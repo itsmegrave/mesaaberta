@@ -111,6 +111,39 @@ export const load = async ({ locals, url }) => {
 
 Profile pictures are shown from the three providers' image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`).
 
+## Authorization
+
+Every access decision lives in `src/lib/server/auth/policy.ts`: a pure `can(actor, action, resource)`, deny by default. Anonymous visitors, suspended accounts, unknown actions and a missing resource are all refused. The actor is the signed-in user's profile, from `await locals.getProfile()`.
+
+```ts
+import { authorize } from '$lib/server/auth/policy';
+import { failFrom } from '$lib/server/errors';
+
+export const actions = {
+	edit: async ({ locals }) => {
+		try {
+			const table = await findTable(/* ... */);
+			authorize(await locals.getProfile(), 'table:edit', table); // throws Forbidden
+			// ...
+		} catch (error) {
+			return failFrom(error); // Forbidden -> 403, NotFound -> 404, anything else is rethrown
+		}
+	}
+};
+```
+
+To add an action, add it to `Resources` and `rules` in `policy.ts` and cover every role and relationship in `policy.spec.ts`. ESLint forbids reading `.role` anywhere else, so a route cannot decide access by itself.
+
+Today the policy covers creating, editing and disabling a table (any signed-in user creates; only that table's GM or an admin edits or disables). The other rows of the roadmap's permissions table (joining, rating, reporting, moderation) are added with the slices that need them.
+
+**Make yourself admin.** There is no admin signup flow. Sign in once so your profile exists, then copy your user id (the UID column in Supabase > Authentication > Users) and run it against the database you want to change:
+
+```sh
+pnpm db:make-admin <user id>
+```
+
+or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
+
 ## Logging
 
 Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
