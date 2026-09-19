@@ -42,6 +42,23 @@ e2e/          Playwright tests (*.e2e.ts)
 
 Component tests sit next to the code as `*.svelte.spec.ts`; plain unit tests as `*.spec.ts`.
 
+## Feature flags
+
+Flags come from [GrowthBook](https://www.growthbook.io). To add one:
+
+1. Add it to `flagDefaults` in `src/lib/server/flags/registry.ts` with a safe default (`false` hides unfinished work). That value is used whenever GrowthBook cannot answer.
+2. Create a feature with the same key in GrowthBook.
+3. Read it in server code: `await locals.flags.isEnabled('my_flag', { id: user.id, role: user.role })`.
+
+Flags load lazily, only when something reads one, and the payload is cached for 60 seconds. The GrowthBook client key in `wrangler.jsonc` is public by design: it can only read flags. Without those settings, for example under plain `vite dev`, every flag returns its default.
+
+In GrowthBook, create one SDK connection for each environment (production and preview), then publish
+the feature configuration after changing a value or rule. Put only its client key in the corresponding
+Cloudflare environment settings. Client keys let an app retrieve the published feature payload; they are
+not admin credentials, so they may be committed. Do not put a GrowthBook API key in the repository.
+Feature evaluation happens in the Worker, so its targeting data and payload never reach the browser; an
+encrypted SDK endpoint is not needed for this integration.
+
 ## TypeScript 7
 
 TypeScript 7 no longer exposes the compiler API that `svelte-check` and `typescript-eslint` are built on. Both run side by side:
