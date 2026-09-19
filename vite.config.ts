@@ -1,3 +1,5 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
@@ -14,7 +16,9 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			adapter: adapter()
-		})
+		}),
+
+		paraglideVitePlugin({ ...paraglideOptions, strategy: [...paraglideOptions.strategy] })
 	],
 	test: {
 		expect: { requireAssertions: true },
