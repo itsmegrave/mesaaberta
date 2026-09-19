@@ -53,7 +53,7 @@ Drop the TS 6 copy once both tools support TS 7 natively.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), including how to add or fix a translation.
+See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a language.
 
 - One issue, one small PR, closing the issue.
 - Conventional commits, one concern per commit.

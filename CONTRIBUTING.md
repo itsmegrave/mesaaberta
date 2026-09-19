@@ -13,20 +13,18 @@ See the [README](README.md) for setup and scripts.
 
 ## Translations
 
-The site is written in Brazilian Portuguese (`pt-BR`, the base language) and English. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components.
+The site is written in Brazilian Portuguese (`pt-BR`, the base language), and only that language is served today. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components. English is planned in [#31](https://github.com/itsmegrave/mesaaberta/issues/31).
 
-**Fix or improve a translation:** edit the value in `messages/<locale>.json`. Keep the keys and any `{placeholders}` exactly as they are.
+**Fix a message:** edit its value in `messages/pt-BR.json`. Keep the keys and any `{placeholders}` exactly as they are.
 
-**Add a language** (for example `es`):
+**Add a language** (for example `en`):
 
-1. Copy `messages/pt-BR.json` to `messages/es.json` and translate every value.
-2. Add `"es"` to `locales` in `project.inlang/settings.json`.
-3. Add its name in that language to `localeNames` in `src/lib/i18n/locales.ts`. TypeScript reports an error until you do.
-4. Run `pnpm test`. A test fails if your file is missing a key or changes a placeholder.
+1. Copy `messages/pt-BR.json` to `messages/en.json` and translate every value.
+2. Add `"en"` to `locales` in `project.inlang/settings.json`.
+3. Run `pnpm test`. A test fails if your file is missing a key or changes a placeholder.
+4. There is no language switch yet, because only one language is served. It ships with the second language (see #31).
 
-English lives at `/en`, and the base language at `/`. A new language gets its own prefix the same way (`/es`).
-
-Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are. Each language is named in itself in the switcher: "Português", "English".
+A new language is served under its own prefix (`/en`), and pt-BR stays at `/`. Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are.
 
 ## Internal links
 

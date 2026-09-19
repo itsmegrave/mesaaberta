@@ -17,10 +17,18 @@ const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) 
 
 const locales = readdirSync(dir)
 	.filter((file) => file.endsWith('.json'))
-	.map((file) => file.replace(/\.json$/, ''))
-	.filter((locale) => locale !== baseLocale);
+	.map((file) => file.replace(/\.json$/, ''));
 
-describe.each(locales)('%s translation', (locale) => {
+describe.each(locales)('%s messages', (locale) => {
+	it('has no empty message', () => {
+		const messages = load(locale);
+
+		for (const key of messageKeys(messages)) expect(messages[key].trim(), key).not.toBe('');
+	});
+});
+
+// Vacuous while pt-BR is the only language; it starts checking the day a translation is added.
+describe.each(locales.filter((locale) => locale !== baseLocale))('%s translation', (locale) => {
 	const base = load(baseLocale);
 	const translation = load(locale);
 
