@@ -1,2 +1,7 @@
 # Copy to .dev.vars (git-ignored). Read by `vite dev`, `wrangler dev` and the db:* scripts.
 DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
+
+# Supabase Auth. Optional: without these the site runs and the sign-in link is hidden.
+# Project Settings > API: the project URL and the publishable (anon) key.
+# SUPABASE_URL=https://<project>.supabase.co
+# SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
