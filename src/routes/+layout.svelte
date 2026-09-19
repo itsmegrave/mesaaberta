@@ -32,7 +32,17 @@
 </main>
 
 <footer class="mx-auto w-full max-w-6xl px-4 md:px-8">
-	<p class="border-t border-petrol/15 py-6 text-sm">
-		Mesa Aberta é um projeto de código aberto, em construção.
-	</p>
+	<div class="border-t border-petrol/15 py-6 text-sm">
+		<p>
+			Feito com 💜 por
+			<a href="https://github.com/itsmegrave" rel="noopener" class="text-link">itsmegrave</a>. Essa
+			plataforma é open source e você pode conferir o código no
+			<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link">GitHub</a
+			>.
+		</p>
+		<p class="mt-2">
+			Feito pela comunidade, para a comunidade. Conheça a
+			<a href="https://linktr.ee/lenindragonsrpg" rel="noopener" class="text-link">Lenindragons</a>.
+		</p>
+	</div>
 </footer>

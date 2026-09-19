@@ -28,4 +28,18 @@ describe('+layout.svelte', () => {
 
 		await expect.element(page.getByRole('banner').getByRole('link')).toHaveAttribute('href', '/');
 	});
+
+	describe('footer credits', () => {
+		it.each([
+			['itsmegrave', 'https://github.com/itsmegrave'],
+			['GitHub', 'https://github.com/itsmegrave/mesaaberta'],
+			['Lenindragons', 'https://linktr.ee/lenindragonsrpg']
+		])('links %s to %s', async (name, href) => {
+			render(Layout, { children });
+
+			await expect
+				.element(page.getByRole('contentinfo').getByRole('link', { name }))
+				.toHaveAttribute('href', href);
+		});
+	});
 });
