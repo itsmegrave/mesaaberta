@@ -1,1 +1,49 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/literata';
+@import '@fontsource-variable/cinzel';
+
+@theme {
+	--font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+	/* Wordmark only */
+	--font-brand: 'Cinzel Variable', Georgia, serif;
+	--font-body: 'Literata Variable', Georgia, 'Times New Roman', serif;
+
+	/* Page and ink */
+	--color-celadon: #e3ebe5;
+	--color-ink: #12272b;
+	/* The table itself */
+	--color-petrol: #17393f;
+	/* Lamp over the table: only used where something is open or needs attention */
+	--color-lamp: #a86a00;
+	/* Players around the table */
+	--color-sage: #7fb7a4;
+	--color-rose: #c97b84;
+	--color-periwinkle: #8e9ae6;
+}
+
+@layer base {
+	html {
+		background-color: var(--color-celadon);
+		color: var(--color-ink);
+		color-scheme: light;
+		font-family: var(--font-body);
+	}
+
+	body {
+		min-height: 100dvh;
+		line-height: 1.65;
+	}
+
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-display);
+		text-wrap: balance;
+	}
+
+	:focus-visible {
+		outline: 3px solid var(--color-petrol);
+		outline-offset: 3px;
+	}
+}

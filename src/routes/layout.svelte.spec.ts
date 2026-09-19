@@ -11,7 +11,7 @@ describe('+layout.svelte', () => {
 		render(Layout, { children });
 
 		const mainId = page.getByRole('main').element().id;
-		const skipHref = page.getByRole('link', { name: /skip/i }).element().getAttribute('href');
+		const skipHref = page.getByRole('link', { name: /pular/i }).element().getAttribute('href');
 
 		expect(mainId).not.toBe('');
 		expect(skipHref).toBe(`#${mainId}`);

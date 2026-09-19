@@ -19,7 +19,7 @@ test('does not scroll horizontally', async ({ page }) => {
 
 test('skip link is the first tab stop and moves to the main region', async ({ page }) => {
 	await page.keyboard.press('Tab');
-	const skipLink = page.getByRole('link', { name: /skip/i });
+	const skipLink = page.getByRole('link', { name: /pular/i });
 	await expect(skipLink).toBeFocused();
 	await expect(skipLink).toBeInViewport();
 
