@@ -31,6 +31,14 @@ test('says the project is open source and links to its repository', async ({ pag
 	);
 });
 
+test('sections are reachable through English anchors', async ({ page }) => {
+	for (const anchor of ['how-it-works', 'for-game-masters']) {
+		await page.goto(`/#${anchor}`);
+
+		await expect(page.locator(`section[aria-labelledby="${anchor}"] > #${anchor}`)).toBeVisible();
+	}
+});
+
 test.describe('seats', () => {
 	const seats = '[data-seat]';
 
