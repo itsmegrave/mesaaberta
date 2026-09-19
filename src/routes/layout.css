@@ -47,3 +47,8 @@
 		outline-offset: 3px;
 	}
 }
+
+/* Inline text link: underlined with the lamp colour */
+@utility text-link {
+	@apply font-medium underline decoration-lamp decoration-2 underline-offset-4;
+}

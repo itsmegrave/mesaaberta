@@ -1,20 +1,16 @@
- <script lang="ts">
-  	import './layout.css';
-  	import { resolve } from '$app/paths';
-  	import appleTouchIcon from '$lib/assets/apple-touch-icon.png';
-  	import favicon32 from '$lib/assets/favicon-32x32.png';
-  	import favicon16 from '$lib/assets/favicon-16x16.png';
-  	import manifest from '$lib/assets/site.webmanifest';
+<script lang="ts">
+	import './layout.css';
+	import { asset, resolve } from '$app/paths';
 
-  	let { children } = $props();
-  </script>
+	let { children } = $props();
+</script>
 
-  <svelte:head>
-  	<link rel="apple-touch-icon" sizes="180x180" href={appleTouchIcon} />
-  	<link rel="icon" type="image/png" sizes="32x32" href={favicon32} />
-  	<link rel="icon" type="image/png" sizes="16x16" href={favicon16} />
-  	<link rel="manifest" href={manifest} />
-  </svelte:head>
+<svelte:head>
+	<link rel="apple-touch-icon" sizes="180x180" href={asset('/apple-touch-icon.png')} />
+	<link rel="icon" type="image/png" sizes="32x32" href={asset('/favicon-32x32.png')} />
+	<link rel="icon" type="image/png" sizes="16x16" href={asset('/favicon-16x16.png')} />
+	<link rel="manifest" href={asset('/site.webmanifest')} />
+</svelte:head>
 
 <a
 	href="#main"
@@ -32,7 +28,17 @@
 </main>
 
 <footer class="mx-auto w-full max-w-6xl px-4 md:px-8">
-	<p class="border-t border-petrol/15 py-6 text-sm">
-		Mesa Aberta é um projeto de código aberto, em construção.
-	</p>
+	<div class="border-t border-petrol/15 py-6 text-sm">
+		<p>
+			Feito com 💜 por
+			<a href="https://github.com/itsmegrave" rel="noopener" class="text-link">itsmegrave</a>. Essa
+			plataforma é open source e você pode conferir o código no
+			<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link">GitHub</a
+			>.
+		</p>
+		<p class="mt-2">
+			Feito pela comunidade, para a comunidade. Conheça a
+			<a href="https://linktr.ee/lenindragonsrpg" rel="noopener" class="text-link">Lenindragons</a>.
+		</p>
+	</div>
 </footer>

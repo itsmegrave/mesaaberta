@@ -38,11 +38,7 @@
 		</p>
 		<p class="mt-6 max-w-[44ch]">
 			Mesa Aberta é um projeto de código aberto, sob a licença MIT.
-			<a
-				href="https://github.com/itsmegrave/mesaaberta"
-				rel="noopener"
-				class="font-medium underline decoration-lamp decoration-2 underline-offset-4"
-			>
+			<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link">
 				Veja o código no GitHub</a
 			>.
 		</p>
