@@ -6,7 +6,7 @@ The roadmap and architecture decisions live in [issue #1](https://github.com/its
 
 ## Stack
 
-SvelteKit (Svelte 5, TypeScript) · Tailwind CSS · Vitest · Playwright · pnpm · Node 26
+SvelteKit (Svelte 5, TypeScript) · Tailwind CSS · Paraglide (i18n) · Vitest · Playwright · pnpm · Node 26
 
 ## Getting started
 
@@ -20,16 +20,17 @@ pnpm dev
 
 ## Scripts
 
-| Script           | What it does                                                 |
-| ---------------- | ------------------------------------------------------------ |
-| `pnpm dev`       | Dev server                                                   |
-| `pnpm build`     | Production build                                             |
-| `pnpm lint`      | Prettier check and ESLint                                    |
-| `pnpm format`    | Prettier write                                               |
-| `pnpm check`     | Type-check `.ts` and `.svelte` files                         |
-| `pnpm test:unit` | Vitest: component tests (Chromium) and unit tests (Node)     |
-| `pnpm test:e2e`  | Playwright against a production build, on mobile and desktop |
-| `pnpm test`      | Unit tests, then e2e                                         |
+| Script           | What it does                                                                      |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `pnpm dev`       | Dev server                                                                        |
+| `pnpm build`     | Production build                                                                  |
+| `pnpm lint`      | Prettier check and ESLint                                                         |
+| `pnpm format`    | Prettier write                                                                    |
+| `pnpm i18n`      | Compile `messages/*.json` into `src/lib/paraglide` (run by `prepare` and `check`) |
+| `pnpm check`     | Type-check `.ts` and `.svelte` files                                              |
+| `pnpm test:unit` | Vitest: component tests (Chromium) and unit tests (Node)                          |
+| `pnpm test:e2e`  | Playwright against a production build, on mobile and desktop                      |
+| `pnpm test`      | Unit tests, then e2e                                                              |
 
 ## Project layout
 
@@ -51,6 +52,8 @@ TypeScript 7 no longer exposes the compiler API that `svelte-check` and `typescr
 Drop the TS 6 copy once both tools support TS 7 natively.
 
 ## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a language.
 
 - One issue, one small PR, closing the issue.
 - Conventional commits, one concern per commit.

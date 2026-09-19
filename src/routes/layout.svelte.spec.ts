@@ -26,7 +26,9 @@ describe('+layout.svelte', () => {
 	it('links the header brand to the home page', async () => {
 		render(Layout, { children });
 
-		await expect.element(page.getByRole('banner').getByRole('link')).toHaveAttribute('href', '/');
+		await expect
+			.element(page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }))
+			.toHaveAttribute('href', '/');
 	});
 
 	describe('footer credits', () => {
