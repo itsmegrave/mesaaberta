@@ -16,7 +16,9 @@ declare global {
 		}
 
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			flags: import('$lib/server/flags/flags').Flags;
+		}
 		// interface PageData {}
 		// interface PageState {}
 	}

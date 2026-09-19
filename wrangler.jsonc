@@ -8,6 +8,11 @@
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
 	},
+	// Public by design: the GrowthBook client key only allows reading feature flags.
+	"vars": {
+		"GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
+		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o"
+	},
 	"workers_dev": true,
 	"preview_urls": true,
 	"observability": {
