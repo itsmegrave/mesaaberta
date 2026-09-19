@@ -15,7 +15,32 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			adapter: adapter(),
+			// Nonce mode: SvelteKit adds a fresh nonce to `script-src` and `style-src` for each
+			// response and stamps it on the inline scripts it renders. The rest of the security
+			// headers live in `src/lib/server/security-headers.ts`.
+			csp: {
+				mode: 'nonce',
+				directives: {
+					'default-src': ['self'],
+					'script-src': ['self'],
+					'style-src': ['self'],
+					// SvelteKit's own screen-reader announcer (`#svelte-announcer`) has an inline `style`
+					// attribute. Only that exact string is allowed, by hash. If a SvelteKit upgrade changes
+					// it, e2e/security.e2e.ts reports the blocked style: replace the hash with the new one.
+					'style-src-attr': [
+						'unsafe-hashes',
+						'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo='
+					],
+					'img-src': ['self', 'data:'],
+					'font-src': ['self'],
+					'connect-src': ['self'],
+					'object-src': ['none'],
+					'base-uri': ['self'],
+					'form-action': ['self'],
+					'frame-ancestors': ['none']
+				}
+			}
 		}),
 
 		paraglideVitePlugin({ ...paraglideOptions, strategy: [...paraglideOptions.strategy] })

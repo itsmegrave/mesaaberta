@@ -4,6 +4,7 @@ import { createFlags } from '$lib/server/flags/flags';
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
 import { logger } from '$lib/server/logger';
 import { handleRequestLog } from '$lib/server/request-log';
+import { handleSecurityHeaders } from '$lib/server/security-headers';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
@@ -55,7 +56,13 @@ const handleFlags: Handle = ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleRequestLog(logger), handleParaglide, handleFlags);
+// Security headers go first so they wrap every response, including the ones later hooks produce.
+export const handle: Handle = sequence(
+	handleSecurityHeaders,
+	handleRequestLog(logger),
+	handleParaglide,
+	handleFlags
+);
 
 // Replaces SvelteKit's default console output so an unexpected error carries the request id.
 // A 404 is a visitor's typo, not a fault, and the request line already records it.
