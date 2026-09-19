@@ -59,6 +59,34 @@ not admin credentials, so they may be committed. Do not put a GrowthBook API key
 Feature evaluation happens in the Worker, so its targeting data and payload never reach the browser; an
 encrypted SDK endpoint is not needed for this integration.
 
+## Database
+
+Postgres through [Drizzle ORM](https://orm.drizzle.team) and `postgres.js`. Supabase provides Postgres, Auth and Storage; app data goes through Drizzle from server code, never from the browser. The schema lives in `src/lib/server/db/schema.ts` and the SQL migrations in `drizzle/` (commit them).
+
+**Run it locally** (needs Docker):
+
+```sh
+cp .dev.vars.example .dev.vars   # DATABASE_URL for the local database
+pnpm db:up                       # Postgres in Docker, waits until it is healthy
+pnpm db:migrate                  # apply the migrations
+pnpm db:seed                     # optional: a GM and two tables
+pnpm dev
+```
+
+`pnpm db:down` stops it. After changing the schema, run `pnpm db:generate`, read the SQL it wrote, and commit it. Tests run the real migrations on an in-process Postgres (PGlite), so `pnpm test` needs no Docker.
+
+Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
+
+**Connect the deployed Worker** (one-time, needs your Cloudflare and Supabase accounts):
+
+1. In Supabase, open Connect and copy the **session pooler** connection string (port 5432). Hyperdrive does its own pooling, so do not use the transaction pooler (port 6543).
+2. `wrangler hyperdrive create mesaaberta-db --connection-string="<that string>"` prints an id.
+3. Uncomment the `hyperdrive` block in `wrangler.jsonc` and paste the id.
+4. Run the migrations against Supabase once: `DATABASE_URL="<direct or session string>" pnpm db:migrate`.
+5. Deploy, then check `/healthz` shows `"database": "ok"`.
+
+Limits checked on 2026-09-19: Supabase's free Nano compute allows 60 direct and 200 pooler connections ([compute and disk](https://supabase.com/docs/guides/platform/compute-and-disk)); Hyperdrive on the free plan allows about 20 origin connections per configuration and 10 configurations per account ([limits](https://developers.cloudflare.com/hyperdrive/platform/limits/)). The Worker opens at most 5 connections per request, so both are comfortable for now. Check the pages again before relying on the numbers.
+
 ## Logging
 
 Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
