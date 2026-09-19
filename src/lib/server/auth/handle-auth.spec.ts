@@ -1,5 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
+import { profiles } from '../db/schema';
+import { createTestDb } from '../db/test-db';
 import { createHandleAuth } from './handle-auth';
 
 const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' };
@@ -73,5 +75,62 @@ describe('handleAuth', () => {
 		await run();
 
 		expect(await event.locals.getUser()).toBeNull();
+	});
+});
+
+describe('getProfile', () => {
+	const id = '00000000-0000-4000-8000-000000000301';
+	const signedIn = () => vi.fn().mockResolvedValue({ data: { user: { id } }, error: null });
+
+	it("returns the signed-in user's profile: the actor the policy decides about", async () => {
+		const test = await createTestDb();
+		await test.db.insert(profiles).values({ id, displayName: 'Ana', role: 'admin' });
+		const { event, run } = setup(env, signedIn());
+		event.locals.db = test.db as never;
+		await run();
+
+		expect(await event.locals.getProfile()).toMatchObject({ id, role: 'admin', status: 'active' });
+		await test.close();
+	});
+
+	it('is null for an anonymous visitor, without touching the database', async () => {
+		const { event, run } = setup({});
+		event.locals.db = null;
+		await run();
+
+		expect(await event.locals.getProfile()).toBeNull();
+	});
+
+	it('is null when someone is signed in but has no profile, rather than a made-up actor', async () => {
+		const test = await createTestDb();
+		const { event, run } = setup(env, signedIn());
+		event.locals.db = test.db as never;
+		await run();
+
+		expect(await event.locals.getProfile()).toBeNull();
+		await test.close();
+	});
+
+	it('is null while no database is configured', async () => {
+		const { event, run } = setup(env, signedIn());
+		event.locals.db = null;
+		await run();
+
+		expect(await event.locals.getProfile()).toBeNull();
+	});
+
+	it('loads once per request however often it is asked', async () => {
+		const test = await createTestDb();
+		await test.db.insert(profiles).values({ id, displayName: 'Ana' });
+		const getUser = signedIn();
+		const { event, run } = setup(env, getUser);
+		event.locals.db = test.db as never;
+		await run();
+
+		const [a, b] = await Promise.all([event.locals.getProfile(), event.locals.getProfile()]);
+
+		expect(a).toBe(b);
+		expect(getUser).toHaveBeenCalledOnce();
+		await test.close();
 	});
 });
