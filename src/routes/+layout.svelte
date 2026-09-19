@@ -1,11 +1,12 @@
 <script lang="ts">
 	import './layout.css';
-	import { asset } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
+	import AccountMenu from '$lib/components/AccountMenu.svelte';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	const locale = getLocale();
 </script>
@@ -24,10 +25,18 @@
 	{m.skip_to_content()}
 </a>
 
-<header class="mx-auto flex h-16 w-full max-w-6xl items-center px-4 md:px-8">
+<header class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:px-8">
 	<a href={localizedHref('/', locale)} class="font-brand text-xl font-semibold tracking-wide">
 		Mesa Aberta
 	</a>
+
+	{#if data.account}
+		<AccountMenu name={data.account.displayName} avatarUrl={data.account.avatarUrl} />
+	{:else if data.authEnabled}
+		<a href={resolve('/login')} class="rounded px-3 py-2 font-semibold hover:bg-petrol/10">
+			{m.nav_sign_in()}
+		</a>
+	{/if}
 </header>
 
 <main id="main" class="mx-auto w-full max-w-6xl px-4 pb-16 md:px-8">

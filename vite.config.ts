@@ -32,7 +32,14 @@ export default defineConfig({
 						'unsafe-hashes',
 						'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo='
 					],
-					'img-src': ['self', 'data:'],
+					// Profile pictures come from the sign-in providers' CDNs.
+					'img-src': [
+						'self',
+						'data:',
+						'https://lh3.googleusercontent.com',
+						'https://avatars.githubusercontent.com',
+						'https://cdn.discordapp.com'
+					],
 					'font-src': ['self'],
 					'connect-src': ['self'],
 					'object-src': ['none'],
@@ -67,6 +74,9 @@ export default defineConfig({
 				test: {
 					name: 'server',
 					environment: 'node',
+					// Tests that start an in-process Postgres (PGlite) take a moment when the machine is busy.
+					testTimeout: 20_000,
+					hookTimeout: 20_000,
 					include: ['src/**/*.{test,spec}.{js,ts}'],
 					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
 				}

@@ -1,8 +1,12 @@
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
 export type Db = PostgresJsDatabase<typeof schema>;
+
+/** Any Drizzle Postgres driver: postgres.js in the Worker, PGlite in tests. */
+export type AnyDb = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 /** The Worker bindings that can hold a connection string. Neither exists until it is configured. */
 export type DatabaseEnv = { HYPERDRIVE?: { connectionString: string }; DATABASE_URL?: string };

@@ -87,6 +87,30 @@ Server code reads the database from `locals.db`, which is `null` when none is co
 
 Limits checked on 2026-09-19: Supabase's free Nano compute allows 60 direct and 200 pooler connections ([compute and disk](https://supabase.com/docs/guides/platform/compute-and-disk)); Hyperdrive on the free plan allows about 20 origin connections per configuration and 10 configurations per account ([limits](https://developers.cloudflare.com/hyperdrive/platform/limits/)). The Worker opens at most 5 connections per request, so both are comfortable for now. Check the pages again before relying on the numbers.
 
+## Sign-in
+
+Sign-in goes through Supabase Auth (Google, Discord and GitHub) with cookie sessions from `@supabase/ssr` and the PKCE flow. The flow is server-side: `/login/<provider>` starts it, `/auth/callback` finishes it and creates a `member` profile on the first login, and `POST /logout` ends it. Login is off until the Supabase settings exist: the site runs, and the "Entrar" link is hidden.
+
+In server code, ask who is signed in through `locals.getUser()`. It asks Supabase to verify the session token, and never trusts the cookie on its own. To protect a page or an action:
+
+```ts
+import { requireUser } from '$lib/server/auth/guard';
+
+export const load = async ({ locals, url }) => {
+	const user = await requireUser(locals, url); // anonymous visitors go to /login and come back
+	// ...
+};
+```
+
+**Set it up** (one-time, needs your Supabase account and one OAuth app per provider):
+
+1. In the Supabase project, open Authentication > Providers and enable Google, Discord and GitHub. Each needs an OAuth app at the provider; its callback URL is Supabase's own, `https://<project>.supabase.co/auth/v1/callback`.
+2. Authentication > URL Configuration: set the Site URL to the production domain, and add `https://<domain>/auth/callback`, `http://localhost:5173/auth/callback` and the preview URL to the Redirect URLs.
+3. Put the project URL and the publishable key (Project Settings > API) in `wrangler.jsonc` under `vars` as `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, and in `.dev.vars` for local work. Both are public by design.
+4. Run the database migrations against the same project (see "Database"): a login needs the `profiles` table.
+
+Profile pictures are shown from the three providers' image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`).
+
 ## Logging
 
 Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
