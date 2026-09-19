@@ -38,7 +38,7 @@
 
 	{#each players as player, i (player.angle)}
 		<g transform="translate({player.x} {player.y})">
-			<g data-seat style="--i: {i}">
+			<g data-seat={i}>
 				<circle r="24" class={player.colour} />
 				<circle r="9" cy="-2" class="fill-petrol/25" />
 			</g>
@@ -46,7 +46,7 @@
 	{/each}
 
 	<g transform="translate({emptySeat.x} {emptySeat.y})">
-		<g data-seat style="--i: {players.length}">
+		<g data-seat={players.length}>
 			<circle r="28" class="fill-lamp/10 stroke-lamp" stroke-width="3.5" stroke-dasharray="7 8" />
 		</g>
 	</g>
@@ -59,6 +59,27 @@
 			transform-origin: center;
 			animation: sit 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 			animation-delay: calc(var(--i) * 110ms + 150ms);
+		}
+
+		/* The seat number reaches the CSS through an attribute, not an inline `style`, because the
+		   Content-Security-Policy blocks inline styles. One rule per seat: five players and one empty. */
+		[data-seat='0'] {
+			--i: 0;
+		}
+		[data-seat='1'] {
+			--i: 1;
+		}
+		[data-seat='2'] {
+			--i: 2;
+		}
+		[data-seat='3'] {
+			--i: 3;
+		}
+		[data-seat='4'] {
+			--i: 4;
+		}
+		[data-seat='5'] {
+			--i: 5;
 		}
 	}
 
