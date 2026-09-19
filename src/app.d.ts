@@ -26,6 +26,10 @@ declare global {
 			supabase: import('@supabase/supabase-js').SupabaseClient | null;
 			/** The signed-in user, verified with Supabase (never read from the cookie). Null if anonymous. */
 			getUser: () => Promise<import('@supabase/supabase-js').User | null>;
+			/** The signed-in user's profile, which is the actor for `can()`. Null if anonymous or without one. */
+			getProfile: () => Promise<
+				typeof import('$lib/server/db/schema').profiles.$inferSelect | null
+			>;
 			/** Set once someone is signed in; it ends up on the request log line. */
 			userId?: string;
 		}
