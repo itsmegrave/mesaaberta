@@ -1,8 +1,11 @@
 import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Layout from './+layout.svelte';
+
+// SvelteKit's runtime is not running in component tests: `page.url` is a stub with no pathname.
+vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
 
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
 
@@ -26,7 +29,9 @@ describe('+layout.svelte', () => {
 	it('links the header brand to the home page', async () => {
 		render(Layout, { children });
 
-		await expect.element(page.getByRole('banner').getByRole('link')).toHaveAttribute('href', '/');
+		await expect
+			.element(page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }))
+			.toHaveAttribute('href', '/');
 	});
 
 	describe('footer credits', () => {

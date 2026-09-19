@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { m } from '$lib/paraglide/messages';
+
 	const centre = 200;
 	const orbit = 150;
 
@@ -24,7 +26,7 @@
 <svg
 	viewBox="0 0 400 400"
 	role="img"
-	aria-label="Mesa de RPG vista de cima, com cinco jogadores sentados e uma cadeira vazia"
+	aria-label={m.table_illustration_label()}
 	class="mx-auto h-auto w-full max-w-md"
 >
 	<circle cx={centre} cy={centre} r="186" class="fill-none stroke-lamp/20" stroke-width="2" />
