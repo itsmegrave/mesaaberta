@@ -1,7 +1,9 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createFlags } from '$lib/server/flags/flags';
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
+import { logger } from '$lib/server/logger';
+import { handleRequestLog } from '$lib/server/request-log';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
@@ -53,4 +55,10 @@ const handleFlags: Handle = ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleParaglide, handleFlags);
+export const handle: Handle = sequence(handleRequestLog(logger), handleParaglide, handleFlags);
+
+// Replaces SvelteKit's default console output so an unexpected error carries the request id.
+// A 404 is a visitor's typo, not a fault, and the request line already records it.
+export const handleError: HandleServerError = ({ error, event, status }) => {
+	if (status !== 404) (event.locals.log ?? logger).error('unhandled error', { error, status });
+};

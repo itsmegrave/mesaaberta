@@ -18,6 +18,10 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			flags: import('$lib/server/flags/flags').Flags;
+			/** Logs with this request's id already attached. */
+			log: import('$lib/server/logger').Logger;
+			/** Set once someone is signed in; it ends up on the request log line. */
+			userId?: string;
 		}
 		// interface PageData {}
 		// interface PageState {}
