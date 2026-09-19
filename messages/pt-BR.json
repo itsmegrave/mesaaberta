@@ -26,5 +26,15 @@
 	"error_not_found_text": "O endereço não existe ou a mesa foi removida.",
 	"error_generic_title": "Algo deu errado",
 	"error_generic_text": "Tente de novo em instantes.",
-	"error_back_home": "Voltar para o início"
+	"error_back_home": "Voltar para o início",
+	"login_title": "Entrar",
+	"login_lede": "Entre para abrir uma mesa ou pegar uma vaga.",
+	"login_with_google": "Continuar com Google",
+	"login_with_discord": "Continuar com Discord",
+	"login_with_github": "Continuar com GitHub",
+	"login_unavailable": "O login ainda não está disponível. Volte em breve.",
+	"login_failed": "Não foi possível entrar. Tente de novo.",
+	"nav_sign_in": "Entrar",
+	"nav_sign_out": "Sair",
+	"nav_account_menu": "Menu da conta"
 }
