@@ -59,6 +59,24 @@ not admin credentials, so they may be committed. Do not put a GrowthBook API key
 Feature evaluation happens in the Worker, so its targeting data and payload never reach the browser; an
 encrypted SDK endpoint is not needed for this integration.
 
+## Logging
+
+Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
+
+```ts
+locals.log.info('session booked', { tableId, players: 5 });
+```
+
+**Never log PII.** Pass ids and counts, not emails, names, phone numbers, CPFs, tokens or cookies. As a safety net the logger redacts fields whose names look sensitive (`email`, `token`, `password`, `cookie`, `authorization`, `phone`, `cpf`, ...) and scrubs email addresses and bearer tokens written into strings. Errors are logged as name and message only, and the query string is never logged. The net is only a net: choose what to log with care.
+
+## Security headers
+
+`src/lib/server/security-headers.ts` adds `X-Content-Type-Options`, `Referrer-Policy` and `Strict-Transport-Security` to every response. The `Content-Security-Policy` is set by SvelteKit (`kit.csp` in `vite.config.ts`) with a fresh nonce per response, and forbids framing (`frame-ancestors 'none'`). SvelteKit's CSRF origin check stays on; `e2e/security.e2e.ts` proves it.
+
+Because inline styles are blocked, do not write `style="..."` in markup: use a class, or a `data-` attribute that CSS selects on. `e2e/security.e2e.ts` fails on any CSP violation, so a blocked style or script shows up in CI.
+
+`GET /healthz` returns `{"status":"ok"}` for uptime checks.
+
 ## TypeScript 7
 
 TypeScript 7 no longer exposes the compiler API that `svelte-check` and `typescript-eslint` are built on. Both run side by side:
