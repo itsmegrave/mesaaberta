@@ -25,6 +25,7 @@
 		"db:down": "docker compose down",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "node --env-file-if-exists=.dev.vars ./node_modules/drizzle-kit/bin.cjs migrate",
+		"db:make-admin": "node --env-file-if-exists=.dev.vars scripts/make-admin.ts",
 		"db:seed": "node --env-file-if-exists=.dev.vars scripts/seed.ts",
 		"i18n": "node scripts/i18n.ts"
 	},
