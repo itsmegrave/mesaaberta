@@ -2,7 +2,8 @@
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "mesaaberta",
 	"compatibility_date": "2026-09-19",
-	"compatibility_flags": ["nodejs_als"],
+	// `nodejs_compat` (which includes `nodejs_als`) is what postgres.js needs to run in a Worker.
+	"compatibility_flags": ["nodejs_compat"],
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"assets": {
 		"binding": "ASSETS",
@@ -13,6 +14,9 @@
 		"GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
 		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o"
 	},
+	// Add once, after creating the Hyperdrive config (see "Database" in the README):
+	//   "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<id from `wrangler hyperdrive create`>" }],
+	// Without it the Worker runs with no database and /healthz reports `not_configured`.
 	"workers_dev": true,
 	"preview_urls": true,
 	"observability": {

@@ -20,6 +20,8 @@ declare global {
 			flags: import('$lib/server/flags/flags').Flags;
 			/** Logs with this request's id already attached. */
 			log: import('$lib/server/logger').Logger;
+			/** The database, or null while none is configured (see `handleDatabase`). */
+			db: import('$lib/server/db/client').Db | null;
 			/** Set once someone is signed in; it ends up on the request log line. */
 			userId?: string;
 		}
