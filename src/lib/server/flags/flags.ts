@@ -2,7 +2,7 @@ import { GrowthBook, type Attributes, type FeatureApiResponse } from '@growthboo
 import { flagDefaults, type FlagName } from './registry';
 
 export type Flags = {
-	isEnabled(name: FlagName): Promise<boolean>;
+	isEnabled(name: FlagName, attributes?: Attributes): Promise<boolean>;
 };
 
 /**
@@ -10,31 +10,32 @@ export type Flags = {
  * many flags are read. If GrowthBook cannot answer, every flag returns its default from the registry.
  * `attributes` (user id, role, ...) feed GrowthBook's targeting rules.
  */
-export function createFlags(
-	loadPayload: () => Promise<FeatureApiResponse | null>,
-	attributes: Attributes = {}
-): Flags {
-	let growthbook: Promise<GrowthBook | null> | undefined;
+export function createFlags(loadPayload: () => Promise<FeatureApiResponse | null>): Flags {
+	let payload: Promise<FeatureApiResponse | null> | undefined;
 
-	const ready = () =>
-		(growthbook ??= (async () => {
+	const load = () =>
+		(payload ??= (async () => {
 			try {
-				const payload = await loadPayload();
-				if (!payload) return null;
-
-				const instance = new GrowthBook({ attributes });
-				await instance.setPayload(payload);
-				return instance;
+				return await loadPayload();
 			} catch (error) {
-				console.error('flags: could not evaluate features:', String(error));
+				console.error('flags: could not load feature payload:', String(error));
 				return null;
 			}
 		})());
 
 	return {
-		async isEnabled(name) {
-			const instance = await ready();
-			return instance ? instance.getFeatureValue(name, flagDefaults[name]) : flagDefaults[name];
+		async isEnabled(name, attributes = {}) {
+			const response = await load();
+			if (!response) return flagDefaults[name];
+
+			try {
+				const growthbook = new GrowthBook({ attributes });
+				await growthbook.setPayload(response);
+				return growthbook.getFeatureValue(name, flagDefaults[name]);
+			} catch (error) {
+				console.error('flags: could not evaluate features:', String(error));
+				return flagDefaults[name];
+			}
 		}
 	};
 }

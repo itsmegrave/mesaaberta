@@ -44,11 +44,10 @@ describe('createFlags', () => {
 			}
 		};
 
-		const admin = createFlags(serving(features), { role: 'admin' });
-		const member = createFlags(serving(features), { role: 'member' });
+		const flags = createFlags(serving(features));
 
-		expect(await admin.isEnabled('is_platform_released')).toBe(true);
-		expect(await member.isEnabled('is_platform_released')).toBe(false);
+		expect(await flags.isEnabled('is_platform_released', { role: 'admin' })).toBe(true);
+		expect(await flags.isEnabled('is_platform_released', { role: 'member' })).toBe(false);
 	});
 
 	it('loads the payload only once, however many flags are read', async () => {
