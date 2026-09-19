@@ -1,0 +1,2 @@
+# Copy to .dev.vars (git-ignored). Read by `vite dev`, `wrangler dev` and the db:* scripts.
+DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
