@@ -11,15 +11,15 @@ const serving = (features: FeatureApiResponse['features']) => async () => payloa
 
 describe('createFlags', () => {
 	it('uses the value GrowthBook serves', async () => {
-		const flags = createFlags(serving({ tables_open: { defaultValue: true } }));
+		const flags = createFlags(serving({ is_platform_released: { defaultValue: true } }));
 
-		expect(await flags.isEnabled('tables_open')).toBe(true);
+		expect(await flags.isEnabled('is_platform_released')).toBe(true);
 	});
 
 	it('falls back to the safe default when no payload is available', async () => {
 		const flags = createFlags(async () => null);
 
-		expect(await flags.isEnabled('tables_open')).toBe(false);
+		expect(await flags.isEnabled('is_platform_released')).toBe(false);
 	});
 
 	it('falls back to the safe default when the loader throws', async () => {
@@ -27,33 +27,36 @@ describe('createFlags', () => {
 			throw new Error('boom');
 		});
 
-		expect(await flags.isEnabled('tables_open')).toBe(false);
+		expect(await flags.isEnabled('is_platform_released')).toBe(false);
 	});
 
 	it('falls back to the safe default for a flag GrowthBook does not know yet', async () => {
 		const flags = createFlags(serving({}));
 
-		expect(await flags.isEnabled('tables_open')).toBe(false);
+		expect(await flags.isEnabled('is_platform_released')).toBe(false);
 	});
 
 	it('evaluates targeting rules against the attributes it is given', async () => {
 		const features = {
-			tables_open: { defaultValue: false, rules: [{ condition: { role: 'admin' }, force: true }] }
+			is_platform_released: {
+				defaultValue: false,
+				rules: [{ condition: { role: 'admin' }, force: true }]
+			}
 		};
 
 		const admin = createFlags(serving(features), { role: 'admin' });
 		const member = createFlags(serving(features), { role: 'member' });
 
-		expect(await admin.isEnabled('tables_open')).toBe(true);
-		expect(await member.isEnabled('tables_open')).toBe(false);
+		expect(await admin.isEnabled('is_platform_released')).toBe(true);
+		expect(await member.isEnabled('is_platform_released')).toBe(false);
 	});
 
 	it('loads the payload only once, however many flags are read', async () => {
-		const load = vi.fn(serving({ tables_open: { defaultValue: true } }));
+		const load = vi.fn(serving({ is_platform_released: { defaultValue: true } }));
 		const flags = createFlags(load);
 
-		await flags.isEnabled('tables_open');
-		await flags.isEnabled('tables_open');
+		await flags.isEnabled('is_platform_released');
+		await flags.isEnabled('is_platform_released');
 
 		expect(load).toHaveBeenCalledTimes(1);
 	});

@@ -3,7 +3,7 @@ import { growthBookPayload, type PayloadCache } from './payload';
 
 const apiHost = 'https://cdn.growthbook.io';
 const clientKey = 'sdk-test';
-const body = { status: 200, features: { tables_open: { defaultValue: true } } };
+const body = { status: 200, features: { is_platform_released: { defaultValue: true } } };
 
 const json = (data: unknown, status = 200) =>
 	new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });

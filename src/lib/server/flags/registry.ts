@@ -4,8 +4,8 @@
  * new flags default to `false`. Create a feature with the same key in GrowthBook.
  */
 export const flagDefaults = {
-	// Turns the landing page at `/` into the real home once tables can be opened.
-	tables_open: false
+	// Off: `/` shows the landing page. On: the released platform.
+	is_platform_released: false
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
