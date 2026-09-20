@@ -50,7 +50,7 @@ const env = {
 	RESEND_API_KEY: 're_test',
 	RESEND_FROM: 'Mesa Aberta <convites@mesaaberta.app>',
 	SUPABASE_URL: 'https://example.supabase.co',
-	SUPABASE_SERVICE_ROLE_KEY: 'service-secret',
+	SUPABASE_SECRET_KEY: 'sb_secret_test',
 	APP_ORIGIN: 'https://mesaaberta.app'
 };
 
@@ -63,6 +63,15 @@ describe('calendar invite handler', () => {
 		expect(inviteHandler(undefined)).toBeNull();
 		expect(inviteHandler({ RESEND_API_KEY: 'x' })).toBeNull();
 		expect(inviteHandler(env)?.name).toBe('calendar-invites-v1');
+	});
+
+	it('takes the admin key under either name, so the legacy service_role key keeps working', () => {
+		const { SUPABASE_SECRET_KEY, ...rest } = env;
+
+		expect(inviteHandler({ ...rest, SUPABASE_SERVICE_ROLE_KEY: SUPABASE_SECRET_KEY })?.name).toBe(
+			'calendar-invites-v1'
+		);
+		expect(inviteHandler(rest)).toBeNull();
 	});
 
 	it('sends a private REQUEST attachment for a confirmed player', async () => {
