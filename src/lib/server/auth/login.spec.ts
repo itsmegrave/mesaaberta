@@ -31,7 +31,7 @@ describe('startLogin', () => {
 	it('does not let next point at another site', async () => {
 		const client = supabase({ data: { url: 'https://p.example' }, error: null });
 
-		await startLogin(client as never, { provider: 'github', origin, next: 'https://evil.example' });
+		await startLogin(client as never, { provider: 'apple', origin, next: 'https://evil.example' });
 
 		const { options } = client.auth.signInWithOAuth.mock.calls[0][0];
 		expect(options.redirectTo).toBe(`${origin}/auth/callback?next=%2F`);
