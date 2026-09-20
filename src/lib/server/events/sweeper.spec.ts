@@ -44,7 +44,7 @@ describe('runSweeper', () => {
 		);
 
 		expect(swept).toBe(1);
-		expect(handle).toHaveBeenCalledWith(expect.objectContaining({ id }));
+		expect(handle).toHaveBeenCalledWith(expect.objectContaining({ id }), test.db);
 		expect(close).toHaveBeenCalledOnce();
 		void events;
 	});

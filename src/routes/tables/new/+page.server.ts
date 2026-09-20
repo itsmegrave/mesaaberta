@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
-import { handlers } from '$lib/server/events/handlers';
+import { handlersFor } from '$lib/server/events/handlers';
 import { createTable } from '$lib/server/tables/write';
 import { listSystems } from '$lib/server/systems';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
@@ -31,7 +31,9 @@ export const actions: Actions = {
 		return handleTableForm(event, async (input, imagePath) => {
 			const created = await createTable(db, await locals.getProfile(), input, { imagePath });
 			// After the commit and the response, so the visitor never waits for a handler.
-			locals.afterResponse((db) => dispatchEvent(db, handlers, created.eventId));
+			locals.afterResponse((db) =>
+				dispatchEvent(db, handlersFor(event.platform?.env), created.eventId)
+			);
 			return created;
 		});
 	}

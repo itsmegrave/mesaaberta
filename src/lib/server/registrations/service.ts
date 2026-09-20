@@ -138,10 +138,7 @@ export async function approveRegistration(
 			.where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
 
 		return {
-			eventIds: [
-				await record(tx, actor!, table, playerId, 'JoinApproved'),
-				await record(tx, actor!, table, playerId, 'PlayerJoined')
-			]
+			eventIds: [await record(tx, actor!, table, playerId, 'JoinApproved')]
 		};
 	});
 }

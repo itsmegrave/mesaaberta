@@ -13,7 +13,7 @@ export type DomainEvent =
 	| { type: 'JoinRequested'; payload: Registration }
 	| { type: 'JoinApproved'; payload: Registration }
 	| { type: 'JoinDeclined'; payload: Registration }
-	// A seat was confirmed: an automatic join, or an approval.
+	// A seat was confirmed by an automatic join. An approval records `JoinApproved` alone, so a player is never told twice.
 	| { type: 'PlayerJoined'; payload: Registration }
 	| { type: 'PlayerLeft'; payload: Registration & { reason: 'left' | 'removed' } }
 	// A player rated the table and its GM (or changed their rating). Scores and comments are not in the payload.
@@ -40,5 +40,6 @@ export type Handler = {
 	/** Stable and unique: it is recorded when the handler succeeds. Never rename one that has run. */
 	name: string;
 	types: readonly EventType[];
-	handle(event: StoredEvent): Promise<void>;
+	/** The dispatcher passes its database connection; handlers must not open a second one. */
+	handle(event: StoredEvent, db: import('../db/client').AnyDb): Promise<void>;
 };

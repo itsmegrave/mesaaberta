@@ -4,9 +4,9 @@ import type { Actor } from '../auth/policy';
 import { safeNext } from '../auth/safe-next';
 import { failFrom } from '../errors';
 import { dispatchEvent } from '../events/dispatcher';
-import { handlers } from '../events/handlers';
+import { handlersFor } from '../events/handlers';
 
-type Event = { locals: App.Locals; url: URL; request: Request };
+type Event = { locals: App.Locals; url: URL; request: Request; platform?: App.Platform };
 
 /**
  * What every join, leave, approve, decline and remove action shares: an anonymous visitor goes to
@@ -15,9 +15,10 @@ type Event = { locals: App.Locals; url: URL; request: Request };
  * permission) becomes a form failure the page can show; anything else is a bug and surfaces.
  */
 export async function runRegistrationAction(
-	{ locals, url, request }: Event,
+	event: Event,
 	run: (db: AnyDb, actor: Actor | null, form: FormData) => Promise<{ eventIds: string[] }>
 ) {
+	const { locals, url, request } = event;
 	if (!(await locals.getUser())) {
 		// The page itself, not the `?/join` action address, which only makes sense as a POST.
 		redirect(303, `/login?next=${encodeURIComponent(url.pathname)}`);
@@ -28,7 +29,8 @@ export async function runRegistrationAction(
 
 	try {
 		const { eventIds } = await run(locals.db, await locals.getProfile(), form);
-		for (const id of eventIds) locals.afterResponse((db) => dispatchEvent(db, handlers, id));
+		for (const id of eventIds)
+			locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), id));
 	} catch (e) {
 		return failFrom(e);
 	}
