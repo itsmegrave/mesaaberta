@@ -21,7 +21,7 @@
 	let kind = $state(values.kind);
 	const timezones = Intl.supportedValuesOf('timeZone');
 
-	const input = 'block w-full rounded border border-petrol/30 bg-surface px-3 py-2';
+	const input = 'block w-full rounded border border-ink/60 bg-surface px-3 py-2';
 	const err = (field: string) => (errors[field] ? errorText(errors[field], field) : undefined);
 	const invalid = (field: string) => (errors[field] ? 'true' : undefined);
 </script>

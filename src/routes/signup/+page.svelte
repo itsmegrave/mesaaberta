@@ -8,25 +8,32 @@
 </script>
 
 <svelte:head>
-	<title>{m.login_title()}</title>
+	<title>{m.signup_title()}</title>
 </svelte:head>
 
 <section class="py-16 md:py-24">
-	<h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{m.login_title()}</h1>
-	<p class="mt-4 max-w-[44ch] text-lg">{m.login_lede()}</p>
+	<h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{m.signup_title()}</h1>
 
-	{#if data.failed}
-		<p role="alert" class="mt-6 max-w-[44ch] font-semibold">
-			{data.confirmHint ? m.login_confirmed_hint() : m.login_failed()}
-		</p>
-	{/if}
+	{#if !data.authEnabled}
+		<p class="mt-8 max-w-[44ch]">{m.login_unavailable()}</p>
+	{:else if form?.checkEmail}
+		<div role="status" class="mt-8 max-w-[44ch]">
+			<h2 class="text-2xl font-semibold">{m.signup_check_email_title()}</h2>
+			<p class="mt-3 text-lg">{m.signup_check_email_text()}</p>
+			<a
+				href="{resolve('/login')}?next={encodeURIComponent(data.next)}"
+				class="mt-4 inline-block text-link"
+			>
+				{m.signup_sign_in()}
+			</a>
+		</div>
+	{:else}
+		<p class="mt-4 max-w-[44ch] text-lg">{m.signup_lede()}</p>
 
-	{#if data.authEnabled}
 		<div class="mt-8 grid max-w-sm gap-8">
 			<CredentialsForm
-				mode="login"
+				mode="signup"
 				next={data.next}
-				action="?/email"
 				email={form?.email}
 				errors={form?.errors}
 				result={form?.result}
@@ -41,13 +48,11 @@
 			<ProviderButtons next={data.next} />
 
 			<p>
-				{m.login_no_account()}
-				<a href="{resolve('/signup')}?next={encodeURIComponent(data.next)}" class="text-link">
-					{m.login_create_account()}
+				{m.signup_have_account()}
+				<a href="{resolve('/login')}?next={encodeURIComponent(data.next)}" class="text-link">
+					{m.signup_sign_in()}
 				</a>
 			</p>
 		</div>
-	{:else}
-		<p class="mt-8 max-w-[44ch]">{m.login_unavailable()}</p>
 	{/if}
 </section>

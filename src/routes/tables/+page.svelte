@@ -31,7 +31,7 @@
 			<select
 				id="system"
 				name="system"
-				class="mt-1 block w-full rounded border border-petrol/30 bg-surface px-3 py-2"
+				class="mt-1 block w-full rounded border border-ink/60 bg-surface px-3 py-2"
 			>
 				<option value="">{m.tables_filter_all()}</option>
 				{#each data.systems as system (system.slug)}

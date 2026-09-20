@@ -216,7 +216,7 @@
 						name="comment"
 						rows="3"
 						maxlength="1000"
-						class="mt-1 block w-full rounded border border-petrol/30 bg-surface px-3 py-2"
+						class="mt-1 block w-full rounded border border-ink/60 bg-surface px-3 py-2"
 						>{data.myRating?.comment ?? ''}</textarea
 					>
 				</div>
