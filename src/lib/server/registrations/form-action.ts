@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { AnyDb } from '../db/client';
 import type { Actor } from '../auth/policy';
+import { safeNext } from '../auth/safe-next';
 import { failFrom } from '../errors';
 import { dispatchEvent } from '../events/dispatcher';
 import { handlers } from '../events/handlers';
@@ -23,12 +24,15 @@ export async function runRegistrationAction(
 	}
 	if (!locals.db) error(503, 'Database not configured');
 
+	const form = await request.formData();
+
 	try {
-		const { eventIds } = await run(locals.db, await locals.getProfile(), await request.formData());
+		const { eventIds } = await run(locals.db, await locals.getProfile(), form);
 		for (const id of eventIds) locals.afterResponse((db) => dispatchEvent(db, handlers, id));
 	} catch (e) {
 		return failFrom(e);
 	}
 
-	redirect(303, url.pathname);
+	// Back to where the form was: the table page, or the dashboard when it names itself in `next`.
+	redirect(303, safeNext(String(form.get('next') ?? ''), url.pathname));
 }
