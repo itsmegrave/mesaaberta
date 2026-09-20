@@ -97,7 +97,10 @@ describe('suggestUsername', () => {
 		expect(usernameProblem(suggestion)).toBeNull();
 	});
 
-	it.each(['', '🎲🎲', 'ab', 'Admin'])('gives nothing for %j, which would not be accepted', (text) => {
-		expect(suggestUsername(text)).toBeNull();
-	});
+	it.each(['', '🎲🎲', 'ab', 'Admin'])(
+		'gives nothing for %j, which would not be accepted',
+		(text) => {
+			expect(suggestUsername(text)).toBeNull();
+		}
+	);
 });

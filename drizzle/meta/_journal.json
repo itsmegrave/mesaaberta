@@ -50,6 +50,13 @@
       "when": 1789931839195,
       "tag": "0006_enable_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789942652744,
+      "tag": "0007_public_profiles",
+      "breakpoints": true
     }
   ]
 }
