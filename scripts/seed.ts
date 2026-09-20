@@ -40,7 +40,9 @@ await db
 			kind: 'one_shot',
 			capacity: 5,
 			startsAt: inDays(7, 22),
-			description: 'Uma aventura de uma noite para quem nunca jogou.'
+			description: 'Uma aventura de uma noite para quem nunca jogou.\nNão precisa de experiência.',
+			// Markup on purpose: the pages must show it as text.
+			extraInfo: 'Traga dados e <b>lápis</b>.'
 		},
 		{
 			...base,
@@ -52,9 +54,20 @@ await db
 			capacity: 4,
 			startsAt: inDays(3, 21),
 			joinMode: 'approval'
+		},
+		{
+			...base,
+			slug: 'mesa-desativada',
+			title: 'Mesa Desativada',
+			systemId: await systemId('daggerheart'),
+			kind: 'one_shot',
+			capacity: 4,
+			startsAt: inDays(5, 20),
+			// The public pages must never show a disabled table.
+			status: 'disabled'
 		}
 	])
 	.onConflictDoNothing();
 
 await client.end();
-console.log('Dev data is in place: 1 profile and 2 tables.');
+console.log('Dev data is in place: 1 profile and 3 tables (one disabled).');
