@@ -25,6 +25,14 @@ export class TableFull extends Error {
 	}
 }
 
+/** The first session has not ended yet, so there is nothing to rate. Not a permission problem: try again later. */
+export class TooEarly extends Error {
+	constructor(message = 'too early') {
+		super(message);
+		this.name = 'TooEarly';
+	}
+}
+
 /** The player already has a place at this table, confirmed or pending. */
 export class AlreadyRegistered extends Error {
 	constructor(message = 'already registered') {
@@ -53,6 +61,7 @@ export function failFrom(error: unknown) {
 	if (error instanceof Forbidden) return fail(403, { error: 'forbidden' as const });
 	if (error instanceof NotFound) return fail(404, { error: 'not_found' as const });
 	if (error instanceof TableFull) return fail(409, { error: 'table_full' as const });
+	if (error instanceof TooEarly) return fail(409, { error: 'too_early' as const });
 	if (error instanceof AlreadyRegistered)
 		return fail(409, { error: 'already_registered' as const });
 	if (error instanceof Invalid) return fail(400, { error: 'invalid' as const, field: error.field });

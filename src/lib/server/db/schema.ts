@@ -1,12 +1,14 @@
 import { sql } from 'drizzle-orm';
 import {
 	check,
+	foreignKey,
 	jsonb,
 	index,
 	integer,
 	pgEnum,
 	pgTable,
 	primaryKey,
+	smallint,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -156,5 +158,32 @@ export const registrations = pgTable(
 	(registration) => [
 		primaryKey({ columns: [registration.tableId, registration.playerId] }),
 		index('registrations_player_idx').on(registration.playerId)
+	]
+);
+
+// What a player thought of a table and of its GM, once they had played. One per registration, and it
+// goes with it: a player who is removed takes their rating with them (cascade). A GM's average is
+// computed by a query, never stored.
+export const ratings = pgTable(
+	'ratings',
+	{
+		tableId: uuid('table_id').notNull(),
+		playerId: uuid('player_id').notNull(),
+		tableScore: smallint('table_score').notNull(),
+		gmScore: smallint('gm_score').notNull(),
+		comment: text('comment'),
+		...timestamps
+	},
+	(rating) => [
+		primaryKey({ columns: [rating.tableId, rating.playerId] }),
+		foreignKey({
+			name: 'ratings_registration_fk',
+			columns: [rating.tableId, rating.playerId],
+			foreignColumns: [registrations.tableId, registrations.playerId]
+		}).onDelete('cascade'),
+		check('ratings_table_score_range', sql`${rating.tableScore} BETWEEN 1 AND 5`),
+		check('ratings_gm_score_range', sql`${rating.gmScore} BETWEEN 1 AND 5`),
+		check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
+		index('ratings_table_idx').on(rating.tableId)
 	]
 );

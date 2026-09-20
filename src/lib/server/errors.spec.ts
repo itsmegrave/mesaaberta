@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { AlreadyRegistered, Forbidden, Invalid, NotFound, TableFull, failFrom } from './errors';
+import {
+	AlreadyRegistered,
+	Forbidden,
+	Invalid,
+	NotFound,
+	TableFull,
+	TooEarly,
+	failFrom
+} from './errors';
 
 describe('failFrom', () => {
 	it('turns Forbidden into a 403 form failure', () => {
@@ -22,6 +30,10 @@ describe('failFrom', () => {
 			status: 409,
 			data: { error: 'already_registered' }
 		});
+	});
+
+	it('turns a rating before the first session ends into a 409', () => {
+		expect(failFrom(new TooEarly())).toMatchObject({ status: 409, data: { error: 'too_early' } });
 	});
 
 	it('turns Invalid into a 400 that names the field, and nothing else', () => {
