@@ -166,5 +166,9 @@
 	"dash_edit": "Editar ou desativar",
 	"dash_players": "Jogadores",
 	"dash_requests": "Pedidos de vaga",
-	"dash_none_yet": "Ninguém ainda."
+	"dash_none_yet": "Ninguém ainda.",
+	"theme_label": "Tema",
+	"theme_system": "Automático",
+	"theme_light": "Claro",
+	"theme_dark": "Escuro"
 }
