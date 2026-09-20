@@ -67,4 +67,77 @@ describe('handleDatabase', () => {
 		expect(used).toHaveBeenCalledOnce();
 		expect(unused).not.toHaveBeenCalled();
 	});
+
+	describe('afterResponse', () => {
+		const run = async (env: object, body: (event: RequestEvent) => void) => {
+			const waiting: Promise<unknown>[] = [];
+			const log = { error: vi.fn() };
+			const event = {
+				locals: { log },
+				platform: { env, ctx: { waitUntil: (p: Promise<unknown>) => waiting.push(p) } }
+			} as unknown as RequestEvent;
+
+			await handleDatabase({
+				event,
+				resolve: async () => {
+					body(event);
+					return new Response();
+				}
+			});
+			await Promise.all(waiting);
+
+			return { log, waiting };
+		};
+
+		it("runs a task after the response, with this request's database", async () => {
+			const seen: unknown[] = [];
+
+			await run({ DATABASE_URL: local }, (event) =>
+				event.locals.afterResponse(async (db) => void seen.push(db))
+			);
+
+			expect(seen).toHaveLength(1);
+			expect(seen[0]).toBeTruthy();
+		});
+
+		it('gives every task the same database, and keeps it open until they have all finished', async () => {
+			const order: string[] = [];
+			const dbs: unknown[] = [];
+
+			await run({ DATABASE_URL: local }, (event) => {
+				event.locals.afterResponse(async (db) => {
+					dbs.push(db);
+					await new Promise((resolve) => setTimeout(resolve, 20));
+					order.push('slow done');
+				});
+				event.locals.afterResponse(async (db) => void dbs.push(db));
+			});
+			order.push('closed');
+
+			expect(dbs[0]).toBe(dbs[1]);
+			expect(order).toEqual(['slow done', 'closed']);
+		});
+
+		it('logs a failing task instead of throwing, and still runs the others', async () => {
+			const ran = vi.fn();
+
+			const { log } = await run({ DATABASE_URL: local }, (event) => {
+				event.locals.afterResponse(async () => {
+					throw new Error('boom');
+				});
+				event.locals.afterResponse(async () => ran());
+			});
+
+			expect(ran).toHaveBeenCalledOnce();
+			expect(log.error).toHaveBeenCalledOnce();
+		});
+
+		it('drops the task when there is no database, since there is nothing to run it against', async () => {
+			const task = vi.fn();
+
+			await run({}, (event) => event.locals.afterResponse(task));
+
+			expect(task).not.toHaveBeenCalled();
+		});
+	});
 });
