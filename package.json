@@ -27,6 +27,7 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "node --env-file-if-exists=.dev.vars ./node_modules/drizzle-kit/bin.cjs migrate",
 		"db:make-admin": "node --env-file-if-exists=.dev.vars scripts/make-admin.ts",
+		"calendar:sample": "node scripts/sample-invite.ts",
 		"db:seed": "node --env-file-if-exists=.dev.vars scripts/seed.ts",
 		"i18n": "node scripts/i18n.ts"
 	},
@@ -48,6 +49,7 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
 		"globals": "^17.12.0",
+		"ical.js": "^2.2.1",
 		"playwright": "^1.63.0",
 		"prettier": "^3.9.8",
 		"prettier-plugin-svelte": "^4.1.1",
