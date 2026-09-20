@@ -48,7 +48,7 @@ beforeEach(async () => {
 
 const env = {
 	RESEND_API_KEY: 're_test',
-	RESEND_FROM: 'Mesa Aberta <convites@mesaaberta.app>',
+	RESEND_FROM: 'Mesa Aberta <no-reply@mesaaberta.app>',
 	SUPABASE_URL: 'https://example.supabase.co',
 	SUPABASE_SECRET_KEY: 'sb_secret_test',
 	APP_ORIGIN: 'https://mesaaberta.app'
