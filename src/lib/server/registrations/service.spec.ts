@@ -160,14 +160,14 @@ describe('joinTable on a table that approves each player', () => {
 });
 
 describe('approveRegistration', () => {
-	it('confirms the seat and records JoinApproved and PlayerJoined', async () => {
+	it('confirms the seat and records JoinApproved', async () => {
 		const table = await makeTable({ joinMode: 'approval' });
 		await joinTable(test.db, player(2), table.slug);
 
 		const result = await approveRegistration(test.db, gm, table.slug, id(2));
 
 		expect(await statusOf(table.id, id(2))).toBe('confirmed');
-		expect(await eventTypes(result.eventIds)).toEqual(['JoinApproved', 'PlayerJoined']);
+		expect(await eventTypes(result.eventIds)).toEqual(['JoinApproved']);
 	});
 
 	it('fails with TableFull when no seat is left, and leaves the request pending', async () => {

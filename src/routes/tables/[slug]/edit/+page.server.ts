@@ -3,7 +3,7 @@ import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '$lib/server/errors';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
-import { handlers } from '$lib/server/events/handlers';
+import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
 import { listSystems } from '$lib/server/systems';
@@ -51,18 +51,19 @@ export const actions: Actions = {
 			const { eventId } = await updateTable(db, await locals.getProfile(), params.slug, input, {
 				imagePath
 			});
-			locals.afterResponse((db) => dispatchEvent(db, handlers, eventId));
+			locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
 			return { slug: params.slug };
 		});
 	},
 
-	disable: async ({ locals, params, url }) => {
+	disable: async (event) => {
+		const { locals, params, url } = event;
 		await requireUser(locals, url);
 		if (!locals.db) error(503, 'Database not configured');
 
 		try {
 			const { eventId } = await disableTable(locals.db, await locals.getProfile(), params.slug);
-			locals.afterResponse((db) => dispatchEvent(db, handlers, eventId));
+			locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
 		} catch (e) {
 			if (e instanceof Forbidden) error(403, 'Forbidden');
 			if (e instanceof NotFound) error(404, 'Not found');

@@ -63,7 +63,7 @@ export async function dispatchEvent(
 	const failures: unknown[] = [];
 	for (const handler of pending) {
 		try {
-			await handler.handle(event);
+			await handler.handle(event, db);
 			await db
 				.update(events)
 				.set({ handledBy: sql`array_append(${events.handledBy}, ${handler.name})` })

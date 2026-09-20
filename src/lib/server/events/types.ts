@@ -40,5 +40,6 @@ export type Handler = {
 	/** Stable and unique: it is recorded when the handler succeeds. Never rename one that has run. */
 	name: string;
 	types: readonly EventType[];
-	handle(event: StoredEvent): Promise<void>;
+	/** The dispatcher passes its database connection; handlers must not open a second one. */
+	handle(event: StoredEvent, db: import('../db/client').AnyDb): Promise<void>;
 };
