@@ -73,8 +73,14 @@ describe('+layout.svelte', () => {
 			await expect.element(banner().getByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
 		});
 
-		it('offers sign-in to an anonymous visitor once login is configured', async () => {
+		it('keeps sign-in hidden until the platform is released', async () => {
 			render(Layout, { children, data: { authEnabled: true, released: false, account: null } });
+
+			await expect.element(banner().getByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
+		});
+
+		it('offers sign-in to an anonymous visitor once login and the platform are enabled', async () => {
+			render(Layout, { children, data: { authEnabled: true, released: true, account: null } });
 
 			await expect
 				.element(banner().getByRole('link', { name: 'Entrar' }))

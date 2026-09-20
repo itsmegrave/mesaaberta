@@ -1,6 +1,6 @@
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { createFlags } from '$lib/server/flags/flags';
+import { createFlags, shouldForceAllFlags } from '$lib/server/flags/flags';
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleDatabase } from '$lib/server/db/handle-database';
@@ -42,6 +42,11 @@ const workersCache = (cache: WorkersCache): PayloadCache => ({
 // settings (for example plain `vite dev`), every flag returns its default.
 const handleFlags: Handle = ({ event, resolve }) => {
 	const { env, caches, ctx } = event.platform ?? {};
+	// Opt-in preview of work that is not released through GrowthBook yet; see `shouldForceAllFlags`.
+	const forceAll = shouldForceAllFlags(
+		env as { IGNORE_FEATURE_FLAGS_IN_LOCALHOST?: string } | undefined,
+		event.url.hostname
+	);
 
 	event.locals.flags = createFlags(
 		env?.GROWTHBOOK_CLIENT_KEY
@@ -52,7 +57,8 @@ const handleFlags: Handle = ({ event, resolve }) => {
 					cache: caches && workersCache(caches.default),
 					waitUntil: (promise) => ctx?.waitUntil(promise)
 				})
-			: async () => null
+			: async () => null,
+		{ forceAll }
 	);
 
 	return resolve(event);

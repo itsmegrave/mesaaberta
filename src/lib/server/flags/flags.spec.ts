@@ -1,6 +1,6 @@
 import type { FeatureApiResponse } from '@growthbook/growthbook';
 import { describe, expect, it, vi } from 'vitest';
-import { createFlags } from './flags';
+import { createFlags, shouldForceAllFlags } from './flags';
 
 const payload = (features: FeatureApiResponse['features']): FeatureApiResponse => ({
 	features,
@@ -14,6 +14,14 @@ describe('createFlags', () => {
 		const flags = createFlags(serving({ is_platform_released: { defaultValue: true } }));
 
 		expect(await flags.isEnabled('is_platform_released')).toBe(true);
+	});
+
+	it('forces every flag on without loading GrowthBook when the local override is enabled', async () => {
+		const load = vi.fn(serving({ is_platform_released: { defaultValue: false } }));
+		const flags = createFlags(load, { forceAll: true });
+
+		expect(await flags.isEnabled('is_platform_released')).toBe(true);
+		expect(load).not.toHaveBeenCalled();
 	});
 
 	it('falls back to the safe default when no payload is available', async () => {
@@ -66,5 +74,39 @@ describe('createFlags', () => {
 		createFlags(load);
 
 		expect(load).not.toHaveBeenCalled();
+	});
+});
+
+describe('shouldForceAllFlags', () => {
+	const on = { IGNORE_FEATURE_FLAGS_IN_LOCALHOST: 'true' };
+
+	it.each(['localhost', '127.0.0.1'])('is on for %s when the variable is true', (host) => {
+		expect(shouldForceAllFlags(on, host)).toBe(true);
+	});
+
+	it.each(['mesaaberta.app', 'preview.mesaaberta.workers.dev', 'localhost.evil.com'])(
+		'stays off for %s even with the variable set',
+		(host) => {
+			expect(shouldForceAllFlags(on, host)).toBe(false);
+		}
+	);
+
+	it('stays off on localhost when the variable is unset', () => {
+		expect(shouldForceAllFlags({}, 'localhost')).toBe(false);
+		expect(shouldForceAllFlags(undefined, 'localhost')).toBe(false);
+	});
+
+	it.each(['false', '1', 'TRUE', ''])('stays off on localhost when the variable is %j', (value) => {
+		expect(shouldForceAllFlags({ IGNORE_FEATURE_FLAGS_IN_LOCALHOST: value }, 'localhost')).toBe(
+			false
+		);
+	});
+
+	it('keeps evaluating flags normally when the bypass is off', async () => {
+		const flags = createFlags(serving({ is_platform_released: { defaultValue: false } }), {
+			forceAll: shouldForceAllFlags(on, 'mesaaberta.app')
+		});
+
+		expect(await flags.isEnabled('is_platform_released')).toBe(false);
 	});
 });
