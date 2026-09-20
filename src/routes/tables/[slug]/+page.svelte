@@ -44,6 +44,24 @@
 
 	<h1 class="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{table.title}</h1>
 
+	{#if table.imageUrl}
+		<img
+			src={table.imageUrl}
+			alt=""
+			referrerpolicy="no-referrer"
+			class="mt-6 max-h-80 w-full max-w-2xl rounded object-cover"
+		/>
+	{/if}
+
+	{#if data.canEdit}
+		<a
+			href={localizedHref(`/tables/${table.slug}/edit`, locale)}
+			class="mt-4 inline-block text-link"
+		>
+			{m.table_edit()}
+		</a>
+	{/if}
+
 	<dl class="mt-8 grid max-w-2xl gap-x-8 gap-y-4 sm:grid-cols-[max-content_1fr]">
 		<dt class="font-semibold">{m.table_system()}</dt>
 		<dd>

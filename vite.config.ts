@@ -38,7 +38,9 @@ export default defineConfig({
 						'data:',
 						'https://lh3.googleusercontent.com',
 						'https://avatars.githubusercontent.com',
-						'https://cdn.discordapp.com'
+						'https://cdn.discordapp.com',
+						// Table images, from the project's Supabase Storage bucket.
+						'https://*.supabase.co'
 					],
 					'font-src': ['self'],
 					'connect-src': ['self'],

@@ -13,6 +13,7 @@
 		seatsLeft: number;
 		timezone: string;
 		nextAt: Date | null;
+		imageUrl?: string | null;
 	};
 
 	let { table }: { table: Table } = $props();
@@ -30,6 +31,15 @@
 <article
 	class="relative rounded border border-petrol/15 bg-white p-4 focus-within:ring-2 focus-within:ring-lamp"
 >
+	{#if table.imageUrl}
+		<img
+			src={table.imageUrl}
+			alt=""
+			loading="lazy"
+			referrerpolicy="no-referrer"
+			class="-mx-4 -mt-4 mb-3 h-36 w-[calc(100%+2rem)] rounded-t object-cover"
+		/>
+	{/if}
 	<p class="flex flex-wrap items-center gap-2 text-sm">
 		<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-celadon">
 			{table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}

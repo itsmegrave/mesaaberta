@@ -17,6 +17,12 @@
 <section class="py-10 md:py-16">
 	<h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{m.tables_title()}</h1>
 	<p class="mt-4 max-w-[44ch] text-lg">{m.tables_lede()}</p>
+	<a
+		href={localizedHref('/tables/new', getLocale())}
+		class="mt-6 inline-block rounded bg-petrol px-5 py-3 font-semibold text-celadon"
+	>
+		{m.tables_open_cta()}
+	</a>
 
 	<!-- A plain GET form: it filters without JavaScript, and the URL can be shared. -->
 	<form method="GET" action={listHref} class="mt-8 flex max-w-xl flex-wrap items-end gap-3">
