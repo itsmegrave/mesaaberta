@@ -190,9 +190,15 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@electric-sql/pglite@0.5.8)(kysely@0.28.17)(postgres@3.4.9)
+      ical.js:
+        specifier: ^2.2.1
+        version: 2.2.1
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
+      timezones-ical-library:
+        specifier: ^2.3.2
+        version: 2.3.2
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -248,9 +254,6 @@ importers:
       globals:
         specifier: ^17.12.0
         version: 17.12.0
-      ical.js:
-        specifier: ^2.2.1
-        version: 2.2.1
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
@@ -2828,6 +2831,9 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
+  timezones-ical-library@2.3.2:
+    resolution: {integrity: sha512-AEhFhnhx6jI40kbcZ+rnpDnvb9raIvkyJGuBJvr6a1tfsbHWVM0oIqxbDZ3h8o/4m/x7lAXW9z+Abahdrlwn3Q==}
+
   tinybench@6.1.4:
     resolution: {integrity: sha512-9APumHG7r4yOk4X4WlkmE71aZcv1gvin1czO3OQ1U9iJcFA5Ja/ygyb0vPOVHTthFozUYs8CLoLUlM8grb2lTQ==}
     engines: {node: '>=20.0.0'}
@@ -5057,6 +5063,8 @@ snapshots:
   tailwindcss@4.3.3: {}
 
   tapable@2.3.3: {}
+
+  timezones-ical-library@2.3.2: {}
 
   tinybench@6.1.4: {}
 

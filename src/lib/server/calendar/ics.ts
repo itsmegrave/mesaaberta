@@ -1,9 +1,12 @@
-// A pure module: a table goes in, an iCalendar (RFC 5545) string comes out. No I/O, no clock unless
-// `now` is passed. Everything that ends up in the output is escaped or checked here, because the
-// text comes from users and a calendar file is parsed line by line: a newline that got through
-// would let a title add an attendee or an event.
+// A table goes in, an iCalendar (RFC 5545) string comes out. The serializing is done by ical.js
+// (Mozilla's iCalendar library: escaping, line folding at 75 octets, parameter quoting, value
+// types) and the time zone rules by timezones-ical-library, which embeds them (it needs no
+// filesystem, so it runs in a Worker). This file only decides *what* goes in an invite, and checks
+// the few things that come from users or from the database before they get near the serializer.
+import ICAL from 'ical.js';
+import { tzlib_get_ical_block } from 'timezones-ical-library';
 // The `.ts` extension lets `scripts/sample-invite.ts` run this module in plain Node.
-import { instantToLocal, utcOffsetMinutes } from '../tables/schedule.ts';
+import { instantToLocal } from '../tables/schedule.ts';
 
 export type CalendarTable = {
 	id: string;
@@ -38,124 +41,43 @@ export type InviteInput = {
 const UID_DOMAIN = 'mesaaberta.app';
 const EMAIL = /^[^\s@<>",;:\\]+@[^\s@<>",;:\\]+\.[^\s@<>",;:\\]+$/;
 const RECURRENCE = /^FREQ=WEEKLY(;INTERVAL=[1-9]\d?)?$/;
-// Control characters other than the line break, which text handles.
+// Control characters other than the line break.
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
 
-/** Text values (RFC 5545 3.3.11): line breaks become `\n`, and `\`, `;` and `,` are escaped. */
-function text(value: string): string {
-	return value
-		.replace(/\r\n|\r/g, '\n')
-		.replace(CONTROL, '')
-		.replace(/\\/g, '\\\\')
-		.replace(/;/g, '\\;')
-		.replace(/,/g, '\\,')
-		.replace(/\n/g, '\\n');
-}
-
-/** A parameter value (a `CN`): quoted, with anything that could end the quote or the line removed. */
-const param = (value: string) =>
-	`"${value
-		.replace(/[\r\n"]/g, ' ')
-		.replace(CONTROL, '')
-		.trim()}"`;
-
-const pad = (n: number, width = 2) => String(n).padStart(width, '0');
-
-const utcStamp = (date: Date) =>
-	`${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}T${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(date.getUTCSeconds())}Z`;
-
-/** `2026-10-10T19:00` (what the clocks read in the zone) as `20261010T190000`. */
-const zoned = (instant: Date, timeZone: string) =>
-	`${instantToLocal(instant, timeZone).replace(/[-:]/g, '')}00`;
-
-const offset = (minutes: number) =>
-	`${minutes < 0 ? '-' : '+'}${pad(Math.floor(Math.abs(minutes) / 60))}${pad(Math.abs(minutes) % 60)}`;
-
-/** Lines are at most 75 octets, folded with a CRLF and a space, never inside a multi-byte character. */
-function fold(line: string): string {
-	const encoder = new TextEncoder();
-	const out: string[] = [];
-	let current = '';
-	let size = 0;
-
-	for (const char of line) {
-		const bytes = encoder.encode(char).length;
-		const limit = out.length === 0 ? 75 : 74; // a continuation line starts with a space
-		if (size + bytes > limit) {
-			out.push(current);
-			current = '';
-			size = 0;
-		}
-		current += char;
-		size += bytes;
-	}
-	out.push(current);
-
-	return out.join('\r\n ');
-}
-
 /**
- * The zone's offsets as a VTIMEZONE, so a client that does not know the zone name still gets the
- * right times. It lists the changes for the first three years from the first session (a zone with
- * none, like São Paulo since 2019, gets a single STANDARD block); a recurring event that runs
- * longer than that leans on the client knowing the zone by name.
+ * Text as one or more lines separated by `\n`. ical.js escapes `\n` but leaves a `\r` as it is, and a
+ * bare CR ends a line for a lenient parser, so every line break is turned into a plain `\n` first
+ * (a test proves a title cannot then add an attendee or an event).
  */
-function timezone(tzid: string, firstSession: Date): string[] {
-	const from = Date.UTC(firstSession.getUTCFullYear(), 0, 1);
-	const to = Date.UTC(firstSession.getUTCFullYear() + 3, 0, 1);
-	const DAY = 86_400_000;
+const clean = (value: string) => value.replace(/\r\n|\r/g, '\n').replace(CONTROL, '');
+/** A parameter value (a name): no line breaks at all, since a parameter cannot span lines. */
+const oneLine = (value: string) =>
+	clean(value)
+		.replace(/[\r\n]+/g, ' ')
+		.trim();
 
-	const name = (at: Date) =>
-		new Intl.DateTimeFormat('en-US', { timeZone: tzid, timeZoneName: 'shortOffset' })
-			.formatToParts(at)
-			.find((part) => part.type === 'timeZoneName')?.value ?? tzid;
-	const wall = (ms: number) => utcStamp(new Date(ms)).replace('Z', '');
+/** `2026-10-10T19:00` (what the clocks read in the zone) as the fields of a floating time. */
+function wallClock(instant: Date, timeZone: string) {
+	const [date, time] = instantToLocal(instant, timeZone).split('T');
+	const [year, month, day] = date.split('-').map(Number);
+	const [hour, minute] = time.split(':').map(Number);
 
-	const blocks: string[][] = [];
-	for (let day = from; day < to; day += DAY) {
-		const before = utcOffsetMinutes(new Date(day), tzid);
-		if (before === utcOffsetMinutes(new Date(day + DAY), tzid)) continue;
+	return ICAL.Time.fromData({ year, month, day, hour, minute, second: 0 });
+}
 
-		// The change is somewhere in this day: find the minute.
-		let low = day;
-		let high = day + DAY;
-		while (high - low > 60_000) {
-			const mid = low + Math.floor((high - low) / 120_000) * 60_000;
-			if (utcOffsetMinutes(new Date(mid), tzid) === before) low = mid;
-			else high = mid;
-		}
-		const after = utcOffsetMinutes(new Date(high), tzid);
+/** The zone's real rules (with their yearly recurrence), or an error for a zone the library does not know. */
+function timezoneComponent(tzid: string): InstanceType<typeof ICAL.Component> {
+	const block = tzlib_get_ical_block(tzid);
+	if (!Array.isArray(block)) throw new Error(`Unknown timezone: ${JSON.stringify(tzid)}`);
 
-		blocks.push([
-			after > before ? 'BEGIN:DAYLIGHT' : 'BEGIN:STANDARD',
-			`DTSTART:${wall(high + before * 60_000)}`,
-			`TZOFFSETFROM:${offset(before)}`,
-			`TZOFFSETTO:${offset(after)}`,
-			`TZNAME:${name(new Date(high))}`,
-			after > before ? 'END:DAYLIGHT' : 'END:STANDARD'
-		]);
-	}
-
-	if (blocks.length === 0) {
-		const fixed = utcOffsetMinutes(firstSession, tzid);
-		blocks.push([
-			'BEGIN:STANDARD',
-			'DTSTART:19700101T000000',
-			`TZOFFSETFROM:${offset(fixed)}`,
-			`TZOFFSETTO:${offset(fixed)}`,
-			`TZNAME:${name(firstSession)}`,
-			'END:STANDARD'
-		]);
-	}
-
-	return ['BEGIN:VTIMEZONE', `TZID:${tzid}`, ...blocks.flat(), 'END:VTIMEZONE'];
+	return new ICAL.Component(ICAL.parse(block[0]));
 }
 
 /**
  * One `.ics` for one recipient. A one-shot is a single event; a campaign is one recurring event
- * with a stable UID, so an edit (a higher SEQUENCE) replaces it. Throws on an address, a UID or a
- * recurrence that is not what this system produces, rather than writing it out.
+ * with a stable UID, so an edit (a higher SEQUENCE) replaces it. Throws on an address, a UID, a
+ * timezone or a recurrence that is not what this system produces, rather than writing it out.
  */
 export function buildInvite({
 	table,
@@ -172,45 +94,56 @@ export function buildInvite({
 		throw new Error(`Unsupported recurrence: ${JSON.stringify(table.recurrence)}`);
 	}
 
+	const vtimezone = timezoneComponent(table.timezone);
 	const end = new Date(table.startsAt.getTime() + table.durationMinutes * 60_000);
-	const rule =
-		table.recurrence &&
-		`${table.recurrence}${table.until ? `;UNTIL=${utcStamp(table.until)}` : ''}`;
 	const url = `${baseUrl.replace(/\/$/, '')}/tables/${encodeURIComponent(table.slug)}`;
 	const description = [table.description, table.extraInfo, url].filter(Boolean).join('\n\n');
 
-	const attendeeLine = `ATTENDEE;CN=${param(attendee.name?.trim() || attendee.email)};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE:mailto:${attendee.email}`;
+	const event = new ICAL.Component('vevent');
+	event.updatePropertyWithValue('uid', `${table.id}@${UID_DOMAIN}`);
+	event.updatePropertyWithValue('dtstamp', ICAL.Time.fromJSDate(now, true));
+	event.updatePropertyWithValue('sequence', table.icalSequence);
 
-	const event = [
-		'BEGIN:VEVENT',
-		`UID:${table.id}@${UID_DOMAIN}`,
-		`DTSTAMP:${utcStamp(now)}`,
-		`SEQUENCE:${table.icalSequence}`,
-		`DTSTART;TZID=${table.timezone}:${zoned(table.startsAt, table.timezone)}`,
-		`DTEND;TZID=${table.timezone}:${zoned(end, table.timezone)}`,
-		...(rule ? [`RRULE:${rule}`] : []),
-		`SUMMARY:${text(table.title)}`,
-		`DESCRIPTION:${text(description)}`,
-		`URL:${url}`,
-		`STATUS:${method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED'}`,
-		'TRANSP:OPAQUE',
-		`ORGANIZER;CN=${param(organizer.name)}:mailto:${organizer.email}`,
-		attendeeLine,
-		'END:VEVENT'
-	];
+	// The start and the end are the clock times in the table's zone, tagged with the zone's name.
+	for (const [name, instant] of [
+		['dtstart', table.startsAt],
+		['dtend', end]
+	] as const) {
+		event
+			.addPropertyWithValue(name, wallClock(instant, table.timezone))
+			.setParameter('tzid', table.timezone);
+	}
 
-	return (
-		[
-			'BEGIN:VCALENDAR',
-			'VERSION:2.0',
-			'PRODID:-//Mesa Aberta//mesaaberta.app//PT',
-			'CALSCALE:GREGORIAN',
-			`METHOD:${method}`,
-			...timezone(table.timezone, table.startsAt),
-			...event,
-			'END:VCALENDAR'
-		]
-			.map(fold)
-			.join('\r\n') + '\r\n'
-	);
+	if (table.recurrence) {
+		const rule = ICAL.Recur.fromString(table.recurrence);
+		// With a zoned start, the standard wants the end date as a UTC instant.
+		if (table.until) rule.until = ICAL.Time.fromJSDate(table.until, true);
+		event.updatePropertyWithValue('rrule', rule);
+	}
+
+	event.updatePropertyWithValue('summary', clean(table.title));
+	event.updatePropertyWithValue('description', clean(description));
+	event.updatePropertyWithValue('url', url);
+	event.updatePropertyWithValue('status', method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED');
+	event.updatePropertyWithValue('transp', 'OPAQUE');
+
+	event
+		.addPropertyWithValue('organizer', `mailto:${organizer.email}`)
+		.setParameter('cn', oneLine(organizer.name));
+
+	const person = event.addPropertyWithValue('attendee', `mailto:${attendee.email}`);
+	person.setParameter('cn', oneLine(attendee.name ?? '') || attendee.email);
+	person.setParameter('role', 'REQ-PARTICIPANT');
+	person.setParameter('partstat', 'NEEDS-ACTION');
+	person.setParameter('rsvp', 'FALSE');
+
+	const calendar = new ICAL.Component(['vcalendar', [], []]);
+	calendar.updatePropertyWithValue('version', '2.0');
+	calendar.updatePropertyWithValue('prodid', '-//Mesa Aberta//mesaaberta.app//PT');
+	calendar.updatePropertyWithValue('calscale', 'GREGORIAN');
+	calendar.updatePropertyWithValue('method', method);
+	calendar.addSubcomponent(vtimezone);
+	calendar.addSubcomponent(event);
+
+	return `${calendar.toString()}\r\n`;
 }
