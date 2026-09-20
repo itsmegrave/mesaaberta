@@ -24,45 +24,37 @@ const metas = () =>
 	);
 
 describe('ThemeToggle', () => {
-	it('is a labelled control with the three choices, on "system" until the reader picks', async () => {
+	it('is a labelled icon button toggle with fixed label "Tema escuro"', async () => {
 		render(ThemeToggle);
 
-		const select = page.getByRole('combobox', { name: 'Tema' });
-		await expect.element(select).toHaveValue('system');
-		for (const name of ['Automático', 'Claro', 'Escuro']) {
-			await expect.element(page.getByRole('option', { name })).toBeInTheDocument();
-		}
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await expect.element(button).toBeInTheDocument();
+		await expect.element(button).toHaveAttribute('aria-pressed', 'false');
 	});
 
-	it('applies dark at once, and remembers it', async () => {
+	it('toggles to dark on first click and saves choice', async () => {
 		render(ThemeToggle);
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('dark');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await button.click();
 
+		await expect.element(button).toHaveAttribute('aria-pressed', 'true');
 		expect(root.dataset.theme).toBe('dark');
 		expect(localStorage.getItem('theme')).toBe('dark');
-	});
-
-	it('paints the browser chrome in the chosen theme, whatever the system is', async () => {
-		render(ThemeToggle);
-
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('dark');
 		expect(metas()).toEqual(['#0e1b1e', '#0e1b1e']);
-
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('light');
-		expect(metas()).toEqual(['#e3ebe5', '#e3ebe5']);
 	});
 
-	it('goes back to following the system: no attribute, nothing stored, each scheme its own colour', async () => {
+	it('toggles back to light on second click and saves choice', async () => {
 		render(ThemeToggle);
-		const select = page.getByRole('combobox', { name: 'Tema' });
-		await select.selectOptions('dark');
 
-		await select.selectOptions('system');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await button.click();
+		await button.click();
 
-		expect(root.dataset.theme).toBeUndefined();
-		expect(localStorage.getItem('theme')).toBeNull();
-		expect(metas()).toEqual(['#e3ebe5', '#0e1b1e']);
+		await expect.element(button).toHaveAttribute('aria-pressed', 'false');
+		expect(root.dataset.theme).toBe('light');
+		expect(localStorage.getItem('theme')).toBe('light');
+		expect(metas()).toEqual(['#e3ebe5', '#e3ebe5']);
 	});
 
 	it('shows the remembered choice when it loads', async () => {
@@ -70,15 +62,8 @@ describe('ThemeToggle', () => {
 
 		render(ThemeToggle);
 
-		await expect.element(page.getByRole('combobox', { name: 'Tema' })).toHaveValue('dark');
-	});
-
-	it('ignores a stored value it does not know', async () => {
-		localStorage.setItem('theme', 'sepia');
-
-		render(ThemeToggle);
-
-		await expect.element(page.getByRole('combobox', { name: 'Tema' })).toHaveValue('system');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await expect.element(button).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	it('still works for this page when storage is blocked', async () => {
@@ -90,7 +75,8 @@ describe('ThemeToggle', () => {
 		});
 		render(ThemeToggle);
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('dark');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await button.click();
 
 		expect(root.dataset.theme).toBe('dark');
 	});

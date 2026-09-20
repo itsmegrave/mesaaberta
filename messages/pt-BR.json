@@ -173,6 +173,8 @@
 	"theme_system": "Automático",
 	"theme_light": "Claro",
 	"theme_dark": "Escuro",
+	"theme_switch_to_dark": "Mudar para o tema escuro",
+	"theme_switch_to_light": "Mudar para o tema claro",
 	"login_with_email_title": "Entrar com email",
 	"login_or": "ou",
 	"login_submit": "Entrar",
