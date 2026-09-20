@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_SLUG_LENGTH, nextFreeSlug, slugify } from './slug';
+import { MAX_SLUG_LENGTH, nextFreeSlug, slugify, tableSlug } from './slug';
 
 describe('slugify', () => {
 	it.each([
@@ -72,5 +72,39 @@ describe('nextFreeSlug', () => {
 		expect(slug.length).toBeLessThanOrEqual(MAX_SLUG_LENGTH);
 		expect(slug.endsWith('-2')).toBe(true);
 		expect(slug).not.toContain('--');
+	});
+});
+
+describe('tableSlug', () => {
+	const none = () => false;
+
+	it('makes the slug from the title', () => {
+		expect(tableSlug('Mesa do Dragão', none)).toBe('mesa-do-dragao');
+	});
+
+	it('falls back to "mesa" when the title has nothing usable, such as only an emoji', () => {
+		expect(tableSlug('🎲🎲🎲', none)).toBe('mesa');
+	});
+
+	it('numbers a title that is already taken: -2, then -3', () => {
+		const taken = new Set(['mesa-do-dragao']);
+		expect(tableSlug('Mesa do Dragão', (s) => taken.has(s))).toBe('mesa-do-dragao-2');
+
+		taken.add('mesa-do-dragao-2');
+		expect(tableSlug('Mesa do Dragão', (s) => taken.has(s))).toBe('mesa-do-dragao-3');
+	});
+
+	it.each(['new', 'edit', 'New', 'EDIT!'])(
+		'never hands out %j, which a static route would shadow',
+		(title) => {
+			const slug = tableSlug(title, none);
+
+			expect(['new', 'edit']).not.toContain(slug);
+			expect(slug).toMatch(/^(new|edit)-2$/);
+		}
+	);
+
+	it('still allows a title that merely contains a reserved word', () => {
+		expect(tableSlug('New Adventures', none)).toBe('new-adventures');
 	});
 });
