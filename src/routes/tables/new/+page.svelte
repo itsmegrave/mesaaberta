@@ -14,7 +14,7 @@
 	<p class="mt-4 max-w-[44ch] text-lg">{m.form_new_lede()}</p>
 
 	{#if form?.error}
-		<p role="alert" class="mt-6 font-semibold text-red-800">
+		<p role="alert" class="mt-6 font-semibold text-danger">
 			{form.error === 'forbidden' ? m.form_error_forbidden() : m.form_error_unavailable()}
 		</p>
 	{/if}

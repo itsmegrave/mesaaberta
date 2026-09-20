@@ -25,7 +25,7 @@
 		{:else}
 			<span
 				aria-hidden="true"
-				class="grid size-7 place-items-center rounded-full bg-petrol text-sm text-celadon"
+				class="grid size-7 place-items-center rounded-full bg-petrol text-sm text-on-petrol"
 			>
 				{name.slice(0, 1).toUpperCase()}
 			</span>
@@ -33,7 +33,7 @@
 		<span class="max-w-[12ch] truncate">{name}</span>
 	</summary>
 
-	<div class="absolute right-0 z-10 mt-1 rounded border border-petrol/15 bg-white p-2 shadow-md">
+	<div class="absolute right-0 z-10 mt-1 rounded border border-petrol/15 bg-surface p-2 shadow-md">
 		<a
 			href={localizedHref('/account/tables', getLocale())}
 			class="block rounded px-3 py-2 whitespace-nowrap hover:bg-petrol/10"

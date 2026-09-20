@@ -19,7 +19,7 @@
 	<p class="mt-4 max-w-[44ch] text-lg">{m.tables_lede()}</p>
 	<a
 		href={localizedHref('/tables/new', getLocale())}
-		class="mt-6 inline-block rounded bg-petrol px-5 py-3 font-semibold text-celadon"
+		class="mt-6 inline-block rounded bg-petrol px-5 py-3 font-semibold text-on-petrol"
 	>
 		{m.tables_open_cta()}
 	</a>
@@ -31,7 +31,7 @@
 			<select
 				id="system"
 				name="system"
-				class="mt-1 block w-full rounded border border-petrol/30 bg-white px-3 py-2"
+				class="mt-1 block w-full rounded border border-petrol/30 bg-surface px-3 py-2"
 			>
 				<option value="">{m.tables_filter_all()}</option>
 				{#each data.systems as system (system.slug)}
@@ -41,7 +41,7 @@
 				{/each}
 			</select>
 		</div>
-		<button type="submit" class="rounded bg-petrol px-4 py-2 font-semibold text-celadon">
+		<button type="submit" class="rounded bg-petrol px-4 py-2 font-semibold text-on-petrol">
 			{m.tables_filter_apply()}
 		</button>
 	</form>
