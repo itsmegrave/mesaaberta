@@ -14,7 +14,7 @@
 	<select
 		bind:value={choice}
 		onchange={() => applyChoice(choice)}
-		class="rounded border border-petrol/30 bg-surface px-2 py-1"
+		class="rounded border border-ink/60 bg-surface px-2 py-1"
 	>
 		<option value="system">{m.theme_system()}</option>
 		<option value="light">{m.theme_light()}</option>

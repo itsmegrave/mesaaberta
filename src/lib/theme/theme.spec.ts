@@ -97,6 +97,42 @@ describe.each([
 	});
 });
 
+describe('the border of a form control (ink at 60% over the card or the page)', () => {
+	const blend = (top: string, bottom: string, alpha: number) =>
+		'#' +
+		[1, 3, 5]
+			.map((i) =>
+				Math.round(
+					alpha * parseInt(top.slice(i, i + 2), 16) +
+						(1 - alpha) * parseInt(bottom.slice(i, i + 2), 16)
+				)
+			)
+			.map((n) => n.toString(16).padStart(2, '0'))
+			.join('');
+
+	it.each([
+		['light', light],
+		['dark', dark]
+	])(
+		'is at least 3:1 against what is behind it in the %s theme (WCAG non-text contrast)',
+		(_theme, colours) => {
+			const border = blend(colours.ink, colours.surface, 0.6);
+
+			expect(contrast(border, colours.surface)).toBeGreaterThanOrEqual(GRAPHIC);
+			expect(
+				contrast(blend(colours.ink, colours.celadon, 0.6), colours.celadon)
+			).toBeGreaterThanOrEqual(GRAPHIC);
+		}
+	);
+});
+
+describe('the provider buttons (brand colours, the same in both themes)', () => {
+	it('keep white text readable on Discord blurple, as in ProviderButtons.svelte', () => {
+		expect(contrast('#ffffff', '#5865F2')).toBeGreaterThanOrEqual(TEXT);
+		expect(contrast('#ffffff', '#4752c4')).toBeGreaterThanOrEqual(TEXT); // its hover colour
+	});
+});
+
 describe('the dark theme keeps the concept', () => {
 	it('is dark: the page is darker than the text, and the table is lighter than the page so it still reads as a shape', () => {
 		expect(contrast(dark.celadon, '#000000')).toBeLessThan(contrast(dark.ink, '#000000'));

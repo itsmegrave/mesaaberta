@@ -123,6 +123,14 @@ export const load = async ({ locals, url }) => {
 };
 ```
 
+**Email and password** (`/signup` and `/login`) is Supabase Auth's own email login: Supabase stores the hashed password, sends the confirmation email and verifies the session. We store nothing and only call it (`src/lib/server/auth/email.ts`), then make sure the person has a profile. Sign-up creates the account and Supabase emails a confirmation link (which comes back to `/auth/callback`); until it is confirmed, sign-in answers "confirm your email". A wrong password and an unknown address get the same message, and a repeat sign-up says the same "check your email" as a first one, so neither can be used to find out who is registered. The email address and the password are never logged. Passwords are 8 to 72 characters (72 is where bcrypt cuts off). There is no password reset yet.
+
+**Supabase settings for email login** (Authentication in the dashboard):
+
+- **SMTP.** Supabase's built-in email sender only delivers to your own team's addresses and is heavily rate limited: real people will not get their confirmation link until you set a custom SMTP under Emails > SMTP Settings (Resend is the plan for #13; its SMTP credentials work here too).
+- **Sign In / Providers > Email:** leave "Confirm email" on, and set the minimum password length to 8 to match the form.
+- **URL Configuration:** the Site URL and the redirect URLs for `/auth/callback`, as for the social providers.
+
 **Set it up** (one-time, needs your Supabase account and one OAuth app per provider):
 
 1. In the Supabase project, open Authentication > Providers and enable Google and Discord. Each needs an OAuth app at the provider; its callback URL is Supabase's own, `https://<project>.supabase.co/auth/v1/callback`.

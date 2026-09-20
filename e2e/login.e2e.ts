@@ -10,6 +10,26 @@ test.describe('login while Supabase is not configured', () => {
 		await expect(page.getByRole('link', { name: /continuar com/i })).toHaveCount(0);
 	});
 
+	test('the sign-up page says so too, and a post to it goes back to the login page', async ({
+		page,
+		request,
+		baseURL
+	}) => {
+		await page.goto('/signup');
+
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Criar conta');
+		await expect(page.getByText(/ainda não está disponível/i)).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Criar conta' })).toHaveCount(0);
+
+		const response = await request.post('/signup', {
+			headers: { origin: baseURL!, accept: 'text/html' },
+			form: { email: 'ana@example.com', password: 'correct horse' },
+			maxRedirects: 0
+		});
+		expect(response.status()).toBe(303);
+		expect(response.headers()['location']).toBe('/login?error=unavailable');
+	});
+
 	test('the header has no sign-in link, so nobody is sent to a dead end', async ({ page }) => {
 		await page.goto('/');
 
