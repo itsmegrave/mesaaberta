@@ -1,17 +1,19 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb, pgErrorCode } from './test-db';
-import { gameTables, profiles } from './schema';
+import { eq } from 'drizzle-orm';
+import { gameTables, profiles, systems } from './schema';
 
 const UNIQUE_VIOLATION = '23505';
 const FOREIGN_KEY_VIOLATION = '23503';
 const CHECK_VIOLATION = '23514';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
+let dndId: string;
 const gm = { id: '00000000-0000-4000-8000-000000000001', displayName: 'Mestre' };
 
 const table = (overrides: Partial<typeof gameTables.$inferInsert> = {}) => ({
 	slug: 'mesa-do-dragao',
-	system: 'D&D 5e',
+	systemId: dndId,
 	title: 'Mesa do Dragão',
 	kind: 'one_shot' as const,
 	capacity: 5,
@@ -25,6 +27,10 @@ const table = (overrides: Partial<typeof gameTables.$inferInsert> = {}) => ({
 beforeAll(async () => {
 	test = await createTestDb();
 	await test.db.insert(profiles).values(gm);
+	[{ id: dndId }] = await test.db
+		.select({ id: systems.id })
+		.from(systems)
+		.where(eq(systems.slug, 'dungeons-e-dragons-5e-2014'));
 });
 
 afterAll(() => test.close());
@@ -49,6 +55,16 @@ describe('game_tables', () => {
 		const code = await pgErrorCode(test.db.insert(gameTables).values(table()));
 
 		expect(code).toBe(UNIQUE_VIOLATION);
+	});
+
+	it('refuse a table whose system does not exist', async () => {
+		const code = await pgErrorCode(
+			test.db
+				.insert(gameTables)
+				.values(table({ slug: 'sem-sistema', systemId: '00000000-0000-4000-8000-0000000000ee' }))
+		);
+
+		expect(code).toBe(FOREIGN_KEY_VIOLATION);
 	});
 
 	it('refuse a table whose GM has no profile', async () => {

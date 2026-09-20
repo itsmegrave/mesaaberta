@@ -1,8 +1,9 @@
-// Development data: one GM and a few tables. Safe to run again; existing rows are left alone.
+// Development data: one GM and a few tables. The RPG systems themselves come from the migrations. Safe to run again; existing rows are left alone.
 // Usage: pnpm db:seed (needs DATABASE_URL, see .dev.vars.example)
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { gameTables, profiles } from '../src/lib/server/db/schema.ts';
+import { gameTables, profiles, systems } from '../src/lib/server/db/schema.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL is not set. Copy .dev.vars.example to .dev.vars.');
@@ -21,6 +22,12 @@ const inDays = (days: number, hour: number) => {
 
 const base = { timezone: 'America/Sao_Paulo', durationMinutes: 240, gmId: gm.id };
 
+const systemId = async (slug: string) => {
+	const [system] = await db.select({ id: systems.id }).from(systems).where(eq(systems.slug, slug));
+	if (!system) throw new Error(`No system "${slug}". Run pnpm db:migrate first.`);
+	return system.id;
+};
+
 await db.insert(profiles).values(gm).onConflictDoNothing();
 await db
 	.insert(gameTables)
@@ -29,7 +36,7 @@ await db
 			...base,
 			slug: 'mesa-do-dragao',
 			title: 'Mesa do Dragão',
-			system: 'D&D 5e',
+			systemId: await systemId('dungeons-e-dragons-5e-2014'),
 			kind: 'one_shot',
 			capacity: 5,
 			startsAt: inDays(7, 22),
@@ -39,7 +46,7 @@ await db
 			...base,
 			slug: 'cronicas-de-arton',
 			title: 'Crônicas de Arton',
-			system: 'Tormenta20',
+			systemId: await systemId('tormenta-20-t20'),
 			kind: 'campaign',
 			recurrence: 'FREQ=WEEKLY;BYDAY=SA',
 			capacity: 4,

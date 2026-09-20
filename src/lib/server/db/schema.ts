@@ -36,6 +36,24 @@ export const profiles = pgTable('profiles', {
 	...timestamps
 });
 
+// The RPG systems (D&D 5e, Tormenta 20, ...). They double as the categories tables are browsed by,
+// so each has a slug for its URL. The rows come from a migration; add one with a new migration.
+export const systems = pgTable(
+	'systems',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		// Shown exactly as written.
+		name: text('name').notNull(),
+		slug: text('slug').notNull(),
+		// Position in the source list: the most played systems first, then A to Z. Pickers sort by it.
+		position: integer('position').notNull()
+	},
+	(system) => [
+		uniqueIndex('systems_slug_unique').on(system.slug),
+		uniqueIndex('systems_name_unique').on(system.name)
+	]
+);
+
 export const gameTables = pgTable(
 	'game_tables',
 	{
@@ -43,7 +61,9 @@ export const gameTables = pgTable(
 		// Generated from the title; it is the table's public URL (`/tables/<slug>`).
 		slug: text('slug').notNull(),
 		joinMode: joinMode('join_mode').notNull().default('auto'),
-		system: text('system').notNull(),
+		systemId: uuid('system_id')
+			.notNull()
+			.references(() => systems.id),
 		title: text('title').notNull(),
 		imagePath: text('image_path'),
 		description: text('description').notNull().default(''),
@@ -67,6 +87,7 @@ export const gameTables = pgTable(
 	(table) => [
 		uniqueIndex('game_tables_slug_unique').on(table.slug),
 		index('game_tables_gm_id_idx').on(table.gmId),
+		index('game_tables_system_id_idx').on(table.systemId),
 		check(
 			'game_tables_recurrence_matches_kind',
 			sql`(${table.kind} = 'one_shot' AND ${table.recurrence} IS NULL) OR (${table.kind} = 'campaign' AND ${table.recurrence} IS NOT NULL)`
