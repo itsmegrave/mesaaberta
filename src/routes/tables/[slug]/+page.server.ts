@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { can, joinBlocker, rateBlocker } from '$lib/server/auth/policy';
 import { Invalid } from '$lib/server/errors';
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { imageUrl } from '$lib/server/images';
 import {
 	firstSessionEnded,
 	gmRating,
@@ -23,7 +23,7 @@ import {
 import { findTableBySlug } from '$lib/server/tables/queries';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, params, platform }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	// Unknown, disabled, or no database at all: the same translated 404.
 	const found = locals.db && (await findTableBySlug(locals.db, params.slug, new Date()));
 	if (!found) error(404, 'Not found');
@@ -64,7 +64,7 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 			gmScore: mine.gmScore,
 			comment: mine.comment ?? ''
 		},
-		table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
+		table: { ...table, imageUrl: imageUrl(imagePath) },
 		canEdit: can(profile, 'table:edit', { gmId }),
 		signedIn,
 		isGm: profile?.id === gmId,

@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { detectImageType, MAX_IMAGE_BYTES, prepareImage, storeImage } from './images';
+import {
+	detectImageType,
+	imageUrl,
+	MAX_IMAGE_BYTES,
+	prepareImage,
+	serveImage,
+	storeImage
+} from './images';
 
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG = [0xff, 0xd8, 0xff, 0xe0];
@@ -85,25 +92,95 @@ describe('prepareImage', () => {
 });
 
 describe('storeImage', () => {
-	it('uploads the bytes with the detected type, without overwriting anything', async () => {
-		const upload = vi.fn().mockResolvedValue({ error: null });
+	it('puts the bytes with the detected type, without overwriting anything', async () => {
+		const put = vi.fn().mockResolvedValue({ key: 'x' });
 		const image = await prepareImage(file(bytes(PNG)));
 
-		expect(await storeImage({ upload }, image)).toBe(image.path);
-		expect(upload).toHaveBeenCalledWith(image.path, image.bytes, {
-			contentType: 'image/png',
-			upsert: false
+		expect(await storeImage({ put }, image)).toBe(image.path);
+		expect(put).toHaveBeenCalledWith(image.path, image.bytes, {
+			httpMetadata: { contentType: 'image/png' },
+			onlyIf: { etagDoesNotMatch: '*' }
 		});
 	});
 
-	it('reports a failed upload as an invalid image field, never as success', async () => {
-		const upload = vi.fn().mockResolvedValue({ error: { message: 'bucket not found' } });
+	it('reports a file that already exists as an invalid image field, never as success', async () => {
+		// R2 answers null, not an error, when `onlyIf` is not met.
+		const put = vi.fn().mockResolvedValue(null);
 		const image = await prepareImage(file(bytes(PNG)));
 
-		await expect(storeImage({ upload }, image)).rejects.toMatchObject({
+		await expect(storeImage({ put }, image)).rejects.toMatchObject({
 			name: 'Invalid',
 			field: 'image',
 			message: 'upload_failed'
 		});
+	});
+
+	it('reports a failed upload as an invalid image field, never as success', async () => {
+		const put = vi.fn().mockRejectedValue(new Error('R2 is down'));
+		const image = await prepareImage(file(bytes(PNG)));
+
+		await expect(storeImage({ put }, image)).rejects.toMatchObject({
+			name: 'Invalid',
+			field: 'image',
+			message: 'upload_failed'
+		});
+	});
+});
+
+describe('imageUrl', () => {
+	it('is served by this site, from /images', () => {
+		expect(imageUrl('tables/abc.png')).toBe('/images/tables/abc.png');
+	});
+
+	it('is null when the table has no image', () => {
+		expect(imageUrl(null)).toBeNull();
+	});
+});
+
+describe('serveImage', () => {
+	const PATH = 'tables/123e4567-e89b-42d3-a456-426614174000.png';
+	const stored = (over = {}) => ({
+		body: new Response('png-bytes').body,
+		httpEtag: '"abc"',
+		httpMetadata: { contentType: 'image/png' },
+		...over
+	});
+
+	it('answers with the stored file, typed by what was stored, and cached for good', async () => {
+		const get = vi.fn().mockResolvedValue(stored());
+
+		const response = await serveImage({ get }, PATH);
+
+		expect(get).toHaveBeenCalledWith(PATH);
+		expect(response?.status).toBe(200);
+		expect(await response?.text()).toBe('png-bytes');
+		expect(response?.headers.get('content-type')).toBe('image/png');
+		expect(response?.headers.get('etag')).toBe('"abc"');
+		// The name is random and a file is never overwritten, so the browser can keep it for good.
+		expect(response?.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+		expect(response?.headers.get('x-content-type-options')).toBe('nosniff');
+	});
+
+	it('is null when nothing is stored under that name', async () => {
+		const get = vi.fn().mockResolvedValue(null);
+
+		expect(await serveImage({ get }, PATH)).toBeNull();
+	});
+
+	it.each([
+		['a path outside tables/', '../secret.png'],
+		['another folder', 'other/123e4567-e89b-42d3-a456-426614174000.png'],
+		['a name that is not one we make', 'tables/logo.png'],
+		['a type we never store', 'tables/123e4567-e89b-42d3-a456-426614174000.svg'],
+		['a nested path', 'tables/a/123e4567-e89b-42d3-a456-426614174000.png']
+	])('never reads the bucket for %s', async (_name, path) => {
+		const get = vi.fn();
+
+		expect(await serveImage({ get }, path)).toBeNull();
+		expect(get).not.toHaveBeenCalled();
+	});
+
+	it('is null when there is no bucket bound (local without R2)', async () => {
+		expect(await serveImage(undefined, PATH)).toBeNull();
 	});
 });

@@ -1,9 +1,9 @@
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { imageUrl } from '$lib/server/images';
 import { listSystems } from '$lib/server/systems';
 import { listUpcomingTables } from '$lib/server/tables/queries';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, platform }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const selected = url.searchParams.get('system') || null;
 	// No database yet (see the README): the page still renders, with nothing to list.
 	if (!locals.db) return { tables: [], systems: [], selected };
@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		tables: tables.map(({ gmId, imagePath, ...table }) => ({
 			...table,
-			imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath)
+			imageUrl: imageUrl(imagePath)
 		})),
 		systems: systems.map(({ name, slug }) => ({ name, slug })),
 		selected
