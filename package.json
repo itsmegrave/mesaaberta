@@ -11,6 +11,7 @@
 		"dev": "vite dev",
 		"build": "wrangler types && vite build && node scripts/wrap-worker.ts",
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
+		"preview:e2e": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173 --var SUPABASE_URL: --var SUPABASE_PUBLISHABLE_KEY:",
 		"prepare": "svelte-kit sync && pnpm run i18n && wrangler types || echo ''",
 		"check": "wrangler types && pnpm run i18n && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json",
 		"check:watch": "wrangler types && pnpm run i18n && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json --watch",
