@@ -17,7 +17,7 @@ export default defineConfig({
 	webServer: {
 		// The built app on the Workers runtime, pointed at the local Supabase instead of production.
 		command: [
-			'pnpm run build &&',
+			`CSP_EXTRA_IMG_SRC=${supabase.API_URL} pnpm run build &&`,
 			`wrangler dev .svelte-kit/cloudflare/_worker.js --port ${port}`,
 			`--var SUPABASE_URL:${supabase.API_URL}`,
 			`--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`
