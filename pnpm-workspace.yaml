@@ -1,3 +1,5 @@
 allowBuilds:
   esbuild: true
   workerd: true
+  # Downloads the Supabase CLI binary (a local Supabase stack in Docker for the e2e tests).
+  supabase: true
