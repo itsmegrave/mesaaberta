@@ -1,0 +1,111 @@
+# A local Supabase for the end-to-end tests: Postgres, Auth, Storage and an inbox that catches the
+# emails Auth sends. `pnpm e2e:up` starts it (in Docker); nothing here touches production.
+# The app's own tables come from the Drizzle migrations, not from this folder.
+project_id = "mesaaberta"
+
+# Ports differ from Supabase's defaults (54321 and up) so this can run next to another local Supabase.
+[api]
+enabled = true
+port = 54341
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54342
+shadow_port = 54340
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[db.migrations]
+enabled = false
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+# Not needed for the tests.
+[studio]
+enabled = false
+
+[realtime]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+# Auth's emails (confirmation, password reset) land here instead of being sent. Mailpit's web page and
+# API are on this port: http://127.0.0.1:54344 and /api/v1/messages.
+[local_smtp]
+enabled = true
+port = 54344
+
+[storage]
+enabled = true
+file_size_limit = "2MiB"
+
+[storage.s3_protocol]
+enabled = false
+
+[storage.vector]
+enabled = false
+
+[storage.analytics]
+enabled = false
+
+# The bucket table images go in, as configured in production (see the README, "Managing tables").
+[storage.buckets.table-images]
+public = true
+file_size_limit = "2MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
+[auth]
+enabled = true
+# Where the app runs during the tests (Playwright's preview server).
+site_url = "http://localhost:4173"
+additional_redirect_urls = ["http://localhost:4173/auth/callback", "http://127.0.0.1:4173/auth/callback"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+# The same as production: the form asks for 8 or more.
+minimum_password_length = 8
+password_requirements = ""
+
+# Generous, so a test run does not trip Supabase's limits (the defaults allow 2 emails an hour).
+[auth.rate_limit]
+email_sent = 1000
+sms_sent = 30
+anonymous_users = 30
+token_refresh = 1000
+sign_in_sign_ups = 1000
+token_verifications = 1000
+web3 = 30
+
+# Sign-in with a provider hops through Auth to the provider's own page. The credentials are fake: the
+# tests only check that the hop starts (they never visit Google or Discord).
+[auth.external.google]
+enabled = true
+client_id = "e2e-google-client-id"
+secret = "e2e-google-secret"
+
+[auth.external.discord]
+enabled = true
+client_id = "e2e-discord-client-id"
+secret = "e2e-discord-secret"
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# On, as in production: sign-up sends a link that has to be opened. The tests read it from the inbox.
+enable_confirmations = true
+secure_password_change = false
+max_frequency = "1s"
+otp_length = 6
+otp_expiry = 3600
