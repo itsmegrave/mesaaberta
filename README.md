@@ -165,6 +165,12 @@ pnpm db:make-admin <user id>
 
 or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
 
+## My tables
+
+`/account/tables` (linked from the account menu) has two views. **Jogando** lists the tables I have a seat or a pending request at: the next session in the table's own timezone, _Sair da mesa_, a pending request shown as "Aguardando o mestre" with _Cancelar pedido_, and, once the first session has ended, a prompt to rate (or the rating already given, with a link to change it). **Mestrando** lists the tables I am the GM of, disabled ones included: the players with _Remover_, the queue of pending requests with _Aprovar_ and _Recusar_, and a link to edit or disable the table. Sessions coming up come first; a table with none left goes last. The queries are in `src/lib/server/dashboard/queries.ts`.
+
+The buttons post to the table page's own actions (`/tables/<slug>?/leave`, `?/approve`, ...), so the rules stay in one place, and carry a `next` field that sends the browser back to the dashboard (only an on-site path is honoured). Disabling is a link to the edit page rather than a one-click button: there is no way to re-enable a table yet, so it stays a deliberate step.
+
 ## Ratings
 
 A player who had a **confirmed** seat rates the table and its GM (1 to 5 each, and an optional comment) once the **first session has ended**; the GM cannot rate their own table. The rules are one policy function, `rateBlocker` (`table:rate`), and the service is `src/lib/server/ratings/service.ts`. A rating can be edited later (one per player, the latest wins) and records `RatingSubmitted`, with no scores or comment in the event. It is tied to the registration by a foreign key with `ON DELETE CASCADE`, so a player who leaves or is removed takes their rating with them.
