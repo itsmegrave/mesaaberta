@@ -110,7 +110,7 @@ Limits checked on 2026-09-19: Supabase's free Nano compute allows 60 direct and 
 
 ## Sign-in
 
-Sign-in goes through Supabase Auth (Google, Apple, Facebook and Discord) with cookie sessions from `@supabase/ssr` and the PKCE flow. The flow is server-side: `/login/<provider>` starts it, `/auth/callback` finishes it and creates a `member` profile on the first login, and `POST /logout` ends it. Login is off until the Supabase settings exist: the site runs, and the "Entrar" link is hidden.
+Sign-in goes through Supabase Auth (Google and Discord) with cookie sessions from `@supabase/ssr` and the PKCE flow. The flow is server-side: `/login/<provider>` starts it, `/auth/callback` finishes it and creates a `member` profile on the first login, and `POST /logout` ends it. Login is off until the Supabase settings exist: the site runs, and the "Entrar" link is hidden.
 
 In server code, ask who is signed in through `locals.getUser()`. It asks Supabase to verify the session token, and never trusts the cookie on its own. To protect a page or an action:
 
@@ -125,14 +125,14 @@ export const load = async ({ locals, url }) => {
 
 **Set it up** (one-time, needs your Supabase account and one OAuth app per provider):
 
-1. In the Supabase project, open Authentication > Providers and enable Google, Apple, Facebook (Meta) and Discord. Each needs an OAuth app at the provider; its callback URL is Supabase's own, `https://<project>.supabase.co/auth/v1/callback`.
+1. In the Supabase project, open Authentication > Providers and enable Google and Discord. Each needs an OAuth app at the provider; its callback URL is Supabase's own, `https://<project>.supabase.co/auth/v1/callback`.
 2. Authentication > URL Configuration: set the Site URL to the production domain, and add `https://<domain>/auth/callback`, `http://localhost:5173/auth/callback` and the preview URL to the Redirect URLs.
 3. Take the project URL and the publishable key (Project Settings > API). Both are public by design. Pass them when deploying, `wrangler deploy --var SUPABASE_URL:<url> --var SUPABASE_PUBLISHABLE_KEY:<key>`, and put them in `.dev.vars` for local work. They are not in `wrangler.jsonc`: CI has no Supabase settings, so the e2e tests cover the app as it runs before login is configured. With them in `.dev.vars`, `pnpm test:e2e` sees login switched on and the tests in `e2e/login.e2e.ts` fail; move them aside for a run.
 4. Run the database migrations against the same project (see "Database"): a login needs the `profiles` table.
 
-Profile pictures are shown from Google's, Facebook's and Discord's image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`). Apple sends no picture, and no name through this flow, so an Apple user starts with the default name and no avatar.
+Profile pictures are shown from Google's and Discord's image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`).
 
-**Apple needs upkeep:** its client secret is a JWT that expires after at most 6 months. Generate a new one from the `.p8` key and paste it into Supabase before then, or Apple sign-in stops working.
+To offer another provider later (Apple, Facebook, ...), enable it in Supabase, add it to `providers` in `src/lib/auth/providers.ts` and to the buttons on the login page, and allow its picture host in `img-src` if it sends one.
 
 ## Authorization
 

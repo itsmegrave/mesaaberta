@@ -30,8 +30,6 @@
 	"login_title": "Entrar",
 	"login_lede": "Entre para abrir uma mesa ou pegar uma vaga.",
 	"login_with_google": "Continuar com Google",
-	"login_with_apple": "Continuar com Apple",
-	"login_with_facebook": "Continuar com Facebook",
 	"login_with_discord": "Continuar com Discord",
 	"login_unavailable": "O login ainda não está disponível. Volte em breve.",
 	"login_failed": "Não foi possível entrar. Tente de novo.",
