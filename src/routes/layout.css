@@ -12,6 +12,7 @@
 	/* Page and ink */
 	--color-celadon: #e3ebe5;
 	--color-ink: #12272b;
+	--color-ink2: #3b5256;
 	/* The table itself */
 	--color-petrol: #17393f;
 	/* Lamp over the table: only used where something is open or needs attention. Dark enough for
@@ -33,6 +34,11 @@
 	--color-danger: #991b1b;
 	/* The keyboard focus ring */
 	--color-focus: #17393f;
+
+	/* Subtle overlays and dividers */
+	--color-line: rgba(23, 57, 63, 0.16);
+	--color-wash: rgba(23, 57, 63, 0.08);
+	--color-lampwash: rgba(146, 91, 0, 0.1);
 }
 
 /*
@@ -45,6 +51,7 @@
 	color-scheme: dark;
 	--color-celadon: #0e1b1e;
 	--color-ink: #e6efe9;
+	--color-ink2: #a9bfb8;
 	--color-petrol: #33727a;
 	--color-lamp: #f0b34a;
 	--color-surface: #16292d;
@@ -52,6 +59,10 @@
 	--color-on-lamp: #1b1300;
 	--color-danger: #ff9d9d;
 	--color-focus: #8fd3cb;
+
+	--color-line: rgba(143, 211, 203, 0.2);
+	--color-wash: rgba(143, 211, 203, 0.1);
+	--color-lampwash: rgba(240, 179, 74, 0.13);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,6 +70,7 @@
 		color-scheme: dark;
 		--color-celadon: #0e1b1e;
 		--color-ink: #e6efe9;
+		--color-ink2: #a9bfb8;
 		--color-petrol: #33727a;
 		--color-lamp: #f0b34a;
 		--color-surface: #16292d;
@@ -66,6 +78,10 @@
 		--color-on-lamp: #1b1300;
 		--color-danger: #ff9d9d;
 		--color-focus: #8fd3cb;
+
+		--color-line: rgba(143, 211, 203, 0.2);
+		--color-wash: rgba(143, 211, 203, 0.1);
+		--color-lampwash: rgba(240, 179, 74, 0.13);
 	}
 }
 
@@ -79,12 +95,16 @@
 
 	body {
 		min-height: 100dvh;
-		line-height: 1.65;
+		font-size: 1.0625rem;
+		line-height: 1.6;
 	}
 
 	h1,
 	h2,
-	h3 {
+	h3,
+	h4,
+	h5,
+	h6 {
 		font-family: var(--font-display);
 		text-wrap: balance;
 	}

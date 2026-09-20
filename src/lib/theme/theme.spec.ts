@@ -8,7 +8,7 @@ const appHtml = readFileSync('src/app.html', 'utf8');
 /** `--color-x: #rrggbb;` declarations inside one block of the stylesheet. */
 const tokens = (block: string) =>
 	Object.fromEntries(
-		[...block.matchAll(/--color-([a-z-]+):\s*(#[0-9a-fA-F]{6})/g)].map(([, name, hex]) => [
+		[...block.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})/g)].map(([, name, hex]) => [
 			name,
 			hex
 		])
@@ -31,6 +31,8 @@ const GRAPHIC = 3; // WCAG AA for the parts of a control you need to see (focus 
 const pairs: [string, string, number, string][] = [
 	['ink', 'celadon', TEXT, 'body text on the page'],
 	['ink', 'surface', TEXT, 'text on a card, an input, a menu'],
+	['ink2', 'celadon', TEXT, 'secondary text on the page'],
+	['ink2', 'surface', TEXT, 'secondary text on a card'],
 	['lamp', 'celadon', TEXT, 'amber text on the page (seats left)'],
 	['lamp', 'surface', TEXT, 'amber text on a card'],
 	['on-petrol', 'petrol', TEXT, 'text on a button or a badge'],
@@ -48,6 +50,7 @@ describe('the theme tokens', () => {
 		for (const name of [
 			'celadon',
 			'ink',
+			'ink2',
 			'petrol',
 			'lamp',
 			'surface',
@@ -69,6 +72,7 @@ describe('the theme tokens', () => {
 		for (const name of [
 			'celadon',
 			'ink',
+			'ink2',
 			'petrol',
 			'lamp',
 			'surface',
