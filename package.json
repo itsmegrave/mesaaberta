@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"dev": "vite dev",
-		"build": "wrangler types && vite build",
+		"build": "wrangler types && vite build && node scripts/wrap-worker.ts",
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
 		"prepare": "svelte-kit sync && pnpm run i18n && wrangler types || echo ''",
 		"check": "wrangler types && pnpm run i18n && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json",
