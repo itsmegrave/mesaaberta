@@ -37,7 +37,6 @@ export default defineConfig({
 						'self',
 						'data:',
 						'https://lh3.googleusercontent.com',
-						'https://platform-lookaside.fbsbx.com',
 						'https://cdn.discordapp.com',
 						// Table images, from the project's Supabase Storage bucket.
 						'https://*.supabase.co'
