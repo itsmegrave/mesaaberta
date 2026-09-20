@@ -1,6 +1,10 @@
 # Copy to .dev.vars (git-ignored). Read by `vite dev`, `wrangler dev` and the db:* scripts.
 DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
 
+# Set to true only while developing locally to return true for every feature flag. It only applies
+# to requests for localhost or 127.0.0.1, so it does nothing on preview or production hosts.
+# IGNORE_FEATURE_FLAGS_IN_LOCALHOST=true
+
 # Supabase Auth. The project URL and publishable key are in wrangler.jsonc (public by design), so
 # login works locally without anything here. Set these only to point at another Supabase project;
 # they override wrangler.jsonc.
