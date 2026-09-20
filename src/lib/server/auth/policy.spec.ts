@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { authorize, can, joinBlocker, type Actor } from './policy';
+import { authorize, can, joinBlocker, rateBlocker, type Actor } from './policy';
 
 const member: Actor = { id: 'member', role: 'member', status: 'active' };
 const otherMember: Actor = { id: 'other', role: 'member', status: 'active' };
@@ -141,5 +141,48 @@ describe('registration:leave', () => {
 	it('is refused for anonymous visitors and suspended accounts', () => {
 		expect(can(null, 'registration:leave', { playerId: 'member' })).toBe(false);
 		expect(can(suspendedMember, 'registration:leave', { playerId: 'member' })).toBe(false);
+	});
+});
+
+describe('table:rate', () => {
+	const ready = { gmId: 'gm', registration: 'confirmed' as const, firstSessionEnded: true };
+
+	it.each([
+		['a player with a confirmed seat', member, true],
+		['the GM of the table', gm, false],
+		['an anonymous visitor', null, false],
+		['a suspended player', suspendedMember, false]
+	])('%s: %s', (_who, who, allowed) => {
+		expect(can(who, 'table:rate', ready)).toBe(allowed);
+	});
+
+	it.each([
+		[
+			'has only asked for a seat (pending)',
+			{ ...ready, registration: 'pending' as const },
+			'not_registered'
+		],
+		['has no place at the table', { ...ready, registration: null }, 'not_registered'],
+		[
+			'played nothing yet: the first session has not ended',
+			{ ...ready, firstSessionEnded: false },
+			'too_early'
+		]
+	])('is refused for a player who %s, and says why', (_what, facts, reason) => {
+		expect(can(member, 'table:rate', facts)).toBe(false);
+		expect(rateBlocker(member, facts)).toBe(reason);
+	});
+
+	it('says nothing about the table to someone who may not rate anyway', () => {
+		expect(rateBlocker(gm, { ...ready, firstSessionEnded: false })).toBe('forbidden');
+		expect(rateBlocker(null, ready)).toBe('forbidden');
+	});
+
+	it('has no blocker when the player may rate', () => {
+		expect(rateBlocker(member, ready)).toBeNull();
+	});
+
+	it('refuses a rating it is given no facts for', () => {
+		expect(can(member, 'table:rate', undefined as never)).toBe(false);
 	});
 });
