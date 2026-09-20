@@ -7,6 +7,27 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 		<meta name="text-scale" content="scale" />
+
+		<!-- The browser's own chrome follows the scheme. A manual choice replaces both, below. -->
+		<meta name="theme-color" content="#e3ebe5" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0e1b1e" media="(prefers-color-scheme: dark)" />
+
+		<!-- Applies a remembered light or dark choice before the first paint, so a dark-mode reader never
+		     sees a light flash. A reader who chose nothing (or "system") follows prefers-color-scheme in CSS. -->
+		<script nonce="%sveltekit.nonce%">
+			(function () {
+				var colours = { light: '#e3ebe5', dark: '#0e1b1e' };
+				var choice = null;
+				try {
+					choice = localStorage.getItem('theme');
+				} catch (e) {}
+				if (choice !== 'light' && choice !== 'dark') return;
+
+				document.documentElement.dataset.theme = choice;
+				var metas = document.querySelectorAll('meta[name="theme-color"]');
+				for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', colours[choice]);
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 
