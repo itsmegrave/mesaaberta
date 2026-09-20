@@ -110,3 +110,9 @@ export function instantToLocal(instant: Date, timeZone: string): string {
 	const w = wallClock(instant, timeZone);
 	return `${w.y}-${two(w.m)}-${two(w.d)}T${two(w.h)}:${two(w.mi)}`;
 }
+
+/** The zone's offset from UTC at `instant`, in minutes (São Paulo is -180). */
+export function utcOffsetMinutes(instant: Date, timeZone: string): number {
+	const whole = new Date(Math.floor(instant.getTime() / 1000) * 1000);
+	return Math.round((asUtc(wallClock(whole, timeZone)) - whole.getTime()) / 60_000);
+}
