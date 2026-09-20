@@ -20,17 +20,19 @@ pnpm dev
 
 ## Scripts
 
-| Script           | What it does                                                                      |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `pnpm dev`       | Dev server                                                                        |
-| `pnpm build`     | Production build                                                                  |
-| `pnpm lint`      | Prettier check and ESLint                                                         |
-| `pnpm format`    | Prettier write                                                                    |
-| `pnpm i18n`      | Compile `messages/*.json` into `src/lib/paraglide` (run by `prepare` and `check`) |
-| `pnpm check`     | Type-check `.ts` and `.svelte` files                                              |
-| `pnpm test:unit` | Vitest: component tests (Chromium) and unit tests (Node)                          |
-| `pnpm test:e2e`  | Playwright against a production build, on mobile and desktop                      |
-| `pnpm test`      | Unit tests, then e2e                                                              |
+| Script           | What it does                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `pnpm dev`       | Dev server                                                                          |
+| `pnpm build`     | Production build                                                                    |
+| `pnpm lint`      | Prettier check and ESLint                                                           |
+| `pnpm format`    | Prettier write                                                                      |
+| `pnpm i18n`      | Compile `messages/*.json` into `src/lib/paraglide` (run by `prepare` and `check`)   |
+| `pnpm check`     | Type-check `.ts` and `.svelte` files                                                |
+| `pnpm test:unit` | Vitest: component tests (Chromium) and unit tests (Node)                            |
+| `pnpm e2e:up`    | Local Supabase in Docker (Postgres, Auth, Storage, mail inbox), migrated and seeded |
+| `pnpm test:e2e`  | Playwright against a production build and that Supabase, on mobile and desktop      |
+| `pnpm e2e:down`  | Stops the local Supabase                                                            |
+| `pnpm test`      | Unit tests, then e2e                                                                |
 
 ## Project layout
 
@@ -137,7 +139,7 @@ export const load = async ({ locals, url }) => {
 
 1. In the Supabase project, open Authentication > Providers and enable Google and Discord. Each needs an OAuth app at the provider; its callback URL is Supabase's own, `https://<project>.supabase.co/auth/v1/callback`.
 2. Authentication > URL Configuration: set the Site URL to the production domain, and add `https://<domain>/auth/callback`, `http://localhost:5173/auth/callback` and the preview URL to the Redirect URLs.
-3. Take the project URL and the publishable key (Project Settings > API) and put them in `wrangler.jsonc` under `vars` as `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Both are public by design. They must be in the file, not only on a `wrangler deploy --var` command: a Git-triggered deploy replaces any variable that is not in the file, which silently turned login off in production once. The e2e tests run through `pnpm preview:e2e`, which blanks the two variables on the command line, so they still cover the app before login is configured; to try login locally use `pnpm preview` or `pnpm dev`.
+3. Take the project URL and the publishable key (Project Settings > API) and put them in `wrangler.jsonc` under `vars` as `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Both are public by design. They must be in the file, not only on a `wrangler deploy --var` command: a Git-triggered deploy replaces any variable that is not in the file, which silently turned login off in production once. The e2e tests do not use these values: they start the app with the local Supabase's own URL and key (see "End-to-end tests" below).
 4. Run the database migrations against the same project (see "Database"): a login needs the `profiles` table.
 
 Profile pictures are shown from Google's and Discord's image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`).
@@ -220,6 +222,8 @@ This file decides what goes in an invite and checks what comes from users or the
 A signed-in player joins a table on its page. On an `auto` table the seat is confirmed at once; on an `approval` table the player _asks_ and the GM (or an admin) approves or declines. Only confirmed registrations take a seat: pending requests never do, so there can be more of them than seats. The GM or an admin can remove a player; a player can leave. The rules (not the GM, table active, not full, not already registered) are in the policy (`table:join`, `registration:manage`, `registration:leave`), and every operation is in `src/lib/server/registrations/service.ts`.
 
 Capacity holds under concurrency because each operation that can take a seat first locks the table's row (`SELECT ... FOR UPDATE`) inside its transaction: two of them on one table run one after the other, and the second counts seats after the first has committed. The events (`JoinRequested`, `JoinApproved`, `JoinDeclined`, `PlayerJoined` when a seat is confirmed, `PlayerLeft` when a seat is freed) are written in the same transaction. Withdrawing a pending request frees no seat and records no event. Player names are only shown to the GM and admins.
+
+**End-to-end tests.** They run against a real Supabase in Docker, not against mocks: `pnpm e2e:up` (starts the stack, applies the migrations, seeds), `pnpm test:e2e`, `pnpm e2e:down`. Playwright builds the app and serves it with `wrangler dev` on port 4173, pointed at that stack (its URL, key and database come from `supabase status`). Sign-up, email confirmation and password reset read the messages from the stack's Mailpit inbox (http://127.0.0.1:54344); signed-in flows create users through the Auth admin API and sign in through the real form; the table image goes to the real Storage bucket. The stack uses ports 54341 to 54344, so it does not clash with `pnpm db:up` (5432) or a Supabase you run for other projects. The tests run one at a time because they share the database. The Docker Postgres from `pnpm db:up` is still what `pnpm dev` and the integration tests use.
 
 **Integration tests.** PGlite is one connection and cannot race, so the concurrency tests (`*.integration.spec.ts`) run against real Postgres: `pnpm db:up && pnpm db:migrate && pnpm test:integration`. CI runs them against a Postgres service. They fail if the row lock is removed.
 
