@@ -43,3 +43,21 @@ export function nextFreeSlug(base: string, isTaken: (slug: string) => boolean): 
 		if (!isTaken(candidate)) return candidate;
 	}
 }
+
+/**
+ * Slugs a table may not have, because a static route sits at the same place and would shadow it:
+ * `/tables/new` is the create form and `/tables/<slug>/edit` the edit form.
+ */
+export const RESERVED_TABLE_SLUGS: ReadonlySet<string> = new Set(['new', 'edit']);
+
+/**
+ * The slug for a new table: made from its title (`mesa` if there is nothing usable), never a
+ * reserved word, and numbered `-2`, `-3` while `isTaken`. Only a first guess: the unique index
+ * decides, so the caller that inserts must retry on a conflict.
+ */
+export function tableSlug(title: string, isTaken: (slug: string) => boolean): string {
+	return nextFreeSlug(
+		slugify(title, { fallback: 'mesa' }),
+		(slug) => RESERVED_TABLE_SLUGS.has(slug) || isTaken(slug)
+	);
+}

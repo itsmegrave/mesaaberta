@@ -25,7 +25,8 @@ const columns = {
 	joinMode: gameTables.joinMode,
 	systemName: systems.name,
 	systemSlug: systems.slug,
-	gmName: profiles.displayName
+	gmName: profiles.displayName,
+	gmId: gameTables.gmId
 };
 
 export type TableView = ReturnType<typeof shape>;
