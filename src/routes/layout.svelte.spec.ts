@@ -100,6 +100,22 @@ describe('+layout.svelte', () => {
 			await expect.element(page.getByRole('button', { name: 'Sair' })).toBeVisible();
 		});
 
+		it('links to the dashboard from the account menu', async () => {
+			render(Layout, {
+				children,
+				data: {
+					authEnabled: true,
+					released: false,
+					account: { displayName: 'Ana Souza', avatarUrl: null }
+				}
+			});
+			await banner().getByText('Ana Souza').click();
+
+			await expect
+				.element(page.getByRole('link', { name: 'Minhas mesas' }))
+				.toHaveAttribute('href', '/account/tables');
+		});
+
 		it('signs out with a POST to /logout, never a link', async () => {
 			render(Layout, {
 				children,

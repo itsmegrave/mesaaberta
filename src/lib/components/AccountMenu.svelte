@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { name, avatarUrl }: { name: string; avatarUrl: string | null } = $props();
 </script>
@@ -32,6 +34,12 @@
 	</summary>
 
 	<div class="absolute right-0 z-10 mt-1 rounded border border-petrol/15 bg-white p-2 shadow-md">
+		<a
+			href={localizedHref('/account/tables', getLocale())}
+			class="block rounded px-3 py-2 whitespace-nowrap hover:bg-petrol/10"
+		>
+			{m.nav_my_tables()}
+		</a>
 		<form method="POST" action="/logout">
 			<button
 				type="submit"

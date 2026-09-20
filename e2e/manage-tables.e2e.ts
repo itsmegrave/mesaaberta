@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // Signing in needs a Supabase project, so these cover what an anonymous visitor meets. The rest is
 // covered by unit tests with a fake signed-in user.
 test.describe('managing tables, anonymous', () => {
-	for (const path of ['/tables/new', '/tables/mesa-do-dragao/edit']) {
+	for (const path of ['/tables/new', '/tables/mesa-do-dragao/edit', '/account/tables']) {
 		test(`${path} sends a visitor to log in, and back afterwards`, async ({ request }) => {
 			const response = await request.get(path, { maxRedirects: 0 });
 

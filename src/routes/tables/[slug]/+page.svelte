@@ -189,7 +189,7 @@
 
 	<!-- Only someone who played (a confirmed seat, and the first session is over) can rate. -->
 	{#if data.canRate}
-		<section class="mt-12 max-w-2xl">
+		<section id="avaliar" class="mt-12 max-w-2xl">
 			<h2 class="text-2xl font-semibold">{m.rating_title()}</h2>
 			<p class="mt-2 max-w-[55ch]">{m.rating_lede()}</p>
 			{#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
