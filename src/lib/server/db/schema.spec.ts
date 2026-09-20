@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb, pgErrorCode } from './test-db';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { gameTables, profiles, systems } from './schema';
 
 const UNIQUE_VIOLATION = '23505';
@@ -115,5 +115,22 @@ describe('game_tables', () => {
 		);
 
 		expect(code).toBe(CHECK_VIOLATION);
+	});
+});
+
+describe('row level security', () => {
+	// Supabase serves everything in `public` over its REST API to anyone holding the publishable key,
+	// which is public. Row level security with no policy is what keeps that door shut: the app itself
+	// reads and writes as the database owner, which is not subject to it.
+	it('is on for every table, so the Supabase REST API exposes none of them', async () => {
+		const result = await test.db.execute<{ table: string; rls: boolean }>(
+			sql`select c.relname as "table", c.relrowsecurity as rls
+				from pg_class c join pg_namespace n on n.oid = c.relnamespace
+				where n.nspname = 'public' and c.relkind = 'r'
+				order by c.relname`
+		);
+
+		expect(result.rows.length).toBeGreaterThanOrEqual(6);
+		expect(result.rows.filter((row) => !row.rls).map((row) => row.table)).toEqual([]);
 	});
 });

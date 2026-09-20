@@ -96,6 +96,8 @@ create policy "signed-in users can upload table images" on storage.objects
 
 Without it the form still works; only saving with an image fails, with a message on the image field. Replaced images are not deleted yet.
 
+**Row level security is on for every table, with no policies** (`.enableRLS()` in `schema.ts`, and a test that fails for any table in `public` without it). Supabase serves `public` over its REST API to anyone holding the publishable key, which is public, so RLS with no policy leaves that API nothing to read or write. The app is not affected: it connects as the database owner (Hyperdrive, or the Docker Postgres), which RLS does not apply to. A new table needs `.enableRLS()`; add a policy only for one that must be reachable through the Supabase API. After deploying a migration like this, run `pnpm db:migrate` against Supabase (step 4 below).
+
 Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
 
 **The deployed Worker** reaches Supabase through Hyperdrive: the `HYPERDRIVE` binding in `wrangler.jsonc` holds the Hyperdrive config id (not a secret). To set it up from scratch:
