@@ -22,6 +22,8 @@ declare global {
 			log: import('$lib/server/logger').Logger;
 			/** The database, or null while none is configured (see `handleDatabase`). */
 			db: import('$lib/server/db/client').Db | null;
+			/** Runs `task` after the response, with the request's database, before the connection closes. */
+			afterResponse: (task: (db: import('$lib/server/db/client').Db) => Promise<unknown>) => void;
 			/** Supabase Auth with cookie sessions, or null while it is not configured. */
 			supabase: import('@supabase/supabase-js').SupabaseClient | null;
 			/** The signed-in user, verified with Supabase (never read from the cookie). Null if anonymous. */

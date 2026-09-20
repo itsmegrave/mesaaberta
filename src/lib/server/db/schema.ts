@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
 	check,
+	jsonb,
 	index,
 	integer,
 	pgEnum,
@@ -94,5 +95,42 @@ export const gameTables = pgTable(
 		),
 		check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
 		check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`)
+	]
+);
+
+// The transactional outbox and the audit log in one table. A row is written in the same transaction
+// as the change it describes, then dispatched to handlers after the commit; a sweeper retries what
+// did not finish. Rows are never deleted: they are the record of who did what, and when.
+export const events = pgTable(
+	'events',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		type: text('type').notNull(),
+		// Who did it. Not a foreign key, so the record outlives the account (account deletion, #21).
+		actorId: uuid('actor_id'),
+		// Ids and public facts only. Never an email address or a token.
+		payload: jsonb('payload').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		processedAt: timestamp('processed_at', { withTimezone: true }),
+		attempts: integer('attempts').notNull().default(0),
+		// Not before this time: the backoff after a failed attempt.
+		nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+		lastError: text('last_error'),
+		// The handlers that already succeeded, so a retry runs only the ones that did not.
+		handledBy: text('handled_by')
+			.array()
+			.notNull()
+			.default(sql`'{}'::text[]`),
+		// Set when the attempt cap is reached: the event stays for a person to look at, no retries.
+		failedAt: timestamp('failed_at', { withTimezone: true }),
+		// A lease, so two dispatchers never run the same event at once.
+		claimedUntil: timestamp('claimed_until', { withTimezone: true })
+	},
+	(event) => [
+		// What the sweeper looks for: events not yet done and not given up on.
+		index('events_pending_idx')
+			.on(event.nextAttemptAt)
+			.where(sql`${event.processedAt} IS NULL AND ${event.failedAt} IS NULL`),
+		index('events_actor_idx').on(event.actorId, event.createdAt)
 	]
 );

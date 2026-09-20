@@ -17,6 +17,9 @@
 	// Add once, after creating the Hyperdrive config (see "Database" in the README):
 	//   "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<id from `wrangler hyperdrive create`>" }],
 	// Without it the Worker runs with no database and /healthz reports `not_configured`.
+	// Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
+	// `pnpm build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
+	"triggers": { "crons": ["*/5 * * * *"] },
 	"workers_dev": true,
 	"preview_urls": true,
 	"observability": {

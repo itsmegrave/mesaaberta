@@ -43,7 +43,7 @@ const isSensitiveKey = (key: string) => {
 };
 
 // Catches PII written straight into a message or value, where no field name can flag it.
-const scrubString = (text: string) =>
+export const scrubString = (text: string) =>
 	text.replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, REDACTED).replace(/\bBearer\s+\S+/gi, REDACTED);
 
 const sanitize = (value: unknown, depth = 0): unknown => {

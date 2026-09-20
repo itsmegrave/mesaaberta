@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { gameTables, profiles } from '../db/schema';
+import { events, gameTables, profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { findTableBySlug, listUpcomingTables } from './queries';
 import { createTable, disableTable, loadTableForEdit, updateTable } from './write';
@@ -248,5 +248,68 @@ describe('disableTable', () => {
 
 		await disableTable(test.db, admin, slug);
 		expect((await rowOf(slug)).status).toBe('disabled');
+	});
+});
+
+describe('events', () => {
+	const eventsOf = async (type: string) =>
+		(await test.db.select().from(events).where(eq(events.type, type))).filter((e) =>
+			(e.payload as { slug: string }).slug.startsWith('evt-')
+		);
+
+	it('create records TableCreated with the actor and the table, and returns its id', async () => {
+		const { slug, eventId } = await createTable(test.db, ana, input({ title: 'Evt Criada' }), {
+			now
+		});
+
+		const [event] = await eventsOf('TableCreated');
+		expect(event).toMatchObject({
+			id: eventId,
+			actorId: ana.id,
+			processedAt: null,
+			payload: { slug, title: 'Evt Criada', tableId: expect.any(String) }
+		});
+		expect((event.payload as { tableId: string }).tableId).toBe((await rowOf(slug)).id);
+	});
+
+	it('edit and disable each record their own event', async () => {
+		const { slug } = await createTable(test.db, ana, input({ title: 'Evt Ciclo' }), { now });
+
+		const edited = await updateTable(test.db, admin, slug, input({ title: 'Evt Ciclo Novo' }));
+		const disabled = await disableTable(test.db, ana, slug);
+
+		const updated = (await eventsOf('TableUpdated')).find((e) => e.id === edited.eventId);
+		const off = (await eventsOf('TableDisabled')).find((e) => e.id === disabled.eventId);
+		expect(updated).toMatchObject({
+			actorId: admin.id,
+			payload: { slug, title: 'Evt Ciclo Novo' }
+		});
+		expect(off).toMatchObject({ actorId: ana.id, payload: { slug } });
+	});
+
+	it('records nothing when the action is refused', async () => {
+		const { slug } = await createTable(test.db, ana, input({ title: 'Evt Recusada' }), { now });
+		const before = (await test.db.select().from(events)).length;
+
+		await expect(updateTable(test.db, bruno, slug, input())).rejects.toMatchObject({
+			name: 'Forbidden'
+		});
+		await expect(disableTable(test.db, bruno, slug)).rejects.toMatchObject({ name: 'Forbidden' });
+		await expect(createTable(test.db, null, input(), { now })).rejects.toMatchObject({
+			name: 'Forbidden'
+		});
+
+		expect((await test.db.select().from(events)).length).toBe(before);
+	});
+
+	it('records one event per table even when two creates race for a slug', async () => {
+		const before = (await test.db.select().from(events)).length;
+
+		await Promise.all([
+			createTable(test.db, ana, input({ title: 'Evt Corrida' }), { now }),
+			createTable(test.db, bruno, input({ title: 'Evt Corrida' }), { now })
+		]);
+
+		expect((await test.db.select().from(events)).length - before).toBe(2);
 	});
 });
