@@ -10,6 +10,8 @@
 		"directory": ".svelte-kit/cloudflare"
 	},
 	// Public by design: the GrowthBook client key only allows reading feature flags.
+	// SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are not here on purpose: CI builds without them so the
+	// e2e tests cover the app before login is configured. Pass them at deploy time (see "Sign-in").
 	"vars": {
 		"GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
 		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o"

@@ -6,8 +6,9 @@
 
 	const providers = [
 		{ id: 'google', label: m.login_with_google() },
-		{ id: 'discord', label: m.login_with_discord() },
-		{ id: 'github', label: m.login_with_github() }
+		{ id: 'apple', label: m.login_with_apple() },
+		{ id: 'facebook', label: m.login_with_facebook() },
+		{ id: 'discord', label: m.login_with_discord() }
 	];
 </script>
 

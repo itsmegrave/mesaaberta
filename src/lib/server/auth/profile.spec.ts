@@ -33,7 +33,7 @@ describe('ensureProfile', () => {
 
 	it.each([
 		[11, 'name', { name: 'Bruno' }, 'Bruno'],
-		[12, 'user_name (GitHub)', { user_name: 'bruno-gh' }, 'bruno-gh']
+		[12, 'user_name', { user_name: 'bruno-gh' }, 'bruno-gh']
 	])('takes the display name from %s', async (n, _what, metadata, expected) => {
 		const profile = await ensureProfile(test.db, user(n, metadata));
 
