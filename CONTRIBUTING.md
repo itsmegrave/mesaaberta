@@ -6,7 +6,7 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 - One issue, one small pull request that closes it.
 - Conventional commits, one concern per commit.
-- The PR should build green (`pnpm lint`, `pnpm check`, `pnpm test`) and include a short test plan.
+- The PR should build green (`pnpm lint`, `pnpm check`, `pnpm test`; and `pnpm test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
 - Tests describe behavior, not wording. Each test should name the break it catches.
 
 See the [README](README.md) for setup and scripts.
