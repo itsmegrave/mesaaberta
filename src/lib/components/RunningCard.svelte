@@ -23,7 +23,7 @@
 	const button = 'font-semibold';
 </script>
 
-<article class="rounded border border-petrol/15 bg-white p-4">
+<article class="rounded border border-petrol/15 bg-surface p-4">
 	<p class="flex flex-wrap items-center gap-2 text-sm">
 		{#if item.tableStatus === 'disabled'}<span class="font-semibold">{m.dash_disabled()}</span>{/if}
 		<span>{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span>
@@ -53,7 +53,7 @@
 				<li class="flex flex-wrap items-center justify-between gap-3 rounded bg-celadon/60 p-2">
 					<span>{request.displayName}</span>
 					<span class="flex gap-4">
-						{#each [['approve', m.table_approve(), ''], ['decline', m.table_decline(), 'text-red-800']] as [action, label, tone] (action)}
+						{#each [['approve', m.table_approve(), ''], ['decline', m.table_decline(), 'text-danger']] as [action, label, tone] (action)}
 							<form method="POST" action="{page}?/{action}">
 								<input type="hidden" name="playerId" value={request.playerId} />
 								<input type="hidden" name="next" value={next} />
@@ -77,7 +77,7 @@
 					<form method="POST" action="{page}?/remove">
 						<input type="hidden" name="playerId" value={player.playerId} />
 						<input type="hidden" name="next" value={next} />
-						<button type="submit" class="{button} text-red-800">{m.table_remove()}</button>
+						<button type="submit" class="{button} text-danger">{m.table_remove()}</button>
 					</form>
 				</li>
 			{/each}

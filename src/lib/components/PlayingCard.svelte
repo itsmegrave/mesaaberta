@@ -23,14 +23,14 @@
 	const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
 </script>
 
-<article class="rounded border border-petrol/15 bg-white p-4">
+<article class="rounded border border-petrol/15 bg-surface p-4">
 	<p class="flex flex-wrap items-center gap-2 text-sm">
 		{#if item.status === 'pending'}
-			<span class="rounded-full bg-lamp px-2 py-0.5 font-semibold text-white"
+			<span class="rounded-full bg-lamp px-2 py-0.5 font-semibold text-on-lamp"
 				>{m.dash_waiting()}</span
 			>
 		{:else}
-			<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-celadon">
+			<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-on-petrol">
 				{m.dash_you_have_seat()}
 			</span>
 		{/if}

@@ -3,6 +3,7 @@
 	import { asset, resolve } from '$app/paths';
 	import { navigating } from '$app/state';
 	import AccountMenu from '$lib/components/AccountMenu.svelte';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -21,7 +22,7 @@
 
 <a
 	href="#main"
-	class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded focus:bg-white focus:px-3 focus:py-2"
+	class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded focus:bg-surface focus:px-3 focus:py-2"
 >
 	{m.skip_to_content()}
 </a>
@@ -32,6 +33,8 @@
 	</a>
 
 	<nav class="flex items-center gap-2" aria-label={m.nav_main()}>
+		<ThemeToggle />
+
 		{#if data.released}
 			<a
 				href={localizedHref('/tables', locale)}
@@ -55,7 +58,7 @@
 {#if navigating.to}
 	<p
 		role="status"
-		class="fixed inset-x-0 top-0 z-20 bg-petrol px-4 py-1 text-center text-sm text-celadon"
+		class="fixed inset-x-0 top-0 z-20 bg-petrol px-4 py-1 text-center text-sm text-on-petrol"
 	>
 		{m.nav_loading()}
 	</p>

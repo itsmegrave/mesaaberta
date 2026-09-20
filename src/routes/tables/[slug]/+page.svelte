@@ -46,7 +46,7 @@
 	<a href={localizedHref('/tables', locale)} class="text-link">{m.table_back()}</a>
 
 	<p class="mt-8 flex flex-wrap items-center gap-2 text-sm">
-		<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-celadon">
+		<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-on-petrol">
 			{table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
 		</span>
 		<span class="font-semibold text-lamp">{seats}</span>
@@ -136,7 +136,7 @@
 	</p>
 
 	{#if form?.error}
-		<p role="alert" class="mt-4 max-w-[44ch] font-semibold text-red-800">
+		<p role="alert" class="mt-4 max-w-[44ch] font-semibold text-danger">
 			{form.error === 'table_full'
 				? m.table_error_full()
 				: form.error === 'already_registered'
@@ -160,7 +160,7 @@
 				href="{resolve('/login')}?next={encodeURIComponent(
 					localizedHref(`/tables/${table.slug}`, locale)
 				)}"
-				class="inline-block rounded bg-petrol px-5 py-3 font-semibold text-celadon"
+				class="inline-block rounded bg-petrol px-5 py-3 font-semibold text-on-petrol"
 			>
 				{m.table_sign_in_to_join()}
 			</a>
@@ -180,7 +180,7 @@
 			</form>
 		{:else if data.canJoin}
 			<form method="POST" action="?/join">
-				<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-celadon">
+				<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-on-petrol">
 					{table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
 				</button>
 			</form>
@@ -216,13 +216,13 @@
 						name="comment"
 						rows="3"
 						maxlength="1000"
-						class="mt-1 block w-full rounded border border-petrol/30 bg-white px-3 py-2"
+						class="mt-1 block w-full rounded border border-petrol/30 bg-surface px-3 py-2"
 						>{data.myRating?.comment ?? ''}</textarea
 					>
 				</div>
 
 				<div>
-					<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-celadon">
+					<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-on-petrol">
 						{data.myRating ? m.rating_update() : m.rating_submit()}
 					</button>
 				</div>
@@ -243,12 +243,12 @@
 				<ul class="mt-3 grid gap-2">
 					{#each players as player (player.playerId)}
 						<li
-							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-white p-3"
+							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-surface p-3"
 						>
 							<span>{player.displayName}</span>
 							<form method="POST" action="?/remove">
 								<input type="hidden" name="playerId" value={player.playerId} />
-								<button type="submit" class="font-semibold text-red-800">{m.table_remove()}</button>
+								<button type="submit" class="font-semibold text-danger">{m.table_remove()}</button>
 							</form>
 						</li>
 					{/each}
@@ -260,7 +260,7 @@
 				<ul class="mt-3 grid gap-2">
 					{#each requests as request (request.playerId)}
 						<li
-							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-white p-3"
+							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-surface p-3"
 						>
 							<span>{request.displayName}</span>
 							<span class="flex gap-4">
@@ -270,7 +270,7 @@
 								</form>
 								<form method="POST" action="?/decline">
 									<input type="hidden" name="playerId" value={request.playerId} />
-									<button type="submit" class="font-semibold text-red-800"
+									<button type="submit" class="font-semibold text-danger"
 										>{m.table_decline()}</button
 									>
 								</form>

@@ -23,7 +23,7 @@
 	{/if}
 
 	{#if form?.error}
-		<p role="alert" class="mt-6 font-semibold text-red-800">
+		<p role="alert" class="mt-6 font-semibold text-danger">
 			{form.error === 'forbidden' ? m.form_error_forbidden() : m.form_error_unavailable()}
 		</p>
 	{/if}
@@ -42,7 +42,7 @@
 			<p class="mb-3">{m.form_disable_hint()}</p>
 			<button
 				type="submit"
-				class="rounded border border-red-800 px-5 py-3 font-semibold text-red-800"
+				class="rounded border border-danger px-5 py-3 font-semibold text-danger"
 			>
 				{m.form_disable()}
 			</button>

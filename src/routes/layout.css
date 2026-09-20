@@ -14,12 +14,59 @@
 	--color-ink: #12272b;
 	/* The table itself */
 	--color-petrol: #17393f;
-	/* Lamp over the table: only used where something is open or needs attention */
-	--color-lamp: #a86a00;
+	/* Lamp over the table: only used where something is open or needs attention. Dark enough for
+	   text (AA, 4.5:1) on the page and on a card; the first version, #a86a00, was not. */
+	--color-lamp: #925b00;
 	/* Players around the table */
 	--color-sage: #7fb7a4;
 	--color-rose: #c97b84;
 	--color-periwinkle: #8e9ae6;
+
+	/* Roles the components use instead of fixed colours, so a theme can change them */
+	/* Cards, inputs and menus, which sit on the page */
+	--color-surface: #ffffff;
+	/* Text and icons on a petrol shape (buttons, badges) */
+	--color-on-petrol: #e3ebe5;
+	/* Text on a lamp shape (the "waiting" badge) */
+	--color-on-lamp: #ffffff;
+	/* Errors and destructive actions */
+	--color-danger: #991b1b;
+	/* The keyboard focus ring */
+	--color-focus: #17393f;
+}
+
+/*
+ * The dark theme: the same tokens with other values. The table stays the dark object (a lighter teal
+ * than the page, so it still reads as a shape), and the lamp stays the amber accent. It applies when
+ * the reader chose dark, or chose nothing and the system is dark. The two blocks must stay identical;
+ * src/lib/theme/theme.spec.ts checks that, and the contrast of every pair.
+ */
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--color-celadon: #0e1b1e;
+	--color-ink: #e6efe9;
+	--color-petrol: #33727a;
+	--color-lamp: #f0b34a;
+	--color-surface: #16292d;
+	--color-on-petrol: #f4f8f5;
+	--color-on-lamp: #1b1300;
+	--color-danger: #ff9d9d;
+	--color-focus: #8fd3cb;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		color-scheme: dark;
+		--color-celadon: #0e1b1e;
+		--color-ink: #e6efe9;
+		--color-petrol: #33727a;
+		--color-lamp: #f0b34a;
+		--color-surface: #16292d;
+		--color-on-petrol: #f4f8f5;
+		--color-on-lamp: #1b1300;
+		--color-danger: #ff9d9d;
+		--color-focus: #8fd3cb;
+	}
 }
 
 @layer base {
@@ -43,7 +90,7 @@
 	}
 
 	:focus-visible {
-		outline: 3px solid var(--color-petrol);
+		outline: 3px solid var(--color-focus);
 		outline-offset: 3px;
 	}
 }

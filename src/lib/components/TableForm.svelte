@@ -21,14 +21,14 @@
 	let kind = $state(values.kind);
 	const timezones = Intl.supportedValuesOf('timeZone');
 
-	const input = 'block w-full rounded border border-petrol/30 bg-white px-3 py-2';
+	const input = 'block w-full rounded border border-petrol/30 bg-surface px-3 py-2';
 	const err = (field: string) => (errors[field] ? errorText(errors[field], field) : undefined);
 	const invalid = (field: string) => (errors[field] ? 'true' : undefined);
 </script>
 
 <form method="POST" {action} enctype="multipart/form-data" class="mt-8 grid max-w-2xl gap-6">
 	{#if Object.keys(errors).length > 0}
-		<p role="alert" class="font-semibold text-red-800">{m.form_summary()}</p>
+		<p role="alert" class="font-semibold text-danger">{m.form_summary()}</p>
 	{/if}
 
 	<FormField id="systemSlug" label={m.form_system()} error={err('systemSlug')}>
@@ -96,7 +96,7 @@
 				{label}
 			</label>
 		{/each}
-		{#if errors.kind}<p role="alert" class="text-sm font-semibold text-red-800">
+		{#if errors.kind}<p role="alert" class="text-sm font-semibold text-danger">
 				{err('kind')}
 			</p>{/if}
 	</fieldset>
@@ -212,7 +212,7 @@
 	</FormField>
 
 	<div>
-		<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-celadon"
+		<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-on-petrol"
 			>{submitLabel}</button
 		>
 	</div>

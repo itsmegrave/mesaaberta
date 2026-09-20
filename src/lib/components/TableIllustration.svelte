@@ -32,7 +32,7 @@
 	<circle cx={centre} cy={centre} r="186" class="fill-none stroke-lamp/20" stroke-width="2" />
 	<circle cx={centre} cy={centre} r="104" class="fill-petrol" />
 	<g transform="rotate(-12 {centre} {centre})">
-		<rect x="152" y="170" width="96" height="60" rx="4" class="fill-celadon" />
+		<rect x="152" y="170" width="96" height="60" rx="4" class="fill-on-petrol" />
 		<path d="M164 190h44M164 202h60M164 214h30" class="stroke-petrol/40" stroke-width="3" />
 	</g>
 

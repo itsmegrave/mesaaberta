@@ -32,7 +32,7 @@
 						href="{resolve('/login/[provider=provider]', {
 							provider: provider.id
 						})}?next={encodeURIComponent(data.next)}"
-						class="block rounded bg-petrol px-4 py-3 text-center font-semibold text-celadon hover:bg-petrol/90"
+						class="block rounded bg-petrol px-4 py-3 text-center font-semibold text-on-petrol hover:bg-petrol/90"
 					>
 						{provider.label}
 					</a>
