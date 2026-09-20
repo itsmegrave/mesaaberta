@@ -167,6 +167,17 @@ pnpm db:make-admin <user id>
 
 or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
 
+## Theme
+
+The site has a light and a dark theme, and follows the system by default. The header has a small labelled control (Automático, Claro, Escuro); the choice is remembered in `localStorage`, not a cookie, so it needs no banner and never leaves the browser.
+
+- **Tokens:** the colours are theme tokens in `src/routes/layout.css` (`@theme`). The dark theme is a second set of values for the same tokens, in `:root[data-theme='dark']` and, for a reader who chose nothing, in a `prefers-color-scheme: dark` block (the two must stay identical; a test checks it). Components use **roles**, not fixed colours: `bg-surface`, `text-on-petrol`, `text-on-lamp`, `text-danger`, `--color-focus`. Never write `bg-white` or `text-red-800` in a component.
+- **No flash:** a tiny inline script in `src/app.html` (with the CSP nonce) applies a remembered light or dark choice to `<html data-theme>` before the first paint. It also sets the `theme-color` meta for the browser's own chrome.
+- **Contrast:** `src/lib/theme/theme.spec.ts` reads the tokens from the stylesheet and asserts WCAG AA for every pair the components use, in both themes (4.5:1 for text, 3:1 for the focus ring, the amber outline and the link underline). A palette change that breaks it fails the test. The check found that the original light amber (`#a86a00`) was below AA, so it is now `#925b00`.
+- **The manifest** (`static/site.webmanifest`) can hold one colour, so it uses the light page colour.
+
+The toggle is a native `<select>`, not Melt UI: it needs no popover and so no inline styles, which the CSP blocks.
+
 ## My tables
 
 `/account/tables` (linked from the account menu) has two views. **Jogando** lists the tables I have a seat or a pending request at: the next session in the table's own timezone, _Sair da mesa_, a pending request shown as "Aguardando o mestre" with _Cancelar pedido_, and, once the first session has ended, a prompt to rate (or the rating already given, with a link to change it). **Mestrando** lists the tables I am the GM of, disabled ones included: the players with _Remover_, the queue of pending requests with _Aprovar_ and _Recusar_, and a link to edit or disable the table. Sessions coming up come first; a table with none left goes last. The queries are in `src/lib/server/dashboard/queries.ts`.
