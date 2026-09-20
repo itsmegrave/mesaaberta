@@ -1,7 +1,15 @@
 import { error } from '@sveltejs/kit';
-import { can, joinBlocker } from '$lib/server/auth/policy';
+import { can, joinBlocker, rateBlocker } from '$lib/server/auth/policy';
 import { Invalid } from '$lib/server/errors';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import {
+	firstSessionEnded,
+	gmRating,
+	ratingOf,
+	submitRating,
+	tableRating
+} from '$lib/server/ratings/service';
+import { parseRatingForm } from '$lib/tables/rating';
 import { runRegistrationAction } from '$lib/server/registrations/form-action';
 import {
 	approveRegistration,
@@ -35,7 +43,27 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 			alreadyRegistered: myStatus !== null
 		}) === null;
 
+	// Averages are public; the comment is not sent to anyone but its author.
+	const [tableScore, gmScore, mine] = await Promise.all([
+		tableRating(locals.db!, id),
+		gmRating(locals.db!, gmId),
+		profile ? ratingOf(locals.db!, id, profile.id) : null
+	]);
+	const canRate =
+		rateBlocker(profile, {
+			gmId,
+			registration: myStatus,
+			firstSessionEnded: firstSessionEnded(found, new Date())
+		}) === null;
+
 	return {
+		ratings: { table: tableScore, gm: gmScore },
+		canRate,
+		myRating: mine && {
+			tableScore: mine.tableScore,
+			gmScore: mine.gmScore,
+			comment: mine.comment ?? ''
+		},
 		table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
 		canEdit: can(profile, 'table:edit', { gmId }),
 		signedIn,
@@ -67,6 +95,13 @@ export const actions: Actions = {
 		runRegistrationAction(event, (db, actor, form) =>
 			declineRegistration(db, actor, event.params.slug, playerIdOf(form))
 		),
+	rate: (event) =>
+		runRegistrationAction(event, (db, actor, form) => {
+			const parsed = parseRatingForm(form);
+			if (!parsed.ok) throw new Invalid(Object.keys(parsed.errors)[0]);
+
+			return submitRating(db, actor, event.params.slug, parsed.data);
+		}),
 	remove: (event) =>
 		runRegistrationAction(event, (db, actor, form) =>
 			removePlayer(db, actor, event.params.slug, playerIdOf(form))

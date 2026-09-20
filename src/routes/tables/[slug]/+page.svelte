@@ -19,6 +19,15 @@
 					? m.table_recurrence_weeks({ weeks: table.everyWeeks })
 					: null
 	);
+	const number = new Intl.NumberFormat(locale, {
+		maximumFractionDigits: 1,
+		minimumFractionDigits: 1
+	});
+	const votes = (count: number) => (count === 1 ? m.rating_count_one() : m.rating_count({ count }));
+	const scoreFields = $derived([
+		{ name: 'tableScore', label: m.rating_the_table(), current: data.myRating?.tableScore },
+		{ name: 'gmScore', label: m.rating_the_gm(), current: data.myRating?.gmScore }
+	]);
 	const seats = $derived(
 		table.seatsLeft === 0
 			? m.table_full()
@@ -52,6 +61,25 @@
 			referrerpolicy="no-referrer"
 			class="mt-6 max-h-80 w-full max-w-2xl rounded object-cover"
 		/>
+	{/if}
+
+	{#if data.ratings.table.count > 0 || data.ratings.gm.count > 0}
+		<p class="mt-4 flex flex-wrap gap-x-6 gap-y-1">
+			{#if data.ratings.table.count > 0}
+				<span>
+					{m.rating_table_average()}:
+					<strong>{number.format(data.ratings.table.average ?? 0)}</strong>
+					({votes(data.ratings.table.count)})
+				</span>
+			{/if}
+			{#if data.ratings.gm.count > 0}
+				<span>
+					{m.rating_gm_average()}:
+					<strong>{number.format(data.ratings.gm.average ?? 0)}</strong>
+					({votes(data.ratings.gm.count)})
+				</span>
+			{/if}
+		</p>
 	{/if}
 
 	{#if data.canEdit}
@@ -115,7 +143,11 @@
 					? m.table_error_already()
 					: form.error === 'forbidden'
 						? m.table_error_forbidden()
-						: m.table_error_other()}
+						: form.error === 'too_early'
+							? m.table_error_too_early()
+							: form.error === 'invalid'
+								? m.table_error_invalid()
+								: m.table_error_other()}
 		</p>
 	{/if}
 
@@ -154,6 +186,49 @@
 			</form>
 		{/if}
 	</div>
+
+	<!-- Only someone who played (a confirmed seat, and the first session is over) can rate. -->
+	{#if data.canRate}
+		<section class="mt-12 max-w-2xl">
+			<h2 class="text-2xl font-semibold">{m.rating_title()}</h2>
+			<p class="mt-2 max-w-[55ch]">{m.rating_lede()}</p>
+			{#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
+
+			<form method="POST" action="?/rate" class="mt-4 grid gap-6">
+				{#each scoreFields as { name, label, current } (name)}
+					<fieldset>
+						<legend class="font-semibold">{label}</legend>
+						<div class="mt-2 flex flex-wrap gap-3">
+							{#each [1, 2, 3, 4, 5] as score (score)}
+								<label class="flex items-center gap-1">
+									<input type="radio" {name} value={score} required checked={current === score} />
+									<span aria-label={m.rating_score_label({ score })}>{score}</span>
+								</label>
+							{/each}
+						</div>
+					</fieldset>
+				{/each}
+
+				<div>
+					<label for="comment" class="block font-semibold">{m.rating_comment()}</label>
+					<textarea
+						id="comment"
+						name="comment"
+						rows="3"
+						maxlength="1000"
+						class="mt-1 block w-full rounded border border-petrol/30 bg-white px-3 py-2"
+						>{data.myRating?.comment ?? ''}</textarea
+					>
+				</div>
+
+				<div>
+					<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-celadon">
+						{data.myRating ? m.rating_update() : m.rating_submit()}
+					</button>
+				</div>
+			</form>
+		</section>
+	{/if}
 
 	<!-- The GM's (and admins') view: who has a seat and who is asking. Names are not public. -->
 	{#if data.registrations}
