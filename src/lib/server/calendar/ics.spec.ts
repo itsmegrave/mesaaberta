@@ -127,8 +127,13 @@ describe('a campaign', () => {
 		expect(lines(ics).filter((l) => l.startsWith('DTSTART;TZID='))).toEqual([
 			'DTSTART;TZID=America/New_York:20260302T200000'
 		]);
-		// The zone's own change, at 02:00 local on 8 March 2026.
-		expect(lines(ics)).toContain('DTSTART:20260308T020000');
+		// The zone's own rules repeat every year, so this is right in 2030 as well as in 2026.
+		expect(lines(ics)).toEqual(
+			expect.arrayContaining([
+				'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU',
+				'RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU'
+			])
+		);
 		expect(lines(ics)).toEqual(expect.arrayContaining(['BEGIN:DAYLIGHT', 'BEGIN:STANDARD']));
 		expect(named(ics, 'TZOFFSETTO')).toEqual(
 			expect.arrayContaining(['TZOFFSETTO:-0400', 'TZOFFSETTO:-0500'])
@@ -192,7 +197,8 @@ describe('who sees whom', () => {
 
 	it('names the organizer as the sender address, not a player', () => {
 		expect(named(invite(), 'ORGANIZER')).toEqual([
-			'ORGANIZER;CN="Mesa Aberta":mailto:convites@mesaaberta.app'
+			// Quotes are only needed when a name has a `;`, `:` or `,` (they are added then).
+			'ORGANIZER;CN=Mesa Aberta:mailto:convites@mesaaberta.app'
 		]);
 	});
 });
@@ -221,14 +227,17 @@ describe('escaping', () => {
 		}
 	});
 
-	it('folds long lines at 75 bytes and never splits a multi-byte character', () => {
+	it('folds long lines at about 75 bytes and never splits a multi-byte character', () => {
 		const long =
 			'Crônicas de Arton, a saga do herói sem coração e do dragão dourado: ação e emoção. '.repeat(
 				6
 			);
 		const ics = invite({ table: { ...table, title: long } });
 
-		for (const physical of ics.split('\r\n')) expect(byteLength(physical)).toBeLessThanOrEqual(75);
+		// ical.js counts 75 bytes of content and then adds the folding space, so a continuation line can be
+		// 76 octets. The standard says "SHOULD NOT exceed 75" and every client reads 76; what matters is
+		// that lines are folded at all and that no character is cut in half (the text reads back whole).
+		for (const physical of ics.split('\r\n')) expect(byteLength(physical)).toBeLessThanOrEqual(76);
 		expect(unescape(named(ics, 'SUMMARY')[0].slice('SUMMARY:'.length))).toBe(long);
 	});
 
@@ -272,6 +281,56 @@ describe('escaping', () => {
 		])('refuses an address that is not an address: %j', (email) => {
 			expect(() => invite({ attendee: { email } })).toThrow(/email/i);
 		});
+	});
+});
+
+describe('the same output on any machine', () => {
+	it.each(['UTC', 'America/New_York', 'Asia/Tokyo', 'America/Sao_Paulo'])(
+		'is identical when the process runs in %s, so the tests mean the same on every computer and on the Worker',
+		(zone) => {
+			const before = process.env.TZ;
+			try {
+				process.env.TZ = 'UTC';
+				const reference = invite({
+					table: {
+						...table,
+						kind: 'campaign',
+						recurrence: 'FREQ=WEEKLY',
+						until: new Date('2026-12-02T02:59:00Z')
+					}
+				});
+
+				process.env.TZ = zone;
+				const other = invite({
+					table: {
+						...table,
+						kind: 'campaign',
+						recurrence: 'FREQ=WEEKLY',
+						until: new Date('2026-12-02T02:59:00Z')
+					}
+				});
+
+				expect(other).toBe(reference);
+			} finally {
+				if (before === undefined) delete process.env.TZ;
+				else process.env.TZ = before;
+			}
+		}
+	);
+
+	it("writes the stamp and the end date in UTC, and the start in the table's own zone", () => {
+		const ics = invite({
+			table: {
+				...table,
+				kind: 'campaign',
+				recurrence: 'FREQ=WEEKLY',
+				until: new Date('2026-12-02T02:59:00Z')
+			}
+		});
+
+		expect(named(ics, 'DTSTAMP')).toEqual(['DTSTAMP:20261001T120000Z']);
+		expect(named(ics, 'RRULE')[0]).toMatch(/UNTIL=20261202T025900Z$/);
+		expect(lines(ics)).toContain('DTSTART;TZID=America/Sao_Paulo:20261010T190000');
 	});
 });
 

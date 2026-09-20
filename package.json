@@ -50,7 +50,6 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
 		"globals": "^17.12.0",
-		"ical.js": "^2.2.1",
 		"playwright": "^1.63.0",
 		"prettier": "^3.9.8",
 		"prettier-plugin-svelte": "^4.1.1",
@@ -75,7 +74,9 @@
 		"@supabase/ssr": "^0.12.7",
 		"@supabase/supabase-js": "^2.116.0",
 		"drizzle-orm": "^0.45.2",
+		"ical.js": "^2.2.1",
 		"postgres": "^3.4.9",
+		"timezones-ical-library": "^2.3.2",
 		"zod": "^4.6.5"
 	}
 }
