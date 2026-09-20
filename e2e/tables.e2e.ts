@@ -109,6 +109,12 @@ test.describe('table page', () => {
 		await expect(page.locator('article b')).toHaveCount(0);
 	});
 
+	test('offers no edit link to a visitor who is not the GM or an admin', async ({ page }) => {
+		await page.goto('/tables/mesa-do-dragao');
+
+		await expect(page.getByRole('link', { name: 'Editar mesa' })).toHaveCount(0);
+	});
+
 	test('an unknown slug is the translated 404, with a way back', async ({ page }) => {
 		const response = await page.goto('/tables/nao-existe');
 
