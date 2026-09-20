@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import { gameTables, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
+import { recordEvent } from '../events/outbox';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
 import type { TableInput } from '$lib/tables/schema';
@@ -55,7 +56,7 @@ export async function createTable(
 	actor: Actor | null,
 	input: TableInput,
 	{ now = new Date(), imagePath = null }: { now?: Date; imagePath?: string | null } = {}
-): Promise<{ slug: string }> {
+): Promise<{ slug: string; eventId: string }> {
 	authorize(actor, 'table:create');
 
 	const columns = { ...(await columnsOf(db, input)), imagePath };
@@ -72,8 +73,21 @@ export async function createTable(
 		const slug = tableSlug(input.title, (candidate) => taken.has(candidate));
 
 		try {
-			await db.insert(gameTables).values({ ...columns, slug, gmId: actor!.id });
-			return { slug };
+			// The table and its event commit together, or neither does. A slug conflict rolls both
+			// back, and the retry writes a fresh pair.
+			const eventId = await db.transaction(async (tx) => {
+				const [created] = await tx
+					.insert(gameTables)
+					.values({ ...columns, slug, gmId: actor!.id })
+					.returning({ id: gameTables.id });
+
+				return recordEvent(tx as unknown as AnyDb, {
+					type: 'TableCreated',
+					actorId: actor!.id,
+					payload: { tableId: created.id, slug, title: input.title }
+				});
+			});
+			return { slug, eventId };
 		} catch (error) {
 			if (!isSlugConflict(error) || attempt === MAX_SLUG_ATTEMPTS) throw error;
 		}
@@ -127,25 +141,53 @@ export async function updateTable(
 	slug: string,
 	input: TableInput,
 	{ imagePath }: { imagePath?: string } = {}
-) {
+): Promise<{ eventId: string }> {
 	const table = await findForWrite(db, slug);
 	authorize(actor, 'table:edit', table);
 
 	const columns = await columnsOf(db, input);
-	await db
-		.update(gameTables)
-		// No new image leaves the current one as it is.
-		.set({ ...columns, ...(imagePath ? { imagePath } : {}), icalSequence: table.icalSequence + 1 })
-		.where(eq(gameTables.id, table.id));
+	const eventId = await db.transaction(async (tx) => {
+		await tx
+			.update(gameTables)
+			// No new image leaves the current one as it is.
+			.set({
+				...columns,
+				...(imagePath ? { imagePath } : {}),
+				icalSequence: table.icalSequence + 1
+			})
+			.where(eq(gameTables.id, table.id));
+
+		return recordEvent(tx as unknown as AnyDb, {
+			type: 'TableUpdated',
+			actorId: actor!.id,
+			payload: { tableId: table.id, slug: table.slug, title: input.title }
+		});
+	});
+
+	return { eventId };
 }
 
 /** Takes a table off the public pages. */
-export async function disableTable(db: AnyDb, actor: Actor | null, slug: string) {
+export async function disableTable(
+	db: AnyDb,
+	actor: Actor | null,
+	slug: string
+): Promise<{ eventId: string }> {
 	const table = await findForWrite(db, slug);
 	authorize(actor, 'table:disable', table);
 
-	await db
-		.update(gameTables)
-		.set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
-		.where(eq(gameTables.id, table.id));
+	const eventId = await db.transaction(async (tx) => {
+		await tx
+			.update(gameTables)
+			.set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
+			.where(eq(gameTables.id, table.id));
+
+		return recordEvent(tx as unknown as AnyDb, {
+			type: 'TableDisabled',
+			actorId: actor!.id,
+			payload: { tableId: table.id, slug: table.slug, title: table.title }
+		});
+	});
+
+	return { eventId };
 }
