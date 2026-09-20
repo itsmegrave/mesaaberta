@@ -24,7 +24,7 @@ export async function signOut(page: Page, name: string) {
 	await accountMenu(page, name).click();
 	await page.getByRole('button', { name: 'Sair' }).click();
 
-	await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar' })).toBeVisible();
+	await expect(accountMenu(page, name)).toHaveCount(0);
 }
 
 /** Signed-in flows are long; they run on the desktop project only (the pages themselves run on both). */
