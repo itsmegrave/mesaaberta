@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { gameTables, profiles, systems } from '../db/schema';
+import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { findTableBySlug, listUpcomingTables, seatsLeft } from './queries';
 
@@ -125,12 +125,38 @@ describe('findTableBySlug', () => {
 	});
 });
 
+describe('seats left', () => {
+	const player = async (n: number) => {
+		const playerId = `00000000-0000-4000-8000-0000000006${String(n).padStart(2, '0')}`;
+		await test.db
+			.insert(profiles)
+			.values({ id: playerId, displayName: `J${n}` })
+			.onConflictDoNothing();
+		return playerId;
+	};
+
+	it('counts only confirmed registrations: a pending request takes no seat', async () => {
+		await add({ slug: 'seats', capacity: 4 });
+		const [table] = await test.db.select().from(gameTables).where(eq(gameTables.slug, 'seats'));
+		await test.db.insert(registrations).values([
+			{ tableId: table.id, playerId: await player(1), status: 'confirmed' },
+			{ tableId: table.id, playerId: await player(2), status: 'confirmed' },
+			{ tableId: table.id, playerId: await player(3), status: 'pending' }
+		]);
+
+		expect((await findTableBySlug(test.db, 'seats', now))?.seatsLeft).toBe(2);
+		expect(
+			(await listUpcomingTables(test.db, now)).find((t) => t.slug === 'seats')?.seatsLeft
+		).toBe(2);
+	});
+});
+
 describe('seatsLeft', () => {
 	it('is the capacity minus the seats taken', () => {
 		expect(seatsLeft(5, 2)).toBe(3);
 	});
 
-	it('is the whole capacity while nobody has joined, which is every table until registrations exist', () => {
+	it('is the whole capacity while nobody has joined', () => {
 		expect(seatsLeft(5)).toBe(5);
 	});
 
