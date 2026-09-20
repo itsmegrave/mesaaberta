@@ -32,6 +32,10 @@
 				result={form?.result}
 			/>
 
+			<p class="-mt-3 text-sm">
+				<a href={resolve('/forgot-password')} class="text-link">{m.login_forgot()}</a>
+			</p>
+
 			<p class="flex items-center gap-3" aria-hidden="true">
 				<span class="h-px grow bg-petrol/30"></span>
 				<span class="text-sm">{m.login_or()}</span>

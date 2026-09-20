@@ -30,6 +30,43 @@ test.describe('login while Supabase is not configured', () => {
 		expect(response.headers()['location']).toBe('/login?error=unavailable');
 	});
 
+	test('the forgot-password page says so, and a post to it goes back to the login page', async ({
+		page,
+		request,
+		baseURL
+	}) => {
+		await page.goto('/forgot-password');
+
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Esqueci minha senha');
+		await expect(page.getByText(/ainda não está disponível/i)).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Enviar link' })).toHaveCount(0);
+
+		const response = await request.post('/forgot-password', {
+			headers: { origin: baseURL!, accept: 'text/html' },
+			form: { email: 'ana@example.com' },
+			maxRedirects: 0
+		});
+		expect(response.status()).toBe(303);
+		expect(response.headers()['location']).toBe('/login?error=unavailable');
+	});
+
+	test('the new-password page needs the session a recovery link gives: without one it asks for a new link', async ({
+		request,
+		baseURL
+	}) => {
+		const page = await request.get('/reset-password', { maxRedirects: 0 });
+		const post = await request.post('/reset-password', {
+			headers: { origin: baseURL!, accept: 'text/html' },
+			form: { password: 'a brand new password', passwordConfirm: 'a brand new password' },
+			maxRedirects: 0
+		});
+
+		for (const response of [page, post]) {
+			expect(response.status()).toBe(303);
+			expect(response.headers()['location']).toBe('/forgot-password?error=link');
+		}
+	});
+
 	test('the header has no sign-in link, so nobody is sent to a dead end', async ({ page }) => {
 		await page.goto('/');
 
