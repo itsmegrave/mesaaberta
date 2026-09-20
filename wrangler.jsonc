@@ -30,10 +30,6 @@
 			"localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta"
 		}
 	],
-	// Table images (see "Table images" in the README). The bucket must exist before a deploy:
-	// `wrangler r2 bucket create table-images`. Locally, `wrangler dev` and `vite dev` use a
-	// simulated bucket on disk.
-	"r2_buckets": [{ "binding": "IMAGES", "bucket_name": "table-images" }],
 	// Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
 	// `pnpm build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
 	"triggers": { "crons": ["*/5 * * * *"] },

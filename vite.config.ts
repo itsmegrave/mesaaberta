@@ -32,12 +32,18 @@ export default defineConfig({
 						'unsafe-hashes',
 						'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo='
 					],
-					// Profile pictures come from the sign-in providers' CDNs. Table images are served by this site.
+					// Profile pictures come from the sign-in providers' CDNs.
 					'img-src': [
 						'self',
 						'data:',
 						'https://lh3.googleusercontent.com',
-						'https://cdn.discordapp.com'
+						'https://cdn.discordapp.com',
+						// Table images, from the project's Supabase Storage bucket.
+						'https://*.supabase.co',
+						// The e2e build adds the local Supabase (see playwright.config.ts). Never set in production.
+						...(process.env.CSP_EXTRA_IMG_SRC
+							? [process.env.CSP_EXTRA_IMG_SRC as `http://${string}.${string}`]
+							: [])
 					],
 					'font-src': ['self'],
 					'connect-src': ['self'],

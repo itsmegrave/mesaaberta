@@ -83,7 +83,18 @@ pnpm dev
 
 **Managing tables.** A signed-in user opens a table at `/tables/new` and becomes its GM; the GM or an admin edits it at `/tables/<slug>/edit` and can disable it. Every write goes through `src/lib/server/tables/write.ts`, which asks the policy first. The form is validated with Zod (`src/lib/tables/schema.ts`); anything the form does not list (`gmId`, `status`, `slug`) is dropped. The slug comes from the title (`mesa` if it has nothing usable), is numbered `-2`, `-3` on a collision, is never `new` or `edit`, retries if two creates race for it, and never changes when the title does. Each edit raises `ical_sequence` so calendar invites replace the old event.
 
-**Table images** are uploaded through the server: 2 MB at most, PNG, JPEG or WebP judged by the file's first bytes (never its name or the type the browser claims), and a random file name. They live in a Cloudflare R2 bucket (the `IMAGES` binding in `wrangler.jsonc`) and are served by the Worker at `/images/tables/<id>.<ext>`, cached for good because a name is never reused. Serving them ourselves keeps them on this origin, so there is no public bucket domain to set up and nothing to allow in the CSP. One-time setup, before the first deploy that has the binding: enable R2 in the Cloudflare dashboard (it needs a payment method on file; the free tier is 10 GB stored, 1M writes and 10M reads a month, and no egress fees), then `wrangler r2 bucket create table-images`. Tests never touch Cloudflare: unit tests hand `storeImage` and `serveImage` a stand-in bucket, and `wrangler dev`, `vite dev` and the e2e tests use a simulated bucket on disk, so there is nothing to set up. Replaced images are not deleted yet.
+**Table images** are uploaded through the server: 2 MB at most, PNG, JPEG or WebP judged by the file's first bytes (never its name or the type the browser claims), and a random file name. They live in a public Supabase Storage bucket, `table-images`. One-time setup in the Supabase SQL editor:
+
+```sql
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('table-images', 'table-images', true, 2097152, array['image/png', 'image/jpeg', 'image/webp'])
+on conflict (id) do nothing;
+
+create policy "signed-in users can upload table images" on storage.objects
+  for insert to authenticated with check (bucket_id = 'table-images');
+```
+
+Without it the form still works; only saving with an image fails, with a message on the image field. Replaced images are not deleted yet.
 
 **Row level security is on for every table, with no policies** (`.enableRLS()` in `schema.ts`, and a test that fails for any table in `public` without it). Supabase serves `public` over its REST API to anyone holding the publishable key, which is public, so RLS with no policy leaves that API nothing to read or write. The app is not affected: it connects as the database owner (Hyperdrive, or the Docker Postgres), which RLS does not apply to. A new table needs `.enableRLS()`; add a policy only for one that must be reachable through the Supabase API. After deploying a migration like this, run `pnpm db:migrate` against Supabase (step 4 below).
 

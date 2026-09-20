@@ -1,6 +1,9 @@
 import { Invalid } from './errors';
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+/** The Supabase Storage bucket table images go in. Public read; see the README for its setup. */
+export const IMAGE_BUCKET = 'table-images';
+
 const TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' } as const;
 type ImageType = keyof typeof TYPES;
 
@@ -36,63 +39,30 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
 	return { bytes, contentType, path: `tables/${crypto.randomUUID()}.${TYPES[contentType]}` };
 }
 
-/** The part of an R2 bucket that stores an image, so tests can stand in for it. */
+/** The part of a Supabase Storage bucket this needs, so tests can stand in for it. */
 export type ImageStorage = {
-	put(
-		key: string,
+	upload(
+		path: string,
 		body: Uint8Array,
-		options: { httpMetadata: { contentType: string }; onlyIf: { etagDoesNotMatch: string } }
-	): Promise<unknown>;
+		options: { contentType: string; upsert: boolean }
+	): PromiseLike<{ error: { message: string } | null }>;
 };
 
-/** The part of an R2 bucket that reads an image back. */
-export type ImageSource = {
-	get(key: string): Promise<{
-		body: ReadableStream;
-		httpEtag: string;
-		httpMetadata?: { contentType?: string };
-	} | null>;
-};
-
-/** Stores a prepared image and returns its path. Never overwrites an existing file. */
+/** Uploads a prepared image and returns its path. Never overwrites an existing file. */
 export async function storeImage(storage: ImageStorage, image: PreparedImage): Promise<string> {
-	try {
-		// `onlyIf` makes R2 answer null, instead of replacing the file, when the name is taken.
-		const stored = await storage.put(image.path, image.bytes, {
-			httpMetadata: { contentType: image.contentType },
-			onlyIf: { etagDoesNotMatch: '*' }
-		});
-		if (!stored) throw new Error('image already exists');
-	} catch {
-		throw new Invalid('image', 'upload_failed');
-	}
+	const { error } = await storage.upload(image.path, image.bytes, {
+		contentType: image.contentType,
+		upsert: false
+	});
+	if (error) throw new Invalid('image', 'upload_failed');
 
 	return image.path;
 }
 
-/** Where a stored image is served from: this site, by `/images/[...path]`. Null when there is none. */
-export const imageUrl = (path: string | null) => (path ? `/images/${path}` : null);
+/** The project URL from the Worker settings. It is not in the generated `Env` type until it is configured. */
+export const supabaseUrlOf = (env: unknown) =>
+	(env as { SUPABASE_URL?: string } | undefined)?.SUPABASE_URL;
 
-// Only what `prepareImage` makes: nothing else in the bucket is ever served.
-const SERVED_PATH = /^tables\/[0-9a-f-]{36}\.(png|jpg|webp)$/;
-
-/** A stored image as a response, or null if the name is not one we make or nothing is stored under it. */
-export async function serveImage(
-	bucket: ImageSource | undefined,
-	path: string
-): Promise<Response | null> {
-	if (!bucket || !SERVED_PATH.test(path)) return null;
-
-	const stored = await bucket.get(path);
-	if (!stored) return null;
-
-	return new Response(stored.body, {
-		headers: {
-			'content-type': stored.httpMetadata?.contentType ?? 'application/octet-stream',
-			etag: stored.httpEtag,
-			// The name is random and a file is never overwritten, so a browser can keep it for good.
-			'cache-control': 'public, max-age=31536000, immutable',
-			'x-content-type-options': 'nosniff'
-		}
-	});
-}
+/** The public URL of a stored image, or null when there is none or Supabase is not configured. */
+export const imageUrl = (supabaseUrl: string | undefined, path: string | null) =>
+	supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${IMAGE_BUCKET}/${path}` : null;
