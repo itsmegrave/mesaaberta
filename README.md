@@ -163,6 +163,18 @@ pnpm db:make-admin <user id>
 
 or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
 
+## Calendar invites
+
+`src/lib/server/calendar/ics.ts` turns a table into an `.ics` (iCalendar) string: `buildInvite({ table, method, attendee, organizer, baseUrl })`. It is pure (no I/O, no clock unless you pass `now`), and the invite email (#13) will call it.
+
+- **`REQUEST`** puts or updates the event; **`CANCEL`** removes it. The `UID` is the table id, so it never changes; every edit raises `SEQUENCE` (`ical_sequence`), and a calendar then replaces the event instead of adding one.
+- A **one-shot** is one event; a **campaign** is one recurring event (`RRULE:FREQ=WEEKLY`, optionally `INTERVAL=2`, and `UNTIL` in UTC as the standard requires for a zoned start). Only the rules the table form builds are accepted; anything else throws.
+- Times are `DTSTART;TZID=...` in the table's timezone, so a weekly 20:00 stays 20:00 across daylight-saving changes, and a `VTIMEZONE` gives the offsets to a client that does not know the zone. It lists the changes for the first three years from the first session; a recurring event that runs longer leans on the client knowing the zone by name (São Paulo has no changes, so it is one block).
+- **One recipient per file**, with a single `ATTENDEE`, so nobody sees another player's address. Build one per player.
+- **Escaping and folding:** text values escape `\`, `;`, `,` and line breaks; lines fold at 75 bytes without splitting a multi-byte character; the attendee name is quoted; an address, UID or recurrence that is not what this system produces throws instead of being written. Tests prove a newline in a title, description, extra info, slug or attendee name cannot add an attendee or an event, and an independent parser (`ical.js`) reads the output back.
+
+**Check it in real calendars by hand** (this is not automated): `pnpm calendar:sample you@example.com` writes three files to `sample-invites/` (a one-shot, a weekly campaign, and its cancellation). Open them, or attach them to an email to yourself, in Gmail, Outlook and Apple Calendar. Import the campaign request, then the cancel: the event should disappear.
+
 ## Registrations
 
 A signed-in player joins a table on its page. On an `auto` table the seat is confirmed at once; on an `approval` table the player _asks_ and the GM (or an admin) approves or declines. Only confirmed registrations take a seat: pending requests never do, so there can be more of them than seats. The GM or an admin can remove a player; a player can leave. The rules (not the GM, table active, not full, not already registered) are in the policy (`table:join`, `registration:manage`, `registration:leave`), and every operation is in `src/lib/server/registrations/service.ts`.
