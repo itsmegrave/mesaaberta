@@ -115,6 +115,33 @@ test.describe('table page', () => {
 		await expect(page.getByRole('link', { name: 'Editar mesa' })).toHaveCount(0);
 	});
 
+	test('asks an anonymous visitor to sign in to take a seat, and never shows the players', async ({
+		page
+	}) => {
+		await page.goto('/tables/mesa-do-dragao');
+
+		await expect(page.getByRole('link', { name: 'Entre para pegar uma vaga' })).toHaveAttribute(
+			'href',
+			/^\/login\?next=%2Ftables%2Fmesa-do-dragao$/
+		);
+		await expect(page.getByRole('button', { name: /pegar vaga|pedir vaga/i })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: 'Jogadores' })).toHaveCount(0);
+	});
+
+	test('joining without being signed in sends the visitor to log in and takes no seat', async ({
+		request,
+		baseURL
+	}) => {
+		const response = await request.post('/tables/mesa-do-dragao?/join', {
+			headers: { origin: baseURL!, accept: 'text/html' },
+			form: {},
+			maxRedirects: 0
+		});
+
+		expect(response.status()).toBe(303);
+		expect(response.headers()['location']).toBe('/login?next=%2Ftables%2Fmesa-do-dragao');
+	});
+
 	test('an unknown slug is the translated 404, with a way back', async ({ page }) => {
 		const response = await page.goto('/tables/nao-existe');
 

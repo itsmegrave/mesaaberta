@@ -1,0 +1,96 @@
+import { describe, expect, it, vi } from 'vitest';
+import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '../errors';
+import { runRegistrationAction } from './form-action';
+
+const setup = (over: { user?: boolean; db?: boolean } = {}) => {
+	const queued: ((db: unknown) => Promise<unknown>)[] = [];
+	const profile = { id: 'p1', role: 'member', status: 'active' };
+	const locals = {
+		getUser: async () => (over.user === false ? null : { id: 'p1' }),
+		getProfile: async () => (over.user === false ? null : profile),
+		db: over.db === false ? null : { fake: 'db' },
+		afterResponse: (task: (db: unknown) => Promise<unknown>) => queued.push(task)
+	} as unknown as App.Locals;
+	const url = new URL('https://x.test/tables/mesa');
+	const event = (fields: Record<string, string> = {}) => {
+		const body = new FormData();
+		for (const [k, v] of Object.entries(fields)) body.set(k, v);
+		return { locals, url, request: new Request(url, { method: 'POST', body }) };
+	};
+
+	return { event, queued, profile };
+};
+
+describe('runRegistrationAction', () => {
+	it('runs the operation as the signed-in player, then goes back to the page', async () => {
+		const { event, profile } = setup();
+		const run = vi.fn().mockResolvedValue({ eventIds: [] });
+
+		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+			status: 303,
+			location: '/tables/mesa'
+		});
+		expect(run).toHaveBeenCalledWith({ fake: 'db' }, profile, expect.any(FormData));
+	});
+
+	it('queues each event for dispatch after the response', async () => {
+		const { event, queued } = setup();
+
+		await runRegistrationAction(event(), async () => ({ eventIds: ['e1', 'e2'] })).catch(() => {});
+
+		expect(queued).toHaveLength(2);
+	});
+
+	it('sends an anonymous visitor to log in, and runs nothing', async () => {
+		const { event } = setup({ user: false });
+		const run = vi.fn();
+
+		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+			status: 303,
+			location: '/login?next=%2Ftables%2Fmesa'
+		});
+		expect(run).not.toHaveBeenCalled();
+	});
+
+	it('returns to the page, not to the action address, after logging in', async () => {
+		const { event } = setup({ user: false });
+		const e = event();
+		e.url = new URL('https://x.test/tables/mesa?/join');
+
+		await expect(runRegistrationAction(e, vi.fn())).rejects.toMatchObject({
+			location: '/login?next=%2Ftables%2Fmesa'
+		});
+	});
+
+	it.each([
+		[new TableFull(), 409, 'table_full'],
+		[new AlreadyRegistered(), 409, 'already_registered'],
+		[new Forbidden('x'), 403, 'forbidden'],
+		[new NotFound('x'), 404, 'not_found']
+	])('answers %s with a %i the page can show', async (error, status, code) => {
+		const { event, queued } = setup();
+
+		const result = await runRegistrationAction(event(), async () => {
+			throw error;
+		});
+
+		expect(result).toMatchObject({ status, data: { error: code } });
+		expect(queued).toHaveLength(0);
+	});
+
+	it('lets a real bug surface instead of hiding it as a permission problem', async () => {
+		const { event } = setup();
+
+		await expect(
+			runRegistrationAction(event(), async () => {
+				throw new TypeError('bug');
+			})
+		).rejects.toThrow('bug');
+	});
+
+	it('says the service is unavailable when there is no database', async () => {
+		const { event } = setup({ db: false });
+
+		await expect(runRegistrationAction(event(), vi.fn())).rejects.toMatchObject({ status: 503 });
+	});
+});

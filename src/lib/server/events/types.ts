@@ -8,7 +8,16 @@
 export type DomainEvent =
 	| { type: 'TableCreated'; payload: { tableId: string; slug: string; title: string } }
 	| { type: 'TableUpdated'; payload: { tableId: string; slug: string; title: string } }
-	| { type: 'TableDisabled'; payload: { tableId: string; slug: string; title: string } };
+	| { type: 'TableDisabled'; payload: { tableId: string; slug: string; title: string } }
+	// A player asked for a seat at a table that approves each one. Takes no seat.
+	| { type: 'JoinRequested'; payload: Registration }
+	| { type: 'JoinApproved'; payload: Registration }
+	| { type: 'JoinDeclined'; payload: Registration }
+	// A seat was confirmed: an automatic join, or an approval.
+	| { type: 'PlayerJoined'; payload: Registration }
+	| { type: 'PlayerLeft'; payload: Registration & { reason: 'left' | 'removed' } };
+
+type Registration = { tableId: string; slug: string; playerId: string };
 
 export type EventType = DomainEvent['type'];
 

@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { formatDuration, formatSession } from '$lib/tables/format';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	const table = $derived(data.table);
 	const locale = getLocale();
@@ -105,4 +106,104 @@
 	<p class="mt-8">
 		{table.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}
 	</p>
+
+	{#if form?.error}
+		<p role="alert" class="mt-4 max-w-[44ch] font-semibold text-red-800">
+			{form.error === 'table_full'
+				? m.table_error_full()
+				: form.error === 'already_registered'
+					? m.table_error_already()
+					: form.error === 'forbidden'
+						? m.table_error_forbidden()
+						: m.table_error_other()}
+		</p>
+	{/if}
+
+	<!-- What this visitor can do about a seat. The server checks it again on every action. -->
+	<div class="mt-6">
+		{#if data.isGm}
+			<p class="font-semibold">{m.table_you_are_gm()}</p>
+		{:else if !data.signedIn}
+			<a
+				href="{resolve('/login')}?next={encodeURIComponent(
+					localizedHref(`/tables/${table.slug}`, locale)
+				)}"
+				class="inline-block rounded bg-petrol px-5 py-3 font-semibold text-celadon"
+			>
+				{m.table_sign_in_to_join()}
+			</a>
+		{:else if data.myStatus === 'confirmed'}
+			<p class="font-semibold">{m.table_you_are_in()}</p>
+			<form method="POST" action="?/leave" class="mt-3">
+				<button type="submit" class="rounded border border-petrol px-5 py-3 font-semibold">
+					{m.table_leave()}
+				</button>
+			</form>
+		{:else if data.myStatus === 'pending'}
+			<p class="font-semibold">{m.table_request_pending()}</p>
+			<form method="POST" action="?/leave" class="mt-3">
+				<button type="submit" class="rounded border border-petrol px-5 py-3 font-semibold">
+					{m.table_cancel_request()}
+				</button>
+			</form>
+		{:else if data.canJoin}
+			<form method="POST" action="?/join">
+				<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-celadon">
+					{table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
+				</button>
+			</form>
+		{/if}
+	</div>
+
+	<!-- The GM's (and admins') view: who has a seat and who is asking. Names are not public. -->
+	{#if data.registrations}
+		{@const players = data.registrations.filter((r) => r.status === 'confirmed')}
+		{@const requests = data.registrations.filter((r) => r.status === 'pending')}
+
+		<section class="mt-12 max-w-2xl">
+			<h2 class="text-2xl font-semibold">{m.table_players()}</h2>
+			{#if players.length === 0}
+				<p class="mt-2">{m.table_no_players()}</p>
+			{:else}
+				<ul class="mt-3 grid gap-2">
+					{#each players as player (player.playerId)}
+						<li
+							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-white p-3"
+						>
+							<span>{player.displayName}</span>
+							<form method="POST" action="?/remove">
+								<input type="hidden" name="playerId" value={player.playerId} />
+								<button type="submit" class="font-semibold text-red-800">{m.table_remove()}</button>
+							</form>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+
+			{#if requests.length > 0}
+				<h2 class="mt-8 text-2xl font-semibold">{m.table_requests()}</h2>
+				<ul class="mt-3 grid gap-2">
+					{#each requests as request (request.playerId)}
+						<li
+							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-white p-3"
+						>
+							<span>{request.displayName}</span>
+							<span class="flex gap-4">
+								<form method="POST" action="?/approve">
+									<input type="hidden" name="playerId" value={request.playerId} />
+									<button type="submit" class="font-semibold">{m.table_approve()}</button>
+								</form>
+								<form method="POST" action="?/decline">
+									<input type="hidden" name="playerId" value={request.playerId} />
+									<button type="submit" class="font-semibold text-red-800"
+										>{m.table_decline()}</button
+									>
+								</form>
+							</span>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</section>
+	{/if}
 </article>

@@ -1,15 +1,13 @@
-import { and, eq, type SQL } from 'drizzle-orm';
+import { and, eq, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, profiles, systems } from '../db/schema';
+import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { nextOccurrence, weeklyInterval } from './schedule';
 
-/**
- * Seats still free. `taken` is the number of confirmed registrations; until registrations exist
- * (#11) nobody can have joined, so every table has all its seats.
- */
+/** Seats still free: the capacity minus the confirmed registrations. */
 export const seatsLeft = (capacity: number, taken = 0) => Math.max(0, capacity - taken);
 
 const columns = {
+	id: gameTables.id,
 	slug: gameTables.slug,
 	title: gameTables.title,
 	kind: gameTables.kind,
@@ -25,6 +23,8 @@ const columns = {
 	joinMode: gameTables.joinMode,
 	systemName: systems.name,
 	systemSlug: systems.slug,
+	// Seats taken: confirmed registrations only. A pending request takes none.
+	taken: sql<number>`(select count(*)::int from ${registrations} where ${registrations.tableId} = ${gameTables.id} and ${registrations.status} = 'confirmed')`,
 	gmName: profiles.displayName,
 	gmId: gameTables.gmId
 };
@@ -47,7 +47,7 @@ const shape = (row: Row, now: Date) => {
 	return {
 		...table,
 		system: { name: systemName, slug: systemSlug },
-		seatsLeft: seatsLeft(row.capacity),
+		seatsLeft: seatsLeft(row.capacity, row.taken),
 		// Weeks between sessions for a weekly campaign; null for a one-shot.
 		everyWeeks: row.kind === 'campaign' ? weeklyInterval(row.recurrence) : null,
 		nextAt: nextOccurrence(row, now)

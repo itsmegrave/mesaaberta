@@ -80,7 +80,21 @@ export default defineConfig({
 					testTimeout: 20_000,
 					hookTimeout: 20_000,
 					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}', 'src/**/*.integration.spec.ts']
+				}
+			},
+
+			{
+				// Needs a real Postgres (DATABASE_URL): `pnpm test:integration`.
+				extends: './vite.config.ts',
+				test: {
+					name: 'integration',
+					environment: 'node',
+					include: ['src/**/*.integration.spec.ts'],
+					testTimeout: 30_000,
+					hookTimeout: 30_000,
+					// One file at a time: they share the database.
+					fileParallelism: false
 				}
 			}
 		]

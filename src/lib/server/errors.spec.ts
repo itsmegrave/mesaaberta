@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Forbidden, Invalid, NotFound, failFrom } from './errors';
+import { AlreadyRegistered, Forbidden, Invalid, NotFound, TableFull, failFrom } from './errors';
 
 describe('failFrom', () => {
 	it('turns Forbidden into a 403 form failure', () => {
@@ -13,6 +13,14 @@ describe('failFrom', () => {
 		expect(failFrom(new NotFound('table'))).toMatchObject({
 			status: 404,
 			data: { error: 'not_found' }
+		});
+	});
+
+	it('turns a full table and a repeat join into 409s, so they read as conflicts and not permissions', () => {
+		expect(failFrom(new TableFull())).toMatchObject({ status: 409, data: { error: 'table_full' } });
+		expect(failFrom(new AlreadyRegistered())).toMatchObject({
+			status: 409,
+			data: { error: 'already_registered' }
 		});
 	});
 
