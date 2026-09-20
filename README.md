@@ -165,6 +165,12 @@ pnpm db:make-admin <user id>
 
 or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
 
+## Ratings
+
+A player who had a **confirmed** seat rates the table and its GM (1 to 5 each, and an optional comment) once the **first session has ended**; the GM cannot rate their own table. The rules are one policy function, `rateBlocker` (`table:rate`), and the service is `src/lib/server/ratings/service.ts`. A rating can be edited later (one per player, the latest wins) and records `RatingSubmitted`, with no scores or comment in the event. It is tied to the registration by a foreign key with `ON DELETE CASCADE`, so a player who leaves or is removed takes their rating with them.
+
+Averages are **computed by a query, never stored**: `tableRating` for a table and `gmRating` across all of a GM's tables. The table page shows both averages (with how many ratings) to everyone; a comment is only ever sent back to its author. The form is native radio buttons, not Melt UI: Melt's popover-style builders need inline styles the CSP blocks (see the sign-in notes), and radios need none.
+
 ## Calendar invites
 
 `src/lib/server/calendar/ics.ts` turns a table into an `.ics` (iCalendar) string: `buildInvite({ table, method, attendee, organizer, baseUrl })`. It is pure (no I/O, no clock unless you pass `now`), and the invite email (#13) will call it.

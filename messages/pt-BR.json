@@ -132,5 +132,20 @@
 	"table_error_full": "A mesa lotou. Você pode tentar de novo se abrir uma vaga.",
 	"table_error_already": "Você já tem um lugar nesta mesa.",
 	"table_error_forbidden": "Você não tem permissão para fazer isso.",
-	"table_error_other": "Não deu certo. Tente de novo."
+	"table_error_other": "Não deu certo. Tente de novo.",
+	"rating_table_average": "Nota da mesa",
+	"rating_gm_average": "Nota do mestre",
+	"rating_count": "{count} avaliações",
+	"rating_count_one": "1 avaliação",
+	"rating_title": "Avalie esta mesa",
+	"rating_lede": "Você jogou. Conte como foi: a nota do mestre e a da mesa ficam visíveis para todos, o comentário não.",
+	"rating_the_table": "A mesa",
+	"rating_the_gm": "O mestre",
+	"rating_score_label": "{score} de 5",
+	"rating_comment": "Comentário (opcional)",
+	"rating_submit": "Enviar avaliação",
+	"rating_update": "Atualizar avaliação",
+	"rating_saved": "Sua avaliação está salva. Você pode mudá-la quando quiser.",
+	"table_error_too_early": "Você poderá avaliar depois que a primeira sessão terminar.",
+	"table_error_invalid": "Escolha uma nota de 1 a 5 para a mesa e para o mestre."
 }

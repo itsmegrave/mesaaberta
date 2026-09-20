@@ -126,6 +126,7 @@ test.describe('table page', () => {
 		);
 		await expect(page.getByRole('button', { name: /pegar vaga|pedir vaga/i })).toHaveCount(0);
 		await expect(page.getByRole('heading', { name: 'Jogadores' })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: 'Avalie esta mesa' })).toHaveCount(0);
 	});
 
 	test('joining without being signed in sends the visitor to log in and takes no seat', async ({

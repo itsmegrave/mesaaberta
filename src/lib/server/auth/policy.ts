@@ -23,6 +23,12 @@ type Resources = {
 		seatsLeft: number;
 		alreadyRegistered: boolean;
 	};
+	/** Rating a table and its GM: needs a confirmed seat and a first session that has ended. */
+	'table:rate': {
+		gmId: string;
+		registration: 'pending' | 'confirmed' | null;
+		firstSessionEnded: boolean;
+	};
 	/** Approve or decline a request, or remove a player. */
 	'registration:manage': { gmId: string };
 	/** A player leaving their own registration. */
@@ -57,12 +63,28 @@ export function joinBlocker(
 	return null;
 }
 
+/**
+ * Why this actor may not rate, or null if they may: a confirmed registration, not the GM, and the
+ * first session has ended (you rate what you played).
+ */
+export function rateBlocker(
+	actor: Actor | null,
+	facts: Resources['table:rate'] | undefined
+): 'forbidden' | 'not_registered' | 'too_early' | null {
+	if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
+	if (facts.registration !== 'confirmed') return 'not_registered';
+	if (!facts.firstSessionEnded) return 'too_early';
+
+	return null;
+}
+
 const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean } = {
 	// Any signed-in user can open a table and becomes its GM.
 	'table:create': () => true,
 	'table:edit': isGmOrAdmin,
 	'table:disable': isGmOrAdmin,
 	'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
+	'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,
 	'registration:manage': isGmOrAdmin,
 	'registration:leave': (actor, registration) =>
 		registration !== undefined && actor.id === registration.playerId
