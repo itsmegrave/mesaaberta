@@ -32,6 +32,11 @@ const timestamps = {
 		.$onUpdate(() => new Date())
 };
 
+// Every table turns row level security on, with no policy. Supabase serves the `public` schema over
+// its REST API to anyone with the (public) publishable key; RLS with no policy leaves that API with
+// nothing to read or write. The app is not affected: it connects as the database owner, which RLS
+// does not apply to. Add a policy here only for a table that should be reachable through that API.
+
 export const profiles = pgTable('profiles', {
 	// The Supabase auth user id. Not a foreign key: Supabase owns the `auth` schema.
 	id: uuid('id').primaryKey(),
@@ -40,7 +45,7 @@ export const profiles = pgTable('profiles', {
 	role: profileRole('role').notNull().default('member'),
 	status: profileStatus('status').notNull().default('active'),
 	...timestamps
-});
+}).enableRLS();
 
 // The RPG systems (D&D 5e, Tormenta 20, ...). They double as the categories tables are browsed by,
 // so each has a slug for its URL. The rows come from a migration; add one with a new migration.
@@ -58,7 +63,7 @@ export const systems = pgTable(
 		uniqueIndex('systems_slug_unique').on(system.slug),
 		uniqueIndex('systems_name_unique').on(system.name)
 	]
-);
+).enableRLS();
 
 export const gameTables = pgTable(
 	'game_tables',
@@ -101,7 +106,7 @@ export const gameTables = pgTable(
 		check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
 		check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`)
 	]
-);
+).enableRLS();
 
 // The transactional outbox and the audit log in one table. A row is written in the same transaction
 // as the change it describes, then dispatched to handlers after the commit; a sweeper retries what
@@ -138,7 +143,7 @@ export const events = pgTable(
 			.where(sql`${event.processedAt} IS NULL AND ${event.failedAt} IS NULL`),
 		index('events_actor_idx').on(event.actorId, event.createdAt)
 	]
-);
+).enableRLS();
 
 // A player's place at a table. Only `confirmed` rows take a seat, get invites and can rate. A
 // declined request, a player who leaves and a player who is removed are deleted: the record of it is
@@ -159,7 +164,7 @@ export const registrations = pgTable(
 		primaryKey({ columns: [registration.tableId, registration.playerId] }),
 		index('registrations_player_idx').on(registration.playerId)
 	]
-);
+).enableRLS();
 
 // What a player thought of a table and of its GM, once they had played. One per registration, and it
 // goes with it: a player who is removed takes their rating with them (cascade). A GM's average is
@@ -186,4 +191,4 @@ export const ratings = pgTable(
 		check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
 		index('ratings_table_idx').on(rating.tableId)
 	]
-);
+).enableRLS();
