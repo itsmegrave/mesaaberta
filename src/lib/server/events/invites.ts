@@ -12,8 +12,20 @@ export type InviteEnv = {
 	RESEND_API_KEY?: string;
 	RESEND_FROM?: string;
 	SUPABASE_URL?: string;
+	/** A Supabase secret key (`sb_secret_...`). It bypasses RLS: server-only. */
+	SUPABASE_SECRET_KEY?: string;
+	/** The legacy `service_role` key, still accepted until Supabase retires it (end of 2026). */
 	SUPABASE_SERVICE_ROLE_KEY?: string;
 	APP_ORIGIN?: string;
+};
+
+/** What the handler needs once `inviteHandler` has checked the environment and picked the admin key. */
+type InviteConfig = {
+	RESEND_API_KEY: string;
+	RESEND_FROM: string;
+	SUPABASE_URL: string;
+	SUPABASE_SECRET_KEY: string;
+	APP_ORIGIN: string;
 };
 
 type Recipient = { id: string; displayName: string };
@@ -84,9 +96,9 @@ async function recipientsFor(
  * the first attempt reached Resend before the Worker stopped.
  */
 export function createInviteHandler(
-	env: Required<InviteEnv>,
+	env: InviteConfig,
 	request: typeof fetch = fetch,
-	admin: SupabaseAdmin = createSupabaseAdmin(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY),
+	admin: SupabaseAdmin = createSupabaseAdmin(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY),
 	mailer: Mailer = resendMailer(env, request)
 ): Handler {
 	return {
@@ -159,15 +171,14 @@ export function createInviteHandler(
 
 /** No secrets in local development means no handler; events still complete as audit rows. */
 export function inviteHandler(env: InviteEnv | undefined): Handler | null {
-	if (
-		!env?.RESEND_API_KEY ||
-		!env.RESEND_FROM ||
-		!env.SUPABASE_URL ||
-		!env.SUPABASE_SERVICE_ROLE_KEY
-	)
-		return null;
+	const secretKey = env?.SUPABASE_SECRET_KEY || env?.SUPABASE_SERVICE_ROLE_KEY;
+	if (!env?.RESEND_API_KEY || !env.RESEND_FROM || !env.SUPABASE_URL || !secretKey) return null;
+
 	return createInviteHandler({
-		...env,
+		RESEND_API_KEY: env.RESEND_API_KEY,
+		RESEND_FROM: env.RESEND_FROM,
+		SUPABASE_URL: env.SUPABASE_URL,
+		SUPABASE_SECRET_KEY: secretKey,
 		APP_ORIGIN: env.APP_ORIGIN || 'https://mesaaberta.app'
-	} as Required<InviteEnv>);
+	});
 }

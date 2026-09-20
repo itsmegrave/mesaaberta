@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 /**
  * The only privileged Auth operation email notifications need. Keeping this narrow prevents a
- * service-role client from spreading through application code.
+ * privileged client from spreading through application code.
  */
 export type SupabaseAdmin = {
 	auth: {
@@ -16,12 +16,13 @@ export type SupabaseAdmin = {
 };
 
 /**
- * A server-only Supabase client for Auth Admin operations. The service-role key bypasses RLS, so
- * this module must only be imported from `$lib/server` code and the client deliberately exposes
- * no general database or storage API.
+ * A server-only Supabase client for Auth Admin operations. `secretKey` is a Supabase secret key
+ * (`sb_secret_...`; the legacy `service_role` key also works). It bypasses RLS, so this module must
+ * only be imported from `$lib/server` code and the client deliberately exposes no general database
+ * or storage API.
  */
-export function createSupabaseAdmin(url: string, serviceRoleKey: string): SupabaseAdmin {
-	return createClient(url, serviceRoleKey, {
+export function createSupabaseAdmin(url: string, secretKey: string): SupabaseAdmin {
+	return createClient(url, secretKey, {
 		auth: {
 			autoRefreshToken: false,
 			persistSession: false,
