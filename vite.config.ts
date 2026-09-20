@@ -39,7 +39,11 @@ export default defineConfig({
 						'https://lh3.googleusercontent.com',
 						'https://cdn.discordapp.com',
 						// Table images, from the project's Supabase Storage bucket.
-						'https://*.supabase.co'
+						'https://*.supabase.co',
+						// The e2e build adds the local Supabase (see playwright.config.ts). Never set in production.
+						...(process.env.CSP_EXTRA_IMG_SRC
+							? [process.env.CSP_EXTRA_IMG_SRC as `http://${string}.${string}`]
+							: [])
 					],
 					'font-src': ['self'],
 					'connect-src': ['self'],

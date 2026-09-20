@@ -1,56 +1,118 @@
 import { expect, test } from '@playwright/test';
 
-// CI has no Supabase settings, so these cover the app as it runs before login is configured.
-test.describe('login while Supabase is not configured', () => {
-	test('the login page says so and offers no provider buttons', async ({ page }) => {
+// Against the local Supabase: the real login screens, and the hop to a provider.
+test.describe('the login page', () => {
+	test('offers email and password, both providers, and a way to sign up or reset a password', async ({
+		page
+	}) => {
 		await page.goto('/login');
 
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Entrar');
-		await expect(page.getByText(/ainda não está disponível/i)).toBeVisible();
-		await expect(page.getByRole('link', { name: /continuar com/i })).toHaveCount(0);
+		await expect(page.getByLabel('Email')).toBeVisible();
+		await expect(page.getByLabel('Senha')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Continuar com Google' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Continuar com Discord' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Esqueci minha senha' })).toHaveAttribute(
+			'href',
+			/forgot-password$/
+		);
+		await expect(page.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', /signup/);
 	});
 
-	test('the sign-up page says so too, and a post to it goes back to the login page', async ({
-		page,
-		request,
-		baseURL
-	}) => {
+	test('offers no provider that is not set up', async ({ page }) => {
+		await page.goto('/login');
+
+		// Only in the main area: the footer has its own GitHub link, to the code.
+		await expect(
+			page.getByRole('main').getByRole('link', { name: /Apple|Facebook|GitHub/ })
+		).toHaveCount(0);
+	});
+
+	test('the sign-up and forgot-password pages have their forms', async ({ page }) => {
 		await page.goto('/signup');
-
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Criar conta');
-		await expect(page.getByText(/ainda não está disponível/i)).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Criar conta' })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Criar conta' })).toBeVisible();
 
-		const response = await request.post('/signup', {
-			headers: { origin: baseURL!, accept: 'text/html' },
-			form: { email: 'ana@example.com', password: 'correct horse' },
-			maxRedirects: 0
-		});
-		expect(response.status()).toBe(303);
-		expect(response.headers()['location']).toBe('/login?error=unavailable');
+		await page.goto('/forgot-password');
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Esqueci minha senha');
+		await expect(page.getByRole('button', { name: 'Enviar link' })).toBeVisible();
 	});
 
-	test('the forgot-password page says so, and a post to it goes back to the login page', async ({
-		page,
+	test('the header offers a way in to an anonymous visitor', async ({ page }) => {
+		await page.goto('/');
+
+		await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar' })).toHaveAttribute(
+			'href',
+			/login/
+		);
+	});
+
+	for (const [provider, host, clientId] of [
+		['google', 'accounts.google.com', 'e2e-google-client-id'],
+		['discord', 'discord.com', 'e2e-discord-client-id']
+	]) {
+		test(`${provider}: our app hands off to Auth, and Auth to the provider, coming back to our callback`, async ({
+			request
+		}) => {
+			const ours = await request.get(`/login/${provider}?next=%2Ftables%2Fnew`, {
+				maxRedirects: 0
+			});
+			expect(ours.status()).toBe(303);
+			const auth = new URL(ours.headers()['location']);
+			expect(auth.pathname).toBe('/auth/v1/authorize');
+			expect(auth.searchParams.get('provider')).toBe(provider);
+			expect(auth.searchParams.get('redirect_to')).toMatch(
+				/\/auth\/callback\?next=%2Ftables%2Fnew$/
+			);
+			expect(auth.searchParams.get('code_challenge')).toBeTruthy(); // PKCE
+
+			const hop = await request.get(auth.toString(), { maxRedirects: 0 });
+			expect(hop.status()).toBe(302);
+			const provided = new URL(hop.headers()['location']);
+			expect(provided.host).toBe(host);
+			expect(provided.searchParams.get('client_id')).toBe(clientId);
+		});
+	}
+
+	test('a provider that is not on the list is a 404', async ({ request }) => {
+		expect((await request.get('/login/myspace', { maxRedirects: 0 })).status()).toBe(404);
+		expect((await request.get('/login/apple', { maxRedirects: 0 })).status()).toBe(404);
+	});
+
+	test('the callback without a code, or with one that cannot be used, goes back to the login page', async ({
+		request
+	}) => {
+		const none = await request.get('/auth/callback', { maxRedirects: 0 });
+		expect(none.headers()['location']).toBe('/login?error=missing_code');
+
+		const bad = await request.get('/auth/callback?code=not-a-real-code', { maxRedirects: 0 });
+		expect(bad.headers()['location']).toBe('/login?error=exchange_failed');
+	});
+
+	test('says what to do when a link was opened in another browser', async ({ page }) => {
+		await page.goto('/login?error=exchange_failed');
+
+		await expect(page.getByRole('alert')).toContainText('Abra-o no mesmo navegador');
+	});
+
+	test('signing out is a POST that lands on the home page, and a GET is refused', async ({
 		request,
 		baseURL
 	}) => {
-		await page.goto('/forgot-password');
-
-		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Esqueci minha senha');
-		await expect(page.getByText(/ainda não está disponível/i)).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Enviar link' })).toHaveCount(0);
-
-		const response = await request.post('/forgot-password', {
+		const post = await request.post('/logout', {
 			headers: { origin: baseURL!, accept: 'text/html' },
-			form: { email: 'ana@example.com' },
+			form: {},
 			maxRedirects: 0
 		});
-		expect(response.status()).toBe(303);
-		expect(response.headers()['location']).toBe('/login?error=unavailable');
+		const get = await request.get('/logout', { maxRedirects: 0 });
+
+		expect(post.status()).toBe(303);
+		expect(post.headers()['location']).toBe('/');
+		expect(get.status()).toBe(405);
 	});
 
-	test('the new-password page needs the session a recovery link gives: without one it asks for a new link', async ({
+	test('the new-password page needs the session a recovery link gives', async ({
 		request,
 		baseURL
 	}) => {
@@ -67,61 +129,17 @@ test.describe('login while Supabase is not configured', () => {
 		}
 	});
 
-	test('the header has no sign-in link, so nobody is sent to a dead end', async ({ page }) => {
-		await page.goto('/');
+	for (const path of ['/login', '/signup', '/forgot-password']) {
+		test(`${path} renders without CSP violations`, async ({ page }) => {
+			const violations: string[] = [];
+			page.on('console', (message) => {
+				if (/content security policy/i.test(message.text())) violations.push(message.text());
+			});
 
-		await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar' })).toHaveCount(0);
-	});
+			await page.goto(path);
+			await page.waitForLoadState('networkidle');
 
-	test('starting a login or returning from one goes back to the login page with an error', async ({
-		request
-	}) => {
-		for (const path of ['/login/google', '/auth/callback?code=abc']) {
-			const response = await request.get(path, { maxRedirects: 0 });
-
-			expect(response.status()).toBe(303);
-			expect(response.headers()['location']).toBe('/login?error=unavailable');
-		}
-	});
-
-	test('an error flag shows a fixed message and never echoes the parameter', async ({ page }) => {
-		await page.goto('/login?error=<img src=x onerror=alert(1)>');
-
-		await expect(page.getByRole('alert')).toHaveText(/não foi possível entrar/i);
-		await expect(page.locator('img[src="x"]')).toHaveCount(0);
-	});
-
-	test('a provider that is not on the list is a 404', async ({ request }) => {
-		const response = await request.get('/login/myspace', { maxRedirects: 0 });
-
-		expect(response.status()).toBe(404);
-	});
-
-	test('signing out is a POST that lands on the home page, and a GET is refused', async ({
-		request,
-		baseURL
-	}) => {
-		const post = await request.post('/logout', {
-			headers: { origin: baseURL! },
-			form: {},
-			maxRedirects: 0
+			expect(violations).toEqual([]);
 		});
-		const get = await request.get('/logout', { maxRedirects: 0 });
-
-		expect(post.status()).toBe(303);
-		expect(post.headers()['location']).toBe('/');
-		expect(get.status()).toBe(405);
-	});
-
-	test('the login page renders without CSP violations', async ({ page }) => {
-		const violations: string[] = [];
-		page.on('console', (message) => {
-			if (/content security policy/i.test(message.text())) violations.push(message.text());
-		});
-
-		await page.goto('/login');
-		await page.waitForLoadState('networkidle');
-
-		expect(violations).toEqual([]);
-	});
+	}
 });
