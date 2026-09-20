@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-svelte';
 import Layout from './+layout.svelte';
 
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
-const signedOut = { authEnabled: false, account: null };
+const signedOut = { authEnabled: false, released: false, account: null };
 
 describe('+layout.svelte', () => {
 	it('skip link targets the id of the main region', async () => {
@@ -46,6 +46,24 @@ describe('+layout.svelte', () => {
 		});
 	});
 
+	describe('tables link', () => {
+		it('is hidden until the platform is released, so nobody is sent to an unfinished page', async () => {
+			render(Layout, { children, data: signedOut });
+
+			await expect
+				.element(page.getByRole('banner').getByRole('link', { name: 'Mesas' }))
+				.not.toBeInTheDocument();
+		});
+
+		it('appears once it is released', async () => {
+			render(Layout, { children, data: { ...signedOut, released: true } });
+
+			await expect
+				.element(page.getByRole('banner').getByRole('link', { name: 'Mesas' }))
+				.toHaveAttribute('href', '/tables');
+		});
+	});
+
 	describe('account area', () => {
 		const banner = () => page.getByRole('banner');
 
@@ -56,7 +74,7 @@ describe('+layout.svelte', () => {
 		});
 
 		it('offers sign-in to an anonymous visitor once login is configured', async () => {
-			render(Layout, { children, data: { authEnabled: true, account: null } });
+			render(Layout, { children, data: { authEnabled: true, released: false, account: null } });
 
 			await expect
 				.element(banner().getByRole('link', { name: 'Entrar' }))
@@ -66,7 +84,11 @@ describe('+layout.svelte', () => {
 		it('shows the signed-in name, and reveals sign-out only when the menu is opened', async () => {
 			render(Layout, {
 				children,
-				data: { authEnabled: true, account: { displayName: 'Ana Souza', avatarUrl: null } }
+				data: {
+					authEnabled: true,
+					released: false,
+					account: { displayName: 'Ana Souza', avatarUrl: null }
+				}
 			});
 
 			const menu = banner().getByText('Ana Souza');
@@ -81,7 +103,11 @@ describe('+layout.svelte', () => {
 		it('signs out with a POST to /logout, never a link', async () => {
 			render(Layout, {
 				children,
-				data: { authEnabled: true, account: { displayName: 'Ana Souza', avatarUrl: null } }
+				data: {
+					authEnabled: true,
+					released: false,
+					account: { displayName: 'Ana Souza', avatarUrl: null }
+				}
 			});
 			await banner().getByText('Ana Souza').click();
 

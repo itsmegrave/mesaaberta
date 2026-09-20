@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { asset, resolve } from '$app/paths';
+	import { navigating } from '$app/state';
 	import AccountMenu from '$lib/components/AccountMenu.svelte';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
@@ -30,14 +31,35 @@
 		Mesa Aberta
 	</a>
 
-	{#if data.account}
-		<AccountMenu name={data.account.displayName} avatarUrl={data.account.avatarUrl} />
-	{:else if data.authEnabled}
-		<a href={resolve('/login')} class="rounded px-3 py-2 font-semibold hover:bg-petrol/10">
-			{m.nav_sign_in()}
-		</a>
-	{/if}
+	<nav class="flex items-center gap-2" aria-label={m.nav_main()}>
+		{#if data.released}
+			<a
+				href={localizedHref('/tables', locale)}
+				class="rounded px-3 py-2 font-semibold hover:bg-petrol/10"
+			>
+				{m.nav_tables()}
+			</a>
+		{/if}
+
+		{#if data.account}
+			<AccountMenu name={data.account.displayName} avatarUrl={data.account.avatarUrl} />
+		{:else if data.authEnabled}
+			<a href={resolve('/login')} class="rounded px-3 py-2 font-semibold hover:bg-petrol/10">
+				{m.nav_sign_in()}
+			</a>
+		{/if}
+	</nav>
 </header>
+
+<!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
+{#if navigating.to}
+	<p
+		role="status"
+		class="fixed inset-x-0 top-0 z-20 bg-petrol px-4 py-1 text-center text-sm text-celadon"
+	>
+		{m.nav_loading()}
+	</p>
+{/if}
 
 <main id="main" class="mx-auto w-full max-w-6xl px-4 pb-16 md:px-8">
 	{@render children()}
