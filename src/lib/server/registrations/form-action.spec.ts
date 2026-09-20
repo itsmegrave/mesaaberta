@@ -33,6 +33,25 @@ describe('runRegistrationAction', () => {
 		expect(run).toHaveBeenCalledWith({ fake: 'db' }, profile, expect.any(FormData));
 	});
 
+	it('goes back to the page named in `next`, such as the dashboard the form was posted from', async () => {
+		const { event } = setup();
+
+		await expect(
+			runRegistrationAction(event({ next: '/account/tables' }), async () => ({ eventIds: [] }))
+		).rejects.toMatchObject({ status: 303, location: '/account/tables' });
+	});
+
+	it.each(['https://evil.example/', '//evil.example', '/\\evil.example'])(
+		'ignores a `next` that leaves the site: %j',
+		async (next) => {
+			const { event } = setup();
+
+			await expect(
+				runRegistrationAction(event({ next }), async () => ({ eventIds: [] }))
+			).rejects.toMatchObject({ status: 303, location: '/tables/mesa' });
+		}
+	);
+
 	it('queues each event for dispatch after the response', async () => {
 		const { event, queued } = setup();
 
