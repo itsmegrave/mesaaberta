@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { buildInvite, type CalendarTable } from '../src/lib/server/calendar/ics.ts';
 
 const email = process.argv[2] ?? 'voce@example.com';
-const organizer = { email: 'convites@mesaaberta.app', name: 'Mesa Aberta' };
+const organizer = { email: 'no-reply@mesaaberta.app', name: 'Mesa Aberta' };
 const baseUrl = 'https://mesaaberta.app';
 
 const oneShot: CalendarTable = {

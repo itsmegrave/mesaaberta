@@ -14,7 +14,7 @@ DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
 # Calendar invite e-mail (Trello #13). Keep these secrets out of wrangler.jsonc and set them with
 # `wrangler secret put` in production. The handler is disabled until the first four are present.
 # RESEND_API_KEY=re_...
-# RESEND_FROM=Mesa Aberta <convites@mesaaberta.app>
+# RESEND_FROM=Mesa Aberta <no-reply@mesaaberta.app>
 # A Supabase secret key (Project Settings > API Keys), not the legacy service_role key.
 # SUPABASE_SECRET_KEY=sb_secret_...
 # APP_ORIGIN=https://mesaaberta.app

@@ -17,8 +17,9 @@
 	"vars": {
 		"GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
 		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
-		"SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
-		"SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl"
+		"RESEND_FROM": "no-reply@mesaaberta.app",
+		"SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl",
+		"SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co"
 	},
 	// The database, through Hyperdrive (see "Database" in the README). The id is the Hyperdrive config,
 	// not a secret. `localConnectionString` is what `wrangler dev`, `vite dev` and CI use instead:
@@ -36,7 +37,7 @@
 	"workers_dev": true,
 	"preview_urls": true,
 	"observability": {
-		"enabled": false,
+		"enabled": true,
 		"head_sampling_rate": 1,
 		"redact_query_string": false,
 		"logs": {

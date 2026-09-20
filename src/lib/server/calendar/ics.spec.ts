@@ -18,7 +18,7 @@ const table: CalendarTable = {
 };
 
 const base = {
-	organizer: { email: 'convites@mesaaberta.app', name: 'Mesa Aberta' },
+	organizer: { email: 'no-reply@mesaaberta.app', name: 'Mesa Aberta' },
 	baseUrl: 'https://mesaaberta.app',
 	now: new Date('2026-10-01T12:00:00Z')
 };
@@ -198,7 +198,7 @@ describe('who sees whom', () => {
 	it('names the organizer as the sender address, not a player', () => {
 		expect(named(invite(), 'ORGANIZER')).toEqual([
 			// Quotes are only needed when a name has a `;`, `:` or `,` (they are added then).
-			'ORGANIZER;CN=Mesa Aberta:mailto:convites@mesaaberta.app'
+			'ORGANIZER;CN=Mesa Aberta:mailto:no-reply@mesaaberta.app'
 		]);
 	});
 });
