@@ -10,7 +10,8 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 	use: { baseURL: `http://localhost:${port}`, trace: 'retain-on-failure' },
 	webServer: {
-		command: 'pnpm run build && pnpm run preview',
+		// Login switched off: these tests cover the app as it runs before login is configured.
+		command: 'pnpm run build && pnpm run preview:e2e',
 		port,
 		reuseExistingServer: !process.env.CI
 	},

@@ -9,12 +9,16 @@
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
 	},
-	// Public by design: the GrowthBook client key only allows reading feature flags.
-	// SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are not here on purpose: CI builds without them so the
-	// e2e tests cover the app before login is configured. Pass them at deploy time (see "Sign-in").
+	// Public by design: the GrowthBook client key only allows reading feature flags, and the Supabase
+	// URL and publishable key only identify the project (every visitor's browser is sent them anyway).
+	// They live here, not only on a `wrangler deploy --var` command, because a Git-triggered deploy
+	// replaces any variable that is not in this file. The e2e tests blank the two Supabase ones (see
+	// `preview:e2e`) so they keep covering the app before login is configured.
 	"vars": {
 		"GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
-		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o"
+		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
+		"SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
+		"SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl"
 	},
 	// The database, through Hyperdrive (see "Database" in the README). The id is the Hyperdrive config,
 	// not a secret. `localConnectionString` is what `wrangler dev`, `vite dev` and CI use instead:
