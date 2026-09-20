@@ -24,3 +24,42 @@ export function parseCredentials(
 	for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.code;
 	return { ok: false, errors };
 }
+
+const emailForm = z.object({ email: z.string().trim().toLowerCase().pipe(z.email()) });
+
+/** Validates the "forgot my password" form: just an email. */
+export function parseEmail(
+	data: FormData
+): { ok: true; data: { email: string } } | { ok: false; errors: { email?: string } } {
+	const parsed = emailForm.safeParse(Object.fromEntries(data));
+	if (parsed.success) return { ok: true, data: parsed.data };
+
+	return { ok: false, errors: { email: parsed.error.issues[0].code } };
+}
+
+const newPasswordForm = z
+	.object({
+		password: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH),
+		passwordConfirm: z.string()
+	})
+	.superRefine((value, ctx) => {
+		if (value.password !== value.passwordConfirm) {
+			ctx.addIssue({ code: 'custom', message: 'mismatch', path: ['passwordConfirm'] });
+		}
+	});
+
+/** Validates the "choose a new password" form: 8 to 72 characters, typed twice the same way. */
+export function parseNewPassword(
+	data: FormData
+):
+	| { ok: true; data: { password: string } }
+	| { ok: false; errors: { password?: string; passwordConfirm?: string } } {
+	const parsed = newPasswordForm.safeParse(Object.fromEntries(data));
+	if (parsed.success) return { ok: true, data: { password: parsed.data.password } };
+
+	const errors: Record<string, string> = {};
+	for (const issue of parsed.error.issues) {
+		errors[String(issue.path[0])] ??= issue.code === 'custom' ? issue.message : issue.code;
+	}
+	return { ok: false, errors };
+}
