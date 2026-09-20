@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Forbidden, NotFound, failFrom } from './errors';
+import { Forbidden, Invalid, NotFound, failFrom } from './errors';
 
 describe('failFrom', () => {
 	it('turns Forbidden into a 403 form failure', () => {
@@ -14,6 +14,13 @@ describe('failFrom', () => {
 			status: 404,
 			data: { error: 'not_found' }
 		});
+	});
+
+	it('turns Invalid into a 400 that names the field, and nothing else', () => {
+		const failure = failFrom(new Invalid('systemSlug', 'no such system: x'));
+
+		expect(failure).toMatchObject({ status: 400, data: { error: 'invalid', field: 'systemSlug' } });
+		expect(JSON.stringify(failure)).not.toContain('no such system');
 	});
 
 	it('does not put the internal message in what the browser receives', () => {

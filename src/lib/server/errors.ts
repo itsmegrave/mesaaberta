@@ -17,6 +17,17 @@ export class NotFound extends Error {
 	}
 }
 
+/** The input is well formed but cannot be accepted: it names a system that does not exist, say. */
+export class Invalid extends Error {
+	constructor(
+		readonly field: string,
+		message = 'invalid'
+	) {
+		super(message);
+		this.name = 'Invalid';
+	}
+}
+
 /**
  * The one place a domain error becomes a form failure. Use it in a form action's `catch`:
  * `catch (error) { return failFrom(error); }`. Anything that is not a domain error is a bug, so it
@@ -25,6 +36,7 @@ export class NotFound extends Error {
 export function failFrom(error: unknown) {
 	if (error instanceof Forbidden) return fail(403, { error: 'forbidden' as const });
 	if (error instanceof NotFound) return fail(404, { error: 'not_found' as const });
+	if (error instanceof Invalid) return fail(400, { error: 'invalid' as const, field: error.field });
 
 	throw error;
 }

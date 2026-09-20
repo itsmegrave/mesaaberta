@@ -93,3 +93,20 @@ export function nextOccurrence(schedule: Schedule, now: Date): Date | null {
 	const next = occurrence(n);
 	return until && next > until ? null : next;
 }
+
+/** The instant at which the clocks in `timeZone` read `local` (`2026-10-10T19:00`). */
+export function localToInstant(local: string, timeZone: string): Date {
+	const [date, time] = local.split('T');
+	const [y, m, d] = date.split('-').map(Number);
+	const [h, mi] = time.split(':').map(Number);
+
+	return instantAt({ y, m, d, h, mi, s: 0 }, timeZone);
+}
+
+const two = (n: number) => String(n).padStart(2, '0');
+
+/** What the clocks in `timeZone` read at `instant`, as `2026-10-10T19:00`: the form's own format. */
+export function instantToLocal(instant: Date, timeZone: string): string {
+	const w = wallClock(instant, timeZone);
+	return `${w.y}-${two(w.m)}-${two(w.d)}T${two(w.h)}:${two(w.mi)}`;
+}
