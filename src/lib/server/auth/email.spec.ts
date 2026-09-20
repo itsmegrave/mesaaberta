@@ -76,6 +76,16 @@ describe('signUpWithEmail', () => {
 		expect(await signUpWithEmail(deps, input)).toBe('check_email');
 	});
 
+	it('gives the same answer when Auth refuses with user_already_exists, which is what a real Auth does for a confirmed account', async () => {
+		const { deps, log: l } = await setup('signUp', {
+			data: { user: null, session: null },
+			error: { code: 'user_already_exists', status: 422, message: 'User already registered' }
+		});
+
+		expect(await signUpWithEmail(deps, input)).toBe('check_email');
+		expect(l.warn).not.toHaveBeenCalled();
+	});
+
 	it('creates the profile and signs in at once when Supabase does not require confirmation', async () => {
 		const { deps, test } = await setup('signUp', {
 			data: { user, session: { access_token: 'x' } },

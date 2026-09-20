@@ -54,6 +54,10 @@ export async function signUpWithEmail(
 
 	if (error) {
 		if (error.code === 'weak_password') return 'weak_password';
+		// Auth answers a sign-up for an address that already has a confirmed account with a 422, not
+		// with a look-alike success (found by the e2e tests against a real Auth). Saying so would tell
+		// anyone who is registered, so it gets the same answer as a first sign-up.
+		if (error.code === 'user_already_exists') return 'check_email';
 		if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
 		// The code and status only: the message can quote the address.
 		deps.log.warn('email auth: sign-up refused', { code: error.code, status: error.status });
