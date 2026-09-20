@@ -6,6 +6,7 @@ import {
 	integer,
 	pgEnum,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -18,6 +19,8 @@ export const profileStatus = pgEnum('profile_status', ['active', 'suspended']);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
 export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot']);
 export const tableStatus = pgEnum('table_status', ['active', 'disabled']);
+// A pending request takes no seat; only a confirmed one does.
+export const registrationStatus = pgEnum('registration_status', ['pending', 'confirmed']);
 
 const timestamps = {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -132,5 +135,26 @@ export const events = pgTable(
 			.on(event.nextAttemptAt)
 			.where(sql`${event.processedAt} IS NULL AND ${event.failedAt} IS NULL`),
 		index('events_actor_idx').on(event.actorId, event.createdAt)
+	]
+);
+
+// A player's place at a table. Only `confirmed` rows take a seat, get invites and can rate. A
+// declined request, a player who leaves and a player who is removed are deleted: the record of it is
+// the event, not a row here.
+export const registrations = pgTable(
+	'registrations',
+	{
+		tableId: uuid('table_id')
+			.notNull()
+			.references(() => gameTables.id),
+		playerId: uuid('player_id')
+			.notNull()
+			.references(() => profiles.id),
+		status: registrationStatus('status').notNull().default('pending'),
+		...timestamps
+	},
+	(registration) => [
+		primaryKey({ columns: [registration.tableId, registration.playerId] }),
+		index('registrations_player_idx').on(registration.playerId)
 	]
 );
