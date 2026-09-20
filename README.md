@@ -163,6 +163,22 @@ pnpm db:make-admin <user id>
 
 or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
 
+## Domain events
+
+Every change that matters writes an event to the `events` table in the same database transaction as the change (a transactional outbox), so there is never a change without its record or a record without its change. The same table is the audit log: who (`actor_id`) did what (`type`, `payload`) and when. Rows are never deleted, and a payload holds ids and public facts only, never an email address or a token.
+
+After the commit, the request dispatches the event to the registered handlers (`src/lib/server/events/handlers.ts`) once the response is on its way, so nobody waits for a handler. Handlers run at least once, so each must be **idempotent**: `event.id` is the key to make a repeat do nothing new. A retry runs only the handlers that have not succeeded yet.
+
+A Cron Trigger runs the sweeper every 5 minutes. It retries events whose handlers failed, with backoff (30 s, 60 s, ... up to an hour), and picks up any event whose first dispatch never happened (the Worker stopped right after the commit). After 8 failed attempts an event is given up on: it stays in the table with `failed_at` set and the last error, for a person to look at. To find those:
+
+```sql
+select id, type, attempts, last_error, created_at from events where failed_at is not null;
+```
+
+To add an event, add it to `DomainEvent` in `src/lib/server/events/types.ts`, record it with `recordEvent(tx, ...)` inside the change's transaction, and dispatch it with `locals.afterResponse((db) => dispatchEvent(db, handlers, eventId))`. Today creating, editing and disabling a table emit `TableCreated`, `TableUpdated` and `TableDisabled`; nothing reacts to them yet (invites are #13).
+
+The adapter only exports `fetch`, so `pnpm build` ends with `scripts/wrap-worker.ts`, which wraps SvelteKit's Worker with the `scheduled` handler. If the deploy runs plain `vite build` instead of `pnpm build`, the site works but the sweeper does not run. To try the sweeper locally: `pnpm build`, then `wrangler dev --test-scheduled` and `curl "http://localhost:8787/cdn-cgi/handler/scheduled"`.
+
 ## Logging
 
 Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
