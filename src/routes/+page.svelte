@@ -31,8 +31,8 @@
 	<TableIllustration />
 </section>
 
-<section aria-labelledby="como-funciona" class="border-t border-petrol/15 py-12 md:py-16">
-	<h2 id="como-funciona" class="text-3xl font-semibold tracking-tight md:text-4xl">
+<section aria-labelledby="how-it-works" class="border-t border-petrol/15 py-12 md:py-16">
+	<h2 id="how-it-works" class="text-3xl font-semibold tracking-tight md:text-4xl">
 		{m.how_title()}
 	</h2>
 	<ol
@@ -48,8 +48,8 @@
 	<p class="mt-10">{m.how_after_session()}</p>
 </section>
 
-<section aria-labelledby="para-mestres" class="border-t border-petrol/15 py-12 md:py-16">
-	<h2 id="para-mestres" class="text-3xl font-semibold tracking-tight md:text-4xl">
+<section aria-labelledby="for-game-masters" class="border-t border-petrol/15 py-12 md:py-16">
+	<h2 id="for-game-masters" class="text-3xl font-semibold tracking-tight md:text-4xl">
 		{m.gm_title()}
 	</h2>
 	<p class="mt-4 max-w-[52ch] text-lg">{m.gm_text()}</p>
