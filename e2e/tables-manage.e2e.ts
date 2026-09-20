@@ -92,10 +92,7 @@ test.describe('creating a table', () => {
 });
 
 test.describe('images', () => {
-	test('uploads a picture to Storage and keeps its path on the table', async ({
-		page,
-		request
-	}) => {
+	test('uploads a picture to R2 and keeps its path on the table', async ({ page, request }) => {
 		const gm = await createUser('Mestra Fernanda');
 		await signIn(page, gm);
 
@@ -109,11 +106,11 @@ test.describe('images', () => {
 			const [row] = await sql`select image_path from game_tables where slug = ${slug}`;
 			expect(row.image_path).toMatch(/^tables\/[0-9a-f-]{36}\.png$/);
 
-			// The file is really in the bucket, publicly readable.
-			const url = `${process.env.E2E_API_URL ?? 'http://127.0.0.1:54341'}/storage/v1/object/public/table-images/${row.image_path}`;
-			const stored = await request.get(url);
+			// The file is really in the bucket, and the site serves it to anyone.
+			const stored = await request.get(`/images/${row.image_path}`);
 			expect(stored.status()).toBe(200);
-			expect(stored.headers()['content-type']).toContain('image/png');
+			expect(stored.headers()['content-type']).toBe('image/png');
+			expect(stored.headers()['cache-control']).toContain('immutable');
 		} finally {
 			await sql.end();
 		}

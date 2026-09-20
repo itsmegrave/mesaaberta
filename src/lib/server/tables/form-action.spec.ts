@@ -39,23 +39,31 @@ const request = (over: Record<string, string | File> = {}) => {
 	return new Request('https://x.test/tables/new', { method: 'POST', body });
 };
 
-const setup = (options: { user?: boolean; upload?: ReturnType<typeof vi.fn> } = {}) => {
-	const upload = options.upload ?? vi.fn().mockResolvedValue({ error: null });
+const setup = (
+	options: { user?: boolean; put?: ReturnType<typeof vi.fn>; bucket?: boolean } = {}
+) => {
+	const put = options.put ?? vi.fn().mockResolvedValue({ key: 'stored' });
 	const locals = {
 		getUser: async () => (options.user === false ? null : { id: ana.id }),
 		getProfile: async () => (options.user === false ? null : ana),
-		supabase: { storage: { from: () => ({ upload }) } },
 		db: test.db
 	} as unknown as App.Locals;
 	const save = vi.fn(async (input: TableInput, imagePath?: string) =>
 		createTable(test.db, ana, input, { imagePath: imagePath ?? null })
 	);
 
-	return { locals, save, upload };
+	const platform = {
+		env: { IMAGES: options.bucket === false ? undefined : { put } }
+	} as unknown as App.Platform;
+
+	return { locals, platform, save, put };
 };
 
 const run = (req: Request, s: ReturnType<typeof setup>) =>
-	handleTableForm({ request: req, locals: s.locals, url: new URL(req.url) }, s.save);
+	handleTableForm(
+		{ request: req, locals: s.locals, platform: s.platform, url: new URL(req.url) },
+		s.save
+	);
 
 describe('handleTableForm', () => {
 	it("saves a valid form and goes to the table's own page", async () => {
@@ -101,7 +109,7 @@ describe('handleTableForm', () => {
 			status: 303
 		});
 
-		expect(s.upload).toHaveBeenCalledOnce();
+		expect(s.put).toHaveBeenCalledOnce();
 		expect(s.save.mock.calls[0][1]).toMatch(/^tables\/[0-9a-f-]{36}\.png$/);
 	});
 
@@ -112,12 +120,22 @@ describe('handleTableForm', () => {
 		const result = await run(request({ image: script }), s);
 
 		expect(result).toMatchObject({ status: 400, data: { errors: { image: 'not_an_image' } } });
-		expect(s.upload).not.toHaveBeenCalled();
+		expect(s.put).not.toHaveBeenCalled();
 		expect(s.save).not.toHaveBeenCalled();
 	});
 
 	it('does not save the table when the upload fails', async () => {
-		const s = setup({ upload: vi.fn().mockResolvedValue({ error: { message: 'no bucket' } }) });
+		const s = setup({ put: vi.fn().mockRejectedValue(new Error('no bucket')) });
+		const png = new File([new Uint8Array(PNG)], 'capa.png');
+
+		const result = await run(request({ image: png }), s);
+
+		expect(result).toMatchObject({ status: 400, data: { errors: { image: 'upload_failed' } } });
+		expect(s.save).not.toHaveBeenCalled();
+	});
+
+	it('does not save the table when no image bucket is bound', async () => {
+		const s = setup({ bucket: false });
 		const png = new File([new Uint8Array(PNG)], 'capa.png');
 
 		const result = await run(request({ image: png }), s);
@@ -134,7 +152,7 @@ describe('handleTableForm', () => {
 		).rejects.toMatchObject({
 			status: 303
 		});
-		expect(s.upload).not.toHaveBeenCalled();
+		expect(s.put).not.toHaveBeenCalled();
 	});
 
 	it('turns a refused permission into a 403 form failure, keeping what was typed', async () => {

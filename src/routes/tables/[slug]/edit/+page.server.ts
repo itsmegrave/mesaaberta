@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '$lib/server/errors';
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { imageUrl } from '$lib/server/images';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
@@ -9,7 +9,7 @@ import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/
 import { listSystems } from '$lib/server/systems';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, params, platform }) => {
+export const load: PageServerLoad = async ({ locals, url, params }) => {
 	await requireUser(locals, url);
 	if (!locals.db) error(503, 'Database not configured');
 
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ locals, url, params, platform }) =>
 				capacity: String(values.capacity),
 				durationMinutes: String(values.durationMinutes)
 			},
-			imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
+			imageUrl: imageUrl(imagePath),
 			systems: systems.map(({ name, slug }) => ({ name, slug }))
 		};
 	} catch (e) {

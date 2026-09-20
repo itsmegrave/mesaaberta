@@ -1,13 +1,18 @@
 import { fail, redirect, type ActionFailure } from '@sveltejs/kit';
 import { Forbidden, Invalid, NotFound } from '../errors';
-import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
+import { prepareImage, storeImage } from '../images';
 import { parseTableForm, type TableInput } from '$lib/tables/schema';
 import { NEW_TABLE_VALUES, type FormValues } from '$lib/tables/form-values';
 
 /** What a failed submit gives back: the problem, and what was typed so nothing is lost. */
 export type FormFailure = { values: FormValues; errors?: Record<string, string>; error?: string };
 
-type Event = { request: Request; locals: App.Locals; url: URL };
+type Event = {
+	request: Request;
+	locals: App.Locals;
+	platform: Readonly<App.Platform> | undefined;
+	url: URL;
+};
 
 const valuesFrom = (data: FormData): FormValues =>
 	Object.fromEntries(
@@ -22,7 +27,7 @@ const valuesFrom = (data: FormData): FormValues =>
  * itself is checked by `save` (through the policy), not here.
  */
 export async function handleTableForm(
-	{ request, locals, url }: Event,
+	{ request, locals, platform, url }: Event,
 	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>
 ): Promise<ActionFailure<FormFailure>> {
 	if (!(await locals.getUser())) {
@@ -42,7 +47,7 @@ export async function handleTableForm(
 
 		if (image instanceof File && image.size > 0) {
 			const prepared = await prepareImage(image);
-			const storage = locals.supabase?.storage.from(IMAGE_BUCKET);
+			const storage = platform?.env.IMAGES;
 			if (!storage) throw new Invalid('image', 'upload_failed');
 			imagePath = await storeImage(storage, prepared);
 		}
