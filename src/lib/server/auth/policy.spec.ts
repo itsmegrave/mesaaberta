@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { authorize, can, type Actor } from './policy';
+import { authorize, can, joinBlocker, type Actor } from './policy';
 
 const member: Actor = { id: 'member', role: 'member', status: 'active' };
 const otherMember: Actor = { id: 'other', role: 'member', status: 'active' };
@@ -74,5 +74,72 @@ describe('authorize', () => {
 		expect(() => authorize(null, 'table:create')).toThrowError(
 			expect.objectContaining({ name: 'Forbidden' })
 		);
+	});
+});
+
+describe('table:join', () => {
+	const open = {
+		gmId: 'gm',
+		tableStatus: 'active' as const,
+		seatsLeft: 2,
+		alreadyRegistered: false
+	};
+
+	it.each([
+		['another member', otherMember, true],
+		['an admin, who is not the GM', admin, true],
+		['the GM of that table', gm, false],
+		['an anonymous visitor', null, false],
+		['a suspended member', suspendedMember, false]
+	])('%s: %s', (_who, who, allowed) => {
+		expect(can(who, 'table:join', open)).toBe(allowed);
+	});
+
+	it.each([
+		['the table is disabled', { ...open, tableStatus: 'disabled' as const }, 'inactive'],
+		['there is no seat left', { ...open, seatsLeft: 0 }, 'full'],
+		['the player already has a registration', { ...open, alreadyRegistered: true }, 'registered']
+	])('is refused when %s, and says why', (_what, facts, reason) => {
+		expect(can(otherMember, 'table:join', facts)).toBe(false);
+		expect(joinBlocker(otherMember, facts)).toBe(reason);
+	});
+
+	it('says nothing about the table to someone who may not join anyway', () => {
+		expect(joinBlocker(gm, { ...open, seatsLeft: 0 })).toBe('forbidden');
+		expect(joinBlocker(null, { ...open, tableStatus: 'disabled' })).toBe('forbidden');
+	});
+
+	it('has no blocker when the player may join', () => {
+		expect(joinBlocker(otherMember, open)).toBeNull();
+	});
+
+	it('refuses a join it is given no facts for', () => {
+		expect(can(otherMember, 'table:join', undefined as never)).toBe(false);
+	});
+});
+
+describe('registration:manage (approve, decline, remove)', () => {
+	it.each([
+		['the GM of that table', gm, true],
+		['an admin', admin, true],
+		['another member', otherMember, false],
+		['a member who has a registration there', member, false],
+		['an anonymous visitor', null, false],
+		['the GM once suspended', suspendedGm, false]
+	])('%s: %s', (_who, who, allowed) => {
+		expect(can(who, 'registration:manage', { gmId: 'gm' })).toBe(allowed);
+	});
+});
+
+describe('registration:leave', () => {
+	it("lets a player leave their own registration, and nobody else's", () => {
+		expect(can(member, 'registration:leave', { playerId: 'member' })).toBe(true);
+		expect(can(otherMember, 'registration:leave', { playerId: 'member' })).toBe(false);
+		expect(can(admin, 'registration:leave', { playerId: 'member' })).toBe(false); // an admin removes instead
+	});
+
+	it('is refused for anonymous visitors and suspended accounts', () => {
+		expect(can(null, 'registration:leave', { playerId: 'member' })).toBe(false);
+		expect(can(suspendedMember, 'registration:leave', { playerId: 'member' })).toBe(false);
 	});
 });

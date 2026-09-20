@@ -16,6 +16,17 @@ type Resources = {
 	'table:create': undefined;
 	'table:edit': { gmId: string };
 	'table:disable': { gmId: string };
+	/** The facts a join depends on, read inside the capacity transaction. */
+	'table:join': {
+		gmId: string;
+		tableStatus: 'active' | 'disabled';
+		seatsLeft: number;
+		alreadyRegistered: boolean;
+	};
+	/** Approve or decline a request, or remove a player. */
+	'registration:manage': { gmId: string };
+	/** A player leaving their own registration. */
+	'registration:leave': { playerId: string };
 };
 
 export type Action = keyof Resources;
@@ -27,11 +38,34 @@ type ResourceArgs<A extends Action> = Resources[A] extends undefined
 const isGmOrAdmin = (actor: Actor, table: Resources['table:edit'] | undefined) =>
 	table !== undefined && (actor.role === 'admin' || actor.id === table.gmId);
 
+type JoinFacts = Resources['table:join'];
+
+/**
+ * Why this actor may not join, or null if they may. The reasons let the caller answer precisely
+ * (a full table is not a permission problem) without deciding anything itself. Checked in order:
+ * who may ever join, whether the table takes players, a registration already there, a free seat.
+ */
+export function joinBlocker(
+	actor: Actor | null,
+	facts: JoinFacts | undefined
+): 'forbidden' | 'inactive' | 'registered' | 'full' | null {
+	if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
+	if (facts.tableStatus !== 'active') return 'inactive';
+	if (facts.alreadyRegistered) return 'registered';
+	if (facts.seatsLeft <= 0) return 'full';
+
+	return null;
+}
+
 const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean } = {
 	// Any signed-in user can open a table and becomes its GM.
 	'table:create': () => true,
 	'table:edit': isGmOrAdmin,
-	'table:disable': isGmOrAdmin
+	'table:disable': isGmOrAdmin,
+	'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
+	'registration:manage': isGmOrAdmin,
+	'registration:leave': (actor, registration) =>
+		registration !== undefined && actor.id === registration.playerId
 };
 
 export function can<A extends Action>(
