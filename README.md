@@ -75,6 +75,8 @@ pnpm dev
 
 `pnpm db:down` stops it. After changing the schema, run `pnpm db:generate`, read the SQL it wrote, and commit it. Tests run the real migrations on an in-process Postgres (PGlite), so `pnpm test` needs no Docker.
 
+**RPG systems.** The 682 systems tables are categorised by (D&D 5e, Tormenta 20, ...) are rows in `systems`, seeded by a migration so every environment has them after `pnpm db:migrate`. Each keeps its name exactly as written and has a unique slug for its URL, made by `slugify()` in `src/lib/slug.ts`; `position` keeps the source order (most played first, then A to Z). `game_tables.system_id` points at a system. Read them with `listSystems(db)` and `findSystemBySlug(db, slug)` from `$lib/server/systems`, and never keep a second list of systems. Slugs never change once shipped, because URLs and invites use them. To add a system, write a new migration with an `INSERT ... ON CONFLICT ("slug") DO NOTHING`.
+
 Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
 
 **Connect the deployed Worker** (one-time, needs your Cloudflare and Supabase accounts):
