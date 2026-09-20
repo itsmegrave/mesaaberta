@@ -96,13 +96,15 @@ Without it the form still works; only saving with an image fails, with a message
 
 Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
 
-**Connect the deployed Worker** (one-time, needs your Cloudflare and Supabase accounts):
+**The deployed Worker** reaches Supabase through Hyperdrive: the `HYPERDRIVE` binding in `wrangler.jsonc` holds the Hyperdrive config id (not a secret). To set it up from scratch:
 
 1. In Supabase, open Connect and copy the **session pooler** connection string (port 5432). Hyperdrive does its own pooling, so do not use the transaction pooler (port 6543).
 2. `wrangler hyperdrive create mesaaberta-db --connection-string="<that string>"` prints an id.
-3. Uncomment the `hyperdrive` block in `wrangler.jsonc` and paste the id.
+3. Put the id in the `hyperdrive` block of `wrangler.jsonc`.
 4. Run the migrations against Supabase once: `DATABASE_URL="<direct or session string>" pnpm db:migrate`.
 5. Deploy, then check `/healthz` shows `"database": "ok"`.
+
+**Locally**, the binding's `localConnectionString` points at the Docker Postgres, so `pnpm dev`, `wrangler dev` and the e2e tests use it without `.dev.vars`: run `pnpm db:up && pnpm db:migrate` first. With the binding in place and no database running, `/healthz` reports `down` (503) rather than `not_configured`. The `db:*` scripts still read `DATABASE_URL` from `.dev.vars`.
 
 Limits checked on 2026-09-19: Supabase's free Nano compute allows 60 direct and 200 pooler connections ([compute and disk](https://supabase.com/docs/guides/platform/compute-and-disk)); Hyperdrive on the free plan allows about 20 origin connections per configuration and 10 configurations per account ([limits](https://developers.cloudflare.com/hyperdrive/platform/limits/)). The Worker opens at most 5 connections per request, so both are comfortable for now. Check the pages again before relying on the numbers.
 
