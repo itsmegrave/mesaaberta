@@ -2,6 +2,8 @@ import { error, redirect } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '$lib/server/errors';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { dispatchEvent } from '$lib/server/events/dispatcher';
+import { handlers } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
 import { listSystems } from '$lib/server/systems';
@@ -46,7 +48,10 @@ export const actions: Actions = {
 		const db = locals.db;
 
 		return handleTableForm(event, async (input, imagePath) => {
-			await updateTable(db, await locals.getProfile(), params.slug, input, { imagePath });
+			const { eventId } = await updateTable(db, await locals.getProfile(), params.slug, input, {
+				imagePath
+			});
+			locals.afterResponse((db) => dispatchEvent(db, handlers, eventId));
 			return { slug: params.slug };
 		});
 	},
@@ -56,7 +61,8 @@ export const actions: Actions = {
 		if (!locals.db) error(503, 'Database not configured');
 
 		try {
-			await disableTable(locals.db, await locals.getProfile(), params.slug);
+			const { eventId } = await disableTable(locals.db, await locals.getProfile(), params.slug);
+			locals.afterResponse((db) => dispatchEvent(db, handlers, eventId));
 		} catch (e) {
 			if (e instanceof Forbidden) error(403, 'Forbidden');
 			if (e instanceof NotFound) error(404, 'Not found');
