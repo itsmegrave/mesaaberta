@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import TableForm from './TableForm.svelte';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
+import { DEFAULT_WELCOME_MESSAGE } from '$lib/tables/welcome';
 
 const systems = [
 	{ name: 'Daggerheart', slug: 'daggerheart' },
@@ -70,6 +71,49 @@ describe('TableForm', () => {
 		render(TableForm, { ...props, imageUrl: 'https://x.supabase.co/img.png' });
 
 		await expect.element(page.getByText('Imagem atual. Envie outra para trocar.')).toBeVisible();
+	});
+
+	describe('welcome message', () => {
+		const field = () => page.getByLabelText('Mensagem de boas-vindas');
+
+		it('is pre-filled with the friendly default on a new table, and explains who reads it', async () => {
+			render(TableForm, props);
+
+			await expect.element(field()).toHaveValue(DEFAULT_WELCOME_MESSAGE);
+			await expect.element(page.getByText(/enviada por e-mail a cada jogador/)).toBeVisible();
+		});
+
+		it('is limited to 1000 characters, like the server', async () => {
+			render(TableForm, props);
+
+			await expect.element(field()).toHaveAttribute('maxlength', '1000');
+		});
+
+		it('shows what the GM saved when editing, not the default', async () => {
+			render(TableForm, {
+				...props,
+				values: { ...NEW_TABLE_VALUES, welcomeMessage: 'Chame no Discord.' }
+			});
+
+			await expect.element(field()).toHaveValue('Chame no Discord.');
+		});
+
+		it('stays empty when the GM cleared it, so clearing is possible', async () => {
+			render(TableForm, { ...props, values: { ...NEW_TABLE_VALUES, welcomeMessage: '' } });
+
+			await expect.element(field()).toHaveValue('');
+		});
+
+		it('keeps the typed text and marks the field when it is too long', async () => {
+			render(TableForm, {
+				...props,
+				values: { ...NEW_TABLE_VALUES, welcomeMessage: 'texto longo' },
+				errors: { welcomeMessage: 'too_big' }
+			});
+
+			await expect.element(field()).toHaveValue('texto longo');
+			await expect.element(field()).toHaveAttribute('aria-invalid', 'true');
+		});
 	});
 
 	it('has no problem message when there is nothing wrong', async () => {
