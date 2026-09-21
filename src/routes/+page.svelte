@@ -18,7 +18,7 @@
 	<meta name="description" content={m.home_description()} />
 </svelte:head>
 
-<section class="flex items-center py-12 md:py-20">
+<section class="flex items-center py-5 md:py-20">
 	<div class="grid w-full items-center gap-10 md:grid-cols-2 md:gap-12">
 		<div class="max-w-3xl">
 			<p
@@ -31,19 +31,20 @@
 				Mesas de RPG com vagas abertas
 			</p>
 			<h1
-				class="mt-5 max-w-[11ch] text-5xl leading-none font-semibold tracking-tight sm:text-6xl md:mt-6 md:text-7xl"
+				class="mt-4 max-w-[11ch] text-5xl leading-none font-semibold tracking-tight sm:text-6xl md:mt-6 md:text-7xl"
 			>
-				{m.hero_title()}
+				{m.hero_title_before()} <span class="text-warning-700-300">{m.hero_title_accent()}</span>
+				{m.hero_title_after()}
 			</h1>
-			<p class="mt-6 max-w-[34ch] text-lg leading-relaxed md:mt-7 md:text-xl">
+			<p class="mt-4 max-w-[34ch] text-lg leading-relaxed md:mt-6 md:text-xl">
 				{m.hero_lede()}
 			</p>
-			<div class="mt-7 flex flex-col gap-3 sm:flex-row md:mt-9">
+			<div class="mt-6 flex flex-col gap-3 sm:flex-row md:mt-8">
 				<a
 					href={localizedHref('/tables', locale)}
 					class="btn h-14 w-full gap-2.5 preset-filled-primary-500 sm:w-auto"
 				>
-					Ver mesas abertas
+					{m.hero_browse_cta()}
 					<svg
 						width="18"
 						height="18"
@@ -60,11 +61,13 @@
 				</a>
 				<a
 					href={localizedHref('/tables/new', locale)}
-					class="btn h-14 w-full preset-outlined-primary-500 sm:w-auto">Abrir uma mesa</a
+					class="btn h-14 w-full preset-outlined-primary-500 sm:w-auto">{m.hero_open_cta()}</a
 				>
 			</div>
 		</div>
-		<div class="mx-auto w-full max-w-[520px] md:justify-self-end"><TableIllustration /></div>
+		<div class="mx-auto mt-1 w-full max-w-xs md:mt-0 md:max-w-md md:justify-self-end">
+			<TableIllustration />
+		</div>
 	</div>
 </section>
 
