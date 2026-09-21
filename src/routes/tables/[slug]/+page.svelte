@@ -297,7 +297,7 @@
 							class="flex items-center justify-between gap-4 card border border-surface-200-800 bg-surface-100-900 p-3"
 						>
 							<span>{request.displayName}</span>
-							<span class="flex gap-4">
+							<div class="flex gap-4">
 								<ActionForm
 									action="?/approve"
 									playerId={request.playerId}
@@ -316,7 +316,7 @@
 										>{m.table_decline()}</button
 									>
 								</ActionForm>
-							</span>
+							</div>
 						</li>
 					{/each}
 				</ul>

@@ -52,13 +52,13 @@
 					class="flex flex-wrap items-center justify-between gap-3 rounded bg-surface-200-800 p-2"
 				>
 					<span>{request.displayName}</span>
-					<span class="flex gap-4">
+					<div class="flex gap-4">
 						{#each [['approve', m.table_approve(), 'preset-tonal-primary'], ['decline', m.table_decline(), 'preset-tonal-error']] as [action, label, tone] (action)}
 							<ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
 								<button type="submit" class="btn btn-sm {tone}">{label}</button>
 							</ActionForm>
 						{/each}
-					</span>
+					</div>
 				</li>
 			{/each}
 		</ul>
