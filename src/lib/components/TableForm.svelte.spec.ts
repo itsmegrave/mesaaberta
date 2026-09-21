@@ -1,20 +1,18 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import TableForm from './TableForm.svelte';
-import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
-import { DEFAULT_WELCOME_MESSAGE } from '$lib/tables/welcome';
+import TableFormHarness from './TableFormHarness.svelte';
 
 const systems = [
 	{ name: 'Daggerheart', slug: 'daggerheart' },
 	{ name: 'Tormenta 20 (T20)', slug: 'tormenta-20-t20' }
 ];
 
-const props = { values: NEW_TABLE_VALUES, systems, submitLabel: 'Abrir mesa' };
+const props = { systems, submitLabel: 'Abrir mesa' };
 
 describe('TableForm', () => {
 	it('offers every system as a choice, and asks for one', async () => {
-		render(TableForm, props);
+		render(TableFormHarness, props);
 
 		const select = page.getByLabelText('Sistema de RPG');
 		await expect.element(select).toBeVisible();
@@ -27,7 +25,7 @@ describe('TableForm', () => {
 	});
 
 	it('starts as a one-shot without the repeat fields, and shows them for a campaign', async () => {
-		render(TableForm, props);
+		render(TableFormHarness, props);
 
 		await expect.element(page.getByLabelText('Repete')).not.toBeInTheDocument();
 
@@ -38,7 +36,7 @@ describe('TableForm', () => {
 	});
 
 	it('groups the form into the four numbered steps and keeps the preview in sync', async () => {
-		render(TableForm, props);
+		render(TableFormHarness, props);
 
 		for (const heading of ['Sobre a mesa', 'Quando', 'Vagas e entrada', 'Imagem']) {
 			await expect.element(page.getByRole('heading', { name: heading })).toBeVisible();
@@ -54,7 +52,7 @@ describe('TableForm', () => {
 	});
 
 	it('posts as multipart to its action, so an image can travel with it', async () => {
-		render(TableForm, { ...props, action: '?/save' });
+		render(TableFormHarness, { ...props, action: '?/save' });
 
 		const form = page.getByRole('button', { name: 'Abrir mesa' }).element().closest('form');
 		expect(form?.method).toBe('post');
@@ -63,7 +61,7 @@ describe('TableForm', () => {
 	});
 
 	it('accepts only the image types the server accepts', async () => {
-		render(TableForm, props);
+		render(TableFormHarness, props);
 
 		await expect
 			.element(page.getByRole('button', { name: 'Imagem' }))
@@ -71,10 +69,10 @@ describe('TableForm', () => {
 	});
 
 	it('keeps what was typed and marks each field that has a problem', async () => {
-		render(TableForm, {
+		render(TableFormHarness, {
 			...props,
-			values: { ...NEW_TABLE_VALUES, title: 'ab' },
-			errors: { title: 'too_small', capacity: 'invalid_type' }
+			values: { title: 'ab' },
+			errors: { title: ['too_small'], capacity: ['invalid_type'] }
 		});
 
 		await expect.element(page.getByLabelText('Título')).toHaveValue('ab');
@@ -84,58 +82,33 @@ describe('TableForm', () => {
 	});
 
 	it('shows the current image when editing', async () => {
-		render(TableForm, { ...props, imageUrl: 'https://x.supabase.co/img.png' });
+		render(TableFormHarness, { ...props, imageUrl: 'https://x.supabase.co/img.png' });
 
 		await expect.element(page.getByText('Imagem atual. Envie outra para trocar.')).toBeVisible();
 	});
 
-	describe('welcome message', () => {
-		const field = () => page.getByLabelText('Mensagem de boas-vindas');
-
-		it('is pre-filled with the friendly default on a new table, and explains who reads it', async () => {
-			render(TableForm, props);
-
-			await expect.element(field()).toHaveValue(DEFAULT_WELCOME_MESSAGE);
-			await expect.element(page.getByText(/Enviada por e-mail a cada jogador/)).toBeVisible();
-			await expect.element(page.getByText(/Use \{nome da mesa\} onde quiser/)).toBeVisible();
-		});
-
-		it('is limited to 1000 characters, like the server', async () => {
-			render(TableForm, props);
-
-			await expect.element(field()).toHaveAttribute('maxlength', '1000');
-		});
-
-		it('shows what the GM saved when editing, not the default', async () => {
-			render(TableForm, {
-				...props,
-				values: { ...NEW_TABLE_VALUES, welcomeMessage: 'Chame no Discord.' }
-			});
-
-			await expect.element(field()).toHaveValue('Chame no Discord.');
-		});
-
-		it('stays empty when the GM cleared it, so clearing is possible', async () => {
-			render(TableForm, { ...props, values: { ...NEW_TABLE_VALUES, welcomeMessage: '' } });
-
-			await expect.element(field()).toHaveValue('');
-		});
-
-		it('keeps the typed text and marks the field when it is too long', async () => {
-			render(TableForm, {
-				...props,
-				values: { ...NEW_TABLE_VALUES, welcomeMessage: 'texto longo' },
-				errors: { welcomeMessage: 'too_big' }
-			});
-
-			await expect.element(field()).toHaveValue('texto longo');
-			await expect.element(field()).toHaveAttribute('aria-invalid', 'true');
-		});
-	});
-
 	it('has no problem message when there is nothing wrong', async () => {
-		render(TableForm, props);
+		render(TableFormHarness, props);
 
 		await expect.element(page.getByText('Corrija os campos marcados.')).not.toBeInTheDocument();
+	});
+
+	it('shows the image problem next to the image field, from the form message', async () => {
+		render(TableFormHarness, { ...props, message: { code: 'not_an_image', field: 'image' } });
+
+		await expect.element(page.getByText('Use uma imagem PNG, JPEG ou WebP.')).toBeVisible();
+		await expect.element(page.getByLabelText('Imagem')).toHaveAttribute('aria-invalid', 'true');
+	});
+
+	it('says a refused permission at the top of the form', async () => {
+		render(TableFormHarness, { ...props, message: { code: 'forbidden' } });
+
+		await expect.element(page.getByText('Você não tem permissão para fazer isso.')).toBeVisible();
+	});
+
+	it('says how long to wait when the person did this too often', async () => {
+		render(TableFormHarness, { ...props, message: { code: 'rate_limited', retryAfter: 900 } });
+
+		await expect.element(page.getByRole('alert')).toHaveTextContent(/Tente de novo em/);
 	});
 });

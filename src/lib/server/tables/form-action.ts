@@ -1,17 +1,10 @@
-import { fail, redirect, type ActionFailure } from '@sveltejs/kit';
-import { requireUser } from '../auth/guard';
+import { redirect } from '@sveltejs/kit';
+import { fail, message, superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
+import { refuse } from '$lib/forms/server';
 import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
-import { parseTableForm, type TableInput } from '$lib/tables/schema';
-import { NEW_TABLE_VALUES, type FormValues } from '$lib/tables/form-values';
-
-/** What a failed submit gives back: the problem, and what was typed so nothing is lost. */
-export type FormFailure = {
-	values: FormValues;
-	errors?: Record<string, string>;
-	error?: string;
-	retryAfter?: number;
-};
+import { tableFormSchema, toTableInput, type TableInput } from '$lib/tables/schema';
 
 type Event = {
 	request: Request;
@@ -20,13 +13,8 @@ type Event = {
 	setHeaders?: (headers: Record<string, string>) => void;
 };
 
-const valuesFrom = (data: FormData): FormValues =>
-	Object.fromEntries(
-		Object.keys(NEW_TABLE_VALUES).map((key) => [key, String(data.get(key) ?? '')])
-	) as FormValues;
-
 /**
- * What the create and the edit form actions share: check who is asking (a signed-in person with a username), validate the form, store
+ * What the create and the edit form actions share: check who is asking, validate the form, store
  * the image if there is one, then run `save`. Whatever `save` returns is where to go next.
  * `guard` runs once the form is valid and before the image is stored: it throws to refuse a request
  * (a rate limit) that should not cost an upload.
@@ -38,14 +26,14 @@ export async function handleTableForm(
 	{ request, locals, url, setHeaders }: Event,
 	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
 	guard: () => Promise<void> = async () => {}
-): Promise<ActionFailure<FormFailure>> {
-	await requireUser(locals, url);
+) {
+	if (!(await locals.getUser())) {
+		redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+	}
 
 	const data = await request.formData();
-	const values = valuesFrom(data);
-
-	const parsed = parseTableForm(data);
-	if (!parsed.ok) return fail(400, { errors: parsed.errors, values });
+	const form = await superValidate(data, zod4(tableFormSchema));
+	if (!form.valid) return fail(400, { form });
 
 	let slug: string;
 	try {
@@ -60,16 +48,18 @@ export async function handleTableForm(
 			imagePath = await storeImage(storage, prepared);
 		}
 
-		({ slug } = await save(parsed.data, imagePath));
+		({ slug } = await save(toTableInput(form.data), imagePath));
 	} catch (error) {
-		if (error instanceof Invalid) {
-			return fail(400, { errors: { [error.field]: error.message }, values });
-		}
-		if (error instanceof Forbidden) return fail(403, { error: 'forbidden', values });
-		if (error instanceof NotFound) return fail(404, { error: 'not_found', values });
+		if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
+		if (error instanceof Forbidden) return message(form, { code: 'forbidden' }, { status: 403 });
+		if (error instanceof NotFound) return message(form, { code: 'not_found' }, { status: 404 });
 		if (error instanceof RateLimited) {
 			setHeaders?.({ 'Retry-After': String(error.retryAfterSeconds) });
-			return fail(429, { error: 'rate_limited', retryAfter: error.retryAfterSeconds, values });
+			return message(
+				form,
+				{ code: 'rate_limited', retryAfter: error.retryAfterSeconds },
+				{ status: 429 }
+			);
 		}
 		throw error;
 	}
