@@ -84,7 +84,7 @@ describe('getProfile', () => {
 
 	it("returns the signed-in user's profile: the actor the policy decides about", async () => {
 		const test = await createTestDb();
-		await test.db.insert(profiles).values({ id, displayName: 'Ana', role: 'admin' });
+		await test.db.insert(profiles).values({ id, username: 'ana', role: 'admin' });
 		const { event, run } = setup(env, signedIn());
 		event.locals.db = test.db as never;
 		await run();
@@ -121,7 +121,7 @@ describe('getProfile', () => {
 
 	it('loads once per request however often it is asked', async () => {
 		const test = await createTestDb();
-		await test.db.insert(profiles).values({ id, displayName: 'Ana' });
+		await test.db.insert(profiles).values({ id, username: 'ana' });
 		const getUser = signedIn();
 		const { event, run } = setup(env, getUser);
 		event.locals.db = test.db as never;

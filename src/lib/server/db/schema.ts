@@ -37,15 +37,48 @@ const timestamps = {
 // nothing to read or write. The app is not affected: it connects as the database owner, which RLS
 // does not apply to. Add a policy here only for a table that should be reachable through that API.
 
-export const profiles = pgTable('profiles', {
-	// The Supabase auth user id. Not a foreign key: Supabase owns the `auth` schema.
-	id: uuid('id').primaryKey(),
-	displayName: text('display_name').notNull(),
-	avatarUrl: text('avatar_url'),
-	role: profileRole('role').notNull().default('member'),
-	status: profileStatus('status').notNull().default('active'),
-	...timestamps
-}).enableRLS();
+export const profiles = pgTable(
+	'profiles',
+	{
+		// The Supabase auth user id. Not a foreign key: Supabase owns the `auth` schema.
+		id: uuid('id').primaryKey(),
+		// The public identifier and slug. Null only until the onboarding step is done: the base profile is
+		// created at sign-up, before the person has picked one. Stored lowercase (see the check below).
+		username: text('username'),
+		// The details below are all optional. `name` is pre-filled from the sign-in provider.
+		name: text('name'),
+		age: smallint('age'),
+		gender: text('gender'),
+		city: text('city'),
+		avatarUrl: text('avatar_url'),
+		role: profileRole('role').notNull().default('member'),
+		status: profileStatus('status').notNull().default('active'),
+		...timestamps
+	},
+	(profile) => [
+		// Unique on the lowercase form, so `Ana` and `ana` cannot both exist even if a caller forgets to
+		// normalise. Nulls do not collide: many profiles can be waiting for onboarding.
+		uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
+		check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`)
+	]
+).enableRLS();
+
+// The social links on a profile: any number, in the order the person put them.
+export const profileSocialLinks = pgTable(
+	'profile_social_links',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		profileId: uuid('profile_id')
+			.notNull()
+			.references(() => profiles.id, { onDelete: 'cascade' }),
+		// One of the networks in `$lib/profile/social-links`, or `website`.
+		network: text('network').notNull(),
+		url: text('url').notNull(),
+		position: integer('position').notNull(),
+		...timestamps
+	},
+	(link) => [index('profile_social_links_profile_idx').on(link.profileId, link.position)]
+).enableRLS();
 
 // The RPG systems (D&D 5e, Tormenta 20, ...). They double as the categories tables are browsed by,
 // so each has a slug for its URL. The rows come from a migration; add one with a new migration.

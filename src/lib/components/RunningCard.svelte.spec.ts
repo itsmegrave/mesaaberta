@@ -5,7 +5,7 @@ import RunningCard from './RunningCard.svelte';
 
 const person = (n: number, name: string) => ({
 	playerId: `00000000-0000-4000-8000-00000000000${n}`,
-	displayName: name
+	username: name
 });
 const base = {
 	slug: 'cronicas',

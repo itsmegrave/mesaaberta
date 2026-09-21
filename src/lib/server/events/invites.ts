@@ -15,6 +15,7 @@ import {
 } from '../mail/templates';
 import { formatSession } from '../../tables/format';
 import type { Handler, StoredEvent } from './types';
+import { NAMELESS } from '../db/public-name';
 
 /** Secrets stay in the Worker environment. Do not put any of these in `wrangler.jsonc`. */
 export type InviteEnv = TemplateEnv & {
@@ -37,7 +38,7 @@ type InviteConfig = TemplateEnv & {
 	APP_ORIGIN: string;
 };
 
-type Recipient = { id: string; displayName: string };
+type Recipient = { id: string; name: string | null; username: string | null };
 
 const calendarColumns = {
 	id: gameTables.id,
@@ -72,7 +73,7 @@ async function tableOf(db: AnyDb, tableId: string) {
 
 async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
 	const [profile] = await db
-		.select({ id: profiles.id, displayName: profiles.displayName })
+		.select({ id: profiles.id, name: profiles.name, username: profiles.username })
 		.from(profiles)
 		.where(eq(profiles.id, id));
 	return profile ? [profile] : [];
@@ -80,7 +81,7 @@ async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
 
 async function confirmedRecipients(db: AnyDb, tableId: string): Promise<Recipient[]> {
 	return db
-		.select({ id: profiles.id, displayName: profiles.displayName })
+		.select({ id: profiles.id, name: profiles.name, username: profiles.username })
 		.from(registrations)
 		.innerJoin(profiles, eq(profiles.id, registrations.playerId))
 		.where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
@@ -145,7 +146,7 @@ export function createInviteHandler(
 				const id = templateIdFor(env, key);
 				if (!id) return {};
 				const variables = templateVariables({
-					RECIPIENT_NAME: recipient.displayName,
+					RECIPIENT_NAME: recipient.name || recipient.username || NAMELESS,
 					TABLE_TITLE: table.title,
 					TABLE_URL: url,
 					CONTEXT: context,
@@ -182,7 +183,7 @@ export function createInviteHandler(
 				const ics = buildInvite({
 					table,
 					method,
-					attendee: { email, name: recipient.displayName },
+					attendee: { email, name: recipient.name || recipient.username || NAMELESS },
 					organizer: { email: addressOf(env.RESEND_FROM), name: 'Mesa Aberta' },
 					baseUrl: env.APP_ORIGIN
 				});

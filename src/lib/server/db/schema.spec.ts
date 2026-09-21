@@ -9,7 +9,7 @@ const CHECK_VIOLATION = '23514';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 let dndId: string;
-const gm = { id: '00000000-0000-4000-8000-000000000001', displayName: 'Mestre' };
+const gm = { id: '00000000-0000-4000-8000-000000000001', username: 'mestre' };
 
 const table = (overrides: Partial<typeof gameTables.$inferInsert> = {}) => ({
 	slug: 'mesa-do-dragao',

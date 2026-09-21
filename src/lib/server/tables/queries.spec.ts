@@ -30,7 +30,7 @@ const add = async (
 
 beforeAll(async () => {
 	test = await createTestDb();
-	await test.db.insert(profiles).values({ id: gm, displayName: 'Mestre Ana' });
+	await test.db.insert(profiles).values({ id: gm, username: 'mestre-ana' });
 
 	await add({ slug: 'later', title: 'Later', startsAt: new Date('2026-10-20T22:00:00Z') });
 	await add({ slug: 'sooner', title: 'Sooner', startsAt: new Date('2026-10-05T22:00:00Z') });
@@ -75,7 +75,7 @@ describe('listUpcomingTables', () => {
 			title: 'Weekly',
 			kind: 'campaign',
 			system: { name: 'Tormenta 20 (T20)', slug: 'tormenta-20-t20' },
-			gmName: 'Mestre Ana',
+			gmName: 'mestre-ana',
 			capacity: 5,
 			seatsLeft: 5,
 			everyWeeks: 1,
@@ -105,7 +105,7 @@ describe('findTableBySlug', () => {
 			slug: 'full',
 			description: 'Uma noite só.',
 			extraInfo: 'Traga dados.',
-			gmName: 'Mestre Ana',
+			gmName: 'mestre-ana',
 			system: { slug: 'daggerheart' },
 			durationMinutes: 240,
 			nextAt: new Date('2026-10-10T22:00:00Z')
@@ -130,7 +130,7 @@ describe('seats left', () => {
 		const playerId = `00000000-0000-4000-8000-0000000006${String(n).padStart(2, '0')}`;
 		await test.db
 			.insert(profiles)
-			.values({ id: playerId, displayName: `J${n}` })
+			.values({ id: playerId, username: `j${n}` })
 			.onConflictDoNothing();
 		return playerId;
 	};

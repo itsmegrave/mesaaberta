@@ -24,7 +24,8 @@ describe('ensureProfile', () => {
 
 		expect(profile).toMatchObject({
 			id: id(1),
-			displayName: 'Ana Souza',
+			name: 'Ana Souza',
+			username: null,
 			avatarUrl: 'https://cdn.example/ana.png',
 			role: 'member',
 			status: 'active'
@@ -34,10 +35,10 @@ describe('ensureProfile', () => {
 	it.each([
 		[11, 'name', { name: 'Bruno' }, 'Bruno'],
 		[12, 'user_name', { user_name: 'bruno-gh' }, 'bruno-gh']
-	])('takes the display name from %s', async (n, _what, metadata, expected) => {
+	])('pre-fills the name from %s', async (n, _what, metadata, expected) => {
 		const profile = await ensureProfile(test.db, user(n, metadata));
 
-		expect(profile.displayName).toBe(expected);
+		expect(profile.name).toBe(expected);
 	});
 
 	it.each([
@@ -53,14 +54,14 @@ describe('ensureProfile', () => {
 	it('does not derive a name from the email address, which is personal data', async () => {
 		const profile = await ensureProfile(test.db, user(2, { email: 'ana@example.com' }));
 
-		expect(profile.displayName).toBe('Jogador');
+		expect(profile.name).toBeNull();
 		expect(JSON.stringify(profile)).not.toContain('ana@example.com');
 	});
 
-	it('trims and shortens an absurd display name', async () => {
+	it('trims and shortens an absurd name', async () => {
 		const profile = await ensureProfile(test.db, user(3, { name: `  ${'x'.repeat(200)}  ` }));
 
-		expect(profile.displayName).toBe('x'.repeat(60));
+		expect(profile.name).toBe('x'.repeat(80));
 	});
 
 	it('leaves an existing profile untouched on later logins, role included', async () => {
@@ -72,7 +73,7 @@ describe('ensureProfile', () => {
 
 		const again = await ensureProfile(test.db, user(4, { name: 'Renamed at the provider' }));
 
-		expect(again).toMatchObject({ displayName: 'Original', role: 'admin' });
+		expect(again).toMatchObject({ name: 'Original', role: 'admin' });
 	});
 
 	it('creates one profile even when two first logins race', async () => {

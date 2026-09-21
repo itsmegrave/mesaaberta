@@ -93,11 +93,11 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
-					account: { displayName: 'Ana Souza', avatarUrl: null }
+					account: { username: 'ana-souza', avatarUrl: null }
 				}
 			});
 
-			const menu = banner().getByText('Ana Souza');
+			const menu = banner().getByText('ana-souza');
 			await expect.element(menu).toBeVisible();
 			await expect.element(page.getByRole('button', { name: 'Sair' })).not.toBeInTheDocument();
 
@@ -112,10 +112,10 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
-					account: { displayName: 'Ana Souza', avatarUrl: null }
+					account: { username: 'ana-souza', avatarUrl: null }
 				}
 			});
-			await banner().getByText('Ana Souza').click();
+			await banner().getByText('ana-souza').click();
 
 			await expect
 				.element(page.getByRole('link', { name: 'Minhas mesas' }))
@@ -128,10 +128,10 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
-					account: { displayName: 'Ana Souza', avatarUrl: null }
+					account: { username: 'ana-souza', avatarUrl: null }
 				}
 			});
-			await banner().getByText('Ana Souza').click();
+			await banner().getByText('ana-souza').click();
 
 			const form = page.getByRole('button', { name: 'Sair' }).element().closest('form');
 

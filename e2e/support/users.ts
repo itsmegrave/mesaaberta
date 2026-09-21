@@ -12,14 +12,34 @@ const admin = () =>
 		auth: { persistSession: false, autoRefreshToken: false }
 	});
 
+const slugOf = (text: string) =>
+	text
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+
 const unique = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
-export type TestUser = { id: string; email: string; password: string; name: string };
+/** `username` is what the app shows for them (the header, the GM's list of players). */
+export type TestUser = {
+	id: string;
+	email: string;
+	password: string;
+	name: string;
+	username: string;
+};
 
-/** A confirmed user, with a profile so the app treats them as someone who has signed in before. */
+/**
+ * A confirmed user, with a finished profile (a username) so the app treats them as someone who has
+ * signed in before and finished the onboarding. `name` is their name; the username is made from it
+ * plus a random tail, so the same name can be used by tests running side by side. With
+ * `incomplete` the profile has no username, like someone who has not done the onboarding step yet.
+ */
 export async function createUser(
 	name: string,
-	options: { role?: 'member' | 'admin' } = {}
+	options: { role?: 'member' | 'admin'; incomplete?: boolean } = {}
 ): Promise<TestUser> {
 	const email = `${name.toLowerCase().replace(/\W+/g, '-')}-${unique()}@example.test`;
 	const { data, error } = await admin().auth.admin.createUser({
@@ -30,14 +50,16 @@ export async function createUser(
 	});
 	if (error || !data.user) throw new Error(`could not create a test user: ${error?.message}`);
 
+	const username = `${slugOf(name).slice(0, 14)}-${Math.random().toString(36).slice(2, 10)}`;
+	const stored = options.incomplete ? null : username;
 	const sql = database();
 	try {
-		await sql`insert into profiles (id, display_name, role) values (${data.user.id}, ${name}, ${options.role ?? 'member'}) on conflict (id) do nothing`;
+		await sql`insert into profiles (id, username, name, role) values (${data.user.id}, ${stored}, ${name}, ${options.role ?? 'member'}) on conflict (id) do nothing`;
 	} finally {
 		await sql.end();
 	}
 
-	return { id: data.user.id, email, password: PASSWORD, name };
+	return { id: data.user.id, email, password: PASSWORD, name, username };
 }
 
 /** A direct connection to the app's database, for what the UI cannot do (back-dating a session, reading a row). */

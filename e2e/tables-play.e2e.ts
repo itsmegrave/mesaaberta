@@ -38,7 +38,7 @@ test.describe('joining a table that takes players at once', () => {
 		// The GM sees who sat down (names are only shown to the GM).
 		await gmPage.goto(`/tables/${slug}`);
 		await expect(gmPage.getByRole('heading', { name: 'Jogadores' })).toBeVisible();
-		await expect(gmPage.getByRole('main').getByText('Bruno')).toBeVisible();
+		await expect(gmPage.getByRole('main').getByText(players[0].username)).toBeVisible();
 
 		await page.getByRole('button', { name: 'Sair da mesa' }).click();
 		await expect(page.getByRole('button', { name: 'Pegar vaga' })).toBeVisible();
@@ -137,7 +137,7 @@ test.describe('a table where the GM approves each player', () => {
 
 		await gmPage.goto('/account/tables');
 		await expect(gmPage.getByRole('heading', { name: 'Pedidos de vaga (1)' })).toBeVisible();
-		await expect(gmPage.getByText('Bruno')).toBeVisible();
+		await expect(gmPage.getByText(players[0].username)).toBeVisible();
 		await gmPage.getByRole('button', { name: 'Aprovar' }).click();
 
 		await expect(gmPage).toHaveURL(/\/account\/tables$/); // the action came back to the dashboard
@@ -299,7 +299,7 @@ test.describe('the dashboard', () => {
 		await gmPage.goto('/account/tables');
 		await expect(gmPage.getByRole('heading', { name: 'Mestrando' })).toBeVisible();
 		await expect(gmPage.getByText('1 de 5 vagas ocupadas')).toBeVisible();
-		await expect(gmPage.getByText('Bruno')).toBeVisible();
+		await expect(gmPage.getByText(players[0].username)).toBeVisible();
 
 		await page.getByRole('button', { name: 'Sair da mesa' }).click();
 		await expect(page).toHaveURL(/\/account\/tables$/);

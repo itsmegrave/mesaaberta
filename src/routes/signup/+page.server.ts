@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { parseCredentials } from '$lib/auth/credentials';
 import { signUpWithEmail, type SignUpResult } from '$lib/server/auth/email';
+import { afterSignIn } from '$lib/server/auth/onboarding';
 import { safeNext } from '$lib/server/auth/safe-next';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -32,7 +33,7 @@ export const actions: Actions = {
 			{ ...credentials.data, origin: url.origin, next }
 		);
 
-		if (result === 'signed_in') redirect(303, next);
+		if (result === 'signed_in') redirect(303, await afterSignIn(locals, next));
 		// Says the same whether or not the address already had an account.
 		if (result === 'check_email') return { checkEmail: true };
 

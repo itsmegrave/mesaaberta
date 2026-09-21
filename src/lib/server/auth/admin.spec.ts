@@ -11,8 +11,8 @@ const other = '00000000-0000-4000-8000-000000000402';
 beforeAll(async () => {
 	test = await createTestDb();
 	await test.db.insert(profiles).values([
-		{ id, displayName: 'Ana' },
-		{ id: other, displayName: 'Bruno' }
+		{ id, username: 'ana' },
+		{ id: other, username: 'bruno' }
 	]);
 });
 afterAll(() => test.close());

@@ -85,7 +85,7 @@ test.describe('table page', () => {
 		await page.goto('/tables/mesa-do-dragao');
 
 		await expect(page.getByText('Uma aventura de uma noite')).toBeVisible();
-		await expect(page.getByText('Mestre de Testes')).toBeVisible();
+		await expect(page.getByText('mestre-de-testes')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Dungeons & Dragons 5e (2014)' })).toHaveAttribute(
 			'href',
 			/\/tables\?system=dungeons-e-dragons-5e-2014$/

@@ -36,9 +36,9 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
 beforeAll(async () => {
 	test = await createTestDb();
 	await test.db.insert(profiles).values([
-		{ id: id(1), displayName: 'Ana' },
-		{ id: id(2), displayName: 'Bruno' },
-		{ id: id(99), displayName: 'Admin', role: 'admin' }
+		{ id: id(1), username: 'ana' },
+		{ id: id(2), username: 'bruno' },
+		{ id: id(99), username: 'admin', role: 'admin' }
 	]);
 });
 afterAll(() => test.close());
@@ -131,7 +131,7 @@ describe('createTable', () => {
 
 		it('refuses the sixth table in an hour, tells when to try again, and creates nothing', async () => {
 			const ede = member(11);
-			await test.db.insert(profiles).values({ id: ede.id, displayName: 'Ede' });
+			await test.db.insert(profiles).values({ id: ede.id, username: 'ede' });
 			await rateLimited(ede, 5, 45);
 			const before = {
 				tables: await tables(),
@@ -150,7 +150,7 @@ describe('createTable', () => {
 
 		it('lets the fifth through, records it, and refuses the next one', async () => {
 			const fabi = member(12);
-			await test.db.insert(profiles).values({ id: fabi.id, displayName: 'Fabi' });
+			await test.db.insert(profiles).values({ id: fabi.id, username: 'fabi' });
 			await rateLimited(fabi, 4, 10);
 
 			await createTable(test.db, fabi, input({ title: 'Quinta' }), { now });
@@ -162,7 +162,7 @@ describe('createTable', () => {
 
 		it('lets the person create again once the oldest table is out of the window', async () => {
 			const gabi = member(13);
-			await test.db.insert(profiles).values({ id: gabi.id, displayName: 'Gabi' });
+			await test.db.insert(profiles).values({ id: gabi.id, username: 'gabi' });
 			await rateLimited(gabi, 5, 60);
 
 			await expect(
@@ -174,8 +174,8 @@ describe('createTable', () => {
 			const hugo = member(14);
 			const ivo = member(15);
 			await test.db.insert(profiles).values([
-				{ id: hugo.id, displayName: 'Hugo' },
-				{ id: ivo.id, displayName: 'Ivo' }
+				{ id: hugo.id, username: 'hugo' },
+				{ id: ivo.id, username: 'ivo' }
 			]);
 			await rateLimited(hugo, 5, 10);
 
@@ -186,7 +186,7 @@ describe('createTable', () => {
 
 		it('is not used up by a form that is rejected for another reason', async () => {
 			const jo = member(16);
-			await test.db.insert(profiles).values({ id: jo.id, displayName: 'Jo' });
+			await test.db.insert(profiles).values({ id: jo.id, username: 'joao' });
 			await rateLimited(jo, 4, 10);
 
 			await expect(

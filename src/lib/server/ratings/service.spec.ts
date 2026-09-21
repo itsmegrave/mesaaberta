@@ -21,8 +21,8 @@ beforeAll(async () => {
 	await test.db
 		.insert(profiles)
 		.values([
-			...Array.from({ length: 6 }, (_, i) => ({ id: id(i + 1), displayName: `P${i + 1}` })),
-			{ id: id(90), displayName: 'Admin', role: 'admin' as const }
+			...Array.from({ length: 6 }, (_, i) => ({ id: id(i + 1), username: `p${i + 1}` })),
+			{ id: id(90), username: 'admin', role: 'admin' as const }
 		]);
 });
 afterAll(() => test.close());

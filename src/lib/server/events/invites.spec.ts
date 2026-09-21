@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { formatSession } from '../../tables/format';
@@ -28,8 +29,8 @@ beforeAll(async () => {
 	test = await createTestDb();
 	const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
 	await test.db.insert(profiles).values([
-		{ id: gm, displayName: 'Mestre' },
-		{ id: player, displayName: 'Ana' }
+		{ id: gm, username: 'mestre' },
+		{ id: player, username: 'ana-souza', name: 'Ana' }
 	]);
 	await test.db.insert(gameTables).values({
 		id: tableId,
@@ -106,6 +107,29 @@ describe('calendar invite handler', () => {
 		expect(Buffer.from(body.attachments[0].content, 'base64').toString()).toContain(
 			'ATTENDEE;CN=Ana'
 		);
+	});
+
+	it('names the attendee by their username when they gave no name', async () => {
+		const sent: RequestInit[] = [];
+		const request = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+			if (init) sent.push(init);
+			return new Response('{}', { status: 200 });
+		});
+		await test.db.update(profiles).set({ name: null }).where(eq(profiles.id, player));
+
+		try {
+			await createInviteHandler(env, request as unknown as typeof fetch, admin()).handle(
+				event('PlayerJoined'),
+				test.db
+			);
+
+			const { attachments } = JSON.parse(String(sent[0]?.body));
+			expect(Buffer.from(attachments[0].content, 'base64').toString()).toContain(
+				'ATTENDEE;CN=ana-souza'
+			);
+		} finally {
+			await test.db.update(profiles).set({ name: 'Ana' }).where(eq(profiles.id, player));
+		}
 	});
 
 	it('sends a CANCEL attachment to the player after they leave', async () => {
@@ -231,7 +255,7 @@ describe('calendar invite handler', () => {
 			expect(body.to).toEqual(['mestre@example.com']);
 			expect(body.template.id).toBe('tpl-requested');
 			expect(body.template.variables).toMatchObject({
-				RECIPIENT_NAME: 'Mestre',
+				RECIPIENT_NAME: 'mestre',
 				CONTEXT: 'JOIN_REQUESTED',
 				FALLBACK_TEXT: 'Há uma nova solicitação para a mesa "Mesa do Dragão".'
 			});

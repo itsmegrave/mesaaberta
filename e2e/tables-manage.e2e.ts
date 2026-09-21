@@ -19,7 +19,7 @@ test.describe('creating a table', () => {
 		// The address is made from the title, in English path, no numeric id.
 		expect(slug).toMatch(/^mesa-do-lich-[a-z0-9]+$/);
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
-		await expect(page.getByRole('main').getByText('Mestra Ana')).toBeVisible();
+		await expect(page.getByRole('main').getByText(gm.username)).toBeVisible();
 		await expect(page.getByText('5 vagas restantes').first()).toBeVisible();
 		await expect(page.getByText('Você é o mestre desta mesa.')).toBeVisible();
 

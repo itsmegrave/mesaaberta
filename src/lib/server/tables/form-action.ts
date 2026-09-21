@@ -1,4 +1,5 @@
 import { fail, redirect, type ActionFailure } from '@sveltejs/kit';
+import { requireUser } from '../auth/guard';
 import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
 import { parseTableForm, type TableInput } from '$lib/tables/schema';
@@ -25,7 +26,7 @@ const valuesFrom = (data: FormData): FormValues =>
 	) as FormValues;
 
 /**
- * What the create and the edit form actions share: check who is asking, validate the form, store
+ * What the create and the edit form actions share: check who is asking (a signed-in person with a username), validate the form, store
  * the image if there is one, then run `save`. Whatever `save` returns is where to go next.
  * `guard` runs once the form is valid and before the image is stored: it throws to refuse a request
  * (a rate limit) that should not cost an upload.
@@ -38,9 +39,7 @@ export async function handleTableForm(
 	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
 	guard: () => Promise<void> = async () => {}
 ): Promise<ActionFailure<FormFailure>> {
-	if (!(await locals.getUser())) {
-		redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
-	}
+	await requireUser(locals, url);
 
 	const data = await request.formData();
 	const values = valuesFrom(data);
