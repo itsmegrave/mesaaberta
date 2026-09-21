@@ -18,11 +18,9 @@
 	<meta name="description" content={m.home_description()} />
 </svelte:head>
 
-<section class="flex min-h-[600px] items-center py-5 md:min-h-[660px] md:py-0">
-	<div
-		class="grid w-full items-center gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(360px,.9fr)] md:gap-12"
-	>
-		<div class="max-w-[40rem]">
+<section class="flex items-center py-12 md:py-20">
+	<div class="grid w-full items-center gap-10 md:grid-cols-2 md:gap-12">
+		<div class="max-w-3xl">
 			<p
 				class="chip gap-2 border-0 bg-warning-500/20 px-3 text-sm font-semibold text-warning-700-300"
 			>
@@ -33,11 +31,11 @@
 				Mesas de RPG com vagas abertas
 			</p>
 			<h1
-				class="mt-5 max-w-[11ch] text-5xl leading-[.96] font-semibold tracking-[-0.035em] sm:text-6xl md:mt-6 md:text-7xl lg:text-[5rem]"
+				class="mt-5 max-w-[11ch] text-5xl leading-none font-semibold tracking-tight sm:text-6xl md:mt-6 md:text-7xl"
 			>
-				Tem uma <span class="text-warning-700-300">cadeira vazia</span> na mesa.
+				{m.hero_title()}
 			</h1>
-			<p class="mt-6 max-w-[34ch] text-lg leading-relaxed md:mt-7 md:text-[1.375rem]">
+			<p class="mt-6 max-w-[34ch] text-lg leading-relaxed md:mt-7 md:text-xl">
 				{m.hero_lede()}
 			</p>
 			<div class="mt-7 flex flex-col gap-3 sm:flex-row md:mt-9">
@@ -65,11 +63,6 @@
 					class="btn h-14 w-full preset-outlined-primary-500 sm:w-auto">Abrir uma mesa</a
 				>
 			</div>
-			<p class="mt-6 max-w-[46ch] text-sm leading-relaxed text-surface-700-300">
-				Mesa Aberta é um projeto de código aberto, sob a licença MIT.
-				<a href="https://github.com/itsmegrave/mesaaberta" class="anchor">Veja o código no GitHub</a
-				>.
-			</p>
 		</div>
 		<div class="mx-auto w-full max-w-[520px] md:justify-self-end"><TableIllustration /></div>
 	</div>

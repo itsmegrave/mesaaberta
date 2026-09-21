@@ -20,12 +20,12 @@
 	<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
 		<h1 class="text-5xl leading-none font-semibold tracking-tight md:text-6xl">{m.dash_title()}</h1>
 		<div class="flex flex-col gap-3 sm:flex-row">
-			<a href={localizedHref('/tables', locale)} class="btn h-[52px] preset-outlined-primary-500"
+			<a href={localizedHref('/tables', locale)} class="btn py-3.5 preset-outlined-primary-500"
 				>{m.dash_find_table()}</a
 			>
 			<a
 				href={localizedHref('/tables/new', locale)}
-				class="btn h-[52px] gap-2.5 preset-filled-primary-500"
+				class="btn gap-2.5 py-3.5 preset-filled-primary-500"
 			>
 				<svg
 					width="18"

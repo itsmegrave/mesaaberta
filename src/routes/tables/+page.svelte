@@ -17,14 +17,14 @@
 <section class="py-10 md:py-12">
 	<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-10">
 		<div>
-			<h1 class="text-5xl leading-none font-semibold tracking-tight md:text-[4.25rem]">
+			<h1 class="text-5xl leading-none font-semibold tracking-tight md:text-6xl">
 				{m.tables_title()}
 			</h1>
 			<p class="mt-4 max-w-[46ch] text-lg text-surface-700-300 md:text-xl">{m.tables_lede()}</p>
 		</div>
 		<a
 			href={localizedHref('/tables/new', getLocale())}
-			class="btn h-[52px] shrink-0 gap-2.5 preset-filled-primary-500"
+			class="btn shrink-0 gap-2.5 py-3.5 preset-filled-primary-500"
 		>
 			<svg
 				width="18"
