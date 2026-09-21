@@ -24,6 +24,8 @@ export function stack(): Stack {
 			stdio: ['ignore', 'pipe', 'ignore']
 		});
 		cached = JSON.parse(out) as Stack;
+		// Lets a branch whose migrations the shared stack does not have yet run against a database of its own.
+		if (process.env.E2E_DB_URL) cached = { ...cached, DB_URL: process.env.E2E_DB_URL };
 		return cached;
 	} catch {
 		throw new Error(

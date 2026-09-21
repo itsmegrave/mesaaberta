@@ -34,11 +34,12 @@ export type TestUser = {
 /**
  * A confirmed user, with a finished profile (a username) so the app treats them as someone who has
  * signed in before and finished the onboarding. `name` is their name; the username is made from it
- * plus a random tail, so the same name can be used by tests running side by side.
+ * plus a random tail, so the same name can be used by tests running side by side. With
+ * `incomplete` the profile has no username, like someone who has not done the onboarding step yet.
  */
 export async function createUser(
 	name: string,
-	options: { role?: 'member' | 'admin' } = {}
+	options: { role?: 'member' | 'admin'; incomplete?: boolean } = {}
 ): Promise<TestUser> {
 	const email = `${name.toLowerCase().replace(/\W+/g, '-')}-${unique()}@example.test`;
 	const { data, error } = await admin().auth.admin.createUser({
@@ -50,9 +51,10 @@ export async function createUser(
 	if (error || !data.user) throw new Error(`could not create a test user: ${error?.message}`);
 
 	const username = `${slugOf(name).slice(0, 14)}-${Math.random().toString(36).slice(2, 10)}`;
+	const stored = options.incomplete ? null : username;
 	const sql = database();
 	try {
-		await sql`insert into profiles (id, username, name, role) values (${data.user.id}, ${username}, ${name}, ${options.role ?? 'member'}) on conflict (id) do nothing`;
+		await sql`insert into profiles (id, username, name, role) values (${data.user.id}, ${stored}, ${name}, ${options.role ?? 'member'}) on conflict (id) do nothing`;
 	} finally {
 		await sql.end();
 	}

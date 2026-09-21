@@ -27,14 +27,23 @@ test.describe('sign up', () => {
 
 		await page.goto(link!);
 
-		// Back on our site, signed in, with the default name (nothing is made up from the address).
+		// Back on our site, signed in, and asked to finish the profile first (nothing is made up from the address).
+		await expect(page).toHaveURL(/\/onboarding\?next=%2F$/);
+		await expect(page.getByRole('heading', { name: 'Complete seu perfil' })).toBeVisible();
+
+		const username = `novata-${Date.now().toString(36)}`;
+		await page.getByLabel('Nome de usuário').fill(username);
+		await expect(page.getByText('Esse nome está livre.')).toBeVisible();
+		await page.getByRole('button', { name: 'Salvar e continuar' }).click();
+
+		// Then on to where the sign-up was going, showing the username.
 		await expect(page).toHaveURL(/localhost:4173\/$/);
-		await expect(accountMenu(page, 'Jogador')).toBeVisible();
+		await expect(accountMenu(page, username)).toBeVisible();
 
 		const sql = database();
 		try {
 			const rows =
-				await sql`select display_name, role, status from profiles where display_name = 'Jogador' order by created_at desc limit 1`;
+				await sql`select username, role, status from profiles where username = ${username}`;
 			expect(rows[0]).toMatchObject({ role: 'member', status: 'active' });
 		} finally {
 			await sql.end();
@@ -91,8 +100,8 @@ test.describe('sign in and out', () => {
 		await signIn(page, user, '/tables');
 		await expect(page).toHaveURL(/\/tables$/);
 
-		await signOut(page, user.name);
-		await expect(page.getByRole('banner').getByText(user.name)).toHaveCount(0);
+		await signOut(page, user.username);
+		await expect(page.getByRole('banner').getByText(user.username)).toHaveCount(0);
 	});
 
 	test('a wrong password and an unknown address get the same message', async ({ page }) => {
@@ -147,7 +156,7 @@ test.describe('sign in and out', () => {
 		await page.getByLabel('Senha').fill(user.password);
 		await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 
-		await expect(accountMenu(page, user.name)).toBeVisible();
+		await expect(accountMenu(page, user.username)).toBeVisible();
 		expect(new URL(page.url()).host).toBe('localhost:4173');
 	});
 });
@@ -177,9 +186,9 @@ test.describe('password reset', () => {
 		await page.getByRole('button', { name: 'Salvar nova senha' }).click();
 
 		await expect(page.getByRole('heading', { level: 1, name: 'Senha alterada' })).toBeVisible();
-		await expect(accountMenu(page, user.name)).toBeVisible();
+		await expect(accountMenu(page, user.username)).toBeVisible();
 
-		await signOut(page, user.name);
+		await signOut(page, user.username);
 
 		// The old password no longer works; the new one does.
 		await page.goto('/login');
