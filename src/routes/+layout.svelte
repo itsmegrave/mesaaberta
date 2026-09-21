@@ -3,6 +3,8 @@
 	import { asset, resolve } from '$app/paths';
 	import { navigating } from '$app/state';
 	import AccountMenu from '$lib/components/AccountMenu.svelte';
+	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
+	import TableLogo from '$lib/components/TableLogo.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
@@ -22,35 +24,78 @@
 
 <a
 	href="#main"
-	class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded focus:bg-surface focus:px-3 focus:py-2"
+	class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2 focus:text-ink focus:shadow-md"
 >
 	{m.skip_to_content()}
 </a>
 
-<header class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:px-8">
-	<a href={localizedHref('/', locale)} class="font-brand text-xl font-semibold tracking-wide">
-		Mesa Aberta
+<header
+	class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:h-[88px] md:px-8"
+>
+	<a
+		href={localizedHref('/', locale)}
+		class="flex items-center gap-2.5 text-ink no-underline md:gap-3"
+	>
+		<TableLogo size={34} class="size-7 md:size-[34px]" />
+		<span class="font-brand text-[19px] font-semibold tracking-[0.04em] md:text-2xl">
+			Mesa Aberta
+		</span>
 	</a>
 
-	<nav class="flex items-center gap-2" aria-label={m.nav_main()}>
-		<ThemeToggle />
-
+	<nav class="flex items-center gap-2 md:gap-3" aria-label={m.nav_main()}>
 		{#if data.released}
 			<a
 				href={localizedHref('/tables', locale)}
-				class="rounded px-3 py-2 font-semibold hover:bg-petrol/10"
+				class="hidden h-11 items-center rounded-xl px-3.5 font-display text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
 			>
 				{m.nav_tables()}
 			</a>
 		{/if}
 
 		{#if data.account}
+			<a
+				href={localizedHref('/account/tables', locale)}
+				class="hidden h-11 items-center rounded-xl px-3.5 font-display text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
+			>
+				{m.nav_my_tables()}
+			</a>
+
+			<a
+				href={localizedHref('/tables/new', locale)}
+				class="hidden h-11 items-center justify-center gap-2.5 rounded-xl border border-petrol bg-petrol px-4 font-display text-[15px] font-semibold text-on-petrol transition-opacity hover:opacity-90 md:inline-flex"
+			>
+				<svg
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					class="shrink-0"
+				>
+					<path d="M12 5v14M5 12h14" />
+				</svg>
+				{m.nav_open_table()}
+			</a>
+		{/if}
+
+		<ThemeToggle />
+
+		{#if data.account}
 			<AccountMenu
-				name={data.account.username ?? m.account_nameless()}
+				name={data.account.displayName}
 				avatarUrl={data.account.avatarUrl}
+				isAdmin={data.account.isAdmin}
+				pendingSuggestionsCount={data.account.pendingSuggestionsCount}
 			/>
 		{:else if data.authEnabled && data.released}
-			<a href={resolve('/login')} class="rounded px-3 py-2 font-semibold hover:bg-petrol/10">
+			<a
+				href={resolve('/login')}
+				class="inline-flex h-11 items-center justify-center rounded-xl border border-petrol px-4 font-display text-[15px] font-semibold text-ink transition-colors hover:bg-wash"
+			>
 				{m.nav_sign_in()}
 			</a>
 		{/if}
@@ -67,12 +112,16 @@
 	</p>
 {/if}
 
-<main id="main" class="mx-auto w-full max-w-6xl px-4 pb-16 md:px-8">
+<main id="main" class="mx-auto w-full max-w-6xl px-4 pb-24 md:px-8 md:pb-16">
 	{@render children()}
 </main>
 
+{#if data.released}
+	<BottomTabBar isAdmin={data.account?.isAdmin} />
+{/if}
+
 <footer class="mx-auto w-full max-w-6xl px-4 md:px-8">
-	<div class="border-t border-petrol/15 py-6 text-sm">
+	<div class="border-t border-line py-6 text-sm">
 		<p>
 			{m.footer_made_with()}
 			<a href="https://github.com/itsmegrave" rel="noopener" class="text-link">itsmegrave</a>.
