@@ -310,6 +310,40 @@ To add an event, add it to `DomainEvent` in `src/lib/server/events/types.ts`, re
 
 The adapter only exports `fetch`, so `pnpm build` ends with `scripts/wrap-worker.ts`, which wraps SvelteKit's Worker with the `scheduled` handler. If the deploy runs plain `vite build` instead of `pnpm build`, the site works but the sweeper does not run. To try the sweeper locally: `pnpm build`, then `wrangler dev --test-scheduled` and `curl "http://localhost:8787/cdn-cgi/handler/scheduled"`.
 
+## Rate limiting
+
+Any signed-in member may open a table and join one, so both are limited per person. `src/lib/server/rate-limit.ts` holds the limits as named constants and the check:
+
+| Limit                  | Counts                           | Allowed              |
+| ---------------------- | -------------------------------- | -------------------- |
+| `TABLE_CREATION_LIMIT` | `TableCreated` events            | 5 in any 60 minutes  |
+| `JOIN_LIMIT`           | `PlayerJoined` + `JoinRequested` | 20 in any 60 minutes |
+
+Workers keep nothing in memory between requests, so nothing is cached: the count is read from the `events` table, which already has a row per creation and per join, is never deleted, and is indexed by `(actor_id, created_at)`. There is no extra table to clean up. Leaving a table and joining again counts as a new join. Admins get no exemption, because the policy gives them no special right to open or join tables.
+
+`enforceRateLimit(tx, actorId, LIMIT)` is called in the same transaction as the write it limits, after validation and the policy checks: a refused request writes nothing and never uses the limit up (a full table or a form with errors does not count). It takes a per-person advisory lock, so two simultaneous requests cannot both slip through on the last slot. It throws `RateLimited`, which `failFrom` turns into a `429` form failure carrying `retryAfter` (seconds until one use ages out); the page shows "Tente de novo em 15 min", and the response has a `Retry-After` header. `checkRateLimit` is the same check without the lock, for a cheap look before costly work: the create form uses it so a limited person does not upload an image first.
+
+To limit something else (reports, say): record an event for it, add a named `RateLimit` next to the others, and call `enforceRateLimit` where the event is written.
+
+**Owner step: Cloudflare rate-limiting rule on the auth routes.** It cannot be created from code, and the tests never touch Cloudflare. In the Cloudflare dashboard, for the `mesaaberta.app` zone, open Security > WAF > Rate limiting rules > Create rule:
+
+- **Name:** `auth routes`
+- **If incoming requests match** (Edit expression):
+
+  ```
+  (http.request.method eq "POST" and http.request.uri.path in {"/login" "/signup" "/forgot-password" "/reset-password"})
+  or http.request.uri.path eq "/auth/callback"
+  or starts_with(http.request.uri.path, "/login/")
+  ```
+
+  The last two are the `GET`s that finish a sign-in and start a social one; `POST /logout` is left out.
+
+- **Counting characteristic:** IP
+- **Threshold and period:** 10 requests per 1 minute. The Free plan only offers a 10 second period: use 5 requests per 10 seconds there.
+- **Action:** Block for 10 minutes (on the Free plan, the 10 seconds it allows), with a custom response: status `429`, content type `text/plain`, body `Muitas tentativas. Tente de novo em alguns minutos.`
+
+The available periods, durations and the number of rules depend on the plan; check them on the plan you have. Supabase Auth also has limits of its own on sign-ins and emails.
+
 ## Logging
 
 Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
