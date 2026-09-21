@@ -7,7 +7,7 @@
 	import TableLogo from '$lib/components/TableLogo.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import Toaster from '$lib/components/Toaster.svelte';
-	import { Progress } from 'bits-ui';
+	import { Progress } from '@skeletonlabs/skeleton-svelte';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -48,7 +48,7 @@
 		{#if data.released}
 			<a
 				href={localizedHref('/tables', locale)}
-				class="hidden h-11 items-center rounded-xl px-3.5 font-display text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
+				class="font-display hidden h-11 items-center rounded-xl px-3.5 text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
 			>
 				{m.nav_tables()}
 			</a>
@@ -57,14 +57,14 @@
 		{#if data.account}
 			<a
 				href={localizedHref('/account/tables', locale)}
-				class="hidden h-11 items-center rounded-xl px-3.5 font-display text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
+				class="font-display hidden h-11 items-center rounded-xl px-3.5 text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
 			>
 				{m.nav_my_tables()}
 			</a>
 
 			<a
 				href={localizedHref('/tables/new', locale)}
-				class="hidden h-11 items-center justify-center gap-2.5 rounded-xl border border-petrol bg-petrol px-4 font-display text-[15px] font-semibold text-on-petrol transition-opacity hover:opacity-90 md:inline-flex"
+				class="font-display hidden h-11 items-center justify-center gap-2.5 rounded-xl border border-petrol bg-petrol px-4 text-[15px] font-semibold text-on-petrol transition-opacity hover:opacity-90 md:inline-flex"
 			>
 				<svg
 					width="18"
@@ -96,7 +96,7 @@
 		{:else if data.authEnabled && data.released}
 			<a
 				href={resolve('/login')}
-				class="inline-flex h-11 items-center justify-center rounded-xl border border-petrol px-4 font-display text-[15px] font-semibold text-ink transition-colors hover:bg-wash"
+				class="font-display inline-flex h-11 items-center justify-center rounded-xl border border-petrol px-4 text-[15px] font-semibold text-ink transition-colors hover:bg-wash"
 			>
 				{m.nav_sign_in()}
 			</a>
@@ -106,13 +106,11 @@
 
 <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
 {#if navigating.to}
-	<Progress.Root
-		value={null}
-		class="fixed inset-x-0 top-0 z-50 h-1 overflow-hidden bg-line"
-		aria-label={m.nav_loading()}
-	>
-		<div class="h-full w-1/3 animate-progress rounded-full bg-petrol"></div>
-	</Progress.Root>
+	<Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
+		<Progress.Track class="h-1">
+			<Progress.Range />
+		</Progress.Track>
+	</Progress>
 {/if}
 
 <Toaster />

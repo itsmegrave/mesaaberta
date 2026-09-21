@@ -23,11 +23,11 @@ describe('Avatar', () => {
 		expect(img?.getAttribute('aria-hidden')).toBe('true');
 	});
 
-	it('applies the requested seat color', async () => {
-		render(Avatar, { name: 'Carlos', color: 'rose' });
+	it('applies the requested semantic color', async () => {
+		render(Avatar, { name: 'Carlos', color: 'secondary' });
 
-		const root = document.querySelector('[data-avatar-root]');
-		expect(root?.classList.contains('bg-rose')).toBe(true);
+		const fallback = document.querySelector('[data-part="fallback"]');
+		expect(fallback?.classList.contains('preset-filled-secondary-500')).toBe(true);
 	});
 
 	it('falls back to ? when name is missing or empty', async () => {
