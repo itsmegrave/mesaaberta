@@ -80,6 +80,8 @@
 	"form_description": "Descrição",
 	"form_extra_info": "Informações extras",
 	"form_extra_info_hint": "Opcional. O que trazer, regras da casa, o que esperar.",
+	"form_welcome_message": "Mensagem de boas-vindas",
+	"form_welcome_message_hint": "Opcional. Enviada por e-mail a cada jogador que garantir uma vaga, junto com o convite. Use {token} onde quiser o nome da mesa. Apague o texto para não enviar mensagem.",
 	"form_kind": "Tipo",
 	"form_kind_one_shot": "One-shot (uma sessão)",
 	"form_kind_campaign": "Campanha (várias sessões)",

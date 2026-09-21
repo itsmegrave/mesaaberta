@@ -1,4 +1,5 @@
 import { m } from '$lib/paraglide/messages';
+import { DEFAULT_WELCOME_MESSAGE } from './welcome';
 
 /** What the form holds while it is being filled in: every value is the text of an input. */
 export type FormValues = {
@@ -6,6 +7,7 @@ export type FormValues = {
 	title: string;
 	description: string;
 	extraInfo: string;
+	welcomeMessage: string;
 	kind: string;
 	capacity: string;
 	startsAtLocal: string;
@@ -21,6 +23,8 @@ export const NEW_TABLE_VALUES: FormValues = {
 	title: '',
 	description: '',
 	extraInfo: '',
+	// The token stays literal: the title is not known yet, and it is expanded when the message is sent.
+	welcomeMessage: DEFAULT_WELCOME_MESSAGE,
 	kind: 'one_shot',
 	capacity: '5',
 	startsAtLocal: '',

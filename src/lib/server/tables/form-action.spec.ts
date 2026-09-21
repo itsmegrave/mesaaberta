@@ -100,6 +100,33 @@ describe('handleTableForm', () => {
 		expect(s.save).not.toHaveBeenCalled();
 	});
 
+	it('hands the welcome message to save, and keeps it when the form is refused', async () => {
+		const s = setup();
+		await expect(
+			run(request({ title: 'Boas-vindas', welcomeMessage: 'Olá, {nome da mesa}!' }), s)
+		).rejects.toMatchObject({ status: 303 });
+		expect(s.save.mock.calls[0][0]).toMatchObject({ welcomeMessage: 'Olá, {nome da mesa}!' });
+
+		const refused = await run(request({ title: 'x', welcomeMessage: 'Fale comigo.' }), setup());
+		expect(refused).toMatchObject({
+			status: 400,
+			data: { values: { welcomeMessage: 'Fale comigo.' } }
+		});
+	});
+
+	it('refuses a welcome message over the limit and gives the typed text back', async () => {
+		const s = setup();
+		const long = 'x'.repeat(1001);
+
+		const result = await run(request({ welcomeMessage: long }), s);
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: { errors: { welcomeMessage: 'too_big' }, values: { welcomeMessage: long } }
+		});
+		expect(s.save).not.toHaveBeenCalled();
+	});
+
 	it('stores an uploaded image and saves its path with the table', async () => {
 		const s = setup();
 		const png = new File([new Uint8Array([...PNG, 1, 2, 3])], 'capa.png', { type: 'image/png' });
