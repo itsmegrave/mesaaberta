@@ -2,7 +2,7 @@ import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { toast } from '$lib/stores/toast.svelte';
+import { toast } from '$lib/toaster';
 import Layout from './+layout.svelte';
 
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
@@ -252,8 +252,7 @@ describe('+layout.svelte', () => {
 
 			toast.success('Vaga confirmada!');
 
-			await expect.element(page.getByRole('status')).toBeVisible();
-			await expect.element(page.getByRole('status')).toHaveTextContent('Vaga confirmada!');
+			await expect.element(page.getByText('Vaga confirmada!')).toBeVisible();
 		});
 	});
 });

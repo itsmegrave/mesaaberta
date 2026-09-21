@@ -5,7 +5,7 @@
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
-	import { toast } from '$lib/stores/toast.svelte';
+	import { toast } from '$lib/toaster';
 
 	let { data, form } = $props();
 

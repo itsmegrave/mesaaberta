@@ -1,37 +1,29 @@
 import { page } from 'vitest/browser';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Toaster from './Toaster.svelte';
-import { toast } from '$lib/stores/toast.svelte';
+import { toast } from '$lib/toaster';
 
-describe('Toaster.svelte', () => {
-	beforeEach(() => {
-		toast.clear();
-	});
+afterEach(() => toast.clear());
 
-	it('renders active toasts with role="status"', async () => {
+describe('Toaster', () => {
+	it('shows a message until the reader closes it', async () => {
 		render(Toaster);
 
-		toast.success('Vaga confirmada! O convite está no seu e-mail.');
+		toast.success('Mesa salva');
 
-		const status = page.getByRole('status');
-		await expect.element(status).toBeVisible();
-		await expect
-			.element(status)
-			.toHaveTextContent('Vaga confirmada! O convite está no seu e-mail.');
+		await expect.element(page.getByText('Mesa salva')).toBeVisible();
+		await page.getByRole('button', { name: 'Fechar aviso' }).click();
+		await expect.element(page.getByText('Mesa salva')).not.toBeInTheDocument();
 	});
 
-	it('dismisses a toast when clicking the close button', async () => {
+	it('shows an error and a pending notice', async () => {
 		render(Toaster);
 
-		toast.error('A mesa lotou.');
+		toast.error('Não deu certo');
+		toast.pending('Aguardando o mestre');
 
-		const status = page.getByRole('status');
-		await expect.element(status).toBeVisible();
-
-		const closeBtn = page.getByRole('button', { name: 'Fechar aviso' });
-		await closeBtn.click();
-
-		await expect.element(page.getByRole('status')).not.toBeInTheDocument();
+		await expect.element(page.getByText('Não deu certo')).toBeVisible();
+		await expect.element(page.getByText('Aguardando o mestre')).toBeVisible();
 	});
 });
