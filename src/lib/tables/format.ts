@@ -28,3 +28,34 @@ export function formatDuration(minutes: number): string {
 export function formatWait(seconds: number): string {
 	return formatDuration(Math.max(1, Math.ceil(seconds / 60)));
 }
+
+/** Date formatting for table cards: day + short month, and weekday + time + offset. */
+export function formatCardDate(
+	date: Date,
+	timeZone: string,
+	locale: string
+): { dayMonth: string; weekdayTime: string } {
+	const dayMonth = new Intl.DateTimeFormat(locale, {
+		timeZone,
+		day: 'numeric',
+		month: 'short'
+	}).format(date);
+
+	const weekday = new Intl.DateTimeFormat(locale, {
+		timeZone,
+		weekday: 'short'
+	}).format(date);
+
+	const time = new Intl.DateTimeFormat(locale, {
+		timeZone,
+		hour: '2-digit',
+		minute: '2-digit',
+		hourCycle: 'h23',
+		timeZoneName: 'shortOffset'
+	}).format(date);
+
+	return {
+		dayMonth: dayMonth.replace('.', '').trim(),
+		weekdayTime: `${weekday} · ${time}`
+	};
+}
