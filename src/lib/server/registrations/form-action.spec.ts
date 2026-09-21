@@ -86,7 +86,7 @@ describe('runRegistrationAction', () => {
 		const { event } = setup({ username: null });
 		const run = vi.fn();
 
-		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+		await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
 			status: 303,
 			location: '/onboarding?next=%2Ftables%2Fmesa'
 		});

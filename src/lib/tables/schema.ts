@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import '$lib/forms/zod-codes';
+import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
 
@@ -7,6 +8,7 @@ export const TABLE_LIMITS = {
 	title: { min: 3, max: 80 },
 	description: 4000,
 	extraInfo: 2000,
+	welcomeMessage: WELCOME_MESSAGE_MAX,
 	capacity: { min: 1, max: 30 },
 	durationMinutes: { min: 15, max: 1440 }
 } as const;
@@ -44,6 +46,11 @@ export const tableFormSchema = z
 		title: z.string().trim().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
 		description: text(TABLE_LIMITS.description).default(''),
 		extraInfo: text(TABLE_LIMITS.extraInfo).default(''),
+		welcomeMessage: z
+			.string()
+			.transform(cleanWelcomeMessage)
+			.pipe(z.string().max(TABLE_LIMITS.welcomeMessage))
+			.default(''),
 		kind: z.enum(['campaign', 'one_shot']),
 		capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
 		startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
@@ -71,6 +78,7 @@ export type TableInput = {
 	title: string;
 	description: string;
 	extraInfo: string | null;
+	welcomeMessage: string | null;
 	kind: 'campaign' | 'one_shot';
 	capacity: number;
 	/** Wall-clock time in `timezone`, e.g. `2026-10-10T19:00`. */
@@ -86,12 +94,13 @@ export type TableInput = {
 
 /** The validated form as what the domain wants: a repeat rule instead of a word, no empty strings. */
 export function toTableInput(values: z.output<typeof tableFormSchema>): TableInput {
-	const { repeat, until, extraInfo, ...rest } = values;
+	const { repeat, until, extraInfo, welcomeMessage, ...rest } = values;
 	const campaign = rest.kind === 'campaign';
 
 	return {
 		...rest,
 		extraInfo: extraInfo || null,
+		welcomeMessage: welcomeMessage || null,
 		recurrence: campaign ? RULES[repeat as keyof typeof RULES] : null,
 		untilLocalDate: campaign && until ? until : null
 	};

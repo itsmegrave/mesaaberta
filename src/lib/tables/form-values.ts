@@ -3,6 +3,7 @@ import type { FormMessage } from '$lib/forms/message';
 import { m } from '$lib/paraglide/messages';
 import { formatWait } from './format';
 import type { tableFormSchema } from './schema';
+import { DEFAULT_WELCOME_MESSAGE } from './welcome';
 
 /** What the form holds: the schema's values, with the numbers as numbers. */
 export type TableFormValues = z.output<typeof tableFormSchema>;
@@ -12,6 +13,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
 	title: '',
 	description: '',
 	extraInfo: '',
+	welcomeMessage: DEFAULT_WELCOME_MESSAGE,
 	kind: 'one_shot',
 	capacity: 5,
 	startsAtLocal: '',

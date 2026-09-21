@@ -109,6 +109,6 @@ describe('TableForm', () => {
 	it('says how long to wait when the person did this too often', async () => {
 		render(TableFormHarness, { ...props, message: { code: 'rate_limited', retryAfter: 900 } });
 
-		await expect.element(page.getByRole('alert')).toHaveTextContent(/Tente de novo em/);
+		await expect.element(page.getByRole('alert')).toHaveTextContent('Tente de novo em');
 	});
 });

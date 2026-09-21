@@ -274,7 +274,7 @@
 						<li
 							class="flex items-center justify-between gap-4 card border border-surface-200-800 bg-surface-100-900 p-3"
 						>
-							<span>{player.displayName}</span>
+							<span>{player.username}</span>
 							<ActionForm
 								action="?/remove"
 								playerId={player.playerId}
@@ -296,7 +296,7 @@
 						<li
 							class="flex items-center justify-between gap-4 card border border-surface-200-800 bg-surface-100-900 p-3"
 						>
-							<span>{request.displayName}</span>
+							<span>{request.username}</span>
 							<div class="flex gap-4">
 								<ActionForm
 									action="?/approve"

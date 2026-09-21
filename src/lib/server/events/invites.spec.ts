@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { formatSession } from '../../tables/format';
