@@ -19,7 +19,7 @@
 </svelte:head>
 
 <section class="py-10 md:py-16">
-	<a href={localizedHref(`/tables/${data.slug}`, getLocale())} class="text-link">
+	<a href={localizedHref(`/tables/${data.slug}`, getLocale())} class="anchor">
 		{m.form_view_table()}
 	</a>
 
