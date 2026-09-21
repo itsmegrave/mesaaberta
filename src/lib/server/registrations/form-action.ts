@@ -2,11 +2,17 @@ import { error, redirect } from '@sveltejs/kit';
 import type { AnyDb } from '../db/client';
 import type { Actor } from '../auth/policy';
 import { safeNext } from '../auth/safe-next';
-import { failFrom } from '../errors';
+import { RateLimited, failFrom } from '../errors';
 import { dispatchEvent } from '../events/dispatcher';
 import { handlersFor } from '../events/handlers';
 
-type Event = { locals: App.Locals; url: URL; request: Request; platform?: App.Platform };
+type Event = {
+	locals: App.Locals;
+	url: URL;
+	request: Request;
+	platform?: App.Platform;
+	setHeaders?: (headers: Record<string, string>) => void;
+};
 
 /**
  * What every join, leave, approve, decline and remove action shares: an anonymous visitor goes to
@@ -32,6 +38,9 @@ export async function runRegistrationAction(
 		for (const id of eventIds)
 			locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), id));
 	} catch (e) {
+		if (e instanceof RateLimited) {
+			event.setHeaders?.({ 'Retry-After': String(e.retryAfterSeconds) });
+		}
 		return failFrom(e);
 	}
 

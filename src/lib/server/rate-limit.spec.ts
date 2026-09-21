@@ -2,7 +2,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { events, profiles } from './db/schema';
 import { createTestDb } from './db/test-db';
 import { RateLimited } from './errors';
-import { JOIN_LIMIT, TABLE_CREATION_LIMIT, enforceRateLimit, type RateLimit } from './rate-limit';
+import {
+	JOIN_LIMIT,
+	TABLE_CREATION_LIMIT,
+	checkRateLimit,
+	enforceRateLimit,
+	type RateLimit
+} from './rate-limit';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = '00000000-0000-4000-8000-000000000a01';
@@ -136,5 +142,21 @@ describe('enforceRateLimit', () => {
 		await enforceRateLimit(test.db, ana, limit, now).catch(() => undefined);
 
 		expect(await test.db.select().from(events)).toHaveLength(3);
+	});
+});
+
+describe('checkRateLimit', () => {
+	it('gives the same answer as enforceRateLimit, for a cheap look before costly work', async () => {
+		await created(ana, 20, 10);
+		await expect(checkRateLimit(test.db, ana, limit, now)).resolves.toBeUndefined();
+
+		await created(ana, 30);
+		expect(await retryAfterOf(checkRateLimit(test.db, ana, limit, now))).toBe(30 * 60);
+	});
+
+	it('counts each person on their own', async () => {
+		await created(ana, 10, 20, 30);
+
+		await expect(checkRateLimit(test.db, bruno, limit, now)).resolves.toBeUndefined();
 	});
 });

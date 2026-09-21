@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatSession } from './format';
+import { formatDuration, formatSession, formatWait } from './format';
 
 describe('formatSession', () => {
 	const start = new Date('2026-10-10T22:00:00Z');
@@ -38,5 +38,20 @@ describe('formatDuration', () => {
 		[90, '1 h 30 min']
 	])('writes %i minutes as %j', (minutes, text) => {
 		expect(formatDuration(minutes)).toBe(text);
+	});
+});
+
+describe('formatWait', () => {
+	it.each([
+		[1, '1 min'],
+		[59, '1 min'],
+		[60, '1 min'],
+		[61, '2 min'],
+		[90, '2 min'],
+		[15 * 60, '15 min'],
+		[3600, '1 h'],
+		[3601, '1 h 1 min']
+	])('%i seconds is %s: rounded up, never promising a moment too early', (seconds, text) => {
+		expect(formatWait(seconds)).toBe(text);
 	});
 });

@@ -1,13 +1,23 @@
 import { fail, redirect, type ActionFailure } from '@sveltejs/kit';
-import { Forbidden, Invalid, NotFound } from '../errors';
+import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
 import { parseTableForm, type TableInput } from '$lib/tables/schema';
 import { NEW_TABLE_VALUES, type FormValues } from '$lib/tables/form-values';
 
 /** What a failed submit gives back: the problem, and what was typed so nothing is lost. */
-export type FormFailure = { values: FormValues; errors?: Record<string, string>; error?: string };
+export type FormFailure = {
+	values: FormValues;
+	errors?: Record<string, string>;
+	error?: string;
+	retryAfter?: number;
+};
 
-type Event = { request: Request; locals: App.Locals; url: URL };
+type Event = {
+	request: Request;
+	locals: App.Locals;
+	url: URL;
+	setHeaders?: (headers: Record<string, string>) => void;
+};
 
 const valuesFrom = (data: FormData): FormValues =>
 	Object.fromEntries(
@@ -17,13 +27,16 @@ const valuesFrom = (data: FormData): FormValues =>
 /**
  * What the create and the edit form actions share: check who is asking, validate the form, store
  * the image if there is one, then run `save`. Whatever `save` returns is where to go next.
+ * `guard` runs once the form is valid and before the image is stored: it throws to refuse a request
+ * (a rate limit) that should not cost an upload.
  *
  * Every failure answers with the values the person typed, so nothing is lost. The permission
  * itself is checked by `save` (through the policy), not here.
  */
 export async function handleTableForm(
-	{ request, locals, url }: Event,
-	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>
+	{ request, locals, url, setHeaders }: Event,
+	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
+	guard: () => Promise<void> = async () => {}
 ): Promise<ActionFailure<FormFailure>> {
 	if (!(await locals.getUser())) {
 		redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
@@ -37,6 +50,7 @@ export async function handleTableForm(
 
 	let slug: string;
 	try {
+		await guard();
 		const image = data.get('image');
 		let imagePath: string | undefined;
 
@@ -54,6 +68,10 @@ export async function handleTableForm(
 		}
 		if (error instanceof Forbidden) return fail(403, { error: 'forbidden', values });
 		if (error instanceof NotFound) return fail(404, { error: 'not_found', values });
+		if (error instanceof RateLimited) {
+			setHeaders?.({ 'Retry-After': String(error.retryAfterSeconds) });
+			return fail(429, { error: 'rate_limited', retryAfter: error.retryAfterSeconds, values });
+		}
 		throw error;
 	}
 

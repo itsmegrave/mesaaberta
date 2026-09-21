@@ -42,20 +42,15 @@ export const JOIN_LIMIT = {
  * telling how long until one use ages out. An event is in the window while it is younger than
  * `windowSeconds`, so it leaves exactly one window after it happened.
  *
- * Call it inside the transaction that writes the event it limits. It first takes a lock on the
- * person (released at commit), so two simultaneous requests cannot both read "one left" and both
- * go through.
+ * This only reads, so it is a cheap look before costly work (storing an upload): two simultaneous
+ * requests can both pass it. Use `enforceRateLimit` where the event is written.
  */
-export async function enforceRateLimit(
+export async function checkRateLimit(
 	db: AnyDb,
 	actorId: string,
 	limit: RateLimit,
 	now: Date = new Date()
 ): Promise<void> {
-	await db.execute(
-		sql`select pg_advisory_xact_lock(hashtextextended(${`rate-limit:${actorId}`}, 0))`
-	);
-
 	const windowStart = new Date(now.getTime() - limit.windowSeconds * 1000);
 	// The newest `max` events in the window. If there are that many, the oldest of them is the one
 	// that must age out before the person is back under the limit.
@@ -75,4 +70,22 @@ export async function enforceRateLimit(
 
 	const frees = used[used.length - 1].createdAt.getTime() + limit.windowSeconds * 1000;
 	throw new RateLimited(Math.max(1, Math.ceil((frees - now.getTime()) / 1000)));
+}
+
+/**
+ * `checkRateLimit`, made safe against simultaneous requests. Call it inside the transaction that
+ * writes the event it limits. It first takes a lock on the person (released at commit), so two
+ * requests cannot both read "one left" and both go through.
+ */
+export async function enforceRateLimit(
+	db: AnyDb,
+	actorId: string,
+	limit: RateLimit,
+	now: Date = new Date()
+): Promise<void> {
+	await db.execute(
+		sql`select pg_advisory_xact_lock(hashtextextended(${`rate-limit:${actorId}`}, 0))`
+	);
+
+	await checkRateLimit(db, actorId, limit, now);
 }
