@@ -37,6 +37,22 @@ describe('TableForm', () => {
 		await expect.element(page.getByLabelText('Última sessão até')).toBeVisible();
 	});
 
+	it('groups the form into the four numbered steps and keeps the preview in sync', async () => {
+		render(TableForm, props);
+
+		for (const heading of ['Sobre a mesa', 'Quando', 'Vagas e entrada', 'Imagem']) {
+			await expect.element(page.getByRole('heading', { name: heading })).toBeVisible();
+		}
+
+		await page.getByLabelText('Título').fill('A Cripta do Rei Afogado');
+		await page.getByLabelText('Sistema de RPG').selectOptions('daggerheart');
+		await page.getByLabelText('Vagas').fill('4');
+
+		await expect.element(page.getByText('A Cripta do Rei Afogado')).toBeVisible();
+		await expect.element(page.getByRole('complementary').getByText('Daggerheart')).toBeVisible();
+		await expect.element(page.getByText('One-shot · 4 vagas')).toBeVisible();
+	});
+
 	it('posts as multipart to its action, so an image can travel with it', async () => {
 		render(TableForm, { ...props, action: '?/save' });
 
@@ -50,7 +66,7 @@ describe('TableForm', () => {
 		render(TableForm, props);
 
 		await expect
-			.element(page.getByLabelText('Imagem'))
+			.element(page.getByRole('button', { name: 'Imagem' }))
 			.toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
 	});
 
