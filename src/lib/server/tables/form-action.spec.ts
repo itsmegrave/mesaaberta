@@ -9,6 +9,7 @@ import type { TableInput } from '$lib/tables/schema';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = {
 	id: '00000000-0000-4000-8000-000000000801',
+	username: 'ana',
 	role: 'member',
 	status: 'active'
 } as const;
@@ -16,7 +17,7 @@ const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 beforeAll(async () => {
 	test = await createTestDb();
-	await test.db.insert(profiles).values({ id: ana.id, displayName: 'Ana' });
+	await test.db.insert(profiles).values({ id: ana.id, username: 'ana' });
 });
 afterAll(() => test.close());
 
@@ -81,6 +82,17 @@ describe('handleTableForm', () => {
 		await expect(run(request(), s)).rejects.toMatchObject({
 			status: 303,
 			location: '/login?next=%2Ftables%2Fnew'
+		});
+		expect(s.save).not.toHaveBeenCalled();
+	});
+
+	it('sends someone who has not picked a username yet to finish the profile, saving nothing', async () => {
+		const s = setup();
+		s.locals.getProfile = async () => ({ ...ana, username: null }) as never;
+
+		await expect(run(request(), s)).rejects.toMatchObject({
+			status: 303,
+			location: '/onboarding?next=%2Ftables%2Fnew'
 		});
 		expect(s.save).not.toHaveBeenCalled();
 	});

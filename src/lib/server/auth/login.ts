@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import type { Logger } from '../logger';
 import type { Provider } from '$lib/auth/providers';
 import { ensureProfile } from './profile';
+import { needsOnboarding, onboardingUrl } from './onboarding';
 import { safeNext } from './safe-next';
 
 /** Where to send the visitor to sign in at the provider, or null if Supabase gave no URL. */
@@ -23,7 +24,7 @@ export async function startLogin(
 
 /**
  * The provider sent the visitor back with a `code`. Trade it for a session, make sure a profile
- * exists, and answer with where to go next. Any failure signs the user out again and goes back to
+ * exists, and answer with where to go next (the onboarding step first, if the profile is not complete). Any failure signs the user out again and goes back to
  * the login page with an error code, so nobody is left half signed in.
  */
 export async function finishLogin(
@@ -46,13 +47,16 @@ export async function finishLogin(
 		return '/login?error=unavailable';
 	}
 
+	let profile;
 	try {
-		await ensureProfile(db, data.user);
+		profile = await ensureProfile(db, data.user);
 	} catch (error) {
 		log.error('login: could not create the profile', { error });
 		await supabase.auth.signOut();
 		return '/login?error=profile_failed';
 	}
 
-	return safeNext(next);
+	// A first sign-in (or a profile from before usernames) goes through the onboarding step first.
+	const target = safeNext(next);
+	return needsOnboarding(profile) ? onboardingUrl(target) : target;
 }

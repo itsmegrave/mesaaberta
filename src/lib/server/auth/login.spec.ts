@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { finishLogin, startLogin } from './login';
 
@@ -69,19 +70,35 @@ describe('finishLogin', () => {
 		return { run, signOut, supabase, log, test };
 	};
 
-	it('exchanges the code, creates the profile, and goes on to next', async () => {
+	it('exchanges the code, creates the profile, and sends the new person to finish it, then on to next', async () => {
 		const { run, test } = await setup({ data: { user }, error: null });
 
-		expect(await run('abc', '/tables/new')).toBe('/tables/new');
+		expect(await run('abc', '/tables/new')).toBe('/onboarding?next=%2Ftables%2Fnew');
 		expect(await test.db.query.profiles.findFirst()).toMatchObject({
 			id: user.id,
-			displayName: 'Ana',
+			name: 'Ana',
+			username: null,
 			role: 'member'
 		});
 	});
 
+	it('goes straight on to next when the profile already has a username', async () => {
+		const { run, test } = await setup({ data: { user }, error: null });
+		await test.db.insert(profiles).values({ id: user.id, username: 'ana' });
+
+		expect(await run('abc', '/tables/new')).toBe('/tables/new');
+	});
+
+	it('sends a profile from before usernames to finish it too', async () => {
+		const { run, test } = await setup({ data: { user }, error: null });
+		await test.db.insert(profiles).values({ id: user.id });
+
+		expect(await run('abc', '/account/tables')).toBe('/onboarding?next=%2Faccount%2Ftables');
+	});
+
 	it('goes home when next is unsafe', async () => {
-		const { run } = await setup({ data: { user }, error: null });
+		const { run, test } = await setup({ data: { user }, error: null });
+		await test.db.insert(profiles).values({ id: user.id, username: 'ana' });
 
 		expect(await run('abc', '//evil.example')).toBe('/');
 	});

@@ -2,9 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { AlreadyRegistered, Forbidden, NotFound, RateLimited, TableFull } from '../errors';
 import { runRegistrationAction } from './form-action';
 
-const setup = (over: { user?: boolean; db?: boolean } = {}) => {
+const setup = (over: { user?: boolean; db?: boolean; username?: string | null } = {}) => {
 	const queued: ((db: unknown) => Promise<unknown>)[] = [];
-	const profile = { id: 'p1', role: 'member', status: 'active' };
+	const profile = {
+		id: 'p1',
+		username: over.username === undefined ? 'ana' : over.username,
+		role: 'member',
+		status: 'active'
+	};
 	const locals = {
 		getUser: async () => (over.user === false ? null : { id: 'p1' }),
 		getProfile: async () => (over.user === false ? null : profile),
@@ -68,6 +73,17 @@ describe('runRegistrationAction', () => {
 		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
 			status: 303,
 			location: '/login?next=%2Ftables%2Fmesa'
+		});
+		expect(run).not.toHaveBeenCalled();
+	});
+
+	it('sends someone who has not picked a username yet to finish the profile, and runs nothing', async () => {
+		const { event } = setup({ username: null });
+		const run = vi.fn();
+
+		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+			status: 303,
+			location: '/onboarding?next=%2Ftables%2Fmesa'
 		});
 		expect(run).not.toHaveBeenCalled();
 	});

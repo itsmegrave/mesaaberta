@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { parseCredentials } from '$lib/auth/credentials';
 import { signInWithEmail, type SignInResult } from '$lib/server/auth/email';
+import { afterSignIn } from '$lib/server/auth/onboarding';
 import { safeNext } from '$lib/server/auth/safe-next';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -41,6 +42,6 @@ export const actions: Actions = {
 		);
 		if (result !== 'ok') return fail(STATUS[result], { result, email });
 
-		redirect(303, next);
+		redirect(303, await afterSignIn(locals, next));
 	}
 };
