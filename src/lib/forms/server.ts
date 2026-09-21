@@ -22,6 +22,7 @@ export function refuse<T extends Record<string, unknown>>(
 	code: string,
 	field?: string
 ) {
-	if (field && field in form.data) return setError(form, field as never, code, { status });
+	if (field && Object.hasOwn(form.data, field))
+		return setError(form, field as never, code, { status });
 	return message(form, { code, field }, { status });
 }

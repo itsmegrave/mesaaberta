@@ -44,6 +44,7 @@ describe('refuse', () => {
 	it('puts the code in the form message when the field is not in the schema, or none is named', async () => {
 		const image = refuse(await filled(), 400, 'not_an_image', 'image');
 		const plain = refuse(await filled(), 429, 'rate_limited');
+		const prototype = refuse(await filled(), 400, 'invalid_field', '__proto__');
 
 		expect(image).toMatchObject({
 			status: 400,
@@ -52,6 +53,10 @@ describe('refuse', () => {
 		expect(plain).toMatchObject({
 			status: 429,
 			data: { form: { message: { code: 'rate_limited' } } }
+		});
+		expect(prototype).toMatchObject({
+			status: 400,
+			data: { form: { message: { code: 'invalid_field', field: '__proto__' } } }
 		});
 	});
 });
