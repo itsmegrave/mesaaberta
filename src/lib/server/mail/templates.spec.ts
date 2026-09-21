@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	TEMPLATE_VARIABLES,
+	welcomeSection,
 	templateIdFor,
 	templateVariables,
 	type TemplateVariables
@@ -46,7 +47,8 @@ describe('template variables', () => {
 			'TABLE_URL',
 			'CONTEXT',
 			'STARTS_AT',
-			'FALLBACK_TEXT'
+			'FALLBACK_TEXT',
+			'WELCOME_MESSAGE'
 		]);
 		const reserved = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'UNSUBSCRIBE_URL', 'contact', 'this'];
 		expect(TEMPLATE_VARIABLES.filter((name) => reserved.includes(name))).toEqual([]);
@@ -66,7 +68,7 @@ describe('template variables', () => {
 			RESEND_API_KEY: 're_secret'
 		} as TemplateVariables;
 
-		expect(Object.keys(templateVariables(smuggled)).sort()).toEqual([...TEMPLATE_VARIABLES].sort());
+		expect(Object.keys(templateVariables(smuggled)).sort()).toEqual(Object.keys(variables).sort());
 	});
 
 	it('omits an optional variable that is absent instead of sending it empty', () => {
@@ -88,5 +90,17 @@ describe('template variables', () => {
 		const result = templateVariables({ ...variables, FALLBACK_TEXT: 'a'.repeat(5000) });
 
 		expect(result.FALLBACK_TEXT).toHaveLength(2000);
+	});
+});
+
+describe('welcomeSection', () => {
+	it('is the heading and the message, on their own lines', () => {
+		expect(welcomeSection('  Bem-vinda!\nAté breve.  ')).toBe(
+			'Mensagem do mestre:\nBem-vinda!\nAté breve.'
+		);
+	});
+
+	it.each([undefined, '', '   \n '])('is nothing, never a bare heading, for %j', (message) => {
+		expect(welcomeSection(message)).toBeUndefined();
 	});
 });

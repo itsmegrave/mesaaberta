@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { createSupabaseAdmin, emailOf, type SupabaseAdmin } from '../auth/admin-client';
+import { expandWelcomeMessage } from '$lib/tables/welcome';
 import { buildInvite, tableUrl, type CalendarTable } from '../calendar/ics';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
@@ -45,6 +46,7 @@ const calendarColumns = {
 	title: gameTables.title,
 	description: gameTables.description,
 	extraInfo: gameTables.extraInfo,
+	welcomeMessage: gameTables.welcomeMessage,
 	kind: gameTables.kind,
 	startsAt: gameTables.startsAt,
 	durationMinutes: gameTables.durationMinutes,
@@ -58,13 +60,15 @@ const calendarColumns = {
 /** Resend accepts `Name <address@example.com>`; iCalendar's ORGANIZER needs only the address. */
 const addressOf = (from: string) => from.match(/<([^<>]+)>\s*$/)?.[1] ?? from;
 
+type InviteTable = CalendarTable & { gmId: string; welcomeMessage: string | null };
+
 async function tableOf(db: AnyDb, tableId: string) {
 	const [table] = await db
 		.select(calendarColumns)
 		.from(gameTables)
 		.where(eq(gameTables.id, tableId));
 	if (!table) throw new Error('Table for invite event no longer exists');
-	return table as CalendarTable;
+	return table as InviteTable;
 }
 
 async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
@@ -86,7 +90,7 @@ async function confirmedRecipients(db: AnyDb, tableId: string): Promise<Recipien
 async function recipientsFor(
 	db: AnyDb,
 	event: StoredEvent,
-	table: CalendarTable & { gmId: string }
+	table: InviteTable
 ): Promise<Recipient[]> {
 	if ('playerId' in event.payload) {
 		return event.type === 'JoinRequested'
@@ -125,7 +129,7 @@ export function createInviteHandler(
 			'TableDisabled'
 		],
 		async handle(event, db) {
-			const table = (await tableOf(db, event.payload.tableId)) as CalendarTable & { gmId: string };
+			const table = await tableOf(db, event.payload.tableId);
 			const recipients = await recipientsFor(db, event, table);
 			const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
 			const method =
@@ -151,6 +155,11 @@ export function createInviteHandler(
 				});
 				return { template: { id, variables } };
 			};
+			// Only the player who just got a seat is welcomed, never a later update or the GM.
+			const welcomeMessage =
+				event.type === 'JoinApproved' || event.type === 'PlayerJoined'
+					? (expandWelcomeMessage(table.welcomeMessage, table.title) ?? undefined)
+					: undefined;
 			for (const recipient of recipients) {
 				const email = await emailOf(admin, recipient.id);
 				if (notification) {
@@ -191,6 +200,7 @@ export function createInviteHandler(
 					...(method === 'REQUEST'
 						? hosted('invite', 'REQUEST', recipient, text)
 						: hosted('cancel', 'CANCEL', recipient, text)),
+					welcomeMessage,
 					attachments: [
 						{
 							filename: 'mesa-aberta.ics',

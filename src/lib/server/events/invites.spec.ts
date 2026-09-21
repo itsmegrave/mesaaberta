@@ -1,9 +1,11 @@
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { formatSession } from '../../tables/format';
 import { TEMPLATE_VARIABLES } from '../mail/templates';
+import { TITLE_TOKEN } from '$lib/tables/welcome';
 import { createInviteHandler, inviteHandler } from './invites';
 import type { SupabaseAdmin } from '../auth/admin-client';
 import type { StoredEvent } from './types';
@@ -310,7 +312,9 @@ describe('calendar invite handler', () => {
 
 			expect(sent.bodies).toHaveLength(4);
 			for (const body of sent.bodies) {
-				expect(Object.keys(body.template.variables).sort()).toEqual([...TEMPLATE_VARIABLES].sort());
+				expect(Object.keys(body.template.variables).sort()).toEqual(
+					[...TEMPLATE_VARIABLES].filter((name) => name !== 'WELCOME_MESSAGE').sort()
+				);
 				const variables = JSON.stringify(body.template.variables);
 				for (const forbidden of [
 					event('PlayerJoined').id,
@@ -361,3 +365,84 @@ function capture(status = 200) {
 	}) as unknown as typeof fetch;
 	return { request, bodies, headers };
 }
+describe('the GM welcome message in the invite', () => {
+	const templated = {
+		...env,
+		RESEND_TEMPLATE_INVITE: 'tpl-invite',
+		RESEND_TEMPLATE_CANCEL: 'tpl-cancel',
+		RESEND_TEMPLATE_JOIN_REQUESTED: 'tpl-requested',
+		RESEND_TEMPLATE_JOIN_DECLINED: 'tpl-declined'
+	};
+
+	const sentBodies = async (
+		type: StoredEvent['type'],
+		welcomeMessage: string | null,
+		config: typeof env = env
+	) => {
+		await test.db.update(gameTables).set({ welcomeMessage }).where(eq(gameTables.id, tableId));
+		const sent = capture();
+		await createInviteHandler(config, sent.request, admin()).handle(event(type), test.db);
+		return sent.bodies;
+	};
+
+	it.each(['JoinApproved', 'PlayerJoined'] as const)(
+		'is in the inline %s e-mail, with the table title in place of the token',
+		async (type) => {
+			const [body] = await sentBodies(
+				type,
+				`Bem-vinda à ${TITLE_TOKEN}! WhatsApp: (11) 99999-0000`
+			);
+
+			expect(body.text).toContain(
+				'Mensagem do mestre:\nBem-vinda à Mesa do Dragão! WhatsApp: (11) 99999-0000'
+			);
+			expect(body.html).toContain('Mensagem do mestre:<br>Bem-vinda à Mesa do Dragão!');
+		}
+	);
+
+	it.each(['JoinApproved', 'PlayerJoined'] as const)(
+		'is the WELCOME_MESSAGE variable of the hosted %s template',
+		async (type) => {
+			const [body] = await sentBodies(type, `Bem-vinda à ${TITLE_TOKEN}!`, templated);
+
+			expect(body.template.id).toBe('tpl-invite');
+			expect(body.template.variables.WELCOME_MESSAGE).toBe(
+				'Mensagem do mestre:\nBem-vinda à Mesa do Dragão!'
+			);
+			expect(Object.keys(body.template.variables).sort()).toEqual([...TEMPLATE_VARIABLES].sort());
+		}
+	);
+
+	it('escapes the message in the inline HTML and does not turn it into markup', async () => {
+		const [body] = await sentBodies('PlayerJoined', '<img src=x onerror=alert(1)> & "oi"');
+
+		expect(body.html).not.toContain('<img');
+		expect(body.html).toContain('&lt;img src=x onerror=alert(1)&gt; &amp; &quot;oi&quot;');
+	});
+
+	it.each([null, '', '  \n '])(
+		'leaves no "Mensagem do mestre" section when the message is %j',
+		async (message) => {
+			const [inline] = await sentBodies('PlayerJoined', message);
+			const [hosted] = await sentBodies('PlayerJoined', message, templated);
+
+			expect(inline.text).not.toContain('Mensagem do mestre');
+			expect(inline.html).not.toContain('Mensagem do mestre');
+			expect(inline.text).toBe(inline.text?.trimEnd());
+			expect(inline.text).toContain('vaga confirmada');
+			expect(hosted.template.variables).not.toHaveProperty('WELCOME_MESSAGE');
+		}
+	);
+
+	it('is not added to updates, cancellations or the GM notifications, inline or hosted', async () => {
+		for (const config of [env, templated]) {
+			for (const type of ['TableUpdated', 'PlayerLeft', 'JoinRequested', 'JoinDeclined'] as const) {
+				const bodies = await sentBodies(type, 'Segredo do mestre', config);
+				expect(bodies.length).toBeGreaterThan(0);
+				for (const body of bodies) {
+					expect(JSON.stringify(body)).not.toContain('Segredo do mestre');
+				}
+			}
+		}
+	});
+});

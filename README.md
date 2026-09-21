@@ -242,16 +242,17 @@ The copy of these e-mails is not built in the app. Each one is a **hosted, versi
 | `RESEND_TEMPLATE_JOIN_REQUESTED` | `mesaaberta-join-requested` | A player asks to join: goes to the GM                                           |
 | `RESEND_TEMPLATE_JOIN_DECLINED`  | `mesaaberta-join-declined`  | The GM declines a request: goes to the player                                   |
 
-**Variables.** These six are the only values that reach Resend, and every template receives all six (`TEMPLATE_VARIABLES`; a unit test pins the list, and another checks that no id, address, token or secret is in the payload). Create all six in each template and give each a fallback value: Resend rejects a send when a variable in the template has neither a value nor a fallback, and we do not know whether it also rejects a variable the template does not define.
+**Variables.** These seven are the only values that reach Resend, and every template receives the first six, plus `WELCOME_MESSAGE` for `mesaaberta-invite` when it applies (`TEMPLATE_VARIABLES`; a unit test pins the list, and another checks that no id, address, token or secret is in the payload). Create the six in each template and give each a fallback value: Resend rejects a send when a variable in the template has neither a value nor a fallback, and we do not know whether it also rejects a variable the template does not define.
 
-| Variable         | Type   | Content                                                                                                                    |
-| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `RECIPIENT_NAME` | string | The recipient's display name                                                                                               |
-| `TABLE_TITLE`    | string | The table's title                                                                                                          |
-| `TABLE_URL`      | string | Link to the public table page                                                                                              |
-| `CONTEXT`        | string | `REQUEST`, `CANCEL`, `JOIN_REQUESTED` or `JOIN_DECLINED`                                                                   |
-| `STARTS_AT`      | string | The session start as people say it, in the table's own time zone, pt-BR (for example `sábado, 10 de outubro, 19:00 GMT-3`) |
-| `FALLBACK_TEXT`  | string | The one-line plain-text copy the app would send without a template                                                         |
+| Variable          | Type   | Content                                                                                                                                                                                                                                                                                        |
+| ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RECIPIENT_NAME`  | string | The recipient's display name                                                                                                                                                                                                                                                                   |
+| `TABLE_TITLE`     | string | The table's title                                                                                                                                                                                                                                                                              |
+| `TABLE_URL`       | string | Link to the public table page                                                                                                                                                                                                                                                                  |
+| `CONTEXT`         | string | `REQUEST`, `CANCEL`, `JOIN_REQUESTED` or `JOIN_DECLINED`                                                                                                                                                                                                                                       |
+| `STARTS_AT`       | string | The session start as people say it, in the table's own time zone, pt-BR (for example `sábado, 10 de outubro, 19:00 GMT-3`)                                                                                                                                                                     |
+| `FALLBACK_TEXT`   | string | The one-line plain-text copy the app would send without a template                                                                                                                                                                                                                             |
+| `WELCOME_MESSAGE` | string | Optional, `mesaaberta-invite` only. The game master's welcome message for the table, with its own heading: `Mensagem do mestre:` and the message on the next lines. Sent only when a player has just got a seat (`JoinApproved`, `PlayerJoined`) and the table has a message; otherwise absent |
 
 Names follow Resend's rules (ASCII letters, digits and underscores, up to 50 characters; `FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`, `contact` and `this` are reserved). Values are strings of at most 2,000 characters; the app also removes `<` and `>` from them, since users write titles and names and Resend does not say whether `{{{VAR}}}` escapes. Use `{{{VAR}}}` in the body.
 
@@ -263,8 +264,11 @@ Names follow Resend's rules (ASCII letters, digits and underscores, up to 50 cha
 
 > Olá, {{{RECIPIENT_NAME}}}!
 > Sua vaga na mesa **{{{TABLE_TITLE}}}** está confirmada. A sessão começa {{{STARTS_AT}}}.
+> {{{WELCOME_MESSAGE}}}
 > O convite de calendário está anexado: abra o arquivo para adicionar a mesa à sua agenda. Se a mesa mudar, você receberá um novo convite que atualiza o evento.
 > [Ver a mesa]({{{TABLE_URL}}})
+
+`WELCOME_MESSAGE` must be defined in this template with an **empty fallback value** (or a single space if the dashboard refuses an empty one), and the line above must hold the variable and nothing else, no heading of its own: Resend templates have no conditionals, so a heading in the template would be shown above nothing when the table has no message or the invite is an update. The heading travels inside the variable for that reason. Line breaks in the message may need `white-space: pre-line` on that block.
 
 `mesaaberta-cancel`, subject `Cancelada: {{{TABLE_TITLE}}}`
 

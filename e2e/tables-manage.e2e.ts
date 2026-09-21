@@ -91,6 +91,98 @@ test.describe('creating a table', () => {
 	});
 });
 
+test.describe('the welcome message', () => {
+	const welcomeOf = async (slug: string) => {
+		const sql = database();
+		try {
+			const [row] = await sql`select welcome_message from game_tables where slug = ${slug}`;
+			return row.welcome_message as string | null;
+		} finally {
+			await sql.end();
+		}
+	};
+
+	test('every new table starts with the friendly default, token and all', async ({ page }) => {
+		const gm = await createUser('Mestra Lara');
+		await signIn(page, gm);
+		await page.goto('/tables/new');
+
+		const field = page.getByLabel('Mensagem de boas-vindas');
+		await expect(field).toHaveValue(
+			/Olá, aventureiro\(a\)! Que alegria ter você na mesa '\{nome da mesa\}'!/
+		);
+		await expect(field).toHaveValue(/WhatsApp: \(##\) #####-##### \. Até breve!/);
+	});
+
+	test('is kept as written, edited later, and cleared for good', async ({ page }) => {
+		const gm = await createUser('Mestre Wagner');
+		await signIn(page, gm);
+		const slug = await createTable(page, { title: uniqueTitle('Com boas-vindas') });
+		expect(await welcomeOf(slug)).toContain("na mesa '{nome da mesa}'");
+
+		await page.getByRole('link', { name: 'Editar mesa' }).click();
+		const field = page.getByLabel('Mensagem de boas-vindas');
+		await expect(field).toHaveValue(/WhatsApp/);
+		await field.fill('Bem-vinda! Me chama no (11) 90000-0000.');
+		await page.getByRole('button', { name: 'Salvar alterações' }).click();
+		await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+		expect(await welcomeOf(slug)).toBe('Bem-vinda! Me chama no (11) 90000-0000.');
+
+		// Saving other changes keeps it.
+		await page.getByRole('link', { name: 'Editar mesa' }).click();
+		await page.getByLabel('Título').fill('Renomeada');
+		await page.getByRole('button', { name: 'Salvar alterações' }).click();
+		await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+		expect(await welcomeOf(slug)).toBe('Bem-vinda! Me chama no (11) 90000-0000.');
+
+		// Emptying it means no message, not the default again.
+		await page.getByRole('link', { name: 'Editar mesa' }).click();
+		await page.getByLabel('Mensagem de boas-vindas').fill('');
+		await page.getByRole('button', { name: 'Salvar alterações' }).click();
+		await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+		expect(await welcomeOf(slug)).toBeNull();
+		await page.getByRole('link', { name: 'Editar mesa' }).click();
+		await expect(page.getByLabel('Mensagem de boas-vindas')).toHaveValue('');
+	});
+
+	test('is never shown on the public table page', async ({ page, browser }) => {
+		const gm = await createUser('Mestra Nina');
+		await signIn(page, gm);
+		await page.goto('/tables/new');
+		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await page.getByLabel('Título').fill(uniqueTitle('Privada'));
+		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+		await page.getByLabel('Mensagem de boas-vindas').fill('Segredo só para quem entrar.');
+		await page.getByRole('button', { name: 'Abrir mesa' }).click();
+		await expect(page).toHaveURL(/\/tables\/[^/]+$/);
+
+		const visitor = await browser.newContext();
+		const anon = await visitor.newPage();
+		await anon.goto(page.url());
+		await expect(anon.getByText('Segredo só para quem entrar.')).toHaveCount(0);
+		await visitor.close();
+	});
+
+	test('a message over the limit is refused, and what was typed stays', async ({ page }) => {
+		const gm = await createUser('Mestre Otto');
+		await signIn(page, gm);
+		await page.goto('/tables/new');
+
+		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await page.getByLabel('Título').fill(uniqueTitle('Longa'));
+		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+		const field = page.getByLabel('Mensagem de boas-vindas');
+		// The browser's own maxlength would stop the typing; turn it off to reach the server's check.
+		await field.evaluate((el) => el.removeAttribute('maxlength'));
+		await field.fill('x'.repeat(1001));
+		await page.getByRole('button', { name: 'Abrir mesa' }).click();
+
+		await expect(page.getByText('Corrija os campos marcados.')).toBeVisible();
+		await expect(field).toHaveValue('x'.repeat(1001));
+		await expect(page).toHaveURL(/tables\/new$/);
+	});
+});
+
 test.describe('images', () => {
 	test('uploads a picture to Storage and keeps its path on the table', async ({
 		page,

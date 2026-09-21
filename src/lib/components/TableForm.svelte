@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FormField from './FormField.svelte';
 	import { errorText, type FormValues } from '$lib/tables/form-values';
+	import { TITLE_TOKEN } from '$lib/tables/welcome';
 	import { m } from '$lib/paraglide/messages';
 
 	type Props = {
@@ -85,6 +86,22 @@
 			maxlength="2000"
 			class={input}
 			aria-invalid={invalid('extraInfo')}>{values.extraInfo}</textarea
+		>
+	</FormField>
+
+	<FormField
+		id="welcomeMessage"
+		label={m.form_welcome_message()}
+		hint={m.form_welcome_message_hint({ token: TITLE_TOKEN })}
+		error={err('welcomeMessage')}
+	>
+		<textarea
+			id="welcomeMessage"
+			name="welcomeMessage"
+			rows="5"
+			maxlength="1000"
+			class={input}
+			aria-invalid={invalid('welcomeMessage')}>{values.welcomeMessage}</textarea
 		>
 	</FormField>
 

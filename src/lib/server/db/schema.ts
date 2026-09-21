@@ -112,6 +112,8 @@ export const gameTables = pgTable(
 		imagePath: text('image_path'),
 		description: text('description').notNull().default(''),
 		extraInfo: text('extra_info'),
+		// The GM's message to each player who gets a seat. Private: only ever sent by e-mail, never selected by the public queries.
+		welcomeMessage: text('welcome_message'),
 		kind: tableKind('kind').notNull(),
 		capacity: integer('capacity').notNull(),
 		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
@@ -137,7 +139,9 @@ export const gameTables = pgTable(
 			sql`(${table.kind} = 'one_shot' AND ${table.recurrence} IS NULL) OR (${table.kind} = 'campaign' AND ${table.recurrence} IS NOT NULL)`
 		),
 		check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
-		check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`)
+		check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
+		// Mirrors WELCOME_MESSAGE_MAX in $lib/tables/welcome.
+		check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 1000`)
 	]
 ).enableRLS();
 

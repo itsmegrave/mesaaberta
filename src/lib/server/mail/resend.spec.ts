@@ -89,8 +89,64 @@ describe('resend mailer', () => {
 		});
 
 		expect(Object.keys(sent.body().template.variables).sort()).toEqual(
-			[...TEMPLATE_VARIABLES].sort()
+			[...TEMPLATE_VARIABLES].filter((name) => name !== 'WELCOME_MESSAGE').sort()
 		);
+	});
+
+	describe('the GM welcome message', () => {
+		const message = 'Bem-vinda! <b>WhatsApp</b>: (11) 99999-0000';
+
+		it('is the WELCOME_MESSAGE variable of a hosted template, with its heading and no angle brackets', async () => {
+			const sent = capture();
+
+			await resendMailer(env, sent.request).send({
+				...inline,
+				welcomeMessage: message,
+				template: { id: 'tpl-invite', variables }
+			});
+
+			expect(sent.body().template.variables).toEqual({
+				...variables,
+				WELCOME_MESSAGE: 'Mensagem do mestre:\nBem-vinda! bWhatsApp/b: (11) 99999-0000'
+			});
+			expect(sent.body()).not.toHaveProperty('text');
+		});
+
+		it.each([undefined, '', '  '])(
+			'is no variable at all for %j, so the template falls back to empty',
+			async (empty) => {
+				const sent = capture();
+
+				await resendMailer(env, sent.request).send({
+					...inline,
+					welcomeMessage: empty,
+					template: { id: 'tpl-invite', variables }
+				});
+
+				expect(sent.body().template.variables).not.toHaveProperty('WELCOME_MESSAGE');
+			}
+		);
+
+		it('is appended to the inline copy, escaped in the HTML', async () => {
+			const sent = capture();
+
+			await resendMailer(env, sent.request).send({ ...inline, welcomeMessage: message });
+
+			expect(sent.body().text).toBe(`${inline.text}\n\nMensagem do mestre:\n${message}`);
+			expect(sent.body().html).toContain(
+				'Mensagem do mestre:<br>Bem-vinda! &lt;b&gt;WhatsApp&lt;/b&gt;'
+			);
+			expect(sent.body().html).not.toContain('<b>');
+		});
+
+		it.each([undefined, '', '  '])('leaves the inline copy untouched for %j', async (empty) => {
+			const sent = capture();
+
+			await resendMailer(env, sent.request).send({ ...inline, welcomeMessage: empty });
+
+			expect(sent.body().text).toBe(inline.text);
+			expect(sent.body().html).not.toContain('Mensagem do mestre');
+		});
 	});
 
 	it('keeps the attachment and the idempotency key with a template', async () => {

@@ -164,3 +164,20 @@ describe('seatsLeft', () => {
 		expect(seatsLeft(5, 7)).toBe(0);
 	});
 });
+
+describe('the GM welcome message', () => {
+	it('is not part of what the public queries return', async () => {
+		await add({ slug: 'greeted', welcomeMessage: 'Segredo do mestre' });
+		try {
+			const listed = await listUpcomingTables(test.db, now);
+			const found = await findTableBySlug(test.db, 'greeted', now);
+
+			expect(listed.map((table) => table.slug)).toContain('greeted');
+			expect(found).not.toBeNull();
+			expect(JSON.stringify(listed)).not.toContain('Segredo do mestre');
+			expect(JSON.stringify(found)).not.toContain('Segredo do mestre');
+		} finally {
+			await test.db.delete(gameTables).where(eq(gameTables.slug, 'greeted'));
+		}
+	});
+});

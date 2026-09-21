@@ -453,6 +453,12 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+        },
+        "game_tables_welcome_message_length": {
+          "name": "game_tables_welcome_message_length",
+          "value": "char_length(\"game_tables\".\"welcome_message\") <= 1000"
+        }
+      },
       "isRLSEnabled": true
     },
     "public.profiles": {
