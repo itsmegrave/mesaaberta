@@ -4,7 +4,7 @@ import type { TestUser } from './users';
 /** Signs in through the real login form, then waits until the header shows who is signed in. */
 export async function signIn(
 	page: Page,
-	user: Pick<TestUser, 'email' | 'password' | 'name'>,
+	user: Pick<TestUser, 'email' | 'password' | 'username'>,
 	next = '/'
 ) {
 	await page.goto(`/login?next=${encodeURIComponent(next)}`);
@@ -12,10 +12,10 @@ export async function signIn(
 	await page.getByLabel('Senha').fill(user.password);
 	await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 
-	await expect(accountMenu(page, user.name)).toBeVisible();
+	await expect(accountMenu(page, user.username)).toBeVisible();
 }
 
-/** The account menu in the header, which shows the signed-in person's name. */
+/** The account menu in the header, which shows the signed-in person's username. */
 export const accountMenu = (page: Page, name: string) =>
 	page.getByRole('banner').getByText(name, { exact: true });
 
@@ -73,7 +73,7 @@ export const PNG = Buffer.from(
 /** A page in its own browser context (its own cookies), signed in as this user. Close the context when done. */
 export async function asUser(
 	browser: Browser,
-	user: Pick<TestUser, 'email' | 'password' | 'name'>
+	user: Pick<TestUser, 'email' | 'password' | 'username'>
 ) {
 	const context = await browser.newContext();
 	const page = await context.newPage();

@@ -14,12 +14,12 @@ let counter = 0;
 beforeAll(async () => {
 	test = await createTestDb();
 	await test.db.insert(profiles).values([
-		{ id: me, displayName: 'Eu' },
-		{ id: gm, displayName: 'Mestra' },
-		{ id: other, displayName: 'Outra Pessoa' },
-		{ id: id(4), displayName: 'Ana' },
-		{ id: id(5), displayName: 'Bruno' },
-		{ id: id(6), displayName: 'Anfitriã' }
+		{ id: me, username: 'eu' },
+		{ id: gm, username: 'mestra' },
+		{ id: other, username: 'outra-pessoa' },
+		{ id: id(4), username: 'ana' },
+		{ id: id(5), username: 'bruno' },
+		{ id: id(6), username: 'anfitria' }
 	]);
 });
 afterAll(() => test.close());
@@ -73,7 +73,7 @@ describe('listPlaying', () => {
 
 		expect(item).toMatchObject({
 			slug: table.slug,
-			gmName: 'Mestra',
+			gmName: 'mestra',
 			timezone: 'UTC',
 			nextAt: new Date('2026-10-20T22:00:00Z'),
 			tableStatus: 'active'
@@ -179,8 +179,8 @@ describe('listRunning', () => {
 
 		const [item] = await listRunning(test.db, host, now);
 
-		expect(item.players).toEqual([{ playerId: me, displayName: 'Eu' }]);
-		expect(item.requests.map((r) => r.displayName).sort()).toEqual(['Mestra', 'Outra Pessoa']);
+		expect(item.players).toEqual([{ playerId: me, username: 'eu' }]);
+		expect(item.requests.map((r) => r.username).sort()).toEqual(['mestra', 'outra-pessoa']);
 		expect(item).toMatchObject({ capacity: 3, seatsLeft: 2, joinMode: 'approval' });
 	});
 

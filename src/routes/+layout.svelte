@@ -45,7 +45,10 @@
 		{/if}
 
 		{#if data.account}
-			<AccountMenu name={data.account.displayName} avatarUrl={data.account.avatarUrl} />
+			<AccountMenu
+				name={data.account.username ?? m.account_nameless()}
+				avatarUrl={data.account.avatarUrl}
+			/>
 		{:else if data.authEnabled && data.released}
 			<a href={resolve('/login')} class="rounded px-3 py-2 font-semibold hover:bg-petrol/10">
 				{m.nav_sign_in()}

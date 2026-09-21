@@ -21,8 +21,8 @@ const limit: RateLimit = { events: ['TableCreated'], max: 3, windowSeconds: 3600
 beforeAll(async () => {
 	test = await createTestDb();
 	await test.db.insert(profiles).values([
-		{ id: ana, displayName: 'Ana' },
-		{ id: bruno, displayName: 'Bruno' }
+		{ id: ana, username: 'ana' },
+		{ id: bruno, username: 'bruno' }
 	]);
 });
 afterAll(() => test.close());

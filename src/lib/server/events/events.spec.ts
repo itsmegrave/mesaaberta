@@ -14,7 +14,7 @@ const payload = { tableId: 'tbl-1', slug: 'mesa', title: 'Mesa' };
 
 beforeAll(async () => {
 	test = await createTestDb();
-	await test.db.insert(profiles).values({ id: actor, displayName: 'Ana' });
+	await test.db.insert(profiles).values({ id: actor, username: 'ana' });
 });
 afterAll(() => test.close());
 beforeEach(async () => {

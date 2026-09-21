@@ -4,7 +4,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	type Person = { playerId: string; displayName: string };
+	type Person = { playerId: string; username: string };
 	type Item = {
 		slug: string;
 		title: string;
@@ -51,7 +51,7 @@
 		<ul class="mt-2 grid gap-2">
 			{#each item.requests as request (request.playerId)}
 				<li class="flex flex-wrap items-center justify-between gap-3 rounded bg-celadon/60 p-2">
-					<span>{request.displayName}</span>
+					<span>{request.username}</span>
 					<span class="flex gap-4">
 						{#each [['approve', m.table_approve(), ''], ['decline', m.table_decline(), 'text-danger']] as [action, label, tone] (action)}
 							<form method="POST" action="{page}?/{action}">
@@ -73,7 +73,7 @@
 		<ul class="mt-2 grid gap-2">
 			{#each item.players as player (player.playerId)}
 				<li class="flex items-center justify-between gap-3 rounded bg-celadon/60 p-2">
-					<span>{player.displayName}</span>
+					<span>{player.username}</span>
 					<form method="POST" action="{page}?/remove">
 						<input type="hidden" name="playerId" value={player.playerId} />
 						<input type="hidden" name="next" value={next} />

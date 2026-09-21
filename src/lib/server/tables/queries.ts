@@ -1,6 +1,7 @@
 import { and, eq, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
+import { publicName } from '../db/public-name';
 import { nextOccurrence, weeklyInterval } from './schedule';
 
 /** Seats still free: the capacity minus the confirmed registrations. */
@@ -25,7 +26,7 @@ const columns = {
 	systemSlug: systems.slug,
 	// Seats taken: confirmed registrations only. A pending request takes none.
 	taken: sql<number>`(select count(*)::int from ${registrations} where ${registrations.tableId} = ${gameTables.id} and ${registrations.status} = 'confirmed')`,
-	gmName: profiles.displayName,
+	gmName: publicName(profiles.username),
 	gmId: gameTables.gmId
 };
 

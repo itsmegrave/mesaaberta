@@ -247,7 +247,7 @@
 						<li
 							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-surface p-3"
 						>
-							<span>{player.displayName}</span>
+							<span>{player.username}</span>
 							<form method="POST" action="?/remove">
 								<input type="hidden" name="playerId" value={player.playerId} />
 								<button type="submit" class="font-semibold text-danger">{m.table_remove()}</button>
@@ -264,7 +264,7 @@
 						<li
 							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-surface p-3"
 						>
-							<span>{request.displayName}</span>
+							<span>{request.username}</span>
 							<span class="flex gap-4">
 								<form method="POST" action="?/approve">
 									<input type="hidden" name="playerId" value={request.playerId} />

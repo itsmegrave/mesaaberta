@@ -24,8 +24,8 @@ beforeAll(async () => {
 	await test.db
 		.insert(profiles)
 		.values([
-			...Array.from({ length: 8 }, (_, i) => ({ id: id(i + 1), displayName: `P${i + 1}` })),
-			{ id: id(90), displayName: 'Admin', role: 'admin' as const }
+			...Array.from({ length: 8 }, (_, i) => ({ id: id(i + 1), username: `p${i + 1}` })),
+			{ id: id(90), username: 'admin', role: 'admin' as const }
 		]);
 });
 afterAll(() => test.close());
@@ -373,8 +373,8 @@ describe('listRegistrations', () => {
 		const list = await listRegistrations(test.db, gm, table.slug);
 
 		expect(list).toEqual([
-			{ playerId: id(2), displayName: 'P2', status: 'confirmed' },
-			{ playerId: id(3), displayName: 'P3', status: 'pending' }
+			{ playerId: id(2), username: 'p2', status: 'confirmed' },
+			{ playerId: id(3), username: 'p3', status: 'pending' }
 		]);
 	});
 

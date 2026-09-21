@@ -11,7 +11,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		return {
 			authEnabled,
 			released,
-			account: profile && { displayName: profile.displayName, avatarUrl: profile.avatarUrl }
+			account: profile && { username: profile.username, avatarUrl: profile.avatarUrl }
 		};
 	} catch (error) {
 		// The page is still worth showing without the account menu.

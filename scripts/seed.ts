@@ -11,7 +11,11 @@ if (!url) throw new Error('DATABASE_URL is not set. Copy .dev.vars.example to .d
 const client = postgres(url, { max: 1 });
 const db = drizzle(client);
 
-const gm = { id: '00000000-0000-4000-8000-000000000001', displayName: 'Mestre de Testes' };
+const gm = {
+	id: '00000000-0000-4000-8000-000000000001',
+	username: 'mestre-de-testes',
+	name: 'Mestre de Testes'
+};
 
 const inDays = (days: number, hour: number) => {
 	const date = new Date();

@@ -141,3 +141,40 @@ describe('0007_public_profiles', () => {
 		expect(left.rows).toHaveLength(0);
 	});
 });
+
+describe('0008_drop_display_name', () => {
+	let client: PGlite;
+
+	beforeAll(async () => {
+		client = new PGlite();
+		await applyMigrations(client, { through: '0006_enable_rls' });
+		await client.query(`insert into profiles (id, display_name) values ($1, 'Ana Maria')`, [
+			uuid(1)
+		]);
+		await applyMigration(client, '0007_public_profiles');
+		await applyMigration(client, '0008_drop_display_name');
+	});
+
+	afterAll(() => client.close());
+
+	it('removes the column and keeps the profile, with the username made from it', async () => {
+		const { rows } = await client.query<{ username: string | null }>(
+			`select username from profiles where id = $1`,
+			[uuid(1)]
+		);
+		expect(rows).toEqual([{ username: 'ana-maria' }]);
+
+		const columns = await client.query(
+			`select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'display_name'`
+		);
+		expect(columns.rows).toHaveLength(0);
+	});
+
+	it('lets a profile be created without any name, as the sign-up does', async () => {
+		const { rows } = await client.query(`insert into profiles (id) values ($1) returning id`, [
+			uuid(2)
+		]);
+
+		expect(rows).toHaveLength(1);
+	});
+});

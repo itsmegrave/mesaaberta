@@ -42,7 +42,6 @@ export const profiles = pgTable(
 	{
 		// The Supabase auth user id. Not a foreign key: Supabase owns the `auth` schema.
 		id: uuid('id').primaryKey(),
-		displayName: text('display_name').notNull(),
 		// The public identifier and slug. Null only until the onboarding step is done: the base profile is
 		// created at sign-up, before the person has picked one. Stored lowercase (see the check below).
 		username: text('username'),

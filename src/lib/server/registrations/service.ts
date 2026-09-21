@@ -1,6 +1,7 @@
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
+import { publicName } from '../db/public-name';
 import { authorize, joinBlocker, type Actor } from '../auth/policy';
 import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '../errors';
 import { recordEvent } from '../events/outbox';
@@ -213,13 +214,13 @@ export async function listRegistrations(db: AnyDb, actor: Actor | null, slug: st
 	return db
 		.select({
 			playerId: registrations.playerId,
-			displayName: profiles.displayName,
+			username: publicName(profiles.username),
 			status: registrations.status
 		})
 		.from(registrations)
 		.innerJoin(profiles, eq(registrations.playerId, profiles.id))
 		.where(eq(registrations.tableId, table.id))
-		.orderBy(asc(registrations.createdAt), asc(profiles.displayName));
+		.orderBy(asc(registrations.createdAt), asc(profiles.username));
 }
 
 /** A player's own place at a table: `confirmed`, `pending`, or null. */

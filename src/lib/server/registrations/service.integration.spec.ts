@@ -12,7 +12,7 @@ const created = { profiles: [] as string[], tables: [] as string[] };
 
 const newPlayer = async (): Promise<Actor> => {
 	const id = crypto.randomUUID();
-	await db.insert(profiles).values({ id, displayName: `Jogador ${id.slice(0, 6)}` });
+	await db.insert(profiles).values({ id, username: `jogador${id.slice(0, 6)}` });
 	created.profiles.push(id);
 	return { id, role: 'member', status: 'active' };
 };

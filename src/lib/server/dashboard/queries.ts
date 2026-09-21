@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, ratings, registrations, systems } from '../db/schema';
+import { publicName } from '../db/public-name';
 import { rateBlocker } from '../auth/policy';
 import { firstSessionEnded } from '../ratings/service';
 import { nextOccurrence } from '../tables/schedule';
@@ -26,7 +27,7 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
 			until: gameTables.until,
 			tableStatus: gameTables.status,
 			gmId: gameTables.gmId,
-			gmName: gm.displayName,
+			gmName: publicName(gm.username),
 			systemName: systems.name,
 			status: registrations.status,
 			tableScore: ratings.tableScore,
@@ -82,7 +83,7 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
 		.select({
 			tableId: registrations.tableId,
 			playerId: registrations.playerId,
-			displayName: profiles.displayName,
+			username: publicName(profiles.username),
 			status: registrations.status
 		})
 		.from(registrations)
@@ -93,17 +94,17 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
 				tables.map((table) => table.id)
 			)
 		)
-		.orderBy(asc(registrations.createdAt), asc(profiles.displayName));
+		.orderBy(asc(registrations.createdAt), asc(profiles.username));
 
 	return byNextSession(
 		tables.map((table) => {
 			const mine = people.filter((person) => person.tableId === table.id);
 			const players = mine
 				.filter((person) => person.status === 'confirmed')
-				.map(({ playerId, displayName }) => ({ playerId, displayName }));
+				.map(({ playerId, username }) => ({ playerId, username }));
 			const requests = mine
 				.filter((person) => person.status === 'pending')
-				.map(({ playerId, displayName }) => ({ playerId, displayName }));
+				.map(({ playerId, username }) => ({ playerId, username }));
 
 			return {
 				slug: table.slug,
