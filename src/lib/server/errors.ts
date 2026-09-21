@@ -41,6 +41,17 @@ export class AlreadyRegistered extends Error {
 	}
 }
 
+/** The person did this too often lately. Not a permission problem: they may try again once `retryAfterSeconds` have passed. */
+export class RateLimited extends Error {
+	constructor(
+		readonly retryAfterSeconds: number,
+		message = 'rate limited'
+	) {
+		super(message);
+		this.name = 'RateLimited';
+	}
+}
+
 /** The input is well formed but cannot be accepted: it names a system that does not exist, say. */
 export class Invalid extends Error {
 	constructor(
@@ -64,6 +75,8 @@ export function failFrom(error: unknown) {
 	if (error instanceof TooEarly) return fail(409, { error: 'too_early' as const });
 	if (error instanceof AlreadyRegistered)
 		return fail(409, { error: 'already_registered' as const });
+	if (error instanceof RateLimited)
+		return fail(429, { error: 'rate_limited' as const, retryAfter: error.retryAfterSeconds });
 	if (error instanceof Invalid) return fail(400, { error: 'invalid' as const, field: error.field });
 
 	throw error;
