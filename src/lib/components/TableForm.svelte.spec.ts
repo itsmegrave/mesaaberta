@@ -80,7 +80,8 @@ describe('TableForm', () => {
 			render(TableForm, props);
 
 			await expect.element(field()).toHaveValue(DEFAULT_WELCOME_MESSAGE);
-			await expect.element(page.getByText(/enviada por e-mail a cada jogador/)).toBeVisible();
+			await expect.element(page.getByText(/Enviada por e-mail a cada jogador/)).toBeVisible();
+			await expect.element(page.getByText(/Use \{nome da mesa\} onde quiser/)).toBeVisible();
 		});
 
 		it('is limited to 1000 characters, like the server', async () => {

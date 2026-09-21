@@ -12,6 +12,7 @@ export const DEFAULT_WELCOME_MESSAGE = `Olá, aventureiro(a)! Que alegria ter vo
  * Control characters (except the line break) and the bidirectional overrides that can make text
  * read differently from how it is stored. Tabs become a space first, then go with the rest.
  */
+// eslint-disable-next-line no-control-regex -- stripping control characters is the point
 const UNWANTED = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g;
 
 /** Makes what a GM typed safe to store: one line-break style, no control characters, trimmed. */

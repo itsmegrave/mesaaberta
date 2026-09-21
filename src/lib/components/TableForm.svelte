@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FormField from './FormField.svelte';
 	import { errorText, type FormValues } from '$lib/tables/form-values';
+	import { TITLE_TOKEN } from '$lib/tables/welcome';
 	import { m } from '$lib/paraglide/messages';
 
 	type Props = {
@@ -91,7 +92,7 @@
 	<FormField
 		id="welcomeMessage"
 		label={m.form_welcome_message()}
-		hint={m.form_welcome_message_hint()}
+		hint={m.form_welcome_message_hint({ token: TITLE_TOKEN })}
 		error={err('welcomeMessage')}
 	>
 		<textarea
