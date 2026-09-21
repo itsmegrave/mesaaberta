@@ -2,6 +2,11 @@ import { z } from 'zod';
 import { usernameProblem } from './username';
 import { MAX_SOCIAL_LINKS, isNetwork, parseSocialUrl, type Network } from './social-links';
 
+// Zod compiles a faster parser with `new Function` when it can. In the browser our Content-Security-Policy
+// forbids `eval`, so Zod would try it and be reported as a violation on every page that loads it. The
+// plain parser is fast enough for a form.
+z.config({ jitless: true });
+
 // The profile form, for the browser (instant feedback) and the server (which decides). Every
 // message is a short code, not text: the form turns a code into a translated sentence.
 
