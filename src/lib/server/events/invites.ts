@@ -1,14 +1,22 @@
 import { and, eq } from 'drizzle-orm';
 import { createSupabaseAdmin, emailOf, type SupabaseAdmin } from '../auth/admin-client';
-import { buildInvite, type CalendarTable } from '../calendar/ics';
+import { buildInvite, tableUrl, type CalendarTable } from '../calendar/ics';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
 import type { Mailer } from '../mail/mailer';
 import { resendMailer } from '../mail/resend';
+import {
+	templateIdFor,
+	templateVariables,
+	type TemplateEnv,
+	type TemplateKey,
+	type TemplateVariables
+} from '../mail/templates';
+import { formatSession } from '../../tables/format';
 import type { Handler, StoredEvent } from './types';
 
 /** Secrets stay in the Worker environment. Do not put any of these in `wrangler.jsonc`. */
-export type InviteEnv = {
+export type InviteEnv = TemplateEnv & {
 	RESEND_API_KEY?: string;
 	RESEND_FROM?: string;
 	SUPABASE_URL?: string;
@@ -20,7 +28,7 @@ export type InviteEnv = {
 };
 
 /** What the handler needs once `inviteHandler` has checked the environment and picked the admin key. */
-type InviteConfig = {
+type InviteConfig = TemplateEnv & {
 	RESEND_API_KEY: string;
 	RESEND_FROM: string;
 	SUPABASE_URL: string;
@@ -90,6 +98,8 @@ async function recipientsFor(
 	return [...gm, ...players];
 }
 
+type Context = TemplateVariables['CONTEXT'];
+
 /**
  * Sends calendar REQUESTs for confirmed joins and table changes, and CANCELs when a player leaves
  * or the table is disabled. A Resend idempotency key makes retries of an outbox event safe even if
@@ -119,6 +129,27 @@ export function createInviteHandler(
 			const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
 			const method =
 				event.type === 'PlayerLeft' || event.type === 'TableDisabled' ? 'CANCEL' : 'REQUEST';
+			const startsAt = formatSession(table.startsAt, table.timezone, 'pt-BR');
+			const url = tableUrl(env.APP_ORIGIN, table.slug);
+			/** A hosted template when its id is configured; otherwise the mail keeps its inline copy. */
+			const hosted = (
+				key: TemplateKey,
+				context: Context,
+				recipient: Recipient,
+				fallbackText: string
+			) => {
+				const id = templateIdFor(env, key);
+				if (!id) return {};
+				const variables = templateVariables({
+					RECIPIENT_NAME: recipient.displayName,
+					TABLE_TITLE: table.title,
+					TABLE_URL: url,
+					CONTEXT: context,
+					STARTS_AT: startsAt,
+					FALLBACK_TEXT: fallbackText
+				});
+				return { template: { id, variables } };
+			};
 			for (const recipient of recipients) {
 				const email = await emailOf(admin, recipient.id);
 				if (notification) {
@@ -132,7 +163,9 @@ export function createInviteHandler(
 							? `Nova solicitação: ${table.title}`
 							: `Solicitação recusada: ${table.title}`,
 						text,
-						html: '',
+						...(toGm
+							? hosted('joinRequested', 'JOIN_REQUESTED', recipient, text)
+							: hosted('joinDeclined', 'JOIN_DECLINED', recipient, text)),
 						idempotencyKey: `${event.id}:${recipient.id}:notification`
 					});
 					continue;
@@ -154,7 +187,9 @@ export function createInviteHandler(
 					to: email,
 					subject,
 					text,
-					html: '',
+					...(method === 'REQUEST'
+						? hosted('invite', 'REQUEST', recipient, text)
+						: hosted('cancel', 'CANCEL', recipient, text)),
 					attachments: [
 						{
 							filename: 'mesa-aberta.ics',
@@ -175,6 +210,10 @@ export function inviteHandler(env: InviteEnv | undefined): Handler | null {
 	if (!env?.RESEND_API_KEY || !env.RESEND_FROM || !env.SUPABASE_URL || !secretKey) return null;
 
 	return createInviteHandler({
+		RESEND_TEMPLATE_INVITE: env.RESEND_TEMPLATE_INVITE,
+		RESEND_TEMPLATE_CANCEL: env.RESEND_TEMPLATE_CANCEL,
+		RESEND_TEMPLATE_JOIN_REQUESTED: env.RESEND_TEMPLATE_JOIN_REQUESTED,
+		RESEND_TEMPLATE_JOIN_DECLINED: env.RESEND_TEMPLATE_JOIN_DECLINED,
 		RESEND_API_KEY: env.RESEND_API_KEY,
 		RESEND_FROM: env.RESEND_FROM,
 		SUPABASE_URL: env.SUPABASE_URL,
