@@ -20,6 +20,7 @@
 		const onChange = (e: MediaQueryListEvent) => {
 			if (readChoice() === 'system') {
 				isDark = e.matches;
+				applyChoice('system');
 			}
 		};
 		mql.addEventListener('change', onChange);
@@ -38,7 +39,7 @@
 	aria-pressed={isDark}
 	title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
 	onclick={() => handlePressedChange(!isDark)}
-	class="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line bg-transparent text-ink transition-colors hover:bg-wash focus-visible:outline-focus"
+	class="btn-icon size-11 shrink-0 rounded-full preset-tonal"
 >
 	{#if isDark}
 		<!-- Sun icon (dark mode -> switch to light) -->

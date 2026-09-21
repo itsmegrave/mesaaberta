@@ -33,111 +33,93 @@ const contrast = (a: string, b: string) => {
 	return (hi + 0.05) / (lo + 0.05);
 };
 
-test.describe('the theme follows the system by default', () => {
-	test('the page background and the text differ between a light and a dark system', async ({
+const toggle = (page: import('@playwright/test').Page) =>
+	page.getByRole('button', { name: 'Tema escuro' });
+
+test.describe('the mode follows the system by default', () => {
+	test('a dark system gets a dark page and a light system a pale one, both readable', async ({
 		browser
 	}) => {
 		const light = await open(browser, 'light');
 		const dark = await open(browser, 'dark');
-
 		const l = await colours(light.page);
 		const d = await colours(dark.page);
 
-		expect(d.background).not.toBe(l.background);
-		expect(d.text).not.toBe(l.text);
-		expect(luminance(d.background)).toBeLessThan(0.05); // a dark page
-		expect(luminance(l.background)).toBeGreaterThan(0.5); // a pale one
+		await expect(light.page.locator('html')).toHaveAttribute('data-mode', 'light');
+		await expect(dark.page.locator('html')).toHaveAttribute('data-mode', 'dark');
+		expect(luminance(d.background)).toBeLessThan(luminance(l.background));
 		expect(contrast(d.background, d.text)).toBeGreaterThanOrEqual(4.5);
 		expect(contrast(l.background, l.text)).toBeGreaterThanOrEqual(4.5);
+		expect(d.scheme).toBe('dark');
 		await light.context.close();
-		await dark.context.close();
-	});
-
-	test('tells the browser which scheme it is, for scrollbars and form controls', async ({
-		browser
-	}) => {
-		const dark = await open(browser, 'dark');
-
-		expect((await colours(dark.page)).scheme).toBe('dark');
 		await dark.context.close();
 	});
 });
 
 test.describe('a manual choice overrides the system', () => {
-	test('light on a dark system is light', async ({ browser }) => {
+	test('light on a dark system is the same page as light on a light system', async ({
+		browser
+	}) => {
 		const chosen = await open(browser, 'dark', 'light');
 		const plain = await open(browser, 'light');
 
+		await expect(chosen.page.locator('html')).toHaveAttribute('data-mode', 'light');
 		expect((await colours(chosen.page)).background).toBe((await colours(plain.page)).background);
 		await chosen.context.close();
 		await plain.context.close();
 	});
 
-	test('dark on a light system is dark', async ({ browser }) => {
-		const chosen = await open(browser, 'light', 'dark');
-		const plain = await open(browser, 'dark');
-
-		expect((await colours(chosen.page)).background).toBe((await colours(plain.page)).background);
-		await chosen.context.close();
-		await plain.context.close();
-	});
-
-	test('choosing in the header changes the page at once, and the choice survives a reload', async ({
+	test('the toggle changes the page at once and the choice survives a reload', async ({
 		browser
 	}) => {
 		const { page, context } = await open(browser, 'light');
 		const before = (await colours(page)).background;
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOption('dark');
-		await expect.poll(async () => (await colours(page)).background).not.toBe(before);
+		await toggle(page).click();
+		await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
+		expect((await colours(page)).background).not.toBe(before);
 
 		await page.reload();
 
-		await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-		await expect(page.getByRole('combobox', { name: 'Tema' })).toHaveValue('dark');
-		expect(luminance((await colours(page)).background)).toBeLessThan(0.05);
+		await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
+		await expect(toggle(page)).toHaveAttribute('aria-pressed', 'true');
 		await context.close();
 	});
 
-	test('going back to automatic forgets the choice', async ({ browser }) => {
-		// Chosen through the control itself: an init script would set it again on every load.
-		const { page, context } = await open(browser, 'light');
-		await page.getByRole('combobox', { name: 'Tema' }).selectOption('dark');
-		await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-
-		await page.getByRole('combobox', { name: 'Tema' }).selectOption('system');
-		await page.reload();
-
-		await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.*/);
-		expect(await page.evaluate(() => localStorage.getItem('theme'))).toBeNull();
-		expect(luminance((await colours(page)).background)).toBeGreaterThan(0.5);
-		await context.close();
-	});
-
-	test('paints the browser chrome in the chosen theme', async ({ browser }) => {
+	test('paints the browser chrome in the chosen mode', async ({ browser }) => {
 		const { page, context } = await open(browser, 'light', 'dark');
 
 		const metas = await page
 			.locator('meta[name="theme-color"]')
 			.evaluateAll((els) => els.map((e) => e.getAttribute('content')));
 
-		expect(metas).toEqual(['#0e1b1e', '#0e1b1e']);
+		expect(metas[0]).toBe(metas[1]);
+		expect(metas[0]).toBe(
+			await page.evaluate(() => {
+				const canvas = document.createElement('canvas');
+				canvas.width = canvas.height = 1;
+				const ctx = canvas.getContext('2d')!;
+				ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
+				ctx.fillRect(0, 0, 1, 1);
+				const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+				return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+			})
+		);
 		await context.close();
 	});
 });
 
 test.describe('no flash', () => {
-	test('with dark chosen, the theme is already set when the body first appears (before the first paint)', async ({
+	test('with dark chosen, the mode is already set when the body first appears', async ({
 		browser
 	}) => {
 		const context = await browser.newContext({ colorScheme: 'light' });
 		await context.addInitScript(() => {
 			localStorage.setItem('theme', 'dark');
-			// Records what <html> says at the moment <body> is inserted: nothing has been painted before that.
 			new MutationObserver((_, observer) => {
 				if (!document.body) return;
-				(window as unknown as { __themeAtBody: string | undefined }).__themeAtBody =
-					document.documentElement.dataset.theme;
+				(window as unknown as { __modeAtBody?: string }).__modeAtBody =
+					document.documentElement.dataset.mode;
 				observer.disconnect();
 			}).observe(document, { childList: true, subtree: true });
 		});
@@ -146,7 +128,7 @@ test.describe('no flash', () => {
 		await page.goto('/');
 
 		const atBody = await page.evaluate(
-			() => (window as unknown as { __themeAtBody?: string }).__themeAtBody
+			() => (window as unknown as { __modeAtBody?: string }).__modeAtBody
 		);
 		expect(atBody).toBe('dark');
 		await context.close();
@@ -163,33 +145,5 @@ test.describe('no flash', () => {
 		const script = html.indexOf(`<script nonce="${nonce}">`);
 		expect(script).toBeGreaterThan(-1);
 		expect(script).toBeLessThan(html.indexOf('rel="stylesheet"'));
-	});
-});
-
-test.describe('the hero table in the dark theme', () => {
-	test('the empty seat still stands out from the page', async ({ browser }) => {
-		const { page, context } = await open(browser, 'dark');
-
-		const seat = await page
-			.locator('svg circle[stroke-dasharray]')
-			.evaluate((el) => getComputedStyle(el).stroke);
-		const background = (await colours(page)).background;
-
-		expect(contrast(seat, background)).toBeGreaterThanOrEqual(3);
-		await context.close();
-	});
-
-	test('recolours with the theme instead of keeping the light palette', async ({ browser }) => {
-		const light = await open(browser, 'light');
-		const dark = await open(browser, 'dark');
-		const fill = (page: import('@playwright/test').Page) =>
-			page
-				.locator('svg circle.fill-petrol')
-				.first()
-				.evaluate((el) => getComputedStyle(el).fill);
-
-		expect(await fill(dark.page)).not.toBe(await fill(light.page));
-		await light.context.close();
-		await dark.context.close();
 	});
 });

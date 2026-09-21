@@ -7,10 +7,10 @@ const root = document.documentElement;
 
 beforeEach(() => {
 	localStorage.clear();
-	delete root.dataset.theme;
+	delete root.dataset.mode;
 	document.head.insertAdjacentHTML(
 		'beforeend',
-		'<meta name="theme-color" content="#e3ebe5" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0e1b1e" media="(prefers-color-scheme: dark)">'
+		'<meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">'
 	);
 });
 afterEach(() => {
@@ -39,9 +39,9 @@ describe('ThemeToggle', () => {
 		await button.click();
 
 		await expect.element(button).toHaveAttribute('aria-pressed', 'true');
-		expect(root.dataset.theme).toBe('dark');
+		expect(root.dataset.mode).toBe('dark');
 		expect(localStorage.getItem('theme')).toBe('dark');
-		expect(metas()).toEqual(['#0e1b1e', '#0e1b1e']);
+		expect(metas()).toEqual(['#121212', '#121212']);
 	});
 
 	it('toggles back to light on second click and saves choice', async () => {
@@ -52,9 +52,9 @@ describe('ThemeToggle', () => {
 		await button.click();
 
 		await expect.element(button).toHaveAttribute('aria-pressed', 'false');
-		expect(root.dataset.theme).toBe('light');
+		expect(root.dataset.mode).toBe('light');
 		expect(localStorage.getItem('theme')).toBe('light');
-		expect(metas()).toEqual(['#e3ebe5', '#e3ebe5']);
+		expect(metas()).toEqual(['#fcfcfc', '#fcfcfc']);
 	});
 
 	it('shows the remembered choice when it loads', async () => {
@@ -78,6 +78,6 @@ describe('ThemeToggle', () => {
 		const button = page.getByRole('button', { name: 'Tema escuro' });
 		await button.click();
 
-		expect(root.dataset.theme).toBe('dark');
+		expect(root.dataset.mode).toBe('dark');
 	});
 });

@@ -1,6 +1,6 @@
 <!doctype html>
 
-<html lang="%paraglide.lang%" dir="%paraglide.dir%">
+<html lang="%paraglide.lang%" dir="%paraglide.dir%" data-theme="cerberus" data-mode="light">
 	<head>
 		<meta charset="utf-8" />
 
@@ -8,24 +8,31 @@
 
 		<meta name="text-scale" content="scale" />
 
-		<!-- The browser's own chrome follows the scheme. A manual choice replaces both, below. -->
-		<meta name="theme-color" content="#e3ebe5" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#0e1b1e" media="(prefers-color-scheme: dark)" />
+		<!-- The browser's own chrome follows the mode. A manual choice replaces both, below. -->
+		<meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
 
-		<!-- Applies a remembered light or dark choice before the first paint, so a dark-mode reader never
-		     sees a light flash. A reader who chose nothing (or "system") follows prefers-color-scheme in CSS. -->
+		<!-- Sets light or dark before the first paint, so a dark-mode reader never sees a light flash: the
+		     remembered choice, else the system preference. Without JavaScript the page stays light. -->
 		<script nonce="%sveltekit.nonce%">
 			(function () {
-				var colours = { light: '#e3ebe5', dark: '#0e1b1e' };
+				var colours = { light: '#fcfcfc', dark: '#121212' };
 				var choice = null;
 				try {
 					choice = localStorage.getItem('theme');
 				} catch (e) {}
-				if (choice !== 'light' && choice !== 'dark') return;
+				var chosen = choice === 'light' || choice === 'dark';
+				var mode = chosen
+					? choice
+					: window.matchMedia('(prefers-color-scheme: dark)').matches
+						? 'dark'
+						: 'light';
 
-				document.documentElement.dataset.theme = choice;
+				document.documentElement.dataset.mode = mode;
+				if (!chosen) return;
+
 				var metas = document.querySelectorAll('meta[name="theme-color"]');
-				for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', colours[choice]);
+				for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', colours[mode]);
 			})();
 		</script>
 		%sveltekit.head%
