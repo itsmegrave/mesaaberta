@@ -17,18 +17,18 @@
 
 <nav
 	aria-label={m.nav_mobile()}
-	class="fixed inset-x-0 bottom-0 z-40 flex h-[76px] items-center justify-around border-t border-line bg-surface px-2 pb-1.5 md:hidden"
+	class="fixed inset-x-0 bottom-0 z-40 flex h-[76px] items-center justify-around border-t border-surface-200-800 bg-surface-100-900 px-2 pb-1.5 md:hidden"
 >
 	<!-- Mesas -->
 	<a
 		href={localizedHref('/tables', locale)}
-		class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 font-display text-xs font-semibold no-underline {isTablesActive
-			? 'text-ink'
-			: 'text-ink2 hover:text-ink'}"
+		class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isTablesActive
+			? 'text-surface-950-50'
+			: 'text-surface-700-300 hover:text-surface-950-50'}"
 	>
 		<span
 			class="flex h-[30px] w-14 items-center justify-center rounded-[15px] {isTablesActive
-				? 'bg-wash'
+				? 'bg-surface-200-800'
 				: 'bg-transparent'}"
 		>
 			<svg
@@ -55,11 +55,11 @@
 	<!-- Abrir mesa -->
 	<a
 		href={localizedHref('/tables/new', locale)}
-		class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 font-display text-xs font-semibold text-ink no-underline"
+		class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 text-xs font-semibold text-surface-950-50 no-underline"
 	>
 		<span
-			class="flex h-[30px] w-14 items-center justify-center rounded-[15px] bg-petrol text-on-petrol {isNewTableActive
-				? 'ring-2 ring-lamp'
+			class="flex h-[30px] w-14 items-center justify-center rounded-[15px] preset-filled-primary-500 {isNewTableActive
+				? 'ring-2 ring-warning-500'
 				: ''}"
 		>
 			<svg
@@ -83,13 +83,13 @@
 	<!-- Minhas mesas -->
 	<a
 		href={localizedHref('/account/tables', locale)}
-		class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 font-display text-xs font-semibold no-underline {isMyTablesActive
-			? 'text-ink'
-			: 'text-ink2 hover:text-ink'}"
+		class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isMyTablesActive
+			? 'text-surface-950-50'
+			: 'text-surface-700-300 hover:text-surface-950-50'}"
 	>
 		<span
 			class="flex h-[30px] w-14 items-center justify-center rounded-[15px] {isMyTablesActive
-				? 'bg-wash'
+				? 'bg-surface-200-800'
 				: 'bg-transparent'}"
 		>
 			<svg
@@ -115,13 +115,13 @@
 	{#if isAdmin}
 		<a
 			href={localizedHref('/admin', locale)}
-			class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 font-display text-xs font-semibold no-underline {isAdminActive
-				? 'text-ink'
-				: 'text-ink2 hover:text-ink'}"
+			class="flex h-[60px] min-w-[84px] flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isAdminActive
+				? 'text-surface-950-50'
+				: 'text-surface-700-300 hover:text-surface-950-50'}"
 		>
 			<span
 				class="flex h-[30px] w-14 items-center justify-center rounded-[15px] {isAdminActive
-					? 'bg-wash'
+					? 'bg-surface-200-800'
 					: 'bg-transparent'}"
 			>
 				<svg

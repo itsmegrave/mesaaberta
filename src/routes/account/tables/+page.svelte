@@ -24,7 +24,7 @@
 			<h2 id="playing" class="text-2xl font-semibold">{m.dash_playing()}</h2>
 			{#if data.playing.length === 0}
 				<p class="mt-3">{m.dash_playing_empty()}</p>
-				<a href={localizedHref('/tables', locale)} class="mt-2 inline-block text-link">
+				<a href={localizedHref('/tables', locale)} class="mt-2 inline-block anchor">
 					{m.dash_find_table()}
 				</a>
 			{:else}
@@ -40,7 +40,7 @@
 			<h2 id="running" class="text-2xl font-semibold">{m.dash_running()}</h2>
 			{#if data.running.length === 0}
 				<p class="mt-3">{m.dash_running_empty()}</p>
-				<a href={localizedHref('/tables/new', locale)} class="mt-2 inline-block text-link">
+				<a href={localizedHref('/tables/new', locale)} class="mt-2 inline-block anchor">
 					{m.tables_open_cta()}
 				</a>
 			{:else}

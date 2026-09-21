@@ -8,7 +8,14 @@
 
 	let { capacity = 5, seatsLeft = 0, size = 64, class: className = '' }: Props = $props();
 
-	const SEAT_COLORS = ['#7fb7a4', '#c97b84', '#8e9ae6', '#f0b34a', '#a78bfa', '#6ac4dc'];
+	const SEAT_COLORS = [
+		'var(--color-success-500)',
+		'var(--color-error-500)',
+		'var(--color-tertiary-500)',
+		'var(--color-warning-500)',
+		'var(--color-secondary-500)',
+		'var(--color-primary-500)'
+	];
 
 	const occupied = $derived(Math.max(0, capacity - Math.max(0, seatsLeft)));
 	const total = $derived(Math.max(1, capacity));
@@ -40,7 +47,7 @@
 	class="shrink-0 {className}"
 >
 	<!-- Central table surface -->
-	<circle cx="50" cy="50" r="20" fill="rgba(0,0,0,0.24)" />
+	<circle cx="50" cy="50" r="20" class="fill-surface-950/25" />
 
 	<!-- Seats around the table -->
 	{#each seats as seat (seat.cx + '-' + seat.cy)}
@@ -51,8 +58,7 @@
 				cx={seat.cx}
 				cy={seat.cy}
 				r={seatRadius}
-				fill="rgba(240,179,74,0.16)"
-				stroke="#f0b34a"
+				class="fill-warning-500/20 stroke-warning-500"
 				stroke-width="2"
 				stroke-dasharray="3 3"
 			/>

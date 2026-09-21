@@ -147,3 +147,32 @@ test.describe('no flash', () => {
 		expect(script).toBeLessThan(html.indexOf('rel="stylesheet"'));
 	});
 });
+
+test.describe('the hero table in the dark mode', () => {
+	test('the empty seat still stands out from the page', async ({ browser }) => {
+		const { page, context } = await open(browser, 'dark');
+
+		const seat = await page
+			.locator('svg circle[stroke-dasharray]')
+			.first()
+			.evaluate((el) => getComputedStyle(el).stroke);
+		const background = (await colours(page)).background;
+
+		expect(contrast(seat, background)).toBeGreaterThanOrEqual(3);
+		await context.close();
+	});
+
+	test('recolours with the mode instead of keeping the light palette', async ({ browser }) => {
+		const light = await open(browser, 'light');
+		const dark = await open(browser, 'dark');
+		const fill = (page: import('@playwright/test').Page) =>
+			page
+				.locator('svg circle.fill-primary-500')
+				.first()
+				.evaluate((el) => getComputedStyle(el).fill);
+
+		expect(await fill(dark.page)).not.toBe(await fill(light.page));
+		await light.context.close();
+		await dark.context.close();
+	});
+});

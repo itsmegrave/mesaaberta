@@ -26,7 +26,7 @@
 
 <a
 	href="#main"
-	class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2 focus:text-ink focus:shadow-md"
+	class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-surface-100-900 focus:px-3 focus:py-2 focus:text-surface-950-50 focus:shadow-md"
 >
 	{m.skip_to_content()}
 </a>
@@ -34,10 +34,7 @@
 <header
 	class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:h-[88px] md:px-8"
 >
-	<a
-		href={localizedHref('/', locale)}
-		class="flex items-center gap-2.5 text-ink no-underline md:gap-3"
-	>
+	<a href={localizedHref('/', locale)} class="flex items-center gap-2.5 no-underline md:gap-3">
 		<TableLogo size={34} class="size-7 md:size-[34px]" />
 		<span class="font-brand text-[19px] font-semibold tracking-[0.04em] md:text-2xl">
 			Mesa Aberta
@@ -48,7 +45,7 @@
 		{#if data.released}
 			<a
 				href={localizedHref('/tables', locale)}
-				class="font-display hidden h-11 items-center rounded-xl px-3.5 text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
+				class="btn hidden h-11 rounded-xl px-3.5 font-semibold hover:preset-tonal md:flex"
 			>
 				{m.nav_tables()}
 			</a>
@@ -57,14 +54,14 @@
 		{#if data.account}
 			<a
 				href={localizedHref('/account/tables', locale)}
-				class="font-display hidden h-11 items-center rounded-xl px-3.5 text-base font-semibold text-ink transition-colors hover:bg-wash md:flex"
+				class="btn hidden h-11 rounded-xl px-3.5 font-semibold hover:preset-tonal md:flex"
 			>
 				{m.nav_my_tables()}
 			</a>
 
 			<a
 				href={localizedHref('/tables/new', locale)}
-				class="font-display hidden h-11 items-center justify-center gap-2.5 rounded-xl border border-petrol bg-petrol px-4 text-[15px] font-semibold text-on-petrol transition-opacity hover:opacity-90 md:inline-flex"
+				class="btn hidden h-11 gap-2.5 rounded-xl preset-filled-primary-500 px-4 md:inline-flex"
 			>
 				<svg
 					width="18"
@@ -94,10 +91,7 @@
 				pendingSuggestionsCount={data.account.pendingSuggestionsCount}
 			/>
 		{:else if data.authEnabled && data.released}
-			<a
-				href={resolve('/login')}
-				class="font-display inline-flex h-11 items-center justify-center rounded-xl border border-petrol px-4 text-[15px] font-semibold text-ink transition-colors hover:bg-wash"
-			>
+			<a href={resolve('/login')} class="btn h-11 rounded-xl preset-outlined-primary-500 px-4">
 				{m.nav_sign_in()}
 			</a>
 		{/if}
@@ -124,28 +118,27 @@
 {/if}
 
 <footer class="mx-auto w-full max-w-6xl px-4 md:px-8">
-	<div class="grid gap-8 border-t border-line py-10 text-sm md:grid-cols-[1fr_auto] md:items-end">
+	<div
+		class="grid gap-8 border-t border-surface-200-800 py-10 text-sm md:grid-cols-[1fr_auto] md:items-end"
+	>
 		<div>
 			<p class="font-brand text-xl font-semibold tracking-[0.04em]">Mesa Aberta</p>
-			<p class="mt-3 max-w-[45ch] text-ink2">
+			<p class="mt-3 max-w-[45ch] text-surface-700-300">
 				Uma plataforma aberta para encontrar pessoas, organizar sessões e manter a mesa viva.
 			</p>
 		</div>
 		<div class="grid gap-2 md:text-right">
 			<p>
 				{m.footer_made_with()}
-				<a href="https://github.com/itsmegrave" rel="noopener" class="text-link">itsmegrave</a>.
+				<a href="https://github.com/itsmegrave" rel="noopener" class="anchor">itsmegrave</a>.
 			</p>
 			<p>
 				{m.footer_open_source()}
-				<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link"
-					>GitHub</a
-				>.
+				<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="anchor">GitHub</a>.
 			</p>
 			<p>
 				{m.footer_community()}
-				<a href="https://linktr.ee/lenindragonsrpg" rel="noopener" class="text-link">Lenindragons</a
-				>.
+				<a href="https://linktr.ee/lenindragonsrpg" rel="noopener" class="anchor">Lenindragons</a>.
 			</p>
 		</div>
 	</div>

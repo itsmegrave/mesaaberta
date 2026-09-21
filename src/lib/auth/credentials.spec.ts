@@ -1,5 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { parseCredentials, parseEmail, parseNewPassword } from './credentials';
+import { credentialsSchema, emailSchema, newPasswordSchema } from './credentials';
+
+type Errors = Record<string, string>;
+const errorsOf = (issues: { path: PropertyKey[]; message: string }[]) => {
+	const errors: Errors = {};
+	for (const issue of issues) errors[String(issue.path[0])] ??= issue.message;
+	return errors;
+};
+
+const parseCredentials = (data: FormData) => {
+	const parsed = credentialsSchema.safeParse(Object.fromEntries(data));
+	if (!parsed.success) return { ok: false as const, errors: errorsOf(parsed.error.issues) };
+	return { ok: true as const, data: { email: parsed.data.email, password: parsed.data.password } };
+};
+
+const parseEmail = (data: FormData) => {
+	const parsed = emailSchema.safeParse(Object.fromEntries(data));
+	if (!parsed.success) return { ok: false as const, errors: errorsOf(parsed.error.issues) };
+	return { ok: true as const, data: parsed.data };
+};
+
+const parseNewPassword = (data: FormData) => {
+	const parsed = newPasswordSchema.safeParse(Object.fromEntries(data));
+	if (!parsed.success) return { ok: false as const, errors: errorsOf(parsed.error.issues) };
+	return { ok: true as const, data: { password: parsed.data.password } };
+};
 
 const form = (fields: Record<string, string>) => {
 	const data = new FormData();
