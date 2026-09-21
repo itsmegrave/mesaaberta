@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { m } from '$lib/paraglide/messages';
-	import { applyChoice, readChoice } from '$lib/theme/theme';
+	import { applyChoice, readChoice, type ThemeChoice } from '$lib/theme/theme';
 
 	let isDark = $state(false);
+	let activeChoice = $state<ThemeChoice>('system');
 
 	onMount(() => {
 		const stored = readChoice();
+		activeChoice = stored;
 		if (stored === 'dark') {
 			isDark = true;
 		} else if (stored === 'light') {
@@ -18,7 +20,7 @@
 
 		const mql = window.matchMedia('(prefers-color-scheme: dark)');
 		const onChange = (e: MediaQueryListEvent) => {
-			if (readChoice() === 'system') {
+			if (activeChoice === 'system') {
 				isDark = e.matches;
 				applyChoice('system');
 			}
@@ -29,7 +31,8 @@
 
 	function handlePressedChange(pressed: boolean) {
 		isDark = pressed;
-		applyChoice(pressed ? 'dark' : 'light');
+		activeChoice = pressed ? 'dark' : 'light';
+		applyChoice(activeChoice);
 	}
 </script>
 

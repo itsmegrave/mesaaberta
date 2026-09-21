@@ -66,7 +66,10 @@ describe('ThemeToggle', () => {
 		await expect.element(button).toHaveAttribute('aria-pressed', 'true');
 	});
 
-	it('still works for this page when storage is blocked', async () => {
+	it('keeps a manual choice when storage is blocked and the system preference changes', async () => {
+		const mql = new EventTarget() as MediaQueryList;
+		Object.defineProperty(mql, 'matches', { value: false });
+		vi.spyOn(window, 'matchMedia').mockReturnValue(mql);
 		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
 			throw new Error('blocked');
 		});
@@ -78,6 +81,8 @@ describe('ThemeToggle', () => {
 		const button = page.getByRole('button', { name: 'Tema escuro' });
 		await button.click();
 
+		expect(root.dataset.mode).toBe('dark');
+		mql.dispatchEvent(new MediaQueryListEvent('change', { matches: false }));
 		expect(root.dataset.mode).toBe('dark');
 	});
 });
