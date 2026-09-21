@@ -30,9 +30,9 @@ export function templateIdFor(env: TemplateEnv, key: TemplateKey): string | unde
  * Resend reserves (`FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`, `contact`, `this`).
  * Never add an id, a token, an address or anything secret here.
  *
- * A later, optional variable (the GM's welcome message) is one line in each of the two places
- * below: `WELCOME_MESSAGE?: string` in the type and `'WELCOME_MESSAGE'` in the list. Absent values
- * are omitted, so a template gives it a fallback value in the dashboard.
+ * `WELCOME_MESSAGE` is optional and is the whole "Mensagem do mestre" section, heading included:
+ * Resend templates have no conditionals, so a template that owned the heading would show it above
+ * nothing. Absent values are omitted, so the template gives it an empty fallback in the dashboard.
  */
 export const TEMPLATE_VARIABLES = [
 	'RECIPIENT_NAME',
@@ -40,7 +40,8 @@ export const TEMPLATE_VARIABLES = [
 	'TABLE_URL',
 	'CONTEXT',
 	'STARTS_AT',
-	'FALLBACK_TEXT'
+	'FALLBACK_TEXT',
+	'WELCOME_MESSAGE'
 ] as const;
 
 export type TemplateVariables = {
@@ -53,6 +54,8 @@ export type TemplateVariables = {
 	STARTS_AT: string;
 	/** The plain-text copy. Resend refuses `text` next to a template, so it travels as a variable. */
 	FALLBACK_TEXT: string;
+	/** The GM's welcome message with its heading (see `welcomeSection`); absent when there is none. */
+	WELCOME_MESSAGE?: string;
 };
 
 /** Resend limits a string variable to 2,000 characters. */
@@ -72,4 +75,13 @@ export function templateVariables(input: TemplateVariables): TemplateVariables {
 		if (value !== undefined) picked[name] = clean(value);
 	}
 	return picked as TemplateVariables;
+}
+
+/** The heading shared by the inline copy and the hosted template variable. */
+export const WELCOME_HEADING = 'Mensagem do mestre';
+
+/** The welcome section as text, or undefined when there is nothing to say: never a bare heading. */
+export function welcomeSection(message: string | undefined): string | undefined {
+	const trimmed = message?.trim();
+	return trimmed ? `${WELCOME_HEADING}:\n${trimmed}` : undefined;
 }
