@@ -14,10 +14,10 @@
 
 	const players = [
 		{ angle: -90, colour: 'fill-success-500' },
-		{ angle: -30, colour: 'fill-tertiary-500' },
-		{ angle: 90, colour: 'fill-secondary-500' },
+		{ angle: -30, colour: 'fill-error-500' },
+		{ angle: 90, colour: 'fill-tertiary-500' },
 		{ angle: 150, colour: 'fill-success-500' },
-		{ angle: 210, colour: 'fill-tertiary-500' }
+		{ angle: 210, colour: 'fill-error-500' }
 	].map((player) => ({ ...player, ...at(player.angle) }));
 
 	const emptySeat = at(30);

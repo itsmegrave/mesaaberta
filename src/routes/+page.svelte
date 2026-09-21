@@ -71,54 +71,11 @@
 	</div>
 </section>
 
-<section aria-labelledby="roles" class="py-14 md:py-20">
-	<div class="max-w-[48ch]">
-		<h2 id="roles" class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">
-			O seu lugar, de qualquer lado da mesa.
-		</h2>
-	</div>
-	<div class="mt-8 grid gap-5 md:grid-cols-2 md:gap-6">
-		<article class="card border border-surface-200-800 bg-surface-100-900 p-6 md:p-8">
-			<h3 class="text-2xl font-semibold">Para quem joga</h3>
-			<p class="mt-3 max-w-[40ch]">
-				Encontre uma cadeira vazia, entre na mesa e acompanhe cada sessão.
-			</p>
-			<div class="mt-6 rounded-2xl border border-surface-200-800 bg-surface-200-800 p-4">
-				<p class="font-semibold">Uma vaga pode ser sua</p>
-				<p class="mt-1 text-sm text-surface-700-300">Depois da sessão, você avalia o mestre.</p>
-			</div>
-			<a href={localizedHref('/tables', locale)} class="mt-6 btn preset-outlined-primary-500"
-				>Ver mesas abertas</a
-			>
-		</article>
-
-		<article class="relative overflow-hidden card preset-filled-primary-500 p-6 md:p-8">
-			<span
-				aria-hidden="true"
-				class="absolute -top-20 -right-20 size-60 rounded-full bg-primary-contrast-500/10"
-			></span>
-			<div class="relative">
-				<h3 class="text-2xl font-semibold">Para quem mestra</h3>
-				<p class="mt-3 max-w-[40ch] opacity-90">
-					Abra sua mesa, escolha como as pessoas entram e cuide da próxima sessão.
-				</p>
-				<div class="mt-6 rounded-2xl bg-white/10 p-4">
-					<p class="font-semibold">Novo pedido de vaga</p>
-					<p class="mt-1 text-sm opacity-80">Você aprova quem senta à sua mesa.</p>
-				</div>
-				<a href={localizedHref('/tables/new', locale)} class="mt-6 btn preset-outlined-primary-500"
-					>Abrir uma mesa</a
-				>
-			</div>
-		</article>
-	</div>
-</section>
-
-<section aria-labelledby="open-tables" class="border-y border-surface-200-800 py-14 md:py-20">
+<section aria-labelledby="open-tables" class="py-7 md:py-16">
 	<div class="flex flex-wrap items-end justify-between gap-4">
 		<div>
 			<h2 id="open-tables" class="text-3xl font-semibold tracking-tight md:text-4xl">
-				Mesas com vaga
+				Mesas abertas
 			</h2>
 			<p class="mt-2 max-w-[44ch]">Escolha a próxima aventura que cabe na sua agenda.</p>
 		</div>

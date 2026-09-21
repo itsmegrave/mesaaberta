@@ -23,7 +23,7 @@
 		{m.form_view_table()}
 	</a>
 
-	<h1 class="h1 mt-6">{m.form_edit_title()}</h1>
+	<h1 class="mt-6 h1">{m.form_edit_title()}</h1>
 
 	{#if data.status === 'disabled'}
 		<p role="status" class="mt-4 max-w-[44ch] font-semibold">{m.form_edit_disabled()}</p>
@@ -38,7 +38,7 @@
 	/>
 
 	{#if data.status === 'active'}
-		<div class="border-surface-200-800 mt-12 max-w-2xl border-t pt-6">
+		<div class="mt-12 max-w-2xl border-t border-surface-200-800 pt-6">
 			<p class="mb-3">{m.form_disable_hint()}</p>
 			<ActionForm action="?/disable">
 				<button type="submit" class="btn preset-outlined-error-500">{m.form_disable()}</button>

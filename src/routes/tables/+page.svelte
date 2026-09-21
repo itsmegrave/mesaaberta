@@ -24,7 +24,7 @@
 		</div>
 		<a
 			href={localizedHref('/tables/new', getLocale())}
-			class="btn shrink-0 gap-2.5 py-3.5 preset-filled-primary-500"
+			class="btn shrink-0 gap-2.5 preset-filled-primary-500 py-3.5"
 		>
 			<svg
 				width="18"
