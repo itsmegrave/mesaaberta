@@ -18,42 +18,60 @@
 	<meta name="description" content={m.home_description()} />
 </svelte:head>
 
-<section class="py-6 md:py-10">
+<section class="flex min-h-[600px] items-center py-5 md:min-h-[660px] md:py-0">
 	<div
-		class="overflow-hidden rounded-[32px] bg-primary-500 text-primary-contrast-500 md:grid md:min-h-[570px] md:grid-cols-[1.05fr_0.95fr]"
+		class="grid w-full items-center gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(360px,.9fr)] md:gap-12"
 	>
-		<div class="flex flex-col justify-between p-7 sm:p-10 md:p-14">
-			<div>
-				<p class="text-base font-semibold text-warning-700-300">Mesas de RPG com vagas abertas</p>
-				<h1
-					class="mt-5 max-w-[10ch] text-5xl leading-[0.92] font-semibold tracking-tight md:text-7xl"
+		<div class="max-w-[40rem]">
+			<p
+				class="chip gap-2 border-0 bg-warning-500/20 px-3 text-sm font-semibold text-warning-700-300"
+			>
+				<span
+					aria-hidden="true"
+					class="size-3.5 rounded-full border-2 border-dashed border-warning-500"
+				></span>
+				Mesas de RPG com vagas abertas
+			</p>
+			<h1
+				class="mt-5 max-w-[11ch] text-5xl leading-[.96] font-semibold tracking-[-0.035em] sm:text-6xl md:mt-6 md:text-7xl lg:text-[5rem]"
+			>
+				Tem uma <span class="text-warning-700-300">cadeira vazia</span> na mesa.
+			</h1>
+			<p class="mt-6 max-w-[34ch] text-lg leading-relaxed md:mt-7 md:text-[1.375rem]">
+				{m.hero_lede()}
+			</p>
+			<div class="mt-7 flex flex-col gap-3 sm:flex-row md:mt-9">
+				<a
+					href={localizedHref('/tables', locale)}
+					class="btn h-14 w-full gap-2.5 preset-filled-primary-500 sm:w-auto"
 				>
-					{m.hero_title()}
-				</h1>
-				<p class="mt-7 max-w-[34ch] text-lg leading-relaxed opacity-85 md:text-xl">
-					{m.hero_lede()}
-				</p>
+					Ver mesas abertas
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M5 12h14M13 6l6 6-6 6" />
+					</svg>
+				</a>
+				<a
+					href={localizedHref('/tables/new', locale)}
+					class="btn h-14 w-full preset-outlined-primary-500 sm:w-auto">Abrir uma mesa</a
+				>
 			</div>
-			<div class="mt-10 flex flex-wrap items-center gap-4">
-				<a href={localizedHref('/tables', locale)} class="btn preset-filled-primary-500"
-					>Encontrar uma mesa</a
-				>
-				<a href={localizedHref('/tables/new', locale)} class="btn preset-outlined-primary-500"
-					>Abrir uma mesa</a
-				>
-			</div>
-		</div>
-		<div
-			class="relative flex min-h-[310px] items-center justify-center bg-primary-contrast-500/10 p-8 md:min-h-0 md:p-14"
-		>
-			<div
-				class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.16),transparent_62%)]"
-			></div>
-			<div class="relative w-full max-w-md"><TableIllustration /></div>
-			<p class="absolute right-7 bottom-7 max-w-[20ch] text-right text-sm opacity-80">
-				Uma agenda compartilhada para a próxima aventura.
+			<p class="mt-6 max-w-[46ch] text-sm leading-relaxed text-surface-700-300">
+				Mesa Aberta é um projeto de código aberto, sob a licença MIT.
+				<a href="https://github.com/itsmegrave/mesaaberta" class="anchor">Veja o código no GitHub</a
+				>.
 			</p>
 		</div>
+		<div class="mx-auto w-full max-w-[520px] md:justify-self-end"><TableIllustration /></div>
 	</div>
 </section>
 
@@ -63,7 +81,7 @@
 			O seu lugar, de qualquer lado da mesa.
 		</h2>
 	</div>
-	<div class="mt-8 grid gap-5 md:grid-cols-2">
+	<div class="mt-8 grid gap-5 md:grid-cols-2 md:gap-6">
 		<article class="card border border-surface-200-800 bg-surface-100-900 p-6 md:p-8">
 			<h3 class="text-2xl font-semibold">Para quem joga</h3>
 			<p class="mt-3 max-w-[40ch]">
@@ -78,18 +96,24 @@
 			>
 		</article>
 
-		<article class="card preset-filled-primary-500 p-6 md:p-8">
-			<h3 class="text-2xl font-semibold">Para quem mestra</h3>
-			<p class="mt-3 max-w-[40ch] opacity-90">
-				Abra sua mesa, escolha como as pessoas entram e cuide da próxima sessão.
-			</p>
-			<div class="mt-6 rounded-2xl bg-white/10 p-4">
-				<p class="font-semibold">Novo pedido de vaga</p>
-				<p class="mt-1 text-sm opacity-80">Você aprova quem senta à sua mesa.</p>
+		<article class="relative overflow-hidden card preset-filled-primary-500 p-6 md:p-8">
+			<span
+				aria-hidden="true"
+				class="absolute -top-20 -right-20 size-60 rounded-full bg-primary-contrast-500/10"
+			></span>
+			<div class="relative">
+				<h3 class="text-2xl font-semibold">Para quem mestra</h3>
+				<p class="mt-3 max-w-[40ch] opacity-90">
+					Abra sua mesa, escolha como as pessoas entram e cuide da próxima sessão.
+				</p>
+				<div class="mt-6 rounded-2xl bg-white/10 p-4">
+					<p class="font-semibold">Novo pedido de vaga</p>
+					<p class="mt-1 text-sm opacity-80">Você aprova quem senta à sua mesa.</p>
+				</div>
+				<a href={localizedHref('/tables/new', locale)} class="mt-6 btn preset-outlined-primary-500"
+					>Abrir uma mesa</a
+				>
 			</div>
-			<a href={localizedHref('/tables/new', locale)} class="mt-6 btn preset-outlined-primary-500"
-				>Abrir uma mesa</a
-			>
 		</article>
 	</div>
 </section>

@@ -52,7 +52,7 @@
 </script>
 
 <article
-	class="group relative flex flex-col overflow-hidden card border border-surface-200-800 bg-surface-100-900 transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
+	class="group relative flex h-full min-h-[396px] flex-col overflow-hidden card border border-surface-200-800 bg-surface-100-900 transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
 >
 	<!-- Top header tile: With cover image vs solid petrol tile without cover -->
 	{#if table.imageUrl}
