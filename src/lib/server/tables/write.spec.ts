@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { events, gameTables, profiles } from '../db/schema';
-import { createTestDb } from '../db/test-db';
+import { createTestDb, pgErrorCode } from '../db/test-db';
 import { findTableBySlug, listUpcomingTables } from './queries';
 import { createTable, disableTable, loadTableForEdit, updateTable } from './write';
 import type { TableInput } from '$lib/tables/schema';
@@ -21,6 +21,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
 	title: 'Mesa do Dragão',
 	description: 'Uma noite só.',
 	extraInfo: null,
+	welcomeMessage: null,
 	kind: 'one_shot',
 	capacity: 5,
 	startsAtLocal: '2026-10-10T19:00',
@@ -133,6 +134,103 @@ describe('createTable', () => {
 		await expect(
 			createTable(test.db, ana, input({ startsAtLocal: '2026-09-01T19:00' }), { now })
 		).rejects.toMatchObject({ name: 'Invalid', field: 'startsAtLocal' });
+	});
+});
+
+describe('welcome message', () => {
+	const MESSAGE = 'Bem-vindo à {nome da mesa}! Chame no WhatsApp.';
+
+	it('is stored on create, and a table made without one has none', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({ title: 'Com Boas-vindas', welcomeMessage: MESSAGE }),
+			{ now }
+		);
+		const { slug: bare } = await createTable(test.db, ana, input({ title: 'Sem Boas-vindas' }), {
+			now
+		});
+
+		expect(await rowOf(slug)).toMatchObject({ welcomeMessage: MESSAGE });
+		expect(await rowOf(bare)).toMatchObject({ welcomeMessage: null });
+	});
+
+	it('comes back to the edit form as it was written, and as an empty text when there is none', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({ title: 'Editar Msg', welcomeMessage: MESSAGE }),
+			{
+				now
+			}
+		);
+		const { slug: bare } = await createTable(test.db, ana, input({ title: 'Editar Sem Msg' }), {
+			now
+		});
+
+		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({ welcomeMessage: MESSAGE });
+		expect(await loadTableForEdit(test.db, ana, bare)).toMatchObject({ welcomeMessage: '' });
+	});
+
+	it('survives an edit that leaves it as it is, and can be changed', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({ title: 'Manter Msg', welcomeMessage: MESSAGE }),
+			{
+				now
+			}
+		);
+
+		await updateTable(
+			test.db,
+			ana,
+			slug,
+			input({ title: 'Manter Msg', capacity: 3, welcomeMessage: MESSAGE })
+		);
+		expect(await rowOf(slug)).toMatchObject({ capacity: 3, welcomeMessage: MESSAGE });
+
+		await updateTable(test.db, ana, slug, input({ title: 'Manter Msg', welcomeMessage: 'Nova.' }));
+		expect(await rowOf(slug)).toMatchObject({ welcomeMessage: 'Nova.' });
+	});
+
+	it('can be cleared, and then nothing is stored', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({ title: 'Limpar Msg', welcomeMessage: MESSAGE }),
+			{
+				now
+			}
+		);
+
+		await updateTable(test.db, ana, slug, input({ title: 'Limpar Msg', welcomeMessage: null }));
+
+		expect(await rowOf(slug)).toMatchObject({ welcomeMessage: null });
+	});
+
+	it('is capped by the database too, whatever the form said', async () => {
+		const { slug } = await createTable(test.db, ana, input({ title: 'Limite Db' }), { now });
+
+		const update = (welcomeMessage: string) =>
+			test.db.update(gameTables).set({ welcomeMessage }).where(eq(gameTables.slug, slug));
+
+		expect(await pgErrorCode(update('x'.repeat(1000)))).toBeUndefined();
+		expect(await pgErrorCode(update('x'.repeat(1001)))).toBe('23514');
+	});
+
+	it('is never on the public table page, which is seen by people without a seat', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({ title: 'Privada Msg', welcomeMessage: MESSAGE }),
+			{
+				now
+			}
+		);
+
+		expect(await findTableBySlug(test.db, slug, now)).not.toHaveProperty('welcomeMessage');
+		expect(JSON.stringify(await findTableBySlug(test.db, slug, now))).not.toContain('WhatsApp');
 	});
 });
 

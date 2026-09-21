@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
 
@@ -6,6 +7,7 @@ export const TABLE_LIMITS = {
 	title: { min: 3, max: 80 },
 	description: 4000,
 	extraInfo: 2000,
+	welcomeMessage: WELCOME_MESSAGE_MAX,
 	capacity: { min: 1, max: 30 },
 	durationMinutes: { min: 15, max: 1440 }
 } as const;
@@ -43,6 +45,12 @@ const form = z
 		title: z.string().trim().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
 		description: text(TABLE_LIMITS.description).default(''),
 		extraInfo: text(TABLE_LIMITS.extraInfo).default(''),
+		// Cleaned first, so the limit counts what is stored and not the control characters dropped.
+		welcomeMessage: z
+			.string()
+			.transform(cleanWelcomeMessage)
+			.pipe(z.string().max(TABLE_LIMITS.welcomeMessage))
+			.default(''),
 		kind: z.enum(['campaign', 'one_shot']),
 		capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
 		startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
@@ -70,6 +78,8 @@ export type TableInput = {
 	title: string;
 	description: string;
 	extraInfo: string | null;
+	/** Sent to each player who gets a seat; `{nome da mesa}` is expanded when sending. */
+	welcomeMessage: string | null;
 	kind: 'campaign' | 'one_shot';
 	capacity: number;
 	/** Wall-clock time in `timezone`, e.g. `2026-10-10T19:00`. */
@@ -104,7 +114,7 @@ export function parseTableForm(
 		return { ok: false, errors };
 	}
 
-	const { repeat, until, extraInfo, ...rest } = parsed.data;
+	const { repeat, until, extraInfo, welcomeMessage, ...rest } = parsed.data;
 	const campaign = rest.kind === 'campaign';
 
 	return {
@@ -112,6 +122,7 @@ export function parseTableForm(
 		data: {
 			...rest,
 			extraInfo: extraInfo || null,
+			welcomeMessage: welcomeMessage || null,
 			recurrence: campaign ? RULES[repeat as keyof typeof RULES] : null,
 			untilLocalDate: campaign && until ? until : null
 		}
