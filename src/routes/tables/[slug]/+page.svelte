@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { formatDuration, formatSession } from '$lib/tables/format';
+	import { formatDuration, formatSession, formatWait } from '$lib/tables/format';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -137,17 +137,19 @@
 
 	{#if form?.error}
 		<p role="alert" class="mt-4 max-w-[44ch] font-semibold text-danger">
-			{form.error === 'table_full'
-				? m.table_error_full()
-				: form.error === 'already_registered'
-					? m.table_error_already()
-					: form.error === 'forbidden'
-						? m.table_error_forbidden()
-						: form.error === 'too_early'
-							? m.table_error_too_early()
-							: form.error === 'invalid'
-								? m.table_error_invalid()
-								: m.table_error_other()}
+			{form.error === 'rate_limited'
+				? m.error_rate_limited({ wait: formatWait(form.retryAfter ?? 60) })
+				: form.error === 'table_full'
+					? m.table_error_full()
+					: form.error === 'already_registered'
+						? m.table_error_already()
+						: form.error === 'forbidden'
+							? m.table_error_forbidden()
+							: form.error === 'too_early'
+								? m.table_error_too_early()
+								: form.error === 'invalid'
+									? m.table_error_invalid()
+									: m.table_error_other()}
 		</p>
 	{/if}
 

@@ -4,6 +4,7 @@ import { gameTables, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { TABLE_CREATION_LIMIT, enforceRateLimit } from '../rate-limit';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
 import type { TableInput } from '$lib/tables/schema';
@@ -49,7 +50,9 @@ async function columnsOf(db: AnyDb, input: TableInput) {
 /**
  * Creates a table; the creator becomes its GM. The slug comes from the title. The unique index
  * has the last word: if another request takes the slug between the check and the insert, this
- * tries the next one, so two simultaneous creates both succeed.
+ * tries the next one, so two simultaneous creates both succeed. Throws `RateLimited` past
+ * `TABLE_CREATION_LIMIT`; the check runs after the form is validated, so a rejected form never
+ * counts, and in the same transaction as the insert, so a refused request leaves nothing behind.
  */
 export async function createTable(
 	db: AnyDb,
@@ -76,16 +79,22 @@ export async function createTable(
 			// The table and its event commit together, or neither does. A slug conflict rolls both
 			// back, and the retry writes a fresh pair.
 			const eventId = await db.transaction(async (tx) => {
+				await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
+
 				const [created] = await tx
 					.insert(gameTables)
 					.values({ ...columns, slug, gmId: actor!.id })
 					.returning({ id: gameTables.id });
 
-				return recordEvent(tx as unknown as AnyDb, {
-					type: 'TableCreated',
-					actorId: actor!.id,
-					payload: { tableId: created.id, slug, title: input.title }
-				});
+				return recordEvent(
+					tx as unknown as AnyDb,
+					{
+						type: 'TableCreated',
+						actorId: actor!.id,
+						payload: { tableId: created.id, slug, title: input.title }
+					},
+					{ now }
+				);
 			});
 			return { slug, eventId };
 		} catch (error) {

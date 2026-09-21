@@ -23,3 +23,8 @@ export function formatDuration(minutes: number): string {
 
 	return [hours && `${hours} h`, rest && `${rest} min`].filter(Boolean).join(' ');
 }
+
+/** How long to wait, rounded up to the minute so it never promises a moment too early: `90` is `2 min`. */
+export function formatWait(seconds: number): string {
+	return formatDuration(Math.max(1, Math.ceil(seconds / 60)));
+}

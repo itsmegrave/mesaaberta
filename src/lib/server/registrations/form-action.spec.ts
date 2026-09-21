@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '../errors';
+import { AlreadyRegistered, Forbidden, NotFound, RateLimited, TableFull } from '../errors';
 import { runRegistrationAction } from './form-action';
 
 const setup = (over: { user?: boolean; db?: boolean } = {}) => {
@@ -12,13 +12,14 @@ const setup = (over: { user?: boolean; db?: boolean } = {}) => {
 		afterResponse: (task: (db: unknown) => Promise<unknown>) => queued.push(task)
 	} as unknown as App.Locals;
 	const url = new URL('https://x.test/tables/mesa');
+	const setHeaders = vi.fn();
 	const event = (fields: Record<string, string> = {}) => {
 		const body = new FormData();
 		for (const [k, v] of Object.entries(fields)) body.set(k, v);
-		return { locals, url, request: new Request(url, { method: 'POST', body }) };
+		return { locals, url, request: new Request(url, { method: 'POST', body }), setHeaders };
 	};
 
-	return { event, queued, profile };
+	return { event, queued, profile, setHeaders };
 };
 
 describe('runRegistrationAction', () => {
@@ -94,6 +95,18 @@ describe('runRegistrationAction', () => {
 		});
 
 		expect(result).toMatchObject({ status, data: { error: code } });
+		expect(queued).toHaveLength(0);
+	});
+
+	it('answers RateLimited with a 429 that says when to try again, in the form and in Retry-After', async () => {
+		const { event, queued, setHeaders } = setup();
+
+		const result = await runRegistrationAction(event(), async () => {
+			throw new RateLimited(90);
+		});
+
+		expect(result).toMatchObject({ status: 429, data: { error: 'rate_limited', retryAfter: 90 } });
+		expect(setHeaders).toHaveBeenCalledWith({ 'Retry-After': '90' });
 		expect(queued).toHaveLength(0);
 	});
 

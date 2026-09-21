@@ -1,6 +1,7 @@
 <script lang="ts">
 	import TableForm from '$lib/components/TableForm.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { formatWait } from '$lib/tables/format';
 
 	let { data, form } = $props();
 </script>
@@ -15,7 +16,11 @@
 
 	{#if form?.error}
 		<p role="alert" class="mt-6 font-semibold text-danger">
-			{form.error === 'forbidden' ? m.form_error_forbidden() : m.form_error_unavailable()}
+			{form.error === 'forbidden'
+				? m.form_error_forbidden()
+				: form.error === 'rate_limited'
+					? m.error_rate_limited({ wait: formatWait(form.retryAfter ?? 60) })
+					: m.form_error_unavailable()}
 		</p>
 	{/if}
 

@@ -26,6 +26,7 @@
 	"error_not_found_text": "O endereço não existe ou a mesa foi removida.",
 	"error_generic_title": "Algo deu errado",
 	"error_generic_text": "Tente de novo em instantes.",
+	"error_rate_limited": "Você fez isso muitas vezes em pouco tempo. Tente de novo em {wait}.",
 	"error_back_home": "Voltar para o início",
 	"login_title": "Entrar",
 	"login_lede": "Entre para abrir uma mesa ou pegar uma vaga.",

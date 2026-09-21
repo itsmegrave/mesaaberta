@@ -4,6 +4,7 @@ import {
 	Forbidden,
 	Invalid,
 	NotFound,
+	RateLimited,
 	TableFull,
 	TooEarly,
 	failFrom
@@ -29,6 +30,13 @@ describe('failFrom', () => {
 		expect(failFrom(new AlreadyRegistered())).toMatchObject({
 			status: 409,
 			data: { error: 'already_registered' }
+		});
+	});
+
+	it('turns RateLimited into a 429 that says how long to wait', () => {
+		expect(failFrom(new RateLimited(90))).toMatchObject({
+			status: 429,
+			data: { error: 'rate_limited', retryAfter: 90 }
 		});
 	});
 

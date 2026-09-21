@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
-import { Forbidden } from '../errors';
+import { Forbidden, RateLimited } from '../errors';
 import { handleTableForm } from './form-action';
 import { createTable } from './write';
 import type { TableInput } from '$lib/tables/schema';
@@ -51,11 +51,18 @@ const setup = (options: { user?: boolean; upload?: ReturnType<typeof vi.fn> } = 
 		createTable(test.db, ana, input, { imagePath: imagePath ?? null })
 	);
 
-	return { locals, save, upload };
+	const setHeaders = vi.fn();
+	const guard = vi.fn(async () => {});
+
+	return { locals, save, upload, setHeaders, guard };
 };
 
 const run = (req: Request, s: ReturnType<typeof setup>) =>
-	handleTableForm({ request: req, locals: s.locals, url: new URL(req.url) }, s.save);
+	handleTableForm(
+		{ request: req, locals: s.locals, url: new URL(req.url), setHeaders: s.setHeaders },
+		s.save,
+		s.guard
+	);
 
 describe('handleTableForm', () => {
 	it("saves a valid form and goes to the table's own page", async () => {
@@ -147,5 +154,38 @@ describe('handleTableForm', () => {
 			status: 403,
 			data: { error: 'forbidden', values: { title: 'Mesa Nova' } }
 		});
+	});
+
+	it('turns RateLimited into a 429 with the wait, keeping what was typed, and sets Retry-After', async () => {
+		const s = setup();
+		s.save.mockRejectedValueOnce(new RateLimited(900));
+
+		const result = await run(request(), s);
+
+		expect(result).toMatchObject({
+			status: 429,
+			data: { error: 'rate_limited', retryAfter: 900, values: { title: 'Mesa Nova' } }
+		});
+		expect(s.setHeaders).toHaveBeenCalledWith({ 'Retry-After': '900' });
+	});
+
+	it('asks the guard before storing the image, so a limited request uploads nothing', async () => {
+		const s = setup();
+		s.guard.mockRejectedValueOnce(new RateLimited(60));
+		const png = new File([new Uint8Array([...PNG, 0, 0, 0, 0])], 'capa.png', { type: 'image/png' });
+
+		const result = await run(request({ image: png }), s);
+
+		expect(result).toMatchObject({ status: 429, data: { error: 'rate_limited', retryAfter: 60 } });
+		expect(s.upload).not.toHaveBeenCalled();
+		expect(s.save).not.toHaveBeenCalled();
+	});
+
+	it('does not ask the guard about a form that is invalid anyway', async () => {
+		const s = setup();
+
+		await run(request({ title: '' }), s);
+
+		expect(s.guard).not.toHaveBeenCalled();
 	});
 });

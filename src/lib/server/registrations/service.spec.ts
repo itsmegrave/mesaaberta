@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { events, gameTables, profiles, registrations, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
@@ -29,6 +29,8 @@ beforeAll(async () => {
 		]);
 });
 afterAll(() => test.close());
+// Each test starts with a clean rate limit: one person opens and joins many tables across a file.
+beforeEach(() => test.db.delete(events));
 
 /** A fresh table with `capacity` seats, so tests do not share seats. */
 const makeTable = async (over: Partial<typeof gameTables.$inferInsert> = {}) => {
@@ -156,6 +158,75 @@ describe('joinTable on a table that approves each player', () => {
 
 		expect(await statusOf(table.id, id(2))).toBe('confirmed');
 		expect(await statusOf(table.id, id(3))).toBe('pending');
+	});
+});
+
+describe('joinTable rate limit', () => {
+	const now = new Date('2026-10-01T12:00:00Z');
+	const rateLimited = (playerId: string, type: string, count: number, ageInSeconds: number) =>
+		test.db.insert(events).values(
+			Array.from({ length: count }, () => ({
+				type,
+				actorId: playerId,
+				payload: {},
+				createdAt: new Date(now.getTime() - ageInSeconds * 1000)
+			}))
+		);
+
+	it('refuses the join past the limit, tells when to try again, and changes nothing', async () => {
+		const table = await makeTable();
+		await rateLimited(id(6), 'PlayerJoined', 20, 600);
+		const eventsBefore = (await test.db.select().from(events)).length;
+
+		await expect(joinTable(test.db, player(6), table.slug, { now })).rejects.toMatchObject({
+			name: 'RateLimited',
+			retryAfterSeconds: 3000
+		});
+
+		expect(await statusOf(table.id, id(6))).toBeUndefined();
+		expect((await test.db.select().from(events)).length).toBe(eventsBefore);
+	});
+
+	it('counts requests to approval tables together with the seats taken', async () => {
+		const table = await makeTable();
+		await rateLimited(id(6), 'PlayerJoined', 12, 600);
+		await rateLimited(id(6), 'JoinRequested', 8, 300);
+
+		await expect(joinTable(test.db, player(6), table.slug, { now })).rejects.toMatchObject({
+			name: 'RateLimited'
+		});
+	});
+
+	it('lets the player in again once the oldest join is out of the window', async () => {
+		const table = await makeTable();
+		await rateLimited(id(6), 'PlayerJoined', 20, 3600);
+
+		await expect(joinTable(test.db, player(6), table.slug, { now })).resolves.toMatchObject({
+			status: 'confirmed'
+		});
+	});
+
+	it('does not count the joins of other players', async () => {
+		const table = await makeTable();
+		await rateLimited(id(6), 'PlayerJoined', 20, 600);
+
+		await expect(joinTable(test.db, player(7), table.slug, { now })).resolves.toMatchObject({
+			status: 'confirmed'
+		});
+	});
+
+	it('answers a full table with TableFull, which is not a use of the limit', async () => {
+		const table = await makeTable({ capacity: 1 });
+		await joinTable(test.db, player(2), table.slug, { now });
+		await rateLimited(id(8), 'PlayerJoined', 19, 600);
+
+		await expect(joinTable(test.db, player(8), table.slug, { now })).rejects.toMatchObject({
+			name: 'TableFull'
+		});
+		const other = await makeTable();
+		await expect(joinTable(test.db, player(8), other.slug, { now })).resolves.toMatchObject({
+			status: 'confirmed'
+		});
 	});
 });
 
