@@ -2,6 +2,7 @@ import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { toast } from '$lib/stores/toast.svelte';
 import Layout from './+layout.svelte';
 
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
@@ -241,6 +242,18 @@ describe('+layout.svelte', () => {
 			await expect
 				.element(nav.getByRole('link', { name: 'Admin' }))
 				.toHaveAttribute('href', '/admin');
+		});
+	});
+
+	describe('toaster', () => {
+		it('renders toasts triggered in the application', async () => {
+			toast.clear();
+			render(Layout, { children, data: signedOut });
+
+			toast.success('Vaga confirmada!');
+
+			await expect.element(page.getByRole('status')).toBeVisible();
+			await expect.element(page.getByRole('status')).toHaveTextContent('Vaga confirmada!');
 		});
 	});
 });

@@ -273,5 +273,9 @@
 	"network_discord": "Discord",
 	"network_github": "GitHub",
 	"network_linkedin": "LinkedIn",
-	"network_website": "Site"
+	"network_website": "Site",
+	"toast_confirmed": "Vaga confirmada! O convite está no seu e-mail.",
+	"toast_pending": "Pedido de vaga enviado ao mestre.",
+	"toast_rating_saved": "Avaliação enviada com sucesso!",
+	"toast_close": "Fechar aviso"
 }

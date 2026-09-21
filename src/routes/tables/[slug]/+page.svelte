@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { formatDuration, formatSession, formatWait } from '$lib/tables/format';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import { toast } from '$lib/stores/toast.svelte';
 
 	let { data, form } = $props();
 
@@ -35,6 +37,24 @@
 				? m.table_seat_left()
 				: m.table_seats_left({ count: table.seatsLeft })
 	);
+
+	$effect(() => {
+		if (form?.error) {
+			const message =
+				form.error === 'table_full'
+					? m.table_error_full()
+					: form.error === 'already_registered'
+						? m.table_error_already()
+						: form.error === 'forbidden'
+							? m.table_error_forbidden()
+							: form.error === 'too_early'
+								? m.table_error_too_early()
+								: form.error === 'invalid'
+									? m.table_error_invalid()
+									: m.table_error_other();
+			toast.error(message);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -181,7 +201,22 @@
 				</button>
 			</form>
 		{:else if data.canJoin}
-			<form method="POST" action="?/join">
+			<form
+				method="POST"
+				action="?/join"
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'redirect' || result.type === 'success') {
+							if (table.joinMode === 'approval') {
+								toast.pending(m.toast_pending());
+							} else {
+								toast.success(m.toast_confirmed());
+							}
+						}
+					};
+				}}
+			>
 				<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-on-petrol">
 					{table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
 				</button>
@@ -196,7 +231,19 @@
 			<p class="mt-2 max-w-[55ch]">{m.rating_lede()}</p>
 			{#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
 
-			<form method="POST" action="?/rate" class="mt-4 grid gap-6">
+			<form
+				method="POST"
+				action="?/rate"
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'redirect' || result.type === 'success') {
+							toast.success(m.toast_rating_saved());
+						}
+					};
+				}}
+				class="mt-4 grid gap-6"
+			>
 				{#each scoreFields as { name, label, current } (name)}
 					<fieldset>
 						<legend class="font-semibold">{label}</legend>

@@ -6,6 +6,8 @@
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
 	import TableLogo from '$lib/components/TableLogo.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import Toaster from '$lib/components/Toaster.svelte';
+	import { Progress } from 'bits-ui';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -104,13 +106,16 @@
 
 <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
 {#if navigating.to}
-	<p
-		role="status"
-		class="fixed inset-x-0 top-0 z-20 bg-petrol px-4 py-1 text-center text-sm text-on-petrol"
+	<Progress.Root
+		value={null}
+		class="fixed inset-x-0 top-0 z-50 h-1 overflow-hidden bg-line"
+		aria-label={m.nav_loading()}
 	>
-		{m.nav_loading()}
-	</p>
+		<div class="h-full w-1/3 animate-progress rounded-full bg-petrol"></div>
+	</Progress.Root>
 {/if}
+
+<Toaster />
 
 <main id="main" class="mx-auto w-full max-w-6xl px-4 pb-24 md:px-8 md:pb-16">
 	{@render children()}
