@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { events, gameTables, profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
@@ -41,6 +41,8 @@ beforeAll(async () => {
 	]);
 });
 afterAll(() => test.close());
+// Each test starts with a clean rate limit: one person opens and joins many tables across a file.
+beforeEach(() => test.db.delete(events));
 
 const rowOf = async (slug: string) =>
 	(await test.db.select().from(gameTables).where(eq(gameTables.slug, slug)))[0];
@@ -112,6 +114,103 @@ describe('createTable', () => {
 		const { slug } = await createTable(test.db, ana, input({ title: 'New' }), { now });
 
 		expect(slug).toBe('new-2');
+	});
+
+	describe('rate limit', () => {
+		const rateLimited = (actor: Actor, count: number, ageInMinutes: number) =>
+			test.db.insert(events).values(
+				Array.from({ length: count }, () => ({
+					type: 'TableCreated',
+					actorId: actor.id,
+					payload: {},
+					createdAt: new Date(now.getTime() - ageInMinutes * 60_000)
+				}))
+			);
+		const tables = async () => (await test.db.select().from(gameTables)).length;
+
+		it('refuses the sixth table in an hour, tells when to try again, and creates nothing', async () => {
+			const ede = member(11);
+			await test.db.insert(profiles).values({ id: ede.id, displayName: 'Ede' });
+			await rateLimited(ede, 5, 45);
+			const before = {
+				tables: await tables(),
+				events: (await test.db.select().from(events)).length
+			};
+
+			await expect(
+				createTable(test.db, ede, input({ title: 'Demais' }), { now })
+			).rejects.toMatchObject({ name: 'RateLimited', retryAfterSeconds: 15 * 60 });
+
+			expect({
+				tables: await tables(),
+				events: (await test.db.select().from(events)).length
+			}).toEqual(before);
+		});
+
+		it('lets the fifth through, records it, and refuses the next one', async () => {
+			const fabi = member(12);
+			await test.db.insert(profiles).values({ id: fabi.id, displayName: 'Fabi' });
+			await rateLimited(fabi, 4, 10);
+
+			await createTable(test.db, fabi, input({ title: 'Quinta' }), { now });
+
+			await expect(
+				createTable(test.db, fabi, input({ title: 'Sexta' }), { now })
+			).rejects.toMatchObject({ name: 'RateLimited' });
+		});
+
+		it('lets the person create again once the oldest table is out of the window', async () => {
+			const gabi = member(13);
+			await test.db.insert(profiles).values({ id: gabi.id, displayName: 'Gabi' });
+			await rateLimited(gabi, 5, 60);
+
+			await expect(
+				createTable(test.db, gabi, input({ title: 'De novo' }), { now })
+			).resolves.toBeDefined();
+		});
+
+		it('does not count the tables of other people', async () => {
+			const hugo = member(14);
+			const ivo = member(15);
+			await test.db.insert(profiles).values([
+				{ id: hugo.id, displayName: 'Hugo' },
+				{ id: ivo.id, displayName: 'Ivo' }
+			]);
+			await rateLimited(hugo, 5, 10);
+
+			await expect(
+				createTable(test.db, ivo, input({ title: 'Do Ivo' }), { now })
+			).resolves.toBeDefined();
+		});
+
+		it('is not used up by a form that is rejected for another reason', async () => {
+			const jo = member(16);
+			await test.db.insert(profiles).values({ id: jo.id, displayName: 'Jo' });
+			await rateLimited(jo, 4, 10);
+
+			await expect(
+				createTable(test.db, jo, input({ title: 'Passado', startsAtLocal: '2026-09-01T19:00' }), {
+					now
+				})
+			).rejects.toMatchObject({ name: 'Invalid' });
+			await expect(
+				createTable(test.db, jo, input({ title: 'Sem sistema', systemSlug: 'nao-existe' }), { now })
+			).rejects.toMatchObject({ name: 'Invalid' });
+
+			await expect(
+				createTable(test.db, jo, input({ title: 'Valida' }), { now })
+			).resolves.toBeDefined();
+		});
+
+		it('applies to admins too: the policy gives them no special right to open tables', async () => {
+			await rateLimited(admin, 5, 10);
+
+			await expect(
+				createTable(test.db, admin, input({ title: 'Admin' }), { now })
+			).rejects.toMatchObject({
+				name: 'RateLimited'
+			});
+		});
 	});
 
 	it('refuses an anonymous visitor and a suspended account', async () => {

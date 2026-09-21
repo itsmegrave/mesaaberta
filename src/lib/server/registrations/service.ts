@@ -5,6 +5,7 @@ import { authorize, joinBlocker, type Actor } from '../auth/policy';
 import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '../errors';
 import { recordEvent } from '../events/outbox';
 import type { DomainEvent } from '../events/types';
+import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -47,19 +48,31 @@ const record = (
 	actor: Actor,
 	table: { id: string; slug: string },
 	playerId: string,
-	type: Exclude<RegistrationEvent['type'], 'PlayerLeft'>
+	type: Exclude<RegistrationEvent['type'], 'PlayerLeft'>,
+	now?: Date
 ) =>
-	recordEvent(asDb(tx), {
-		type,
-		actorId: actor.id,
-		payload: { tableId: table.id, slug: table.slug, playerId }
-	});
+	recordEvent(
+		asDb(tx),
+		{
+			type,
+			actorId: actor.id,
+			payload: { tableId: table.id, slug: table.slug, playerId }
+		},
+		{ now }
+	);
 
 /**
  * The signed-in player takes a seat, or asks for one when the GM approves each player. The seat
  * count is read under the table lock, so the last seat goes to exactly one of two racing players.
+ * Throws `RateLimited` past `JOIN_LIMIT`, but only for a join that would otherwise have worked, so
+ * a full table or a repeat join never uses the limit up.
  */
-export async function joinTable(db: AnyDb, actor: Actor | null, slug: string) {
+export async function joinTable(
+	db: AnyDb,
+	actor: Actor | null,
+	slug: string,
+	{ now = new Date() }: { now?: Date } = {}
+) {
 	return db.transaction(async (tx) => {
 		const table = await lockTable(tx, slug);
 		const seatsLeft = table.capacity - (await confirmedSeats(tx, table.id));
@@ -75,6 +88,7 @@ export async function joinTable(db: AnyDb, actor: Actor | null, slug: string) {
 		if (blocker === 'registered') throw new AlreadyRegistered();
 		if (blocker === 'full') throw new TableFull();
 		if (blocker) throw new Forbidden('table:join');
+		await enforceRateLimit(asDb(tx), actor!.id, JOIN_LIMIT, now);
 
 		const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
 		await tx.insert(registrations).values({ tableId: table.id, playerId: actor!.id, status });
@@ -85,7 +99,8 @@ export async function joinTable(db: AnyDb, actor: Actor | null, slug: string) {
 				actor!,
 				table,
 				actor!.id,
-				status === 'confirmed' ? 'PlayerJoined' : 'JoinRequested'
+				status === 'confirmed' ? 'PlayerJoined' : 'JoinRequested',
+				now
 			)
 		];
 		return { status, eventIds } as const;
