@@ -18,3 +18,10 @@ DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
 # A Supabase secret key (Project Settings > API Keys), not the legacy service_role key.
 # SUPABASE_SECRET_KEY=sb_secret_...
 # APP_ORIGIN=https://mesaaberta.app
+
+# Hosted Resend templates (optional, see "Hosted e-mail templates" in the README). Template ids or
+# aliases, not secrets. A blank or missing one keeps that e-mail on its inline text.
+# RESEND_TEMPLATE_INVITE=
+# RESEND_TEMPLATE_CANCEL=
+# RESEND_TEMPLATE_JOIN_REQUESTED=
+# RESEND_TEMPLATE_JOIN_DECLINED=

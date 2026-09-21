@@ -1,4 +1,5 @@
-import type { Mailer } from './mailer';
+import type { Mail, Mailer } from './mailer';
+import { templateVariables } from './templates';
 
 export type ResendEnv = { RESEND_API_KEY: string; RESEND_FROM: string };
 type Fetch = typeof fetch;
@@ -15,6 +16,19 @@ const utf8Base64 = (value: string) => {
 	return btoa(binary);
 };
 
+/**
+ * Resend rejects `text`, `html` and `react` next to a `template`, so a hosted template sends its
+ * id and variables and the inline copy is sent only without one. `subject` stays in both: the
+ * payload's subject wins over the template's default, and a template with none would fail.
+ */
+const content = (mail: Mail) =>
+	mail.template
+		? { template: { id: mail.template.id, variables: templateVariables(mail.template.variables) } }
+		: {
+				text: mail.text,
+				html: `<p>${escapeHtml(mail.text).replace(/\n/g, '<br>')}</p>`
+			};
+
 /** Resend's HTTP API is Worker-native, so no Node-only SDK or persistent process is needed. */
 export function resendMailer(env: ResendEnv, request: Fetch = fetch): Mailer {
 	return {
@@ -30,8 +44,7 @@ export function resendMailer(env: ResendEnv, request: Fetch = fetch): Mailer {
 					from: env.RESEND_FROM,
 					to: [mail.to],
 					subject: mail.subject,
-					text: mail.text,
-					html: mail.html || `<p>${escapeHtml(mail.text).replace(/\n/g, '<br>')}</p>`,
+					...content(mail),
 					attachments: mail.attachments?.map((attachment) => ({
 						filename: attachment.filename,
 						content: utf8Base64(attachment.content),

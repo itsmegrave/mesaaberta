@@ -129,7 +129,7 @@ export const load = async ({ locals, url }) => {
 
 **Email and password** (`/signup` and `/login`) is Supabase Auth's own email login: Supabase stores the hashed password, sends the confirmation email and verifies the session. We store nothing and only call it (`src/lib/server/auth/email.ts`), then make sure the person has a profile. Sign-up creates the account and Supabase emails a confirmation link (which comes back to `/auth/callback`); until it is confirmed, sign-in answers "confirm your email". A wrong password and an unknown address get the same message, and a repeat sign-up says the same "check your email" as a first one, so neither can be used to find out who is registered. The email address and the password are never logged. Passwords are 8 to 72 characters (72 is where bcrypt cuts off).
 
-**Calendar invites** are transactional Resend messages, sent from the event outbox after a seat is confirmed and cancelled when the player leaves or the table is disabled. Editing a table updates every confirmed player's invite. Set `RESEND_API_KEY`, `RESEND_FROM`, `SUPABASE_SECRET_KEY` (a Supabase secret key, `sb_secret_...`; the legacy `service_role` key still works as `SUPABASE_SERVICE_ROLE_KEY` until Supabase retires it), and optionally `APP_ORIGIN` as Worker secrets; the handler stays off until all required values exist. It looks up a recipient through Supabase Auth's Admin API at send time, so no email address is copied into `profiles`, registrations, or the permanent event payload. Set the first three with `wrangler secret put <NAME>` (not `wrangler.jsonc`), and make `RESEND_FROM` a verified Resend sender. Each Resend request uses the event id and recipient id as its idempotency key, so an outbox retry cannot duplicate an invite.
+**Calendar invites** are transactional Resend messages, sent from the event outbox after a seat is confirmed and cancelled when the player leaves or the table is disabled. Editing a table updates every confirmed player's invite. Set `RESEND_API_KEY`, `RESEND_FROM`, `SUPABASE_SECRET_KEY` (a Supabase secret key, `sb_secret_...`; the legacy `service_role` key still works as `SUPABASE_SERVICE_ROLE_KEY` until Supabase retires it), and optionally `APP_ORIGIN` as Worker secrets; the handler stays off until all required values exist. It looks up a recipient through Supabase Auth's Admin API at send time, so no email address is copied into `profiles`, registrations, or the permanent event payload. Set the first three with `wrangler secret put <NAME>` (not `wrangler.jsonc`), and make `RESEND_FROM` a verified Resend sender. Each Resend request uses the event id and recipient id as its idempotency key, so an outbox retry cannot duplicate an invite. The copy is hosted in Resend; see "Hosted e-mail templates" under Calendar invites.
 
 **Password reset** uses Supabase's recovery flow. `/forgot-password` asks for an email and always answers "if the address has an account, we sent a link" (Supabase does not say whether it does, and neither do we). The link comes back through `/auth/callback`, which signs the person in and sends them to `/reset-password`, where they choose a new password (typed twice, 8 to 72 characters). Changing it signs every other session out, in case whoever knew the old password was still in. `/reset-password` is only for someone a recovery link just signed in: without a session it sends them to ask for a new link. Because sign-in uses PKCE, the link only works in the browser that asked for it; opened elsewhere, the login page says to open it in the same browser or ask again. The address and the passwords are never logged. Supabase's Reset Password email template needs no change: it already sends `{{ .ConfirmationURL }}`, which returns to the redirect URLs set for the social providers.
 
@@ -220,6 +220,69 @@ This file decides what goes in an invite and checks what comes from users or the
 - **Known small deviation:** ical.js folds at 75 bytes of content plus the folding space, so a continuation line can be 76 octets (the standard says "should not exceed 75"; every mainstream client reads it). It never splits a character.
 
 **Check it in real calendars by hand** (this is not automated): `pnpm calendar:sample you@example.com` writes three files to `sample-invites/` (a one-shot, a weekly campaign, and its cancellation). Open them, or attach them to an email to yourself, in Gmail, Outlook and Apple Calendar. Import the campaign request, then the cancel: the event should disappear.
+
+### Hosted e-mail templates
+
+The copy of these e-mails is not built in the app. Each one is a **hosted, versioned template in the Resend dashboard**; the app sends the template id and a few variables (`src/lib/server/mail/templates.ts`), plus the per-recipient `.ics` attachment and the idempotency key. Until a template id is configured, that e-mail is sent with the short inline text it had before, so invites keep going out while the templates do not exist yet. A missing or blank id never stops the handler; each of the four is independent.
+
+**Worker variables** (ids are not secrets). Put them in `vars` in `wrangler.jsonc` once the templates exist, next to `RESEND_FROM`: a Git-triggered deploy replaces any variable that is not in that file. Use the template's id (a UUID) or its alias. For local runs, set them in `.dev.vars` (see `.dev.vars.example`).
+
+| Worker variable                  | Template                    | Sent when                                                                       |
+| -------------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
+| `RESEND_TEMPLATE_INVITE`         | `mesaaberta-invite`         | A seat is confirmed, or a table is edited (calendar `REQUEST`, with the `.ics`) |
+| `RESEND_TEMPLATE_CANCEL`         | `mesaaberta-cancel`         | A player leaves or the table is disabled (calendar `CANCEL`, with the `.ics`)   |
+| `RESEND_TEMPLATE_JOIN_REQUESTED` | `mesaaberta-join-requested` | A player asks to join: goes to the GM                                           |
+| `RESEND_TEMPLATE_JOIN_DECLINED`  | `mesaaberta-join-declined`  | The GM declines a request: goes to the player                                   |
+
+**Variables.** These six are the only values that reach Resend, and every template receives all six (`TEMPLATE_VARIABLES`; a unit test pins the list, and another checks that no id, address, token or secret is in the payload). Create all six in each template and give each a fallback value: Resend rejects a send when a variable in the template has neither a value nor a fallback, and we do not know whether it also rejects a variable the template does not define.
+
+| Variable         | Type   | Content                                                                                                                    |
+| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `RECIPIENT_NAME` | string | The recipient's display name                                                                                               |
+| `TABLE_TITLE`    | string | The table's title                                                                                                          |
+| `TABLE_URL`      | string | Link to the public table page                                                                                              |
+| `CONTEXT`        | string | `REQUEST`, `CANCEL`, `JOIN_REQUESTED` or `JOIN_DECLINED`                                                                   |
+| `STARTS_AT`      | string | The session start as people say it, in the table's own time zone, pt-BR (for example `sábado, 10 de outubro, 19:00 GMT-3`) |
+| `FALLBACK_TEXT`  | string | The one-line plain-text copy the app would send without a template                                                         |
+
+Names follow Resend's rules (ASCII letters, digits and underscores, up to 50 characters; `FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`, `contact` and `this` are reserved). Values are strings of at most 2,000 characters; the app also removes `<` and `>` from them, since users write titles and names and Resend does not say whether `{{{VAR}}}` escapes. Use `{{{VAR}}}` in the body.
+
+**What Resend accepts** (from its API reference): with a `template`, the request may not carry `html`, `text` or `react`, so the plain-text copy travels as `FALLBACK_TEXT`. `subject` and `from` may be sent and win over the template's defaults; the app always sends the subject listed below, so the subject you set in the template is only a default. Attachments are not excluded, and the `.ics` is kept.
+
+**Suggested copy (pt-BR).** Create four templates in the Resend dashboard (Templates > Create template), named as in the table above, with the subject and body below. Keep the body short and plain; the `.ics` carries the details.
+
+`mesaaberta-invite`, subject `Convite: {{{TABLE_TITLE}}}`
+
+> Olá, {{{RECIPIENT_NAME}}}!
+> Sua vaga na mesa **{{{TABLE_TITLE}}}** está confirmada. A sessão começa {{{STARTS_AT}}}.
+> O convite de calendário está anexado: abra o arquivo para adicionar a mesa à sua agenda. Se a mesa mudar, você receberá um novo convite que atualiza o evento.
+> [Ver a mesa]({{{TABLE_URL}}})
+
+`mesaaberta-cancel`, subject `Cancelada: {{{TABLE_TITLE}}}`
+
+> Olá, {{{RECIPIENT_NAME}}}.
+> Sua participação na mesa **{{{TABLE_TITLE}}}** foi cancelada. O cancelamento de calendário está anexado: abra o arquivo para remover o evento da sua agenda.
+> [Ver a mesa]({{{TABLE_URL}}})
+
+`mesaaberta-join-requested`, subject `Nova solicitação: {{{TABLE_TITLE}}}`
+
+> Olá, {{{RECIPIENT_NAME}}}!
+> Há uma nova solicitação para entrar na sua mesa **{{{TABLE_TITLE}}}**. Abra a mesa para aprovar ou recusar.
+> [Ver a mesa]({{{TABLE_URL}}})
+
+`mesaaberta-join-declined`, subject `Solicitação recusada: {{{TABLE_TITLE}}}`
+
+> Olá, {{{RECIPIENT_NAME}}}.
+> Sua solicitação para a mesa **{{{TABLE_TITLE}}}** foi recusada. Há outras mesas abertas esperando por você.
+> [Ver a mesa]({{{TABLE_URL}}})
+
+**Preview and test.** In the template editor, use the dashboard's test e-mail and fill in sample values for the six variables (for example the ones in the table above). Check it in Gmail, Outlook and Apple Mail, on a phone and in dark mode. To exercise the real path, put the ids in `.dev.vars` together with a real `RESEND_API_KEY` and a `RESEND_FROM` on a verified domain, and join a table with an account whose address is yours. The automated tests never call Resend.
+
+**Safe update procedure.** A template has a draft and a published version, and only the published one is sent. Edit the draft, test it, then publish; the next e-mail uses it. Nothing to deploy, since the id does not change. To undo, use the version history (revert creates a new draft, then publish it). Adding a variable is two steps in this order: add it to the template with a fallback value and publish, then deploy the code that sends it. Removing one is the reverse. To go back to the inline copy, empty or delete the `RESEND_TEMPLATE_*` variable and deploy.
+
+**Errors.** A refused send (a wrong id, an unpublished template, a variable without a value or fallback) throws, like any failed send, so the outbox sweeper retries it every five minutes. It does not fall back to the inline copy by itself. If a template is misconfigured, unset its variable to keep e-mails flowing.
+
+**Later variables.** The GM's welcome message will be one optional string variable (`WELCOME_MESSAGE`): one line in the `TemplateVariables` type and one in `TEMPLATE_VARIABLES`. An absent value is left out of the request, so the template must give it a fallback value.
 
 ## Registrations
 

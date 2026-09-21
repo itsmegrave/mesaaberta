@@ -74,6 +74,10 @@ function timezoneComponent(tzid: string): InstanceType<typeof ICAL.Component> {
 	return new ICAL.Component(ICAL.parse(block[0]));
 }
 
+/** The public page of a table, which the invite and its e-mail both link to. */
+export const tableUrl = (baseUrl: string, slug: string) =>
+	`${baseUrl.replace(/\/$/, '')}/tables/${encodeURIComponent(slug)}`;
+
 /**
  * One `.ics` for one recipient. A one-shot is a single event; a campaign is one recurring event
  * with a stable UID, so an edit (a higher SEQUENCE) replaces it. Throws on an address, a UID, a
@@ -96,7 +100,7 @@ export function buildInvite({
 
 	const vtimezone = timezoneComponent(table.timezone);
 	const end = new Date(table.startsAt.getTime() + table.durationMinutes * 60_000);
-	const url = `${baseUrl.replace(/\/$/, '')}/tables/${encodeURIComponent(table.slug)}`;
+	const url = tableUrl(baseUrl, table.slug);
 	const description = [table.description, table.extraInfo, url].filter(Boolean).join('\n\n');
 
 	const event = new ICAL.Component('vevent');
