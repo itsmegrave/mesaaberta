@@ -126,17 +126,29 @@
 {/if}
 
 <footer class="mx-auto w-full max-w-6xl px-4 md:px-8">
-	<div class="border-t border-line py-6 text-sm">
-		<p>
-			{m.footer_made_with()}
-			<a href="https://github.com/itsmegrave" rel="noopener" class="text-link">itsmegrave</a>.
-			{m.footer_open_source()}
-			<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link">GitHub</a
-			>.
-		</p>
-		<p class="mt-2">
-			{m.footer_community()}
-			<a href="https://linktr.ee/lenindragonsrpg" rel="noopener" class="text-link">Lenindragons</a>.
-		</p>
+	<div class="grid gap-8 border-t border-line py-10 text-sm md:grid-cols-[1fr_auto] md:items-end">
+		<div>
+			<p class="font-brand text-xl font-semibold tracking-[0.04em]">Mesa Aberta</p>
+			<p class="mt-3 max-w-[45ch] text-ink2">
+				Uma plataforma aberta para encontrar pessoas, organizar sessões e manter a mesa viva.
+			</p>
+		</div>
+		<div class="grid gap-2 md:text-right">
+			<p>
+				{m.footer_made_with()}
+				<a href="https://github.com/itsmegrave" rel="noopener" class="text-link">itsmegrave</a>.
+			</p>
+			<p>
+				{m.footer_open_source()}
+				<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link"
+					>GitHub</a
+				>.
+			</p>
+			<p>
+				{m.footer_community()}
+				<a href="https://linktr.ee/lenindragonsrpg" rel="noopener" class="text-link">Lenindragons</a
+				>.
+			</p>
+		</div>
 	</div>
 </footer>

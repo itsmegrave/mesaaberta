@@ -21,6 +21,26 @@ test('presents how it works as an ordered list of three steps', async ({ page })
 	await expect(region.getByRole('listitem')).toHaveCount(3);
 });
 
+test('offers distinct paths for players and game masters before showing open tables', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	const roles = page.locator('section[aria-labelledby="roles"]');
+	await expect(roles.getByRole('heading', { name: 'Para quem joga' })).toBeVisible();
+	await expect(roles.getByRole('heading', { name: 'Para quem mestra' })).toBeVisible();
+	await expect(roles.getByRole('link', { name: 'Ver mesas abertas' })).toHaveAttribute(
+		'href',
+		'/tables'
+	);
+	await expect(roles.getByRole('link', { name: 'Abrir uma mesa' })).toHaveAttribute(
+		'href',
+		'/tables/new'
+	);
+
+	await expect(page.locator('section[aria-labelledby="open-tables"]')).toBeVisible();
+});
+
 test('says the project is open source and links to its repository', async ({ page }) => {
 	await page.goto('/');
 

@@ -1,6 +1,10 @@
 <script lang="ts">
 	import TableIllustration from '$lib/components/TableIllustration.svelte';
+	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
+
+	const locale = getLocale();
 
 	const steps = [
 		{ title: m.how_step_1_title, text: m.how_step_1_text },
@@ -14,24 +18,116 @@
 	<meta name="description" content={m.home_description()} />
 </svelte:head>
 
-<section class="grid items-center gap-10 py-8 md:grid-cols-[1.1fr_1fr] md:gap-16 md:py-16">
-	<div>
-		<h1 class="text-5xl leading-[0.95] font-semibold tracking-tight md:text-7xl">
-			{m.hero_title()}
-		</h1>
-		<p class="mt-6 max-w-[34ch] text-xl">{m.hero_lede()}</p>
-		<p class="mt-6 max-w-[44ch]">{m.hero_status()}</p>
-		<p class="mt-6 max-w-[44ch]">
-			{m.hero_open_source()}
-			<a href="https://github.com/itsmegrave/mesaaberta" rel="noopener" class="text-link">
-				{m.hero_open_source_link()}</a
-			>.
-		</p>
+<section class="py-6 md:py-10">
+	<div
+		class="overflow-hidden rounded-[32px] bg-petrol text-on-petrol md:grid md:min-h-[570px] md:grid-cols-[1.05fr_0.95fr]"
+	>
+		<div class="flex flex-col justify-between p-7 sm:p-10 md:p-14">
+			<div>
+				<p class="font-display text-base font-semibold text-sage">Mesas de RPG com vagas abertas</p>
+				<h1
+					class="mt-5 max-w-[10ch] text-5xl leading-[0.92] font-semibold tracking-tight md:text-7xl"
+				>
+					{m.hero_title()}
+				</h1>
+				<p class="mt-7 max-w-[34ch] text-lg leading-relaxed text-on-petrol/85 md:text-xl">
+					{m.hero_lede()}
+				</p>
+			</div>
+			<div class="mt-10 flex flex-wrap items-center gap-4">
+				<a
+					href={localizedHref('/tables', locale)}
+					class="rounded-xl bg-surface px-5 py-3 font-display font-semibold text-ink hover:bg-celadon"
+					>Encontrar uma mesa</a
+				>
+				<a
+					href={localizedHref('/tables/new', locale)}
+					class="rounded-xl border border-white/35 px-5 py-3 font-display font-semibold text-on-petrol hover:bg-white/10"
+					>Abrir uma mesa</a
+				>
+			</div>
+		</div>
+		<div
+			class="relative flex min-h-[310px] items-center justify-center bg-sage/20 p-8 md:min-h-0 md:p-14"
+		>
+			<div
+				class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.16),transparent_62%)]"
+			></div>
+			<div class="relative w-full max-w-md"><TableIllustration /></div>
+			<p class="absolute right-7 bottom-7 max-w-[20ch] text-right text-sm text-on-petrol/80">
+				Uma agenda compartilhada para a próxima aventura.
+			</p>
+		</div>
 	</div>
-	<TableIllustration />
 </section>
 
-<section aria-labelledby="how-it-works" class="border-t border-petrol/15 py-12 md:py-16">
+<section aria-labelledby="roles" class="py-14 md:py-20">
+	<div class="max-w-[48ch]">
+		<h2 id="roles" class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">
+			O seu lugar, de qualquer lado da mesa.
+		</h2>
+	</div>
+	<div class="mt-8 grid gap-5 md:grid-cols-2">
+		<article class="rounded-[24px] border border-line bg-surface p-6 md:p-8">
+			<h3 class="text-2xl font-semibold">Para quem joga</h3>
+			<p class="mt-3 max-w-[40ch]">
+				Encontre uma cadeira vazia, entre na mesa e acompanhe cada sessão.
+			</p>
+			<div class="mt-6 rounded-2xl border border-line bg-celadon p-4">
+				<p class="font-display font-semibold">Uma vaga pode ser sua</p>
+				<p class="mt-1 text-sm text-ink2">Depois da sessão, você avalia o mestre.</p>
+			</div>
+			<a
+				href={localizedHref('/tables', locale)}
+				class="mt-6 inline-flex rounded-xl border border-petrol px-4 py-2.5 font-display font-semibold text-ink hover:bg-wash"
+				>Ver mesas abertas</a
+			>
+		</article>
+
+		<article class="rounded-[24px] bg-petrol p-6 text-on-petrol md:p-8">
+			<h3 class="text-2xl font-semibold">Para quem mestra</h3>
+			<p class="mt-3 max-w-[40ch] text-on-petrol/90">
+				Abra sua mesa, escolha como as pessoas entram e cuide da próxima sessão.
+			</p>
+			<div class="mt-6 rounded-2xl bg-white/10 p-4">
+				<p class="font-display font-semibold">Novo pedido de vaga</p>
+				<p class="mt-1 text-sm text-on-petrol/80">Você aprova quem senta à sua mesa.</p>
+			</div>
+			<a
+				href={localizedHref('/tables/new', locale)}
+				class="mt-6 inline-flex rounded-xl bg-surface px-4 py-2.5 font-display font-semibold text-ink hover:bg-celadon"
+				>Abrir uma mesa</a
+			>
+		</article>
+	</div>
+</section>
+
+<section aria-labelledby="open-tables" class="border-y border-line py-14 md:py-20">
+	<div class="flex flex-wrap items-end justify-between gap-4">
+		<div>
+			<h2 id="open-tables" class="text-3xl font-semibold tracking-tight md:text-4xl">
+				Mesas com vaga
+			</h2>
+			<p class="mt-2 max-w-[44ch]">Escolha a próxima aventura que cabe na sua agenda.</p>
+		</div>
+		<a href={localizedHref('/tables', locale)} class="text-link">Ver todas as mesas</a>
+	</div>
+	<div
+		class="mt-8 rounded-[24px] border border-line bg-surface p-6 md:flex md:items-center md:justify-between md:gap-8"
+	>
+		<div>
+			<p class="font-display text-xl font-semibold">Pronto para escolher uma aventura?</p>
+			<p class="mt-2 max-w-[42ch]">Veja sistemas, horários e vagas antes de entrar na mesa.</p>
+		</div>
+		<a
+			href={localizedHref('/tables', locale)}
+			class="mt-5 inline-flex shrink-0 rounded-xl bg-petrol px-4 py-2.5 font-display font-semibold text-on-petrol hover:opacity-90 md:mt-0"
+			>Explorar mesas</a
+		>
+	</div>
+</section>
+
+<section aria-labelledby="how-it-works" class="py-14 md:py-20">
 	<h2 id="how-it-works" class="text-3xl font-semibold tracking-tight md:text-4xl">
 		{m.how_title()}
 	</h2>
@@ -48,9 +144,19 @@
 	<p class="mt-10">{m.how_after_session()}</p>
 </section>
 
-<section aria-labelledby="for-game-masters" class="border-t border-petrol/15 py-12 md:py-16">
-	<h2 id="for-game-masters" class="text-3xl font-semibold tracking-tight md:text-4xl">
-		{m.gm_title()}
-	</h2>
-	<p class="mt-4 max-w-[52ch] text-lg">{m.gm_text()}</p>
+<section aria-labelledby="for-game-masters" class="pb-14 md:pb-20">
+	<div class="rounded-[28px] bg-surface p-7 md:grid md:grid-cols-[0.9fr_1.1fr] md:gap-16 md:p-12">
+		<h2
+			id="for-game-masters"
+			class="text-3xl leading-tight font-semibold tracking-tight md:text-4xl"
+		>
+			{m.gm_title()}
+		</h2>
+		<div>
+			<p class="max-w-[52ch] text-lg">{m.gm_text()}</p>
+			<a href={localizedHref('/tables/new', locale)} class="mt-6 inline-flex text-link"
+				>Abrir uma mesa</a
+			>
+		</div>
+	</div>
 </section>
