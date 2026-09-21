@@ -316,9 +316,19 @@ describe('calendar invite handler', () => {
 	});
 });
 
+/** What the tests read back from a Resend request body. */
+type SentBody = {
+	to: string[];
+	subject: string;
+	text?: string;
+	html?: string;
+	template: { id: string; variables: Record<string, string> };
+	attachments: Array<{ filename: string; content: string }>;
+};
+
 /** Records what would reach Resend; the real API is never called. */
 function capture(status = 200) {
-	const bodies: Array<Record<string, any>> = [];
+	const bodies: SentBody[] = [];
 	const headers: Array<Record<string, string>> = [];
 	const request = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
 		bodies.push(JSON.parse(String(init?.body)));
