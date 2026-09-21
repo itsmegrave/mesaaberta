@@ -1,13 +1,22 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { formatDuration, formatSession, formatWait } from '$lib/tables/format';
+	import { superForm } from 'sveltekit-superforms';
+	import { zod4Client } from 'sveltekit-superforms/adapters';
+	import { formatDuration, formatSession } from '$lib/tables/format';
+	import type { FormMessage } from '$lib/forms/message';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import { ratingSchema } from '$lib/tables/rating';
+	import { registrationError } from '$lib/tables/registration-errors';
 	import { toast } from '$lib/toaster';
+	import ActionForm from '$lib/components/ActionForm.svelte';
 
 	let { data, form } = $props();
+
+	// What the last seat action answered: from a submit with JavaScript (`onfail`), or from the page the server sent back without it.
+	let failed = $state<FormMessage | null>(null);
+	const problem = $derived(failed ?? form?.form?.message ?? null);
 
 	const table = $derived(data.table);
 	const locale = getLocale();
@@ -26,10 +35,24 @@
 		minimumFractionDigits: 1
 	});
 	const votes = (count: number) => (count === 1 ? m.rating_count_one() : m.rating_count({ count }));
+	// svelte-ignore state_referenced_locally
+	const rating = superForm(data.ratingForm, {
+		validators: zod4Client(ratingSchema),
+		resetForm: false,
+		onResult({ result }) {
+			if (result.type === 'redirect') toast.success(m.toast_rating_saved());
+		},
+		onUpdated({ form: updated }) {
+			if (updated.valid || !updated.message) return;
+			toast.error(registrationError(updated.message.code, updated.message.retryAfter));
+			failed = updated.message;
+		}
+	});
+	const { form: ratingValues, errors: ratingErrors, enhance: ratingEnhance } = rating;
 	const scoreFields = $derived([
-		{ name: 'tableScore', label: m.rating_the_table(), current: data.myRating?.tableScore },
-		{ name: 'gmScore', label: m.rating_the_gm(), current: data.myRating?.gmScore }
-	]);
+		{ name: 'tableScore', label: m.rating_the_table() },
+		{ name: 'gmScore', label: m.rating_the_gm() }
+	] as const);
 	const seats = $derived(
 		table.seatsLeft === 0
 			? m.table_full()
@@ -37,24 +60,6 @@
 				? m.table_seat_left()
 				: m.table_seats_left({ count: table.seatsLeft })
 	);
-
-	$effect(() => {
-		if (form?.error) {
-			const message =
-				form.error === 'table_full'
-					? m.table_error_full()
-					: form.error === 'already_registered'
-						? m.table_error_already()
-						: form.error === 'forbidden'
-							? m.table_error_forbidden()
-							: form.error === 'too_early'
-								? m.table_error_too_early()
-								: form.error === 'invalid'
-									? m.table_error_invalid()
-									: m.table_error_other();
-			toast.error(message);
-		}
-	});
 </script>
 
 <svelte:head>
@@ -63,13 +68,13 @@
 </svelte:head>
 
 <article class="py-10 md:py-16">
-	<a href={localizedHref('/tables', locale)} class="text-link">{m.table_back()}</a>
+	<a href={localizedHref('/tables', locale)} class="anchor">{m.table_back()}</a>
 
 	<p class="mt-8 flex flex-wrap items-center gap-2 text-sm">
-		<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-on-petrol">
+		<span class="chip preset-filled-primary-500">
 			{table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
 		</span>
-		<span class="font-semibold text-lamp">{seats}</span>
+		<span class="font-semibold text-warning-700-300">{seats}</span>
 	</p>
 
 	<h1 class="mt-3 text-4xl font-semibold tracking-tight md:text-6xl">{table.title}</h1>
@@ -79,7 +84,7 @@
 			src={table.imageUrl}
 			alt=""
 			referrerpolicy="no-referrer"
-			class="mt-6 max-h-80 w-full max-w-2xl rounded object-cover"
+			class="mt-6 max-h-80 w-full max-w-2xl rounded-container object-cover"
 		/>
 	{/if}
 
@@ -103,10 +108,7 @@
 	{/if}
 
 	{#if data.canEdit}
-		<a
-			href={localizedHref(`/tables/${table.slug}/edit`, locale)}
-			class="mt-4 inline-block text-link"
-		>
+		<a href={localizedHref(`/tables/${table.slug}/edit`, locale)} class="mt-4 inline-block anchor">
 			{m.table_edit()}
 		</a>
 	{/if}
@@ -116,7 +118,7 @@
 		<dd>
 			<a
 				href="{localizedHref('/tables', locale)}?system={encodeURIComponent(table.system.slug)}"
-				class="text-link"
+				class="anchor"
 			>
 				{table.system.name}
 			</a>
@@ -155,21 +157,9 @@
 		{table.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}
 	</p>
 
-	{#if form?.error}
-		<p role="alert" class="mt-4 max-w-[44ch] font-semibold text-danger">
-			{form.error === 'rate_limited'
-				? m.error_rate_limited({ wait: formatWait(form.retryAfter ?? 60) })
-				: form.error === 'table_full'
-					? m.table_error_full()
-					: form.error === 'already_registered'
-						? m.table_error_already()
-						: form.error === 'forbidden'
-							? m.table_error_forbidden()
-							: form.error === 'too_early'
-								? m.table_error_too_early()
-								: form.error === 'invalid'
-									? m.table_error_invalid()
-									: m.table_error_other()}
+	{#if problem}
+		<p role="alert" class="mt-4 max-w-[44ch] font-semibold text-error-700-300">
+			{registrationError(problem.code, problem.retryAfter)}
 		</p>
 	{/if}
 
@@ -182,45 +172,37 @@
 				href="{resolve('/login')}?next={encodeURIComponent(
 					localizedHref(`/tables/${table.slug}`, locale)
 				)}"
-				class="inline-block rounded bg-petrol px-5 py-3 font-semibold text-on-petrol"
+				class="btn preset-filled-primary-500"
 			>
 				{m.table_sign_in_to_join()}
 			</a>
 		{:else if data.myStatus === 'confirmed'}
 			<p class="font-semibold">{m.table_you_are_in()}</p>
-			<form method="POST" action="?/leave" class="mt-3">
-				<button type="submit" class="rounded border border-petrol px-5 py-3 font-semibold">
+			<ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
+				<button type="submit" class="btn preset-outlined-primary-500">
 					{m.table_leave()}
 				</button>
-			</form>
+			</ActionForm>
 		{:else if data.myStatus === 'pending'}
 			<p class="font-semibold">{m.table_request_pending()}</p>
-			<form method="POST" action="?/leave" class="mt-3">
-				<button type="submit" class="rounded border border-petrol px-5 py-3 font-semibold">
+			<ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
+				<button type="submit" class="btn preset-outlined-primary-500">
 					{m.table_cancel_request()}
 				</button>
-			</form>
+			</ActionForm>
 		{:else if data.canJoin}
-			<form
-				method="POST"
+			<ActionForm
 				action="?/join"
-				use:enhance={() => {
-					return async ({ result, update }) => {
-						await update();
-						if (result.type === 'redirect' || result.type === 'success') {
-							if (table.joinMode === 'approval') {
-								toast.pending(m.toast_pending());
-							} else {
-								toast.success(m.toast_confirmed());
-							}
-						}
-					};
-				}}
+				onfail={(message) => (failed = message)}
+				onsuccess={() =>
+					table.joinMode === 'approval'
+						? toast.pending(m.toast_pending())
+						: toast.success(m.toast_confirmed())}
 			>
-				<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-on-petrol">
+				<button type="submit" class="btn preset-filled-primary-500">
 					{table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
 				</button>
-			</form>
+			</ActionForm>
 		{/if}
 	</div>
 
@@ -231,47 +213,45 @@
 			<p class="mt-2 max-w-[55ch]">{m.rating_lede()}</p>
 			{#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
 
-			<form
-				method="POST"
-				action="?/rate"
-				use:enhance={() => {
-					return async ({ result, update }) => {
-						await update();
-						if (result.type === 'redirect' || result.type === 'success') {
-							toast.success(m.toast_rating_saved());
-						}
-					};
-				}}
-				class="mt-4 grid gap-6"
-			>
-				{#each scoreFields as { name, label, current } (name)}
+			<form method="POST" action="?/rate" use:ratingEnhance class="mt-4 grid gap-6">
+				{#each scoreFields as { name, label } (name)}
 					<fieldset>
 						<legend class="font-semibold">{label}</legend>
 						<div class="mt-2 flex flex-wrap gap-3">
 							{#each [1, 2, 3, 4, 5] as score (score)}
 								<label class="flex items-center gap-1">
-									<input type="radio" {name} value={score} required checked={current === score} />
+									<input
+										type="radio"
+										{name}
+										value={score}
+										required
+										bind:group={$ratingValues[name]}
+									/>
 									<span aria-label={m.rating_score_label({ score })}>{score}</span>
 								</label>
 							{/each}
 						</div>
+						{#if $ratingErrors[name]}
+							<p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
+								{m.table_error_invalid()}
+							</p>
+						{/if}
 					</fieldset>
 				{/each}
 
 				<div>
-					<label for="comment" class="block font-semibold">{m.rating_comment()}</label>
+					<label for="comment" class="label-text block font-semibold">{m.rating_comment()}</label>
 					<textarea
 						id="comment"
 						name="comment"
 						rows="3"
 						maxlength="1000"
-						class="mt-1 block w-full rounded border border-ink/60 bg-surface px-3 py-2"
-						>{data.myRating?.comment ?? ''}</textarea
-					>
+						bind:value={$ratingValues.comment}
+						class="mt-1 textarea"></textarea>
 				</div>
 
 				<div>
-					<button type="submit" class="rounded bg-petrol px-5 py-3 font-semibold text-on-petrol">
+					<button type="submit" class="btn preset-filled-primary-500">
 						{data.myRating ? m.rating_update() : m.rating_submit()}
 					</button>
 				</div>
@@ -292,13 +272,18 @@
 				<ul class="mt-3 grid gap-2">
 					{#each players as player (player.playerId)}
 						<li
-							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-surface p-3"
+							class="flex items-center justify-between gap-4 card border border-surface-200-800 bg-surface-100-900 p-3"
 						>
-							<span>{player.username}</span>
-							<form method="POST" action="?/remove">
-								<input type="hidden" name="playerId" value={player.playerId} />
-								<button type="submit" class="font-semibold text-danger">{m.table_remove()}</button>
-							</form>
+							<span>{player.displayName}</span>
+							<ActionForm
+								action="?/remove"
+								playerId={player.playerId}
+								onfail={(message) => (failed = message)}
+							>
+								<button type="submit" class="btn preset-tonal-error btn-sm"
+									>{m.table_remove()}</button
+								>
+							</ActionForm>
 						</li>
 					{/each}
 				</ul>
@@ -309,20 +294,28 @@
 				<ul class="mt-3 grid gap-2">
 					{#each requests as request (request.playerId)}
 						<li
-							class="flex items-center justify-between gap-4 rounded border border-petrol/15 bg-surface p-3"
+							class="flex items-center justify-between gap-4 card border border-surface-200-800 bg-surface-100-900 p-3"
 						>
-							<span>{request.username}</span>
+							<span>{request.displayName}</span>
 							<span class="flex gap-4">
-								<form method="POST" action="?/approve">
-									<input type="hidden" name="playerId" value={request.playerId} />
-									<button type="submit" class="font-semibold">{m.table_approve()}</button>
-								</form>
-								<form method="POST" action="?/decline">
-									<input type="hidden" name="playerId" value={request.playerId} />
-									<button type="submit" class="font-semibold text-danger"
+								<ActionForm
+									action="?/approve"
+									playerId={request.playerId}
+									onfail={(message) => (failed = message)}
+								>
+									<button type="submit" class="btn preset-tonal-primary btn-sm"
+										>{m.table_approve()}</button
+									>
+								</ActionForm>
+								<ActionForm
+									action="?/decline"
+									playerId={request.playerId}
+									onfail={(message) => (failed = message)}
+								>
+									<button type="submit" class="btn preset-tonal-error btn-sm"
 										>{m.table_decline()}</button
 									>
-								</form>
+								</ActionForm>
 							</span>
 						</li>
 					{/each}
