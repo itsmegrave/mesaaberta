@@ -124,7 +124,7 @@ describe('handleTableForm', () => {
 		const refused = await run(request({ title: 'x', welcomeMessage: 'Fale comigo.' }), setup());
 		expect(refused).toMatchObject({
 			status: 400,
-			data: { values: { welcomeMessage: 'Fale comigo.' } }
+			data: { form: { data: { welcomeMessage: 'Fale comigo.' } } }
 		});
 	});
 
@@ -136,7 +136,12 @@ describe('handleTableForm', () => {
 
 		expect(result).toMatchObject({
 			status: 400,
-			data: { errors: { welcomeMessage: 'too_big' }, values: { welcomeMessage: long } }
+			data: {
+				form: {
+					errors: { welcomeMessage: expect.any(Array) },
+					data: { welcomeMessage: long }
+				}
+			}
 		});
 		expect(s.save).not.toHaveBeenCalled();
 	});

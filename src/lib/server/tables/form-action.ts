@@ -30,6 +30,9 @@ export async function handleTableForm(
 	if (!(await locals.getUser())) {
 		redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
 	}
+	if (!(await locals.getProfile())?.username) {
+		redirect(303, `/onboarding?next=${encodeURIComponent(url.pathname + url.search)}`);
+	}
 
 	const data = await request.formData();
 	const form = await superValidate(data, zod4(tableFormSchema));
