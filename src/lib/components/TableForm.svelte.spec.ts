@@ -97,7 +97,9 @@ describe('TableForm', () => {
 		render(TableFormHarness, { ...props, message: { code: 'not_an_image', field: 'image' } });
 
 		await expect.element(page.getByText('Use uma imagem PNG, JPEG ou WebP.')).toBeVisible();
-		await expect.element(page.locator('input#image')).toHaveAttribute('aria-invalid', 'true');
+		await expect
+			.element(page.getByRole('button', { name: 'Imagem' }))
+			.toHaveAttribute('aria-invalid', 'true');
 	});
 
 	it('says a refused permission at the top of the form', async () => {
