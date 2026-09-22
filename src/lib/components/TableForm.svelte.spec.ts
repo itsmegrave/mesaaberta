@@ -97,7 +97,7 @@ describe('TableForm', () => {
 		render(TableFormHarness, { ...props, message: { code: 'not_an_image', field: 'image' } });
 
 		await expect.element(page.getByText('Use uma imagem PNG, JPEG ou WebP.')).toBeVisible();
-		await expect.element(page.getByLabelText('Imagem')).toHaveAttribute('aria-invalid', 'true');
+		await expect.element(page.locator('input#image')).toHaveAttribute('aria-invalid', 'true');
 	});
 
 	it('says a refused permission at the top of the form', async () => {
@@ -109,6 +109,8 @@ describe('TableForm', () => {
 	it('says how long to wait when the person did this too often', async () => {
 		render(TableFormHarness, { ...props, message: { code: 'rate_limited', retryAfter: 900 } });
 
-		await expect.element(page.getByRole('alert')).toHaveTextContent('Tente de novo em');
+		await expect
+			.element(page.getByRole('alert'))
+			.toHaveTextContent('Você fez isso muitas vezes em pouco tempo. Tente de novo em 15 min.');
 	});
 });
