@@ -15,9 +15,9 @@ export async function signIn(
 	await expect(accountMenu(page, user.username)).toBeVisible();
 }
 
-/** The account menu in the header, which shows the signed-in person's username. */
-export const accountMenu = (page: Page, name: string) =>
-	page.getByRole('banner').getByText(name, { exact: true });
+/** The account-menu trigger in the header. The profile can show a display name instead of a username. */
+export const accountMenu = (page: Page, _name: string) =>
+	page.getByRole('banner').getByRole('button', { name: /menu da conta/i });
 
 /** Signs out through the account menu. */
 export async function signOut(page: Page, name: string) {

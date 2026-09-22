@@ -30,7 +30,9 @@ export default defineConfig({
 					// it, e2e/security.e2e.ts reports the blocked style: replace the hash with the new one.
 					'style-src-attr': [
 						'unsafe-hashes',
-						'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo='
+						// SvelteKit emits one form while rendering and another while hydrating.
+						'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo=',
+						'sha256-/T6DJcdasOV4WsFcyeBnzYHkgGst73FPCnMT1hu8phU='
 					],
 					// Profile pictures come from the sign-in providers' CDNs.
 					'img-src': [

@@ -40,8 +40,8 @@ test('offers paths to browse or open a table before showing open tables', async 
 test('says the project is open source and links to its repository', async ({ page }) => {
 	await page.goto('/');
 
-	await expect(page.getByRole('main').getByText(/código aberto/i)).toBeVisible();
-	await expect(page.getByRole('link', { name: /código/i })).toHaveAttribute(
+	await expect(page.getByRole('contentinfo').getByText(/open source/i)).toBeVisible();
+	await expect(page.getByRole('contentinfo').getByRole('link', { name: 'GitHub' })).toHaveAttribute(
 		'href',
 		'https://github.com/itsmegrave/mesaaberta'
 	);
@@ -51,7 +51,7 @@ test('sections are reachable through English anchors', async ({ page }) => {
 	for (const anchor of ['how-it-works', 'for-game-masters']) {
 		await page.goto(`/#${anchor}`);
 
-		await expect(page.locator(`section[aria-labelledby="${anchor}"] > #${anchor}`)).toBeVisible();
+		await expect(page.locator(`section[aria-labelledby="${anchor}"] #${anchor}`)).toBeVisible();
 	}
 });
 

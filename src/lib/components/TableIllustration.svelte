@@ -36,7 +36,7 @@
 		class="fill-none stroke-warning-500/20"
 		stroke-width="2"
 	/>
-	<circle cx={centre} cy={centre} r="104" class="fill-primary-500" />
+	<circle cx={centre} cy={centre} r="104" class="table-top fill-primary-500" />
 	<g transform="rotate(-12 {centre} {centre})">
 		<rect x="152" y="170" width="96" height="60" rx="4" class="fill-primary-contrast-500/20" />
 		<path d="M164 190h44M164 202h60M164 214h30" class="stroke-primary-500/40" stroke-width="3" />
@@ -103,5 +103,10 @@
 			opacity: 1;
 			transform: scale(1);
 		}
+	}
+
+	/* The tabletop keeps its blue identity while lifting in dark mode. */
+	:global([data-mode='dark']) .table-top {
+		fill: var(--color-primary-400);
 	}
 </style>

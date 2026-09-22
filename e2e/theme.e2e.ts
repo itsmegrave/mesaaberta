@@ -14,8 +14,28 @@ const open = async (browser: Browser, scheme: Scheme, chosen?: Scheme | 'system'
 const colours = (page: import('@playwright/test').Page) =>
 	page.evaluate(() => {
 		const style = getComputedStyle(document.documentElement);
-		return { background: style.backgroundColor, text: style.color, scheme: style.colorScheme };
+		const rgb = (colour: string) => {
+			const canvas = document.createElement('canvas');
+			canvas.width = canvas.height = 1;
+			const context = canvas.getContext('2d')!;
+			context.fillStyle = colour;
+			context.fillRect(0, 0, 1, 1);
+			const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+			return `rgb(${r}, ${g}, ${b})`;
+		};
+		return { background: rgb(style.backgroundColor), text: rgb(style.color), scheme: style.colorScheme };
 	});
+
+const renderedColour = (page: import('@playwright/test').Page, selector: string, property: 'fill' | 'stroke') =>
+	page.locator(selector).first().evaluate((el, property) => {
+		const canvas = document.createElement('canvas');
+		canvas.width = canvas.height = 1;
+		const context = canvas.getContext('2d')!;
+		context.fillStyle = getComputedStyle(el)[property];
+		context.fillRect(0, 0, 1, 1);
+		const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+		return `rgb(${r}, ${g}, ${b})`;
+	}, property);
 
 const rgb = (value: string) =>
 	value
@@ -152,10 +172,7 @@ test.describe('the hero table in the dark mode', () => {
 	test('the empty seat still stands out from the page', async ({ browser }) => {
 		const { page, context } = await open(browser, 'dark');
 
-		const seat = await page
-			.locator('svg circle[stroke-dasharray]')
-			.first()
-			.evaluate((el) => getComputedStyle(el).stroke);
+		const seat = await renderedColour(page, 'svg circle[stroke-dasharray]', 'stroke');
 		const background = (await colours(page)).background;
 
 		expect(contrast(seat, background)).toBeGreaterThanOrEqual(3);
@@ -166,10 +183,7 @@ test.describe('the hero table in the dark mode', () => {
 		const light = await open(browser, 'light');
 		const dark = await open(browser, 'dark');
 		const fill = (page: import('@playwright/test').Page) =>
-			page
-				.locator('svg circle.fill-primary-500')
-				.first()
-				.evaluate((el) => getComputedStyle(el).fill);
+			renderedColour(page, 'svg[role="img"] circle.fill-primary-500', 'fill');
 
 		expect(await fill(dark.page)).not.toBe(await fill(light.page));
 		await light.context.close();

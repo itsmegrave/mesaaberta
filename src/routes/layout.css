@@ -15,6 +15,10 @@
 	color-scheme: dark;
 }
 
+html {
+	color: light-dark(var(--color-surface-950), var(--color-surface-50));
+}
+
 /* Skeleton applies the page background to <html>; matching it on <body> lets browser chrome use the rendered canvas. */
 body {
 	background-color: light-dark(var(--color-root-bg-light), var(--color-root-bg-dark));
