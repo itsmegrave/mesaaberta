@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { profileSchema, PROFILE_LIMITS, type ProfileInput } from '$lib/profile/schema';
 	import { superForm, type SuperValidated } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import FormField from './FormField.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import { profileSchema, PROFILE_LIMITS, type ProfileInput } from '$lib/profile/schema';
 	import { MAX_SOCIAL_LINKS, NETWORKS, type Network } from '$lib/profile/social-links';
 	import { MAX_USERNAME_LENGTH, normalizeUsername, usernameProblem } from '$lib/profile/username';
 

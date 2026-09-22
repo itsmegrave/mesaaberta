@@ -104,6 +104,21 @@
 						class="textarea"
 						aria-invalid={invalid('extraInfo')}></textarea>
 				</FormField>
+				<FormField
+					id="welcomeMessage"
+					label={m.form_welcome_message()}
+					hint={m.form_welcome_message_hint({ token: '{nome da mesa}' })}
+					error={err('welcomeMessage')}
+				>
+					<textarea
+						id="welcomeMessage"
+						name="welcomeMessage"
+						rows="4"
+						maxlength="1000"
+						bind:value={$form.welcomeMessage}
+						class="textarea"
+						aria-invalid={invalid('welcomeMessage')}></textarea>
+				</FormField>
 				<fieldset class="grid gap-2">
 					<legend class="font-semibold">{m.form_kind()}</legend>
 					{#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()]] as [value, label] (value)}<label

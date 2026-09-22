@@ -16,13 +16,18 @@ export async function signIn(
 }
 
 /** The account-menu trigger in the header. The profile can show a display name instead of a username. */
-export const accountMenu = (page: Page, _name: string) =>
-	page.getByRole('banner').getByRole('button', { name: /menu da conta/i });
+export const accountMenu = (page: Page, name: string) => {
+	void name;
+	return page.getByRole('banner').getByRole('button', { name: /menu da conta/i });
+};
 
 /** Signs out through the account menu. */
 export async function signOut(page: Page, name: string) {
 	await accountMenu(page, name).click();
-	await page.getByRole('button', { name: 'Sair' }).click();
+	await page
+		.getByRole('navigation', { name: 'Menu da conta' })
+		.getByRole('button', { name: 'Sair' })
+		.click();
 
 	await expect(accountMenu(page, name)).toHaveCount(0);
 }
@@ -54,13 +59,13 @@ export async function createTable(page: Page, table: NewTable) {
 	await page.getByLabel('Título').fill(table.title);
 	if (table.description) await page.getByLabel('Descrição').fill(table.description);
 	if (table.kind === 'campaign') await page.getByLabel('Campanha (várias sessões)').check();
-	await page.getByLabel('Vagas').fill(String(table.capacity ?? 5));
+	await page.getByLabel('Vagas', { exact: true }).fill(String(table.capacity ?? 5));
 	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 	if (table.joinMode === 'approval') await page.getByLabel(/Com a sua aprovação/).check();
-	if (table.image) await page.getByLabel('Imagem').setInputFiles(table.image);
+	if (table.image) await page.locator('input#image').setInputFiles(table.image);
 	await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-	await expect(page).toHaveURL(/\/tables\/[^/]+$/);
+	await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
 	return new URL(page.url()).pathname.split('/').at(-1)!;
 }
 

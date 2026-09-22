@@ -222,7 +222,7 @@ test.describe('images', () => {
 		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
 		await page.getByLabel('Título').fill(title);
 		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
-		await page.getByLabel('Imagem').setInputFiles({
+		await page.locator('input#image').setInputFiles({
 			name: 'capa.png',
 			mimeType: 'image/png',
 			buffer: Buffer.from('<script>alert(1)</script>')

@@ -12,6 +12,11 @@
 		<meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
 
+		<!-- Zod must see this before any lazily loaded form code: probing Function() violates our CSP. -->
+		<script nonce="%sveltekit.nonce%">
+			globalThis.__zod_globalConfig = { ...(globalThis.__zod_globalConfig ?? {}), jitless: true };
+		</script>
+
 		<!-- Sets light or dark before the first paint, so a dark-mode reader never sees a light flash: the
 		     remembered choice, else the system preference. Without JavaScript the page stays light. -->
 		<script nonce="%sveltekit.nonce%">

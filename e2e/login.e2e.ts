@@ -39,13 +39,10 @@ test.describe('the login page', () => {
 		await expect(page.getByRole('button', { name: 'Enviar link' })).toBeVisible();
 	});
 
-	test('the released local preview offers a way in from the header', async ({ page }) => {
+	test('the header does not offer a way in while the platform is unreleased', async ({ page }) => {
 		await page.goto('/');
 
-		await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar' })).toHaveAttribute(
-			'href',
-			'/login'
-		);
+		await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar' })).toHaveCount(0);
 	});
 
 	for (const [provider, host, clientId] of [

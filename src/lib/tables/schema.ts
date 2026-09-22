@@ -3,6 +3,8 @@ import '$lib/forms/zod-codes';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
+// Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
+z.config({ jitless: true });
 
 export const TABLE_LIMITS = {
 	title: { min: 3, max: 80 },
