@@ -55,6 +55,7 @@ describe('parseTableForm', () => {
 				durationMinutes: 240,
 				recurrence: null,
 				untilLocalDate: null,
+				welcomeMessage: null,
 				joinMode: 'auto'
 			}
 		});
