@@ -23,19 +23,30 @@ const colours = (page: import('@playwright/test').Page) =>
 			const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
 			return `rgb(${r}, ${g}, ${b})`;
 		};
-		return { background: rgb(style.backgroundColor), text: rgb(style.color), scheme: style.colorScheme };
+		return {
+			background: rgb(style.backgroundColor),
+			text: rgb(style.color),
+			scheme: style.colorScheme
+		};
 	});
 
-const renderedColour = (page: import('@playwright/test').Page, selector: string, property: 'fill' | 'stroke') =>
-	page.locator(selector).first().evaluate((el, property) => {
-		const canvas = document.createElement('canvas');
-		canvas.width = canvas.height = 1;
-		const context = canvas.getContext('2d')!;
-		context.fillStyle = getComputedStyle(el)[property];
-		context.fillRect(0, 0, 1, 1);
-		const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
-		return `rgb(${r}, ${g}, ${b})`;
-	}, property);
+const renderedColour = (
+	page: import('@playwright/test').Page,
+	selector: string,
+	property: 'fill' | 'stroke'
+) =>
+	page
+		.locator(selector)
+		.first()
+		.evaluate((el, property) => {
+			const canvas = document.createElement('canvas');
+			canvas.width = canvas.height = 1;
+			const context = canvas.getContext('2d')!;
+			context.fillStyle = getComputedStyle(el)[property];
+			context.fillRect(0, 0, 1, 1);
+			const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+			return `rgb(${r}, ${g}, ${b})`;
+		}, property);
 
 const rgb = (value: string) =>
 	value
