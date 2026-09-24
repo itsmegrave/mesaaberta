@@ -16,8 +16,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Lint, typecheck, unit tests
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:unit
+
+  integration:
+    name: Integration tests
     runs-on: ubuntu-latest
     # A real Postgres for the integration tests: the capacity rules must hold under real concurrency.
     services:
@@ -42,19 +81,32 @@ jobs:
           node-version-file: .tool-versions
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run lint
-      - run: pnpm run check
-      - run: pnpm run test:unit
       - name: Integration tests against Postgres
         run: |
           echo 'DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta' > .dev.vars
           pnpm run db:migrate
           pnpm run test:integration
 
-  e2e:
-    name: End-to-end tests
+  build:
+    name: Production build
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  e2e:
+    name: End-to-end tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/2, 2/2]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -67,13 +119,13 @@ jobs:
       # The same Supabase as production (Postgres, Auth, Storage) in Docker, with a mail inbox: the
       # tests sign up, confirm by email and reset passwords for real. It also runs the migrations.
       - run: pnpm run e2e:up
-      - run: pnpm run test:e2e
+      - run: pnpm run test:e2e -- --shard=${{ matrix.shard }}
       - run: pnpm exec supabase stop
         if: always()
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report
           retention-days: 7
 
@@ -90,3 +142,35 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Low-severity advisories in SvelteKit's own dependencies are upstream's to fix.
       - run: pnpm audit --audit-level high
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/dependency-review-action@40c09b7dc99638e5ddb0bfd91c1673effc064d8a # v4.8.1
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@c23de5a82f64bb08c6d9f28844551440ca298e76 # v4.38.1
+        with:
+          languages: javascript-typescript
+          build-mode: none
+      - uses: github/codeql-action/analyze@c23de5a82f64bb08c6d9f28844551440ca298e76 # v4.38.1
