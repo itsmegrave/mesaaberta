@@ -1,7 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { asset, resolve } from '$app/paths';
-	import { navigating } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import AccountMenu from '$lib/components/AccountMenu.svelte';
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
 	import TableLogo from '$lib/components/TableLogo.svelte';
@@ -15,6 +15,13 @@
 	let { children, data } = $props();
 
 	const locale = getLocale();
+
+	// The header marks the section you are in, as the bottom tab bar does on phones.
+	const pathname = $derived(page.url.pathname);
+	const inTables = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
+	const inMyTables = $derived(pathname.startsWith('/account'));
+	const navLink =
+		'btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-[9px]';
 </script>
 
 <svelte:head>
@@ -45,7 +52,8 @@
 		{#if data.released}
 			<a
 				href={localizedHref('/tables', locale)}
-				class="btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex"
+				aria-current={inTables ? 'page' : undefined}
+				class={navLink}
 			>
 				{m.nav_tables()}
 			</a>
@@ -54,7 +62,8 @@
 		{#if data.account}
 			<a
 				href={localizedHref('/account/tables', locale)}
-				class="btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex"
+				aria-current={inMyTables ? 'page' : undefined}
+				class={navLink}
 			>
 				{m.nav_my_tables()}
 			</a>
