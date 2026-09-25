@@ -17,7 +17,7 @@
 	<p class="mt-4 max-w-[44ch] text-lg">
 		{notFound ? m.error_not_found_text() : m.error_generic_text()}
 	</p>
-	<a href={localizedHref('/', getLocale())} class="mt-6 inline-block text-link">
+	<a href={localizedHref('/', getLocale())} class="mt-6 inline-block anchor">
 		{m.error_back_home()}
 	</a>
 </section>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatSession, formatWait } from './format';
+import { formatCardDate, formatDuration, formatSession, formatWait } from './format';
 
 describe('formatSession', () => {
 	const start = new Date('2026-10-10T22:00:00Z');
@@ -53,5 +53,18 @@ describe('formatWait', () => {
 		[3601, '1 h 1 min']
 	])('%i seconds is %s: rounded up, never promising a moment too early', (seconds, text) => {
 		expect(formatWait(seconds)).toBe(text);
+	});
+});
+
+describe('formatCardDate', () => {
+	const start = new Date('2026-10-10T22:00:00Z');
+
+	it('returns dayMonth and weekdayTime in Portuguese', () => {
+		const res = formatCardDate(start, 'America/Sao_Paulo', 'pt-BR');
+
+		expect(res.dayMonth).toMatch(/10.*out/i);
+		expect(res.weekdayTime).toMatch(/sáb/i);
+		expect(res.weekdayTime).toMatch(/19:00/);
+		expect(res.weekdayTime).toMatch(/GMT-3/);
 	});
 });

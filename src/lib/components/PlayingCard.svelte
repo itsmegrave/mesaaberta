@@ -3,6 +3,7 @@
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import ActionForm from './ActionForm.svelte';
 
 	type Item = {
 		slug: string;
@@ -23,14 +24,12 @@
 	const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
 </script>
 
-<article class="rounded border border-petrol/15 bg-surface p-4">
+<article class="card border border-surface-200-800 bg-surface-100-900 p-4">
 	<p class="flex flex-wrap items-center gap-2 text-sm">
 		{#if item.status === 'pending'}
-			<span class="rounded-full bg-lamp px-2 py-0.5 font-semibold text-on-lamp"
-				>{m.dash_waiting()}</span
-			>
+			<span class="badge preset-filled-warning-500">{m.dash_waiting()}</span>
 		{:else}
-			<span class="rounded-full bg-petrol px-2 py-0.5 font-semibold text-on-petrol">
+			<span class="badge preset-filled-primary-500">
 				{m.dash_you_have_seat()}
 			</span>
 		{/if}
@@ -39,7 +38,7 @@
 	</p>
 
 	<h3 class="mt-2 text-xl font-semibold">
-		<a href={page} class="text-link">{item.title}</a>
+		<a href={page} class="anchor">{item.title}</a>
 	</h3>
 	<p class="mt-1 text-sm">{m.table_gm()}: {item.gmName}</p>
 
@@ -54,19 +53,18 @@
 		<p class="mt-3">
 			{#if item.rating}
 				{m.dash_your_rating({ table: item.rating.tableScore, gm: item.rating.gmScore })}
-				<a href="{page}#avaliar" class="text-link">{m.dash_change_rating()}</a>
+				<a href="{page}#avaliar" class="anchor">{m.dash_change_rating()}</a>
 			{:else}
 				{m.dash_rate_prompt()}
-				<a href="{page}#avaliar" class="text-link font-semibold">{m.dash_rate_action()}</a>
+				<a href="{page}#avaliar" class="anchor font-semibold">{m.dash_rate_action()}</a>
 			{/if}
 		</p>
 	{/if}
 
 	<!-- Leaving, or withdrawing a request, posts to the table's own action and comes back here. -->
-	<form method="POST" action="{page}?/leave" class="mt-4">
-		<input type="hidden" name="next" value={next} />
-		<button type="submit" class="rounded border border-petrol px-4 py-2 font-semibold">
+	<ActionForm action="{page}?/leave" {next} class="mt-4">
+		<button type="submit" class="btn preset-outlined-primary-500">
 			{item.status === 'pending' ? m.table_cancel_request() : m.table_leave()}
 		</button>
-	</form>
+	</ActionForm>
 </article>

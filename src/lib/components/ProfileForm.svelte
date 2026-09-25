@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { profileSchema, PROFILE_LIMITS, type ProfileInput } from '$lib/profile/schema';
 	import { superForm, type SuperValidated } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import FormField from './FormField.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import { profileSchema, PROFILE_LIMITS, type ProfileInput } from '$lib/profile/schema';
 	import { MAX_SOCIAL_LINKS, NETWORKS, type Network } from '$lib/profile/social-links';
 	import { MAX_USERNAME_LENGTH, normalizeUsername, usernameProblem } from '$lib/profile/username';
 
@@ -165,7 +165,7 @@
      own words, and stop superforms from validating (it skips a form the browser is asked to check). -->
 <form method="POST" {action} use:enhance class="grid max-w-xl gap-6">
 	{#if $allErrors.length > 0}
-		<p role="alert" class="font-semibold text-danger">{m.profile_error_form()}</p>
+		<p role="alert" class="text-danger font-semibold">{m.profile_error_form()}</p>
 	{/if}
 
 	<FormField
@@ -282,7 +282,7 @@
 		<p id="links-hint" class="text-sm">{m.profile_links_hint()}</p>
 
 		{#if listError()}
-			<p role="alert" class="text-sm font-semibold text-danger">{listError()}</p>
+			<p role="alert" class="text-danger text-sm font-semibold">{listError()}</p>
 		{/if}
 
 		{#if ids.length === 0}
@@ -293,7 +293,7 @@
 			{#each ids as id, index (id)}
 				{@const urlError = itemError('linkUrl', index)}
 				{@const networkError = itemError('linkNetwork', index)}
-				<li class="grid gap-2 rounded border border-ink/30 p-3">
+				<li class="border-ink/30 grid gap-2 rounded border p-3">
 					<div class="grid gap-2 sm:grid-cols-[10rem_1fr]">
 						<!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
 						<select
@@ -323,7 +323,7 @@
 						/>
 					</div>
 					{#if urlError || networkError}
-						<p id="link-error-{id}" role="alert" class="text-sm font-semibold text-danger">
+						<p id="link-error-{id}" role="alert" class="text-danger text-sm font-semibold">
 							{urlError ?? networkError}
 						</p>
 					{/if}
@@ -377,7 +377,7 @@
 		<button
 			type="submit"
 			disabled={$submitting}
-			class="w-full rounded bg-petrol px-5 py-3 font-semibold text-on-petrol disabled:opacity-60 sm:w-auto"
+			class="bg-petrol text-on-petrol w-full rounded px-5 py-3 font-semibold disabled:opacity-60 sm:w-auto"
 		>
 			{m.profile_submit()}
 		</button>

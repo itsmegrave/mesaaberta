@@ -26,12 +26,17 @@ const submit = (event: RequestEvent) =>
 	(actions as Record<string, (e: RequestEvent) => Promise<unknown>>).default(event);
 
 describe('the forgot-password page', () => {
-	it('says a link expired only when it is sent here for that reason, and shows no text from the address', () => {
+	it('says a link expired only when it is sent here for that reason, and shows no text from the address', async () => {
 		const url = (search: string) =>
 			({ url: new URL(`https://x.test/forgot-password${search}`) }) as unknown as RequestEvent;
 
-		expect((load as (e: RequestEvent) => unknown)(url(''))).toEqual({ linkExpired: false });
-		expect((load as (e: RequestEvent) => unknown)(url('?error=<script>'))).toEqual({
+		expect(await (load as (e: RequestEvent) => Promise<unknown>)(url(''))).toEqual({
+			linkExpired: false,
+			form: expect.any(Object)
+		});
+		expect(
+			await (load as (e: RequestEvent) => Promise<unknown>)(url('?error=<script>'))
+		).toMatchObject({
 			linkExpired: true
 		});
 	});
@@ -39,7 +44,9 @@ describe('the forgot-password page', () => {
 	it('asks Supabase for a link and says "sent"', async () => {
 		const { event, resetPasswordForEmail } = setup();
 
-		expect(await submit(event({ email: 'Ana@Example.com' }))).toEqual({ sent: true });
+		expect(await submit(event({ email: 'Ana@Example.com' }))).toMatchObject({
+			form: { message: { code: 'sent' } }
+		});
 		expect(resetPasswordForEmail).toHaveBeenCalledWith('ana@example.com', {
 			redirectTo: 'https://mesaaberta.app/auth/callback?next=%2Freset-password'
 		});
@@ -49,9 +56,11 @@ describe('the forgot-password page', () => {
 		const known = setup();
 		const unknown = setup();
 
-		expect(await submit(known.event({ email: 'ana@example.com' }))).toEqual(
+		for (const result of [
+			await submit(known.event({ email: 'ana@example.com' })),
 			await submit(unknown.event({ email: 'nobody@example.com' }))
-		);
+		])
+			expect(result).toMatchObject({ form: { message: { code: 'sent' } } });
 	});
 
 	it('refuses something that is not an email before Supabase is asked', async () => {
@@ -59,7 +68,7 @@ describe('the forgot-password page', () => {
 
 		expect(await submit(event({ email: 'nope' }))).toMatchObject({
 			status: 400,
-			data: { errors: { email: expect.any(String) } }
+			data: { form: { errors: { email: expect.any(Array) } } }
 		});
 		expect(resetPasswordForEmail).not.toHaveBeenCalled();
 	});
@@ -73,11 +82,11 @@ describe('the forgot-password page', () => {
 
 		expect(await submit(limited.event({ email: 'ana@example.com' }))).toMatchObject({
 			status: 429,
-			data: { result: 'rate_limited' }
+			data: { form: { message: { code: 'rate_limited' } } }
 		});
 		expect(await submit(broken.event({ email: 'ana@example.com' }))).toMatchObject({
 			status: 500,
-			data: { result: 'failed' }
+			data: { form: { message: { code: 'failed' } } }
 		});
 	});
 

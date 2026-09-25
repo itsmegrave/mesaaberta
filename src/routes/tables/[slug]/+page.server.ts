@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
 import { can, joinBlocker, rateBlocker } from '$lib/server/auth/policy';
-import { Invalid } from '$lib/server/errors';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
 import {
 	firstSessionEnded,
@@ -9,7 +10,8 @@ import {
 	submitRating,
 	tableRating
 } from '$lib/server/ratings/service';
-import { parseRatingForm } from '$lib/tables/rating';
+import { ratingSchema } from '$lib/tables/rating';
+import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from '$lib/server/registrations/form-action';
 import {
 	approveRegistration,
@@ -64,6 +66,13 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 			gmScore: mine.gmScore,
 			comment: mine.comment ?? ''
 		},
+		ratingForm: await superValidate(
+			mine
+				? { tableScore: mine.tableScore, gmScore: mine.gmScore, comment: mine.comment ?? '' }
+				: {},
+			zod4(ratingSchema),
+			{ errors: false }
+		),
 		table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
 		canEdit: can(profile, 'table:edit', { gmId }),
 		signedIn,
@@ -74,36 +83,34 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 	};
 };
 
-const playerIdOf = (form: FormData) => {
-	const playerId = String(form.get('playerId') ?? '');
-	if (!/^[0-9a-f-]{36}$/i.test(playerId)) throw new Invalid('playerId');
-
-	return playerId;
-};
-
 // Each action runs a registration operation as the signed-in player (see runRegistrationAction).
 export const actions: Actions = {
 	join: (event) =>
-		runRegistrationAction(event, (db, actor) => joinTable(db, actor, event.params.slug)),
+		runRegistrationAction(event, tableActionSchema, (db, actor) =>
+			joinTable(db, actor, event.params.slug)
+		),
 	leave: (event) =>
-		runRegistrationAction(event, (db, actor) => leaveTable(db, actor, event.params.slug)),
+		runRegistrationAction(event, tableActionSchema, (db, actor) =>
+			leaveTable(db, actor, event.params.slug)
+		),
 	approve: (event) =>
-		runRegistrationAction(event, (db, actor, form) =>
-			approveRegistration(db, actor, event.params.slug, playerIdOf(form))
+		runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
+			approveRegistration(db, actor, event.params.slug, playerId)
 		),
 	decline: (event) =>
-		runRegistrationAction(event, (db, actor, form) =>
-			declineRegistration(db, actor, event.params.slug, playerIdOf(form))
+		runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
+			declineRegistration(db, actor, event.params.slug, playerId)
 		),
 	rate: (event) =>
-		runRegistrationAction(event, (db, actor, form) => {
-			const parsed = parseRatingForm(form);
-			if (!parsed.ok) throw new Invalid(Object.keys(parsed.errors)[0]);
-
-			return submitRating(db, actor, event.params.slug, parsed.data);
-		}),
+		runRegistrationAction(event, ratingSchema, (db, actor, data) =>
+			submitRating(db, actor, event.params.slug, {
+				tableScore: data.tableScore,
+				gmScore: data.gmScore,
+				comment: data.comment || null
+			})
+		),
 	remove: (event) =>
-		runRegistrationAction(event, (db, actor, form) =>
-			removePlayer(db, actor, event.params.slug, playerIdOf(form))
+		runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
+			removePlayer(db, actor, event.params.slug, playerId)
 		)
 };

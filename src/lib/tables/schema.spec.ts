@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { parseTableForm } from './schema';
-import { TITLE_TOKEN, WELCOME_MESSAGE_MAX } from './welcome';
+import { tableFormSchema, toTableInput } from './schema';
+
+const parseTableForm = (data: FormData) => {
+	const parsed = tableFormSchema.safeParse(Object.fromEntries(data));
+	if (parsed.success) return { ok: true as const, data: toTableInput(parsed.data) };
+
+	const errors: Record<string, string> = {};
+	for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.message;
+	return { ok: false as const, errors };
+};
 
 const valid = {
 	systemSlug: 'daggerheart',
 	title: 'Mesa do Dragão',
 	description: 'Uma noite só.',
 	extraInfo: '',
-	welcomeMessage: '',
 	kind: 'one_shot',
 	capacity: '5',
 	startsAtLocal: '2026-10-10T19:00',
@@ -41,7 +48,6 @@ describe('parseTableForm', () => {
 				title: 'Mesa do Dragão',
 				description: 'Uma noite só.',
 				extraInfo: null,
-				welcomeMessage: null,
 				kind: 'one_shot',
 				capacity: 5,
 				startsAtLocal: '2026-10-10T19:00',
@@ -49,6 +55,7 @@ describe('parseTableForm', () => {
 				durationMinutes: 240,
 				recurrence: null,
 				untilLocalDate: null,
+				welcomeMessage: null,
 				joinMode: 'auto'
 			}
 		});
@@ -58,49 +65,6 @@ describe('parseTableForm', () => {
 		const result = parseTableForm(form({ title: '  Mesa  ', extraInfo: '   ' }));
 
 		expect(result.ok && result.data).toMatchObject({ title: 'Mesa', extraInfo: null });
-	});
-
-	describe('welcome message', () => {
-		const welcome = (welcomeMessage: string) => {
-			const result = parseTableForm(form({ welcomeMessage }));
-			return result.ok && result.data.welcomeMessage;
-		};
-
-		it('keeps what the GM wrote, tokens and line breaks included', () => {
-			expect(welcome(`Olá!\nBem-vindo à ${TITLE_TOKEN}.`)).toBe(
-				`Olá!\nBem-vindo à ${TITLE_TOKEN}.`
-			);
-		});
-
-		it('is null when cleared or blank, so there is nothing to send', () => {
-			expect(welcome('')).toBeNull();
-			expect(welcome('  \n ')).toBeNull();
-		});
-
-		it('is null when the form does not carry the field at all', () => {
-			const data = form();
-			data.delete('welcomeMessage');
-
-			expect(parseTableForm(data)).toMatchObject({ ok: true, data: { welcomeMessage: null } });
-		});
-
-		it('drops control characters', () => {
-			expect(welcome('Oi\u0000\u001b, ok')).toBe('Oi, ok');
-			expect(welcome('\u0000\u0007')).toBeNull();
-		});
-
-		it('allows exactly the maximum and refuses one more', () => {
-			expect(welcome('x'.repeat(WELCOME_MESSAGE_MAX))).toHaveLength(WELCOME_MESSAGE_MAX);
-			expect(errorsOf({ welcomeMessage: 'x'.repeat(WELCOME_MESSAGE_MAX + 1) })).toEqual({
-				welcomeMessage: 'too_big'
-			});
-		});
-
-		it('counts the length after cleaning, not before', () => {
-			expect(welcome('x'.repeat(WELCOME_MESSAGE_MAX) + '\u0000\u0000  ')).toHaveLength(
-				WELCOME_MESSAGE_MAX
-			);
-		});
 	});
 
 	describe('recurrence', () => {

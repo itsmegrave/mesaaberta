@@ -34,7 +34,10 @@ test.describe('table list', () => {
 
 	test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
 		await page.goto('/tables');
-		const titles = await page.getByRole('heading', { level: 2 }).allTextContents();
+		const cards = page.getByRole('article');
+		const titles = await cards.evaluateAll((elements) =>
+			elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim())
+		);
 
 		await expect(page.getByRole('article').filter({ hasText: 'Crônicas de Arton' })).toContainText(
 			'Campanha'
