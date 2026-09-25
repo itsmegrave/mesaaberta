@@ -29,7 +29,7 @@ export function formatWait(seconds: number): string {
 	return formatDuration(Math.max(1, Math.ceil(seconds / 60)));
 }
 
-/** Date formatting for table cards: day + short month, and weekday + time + offset. */
+/** Date formatting for table cards: day + short month ("26 set"), and weekday + time + offset. */
 export function formatCardDate(
 	date: Date,
 	timeZone: string,
@@ -43,7 +43,7 @@ export function formatCardDate(
 
 	const weekday = new Intl.DateTimeFormat(locale, {
 		timeZone,
-		weekday: 'short'
+		weekday: 'long'
 	}).format(date);
 
 	const time = new Intl.DateTimeFormat(locale, {
@@ -55,7 +55,9 @@ export function formatCardDate(
 	}).format(date);
 
 	return {
-		dayMonth: dayMonth.replace('.', '').trim(),
-		weekdayTime: `${weekday} · ${time}`
+		// pt-BR writes "26 de set."; the card shows "26 set".
+		dayMonth: dayMonth.replace(' de ', ' ').replace('.', '').trim(),
+		// Monday to Friday end in "-feira" ("sexta-feira"); the card shows just "sexta".
+		weekdayTime: `${weekday.replace(/-feira$/, '')} · ${time}`
 	};
 }

@@ -24,7 +24,64 @@ body {
 	background-color: light-dark(var(--color-root-bg-light), var(--color-root-bg-dark));
 }
 
+/* Full-bleed bands paint past the content column; clipping keeps them from scrolling sideways. */
+body {
+	overflow-x: clip;
+}
+
 @theme {
 	/* Wordmark only */
 	--font-brand: 'Cinzel Variable', Georgia, serif;
+}
+
+/* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
+@utility bg-panel {
+	background-color: light-dark(var(--color-surface-50), var(--color-surface-900));
+}
+
+@utility text-muted {
+	color: light-dark(var(--color-surface-600), var(--color-surface-300));
+}
+
+@utility text-lamp {
+	color: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility fill-lamp {
+	fill: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility stroke-lamp {
+	stroke: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility border-lamp {
+	border-color: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility bg-lamp-wash {
+	background-color: light-dark(
+		color-mix(in oklab, var(--color-warning-500) 24%, transparent),
+		color-mix(in oklab, var(--color-warning-400) 14%, transparent)
+	);
+}
+
+@utility fill-lamp-wash {
+	fill: light-dark(
+		color-mix(in oklab, var(--color-warning-500) 24%, transparent),
+		color-mix(in oklab, var(--color-warning-400) 14%, transparent)
+	);
+}
+
+@utility text-link {
+	color: light-dark(var(--color-primary-600), var(--color-primary-400));
+}
+
+/* Underlined link from the reference: body-coloured text over a thick primary underline. */
+@utility link-underline {
+	font-weight: 600;
+	text-decoration-line: underline;
+	text-decoration-color: var(--color-primary-500);
+	text-decoration-thickness: 2px;
+	text-underline-offset: 4px;
 }
