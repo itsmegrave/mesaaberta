@@ -52,7 +52,7 @@
 </script>
 
 <article
-	class="group relative flex h-full min-h-96 flex-col overflow-hidden card border border-surface-200-800 bg-surface-100-900 transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
+	class="group relative flex h-full min-h-[396px] flex-col overflow-hidden rounded-lg border border-surface-200-800 bg-panel transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
 >
 	<!-- Top header tile: With cover image vs solid petrol tile without cover -->
 	{#if table.imageUrl}
@@ -75,7 +75,7 @@
 			<!-- Date chip -->
 			{#if table.nextAt && cardDate}
 				<div
-					class="absolute bottom-3.5 left-3.5 rounded-xl preset-filled-primary-500 px-3 pt-2 pb-[9px] shadow-sm"
+					class="absolute bottom-3.5 left-3.5 rounded-lg preset-filled-primary-500 px-3 pt-2 pb-[9px] shadow-sm"
 				>
 					<div class="font-sans text-[22px] leading-none font-bold tracking-tight">
 						{cardDate.dayMonth}
@@ -87,7 +87,7 @@
 			{/if}
 			<!-- Seat ring chip -->
 			<div
-				class="absolute right-3.5 bottom-3.5 rounded-2xl preset-filled-primary-500 p-1.5 shadow-sm"
+				class="absolute right-3.5 bottom-3.5 rounded-lg preset-filled-primary-500 p-1.5 shadow-sm"
 			>
 				<SeatRing capacity={table.capacity ?? 5} seatsLeft={table.seatsLeft} size={64} />
 			</div>
@@ -128,7 +128,7 @@
 
 	<!-- Card body -->
 	<div class="flex grow flex-col p-[20px_22px_18px]">
-		<div class="text-sm leading-snug font-semibold text-surface-700-300">
+		<div class="text-sm leading-snug font-semibold text-muted">
 			{table.system.name}
 		</div>
 
@@ -141,7 +141,7 @@
 			</a>
 		</h3>
 
-		<div class="mt-2 text-[15px] leading-normal text-surface-700-300">
+		<div class="mt-2 text-[15px] leading-normal text-muted">
 			{m.table_gm()}: {table.gmName}
 		</div>
 
@@ -150,7 +150,7 @@
 			<div class="mt-3 flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
 				{#if firstPlatform}
 					<span
-						class="chip h-[26px] shrink-0 gap-1.5 border border-surface-200-800 bg-surface-100-900 px-2.5 text-[13px] font-semibold"
+						class="chip h-[26px] shrink-0 gap-1.5 rounded-lg border border-surface-200-800 bg-panel px-2.5 text-[13px] font-semibold"
 					>
 						<svg
 							width="14"
@@ -172,14 +172,14 @@
 				{/if}
 				{#if firstTag}
 					<span
-						class="chip h-[26px] shrink-0 gap-1.5 preset-tonal px-2.5 text-[13px] font-semibold"
+						class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-950/7 px-2.5 text-[13px] font-semibold dark:bg-surface-50/8"
 					>
 						{firstTag}
 					</span>
 				{/if}
 				{#if moreTagsCount > 0}
 					<span
-						class="chip h-[26px] shrink-0 gap-1.5 preset-tonal px-2.5 text-[13px] font-semibold"
+						class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-950/7 px-2.5 text-[13px] font-semibold dark:bg-surface-50/8"
 					>
 						+{moreTagsCount}
 					</span>
@@ -191,16 +191,12 @@
 		<div
 			class="mt-auto flex items-center justify-between gap-3 border-t border-surface-200-800 pt-3.5"
 		>
-			<span
-				class="text-base font-semibold {table.seatsLeft === 0
-					? 'text-surface-700-300'
-					: 'text-warning-700-300'}"
-			>
+			<span class="text-base font-semibold {table.seatsLeft === 0 ? 'text-muted' : 'text-lamp'}">
 				{seats}
 			</span>
 			<span
 				aria-hidden="true"
-				class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-200-800 text-surface-950-50 transition-transform group-hover:translate-x-1"
+				class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-950/7 text-surface-950-50 transition-transform group-hover:translate-x-1 dark:bg-surface-50/8"
 			>
 				<svg
 					width="18"

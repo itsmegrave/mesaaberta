@@ -25,7 +25,7 @@
 <Popover positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}>
 	<Popover.Trigger
 		aria-label="{m.nav_account_menu()}: {name}"
-		class="btn flex size-11 items-center justify-center rounded-full preset-tonal p-0 md:h-11 md:w-auto md:gap-2.5 md:pr-3 md:pl-1.5"
+		class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal md:h-11 md:w-auto md:gap-2.5 md:pr-3 md:pl-1.5"
 	>
 		<Avatar src={avatarUrl} {name} size={32} />
 		<span class="hidden max-w-[14ch] truncate md:inline">{name}</span>

@@ -42,7 +42,7 @@
 	aria-pressed={isDark}
 	title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
 	onclick={() => handlePressedChange(!isDark)}
-	class="btn-icon size-11 shrink-0 rounded-full preset-tonal"
+	class="btn-icon size-11 shrink-0 rounded-full border border-surface-200-800 hover:preset-tonal"
 >
 	{#if isDark}
 		<!-- Sun icon (dark mode -> switch to light) -->

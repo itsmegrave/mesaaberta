@@ -62,9 +62,16 @@ describe('formatCardDate', () => {
 	it('returns dayMonth and weekdayTime in Portuguese', () => {
 		const res = formatCardDate(start, 'America/Sao_Paulo', 'pt-BR');
 
-		expect(res.dayMonth).toMatch(/10.*out/i);
-		expect(res.weekdayTime).toMatch(/sáb/i);
+		expect(res.dayMonth).toBe('10 out');
+		expect(res.weekdayTime).toMatch(/^sábado · /);
 		expect(res.weekdayTime).toMatch(/19:00/);
 		expect(res.weekdayTime).toMatch(/GMT-3/);
+	});
+
+	it('drops "-feira" from weekdays, as the card reference does', () => {
+		// Friday, 9 October 2026, 20:30 in São Paulo.
+		const res = formatCardDate(new Date('2026-10-09T23:30:00Z'), 'America/Sao_Paulo', 'pt-BR');
+
+		expect(res.weekdayTime).toMatch(/^sexta · 20:30/);
 	});
 });
