@@ -1,9 +1,18 @@
 // Development data: one GM and a few tables. The RPG systems themselves come from the migrations. Safe to run again; existing rows are left alone.
 // Usage: pnpm db:seed (needs DATABASE_URL, see .dev.vars.example)
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { gameTables, profiles, systems } from '../src/lib/server/db/schema.ts';
+import {
+	gameTablePlatforms,
+	gameTables,
+	gameTableTags,
+	platforms,
+	tags,
+	profiles,
+	registrations,
+	systems
+} from '../src/lib/server/db/schema.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL is not set. Copy .dev.vars.example to .dev.vars.');
@@ -91,12 +100,63 @@ const tables = [
 	}
 ];
 
+// The platforms and tags of each seeded table, by slug (the catalog comes from a migration).
+const picks: Record<string, { platforms: string[]; tags: string[] }> = {
+	'os-sinos-de-sablewood': {
+		platforms: ['discord', 'foundry-vtt'],
+		tags: ['iniciantes', 'alta-fantasia']
+	},
+	'cronicas-de-roshar': {
+		platforms: ['discord'],
+		tags: ['roleplay', 'intriga-politica', 'exploracao']
+	},
+	'noites-de-neon': { platforms: [], tags: ['terror', 'mesa-segura'] },
+	'a-cripta-do-rei-afogado': {
+		platforms: ['owlbear-rodeo', 'discord'],
+		tags: ['dungeon-crawl', 'sobrevivencia']
+	},
+	'a-ultima-estrada': { platforms: ['roll20'], tags: ['pos-apocaliptico'] }
+};
+
+const idsOf = async (table: typeof platforms | typeof tags, slugs: string[]) =>
+	slugs.length === 0
+		? []
+		: (
+				await db
+					.select({ id: table.id, slug: table.slug })
+					.from(table)
+					.where(inArray(table.slug, slugs))
+			)
+				.sort((a, b) => slugs.indexOf(a.slug) - slugs.indexOf(b.slug))
+				.map((row) => row.id);
+
 // Running it again moves the sessions back to the days above, so the dates never go stale.
 for (const table of tables) {
-	await db
+	const [row] = await db
 		.insert(gameTables)
 		.values(table)
-		.onConflictDoUpdate({ target: gameTables.slug, set: { startsAt: table.startsAt } });
+		.onConflictDoUpdate({ target: gameTables.slug, set: { startsAt: table.startsAt } })
+		.returning({ id: gameTables.id });
+
+	// Seeded tables start empty on every run, so tests that count their seats do not depend on order.
+	await db.delete(registrations).where(eq(registrations.tableId, row.id));
+	const pick = picks[table.slug];
+	await db.delete(gameTablePlatforms).where(eq(gameTablePlatforms.tableId, row.id));
+	await db.delete(gameTableTags).where(eq(gameTableTags.tableId, row.id));
+	const platformIds = await idsOf(platforms, pick.platforms);
+	const tagIds = await idsOf(tags, pick.tags);
+	if (platformIds.length > 0) {
+		await db
+			.insert(gameTablePlatforms)
+			.values(
+				platformIds.map((platformId, position) => ({ tableId: row.id, platformId, position }))
+			);
+	}
+	if (tagIds.length > 0) {
+		await db
+			.insert(gameTableTags)
+			.values(tagIds.map((tagId, position) => ({ tableId: row.id, tagId, position })));
+	}
 }
 
 await client.end();

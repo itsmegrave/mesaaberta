@@ -83,6 +83,10 @@ pnpm dev
 
 **Managing tables.** A signed-in user opens a table at `/tables/new` and becomes its GM; the GM or an admin edits it at `/tables/<slug>/edit` and can disable it. Every write goes through `src/lib/server/tables/write.ts`, which asks the policy first. The form is validated with Zod (`src/lib/tables/schema.ts`); anything the form does not list (`gmId`, `status`, `slug`) is dropped. The slug comes from the title (`mesa` if it has nothing usable), is numbered `-2`, `-3` on a collision, is never `new` or `edit`, retries if two creates race for it, and never changes when the title does. Each edit raises `ical_sequence` so calendar invites replace the old event.
 
+**Platforms and tags** come from a catalog kept in `platforms` and `tags` (seeded by migration `0013`; each row has a status, and only `approved` ones are public). A table picks any number of each (`game_table_platforms`, `game_table_tags`, in the order picked); `src/lib/server/catalog.ts` reads and writes them. The suggestion and approval flow is not built yet.
+
+**Filtering `/tables`** is all in the query string, with slugs as values and the key repeated for each value ticked: `/tables?system=daggerheart&system=savage-worlds&modality=online&platform=discord&tag=terror&tag=iniciantes`. Within a key any value matches; across keys a table has to match each. The filter is a plain GET form of checkboxes, so it works without JavaScript and every combination is a shareable link.
+
 **Table images** are uploaded through the server: 2 MB at most, PNG, JPEG or WebP judged by the file's first bytes (never its name or the type the browser claims), and a random file name. They live in a public Supabase Storage bucket, `table-images`. One-time setup in the Supabase SQL editor:
 
 ```sql

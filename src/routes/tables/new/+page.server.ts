@@ -8,6 +8,7 @@ import { handlersFor } from '$lib/server/events/handlers';
 import { createTable } from '$lib/server/tables/write';
 import { TABLE_CREATION_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
 import { listSystems } from '$lib/server/systems';
+import { listCatalog } from '$lib/server/catalog';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
@@ -16,11 +17,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	await requireUser(locals, url);
 	if (!locals.db) error(503, 'Database not configured');
 
-	const systems = await listSystems(locals.db);
+	const [systems, catalog] = await Promise.all([listSystems(locals.db), listCatalog(locals.db)]);
 
 	return {
 		form: await superValidate(NEW_TABLE_VALUES, zod4(tableFormSchema), { errors: false }),
-		systems: systems.map(({ name, slug }) => ({ name, slug }))
+		systems: systems.map(({ name, slug }) => ({ name, slug })),
+		catalog
 	};
 };
 

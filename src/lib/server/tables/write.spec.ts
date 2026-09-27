@@ -37,6 +37,8 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
 	locationNeighbourhood: null,
 	locationCity: null,
 	locationState: null,
+	platforms: [],
+	tags: [],
 	...over
 });
 

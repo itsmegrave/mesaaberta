@@ -15,6 +15,8 @@ export const TABLE_LIMITS = {
 	capacity: { min: 1, max: 30 },
 	// Mirror the length checks on game_tables.
 	locationArea: 120,
+	// Platforms or tags a table can pick, each.
+	catalogPicks: 12,
 	joinDetails: 1000,
 	durationMinutes: { min: 15, max: 1440 }
 } as const;
@@ -68,6 +70,9 @@ export const tableFormSchema = z
 		modality: z.enum(['online', 'in_person']).default('online'),
 		locationArea: text(TABLE_LIMITS.locationArea).default(''),
 		joinDetails: text(TABLE_LIMITS.joinDetails).default(''),
+		// Checkboxes: every ticked one arrives under the same name. The server checks them against the catalog.
+		platforms: z.array(z.string().trim().min(1)).max(TABLE_LIMITS.catalogPicks).default([]),
+		tags: z.array(z.string().trim().min(1)).max(TABLE_LIMITS.catalogPicks).default([]),
 		postalCode: z
 			.string()
 			.trim()
@@ -113,6 +118,9 @@ export type TableInput = {
 	locationArea: string | null;
 	/** How to join (link or address); private to the GM and the confirmed players. */
 	joinDetails: string | null;
+	/** Catalog slugs, in the order picked. */
+	platforms: string[];
+	tags: string[];
 	/** The CEP of an in-person table, 8 digits; null without one or online. */
 	postalCode: string | null;
 	/** What the CEP resolved to (see `withLocation`); null until then, or when it could not be looked up. */

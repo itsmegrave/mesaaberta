@@ -4,6 +4,7 @@ import { gameTables, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { catalogOf, setTableCatalog } from '../catalog';
 import { TABLE_CREATION_LIMIT, enforceRateLimit } from '../rate-limit';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
@@ -28,6 +29,11 @@ async function systemIdOf(db: AnyDb, slug: string) {
 }
 
 /** The columns a form controls. Never the slug, the GM, the status or the calendar sequence. */
+const catalogPicks = (input: TableInput) => ({
+	platformSlugs: input.platforms,
+	tagSlugs: input.tags
+});
+
 async function columnsOf(db: AnyDb, input: TableInput) {
 	return {
 		systemId: await systemIdOf(db, input.systemSlug),
@@ -94,6 +100,7 @@ export async function createTable(
 					.insert(gameTables)
 					.values({ ...columns, slug, gmId: actor!.id })
 					.returning({ id: gameTables.id });
+				await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input));
 
 				return recordEvent(
 					tx as unknown as AnyDb,
@@ -128,6 +135,7 @@ export async function loadTableForEdit(db: AnyDb, actor: Actor | null, slug: str
 		.select({ slug: systems.slug })
 		.from(systems)
 		.where(eq(systems.id, table.systemId));
+	const catalog = (await catalogOf(db, [table.id])).get(table.id)!;
 
 	return {
 		slug: table.slug,
@@ -150,6 +158,8 @@ export async function loadTableForEdit(db: AnyDb, actor: Actor | null, slug: str
 		locationArea: table.locationArea ?? '',
 		joinDetails: table.joinDetails ?? '',
 		postalCode: table.postalCode ? formatCep(table.postalCode) : '',
+		platforms: catalog.platforms.map((p) => p.slug),
+		tags: catalog.tags.map((t) => t.slug),
 		imagePath: table.imagePath
 	};
 }
@@ -179,6 +189,7 @@ export async function updateTable(
 				icalSequence: table.icalSequence + 1
 			})
 			.where(eq(gameTables.id, table.id));
+		await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input));
 
 		return recordEvent(tx as unknown as AnyDb, {
 			type: 'TableUpdated',

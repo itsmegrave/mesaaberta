@@ -126,6 +126,20 @@
 				{table.title}
 			</h1>
 
+			{#if table.tags.length > 0}
+				<ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">
+					{#each table.tags as tag (tag.slug)}
+						<li>
+							<a
+								href="{localizedHref('/tables', locale)}?tag={encodeURIComponent(tag.slug)}"
+								class="chip h-8 rounded-lg bg-surface-950/7 px-3 text-sm font-semibold hover:preset-tonal dark:bg-surface-50/8"
+								>{tag.name}</a
+							>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+
 			<div class="mt-5 flex flex-wrap items-center gap-4">
 				<p>
 					<span class="block text-sm font-semibold text-muted">{m.table_gm()}</span>
@@ -238,6 +252,19 @@
 						? `${m.table_modality_in_person()} · ${table.locationArea}`
 						: m.table_modality_online()}
 				</dd>
+				{#if table.platforms.length > 0}
+					<dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
+						{m.form_platforms()}
+					</dt>
+					<dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
+						{#each table.platforms as platform (platform.slug)}
+							<span
+								class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-[13px] font-semibold"
+								>{platform.name}</span
+							>
+						{/each}
+					</dd>
+				{/if}
 				<dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
 					{m.table_schedule()}
 				</dt>

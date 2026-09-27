@@ -36,6 +36,7 @@
 	<TableForm
 		{superform}
 		systems={data.systems}
+		catalog={data.catalog}
 		imageUrl={data.imageUrl}
 		action="?/save"
 		submitLabel={m.form_submit_edit()}

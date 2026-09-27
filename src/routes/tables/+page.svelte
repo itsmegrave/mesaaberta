@@ -9,13 +9,15 @@
 	const locale = getLocale();
 	const listHref = localizedHref('/tables', locale);
 
-	/** The list's query string with one filter changed and the other kept. */
-	const query = (filters: { system?: string | null; modality?: string | null }) => {
-		const system = 'system' in filters ? filters.system : data.selected;
+	/** The list's query string with the systems or the modality changed and every other filter kept. */
+	const query = (filters: { system?: null; modality?: string | null }) => {
+		const systems = 'system' in filters ? [] : data.pickedSystems;
 		const modality = 'modality' in filters ? filters.modality : data.modality;
 		const parts = [
-			system ? `system=${encodeURIComponent(system)}` : '',
-			modality ? `modality=${modality}` : ''
+			...systems.map((slug) => `system=${encodeURIComponent(slug)}`),
+			modality ? `modality=${modality}` : '',
+			...data.pickedPlatforms.map((slug) => `platform=${encodeURIComponent(slug)}`),
+			...data.pickedTags.map((slug) => `tag=${encodeURIComponent(slug)}`)
 		].filter(Boolean);
 		return parts.length > 0 ? `?${parts.join('&')}` : '';
 	};
@@ -26,10 +28,6 @@
 		{ value: 'in_person', label: m.table_modality_in_person }
 	] as const;
 
-	const more = $derived(
-		data.systems.filter((system) => !data.featured.some((f) => f.slug === system.slug))
-	);
-
 	const count = $derived(
 		data.tables.length === 1 ? m.tables_count_one() : m.tables_count({ count: data.tables.length })
 	);
@@ -38,6 +36,44 @@
 		'inline-flex h-11 shrink-0 items-center rounded-full border-[1.5px] px-[18px] text-[15px] font-semibold whitespace-nowrap no-underline';
 	const chipIdle = `${chip} border-surface-200-800 bg-panel hover:preset-tonal`;
 	const chipActive = `${chip} border-primary-500 preset-filled-primary-500`;
+	// A ticked checkbox chip: the whole chip is its label; the box itself is hidden.
+	const checkChip =
+		'relative inline-flex h-11 shrink-0 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 bg-panel px-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal has-[:checked]:border-primary-500 has-[:checked]:preset-filled-primary-500 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary-500';
+
+	/** With JavaScript, ticking a chip applies it at once; without, the "Filtrar" button does. */
+	const applyNow = (event: Event) =>
+		(event.currentTarget as HTMLInputElement).form?.requestSubmit();
+	const catalogGroups = $derived([
+		{
+			name: 'system',
+			id: 'system-filter',
+			label: m.tables_filter_label(),
+			moreLabel: m.tables_filter_more(),
+			items: data.featured,
+			more: data.systems.filter(
+				(system) => !data.featured.some((featured) => featured.slug === system.slug)
+			),
+			picked: data.pickedSystems
+		},
+		{
+			name: 'platform',
+			id: 'platform-filter',
+			label: m.form_platforms(),
+			moreLabel: '',
+			items: data.catalog.platforms,
+			more: [],
+			picked: data.pickedPlatforms
+		},
+		{
+			name: 'tag',
+			id: 'tag-filter',
+			label: m.form_tags(),
+			moreLabel: m.tables_filter_more_tags(),
+			items: data.catalog.tags,
+			more: data.catalog.moreTags,
+			picked: data.pickedTags
+		}
+	]);
 </script>
 
 <svelte:head>
@@ -80,109 +116,120 @@
 		</a>
 	</div>
 
-	<!-- Plain links: the filter works without JavaScript, and the URL can be shared. -->
-	<div
-		role="group"
-		aria-labelledby="system-filter"
-		class="mt-5 md:mt-8 md:flex md:items-start md:gap-5"
-	>
-		<span
-			id="system-filter"
-			class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
-		>
-			{m.tables_filter_label()}
-		</span>
-		<div class="md:flex md:flex-wrap md:gap-2.5">
-			<div class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:contents">
-				<a
-					href={localizedHref(`/tables${query({ system: null })}`, locale)}
-					aria-current={data.selected ? undefined : 'page'}
-					class={data.selected ? chipIdle : chipActive}>{m.tables_filter_all()}</a
-				>
-				{#each data.featured as system (system.slug)}
-					<a
-						href={localizedHref(`/tables${query({ system: system.slug })}`, locale)}
-						aria-current={system.slug === data.selected ? 'page' : undefined}
-						class={system.slug === data.selected ? chipActive : chipIdle}>{system.name}</a
+	<!-- A plain GET form: it filters without JavaScript, and the URL can be shared. Every filter is a
+	     slug in the query string, and a key repeats for each value ticked. -->
+	<form method="GET" action={listHref} class="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4 md:mt-8">
+		{#if data.modality}<input type="hidden" name="modality" value={data.modality} />{/if}
+		{#each catalogGroups as group, g (group.name)}
+			{#if group.items.length > 0}
+				<div role="group" aria-labelledby={group.id} class="md:flex md:items-start md:gap-5">
+					<span
+						id={group.id}
+						class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
 					>
-				{/each}
-			</div>
-			{#if more.length > 0}
-				<details class="group relative mt-2 md:mt-0">
-					<summary
-						class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-full border-[1.5px] border-dashed border-surface-600-400 pr-3.5 pl-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
-					>
-						<svg
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.8"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							aria-hidden="true"
-							class="shrink-0"
-						>
-							<circle cx="11" cy="11" r="6.5" />
-							<path d="M20 20l-4.2-4.2" />
-						</svg>
-						{m.tables_filter_more()}
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.8"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							aria-hidden="true"
-							class="shrink-0 transition-transform group-open:rotate-180"
-						>
-							<path d="M6 9l6 6 6-6" />
-						</svg>
-					</summary>
-					<ul
-						class="mt-2 max-h-72 w-full overflow-y-auto rounded-lg border border-surface-200-800 bg-panel p-1.5 shadow-xl md:absolute md:z-20 md:w-72"
-					>
-						{#each more as system (system.slug)}
-							<li>
+						{group.label}
+					</span>
+					<div class="md:flex md:flex-wrap md:gap-2.5">
+						<div class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:contents">
+							{#if group.name === 'system'}
 								<a
-									href={localizedHref(`/tables${query({ system: system.slug })}`, locale)}
-									class="flex min-h-11 items-center rounded-lg px-3 font-semibold no-underline hover:preset-tonal"
-									>{system.name}</a
+									href={localizedHref(`/tables${query({ system: null })}`, locale)}
+									aria-current={data.pickedSystems.length === 0 ? 'page' : undefined}
+									class={data.pickedSystems.length === 0 ? chipActive : chipIdle}
+									>{m.tables_filter_all()}</a
 								>
-							</li>
-						{/each}
-					</ul>
-				</details>
+							{/if}
+							{#each group.items as item (item.slug)}
+								<label class="{checkChip} {group.name === 'system' ? 'rounded-full!' : ''}">
+									<input
+										type="checkbox"
+										name={group.name}
+										value={item.slug}
+										checked={group.picked.includes(item.slug)}
+										onchange={applyNow}
+										class="sr-only"
+									/>{item.name}
+								</label>
+							{/each}
+						</div>
+						{#if group.more.length > 0}
+							<details class="group relative mt-2 md:mt-0">
+								<summary
+									class="inline-flex h-11 cursor-pointer list-none items-center gap-2 border-[1.5px] border-dashed border-surface-600-400 px-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden {group.name ===
+									'system'
+										? 'rounded-full'
+										: 'rounded-lg'}"
+									>{group.moreLabel}
+									<svg
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="1.8"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+										class="shrink-0 transition-transform group-open:rotate-180"
+										><path d="M6 9l6 6 6-6" /></svg
+									></summary
+								>
+								<div
+									class="mt-2 flex max-h-72 w-full flex-wrap gap-2 overflow-y-auto rounded-lg border border-surface-200-800 bg-panel p-3 shadow-xl md:absolute md:z-20 md:w-96"
+								>
+									{#each group.more as item (item.slug)}
+										<label class={checkChip}>
+											<input
+												type="checkbox"
+												name={group.name}
+												value={item.slug}
+												onchange={applyNow}
+												class="sr-only"
+											/>{item.name}
+										</label>
+									{/each}
+								</div>
+							</details>
+						{/if}
+					</div>
+				</div>
 			{/if}
-		</div>
-	</div>
-
-	<div role="group" aria-labelledby="modality-filter" class="mt-4 md:flex md:items-start md:gap-5">
-		<span
-			id="modality-filter"
-			class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
-		>
-			{m.tables_filter_modality()}
-		</span>
-		<div class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:gap-2.5 md:px-0">
-			{#each modalities as option (option.value)}
-				<a
-					href={localizedHref(`/tables${query({ modality: option.value })}`, locale)}
-					aria-current={option.value === data.modality ? 'page' : undefined}
-					class={option.value === data.modality ? chipActive : chipIdle}>{option.label()}</a
-				>
-			{/each}
-		</div>
-	</div>
+			{#if g === 0}
+				<div role="group" aria-labelledby="modality-filter" class="md:flex md:items-start md:gap-5">
+					<span
+						id="modality-filter"
+						class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
+					>
+						{m.tables_filter_modality()}
+					</span>
+					<div
+						class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:gap-2.5 md:px-0"
+					>
+						{#each modalities as option (option.value)}
+							<a
+								href={localizedHref(`/tables${query({ modality: option.value })}`, locale)}
+								aria-current={option.value === data.modality ? 'page' : undefined}
+								class={option.value === data.modality ? chipActive : chipIdle}>{option.label()}</a
+							>
+						{/each}
+					</div>
+				</div>
+			{/if}
+		{/each}
+		<noscript>
+			<button
+				type="submit"
+				class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold md:ml-[108px]"
+				>{m.tables_filter_apply()}</button
+			>
+		</noscript>
+	</form>
 
 	{#if data.tables.length > 0}
-		<p role="status" class="mt-8 hidden text-[15px] font-semibold text-muted md:block">
-			{count}
-		</p>
+		<div class="mt-8 hidden items-baseline justify-between gap-6 md:flex">
+			<p role="status" class="text-[15px] font-semibold text-muted">{count}</p>
+			<p class="text-sm text-muted">{m.tables_filter_any_note()}</p>
+		</div>
 		<ul class="mt-5 grid gap-4 md:mt-3.5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
 			{#each data.tables as table (table.slug)}
 				<li><TableCard {table} /></li>
@@ -190,8 +237,15 @@
 		</ul>
 	{:else}
 		<div class="mt-10 max-w-[44ch]" role="status">
-			<p class="text-lg">{data.selected ? m.tables_empty_filtered() : m.tables_empty()}</p>
-			{#if data.selected}
+			<p class="text-lg">
+				{data.pickedSystems.length > 0 ||
+				data.pickedPlatforms.length > 0 ||
+				data.pickedTags.length > 0 ||
+				data.modality
+					? m.tables_empty_filtered()
+					: m.tables_empty()}
+			</p>
+			{#if data.pickedSystems.length > 0 || data.pickedPlatforms.length > 0 || data.pickedTags.length > 0 || data.modality}
 				<a href={listHref} class="mt-3 inline-block anchor">{m.tables_filter_clear()}</a>
 			{/if}
 		</div>

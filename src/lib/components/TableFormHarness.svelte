@@ -27,4 +27,20 @@
 	if (message) superform.message.set(message);
 </script>
 
-<TableForm {superform} {systems} {submitLabel} {imageUrl} {action} />
+<TableForm
+	{superform}
+	{systems}
+	catalog={{
+		platforms: [
+			{ name: 'Discord', slug: 'discord' },
+			{ name: 'Foundry VTT', slug: 'foundry-vtt' }
+		],
+		tags: [
+			{ name: 'Iniciantes', slug: 'iniciantes' },
+			{ name: 'Terror', slug: 'terror' }
+		]
+	}}
+	{submitLabel}
+	{imageUrl}
+	{action}
+/>
