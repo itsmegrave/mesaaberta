@@ -10,6 +10,11 @@
 	type Props = {
 		superform: SuperForm<TableFormValues, FormMessage>;
 		systems: { name: string; slug: string }[];
+		/** The approved platforms and tags a table can pick. */
+		catalog: {
+			platforms: { name: string; slug: string }[];
+			tags: { name: string; slug: string }[];
+		};
 		submitLabel: string;
 		imageUrl?: string | null;
 		action?: string;
@@ -22,6 +27,7 @@
 	let {
 		superform,
 		systems,
+		catalog,
 		submitLabel,
 		imageUrl = null,
 		action,
@@ -33,6 +39,11 @@
 	const previewSystem = $derived(
 		systems.find((system) => system.slug === $form.systemSlug)?.name ?? m.form_system()
 	);
+	const nameOf = (list: { name: string; slug: string }[], slug: string) =>
+		list.find((item) => item.slug === slug)?.name ?? slug;
+	const chip =
+		'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 px-3.5 text-[15px] font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary-500';
+
 	// The card the list will show, from what is typed so far.
 	const preview = $derived({
 		slug: 'preview',
@@ -46,14 +57,24 @@
 		nextAt: zonedToDate($form.startsAtLocal, $form.timezone),
 		imageUrl,
 		modality: $form.modality,
-		locationArea: $form.locationArea || null
+		locationArea: $form.locationArea || null,
+		platforms: $form.platforms.map((slug) => nameOf(catalog.platforms, slug)),
+		tags: $form.tags.map((slug) => nameOf(catalog.tags, slug))
 	});
-	const err = (field: keyof TableFormValues) =>
-		$errors[field]?.[0] ? errorText($errors[field][0], field) : undefined;
+	// A plain field's errors are a list; a list field's (platforms, tags) are under `_errors`.
+	const firstError = (value: unknown): string | undefined =>
+		Array.isArray(value)
+			? (value[0] as string | undefined)
+			: ((value as { _errors?: string[] } | undefined)?._errors?.[0] ?? undefined);
+	const err = (field: keyof TableFormValues) => {
+		const code = firstError($errors[field]);
+		return code ? errorText(code, field) : undefined;
+	};
 	const imageError = $derived(
 		$message?.field === 'image' ? errorText($message.code, 'image') : undefined
 	);
-	const invalid = (field: keyof TableFormValues) => ($errors[field]?.[0] ? 'true' : undefined);
+	const invalid = (field: keyof TableFormValues) =>
+		firstError($errors[field]) ? 'true' : undefined;
 	const problem = $derived(formProblem($message));
 	const hasErrors = $derived(
 		Object.values($errors).some((list) => Array.isArray(list) && list.length > 0) || !!imageError
@@ -111,6 +132,31 @@
 						aria-invalid={invalid('title')}
 					/>
 				</FormField>
+				{#each [{ field: 'platforms', legend: m.form_platforms(), hint: m.form_platforms_hint(), items: catalog.platforms }, { field: 'tags', legend: m.form_tags(), hint: m.form_tags_hint(), items: catalog.tags }] as group (group.field)}
+					<fieldset aria-describedby="{group.field}-hint">
+						<legend class="font-semibold">{group.legend}</legend>
+						<p id="{group.field}-hint" class="text-sm text-surface-700-300">{group.hint}</p>
+						<div class="mt-2 flex flex-wrap gap-2">
+							{#each group.items as item (item.slug)}
+								<label class={chip}>
+									<input
+										type="checkbox"
+										name={group.field}
+										value={item.slug}
+										bind:group={$form[group.field as 'platforms' | 'tags']}
+										class="sr-only"
+									/>{item.name}
+								</label>
+							{/each}
+						</div>
+						{#if err(group.field as 'platforms' | 'tags')}<p
+								role="alert"
+								class="mt-1 text-sm font-semibold text-error-700-300"
+							>
+								{err(group.field as 'platforms' | 'tags')}
+							</p>{/if}
+					</fieldset>
+				{/each}
 				<FormField id="description" label={m.form_description()} error={err('description')}>
 					<textarea
 						id="description"

@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
 import { nextOccurrence, weeklyInterval } from './schedule';
+import { catalogOf } from '../catalog';
 
 /** Seats still free: the capacity minus the confirmed registrations. */
 export const seatsLeft = (capacity: number, taken = 0) => Math.max(0, capacity - taken);
@@ -32,7 +33,10 @@ const columns = {
 	gmId: gameTables.gmId
 };
 
-export type TableView = ReturnType<typeof shape>;
+export type TableView = ReturnType<typeof shape> & {
+	platforms: { name: string; slug: string }[];
+	tags: { name: string; slug: string }[];
+};
 
 const query = (db: AnyDb, where: SQL | undefined) =>
 	db
@@ -74,10 +78,20 @@ export async function listUpcomingTables(
 		and(eq(gameTables.status, 'active'), systemSlug ? eq(systems.slug, systemSlug) : undefined)
 	);
 
-	return rows
+	const upcoming = rows
 		.map((row) => shape(row, now))
 		.filter((table) => table.nextAt !== null)
 		.sort((a, b) => a.nextAt!.getTime() - b.nextAt!.getTime());
+	return withCatalog(db, upcoming);
+}
+
+/** Adds each table's approved platforms and tags. */
+async function withCatalog<T extends { id: string }>(db: AnyDb, list: T[]) {
+	const catalog = await catalogOf(
+		db,
+		list.map((table) => table.id)
+	);
+	return list.map((table) => ({ ...table, ...catalog.get(table.id)! }));
 }
 
 /**
@@ -91,7 +105,7 @@ export async function findTableBySlug(
 ): Promise<TableView | null> {
 	const [row] = await query(db, and(eq(gameTables.slug, slug), eq(gameTables.status, 'active')));
 
-	return row ? shape(row, now) : null;
+	return row ? (await withCatalog(db, [shape(row, now)]))[0] : null;
 }
 
 /**

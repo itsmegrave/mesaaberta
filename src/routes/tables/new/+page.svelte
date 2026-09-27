@@ -28,6 +28,7 @@
 	<TableForm
 		{superform}
 		systems={data.systems}
+		catalog={data.catalog}
 		submitLabel={m.form_submit_new()}
 		cancelHref={localizedHref('/tables', getLocale())}
 		gmName={data.account?.username ?? undefined}

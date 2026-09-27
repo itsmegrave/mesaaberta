@@ -77,19 +77,17 @@ test.describe('table list', () => {
 			'page'
 		);
 		// Featured as a chip, or behind "Mais sistemas" when other systems have more tables.
-		const chip = filter.getByRole('link', { name: 'Cosmere Roleplaying Game' });
+		const chip = filter.getByText('Cosmere Roleplaying Game');
 		if (!(await chip.first().isVisible())) await filter.getByText('Mais sistemas').click();
 		await chip.first().click();
 
 		await expect(page).toHaveURL(/system=cosmere-roleplaying-game/);
-		await expect(
-			filter.getByRole('link', { name: 'Cosmere Roleplaying Game' }).first()
-		).toHaveAttribute('aria-current', 'page');
+		await expect(filter.getByLabel('Cosmere Roleplaying Game')).toBeChecked();
 		await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toHaveCount(0);
 
 		await page.goto('/tables?system=gurps');
-		await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta neste sistema');
+		await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta com esses filtros');
 		await expect(page.getByRole('link', { name: 'Ver todas as mesas' })).toHaveAttribute(
 			'href',
 			'/tables'

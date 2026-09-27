@@ -25,7 +25,9 @@ export const NEW_TABLE_VALUES: TableFormValues = {
 	modality: 'online',
 	locationArea: '',
 	joinDetails: '',
-	postalCode: ''
+	postalCode: '',
+	platforms: [],
+	tags: []
 };
 
 /** The sentence for a problem that is about the whole form, not one field; null when there is none. */

@@ -23,6 +23,14 @@ export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot']);
 export const tableStatus = pgEnum('table_status', ['active', 'disabled']);
 // Where the table plays: over the internet, or around a real table.
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
+// Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for
+// the GM who suggested them and the admins (the suggestion flow is card #34).
+export const catalogStatus = pgEnum('catalog_status', [
+	'pending',
+	'approved',
+	'rejected',
+	'disabled'
+]);
 // A pending request takes no seat; only a confirmed one does.
 export const registrationStatus = pgEnum('registration_status', ['pending', 'confirmed']);
 
@@ -117,6 +125,35 @@ export const postalCodes = pgTable(
 	(row) => [check('postal_codes_cep_format', sql`${row.cep} ~ '^[0-9]{8}$'`)]
 ).enableRLS();
 
+/** The columns platforms and tags share: a catalog kept by admins, where GMs can suggest entries. */
+const catalogColumns = () => ({
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	// Lowercase, unique: two suggestions that differ only in case are the same entry.
+	slug: text('slug').notNull(),
+	status: catalogStatus('status').notNull().default('approved'),
+	// Catalog order: pickers and filters list them by it.
+	position: integer('position').notNull().default(1000),
+	suggestedBy: uuid('suggested_by').references(() => profiles.id, { onDelete: 'set null' }),
+	reviewedBy: uuid('reviewed_by').references(() => profiles.id, { onDelete: 'set null' }),
+	reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+	// A duplicate merged into another entry points at it.
+	mergedInto: uuid('merged_into'),
+	...timestamps
+});
+
+// Where a table plays online: Discord, Foundry VTT, Roll20, ...
+export const platforms = pgTable('platforms', catalogColumns(), (row) => [
+	uniqueIndex('platforms_slug_unique').on(sql`lower(${row.slug})`),
+	check('platforms_slug_format', sql`${row.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`)
+]).enableRLS();
+
+// What a table is like: Iniciantes, Terror, Roleplay, ...
+export const tags = pgTable('tags', catalogColumns(), (row) => [
+	uniqueIndex('tags_slug_unique').on(sql`lower(${row.slug})`),
+	check('tags_slug_format', sql`${row.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`)
+]).enableRLS();
+
 export const gameTables = pgTable(
 	'game_tables',
 	{
@@ -184,6 +221,41 @@ export const gameTables = pgTable(
 		check('game_tables_join_details_length', sql`char_length(${table.joinDetails}) <= 1000`),
 		// Mirrors WELCOME_MESSAGE_MAX in $lib/tables/welcome.
 		check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 1000`)
+	]
+).enableRLS();
+
+// The platforms and the tags of a table, in the order the GM picked them.
+export const gameTablePlatforms = pgTable(
+	'game_table_platforms',
+	{
+		tableId: uuid('table_id')
+			.notNull()
+			.references(() => gameTables.id, { onDelete: 'cascade' }),
+		platformId: uuid('platform_id')
+			.notNull()
+			.references(() => platforms.id),
+		position: integer('position').notNull()
+	},
+	(row) => [
+		primaryKey({ columns: [row.tableId, row.platformId] }),
+		index('game_table_platforms_platform_idx').on(row.platformId)
+	]
+).enableRLS();
+
+export const gameTableTags = pgTable(
+	'game_table_tags',
+	{
+		tableId: uuid('table_id')
+			.notNull()
+			.references(() => gameTables.id, { onDelete: 'cascade' }),
+		tagId: uuid('tag_id')
+			.notNull()
+			.references(() => tags.id),
+		position: integer('position').notNull()
+	},
+	(row) => [
+		primaryKey({ columns: [row.tableId, row.tagId] }),
+		index('game_table_tags_tag_idx').on(row.tagId)
 	]
 ).enableRLS();
 

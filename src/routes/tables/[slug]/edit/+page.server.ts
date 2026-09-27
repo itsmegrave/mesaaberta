@@ -9,6 +9,7 @@ import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
 import { listSystems } from '$lib/server/systems';
+import { listCatalog } from '$lib/server/catalog';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -22,14 +23,15 @@ export const load: PageServerLoad = async ({ locals, url, params, platform }) =>
 			await locals.getProfile(),
 			params.slug
 		);
-		const systems = await listSystems(locals.db);
+		const [systems, catalog] = await Promise.all([listSystems(locals.db), listCatalog(locals.db)]);
 
 		return {
 			slug,
 			status,
 			form: await superValidate(values, zod4(tableFormSchema), { errors: false }),
 			imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
-			systems: systems.map(({ name, slug }) => ({ name, slug }))
+			systems: systems.map(({ name, slug }) => ({ name, slug })),
+			catalog
 		};
 	} catch (e) {
 		// Someone else's table is a 403; one that is not there is a 404.

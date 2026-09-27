@@ -6,6 +6,12 @@ import { load } from './+page.server';
 
 vi.mock('$lib/server/tables/queries', () => ({ listUpcomingTables: vi.fn() }));
 vi.mock('$lib/server/systems', () => ({ listSystems: vi.fn() }));
+vi.mock('$lib/server/catalog', () => ({
+	listCatalog: vi.fn(async () => ({
+		platforms: [{ name: 'Discord', slug: 'discord' }],
+		tags: [{ name: 'Terror', slug: 'terror' }]
+	}))
+}));
 
 type Table = Awaited<ReturnType<typeof listUpcomingTables>>[number];
 type System = Awaited<ReturnType<typeof listSystems>>[number];
@@ -16,7 +22,9 @@ const table = (slug: string, systemSlug: string) =>
 		slug,
 		gmId: 'gm',
 		imagePath: null,
-		system: { slug: systemSlug, name: '' }
+		system: { slug: systemSlug, name: '' },
+		platforms: slug === 't3' ? [{ name: 'Discord', slug: 'discord' }] : [],
+		tags: slug === 't1' ? [{ name: 'Terror', slug: 'terror' }] : []
 	}) as unknown as Table;
 
 // Catalogue order: a, b, c, d, e.
@@ -55,7 +63,7 @@ describe('the table list load', () => {
 	it('narrows the list to the chosen system', async () => {
 		const data = await run(event('?system=c'));
 
-		expect(data.selected).toBe('c');
+		expect(data.pickedSystems).toEqual(['c']);
 		expect(slugs(data.tables)).toEqual(['t3']);
 	});
 
@@ -64,5 +72,13 @@ describe('the table list load', () => {
 
 		expect(slugs(data.featured)).toEqual(['d', 'c', 'a', 'e']);
 		expect(data.tables).toEqual([]);
+	});
+
+	it('takes several systems, platforms and tags from the query string, any of each', async () => {
+		expect(slugs((await run(event('?system=c&system=d'))).tables)).toEqual(['t1', 't2', 't3']);
+		expect(slugs((await run(event('?platform=discord'))).tables)).toEqual(['t3']);
+		expect(slugs((await run(event('?tag=terror&tag=humor'))).tables)).toEqual(['t1']);
+		// Across groups, a table has to match both.
+		expect(slugs((await run(event('?tag=terror&platform=discord'))).tables)).toEqual([]);
 	});
 });

@@ -63,7 +63,9 @@ describe('parseTableForm', () => {
 				postalCode: null,
 				locationNeighbourhood: null,
 				locationCity: null,
-				locationState: null
+				locationState: null,
+				platforms: [],
+				tags: []
 			}
 		});
 	});
