@@ -2,11 +2,11 @@ import { redirect } from '@sveltejs/kit';
 import { finishLogin } from '$lib/server/auth/login';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url, locals }) => {
+export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => {
 	if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
 	const target = await finishLogin(
-		{ supabase: locals.supabase, db: locals.db, log: locals.log },
+		{ supabase: locals.supabase, db: locals.db, log: locals.log, ip: getClientAddress() },
 		{ code: url.searchParams.get('code'), next: url.searchParams.get('next') }
 	);
 

@@ -23,7 +23,7 @@ const STATUS = {
 } as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
 
 export const actions: Actions = {
-	default: async ({ request, locals, url }) => {
+	default: async ({ request, locals, url, getClientAddress }) => {
 		if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
 		const form: SuperValidated<CredentialsData, FormMessage> = await superValidate(
@@ -36,7 +36,7 @@ export const actions: Actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await signUpWithEmail(
-			{ supabase: locals.supabase, db: locals.db, log: locals.log },
+			{ supabase: locals.supabase, db: locals.db, log: locals.log, ip: getClientAddress() },
 			{ email, password, origin: url.origin, next }
 		);
 

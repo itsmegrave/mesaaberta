@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AnyDb } from '../db/client';
 import type { Logger } from '../logger';
 import type { Provider } from '$lib/auth/providers';
+import { recordConnection } from '../events/outbox';
 import { ensureProfile } from './profile';
 import { needsOnboarding, onboardingUrl } from './onboarding';
 import { safeNext } from './safe-next';
@@ -28,10 +29,10 @@ export async function startLogin(
  * the login page with an error code, so nobody is left half signed in.
  */
 export async function finishLogin(
-	deps: { supabase: SupabaseClient; db: AnyDb | null; log: Logger },
+	deps: { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: string | null },
 	{ code, next }: { code: string | null; next: string | null }
 ): Promise<string> {
-	const { supabase, db, log } = deps;
+	const { supabase, db, log, ip } = deps;
 
 	if (!code) return '/login?error=missing_code';
 
@@ -55,6 +56,8 @@ export async function finishLogin(
 		await supabase.auth.signOut();
 		return '/login?error=profile_failed';
 	}
+
+	await recordConnection(db, { actorId: data.user.id, ip, log });
 
 	// A first sign-in (or a profile from before usernames) goes through the onboarding step first.
 	const target = safeNext(next);

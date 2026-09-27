@@ -7,6 +7,7 @@ import {
 	dispatchEvent,
 	MAX_ATTEMPTS,
 	backoffSeconds,
+	CONNECTION_RETENTION_DAYS,
 	pruneEvents,
 	RETENTION_DAYS,
 	sweepEvents
@@ -33,6 +34,13 @@ const record = async (over: { type?: 'TableCreated' | 'TableUpdated'; at?: Date 
 		test.db,
 		{ type: over.type ?? 'TableCreated', actorId: actor, payload },
 		{ now: over.at ?? t0 }
+	);
+
+const recordConnection = async (at?: Date) =>
+	recordEvent(
+		test.db,
+		{ type: 'UserSignedIn', actorId: actor, payload: { ip: '203.0.113.1' } },
+		{ now: at ?? t0 }
 	);
 
 const row = async (id: string) => (await test.db.select().from(events).where(eq(events.id, id)))[0];
@@ -324,5 +332,16 @@ describe('pruneEvents', () => {
 		expect(await row(recent)).toBeDefined();
 		// Never processed: it still has work to do, whatever its age.
 		expect(await row(pending)).toBeDefined();
+	});
+
+	it('keeps UserSignedIn (the connection log) past the general retention, deleting it only after CONNECTION_RETENTION_DAYS', async () => {
+		const connection = await recordConnection(t0);
+		await test.db.update(events).set({ processedAt: t0 }).where(eq(events.id, connection));
+
+		expect(await pruneEvents(test.db, days(RETENTION_DAYS + 1))).toBe(0);
+		expect(await row(connection)).toBeDefined();
+
+		expect(await pruneEvents(test.db, days(CONNECTION_RETENTION_DAYS + 1))).toBe(1);
+		expect(await row(connection)).toBeUndefined();
 	});
 });
