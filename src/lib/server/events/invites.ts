@@ -87,9 +87,26 @@ async function confirmedRecipients(db: AnyDb, tableId: string): Promise<Recipien
 		.where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
 }
 
+/** The event types this handler is registered for (`types` below) — never `UserSignedIn`, which
+ *  the dispatcher never routes here, but which TypeScript cannot rule out from plain `StoredEvent`. */
+type InviteEvent = Extract<
+	StoredEvent,
+	{
+		type:
+			| 'TableCreated'
+			| 'JoinRequested'
+			| 'JoinApproved'
+			| 'PlayerJoined'
+			| 'JoinDeclined'
+			| 'PlayerLeft'
+			| 'TableUpdated'
+			| 'TableDisabled';
+	}
+>;
+
 async function recipientsFor(
 	db: AnyDb,
-	event: StoredEvent,
+	event: InviteEvent,
 	table: InviteTable
 ): Promise<Recipient[]> {
 	if ('playerId' in event.payload) {
@@ -128,7 +145,7 @@ export function createInviteHandler(
 			'TableUpdated',
 			'TableDisabled'
 		],
-		async handle(event, db) {
+		async handle(event: InviteEvent, db) {
 			const table = await tableOf(db, event.payload.tableId);
 			const recipients = await recipientsFor(db, event, table);
 			const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';

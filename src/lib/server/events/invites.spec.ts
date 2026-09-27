@@ -67,6 +67,31 @@ const admin = (email = 'ana@example.com'): SupabaseAdmin => ({
 	}
 });
 
+/** For events with more than one recipient: looks up each id's own address. */
+const adminByRecipient = (byId: Record<string, string>): SupabaseAdmin => ({
+	auth: {
+		admin: {
+			getUserById: vi.fn(async (id: string) => ({
+				data: { user: { email: byId[id] } },
+				error: null
+			})),
+			deleteUser: vi.fn(async () => ({ error: null }))
+		}
+	}
+});
+
+/** TableCreated, TableUpdated and TableDisabled carry no `playerId`: their recipients come from the
+ *  table's GM and, for the latter two, its confirmed players. */
+const tableEvent = (type: 'TableCreated' | 'TableUpdated' | 'TableDisabled'): StoredEvent =>
+	({
+		id: '00000000-0000-4000-8000-000000000815',
+		type,
+		actorId: gm,
+		createdAt: new Date('2026-10-01T12:00:00Z'),
+		attempts: 0,
+		payload: { tableId, slug: 'mesa', title: 'Mesa do Dragão' }
+	}) as StoredEvent;
+
 describe('calendar invite handler', () => {
 	it('does not exist until every secret it needs is configured', () => {
 		expect(inviteHandler(undefined)).toBeNull();
@@ -183,6 +208,61 @@ describe('calendar invite handler', () => {
 		expect(sent.headers[0]).toMatchObject({
 			'Idempotency-Key': `${event('JoinRequested').id}:${gm}:notification`
 		});
+	});
+
+	it('invites only the GM when a table is created', async () => {
+		const sent = capture();
+
+		await createInviteHandler(env, sent.request, admin('mestre@example.com')).handle(
+			tableEvent('TableCreated'),
+			test.db
+		);
+
+		expect(sent.bodies).toHaveLength(1);
+		expect(sent.bodies[0]).toMatchObject({
+			to: ['mestre@example.com'],
+			subject: 'Convite: Mesa do Dragão'
+		});
+	});
+
+	it('invites the approved player, not the GM', async () => {
+		const sent = capture();
+
+		await createInviteHandler(env, sent.request, admin()).handle(event('JoinApproved'), test.db);
+
+		expect(sent.bodies).toHaveLength(1);
+		expect(sent.bodies[0]).toMatchObject({
+			to: ['ana@example.com'],
+			subject: 'Convite: Mesa do Dragão'
+		});
+	});
+
+	it('sends an updated invite to the GM and every confirmed player when the table changes', async () => {
+		await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
+		const byId = adminByRecipient({ [gm]: 'mestre@example.com', [player]: 'ana@example.com' });
+		const sent = capture();
+
+		await createInviteHandler(env, sent.request, byId).handle(tableEvent('TableUpdated'), test.db);
+
+		expect(sent.bodies.map((body) => body.to[0]).sort()).toEqual([
+			'ana@example.com',
+			'mestre@example.com'
+		]);
+		for (const body of sent.bodies) expect(body.subject).toBe('Convite: Mesa do Dragão');
+	});
+
+	it('cancels for the GM and every confirmed player when the table is disabled', async () => {
+		await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
+		const byId = adminByRecipient({ [gm]: 'mestre@example.com', [player]: 'ana@example.com' });
+		const sent = capture();
+
+		await createInviteHandler(env, sent.request, byId).handle(tableEvent('TableDisabled'), test.db);
+
+		expect(sent.bodies.map((body) => body.to[0]).sort()).toEqual([
+			'ana@example.com',
+			'mestre@example.com'
+		]);
+		for (const body of sent.bodies) expect(body.subject).toBe('Cancelada: Mesa do Dragão');
 	});
 
 	describe('with hosted Resend templates', () => {
