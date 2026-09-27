@@ -65,6 +65,10 @@
 			e-mails e outros dados pessoais são mascarados.
 		</li>
 		<li>
+			Registro de conexão: a cada vez que você entra na conta, guardamos o endereço IP, a data e a
+			hora, como pede o Marco Civil da Internet (art. 15).
+		</li>
+		<li>
 			Contadores de uso por pessoa (por exemplo, quantas mesas você abriu na última hora), para
 			limitar abusos.
 		</li>
@@ -151,7 +155,10 @@
 			Quando a conta é apagada, removemos o perfil, os links, as inscrições e as avaliações. As
 			mesas que você abriu são desativadas e somem da plataforma.
 		</li>
-		<li>Registros de acesso: por até 6 meses (Marco Civil da Internet, art. 15).</li>
+		<li>
+			Registros de conexão (IP, data e hora de cada entrada na conta) e registros de acesso: por 6
+			meses (Marco Civil da Internet, art. 15), depois são apagados.
+		</li>
 		<li>Registros internos dos avisos enviados pelas mesas: até 90 dias depois de processados.</li>
 	</ul>
 
