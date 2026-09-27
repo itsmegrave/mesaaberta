@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { atHandle } from '$lib/profile/handle';
 	import { formatSession } from '$lib/tables/format';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
@@ -51,7 +52,7 @@
 				<li
 					class="flex flex-wrap items-center justify-between gap-3 rounded bg-surface-200-800 p-2"
 				>
-					<span>{request.username}</span>
+					<span>{atHandle(request.username)}</span>
 					<div class="flex gap-4">
 						{#each [['approve', m.table_approve(), 'preset-tonal-primary'], ['decline', m.table_decline(), 'preset-tonal-error']] as [action, label, tone] (action)}
 							<ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
@@ -71,7 +72,7 @@
 		<ul class="mt-2 grid gap-2">
 			{#each item.players as player (player.playerId)}
 				<li class="flex items-center justify-between gap-3 rounded bg-surface-200-800 p-2">
-					<span>{player.username}</span>
+					<span>{atHandle(player.username)}</span>
 					<ActionForm action="{page}?/remove" playerId={player.playerId} {next}>
 						<button type="submit" class="btn preset-tonal-error btn-sm">{m.table_remove()}</button>
 					</ActionForm>

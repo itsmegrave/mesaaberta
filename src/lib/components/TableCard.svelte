@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { atHandle } from '$lib/profile/handle';
 	import { formatCardDate, formatSession } from '$lib/tables/format';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
@@ -144,7 +145,7 @@
 		</h3>
 
 		<div class="mt-2 text-[15px] leading-normal text-muted">
-			{m.table_gm()}: {table.gmName}
+			{m.table_gm()}: {atHandle(table.gmName)}
 		</div>
 
 		{#if table.modality}

@@ -116,6 +116,7 @@
 	"table_join_auto": "Você entra na hora, se houver vaga.",
 	"table_join_approval": "O mestre aprova cada entrada.",
 	"table_back": "Voltar para as mesas",
+	"table_seats_taken": "{taken} de {total} lugares",
 	"nav_main": "Navegação principal",
 	"tables_open_cta": "Abrir uma mesa",
 	"form_new_title": "Abrir uma mesa",

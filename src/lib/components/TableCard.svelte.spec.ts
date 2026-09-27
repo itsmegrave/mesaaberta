@@ -29,7 +29,7 @@ describe('TableCard', () => {
 
 		await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
 		await expect.element(page.getByText('One-shot')).toBeVisible();
-		await expect.element(page.getByText('Mestre: Mestre Ana')).toBeVisible();
+		await expect.element(page.getByText('Mestre: @Mestre Ana')).toBeVisible();
 		await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeInTheDocument();
 	});
 
