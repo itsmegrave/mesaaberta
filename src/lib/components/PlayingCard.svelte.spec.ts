@@ -25,7 +25,7 @@ describe('PlayingCard', () => {
 		await expect
 			.element(page.getByRole('link', { name: 'Mesa do Dragão' }))
 			.toHaveAttribute('href', '/tables/mesa-do-dragao');
-		await expect.element(page.getByText('Mestre: Mestra Ana')).toBeVisible();
+		await expect.element(page.getByText('Mestre: @Mestra Ana')).toBeVisible();
 		await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
 		await expect.element(page.getByText('Você tem uma vaga')).toBeVisible();
 	});

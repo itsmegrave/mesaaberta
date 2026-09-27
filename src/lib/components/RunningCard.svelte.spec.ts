@@ -33,7 +33,7 @@ describe('RunningCard', () => {
 	it('lists the players, each with a remove button that posts to the table and returns here', async () => {
 		render(RunningCard, props());
 
-		await expect.element(page.getByText('Ana')).toBeVisible();
+		await expect.element(page.getByText('@Ana')).toBeVisible();
 		const form = page.getByRole('button', { name: 'Remover' }).first().element().closest('form')!;
 
 		expect(form.getAttribute('action')).toBe('/tables/cronicas?/remove');
@@ -47,7 +47,7 @@ describe('RunningCard', () => {
 		render(RunningCard, props());
 
 		await expect.element(page.getByRole('heading', { name: 'Pedidos de vaga (1)' })).toBeVisible();
-		await expect.element(page.getByText('Caio')).toBeVisible();
+		await expect.element(page.getByText('@Caio')).toBeVisible();
 		const approve = page.getByRole('button', { name: 'Aprovar' }).element().closest('form')!;
 		const decline = page.getByRole('button', { name: 'Recusar' }).element().closest('form')!;
 
@@ -80,7 +80,7 @@ describe('RunningCard', () => {
 	it('shows names as text, never as markup', async () => {
 		render(RunningCard, props({ requests: [person(4, '<img src=x onerror=alert(1)>')] }));
 
-		await expect.element(page.getByText('<img src=x onerror=alert(1)>')).toBeVisible();
+		await expect.element(page.getByText('@<img src=x onerror=alert(1)>')).toBeVisible();
 		expect(document.querySelectorAll('img')).toHaveLength(0);
 	});
 });

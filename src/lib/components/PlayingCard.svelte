@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { atHandle } from '$lib/profile/handle';
 	import { formatSession } from '$lib/tables/format';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
@@ -40,7 +41,7 @@
 	<h3 class="mt-2 text-xl font-semibold">
 		<a href={page} class="anchor">{item.title}</a>
 	</h3>
-	<p class="mt-1 text-sm">{m.table_gm()}: {item.gmName}</p>
+	<p class="mt-1 text-sm">{m.table_gm()}: {atHandle(item.gmName)}</p>
 
 	{#if item.nextAt}
 		<p class="mt-3">

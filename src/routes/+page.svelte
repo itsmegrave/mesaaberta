@@ -271,8 +271,8 @@
 				</span>
 			</div>
 			<div>
-				<p class="text-sm font-semibold text-muted">Tormenta 20 (T20) · Mestre: Bruno Leal</p>
-				<p class="mt-0.5 text-2xl leading-[1.15] font-semibold">Guardiões de Arton</p>
+				<p class="text-sm font-semibold text-muted">Daggerheart · Mestre: @bruno-leal</p>
+				<p class="mt-0.5 text-2xl leading-[1.15] font-semibold">Os Sinos de Sablewood</p>
 			</div>
 			<p class="flex items-start gap-2.5 text-base leading-[1.45] md:text-[17px]">
 				<svg
@@ -352,7 +352,10 @@
 			class="mt-6 flex flex-col gap-4 rounded-lg bg-panel p-5 text-surface-950-50 md:mt-auto md:p-[26px]"
 		>
 			<div class="flex items-center justify-between gap-3">
-				<span class="text-lg font-semibold md:text-[22px]">A Torre das Marés Mortas</span>
+				<span>
+					<span class="block text-sm font-semibold text-muted">Urban Shadows 2e</span>
+					<span class="text-lg font-semibold md:text-[22px]">Noites de Neon</span>
+				</span>
 				<span
 					class="chip h-[26px] shrink-0 rounded-full border border-surface-200-800 px-3 text-[13px] font-semibold"
 					>Campanha</span
@@ -385,7 +388,7 @@
 							class="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-tertiary-400 text-sm font-bold text-surface-950"
 							>L</span
 						>
-						Lucas Ferreira
+						@lucas-ferreira
 					</span>
 					<span class="hidden items-center gap-2 md:flex">
 						<span
