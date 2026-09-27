@@ -12,6 +12,9 @@ export const TABLE_LIMITS = {
 	extraInfo: 2000,
 	welcomeMessage: WELCOME_MESSAGE_MAX,
 	capacity: { min: 1, max: 30 },
+	// Mirror the length checks on game_tables.
+	locationArea: 120,
+	joinDetails: 1000,
 	durationMinutes: { min: 15, max: 1440 }
 } as const;
 
@@ -60,9 +63,15 @@ export const tableFormSchema = z
 		durationMinutes: whole(TABLE_LIMITS.durationMinutes.min, TABLE_LIMITS.durationMinutes.max),
 		repeat: z.string().default(''),
 		until: z.string().default(''),
-		joinMode: z.enum(['auto', 'approval']).default('auto')
+		joinMode: z.enum(['auto', 'approval']).default('auto'),
+		modality: z.enum(['online', 'in_person']).default('online'),
+		locationArea: text(TABLE_LIMITS.locationArea).default(''),
+		joinDetails: text(TABLE_LIMITS.joinDetails).default('')
 	})
 	.superRefine((value, ctx) => {
+		if (value.modality === 'in_person' && !value.locationArea) {
+			ctx.addIssue({ code: 'custom', message: 'required', path: ['locationArea'] });
+		}
 		if (value.kind !== 'campaign') return;
 
 		if (!(value.repeat in RULES)) {
@@ -92,15 +101,22 @@ export type TableInput = {
 	/** Last day of a campaign, as `YYYY-MM-DD` in `timezone`. */
 	untilLocalDate: string | null;
 	joinMode: 'auto' | 'approval';
+	modality: 'online' | 'in_person';
+	/** Neighbourhood and city of an in-person table; public. Null online. */
+	locationArea: string | null;
+	/** How to join (link or address); private to the GM and the confirmed players. */
+	joinDetails: string | null;
 };
 
 /** The validated form as what the domain wants: a repeat rule instead of a word, no empty strings. */
 export function toTableInput(values: z.output<typeof tableFormSchema>): TableInput {
-	const { repeat, until, extraInfo, welcomeMessage, ...rest } = values;
+	const { repeat, until, extraInfo, welcomeMessage, locationArea, joinDetails, ...rest } = values;
 	const campaign = rest.kind === 'campaign';
 
 	return {
 		...rest,
+		locationArea: rest.modality === 'in_person' ? locationArea : null,
+		joinDetails: joinDetails || null,
 		extraInfo: extraInfo || null,
 		welcomeMessage: welcomeMessage || null,
 		recurrence: campaign ? RULES[repeat as keyof typeof RULES] : null,

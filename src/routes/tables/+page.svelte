@@ -9,6 +9,23 @@
 	const locale = getLocale();
 	const listHref = localizedHref('/tables', locale);
 
+	/** The list's query string with one filter changed and the other kept. */
+	const query = (filters: { system?: string | null; modality?: string | null }) => {
+		const system = 'system' in filters ? filters.system : data.selected;
+		const modality = 'modality' in filters ? filters.modality : data.modality;
+		const parts = [
+			system ? `system=${encodeURIComponent(system)}` : '',
+			modality ? `modality=${modality}` : ''
+		].filter(Boolean);
+		return parts.length > 0 ? `?${parts.join('&')}` : '';
+	};
+
+	const modalities = [
+		{ value: null, label: m.tables_filter_modality_all },
+		{ value: 'online', label: m.table_modality_online },
+		{ value: 'in_person', label: m.table_modality_in_person }
+	] as const;
+
 	const more = $derived(
 		data.systems.filter((system) => !data.featured.some((f) => f.slug === system.slug))
 	);
@@ -78,13 +95,13 @@
 		<div class="md:flex md:flex-wrap md:gap-2.5">
 			<div class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:contents">
 				<a
-					href={listHref}
+					href={localizedHref(`/tables${query({ system: null })}`, locale)}
 					aria-current={data.selected ? undefined : 'page'}
 					class={data.selected ? chipIdle : chipActive}>{m.tables_filter_all()}</a
 				>
 				{#each data.featured as system (system.slug)}
 					<a
-						href={localizedHref(`/tables?system=${encodeURIComponent(system.slug)}`, locale)}
+						href={localizedHref(`/tables${query({ system: system.slug })}`, locale)}
 						aria-current={system.slug === data.selected ? 'page' : undefined}
 						class={system.slug === data.selected ? chipActive : chipIdle}>{system.name}</a
 					>
@@ -132,7 +149,7 @@
 						{#each more as system (system.slug)}
 							<li>
 								<a
-									href={localizedHref(`/tables?system=${encodeURIComponent(system.slug)}`, locale)}
+									href={localizedHref(`/tables${query({ system: system.slug })}`, locale)}
 									class="flex min-h-11 items-center rounded-lg px-3 font-semibold no-underline hover:preset-tonal"
 									>{system.name}</a
 								>
@@ -141,6 +158,24 @@
 					</ul>
 				</details>
 			{/if}
+		</div>
+	</div>
+
+	<div role="group" aria-labelledby="modality-filter" class="mt-4 md:flex md:items-start md:gap-5">
+		<span
+			id="modality-filter"
+			class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
+		>
+			{m.tables_filter_modality()}
+		</span>
+		<div class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:gap-2.5 md:px-0">
+			{#each modalities as option (option.value)}
+				<a
+					href={localizedHref(`/tables${query({ modality: option.value })}`, locale)}
+					aria-current={option.value === data.modality ? 'page' : undefined}
+					class={option.value === data.modality ? chipActive : chipIdle}>{option.label()}</a
+				>
+			{/each}
 		</div>
 	</div>
 

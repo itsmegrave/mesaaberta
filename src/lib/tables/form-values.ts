@@ -21,7 +21,10 @@ export const NEW_TABLE_VALUES: TableFormValues = {
 	durationMinutes: 240,
 	repeat: 'weekly',
 	until: '',
-	joinMode: 'auto'
+	joinMode: 'auto',
+	modality: 'online',
+	locationArea: '',
+	joinDetails: ''
 };
 
 /** The sentence for a problem that is about the whole form, not one field; null when there is none. */

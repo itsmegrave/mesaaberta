@@ -22,6 +22,8 @@ const columns = {
 	recurrence: gameTables.recurrence,
 	until: gameTables.until,
 	joinMode: gameTables.joinMode,
+	modality: gameTables.modality,
+	locationArea: gameTables.locationArea,
 	systemName: systems.name,
 	systemSlug: systems.slug,
 	// Seats taken: confirmed registrations only. A pending request takes none.
@@ -90,4 +92,17 @@ export async function findTableBySlug(
 	const [row] = await query(db, and(eq(gameTables.slug, slug), eq(gameTables.status, 'active')));
 
 	return row ? shape(row, now) : null;
+}
+
+/**
+ * How to join a table (the link or the address). Private: call it only for the GM and the
+ * confirmed players; the public queries above never select it.
+ */
+export async function joinDetailsOf(db: AnyDb, tableId: string): Promise<string | null> {
+	const [row] = await db
+		.select({ joinDetails: gameTables.joinDetails })
+		.from(gameTables)
+		.where(eq(gameTables.id, tableId));
+
+	return row?.joinDetails ?? null;
 }

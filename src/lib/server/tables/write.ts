@@ -44,7 +44,10 @@ async function columnsOf(db: AnyDb, input: TableInput) {
 		until: input.untilLocalDate
 			? localToInstant(`${input.untilLocalDate}T23:59`, input.timezone)
 			: null,
-		joinMode: input.joinMode
+		joinMode: input.joinMode,
+		modality: input.modality,
+		locationArea: input.locationArea,
+		joinDetails: input.joinDetails
 	};
 }
 
@@ -138,6 +141,9 @@ export async function loadTableForEdit(db: AnyDb, actor: Actor | null, slug: str
 			table.recurrence === 'FREQ=WEEKLY;INTERVAL=2' ? 'biweekly' : table.recurrence ? 'weekly' : '',
 		until: table.until ? instantToLocal(table.until, table.timezone).slice(0, 10) : '',
 		joinMode: table.joinMode,
+		modality: table.modality,
+		locationArea: table.locationArea ?? '',
+		joinDetails: table.joinDetails ?? '',
 		imagePath: table.imagePath
 	};
 }

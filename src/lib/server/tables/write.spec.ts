@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { events, gameTables, profiles } from '../db/schema';
 import { createTestDb, pgErrorCode } from '../db/test-db';
-import { findTableBySlug, listUpcomingTables } from './queries';
+import { findTableBySlug, joinDetailsOf, listUpcomingTables } from './queries';
 import { createTable, disableTable, loadTableForEdit, updateTable } from './write';
 import type { TableInput } from '$lib/tables/schema';
 import type { Actor } from '../auth/policy';
@@ -30,6 +30,9 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
 	recurrence: null,
 	untilLocalDate: null,
 	joinMode: 'auto',
+	modality: 'online',
+	locationArea: null,
+	joinDetails: null,
 	...over
 });
 
@@ -330,6 +333,45 @@ describe('welcome message', () => {
 
 		expect(await findTableBySlug(test.db, slug, now)).not.toHaveProperty('welcomeMessage');
 		expect(JSON.stringify(await findTableBySlug(test.db, slug, now))).not.toContain('WhatsApp');
+	});
+});
+
+describe('modality', () => {
+	it('stores an in-person table with its public area and its private join details', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({
+				title: 'Na Mesa de Casa',
+				modality: 'in_person',
+				locationArea: 'Boa Viagem, Recife',
+				joinDetails: 'Rua das Flores, 10, ap. 302'
+			}),
+			{ now }
+		);
+
+		const table = await findTableBySlug(test.db, slug, now);
+		expect(table).toMatchObject({ modality: 'in_person', locationArea: 'Boa Viagem, Recife' });
+		// The address is private: never on the public page.
+		expect(table).not.toHaveProperty('joinDetails');
+		expect(JSON.stringify(table)).not.toContain('Rua das Flores');
+		expect(await joinDetailsOf(test.db, table!.id)).toBe('Rua das Flores, 10, ap. 302');
+		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({
+			modality: 'in_person',
+			locationArea: 'Boa Viagem, Recife',
+			joinDetails: 'Rua das Flores, 10, ap. 302'
+		});
+	});
+
+	it('cannot be in person without an area, as the database insists', async () => {
+		const rejected = createTable(
+			test.db,
+			ana,
+			input({ title: 'Sem Lugar', modality: 'in_person', locationArea: null }),
+			{ now }
+		);
+
+		expect(await pgErrorCode(rejected)).toBe('23514');
 	});
 });
 

@@ -308,7 +308,7 @@ Capacity holds under concurrency because each operation that can take a seat fir
 
 ## Domain events
 
-Every change that matters writes an event to the `events` table in the same database transaction as the change (a transactional outbox), so there is never a change without its record or a record without its change. The same table is the audit log: who (`actor_id`) did what (`type`, `payload`) and when. Rows are never deleted, and a payload holds ids and public facts only, never an email address or a token.
+Every change that matters writes an event to the `events` table in the same database transaction as the change (a transactional outbox), so there is never a change without its record or a record without its change. The same table is the audit log: who (`actor_id`) did what (`type`, `payload`) and when. A row is kept for 90 days after it finishes (processed or given up on), then the sweeper deletes it (`RETENTION_DAYS`, the period the privacy policy promises); a payload holds ids and public facts only, never an email address or a token.
 
 After the commit, the request dispatches the event to the registered handlers (`src/lib/server/events/handlers.ts`) once the response is on its way, so nobody waits for a handler. Handlers run at least once, so each must be **idempotent**: `event.id` is the key to make a repeat do nothing new. A retry runs only the handlers that have not succeeded yet.
 
@@ -331,7 +331,7 @@ Any signed-in member may open a table and join one, so both are limited per pers
 | `TABLE_CREATION_LIMIT` | `TableCreated` events            | 5 in any 60 minutes  |
 | `JOIN_LIMIT`           | `PlayerJoined` + `JoinRequested` | 20 in any 60 minutes |
 
-Workers keep nothing in memory between requests, so nothing is cached: the count is read from the `events` table, which already has a row per creation and per join, is never deleted, and is indexed by `(actor_id, created_at)`. There is no extra table to clean up. Leaving a table and joining again counts as a new join. Admins get no exemption, because the policy gives them no special right to open or join tables.
+Workers keep nothing in memory between requests, so nothing is cached: the count is read from the `events` table, which already has a row per creation and per join, keeps it far longer than the hour a limit looks back, and is indexed by `(actor_id, created_at)`. There is no extra table to clean up. Leaving a table and joining again counts as a new join. Admins get no exemption, because the policy gives them no special right to open or join tables.
 
 `enforceRateLimit(tx, actorId, LIMIT)` is called in the same transaction as the write it limits, after validation and the policy checks: a refused request writes nothing and never uses the limit up (a full table or a form with errors does not count). It takes a per-person advisory lock, so two simultaneous requests cannot both slip through on the last slot. It throws `RateLimited`, which `failFrom` turns into a `429` form failure carrying `retryAfter` (seconds until one use ages out); the page shows "Tente de novo em 15 min", and the response has a `Retry-After` header. `checkRateLimit` is the same check without the lock, for a cheap look before costly work: the create form uses it so a limited person does not upload an image first.
 

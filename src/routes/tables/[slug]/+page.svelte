@@ -127,6 +127,13 @@
 		<dt class="font-semibold">{m.table_gm()}</dt>
 		<dd>{table.gmName}</dd>
 
+		<dt class="font-semibold">{m.table_modality()}</dt>
+		<dd>
+			{table.modality === 'in_person'
+				? `${m.table_modality_in_person()} · ${table.locationArea}`
+				: m.table_modality_online()}
+		</dd>
+
 		<dt class="font-semibold">{m.table_next_session()}</dt>
 		<dd>
 			{#if table.nextAt}
@@ -151,6 +158,17 @@
 	{#if table.extraInfo}
 		<h2 class="mt-8 text-2xl font-semibold">{m.table_extra_info()}</h2>
 		<p class="mt-2 max-w-[65ch] whitespace-pre-line">{table.extraInfo}</p>
+	{/if}
+
+	{#if data.joinDetails}
+		<section
+			aria-labelledby="join-details"
+			class="mt-8 max-w-[65ch] rounded-lg border border-surface-200-800 bg-panel p-5"
+		>
+			<h2 id="join-details" class="text-xl font-semibold">{m.table_join_details()}</h2>
+			<p class="mt-2 break-words whitespace-pre-line">{data.joinDetails}</p>
+			<p class="mt-3 text-sm text-muted">{m.table_join_details_private()}</p>
+		</section>
 	{/if}
 
 	<p class="mt-8">

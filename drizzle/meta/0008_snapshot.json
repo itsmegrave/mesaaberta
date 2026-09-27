@@ -188,6 +188,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "welcome_message": {
+          "name": "welcome_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "kind": {
           "name": "kind",
           "type": "table_kind",
@@ -357,6 +363,10 @@
         "game_tables_duration_positive": {
           "name": "game_tables_duration_positive",
           "value": "\"game_tables\".\"duration_minutes\" > 0"
+        },
+        "game_tables_welcome_message_length": {
+          "name": "game_tables_welcome_message_length",
+          "value": "char_length(\"game_tables\".\"welcome_message\") <= 1000"
         }
       },
       "isRLSEnabled": true

@@ -8,8 +8,11 @@ const FEATURED_SYSTEMS = 3;
 
 export const load: PageServerLoad = async ({ locals, url, platform }) => {
 	const selected = url.searchParams.get('system') || null;
+	const modalityParam = url.searchParams.get('modality');
+	const modality =
+		modalityParam === 'online' || modalityParam === 'in_person' ? modalityParam : null;
 	// No database yet (see the README): the page still renders, with nothing to list.
-	if (!locals.db) return { tables: [], systems: [], featured: [], selected };
+	if (!locals.db) return { tables: [], systems: [], featured: [], selected, modality };
 
 	const [upcoming, systems] = await Promise.all([
 		listUpcomingTables(locals.db, new Date()),
@@ -31,7 +34,10 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 	const picked = ranked.find((system) => system.slug === selected);
 	if (picked && !featured.includes(picked)) featured.push(picked);
 
-	const tables = selected ? upcoming.filter((table) => table.system.slug === selected) : upcoming;
+	const tables = upcoming.filter(
+		(table) =>
+			(!selected || table.system.slug === selected) && (!modality || table.modality === modality)
+	);
 
 	return {
 		// gmId stays on the server: the page only needs the GM's name.
@@ -42,6 +48,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 		})),
 		systems: ranked,
 		featured,
-		selected
+		selected,
+		modality
 	};
 };
