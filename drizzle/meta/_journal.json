@@ -78,6 +78,13 @@
       "when": 1790512885267,
       "tag": "0010_table_modality",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790513611197,
+      "tag": "0011_profile_avatar_path",
+      "breakpoints": true
     }
   ]
 }

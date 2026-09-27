@@ -148,6 +148,15 @@ export const load = async ({ locals, url }) => {
 
 Profile pictures are shown from Google's and Discord's image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`).
 
+**Profile pictures.** A person can upload their own picture on `/account/profile` (same checks as table images: 2 MB, PNG, JPEG or WebP by its first bytes). It goes to the public `profile-avatars` bucket under a folder named after their user id, and it wins over the provider's picture; removing it goes back to the provider's, and a replaced file is deleted. The picture shown is `pictureOf()` in `src/lib/server/images.ts`. One-time setup in the Supabase SQL editor (the bucket exists in production; the local stack gets both from `config.toml` and `seed.sql`):
+
+```sql
+create policy "users manage their own avatar" on storage.objects
+  for all to authenticated
+  using (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+```
+
 To offer another provider later (Apple, Facebook, ...), enable it in Supabase, add it to `providers` in `src/lib/auth/providers.ts` and to the buttons on the login page, and allow its picture host in `img-src` if it sends one.
 
 ## Authorization

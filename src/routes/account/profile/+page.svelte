@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import ProfileForm from '$lib/components/ProfileForm.svelte';
 	import { localizedHref } from '$lib/i18n/locales';
@@ -12,6 +13,15 @@
 
 	const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
 	const heading = 'text-2xl leading-tight font-semibold tracking-[-0.02em] md:text-[26px]';
+
+	const photoNotice = $derived(page.url.searchParams.get('foto'));
+
+	const photoErrors: Record<string, () => string> = {
+		empty: m.account_photo_error_empty,
+		too_big: m.account_photo_error_too_big,
+		not_an_image: m.account_photo_error_type,
+		upload_failed: m.account_photo_error_failed
+	};
 
 	const check = 'M5 12.5l4.5 4.5L19 7.5';
 	const cross = 'M6 6l12 12M18 6L6 18';
@@ -49,11 +59,55 @@
 
 	<div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
 		<div class="grid gap-6">
-			<section aria-labelledby="photo" class={card}>
-				<h2 id="photo" class={heading}>{m.account_photo()}</h2>
-				<div class="mt-5 flex items-center gap-5">
+			<section aria-labelledby="photo-heading" class={card}>
+				<h2 id="photo-heading" class={heading}>{m.account_photo()}</h2>
+				<div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
 					<Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
-					<p class="max-w-[46ch] text-[15px] text-muted">{m.account_photo_hint()}</p>
+					<div class="grid gap-3">
+						<form
+							method="POST"
+							action="?/photo"
+							enctype="multipart/form-data"
+							class="flex flex-wrap items-center gap-3"
+						>
+							<label for="photo" class="sr-only">{m.account_photo_file()}</label>
+							<input
+								id="photo"
+								name="photo"
+								type="file"
+								accept="image/png,image/jpeg,image/webp"
+								aria-describedby="photo-hint{form?.photoError ? ' photo-error' : ''}"
+								class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-[1.5px] file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
+							/>
+							<button
+								type="submit"
+								class="btn h-11 rounded-lg border-[1.5px] border-surface-950-50 px-4 font-semibold"
+								>{m.account_photo_upload()}</button
+							>
+						</form>
+						{#if data.hasUploadedPhoto}
+							<form method="POST" action="?/removePhoto">
+								<button
+									type="submit"
+									class="btn h-11 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+									>{m.account_photo_remove()}</button
+								>
+							</form>
+						{/if}
+						<p id="photo-hint" class="max-w-[52ch] text-[15px] text-muted">
+							{m.account_photo_hint()}
+						</p>
+						{#if form?.photoError}
+							<p id="photo-error" role="alert" class="text-sm font-semibold text-error-700-300">
+								{photoErrors[form.photoError]?.() ?? m.account_photo_error_failed()}
+							</p>
+						{/if}
+						{#if photoNotice}
+							<p role="status" class="text-sm font-semibold">
+								{photoNotice === 'salva' ? m.account_photo_saved() : m.account_photo_removed()}
+							</p>
+						{/if}
+					</div>
 				</div>
 			</section>
 
