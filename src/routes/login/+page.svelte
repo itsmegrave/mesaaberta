@@ -3,6 +3,7 @@
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import { resolve } from '$app/paths';
 	import CredentialsForm from '$lib/components/CredentialsForm.svelte';
+	import LegalConsent from '$lib/components/LegalConsent.svelte';
 	import ProviderButtons from '$lib/components/ProviderButtons.svelte';
 	import TableIllustration from '$lib/components/TableIllustration.svelte';
 	import { credentialsSchema } from '$lib/auth/credentials';
@@ -57,6 +58,8 @@
 					</p>
 
 					<ProviderButtons next={data.next} />
+
+					<LegalConsent mode="login" />
 
 					<p>
 						{m.login_no_account()}
