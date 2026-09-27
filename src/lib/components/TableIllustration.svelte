@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages';
 
+	// On the blue panel of the sign-in pages the tabletop is a shade instead of blue, and the lamp
+	// colours are the light ones.
+	let { onBrand = false }: { onBrand?: boolean } = $props();
+
 	const centre = 200;
 	const orbit = 150;
 
@@ -33,11 +37,16 @@
 		cx={centre}
 		cy={centre}
 		r="186"
-		class="fill-none stroke-lamp"
+		class="fill-none {onBrand ? 'stroke-warning-300' : 'stroke-lamp'}"
 		stroke-opacity="0.28"
 		stroke-width="2"
 	/>
-	<circle cx={centre} cy={centre} r="104" class="table-top fill-primary-500" />
+	<circle
+		cx={centre}
+		cy={centre}
+		r="104"
+		class={onBrand ? 'fill-black/26' : 'table-top fill-primary-500'}
+	/>
 	<g transform="rotate(-12 {centre} {centre})">
 		<rect x="152" y="170" width="96" height="60" rx="4" class="fill-white" />
 		<path d="M164 190h44M164 202h60M164 214h30" class="stroke-surface-950/40" stroke-width="3" />
@@ -54,7 +63,12 @@
 
 	<g transform="translate({emptySeat.x} {emptySeat.y})">
 		<g data-seat={players.length}>
-			<circle r="28" class="fill-lamp-wash stroke-lamp" stroke-width="3.5" stroke-dasharray="7 8" />
+			<circle
+				r="28"
+				class={onBrand ? 'fill-warning-500/14 stroke-warning-300' : 'fill-lamp-wash stroke-lamp'}
+				stroke-width="3.5"
+				stroke-dasharray="7 8"
+			/>
 		</g>
 	</g>
 </svg>

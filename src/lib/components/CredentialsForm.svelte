@@ -24,7 +24,7 @@
 	};
 </script>
 
-<form method="POST" {action} use:enhance class="grid max-w-sm gap-5">
+<form method="POST" {action} use:enhance class="grid gap-[18px]">
 	{#if $message && messages[$message.code]}
 		<p role="alert" class="font-semibold text-error-700-300">{messages[$message.code]()}</p>
 	{/if}
@@ -43,7 +43,7 @@
 			required
 			autocomplete="email"
 			bind:value={$form.email}
-			class="input"
+			class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
 			aria-invalid={$errors.email ? 'true' : undefined}
 		/>
 	</FormField>
@@ -63,13 +63,17 @@
 			maxlength="72"
 			autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
 			bind:value={$form.password}
-			class="input"
+			class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
 			aria-invalid={$errors.password ? 'true' : undefined}
 		/>
 	</FormField>
 
 	<div>
-		<button type="submit" class="btn w-full preset-filled-primary-500" aria-busy={$delayed}>
+		<button
+			type="submit"
+			class="btn h-[54px] w-full rounded-lg preset-filled-primary-500 text-[17px] font-semibold"
+			aria-busy={$delayed}
+		>
 			{mode === 'signup' ? m.signup_submit() : m.login_submit()}
 		</button>
 	</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AuthShell from '$lib/components/AuthShell.svelte';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import { resolve } from '$app/paths';
@@ -29,18 +30,20 @@
 	<title>{m.reset_title()}</title>
 </svelte:head>
 
-<section class="py-16 md:py-24">
+<AuthShell
+	title={data.done ? m.reset_done_title() : m.reset_title()}
+	lede={data.done ? undefined : m.reset_lede()}
+>
 	{#if data.done}
-		<h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{m.reset_done_title()}</h1>
-		<p role="status" class="mt-4 max-w-[44ch] text-lg">{m.reset_done_text()}</p>
-		<a href={localizedHref('/tables', getLocale())} class="mt-6 inline-block anchor">
+		<p role="status" class="max-w-[44ch] text-lg">{m.reset_done_text()}</p>
+		<a
+			href={localizedHref('/tables', getLocale())}
+			class="mt-6 inline-block link-underline font-semibold text-link"
+		>
 			{m.reset_done_link()}
 		</a>
 	{:else}
-		<h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{m.reset_title()}</h1>
-		<p class="mt-4 max-w-[44ch] text-lg">{m.reset_lede()}</p>
-
-		<form method="POST" use:enhance class="mt-8 grid max-w-sm gap-5">
+		<form method="POST" use:enhance class="grid gap-[18px]">
 			{#if problem}<p role="alert" class="font-semibold text-error-700-300">{problem}</p>{/if}
 
 			<FormField
@@ -58,7 +61,7 @@
 					maxlength="72"
 					autocomplete="new-password"
 					bind:value={$form.password}
-					class="input"
+					class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
 					aria-invalid={$errors.password ? 'true' : undefined}
 				/>
 			</FormField>
@@ -77,13 +80,17 @@
 					maxlength="72"
 					autocomplete="new-password"
 					bind:value={$form.passwordConfirm}
-					class="input"
+					class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
 					aria-invalid={$errors.passwordConfirm ? 'true' : undefined}
 				/>
 			</FormField>
 
 			<div>
-				<button type="submit" class="btn w-full preset-filled-primary-500" aria-busy={$delayed}>
+				<button
+					type="submit"
+					class="btn h-[54px] w-full rounded-lg preset-filled-primary-500 text-[17px] font-semibold"
+					aria-busy={$delayed}
+				>
 					{m.reset_submit()}
 				</button>
 			</div>
@@ -91,4 +98,4 @@
 
 		<p class="mt-8"><a href={resolve('/login')} class="anchor">{m.forgot_back()}</a></p>
 	{/if}
-</section>
+</AuthShell>
