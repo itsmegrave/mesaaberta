@@ -79,7 +79,7 @@
 		</li>
 		<li>
 			<strong>Dados opcionais do perfil</strong>: seu consentimento, dado ao preencher o campo. Você
-			pode pedir que sejam apagados a qualquer momento.
+			pode apagá-los a qualquer momento na página do perfil.
 		</li>
 		<li>
 			<strong>Segurança, prevenção de abuso e correção de erros</strong>: legítimo interesse (art.
@@ -162,9 +162,11 @@
 		<li>reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</li>
 	</ul>
 	<p>
-		Para qualquer um desses pedidos, inclusive apagar a conta ou receber uma cópia dos seus dados,
-		escreva para <a href="mailto:{controller.email}">{controller.email}</a> a partir do e-mail da sua
-		conta. Respondemos em até 15 dias.
+		Na <a href={localizedHref('/account/profile', locale)}>página do seu perfil</a> você corrige os
+		seus dados, baixa uma cópia de tudo em JSON e apaga a conta. Para os outros pedidos, escreva
+		para
+		<a href="mailto:{controller.email}">{controller.email}</a> a partir do e-mail da sua conta. Respondemos
+		em até 15 dias.
 	</p>
 
 	<h2>Segurança</h2>

@@ -140,7 +140,7 @@ describe('+layout.svelte', () => {
 
 			await expect
 				.element(accountMenu().getByRole('link', { name: 'Perfil' }))
-				.toHaveAttribute('href', '/perfil');
+				.toHaveAttribute('href', '/account/profile');
 			await expect
 				.element(accountMenu().getByRole('link', { name: 'Minhas mesas' }))
 				.toHaveAttribute('href', '/account/tables');

@@ -24,7 +24,7 @@ describe('AccountMenu.svelte', () => {
 		await expect.element(page.getByTestId('account-user-name')).toHaveTextContent('Marina Alves');
 		await expect
 			.element(menu().getByRole('link', { name: 'Perfil' }))
-			.toHaveAttribute('href', '/perfil');
+			.toHaveAttribute('href', '/account/profile');
 		await expect
 			.element(menu().getByRole('link', { name: 'Minhas mesas' }))
 			.toHaveAttribute('href', '/account/tables');

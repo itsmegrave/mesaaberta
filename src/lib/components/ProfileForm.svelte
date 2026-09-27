@@ -14,6 +14,11 @@
 	type Props = {
 		form: SuperValidated<ProfileInput>;
 		action?: string;
+		/** On the profile page the username is shown but cannot change: it was chosen at onboarding. */
+		usernameLocked?: boolean;
+		submitLabel?: string;
+		/** Called after a save that stays on the page (the profile page), to confirm it. */
+		onsaved?: () => void;
 		/** Asks the server if a (well formed) username is free. Replaced in tests. */
 		checkUsername?: (username: string, signal: AbortSignal) => Promise<Availability>;
 	};
@@ -28,18 +33,28 @@
 		return ((await response.json()) as { status: Availability }).status;
 	};
 
-	let { form: initial, action, checkUsername = askServer }: Props = $props();
+	let {
+		form: initial,
+		action,
+		usernameLocked = false,
+		submitLabel,
+		onsaved,
+		checkUsername = askServer
+	}: Props = $props();
 
 	// The form is set up once with what the server loaded; superforms keeps it up to date after that.
 	// svelte-ignore state_referenced_locally
 	const { form, errors, allErrors, enhance, submitting } = superForm(initial, {
 		validators: zod4Client(profileSchema),
-		resetForm: false
+		resetForm: false,
+		onUpdated: ({ form }) => {
+			if (form.valid) onsaved?.();
+		}
 	});
 
-	const input = 'block w-full rounded border border-ink/60 bg-surface px-3 py-2';
+	const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
 	const secondary =
-		'rounded border border-ink/60 px-3 py-1 font-semibold hover:bg-petrol/10 disabled:opacity-50';
+		'btn h-11 min-w-11 rounded-lg border-[1.5px] border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
 
 	const ERRORS: Record<string, () => string> = {
 		required: m.profile_error_required,
@@ -107,7 +122,8 @@
 	}
 
 	// A username that arrives already filled in (a suggestion made from the sign-in name) is checked too.
-	if ($form.username !== '') usernameChanged();
+	// svelte-ignore state_referenced_locally
+	if ($form.username !== '' && !usernameLocked) usernameChanged();
 
 	const usernameError = $derived(
 		errorText($errors.username?.[0]) ??
@@ -165,14 +181,14 @@
      own words, and stop superforms from validating (it skips a form the browser is asked to check). -->
 <form method="POST" {action} use:enhance class="grid max-w-xl gap-6">
 	{#if $allErrors.length > 0}
-		<p role="alert" class="text-danger font-semibold">{m.profile_error_form()}</p>
+		<p role="alert" class="font-semibold text-error-700-300">{m.profile_error_form()}</p>
 	{/if}
 
 	<FormField
 		id="username"
 		label={m.profile_username()}
-		hint={m.profile_username_hint()}
-		error={usernameError}
+		hint={usernameLocked ? m.profile_username_locked_hint() : m.profile_username_hint()}
+		error={usernameLocked ? undefined : usernameError}
 	>
 		<input
 			id="username"
@@ -185,12 +201,17 @@
 			spellcheck="false"
 			bind:value={$form.username}
 			oninput={usernameChanged}
-			class={input}
+			readonly={usernameLocked}
+			class="{input} {usernameLocked ? 'bg-surface-950/5 text-muted dark:bg-surface-50/5' : ''}"
 			aria-invalid={usernameError ? 'true' : undefined}
 			aria-describedby={usernameDescription}
 		/>
 		<!-- Announced politely as the check finishes; it never blocks the form. -->
-		<p id="username-status" role="status" class="mt-1 min-h-6 text-sm">
+		<p
+			id="username-status"
+			role="status"
+			class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
+		>
 			{#if availability === 'checking'}
 				{m.profile_username_checking()}
 			{:else if availability === 'free'}
@@ -282,7 +303,7 @@
 		<p id="links-hint" class="text-sm">{m.profile_links_hint()}</p>
 
 		{#if listError()}
-			<p role="alert" class="text-danger text-sm font-semibold">{listError()}</p>
+			<p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
 		{/if}
 
 		{#if ids.length === 0}
@@ -293,7 +314,7 @@
 			{#each ids as id, index (id)}
 				{@const urlError = itemError('linkUrl', index)}
 				{@const networkError = itemError('linkNetwork', index)}
-				<li class="border-ink/30 grid gap-2 rounded border p-3">
+				<li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
 					<div class="grid gap-2 sm:grid-cols-[10rem_1fr]">
 						<!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
 						<select
@@ -323,7 +344,7 @@
 						/>
 					</div>
 					{#if urlError || networkError}
-						<p id="link-error-{id}" role="alert" class="text-danger text-sm font-semibold">
+						<p id="link-error-{id}" role="alert" class="text-sm font-semibold text-error-700-300">
 							{urlError ?? networkError}
 						</p>
 					{/if}
@@ -377,9 +398,9 @@
 		<button
 			type="submit"
 			disabled={$submitting}
-			class="bg-petrol text-on-petrol w-full rounded px-5 py-3 font-semibold disabled:opacity-60 sm:w-auto"
+			class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
 		>
-			{m.profile_submit()}
+			{submitLabel ?? m.profile_submit()}
 		</button>
 	</div>
 </form>

@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * The only privileged Auth operation email notifications need. Keeping this narrow prevents a
- * privileged client from spreading through application code.
+ * The only privileged Auth operations the app needs: reading an address for a notification, and
+ * deleting the user when they close their account. Keeping this narrow prevents a privileged
+ * client from spreading through application code.
  */
 export type SupabaseAdmin = {
 	auth: {
@@ -11,9 +12,24 @@ export type SupabaseAdmin = {
 				data: { user: { email?: string | null } | null };
 				error: { message: string } | null;
 			}>;
+			deleteUser(id: string): Promise<{ error: { message: string } | null }>;
 		};
 	};
 };
+
+type AdminEnv = {
+	SUPABASE_URL?: string;
+	SUPABASE_SECRET_KEY?: string;
+	/** The legacy name of the secret key. */
+	SUPABASE_SERVICE_ROLE_KEY?: string;
+};
+
+/** The admin client, or null when the secrets are not configured (local development). */
+export function supabaseAdminFrom(env: AdminEnv | undefined): SupabaseAdmin | null {
+	const secretKey = env?.SUPABASE_SECRET_KEY || env?.SUPABASE_SERVICE_ROLE_KEY;
+	if (!env?.SUPABASE_URL || !secretKey) return null;
+	return createSupabaseAdmin(env.SUPABASE_URL, secretKey);
+}
 
 /**
  * A server-only Supabase client for Auth Admin operations. `secretKey` is a Supabase secret key
@@ -39,4 +55,10 @@ export async function emailOf(admin: SupabaseAdmin, userId: string): Promise<str
 		throw new Error('Supabase user has no email address');
 	}
 	return data.user.email;
+}
+
+/** Deletes the Auth user, their email and sign-in methods with it. */
+export async function deleteAuthUser(admin: SupabaseAdmin, userId: string): Promise<void> {
+	const { error } = await admin.auth.admin.deleteUser(userId);
+	if (error) throw new Error(`Supabase Admin request failed: ${error.message}`);
 }

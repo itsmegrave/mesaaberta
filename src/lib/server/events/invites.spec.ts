@@ -59,7 +59,12 @@ const env = {
 };
 
 const admin = (email = 'ana@example.com'): SupabaseAdmin => ({
-	auth: { admin: { getUserById: vi.fn(async () => ({ data: { user: { email } }, error: null })) } }
+	auth: {
+		admin: {
+			getUserById: vi.fn(async () => ({ data: { user: { email } }, error: null })),
+			deleteUser: vi.fn(async () => ({ error: null }))
+		}
+	}
 });
 
 describe('calendar invite handler', () => {
