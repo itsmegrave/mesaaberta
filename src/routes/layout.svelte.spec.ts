@@ -9,12 +9,14 @@ const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }
 const signedOut = { authEnabled: false, released: false, account: null };
 const memberAccount = {
 	displayName: 'Ana Souza',
+	username: 'ana',
 	avatarUrl: null,
 	isAdmin: false,
 	pendingSuggestionsCount: 0
 };
 const adminAccount = {
 	displayName: 'Mestre Silva',
+	username: 'ana',
 	avatarUrl: null,
 	isAdmin: true,
 	pendingSuggestionsCount: 3

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCardDate, formatDuration, formatSession, formatWait } from './format';
+import { formatCardDate, formatDuration, formatSession, formatWait, zonedToDate } from './format';
 
 describe('formatSession', () => {
 	const start = new Date('2026-10-10T22:00:00Z');
@@ -73,5 +73,20 @@ describe('formatCardDate', () => {
 		const res = formatCardDate(new Date('2026-10-09T23:30:00Z'), 'America/Sao_Paulo', 'pt-BR');
 
 		expect(res.weekdayTime).toMatch(/^sexta · 20:30/);
+	});
+});
+
+describe('zonedToDate', () => {
+	it('reads a wall-clock time in its zone', () => {
+		expect(zonedToDate('2026-10-10T19:00', 'America/Sao_Paulo')?.toISOString()).toBe(
+			'2026-10-10T22:00:00.000Z'
+		);
+		expect(zonedToDate('2026-10-10T19:00', 'UTC')?.toISOString()).toBe('2026-10-10T19:00:00.000Z');
+	});
+
+	it('is null for an incomplete date or an unknown zone', () => {
+		expect(zonedToDate('', 'UTC')).toBeNull();
+		expect(zonedToDate('2026-10-10', 'UTC')).toBeNull();
+		expect(zonedToDate('2026-10-10T19:00', 'Nowhere/Else')).toBeNull();
 	});
 });
