@@ -1,3 +1,4 @@
+import { can } from '$lib/server/auth/policy';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
@@ -11,7 +12,12 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		return {
 			authEnabled,
 			released,
-			account: profile && { username: profile.username, avatarUrl: profile.avatarUrl }
+			account: profile && {
+				displayName: profile.name ?? profile.username ?? 'Pessoa sem nome',
+				avatarUrl: profile.avatarUrl,
+				isAdmin: can(profile, 'admin:access'),
+				pendingSuggestionsCount: 0
+			}
 		};
 	} catch (error) {
 		// The page is still worth showing without the account menu.

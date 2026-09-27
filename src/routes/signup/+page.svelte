@@ -1,10 +1,15 @@
 <script lang="ts">
+	import { superForm } from 'sveltekit-superforms';
+	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import { resolve } from '$app/paths';
 	import CredentialsForm from '$lib/components/CredentialsForm.svelte';
 	import ProviderButtons from '$lib/components/ProviderButtons.svelte';
+	import { credentialsSchema } from '$lib/auth/credentials';
 	import { m } from '$lib/paraglide/messages';
 
-	let { data, form } = $props();
+	let { data } = $props();
+	const superform = superForm(data.form, { validators: zod4Client(credentialsSchema) });
+	const { message } = superform;
 </script>
 
 <svelte:head>
@@ -16,13 +21,13 @@
 
 	{#if !data.authEnabled}
 		<p class="mt-8 max-w-[44ch]">{m.login_unavailable()}</p>
-	{:else if form?.checkEmail}
+	{:else if $message?.code === 'check_email'}
 		<div role="status" class="mt-8 max-w-[44ch]">
 			<h2 class="text-2xl font-semibold">{m.signup_check_email_title()}</h2>
 			<p class="mt-3 text-lg">{m.signup_check_email_text()}</p>
 			<a
 				href="{resolve('/login')}?next={encodeURIComponent(data.next)}"
-				class="mt-4 inline-block text-link"
+				class="mt-4 inline-block anchor"
 			>
 				{m.signup_sign_in()}
 			</a>
@@ -31,25 +36,19 @@
 		<p class="mt-4 max-w-[44ch] text-lg">{m.signup_lede()}</p>
 
 		<div class="mt-8 grid max-w-sm gap-8">
-			<CredentialsForm
-				mode="signup"
-				next={data.next}
-				email={form?.email}
-				errors={form?.errors}
-				result={form?.result}
-			/>
+			<CredentialsForm mode="signup" {superform} />
 
 			<p class="flex items-center gap-3" aria-hidden="true">
-				<span class="h-px grow bg-petrol/30"></span>
+				<span class="h-px grow bg-surface-300-700"></span>
 				<span class="text-sm">{m.login_or()}</span>
-				<span class="h-px grow bg-petrol/30"></span>
+				<span class="h-px grow bg-surface-300-700"></span>
 			</p>
 
 			<ProviderButtons next={data.next} />
 
 			<p>
 				{m.signup_have_account()}
-				<a href="{resolve('/login')}?next={encodeURIComponent(data.next)}" class="text-link">
+				<a href="{resolve('/login')}?next={encodeURIComponent(data.next)}" class="anchor">
 					{m.signup_sign_in()}
 				</a>
 			</p>

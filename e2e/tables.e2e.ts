@@ -34,7 +34,10 @@ test.describe('table list', () => {
 
 	test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
 		await page.goto('/tables');
-		const titles = await page.getByRole('heading', { level: 2 }).allTextContents();
+		const cards = page.getByRole('article');
+		const titles = await cards.evaluateAll((elements) =>
+			elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim())
+		);
 
 		await expect(page.getByRole('article').filter({ hasText: 'Crônicas de Arton' })).toContainText(
 			'Campanha'
@@ -53,10 +56,18 @@ test.describe('table list', () => {
 
 	test('filters by system, and says so when nothing matches', async ({ page }) => {
 		await page.goto('/tables');
-		await page.getByLabel('Sistema').selectOption({ label: 'Tormenta 20 (T20)' });
-		await page.getByRole('button', { name: 'Filtrar' }).click();
+		const filter = page.getByRole('group', { name: 'Sistema' });
+		await expect(filter.getByRole('link', { name: 'Todos os sistemas' })).toHaveAttribute(
+			'aria-current',
+			'page'
+		);
+		await filter.getByRole('link', { name: 'Tormenta 20 (T20)' }).click();
 
 		await expect(page).toHaveURL(/system=tormenta-20-t20/);
+		await expect(filter.getByRole('link', { name: 'Tormenta 20 (T20)' })).toHaveAttribute(
+			'aria-current',
+			'page'
+		);
 		await expect(page.getByRole('link', { name: 'Crônicas de Arton' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Mesa do Dragão' })).toHaveCount(0);
 

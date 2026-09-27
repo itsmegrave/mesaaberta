@@ -103,10 +103,14 @@ test.describe('joining a table that takes players at once', () => {
 			b.page.getByRole('button', { name: 'Pegar vaga' }).click()
 		]);
 
-		const winners = await Promise.all(
-			[a.page, b.page].map((p) => p.getByText('Você está nesta mesa.').isVisible())
-		);
-		expect(winners.filter(Boolean)).toHaveLength(1);
+		await expect
+			.poll(async () => {
+				const winners = await Promise.all(
+					[a.page, b.page].map((p) => p.getByText('Você está nesta mesa.').isVisible())
+				);
+				return winners.filter(Boolean).length;
+			})
+			.toBe(1);
 
 		const sql = database();
 		try {
@@ -188,7 +192,7 @@ test.describe('a table where the GM approves each player', () => {
 		await expect(gmPage.getByRole('button', { name: 'Aprovar' })).toHaveCount(1);
 		await gmPage.getByRole('button', { name: 'Aprovar' }).click();
 
-		await expect(gmPage.getByText('A mesa lotou.')).toBeVisible();
+		await expect(gmPage.getByRole('alert')).toContainText('A mesa lotou.');
 		await second.page.reload();
 		// Whichever request was second is still waiting, not seated.
 		const seated = await Promise.all(

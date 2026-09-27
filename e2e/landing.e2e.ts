@@ -21,11 +21,27 @@ test('presents how it works as an ordered list of three steps', async ({ page })
 	await expect(region.getByRole('listitem')).toHaveCount(3);
 });
 
+test('offers paths to browse or open a table before showing open tables', async ({ page }) => {
+	await page.goto('/');
+
+	const hero = page.getByRole('heading', { level: 1 }).locator('..').locator('..');
+	await expect(hero.getByRole('link', { name: 'Ver mesas abertas' })).toHaveAttribute(
+		'href',
+		'/tables'
+	);
+	await expect(hero.getByRole('link', { name: 'Abrir uma mesa' })).toHaveAttribute(
+		'href',
+		'/tables/new'
+	);
+
+	await expect(page.locator('section[aria-labelledby="open-tables"]')).toBeVisible();
+});
+
 test('says the project is open source and links to its repository', async ({ page }) => {
 	await page.goto('/');
 
-	await expect(page.getByRole('main').getByText(/código aberto/i)).toBeVisible();
-	await expect(page.getByRole('link', { name: /código/i })).toHaveAttribute(
+	await expect(page.getByRole('contentinfo').getByText(/open source/i)).toBeVisible();
+	await expect(page.getByRole('contentinfo').getByRole('link', { name: 'GitHub' })).toHaveAttribute(
 		'href',
 		'https://github.com/itsmegrave/mesaaberta'
 	);
@@ -35,7 +51,7 @@ test('sections are reachable through English anchors', async ({ page }) => {
 	for (const anchor of ['how-it-works', 'for-game-masters']) {
 		await page.goto(`/#${anchor}`);
 
-		await expect(page.locator(`section[aria-labelledby="${anchor}"] > #${anchor}`)).toBeVisible();
+		await expect(page.locator(`section[aria-labelledby="${anchor}"] #${anchor}`)).toBeVisible();
 	}
 });
 

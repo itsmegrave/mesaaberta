@@ -24,6 +24,17 @@ describe('can', () => {
 		});
 	});
 
+	describe('admin:access', () => {
+		it.each([
+			['an admin', admin, true],
+			['a member', member, false],
+			['an anonymous visitor', null, false],
+			['a suspended admin', suspendedAdmin, false]
+		])('for %s: %s', (_who, who, allowed) => {
+			expect(can(who, 'admin:access')).toBe(allowed);
+		});
+	});
+
 	describe.each(['table:edit', 'table:disable'] as const)('%s', (action) => {
 		it.each([
 			['the GM of that table', gm, true],

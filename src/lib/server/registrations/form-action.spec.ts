@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AlreadyRegistered, Forbidden, NotFound, RateLimited, TableFull } from '../errors';
+import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from './form-action';
 
 const setup = (over: { user?: boolean; db?: boolean; username?: string | null } = {}) => {
@@ -32,18 +33,20 @@ describe('runRegistrationAction', () => {
 		const { event, profile } = setup();
 		const run = vi.fn().mockResolvedValue({ eventIds: [] });
 
-		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+		await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
 			status: 303,
 			location: '/tables/mesa'
 		});
-		expect(run).toHaveBeenCalledWith({ fake: 'db' }, profile, expect.any(FormData));
+		expect(run).toHaveBeenCalledWith({ fake: 'db' }, profile, { next: '' });
 	});
 
 	it('goes back to the page named in `next`, such as the dashboard the form was posted from', async () => {
 		const { event } = setup();
 
 		await expect(
-			runRegistrationAction(event({ next: '/account/tables' }), async () => ({ eventIds: [] }))
+			runRegistrationAction(event({ next: '/account/tables' }), tableActionSchema, async () => ({
+				eventIds: []
+			}))
 		).rejects.toMatchObject({ status: 303, location: '/account/tables' });
 	});
 
@@ -53,7 +56,7 @@ describe('runRegistrationAction', () => {
 			const { event } = setup();
 
 			await expect(
-				runRegistrationAction(event({ next }), async () => ({ eventIds: [] }))
+				runRegistrationAction(event({ next }), tableActionSchema, async () => ({ eventIds: [] }))
 			).rejects.toMatchObject({ status: 303, location: '/tables/mesa' });
 		}
 	);
@@ -61,7 +64,9 @@ describe('runRegistrationAction', () => {
 	it('queues each event for dispatch after the response', async () => {
 		const { event, queued } = setup();
 
-		await runRegistrationAction(event(), async () => ({ eventIds: ['e1', 'e2'] })).catch(() => {});
+		await runRegistrationAction(event(), tableActionSchema, async () => ({
+			eventIds: ['e1', 'e2']
+		})).catch(() => {});
 
 		expect(queued).toHaveLength(2);
 	});
@@ -70,7 +75,7 @@ describe('runRegistrationAction', () => {
 		const { event } = setup({ user: false });
 		const run = vi.fn();
 
-		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+		await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
 			status: 303,
 			location: '/login?next=%2Ftables%2Fmesa'
 		});
@@ -81,7 +86,7 @@ describe('runRegistrationAction', () => {
 		const { event } = setup({ username: null });
 		const run = vi.fn();
 
-		await expect(runRegistrationAction(event(), run)).rejects.toMatchObject({
+		await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
 			status: 303,
 			location: '/onboarding?next=%2Ftables%2Fmesa'
 		});
@@ -93,7 +98,7 @@ describe('runRegistrationAction', () => {
 		const e = event();
 		e.url = new URL('https://x.test/tables/mesa?/join');
 
-		await expect(runRegistrationAction(e, vi.fn())).rejects.toMatchObject({
+		await expect(runRegistrationAction(e, tableActionSchema, vi.fn())).rejects.toMatchObject({
 			location: '/login?next=%2Ftables%2Fmesa'
 		});
 	});
@@ -106,22 +111,25 @@ describe('runRegistrationAction', () => {
 	])('answers %s with a %i the page can show', async (error, status, code) => {
 		const { event, queued } = setup();
 
-		const result = await runRegistrationAction(event(), async () => {
+		const result = await runRegistrationAction(event(), tableActionSchema, async () => {
 			throw error;
 		});
 
-		expect(result).toMatchObject({ status, data: { error: code } });
+		expect(result).toMatchObject({ status, data: { form: { message: { code } } } });
 		expect(queued).toHaveLength(0);
 	});
 
 	it('answers RateLimited with a 429 that says when to try again, in the form and in Retry-After', async () => {
 		const { event, queued, setHeaders } = setup();
 
-		const result = await runRegistrationAction(event(), async () => {
+		const result = await runRegistrationAction(event(), tableActionSchema, async () => {
 			throw new RateLimited(90);
 		});
 
-		expect(result).toMatchObject({ status: 429, data: { error: 'rate_limited', retryAfter: 90 } });
+		expect(result).toMatchObject({
+			status: 429,
+			data: { form: { message: { code: 'rate_limited', retryAfter: 90 } } }
+		});
 		expect(setHeaders).toHaveBeenCalledWith({ 'Retry-After': '90' });
 		expect(queued).toHaveLength(0);
 	});
@@ -130,7 +138,7 @@ describe('runRegistrationAction', () => {
 		const { event } = setup();
 
 		await expect(
-			runRegistrationAction(event(), async () => {
+			runRegistrationAction(event(), tableActionSchema, async () => {
 				throw new TypeError('bug');
 			})
 		).rejects.toThrow('bug');
@@ -139,6 +147,35 @@ describe('runRegistrationAction', () => {
 	it('says the service is unavailable when there is no database', async () => {
 		const { event } = setup({ db: false });
 
-		await expect(runRegistrationAction(event(), vi.fn())).rejects.toMatchObject({ status: 503 });
+		await expect(runRegistrationAction(event(), tableActionSchema, vi.fn())).rejects.toMatchObject({
+			status: 503
+		});
+	});
+
+	it('refuses a request whose fields are not valid, and runs nothing', async () => {
+		const { event } = setup();
+		const run = vi.fn();
+
+		const result = await runRegistrationAction(
+			event({ playerId: 'not-a-uuid' }),
+			playerActionSchema,
+			run
+		);
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: { form: { message: { code: 'invalid' }, errors: { playerId: expect.any(Array) } } }
+		});
+		expect(run).not.toHaveBeenCalled();
+	});
+
+	it('hands the run the validated fields', async () => {
+		const { event } = setup();
+		const run = vi.fn().mockResolvedValue({ eventIds: [] });
+		const playerId = '11111111-1111-4111-8111-111111111111';
+
+		await runRegistrationAction(event({ playerId }), playerActionSchema, run).catch(() => {});
+
+		expect(run).toHaveBeenCalledWith({ fake: 'db' }, expect.anything(), { playerId, next: '' });
 	});
 });

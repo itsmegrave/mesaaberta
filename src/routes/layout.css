@@ -1,101 +1,87 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/bricolage-grotesque';
-@import '@fontsource-variable/literata';
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-svelte';
+@import '@skeletonlabs/skeleton/themes/cerberus';
 @import '@fontsource-variable/cinzel';
 
+/* Dark mode is a `data-mode` on <html>: set before the first paint (src/app.html) and by the theme toggle. */
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
+:root[data-mode='light'] {
+	color-scheme: light;
+}
+
+:root[data-mode='dark'] {
+	color-scheme: dark;
+}
+
+html {
+	color: light-dark(var(--color-surface-950), var(--color-surface-50));
+}
+
+/* Skeleton applies the page background to <html>; matching it on <body> lets browser chrome use the rendered canvas. */
+body {
+	background-color: light-dark(var(--color-root-bg-light), var(--color-root-bg-dark));
+}
+
+/* Full-bleed bands paint past the content column; clipping keeps them from scrolling sideways. */
+body {
+	overflow-x: clip;
+}
+
 @theme {
-	--font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
 	/* Wordmark only */
 	--font-brand: 'Cinzel Variable', Georgia, serif;
-	--font-body: 'Literata Variable', Georgia, 'Times New Roman', serif;
-
-	/* Page and ink */
-	--color-celadon: #e3ebe5;
-	--color-ink: #12272b;
-	/* The table itself */
-	--color-petrol: #17393f;
-	/* Lamp over the table: only used where something is open or needs attention. Dark enough for
-	   text (AA, 4.5:1) on the page and on a card; the first version, #a86a00, was not. */
-	--color-lamp: #925b00;
-	/* Players around the table */
-	--color-sage: #7fb7a4;
-	--color-rose: #c97b84;
-	--color-periwinkle: #8e9ae6;
-
-	/* Roles the components use instead of fixed colours, so a theme can change them */
-	/* Cards, inputs and menus, which sit on the page */
-	--color-surface: #ffffff;
-	/* Text and icons on a petrol shape (buttons, badges) */
-	--color-on-petrol: #e3ebe5;
-	/* Text on a lamp shape (the "waiting" badge) */
-	--color-on-lamp: #ffffff;
-	/* Errors and destructive actions */
-	--color-danger: #991b1b;
-	/* The keyboard focus ring */
-	--color-focus: #17393f;
 }
 
-/*
- * The dark theme: the same tokens with other values. The table stays the dark object (a lighter teal
- * than the page, so it still reads as a shape), and the lamp stays the amber accent. It applies when
- * the reader chose dark, or chose nothing and the system is dark. The two blocks must stay identical;
- * src/lib/theme/theme.spec.ts checks that, and the contrast of every pair.
- */
-:root[data-theme='dark'] {
-	color-scheme: dark;
-	--color-celadon: #0e1b1e;
-	--color-ink: #e6efe9;
-	--color-petrol: #33727a;
-	--color-lamp: #f0b34a;
-	--color-surface: #16292d;
-	--color-on-petrol: #f4f8f5;
-	--color-on-lamp: #1b1300;
-	--color-danger: #ff9d9d;
-	--color-focus: #8fd3cb;
+/* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
+@utility bg-panel {
+	background-color: light-dark(var(--color-surface-50), var(--color-surface-900));
 }
 
-@media (prefers-color-scheme: dark) {
-	:root:not([data-theme='light']) {
-		color-scheme: dark;
-		--color-celadon: #0e1b1e;
-		--color-ink: #e6efe9;
-		--color-petrol: #33727a;
-		--color-lamp: #f0b34a;
-		--color-surface: #16292d;
-		--color-on-petrol: #f4f8f5;
-		--color-on-lamp: #1b1300;
-		--color-danger: #ff9d9d;
-		--color-focus: #8fd3cb;
-	}
+@utility text-muted {
+	color: light-dark(var(--color-surface-600), var(--color-surface-300));
 }
 
-@layer base {
-	html {
-		background-color: var(--color-celadon);
-		color: var(--color-ink);
-		color-scheme: light;
-		font-family: var(--font-body);
-	}
-
-	body {
-		min-height: 100dvh;
-		line-height: 1.65;
-	}
-
-	h1,
-	h2,
-	h3 {
-		font-family: var(--font-display);
-		text-wrap: balance;
-	}
-
-	:focus-visible {
-		outline: 3px solid var(--color-focus);
-		outline-offset: 3px;
-	}
+@utility text-lamp {
+	color: light-dark(var(--color-warning-950), var(--color-warning-400));
 }
 
-/* Inline text link: underlined with the lamp colour */
+@utility fill-lamp {
+	fill: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility stroke-lamp {
+	stroke: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility border-lamp {
+	border-color: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility bg-lamp-wash {
+	background-color: light-dark(
+		color-mix(in oklab, var(--color-warning-500) 24%, transparent),
+		color-mix(in oklab, var(--color-warning-400) 14%, transparent)
+	);
+}
+
+@utility fill-lamp-wash {
+	fill: light-dark(
+		color-mix(in oklab, var(--color-warning-500) 24%, transparent),
+		color-mix(in oklab, var(--color-warning-400) 14%, transparent)
+	);
+}
+
 @utility text-link {
-	@apply font-medium underline decoration-lamp decoration-2 underline-offset-4;
+	color: light-dark(var(--color-primary-600), var(--color-primary-400));
+}
+
+/* Underlined link from the reference: body-coloured text over a thick primary underline. */
+@utility link-underline {
+	font-weight: 600;
+	text-decoration-line: underline;
+	text-decoration-color: var(--color-primary-500);
+	text-decoration-thickness: 2px;
+	text-underline-offset: 4px;
 }

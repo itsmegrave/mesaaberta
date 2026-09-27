@@ -13,6 +13,7 @@ export type Actor = Pick<typeof profiles.$inferSelect, 'id' | 'role' | 'status'>
 
 /** What each action needs to know about the thing it acts on. Add the next action here. */
 type Resources = {
+	'admin:access': undefined;
 	'table:create': undefined;
 	'table:edit': { gmId: string };
 	'table:disable': { gmId: string };
@@ -79,6 +80,7 @@ export function rateBlocker(
 }
 
 const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean } = {
+	'admin:access': (actor) => actor.role === 'admin',
 	// Any signed-in user can open a table and becomes its GM.
 	'table:create': () => true,
 	'table:edit': isGmOrAdmin,

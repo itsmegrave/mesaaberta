@@ -1,6 +1,6 @@
 # local tooling
 .nodeterm/
-.claude/settings.local.json
+.claude/
 .remember/
 
 node_modules

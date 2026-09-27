@@ -10,7 +10,7 @@
 		{
 			id: 'google' as const,
 			label: m.login_with_google(),
-			style: 'border border-ink/60 bg-surface text-ink hover:bg-petrol/10'
+			style: 'preset-outlined-surface-300-700 hover:preset-tonal'
 		},
 		{
 			id: 'discord' as const,
@@ -27,7 +27,7 @@
 				href="{resolve('/login/[provider=provider]', {
 					provider: provider.id
 				})}?next={encodeURIComponent(next)}"
-				class="flex items-center justify-center gap-3 rounded px-4 py-3 font-semibold {provider.style}"
+				class="btn w-full justify-center gap-3 {provider.style}"
 			>
 				<ProviderLogo provider={provider.id} />
 				{provider.label}

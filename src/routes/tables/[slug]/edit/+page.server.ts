@@ -1,4 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
 import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '$lib/server/errors';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
@@ -7,6 +9,7 @@ import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
 import { listSystems } from '$lib/server/systems';
+import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url, params, platform }) => {
@@ -24,11 +27,7 @@ export const load: PageServerLoad = async ({ locals, url, params, platform }) =>
 		return {
 			slug,
 			status,
-			values: {
-				...values,
-				capacity: String(values.capacity),
-				durationMinutes: String(values.durationMinutes)
-			},
+			form: await superValidate(values, zod4(tableFormSchema), { errors: false }),
 			imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
 			systems: systems.map(({ name, slug }) => ({ name, slug }))
 		};

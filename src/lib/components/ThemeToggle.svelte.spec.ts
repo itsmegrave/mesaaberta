@@ -7,10 +7,10 @@ const root = document.documentElement;
 
 beforeEach(() => {
 	localStorage.clear();
-	delete root.dataset.theme;
+	delete root.dataset.mode;
 	document.head.insertAdjacentHTML(
 		'beforeend',
-		'<meta name="theme-color" content="#e3ebe5" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0e1b1e" media="(prefers-color-scheme: dark)">'
+		'<meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">'
 	);
 });
 afterEach(() => {
@@ -24,45 +24,37 @@ const metas = () =>
 	);
 
 describe('ThemeToggle', () => {
-	it('is a labelled control with the three choices, on "system" until the reader picks', async () => {
+	it('is a labelled icon button toggle with fixed label "Tema escuro"', async () => {
 		render(ThemeToggle);
 
-		const select = page.getByRole('combobox', { name: 'Tema' });
-		await expect.element(select).toHaveValue('system');
-		for (const name of ['Automático', 'Claro', 'Escuro']) {
-			await expect.element(page.getByRole('option', { name })).toBeInTheDocument();
-		}
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await expect.element(button).toBeInTheDocument();
+		await expect.element(button).toHaveAttribute('aria-pressed', 'false');
 	});
 
-	it('applies dark at once, and remembers it', async () => {
+	it('toggles to dark on first click and saves choice', async () => {
 		render(ThemeToggle);
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('dark');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await button.click();
 
-		expect(root.dataset.theme).toBe('dark');
+		await expect.element(button).toHaveAttribute('aria-pressed', 'true');
+		expect(root.dataset.mode).toBe('dark');
 		expect(localStorage.getItem('theme')).toBe('dark');
+		expect(metas()).toEqual(['#121212', '#121212']);
 	});
 
-	it('paints the browser chrome in the chosen theme, whatever the system is', async () => {
+	it('toggles back to light on second click and saves choice', async () => {
 		render(ThemeToggle);
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('dark');
-		expect(metas()).toEqual(['#0e1b1e', '#0e1b1e']);
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await button.click();
+		await button.click();
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('light');
-		expect(metas()).toEqual(['#e3ebe5', '#e3ebe5']);
-	});
-
-	it('goes back to following the system: no attribute, nothing stored, each scheme its own colour', async () => {
-		render(ThemeToggle);
-		const select = page.getByRole('combobox', { name: 'Tema' });
-		await select.selectOptions('dark');
-
-		await select.selectOptions('system');
-
-		expect(root.dataset.theme).toBeUndefined();
-		expect(localStorage.getItem('theme')).toBeNull();
-		expect(metas()).toEqual(['#e3ebe5', '#0e1b1e']);
+		await expect.element(button).toHaveAttribute('aria-pressed', 'false');
+		expect(root.dataset.mode).toBe('light');
+		expect(localStorage.getItem('theme')).toBe('light');
+		expect(metas()).toEqual(['#fcfcfc', '#fcfcfc']);
 	});
 
 	it('shows the remembered choice when it loads', async () => {
@@ -70,18 +62,14 @@ describe('ThemeToggle', () => {
 
 		render(ThemeToggle);
 
-		await expect.element(page.getByRole('combobox', { name: 'Tema' })).toHaveValue('dark');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await expect.element(button).toHaveAttribute('aria-pressed', 'true');
 	});
 
-	it('ignores a stored value it does not know', async () => {
-		localStorage.setItem('theme', 'sepia');
-
-		render(ThemeToggle);
-
-		await expect.element(page.getByRole('combobox', { name: 'Tema' })).toHaveValue('system');
-	});
-
-	it('still works for this page when storage is blocked', async () => {
+	it('keeps a manual choice when storage is blocked and the system preference changes', async () => {
+		const mql = new EventTarget() as MediaQueryList;
+		Object.defineProperty(mql, 'matches', { value: false });
+		vi.spyOn(window, 'matchMedia').mockReturnValue(mql);
 		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
 			throw new Error('blocked');
 		});
@@ -90,8 +78,11 @@ describe('ThemeToggle', () => {
 		});
 		render(ThemeToggle);
 
-		await page.getByRole('combobox', { name: 'Tema' }).selectOptions('dark');
+		const button = page.getByRole('button', { name: 'Tema escuro' });
+		await button.click();
 
-		expect(root.dataset.theme).toBe('dark');
+		expect(root.dataset.mode).toBe('dark');
+		mql.dispatchEvent(new MediaQueryListEvent('change', { matches: false }));
+		expect(root.dataset.mode).toBe('dark');
 	});
 });

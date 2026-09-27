@@ -1,7 +1,10 @@
 import { z } from 'zod';
+import '$lib/forms/zod-codes';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
+// Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
+z.config({ jitless: true });
 
 export const TABLE_LIMITS = {
 	title: { min: 3, max: 80 },
@@ -39,13 +42,12 @@ const whole = (min: number, max: number) => z.coerce.number().int().min(min).max
 
 const RULES = { weekly: 'FREQ=WEEKLY', biweekly: 'FREQ=WEEKLY;INTERVAL=2' } as const;
 
-const form = z
+export const tableFormSchema = z
 	.object({
 		systemSlug: z.string().trim().min(1),
 		title: z.string().trim().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
 		description: text(TABLE_LIMITS.description).default(''),
 		extraInfo: text(TABLE_LIMITS.extraInfo).default(''),
-		// Cleaned first, so the limit counts what is stored and not the control characters dropped.
 		welcomeMessage: z
 			.string()
 			.transform(cleanWelcomeMessage)
@@ -78,7 +80,6 @@ export type TableInput = {
 	title: string;
 	description: string;
 	extraInfo: string | null;
-	/** Sent to each player who gets a seat; `{nome da mesa}` is expanded when sending. */
 	welcomeMessage: string | null;
 	kind: 'campaign' | 'one_shot';
 	capacity: number;
@@ -93,38 +94,16 @@ export type TableInput = {
 	joinMode: 'auto' | 'approval';
 };
 
-export type FormErrors = Partial<Record<keyof TableInput | 'repeat' | 'until', string>>;
-
-/**
- * Validates the create and edit form. Anything the form does not list (a `gmId`, a `status`, a
- * `slug`) is dropped, so a crafted request cannot set it. On failure, every problem is reported at
- * once as a field name and a short code.
- */
-export function parseTableForm(
-	data: FormData
-): { ok: true; data: TableInput } | { ok: false; errors: FormErrors } {
-	const parsed = form.safeParse(Object.fromEntries(data));
-
-	if (!parsed.success) {
-		const errors: Record<string, string> = {};
-		for (const issue of parsed.error.issues) {
-			const field = String(issue.path[0]);
-			errors[field] ??= issue.code === 'custom' ? issue.message : issue.code;
-		}
-		return { ok: false, errors };
-	}
-
-	const { repeat, until, extraInfo, welcomeMessage, ...rest } = parsed.data;
+/** The validated form as what the domain wants: a repeat rule instead of a word, no empty strings. */
+export function toTableInput(values: z.output<typeof tableFormSchema>): TableInput {
+	const { repeat, until, extraInfo, welcomeMessage, ...rest } = values;
 	const campaign = rest.kind === 'campaign';
 
 	return {
-		ok: true,
-		data: {
-			...rest,
-			extraInfo: extraInfo || null,
-			welcomeMessage: welcomeMessage || null,
-			recurrence: campaign ? RULES[repeat as keyof typeof RULES] : null,
-			untilLocalDate: campaign && until ? until : null
-		}
+		...rest,
+		extraInfo: extraInfo || null,
+		welcomeMessage: welcomeMessage || null,
+		recurrence: campaign ? RULES[repeat as keyof typeof RULES] : null,
+		untilLocalDate: campaign && until ? until : null
 	};
 }

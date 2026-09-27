@@ -1,4 +1,6 @@
 import { error } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
 import { requireUser } from '$lib/server/auth/guard';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
@@ -7,6 +9,7 @@ import { createTable } from '$lib/server/tables/write';
 import { TABLE_CREATION_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
 import { listSystems } from '$lib/server/systems';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
+import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -16,7 +19,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const systems = await listSystems(locals.db);
 
 	return {
-		values: NEW_TABLE_VALUES,
+		form: await superValidate(NEW_TABLE_VALUES, zod4(tableFormSchema), { errors: false }),
 		systems: systems.map(({ name, slug }) => ({ name, slug }))
 	};
 };

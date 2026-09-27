@@ -1,13 +1,13 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import CredentialsForm from './CredentialsForm.svelte';
+import CredentialsFormHarness from './CredentialsFormHarness.svelte';
 
 const props = { next: '/tables/new' };
 
 describe('CredentialsForm', () => {
 	it('is a plain POST with an email and a password, and nothing else to fill in', async () => {
-		render(CredentialsForm, { ...props, mode: 'login', action: '?/email' });
+		render(CredentialsFormHarness, { ...props, mode: 'login', action: '?/email' });
 
 		const form = page.getByRole('button', { name: 'Entrar' }).element().closest('form')!;
 		expect(form.method).toBe('post');
@@ -17,21 +17,21 @@ describe('CredentialsForm', () => {
 	});
 
 	it('carries where to go afterwards in a hidden field', async () => {
-		render(CredentialsForm, { ...props, mode: 'login' });
+		render(CredentialsFormHarness, { ...props, mode: 'login' });
 
 		const form = page.getByRole('button', { name: 'Entrar' }).element().closest('form')!;
 		expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/tables/new');
 	});
 
 	it('tells a password manager which kind of form it is', async () => {
-		render(CredentialsForm, { ...props, mode: 'login' });
+		render(CredentialsFormHarness, { ...props, mode: 'login' });
 		await expect
 			.element(page.getByLabelText('Senha'))
 			.toHaveAttribute('autocomplete', 'current-password');
 	});
 
 	it('for sign-up: says the password rules, offers a new password, and names the button "Criar conta"', async () => {
-		render(CredentialsForm, { ...props, mode: 'signup' });
+		render(CredentialsFormHarness, { ...props, mode: 'signup' });
 
 		await expect.element(page.getByText('De 8 a 72 caracteres.')).toBeVisible();
 		await expect
@@ -41,7 +41,7 @@ describe('CredentialsForm', () => {
 	});
 
 	it('enforces the same limits in the browser as on the server', async () => {
-		render(CredentialsForm, { ...props, mode: 'signup' });
+		render(CredentialsFormHarness, { ...props, mode: 'signup' });
 
 		const password = page.getByLabelText('Senha');
 		await expect.element(password).toHaveAttribute('minlength', '8');
@@ -50,7 +50,7 @@ describe('CredentialsForm', () => {
 	});
 
 	it('gives back the email that was typed, but has no way to give back a password', async () => {
-		render(CredentialsForm, { ...props, mode: 'login', email: 'ana@example.com' });
+		render(CredentialsFormHarness, { ...props, mode: 'login', email: 'ana@example.com' });
 
 		await expect.element(page.getByLabelText('Email')).toHaveValue('ana@example.com');
 		await expect.element(page.getByLabelText('Senha')).toHaveValue('');
@@ -63,16 +63,16 @@ describe('CredentialsForm', () => {
 		['rate_limited', 'Muitas tentativas. Espere um pouco e tente de novo.'],
 		['failed', 'Não foi possível agora. Tente de novo em instantes.']
 	])('says what Supabase answered: %s', async (result, text) => {
-		render(CredentialsForm, { ...props, mode: 'login', result });
+		render(CredentialsFormHarness, { ...props, mode: 'login', message: { code: result } });
 
 		await expect.element(page.getByRole('alert')).toHaveTextContent(text);
 	});
 
 	it('marks the field that is wrong', async () => {
-		render(CredentialsForm, {
+		render(CredentialsFormHarness, {
 			...props,
 			mode: 'signup',
-			errors: { email: 'invalid_format', password: 'too_small' }
+			errors: { email: ['invalid_format'], password: ['too_small'] }
 		});
 
 		await expect.element(page.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
@@ -82,8 +82,14 @@ describe('CredentialsForm', () => {
 	});
 
 	it('shows no error when there is none', async () => {
-		render(CredentialsForm, { ...props, mode: 'login' });
+		render(CredentialsFormHarness, { ...props, mode: 'login' });
 
 		await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
+	});
+
+	it('empties the password field when the server sends the form back', async () => {
+		render(CredentialsFormHarness, { ...props, mode: 'login', message: { code: 'invalid' } });
+
+		await expect.element(page.getByLabelText('Senha')).toHaveValue('');
 	});
 });

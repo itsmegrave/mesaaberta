@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
-import { Forbidden, RateLimited } from '../errors';
+import { Forbidden, Invalid, RateLimited } from '../errors';
 import { handleTableForm } from './form-action';
 import { createTable } from './write';
 import type { TableInput } from '$lib/tables/schema';
@@ -105,8 +105,10 @@ describe('handleTableForm', () => {
 		expect(result).toMatchObject({
 			status: 400,
 			data: {
-				errors: { title: expect.any(String), capacity: expect.any(String) },
-				values: { title: 'x' }
+				form: {
+					errors: { title: expect.any(Array), capacity: expect.any(Array) },
+					data: { title: 'x' }
+				}
 			}
 		});
 		expect(s.save).not.toHaveBeenCalled();
@@ -122,7 +124,7 @@ describe('handleTableForm', () => {
 		const refused = await run(request({ title: 'x', welcomeMessage: 'Fale comigo.' }), setup());
 		expect(refused).toMatchObject({
 			status: 400,
-			data: { values: { welcomeMessage: 'Fale comigo.' } }
+			data: { form: { data: { welcomeMessage: 'Fale comigo.' } } }
 		});
 	});
 
@@ -134,7 +136,12 @@ describe('handleTableForm', () => {
 
 		expect(result).toMatchObject({
 			status: 400,
-			data: { errors: { welcomeMessage: 'too_big' }, values: { welcomeMessage: long } }
+			data: {
+				form: {
+					errors: { welcomeMessage: expect.any(Array) },
+					data: { welcomeMessage: long }
+				}
+			}
 		});
 		expect(s.save).not.toHaveBeenCalled();
 	});
@@ -157,7 +164,10 @@ describe('handleTableForm', () => {
 
 		const result = await run(request({ image: script }), s);
 
-		expect(result).toMatchObject({ status: 400, data: { errors: { image: 'not_an_image' } } });
+		expect(result).toMatchObject({
+			status: 400,
+			data: { form: { message: { code: 'not_an_image', field: 'image' } } }
+		});
 		expect(s.upload).not.toHaveBeenCalled();
 		expect(s.save).not.toHaveBeenCalled();
 	});
@@ -168,7 +178,10 @@ describe('handleTableForm', () => {
 
 		const result = await run(request({ image: png }), s);
 
-		expect(result).toMatchObject({ status: 400, data: { errors: { image: 'upload_failed' } } });
+		expect(result).toMatchObject({
+			status: 400,
+			data: { form: { message: { code: 'upload_failed', field: 'image' } } }
+		});
 		expect(s.save).not.toHaveBeenCalled();
 	});
 
@@ -191,7 +204,7 @@ describe('handleTableForm', () => {
 
 		expect(result).toMatchObject({
 			status: 403,
-			data: { error: 'forbidden', values: { title: 'Mesa Nova' } }
+			data: { form: { message: { code: 'forbidden' }, data: { title: 'Mesa Nova' } } }
 		});
 	});
 
@@ -203,7 +216,9 @@ describe('handleTableForm', () => {
 
 		expect(result).toMatchObject({
 			status: 429,
-			data: { error: 'rate_limited', retryAfter: 900, values: { title: 'Mesa Nova' } }
+			data: {
+				form: { message: { code: 'rate_limited', retryAfter: 900 }, data: { title: 'Mesa Nova' } }
+			}
 		});
 		expect(s.setHeaders).toHaveBeenCalledWith({ 'Retry-After': '900' });
 	});
@@ -215,7 +230,10 @@ describe('handleTableForm', () => {
 
 		const result = await run(request({ image: png }), s);
 
-		expect(result).toMatchObject({ status: 429, data: { error: 'rate_limited', retryAfter: 60 } });
+		expect(result).toMatchObject({
+			status: 429,
+			data: { form: { message: { code: 'rate_limited', retryAfter: 60 } } }
+		});
 		expect(s.upload).not.toHaveBeenCalled();
 		expect(s.save).not.toHaveBeenCalled();
 	});
@@ -226,5 +244,17 @@ describe('handleTableForm', () => {
 		await run(request({ title: '' }), s);
 
 		expect(s.guard).not.toHaveBeenCalled();
+	});
+
+	it('puts a domain problem on the field it names', async () => {
+		const s = setup();
+		s.save.mockRejectedValueOnce(new Invalid('systemSlug'));
+
+		const result = await run(request(), s);
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: { form: { errors: { systemSlug: ['invalid'] } } }
+		});
 	});
 });

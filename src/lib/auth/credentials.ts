@@ -1,3 +1,4 @@
+import '$lib/forms/zod-codes';
 import { z } from 'zod';
 
 export const MIN_PASSWORD_LENGTH = 8;
@@ -5,61 +6,26 @@ export const MIN_PASSWORD_LENGTH = 8;
 // would be silently shortened, so it is refused instead.
 export const MAX_PASSWORD_LENGTH = 72;
 
-const form = z.object({
-	email: z.string().trim().toLowerCase().pipe(z.email()),
-	// Not trimmed: spaces are part of what the person chose.
-	password: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH)
+const email = z.string().trim().toLowerCase().max(254).pipe(z.email());
+// Not trimmed: spaces are part of what the person chose.
+const password = z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH);
+
+/** Sign-in and sign-up: an email and a password, and where to go afterwards. */
+export const credentialsSchema = z.object({
+	email,
+	password,
+	next: z.string().max(2000).default('')
 });
 
-export type Credentials = z.infer<typeof form>;
+/** "Forgot my password": just an email. */
+export const emailSchema = z.object({ email });
 
-/** Validates the sign-up and sign-in forms. Never returns the password inside an error. */
-export function parseCredentials(
-	data: FormData
-): { ok: true; data: Credentials } | { ok: false; errors: { email?: string; password?: string } } {
-	const parsed = form.safeParse(Object.fromEntries(data));
-	if (parsed.success) return { ok: true, data: parsed.data };
-
-	const errors: Record<string, string> = {};
-	for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.code;
-	return { ok: false, errors };
-}
-
-const emailForm = z.object({ email: z.string().trim().toLowerCase().pipe(z.email()) });
-
-/** Validates the "forgot my password" form: just an email. */
-export function parseEmail(
-	data: FormData
-): { ok: true; data: { email: string } } | { ok: false; errors: { email?: string } } {
-	const parsed = emailForm.safeParse(Object.fromEntries(data));
-	if (parsed.success) return { ok: true, data: parsed.data };
-
-	return { ok: false, errors: { email: parsed.error.issues[0].code } };
-}
-
-const newPasswordForm = z
-	.object({
-		password: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH),
-		passwordConfirm: z.string()
-	})
-	.superRefine((value, ctx) => {
-		if (value.password !== value.passwordConfirm) {
-			ctx.addIssue({ code: 'custom', message: 'mismatch', path: ['passwordConfirm'] });
-		}
+/** "Choose a new password": 8 to 72 characters, typed twice the same way. */
+export const newPasswordSchema = z
+	.object({ password, passwordConfirm: z.string() })
+	.refine((value) => value.password === value.passwordConfirm, {
+		message: 'mismatch',
+		path: ['passwordConfirm']
 	});
 
-/** Validates the "choose a new password" form: 8 to 72 characters, typed twice the same way. */
-export function parseNewPassword(
-	data: FormData
-):
-	| { ok: true; data: { password: string } }
-	| { ok: false; errors: { password?: string; passwordConfirm?: string } } {
-	const parsed = newPasswordForm.safeParse(Object.fromEntries(data));
-	if (parsed.success) return { ok: true, data: { password: parsed.data.password } };
-
-	const errors: Record<string, string> = {};
-	for (const issue of parsed.error.issues) {
-		errors[String(issue.path[0])] ??= issue.code === 'custom' ? issue.message : issue.code;
-	}
-	return { ok: false, errors };
-}
+export type CredentialsData = z.output<typeof credentialsSchema>;

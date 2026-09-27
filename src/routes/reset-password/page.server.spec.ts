@@ -42,9 +42,15 @@ describe('the new-password page', () => {
 	it('shows the form to someone the link signed in, and the confirmation after a change', async () => {
 		const { event } = setup();
 
-		expect(await (load as (e: RequestEvent) => Promise<unknown>)(event())).toEqual({ done: false });
-		expect(await (load as (e: RequestEvent) => Promise<unknown>)(event({}, '?done=1'))).toEqual({
-			done: true
+		expect(await (load as (e: RequestEvent) => Promise<unknown>)(event())).toMatchObject({
+			done: false,
+			form: expect.any(Object)
+		});
+		expect(
+			await (load as (e: RequestEvent) => Promise<unknown>)(event({}, '?done=1'))
+		).toMatchObject({
+			done: true,
+			form: expect.any(Object)
 		});
 	});
 
@@ -69,7 +75,7 @@ describe('the new-password page', () => {
 
 		expect(result).toMatchObject({
 			status: 400,
-			data: { errors: { passwordConfirm: 'mismatch' } }
+			data: { form: { errors: { passwordConfirm: expect.any(Array) } } }
 		});
 		expect(JSON.stringify(result)).not.toContain('brand new password');
 		expect(auth.updateUser).not.toHaveBeenCalled();
@@ -87,7 +93,7 @@ describe('the new-password page', () => {
 				)
 			).toMatchObject({
 				status: 400,
-				data: { result: code }
+				data: { form: { message: { code } } }
 			});
 		}
 	});

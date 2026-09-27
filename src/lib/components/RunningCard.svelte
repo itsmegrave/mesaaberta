@@ -3,6 +3,7 @@
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import ActionForm from './ActionForm.svelte';
 
 	type Person = { playerId: string; username: string };
 	type Item = {
@@ -20,16 +21,15 @@
 
 	const locale = getLocale();
 	const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
-	const button = 'font-semibold';
 </script>
 
-<article class="rounded border border-petrol/15 bg-surface p-4">
+<article class="card border border-surface-200-800 bg-surface-100-900 p-4">
 	<p class="flex flex-wrap items-center gap-2 text-sm">
 		{#if item.tableStatus === 'disabled'}<span class="font-semibold">{m.dash_disabled()}</span>{/if}
 		<span>{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span>
 	</p>
 
-	<h3 class="mt-2 text-xl font-semibold"><a href={page} class="text-link">{item.title}</a></h3>
+	<h3 class="mt-2 text-xl font-semibold"><a href={page} class="anchor">{item.title}</a></h3>
 
 	<p class="mt-2">
 		{#if item.nextAt}
@@ -41,26 +41,24 @@
 	</p>
 
 	<p class="mt-2">
-		<a href={localizedHref(`/tables/${item.slug}/edit`, locale)} class="text-link"
-			>{m.dash_edit()}</a
-		>
+		<a href={localizedHref(`/tables/${item.slug}/edit`, locale)} class="anchor">{m.dash_edit()}</a>
 	</p>
 
 	{#if item.requests.length > 0}
 		<h4 class="mt-5 font-semibold">{m.dash_requests()} ({item.requests.length})</h4>
 		<ul class="mt-2 grid gap-2">
 			{#each item.requests as request (request.playerId)}
-				<li class="flex flex-wrap items-center justify-between gap-3 rounded bg-celadon/60 p-2">
+				<li
+					class="flex flex-wrap items-center justify-between gap-3 rounded bg-surface-200-800 p-2"
+				>
 					<span>{request.username}</span>
-					<span class="flex gap-4">
-						{#each [['approve', m.table_approve(), ''], ['decline', m.table_decline(), 'text-danger']] as [action, label, tone] (action)}
-							<form method="POST" action="{page}?/{action}">
-								<input type="hidden" name="playerId" value={request.playerId} />
-								<input type="hidden" name="next" value={next} />
-								<button type="submit" class="{button} {tone}">{label}</button>
-							</form>
+					<div class="flex gap-4">
+						{#each [['approve', m.table_approve(), 'preset-tonal-primary'], ['decline', m.table_decline(), 'preset-tonal-error']] as [action, label, tone] (action)}
+							<ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
+								<button type="submit" class="btn btn-sm {tone}">{label}</button>
+							</ActionForm>
 						{/each}
-					</span>
+					</div>
 				</li>
 			{/each}
 		</ul>
@@ -72,13 +70,11 @@
 	{:else}
 		<ul class="mt-2 grid gap-2">
 			{#each item.players as player (player.playerId)}
-				<li class="flex items-center justify-between gap-3 rounded bg-celadon/60 p-2">
+				<li class="flex items-center justify-between gap-3 rounded bg-surface-200-800 p-2">
 					<span>{player.username}</span>
-					<form method="POST" action="{page}?/remove">
-						<input type="hidden" name="playerId" value={player.playerId} />
-						<input type="hidden" name="next" value={next} />
-						<button type="submit" class="{button} text-danger">{m.table_remove()}</button>
-					</form>
+					<ActionForm action="{page}?/remove" playerId={player.playerId} {next}>
+						<button type="submit" class="btn preset-tonal-error btn-sm">{m.table_remove()}</button>
+					</ActionForm>
 				</li>
 			{/each}
 		</ul>

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { parseRatingForm } from './rating';
+import { ratingSchema } from './rating';
+
+const parseRatingForm = (data: FormData) => {
+	const parsed = ratingSchema.safeParse(Object.fromEntries(data));
+	if (!parsed.success) {
+		const errors: Record<string, string> = {};
+		for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.message;
+		return { ok: false as const, errors };
+	}
+	const { comment, ...scores } = parsed.data;
+	return { ok: true as const, data: { ...scores, comment: comment || null } };
+};
 
 const form = (fields: Record<string, string>) => {
 	const data = new FormData();
