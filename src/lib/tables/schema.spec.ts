@@ -59,7 +59,11 @@ describe('parseTableForm', () => {
 				joinMode: 'auto',
 				modality: 'online',
 				locationArea: null,
-				joinDetails: null
+				joinDetails: null,
+				postalCode: null,
+				locationNeighbourhood: null,
+				locationCity: null,
+				locationState: null
 			}
 		});
 	});
@@ -173,6 +177,23 @@ describe('parseTableForm', () => {
 		it('drops a location left in the form when the table is online', () => {
 			const result = parseTableForm(form({ modality: 'online', locationArea: 'Recife' }));
 			expect(result.ok && result.data.locationArea).toBeNull();
+		});
+
+		it('takes a CEP in any punctuation, and it stands in for the area', () => {
+			const result = parseTableForm(form({ modality: 'in_person', postalCode: '52011-000' }));
+			expect(result.ok && result.data).toMatchObject({
+				postalCode: '52011000',
+				locationArea: null
+			});
+		});
+
+		it('refuses a CEP that is not 8 digits, and ignores one on an online table', () => {
+			expect(parseTableForm(form({ modality: 'in_person', postalCode: '5201' }))).toMatchObject({
+				ok: false,
+				errors: { postalCode: 'invalid' }
+			});
+			const online = parseTableForm(form({ modality: 'online', postalCode: '52011-000' }));
+			expect(online.ok && online.data.postalCode).toBeNull();
 		});
 
 		it('refuses a modality it does not offer', () => {

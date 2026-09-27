@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import '$lib/forms/zod-codes';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
+import { normalizeCep } from '$lib/location/cep';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
@@ -66,10 +67,16 @@ export const tableFormSchema = z
 		joinMode: z.enum(['auto', 'approval']).default('auto'),
 		modality: z.enum(['online', 'in_person']).default('online'),
 		locationArea: text(TABLE_LIMITS.locationArea).default(''),
-		joinDetails: text(TABLE_LIMITS.joinDetails).default('')
+		joinDetails: text(TABLE_LIMITS.joinDetails).default(''),
+		postalCode: z
+			.string()
+			.trim()
+			.refine((value) => value === '' || normalizeCep(value) !== null, 'invalid')
+			.default('')
 	})
 	.superRefine((value, ctx) => {
-		if (value.modality === 'in_person' && !value.locationArea) {
+		// With a CEP the server fills the area in; without one, the person types it.
+		if (value.modality === 'in_person' && !value.locationArea && !value.postalCode) {
 			ctx.addIssue({ code: 'custom', message: 'required', path: ['locationArea'] });
 		}
 		if (value.kind !== 'campaign') return;
@@ -106,16 +113,36 @@ export type TableInput = {
 	locationArea: string | null;
 	/** How to join (link or address); private to the GM and the confirmed players. */
 	joinDetails: string | null;
+	/** The CEP of an in-person table, 8 digits; null without one or online. */
+	postalCode: string | null;
+	/** What the CEP resolved to (see `withLocation`); null until then, or when it could not be looked up. */
+	locationNeighbourhood: string | null;
+	locationCity: string | null;
+	locationState: string | null;
 };
 
 /** The validated form as what the domain wants: a repeat rule instead of a word, no empty strings. */
 export function toTableInput(values: z.output<typeof tableFormSchema>): TableInput {
-	const { repeat, until, extraInfo, welcomeMessage, locationArea, joinDetails, ...rest } = values;
+	const {
+		repeat,
+		until,
+		extraInfo,
+		welcomeMessage,
+		locationArea,
+		joinDetails,
+		postalCode,
+		...rest
+	} = values;
 	const campaign = rest.kind === 'campaign';
+	const inPerson = rest.modality === 'in_person';
 
 	return {
 		...rest,
-		locationArea: rest.modality === 'in_person' ? locationArea : null,
+		locationArea: inPerson ? locationArea || null : null,
+		postalCode: inPerson ? normalizeCep(postalCode) : null,
+		locationNeighbourhood: null,
+		locationCity: null,
+		locationState: null,
 		joinDetails: joinDetails || null,
 		extraInfo: extraInfo || null,
 		welcomeMessage: welcomeMessage || null,

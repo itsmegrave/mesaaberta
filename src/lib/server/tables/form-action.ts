@@ -4,6 +4,7 @@ import { zod4 } from 'sveltekit-superforms/adapters';
 import { refuse } from '$lib/forms/server';
 import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
+import { withLocation } from '../location/cep';
 import { tableFormSchema, toTableInput, type TableInput } from '$lib/tables/schema';
 
 type Event = {
@@ -51,7 +52,10 @@ export async function handleTableForm(
 			imagePath = await storeImage(storage, prepared);
 		}
 
-		({ slug } = await save(toTableInput(form.data), imagePath));
+		const input = locals.db
+			? await withLocation(locals.db, toTableInput(form.data))
+			: toTableInput(form.data);
+		({ slug } = await save(input, imagePath));
 	} catch (error) {
 		if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
 		if (error instanceof Forbidden) return message(form, { code: 'forbidden' }, { status: 403 });

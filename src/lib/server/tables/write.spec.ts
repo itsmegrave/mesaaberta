@@ -33,6 +33,10 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
 	modality: 'online',
 	locationArea: null,
 	joinDetails: null,
+	postalCode: null,
+	locationNeighbourhood: null,
+	locationCity: null,
+	locationState: null,
 	...over
 });
 
@@ -361,6 +365,31 @@ describe('modality', () => {
 			locationArea: 'Boa Viagem, Recife',
 			joinDetails: 'Rua das Flores, 10, ap. 302'
 		});
+	});
+
+	it('stores the CEP and the place it resolved to, and shows the CEP formatted when editing', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({
+				title: 'Com CEP',
+				modality: 'in_person',
+				locationArea: 'Graças, Recife - PE',
+				postalCode: '52011000',
+				locationNeighbourhood: 'Graças',
+				locationCity: 'Recife',
+				locationState: 'PE'
+			}),
+			{ now }
+		);
+
+		const [row] = await test.db.select().from(gameTables).where(eq(gameTables.slug, slug));
+		expect(row).toMatchObject({
+			postalCode: '52011000',
+			locationCity: 'Recife',
+			locationState: 'PE'
+		});
+		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({ postalCode: '52011-000' });
 	});
 
 	it('cannot be in person without an area, as the database insists', async () => {

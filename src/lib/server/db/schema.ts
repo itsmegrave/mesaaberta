@@ -103,6 +103,20 @@ export const systems = pgTable(
 	]
 ).enableRLS();
 
+// CEPs already looked up (ViaCEP), so the same one is never asked for twice. Public facts, no
+// personal data: a CEP is an area, not an address.
+export const postalCodes = pgTable(
+	'postal_codes',
+	{
+		cep: text('cep').primaryKey(),
+		neighbourhood: text('neighbourhood'),
+		city: text('city').notNull(),
+		state: text('state').notNull(),
+		...timestamps
+	},
+	(row) => [check('postal_codes_cep_format', sql`${row.cep} ~ '^[0-9]{8}$'`)]
+).enableRLS();
+
 export const gameTables = pgTable(
 	'game_tables',
 	{
@@ -128,6 +142,12 @@ export const gameTables = pgTable(
 		// Private: how to join (the Discord or VTT link, or the address). Shown only to the GM and the
 		// confirmed players, never selected by the public queries.
 		joinDetails: text('join_details'),
+		// Optional CEP of an in-person table (8 digits), and what it resolved to, for filters by state,
+		// city and neighbourhood. The street is never stored.
+		postalCode: text('postal_code'),
+		locationNeighbourhood: text('location_neighbourhood'),
+		locationCity: text('location_city'),
+		locationState: text('location_state'),
 		capacity: integer('capacity').notNull(),
 		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
 		durationMinutes: integer('duration_minutes').notNull(),
@@ -147,6 +167,8 @@ export const gameTables = pgTable(
 		uniqueIndex('game_tables_slug_unique').on(table.slug),
 		index('game_tables_gm_id_idx').on(table.gmId),
 		index('game_tables_system_id_idx').on(table.systemId),
+		index('game_tables_location_idx').on(table.locationState, table.locationCity),
+		check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
 		check(
 			'game_tables_recurrence_matches_kind',
 			sql`(${table.kind} = 'one_shot' AND ${table.recurrence} IS NULL) OR (${table.kind} = 'campaign' AND ${table.recurrence} IS NOT NULL)`
