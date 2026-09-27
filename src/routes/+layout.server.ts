@@ -15,6 +15,7 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 			released,
 			account: profile && {
 				displayName: profile.name ?? profile.username ?? 'Pessoa sem nome',
+				username: profile.username,
 				avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
 				isAdmin: can(profile, 'admin:access'),
 				pendingSuggestionsCount: 0

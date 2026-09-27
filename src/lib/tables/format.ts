@@ -61,3 +61,34 @@ export function formatCardDate(
 		weekdayTime: `${weekday.replace(/-feira$/, '')} · ${time}`
 	};
 }
+
+/**
+ * The instant a wall-clock time (`2026-10-10T19:00`) names in `timeZone`, for previews in the
+ * browser; null when the text is not a complete date and time. The server has its own, exact one.
+ */
+export function zonedToDate(local: string, timeZone: string): Date | null {
+	const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local);
+	if (!match) return null;
+	const [, y, mo, d, h, mi] = match.map(Number);
+	const guess = Date.UTC(y, mo - 1, d, h, mi);
+	try {
+		// What that UTC instant reads as in the zone; the difference is the zone's offset then.
+		const parts = Object.fromEntries(
+			new Intl.DateTimeFormat('en-US', {
+				timeZone,
+				hourCycle: 'h23',
+				year: 'numeric',
+				month: 'numeric',
+				day: 'numeric',
+				hour: 'numeric',
+				minute: 'numeric'
+			})
+				.formatToParts(new Date(guess))
+				.map((part) => [part.type, Number(part.value)])
+		);
+		const read = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
+		return new Date(guess - (read - guess));
+	} catch {
+		return null;
+	}
+}

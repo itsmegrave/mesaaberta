@@ -46,9 +46,11 @@ describe('TableForm', () => {
 		await page.getByLabelText('Sistema de RPG').selectOptions('daggerheart');
 		await page.getByLabelText('Vagas').fill('4');
 
-		await expect.element(page.getByText('A Cripta do Rei Afogado')).toBeVisible();
-		await expect.element(page.getByRole('complementary').getByText('Daggerheart')).toBeVisible();
-		await expect.element(page.getByText('One-shot · 4 vagas')).toBeVisible();
+		const preview = page.getByRole('complementary');
+		await expect.element(preview.getByText('A Cripta do Rei Afogado')).toBeVisible();
+		await expect.element(preview.getByText('Daggerheart')).toBeVisible();
+		await expect.element(preview.getByText('One-shot')).toBeVisible();
+		await expect.element(preview.getByText('4 vagas restantes')).toBeVisible();
 	});
 
 	it('posts as multipart to its action, so an image can travel with it', async () => {

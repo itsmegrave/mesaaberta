@@ -23,7 +23,11 @@
 		{m.form_view_table()}
 	</a>
 
-	<h1 class="mt-6 h1">{m.form_edit_title()}</h1>
+	<h1
+		class="mt-6 text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[68px]"
+	>
+		{m.form_edit_title()}
+	</h1>
 
 	{#if data.status === 'disabled'}
 		<p role="status" class="mt-4 max-w-[44ch] font-semibold">{m.form_edit_disabled()}</p>
@@ -35,13 +39,19 @@
 		imageUrl={data.imageUrl}
 		action="?/save"
 		submitLabel={m.form_submit_edit()}
+		cancelHref={localizedHref(`/tables/${data.slug}`, getLocale())}
+		gmName={data.account?.username ?? undefined}
 	/>
 
 	{#if data.status === 'active'}
 		<div class="mt-12 max-w-2xl border-t border-surface-200-800 pt-6">
 			<p class="mb-3">{m.form_disable_hint()}</p>
 			<ActionForm action="?/disable">
-				<button type="submit" class="btn preset-outlined-error-500">{m.form_disable()}</button>
+				<button
+					type="submit"
+					class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-5 font-semibold text-error-800 hover:preset-tonal dark:text-error-300"
+					>{m.form_disable()}</button
+				>
 			</ActionForm>
 		</div>
 	{/if}
