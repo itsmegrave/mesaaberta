@@ -10,7 +10,7 @@
 		{
 			id: 'google' as const,
 			label: m.login_with_google(),
-			style: 'preset-outlined-surface-300-700 hover:preset-tonal'
+			style: 'border-[1.5px] border-surface-200-800 bg-panel hover:preset-tonal'
 		},
 		{
 			id: 'discord' as const,
@@ -20,14 +20,14 @@
 	]);
 </script>
 
-<ul class="flex max-w-sm flex-col gap-3">
+<ul class="flex flex-col gap-3">
 	{#each providers as provider (provider.id)}
 		<li>
 			<a
 				href="{resolve('/login/[provider=provider]', {
 					provider: provider.id
 				})}?next={encodeURIComponent(next)}"
-				class="btn w-full justify-center gap-3 {provider.style}"
+				class="btn h-[54px] w-full justify-center gap-3 rounded-lg font-semibold {provider.style}"
 			>
 				<ProviderLogo provider={provider.id} />
 				{provider.label}
