@@ -26,7 +26,7 @@ describe('RunningCard', () => {
 		await expect.element(page.getByText('2 de 4 vagas ocupadas')).toBeVisible();
 		await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
 		await expect
-			.element(page.getByRole('link', { name: 'Editar ou desativar' }))
+			.element(page.getByRole('link', { name: 'Editar mesa' }))
 			.toHaveAttribute('href', '/tables/cronicas/edit');
 	});
 
