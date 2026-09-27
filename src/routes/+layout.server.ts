@@ -1,7 +1,8 @@
 import { can } from '$lib/server/auth/policy';
+import { pictureOf, supabaseUrlOf } from '$lib/server/images';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals, platform }) => {
 	const authEnabled = locals.supabase !== null;
 	// The Mesas link appears once the platform is released. The pages exist before that, unlinked.
 	const released = await locals.flags.isEnabled('is_platform_released');
@@ -14,7 +15,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			released,
 			account: profile && {
 				displayName: profile.name ?? profile.username ?? 'Pessoa sem nome',
-				avatarUrl: profile.avatarUrl,
+				avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
 				isAdmin: can(profile, 'admin:access'),
 				pendingSuggestionsCount: 0
 			}

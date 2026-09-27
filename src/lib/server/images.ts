@@ -3,6 +3,8 @@ import { Invalid } from './errors';
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 /** The Supabase Storage bucket table images go in. Public read; see the README for its setup. */
 export const IMAGE_BUCKET = 'table-images';
+/** The bucket profile pictures go in, one folder per user id. See the README, "Profile pictures". */
+export const AVATAR_BUCKET = 'profile-avatars';
 
 const TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' } as const;
 type ImageType = keyof typeof TYPES;
@@ -27,8 +29,11 @@ export function detectImageType(data: Uint8Array): ImageType | null {
 
 export type PreparedImage = { bytes: Uint8Array; contentType: ImageType; path: string };
 
-/** Checks an uploaded file and gives it a random name. Throws `Invalid` on the `image` field. */
-export async function prepareImage(file: File): Promise<PreparedImage> {
+/**
+ * Checks an uploaded file and gives it a random name inside `folder`. Throws `Invalid` on the
+ * `image` field.
+ */
+export async function prepareImage(file: File, folder = 'tables'): Promise<PreparedImage> {
 	if (file.size === 0) throw new Invalid('image', 'empty');
 	if (file.size > MAX_IMAGE_BYTES) throw new Invalid('image', 'too_big');
 
@@ -36,7 +41,7 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
 	const contentType = detectImageType(bytes);
 	if (!contentType) throw new Invalid('image', 'not_an_image');
 
-	return { bytes, contentType, path: `tables/${crypto.randomUUID()}.${TYPES[contentType]}` };
+	return { bytes, contentType, path: `${folder}/${crypto.randomUUID()}.${TYPES[contentType]}` };
 }
 
 /** The part of a Supabase Storage bucket this needs, so tests can stand in for it. */
@@ -66,3 +71,12 @@ export const supabaseUrlOf = (env: unknown) =>
 /** The public URL of a stored image, or null when there is none or Supabase is not configured. */
 export const imageUrl = (supabaseUrl: string | undefined, path: string | null) =>
 	supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${IMAGE_BUCKET}/${path}` : null;
+
+/** The picture a profile shows: the uploaded one, else the sign-in provider's, else none. */
+export const pictureOf = (
+	supabaseUrl: string | undefined,
+	profile: { avatarPath: string | null; avatarUrl: string | null }
+) =>
+	supabaseUrl && profile.avatarPath
+		? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${profile.avatarPath}`
+		: profile.avatarUrl;

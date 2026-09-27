@@ -64,6 +64,12 @@ public = true
 file_size_limit = "2MiB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
 
+# Profile pictures, as configured in production (see the README, "Profile pictures").
+[storage.buckets.profile-avatars]
+public = true
+file_size_limit = "2MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
 [auth]
 enabled = true
 # Where the app runs during the tests (Playwright's preview server).

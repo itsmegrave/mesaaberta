@@ -23,6 +23,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 			gender: profiles.gender,
 			city: profiles.city,
 			avatarUrl: profiles.avatarUrl,
+			avatarPath: profiles.avatarPath,
 			createdAt: profiles.createdAt
 		})
 		.from(profiles)
@@ -44,6 +45,9 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 				description: gameTables.description,
 				extraInfo: gameTables.extraInfo,
 				welcomeMessage: gameTables.welcomeMessage,
+				modality: gameTables.modality,
+				locationArea: gameTables.locationArea,
+				joinDetails: gameTables.joinDetails,
 				capacity: gameTables.capacity,
 				joinMode: gameTables.joinMode,
 				startsAt: gameTables.startsAt,
@@ -151,8 +155,29 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
 				gender: null,
 				city: null,
 				avatarUrl: null,
+				avatarPath: null,
 				status: 'suspended'
 			})
 			.where(eq(profiles.id, userId));
+	});
+}
+
+/**
+ * Points the profile at a newly uploaded picture, or at none (`null`: back to the provider's).
+ * Returns the path it replaced, so the caller can delete that file.
+ */
+export async function setAvatarPath(
+	db: AnyDb,
+	userId: string,
+	path: string | null
+): Promise<string | null> {
+	return db.transaction(async (tx) => {
+		const [before] = await tx
+			.select({ avatarPath: profiles.avatarPath })
+			.from(profiles)
+			.where(eq(profiles.id, userId))
+			.for('update');
+		await tx.update(profiles).set({ avatarPath: path }).where(eq(profiles.id, userId));
+		return before?.avatarPath ?? null;
 	});
 }

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { signIn } from './support/app';
+import { PNG, signIn } from './support/app';
 import { createUser, database } from './support/users';
 
 // The profile page: editing, the data export and closing the account. Against the local Supabase.
@@ -75,4 +75,53 @@ test('closing the account asks for the username, then removes the person and sig
 	} finally {
 		await sql.end();
 	}
+});
+
+test('uploads a profile picture to the own folder, shows it in the header, and removes it', async ({
+	page
+}) => {
+	const user = await createUser('Foto Enviada');
+	await signIn(page, user, '/account/profile');
+	await expect(page.getByRole('button', { name: 'Remover foto enviada' })).toHaveCount(0);
+
+	await page.getByLabel('Escolher foto').setInputFiles({
+		name: 'eu.png',
+		mimeType: 'image/png',
+		buffer: PNG
+	});
+	await page.getByRole('button', { name: 'Enviar foto' }).click();
+	await expect(page.getByText('Foto atualizada.')).toBeVisible();
+
+	const sql = database();
+	try {
+		const [{ avatar_path: path }] =
+			await sql`select avatar_path from profiles where id = ${user.id}`;
+		expect(path).toMatch(new RegExp(`^${user.id}/[0-9a-f-]+\\.png$`));
+		await expect(
+			page.getByRole('banner').locator(`img[src$="/profile-avatars/${path}"]`)
+		).toHaveCount(1);
+
+		await page.getByRole('button', { name: 'Remover foto enviada' }).click();
+		await expect(page.getByText('Foto removida.', { exact: false })).toBeVisible();
+		const [after] = await sql`select avatar_path from profiles where id = ${user.id}`;
+		expect(after.avatar_path).toBeNull();
+		const [file] =
+			await sql`select count(*)::int as n from storage.objects where bucket_id = 'profile-avatars' and name = ${path}`;
+		expect(file.n).toBe(0);
+	} finally {
+		await sql.end();
+	}
+});
+
+test('refuses a file that is not a picture', async ({ page }) => {
+	const user = await createUser('Foto Falsa');
+	await signIn(page, user, '/account/profile');
+
+	await page.getByLabel('Escolher foto').setInputFiles({
+		name: 'eu.png',
+		mimeType: 'image/png',
+		buffer: Buffer.from('<svg onload="alert(1)"></svg>')
+	});
+	await page.getByRole('button', { name: 'Enviar foto' }).click();
+	await expect(page.getByRole('alert')).toContainText('Envie uma foto PNG, JPEG ou WebP.');
 });

@@ -52,7 +52,10 @@ export const profiles = pgTable(
 		age: smallint('age'),
 		gender: text('gender'),
 		city: text('city'),
+		// The picture from the sign-in provider (Google, Discord).
 		avatarUrl: text('avatar_url'),
+		// A picture the person uploaded, in the profile-avatars bucket; it wins over the provider's.
+		avatarPath: text('avatar_path'),
 		role: profileRole('role').notNull().default('member'),
 		status: profileStatus('status').notNull().default('active'),
 		...timestamps

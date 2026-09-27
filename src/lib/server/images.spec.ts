@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { detectImageType, MAX_IMAGE_BYTES, prepareImage, storeImage } from './images';
+import { detectImageType, MAX_IMAGE_BYTES, pictureOf, prepareImage, storeImage } from './images';
 
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG = [0xff, 0xd8, 0xff, 0xe0];
@@ -105,5 +105,32 @@ describe('storeImage', () => {
 			field: 'image',
 			message: 'upload_failed'
 		});
+	});
+});
+
+describe('prepareImage in a folder', () => {
+	it("puts a profile picture in its owner's folder, still with a random name", async () => {
+		const { path } = await prepareImage(file(bytes(PNG)), 'user-1');
+		expect(path).toMatch(/^user-1\/[0-9a-f-]{36}\.png$/);
+	});
+});
+
+describe('pictureOf', () => {
+	const base = 'https://x.supabase.co';
+
+	it('prefers an uploaded picture, then the one from the sign-in provider', () => {
+		expect(pictureOf(base, { avatarPath: 'u/a.png', avatarUrl: 'https://google/p.jpg' })).toBe(
+			'https://x.supabase.co/storage/v1/object/public/profile-avatars/u/a.png'
+		);
+		expect(pictureOf(base, { avatarPath: null, avatarUrl: 'https://google/p.jpg' })).toBe(
+			'https://google/p.jpg'
+		);
+		expect(pictureOf(base, { avatarPath: null, avatarUrl: null })).toBeNull();
+	});
+
+	it('falls back to the provider picture when Supabase is not configured', () => {
+		expect(pictureOf(undefined, { avatarPath: 'u/a.png', avatarUrl: 'https://g/p.jpg' })).toBe(
+			'https://g/p.jpg'
+		);
 	});
 });

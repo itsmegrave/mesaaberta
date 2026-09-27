@@ -10,7 +10,7 @@ import {
 	systems
 } from '../db/schema';
 import { createTestDb } from '../db/test-db';
-import { anonymiseProfile, closeAccount, exportAccount } from './service';
+import { anonymiseProfile, closeAccount, exportAccount, setAvatarPath } from './service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000007${String(n).padStart(2, '0')}`;
@@ -144,7 +144,8 @@ describe('anonymiseProfile', () => {
 			age: 40,
 			gender: 'homem',
 			city: 'Natal',
-			avatarUrl: 'https://example.com/a.png'
+			avatarUrl: 'https://example.com/a.png',
+			avatarPath: 'person/a.png'
 		});
 		await test.db
 			.insert(profileSocialLinks)
@@ -160,6 +161,7 @@ describe('anonymiseProfile', () => {
 			gender: null,
 			city: null,
 			avatarUrl: null,
+			avatarPath: null,
 			status: 'suspended'
 		});
 		expect(
@@ -168,5 +170,19 @@ describe('anonymiseProfile', () => {
 				.from(profileSocialLinks)
 				.where(eq(profileSocialLinks.profileId, person))
 		).toEqual([]);
+	});
+});
+
+describe('setAvatarPath', () => {
+	it('stores the uploaded picture and hands back the one it replaced', async () => {
+		const person = id(30);
+		await test.db.insert(profiles).values({ id: person, username: 'elis' });
+
+		expect(await setAvatarPath(test.db, person, 'elis/1.png')).toBeNull();
+		expect(await setAvatarPath(test.db, person, 'elis/2.png')).toBe('elis/1.png');
+		expect(await setAvatarPath(test.db, person, null)).toBe('elis/2.png');
+
+		const [profile] = await test.db.select().from(profiles).where(eq(profiles.id, person));
+		expect(profile.avatarPath).toBeNull();
 	});
 });
