@@ -33,45 +33,71 @@ const systemId = async (slug: string) => {
 };
 
 await db.insert(profiles).values(gm).onConflictDoNothing();
-await db
-	.insert(gameTables)
-	.values([
-		{
-			...base,
-			slug: 'mesa-do-dragao',
-			title: 'Mesa do Dragão',
-			systemId: await systemId('dungeons-e-dragons-5e-2014'),
-			kind: 'one_shot',
-			capacity: 5,
-			startsAt: inDays(7, 22),
-			description: 'Uma aventura de uma noite para quem nunca jogou.\nNão precisa de experiência.',
-			// Markup on purpose: the pages must show it as text.
-			extraInfo: 'Traga dados e <b>lápis</b>.'
-		},
-		{
-			...base,
-			slug: 'cronicas-de-arton',
-			title: 'Crônicas de Arton',
-			systemId: await systemId('tormenta-20-t20'),
-			kind: 'campaign',
-			recurrence: 'FREQ=WEEKLY;BYDAY=SA',
-			capacity: 4,
-			startsAt: inDays(3, 21),
-			joinMode: 'approval'
-		},
-		{
-			...base,
-			slug: 'mesa-desativada',
-			title: 'Mesa Desativada',
-			systemId: await systemId('daggerheart'),
-			kind: 'one_shot',
-			capacity: 4,
-			startsAt: inDays(5, 20),
-			// The public pages must never show a disabled table.
-			status: 'disabled'
-		}
-	])
-	.onConflictDoNothing();
+
+const tables = [
+	{
+		...base,
+		slug: 'os-sinos-de-sablewood',
+		title: 'Os Sinos de Sablewood',
+		systemId: await systemId('daggerheart'),
+		kind: 'one_shot' as const,
+		capacity: 5,
+		startsAt: inDays(7, 22),
+		description: 'Uma aventura de uma noite para quem nunca jogou.\nNão precisa de experiência.',
+		// Markup on purpose: the pages must show it as text.
+		extraInfo: 'Traga dados e <b>lápis</b>.'
+	},
+	{
+		...base,
+		slug: 'cronicas-de-roshar',
+		title: 'Crônicas de Roshar',
+		systemId: await systemId('cosmere-roleplaying-game'),
+		kind: 'campaign' as const,
+		recurrence: 'FREQ=WEEKLY;BYDAY=SA',
+		capacity: 4,
+		startsAt: inDays(3, 21),
+		joinMode: 'approval' as const
+	},
+	{
+		...base,
+		slug: 'noites-de-neon',
+		title: 'Noites de Neon',
+		systemId: await systemId('urban-shadows-2e'),
+		kind: 'one_shot' as const,
+		capacity: 4,
+		startsAt: inDays(10, 22),
+		modality: 'in_person' as const,
+		locationArea: 'Boa Viagem, Recife - PE'
+	},
+	{
+		...base,
+		slug: 'a-cripta-do-rei-afogado',
+		title: 'A Cripta do Rei Afogado',
+		systemId: await systemId('old-dragon-2-edicao'),
+		kind: 'one_shot' as const,
+		capacity: 5,
+		startsAt: inDays(12, 22)
+	},
+	{
+		...base,
+		slug: 'a-ultima-estrada',
+		title: 'A Última Estrada',
+		systemId: await systemId('savage-worlds'),
+		kind: 'one_shot' as const,
+		capacity: 4,
+		startsAt: inDays(5, 20),
+		// The public pages must never show a disabled table.
+		status: 'disabled' as const
+	}
+];
+
+// Running it again moves the sessions back to the days above, so the dates never go stale.
+for (const table of tables) {
+	await db
+		.insert(gameTables)
+		.values(table)
+		.onConflictDoUpdate({ target: gameTables.slug, set: { startsAt: table.startsAt } });
+}
 
 await client.end();
-console.log('Dev data is in place: 1 profile and 3 tables (one disabled).');
+console.log(`Dev data is in place: 1 profile and ${tables.length} tables (one disabled).`);
