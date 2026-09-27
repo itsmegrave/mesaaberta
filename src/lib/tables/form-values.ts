@@ -24,7 +24,8 @@ export const NEW_TABLE_VALUES: TableFormValues = {
 	joinMode: 'auto',
 	modality: 'online',
 	locationArea: '',
-	joinDetails: ''
+	joinDetails: '',
+	postalCode: ''
 };
 
 /** The sentence for a problem that is about the whole form, not one field; null when there is none. */
@@ -40,6 +41,11 @@ export function formProblem(message: FormMessage | undefined): string | null {
 /** A validation code (from `parseTableForm` or an `Invalid` error) as a sentence. */
 export function errorText(code: string, field = ''): string {
 	if (field === 'image' && code === 'too_big') return m.form_error_image_too_big();
+	if (field === 'postalCode') {
+		if (code === 'not_found') return m.form_error_cep_not_found();
+		if (code === 'unavailable') return m.form_error_cep_unavailable();
+		return m.form_error_cep_invalid();
+	}
 
 	switch (code) {
 		case 'required':

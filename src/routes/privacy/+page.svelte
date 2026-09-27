@@ -47,8 +47,9 @@
 	<h3>Mesas e participação</h3>
 	<ul>
 		<li>
-			As mesas que você abre: título, descrição, sistema, horários, fuso, vagas, imagem de capa e
-			mensagem de boas-vindas.
+			As mesas que você abre: título, descrição, sistema, horários, fuso, vagas, imagem de capa,
+			mensagem de boas-vindas, se é online ou presencial, bairro, cidade e CEP (presencial), e como
+			entrar (link ou endereço, visível só para você e os jogadores confirmados).
 		</li>
 		<li>
 			As mesas em que você entra ou pede vaga, e o andamento desses pedidos (aprovado, recusado,
@@ -113,6 +114,10 @@
 		<li><strong>Cloudflare</strong>: hospedagem, rede e proteção contra ataques.</li>
 		<li><strong>Resend</strong>: envio de e-mails (convites e avisos das mesas).</li>
 		<li><strong>Google e Discord</strong>: só se você escolher entrar com eles.</li>
+		<li>
+			<strong>ViaCEP</strong>: recebe só o CEP de uma mesa presencial, para achar o bairro e a
+			cidade. Guardamos a resposta para não perguntar de novo.
+		</li>
 	</ul>
 	<p>Também compartilhamos dados se uma autoridade competente exigir, nos termos da lei.</p>
 

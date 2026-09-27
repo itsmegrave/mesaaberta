@@ -8,6 +8,7 @@ import { TABLE_CREATION_LIMIT, enforceRateLimit } from '../rate-limit';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
 import type { TableInput } from '$lib/tables/schema';
+import { formatCep } from '$lib/location/cep';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
@@ -47,7 +48,11 @@ async function columnsOf(db: AnyDb, input: TableInput) {
 		joinMode: input.joinMode,
 		modality: input.modality,
 		locationArea: input.locationArea,
-		joinDetails: input.joinDetails
+		joinDetails: input.joinDetails,
+		postalCode: input.postalCode,
+		locationNeighbourhood: input.locationNeighbourhood,
+		locationCity: input.locationCity,
+		locationState: input.locationState
 	};
 }
 
@@ -144,6 +149,7 @@ export async function loadTableForEdit(db: AnyDb, actor: Actor | null, slug: str
 		modality: table.modality,
 		locationArea: table.locationArea ?? '',
 		joinDetails: table.joinDetails ?? '',
+		postalCode: table.postalCode ? formatCep(table.postalCode) : '',
 		imagePath: table.imagePath
 	};
 }

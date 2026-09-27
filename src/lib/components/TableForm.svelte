@@ -232,9 +232,26 @@
 			</fieldset>
 			{#if $form.modality === 'in_person'}
 				<FormField
+					id="postalCode"
+					label={m.form_postal_code()}
+					hint={m.form_postal_code_hint()}
+					error={err('postalCode')}
+					><input
+						id="postalCode"
+						name="postalCode"
+						inputmode="numeric"
+						autocomplete="postal-code"
+						maxlength="10"
+						placeholder="00000-000"
+						bind:value={$form.postalCode}
+						class="input max-w-48"
+						aria-invalid={invalid('postalCode')}
+					/></FormField
+				>
+				<FormField
 					id="locationArea"
 					label={m.form_location_area()}
-					hint={m.form_location_area_hint()}
+					hint={$form.postalCode ? m.form_location_area_hint_cep() : m.form_location_area_hint()}
 					error={err('locationArea')}
 					><input
 						id="locationArea"

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { createTable, signIn, uniqueTitle } from './support/app';
-import { createUser } from './support/users';
+import { createUser, database } from './support/users';
 
 // Online or in person: the GM says which, players see it and can filter by it, and the address or
 // link stays private to the GM and the confirmed players.
@@ -46,4 +46,43 @@ test('an in-person table needs the neighbourhood and city', async ({ page }) => 
 	await expect(page.getByLabel('Bairro e cidade')).toBeVisible();
 	await page.getByLabel('Online', { exact: true }).check();
 	await expect(page.getByLabel('Bairro e cidade')).toHaveCount(0);
+});
+
+test('a CEP fills the neighbourhood and city in, from the local cache, and never shows the CEP', async ({
+	page
+}) => {
+	// Cached, so the test never calls ViaCEP.
+	const sql = database();
+	try {
+		await sql`insert into postal_codes (cep, neighbourhood, city, state) values ('52011000', 'Graças', 'Recife', 'PE') on conflict do nothing`;
+	} finally {
+		await sql.end();
+	}
+
+	await signIn(page, await createUser('Mestre Com Cep'));
+	await page.goto('/tables/new');
+	await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+	await page.getByLabel('Título').fill(uniqueTitle('Com CEP'));
+	await page.getByLabel('Vagas', { exact: true }).fill('4');
+	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+	await page.getByLabel('Presencial', { exact: true }).check();
+	await page.getByLabel('CEP', { exact: true }).fill('52011-000');
+	await page.getByRole('button', { name: 'Abrir mesa' }).click();
+
+	await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
+	await expect(page.getByText('Presencial · Graças, Recife - PE')).toBeVisible();
+	await expect(page.getByText('52011')).toHaveCount(0);
+});
+
+test('a CEP in the wrong shape is refused next to the field', async ({ page }) => {
+	await signIn(page, await createUser('Mestre Cep Errado'));
+	await page.goto('/tables/new');
+	await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+	await page.getByLabel('Título').fill(uniqueTitle('CEP ruim'));
+	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+	await page.getByLabel('Presencial', { exact: true }).check();
+	await page.getByLabel('CEP', { exact: true }).fill('1234');
+	await page.getByRole('button', { name: 'Abrir mesa' }).click();
+
+	await expect(page.getByText('O CEP tem 8 números, por exemplo 50030-230.')).toBeVisible();
 });
