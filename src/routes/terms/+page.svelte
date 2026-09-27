@@ -91,9 +91,9 @@
 
 	<h2>Encerrar a conta</h2>
 	<p>
-		Você pode pedir para apagar a sua conta a qualquer momento, escrevendo para
-		<a href="mailto:{controller.email}">{controller.email}</a>. O que acontece com os seus dados
-		está na <a href={localizedHref('/privacy', locale)}>Política de privacidade</a>.
+		Você pode apagar a sua conta a qualquer momento, na
+		<a href={localizedHref('/account/profile', locale)}>página do seu perfil</a>. O que acontece com
+		os seus dados está na <a href={localizedHref('/privacy', locale)}>Política de privacidade</a>.
 	</p>
 
 	<h2>Responsabilidade</h2>

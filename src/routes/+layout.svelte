@@ -19,7 +19,7 @@
 	// The header marks the section you are in, as the bottom tab bar does on phones.
 	const pathname = $derived(page.url.pathname);
 	const inTables = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
-	const inMyTables = $derived(pathname.startsWith('/account'));
+	const inMyTables = $derived(pathname.startsWith('/account/tables'));
 	const navLink =
 		'btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-[9px]';
 </script>

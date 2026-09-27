@@ -21,6 +21,8 @@ export default defineConfig({
 			`wrangler dev .svelte-kit/cloudflare/_worker.js --port ${port}`,
 			`--var SUPABASE_URL:${supabase.API_URL}`,
 			`--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`,
+			// The local stack's secret key: account deletion removes the Auth user through the Admin API.
+			`--var SUPABASE_SECRET_KEY:${supabase.SECRET_KEY}`,
 			// E2E mirrors the feature-flag defaults used in CI instead of .dev.vars' local preview mode.
 			'--var IGNORE_FEATURE_FLAGS_IN_LOCALHOST:false'
 		].join(' '),

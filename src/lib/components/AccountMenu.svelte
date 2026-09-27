@@ -66,7 +66,7 @@
 				<hr class="mx-2 mb-1.5" />
 
 				<nav aria-label={m.nav_account_menu()} class="flex flex-col gap-0.5">
-					<a href={localizedHref('/perfil', locale)} class={item}>
+					<a href={localizedHref('/account/profile', locale)} class={item}>
 						<svg
 							width="20"
 							height="20"
