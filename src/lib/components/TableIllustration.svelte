@@ -6,6 +6,12 @@
 	let { onBrand = false }: { onBrand?: boolean } = $props();
 
 	const centre = 200;
+
+	// The map's grid: 20px squares inside its 120 x 100 frame (x 140-260, y 150-250).
+	const gridLines = [
+		...[160, 180, 200, 220, 240].map((x) => `M${x} 150V250`),
+		...[170, 190, 210, 230].map((y) => `M140 ${y}H260`)
+	].join('');
 	const orbit = 150;
 
 	const at = (degrees: number) => {
@@ -47,9 +53,23 @@
 		r="104"
 		class={onBrand ? 'fill-black/26' : 'table-top fill-primary-500'}
 	/>
+	<!-- A battle map on the table: a square grid, two miniatures on it, and a d20 beside it. -->
 	<g transform="rotate(-12 {centre} {centre})">
-		<rect x="152" y="170" width="96" height="60" rx="4" class="fill-white" />
-		<path d="M164 190h44M164 202h60M164 214h30" class="stroke-surface-950/40" stroke-width="3" />
+		<rect x="140" y="150" width="120" height="100" rx="6" class="fill-white" />
+		<path d={gridLines} class="stroke-primary-500/35" stroke-width="1.5" />
+		<!-- A wall across the map, so it reads as a dungeon, not a spreadsheet. -->
+		<path d="M160 170h40v20" class="fill-none stroke-surface-950/55" stroke-width="4" />
+		<circle cx="190" cy="220" r="7" class="fill-success-500" />
+		<circle cx="230" cy="180" r="7" class="fill-tertiary-400" />
+	</g>
+	<g transform="translate(262 238) rotate(14)">
+		<path d="M0-15 13-7.5v15L0 15-13 7.5v-15z" class="fill-warning-400" />
+		<path
+			d="M0-15 7.5 5h-15zM-13 7.5 -7.5 5M13 7.5 7.5 5M0 15V5"
+			class="fill-none stroke-warning-950/60"
+			stroke-width="1.5"
+			stroke-linejoin="round"
+		/>
 	</g>
 
 	{#each players as player, i (player.angle)}
