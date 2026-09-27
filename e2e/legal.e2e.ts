@@ -4,13 +4,9 @@ for (const [name, path, heading] of [
 	['privacy policy', '/privacy', 'Política de privacidade'],
 	['terms of use', '/terms', 'Termos de uso']
 ] as const) {
-	test(`the footer links to the ${name}, which names a contact for data requests`, async ({
-		page
-	}) => {
-		await page.goto('/');
-		await page.getByRole('contentinfo').getByRole('link', { name: heading }).click();
+	test(`the ${name} is served, and names a contact for data requests`, async ({ page }) => {
+		await page.goto(path);
 
-		await expect(page).toHaveURL(new RegExp(`${path}$`));
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading);
 		await expect(
 			page.getByRole('main').getByRole('link', { name: 'privacidade@mesaaberta.app' }).first()

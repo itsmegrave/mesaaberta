@@ -175,11 +175,4 @@
 			>.
 		</p>
 	</div>
-	<nav
-		aria-label={m.footer_legal()}
-		class="flex gap-6 border-t border-surface-200-800 py-5 text-[15px] font-semibold"
-	>
-		<a href={localizedHref('/privacy', locale)} class="hover:underline">{m.privacy_title()}</a>
-		<a href={localizedHref('/terms', locale)} class="hover:underline">{m.terms_title()}</a>
-	</nav>
 </footer>
