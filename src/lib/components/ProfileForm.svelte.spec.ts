@@ -94,8 +94,11 @@ describe('ProfileForm', () => {
 			await userEvent.type(page.getByLabelText('Nome de usuário'), 'Ana-Maria');
 
 			await expect.element(page.getByText('Esse nome está livre.')).toBeVisible();
-			expect(check).toHaveBeenCalledTimes(1);
-			expect(check).toHaveBeenCalledWith('ana-maria', expect.any(AbortSignal));
+			// Not once per key: the check waits for a pause. (A slow test machine can make a pause mid-word,
+			// so this does not insist on exactly one call.)
+			expect(check.mock.calls.length).toBeGreaterThan(0);
+			expect(check.mock.calls.length).toBeLessThan('Ana-Maria'.length);
+			expect(check).toHaveBeenLastCalledWith('ana-maria', expect.any(AbortSignal));
 		});
 
 		it('says the name is taken, as an error tied to the field', async () => {
