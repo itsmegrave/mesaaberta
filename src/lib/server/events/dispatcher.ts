@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
 import { scrubString } from '../logger';
@@ -116,4 +116,21 @@ export async function sweepEvents(
 	for (const { id } of rows) await dispatchEvent(db, handlers, id, now);
 
 	return rows.length;
+}
+
+/** Days a finished event stays in the audit log. The privacy policy promises this; keep them in step. */
+export const RETENTION_DAYS = 90;
+
+/**
+ * Deletes the events that finished (processed, or given up on) more than `RETENTION_DAYS` ago.
+ * Pending events stay, whatever their age. Returns how many were deleted.
+ */
+export async function pruneEvents(db: AnyDb, now = new Date()): Promise<number> {
+	const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 3600 * 1000);
+	const deleted = await db
+		.delete(events)
+		.where(or(lt(events.processedAt, cutoff), lt(events.failedAt, cutoff)))
+		.returning({ id: events.id });
+
+	return deleted.length;
 }

@@ -3,6 +3,7 @@
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import { resolve } from '$app/paths';
 	import CredentialsForm from '$lib/components/CredentialsForm.svelte';
+	import LegalConsent from '$lib/components/LegalConsent.svelte';
 	import ProviderButtons from '$lib/components/ProviderButtons.svelte';
 	import { credentialsSchema } from '$lib/auth/credentials';
 	import { m } from '$lib/paraglide/messages';
@@ -45,6 +46,8 @@
 			</p>
 
 			<ProviderButtons next={data.next} />
+
+			<LegalConsent mode="signup" />
 
 			<p>
 				{m.signup_have_account()}

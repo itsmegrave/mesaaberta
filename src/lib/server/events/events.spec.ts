@@ -3,7 +3,14 @@ import { eq } from 'drizzle-orm';
 import { events, gameTables, profiles, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { recordEvent } from './outbox';
-import { dispatchEvent, MAX_ATTEMPTS, backoffSeconds, sweepEvents } from './dispatcher';
+import {
+	dispatchEvent,
+	MAX_ATTEMPTS,
+	backoffSeconds,
+	pruneEvents,
+	RETENTION_DAYS,
+	sweepEvents
+} from './dispatcher';
 import type { Handler, StoredEvent } from './types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -291,5 +298,31 @@ describe('sweepEvents', () => {
 
 		expect(await sweepEvents(test.db, [], later(1), 3)).toBe(3);
 		expect(await sweepEvents(test.db, [], later(1), 3)).toBe(2);
+	});
+});
+
+describe('pruneEvents', () => {
+	const days = (n: number) => later(n * 24 * 3600);
+
+	it('deletes events finished more than the retention period ago, and keeps the rest', async () => {
+		const old = await record();
+		const recent = await record();
+		const gaveUp = await record();
+		const pending = await record();
+		await test.db.update(events).set({ processedAt: t0 }).where(eq(events.id, old));
+		await test.db
+			.update(events)
+			.set({ processedAt: days(10) })
+			.where(eq(events.id, recent));
+		await test.db.update(events).set({ failedAt: t0 }).where(eq(events.id, gaveUp));
+
+		const pruned = await pruneEvents(test.db, days(RETENTION_DAYS + 1));
+
+		expect(pruned).toBe(2);
+		expect(await row(old)).toBeUndefined();
+		expect(await row(gaveUp)).toBeUndefined();
+		expect(await row(recent)).toBeDefined();
+		// Never processed: it still has work to do, whatever its age.
+		expect(await row(pending)).toBeDefined();
 	});
 });
