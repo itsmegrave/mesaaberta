@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { events } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { signInWithEmail, signUpWithEmail } from './email';
 
@@ -28,7 +30,12 @@ const setup = async (
 		signOut,
 		call,
 		log: l,
-		deps: { supabase: supabase as never, db: options.db === false ? null : test.db, log: l }
+		deps: {
+			supabase: supabase as never,
+			db: options.db === false ? null : test.db,
+			log: l,
+			ip: '203.0.113.1'
+		}
 	};
 };
 
@@ -96,6 +103,18 @@ describe('signUpWithEmail', () => {
 		expect(await test.db.query.profiles.findFirst()).toMatchObject({ id: user.id, role: 'member' });
 	});
 
+	it('records the connection, for the Marco Civil retention', async () => {
+		const { deps, test } = await setup('signUp', {
+			data: { user, session: { access_token: 'x' } },
+			error: null
+		});
+
+		await signUpWithEmail(deps, input);
+
+		const [event] = await test.db.select().from(events).where(eq(events.actorId, user.id));
+		expect(event).toMatchObject({ type: 'UserSignedIn', payload: { ip: '203.0.113.1' } });
+	});
+
 	it('names no part of the address in the default display name', async () => {
 		const { deps, test } = await setup('signUp', {
 			data: { user, session: { access_token: 'x' } },
@@ -157,6 +176,18 @@ describe('signInWithEmail', () => {
 
 		expect(await signInWithEmail(deps, input)).toBe('ok');
 		expect(await test.db.query.profiles.findFirst()).toMatchObject({ id: user.id });
+	});
+
+	it('records the connection, for the Marco Civil retention', async () => {
+		const { deps, test } = await setup('signInWithPassword', {
+			data: { user, session: { access_token: 'x' } },
+			error: null
+		});
+
+		await signInWithEmail(deps, input);
+
+		const [event] = await test.db.select().from(events).where(eq(events.actorId, user.id));
+		expect(event).toMatchObject({ type: 'UserSignedIn', payload: { ip: '203.0.113.1' } });
 	});
 
 	it.each([

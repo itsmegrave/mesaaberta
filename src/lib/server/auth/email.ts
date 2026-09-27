@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import type { AnyDb } from '../db/client';
 import type { Logger } from '../logger';
+import { recordConnection } from '../events/outbox';
 import { ensureProfile } from './profile';
 import { safeNext } from './safe-next';
 
@@ -8,7 +9,7 @@ import { safeNext } from './safe-next';
 // password, sends the confirmation email and verifies the session. This only calls it, then makes
 // sure the person has a profile. The email address and the password are never logged.
 
-type Deps = { supabase: SupabaseClient; db: AnyDb | null; log: Logger };
+type Deps = { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: string | null };
 
 /** What the sign-up form should say. `check_email` is also the answer for an address that already has an account. */
 export type SignUpResult =
@@ -33,6 +34,10 @@ async function keepProfile({ supabase, db, log }: Deps, user: User): Promise<boo
 		return false;
 	}
 }
+
+/** `keepProfile` already checked that `db` is there when it returns true. */
+const signedIn = async ({ db, ip, log }: Deps, user: User) =>
+	recordConnection(db as AnyDb, { actorId: user.id, ip, log });
 
 export async function signUpWithEmail(
 	deps: Deps,
@@ -68,7 +73,9 @@ export async function signUpWithEmail(
 	// the same way, so this never says whether the address was already registered.
 	if (!data.session || !data.user) return 'check_email';
 
-	return (await keepProfile(deps, data.user)) ? 'signed_in' : 'failed';
+	if (!(await keepProfile(deps, data.user))) return 'failed';
+	await signedIn(deps, data.user);
+	return 'signed_in';
 }
 
 export async function signInWithEmail(
@@ -86,5 +93,7 @@ export async function signInWithEmail(
 		return 'failed';
 	}
 
-	return (await keepProfile(deps, data.user)) ? 'ok' : 'failed';
+	if (!(await keepProfile(deps, data.user))) return 'failed';
+	await signedIn(deps, data.user);
+	return 'ok';
 }

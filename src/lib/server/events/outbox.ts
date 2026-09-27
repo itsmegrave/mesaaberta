@@ -1,5 +1,6 @@
 import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
+import type { Logger } from '../logger';
 import type { DomainEvent } from './types';
 
 /**
@@ -23,4 +24,19 @@ export async function recordEvent(
 		.returning({ id: events.id });
 
 	return row.id;
+}
+
+/**
+ * Records the connection log a sign-in requires (Marco Civil da Internet, art. 15), without
+ * failing the sign-in itself if the write does not go through.
+ */
+export async function recordConnection(
+	db: AnyDb,
+	{ actorId, ip, log }: { actorId: string; ip: string | null; log: Pick<Logger, 'warn'> }
+): Promise<void> {
+	try {
+		await recordEvent(db, { type: 'UserSignedIn', actorId, payload: { ip } });
+	} catch (error) {
+		log.warn('connection log: could not record the sign-in', { error });
+	}
 }

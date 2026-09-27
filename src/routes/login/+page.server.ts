@@ -31,7 +31,7 @@ const STATUS = {
 
 export const actions: Actions = {
 	// Email and password. Supabase checks them; a wrong email and a wrong password look the same.
-	email: async ({ request, locals }) => {
+	email: async ({ request, locals, getClientAddress }) => {
 		if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
 		const form: SuperValidated<CredentialsData, FormMessage> = await superValidate(
@@ -45,7 +45,7 @@ export const actions: Actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await signInWithEmail(
-			{ supabase: locals.supabase, db: locals.db, log: locals.log },
+			{ supabase: locals.supabase, db: locals.db, log: locals.log, ip: getClientAddress() },
 			{ email, password }
 		);
 		if (result !== 'ok') return message(form, { code: result }, { status: STATUS[result] });

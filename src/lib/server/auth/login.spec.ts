@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { profiles } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import { events, profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { finishLogin, startLogin } from './login';
 
@@ -63,7 +64,12 @@ describe('finishLogin', () => {
 		const log = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() };
 		const run = (code: string | null, next: string | null = null) =>
 			finishLogin(
-				{ supabase: supabase as never, db: options.db === false ? null : test.db, log },
+				{
+					supabase: supabase as never,
+					db: options.db === false ? null : test.db,
+					log,
+					ip: '203.0.113.1'
+				},
 				{ code, next }
 			);
 
@@ -80,6 +86,15 @@ describe('finishLogin', () => {
 			username: null,
 			role: 'member'
 		});
+	});
+
+	it('records the connection with the visitor IP, for the Marco Civil retention', async () => {
+		const { run, test } = await setup({ data: { user }, error: null });
+
+		await run('abc', '/tables/new');
+
+		const [event] = await test.db.select().from(events).where(eq(events.actorId, user.id));
+		expect(event).toMatchObject({ type: 'UserSignedIn', payload: { ip: '203.0.113.1' } });
 	});
 
 	it('goes straight on to next when the profile already has a username', async () => {

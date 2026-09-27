@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
 import { scrubString } from '../logger';
@@ -122,14 +122,30 @@ export async function sweepEvents(
 export const RETENTION_DAYS = 90;
 
 /**
- * Deletes the events that finished (processed, or given up on) more than `RETENTION_DAYS` ago.
+ * Days a finished `UserSignedIn` event stays: the connection log Marco Civil da Internet (art. 15)
+ * requires kept for 6 months. The privacy policy promises this too; keep them in step.
+ */
+export const CONNECTION_RETENTION_DAYS = 180;
+
+const finishedBefore = (cutoff: Date) =>
+	or(lt(events.processedAt, cutoff), lt(events.failedAt, cutoff));
+
+/**
+ * Deletes the events that finished (processed, or given up on) more than their retention period
+ * ago: `CONNECTION_RETENTION_DAYS` for `UserSignedIn`, `RETENTION_DAYS` for everything else.
  * Pending events stay, whatever their age. Returns how many were deleted.
  */
 export async function pruneEvents(db: AnyDb, now = new Date()): Promise<number> {
 	const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 3600 * 1000);
+	const connectionCutoff = new Date(now.getTime() - CONNECTION_RETENTION_DAYS * 24 * 3600 * 1000);
 	const deleted = await db
 		.delete(events)
-		.where(or(lt(events.processedAt, cutoff), lt(events.failedAt, cutoff)))
+		.where(
+			or(
+				and(ne(events.type, 'UserSignedIn'), finishedBefore(cutoff)),
+				and(eq(events.type, 'UserSignedIn'), finishedBefore(connectionCutoff))
+			)
+		)
 		.returning({ id: events.id });
 
 	return deleted.length;
