@@ -14,22 +14,35 @@ test.describe('table list', () => {
 		await page.goto('/tables');
 
 		await expect(page.getByRole('heading', { level: 1, name: 'Mesas abertas' })).toBeVisible();
-		await page.getByRole('link', { name: 'Mesa do Dragão' }).click();
+		await page.getByRole('link', { name: 'Os Sinos de Sablewood' }).click();
 
-		await expect(page).toHaveURL(/\/tables\/mesa-do-dragao$/);
-		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mesa do Dragão');
+		await expect(page).toHaveURL(/\/tables\/os-sinos-de-sablewood$/);
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Os Sinos de Sablewood');
 	});
 
 	test("shows what a card needs: system, kind, seats and the session in the table's timezone", async ({
 		page
 	}) => {
 		await page.goto('/tables');
-		const card = page.getByRole('article').filter({ hasText: 'Mesa do Dragão' });
+		const card = page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' });
 
-		await expect(card).toContainText('Dungeons & Dragons 5e (2014)');
+		await expect(card).toContainText('Daggerheart');
 		await expect(card).toContainText('One-shot');
 		await expect(card).toContainText('5 vagas restantes');
 		await expect(card).toContainText(/GMT-3/);
+	});
+
+	test('shows where an in-person table plays, and the Old Dragon one is listed too', async ({
+		page
+	}) => {
+		await page.goto('/tables');
+
+		await expect(page.getByRole('article').filter({ hasText: 'Noites de Neon' })).toContainText(
+			'Presencial · Boa Viagem, Recife - PE'
+		);
+		await expect(
+			page.getByRole('article').filter({ hasText: 'A Cripta do Rei Afogado' })
+		).toContainText('Old Dragon 2ª Edição');
 	});
 
 	test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
@@ -39,18 +52,20 @@ test.describe('table list', () => {
 			elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim())
 		);
 
-		await expect(page.getByRole('article').filter({ hasText: 'Crônicas de Arton' })).toContainText(
+		await expect(page.getByRole('article').filter({ hasText: 'Crônicas de Roshar' })).toContainText(
 			'Campanha'
 		);
-		// Crônicas starts in 3 days, the dragon in 7.
-		expect(titles.indexOf('Crônicas de Arton')).toBeLessThan(titles.indexOf('Mesa do Dragão'));
+		// Roshar starts in 3 days, Sablewood in 7.
+		expect(titles.indexOf('Crônicas de Roshar')).toBeLessThan(
+			titles.indexOf('Os Sinos de Sablewood')
+		);
 	});
 
 	test('never shows a disabled table, in the list or by its address', async ({ page }) => {
 		await page.goto('/tables');
-		await expect(page.getByText('Mesa Desativada')).toHaveCount(0);
+		await expect(page.getByText('A Última Estrada')).toHaveCount(0);
 
-		const response = await page.goto('/tables/mesa-desativada');
+		const response = await page.goto('/tables/a-ultima-estrada');
 		expect(response?.status()).toBe(404);
 	});
 
@@ -61,15 +76,17 @@ test.describe('table list', () => {
 			'aria-current',
 			'page'
 		);
-		await filter.getByRole('link', { name: 'Tormenta 20 (T20)' }).click();
+		// Featured as a chip, or behind "Mais sistemas" when other systems have more tables.
+		const chip = filter.getByRole('link', { name: 'Cosmere Roleplaying Game' });
+		if (!(await chip.first().isVisible())) await filter.getByText('Mais sistemas').click();
+		await chip.first().click();
 
-		await expect(page).toHaveURL(/system=tormenta-20-t20/);
-		await expect(filter.getByRole('link', { name: 'Tormenta 20 (T20)' })).toHaveAttribute(
-			'aria-current',
-			'page'
-		);
-		await expect(page.getByRole('link', { name: 'Crônicas de Arton' })).toBeVisible();
-		await expect(page.getByRole('link', { name: 'Mesa do Dragão' })).toHaveCount(0);
+		await expect(page).toHaveURL(/system=cosmere-roleplaying-game/);
+		await expect(
+			filter.getByRole('link', { name: 'Cosmere Roleplaying Game' }).first()
+		).toHaveAttribute('aria-current', 'page');
+		await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toHaveCount(0);
 
 		await page.goto('/tables?system=gurps');
 		await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta neste sistema');
@@ -93,13 +110,13 @@ test.describe('table page', () => {
 	test('shows the description, the GM, the system, the schedule and the extra info', async ({
 		page
 	}) => {
-		await page.goto('/tables/mesa-do-dragao');
+		await page.goto('/tables/os-sinos-de-sablewood');
 
 		await expect(page.getByText('Uma aventura de uma noite')).toBeVisible();
-		await expect(page.getByText('mestre-de-testes')).toBeVisible();
-		await expect(page.getByRole('link', { name: 'Dungeons & Dragons 5e (2014)' })).toHaveAttribute(
+		await expect(page.getByText('@mestre-de-testes')).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Daggerheart' })).toHaveAttribute(
 			'href',
-			/\/tables\?system=dungeons-e-dragons-5e-2014$/
+			/\/tables\?system=daggerheart$/
 		);
 		await expect(page.getByText('Sessão única')).toBeVisible();
 		await expect(page.getByText('4 h')).toBeVisible();
@@ -107,21 +124,21 @@ test.describe('table page', () => {
 	});
 
 	test('describes a weekly campaign', async ({ page }) => {
-		await page.goto('/tables/cronicas-de-arton');
+		await page.goto('/tables/cronicas-de-roshar');
 
 		await expect(page.getByText('Toda semana')).toBeVisible();
 		await expect(page.getByText('O mestre aprova cada entrada.')).toBeVisible();
 	});
 
 	test('shows user text as text: markup is never interpreted', async ({ page }) => {
-		await page.goto('/tables/mesa-do-dragao');
+		await page.goto('/tables/os-sinos-de-sablewood');
 
 		await expect(page.getByText('Traga dados e <b>lápis</b>.')).toBeVisible();
 		await expect(page.locator('article b')).toHaveCount(0);
 	});
 
 	test('offers no edit link to a visitor who is not the GM or an admin', async ({ page }) => {
-		await page.goto('/tables/mesa-do-dragao');
+		await page.goto('/tables/os-sinos-de-sablewood');
 
 		await expect(page.getByRole('link', { name: 'Editar mesa' })).toHaveCount(0);
 	});
@@ -129,11 +146,11 @@ test.describe('table page', () => {
 	test('asks an anonymous visitor to sign in to take a seat, and never shows the players', async ({
 		page
 	}) => {
-		await page.goto('/tables/mesa-do-dragao');
+		await page.goto('/tables/os-sinos-de-sablewood');
 
 		await expect(page.getByRole('link', { name: 'Entre para pegar uma vaga' })).toHaveAttribute(
 			'href',
-			/^\/login\?next=%2Ftables%2Fmesa-do-dragao$/
+			/^\/login\?next=%2Ftables%2Fos-sinos-de-sablewood$/
 		);
 		await expect(page.getByRole('button', { name: /pegar vaga|pedir vaga/i })).toHaveCount(0);
 		await expect(page.getByRole('heading', { name: 'Jogadores' })).toHaveCount(0);
@@ -144,14 +161,14 @@ test.describe('table page', () => {
 		request,
 		baseURL
 	}) => {
-		const response = await request.post('/tables/mesa-do-dragao?/join', {
+		const response = await request.post('/tables/os-sinos-de-sablewood?/join', {
 			headers: { origin: baseURL!, accept: 'text/html' },
 			form: {},
 			maxRedirects: 0
 		});
 
 		expect(response.status()).toBe(303);
-		expect(response.headers()['location']).toBe('/login?next=%2Ftables%2Fmesa-do-dragao');
+		expect(response.headers()['location']).toBe('/login?next=%2Ftables%2Fos-sinos-de-sablewood');
 	});
 
 	test('an unknown slug is the translated 404, with a way back', async ({ page }) => {
@@ -169,10 +186,10 @@ test.describe('table page', () => {
 		});
 
 		await page.goto('/tables');
-		await page.goto('/tables/mesa-do-dragao');
+		await page.goto('/tables/os-sinos-de-sablewood');
 		await page.waitForLoadState('networkidle');
 
-		await expect(page).toHaveTitle('Mesa do Dragão');
+		await expect(page).toHaveTitle('Os Sinos de Sablewood');
 		expect(violations).toEqual([]);
 	});
 });

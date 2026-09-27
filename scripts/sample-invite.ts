@@ -10,8 +10,8 @@ const baseUrl = 'https://mesaaberta.app';
 
 const oneShot: CalendarTable = {
 	id: '3f1c2d4e-1111-4222-8333-444455556666',
-	slug: 'mesa-do-dragao',
-	title: 'Mesa do Dragão, com vírgula; e ponto e vírgula',
+	slug: 'os-sinos-de-sablewood',
+	title: 'Os Sinos de Sablewood, com vírgula; e ponto e vírgula',
 	description: 'Uma aventura de uma noite.\nTraga dados.',
 	extraInfo: 'Regras da casa: nenhuma.',
 	kind: 'one_shot',
@@ -27,7 +27,7 @@ const campaign: CalendarTable = {
 	...oneShot,
 	id: '9a8b7c6d-5555-4666-8777-888899990000',
 	slug: 'cronicas-de-arton',
-	title: 'Crônicas de Arton',
+	title: 'Crônicas de Roshar',
 	kind: 'campaign',
 	recurrence: 'FREQ=WEEKLY',
 	until: new Date(Date.now() + 90 * 86_400_000)
