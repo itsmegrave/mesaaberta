@@ -22,7 +22,7 @@ import {
 	registrationStatus,
 	removePlayer
 } from '$lib/server/registrations/service';
-import { findTableBySlug } from '$lib/server/tables/queries';
+import { findTableBySlug, joinDetailsOf } from '$lib/server/tables/queries';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, platform }) => {
@@ -79,7 +79,10 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 		isGm: profile?.id === gmId,
 		myStatus,
 		canJoin,
-		registrations: manage ? await listRegistrations(locals.db!, profile, params.slug) : null
+		registrations: manage ? await listRegistrations(locals.db!, profile, params.slug) : null,
+		// How to join is private: only the GM and the confirmed players get it.
+		joinDetails:
+			profile?.id === gmId || myStatus === 'confirmed' ? await joinDetailsOf(locals.db!, id) : null
 	};
 };
 

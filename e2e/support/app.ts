@@ -45,6 +45,10 @@ export type NewTable = {
 	capacity?: number;
 	joinMode?: 'auto' | 'approval';
 	description?: string;
+	/** An in-person table: its public area and, optionally, the private address. */
+	inPerson?: { area: string; address?: string };
+	/** How to join an online table (private). */
+	joinDetails?: string;
 	image?: { name: string; mimeType: string; buffer: Buffer };
 };
 
@@ -62,6 +66,16 @@ export async function createTable(page: Page, table: NewTable) {
 	await page.getByLabel('Vagas', { exact: true }).fill(String(table.capacity ?? 5));
 	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 	if (table.joinMode === 'approval') await page.getByLabel(/Com a sua aprovação/).check();
+	if (table.inPerson) {
+		await page.getByLabel('Presencial', { exact: true }).check();
+		await page.getByLabel('Bairro e cidade').fill(table.inPerson.area);
+		if (table.inPerson.address) {
+			await page.getByLabel('Endereço e como chegar').fill(table.inPerson.address);
+		}
+	}
+	if (table.joinDetails) {
+		await page.getByLabel(/Como entrar \(link/).fill(table.joinDetails);
+	}
 	if (table.image) await page.locator('input#image').setInputFiles(table.image);
 	await page.getByRole('button', { name: 'Abrir mesa' }).click();
 

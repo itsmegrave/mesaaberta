@@ -1,6 +1,6 @@
 {
-  "id": "c250b14e-6451-4d11-a16c-01eba6678586",
-  "prevId": "a9ddce06-f859-4912-91cc-eb9264e2a9bf",
+  "id": "8ec6e8a7-0125-4518-b066-db77eb07830b",
+  "prevId": "97ede13a-4f2b-467c-a1e5-375a5fb6d905",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -188,12 +188,38 @@
           "primaryKey": false,
           "notNull": false
         },
+        "welcome_message": {
+          "name": "welcome_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "kind": {
           "name": "kind",
           "type": "table_kind",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "modality": {
+          "name": "modality",
+          "type": "table_modality",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'online'"
+        },
+        "location_area": {
+          "name": "location_area",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "join_details": {
+          "name": "join_details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "capacity": {
           "name": "capacity",
@@ -357,6 +383,22 @@
         "game_tables_duration_positive": {
           "name": "game_tables_duration_positive",
           "value": "\"game_tables\".\"duration_minutes\" > 0"
+        },
+        "game_tables_in_person_has_area": {
+          "name": "game_tables_in_person_has_area",
+          "value": "\"game_tables\".\"modality\" = 'online' OR \"game_tables\".\"location_area\" IS NOT NULL"
+        },
+        "game_tables_location_area_length": {
+          "name": "game_tables_location_area_length",
+          "value": "char_length(\"game_tables\".\"location_area\") <= 120"
+        },
+        "game_tables_join_details_length": {
+          "name": "game_tables_join_details_length",
+          "value": "char_length(\"game_tables\".\"join_details\") <= 1000"
+        },
+        "game_tables_welcome_message_length": {
+          "name": "game_tables_welcome_message_length",
+          "value": "char_length(\"game_tables\".\"welcome_message\") <= 1000"
         }
       },
       "isRLSEnabled": true
@@ -463,12 +505,6 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
-        },
-        "display_name": {
-          "name": "display_name",
-          "type": "text",
-          "primaryKey": false,
           "notNull": true
         },
         "username": {
@@ -884,6 +920,14 @@
       "values": [
         "campaign",
         "one_shot"
+      ]
+    },
+    "public.table_modality": {
+      "name": "table_modality",
+      "schema": "public",
+      "values": [
+        "online",
+        "in_person"
       ]
     },
     "public.table_status": {

@@ -21,6 +21,8 @@ export const profileStatus = pgEnum('profile_status', ['active', 'suspended']);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
 export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot']);
 export const tableStatus = pgEnum('table_status', ['active', 'disabled']);
+// Where the table plays: over the internet, or around a real table.
+export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // A pending request takes no seat; only a confirmed one does.
 export const registrationStatus = pgEnum('registration_status', ['pending', 'confirmed']);
 
@@ -115,6 +117,14 @@ export const gameTables = pgTable(
 		// The GM's message to each player who gets a seat. Private: only ever sent by e-mail, never selected by the public queries.
 		welcomeMessage: text('welcome_message'),
 		kind: tableKind('kind').notNull(),
+		// Existing tables were all online, so that is the default.
+		modality: tableModality('modality').notNull().default('online'),
+		// Public, for an in-person table: the neighbourhood and city ("Boa Viagem, Recife"), never the
+		// address.
+		locationArea: text('location_area'),
+		// Private: how to join (the Discord or VTT link, or the address). Shown only to the GM and the
+		// confirmed players, never selected by the public queries.
+		joinDetails: text('join_details'),
 		capacity: integer('capacity').notNull(),
 		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
 		durationMinutes: integer('duration_minutes').notNull(),
@@ -140,6 +150,13 @@ export const gameTables = pgTable(
 		),
 		check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
 		check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
+		check(
+			'game_tables_in_person_has_area',
+			sql`${table.modality} = 'online' OR ${table.locationArea} IS NOT NULL`
+		),
+		// Mirror TABLE_LIMITS in $lib/tables/schema.
+		check('game_tables_location_area_length', sql`char_length(${table.locationArea}) <= 120`),
+		check('game_tables_join_details_length', sql`char_length(${table.joinDetails}) <= 1000`),
 		// Mirrors WELCOME_MESSAGE_MAX in $lib/tables/welcome.
 		check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 1000`)
 	]
@@ -147,7 +164,8 @@ export const gameTables = pgTable(
 
 // The transactional outbox and the audit log in one table. A row is written in the same transaction
 // as the change it describes, then dispatched to handlers after the commit; a sweeper retries what
-// did not finish. Rows are never deleted: they are the record of who did what, and when.
+// did not finish. Rows are the record of who did what, and when; a finished one is deleted after
+// RETENTION_DAYS (see pruneEvents).
 export const events = pgTable(
 	'events',
 	{

@@ -19,6 +19,8 @@
 		timezone: string;
 		nextAt: Date | null;
 		imageUrl?: string | null;
+		modality?: 'online' | 'in_person';
+		locationArea?: string | null;
 		platforms?: PlatformItem[];
 		tags?: TagItem[];
 	};
@@ -144,6 +146,14 @@
 		<div class="mt-2 text-[15px] leading-normal text-muted">
 			{m.table_gm()}: {table.gmName}
 		</div>
+
+		{#if table.modality}
+			<div class="mt-1 text-[15px] leading-normal text-muted">
+				{table.modality === 'in_person'
+					? `${m.table_modality_in_person()} · ${table.locationArea ?? ''}`
+					: m.table_modality_online()}
+			</div>
+		{/if}
 
 		<!-- Chips line: first platform ("Discord +1") and first tag with "+N", never a second line -->
 		{#if firstPlatform || firstTag}

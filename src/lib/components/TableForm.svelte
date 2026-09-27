@@ -218,6 +218,51 @@
 				<span class="text-2xl font-semibold text-warning-700-300" aria-hidden="true">3</span>
 				<h2 id="seats-entry" class="text-2xl font-semibold">Vagas e entrada</h2>
 			</div>
+			<fieldset class="mb-6 grid gap-2">
+				<legend class="font-semibold">{m.form_modality()}</legend
+				>{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as [value, label] (value)}<label
+						class="flex items-center gap-2"
+						><input
+							type="radio"
+							name="modality"
+							{value}
+							bind:group={$form.modality}
+						/>{label}</label
+					>{/each}
+			</fieldset>
+			{#if $form.modality === 'in_person'}
+				<FormField
+					id="locationArea"
+					label={m.form_location_area()}
+					hint={m.form_location_area_hint()}
+					error={err('locationArea')}
+					><input
+						id="locationArea"
+						name="locationArea"
+						maxlength="120"
+						autocomplete="off"
+						bind:value={$form.locationArea}
+						class="input"
+						aria-invalid={invalid('locationArea')}
+					/></FormField
+				>
+			{/if}
+			<FormField
+				id="joinDetails"
+				label={$form.modality === 'in_person'
+					? m.form_join_details_place()
+					: m.form_join_details_link()}
+				hint={m.form_join_details_hint()}
+				error={err('joinDetails')}
+				><textarea
+					id="joinDetails"
+					name="joinDetails"
+					rows="3"
+					maxlength="1000"
+					bind:value={$form.joinDetails}
+					class="textarea"
+					aria-invalid={invalid('joinDetails')}></textarea></FormField
+			>
 			<FormField id="capacity" label={m.form_capacity()} error={err('capacity')}
 				><input
 					id="capacity"

@@ -56,7 +56,10 @@ describe('parseTableForm', () => {
 				recurrence: null,
 				untilLocalDate: null,
 				welcomeMessage: null,
-				joinMode: 'auto'
+				joinMode: 'auto',
+				modality: 'online',
+				locationArea: null,
+				joinDetails: null
 			}
 		});
 	});
@@ -138,6 +141,46 @@ describe('parseTableForm', () => {
 			'timezone',
 			'title'
 		]);
+	});
+
+	describe('modality', () => {
+		it('is online when the form does not say, and keeps the private join details', () => {
+			const data = form({ joinDetails: '  https://discord.gg/abc  ' });
+
+			const result = parseTableForm(data);
+			expect(result.ok && result.data).toMatchObject({
+				modality: 'online',
+				locationArea: null,
+				joinDetails: 'https://discord.gg/abc'
+			});
+		});
+
+		it('needs the neighbourhood and city for an in-person table', () => {
+			expect(parseTableForm(form({ modality: 'in_person', locationArea: ' ' }))).toMatchObject({
+				ok: false,
+				errors: { locationArea: 'required' }
+			});
+
+			const result = parseTableForm(
+				form({ modality: 'in_person', locationArea: 'Boa Viagem, Recife' })
+			);
+			expect(result.ok && result.data).toMatchObject({
+				modality: 'in_person',
+				locationArea: 'Boa Viagem, Recife'
+			});
+		});
+
+		it('drops a location left in the form when the table is online', () => {
+			const result = parseTableForm(form({ modality: 'online', locationArea: 'Recife' }));
+			expect(result.ok && result.data.locationArea).toBeNull();
+		});
+
+		it('refuses a modality it does not offer', () => {
+			expect(parseTableForm(form({ modality: 'hybrid' }))).toMatchObject({
+				ok: false,
+				errors: { modality: expect.any(String) }
+			});
+		});
 	});
 
 	it('defaults the join mode to auto when the form does not send it', () => {
