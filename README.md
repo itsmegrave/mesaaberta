@@ -198,7 +198,12 @@ A profile has a required, public **username** (`profiles.username`: 3 to 30 lowe
 
 **Onboarding.** Right after a first sign-in (OAuth or email) the person lands on `/onboarding?next=<where they were going>`, a form built with `sveltekit-superforms` (Zod validation in the browser and on the server, `use:enhance`, and it also works as a plain POST with JavaScript off). The username is checked while it is typed through `GET /onboarding/username?value=...`, which answers only `free`, `taken` or `invalid` and only to signed-in people; it is advice, the unique index still decides. The gate is `requireUser` (`src/lib/server/auth/guard.ts`): someone without a username is sent to the onboarding from every authenticated page and form action, and brought back afterwards. Public pages stay public and so does logging out. Profiles that predate usernames get one from their old display name by the migration where an acceptable one comes out of it (a numeric suffix on a repeat), and pick one at the onboarding otherwise. Until then they show as "jogador".
 
-**Deploying.** Migrations `0007` and `0008` must run (`pnpm db:migrate`) **before** the new code serves traffic: the new code reads `username`. `0008` drops `profiles.display_name`, which the previous release still reads, so deploy right after migrating; there is a short window where the old release errors on the queries that name it.
+**Deploying.** Migrations run **before** the new code serves traffic, as the first step of `pnpm build` on the Cloudflare Workers Build of `main` (`scripts/migrate-on-deploy.ts`). The build applies what is pending, and a failed migration fails the build, so the Worker is never deployed onto an older schema. Local builds, GitHub CI and preview branches skip it and never touch production. One-time setup in the Cloudflare dashboard (Workers & Pages > mesaaberta > Settings > Build):
+
+1. Build command: `pnpm build` (not plain `vite build`).
+2. Build variables and secrets: add a **secret** `MIGRATE_DATABASE_URL` with the Supabase **session pooler** connection string (Project Settings > Database > Connection string > Session pooler, port 5432; the build machines have no IPv6, so not the direct one).
+
+Without the secret the build warns and deploys anyway; then run `DATABASE_URL="<same string>" pnpm db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
 
 ## Theme
 
