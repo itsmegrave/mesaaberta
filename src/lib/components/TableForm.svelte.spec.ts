@@ -26,6 +26,16 @@ describe('TableForm', () => {
 		await expect.element(page.getByRole('option', { name: 'Daggerheart' })).not.toBeInTheDocument();
 	});
 
+	it("says the time is in the GM's own zone and links to change it, without asking for one", async () => {
+		render(TableFormHarness, props);
+
+		await expect.element(page.getByText(/No seu fuso, America\/Sao Paulo \(GMT-3\)/)).toBeVisible();
+		await expect
+			.element(page.getByRole('link', { name: 'Mudar no perfil' }))
+			.toHaveAttribute('href', '/account/profile');
+		await expect.element(page.getByLabelText('Fuso horário')).not.toBeInTheDocument();
+	});
+
 	it('starts as a one-shot without the repeat fields, and shows them for a campaign', async () => {
 		render(TableFormHarness, props);
 

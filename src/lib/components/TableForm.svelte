@@ -5,6 +5,8 @@
 	import type { FormMessage } from '$lib/forms/message';
 	import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
 	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { localizedHref } from '$lib/i18n/locales';
 	import { formatDuration, zonedToDate } from '$lib/tables/format';
 	import TableCard from './TableCard.svelte';
 
@@ -36,7 +38,12 @@
 		gmName = 'jogador'
 	}: Props = $props();
 	const { form, errors, message, enhance, delayed } = superform;
-	const timezones = Intl.supportedValuesOf('timeZone');
+	// "GMT-3": the zone's offset at the first session, or now until one is typed.
+	const zoneOffset = $derived(
+		new Intl.DateTimeFormat('pt-BR', { timeZone: $form.timezone, timeZoneName: 'shortOffset' })
+			.formatToParts(zonedToDate($form.startsAtLocal, $form.timezone) ?? new Date())
+			.find((part) => part.type === 'timeZoneName')?.value ?? ''
+	);
 	const previewSystem = $derived(
 		systems.find((system) => system.slug === $form.systemSlug)?.name ?? m.form_system()
 	);
@@ -242,17 +249,6 @@
 						aria-invalid={invalid('startsAtLocal')}
 					/></FormField
 				>
-				<FormField id="timezone" label={m.form_timezone()} error={err('timezone')}
-					><select
-						id="timezone"
-						name="timezone"
-						required
-						bind:value={$form.timezone}
-						class="select h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-						aria-invalid={invalid('timezone')}
-						>{#each timezones as zone (zone)}<option value={zone}>{zone}</option>{/each}</select
-					></FormField
-				>
 				<FormField id="durationMinutes" label={m.form_duration()} error={err('durationMinutes')}
 					><input
 						id="durationMinutes"
@@ -267,6 +263,18 @@
 						aria-invalid={invalid('durationMinutes')}
 					/></FormField
 				>
+				<div class="min-w-0 sm:col-span-2">
+					<input type="hidden" name="timezone" value={$form.timezone} />
+					<p class="text-sm text-surface-700-300">
+						{m.form_timezone_note({
+							zone: $form.timezone.replaceAll('_', ' '),
+							offset: zoneOffset
+						})}
+						<a href={localizedHref('/account/profile', getLocale())} class="anchor"
+							>{m.form_timezone_change()}</a
+						>
+					</p>
+				</div>
 			</div>
 			{#if $form.kind === 'campaign'}
 				<div class="grid gap-6 sm:grid-cols-2">

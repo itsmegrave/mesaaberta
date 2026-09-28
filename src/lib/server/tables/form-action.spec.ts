@@ -60,12 +60,30 @@ const setup = (options: { user?: boolean; upload?: ReturnType<typeof vi.fn> } = 
 
 const run = (req: Request, s: ReturnType<typeof setup>) =>
 	handleTableForm(
-		{ request: req, locals: s.locals, url: new URL(req.url), setHeaders: s.setHeaders },
+		{
+			request: req,
+			locals: s.locals,
+			url: new URL(req.url),
+			cookies: { get: () => undefined },
+			setHeaders: s.setHeaders
+		},
 		s.save,
 		s.guard
 	);
 
 describe('handleTableForm', () => {
+	it("takes the time in the GM's own zone, whatever zone the form sent", async () => {
+		const s = setup();
+		s.locals.getProfile = async () => ({ ...ana, timezone: 'Europe/Lisbon' }) as never;
+
+		await expect(
+			run(request({ title: 'Mesa em Lisboa', timezone: 'Asia/Tokyo' }), s)
+		).rejects.toMatchObject({
+			status: 303
+		});
+		expect(s.save.mock.calls[0][0].timezone).toBe('Europe/Lisbon');
+	});
+
 	it("saves a valid form and goes to the table's own page", async () => {
 		const s = setup();
 

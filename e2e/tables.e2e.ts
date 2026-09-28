@@ -21,7 +21,7 @@ test.describe('table list', () => {
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Os Sinos de Sablewood');
 	});
 
-	test("shows what a card needs: system, kind, seats and the session in the table's timezone", async ({
+	test("shows what a card needs: system, kind, seats and the session in the visitor's timezone", async ({
 		page
 	}) => {
 		await page.goto('/tables');

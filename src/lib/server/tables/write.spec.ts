@@ -9,6 +9,7 @@ import type { Actor } from '../auth/policy';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T12:00:00Z');
+const SP = 'America/Sao_Paulo';
 
 const id = (n: number) => `00000000-0000-4000-8000-0000000007${String(n).padStart(2, '0')}`;
 const member = (n: number): Actor => ({ id: id(n), role: 'member', status: 'active' });
@@ -276,8 +277,10 @@ describe('welcome message', () => {
 			now
 		});
 
-		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({ welcomeMessage: MESSAGE });
-		expect(await loadTableForEdit(test.db, ana, bare)).toMatchObject({ welcomeMessage: '' });
+		expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({
+			welcomeMessage: MESSAGE
+		});
+		expect(await loadTableForEdit(test.db, ana, bare, SP)).toMatchObject({ welcomeMessage: '' });
 	});
 
 	it('survives an edit that leaves it as it is, and can be changed', async () => {
@@ -362,7 +365,7 @@ describe('modality', () => {
 		expect(table).not.toHaveProperty('joinDetails');
 		expect(JSON.stringify(table)).not.toContain('Rua das Flores');
 		expect(await joinDetailsOf(test.db, table!.id)).toBe('Rua das Flores, 10, ap. 302');
-		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({
+		expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({
 			modality: 'in_person',
 			locationArea: 'Boa Viagem, Recife',
 			joinDetails: 'Rua das Flores, 10, ap. 302'
@@ -391,7 +394,9 @@ describe('modality', () => {
 			locationCity: 'Recife',
 			locationState: 'PE'
 		});
-		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({ postalCode: '52011-000' });
+		expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({
+			postalCode: '52011-000'
+		});
 	});
 
 	it('cannot be in person without an area, as the database insists', async () => {
@@ -411,7 +416,7 @@ describe('loadTableForEdit', () => {
 		const { slug } = await createTable(test.db, ana, input({ title: 'Para editar' }), { now });
 		await disableTable(test.db, ana, slug);
 
-		expect(await loadTableForEdit(test.db, ana, slug)).toMatchObject({
+		expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({
 			title: 'Para editar',
 			systemSlug: 'daggerheart',
 			startsAtLocal: '2026-10-10T19:00',
@@ -421,13 +426,28 @@ describe('loadTableForEdit', () => {
 		});
 	});
 
+	it('shows the times in the zone the GM edits in, not the one the table was made in', async () => {
+		const { slug } = await createTable(
+			test.db,
+			ana,
+			input({ title: 'Em Lisboa', startsAtLocal: '2026-10-10T19:00', timezone: SP }),
+			{ now }
+		);
+
+		// 19:00 in São Paulo (GMT-3) is 23:00 in Lisbon (GMT+1 in October).
+		expect(await loadTableForEdit(test.db, ana, slug, 'Europe/Lisbon')).toMatchObject({
+			startsAtLocal: '2026-10-10T23:00',
+			timezone: 'Europe/Lisbon'
+		});
+	});
+
 	it('is Forbidden for another member and NotFound for a slug that does not exist', async () => {
 		const { slug } = await createTable(test.db, ana, input({ title: 'Da Ana' }), { now });
 
-		await expect(loadTableForEdit(test.db, bruno, slug)).rejects.toMatchObject({
+		await expect(loadTableForEdit(test.db, bruno, slug, SP)).rejects.toMatchObject({
 			name: 'Forbidden'
 		});
-		await expect(loadTableForEdit(test.db, ana, 'nao-existe')).rejects.toMatchObject({
+		await expect(loadTableForEdit(test.db, ana, 'nao-existe', SP)).rejects.toMatchObject({
 			name: 'NotFound'
 		});
 	});

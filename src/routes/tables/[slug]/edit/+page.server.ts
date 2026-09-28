@@ -2,6 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { requireUser } from '$lib/server/auth/guard';
+import { timezoneOf } from '$lib/server/time';
 import { Forbidden, NotFound } from '$lib/server/errors';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
@@ -13,7 +14,7 @@ import { listCatalog } from '$lib/server/catalog';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, params, platform }) => {
+export const load: PageServerLoad = async ({ locals, url, params, platform, cookies }) => {
 	await requireUser(locals, url);
 	if (!locals.db) error(503, 'Database not configured');
 
@@ -21,7 +22,8 @@ export const load: PageServerLoad = async ({ locals, url, params, platform }) =>
 		const { slug, status, imagePath, ...values } = await loadTableForEdit(
 			locals.db,
 			await locals.getProfile(),
-			params.slug
+			params.slug,
+			await timezoneOf(locals, cookies)
 		);
 		const [systems, catalog] = await Promise.all([listSystems(locals.db), listCatalog(locals.db)]);
 

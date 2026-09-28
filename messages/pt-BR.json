@@ -152,6 +152,8 @@
 	"form_capacity": "Vagas",
 	"form_starts_at": "Primeira sessão",
 	"form_timezone": "Fuso horário",
+	"form_timezone_note": "No seu fuso, {zone} ({offset}). Cada jogador vê a hora no fuso dele.",
+	"form_timezone_change": "Mudar no perfil",
 	"form_duration": "Duração (minutos)",
 	"form_repeat": "Repete",
 	"form_repeat_weekly": "Toda semana",

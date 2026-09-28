@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { requireUser } from '$lib/server/auth/guard';
+import { timezoneOf } from '$lib/server/time';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
@@ -13,14 +14,18 @@ import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 	await requireUser(locals, url);
 	if (!locals.db) error(503, 'Database not configured');
 
 	const [systems, catalog] = await Promise.all([listSystems(locals.db), listCatalog(locals.db)]);
 
 	return {
-		form: await superValidate(NEW_TABLE_VALUES, zod4(tableFormSchema), { errors: false }),
+		form: await superValidate(
+			{ ...NEW_TABLE_VALUES, timezone: await timezoneOf(locals, cookies) },
+			zod4(tableFormSchema),
+			{ errors: false }
+		),
 		systems: systems.map(({ name, slug }) => ({ name, slug })),
 		catalog
 	};

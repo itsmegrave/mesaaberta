@@ -127,7 +127,13 @@ async function findForWrite(db: AnyDb, slug: string) {
 }
 
 /** A table as the edit form shows it. Works for a disabled table too, so its GM can find it. */
-export async function loadTableForEdit(db: AnyDb, actor: Actor | null, slug: string) {
+export async function loadTableForEdit(
+	db: AnyDb,
+	actor: Actor | null,
+	slug: string,
+	/** The zone the GM edits in (see `timezoneOf`); the times are shown in it. */
+	timezone: string
+) {
 	const table = await findForWrite(db, slug);
 	authorize(actor, 'table:edit', table);
 
@@ -147,12 +153,12 @@ export async function loadTableForEdit(db: AnyDb, actor: Actor | null, slug: str
 		welcomeMessage: table.welcomeMessage ?? '',
 		kind: table.kind,
 		capacity: table.capacity,
-		startsAtLocal: instantToLocal(table.startsAt, table.timezone),
-		timezone: table.timezone,
+		startsAtLocal: instantToLocal(table.startsAt, timezone),
+		timezone,
 		durationMinutes: table.durationMinutes,
 		repeat:
 			table.recurrence === 'FREQ=WEEKLY;INTERVAL=2' ? 'biweekly' : table.recurrence ? 'weekly' : '',
-		until: table.until ? instantToLocal(table.until, table.timezone).slice(0, 10) : '',
+		until: table.until ? instantToLocal(table.until, timezone).slice(0, 10) : '',
 		joinMode: table.joinMode,
 		modality: table.modality,
 		locationArea: table.locationArea ?? '',
