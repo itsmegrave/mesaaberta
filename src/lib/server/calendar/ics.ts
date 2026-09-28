@@ -6,7 +6,7 @@
 import ICAL from 'ical.js';
 import { tzlib_get_ical_block } from 'timezones-ical-library';
 // The `.ts` extension lets `scripts/sample-invite.ts` run this module in plain Node.
-import { instantToLocal } from '../tables/schedule.ts';
+import { RECURRENCE, instantToLocal } from '../tables/schedule.ts';
 
 export type CalendarTable = {
 	id: string;
@@ -40,7 +40,6 @@ export type InviteInput = {
 
 const UID_DOMAIN = 'mesaaberta.app';
 const EMAIL = /^[^\s@<>",;:\\]+@[^\s@<>",;:\\]+\.[^\s@<>",;:\\]+$/;
-const RECURRENCE = /^FREQ=WEEKLY(;INTERVAL=[1-9]\d?)?$/;
 // Control characters other than the line break.
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;

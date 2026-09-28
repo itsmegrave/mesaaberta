@@ -1,63 +1,37 @@
+// Dates, zones and repeats, on Temporal (the `temporal-polyfill` package: the Workers runtime has
+// no built-in Temporal yet). This file is the domain layer: the rules about what a session is live
+// here, and Temporal only does the calendar arithmetic.
+import { Temporal } from 'temporal-polyfill';
+
 export type Schedule = {
 	kind: 'campaign' | 'one_shot';
 	startsAt: Date;
 	timezone: string;
-	/** An iCalendar RRULE. Only `FREQ=WEEKLY` (with an optional `INTERVAL`) is understood. */
+	/** An iCalendar RRULE: only what the table form builds (see `RECURRENCE`). */
 	recurrence: string | null;
 	until: Date | null;
 };
 
-const DAY = 86_400_000;
+/**
+ * The one repeat rule the system supports: weekly, optionally every `n` weeks (1–99). It is what
+ * the table form writes, what `nextOccurrence` counts and the only rule an invite may carry. Any
+ * other RRULE (DAILY, BYDAY, COUNT…) is refused rather than half understood.
+ */
+export const RECURRENCE = /^FREQ=WEEKLY(?:;INTERVAL=([1-9]\d?))?$/;
 
-/** The weeks between sessions, or null for a recurrence this does not understand. */
+/** The weeks between sessions, or null for no recurrence or one outside `RECURRENCE`. */
 export function weeklyInterval(recurrence: string | null): number | null {
-	if (!recurrence) return null;
-
-	const rule = new Map(recurrence.split(';').map((part) => part.split('=') as [string, string]));
-	if (rule.get('FREQ') !== 'WEEKLY') return null;
-
-	const interval = Number(rule.get('INTERVAL') ?? 1);
-	return Number.isInteger(interval) && interval >= 1 ? interval : null;
+	const match = recurrence ? RECURRENCE.exec(recurrence) : null;
+	return match ? Number(match[1] ?? 1) : null;
 }
 
-type Wall = { y: number; m: number; d: number; h: number; mi: number; s: number };
+// A wall-clock time that the clocks skip (the hour lost when they go forward) is read as the time
+// after the gap; one they show twice (the hour repeated when they go back) as the earlier of the two.
+// This is RFC 5545's rule for such times, and so what calendars do with the same invite.
+const DISAMBIGUATION = 'compatible' as const;
 
-/** What the clocks in `timeZone` show at this instant. */
-function wallClock(instant: Date, timeZone: string): Wall {
-	const parts = new Intl.DateTimeFormat('en-US', {
-		timeZone,
-		hourCycle: 'h23',
-		year: 'numeric',
-		month: 'numeric',
-		day: 'numeric',
-		hour: 'numeric',
-		minute: 'numeric',
-		second: 'numeric'
-	}).formatToParts(instant);
-	const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
-
-	return {
-		y: get('year'),
-		m: get('month'),
-		d: get('day'),
-		h: get('hour'),
-		mi: get('minute'),
-		s: get('second')
-	};
-}
-
-const asUtc = (w: Wall) => Date.UTC(w.y, w.m - 1, w.d, w.h, w.mi, w.s);
-
-/** The instant at which the clocks in `timeZone` show `wall`. */
-function instantAt(wall: Wall, timeZone: string): Date {
-	const target = asUtc(wall);
-	let guess = target;
-
-	// The zone's offset can differ between the guess and the answer, so correct it twice.
-	for (let i = 0; i < 2; i++) guess += target - asUtc(wallClock(new Date(guess), timeZone));
-
-	return new Date(guess);
-}
+const zoned = (instant: Date, timeZone: string) =>
+	Temporal.Instant.fromEpochMilliseconds(instant.getTime()).toZonedDateTimeISO(timeZone);
 
 /**
  * The start of the session at or after `now`, or null when there is none left: a one-shot that has
@@ -65,7 +39,7 @@ function instantAt(wall: Wall, timeZone: string): Date {
  * treated as a single date rather than guessed at).
  *
  * A weekly session keeps its wall-clock time in the table's timezone, so it does not drift an hour
- * when the clocks change. The weekday is the one of `startsAt`; `BYDAY` is not read.
+ * when the clocks change. The weekday is the one of `startsAt`.
  */
 export function nextOccurrence(schedule: Schedule, now: Date): Date | null {
 	const { startsAt, timezone, until } = schedule;
@@ -73,21 +47,12 @@ export function nextOccurrence(schedule: Schedule, now: Date): Date | null {
 
 	if (interval === null) return startsAt >= now ? startsAt : null;
 
-	const start = wallClock(startsAt, timezone);
-	const occurrence = (n: number) =>
-		n === 0
-			? startsAt
-			: instantAt(
-					wallClock(
-						new Date(
-							Date.UTC(start.y, start.m - 1, start.d + 7 * interval * n, start.h, start.mi, start.s)
-						),
-						'UTC'
-					),
-					timezone
-				);
+	const start = zoned(startsAt, timezone);
+	const occurrence = (n: number) => new Date(start.add({ weeks: interval * n }).epochMilliseconds);
 
-	let n = Math.max(0, Math.floor((now.getTime() - startsAt.getTime()) / (7 * interval * DAY)) - 1);
+	// Close to the answer in one step (a week is 7 × 24 h, give or take a DST hour), then walk forward.
+	const week = 7 * 24 * 60 * 60 * 1000;
+	let n = Math.max(0, Math.floor((now.getTime() - startsAt.getTime()) / (interval * week)) - 1);
 	while (occurrence(n) < now) n++;
 
 	const next = occurrence(n);
@@ -96,17 +61,13 @@ export function nextOccurrence(schedule: Schedule, now: Date): Date | null {
 
 /** The instant at which the clocks in `timeZone` read `local` (`2026-10-10T19:00`). */
 export function localToInstant(local: string, timeZone: string): Date {
-	const [date, time] = local.split('T');
-	const [y, m, d] = date.split('-').map(Number);
-	const [h, mi] = time.split(':').map(Number);
-
-	return instantAt({ y, m, d, h, mi, s: 0 }, timeZone);
+	const zonedTime = Temporal.PlainDateTime.from(local).toZonedDateTime(timeZone, {
+		disambiguation: DISAMBIGUATION
+	});
+	return new Date(zonedTime.epochMilliseconds);
 }
-
-const two = (n: number) => String(n).padStart(2, '0');
 
 /** What the clocks in `timeZone` read at `instant`, as `2026-10-10T19:00`: the form's own format. */
 export function instantToLocal(instant: Date, timeZone: string): string {
-	const w = wallClock(instant, timeZone);
-	return `${w.y}-${two(w.m)}-${two(w.d)}T${two(w.h)}:${two(w.mi)}`;
+	return zoned(instant, timeZone).toPlainDateTime().toString({ smallestUnit: 'minute' });
 }
