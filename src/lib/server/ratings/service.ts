@@ -43,7 +43,7 @@ export async function submitRating(
 		if (blocker === 'too_early') throw new TooEarly();
 		if (blocker) throw new Forbidden('table:rate');
 
-		const values = { tableScore: input.tableScore, gmScore: input.gmScore, comment: input.comment };
+		const values = { gmScore: input.gmScore, comment: input.comment };
 		await tx
 			.insert(ratings)
 			.values({ tableId: table.id, playerId: actor!.id, ...values })
@@ -76,19 +76,6 @@ const summary = (row: { average: number | null; count: number }) => ({
 	average: row.average === null ? null : Number(row.average),
 	count: row.count
 });
-
-/** A table's average score and how many rated it. Computed, not stored. */
-export async function tableRating(db: AnyDb, tableId: string) {
-	const [row] = await db
-		.select({
-			average: sql<number | null>`avg(${ratings.tableScore})::float`,
-			count: sql<number>`count(*)::int`
-		})
-		.from(ratings)
-		.where(eq(ratings.tableId, tableId));
-
-	return summary(row);
-}
 
 /** A GM's average across all their tables, and how many ratings that is. Computed, not stored. */
 export async function gmRating(db: AnyDb, gmId: string) {

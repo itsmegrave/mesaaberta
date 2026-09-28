@@ -323,7 +323,7 @@ export const registrations = pgTable(
 	]
 ).enableRLS();
 
-// What a player thought of a table and of its GM, once they had played. One per registration, and it
+// What a player thought of the GM of a table they played at: tables are not rated, GMs are. One per registration, and it
 // goes with it: a player who is removed takes their rating with them (cascade). A GM's average is
 // computed by a query, never stored.
 export const ratings = pgTable(
@@ -331,7 +331,6 @@ export const ratings = pgTable(
 	{
 		tableId: uuid('table_id').notNull(),
 		playerId: uuid('player_id').notNull(),
-		tableScore: smallint('table_score').notNull(),
 		gmScore: smallint('gm_score').notNull(),
 		comment: text('comment'),
 		...timestamps
@@ -343,7 +342,6 @@ export const ratings = pgTable(
 			columns: [rating.tableId, rating.playerId],
 			foreignColumns: [registrations.tableId, registrations.playerId]
 		}).onDelete('cascade'),
-		check('ratings_table_score_range', sql`${rating.tableScore} BETWEEN 1 AND 5`),
 		check('ratings_gm_score_range', sql`${rating.gmScore} BETWEEN 1 AND 5`),
 		check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
 		index('ratings_table_idx').on(rating.tableId)

@@ -51,10 +51,7 @@
 		}
 	});
 	const { form: ratingValues, errors: ratingErrors, enhance: ratingEnhance } = rating;
-	const scoreFields = $derived([
-		{ name: 'tableScore', label: m.rating_the_table() },
-		{ name: 'gmScore', label: m.rating_the_gm() }
-	] as const);
+	const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
 	const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
 
 	// The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
@@ -166,13 +163,6 @@
 						<span aria-hidden="true" class="text-sm text-muted"
 							>({votes(data.ratings.gm.count)})</span
 						>
-					</p>
-				{/if}
-				{#if data.ratings.table.count > 0}
-					<p class="text-sm text-muted">
-						{m.rating_table_average()}:
-						<strong>{number.format(data.ratings.table.average ?? 0)}</strong>
-						({votes(data.ratings.table.count)})
 					</p>
 				{/if}
 			</div>

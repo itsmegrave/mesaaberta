@@ -218,7 +218,7 @@ test.describe('ratings', () => {
 		await expect(page.getByText('Você está nesta mesa.')).toBeVisible();
 
 		// The first session is years away: nothing to rate yet.
-		await expect(page.getByRole('heading', { name: 'Avalie esta mesa' })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
 
 		// Back-date the session, as if it had been played.
 		const sql = database();
@@ -226,23 +226,24 @@ test.describe('ratings', () => {
 			await sql`update game_tables set starts_at = now() - interval '3 days' where slug = ${slug}`;
 
 			await page.reload();
-			await expect(page.getByRole('heading', { name: 'Avalie esta mesa' })).toBeVisible();
-			await page.getByRole('group', { name: 'A mesa' }).getByLabel('5', { exact: true }).check();
-			await page.getByRole('group', { name: 'O mestre' }).getByLabel('4', { exact: true }).check();
+			await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toBeVisible();
+			await page
+				.getByRole('group', { name: 'Sua nota para o mestre' })
+				.getByLabel('4', { exact: true })
+				.check();
 			await page.getByLabel('Comentário (opcional)').fill('Noite ótima.');
 			await page.getByRole('button', { name: 'Enviar avaliação' }).click();
 
 			await expect(
 				page.getByText('Sua avaliação está salva. Você pode mudá-la quando quiser.')
 			).toBeVisible();
-			await expect(page.getByText('Nota da mesa:').first()).toContainText('5,0');
 			await expect(page.getByText('Nota do mestre:').first()).toContainText('4,0');
 
 			// The dashboard shows what was given, and the GM cannot rate their own table.
 			await page.goto('/account/tables');
-			await expect(page.getByText('Sua avaliação: mesa 5, mestre 4')).toBeVisible();
+			await expect(page.getByText('Sua nota para o mestre: 4')).toBeVisible();
 			await gmPage.goto(`/tables/${slug}`);
-			await expect(gmPage.getByRole('heading', { name: 'Avalie esta mesa' })).toHaveCount(0);
+			await expect(gmPage.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
 
 			// Changing it updates the average; the comment is stored but never shown to anyone else.
 			await page.goto(`/tables/${slug}`);
@@ -281,7 +282,7 @@ test.describe('ratings', () => {
 		}
 		await page.reload();
 
-		await expect(page.getByRole('heading', { name: 'Avalie esta mesa' })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
 		await context.close();
 		await gmContext.close();
 	});

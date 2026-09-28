@@ -114,13 +114,11 @@ describe('listPlaying', () => {
 				startsAt: new Date('2026-09-01T20:00:00Z')
 			});
 			await seat(table.id, me);
-			await test.db
-				.insert(ratings)
-				.values({ tableId: table.id, playerId: me, tableScore: 4, gmScore: 5 });
+			await test.db.insert(ratings).values({ tableId: table.id, playerId: me, gmScore: 5 });
 
 			const item = (await listPlaying(test.db, me, now)).find((p) => p.title === 'Avaliada');
 
-			expect(item).toMatchObject({ canRate: true, rating: { tableScore: 4, gmScore: 5 } });
+			expect(item).toMatchObject({ canRate: true, rating: { gmScore: 5 } });
 		});
 
 		it('is off before the first session ends, and for a request that is still pending', async () => {
