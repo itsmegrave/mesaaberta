@@ -13,87 +13,87 @@ type Deps = { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: strin
 
 /** What the sign-up form should say. `check_email` is also the answer for an address that already has an account. */
 export type SignUpResult =
-	'signed_in' | 'check_email' | 'weak_password' | 'rate_limited' | 'failed';
+  'signed_in' | 'check_email' | 'weak_password' | 'rate_limited' | 'failed';
 export type SignInResult = 'ok' | 'invalid' | 'unconfirmed' | 'rate_limited' | 'failed';
 
 const RATE_LIMITED = new Set([
-	'over_email_send_rate_limit',
-	'over_request_rate_limit',
-	'over_sms_send_rate_limit'
+  'over_email_send_rate_limit',
+  'over_request_rate_limit',
+  'over_sms_send_rate_limit',
 ]);
 
 /** Creates the profile, or signs the person out again so nobody is left half signed in. */
 async function keepProfile({ supabase, db, log }: Deps, user: User): Promise<boolean> {
-	try {
-		if (!db) throw new Error('no database to create the profile in');
-		await ensureProfile(db, user);
-		return true;
-	} catch (error) {
-		log.error('email auth: could not create the profile', { error });
-		await supabase.auth.signOut();
-		return false;
-	}
+  try {
+    if (!db) throw new Error('no database to create the profile in');
+    await ensureProfile(db, user);
+    return true;
+  } catch (error) {
+    log.error('email auth: could not create the profile', { error });
+    await supabase.auth.signOut();
+    return false;
+  }
 }
 
 /** `keepProfile` already checked that `db` is there when it returns true. */
 const signedIn = async ({ db, ip, log }: Deps, user: User) =>
-	recordConnection(db as AnyDb, { actorId: user.id, ip, log });
+  recordConnection(db as AnyDb, { actorId: user.id, ip, log });
 
 export async function signUpWithEmail(
-	deps: Deps,
-	{
-		email,
-		password,
-		origin,
-		next
-	}: { email: string; password: string; origin: string; next: string | null }
+  deps: Deps,
+  {
+    email,
+    password,
+    origin,
+    next,
+  }: { email: string; password: string; origin: string; next: string | null },
 ): Promise<SignUpResult> {
-	const { data, error } = await deps.supabase.auth.signUp({
-		email,
-		password,
-		// The link in the confirmation email comes back to our callback.
-		options: {
-			emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext(next))}`
-		}
-	});
+  const { data, error } = await deps.supabase.auth.signUp({
+    email,
+    password,
+    // The link in the confirmation email comes back to our callback.
+    options: {
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext(next))}`,
+    },
+  });
 
-	if (error) {
-		if (error.code === 'weak_password') return 'weak_password';
-		// Auth answers a sign-up for an address that already has a confirmed account with a 422, not
-		// with a look-alike success (found by the e2e tests against a real Auth). Saying so would tell
-		// anyone who is registered, so it gets the same answer as a first sign-up.
-		if (error.code === 'user_already_exists') return 'check_email';
-		if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
-		// The code and status only: the message can quote the address.
-		deps.log.warn('email auth: sign-up refused', { code: error.code, status: error.status });
-		return 'failed';
-	}
+  if (error) {
+    if (error.code === 'weak_password') return 'weak_password';
+    // Auth answers a sign-up for an address that already has a confirmed account with a 422, not
+    // with a look-alike success (found by the e2e tests against a real Auth). Saying so would tell
+    // anyone who is registered, so it gets the same answer as a first sign-up.
+    if (error.code === 'user_already_exists') return 'check_email';
+    if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
+    // The code and status only: the message can quote the address.
+    deps.log.warn('email auth: sign-up refused', { code: error.code, status: error.status });
+    return 'failed';
+  }
 
-	// No session yet: the person has to confirm the address first. Supabase answers a repeat sign-up
-	// the same way, so this never says whether the address was already registered.
-	if (!data.session || !data.user) return 'check_email';
+  // No session yet: the person has to confirm the address first. Supabase answers a repeat sign-up
+  // the same way, so this never says whether the address was already registered.
+  if (!data.session || !data.user) return 'check_email';
 
-	if (!(await keepProfile(deps, data.user))) return 'failed';
-	await signedIn(deps, data.user);
-	return 'signed_in';
+  if (!(await keepProfile(deps, data.user))) return 'failed';
+  await signedIn(deps, data.user);
+  return 'signed_in';
 }
 
 export async function signInWithEmail(
-	deps: Deps,
-	{ email, password }: { email: string; password: string }
+  deps: Deps,
+  { email, password }: { email: string; password: string },
 ): Promise<SignInResult> {
-	const { data, error } = await deps.supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await deps.supabase.auth.signInWithPassword({ email, password });
 
-	if (error) {
-		// A wrong password and an unknown address get the same code, so the form cannot tell them apart.
-		if (error.code === 'invalid_credentials') return 'invalid';
-		if (error.code === 'email_not_confirmed') return 'unconfirmed';
-		if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
-		deps.log.warn('email auth: sign-in refused', { code: error.code, status: error.status });
-		return 'failed';
-	}
+  if (error) {
+    // A wrong password and an unknown address get the same code, so the form cannot tell them apart.
+    if (error.code === 'invalid_credentials') return 'invalid';
+    if (error.code === 'email_not_confirmed') return 'unconfirmed';
+    if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
+    deps.log.warn('email auth: sign-in refused', { code: error.code, status: error.status });
+    return 'failed';
+  }
 
-	if (!(await keepProfile(deps, data.user))) return 'failed';
-	await signedIn(deps, data.user);
-	return 'ok';
+  if (!(await keepProfile(deps, data.user))) return 'failed';
+  await signedIn(deps, data.user);
+  return 'ok';
 }

@@ -7,6 +7,6 @@ import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
  * hour for them across daylight-saving changes.
  */
 export async function timezoneOf(locals: App.Locals, cookies: Pick<Cookies, 'get'>) {
-	const profile = await locals.getProfile();
-	return viewerTimezone(profile?.timezone, cookies.get(TIMEZONE_COOKIE)).timezone;
+  const profile = await locals.getProfile();
+  return viewerTimezone(profile?.timezone, cookies.get(TIMEZONE_COOKIE)).timezone;
 }

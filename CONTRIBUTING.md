@@ -11,6 +11,18 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 See the [README](README.md) for setup and scripts.
 
+## Code style
+
+Tabs for indentation and semicolons at the end of statements (YAML is the one exception and uses spaces). Prettier is the only formatter: `prettier.config.js` sets the rules and `.editorconfig` tells editors the same. ESLint checks code quality and never formatting.
+
+- `pnpm format` rewrites every file to the style.
+- `pnpm lint:fix` does the same and applies ESLint's automatic fixes.
+- `pnpm lint` (Prettier check, then ESLint) is what CI runs, and a badly formatted file fails it.
+
+In VS Code, install the recommended extensions when prompted (`.vscode/extensions.json`) and files are formatted on save. Any other editor needs the Prettier plugin and EditorConfig support.
+
+When you must disable an ESLint rule, say why on the same line: `// eslint-disable-next-line rule -- reason`.
+
 ## Translations
 
 The site is written in Brazilian Portuguese (`pt-BR`, the base language), and only that language is served today. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components. English is planned in [#31](https://github.com/itsmegrave/mesaaberta/issues/31).

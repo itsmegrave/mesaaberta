@@ -16,12 +16,12 @@ export type DatabaseEnv = { HYPERDRIVE?: { connectionString: string }; DATABASE_
  * `.dev.vars`) is the local fallback. With neither, the app runs without a database.
  */
 export const connectionStringFrom = (env: DatabaseEnv | undefined) =>
-	env?.HYPERDRIVE?.connectionString || env?.DATABASE_URL || undefined;
+  env?.HYPERDRIVE?.connectionString || env?.DATABASE_URL || undefined;
 
 /** postgres.js connects on the first query, so creating a client is cheap. */
 export function createDb(connectionString: string) {
-	// `fetch_types: false` skips a startup round trip; Hyperdrive is the pool, so keep this small.
-	const client = postgres(connectionString, { max: 5, fetch_types: false });
+  // `fetch_types: false` skips a startup round trip; Hyperdrive is the pool, so keep this small.
+  const client = postgres(connectionString, { max: 5, fetch_types: false });
 
-	return { db: drizzle(client, { schema }), close: () => client.end() };
+  return { db: drizzle(client, { schema }), close: () => client.end() };
 }

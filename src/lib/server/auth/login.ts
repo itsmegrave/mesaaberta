@@ -9,18 +9,18 @@ import { safeNext } from './safe-next';
 
 /** Where to send the visitor to sign in at the provider, or null if Supabase gave no URL. */
 export async function startLogin(
-	supabase: SupabaseClient,
-	{ provider, origin, next }: { provider: Provider; origin: string; next: string | null }
+  supabase: SupabaseClient,
+  { provider, origin, next }: { provider: Provider; origin: string; next: string | null },
 ): Promise<string | null> {
-	const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(safeNext(next))}`;
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(safeNext(next))}`;
 
-	const { data } = await supabase.auth.signInWithOAuth({
-		provider,
-		// The URL comes back to us so the server can redirect; PKCE keeps its verifier in a cookie.
-		options: { redirectTo, skipBrowserRedirect: true }
-	});
+  const { data } = await supabase.auth.signInWithOAuth({
+    provider,
+    // The URL comes back to us so the server can redirect; PKCE keeps its verifier in a cookie.
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
 
-	return data?.url ?? null;
+  return data?.url ?? null;
 }
 
 /**
@@ -29,37 +29,37 @@ export async function startLogin(
  * the login page with an error code, so nobody is left half signed in.
  */
 export async function finishLogin(
-	deps: { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: string | null },
-	{ code, next }: { code: string | null; next: string | null }
+  deps: { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: string | null },
+  { code, next }: { code: string | null; next: string | null },
 ): Promise<string> {
-	const { supabase, db, log, ip } = deps;
+  const { supabase, db, log, ip } = deps;
 
-	if (!code) return '/login?error=missing_code';
+  if (!code) return '/login?error=missing_code';
 
-	const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-	if (error || !data.user) {
-		log.warn('login: could not exchange the code', { error });
-		return '/login?error=exchange_failed';
-	}
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error || !data.user) {
+    log.warn('login: could not exchange the code', { error });
+    return '/login?error=exchange_failed';
+  }
 
-	if (!db) {
-		log.error('login: there is no database to create the profile in');
-		await supabase.auth.signOut();
-		return '/login?error=unavailable';
-	}
+  if (!db) {
+    log.error('login: there is no database to create the profile in');
+    await supabase.auth.signOut();
+    return '/login?error=unavailable';
+  }
 
-	let profile;
-	try {
-		profile = await ensureProfile(db, data.user);
-	} catch (error) {
-		log.error('login: could not create the profile', { error });
-		await supabase.auth.signOut();
-		return '/login?error=profile_failed';
-	}
+  let profile;
+  try {
+    profile = await ensureProfile(db, data.user);
+  } catch (error) {
+    log.error('login: could not create the profile', { error });
+    await supabase.auth.signOut();
+    return '/login?error=profile_failed';
+  }
 
-	await recordConnection(db, { actorId: data.user.id, ip, log });
+  await recordConnection(db, { actorId: data.user.id, ip, log });
 
-	// A first sign-in (or a profile from before usernames) goes through the onboarding step first.
-	const target = safeNext(next);
-	return needsOnboarding(profile) ? onboardingUrl(target) : target;
+  // A first sign-in (or a profile from before usernames) goes through the onboarding step first.
+  const target = safeNext(next);
+  return needsOnboarding(profile) ? onboardingUrl(target) : target;
 }

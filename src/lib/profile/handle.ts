@@ -3,4 +3,4 @@ export const NAMELESS = 'jogador';
 
 /** How a person appears to others: `@username`, or the placeholder while they have none. */
 export const atHandle = (username: string | null | undefined) =>
-	username && username !== NAMELESS ? `@${username}` : NAMELESS;
+  username && username !== NAMELESS ? `@${username}` : NAMELESS;

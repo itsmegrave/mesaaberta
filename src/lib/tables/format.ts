@@ -4,62 +4,62 @@
  * server and the browser would each use their own and the page would change on hydration.
  */
 export function formatSession(date: Date, timeZone: string, locale: string): string {
-	return new Intl.DateTimeFormat(locale, {
-		timeZone,
-		weekday: 'long',
-		day: 'numeric',
-		month: 'long',
-		hour: '2-digit',
-		minute: '2-digit',
-		hourCycle: 'h23',
-		timeZoneName: 'shortOffset'
-	}).format(date);
+  return new Intl.DateTimeFormat(locale, {
+    timeZone,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZoneName: 'shortOffset',
+  }).format(date);
 }
 
 /** `240` is `4 h`, `150` is `2 h 30 min`, `45` is `45 min`. */
 export function formatDuration(minutes: number): string {
-	const hours = Math.floor(minutes / 60);
-	const rest = minutes % 60;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
 
-	return [hours && `${hours} h`, rest && `${rest} min`].filter(Boolean).join(' ');
+  return [hours && `${hours} h`, rest && `${rest} min`].filter(Boolean).join(' ');
 }
 
 /** How long to wait, rounded up to the minute so it never promises a moment too early: `90` is `2 min`. */
 export function formatWait(seconds: number): string {
-	return formatDuration(Math.max(1, Math.ceil(seconds / 60)));
+  return formatDuration(Math.max(1, Math.ceil(seconds / 60)));
 }
 
 /** Date formatting for table cards: day + short month ("26 set"), and weekday + time + offset. */
 export function formatCardDate(
-	date: Date,
-	timeZone: string,
-	locale: string
+  date: Date,
+  timeZone: string,
+  locale: string,
 ): { dayMonth: string; weekdayTime: string } {
-	const dayMonth = new Intl.DateTimeFormat(locale, {
-		timeZone,
-		day: 'numeric',
-		month: 'short'
-	}).format(date);
+  const dayMonth = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    day: 'numeric',
+    month: 'short',
+  }).format(date);
 
-	const weekday = new Intl.DateTimeFormat(locale, {
-		timeZone,
-		weekday: 'long'
-	}).format(date);
+  const weekday = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    weekday: 'long',
+  }).format(date);
 
-	const time = new Intl.DateTimeFormat(locale, {
-		timeZone,
-		hour: '2-digit',
-		minute: '2-digit',
-		hourCycle: 'h23',
-		timeZoneName: 'shortOffset'
-	}).format(date);
+  const time = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZoneName: 'shortOffset',
+  }).format(date);
 
-	return {
-		// pt-BR writes "26 de set."; the card shows "26 set".
-		dayMonth: dayMonth.replace(' de ', ' ').replace('.', '').trim(),
-		// Monday to Friday end in "-feira" ("sexta-feira"); the card shows just "sexta".
-		weekdayTime: `${weekday.replace(/-feira$/, '')} · ${time}`
-	};
+  return {
+    // pt-BR writes "26 de set."; the card shows "26 set".
+    dayMonth: dayMonth.replace(' de ', ' ').replace('.', '').trim(),
+    // Monday to Friday end in "-feira" ("sexta-feira"); the card shows just "sexta".
+    weekdayTime: `${weekday.replace(/-feira$/, '')} · ${time}`,
+  };
 }
 
 /**
@@ -67,28 +67,28 @@ export function formatCardDate(
  * browser; null when the text is not a complete date and time. The server has its own, exact one.
  */
 export function zonedToDate(local: string, timeZone: string): Date | null {
-	const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local);
-	if (!match) return null;
-	const [, y, mo, d, h, mi] = match.map(Number);
-	const guess = Date.UTC(y, mo - 1, d, h, mi);
-	try {
-		// What that UTC instant reads as in the zone; the difference is the zone's offset then.
-		const parts = Object.fromEntries(
-			new Intl.DateTimeFormat('en-US', {
-				timeZone,
-				hourCycle: 'h23',
-				year: 'numeric',
-				month: 'numeric',
-				day: 'numeric',
-				hour: 'numeric',
-				minute: 'numeric'
-			})
-				.formatToParts(new Date(guess))
-				.map((part) => [part.type, Number(part.value)])
-		);
-		const read = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
-		return new Date(guess - (read - guess));
-	} catch {
-		return null;
-	}
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local);
+  if (!match) return null;
+  const [, y, mo, d, h, mi] = match.map(Number);
+  const guess = Date.UTC(y, mo - 1, d, h, mi);
+  try {
+    // What that UTC instant reads as in the zone; the difference is the zone's offset then.
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        hourCycle: 'h23',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+      })
+        .formatToParts(new Date(guess))
+        .map((part) => [part.type, Number(part.value)]),
+    );
+    const read = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
+    return new Date(guess - (read - guess));
+  } catch {
+    return null;
+  }
 }

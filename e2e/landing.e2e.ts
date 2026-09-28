@@ -1,86 +1,86 @@
 import { expect, test } from '@playwright/test';
 
 test('declares the page language as Brazilian Portuguese', async ({ page }) => {
-	await page.goto('/');
+  await page.goto('/');
 
-	await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
 });
 
 test('describes the hero table illustration, including the empty chair', async ({ page }) => {
-	await page.goto('/');
+  await page.goto('/');
 
-	await expect(page.getByRole('img', { name: /cadeira vazia/i })).toBeVisible();
+  await expect(page.getByRole('img', { name: /cadeira vazia/i })).toBeVisible();
 });
 
 test('presents how it works as an ordered list of three steps', async ({ page }) => {
-	await page.goto('/');
+  await page.goto('/');
 
-	const region = page.getByRole('region', { name: /como funciona/i });
+  const region = page.getByRole('region', { name: /como funciona/i });
 
-	await expect(region.getByRole('list')).toHaveCount(1);
-	await expect(region.getByRole('listitem')).toHaveCount(3);
+  await expect(region.getByRole('list')).toHaveCount(1);
+  await expect(region.getByRole('listitem')).toHaveCount(3);
 });
 
 test('offers paths to browse or open a table before showing open tables', async ({ page }) => {
-	await page.goto('/');
+  await page.goto('/');
 
-	const hero = page.getByRole('heading', { level: 1 }).locator('..').locator('..');
-	await expect(hero.getByRole('link', { name: 'Ver mesas abertas' })).toHaveAttribute(
-		'href',
-		'/tables'
-	);
-	await expect(hero.getByRole('link', { name: 'Abrir uma mesa' })).toHaveAttribute(
-		'href',
-		'/tables/new'
-	);
+  const hero = page.getByRole('heading', { level: 1 }).locator('..').locator('..');
+  await expect(hero.getByRole('link', { name: 'Ver mesas abertas' })).toHaveAttribute(
+    'href',
+    '/tables',
+  );
+  await expect(hero.getByRole('link', { name: 'Abrir uma mesa' })).toHaveAttribute(
+    'href',
+    '/tables/new',
+  );
 
-	await expect(page.locator('section[aria-labelledby="open-tables"]')).toBeVisible();
+  await expect(page.locator('section[aria-labelledby="open-tables"]')).toBeVisible();
 });
 
 test('says the project is open source and links to its repository', async ({ page }) => {
-	await page.goto('/');
+  await page.goto('/');
 
-	await expect(page.getByRole('contentinfo').getByText(/open source/i)).toBeVisible();
-	await expect(page.getByRole('contentinfo').getByRole('link', { name: 'GitHub' })).toHaveAttribute(
-		'href',
-		'https://github.com/itsmegrave/mesaaberta'
-	);
+  await expect(page.getByRole('contentinfo').getByText(/open source/i)).toBeVisible();
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'GitHub' })).toHaveAttribute(
+    'href',
+    'https://github.com/itsmegrave/mesaaberta',
+  );
 });
 
 test('sections are reachable through English anchors', async ({ page }) => {
-	for (const anchor of ['how-it-works', 'for-game-masters']) {
-		await page.goto(`/#${anchor}`);
+  for (const anchor of ['how-it-works', 'for-game-masters']) {
+    await page.goto(`/#${anchor}`);
 
-		await expect(page.locator(`section[aria-labelledby="${anchor}"] #${anchor}`)).toBeVisible();
-	}
+    await expect(page.locator(`section[aria-labelledby="${anchor}"] #${anchor}`)).toBeVisible();
+  }
 });
 
 test.describe('seats', () => {
-	const seats = '[data-seat]';
+  const seats = '[data-seat]';
 
-	test('are all fully visible once the intro animation has played', async ({ page }) => {
-		await page.goto('/');
-		const all = page.locator(seats);
-		await expect(all).toHaveCount(6);
+  test('are all fully visible once the intro animation has played', async ({ page }) => {
+    await page.goto('/');
+    const all = page.locator(seats);
+    await expect(all).toHaveCount(6);
 
-		await expect
-			.poll(() => all.evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)))
-			.toEqual(Array(6).fill('1'));
-	});
+    await expect
+      .poll(() => all.evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)))
+      .toEqual(Array(6).fill('1'));
+  });
 
-	test.describe('with reduced motion', () => {
-		test.use({ reducedMotion: 'reduce' });
+  test.describe('with reduced motion', () => {
+    test.use({ reducedMotion: 'reduce' });
 
-		test('are visible immediately, with no animation', async ({ page }) => {
-			await page.goto('/');
+    test('are visible immediately, with no animation', async ({ page }) => {
+      await page.goto('/');
 
-			const state = await page
-				.locator(seats)
-				.evaluateAll((els) =>
-					els.map((el) => [getComputedStyle(el).opacity, getComputedStyle(el).animationName])
-				);
+      const state = await page
+        .locator(seats)
+        .evaluateAll((els) =>
+          els.map((el) => [getComputedStyle(el).opacity, getComputedStyle(el).animationName]),
+        );
 
-			expect(state).toEqual(Array(6).fill(['1', 'none']));
-		});
-	});
+      expect(state).toEqual(Array(6).fill(['1', 'none']));
+    });
+  });
 });

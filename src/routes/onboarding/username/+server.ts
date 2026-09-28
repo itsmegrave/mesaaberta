@@ -9,18 +9,18 @@ import type { RequestHandler } from './$types';
  * signed in, who may not have finished their profile.
  */
 export const GET: RequestHandler = async ({ locals, url }) => {
-	if (!(await locals.getUser())) error(401, 'Sign in first');
-	if (!locals.db) error(503, 'Database not configured');
+  if (!(await locals.getUser())) error(401, 'Sign in first');
+  if (!locals.db) error(503, 'Database not configured');
 
-	const value = normalizeUsername(url.searchParams.get('value') ?? '');
-	// Nothing goes to the database for a name that could not be taken anyway.
-	const status =
-		usernameProblem(value) !== null
-			? 'invalid'
-			: (await isUsernameAvailable(locals.db, value, { exceptProfileId: locals.userId }))
-				? 'free'
-				: 'taken';
+  const value = normalizeUsername(url.searchParams.get('value') ?? '');
+  // Nothing goes to the database for a name that could not be taken anyway.
+  const status =
+    usernameProblem(value) !== null
+      ? 'invalid'
+      : (await isUsernameAvailable(locals.db, value, { exceptProfileId: locals.userId }))
+        ? 'free'
+        : 'taken';
 
-	// A stale answer is worse than none: the person may be about to pick this name.
-	return json({ status }, { headers: { 'cache-control': 'no-store' } });
+  // A stale answer is worse than none: the person may be about to pick this name.
+  return json({ status }, { headers: { 'cache-control': 'no-store' } });
 };

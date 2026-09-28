@@ -18,49 +18,49 @@ type RegistrationEvent = Extract<DomainEvent, { payload: { playerId: string } }>
 
 /** The table row, locked until the transaction ends. */
 async function lockTable(tx: Tx, slug: string) {
-	const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug)).for('update');
-	if (!table) throw new NotFound(`no table with slug "${slug}"`);
+  const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug)).for('update');
+  if (!table) throw new NotFound(`no table with slug "${slug}"`);
 
-	return table;
+  return table;
 }
 
 async function confirmedSeats(tx: Tx, tableId: string) {
-	const [{ count }] = await tx
-		.select({ count: sql<number>`count(*)::int` })
-		.from(registrations)
-		.where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
+  const [{ count }] = await tx
+    .select({ count: sql<number>`count(*)::int` })
+    .from(registrations)
+    .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
 
-	return count;
+  return count;
 }
 
 async function registrationOf(tx: Tx, tableId: string, playerId: string) {
-	const [registration] = await tx
-		.select()
-		.from(registrations)
-		.where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)));
+  const [registration] = await tx
+    .select()
+    .from(registrations)
+    .where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)));
 
-	return registration;
+  return registration;
 }
 
 const asDb = (tx: Tx) => tx as unknown as AnyDb;
 
 const record = (
-	tx: Tx,
-	actor: Actor,
-	table: { id: string; slug: string },
-	playerId: string,
-	type: Exclude<RegistrationEvent['type'], 'PlayerLeft'>,
-	now?: Date
+  tx: Tx,
+  actor: Actor,
+  table: { id: string; slug: string },
+  playerId: string,
+  type: Exclude<RegistrationEvent['type'], 'PlayerLeft'>,
+  now?: Date,
 ) =>
-	recordEvent(
-		asDb(tx),
-		{
-			type,
-			actorId: actor.id,
-			payload: { tableId: table.id, slug: table.slug, playerId }
-		},
-		{ now }
-	);
+  recordEvent(
+    asDb(tx),
+    {
+      type,
+      actorId: actor.id,
+      payload: { tableId: table.id, slug: table.slug, playerId },
+    },
+    { now },
+  );
 
 /**
  * The signed-in player takes a seat, or asks for one when the GM approves each player. The seat
@@ -69,166 +69,166 @@ const record = (
  * a full table or a repeat join never uses the limit up.
  */
 export async function joinTable(
-	db: AnyDb,
-	actor: Actor | null,
-	slug: string,
-	{ now = new Date() }: { now?: Date } = {}
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  { now = new Date() }: { now?: Date } = {},
 ) {
-	return db.transaction(async (tx) => {
-		const table = await lockTable(tx, slug);
-		const seatsLeft = table.capacity - (await confirmedSeats(tx, table.id));
-		const existing = actor ? await registrationOf(tx, table.id, actor.id) : undefined;
+  return db.transaction(async (tx) => {
+    const table = await lockTable(tx, slug);
+    const seatsLeft = table.capacity - (await confirmedSeats(tx, table.id));
+    const existing = actor ? await registrationOf(tx, table.id, actor.id) : undefined;
 
-		const blocker = joinBlocker(actor, {
-			gmId: table.gmId,
-			tableStatus: table.status,
-			seatsLeft,
-			alreadyRegistered: existing !== undefined
-		});
-		if (blocker === 'inactive') throw new NotFound('the table is not active');
-		if (blocker === 'registered') throw new AlreadyRegistered();
-		if (blocker === 'full') throw new TableFull();
-		if (blocker) throw new Forbidden('table:join');
-		await enforceRateLimit(asDb(tx), actor!.id, JOIN_LIMIT, now);
+    const blocker = joinBlocker(actor, {
+      gmId: table.gmId,
+      tableStatus: table.status,
+      seatsLeft,
+      alreadyRegistered: existing !== undefined,
+    });
+    if (blocker === 'inactive') throw new NotFound('the table is not active');
+    if (blocker === 'registered') throw new AlreadyRegistered();
+    if (blocker === 'full') throw new TableFull();
+    if (blocker) throw new Forbidden('table:join');
+    await enforceRateLimit(asDb(tx), actor!.id, JOIN_LIMIT, now);
 
-		const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
-		await tx.insert(registrations).values({ tableId: table.id, playerId: actor!.id, status });
+    const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
+    await tx.insert(registrations).values({ tableId: table.id, playerId: actor!.id, status });
 
-		const eventIds = [
-			await record(
-				tx,
-				actor!,
-				table,
-				actor!.id,
-				status === 'confirmed' ? 'PlayerJoined' : 'JoinRequested',
-				now
-			)
-		];
-		return { status, eventIds } as const;
-	});
+    const eventIds = [
+      await record(
+        tx,
+        actor!,
+        table,
+        actor!.id,
+        status === 'confirmed' ? 'PlayerJoined' : 'JoinRequested',
+        now,
+      ),
+    ];
+    return { status, eventIds } as const;
+  });
 }
 
 /** A player gives up their place, or withdraws a request. A pending request took no seat, so it leaves no event. */
 export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
-	return db.transaction(async (tx) => {
-		const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug));
-		if (!table) throw new NotFound(`no table with slug "${slug}"`);
-		authorize(actor, 'registration:leave', { playerId: actor?.id ?? '' });
+  return db.transaction(async (tx) => {
+    const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug));
+    if (!table) throw new NotFound(`no table with slug "${slug}"`);
+    authorize(actor, 'registration:leave', { playerId: actor?.id ?? '' });
 
-		const registration = await registrationOf(tx, table.id, actor!.id);
-		if (!registration) throw new NotFound('no registration');
+    const registration = await registrationOf(tx, table.id, actor!.id);
+    if (!registration) throw new NotFound('no registration');
 
-		await tx
-			.delete(registrations)
-			.where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, actor!.id)));
+    await tx
+      .delete(registrations)
+      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, actor!.id)));
 
-		if (registration.status === 'pending') return { eventIds: [] as string[] };
+    if (registration.status === 'pending') return { eventIds: [] as string[] };
 
-		const eventId = await recordEvent(asDb(tx), {
-			type: 'PlayerLeft',
-			actorId: actor!.id,
-			payload: { tableId: table.id, slug: table.slug, playerId: actor!.id, reason: 'left' }
-		});
-		return { eventIds: [eventId] };
-	});
+    const eventId = await recordEvent(asDb(tx), {
+      type: 'PlayerLeft',
+      actorId: actor!.id,
+      payload: { tableId: table.id, slug: table.slug, playerId: actor!.id, reason: 'left' },
+    });
+    return { eventIds: [eventId] };
+  });
 }
 
 /** The GM or an admin confirms a pending request. Fails with `TableFull` when no seat is left. */
 export async function approveRegistration(
-	db: AnyDb,
-	actor: Actor | null,
-	slug: string,
-	playerId: string
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  playerId: string,
 ) {
-	return db.transaction(async (tx) => {
-		const table = await lockTable(tx, slug);
-		authorize(actor, 'registration:manage', table);
+  return db.transaction(async (tx) => {
+    const table = await lockTable(tx, slug);
+    authorize(actor, 'registration:manage', table);
 
-		const registration = await registrationOf(tx, table.id, playerId);
-		if (registration?.status !== 'pending') throw new NotFound('no pending request');
-		if ((await confirmedSeats(tx, table.id)) >= table.capacity) throw new TableFull();
+    const registration = await registrationOf(tx, table.id, playerId);
+    if (registration?.status !== 'pending') throw new NotFound('no pending request');
+    if ((await confirmedSeats(tx, table.id)) >= table.capacity) throw new TableFull();
 
-		await tx
-			.update(registrations)
-			.set({ status: 'confirmed' })
-			.where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
+    await tx
+      .update(registrations)
+      .set({ status: 'confirmed' })
+      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
 
-		return {
-			eventIds: [await record(tx, actor!, table, playerId, 'JoinApproved')]
-		};
-	});
+    return {
+      eventIds: [await record(tx, actor!, table, playerId, 'JoinApproved')],
+    };
+  });
 }
 
 /** The GM or an admin turns down a pending request; it is deleted. */
 export async function declineRegistration(
-	db: AnyDb,
-	actor: Actor | null,
-	slug: string,
-	playerId: string
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  playerId: string,
 ) {
-	return db.transaction(async (tx) => {
-		const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug));
-		if (!table) throw new NotFound(`no table with slug "${slug}"`);
-		authorize(actor, 'registration:manage', table);
+  return db.transaction(async (tx) => {
+    const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug));
+    if (!table) throw new NotFound(`no table with slug "${slug}"`);
+    authorize(actor, 'registration:manage', table);
 
-		const registration = await registrationOf(tx, table.id, playerId);
-		if (registration?.status !== 'pending') throw new NotFound('no pending request');
+    const registration = await registrationOf(tx, table.id, playerId);
+    if (registration?.status !== 'pending') throw new NotFound('no pending request');
 
-		await tx
-			.delete(registrations)
-			.where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
+    await tx
+      .delete(registrations)
+      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
 
-		return { eventIds: [await record(tx, actor!, table, playerId, 'JoinDeclined')] };
-	});
+    return { eventIds: [await record(tx, actor!, table, playerId, 'JoinDeclined')] };
+  });
 }
 
 /** The GM or an admin removes a player who has a seat. */
 export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string, playerId: string) {
-	return db.transaction(async (tx) => {
-		const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug));
-		if (!table) throw new NotFound(`no table with slug "${slug}"`);
-		authorize(actor, 'registration:manage', table);
+  return db.transaction(async (tx) => {
+    const [table] = await tx.select().from(gameTables).where(eq(gameTables.slug, slug));
+    if (!table) throw new NotFound(`no table with slug "${slug}"`);
+    authorize(actor, 'registration:manage', table);
 
-		const registration = await registrationOf(tx, table.id, playerId);
-		if (registration?.status !== 'confirmed') throw new NotFound('that player has no seat');
+    const registration = await registrationOf(tx, table.id, playerId);
+    if (registration?.status !== 'confirmed') throw new NotFound('that player has no seat');
 
-		await tx
-			.delete(registrations)
-			.where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
+    await tx
+      .delete(registrations)
+      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
 
-		const eventId = await recordEvent(asDb(tx), {
-			type: 'PlayerLeft',
-			actorId: actor!.id,
-			payload: { tableId: table.id, slug: table.slug, playerId, reason: 'removed' }
-		});
-		return { eventIds: [eventId] };
-	});
+    const eventId = await recordEvent(asDb(tx), {
+      type: 'PlayerLeft',
+      actorId: actor!.id,
+      payload: { tableId: table.id, slug: table.slug, playerId, reason: 'removed' },
+    });
+    return { eventIds: [eventId] };
+  });
 }
 
 /** The players and the requests at a table, with names. Only for the GM and admins: names are not public. */
 export async function listRegistrations(db: AnyDb, actor: Actor | null, slug: string) {
-	const [table] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
-	if (!table) throw new NotFound(`no table with slug "${slug}"`);
-	authorize(actor, 'registration:manage', table);
+  const [table] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
+  if (!table) throw new NotFound(`no table with slug "${slug}"`);
+  authorize(actor, 'registration:manage', table);
 
-	return db
-		.select({
-			playerId: registrations.playerId,
-			username: publicName(profiles.username),
-			status: registrations.status
-		})
-		.from(registrations)
-		.innerJoin(profiles, eq(registrations.playerId, profiles.id))
-		.where(eq(registrations.tableId, table.id))
-		.orderBy(asc(registrations.createdAt), asc(profiles.username));
+  return db
+    .select({
+      playerId: registrations.playerId,
+      username: publicName(profiles.username),
+      status: registrations.status,
+    })
+    .from(registrations)
+    .innerJoin(profiles, eq(registrations.playerId, profiles.id))
+    .where(eq(registrations.tableId, table.id))
+    .orderBy(asc(registrations.createdAt), asc(profiles.username));
 }
 
 /** A player's own place at a table: `confirmed`, `pending`, or null. */
 export async function registrationStatus(db: AnyDb, tableId: string, playerId: string) {
-	const [registration] = await db
-		.select({ status: registrations.status })
-		.from(registrations)
-		.where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)));
+  const [registration] = await db
+    .select({ status: registrations.status })
+    .from(registrations)
+    .where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)));
 
-	return registration?.status ?? null;
+  return registration?.status ?? null;
 }

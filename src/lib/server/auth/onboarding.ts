@@ -9,14 +9,14 @@ export const onboardingUrl = (next: string) => `/onboarding?next=${encodeURIComp
  * step (which creates it) is where those people end up too.
  */
 export const needsOnboarding = (profile: { username: string | null } | null): boolean =>
-	!profile?.username;
+  !profile?.username;
 
 /**
  * Where to send someone who has just signed in: where they were going (`next`, checked), or the
  * onboarding step first when their profile is not complete.
  */
 export const afterSignIn = async (locals: App.Locals, next: string | null): Promise<string> => {
-	const target = safeNext(next);
+  const target = safeNext(next);
 
-	return needsOnboarding(await locals.getProfile()) ? onboardingUrl(target) : target;
+  return needsOnboarding(await locals.getProfile()) ? onboardingUrl(target) : target;
 };

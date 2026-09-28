@@ -10,18 +10,18 @@ import { needsOnboarding, onboardingUrl } from './onboarding';
  * `allowIncomplete`.
  */
 export async function requireUser(
-	locals: App.Locals,
-	url: URL,
-	{ allowIncomplete = false }: { allowIncomplete?: boolean } = {}
+  locals: App.Locals,
+  url: URL,
+  { allowIncomplete = false }: { allowIncomplete?: boolean } = {},
 ): Promise<User> {
-	const here = url.pathname + url.search;
+  const here = url.pathname + url.search;
 
-	const user = await locals.getUser();
-	if (!user) redirect(303, `/login?next=${encodeURIComponent(here)}`);
+  const user = await locals.getUser();
+  if (!user) redirect(303, `/login?next=${encodeURIComponent(here)}`);
 
-	if (!allowIncomplete && needsOnboarding(await locals.getProfile())) {
-		redirect(303, onboardingUrl(here));
-	}
+  if (!allowIncomplete && needsOnboarding(await locals.getProfile())) {
+    redirect(303, onboardingUrl(here));
+  }
 
-	return user;
+  return user;
 }

@@ -8,14 +8,14 @@ import { runSweeper } from '../../src/lib/server/events/sweeper.ts';
 import { logger } from '../../src/lib/server/logger.ts';
 
 export default {
-	fetch: sveltekit.fetch,
+  fetch: sveltekit.fetch,
 
-	// Retries domain events that did not finish. See sweepEvents and the cron in wrangler.jsonc.
-	async scheduled(_controller, env, ctx) {
-		ctx.waitUntil(
-			runSweeper(env, { handlers: handlersFor(env), log: logger }).catch((error) =>
-				logger.error('event sweep failed', { error })
-			)
-		);
-	}
+  // Retries domain events that did not finish. See sweepEvents and the cron in wrangler.jsonc.
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(
+      runSweeper(env, { handlers: handlersFor(env), log: logger }).catch((error) =>
+        logger.error('event sweep failed', { error }),
+      ),
+    );
+  },
 };

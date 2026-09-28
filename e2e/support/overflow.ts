@@ -6,10 +6,10 @@ import type { Page } from '@playwright/test';
  * layout that only fits with a narrow font must fail here too, not only in CI.
  */
 export async function sidewaysOverflow(page: Page) {
-	return page.evaluate(() => {
-		for (const element of document.querySelectorAll<HTMLElement>('body *')) {
-			element.style.setProperty('font-family', 'Verdana, sans-serif', 'important');
-		}
-		return document.documentElement.scrollWidth - document.documentElement.clientWidth;
-	});
+  return page.evaluate(() => {
+    for (const element of document.querySelectorAll<HTMLElement>('body *')) {
+      element.style.setProperty('font-family', 'Verdana, sans-serif', 'important');
+    }
+    return document.documentElement.scrollWidth - document.documentElement.clientWidth;
+  });
 }

@@ -8,14 +8,14 @@ const ONE_YEAR = 60 * 60 * 24 * 365;
  * times on it are this person's. Once the cookie is there the server agrees, so it does not repeat.
  */
 export function syncBrowserTimezone(
-	viewer: ViewerTimezone,
-	browserTimezone: string | undefined = Intl.DateTimeFormat().resolvedOptions().timeZone,
-	doc: Pick<Document, 'cookie'> & { location: Pick<Location, 'protocol'> } = document
+  viewer: ViewerTimezone,
+  browserTimezone: string | undefined = Intl.DateTimeFormat().resolvedOptions().timeZone,
+  doc: Pick<Document, 'cookie'> & { location: Pick<Location, 'protocol'> } = document,
 ): boolean {
-	if (viewer.source === 'profile' || !isTimeZone(browserTimezone)) return false;
+  if (viewer.source === 'profile' || !isTimeZone(browserTimezone)) return false;
 
-	const secure = doc.location.protocol === 'https:' ? '; secure' : '';
-	doc.cookie = `${TIMEZONE_COOKIE}=${encodeURIComponent(browserTimezone)}; path=/; max-age=${ONE_YEAR}; samesite=lax${secure}`;
+  const secure = doc.location.protocol === 'https:' ? '; secure' : '';
+  doc.cookie = `${TIMEZONE_COOKIE}=${encodeURIComponent(browserTimezone)}; path=/; max-age=${ONE_YEAR}; samesite=lax${secure}`;
 
-	return viewer.timezone !== browserTimezone;
+  return viewer.timezone !== browserTimezone;
 }

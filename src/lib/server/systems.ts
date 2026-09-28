@@ -10,7 +10,7 @@ export const listSystems = (db: AnyDb) => db.select().from(systems).orderBy(asc(
 
 /** The system behind a slug in a URL, or null so the page can answer 404. */
 export async function findSystemBySlug(db: AnyDb, slug: string) {
-	const [system] = await db.select().from(systems).where(eq(systems.slug, slug));
+  const [system] = await db.select().from(systems).where(eq(systems.slug, slug));
 
-	return system ?? null;
+  return system ?? null;
 }

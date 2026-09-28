@@ -12,17 +12,17 @@ const LEASE_MS = 2 * 60_000;
 export const backoffSeconds = (attempts: number) => Math.min(30 * 2 ** (attempts - 1), 3600);
 
 const due = (now: Date) =>
-	and(
-		isNull(events.processedAt),
-		isNull(events.failedAt),
-		lte(events.nextAttemptAt, now),
-		or(isNull(events.claimedUntil), lte(events.claimedUntil, now))
-	);
+  and(
+    isNull(events.processedAt),
+    isNull(events.failedAt),
+    lte(events.nextAttemptAt, now),
+    or(isNull(events.claimedUntil), lte(events.claimedUntil, now)),
+  );
 
 const describe = (error: unknown) => {
-	const { name, message } = error instanceof Error ? error : new Error(String(error));
-	// Kept in the audit log, so no email address or token that an error message happened to carry.
-	return scrubString(`${name}: ${message}`).slice(0, 500);
+  const { name, message } = error instanceof Error ? error : new Error(String(error));
+  // Kept in the audit log, so no email address or token that an error message happened to carry.
+  return scrubString(`${name}: ${message}`).slice(0, 500);
 };
 
 /**
@@ -34,65 +34,65 @@ const describe = (error: unknown) => {
  * backoff, up to `MAX_ATTEMPTS`. It never throws for a handler's failure.
  */
 export async function dispatchEvent(
-	db: AnyDb,
-	handlers: readonly Handler[],
-	id: string,
-	now = new Date()
+  db: AnyDb,
+  handlers: readonly Handler[],
+  id: string,
+  now = new Date(),
 ): Promise<void> {
-	const [row] = await db
-		.update(events)
-		.set({ claimedUntil: new Date(now.getTime() + LEASE_MS) })
-		.where(and(eq(events.id, id), due(now)))
-		.returning();
-	if (!row) return; // done, given up on, not due yet, or being run by someone else
+  const [row] = await db
+    .update(events)
+    .set({ claimedUntil: new Date(now.getTime() + LEASE_MS) })
+    .where(and(eq(events.id, id), due(now)))
+    .returning();
+  if (!row) return; // done, given up on, not due yet, or being run by someone else
 
-	const event = {
-		id: row.id,
-		type: row.type,
-		payload: row.payload,
-		actorId: row.actorId,
-		createdAt: row.createdAt,
-		attempts: row.attempts
-	} as StoredEvent;
-	const pending = handlers.filter(
-		(handler) =>
-			handler.types.includes(event.type as DomainEvent['type']) &&
-			!row.handledBy.includes(handler.name)
-	);
+  const event = {
+    id: row.id,
+    type: row.type,
+    payload: row.payload,
+    actorId: row.actorId,
+    createdAt: row.createdAt,
+    attempts: row.attempts,
+  } as StoredEvent;
+  const pending = handlers.filter(
+    (handler) =>
+      handler.types.includes(event.type as DomainEvent['type']) &&
+      !row.handledBy.includes(handler.name),
+  );
 
-	const failures: unknown[] = [];
-	for (const handler of pending) {
-		try {
-			await handler.handle(event, db);
-			await db
-				.update(events)
-				.set({ handledBy: sql`array_append(${events.handledBy}, ${handler.name})` })
-				.where(eq(events.id, id));
-		} catch (error) {
-			failures.push(error);
-		}
-	}
+  const failures: unknown[] = [];
+  for (const handler of pending) {
+    try {
+      await handler.handle(event, db);
+      await db
+        .update(events)
+        .set({ handledBy: sql`array_append(${events.handledBy}, ${handler.name})` })
+        .where(eq(events.id, id));
+    } catch (error) {
+      failures.push(error);
+    }
+  }
 
-	if (failures.length === 0) {
-		await db
-			.update(events)
-			.set({ processedAt: now, claimedUntil: null, lastError: null })
-			.where(eq(events.id, id));
-		return;
-	}
+  if (failures.length === 0) {
+    await db
+      .update(events)
+      .set({ processedAt: now, claimedUntil: null, lastError: null })
+      .where(eq(events.id, id));
+    return;
+  }
 
-	const attempts = row.attempts + 1;
-	await db
-		.update(events)
-		.set({
-			attempts,
-			claimedUntil: null,
-			lastError: describe(failures[0]),
-			...(attempts >= MAX_ATTEMPTS
-				? { failedAt: now }
-				: { nextAttemptAt: new Date(now.getTime() + backoffSeconds(attempts) * 1000) })
-		})
-		.where(eq(events.id, id));
+  const attempts = row.attempts + 1;
+  await db
+    .update(events)
+    .set({
+      attempts,
+      claimedUntil: null,
+      lastError: describe(failures[0]),
+      ...(attempts >= MAX_ATTEMPTS
+        ? { failedAt: now }
+        : { nextAttemptAt: new Date(now.getTime() + backoffSeconds(attempts) * 1000) }),
+    })
+    .where(eq(events.id, id));
 }
 
 /**
@@ -101,21 +101,21 @@ export async function dispatchEvent(
  * happened (the Worker stopped right after the commit). Returns how many it tried.
  */
 export async function sweepEvents(
-	db: AnyDb,
-	handlers: readonly Handler[],
-	now = new Date(),
-	limit = 50
+  db: AnyDb,
+  handlers: readonly Handler[],
+  now = new Date(),
+  limit = 50,
 ): Promise<number> {
-	const rows = await db
-		.select({ id: events.id })
-		.from(events)
-		.where(due(now))
-		.orderBy(asc(events.createdAt))
-		.limit(limit);
+  const rows = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(due(now))
+    .orderBy(asc(events.createdAt))
+    .limit(limit);
 
-	for (const { id } of rows) await dispatchEvent(db, handlers, id, now);
+  for (const { id } of rows) await dispatchEvent(db, handlers, id, now);
 
-	return rows.length;
+  return rows.length;
 }
 
 /** Days a finished event stays in the audit log. The privacy policy promises this; keep them in step. */
@@ -128,7 +128,7 @@ export const RETENTION_DAYS = 90;
 export const CONNECTION_RETENTION_DAYS = 180;
 
 const finishedBefore = (cutoff: Date) =>
-	or(lt(events.processedAt, cutoff), lt(events.failedAt, cutoff));
+  or(lt(events.processedAt, cutoff), lt(events.failedAt, cutoff));
 
 /**
  * Deletes the events that finished (processed, or given up on) more than their retention period
@@ -136,17 +136,17 @@ const finishedBefore = (cutoff: Date) =>
  * Pending events stay, whatever their age. Returns how many were deleted.
  */
 export async function pruneEvents(db: AnyDb, now = new Date()): Promise<number> {
-	const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 3600 * 1000);
-	const connectionCutoff = new Date(now.getTime() - CONNECTION_RETENTION_DAYS * 24 * 3600 * 1000);
-	const deleted = await db
-		.delete(events)
-		.where(
-			or(
-				and(ne(events.type, 'UserSignedIn'), finishedBefore(cutoff)),
-				and(eq(events.type, 'UserSignedIn'), finishedBefore(connectionCutoff))
-			)
-		)
-		.returning({ id: events.id });
+  const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 3600 * 1000);
+  const connectionCutoff = new Date(now.getTime() - CONNECTION_RETENTION_DAYS * 24 * 3600 * 1000);
+  const deleted = await db
+    .delete(events)
+    .where(
+      or(
+        and(ne(events.type, 'UserSignedIn'), finishedBefore(cutoff)),
+        and(eq(events.type, 'UserSignedIn'), finishedBefore(connectionCutoff)),
+      ),
+    )
+    .returning({ id: events.id });
 
-	return deleted.length;
+  return deleted.length;
 }

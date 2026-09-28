@@ -9,11 +9,11 @@ import { timezoneOf } from '../time';
 import { tableFormSchema, toTableInput, type TableInput } from '$lib/tables/schema';
 
 type Event = {
-	request: Request;
-	locals: App.Locals;
-	url: URL;
-	cookies: Pick<import('@sveltejs/kit').Cookies, 'get'>;
-	setHeaders?: (headers: Record<string, string>) => void;
+  request: Request;
+  locals: App.Locals;
+  url: URL;
+  cookies: Pick<import('@sveltejs/kit').Cookies, 'get'>;
+  setHeaders?: (headers: Record<string, string>) => void;
 };
 
 /**
@@ -26,54 +26,54 @@ type Event = {
  * itself is checked by `save` (through the policy), not here.
  */
 export async function handleTableForm(
-	{ request, locals, url, cookies, setHeaders }: Event,
-	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
-	guard: () => Promise<void> = async () => {}
+  { request, locals, url, cookies, setHeaders }: Event,
+  save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
+  guard: () => Promise<void> = async () => {},
 ) {
-	if (!(await locals.getUser())) {
-		redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
-	}
-	if (!(await locals.getProfile())?.username) {
-		redirect(303, `/onboarding?next=${encodeURIComponent(url.pathname + url.search)}`);
-	}
+  if (!(await locals.getUser())) {
+    redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+  }
+  if (!(await locals.getProfile())?.username) {
+    redirect(303, `/onboarding?next=${encodeURIComponent(url.pathname + url.search)}`);
+  }
 
-	const data = await request.formData();
-	// The GM types the time in their own zone; whatever zone was sent, that is the one used.
-	data.set('timezone', await timezoneOf(locals, cookies));
-	const form = await superValidate(data, zod4(tableFormSchema));
-	if (!form.valid) return fail(400, { form });
+  const data = await request.formData();
+  // The GM types the time in their own zone; whatever zone was sent, that is the one used.
+  data.set('timezone', await timezoneOf(locals, cookies));
+  const form = await superValidate(data, zod4(tableFormSchema));
+  if (!form.valid) return fail(400, { form });
 
-	let slug: string;
-	try {
-		await guard();
-		const image = data.get('image');
-		let imagePath: string | undefined;
+  let slug: string;
+  try {
+    await guard();
+    const image = data.get('image');
+    let imagePath: string | undefined;
 
-		if (image instanceof File && image.size > 0) {
-			const prepared = await prepareImage(image);
-			const storage = locals.supabase?.storage.from(IMAGE_BUCKET);
-			if (!storage) throw new Invalid('image', 'upload_failed');
-			imagePath = await storeImage(storage, prepared);
-		}
+    if (image instanceof File && image.size > 0) {
+      const prepared = await prepareImage(image);
+      const storage = locals.supabase?.storage.from(IMAGE_BUCKET);
+      if (!storage) throw new Invalid('image', 'upload_failed');
+      imagePath = await storeImage(storage, prepared);
+    }
 
-		const input = locals.db
-			? await withLocation(locals.db, toTableInput(form.data))
-			: toTableInput(form.data);
-		({ slug } = await save(input, imagePath));
-	} catch (error) {
-		if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
-		if (error instanceof Forbidden) return message(form, { code: 'forbidden' }, { status: 403 });
-		if (error instanceof NotFound) return message(form, { code: 'not_found' }, { status: 404 });
-		if (error instanceof RateLimited) {
-			setHeaders?.({ 'Retry-After': String(error.retryAfterSeconds) });
-			return message(
-				form,
-				{ code: 'rate_limited', retryAfter: error.retryAfterSeconds },
-				{ status: 429 }
-			);
-		}
-		throw error;
-	}
+    const input = locals.db
+      ? await withLocation(locals.db, toTableInput(form.data))
+      : toTableInput(form.data);
+    ({ slug } = await save(input, imagePath));
+  } catch (error) {
+    if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
+    if (error instanceof Forbidden) return message(form, { code: 'forbidden' }, { status: 403 });
+    if (error instanceof NotFound) return message(form, { code: 'not_found' }, { status: 404 });
+    if (error instanceof RateLimited) {
+      setHeaders?.({ 'Retry-After': String(error.retryAfterSeconds) });
+      return message(
+        form,
+        { code: 'rate_limited', retryAfter: error.retryAfterSeconds },
+        { status: 429 },
+      );
+    }
+    throw error;
+  }
 
-	redirect(303, `/tables/${slug}`);
+  redirect(303, `/tables/${slug}`);
 }

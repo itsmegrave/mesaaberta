@@ -14,13 +14,13 @@ if (!userId) throw new Error('Usage: pnpm db:make-admin <user id>');
 const client = postgres(url, { max: 1 });
 
 try {
-	const found = await promoteToAdmin(drizzle(client), userId);
-	console.log(
-		found
-			? `${userId} is now an admin.`
-			: `No profile for ${userId}. They need to sign in once first.`
-	);
-	process.exitCode = found ? 0 : 1;
+  const found = await promoteToAdmin(drizzle(client), userId);
+  console.log(
+    found
+      ? `${userId} is now an admin.`
+      : `No profile for ${userId}. They need to sign in once first.`,
+  );
+  process.exitCode = found ? 0 : 1;
 } finally {
-	await client.end();
+  await client.end();
 }
