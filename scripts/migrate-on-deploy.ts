@@ -4,6 +4,7 @@
 //
 // It runs Drizzle's migrator itself rather than `drizzle-kit migrate`, which hides the database's
 // error behind its spinner: here a failure prints what Postgres said, and where it was connecting.
+import { readFileSync } from 'node:fs';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
@@ -28,8 +29,22 @@ const target = (() => {
 	}
 })();
 
+// Supabase signs its database certificates with its own root CA, which is not in Node's trust
+// store. Trust exactly that CA (public, in the repo) and keep verifying the host name, rather than
+// turning verification off: the password only goes to a server that proves it is Supabase's.
+// Downloaded from Supabase (Database settings > SSL); valid until 2031.
+const ca = readFileSync(new URL('../supabase/prod-ca-2021.crt', import.meta.url), 'utf8');
+// The TLS settings come from here, so an `sslmode` left in the string cannot weaken them.
+const url = new URL(plan.url);
+url.searchParams.delete('sslmode');
+
 console.log(`migrations: applying the pending ones to production (${target})`);
-const sql = postgres(plan.url, { max: 1, onnotice: () => {}, connect_timeout: 15 });
+const sql = postgres(url.toString(), {
+	max: 1,
+	onnotice: () => {},
+	connect_timeout: 15,
+	ssl: { ca, rejectUnauthorized: true }
+});
 try {
 	await migrate(drizzle(sql), { migrationsFolder: 'drizzle' });
 	console.log('migrations: done');
