@@ -52,6 +52,17 @@ export type NewTable = {
 	image?: { name: string; mimeType: string; buffer: Buffer };
 };
 
+/**
+ * Picks an option in a SearchSelect (the searchable dropdown): types part of its name, then clicks
+ * it. Waits for the combobox first, since the page shows a plain <select> until it hydrates.
+ */
+export async function pickFromSearch(page: Page, label: string, option: string) {
+	const input = page.getByRole('combobox', { name: label });
+	await expect(input).toBeVisible();
+	await input.fill(option.slice(0, 6));
+	await page.getByRole('option', { name: option, exact: true }).click();
+}
+
 /** A title no other test uses, so tests that share a database do not collide. */
 export const uniqueTitle = (prefix: string) =>
 	`${prefix} ${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
@@ -59,7 +70,7 @@ export const uniqueTitle = (prefix: string) =>
 /** Fills and submits the create form as the signed-in user. Returns the slug from the URL it lands on. */
 export async function createTable(page: Page, table: NewTable) {
 	await page.goto('/tables/new');
-	await page.getByLabel('Sistema de RPG').selectOption({ label: table.system ?? 'Daggerheart' });
+	await pickFromSearch(page, 'Sistema de RPG', table.system ?? 'Daggerheart');
 	await page.getByLabel('Título').fill(table.title);
 	if (table.description) await page.getByLabel('Descrição').fill(table.description);
 	if (table.kind === 'campaign') await page.getByLabel('Campanha (várias sessões)').check();

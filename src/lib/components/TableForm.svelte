@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SuperForm } from 'sveltekit-superforms';
 	import FormField from './FormField.svelte';
+	import SearchSelect from './SearchSelect.svelte';
 	import type { FormMessage } from '$lib/forms/message';
 	import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
 	import { m } from '$lib/paraglide/messages';
@@ -106,20 +107,28 @@
 				<h2 id="about-table" class="text-[26px] font-semibold tracking-[-0.02em]">Sobre a mesa</h2>
 			</div>
 			<div class="grid gap-6">
-				<FormField id="systemSlug" label={m.form_system()} error={err('systemSlug')}>
-					<select
+				<div class="min-w-0">
+					<SearchSelect
 						id="systemSlug"
 						name="systemSlug"
+						label={m.form_system()}
+						labelClass="label-text block font-semibold"
+						class="grid gap-1"
+						items={systems}
+						value={$form.systemSlug ? [$form.systemSlug] : []}
+						placeholder={m.form_system_choose()}
 						required
-						bind:value={$form.systemSlug}
-						class="select h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-						aria-invalid={invalid('systemSlug')}
-						><option value="">{m.form_system_choose()}</option
-						>{#each systems as system (system.slug)}<option value={system.slug}
-								>{system.name}</option
-							>{/each}</select
-					>
-				</FormField>
+						invalid={!!invalid('systemSlug')}
+						onchange={(picked) => ($form.systemSlug = picked[0] ?? '')}
+					/>
+					{#if err('systemSlug')}<p
+							id="systemSlug-error"
+							role="alert"
+							class="mt-1 text-sm font-semibold text-error-700-300"
+						>
+							{err('systemSlug')}
+						</p>{/if}
+				</div>
 				<FormField id="title" label={m.form_title()} error={err('title')}>
 					<input
 						id="title"

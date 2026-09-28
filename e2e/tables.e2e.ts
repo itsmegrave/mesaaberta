@@ -72,20 +72,33 @@ test.describe('table list', () => {
 
 	test('filters by system, and says so when nothing matches', async ({ page }) => {
 		await page.goto('/tables');
-		const filter = page.getByRole('group', { name: 'Sistema' });
-		await expect(filter.getByRole('link', { name: 'Todos os sistemas' })).toHaveAttribute(
-			'aria-current',
-			'page'
-		);
-		// Featured as a chip, or behind "Mais sistemas" when other systems have more tables.
-		const chip = filter.getByText('Cosmere Roleplaying Game');
-		if (!(await chip.first().isVisible())) await filter.getByText('Mais sistemas').click();
-		await chip.first().click();
+		const filter = page.getByRole('combobox', { name: 'Sistema' });
+		await expect(filter).toBeVisible();
+
+		// Typed without the accent or the capital, it is still found.
+		await filter.fill('cosmere');
+		await page.getByRole('option', { name: 'Cosmere Roleplaying Game', exact: true }).click();
 
 		await expect(page).toHaveURL(/system=cosmere-roleplaying-game/);
-		await expect(filter.getByLabel('Cosmere Roleplaying Game')).toBeChecked();
+		const picked = page.getByRole('list', { name: 'Sistema: escolhidos' });
+		await expect(
+			picked.getByRole('button', { name: 'Remover Cosmere Roleplaying Game' })
+		).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toHaveCount(0);
+
+		// A second system adds its tables; removing the first leaves only the second's.
+		await filter.fill('dagger');
+		await page.getByRole('option', { name: 'Daggerheart', exact: true }).click();
+		await expect(page).toHaveURL(/system=cosmere-roleplaying-game&system=daggerheart/);
+		await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
+
+		// The list stays open for another pick; Escape closes it.
+		await filter.press('Escape');
+		await picked.getByRole('button', { name: 'Remover Cosmere Roleplaying Game' }).click();
+		await expect(page).toHaveURL(/\?system=daggerheart$/);
+		await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toHaveCount(0);
 
 		await page.goto('/tables?system=gurps');
 		await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta com esses filtros');
@@ -93,6 +106,21 @@ test.describe('table list', () => {
 			'href',
 			'/tables'
 		);
+	});
+
+	test.describe('without JavaScript', () => {
+		test.use({ javaScriptEnabled: false });
+
+		test('filters by system with the plain list and the Filtrar button', async ({ page }) => {
+			await page.goto('/tables');
+
+			await page.getByLabel('Sistema', { exact: true }).selectOption('cosmere-roleplaying-game');
+			await page.getByRole('button', { name: 'Filtrar' }).click();
+
+			await expect(page).toHaveURL(/\?system=cosmere-roleplaying-game$/);
+			await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
+			await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toHaveCount(0);
+		});
 	});
 
 	test('does not scroll sideways on a phone', async ({ page }) => {

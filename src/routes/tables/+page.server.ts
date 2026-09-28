@@ -4,8 +4,6 @@ import { listCatalog } from '$lib/server/catalog';
 import { listUpcomingTables } from '$lib/server/tables/queries';
 import type { PageServerLoad } from './$types';
 
-// Systems shown as chips next to "Todos os sistemas"; the rest wait behind "Mais sistemas".
-const FEATURED_SYSTEMS = 3;
 // Tags shown as chips before "Mais tags".
 const FEATURED_TAGS = 7;
 
@@ -25,7 +23,6 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 		return {
 			tables: [],
 			systems: [],
-			featured: [],
 			pickedSystems,
 			modality,
 			catalog: empty,
@@ -53,7 +50,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 		(tag, i) => i < FEATURED_TAGS || pickedTags.includes(tag.slug)
 	);
 
-	// Systems with the most upcoming tables come first, then the catalogue order.
+	// In the dropdown, systems with the most upcoming tables come first, then the catalogue order.
 	const counts = new Map<string, number>();
 	for (const table of upcoming) {
 		counts.set(table.system.slug, (counts.get(table.system.slug) ?? 0) + 1);
@@ -62,11 +59,6 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 		.map(({ name, slug }, position) => ({ name, slug, count: counts.get(slug) ?? 0, position }))
 		.sort((a, b) => b.count - a.count || a.position - b.position)
 		.map(({ name, slug }) => ({ name, slug }));
-
-	// A system picked from the overflow list stays visible as a chip, so the filter shows what is on.
-	const featured = ranked.filter(
-		(system, i) => i < FEATURED_SYSTEMS || pickedSystems.includes(system.slug)
-	);
 
 	const tables = upcoming.filter(
 		(table) =>
@@ -85,7 +77,6 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 			imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath)
 		})),
 		systems: ranked,
-		featured,
 		pickedSystems,
 		modality,
 		catalog: {

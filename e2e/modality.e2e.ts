@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createTable, signIn, uniqueTitle } from './support/app';
+import { createTable, signIn, uniqueTitle, pickFromSearch } from './support/app';
 import { createUser, database } from './support/users';
 
 // Online or in person: the GM says which, players see it and can filter by it, and the address or
@@ -61,7 +61,7 @@ test('a CEP fills the neighbourhood and city in, from the local cache, and never
 
 	await signIn(page, await createUser('Mestre Com Cep'));
 	await page.goto('/tables/new');
-	await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+	await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 	await page.getByLabel('Título').fill(uniqueTitle('Com CEP'));
 	await page.getByLabel('Vagas', { exact: true }).fill('4');
 	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
@@ -77,7 +77,7 @@ test('a CEP fills the neighbourhood and city in, from the local cache, and never
 test('a CEP in the wrong shape is refused next to the field', async ({ page }) => {
 	await signIn(page, await createUser('Mestre Cep Errado'));
 	await page.goto('/tables/new');
-	await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+	await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 	await page.getByLabel('Título').fill(uniqueTitle('CEP ruim'));
 	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 	await page.getByLabel('Presencial', { exact: true }).check();
