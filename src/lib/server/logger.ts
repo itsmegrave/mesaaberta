@@ -51,8 +51,19 @@ const sanitize = (value: unknown, depth = 0): unknown => {
 	if (value === null || typeof value === 'number' || typeof value === 'boolean') return value;
 	if (typeof value === 'bigint') return value.toString();
 	if (value instanceof Date) return value.toISOString();
-	// Name and message only: stacks and `cause` can carry request data.
-	if (value instanceof Error) return sanitize({ name: value.name, message: value.message }, depth);
+	// Name and message only: stacks and `cause` can carry request data. Of the cause, only its error
+	// code (a Postgres SQLSTATE, a Node code): it says why a query failed without any of the values.
+	if (value instanceof Error) {
+		const code = (value.cause as { code?: unknown } | undefined)?.code;
+		return sanitize(
+			{
+				name: value.name,
+				message: value.message,
+				...(typeof code === 'string' && { causeCode: code })
+			},
+			depth
+		);
+	}
 	if (typeof value !== 'object') return undefined;
 	if (depth >= MAX_DEPTH) return '[truncated]';
 

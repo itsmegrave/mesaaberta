@@ -115,6 +115,21 @@ describe('logger', () => {
 
 			expect(lines[0].error).toEqual({ name: 'TypeError', message: 'bad input from [redacted]' });
 		});
+
+		it("adds the code of the error's cause, and nothing else of it", () => {
+			const { lines, log } = capture();
+			const cause = Object.assign(new Error('Key (email)=(ana@example.com) exists'), {
+				code: '23505'
+			});
+
+			log.error('failed', { error: new Error('Failed query', { cause }) });
+
+			expect(lines[0].error).toEqual({
+				name: 'Error',
+				message: 'Failed query',
+				causeCode: '23505'
+			});
+		});
 	});
 
 	it('survives a self-referencing field instead of throwing', () => {
