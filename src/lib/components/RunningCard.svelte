@@ -37,12 +37,12 @@
     >
   </p>
 
-  <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-[-0.01em]">
+  <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
   <p class="mt-3"><SeatDots taken={item.players.length} capacity={item.capacity} /></p>
 
-  <p class="mt-4 flex items-start gap-2.5">
+  <p class="mt-4 flex items-start gap-2">
     <svg
       width="18"
       height="18"
@@ -75,8 +75,7 @@
     >
     <a
       href={localizedHref(`/tables/${item.slug}/edit`, locale)}
-      class="btn h-11 rounded-lg border-[1.5px] border-primary-500 px-4 font-semibold"
-      >{m.dash_edit()}</a
+      class="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
     >
   </p>
 
@@ -90,7 +89,7 @@
           >
             <span>{atHandle(request.username)}</span>
             <div class="flex gap-4">
-              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-[1.5px] border-surface-200-800 text-error-800 dark:text-error-300']] as [action, label, tone] (action)}
+              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-2 border-surface-200-800 text-error-alert']] as [action, label, tone] (action)}
                 <ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
                   <button type="submit" class="btn h-10 rounded-lg px-4 font-semibold {tone}"
                     >{label}</button
@@ -111,13 +110,13 @@
     <ul class="mt-2 grid gap-2">
       {#each item.players as player (player.playerId)}
         <li
-          class="flex items-center justify-between gap-3 rounded-lg bg-surface-950/5 px-3 py-2 dark:bg-surface-50/5"
+          class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
         >
           <span>{atHandle(player.username)}</span>
           <ActionForm action="{page}?/remove" playerId={player.playerId} {next}>
             <button
               type="submit"
-              class="btn h-10 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold text-error-800 dark:text-error-300"
+              class="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
               >{m.table_remove()}</button
             >
           </ActionForm>

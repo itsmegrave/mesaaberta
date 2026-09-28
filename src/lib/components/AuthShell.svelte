@@ -8,32 +8,28 @@
   let { title, lede, children }: { title: string; lede?: string; children: Snippet } = $props();
 </script>
 
-<section
-  class="grid items-center gap-10 pt-2 pb-6 md:pt-8 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:gap-24"
->
+<section class="grid items-center gap-10 pt-2 pb-6 md:pt-8 lg:grid-cols-2 lg:gap-24">
   <div
-    class="relative hidden h-[660px] flex-col items-center justify-center gap-7 overflow-hidden rounded-lg bg-primary-500 p-10 text-white lg:flex"
+    class="relative hidden h-160 flex-col items-center justify-center gap-7 overflow-hidden rounded-lg bg-primary-500 p-10 text-white lg:flex"
   >
-    <span
-      aria-hidden="true"
-      class="absolute -top-[120px] -right-[120px] size-[340px] rounded-full bg-white/6"
+    <span aria-hidden="true" class="absolute -top-28 -right-28 size-80 rounded-full bg-white/5"
     ></span>
-    <div class="relative w-[340px]"><TableIllustration onBrand /></div>
+    <div class="relative w-80"><TableIllustration onBrand /></div>
     <p
-      class="relative max-w-[16ch] text-center text-[34px] leading-[1.1] font-semibold tracking-[-0.02em] text-balance"
+      class="relative max-w-xs text-center text-4xl leading-none font-semibold tracking-tight text-balance"
     >
       {m.hero_title()}
     </p>
   </div>
 
   <div class="min-w-0">
-    <h1
-      class="text-[44px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[64px]"
-    >
+    <h1 class="text-5xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
       {title}
     </h1>
-    {#if lede}<p class="mt-2.5 max-w-[40ch] text-lg text-muted md:mt-3 md:text-xl">{lede}</p>{/if}
-    <div class="mt-7 w-full max-w-[440px] md:mt-8">
+    {#if lede}<p class="mt-2 max-w-sm text-lg text-muted md:mt-3 md:max-w-md md:text-xl">
+        {lede}
+      </p>{/if}
+    <div class="mt-7 w-full max-w-md md:mt-8">
       {@render children()}
     </div>
   </div>

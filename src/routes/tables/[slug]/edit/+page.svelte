@@ -23,14 +23,12 @@
     {m.form_view_table()}
   </a>
 
-  <h1
-    class="mt-6 text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[68px]"
-  >
+  <h1 class="mt-6 text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.form_edit_title()}
   </h1>
 
   {#if data.status === 'disabled'}
-    <p role="status" class="mt-4 max-w-[44ch] font-semibold">{m.form_edit_disabled()}</p>
+    <p role="status" class="mt-4 max-w-sm font-semibold">{m.form_edit_disabled()}</p>
   {/if}
 
   <TableForm
@@ -50,7 +48,7 @@
       <ActionForm action="?/disable">
         <button
           type="submit"
-          class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-5 font-semibold text-error-800 hover:preset-tonal dark:text-error-300"
+          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold text-error-alert hover:preset-tonal"
           >{m.form_disable()}</button
         >
       </ActionForm>

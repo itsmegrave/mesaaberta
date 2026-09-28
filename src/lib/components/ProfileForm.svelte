@@ -63,7 +63,7 @@
 
   const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
-    'btn h-11 min-w-11 rounded-lg border-[1.5px] border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
+    'btn h-11 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
 
   const ERRORS: Record<string, () => string> = {
     required: m.profile_error_required,
@@ -211,7 +211,7 @@
       bind:value={$form.username}
       oninput={usernameChanged}
       readonly={usernameLocked}
-      class="{input} {usernameLocked ? 'bg-surface-950/5 text-muted dark:bg-surface-50/5' : ''}"
+      class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
       aria-invalid={usernameError ? 'true' : undefined}
       aria-describedby={usernameDescription}
     />
@@ -347,7 +347,7 @@
         {@const urlError = itemError('linkUrl', index)}
         {@const networkError = itemError('linkNetwork', index)}
         <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-          <div class="grid gap-2 sm:grid-cols-[10rem_1fr]">
+          <div class="grid gap-2 sm:grid-cols-4">
             <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
             <select
               name="linkNetwork"
@@ -370,7 +370,7 @@
               placeholder="https://"
               aria-label={m.profile_link_url({ n: index + 1 })}
               bind:value={$form.linkUrl[index]}
-              class={input}
+              class="{input} sm:col-span-3"
               aria-invalid={urlError ? 'true' : undefined}
               aria-describedby={urlError ? `link-error-${id}` : undefined}
             />
@@ -430,7 +430,7 @@
     <button
       type="submit"
       disabled={$submitting}
-      class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
+      class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
     </button>

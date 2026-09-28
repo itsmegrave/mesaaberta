@@ -102,12 +102,10 @@
     {m.table_back()}
   </a>
 
-  <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
-    <div class="min-w-0">
+  <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-3 lg:gap-16">
+    <div class="min-w-0 lg:col-span-2">
       <p class="flex flex-wrap items-center gap-3">
-        <span
-          class="chip h-[26px] rounded-full preset-filled-primary-500 px-3 text-[13px] font-semibold"
-        >
+        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
           {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
         </span>
         <a
@@ -118,9 +116,7 @@
         </a>
       </p>
 
-      <h1
-        class="mt-3 text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[64px]"
-      >
+      <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
         {table.title}
       </h1>
 
@@ -130,7 +126,7 @@
             <li>
               <a
                 href="{localizedHref('/tables', locale)}?tag={encodeURIComponent(tag.slug)}"
-                class="chip h-8 rounded-lg bg-surface-950/7 px-3 text-sm font-semibold hover:preset-tonal dark:bg-surface-50/8"
+                class="chip h-8 rounded-lg bg-surface-wash px-3 text-sm font-semibold hover:preset-tonal"
                 >{tag.name}</a
               >
             </li>
@@ -145,7 +141,7 @@
         </p>
         {#if data.ratings.gm.count > 0}
           <p
-            class="inline-flex h-11 items-center gap-2 rounded-lg border border-surface-200-800 px-3.5"
+            class="inline-flex h-11 items-center gap-2 rounded-lg border border-surface-200-800 px-3"
           >
             <span class="sr-only"
               >{m.rating_gm_average()}: {number.format(data.ratings.gm.average ?? 0)} ({votes(
@@ -187,27 +183,27 @@
           src={table.imageUrl}
           alt=""
           referrerpolicy="no-referrer"
-          class="mt-8 aspect-[736/300] w-full rounded-lg object-cover"
+          class="mt-8 aspect-5/2 w-full rounded-lg object-cover"
         />
       {/if}
 
       <!-- User text is rendered as text and never as markup; line breaks are kept by the CSS. -->
       {#if table.description}
-        <p class="mt-8 max-w-[65ch] text-lg whitespace-pre-line">{table.description}</p>
+        <p class="mt-8 max-w-prose text-lg whitespace-pre-line">{table.description}</p>
       {/if}
 
       {#if table.extraInfo}
-        <h2 class="mt-10 text-[28px] font-semibold tracking-[-0.02em]">{m.table_extra_info()}</h2>
-        <p class="mt-2 max-w-[65ch] whitespace-pre-line">{table.extraInfo}</p>
+        <h2 class="mt-10 text-3xl font-semibold tracking-tight">{m.table_extra_info()}</h2>
+        <p class="mt-2 max-w-prose whitespace-pre-line">{table.extraInfo}</p>
       {/if}
 
       {#if data.joinDetails}
         <section
           aria-labelledby="join-details"
-          class="mt-8 max-w-[65ch] rounded-lg border border-surface-200-800 bg-panel p-5"
+          class="mt-8 max-w-prose rounded-lg border border-surface-200-800 bg-panel p-5"
         >
           <h2 id="join-details" class="text-xl font-semibold">{m.table_join_details()}</h2>
-          <p class="mt-2 break-words whitespace-pre-line">{data.joinDetails}</p>
+          <p class="mt-2 wrap-break-word whitespace-pre-line">{data.joinDetails}</p>
           <p class="mt-3 text-sm text-muted">{m.table_join_details_private()}</p>
         </section>
       {/if}
@@ -221,10 +217,10 @@
         {#if dateBox}
           <div
             aria-hidden="true"
-            class="flex w-[72px] shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
+            class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
           >
             <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-            <span class="mt-1 text-[28px] font-bold">{dateBox.day}</span>
+            <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
             <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
           </div>
         {/if}
@@ -240,11 +236,11 @@
         </div>
       </div>
 
-      <dl class="mt-6 grid grid-cols-[max-content_1fr] border-t border-surface-200-800 text-[15px]">
+      <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
         <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
           {m.table_modality()}
         </dt>
-        <dd class="border-b border-surface-200-800 py-3">
+        <dd class="col-span-2 border-b border-surface-200-800 py-3">
           {table.modality === 'in_person'
             ? `${m.table_modality_in_person()} · ${table.locationArea}`
             : m.table_modality_online()}
@@ -253,10 +249,10 @@
           <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
             {m.form_platforms()}
           </dt>
-          <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
+          <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
             {#each table.platforms as platform (platform.slug)}
               <span
-                class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-[13px] font-semibold"
+                class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                 >{platform.name}</span
               >
             {/each}
@@ -265,11 +261,11 @@
         <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
           {m.table_schedule()}
         </dt>
-        <dd class="border-b border-surface-200-800 py-3">{recurrence}</dd>
+        <dd class="col-span-2 border-b border-surface-200-800 py-3">{recurrence}</dd>
         <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
           {m.table_duration()}
         </dt>
-        <dd class="border-b border-surface-200-800 py-3">
+        <dd class="col-span-2 border-b border-surface-200-800 py-3">
           {formatDuration(table.durationMinutes)}
         </dd>
       </dl>
@@ -286,13 +282,12 @@
         {#each { length: table.capacity }, i (i)}
           {#if i < table.capacity - table.seatsLeft}
             <span
-              class="flex size-[34px] items-center justify-center rounded-full {seatColours[
+              class="flex size-8 items-center justify-center rounded-full {seatColours[
                 i % seatColours.length
-              ]}"><span class="size-3 rounded-full bg-surface-950/28"></span></span
+              ]}"><span class="size-3 rounded-full bg-surface-950/30"></span></span
             >
           {:else}
-            <span
-              class="block size-[34px] rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
+            <span class="block size-8 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
             ></span>
           {/if}
         {/each}
@@ -313,7 +308,7 @@
             href="{resolve('/login')}?next={encodeURIComponent(
               localizedHref(`/tables/${table.slug}`, locale),
             )}"
-            class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 font-semibold"
+            class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
           >
             {m.table_sign_in_to_join()}
           </a>
@@ -322,7 +317,7 @@
           <ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
             <button
               type="submit"
-              class="btn h-12 w-full rounded-lg border-[1.5px] border-surface-200-800 font-semibold hover:preset-tonal"
+              class="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
             >
               {m.table_leave()}
             </button>
@@ -332,7 +327,7 @@
           <ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
             <button
               type="submit"
-              class="btn h-12 w-full rounded-lg border-[1.5px] border-surface-200-800 font-semibold hover:preset-tonal"
+              class="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
             >
               {m.table_cancel_request()}
             </button>
@@ -348,7 +343,7 @@
           >
             <button
               type="submit"
-              class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 font-semibold"
+              class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
             >
               {table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
             </button>
@@ -365,7 +360,7 @@
   {#if data.canRate}
     <section id="avaliar" class="mt-12 max-w-2xl">
       <h2 class="text-2xl font-semibold">{m.rating_title()}</h2>
-      <p class="mt-2 max-w-[55ch]">{m.rating_lede()}</p>
+      <p class="mt-2 max-w-prose">{m.rating_lede()}</p>
       {#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
 
       <form method="POST" action="?/rate" use:ratingEnhance class="mt-4 grid gap-6">

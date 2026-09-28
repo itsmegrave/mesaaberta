@@ -35,7 +35,7 @@
   lede={data.done ? undefined : m.reset_lede()}
 >
   {#if data.done}
-    <p role="status" class="max-w-[44ch] text-lg">{m.reset_done_text()}</p>
+    <p role="status" class="max-w-sm text-lg">{m.reset_done_text()}</p>
     <a
       href={localizedHref('/tables', getLocale())}
       class="mt-6 inline-block link-underline font-semibold text-link"
@@ -43,7 +43,7 @@
       {m.reset_done_link()}
     </a>
   {:else}
-    <form method="POST" use:enhance class="grid gap-[18px]">
+    <form method="POST" use:enhance class="grid gap-4">
       {#if problem}<p role="alert" class="font-semibold text-error-700-300">{problem}</p>{/if}
 
       <FormField
@@ -61,7 +61,7 @@
           maxlength="72"
           autocomplete="new-password"
           bind:value={$form.password}
-          class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+          class="input h-12 rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
           aria-invalid={$errors.password ? 'true' : undefined}
         />
       </FormField>
@@ -80,7 +80,7 @@
           maxlength="72"
           autocomplete="new-password"
           bind:value={$form.passwordConfirm}
-          class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+          class="input h-12 rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
           aria-invalid={$errors.passwordConfirm ? 'true' : undefined}
         />
       </FormField>
@@ -88,7 +88,7 @@
       <div>
         <button
           type="submit"
-          class="btn h-[54px] w-full rounded-lg preset-filled-primary-500 text-[17px] font-semibold"
+          class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
           aria-busy={$delayed}
         >
           {m.reset_submit()}

@@ -32,11 +32,33 @@ body {
 @theme {
   /* Wordmark only */
   --font-brand: 'Cinzel Variable', Georgia, serif;
+  /* Discord brand colour; no native equivalent */
+  --color-discord: #5865f2;
 }
 
 /* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
 @utility bg-panel {
   background-color: light-dark(var(--color-surface-50), var(--color-surface-900));
+}
+
+/* Subtle neutral fill used by tags and compact summary controls. */
+@utility bg-surface-wash {
+  background-color: light-dark(
+    color-mix(in oklab, var(--color-surface-950) 7%, transparent),
+    color-mix(in oklab, var(--color-surface-50) 8%, transparent)
+  );
+}
+
+@utility bg-warning-status {
+  background-color: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility text-error-alert {
+  color: light-dark(var(--color-error-800), var(--color-error-300));
+}
+
+@utility border-error-alert {
+  border-color: light-dark(var(--color-error-800), var(--color-error-300));
 }
 
 @utility text-muted {
@@ -84,4 +106,9 @@ body {
   text-decoration-color: var(--color-primary-500);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
+}
+
+/* Filter row: the label column matches `md:w-20` on the label, and the field is capped at `max-w-md`. Tailwind has no native class for a fixed column beside a capped one. */
+@utility grid-cols-filter {
+  grid-template-columns: calc(var(--spacing) * 20) minmax(0, var(--container-md));
 }

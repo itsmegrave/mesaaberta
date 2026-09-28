@@ -25,10 +25,10 @@
 <Popover positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}>
   <Popover.Trigger
     aria-label="{m.nav_account_menu()}: {name}"
-    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal md:h-11 md:w-auto md:gap-2.5 md:pr-3 md:pl-1.5"
+    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal md:h-11 md:w-auto md:gap-2 md:pr-3 md:pl-1"
   >
     <Avatar src={avatarUrl} {name} size={32} />
-    <span class="hidden max-w-[14ch] truncate md:inline">{name}</span>
+    <span class="hidden max-w-28 truncate md:inline">{name}</span>
     <svg
       width="16"
       height="16"
@@ -48,24 +48,21 @@
   <Portal>
     <Popover.Positioner class="z-50!">
       <Popover.Content
-        class="w-[272px] card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+        class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
       >
         <!-- User info header -->
-        <div class="flex items-center gap-3 p-2.5 pb-3">
+        <div class="flex items-center gap-3 p-2 pb-3">
           <Avatar src={avatarUrl} {name} size={40} />
           <div class="min-w-0 flex-1">
-            <div
-              data-testid="account-user-name"
-              class="truncate text-[17px] leading-tight font-bold"
-            >
+            <div data-testid="account-user-name" class="truncate text-base leading-tight font-bold">
               {name}
             </div>
           </div>
         </div>
 
-        <hr class="mx-2 mb-1.5" />
+        <hr class="mx-2 mb-1" />
 
-        <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-0.5">
+        <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
           <a href={localizedHref('/account/profile', locale)} class={item}>
             <svg
               width="20"
@@ -124,7 +121,7 @@
               {m.nav_admin()}
               {#if pendingSuggestionsCount > 0}
                 <span
-                  class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1.5 font-bold"
+                  class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 font-bold"
                 >
                   {pendingSuggestionsCount}
                 </span>

@@ -70,7 +70,7 @@
   const remove = (slug: string) => commit(value.filter((picked) => picked !== slug));
 
   const control =
-    'flex h-11 w-full items-center rounded-lg border-[1.5px] border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
+    'flex h-11 w-full items-center rounded-lg border-2 border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
 </script>
 
 {#if mounted}
@@ -101,7 +101,7 @@
     <Combobox.Label class={labelClass}>{label}</Combobox.Label>
     <Combobox.Control class={control}>
       <Combobox.Input
-        class="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] outline-none"
+        class="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
         aria-invalid={invalid || undefined}
       />
       <Combobox.Trigger
@@ -124,12 +124,12 @@
     <Portal>
       <Combobox.Positioner class="z-50!">
         <Combobox.Content
-          class="max-h-72 overflow-y-auto card border border-surface-200-800 bg-surface-100-900 p-1.5 shadow-2xl"
+          class="max-h-72 overflow-y-auto card border border-surface-200-800 bg-surface-100-900 p-1 shadow-2xl"
         >
           {#each shown as item (item.slug)}
             <Combobox.Item
               {item}
-              class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-2 text-[15px] data-highlighted:preset-tonal"
+              class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
             >
               <Combobox.ItemText>{item.name}</Combobox.ItemText>
               <Combobox.ItemIndicator class="shrink-0 text-primary-500">
@@ -147,10 +147,10 @@
               </Combobox.ItemIndicator>
             </Combobox.Item>
           {:else}
-            <li class="px-2.5 py-2 text-[15px] text-muted">{m.search_select_none()}</li>
+            <li class="p-2 text-sm text-muted">{m.search_select_none()}</li>
           {/each}
           {#if matching.length > shown.length}
-            <li class="px-2.5 py-2 text-sm text-muted" aria-hidden="true">
+            <li class="p-2 text-sm text-muted" aria-hidden="true">
               {m.search_select_more({ count: matching.length - shown.length })}
             </li>
           {/if}
@@ -167,7 +167,7 @@
           <li>
             <button
               type="button"
-              class="inline-flex h-9 items-center gap-1.5 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
+              class="inline-flex h-9 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
               aria-label={m.search_select_remove({ name: nameOf(slug) })}
               onclick={() => remove(slug)}
             >

@@ -2,6 +2,7 @@ import prettier from 'eslint-config-prettier';
 import path from 'node:path';
 import js from '@eslint/js';
 import svelte from 'eslint-plugin-svelte';
+import tailwindcss from 'eslint-plugin-tailwindcss';
 import { defineConfig, includeIgnoreFile } from 'eslint/config';
 import globals from 'globals';
 import ts from 'typescript-eslint';
@@ -36,6 +37,28 @@ export default defineConfig(
         extraFileExtensions: ['.svelte'],
         parser: ts.parser,
       },
+    },
+  },
+  {
+    files: ['**/*.{ts,js,svelte}'],
+    plugins: { tailwindcss },
+    settings: {
+      tailwindcss: {
+        attributes: ['class'],
+        cssConfigPath: './src/routes/layout.css',
+      },
+    },
+    rules: {
+      // Prettier's Tailwind plugin owns class ordering; its output is more reliable for arbitrary values.
+      'tailwindcss/classnames-order': 'off',
+      'tailwindcss/enforces-canonical-classname': 'error',
+      'tailwindcss/enforces-negative-arbitrary-values': 'error',
+      'tailwindcss/enforces-shorthand': 'error',
+      'tailwindcss/important-modifier-suffix': 'error',
+      'tailwindcss/no-custom-classname': ['error', { whitelist: ['legal', 'table-top'] }],
+      'tailwindcss/no-contradicting-classname': 'error',
+      // The v4 plugin currently rewrites valid fractional line-heights to invalid dynamic utilities.
+      'tailwindcss/no-unnecessary-arbitrary-value': 'off',
     },
   },
   {
