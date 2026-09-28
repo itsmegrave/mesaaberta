@@ -10,5 +10,9 @@ for (const [name, path] of [
     const footer = page.getByRole('contentinfo');
     await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Lenindragons' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: 'Reporte aqui' })).toHaveAttribute(
+      'href',
+      'https://github.com/itsmegrave/mesaaberta/issues',
+    );
   });
 }
