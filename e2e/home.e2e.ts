@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { sidewaysOverflow } from './support/overflow';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/');
@@ -10,11 +11,7 @@ test('has a document title and exactly one top-level heading', async ({ page }) 
 });
 
 test('does not scroll horizontally', async ({ page }) => {
-	const overflow = await page.evaluate(
-		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
-	);
-
-	expect(overflow).toBeLessThanOrEqual(0);
+	expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
 });
 
 test('skip link is the first tab stop and moves to the main region', async ({ page }) => {

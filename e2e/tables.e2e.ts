@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { sidewaysOverflow } from './support/overflow';
 
 // These need the seeded database: `pnpm db:up && pnpm db:migrate && pnpm db:seed` (CI does the same).
 // Locally they skip when there is none; in CI a missing database is a failure, not a skip.
@@ -97,10 +98,7 @@ test.describe('table list', () => {
 	test('does not scroll sideways on a phone', async ({ page }) => {
 		await page.goto('/tables');
 
-		const overflow = await page.evaluate(
-			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
-		);
-		expect(overflow).toBeLessThanOrEqual(0);
+		expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
 	});
 });
 
