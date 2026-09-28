@@ -166,21 +166,24 @@
 				<a
 					href="https://github.com/itsmegrave"
 					rel="noopener"
+					target="_blank"
 					class="link-underline text-surface-950-50">itsmegrave</a
 				>. {m.footer_open_source()}
 				<a
 					href="https://github.com/itsmegrave/mesaaberta"
 					rel="noopener"
+					target="_blank"
 					class="link-underline text-surface-950-50">GitHub</a
 				>.
 			</p>
 		</div>
-		<div class="flex flex-col gap-3 md:max-w-[380px]">
+		<div class="flex flex-col gap-3 md:max-w-95">
 			<p>
 				{m.footer_community()}
 				<a
 					href="https://linktr.ee/lenindragonsrpg"
 					rel="noopener"
+					target="_blank"
 					class="link-underline text-surface-950-50">Lenindragons</a
 				>.
 			</p>
@@ -189,6 +192,7 @@
 				<a
 					href="https://github.com/itsmegrave/mesaaberta/issues"
 					rel="noopener"
+					target="_blank"
 					class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
 				>.
 			</p>
