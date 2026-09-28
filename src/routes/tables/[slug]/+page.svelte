@@ -178,12 +178,18 @@
 			</div>
 
 			{#if data.canEdit}
-				<a
-					href={localizedHref(`/tables/${table.slug}/edit`, locale)}
-					class="mt-4 inline-block link-underline font-semibold"
-				>
-					{m.table_edit()}
-				</a>
+				<p class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+					{#if data.registrations}
+						<a
+							href={localizedHref(`/tables/${table.slug}/manage`, locale)}
+							class="link-underline font-semibold">{m.dash_manage()}</a
+						>
+					{/if}
+					<a
+						href={localizedHref(`/tables/${table.slug}/edit`, locale)}
+						class="link-underline font-semibold">{m.table_edit()}</a
+					>
+				</p>
 			{/if}
 
 			{#if table.imageUrl}

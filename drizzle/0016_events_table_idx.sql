@@ -1,0 +1,1 @@
+CREATE INDEX "events_table_idx" ON "events" USING btree (("payload"->>'tableId'),"created_at");

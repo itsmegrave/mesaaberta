@@ -69,8 +69,9 @@
 	</p>
 
 	<p class="mt-4 flex flex-wrap gap-3">
-		<a href={page} class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-			>{m.dash_manage()}</a
+		<a
+			href={localizedHref(`/tables/${item.slug}/manage`, locale)}
+			class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
 		>
 		<a
 			href={localizedHref(`/tables/${item.slug}/edit`, locale)}

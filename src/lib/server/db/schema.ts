@@ -296,7 +296,9 @@ export const events = pgTable(
 		index('events_pending_idx')
 			.on(event.nextAttemptAt)
 			.where(sql`${event.processedAt} IS NULL AND ${event.failedAt} IS NULL`),
-		index('events_actor_idx').on(event.actorId, event.createdAt)
+		index('events_actor_idx').on(event.actorId, event.createdAt),
+		// A table's recent activity, on the GM's manage page.
+		index('events_table_idx').on(sql`(${event.payload}->>'tableId')`, event.createdAt)
 	]
 ).enableRLS();
 
