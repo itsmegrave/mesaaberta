@@ -347,7 +347,7 @@
         {@const urlError = itemError('linkUrl', index)}
         {@const networkError = itemError('linkNetwork', index)}
         <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-          <div class="grid gap-2 sm:grid-cols-[10rem_1fr]">
+          <div class="grid gap-2 sm:grid-cols-4">
             <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
             <select
               name="linkNetwork"
@@ -370,7 +370,7 @@
               placeholder="https://"
               aria-label={m.profile_link_url({ n: index + 1 })}
               bind:value={$form.linkUrl[index]}
-              class={input}
+              class="{input} sm:col-span-3"
               aria-invalid={urlError ? 'true' : undefined}
               aria-describedby={urlError ? `link-error-${id}` : undefined}
             />
@@ -430,7 +430,7 @@
     <button
       type="submit"
       disabled={$submitting}
-      class="btn h-13 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
+      class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
     </button>

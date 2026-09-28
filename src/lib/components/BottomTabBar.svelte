@@ -17,12 +17,12 @@
 
 <nav
   aria-label={m.nav_mobile()}
-  class="fixed inset-x-0 bottom-0 z-40 flex h-19 items-center justify-around border-t border-surface-200-800 bg-panel px-2 pb-1.5 md:hidden"
+  class="fixed inset-x-0 bottom-0 z-40 flex h-20 items-center justify-around border-t border-surface-200-800 bg-panel px-2 pb-1 md:hidden"
 >
   <!-- Mesas -->
   <a
     href={localizedHref('/tables', locale)}
-    class="flex h-15 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isTablesActive
+    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isTablesActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
   >
@@ -55,7 +55,7 @@
   <!-- Abrir mesa -->
   <a
     href={localizedHref('/tables/new', locale)}
-    class="flex h-15 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold text-surface-950-50 no-underline"
+    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold text-surface-950-50 no-underline"
   >
     <span
       class="flex h-7 w-14 items-center justify-center rounded-full preset-filled-primary-500 {isNewTableActive
@@ -83,7 +83,7 @@
   <!-- Minhas mesas -->
   <a
     href={localizedHref('/account/tables', locale)}
-    class="flex h-15 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isMyTablesActive
+    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isMyTablesActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
   >
@@ -115,7 +115,7 @@
   {#if isAdmin}
     <a
       href={localizedHref('/admin', locale)}
-      class="flex h-15 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isAdminActive
+      class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isAdminActive
         ? 'text-surface-950-50'
         : 'text-muted hover:text-surface-950-50'}"
     >

@@ -138,9 +138,7 @@
         : m.table_kind_one_shot()}</span
     >
   </p>
-  <h1
-    class="mt-3 text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-6xl"
-  >
+  <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
     {table.title}
   </h1>
 
@@ -172,8 +170,8 @@
     >
   </div>
 
-  <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12">
-    <div class="grid min-w-0 content-start gap-8">
+  <div class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12">
+    <div class="grid min-w-0 content-start gap-8 lg:col-span-2">
       <section aria-labelledby="requests" class={card}>
         <div class="flex items-center gap-3">
           <h2 id="requests" class="text-2xl font-semibold">{m.table_requests()}</h2>
@@ -248,7 +246,7 @@
                 <span class="block text-sm text-muted">{m.manage_you()}</span>
               </span>
             </span>
-            <span class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2.5 text-xs font-semibold"
+            <span class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
               >{m.manage_gm_badge()}</span
             >
           </li>
@@ -322,7 +320,7 @@
                   <li class="flex items-start gap-3">
                     <span
                       aria-hidden="true"
-                      class="mt-1.5 block size-2.5 shrink-0 rounded-full bg-primary-500"
+                      class="mt-1 block size-2 shrink-0 rounded-full bg-primary-500"
                     ></span>
                     <span>
                       <span class="block">{activityText(item)}</span>
@@ -346,7 +344,7 @@
           src={table.imageUrl}
           alt=""
           referrerpolicy="no-referrer"
-          class="aspect-380/150 w-full object-cover"
+          class="aspect-5/2 w-full object-cover"
         />
       {/if}
       <div class="p-6">
@@ -380,15 +378,15 @@
           </p>
         </div>
 
-        <dl class="mt-4 grid grid-cols-[max-content_1fr] border-t border-surface-200-800 text-sm">
+        <dl class="mt-4 grid grid-cols-3 border-t border-surface-200-800 text-sm">
           {#if table.platforms.length > 0}
             <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
               {m.form_platforms()}
             </dt>
-            <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
+            <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
               {#each table.platforms as platform (platform.slug)}
                 <span
-                  class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-xs font-semibold"
+                  class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                   >{platform.name}</span
                 >
               {/each}
@@ -398,9 +396,9 @@
             <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
               {m.form_tags()}
             </dt>
-            <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
+            <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
               {#each table.tags as tag (tag.slug)}
-                <span class="chip h-7 rounded-lg bg-surface-wash px-2.5 text-xs font-semibold"
+                <span class="chip h-7 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
                   >{tag.name}</span
                 >
               {/each}
@@ -409,13 +407,13 @@
           <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
             {m.manage_entry()}
           </dt>
-          <dd class="border-b border-surface-200-800 py-3">
+          <dd class="col-span-2 border-b border-surface-200-800 py-3">
             {table.joinMode === 'approval' ? m.manage_entry_approval() : m.manage_entry_auto()}
           </dd>
           <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
             {m.table_schedule()}
           </dt>
-          <dd class="border-b border-surface-200-800 py-3">
+          <dd class="col-span-2 border-b border-surface-200-800 py-3">
             {recurrence}, {formatDuration(table.durationMinutes)}
           </dd>
         </dl>

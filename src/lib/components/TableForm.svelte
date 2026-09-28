@@ -50,7 +50,7 @@
   const nameOf = (list: { name: string; slug: string }[], slug: string) =>
     list.find((item) => item.slug === slug)?.name ?? slug;
   const chip =
-    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 px-3.5 text-sm font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary-500';
+    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 px-3 text-sm font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-primary-500';
 
   // The card the list will show, from what is typed so far.
   const preview = $derived({
@@ -94,9 +94,9 @@
   {action}
   enctype="multipart/form-data"
   use:enhance
-  class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12"
+  class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
 >
-  <div class="grid gap-8">
+  <div class="grid gap-8 lg:col-span-2">
     {#if hasErrors}<p role="alert" class="font-semibold text-error-700-300">
         {m.form_summary()}
       </p>{/if}
@@ -111,7 +111,7 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">1</span
         >
-        <h2 id="about-table" class="text-2xl font-semibold tracking-[-0.02em]">Sobre a mesa</h2>
+        <h2 id="about-table" class="text-2xl font-semibold tracking-tight">Sobre a mesa</h2>
       </div>
       <div class="grid gap-6">
         <div class="min-w-0">
@@ -225,12 +225,12 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">2</span
         >
-        <h2 id="when" class="text-2xl font-semibold tracking-[-0.02em]">Quando</h2>
+        <h2 id="when" class="text-2xl font-semibold tracking-tight">Quando</h2>
       </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
         {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
             ><input type="radio" name="kind" {value} bind:group={$form.kind} />{label}</label
           >{/each}
         {#if $errors.kind}<p role="alert" class="text-sm font-semibold text-error-700-300">
@@ -317,12 +317,12 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">3</span
         >
-        <h2 id="seats-entry" class="text-2xl font-semibold tracking-[-0.02em]">Vagas e entrada</h2>
+        <h2 id="seats-entry" class="text-2xl font-semibold tracking-tight">Vagas e entrada</h2>
       </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
         >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
             ><input
               type="radio"
               name="modality"
@@ -397,7 +397,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
         >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
             ><input
               type="radio"
               name="joinMode"
@@ -417,9 +417,9 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">4</span
         >
-        <h2 id="image-section" class="text-2xl font-semibold tracking-[-0.02em]">Imagem</h2>
+        <h2 id="image-section" class="text-2xl font-semibold tracking-tight">Imagem</h2>
       </div>
-      <div class="rounded-lg border-2 border-dashed border-surface-400-600 bg-surface-950-50/4 p-5">
+      <div class="rounded-lg border-2 border-dashed border-surface-400-600 bg-surface-950-50/5 p-5">
         <FormField
           id="image"
           label={m.form_image()}
@@ -429,7 +429,7 @@
           {#if imageUrl}<img
               src={imageUrl}
               alt=""
-              class="mb-3 aspect-736/300 w-full max-w-sm rounded-lg object-cover"
+              class="mb-3 aspect-5/2 w-full max-w-sm rounded-lg object-cover"
             />{/if}
           <input
             id="image"
@@ -445,7 +445,7 @@
     <div class="flex flex-wrap items-center gap-5">
       <button
         type="submit"
-        class="btn h-13 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+        class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
         aria-busy={$delayed}>{submitLabel}</button
       >
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
@@ -453,7 +453,7 @@
     </div>
   </div>
   <aside aria-labelledby="preview-title" class="lg:sticky lg:top-6 lg:self-start">
-    <p id="preview-title" class="text-sm font-bold tracking-[0.06em] text-muted uppercase">
+    <p id="preview-title" class="text-sm font-bold tracking-wider text-muted uppercase">
       {m.form_preview()}
     </p>
     <!-- A preview, not a link: `inert` keeps its card out of the tab order and the reading order. -->

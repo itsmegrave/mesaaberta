@@ -51,7 +51,7 @@
     cx={centre}
     cy={centre}
     r="104"
-    class={onBrand ? 'fill-black/26' : 'table-top fill-primary-500'}
+    class={onBrand ? 'fill-black/25' : 'table-top fill-primary-500'}
   />
   <!-- A battle map on the table: a square grid, two miniatures on it, and a d20 beside it. -->
   <g transform="rotate(-12 {centre} {centre})">
@@ -85,7 +85,7 @@
     <g data-seat={players.length}>
       <circle
         r="28"
-        class={onBrand ? 'fill-warning-500/14 stroke-warning-300' : 'fill-lamp-wash stroke-lamp'}
+        class={onBrand ? 'fill-warning-500/15 stroke-warning-300' : 'fill-lamp-wash stroke-lamp'}
         stroke-width="3.5"
         stroke-dasharray="7 8"
       />

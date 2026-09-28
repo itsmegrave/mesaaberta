@@ -18,10 +18,12 @@
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
-  <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl">
+  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.form_new_title()}
   </h1>
-  <p class="mt-2.5 max-w-[46ch] text-base text-muted md:mt-3.5 md:text-xl">{m.form_new_lede()}</p>
+  <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
+    {m.form_new_lede()}
+  </p>
 
   <TableForm
     {superform}

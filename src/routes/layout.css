@@ -32,6 +32,8 @@ body {
 @theme {
   /* Wordmark only */
   --font-brand: 'Cinzel Variable', Georgia, serif;
+  /* Discord brand colour; no native equivalent */
+  --color-discord: #5865f2;
 }
 
 /* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
@@ -104,4 +106,9 @@ body {
   text-decoration-color: var(--color-primary-500);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
+}
+
+/* Filter row: the label column matches `md:w-20` on the label, and the field is capped at `max-w-md`. Tailwind has no native class for a fixed column beside a capped one. */
+@utility grid-cols-filter {
+  grid-template-columns: calc(var(--spacing) * 20) minmax(0, var(--container-md));
 }

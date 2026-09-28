@@ -23,7 +23,7 @@
   lede={data.authEnabled && $message?.code !== 'check_email' ? m.signup_lede() : undefined}
 >
   {#if !data.authEnabled}
-    <p class="max-w-[44ch]">{m.login_unavailable()}</p>
+    <p class="max-w-sm">{m.login_unavailable()}</p>
   {:else if $message?.code === 'check_email'}
     <div role="status" class="rounded-lg border border-surface-200-800 bg-panel p-6">
       <h2 class="text-2xl font-semibold">{m.signup_check_email_title()}</h2>
@@ -39,7 +39,7 @@
     <div class="grid gap-5">
       <CredentialsForm mode="signup" {superform} />
 
-      <p class="flex items-center gap-3.5" aria-hidden="true">
+      <p class="flex items-center gap-3" aria-hidden="true">
         <span class="h-px grow bg-surface-200-800"></span>
         <span class="text-sm font-semibold text-muted">{m.login_or()}</span>
         <span class="h-px grow bg-surface-200-800"></span>

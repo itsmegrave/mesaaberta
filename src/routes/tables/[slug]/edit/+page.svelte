@@ -23,14 +23,12 @@
     {m.form_view_table()}
   </a>
 
-  <h1
-    class="mt-6 text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl"
-  >
+  <h1 class="mt-6 text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.form_edit_title()}
   </h1>
 
   {#if data.status === 'disabled'}
-    <p role="status" class="mt-4 max-w-[44ch] font-semibold">{m.form_edit_disabled()}</p>
+    <p role="status" class="mt-4 max-w-sm font-semibold">{m.form_edit_disabled()}</p>
   {/if}
 
   <TableForm

@@ -33,18 +33,18 @@
 
 <section class="pt-2 pb-4 md:pt-12">
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-    <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl">
+    <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
       {m.dash_title()}
     </h1>
     <div class="flex flex-col gap-3 sm:flex-row">
       <a
         href={localizedHref('/tables', locale)}
-        class="btn h-13 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+        class="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >{m.dash_find_table()}</a
       >
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-13 gap-2.5 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+        class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
       >
         <svg
           width="18"
@@ -92,7 +92,7 @@
   <div class="mt-8 grid gap-10 lg:grid-cols-2 lg:gap-12">
     <section aria-labelledby="playing">
       <div class="flex items-baseline gap-3">
-        <h2 id="playing" class="text-3xl font-semibold tracking-[-0.02em]">
+        <h2 id="playing" class="text-3xl font-semibold tracking-tight">
           {m.dash_playing()}
         </h2>
         <span class="text-sm font-semibold text-muted">{count(data.playing.length)}</span>
@@ -113,7 +113,7 @@
 
     <section aria-labelledby="running">
       <div class="flex items-baseline gap-3">
-        <h2 id="running" class="text-3xl font-semibold tracking-[-0.02em]">
+        <h2 id="running" class="text-3xl font-semibold tracking-tight">
           {m.dash_running()}
         </h2>
         <span class="text-sm font-semibold text-muted">{count(data.running.length)}</span>

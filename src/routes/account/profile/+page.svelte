@@ -12,7 +12,7 @@
   const locale = getLocale();
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
-  const heading = 'text-2xl leading-tight font-semibold tracking-[-0.02em]';
+  const heading = 'text-2xl leading-tight font-semibold tracking-tight';
 
   const photoNotice = $derived(page.url.searchParams.get('foto'));
 
@@ -48,15 +48,15 @@
 {/snippet}
 
 <section class="pt-2 pb-4 md:pt-12">
-  <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl">
+  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.account_profile_title()}
   </h1>
-  <p class="mt-2.5 max-w-[52ch] text-base text-muted md:mt-3.5 md:text-xl">
+  <p class="mt-2 max-w-md text-base text-muted md:mt-3 md:max-w-xl md:text-xl">
     {m.account_profile_lede()}
   </p>
 
-  <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-    <div class="grid gap-6">
+  <div class="mt-8 grid gap-6 lg:grid-cols-3 lg:items-start">
+    <div class="grid gap-6 lg:col-span-2">
       <section aria-labelledby="photo-heading" class={card}>
         <h2 id="photo-heading" class={heading}>{m.account_photo()}</h2>
         <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -92,7 +92,7 @@
                 >
               </form>
             {/if}
-            <p id="photo-hint" class="max-w-[52ch] text-sm text-muted">
+            <p id="photo-hint" class="max-w-sm text-sm text-muted">
               {m.account_photo_hint()}
             </p>
             {#if form?.photoError}
@@ -136,7 +136,7 @@
 
       <section aria-labelledby="your-data" class={card}>
         <h2 id="your-data" class={heading}>{m.account_data_title()}</h2>
-        <p class="mt-3 max-w-[60ch]">
+        <p class="mt-3 max-w-prose">
           {m.account_data_text()}
           <a href={localizedHref('/privacy', locale)} class="link-underline text-surface-950-50"
             >{m.privacy_title()}</a
@@ -146,7 +146,7 @@
           href={localizedHref('/account/export', locale)}
           download
           data-sveltekit-reload
-          class="mt-5 btn h-12 gap-2.5 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+          class="mt-5 btn h-12 gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >
           <svg
             width="18"
@@ -165,7 +165,7 @@
 
         <div class="mt-8 border-t border-surface-200-800 pt-6">
           <h3 class="text-lg font-semibold">{m.account_delete_title()}</h3>
-          <p class="mt-2 max-w-[60ch] text-muted">{m.account_delete_text()}</p>
+          <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
           <form method="POST" action="?/delete" class="mt-4 grid max-w-sm gap-3">
             <label for="confirm" class="label-text font-semibold"
               >{m.account_delete_confirm()}</label

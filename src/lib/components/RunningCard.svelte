@@ -37,12 +37,12 @@
     >
   </p>
 
-  <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-[-0.01em]">
+  <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
   <p class="mt-3"><SeatDots taken={item.players.length} capacity={item.capacity} /></p>
 
-  <p class="mt-4 flex items-start gap-2.5">
+  <p class="mt-4 flex items-start gap-2">
     <svg
       width="18"
       height="18"

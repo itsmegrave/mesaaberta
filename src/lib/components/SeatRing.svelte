@@ -44,7 +44,7 @@
   class="shrink-0 {className}"
 >
   <!-- Central table surface -->
-  <circle cx="50" cy="50" r="20" class="fill-black/24" />
+  <circle cx="50" cy="50" r="20" class="fill-black/25" />
 
   <!-- Seats around the table -->
   {#each seats as seat (seat.cx + '-' + seat.cy)}
@@ -55,7 +55,7 @@
         cx={seat.cx}
         cy={seat.cy}
         r={seatRadius}
-        class="fill-warning-500/16 stroke-warning-300"
+        class="fill-warning-500/15 stroke-warning-300"
         stroke-width="2"
         stroke-dasharray="3 3"
       />

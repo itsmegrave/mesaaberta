@@ -42,13 +42,13 @@
     <span class="font-semibold text-muted">{item.systemName}</span>
   </p>
 
-  <h3 class="mt-3 text-2xl leading-tight font-semibold tracking-[-0.01em]">
+  <h3 class="mt-3 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
   <p class="mt-1 text-sm text-muted">{m.table_gm()}: {atHandle(item.gmName)}</p>
 
   {#if item.nextAt}
-    <p class="mt-4 flex items-start gap-2.5">
+    <p class="mt-4 flex items-start gap-2">
       <svg
         width="18"
         height="18"

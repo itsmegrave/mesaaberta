@@ -21,7 +21,7 @@
   {#if data.failed}
     <p
       role="alert"
-      class="mb-5 rounded-lg border-2 border-error-alert bg-panel px-4 py-3.5 font-semibold"
+      class="mb-5 rounded-lg border-2 border-error-alert bg-panel px-4 py-3 font-semibold"
     >
       {data.confirmHint ? m.login_confirmed_hint() : m.login_failed()}
     </p>
@@ -37,7 +37,7 @@
         >
       </p>
 
-      <p class="flex items-center gap-3.5" aria-hidden="true">
+      <p class="flex items-center gap-3" aria-hidden="true">
         <span class="h-px grow bg-surface-200-800"></span>
         <span class="text-sm font-semibold text-muted">{m.login_or()}</span>
         <span class="h-px grow bg-surface-200-800"></span>
@@ -58,6 +58,6 @@
       </p>
     </div>
   {:else}
-    <p class="max-w-[44ch]">{m.login_unavailable()}</p>
+    <p class="max-w-sm">{m.login_unavailable()}</p>
   {/if}
 </AuthShell>

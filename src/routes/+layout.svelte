@@ -30,7 +30,7 @@
   const inTables = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
   const inMyTables = $derived(pathname.startsWith('/account/tables'));
   const navLink =
-    'btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
+    'btn hidden h-11 rounded-lg px-3 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
 </script>
 
 <svelte:head>
@@ -48,13 +48,11 @@
 </a>
 
 <header
-  class="mx-auto flex h-16 w-full max-w-316 items-center justify-between px-5 md:h-22 md:px-8"
+  class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 md:h-20 md:px-8"
 >
-  <a href={localizedHref('/', locale)} class="flex items-center gap-2.5 no-underline md:gap-3">
+  <a href={localizedHref('/', locale)} class="flex items-center gap-2 no-underline md:gap-3">
     <TableLogo size={34} class="size-7 md:size-8" />
-    <span class="font-brand text-lg font-semibold tracking-[0.04em] md:text-2xl">
-      Mesa Aberta
-    </span>
+    <span class="font-brand text-lg font-semibold tracking-wider md:text-2xl"> Mesa Aberta </span>
   </a>
 
   <nav class="flex items-center gap-2 md:gap-1" aria-label={m.nav_main()}>
@@ -79,7 +77,7 @@
 
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn hidden h-11 gap-2.5 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
+        class="btn hidden h-11 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
       >
         <svg
           width="18"
@@ -131,7 +129,7 @@
 
 <Toaster />
 
-<main id="main" class="mx-auto w-full max-w-316 px-5 pb-8 md:px-8 md:pb-10">
+<main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
   {@render children()}
 </main>
 
@@ -139,16 +137,16 @@
   <BottomTabBar isAdmin={data.account?.isAdmin} />
 {/if}
 
-<footer class="mx-auto w-full max-w-316 px-5 pb-24 md:px-8 md:pb-0">
+<footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
   <div
     class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
   >
     <div class="flex flex-col gap-3">
-      <p class="flex items-center gap-2.5 text-surface-950-50">
+      <p class="flex items-center gap-2 text-surface-950-50">
         <TableLogo size={26} />
-        <span class="font-brand text-lg font-semibold tracking-[0.04em]">Mesa Aberta</span>
+        <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
       </p>
-      <p class="md:max-w-115">
+      <p class="md:max-w-md">
         {m.footer_made_with()}
         <svg
           width="15"
@@ -156,7 +154,7 @@
           viewBox="0 0 24 24"
           role="img"
           aria-label={m.footer_made_with_love()}
-          class="inline shrink-0 fill-secondary-300 align-[-2px]"
+          class="inline shrink-0 fill-secondary-300 align-middle"
         >
           <path
             d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
@@ -177,7 +175,7 @@
         >.
       </p>
     </div>
-    <div class="flex flex-col gap-3 md:max-w-95">
+    <div class="flex flex-col gap-3 md:max-w-sm">
       <p>
         {m.footer_community()}
         <a

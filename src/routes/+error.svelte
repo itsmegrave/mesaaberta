@@ -14,7 +14,7 @@
 
 <section class="py-16 md:py-24">
   <h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{title}</h1>
-  <p class="mt-4 max-w-[44ch] text-lg">
+  <p class="mt-4 max-w-md text-lg">
     {notFound ? m.error_not_found_text() : m.error_generic_text()}
   </p>
   <a href={localizedHref('/', getLocale())} class="mt-6 inline-block anchor">

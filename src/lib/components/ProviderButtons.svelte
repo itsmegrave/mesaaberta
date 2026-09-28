@@ -15,7 +15,7 @@
     {
       id: 'discord' as const,
       label: m.login_with_discord(),
-      style: 'bg-[#5865F2] text-white hover:bg-[#4752c4]',
+      style: 'bg-discord text-white hover:brightness-90',
     },
   ]);
 </script>
@@ -27,7 +27,7 @@
         href="{resolve('/login/[provider=provider]', {
           provider: provider.id,
         })}?next={encodeURIComponent(next)}"
-        class="btn h-13 w-full justify-center gap-3 rounded-lg font-semibold {provider.style}"
+        class="btn h-12 w-full justify-center gap-3 rounded-lg font-semibold {provider.style}"
       >
         <ProviderLogo provider={provider.id} />
         {provider.label}
