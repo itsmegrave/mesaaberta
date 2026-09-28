@@ -120,6 +120,13 @@
       "when": 1790603556277,
       "tag": "0016_events_table_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790605002857,
+      "tag": "0017_gm_only_rating",
+      "breakpoints": true
     }
   ]
 }

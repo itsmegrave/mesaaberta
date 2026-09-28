@@ -17,7 +17,7 @@
 		timezone: string;
 		nextAt: Date | null;
 		canRate: boolean;
-		rating: { tableScore: number; gmScore: number } | null;
+		rating: { gmScore: number } | null;
 	};
 
 	let { item, next }: { item: Item; next: string } = $props();
@@ -76,7 +76,7 @@
 	{#if item.canRate}
 		<p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-lamp-wash px-4 py-3">
 			{#if item.rating}
-				{m.dash_your_rating({ table: item.rating.tableScore, gm: item.rating.gmScore })}
+				{m.dash_your_rating({ gm: item.rating.gmScore })}
 				<a href="{page}#avaliar" class="anchor">{m.dash_change_rating()}</a>
 			{:else}
 				{m.dash_rate_prompt()}

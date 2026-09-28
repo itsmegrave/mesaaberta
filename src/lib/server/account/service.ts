@@ -77,7 +77,6 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 			.select({
 				table: gameTables.title,
 				slug: gameTables.slug,
-				tableScore: ratings.tableScore,
 				gmScore: ratings.gmScore,
 				comment: ratings.comment,
 				createdAt: ratings.createdAt

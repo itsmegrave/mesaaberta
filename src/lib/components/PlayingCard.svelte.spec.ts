@@ -58,16 +58,16 @@ describe('PlayingCard', () => {
 	});
 
 	it('shows the rating already given, and offers to change it', async () => {
-		render(PlayingCard, props({ canRate: true, rating: { tableScore: 4, gmScore: 5 } }));
+		render(PlayingCard, props({ canRate: true, rating: { gmScore: 5 } }));
 
-		await expect.element(page.getByText(/Sua avaliação: mesa 4, mestre 5/)).toBeVisible();
+		await expect.element(page.getByText(/Sua nota para o mestre: 5/)).toBeVisible();
 		await expect.element(page.getByRole('link', { name: 'Mudar' })).toBeVisible();
 	});
 
 	it('does not prompt to rate before it is time', async () => {
 		render(PlayingCard, props({ canRate: false }));
 
-		await expect.element(page.getByText(/Avalie esta mesa/)).not.toBeInTheDocument();
+		await expect.element(page.getByText(/Avalie o mestre/)).not.toBeInTheDocument();
 	});
 
 	it('says so when the table has been disabled', async () => {

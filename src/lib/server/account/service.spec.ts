@@ -61,7 +61,7 @@ describe('exportAccount', () => {
 		]);
 		await test.db
 			.insert(ratings)
-			.values({ tableId: theirs.id, playerId: me, tableScore: 4, gmScore: 5, comment: 'Ótima' });
+			.values({ tableId: theirs.id, playerId: me, gmScore: 5, comment: 'Ótima' });
 
 		const data = await exportAccount(
 			test.db,
@@ -86,7 +86,6 @@ describe('exportAccount', () => {
 		expect(data.ratingsGiven).toEqual([
 			expect.objectContaining({
 				table: 'Mesa do Bruno',
-				tableScore: 4,
 				gmScore: 5,
 				comment: 'Ótima'
 			})
@@ -107,9 +106,7 @@ describe('closeAccount', () => {
 			{ tableId: elsewhere.id, playerId: gm, status: 'confirmed' },
 			{ tableId: active.id, playerId: other, status: 'confirmed' }
 		]);
-		await test.db
-			.insert(ratings)
-			.values({ tableId: elsewhere.id, playerId: gm, tableScore: 3, gmScore: 3 });
+		await test.db.insert(ratings).values({ tableId: elsewhere.id, playerId: gm, gmScore: 3 });
 
 		const { eventIds } = await closeAccount(test.db, gm);
 

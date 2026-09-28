@@ -3,13 +3,7 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { can, joinBlocker, rateBlocker } from '$lib/server/auth/policy';
 import { imageUrl, supabaseUrlOf } from '$lib/server/images';
-import {
-	firstSessionEnded,
-	gmRating,
-	ratingOf,
-	submitRating,
-	tableRating
-} from '$lib/server/ratings/service';
+import { firstSessionEnded, gmRating, ratingOf, submitRating } from '$lib/server/ratings/service';
 import { ratingSchema } from '$lib/tables/rating';
 import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from '$lib/server/registrations/form-action';
@@ -46,8 +40,7 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 		}) === null;
 
 	// Averages are public; the comment is not sent to anyone but its author.
-	const [tableScore, gmScore, mine] = await Promise.all([
-		tableRating(locals.db!, id),
+	const [gmScore, mine] = await Promise.all([
 		gmRating(locals.db!, gmId),
 		profile ? ratingOf(locals.db!, id, profile.id) : null
 	]);
@@ -59,17 +52,14 @@ export const load: PageServerLoad = async ({ locals, params, platform }) => {
 		}) === null;
 
 	return {
-		ratings: { table: tableScore, gm: gmScore },
+		ratings: { gm: gmScore },
 		canRate,
 		myRating: mine && {
-			tableScore: mine.tableScore,
 			gmScore: mine.gmScore,
 			comment: mine.comment ?? ''
 		},
 		ratingForm: await superValidate(
-			mine
-				? { tableScore: mine.tableScore, gmScore: mine.gmScore, comment: mine.comment ?? '' }
-				: {},
+			mine ? { gmScore: mine.gmScore, comment: mine.comment ?? '' } : {},
 			zod4(ratingSchema),
 			{ errors: false }
 		),
@@ -107,7 +97,6 @@ export const actions: Actions = {
 	rate: (event) =>
 		runRegistrationAction(event, ratingSchema, (db, actor, data) =>
 			submitRating(db, actor, event.params.slug, {
-				tableScore: data.tableScore,
 				gmScore: data.gmScore,
 				comment: data.comment || null
 			})

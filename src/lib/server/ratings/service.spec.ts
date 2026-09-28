@@ -4,7 +4,7 @@ import { events, gameTables, profiles, ratings, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '../auth/policy';
 import { joinTable, leaveTable, removePlayer } from '../registrations/service';
-import { firstSessionEnded, gmRating, ratingOf, submitRating, tableRating } from './service';
+import { firstSessionEnded, gmRating, ratingOf, submitRating } from './service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000020${String(n).padStart(2, '0')}`;
@@ -49,7 +49,6 @@ const makeTable = async (over: Partial<typeof gameTables.$inferInsert> = {}) => 
 };
 
 const input = (over: Partial<Parameters<typeof submitRating>[3]> = {}) => ({
-	tableScore: 5,
 	gmScore: 4,
 	comment: null,
 	...over
@@ -86,7 +85,6 @@ describe('submitRating', () => {
 		);
 
 		expect(await ratingOf(test.db, table.id, id(2))).toMatchObject({
-			tableScore: 5,
 			gmScore: 4,
 			comment: 'Ótima.'
 		});
@@ -103,18 +101,18 @@ describe('submitRating', () => {
 		const table = await makeTable();
 		await seated(2, table.slug);
 
-		await submitRating(test.db, player(2), table.slug, input({ tableScore: 2, gmScore: 2 }), after);
+		await submitRating(test.db, player(2), table.slug, input({ gmScore: 2 }), after);
 		await submitRating(
 			test.db,
 			player(2),
 			table.slug,
-			input({ tableScore: 5, gmScore: 5, comment: 'Melhorou.' }),
+			input({ gmScore: 5, comment: 'Melhorou.' }),
 			after
 		);
 
 		const rows = await test.db.select().from(ratings).where(eq(ratings.tableId, table.id));
 		expect(rows).toHaveLength(1);
-		expect(rows[0]).toMatchObject({ tableScore: 5, gmScore: 5, comment: 'Melhorou.' });
+		expect(rows[0]).toMatchObject({ gmScore: 5, comment: 'Melhorou.' });
 	});
 
 	it('refuses a rating before the first session has ended, with TooEarly', async () => {
@@ -188,42 +186,19 @@ describe('when a player goes, their rating goes with them', () => {
 });
 
 describe('averages, computed by a query', () => {
-	it("gives a table's average and how many rated it", async () => {
-		const table = await makeTable();
-		for (const [n, score] of [
-			[2, 5],
-			[3, 4],
-			[4, 3]
-		] as const) {
-			await seated(n, table.slug);
-			await submitRating(
-				test.db,
-				player(n),
-				table.slug,
-				input({ tableScore: score, gmScore: 1 }),
-				after
-			);
-		}
-
-		expect(await tableRating(test.db, table.id)).toEqual({ average: 4, count: 3 });
-	});
-
-	it("gives a GM's average across all their tables, not a table's", async () => {
+	it("gives a GM's average across all their tables", async () => {
 		const otherGm = player(6);
 		const a = await makeTable({ gmId: otherGm.id });
 		const b = await makeTable({ gmId: otherGm.id });
 		await seated(2, a.slug);
 		await seated(3, b.slug);
-		await submitRating(test.db, player(2), a.slug, input({ tableScore: 1, gmScore: 5 }), after);
-		await submitRating(test.db, player(3), b.slug, input({ tableScore: 1, gmScore: 4 }), after);
+		await submitRating(test.db, player(2), a.slug, input({ gmScore: 5 }), after);
+		await submitRating(test.db, player(3), b.slug, input({ gmScore: 4 }), after);
 
 		expect(await gmRating(test.db, otherGm.id)).toEqual({ average: 4.5, count: 2 });
 	});
 
 	it('is null, with a count of zero, when nobody has rated', async () => {
-		const table = await makeTable({ gmId: id(5) });
-
-		expect(await tableRating(test.db, table.id)).toEqual({ average: null, count: 0 });
 		expect(await gmRating(test.db, id(5))).toEqual({ average: null, count: 0 });
 	});
 
