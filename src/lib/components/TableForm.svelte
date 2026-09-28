@@ -50,7 +50,7 @@
   const nameOf = (list: { name: string; slug: string }[], slug: string) =>
     list.find((item) => item.slug === slug)?.name ?? slug;
   const chip =
-    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 px-3.5 text-sm font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary-500';
+    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 px-3.5 text-sm font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary-500';
 
   // The card the list will show, from what is typed so far.
   const preview = $derived({
@@ -230,7 +230,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
         {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
             ><input type="radio" name="kind" {value} bind:group={$form.kind} />{label}</label
           >{/each}
         {#if $errors.kind}<p role="alert" class="text-sm font-semibold text-error-700-300">
@@ -322,7 +322,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
         >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
             ><input
               type="radio"
               name="modality"
@@ -397,7 +397,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
         >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
             ><input
               type="radio"
               name="joinMode"
@@ -419,9 +419,7 @@
         >
         <h2 id="image-section" class="text-2xl font-semibold tracking-[-0.02em]">Imagem</h2>
       </div>
-      <div
-        class="rounded-lg border-[1.5px] border-dashed border-surface-400-600 bg-surface-950-50/4 p-5"
-      >
+      <div class="rounded-lg border-2 border-dashed border-surface-400-600 bg-surface-950-50/4 p-5">
         <FormField
           id="image"
           label={m.form_image()}
@@ -438,7 +436,7 @@
             name="image"
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            class="block w-full text-sm file:mr-3 file:h-11 file:rounded-lg file:border-[1.5px] file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
+            class="block w-full text-sm file:mr-3 file:h-11 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
             aria-invalid={imageError ? 'true' : undefined}
           />
         </FormField>

@@ -75,8 +75,7 @@
     >
     <a
       href={localizedHref(`/tables/${item.slug}/edit`, locale)}
-      class="btn h-11 rounded-lg border-[1.5px] border-primary-500 px-4 font-semibold"
-      >{m.dash_edit()}</a
+      class="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
     >
   </p>
 
@@ -90,7 +89,7 @@
           >
             <span>{atHandle(request.username)}</span>
             <div class="flex gap-4">
-              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-[1.5px] border-surface-200-800 text-error-alert']] as [action, label, tone] (action)}
+              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-2 border-surface-200-800 text-error-alert']] as [action, label, tone] (action)}
                 <ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
                   <button type="submit" class="btn h-10 rounded-lg px-4 font-semibold {tone}"
                     >{label}</button
@@ -117,7 +116,7 @@
           <ActionForm action="{page}?/remove" playerId={player.playerId} {next}>
             <button
               type="submit"
-              class="btn h-10 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold text-error-alert"
+              class="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
               >{m.table_remove()}</button
             >
           </ActionForm>

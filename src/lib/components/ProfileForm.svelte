@@ -63,7 +63,7 @@
 
   const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
-    'btn h-11 min-w-11 rounded-lg border-[1.5px] border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
+    'btn h-11 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
 
   const ERRORS: Record<string, () => string> = {
     required: m.profile_error_required,

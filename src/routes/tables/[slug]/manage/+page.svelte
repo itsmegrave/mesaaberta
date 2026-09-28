@@ -101,7 +101,7 @@
   const row =
     'flex items-center justify-between gap-3 border-b border-surface-200-800 py-3 last:border-b-0';
   const secondary =
-    'btn h-11 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold hover:preset-tonal';
+    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
 </script>
 
 <svelte:head>

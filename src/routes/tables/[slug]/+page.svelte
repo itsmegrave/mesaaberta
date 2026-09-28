@@ -320,7 +320,7 @@
           <ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
             <button
               type="submit"
-              class="btn h-12 w-full rounded-lg border-[1.5px] border-surface-200-800 font-semibold hover:preset-tonal"
+              class="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
             >
               {m.table_leave()}
             </button>
@@ -330,7 +330,7 @@
           <ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
             <button
               type="submit"
-              class="btn h-12 w-full rounded-lg border-[1.5px] border-surface-200-800 font-semibold hover:preset-tonal"
+              class="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
             >
               {m.table_cancel_request()}
             </button>

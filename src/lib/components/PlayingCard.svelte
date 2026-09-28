@@ -91,7 +91,7 @@
   <ActionForm action="{page}?/leave" {next} class="mt-5">
     <button
       type="submit"
-      class="btn h-11 rounded-lg border-[1.5px] border-primary-500 px-4 font-semibold"
+      class="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold"
     >
       {item.status === 'pending' ? m.table_cancel_request() : m.table_leave()}
     </button>

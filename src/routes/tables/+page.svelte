@@ -32,12 +32,12 @@
   );
 
   const chip =
-    'inline-flex h-11 shrink-0 items-center rounded-full border-[1.5px] px-4 text-sm font-semibold whitespace-nowrap no-underline';
+    'inline-flex h-11 shrink-0 items-center rounded-full border-2 px-4 text-sm font-semibold whitespace-nowrap no-underline';
   const chipIdle = `${chip} border-surface-200-800 bg-panel hover:preset-tonal`;
   const chipActive = `${chip} border-primary-500 preset-filled-primary-500`;
   // A ticked checkbox chip: the whole chip is its label; the box itself is hidden.
   const checkChip =
-    'relative inline-flex h-11 shrink-0 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 bg-panel px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal has-[:checked]:border-primary-500 has-[:checked]:preset-filled-primary-500 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary-500';
+    'relative inline-flex h-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 bg-panel px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal has-[:checked]:border-primary-500 has-[:checked]:preset-filled-primary-500 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary-500';
 
   /** With JavaScript, ticking a chip applies it at once; without, the "Filtrar" button does. */
   const applyNow = (event: Event) =>
@@ -166,7 +166,7 @@
             {#if group.more.length > 0}
               <details class="group relative mt-2 md:mt-0">
                 <summary
-                  class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-[1.5px] border-dashed border-surface-600-400 px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
+                  class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-2 border-dashed border-surface-600-400 px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
                   >{group.moreLabel}
                   <svg
                     width="16"

@@ -75,11 +75,11 @@
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 aria-describedby="photo-hint{form?.photoError ? ' photo-error' : ''}"
-                class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-[1.5px] file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
+                class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-2 file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
               />
               <button
                 type="submit"
-                class="btn h-11 rounded-lg border-[1.5px] border-surface-950-50 px-4 font-semibold"
+                class="btn h-11 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
                 >{m.account_photo_upload()}</button
               >
             </form>
@@ -87,7 +87,7 @@
               <form method="POST" action="?/removePhoto">
                 <button
                   type="submit"
-                  class="btn h-11 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+                  class="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
                   >{m.account_photo_remove()}</button
                 >
               </form>
@@ -146,7 +146,7 @@
           href={localizedHref('/account/export', locale)}
           download
           data-sveltekit-reload
-          class="mt-5 btn h-12 gap-2.5 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold"
+          class="mt-5 btn h-12 gap-2.5 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >
           <svg
             width="18"
@@ -190,7 +190,7 @@
             <div>
               <button
                 type="submit"
-                class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
+                class="btn h-12 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
               >
                 {m.account_delete_button()}
               </button>

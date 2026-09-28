@@ -39,7 +39,7 @@
     <div class="flex flex-col gap-3 sm:flex-row">
       <a
         href={localizedHref('/tables', locale)}
-        class="btn h-13 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold"
+        class="btn h-13 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >{m.dash_find_table()}</a
       >
       <a

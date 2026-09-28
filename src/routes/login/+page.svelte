@@ -21,7 +21,7 @@
   {#if data.failed}
     <p
       role="alert"
-      class="mb-5 rounded-lg border-[1.5px] border-error-alert bg-panel px-4 py-3.5 font-semibold"
+      class="mb-5 rounded-lg border-2 border-error-alert bg-panel px-4 py-3.5 font-semibold"
     >
       {data.confirmHint ? m.login_confirmed_hint() : m.login_failed()}
     </p>

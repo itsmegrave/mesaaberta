@@ -103,7 +103,7 @@
       </a>
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-13 w-full rounded-lg border-[1.5px] border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-13 w-full rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
         >{m.hero_open_cta()}</a
       >
     </div>
@@ -133,7 +133,7 @@
     {#if data.tables.length > 0}
       <a
         href={localizedHref('/tables', locale)}
-        class="btn hidden h-12 gap-2.5 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold md:inline-flex"
+        class="btn hidden h-12 gap-2.5 rounded-lg border-2 border-primary-500 px-6 font-semibold md:inline-flex"
       >
         {m.home_open_tables_all()}
         {@render arrow()}
@@ -150,7 +150,7 @@
     </ul>
     <a
       href={localizedHref('/tables', locale)}
-      class="mt-4 btn h-13 w-full gap-2.5 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold md:hidden"
+      class="mt-4 btn h-13 w-full gap-2.5 rounded-lg border-2 border-primary-500 px-6 font-semibold md:hidden"
     >
       {m.home_open_tables_all()}
       {@render arrow()}
@@ -395,7 +395,7 @@
               >Aprovar</span
             >
             <span
-              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-sm font-semibold text-error-alert"
+              class="flex h-10 items-center rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold text-error-alert"
               >Recusar</span
             >
           </span>

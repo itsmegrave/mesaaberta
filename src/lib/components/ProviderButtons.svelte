@@ -10,7 +10,7 @@
     {
       id: 'google' as const,
       label: m.login_with_google(),
-      style: 'border-[1.5px] border-surface-200-800 bg-panel hover:preset-tonal',
+      style: 'border-2 border-surface-200-800 bg-panel hover:preset-tonal',
     },
     {
       id: 'discord' as const,
