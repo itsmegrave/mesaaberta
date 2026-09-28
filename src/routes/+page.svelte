@@ -142,7 +142,7 @@
 	</div>
 
 	{#if data.tables.length > 0}
-		<ul class="mt-[18px] grid gap-4 md:mt-7 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+		<ul class="mt-[18px] grid grid-cols-1 gap-4 md:mt-7 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
 			{#each data.tables as table, i (table.slug)}
 				<!-- The phone layout previews two tables; the third waits on the full list. -->
 				<li class={i >= 2 ? 'hidden lg:block' : ''}><TableCard {table} /></li>

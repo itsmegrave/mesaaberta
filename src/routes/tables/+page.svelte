@@ -230,7 +230,7 @@
 			<p role="status" class="text-[15px] font-semibold text-muted">{count}</p>
 			<p class="text-sm text-muted">{m.tables_filter_any_note()}</p>
 		</div>
-		<ul class="mt-5 grid gap-4 md:mt-3.5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+		<ul class="mt-5 grid grid-cols-1 gap-4 md:mt-3.5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
 			{#each data.tables as table (table.slug)}
 				<li><TableCard {table} /></li>
 			{/each}
