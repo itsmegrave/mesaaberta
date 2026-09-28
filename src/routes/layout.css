@@ -39,6 +39,14 @@ body {
   background-color: light-dark(var(--color-surface-50), var(--color-surface-900));
 }
 
+/* Subtle neutral fill used by tags and compact summary controls. */
+@utility bg-surface-wash {
+  background-color: light-dark(
+    color-mix(in oklab, var(--color-surface-950) 7%, transparent),
+    color-mix(in oklab, var(--color-surface-50) 8%, transparent)
+  );
+}
+
 @utility text-muted {
   color: light-dark(var(--color-surface-600), var(--color-surface-300));
 }

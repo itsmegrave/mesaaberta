@@ -43,7 +43,7 @@
       {m.reset_done_link()}
     </a>
   {:else}
-    <form method="POST" use:enhance class="grid gap-[18px]">
+    <form method="POST" use:enhance class="grid gap-4">
       {#if problem}<p role="alert" class="font-semibold text-error-700-300">{problem}</p>{/if}
 
       <FormField

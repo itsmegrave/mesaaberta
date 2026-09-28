@@ -211,7 +211,7 @@
       bind:value={$form.username}
       oninput={usernameChanged}
       readonly={usernameLocked}
-      class="{input} {usernameLocked ? 'bg-surface-950/5 text-muted dark:bg-surface-50/5' : ''}"
+      class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
       aria-invalid={usernameError ? 'true' : undefined}
       aria-describedby={usernameDescription}
     />

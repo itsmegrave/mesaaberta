@@ -32,7 +32,7 @@
       <p role="alert" class="mt-6 max-w-[44ch] font-semibold">{m.forgot_link_expired()}</p>
     {/if}
 
-    <form method="POST" use:enhance class="mt-6 grid gap-[18px]">
+    <form method="POST" use:enhance class="mt-6 grid gap-4">
       {#if $message}
         <p role="alert" class="font-semibold text-error-700-300">
           {$message.code === 'rate_limited' ? m.auth_error_rate_limited() : m.auth_error_failed()}

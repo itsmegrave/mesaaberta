@@ -90,7 +90,7 @@
           >
             <span>{atHandle(request.username)}</span>
             <div class="flex gap-4">
-              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-[1.5px] border-surface-200-800 text-error-800 dark:text-error-300']] as [action, label, tone] (action)}
+              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-[1.5px] border-surface-200-800 text-error-800-300']] as [action, label, tone] (action)}
                 <ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
                   <button type="submit" class="btn h-10 rounded-lg px-4 font-semibold {tone}"
                     >{label}</button
@@ -111,13 +111,13 @@
     <ul class="mt-2 grid gap-2">
       {#each item.players as player (player.playerId)}
         <li
-          class="flex items-center justify-between gap-3 rounded-lg bg-surface-950/5 px-3 py-2 dark:bg-surface-50/5"
+          class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
         >
           <span>{atHandle(player.username)}</span>
           <ActionForm action="{page}?/remove" playerId={player.playerId} {next}>
             <button
               type="submit"
-              class="btn h-10 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold text-error-800 dark:text-error-300"
+              class="btn h-10 rounded-lg border-[1.5px] border-surface-200-800 px-4 font-semibold text-error-800-300"
               >{m.table_remove()}</button
             >
           </ActionForm>

@@ -79,7 +79,7 @@
       <!-- Date chip -->
       {#if table.nextAt && cardDate}
         <div
-          class="absolute bottom-3.5 left-3.5 rounded-lg preset-filled-primary-500 px-3 pt-2 pb-[9px] shadow-sm"
+          class="absolute bottom-3.5 left-3.5 rounded-lg preset-filled-primary-500 px-3 pt-2 pb-2 shadow-sm"
         >
           <div class="font-sans text-[22px] leading-none font-bold tracking-tight">
             {cardDate.dayMonth}
@@ -98,7 +98,7 @@
     </div>
   {:else}
     <div
-      class="flex h-[148px] shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 p-[18px_20px]"
+      class="flex h-[148px] shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-5 py-4"
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span
@@ -131,7 +131,7 @@
   {/if}
 
   <!-- Card body -->
-  <div class="flex grow flex-col p-[20px_22px_18px]">
+  <div class="flex grow flex-col px-5 pt-5 pb-4">
     <div class="text-sm leading-snug font-semibold text-muted">
       {table.system.name}
     </div>
@@ -184,14 +184,14 @@
         {/if}
         {#if firstTag}
           <span
-            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-950/7 px-2.5 text-[13px] font-semibold dark:bg-surface-50/8"
+            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
           >
             {firstTag}
           </span>
         {/if}
         {#if moreTagsCount > 0}
           <span
-            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-950/7 px-2.5 text-[13px] font-semibold dark:bg-surface-50/8"
+            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
           >
             +{moreTagsCount}
           </span>
@@ -208,7 +208,7 @@
       </span>
       <span
         aria-hidden="true"
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-950/7 text-surface-950-50 transition-transform group-hover:translate-x-1 dark:bg-surface-50/8"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-wash text-surface-950-50 transition-transform group-hover:translate-x-1"
       >
         <svg
           width="18"

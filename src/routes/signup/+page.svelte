@@ -36,7 +36,7 @@
       </a>
     </div>
   {:else}
-    <div class="grid gap-[22px]">
+    <div class="grid gap-5">
       <CredentialsForm mode="signup" {superform} />
 
       <p class="flex items-center gap-3.5" aria-hidden="true">

@@ -43,7 +43,7 @@
 {/snippet}
 
 {#snippet stars(size: number)}
-  <span class="flex shrink-0 gap-[3px]">
+  <span class="flex shrink-0 gap-0.5">
     {#each { length: 5 }, i (i)}
       <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" class="fill-lamp">
         <path d={star} />
@@ -85,12 +85,12 @@
       Mesas de RPG com vagas abertas
     </p>
     <h1
-      class="mt-[18px] text-[52px] leading-[0.96] font-semibold tracking-[-0.035em] text-balance md:mt-[22px] md:text-6xl md:leading-none lg:text-[80px]"
+      class="mt-4 text-[52px] leading-[0.96] font-semibold tracking-[-0.035em] text-balance md:mt-5 md:text-6xl md:leading-none lg:text-[80px]"
     >
       {m.hero_title_before()} <span class="text-lamp">{m.hero_title_accent()}</span>
       {m.hero_title_after()}
     </h1>
-    <p class="mt-[18px] max-w-[34ch] text-[19px] leading-normal md:mt-7 md:text-[22px]">
+    <p class="mt-4 max-w-[34ch] text-[19px] leading-normal md:mt-7 md:text-[22px]">
       {m.hero_lede()}
     </p>
     <div class="mt-6 flex w-full flex-col gap-2.5 md:mt-9 md:w-auto md:flex-row md:gap-3">
@@ -142,7 +142,7 @@
   </div>
 
   {#if data.tables.length > 0}
-    <ul class="mt-[18px] grid grid-cols-1 gap-4 md:mt-7 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <ul class="mt-4 grid grid-cols-1 gap-4 md:mt-7 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
       {#each data.tables as table, i (table.slug)}
         <!-- The phone layout previews two tables; the third waits on the full list. -->
         <li class={i >= 2 ? 'hidden lg:block' : ''}><TableCard {table} /></li>
@@ -229,7 +229,7 @@
     >
       {m.players_title()}
     </h2>
-    <p class="mt-3.5 text-[17px] md:mt-[18px] md:text-[19px]">{m.players_text()}</p>
+    <p class="mt-3.5 text-[17px] md:mt-4 md:text-[19px]">{m.players_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
         href={localizedHref('/tables', locale)}
@@ -322,7 +322,7 @@
     >
       {m.gm_title()}
     </h2>
-    <p class="mt-3.5 text-[17px] md:mt-[18px] md:text-[19px]">{m.gm_text()}</p>
+    <p class="mt-3.5 text-[17px] md:mt-4 md:text-[19px]">{m.gm_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
         href={localizedHref('/tables/new', locale)}
@@ -349,7 +349,7 @@
     <!-- A sample of the game master's view; decorative, so it stays out of the accessibility tree. -->
     <div
       aria-hidden="true"
-      class="mt-6 flex flex-col gap-4 rounded-lg bg-panel p-5 text-surface-950-50 md:mt-auto md:p-[26px]"
+      class="mt-6 flex flex-col gap-4 rounded-lg bg-panel p-5 text-surface-950-50 md:mt-auto md:p-6"
     >
       <div class="flex items-center justify-between gap-3">
         <span>
@@ -396,7 +396,7 @@
               >Aprovar</span
             >
             <span
-              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-[15px] font-semibold text-error-800 dark:text-error-300"
+              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-[15px] font-semibold text-error-800-300"
               >Recusar</span
             >
           </span>

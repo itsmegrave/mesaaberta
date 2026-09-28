@@ -122,7 +122,7 @@
             value={data.email}
             readonly
             aria-describedby="email-hint"
-            class="mt-1 input h-12 w-full rounded-lg border-surface-200-800 bg-surface-950/5 px-3 text-muted dark:bg-surface-50/5"
+            class="mt-1 input h-12 w-full rounded-lg border-surface-200-800 bg-surface-950-50/5 px-3 text-muted"
           />
         </div>
         <div class="mt-6">
@@ -192,7 +192,7 @@
             <div>
               <button
                 type="submit"
-                class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-6 font-semibold text-error-800 hover:preset-tonal dark:text-error-300"
+                class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-6 font-semibold text-error-800-300 hover:preset-tonal"
               >
                 {m.account_delete_button()}
               </button>

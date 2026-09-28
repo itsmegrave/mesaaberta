@@ -50,7 +50,7 @@
       <ActionForm action="?/disable">
         <button
           type="submit"
-          class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-5 font-semibold text-error-800 hover:preset-tonal dark:text-error-300"
+          class="btn h-12 rounded-lg border-[1.5px] border-surface-200-800 px-5 font-semibold text-error-800-300 hover:preset-tonal"
           >{m.form_disable()}</button
         >
       </ActionForm>

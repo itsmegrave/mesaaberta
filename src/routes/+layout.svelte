@@ -79,7 +79,7 @@
 
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn hidden h-11 gap-2.5 rounded-lg preset-filled-primary-500 px-[18px] text-[15px] font-semibold md:ml-2 md:inline-flex"
+        class="btn hidden h-11 gap-2.5 rounded-lg preset-filled-primary-500 px-4 text-[15px] font-semibold md:ml-2 md:inline-flex"
       >
         <svg
           width="18"

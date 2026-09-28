@@ -250,7 +250,7 @@
               </span>
             </span>
             <span
-              class="chip h-7 shrink-0 rounded-lg bg-surface-950/7 px-2.5 text-[13px] font-semibold dark:bg-surface-50/8"
+              class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
               >{m.manage_gm_badge()}</span
             >
           </li>
@@ -404,8 +404,7 @@
             </dt>
             <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
               {#each table.tags as tag (tag.slug)}
-                <span
-                  class="chip h-7 rounded-lg bg-surface-950/7 px-2.5 text-[13px] font-semibold dark:bg-surface-50/8"
+                <span class="chip h-7 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
                   >{tag.name}</span
                 >
               {/each}

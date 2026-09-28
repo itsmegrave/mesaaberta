@@ -422,7 +422,7 @@
         <h2 id="image-section" class="text-[26px] font-semibold tracking-[-0.02em]">Imagem</h2>
       </div>
       <div
-        class="rounded-lg border-[1.5px] border-dashed border-surface-400-600 bg-surface-950/4 p-5 dark:bg-surface-50/4"
+        class="rounded-lg border-[1.5px] border-dashed border-surface-400-600 bg-surface-950-50/4 p-5"
       >
         <FormField
           id="image"

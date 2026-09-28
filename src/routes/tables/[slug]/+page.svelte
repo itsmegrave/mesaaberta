@@ -130,7 +130,7 @@
             <li>
               <a
                 href="{localizedHref('/tables', locale)}?tag={encodeURIComponent(tag.slug)}"
-                class="chip h-8 rounded-lg bg-surface-950/7 px-3 text-sm font-semibold hover:preset-tonal dark:bg-surface-50/8"
+                class="chip h-8 rounded-lg bg-surface-wash px-3 text-sm font-semibold hover:preset-tonal"
                 >{tag.name}</a
               >
             </li>

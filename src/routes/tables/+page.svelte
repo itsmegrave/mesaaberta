@@ -32,7 +32,7 @@
   );
 
   const chip =
-    'inline-flex h-11 shrink-0 items-center rounded-full border-[1.5px] px-[18px] text-[15px] font-semibold whitespace-nowrap no-underline';
+    'inline-flex h-11 shrink-0 items-center rounded-full border-[1.5px] px-4 text-[15px] font-semibold whitespace-nowrap no-underline';
   const chipIdle = `${chip} border-surface-200-800 bg-panel hover:preset-tonal`;
   const chipActive = `${chip} border-primary-500 preset-filled-primary-500`;
   // A ticked checkbox chip: the whole chip is its label; the box itself is hidden.

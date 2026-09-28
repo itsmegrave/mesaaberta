@@ -24,7 +24,7 @@
   };
 </script>
 
-<form method="POST" {action} use:enhance class="grid gap-[18px]">
+<form method="POST" {action} use:enhance class="grid gap-4">
   {#if $message && messages[$message.code]}
     <p role="alert" class="font-semibold text-error-700-300">{messages[$message.code]()}</p>
   {/if}
