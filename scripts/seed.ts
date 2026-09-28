@@ -62,7 +62,7 @@ const tables = [
     title: 'Crônicas de Roshar',
     systemId: await systemId('cosmere-roleplaying-game'),
     kind: 'campaign' as const,
-    recurrence: 'FREQ=WEEKLY;BYDAY=SA',
+    recurrence: 'FREQ=WEEKLY',
     capacity: 4,
     startsAt: inDays(3, 21),
     joinMode: 'approval' as const,
