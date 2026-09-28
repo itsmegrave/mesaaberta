@@ -48,7 +48,7 @@
   <Portal>
     <Popover.Positioner class="z-50!">
       <Popover.Content
-        class="w-[272px] card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+        class="w-68 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
       >
         <!-- User info header -->
         <div class="flex items-center gap-3 p-2.5 pb-3">

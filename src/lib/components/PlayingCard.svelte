@@ -30,7 +30,7 @@
   <p class="flex flex-wrap items-center gap-2 text-sm">
     {#if item.status === 'pending'}
       <span
-        class="chip h-[26px] rounded-full bg-warning-950-400 px-3 text-[13px] font-semibold text-surface-50-950"
+        class="chip h-[26px] rounded-full bg-warning-status px-3 text-[13px] font-semibold text-surface-50-950"
         >{m.dash_waiting()}</span
       >
     {:else}

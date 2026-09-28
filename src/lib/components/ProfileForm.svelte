@@ -430,7 +430,7 @@
     <button
       type="submit"
       disabled={$submitting}
-      class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
+      class="btn h-13 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
     </button>

@@ -72,9 +72,9 @@
 {/snippet}
 
 <section
-  class="flex flex-col gap-7 pt-5 pb-3 md:min-h-[660px] md:flex-row md:items-center md:gap-12 md:py-0"
+  class="flex flex-col gap-7 pt-5 pb-3 md:min-h-165 md:flex-row md:items-center md:gap-12 md:py-0"
 >
-  <div class="flex max-w-[640px] flex-col items-start md:flex-1">
+  <div class="flex max-w-160 flex-col items-start md:flex-1">
     <p
       class="inline-flex items-center gap-2 rounded-full bg-lamp-wash py-1.5 pr-3.5 pl-2.5 text-sm leading-tight font-semibold text-lamp"
     >
@@ -117,7 +117,7 @@
       >.
     </p>
   </div>
-  <div class="mx-auto w-full max-w-[330px] md:mx-0 md:w-[43%] md:max-w-[520px] md:shrink-0">
+  <div class="mx-auto w-full max-w-[330px] md:mx-0 md:w-[43%] md:max-w-130 md:shrink-0">
     <TableIllustration />
   </div>
 </section>
@@ -150,7 +150,7 @@
     </ul>
     <a
       href={localizedHref('/tables', locale)}
-      class="mt-4 btn h-[52px] w-full gap-2.5 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold md:hidden"
+      class="mt-4 btn h-13 w-full gap-2.5 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold md:hidden"
     >
       {m.home_open_tables_all()}
       {@render arrow()}
@@ -177,7 +177,7 @@
 <!-- The band runs edge to edge; its background is a pseudo-element so the content keeps the page column. -->
 <section
   aria-labelledby="how-it-works"
-  class="relative isolate mt-7 py-9 before:absolute before:inset-y-0 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 before:border-y before:border-surface-200-800 before:bg-panel md:mt-0 md:pt-[72px] md:pb-24"
+  class="relative isolate mt-7 py-9 before:absolute before:inset-y-0 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 before:border-y before:border-surface-200-800 before:bg-panel md:mt-0 md:pt-18 md:pb-24"
 >
   <h2
     id="how-it-works"
@@ -188,7 +188,7 @@
   <div class="relative mt-6 md:mt-11">
     <span
       aria-hidden="true"
-      class="absolute top-9 right-[120px] left-9 hidden border-t-2 border-dashed border-surface-200-800 md:block"
+      class="absolute top-9 right-30 left-9 hidden border-t-2 border-dashed border-surface-200-800 md:block"
     ></span>
     <ol class="relative flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-12">
       {#each steps as step, i (step.title)}
@@ -221,7 +221,7 @@
 <div class="flex flex-col gap-4 pt-7 md:flex-row md:gap-6 md:pt-10">
   <section
     aria-labelledby="for-players"
-    class="flex flex-col rounded-lg border border-surface-200-800 bg-panel px-6 py-8 md:min-h-[760px] md:flex-1 md:p-11"
+    class="flex flex-col rounded-lg border border-surface-200-800 bg-panel px-6 py-8 md:min-h-190 md:flex-1 md:p-11"
   >
     <h2
       id="for-players"
@@ -306,15 +306,15 @@
 
   <section
     aria-labelledby="for-game-masters"
-    class="relative isolate flex flex-col overflow-hidden rounded-lg bg-primary-500 px-6 py-8 text-white md:min-h-[760px] md:flex-1 md:p-11"
+    class="relative isolate flex flex-col overflow-hidden rounded-lg bg-primary-500 px-6 py-8 text-white md:min-h-190 md:flex-1 md:p-11"
   >
     <span
       aria-hidden="true"
-      class="absolute -top-[140px] -right-40 -z-10 size-[420px] rounded-full bg-white/6"
+      class="absolute -top-35 -right-40 -z-10 size-[420px] rounded-full bg-white/6"
     ></span>
     <span
       aria-hidden="true"
-      class="absolute -bottom-[200px] -left-[120px] -z-10 size-[380px] rounded-full bg-white/5"
+      class="absolute -bottom-50 -left-30 -z-10 size-[380px] rounded-full bg-white/5"
     ></span>
     <h2
       id="for-game-masters"
@@ -396,7 +396,7 @@
               >Aprovar</span
             >
             <span
-              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-[15px] font-semibold text-error-800-300"
+              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-[15px] font-semibold text-error-alert"
               >Recusar</span
             >
           </span>

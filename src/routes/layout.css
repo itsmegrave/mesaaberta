@@ -47,6 +47,18 @@ body {
   );
 }
 
+@utility bg-warning-status {
+  background-color: light-dark(var(--color-warning-950), var(--color-warning-400));
+}
+
+@utility text-error-alert {
+  color: light-dark(var(--color-error-800), var(--color-error-300));
+}
+
+@utility border-error-alert {
+  border-color: light-dark(var(--color-error-800), var(--color-error-300));
+}
+
 @utility text-muted {
   color: light-dark(var(--color-surface-600), var(--color-surface-300));
 }

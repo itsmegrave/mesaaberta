@@ -187,7 +187,7 @@
           src={table.imageUrl}
           alt=""
           referrerpolicy="no-referrer"
-          class="mt-8 aspect-[736/300] w-full rounded-lg object-cover"
+          class="mt-8 aspect-736/300 w-full rounded-lg object-cover"
         />
       {/if}
 
@@ -207,7 +207,7 @@
           class="mt-8 max-w-[65ch] rounded-lg border border-surface-200-800 bg-panel p-5"
         >
           <h2 id="join-details" class="text-xl font-semibold">{m.table_join_details()}</h2>
-          <p class="mt-2 break-words whitespace-pre-line">{data.joinDetails}</p>
+          <p class="mt-2 wrap-break-word whitespace-pre-line">{data.joinDetails}</p>
           <p class="mt-3 text-sm text-muted">{m.table_join_details_private()}</p>
         </section>
       {/if}
@@ -221,7 +221,7 @@
         {#if dateBox}
           <div
             aria-hidden="true"
-            class="flex w-[72px] shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
+            class="flex w-18 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
           >
             <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
             <span class="mt-1 text-[28px] font-bold">{dateBox.day}</span>
@@ -313,7 +313,7 @@
             href="{resolve('/login')}?next={encodeURIComponent(
               localizedHref(`/tables/${table.slug}`, locale),
             )}"
-            class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 font-semibold"
+            class="btn h-13 w-full rounded-lg preset-filled-primary-500 font-semibold"
           >
             {m.table_sign_in_to_join()}
           </a>
@@ -348,7 +348,7 @@
           >
             <button
               type="submit"
-              class="btn h-[52px] w-full rounded-lg preset-filled-primary-500 font-semibold"
+              class="btn h-13 w-full rounded-lg preset-filled-primary-500 font-semibold"
             >
               {table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
             </button>

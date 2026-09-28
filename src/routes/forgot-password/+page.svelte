@@ -51,7 +51,7 @@
           required
           autocomplete="email"
           bind:value={$form.email}
-          class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+          class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
           aria-invalid={$errors.email ? 'true' : undefined}
         />
       </FormField>

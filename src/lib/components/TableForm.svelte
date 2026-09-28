@@ -230,7 +230,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
         {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
             ><input type="radio" name="kind" {value} bind:group={$form.kind} />{label}</label
           >{/each}
         {#if $errors.kind}<p role="alert" class="text-sm font-semibold text-error-700-300">
@@ -324,7 +324,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
         >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
             ><input
               type="radio"
               name="modality"
@@ -399,7 +399,7 @@
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
         >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/8"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-[1.5px] border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/8"
             ><input
               type="radio"
               name="joinMode"
@@ -433,7 +433,7 @@
           {#if imageUrl}<img
               src={imageUrl}
               alt=""
-              class="mb-3 aspect-[736/300] w-full max-w-sm rounded-lg object-cover"
+              class="mb-3 aspect-736/300 w-full max-w-sm rounded-lg object-cover"
             />{/if}
           <input
             id="image"
@@ -449,7 +449,7 @@
     <div class="flex flex-wrap items-center gap-5">
       <button
         type="submit"
-        class="btn h-[52px] rounded-lg preset-filled-primary-500 px-7 font-semibold"
+        class="btn h-13 rounded-lg preset-filled-primary-500 px-7 font-semibold"
         aria-busy={$delayed}>{submitLabel}</button
       >
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->

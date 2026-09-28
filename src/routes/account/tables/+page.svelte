@@ -41,12 +41,12 @@
     <div class="flex flex-col gap-3 sm:flex-row">
       <a
         href={localizedHref('/tables', locale)}
-        class="btn h-[52px] rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold"
+        class="btn h-13 rounded-lg border-[1.5px] border-primary-500 px-6 font-semibold"
         >{m.dash_find_table()}</a
       >
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-[52px] gap-2.5 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+        class="btn h-13 gap-2.5 rounded-lg preset-filled-primary-500 px-6 font-semibold"
       >
         <svg
           width="18"

@@ -56,17 +56,17 @@
 </script>
 
 <article
-  class="group relative flex h-full min-h-[396px] flex-col overflow-hidden rounded-lg border border-surface-200-800 bg-panel transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
+  class="group relative flex h-full min-h-99 flex-col overflow-hidden rounded-lg border border-surface-200-800 bg-panel transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
 >
   <!-- Top header tile: With cover image vs solid petrol tile without cover -->
   {#if table.imageUrl}
-    <div class="relative h-[148px] shrink-0 overflow-hidden bg-primary-500">
+    <div class="relative h-37 shrink-0 overflow-hidden bg-primary-500">
       <img
         src={table.imageUrl}
         alt=""
         loading="lazy"
         referrerpolicy="no-referrer"
-        class="absolute inset-0 h-full w-full object-cover"
+        class="absolute inset-0 size-full object-cover"
       />
       <!-- Kind pill -->
       <div class="absolute top-3.5 left-3.5">
@@ -79,7 +79,7 @@
       <!-- Date chip -->
       {#if table.nextAt && cardDate}
         <div
-          class="absolute bottom-3.5 left-3.5 rounded-lg preset-filled-primary-500 px-3 pt-2 pb-2 shadow-sm"
+          class="absolute bottom-3.5 left-3.5 rounded-lg preset-filled-primary-500 px-3 py-2 shadow-sm"
         >
           <div class="font-sans text-[22px] leading-none font-bold tracking-tight">
             {cardDate.dayMonth}
@@ -98,7 +98,7 @@
     </div>
   {:else}
     <div
-      class="flex h-[148px] shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-5 py-4"
+      class="flex h-37 shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-5 py-4"
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span
@@ -208,7 +208,7 @@
       </span>
       <span
         aria-hidden="true"
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-wash text-surface-950-50 transition-transform group-hover:translate-x-1"
+        class="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-wash text-surface-950-50 transition-transform group-hover:translate-x-1"
       >
         <svg
           width="18"

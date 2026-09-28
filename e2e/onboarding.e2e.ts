@@ -7,7 +7,8 @@ import { PASSWORD, createUser, database } from './support/users';
 // the local Supabase and its real Postgres.
 test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
 
-const unique = () => `${Date.now().toString(36)}${randomBytes(2).readUInt16BE(0).toString(36).slice(0, 3)}`;
+const unique = () =>
+  `${Date.now().toString(36)}${randomBytes(2).readUInt16BE(0).toString(36).slice(0, 3)}`;
 
 /** Signs in through the login form as somebody without a username, who is sent to the onboarding. */
 async function signInIncomplete(page: Page, user: { email: string }, next = '/') {

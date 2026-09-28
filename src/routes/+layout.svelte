@@ -48,7 +48,7 @@
 </a>
 
 <header
-  class="mx-auto flex h-16 w-full max-w-[1264px] items-center justify-between px-5 md:h-[88px] md:px-8"
+  class="mx-auto flex h-16 w-full max-w-316 items-center justify-between px-5 md:h-22 md:px-8"
 >
   <a href={localizedHref('/', locale)} class="flex items-center gap-2.5 no-underline md:gap-3">
     <TableLogo size={34} class="size-7 md:size-[34px]" />
@@ -131,7 +131,7 @@
 
 <Toaster />
 
-<main id="main" class="mx-auto w-full max-w-[1264px] px-5 pb-8 md:px-8 md:pb-10">
+<main id="main" class="mx-auto w-full max-w-316 px-5 pb-8 md:px-8 md:pb-10">
   {@render children()}
 </main>
 
@@ -139,7 +139,7 @@
   <BottomTabBar isAdmin={data.account?.isAdmin} />
 {/if}
 
-<footer class="mx-auto w-full max-w-[1264px] px-5 pb-24 md:px-8 md:pb-0">
+<footer class="mx-auto w-full max-w-316 px-5 pb-24 md:px-8 md:pb-0">
   <div
     class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-[15px] leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
   >
@@ -148,7 +148,7 @@
         <TableLogo size={26} />
         <span class="font-brand text-lg font-semibold tracking-[0.04em]">Mesa Aberta</span>
       </p>
-      <p class="md:max-w-[460px]">
+      <p class="md:max-w-115">
         {m.footer_made_with()}
         <svg
           width="15"

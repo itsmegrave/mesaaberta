@@ -348,7 +348,7 @@
           src={table.imageUrl}
           alt=""
           referrerpolicy="no-referrer"
-          class="aspect-[380/150] w-full object-cover"
+          class="aspect-380/150 w-full object-cover"
         />
       {/if}
       <div class="p-6">
@@ -356,7 +356,7 @@
           {#if dateBox}
             <div
               aria-hidden="true"
-              class="flex w-[64px] shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
+              class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
             >
               <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
               <span class="mt-1 text-2xl font-bold">{dateBox.day}</span>

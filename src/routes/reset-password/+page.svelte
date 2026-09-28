@@ -61,7 +61,7 @@
           maxlength="72"
           autocomplete="new-password"
           bind:value={$form.password}
-          class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+          class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
           aria-invalid={$errors.password ? 'true' : undefined}
         />
       </FormField>
@@ -80,7 +80,7 @@
           maxlength="72"
           autocomplete="new-password"
           bind:value={$form.passwordConfirm}
-          class="input h-[52px] rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+          class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
           aria-invalid={$errors.passwordConfirm ? 'true' : undefined}
         />
       </FormField>

@@ -72,7 +72,7 @@
   <meta name="description" content={m.tables_description()} />
 </svelte:head>
 
-<section class="pt-2 pb-2 md:pt-12">
+<section class="py-2 md:pt-12">
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
     <div>
       <h1
@@ -87,7 +87,7 @@
     <!-- On a phone the tab bar offers this once the platform is released; until then, the page does. -->
     <a
       href={localizedHref('/tables/new', locale)}
-      class="btn h-[52px] shrink-0 gap-2.5 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex {data.released
+      class="btn h-13 shrink-0 gap-2.5 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex {data.released
         ? 'hidden'
         : 'inline-flex'}"
     >
@@ -208,7 +208,7 @@
     <noscript>
       <button
         type="submit"
-        class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold md:ml-[108px]"
+        class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold md:ml-27"
         >{m.tables_filter_apply()}</button
       >
     </noscript>
