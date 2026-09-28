@@ -207,7 +207,7 @@ A profile has a required, public **username** (`profiles.username`: 3 to 30 lowe
 1. Build command: `pnpm build` (not plain `vite build`).
 2. Build variables and secrets: add a **secret** `MIGRATE_DATABASE_URL` with the Supabase **session pooler** connection string (Project Settings > Database > Connection string > Session pooler, port 5432; the build machines have no IPv6, so not the direct one).
 
-Without the secret the build warns and deploys anyway; then run `DATABASE_URL="<same string>" pnpm db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
+The connection verifies Supabase's certificate against its root CA, kept at `supabase/prod-ca-2021.crt` (public; valid until 2031, when Supabase rotates it, replace the file). Without the secret the build warns and deploys anyway; then run `DATABASE_URL="<same string>" pnpm db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
 
 ## Theme
 
