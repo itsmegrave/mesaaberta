@@ -130,6 +130,23 @@ test.describe('table list', () => {
 	});
 });
 
+test.describe("times in the visitor's timezone", () => {
+	test('a visitor in Brazil sees the session in their zone', async ({ page }) => {
+		await page.goto('/tables/os-sinos-de-sablewood');
+		await expect(page.getByRole('main')).toContainText('GMT-3');
+	});
+
+	test.describe('in Tokyo', () => {
+		test.use({ timezoneId: 'Asia/Tokyo' });
+
+		test('sees the same session in Tokyo time, from the browser', async ({ page }) => {
+			await page.goto('/tables/os-sinos-de-sablewood');
+			await expect(page.getByRole('main')).toContainText('GMT+9');
+			await expect(page.getByRole('main')).not.toContainText('GMT-3');
+		});
+	});
+});
+
 test.describe('table page', () => {
 	test('shows the description, the GM, the system, the schedule and the extra info', async ({
 		page

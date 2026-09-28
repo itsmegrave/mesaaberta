@@ -13,7 +13,12 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 	// Signed-in flows share one database, so tests run one after the other, not in parallel.
 	workers: 1,
-	use: { baseURL: `http://localhost:${port}`, trace: 'retain-on-failure' },
+	use: {
+		baseURL: `http://localhost:${port}`,
+		trace: 'retain-on-failure',
+		// Times follow the browser's zone; pin it so a runner in UTC sees what a player in Brazil does.
+		timezoneId: 'America/Sao_Paulo'
+	},
 	webServer: {
 		// The built app on the Workers runtime, pointed at the local Supabase instead of production.
 		command: [

@@ -38,7 +38,20 @@ type InviteConfig = TemplateEnv & {
 	APP_ORIGIN: string;
 };
 
-type Recipient = { id: string; name: string | null; username: string | null };
+type Recipient = {
+	id: string;
+	name: string | null;
+	username: string | null;
+	/** The zone the time in the e-mail is written in; the table's when the person has none. */
+	timezone: string | null;
+};
+
+const recipientColumns = {
+	id: profiles.id,
+	name: profiles.name,
+	username: profiles.username,
+	timezone: profiles.timezone
+};
 
 const calendarColumns = {
 	id: gameTables.id,
@@ -72,16 +85,13 @@ async function tableOf(db: AnyDb, tableId: string) {
 }
 
 async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
-	const [profile] = await db
-		.select({ id: profiles.id, name: profiles.name, username: profiles.username })
-		.from(profiles)
-		.where(eq(profiles.id, id));
+	const [profile] = await db.select(recipientColumns).from(profiles).where(eq(profiles.id, id));
 	return profile ? [profile] : [];
 }
 
 async function confirmedRecipients(db: AnyDb, tableId: string): Promise<Recipient[]> {
 	return db
-		.select({ id: profiles.id, name: profiles.name, username: profiles.username })
+		.select(recipientColumns)
 		.from(registrations)
 		.innerJoin(profiles, eq(profiles.id, registrations.playerId))
 		.where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
@@ -151,8 +161,10 @@ export function createInviteHandler(
 			const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
 			const method =
 				event.type === 'PlayerLeft' || event.type === 'TableDisabled' ? 'CANCEL' : 'REQUEST';
-			const startsAt = formatSession(table.startsAt, table.timezone, 'pt-BR');
 			const url = tableUrl(env.APP_ORIGIN, table.slug);
+			// Written in each person's own timezone, like the site shows it to them.
+			const startsAtFor = (recipient: Recipient) =>
+				formatSession(table.startsAt, recipient.timezone ?? table.timezone, 'pt-BR');
 			/** A hosted template when its id is configured; otherwise the mail keeps its inline copy. */
 			const hosted = (
 				key: TemplateKey,
@@ -167,7 +179,7 @@ export function createInviteHandler(
 					TABLE_TITLE: table.title,
 					TABLE_URL: url,
 					CONTEXT: context,
-					STARTS_AT: startsAt,
+					STARTS_AT: startsAtFor(recipient),
 					FALLBACK_TEXT: fallbackText
 				});
 				return { template: { id, variables } };

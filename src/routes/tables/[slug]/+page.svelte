@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { shownTimezone } from '$lib/time/shown-timezone';
 	import { atHandle } from '$lib/profile/handle';
 	import { resolve } from '$app/paths';
 	import { superForm } from 'sveltekit-superforms';
@@ -56,11 +57,11 @@
 	] as const);
 	const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
 
-	// The calendar tile next to the session: "SÁB / 26 / SET", in the table's timezone.
+	// The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
 	const dateBox = $derived.by(() => {
 		if (!table.nextAt) return null;
 		const part = (options: Intl.DateTimeFormatOptions) =>
-			new Intl.DateTimeFormat(locale, { timeZone: table.timezone, ...options })
+			new Intl.DateTimeFormat(locale, { timeZone: shownTimezone(table.timezone), ...options })
 				.format(table.nextAt!)
 				.replace('.', '');
 		return {
@@ -235,7 +236,7 @@
 					<p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
 					<p class="mt-1 text-xl leading-snug font-semibold">
 						{#if table.nextAt}
-							{formatSession(table.nextAt, table.timezone, locale)}
+							{formatSession(table.nextAt, shownTimezone(table.timezone), locale)}
 						{:else}
 							{m.table_no_more_sessions()}
 						{/if}

@@ -142,6 +142,11 @@
 			<strong>Preferência de tema</strong> (claro ou escuro), guardada no armazenamento local do seu navegador.
 			Não sai do seu aparelho.
 		</li>
+		<li>
+			<strong>Fuso horário</strong>: um cookie com o fuso do seu navegador (por exemplo,
+			America/Sao_Paulo), para mostrar os horários das mesas no seu fuso. Não identifica você e só é
+			usado para isso. Se você escolher um fuso no perfil, vale o do perfil.
+		</li>
 	</ul>
 	<p>
 		Não usamos cookies de publicidade, de rastreamento ou de terceiros para análise. Por isso não

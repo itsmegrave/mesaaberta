@@ -19,6 +19,7 @@ const empty: ProfileInput = {
 	age: null,
 	gender: '',
 	city: '',
+	timezone: '',
 	linkNetwork: [],
 	linkUrl: []
 };

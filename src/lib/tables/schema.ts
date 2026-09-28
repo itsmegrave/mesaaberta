@@ -2,6 +2,7 @@ import { z } from 'zod';
 import '$lib/forms/zod-codes';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
 import { normalizeCep } from '$lib/location/cep';
+import { isTimeZone } from '$lib/time/timezone';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
@@ -20,15 +21,6 @@ export const TABLE_LIMITS = {
 	joinDetails: 1000,
 	durationMinutes: { min: 15, max: 1440 }
 } as const;
-
-const isRealTimezone = (timeZone: string) => {
-	try {
-		new Intl.DateTimeFormat('en', { timeZone });
-		return true;
-	} catch {
-		return false;
-	}
-};
 
 /** True when `iso` is a calendar moment that exists (not `2026-13-40`), read as UTC. */
 const isRealMoment = (iso: string, echo: string) => {
@@ -62,7 +54,7 @@ export const tableFormSchema = z
 		kind: z.enum(['campaign', 'one_shot']),
 		capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
 		startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
-		timezone: z.string().refine(isRealTimezone, 'invalid'),
+		timezone: z.string().refine(isTimeZone, 'invalid'),
 		durationMinutes: whole(TABLE_LIMITS.durationMinutes.min, TABLE_LIMITS.durationMinutes.max),
 		repeat: z.string().default(''),
 		until: z.string().default(''),

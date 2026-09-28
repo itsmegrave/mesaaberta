@@ -56,6 +56,7 @@ export async function loadProfileForm(
 		age: profile.age,
 		gender: profile.gender ?? '',
 		city: profile.city ?? '',
+		timezone: profile.timezone ?? '',
 		linkNetwork: links.map((link) => link.network),
 		linkUrl: links.map((link) => link.url)
 	};
@@ -79,7 +80,8 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
 					name: input.name || null,
 					age: input.age,
 					gender: input.gender || null,
-					city: input.city || null
+					city: input.city || null,
+					timezone: input.timezone || null
 				})
 				.where(eq(profiles.id, profileId))
 				.returning({ id: profiles.id });

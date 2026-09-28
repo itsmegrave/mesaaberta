@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PNG, signIn } from './support/app';
+import { PNG, pickFromSearch, signIn } from './support/app';
 import { createUser, database } from './support/users';
 
 // The profile page: editing, the data export and closing the account. Against the local Supabase.
@@ -31,6 +31,22 @@ test('the account menu leads to the profile, where the details are saved and the
 	await page.reload();
 	await expect(page.getByLabel('Cidade')).toHaveValue('Recife');
 	await expect(page.getByLabel('Nome de usuário')).toHaveValue(user.username);
+});
+
+test("the timezone on the profile wins over the browser's, on every page", async ({ page }) => {
+	const user = await createUser('Fuso Horario');
+	await signIn(page, user, '/account/profile');
+
+	// Not picked yet: the field offers the browser's zone.
+	const field = page.getByRole('combobox', { name: 'Fuso horário' });
+	await expect(field).toHaveValue('America/Sao Paulo');
+
+	await pickFromSearch(page, 'Fuso horário', 'Asia/Tokyo');
+	await page.getByRole('button', { name: 'Salvar perfil' }).click();
+	await expect(page.getByText('Perfil salvo.')).toBeVisible();
+
+	await page.goto('/tables/os-sinos-de-sablewood');
+	await expect(page.getByRole('main')).toContainText('GMT+9');
 });
 
 test('downloads a copy of the account data as JSON', async ({ page }) => {

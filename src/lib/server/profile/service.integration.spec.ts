@@ -24,6 +24,7 @@ const form = (username: string): ProfileInput => ({
 	age: null,
 	gender: '',
 	city: '',
+	timezone: '',
 	linkNetwork: [],
 	linkUrl: []
 });

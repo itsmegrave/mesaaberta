@@ -1,8 +1,9 @@
 import { can } from '$lib/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
+import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, platform }) => {
+export const load: LayoutServerLoad = async ({ locals, platform, cookies }) => {
 	const authEnabled = locals.supabase !== null;
 	// The Mesas link appears once the platform is released. The pages exist before that, unlinked.
 	const released = await locals.flags.isEnabled('is_platform_released');
@@ -13,6 +14,8 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 		return {
 			authEnabled,
 			released,
+			// Every time on the site is shown in this zone.
+			viewer: viewerTimezone(profile?.timezone, cookies.get(TIMEZONE_COOKIE)),
 			account: profile && {
 				displayName: profile.name ?? profile.username ?? 'Pessoa sem nome',
 				username: profile.username,
@@ -24,6 +27,11 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 	} catch (error) {
 		// The page is still worth showing without the account menu.
 		locals.log.error('layout: could not load the profile', { error });
-		return { authEnabled, released, account: null };
+		return {
+			authEnabled,
+			released,
+			viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
+			account: null
+		};
 	}
 };

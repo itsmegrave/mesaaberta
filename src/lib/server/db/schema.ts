@@ -64,6 +64,9 @@ export const profiles = pgTable(
 		avatarUrl: text('avatar_url'),
 		// A picture the person uploaded, in the profile-avatars bucket; it wins over the provider's.
 		avatarPath: text('avatar_path'),
+		// The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
+		// browser's zone is used meanwhile (see `viewerTimezone`).
+		timezone: text('timezone'),
 		role: profileRole('role').notNull().default('member'),
 		status: profileStatus('status').notNull().default('active'),
 		...timestamps
