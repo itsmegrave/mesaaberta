@@ -18,6 +18,11 @@
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
     "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
     "RESEND_FROM": "no-reply@mesaaberta.app",
+    // Ids of the hosted Resend templates (see "Hosted e-mail templates" in the README). Not secrets.
+    "RESEND_TEMPLATE_CANCEL": "09588881-360c-44f2-9ae9-652f16929591",
+    "RESEND_TEMPLATE_INVITE": "dc486320-16dd-44a9-99ac-dfe1b25255eb",
+    "RESEND_TEMPLATE_JOIN_DECLINED": "626203c9-3fe5-41fe-9c91-c93b7001a708",
+    "RESEND_TEMPLATE_JOIN_REQUESTED": "952426c5-2b97-4935-b385-e82c4e808dc4",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl",
     "SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
   },
