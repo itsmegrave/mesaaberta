@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PNG, createTable, signIn, uniqueTitle } from './support/app';
+import { PNG, createTable, signIn, uniqueTitle, pickFromSearch } from './support/app';
 import { createUser, database } from './support/users';
 
 // A signed-in GM creating and managing tables, against the local Supabase.
@@ -51,7 +51,7 @@ test.describe('creating a table', () => {
 		await signIn(page, gm);
 
 		await page.goto('/tables/new');
-		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 		await page.getByLabel('Título').fill('ab');
 		await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
 		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
@@ -70,7 +70,7 @@ test.describe('creating a table', () => {
 		await signIn(page, gm);
 
 		await page.goto('/tables/new');
-		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 		await page.getByLabel('Título').fill(uniqueTitle('Passada'));
 		await page.getByLabel('Primeira sessão').fill('2020-01-01T19:00');
 		await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -149,7 +149,7 @@ test.describe('the welcome message', () => {
 		const gm = await createUser('Mestra Nina');
 		await signIn(page, gm);
 		await page.goto('/tables/new');
-		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 		await page.getByLabel('Título').fill(uniqueTitle('Privada'));
 		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 		await page.getByLabel('Mensagem de boas-vindas').fill('Segredo só para quem entrar.');
@@ -168,7 +168,7 @@ test.describe('the welcome message', () => {
 		await signIn(page, gm);
 		await page.goto('/tables/new');
 
-		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 		await page.getByLabel('Título').fill(uniqueTitle('Longa'));
 		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 		const field = page.getByLabel('Mensagem de boas-vindas');
@@ -219,7 +219,7 @@ test.describe('images', () => {
 		await signIn(page, gm);
 
 		await page.goto('/tables/new');
-		await page.getByLabel('Sistema de RPG').selectOption({ label: 'Daggerheart' });
+		await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
 		await page.getByLabel('Título').fill(title);
 		await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 		await page.locator('input#image').setInputFiles({
