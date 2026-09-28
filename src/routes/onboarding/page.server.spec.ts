@@ -34,7 +34,7 @@ const event = (
 };
 
 // The results are read for whatever the test looks at: load data, an action failure, a thrown redirect.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
 const run = (fn: unknown, e: RequestEvent) => (fn as (e: RequestEvent) => Promise<any>)(e);
 const submit = (e: RequestEvent) => run((actions as Record<string, unknown>).default, e);
 const redirected = (promise: Promise<unknown>) =>

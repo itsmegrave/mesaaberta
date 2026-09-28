@@ -159,8 +159,9 @@ test.describe('the onboarding form', () => {
 		const user = await createUser('Politica Csp', { incomplete: true });
 		await page.addInitScript(() =>
 			document.addEventListener('securitypolicyviolation', (event) =>
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				((window as any).__violations ??= []).push(`${event.violatedDirective} ${event.blockedURI}`)
+				((window as Window & { __violations?: string[] }).__violations ??= []).push(
+					`${event.violatedDirective} ${event.blockedURI}`
+				)
 			)
 		);
 		const messages: string[] = [];
@@ -174,8 +175,7 @@ test.describe('the onboarding form', () => {
 		await expect(page.getByText('Esse nome está livre.')).toBeVisible();
 
 		const reported = await page.evaluate(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			() => (window as any).__violations ?? []
+			() => (window as Window & { __violations?: string[] }).__violations ?? []
 		);
 		expect([...messages, ...reported]).toEqual([]);
 	});

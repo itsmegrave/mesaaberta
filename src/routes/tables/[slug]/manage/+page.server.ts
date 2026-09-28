@@ -21,7 +21,6 @@ export const load: PageServerLoad = async ({ locals, url, params, platform }) =>
 		}: T) => ({ ...rest, avatarUrl: pictureOf(supabaseUrl, { avatarUrl, avatarPath }) });
 
 		// The GM's id stays on the server; the page only needs names and pictures.
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { gmId, id, imagePath, ...table } = manage.table;
 		return {
 			table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },

@@ -44,8 +44,9 @@ test.describe('security headers', () => {
 		const violations: string[] = [];
 		await page.addInitScript(() =>
 			document.addEventListener('securitypolicyviolation', (event) =>
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				((window as any).__violations ??= []).push(`${event.violatedDirective} ${event.blockedURI}`)
+				((window as Window & { __violations?: string[] }).__violations ??= []).push(
+					`${event.violatedDirective} ${event.blockedURI}`
+				)
 			)
 		);
 		page.on('console', (message) => {
@@ -56,8 +57,7 @@ test.describe('security headers', () => {
 		await page.waitForLoadState('networkidle');
 
 		const reported = await page.evaluate(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			() => (window as any).__violations ?? []
+			() => (window as Window & { __violations?: string[] }).__violations ?? []
 		);
 		expect([...violations, ...reported]).toEqual([]);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

@@ -1,7 +1,7 @@
 // Generated global Workers types (`wrangler types`). A reference is required: the file is a
 // global declaration script, not a module, so `import` does not apply. Loaded here instead of
 // through tsconfig `types`, whose file-path form TypeScript 7 rejects.
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- a global declaration script cannot import
 /// <reference path="../worker-configuration.d.ts" />
 
 // See https://svelte.dev/docs/kit/types#app.d.ts

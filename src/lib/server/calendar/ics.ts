@@ -41,7 +41,7 @@ export type InviteInput = {
 const UID_DOMAIN = 'mesaaberta.app';
 const EMAIL = /^[^\s@<>",;:\\]+@[^\s@<>",;:\\]+\.[^\s@<>",;:\\]+$/;
 // Control characters other than the line break.
-// eslint-disable-next-line no-control-regex
+// eslint-disable-next-line no-control-regex -- stripping control characters is the point
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
 
 /**

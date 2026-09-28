@@ -19,7 +19,7 @@ const error = vi.fn();
 const event = (db: unknown = {}) =>
 	({ locals: { db, log: { error } }, platform: undefined }) as unknown as RequestEvent;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
 const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
 
 describe('the home page load', () => {
