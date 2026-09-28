@@ -1,10 +1,14 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { actions, load } from './+page.server';
+import { PASSWORD_RESET_LIMIT } from '$lib/server/auth/attempt-limit';
+import { createTestDb } from '$lib/server/db/test-db';
 
-const setup = (answer: object = { data: {}, error: null }, supabase = true) => {
+const setup = (answer: object = { data: {}, error: null }, supabase = true, db: unknown = null) => {
 	const resetPasswordForEmail = vi.fn().mockResolvedValue(answer);
+	const setHeaders = vi.fn();
 	const locals = {
+		db,
 		supabase: supabase ? { auth: { resetPasswordForEmail } } : null,
 		log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() }
 	};
@@ -15,11 +19,13 @@ const setup = (answer: object = { data: {}, error: null }, supabase = true) => {
 		return {
 			locals,
 			url,
+			getClientAddress: () => '203.0.113.7',
+			setHeaders,
 			request: new Request(url, { method: 'POST', body })
 		} as unknown as RequestEvent;
 	};
 
-	return { resetPasswordForEmail, event };
+	return { resetPasswordForEmail, event, setHeaders };
 };
 
 const submit = (event: RequestEvent) =>
@@ -88,6 +94,26 @@ describe('the forgot-password page', () => {
 			status: 500,
 			data: { form: { message: { code: 'failed' } } }
 		});
+	});
+
+	it('refuses an address past the limit with 429, before Supabase sends any e-mail', async () => {
+		const test = await createTestDb();
+		try {
+			const { event, resetPasswordForEmail, setHeaders } = setup(undefined, true, test.db);
+			for (let i = 0; i < PASSWORD_RESET_LIMIT.max; i++) {
+				await submit(event({ email: 'ana@example.com' }));
+			}
+			resetPasswordForEmail.mockClear();
+
+			expect(await submit(event({ email: 'ana@example.com' }))).toMatchObject({
+				status: 429,
+				data: { form: { message: { code: 'rate_limited' } } }
+			});
+			expect(setHeaders).toHaveBeenCalledWith({ 'Retry-After': expect.any(String) });
+			expect(resetPasswordForEmail).not.toHaveBeenCalled();
+		} finally {
+			await test.close();
+		}
 	});
 
 	it('goes back to the login page, which says so, when there is no Supabase', async () => {

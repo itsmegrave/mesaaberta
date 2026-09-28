@@ -72,6 +72,11 @@
 			Contadores de uso por pessoa (por exemplo, quantas mesas você abriu na última hora), para
 			limitar abusos.
 		</li>
+		<li>
+			Contadores de tentativas por rede: quando alguém tenta entrar, criar conta ou recuperar a
+			senha, guardamos um resumo criptográfico (hash) do endereço IP, não o endereço em si, para
+			barrar tentativas em massa.
+		</li>
 	</ul>
 
 	<h2>Para que usamos e com qual base legal</h2>
@@ -165,6 +170,7 @@
 			meses (Marco Civil da Internet, art. 15), depois são apagados.
 		</li>
 		<li>Registros internos dos avisos enviados pelas mesas: até 90 dias depois de processados.</li>
+		<li>Contadores de tentativas de entrada, cadastro e recuperação de senha: até 24 horas.</li>
 	</ul>
 
 	<h2>Seus direitos</h2>

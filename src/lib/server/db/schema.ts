@@ -347,3 +347,19 @@ export const ratings = pgTable(
 		index('ratings_table_idx').on(rating.tableId)
 	]
 ).enableRLS();
+
+// Attempts at the sign-in, sign-up and password-reset forms, to limit them per network before
+// anyone is signed in (see auth/attempt-limit.ts). `key` is a hash of the action and the IP, never
+// the IP itself, and rows are deleted after a day.
+export const authAttempts = pgTable(
+	'auth_attempts',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		key: text('key').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(attempt) => [
+		index('auth_attempts_key_created_idx').on(attempt.key, attempt.createdAt),
+		index('auth_attempts_created_idx').on(attempt.createdAt)
+	]
+).enableRLS();
