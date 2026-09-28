@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import postgres from 'postgres';
+import { randomBytes } from 'crypto';
 import { stack } from './stack';
 
 // Test users, created straight in the local Auth with the service key (already confirmed), so tests
@@ -20,7 +21,7 @@ const slugOf = (text: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const unique = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+const unique = () => `${Date.now().toString(36)}${randomBytes(4).toString('hex').slice(0, 5)}`;
 
 /** `username` is what the app shows for them (the header, the GM's list of players). */
 export type TestUser = {
@@ -50,7 +51,7 @@ export async function createUser(
   });
   if (error || !data.user) throw new Error(`could not create a test user: ${error?.message}`);
 
-  const username = `${slugOf(name).slice(0, 14)}-${Math.random().toString(36).slice(2, 10)}`;
+  const username = `${slugOf(name).slice(0, 14)}-${randomBytes(6).toString('hex').slice(0, 8)}`;
   const stored = options.incomplete ? null : username;
   const sql = database();
   try {
