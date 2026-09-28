@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { usernameProblem } from './username';
 import { MAX_SOCIAL_LINKS, isNetwork, parseSocialUrl, type Network } from './social-links';
+import { isTimeZone } from '$lib/time/timezone';
 
 // Zod compiles a faster parser with `new Function` when it can. In the browser our Content-Security-Policy
 // forbids `eval`, so Zod would try it and be reported as a violation on every page that loads it. The
@@ -39,6 +40,12 @@ export const profileSchema = z
 			.default(null),
 		gender: z.string().trim().max(PROFILE_LIMITS.gender, 'too_long').default(''),
 		city: z.string().trim().max(PROFILE_LIMITS.city, 'too_long').default(''),
+		// An IANA zone, or empty for "not picked yet" (the browser's is used meanwhile).
+		timezone: z
+			.string()
+			.trim()
+			.refine((zone) => zone === '' || isTimeZone(zone), 'invalid')
+			.default(''),
 		linkNetwork: z.array(z.string()).default([]),
 		linkUrl: z.array(z.string()).default([])
 	})

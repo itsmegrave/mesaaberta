@@ -23,6 +23,7 @@ const input = (over: Partial<ProfileInput> = {}): ProfileInput => ({
 	age: null,
 	gender: '',
 	city: '',
+	timezone: '',
 	linkNetwork: [],
 	linkUrl: [],
 	...over
@@ -55,6 +56,7 @@ describe('saveProfile', () => {
 				age: 30,
 				gender: 'mulher',
 				city: 'Recife',
+				timezone: 'America/Recife',
 				linkNetwork: ['instagram', 'website', 'x'],
 				linkUrl: ['instagram.com/carla', '', 'https://x.com/carla']
 			})
@@ -66,6 +68,7 @@ describe('saveProfile', () => {
 			age: 30,
 			gender: 'mulher',
 			city: 'Recife',
+			timezone: 'America/Recife',
 			linkNetwork: ['instagram', 'x'],
 			linkUrl: ['https://instagram.com/carla', 'https://x.com/carla']
 		});

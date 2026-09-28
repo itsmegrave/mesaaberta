@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { atHandle } from '$lib/profile/handle';
 	import { formatCardDate, formatSession } from '$lib/tables/format';
+	import { shownTimezone } from '$lib/time/shown-timezone';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -38,7 +39,7 @@
 	);
 
 	const cardDate = $derived(
-		table.nextAt ? formatCardDate(table.nextAt, table.timezone, locale) : null
+		table.nextAt ? formatCardDate(table.nextAt, shownTimezone(table.timezone), locale) : null
 	);
 
 	const platformNames = $derived(
@@ -125,7 +126,7 @@
 	<!-- Full accessible date for screen readers -->
 	{#if table.nextAt}
 		<time datetime={table.nextAt.toISOString()} class="sr-only">
-			{formatSession(table.nextAt, table.timezone, locale)}
+			{formatSession(table.nextAt, shownTimezone(table.timezone), locale)}
 		</time>
 	{/if}
 

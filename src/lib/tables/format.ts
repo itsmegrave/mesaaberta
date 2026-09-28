@@ -1,5 +1,5 @@
 /**
- * A session start as people say it, in the table's own timezone (the one its GM set), with the
+ * A session start as people say it, in the given timezone (the viewer's, see shownTimezone), with the
  * zone named so a player elsewhere can convert. Pass the timezone explicitly: without it the
  * server and the browser would each use their own and the page would change on hydration.
  */

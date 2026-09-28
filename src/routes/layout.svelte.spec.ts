@@ -6,7 +6,9 @@ import { toast } from '$lib/toaster';
 import Layout from './+layout.svelte';
 
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
-const signedOut = { authEnabled: false, released: false, account: null };
+// From the profile, so the layout does not set a cookie or reload in these tests.
+const viewer = { timezone: 'America/Sao_Paulo', source: 'profile' } as const;
+const signedOut = { authEnabled: false, released: false, viewer, account: null };
 const memberAccount = {
 	displayName: 'Ana Souza',
 	username: 'ana',
@@ -93,13 +95,19 @@ describe('+layout.svelte', () => {
 		});
 
 		it('keeps sign-in hidden until the platform is released', async () => {
-			render(Layout, { children, data: { authEnabled: true, released: false, account: null } });
+			render(Layout, {
+				children,
+				data: { authEnabled: true, released: false, viewer, account: null }
+			});
 
 			await expect.element(banner().getByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
 		});
 
 		it('offers sign-in to an anonymous visitor once login and the platform are enabled', async () => {
-			render(Layout, { children, data: { authEnabled: true, released: true, account: null } });
+			render(Layout, {
+				children,
+				data: { authEnabled: true, released: true, viewer, account: null }
+			});
 
 			await expect
 				.element(banner().getByRole('link', { name: 'Entrar' }))
@@ -112,6 +120,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
+					viewer,
 					account: memberAccount
 				}
 			});
@@ -133,6 +142,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
+					viewer,
 					account: memberAccount
 				}
 			});
@@ -154,6 +164,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
+					viewer,
 					account: adminAccount
 				}
 			});
@@ -173,6 +184,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: false,
+					viewer,
 					account: memberAccount
 				}
 			});
@@ -192,6 +204,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: true,
+					viewer,
 					account: memberAccount
 				}
 			});
@@ -213,6 +226,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: true,
+					viewer,
 					account: memberAccount
 				}
 			});
@@ -236,6 +250,7 @@ describe('+layout.svelte', () => {
 				data: {
 					authEnabled: true,
 					released: true,
+					viewer,
 					account: adminAccount
 				}
 			});

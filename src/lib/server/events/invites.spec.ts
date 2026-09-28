@@ -307,6 +307,27 @@ describe('calendar invite handler', () => {
 			});
 		});
 
+		it("writes the time in the recipient's own timezone when they have one", async () => {
+			await test.db
+				.update(profiles)
+				.set({ timezone: 'Europe/Lisbon' })
+				.where(eq(profiles.id, player));
+			try {
+				const sent = capture();
+
+				await createInviteHandler(templated, sent.request, admin()).handle(
+					event('PlayerJoined'),
+					test.db
+				);
+
+				const lisbon = formatSession(new Date('2026-10-10T22:00:00Z'), 'Europe/Lisbon', 'pt-BR');
+				expect(lisbon).not.toBe(startsAt);
+				expect(sent.bodies[0].template.variables.STARTS_AT).toBe(lisbon);
+			} finally {
+				await test.db.update(profiles).set({ timezone: null }).where(eq(profiles.id, player));
+			}
+		});
+
 		it('sends the cancel template with a CANCEL attachment', async () => {
 			const sent = capture();
 

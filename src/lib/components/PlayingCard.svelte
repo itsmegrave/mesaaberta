@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { atHandle } from '$lib/profile/handle';
 	import { formatSession } from '$lib/tables/format';
+	import { shownTimezone } from '$lib/time/shown-timezone';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -67,7 +68,7 @@
 			>
 			<span
 				><span class="font-semibold">{m.table_next_session()}:</span>
-				{formatSession(item.nextAt, item.timezone, locale)}</span
+				{formatSession(item.nextAt, shownTimezone(item.timezone), locale)}</span
 			>
 		</p>
 	{/if}

@@ -4,6 +4,9 @@
 	import { superForm, type SuperValidated } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 	import FormField from './FormField.svelte';
+	import SearchSelect from './SearchSelect.svelte';
+	import { timezoneOptions } from '$lib/time/timezone';
+	import { onMount } from 'svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { MAX_SOCIAL_LINKS, NETWORKS, type Network } from '$lib/profile/social-links';
 	import { MAX_USERNAME_LENGTH, normalizeUsername, usernameProblem } from '$lib/profile/username';
@@ -51,6 +54,12 @@
 			if (form.valid) onsaved?.();
 		}
 	});
+
+	// Not picked yet: offer the browser's zone, so saving the form keeps it on the profile.
+	onMount(() => {
+		if (!$form.timezone) $form.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	});
+	const timezones = timezoneOptions();
 
 	const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
 	const secondary =
@@ -297,6 +306,29 @@
 			aria-describedby="city-hint{$errors.city ? ' city-error' : ''}"
 		/>
 	</FormField>
+
+	<div class="min-w-0">
+		<SearchSelect
+			id="timezone"
+			name="timezone"
+			label={m.profile_timezone()}
+			labelClass="label-text block font-semibold"
+			class="grid gap-1"
+			items={timezones}
+			value={$form.timezone ? [$form.timezone] : []}
+			placeholder={m.profile_timezone_placeholder()}
+			invalid={Boolean($errors.timezone)}
+			onchange={(picked) => ($form.timezone = picked[0] ?? '')}
+		/>
+		<p id="timezone-hint" class="mt-1 text-sm text-surface-700-300">{m.profile_timezone_hint()}</p>
+		{#if $errors.timezone}<p
+				id="timezone-error"
+				role="alert"
+				class="mt-1 text-sm font-semibold text-error-700-300"
+			>
+				{errorText($errors.timezone[0])}
+			</p>{/if}
+	</div>
 
 	<fieldset class="grid gap-3" aria-describedby="links-hint">
 		<legend class="font-semibold">{m.profile_links()}</legend>

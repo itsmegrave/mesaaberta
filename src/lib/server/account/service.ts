@@ -22,6 +22,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 			age: profiles.age,
 			gender: profiles.gender,
 			city: profiles.city,
+			timezone: profiles.timezone,
 			avatarUrl: profiles.avatarUrl,
 			avatarPath: profiles.avatarPath,
 			createdAt: profiles.createdAt
@@ -154,6 +155,7 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
 				age: null,
 				gender: null,
 				city: null,
+				timezone: null,
 				avatarUrl: null,
 				avatarPath: null,
 				status: 'suspended'

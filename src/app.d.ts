@@ -35,7 +35,10 @@ declare global {
 			/** Set once someone is signed in; it ends up on the request log line. */
 			userId?: string;
 		}
-		// interface PageData {}
+		interface PageData {
+			/** The zone every time is shown in, from the root layout (see `viewerTimezone`). */
+			viewer?: import('$lib/time/timezone').ViewerTimezone;
+		}
 		// interface PageState {}
 	}
 }
