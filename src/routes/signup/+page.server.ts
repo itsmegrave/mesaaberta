@@ -4,6 +4,7 @@ import { zod4 } from 'sveltekit-superforms/adapters';
 import { credentialsSchema, type CredentialsData } from '$lib/auth/credentials';
 import type { FormMessage } from '$lib/forms/message';
 import { withoutSecrets } from '$lib/forms/server';
+import { SIGN_UP_LIMIT, attemptWait } from '$lib/server/auth/attempt-limit';
 import { signUpWithEmail, type SignUpResult } from '$lib/server/auth/email';
 import { afterSignIn } from '$lib/server/auth/onboarding';
 import { safeNext } from '$lib/server/auth/safe-next';
@@ -23,7 +24,7 @@ const STATUS = {
 } as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
 
 export const actions: Actions = {
-	default: async ({ request, locals, url, getClientAddress }) => {
+	default: async ({ request, locals, url, getClientAddress, setHeaders }) => {
 		if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
 		const form: SuperValidated<CredentialsData, FormMessage> = await superValidate(
@@ -34,6 +35,11 @@ export const actions: Actions = {
 		const { email, password } = form.data;
 		withoutSecrets(form, ['password']);
 		if (!form.valid) return fail(400, { form });
+		const wait = await attemptWait(locals.db, SIGN_UP_LIMIT, getClientAddress());
+		if (wait !== null) {
+			setHeaders({ 'Retry-After': String(wait) });
+			return message(form, { code: 'rate_limited', retryAfter: wait }, { status: 429 });
+		}
 
 		const result = await signUpWithEmail(
 			{ supabase: locals.supabase, db: locals.db, log: locals.log, ip: getClientAddress() },

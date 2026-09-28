@@ -3,6 +3,7 @@ import { fail, message, superValidate, type SuperValidated } from 'sveltekit-sup
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { emailSchema } from '$lib/auth/credentials';
 import type { FormMessage } from '$lib/forms/message';
+import { PASSWORD_RESET_LIMIT, attemptWait } from '$lib/server/auth/attempt-limit';
 import { requestPasswordReset } from '$lib/server/auth/password';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -13,7 +14,7 @@ export const load: PageServerLoad = async ({ url }) => ({
 });
 
 export const actions: Actions = {
-	default: async ({ request, locals, url }) => {
+	default: async ({ request, locals, url, getClientAddress, setHeaders }) => {
 		if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
 		const form: SuperValidated<{ email: string }, FormMessage> = await superValidate(
@@ -21,6 +22,12 @@ export const actions: Actions = {
 			zod4(emailSchema)
 		);
 		if (!form.valid) return fail(400, { form });
+		// Each request sends an e-mail: without a limit, a script could flood someone's inbox.
+		const wait = await attemptWait(locals.db, PASSWORD_RESET_LIMIT, getClientAddress());
+		if (wait !== null) {
+			setHeaders({ 'Retry-After': String(wait) });
+			return message(form, { code: 'rate_limited', retryAfter: wait }, { status: 429 });
+		}
 
 		const result = await requestPasswordReset(
 			{ supabase: locals.supabase, log: locals.log },
