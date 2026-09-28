@@ -1,49 +1,49 @@
 <!doctype html>
 
 <html lang="%paraglide.lang%" dir="%paraglide.dir%" data-theme="cerberus" data-mode="light">
-	<head>
-		<meta charset="utf-8" />
+  <head>
+    <meta charset="utf-8" />
 
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		<meta name="text-scale" content="scale" />
+    <meta name="text-scale" content="scale" />
 
-		<!-- The browser's own chrome follows the mode. A manual choice replaces both, below. -->
-		<meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+    <!-- The browser's own chrome follows the mode. A manual choice replaces both, below. -->
+    <meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
 
-		<!-- Zod must see this before any lazily loaded form code: probing Function() violates our CSP. -->
-		<script nonce="%sveltekit.nonce%">
-			globalThis.__zod_globalConfig = { ...(globalThis.__zod_globalConfig ?? {}), jitless: true };
-		</script>
+    <!-- Zod must see this before any lazily loaded form code: probing Function() violates our CSP. -->
+    <script nonce="%sveltekit.nonce%">
+      globalThis.__zod_globalConfig = { ...(globalThis.__zod_globalConfig ?? {}), jitless: true };
+    </script>
 
-		<!-- Sets light or dark before the first paint, so a dark-mode reader never sees a light flash: the
+    <!-- Sets light or dark before the first paint, so a dark-mode reader never sees a light flash: the
 		     remembered choice, else the system preference. Without JavaScript the page stays light. -->
-		<script nonce="%sveltekit.nonce%">
-			(function () {
-				var colours = { light: '#fcfcfc', dark: '#121212' };
-				var choice = null;
-				try {
-					choice = localStorage.getItem('theme');
-				} catch (e) {}
-				var chosen = choice === 'light' || choice === 'dark';
-				var mode = chosen
-					? choice
-					: window.matchMedia('(prefers-color-scheme: dark)').matches
-						? 'dark'
-						: 'light';
+    <script nonce="%sveltekit.nonce%">
+      (function () {
+        var colours = { light: '#fcfcfc', dark: '#121212' };
+        var choice = null;
+        try {
+          choice = localStorage.getItem('theme');
+        } catch (e) {}
+        var chosen = choice === 'light' || choice === 'dark';
+        var mode = chosen
+          ? choice
+          : window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
 
-				document.documentElement.dataset.mode = mode;
-				if (!chosen) return;
+        document.documentElement.dataset.mode = mode;
+        if (!chosen) return;
 
-				var metas = document.querySelectorAll('meta[name="theme-color"]');
-				for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', colours[mode]);
-			})();
-		</script>
-		%sveltekit.head%
-	</head>
+        var metas = document.querySelectorAll('meta[name="theme-color"]');
+        for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', colours[mode]);
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
 
-	<body data-sveltekit-preload-data="hover">
-		<div class="contents">%sveltekit.body%</div>
-	</body>
+  <body data-sveltekit-preload-data="hover">
+    <div class="contents">%sveltekit.body%</div>
+  </body>
 </html>

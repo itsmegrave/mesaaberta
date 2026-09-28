@@ -5,11 +5,11 @@ type Form<T extends Record<string, unknown>> = SuperValidated<T, FormMessage>;
 
 /** Never send a secret back to the browser: not even when the form is refused. */
 export function withoutSecrets<T extends Record<string, unknown>>(
-	form: Form<T>,
-	fields: (keyof T)[]
+  form: Form<T>,
+  fields: (keyof T)[],
 ): Form<T> {
-	for (const field of fields) (form.data as Record<keyof T, unknown>)[field] = '';
-	return form;
+  for (const field of fields) (form.data as Record<keyof T, unknown>)[field] = '';
+  return form;
 }
 
 /**
@@ -17,12 +17,12 @@ export function withoutSecrets<T extends Record<string, unknown>>(
  * (so the form shows it there), or in the form message when the field is not one the schema knows.
  */
 export function refuse<T extends Record<string, unknown>>(
-	form: Form<T>,
-	status: ErrorStatus,
-	code: string,
-	field?: string
+  form: Form<T>,
+  status: ErrorStatus,
+  code: string,
+  field?: string,
 ) {
-	if (field && Object.hasOwn(form.data, field))
-		return setError(form, field as never, code, { status });
-	return message(form, { code, field }, { status });
+  if (field && Object.hasOwn(form.data, field))
+    return setError(form, field as never, code, { status });
+  return message(form, { code, field }, { status });
 }

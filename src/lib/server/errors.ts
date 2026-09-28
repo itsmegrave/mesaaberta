@@ -4,63 +4,63 @@ import { fail } from '@sveltejs/kit';
 // is for logs and never reaches the browser; `failFrom` decides what the visitor sees.
 
 export class Forbidden extends Error {
-	constructor(message = 'forbidden') {
-		super(message);
-		this.name = 'Forbidden';
-	}
+  constructor(message = 'forbidden') {
+    super(message);
+    this.name = 'Forbidden';
+  }
 }
 
 export class NotFound extends Error {
-	constructor(message = 'not found') {
-		super(message);
-		this.name = 'NotFound';
-	}
+  constructor(message = 'not found') {
+    super(message);
+    this.name = 'NotFound';
+  }
 }
 
 /** There is no seat left. Not a permission problem: the player may join if one frees up. */
 export class TableFull extends Error {
-	constructor(message = 'table full') {
-		super(message);
-		this.name = 'TableFull';
-	}
+  constructor(message = 'table full') {
+    super(message);
+    this.name = 'TableFull';
+  }
 }
 
 /** The first session has not ended yet, so there is nothing to rate. Not a permission problem: try again later. */
 export class TooEarly extends Error {
-	constructor(message = 'too early') {
-		super(message);
-		this.name = 'TooEarly';
-	}
+  constructor(message = 'too early') {
+    super(message);
+    this.name = 'TooEarly';
+  }
 }
 
 /** The player already has a place at this table, confirmed or pending. */
 export class AlreadyRegistered extends Error {
-	constructor(message = 'already registered') {
-		super(message);
-		this.name = 'AlreadyRegistered';
-	}
+  constructor(message = 'already registered') {
+    super(message);
+    this.name = 'AlreadyRegistered';
+  }
 }
 
 /** The person did this too often lately. Not a permission problem: they may try again once `retryAfterSeconds` have passed. */
 export class RateLimited extends Error {
-	constructor(
-		readonly retryAfterSeconds: number,
-		message = 'rate limited'
-	) {
-		super(message);
-		this.name = 'RateLimited';
-	}
+  constructor(
+    readonly retryAfterSeconds: number,
+    message = 'rate limited',
+  ) {
+    super(message);
+    this.name = 'RateLimited';
+  }
 }
 
 /** The input is well formed but cannot be accepted: it names a system that does not exist, say. */
 export class Invalid extends Error {
-	constructor(
-		readonly field: string,
-		message = 'invalid'
-	) {
-		super(message);
-		this.name = 'Invalid';
-	}
+  constructor(
+    readonly field: string,
+    message = 'invalid',
+  ) {
+    super(message);
+    this.name = 'Invalid';
+  }
 }
 
 /**
@@ -69,15 +69,15 @@ export class Invalid extends Error {
  * is rethrown and becomes a 500 rather than a misleading 403.
  */
 export function failFrom(error: unknown) {
-	if (error instanceof Forbidden) return fail(403, { error: 'forbidden' as const });
-	if (error instanceof NotFound) return fail(404, { error: 'not_found' as const });
-	if (error instanceof TableFull) return fail(409, { error: 'table_full' as const });
-	if (error instanceof TooEarly) return fail(409, { error: 'too_early' as const });
-	if (error instanceof AlreadyRegistered)
-		return fail(409, { error: 'already_registered' as const });
-	if (error instanceof RateLimited)
-		return fail(429, { error: 'rate_limited' as const, retryAfter: error.retryAfterSeconds });
-	if (error instanceof Invalid) return fail(400, { error: 'invalid' as const, field: error.field });
+  if (error instanceof Forbidden) return fail(403, { error: 'forbidden' as const });
+  if (error instanceof NotFound) return fail(404, { error: 'not_found' as const });
+  if (error instanceof TableFull) return fail(409, { error: 'table_full' as const });
+  if (error instanceof TooEarly) return fail(409, { error: 'too_early' as const });
+  if (error instanceof AlreadyRegistered)
+    return fail(409, { error: 'already_registered' as const });
+  if (error instanceof RateLimited)
+    return fail(429, { error: 'rate_limited' as const, retryAfter: error.retryAfterSeconds });
+  if (error instanceof Invalid) return fail(400, { error: 'invalid' as const, field: error.field });
 
-	throw error;
+  throw error;
 }

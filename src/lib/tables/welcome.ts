@@ -17,12 +17,12 @@ const UNWANTED = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u
 
 /** Makes what a GM typed safe to store: one line-break style, no control characters, trimmed. */
 export function cleanWelcomeMessage(value: string): string {
-	return value.replace(/\r\n?/g, '\n').replace(/\t/g, ' ').replace(UNWANTED, '').trim();
+  return value.replace(/\r\n?/g, '\n').replace(/\t/g, ' ').replace(UNWANTED, '').trim();
 }
 
 /** The message as it is sent to a player, or null when there is nothing to say. */
 export function expandWelcomeMessage(message: string | null, title: string): string | null {
-	const cleaned = message ? cleanWelcomeMessage(message) : '';
-	// A function replacer, so `$&` and friends in a title stay literal.
-	return cleaned ? cleaned.replaceAll(TITLE_TOKEN, () => title) : null;
+  const cleaned = message ? cleanWelcomeMessage(message) : '';
+  // A function replacer, so `$&` and friends in a title stay literal.
+  return cleaned ? cleaned.replaceAll(TITLE_TOKEN, () => title) : null;
 }

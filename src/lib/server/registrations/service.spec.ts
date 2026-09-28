@@ -4,12 +4,12 @@ import { events, gameTables, profiles, registrations, systems } from '../db/sche
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '../auth/policy';
 import {
-	approveRegistration,
-	declineRegistration,
-	joinTable,
-	leaveTable,
-	listRegistrations,
-	removePlayer
+  approveRegistration,
+  declineRegistration,
+  joinTable,
+  leaveTable,
+  listRegistrations,
+  removePlayer,
 } from './service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -20,13 +20,13 @@ const admin: Actor = { id: id(90), role: 'admin', status: 'active' };
 let counter = 0;
 
 beforeAll(async () => {
-	test = await createTestDb();
-	await test.db
-		.insert(profiles)
-		.values([
-			...Array.from({ length: 8 }, (_, i) => ({ id: id(i + 1), username: `p${i + 1}` })),
-			{ id: id(90), username: 'admin', role: 'admin' as const }
-		]);
+  test = await createTestDb();
+  await test.db
+    .insert(profiles)
+    .values([
+      ...Array.from({ length: 8 }, (_, i) => ({ id: id(i + 1), username: `p${i + 1}` })),
+      { id: id(90), username: 'admin', role: 'admin' as const },
+    ]);
 });
 afterAll(() => test.close());
 // Each test starts with a clean rate limit: one person opens and joins many tables across a file.
@@ -34,355 +34,355 @@ beforeEach(() => test.db.delete(events));
 
 /** A fresh table with `capacity` seats, so tests do not share seats. */
 const makeTable = async (over: Partial<typeof gameTables.$inferInsert> = {}) => {
-	const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
-	const slug = `mesa-${++counter}`;
-	const [table] = await test.db
-		.insert(gameTables)
-		.values({
-			slug,
-			title: slug,
-			kind: 'one_shot',
-			capacity: 2,
-			startsAt: new Date('2099-01-01T20:00:00Z'),
-			durationMinutes: 60,
-			timezone: 'UTC',
-			gmId: gm.id,
-			systemId: system.id,
-			...over
-		})
-		.returning();
-	return table;
+  const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+  const slug = `mesa-${++counter}`;
+  const [table] = await test.db
+    .insert(gameTables)
+    .values({
+      slug,
+      title: slug,
+      kind: 'one_shot',
+      capacity: 2,
+      startsAt: new Date('2099-01-01T20:00:00Z'),
+      durationMinutes: 60,
+      timezone: 'UTC',
+      gmId: gm.id,
+      systemId: system.id,
+      ...over,
+    })
+    .returning();
+  return table;
 };
 
 const statusOf = async (tableId: string, playerId: string) =>
-	(
-		await test.db
-			.select()
-			.from(registrations)
-			.where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)))
-	)[0]?.status;
+  (
+    await test.db
+      .select()
+      .from(registrations)
+      .where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)))
+  )[0]?.status;
 
 const eventTypes = async (eventIds: string[]) =>
-	(await test.db.select().from(events))
-		.filter((e) => eventIds.includes(e.id))
-		.map((e) => e.type)
-		.sort();
+  (await test.db.select().from(events))
+    .filter((e) => eventIds.includes(e.id))
+    .map((e) => e.type)
+    .sort();
 
 describe('joinTable on an automatic table', () => {
-	it('confirms the seat at once and records PlayerJoined', async () => {
-		const table = await makeTable();
+  it('confirms the seat at once and records PlayerJoined', async () => {
+    const table = await makeTable();
 
-		const result = await joinTable(test.db, player(2), table.slug);
+    const result = await joinTable(test.db, player(2), table.slug);
 
-		expect(result.status).toBe('confirmed');
-		expect(await statusOf(table.id, id(2))).toBe('confirmed');
-		expect(await eventTypes(result.eventIds)).toEqual(['PlayerJoined']);
-	});
+    expect(result.status).toBe('confirmed');
+    expect(await statusOf(table.id, id(2))).toBe('confirmed');
+    expect(await eventTypes(result.eventIds)).toEqual(['PlayerJoined']);
+  });
 
-	it('fills the seats and then answers TableFull, leaving nothing behind', async () => {
-		const table = await makeTable({ capacity: 2 });
-		await joinTable(test.db, player(2), table.slug);
-		await joinTable(test.db, player(3), table.slug);
-		const eventsBefore = (await test.db.select().from(events)).length;
+  it('fills the seats and then answers TableFull, leaving nothing behind', async () => {
+    const table = await makeTable({ capacity: 2 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
+    const eventsBefore = (await test.db.select().from(events)).length;
 
-		await expect(joinTable(test.db, player(4), table.slug)).rejects.toMatchObject({
-			name: 'TableFull'
-		});
+    await expect(joinTable(test.db, player(4), table.slug)).rejects.toMatchObject({
+      name: 'TableFull',
+    });
 
-		expect(await statusOf(table.id, id(4))).toBeUndefined();
-		expect((await test.db.select().from(events)).length).toBe(eventsBefore);
-	});
+    expect(await statusOf(table.id, id(4))).toBeUndefined();
+    expect((await test.db.select().from(events)).length).toBe(eventsBefore);
+  });
 
-	it('refuses a second join by the same player', async () => {
-		const table = await makeTable({ capacity: 3 });
-		await joinTable(test.db, player(2), table.slug);
+  it('refuses a second join by the same player', async () => {
+    const table = await makeTable({ capacity: 3 });
+    await joinTable(test.db, player(2), table.slug);
 
-		await expect(joinTable(test.db, player(2), table.slug)).rejects.toMatchObject({
-			name: 'AlreadyRegistered'
-		});
-	});
+    await expect(joinTable(test.db, player(2), table.slug)).rejects.toMatchObject({
+      name: 'AlreadyRegistered',
+    });
+  });
 
-	it.each([
-		['the GM of the table', () => gm, 'Forbidden'],
-		['an anonymous visitor', () => null, 'Forbidden'],
-		['a suspended player', () => ({ ...player(5), status: 'suspended' as const }), 'Forbidden']
-	])('refuses %s', async (_who, who, error) => {
-		const table = await makeTable();
+  it.each([
+    ['the GM of the table', () => gm, 'Forbidden'],
+    ['an anonymous visitor', () => null, 'Forbidden'],
+    ['a suspended player', () => ({ ...player(5), status: 'suspended' as const }), 'Forbidden'],
+  ])('refuses %s', async (_who, who, error) => {
+    const table = await makeTable();
 
-		await expect(joinTable(test.db, who(), table.slug)).rejects.toMatchObject({ name: error });
-	});
+    await expect(joinTable(test.db, who(), table.slug)).rejects.toMatchObject({ name: error });
+  });
 
-	it('lets an admin who is not the GM take a seat', async () => {
-		const table = await makeTable();
+  it('lets an admin who is not the GM take a seat', async () => {
+    const table = await makeTable();
 
-		expect((await joinTable(test.db, admin, table.slug)).status).toBe('confirmed');
-	});
+    expect((await joinTable(test.db, admin, table.slug)).status).toBe('confirmed');
+  });
 
-	it('is NotFound for a disabled table or one that does not exist', async () => {
-		const off = await makeTable({ status: 'disabled' });
+  it('is NotFound for a disabled table or one that does not exist', async () => {
+    const off = await makeTable({ status: 'disabled' });
 
-		await expect(joinTable(test.db, player(2), off.slug)).rejects.toMatchObject({
-			name: 'NotFound'
-		});
-		await expect(joinTable(test.db, player(2), 'nao-existe')).rejects.toMatchObject({
-			name: 'NotFound'
-		});
-	});
+    await expect(joinTable(test.db, player(2), off.slug)).rejects.toMatchObject({
+      name: 'NotFound',
+    });
+    await expect(joinTable(test.db, player(2), 'nao-existe')).rejects.toMatchObject({
+      name: 'NotFound',
+    });
+  });
 });
 
 describe('joinTable on a table that approves each player', () => {
-	it('records a pending request that takes no seat', async () => {
-		const table = await makeTable({ joinMode: 'approval', capacity: 1 });
+  it('records a pending request that takes no seat', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 1 });
 
-		const result = await joinTable(test.db, player(2), table.slug);
+    const result = await joinTable(test.db, player(2), table.slug);
 
-		expect(result.status).toBe('pending');
-		expect(await eventTypes(result.eventIds)).toEqual(['JoinRequested']);
-	});
+    expect(result.status).toBe('pending');
+    expect(await eventTypes(result.eventIds)).toEqual(['JoinRequested']);
+  });
 
-	it('lets more players ask than there are seats, since pending requests never consume capacity', async () => {
-		const table = await makeTable({ joinMode: 'approval', capacity: 1 });
+  it('lets more players ask than there are seats, since pending requests never consume capacity', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 1 });
 
-		for (const n of [2, 3, 4]) await joinTable(test.db, player(n), table.slug);
+    for (const n of [2, 3, 4]) await joinTable(test.db, player(n), table.slug);
 
-		expect(await statusOf(table.id, id(2))).toBe('pending');
-		expect(await statusOf(table.id, id(4))).toBe('pending');
-	});
+    expect(await statusOf(table.id, id(2))).toBe('pending');
+    expect(await statusOf(table.id, id(4))).toBe('pending');
+  });
 
-	it('does not let a pending request block someone else from a confirmed seat', async () => {
-		const table = await makeTable({ joinMode: 'approval', capacity: 1 });
-		await joinTable(test.db, player(2), table.slug);
-		await joinTable(test.db, player(3), table.slug);
+  it('does not let a pending request block someone else from a confirmed seat', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 1 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
 
-		await approveRegistration(test.db, gm, table.slug, id(2));
+    await approveRegistration(test.db, gm, table.slug, id(2));
 
-		expect(await statusOf(table.id, id(2))).toBe('confirmed');
-		expect(await statusOf(table.id, id(3))).toBe('pending');
-	});
+    expect(await statusOf(table.id, id(2))).toBe('confirmed');
+    expect(await statusOf(table.id, id(3))).toBe('pending');
+  });
 });
 
 describe('joinTable rate limit', () => {
-	const now = new Date('2026-10-01T12:00:00Z');
-	const rateLimited = (playerId: string, type: string, count: number, ageInSeconds: number) =>
-		test.db.insert(events).values(
-			Array.from({ length: count }, () => ({
-				type,
-				actorId: playerId,
-				payload: {},
-				createdAt: new Date(now.getTime() - ageInSeconds * 1000)
-			}))
-		);
+  const now = new Date('2026-10-01T12:00:00Z');
+  const rateLimited = (playerId: string, type: string, count: number, ageInSeconds: number) =>
+    test.db.insert(events).values(
+      Array.from({ length: count }, () => ({
+        type,
+        actorId: playerId,
+        payload: {},
+        createdAt: new Date(now.getTime() - ageInSeconds * 1000),
+      })),
+    );
 
-	it('refuses the join past the limit, tells when to try again, and changes nothing', async () => {
-		const table = await makeTable();
-		await rateLimited(id(6), 'PlayerJoined', 20, 600);
-		const eventsBefore = (await test.db.select().from(events)).length;
+  it('refuses the join past the limit, tells when to try again, and changes nothing', async () => {
+    const table = await makeTable();
+    await rateLimited(id(6), 'PlayerJoined', 20, 600);
+    const eventsBefore = (await test.db.select().from(events)).length;
 
-		await expect(joinTable(test.db, player(6), table.slug, { now })).rejects.toMatchObject({
-			name: 'RateLimited',
-			retryAfterSeconds: 3000
-		});
+    await expect(joinTable(test.db, player(6), table.slug, { now })).rejects.toMatchObject({
+      name: 'RateLimited',
+      retryAfterSeconds: 3000,
+    });
 
-		expect(await statusOf(table.id, id(6))).toBeUndefined();
-		expect((await test.db.select().from(events)).length).toBe(eventsBefore);
-	});
+    expect(await statusOf(table.id, id(6))).toBeUndefined();
+    expect((await test.db.select().from(events)).length).toBe(eventsBefore);
+  });
 
-	it('counts requests to approval tables together with the seats taken', async () => {
-		const table = await makeTable();
-		await rateLimited(id(6), 'PlayerJoined', 12, 600);
-		await rateLimited(id(6), 'JoinRequested', 8, 300);
+  it('counts requests to approval tables together with the seats taken', async () => {
+    const table = await makeTable();
+    await rateLimited(id(6), 'PlayerJoined', 12, 600);
+    await rateLimited(id(6), 'JoinRequested', 8, 300);
 
-		await expect(joinTable(test.db, player(6), table.slug, { now })).rejects.toMatchObject({
-			name: 'RateLimited'
-		});
-	});
+    await expect(joinTable(test.db, player(6), table.slug, { now })).rejects.toMatchObject({
+      name: 'RateLimited',
+    });
+  });
 
-	it('lets the player in again once the oldest join is out of the window', async () => {
-		const table = await makeTable();
-		await rateLimited(id(6), 'PlayerJoined', 20, 3600);
+  it('lets the player in again once the oldest join is out of the window', async () => {
+    const table = await makeTable();
+    await rateLimited(id(6), 'PlayerJoined', 20, 3600);
 
-		await expect(joinTable(test.db, player(6), table.slug, { now })).resolves.toMatchObject({
-			status: 'confirmed'
-		});
-	});
+    await expect(joinTable(test.db, player(6), table.slug, { now })).resolves.toMatchObject({
+      status: 'confirmed',
+    });
+  });
 
-	it('does not count the joins of other players', async () => {
-		const table = await makeTable();
-		await rateLimited(id(6), 'PlayerJoined', 20, 600);
+  it('does not count the joins of other players', async () => {
+    const table = await makeTable();
+    await rateLimited(id(6), 'PlayerJoined', 20, 600);
 
-		await expect(joinTable(test.db, player(7), table.slug, { now })).resolves.toMatchObject({
-			status: 'confirmed'
-		});
-	});
+    await expect(joinTable(test.db, player(7), table.slug, { now })).resolves.toMatchObject({
+      status: 'confirmed',
+    });
+  });
 
-	it('answers a full table with TableFull, which is not a use of the limit', async () => {
-		const table = await makeTable({ capacity: 1 });
-		await joinTable(test.db, player(2), table.slug, { now });
-		await rateLimited(id(8), 'PlayerJoined', 19, 600);
+  it('answers a full table with TableFull, which is not a use of the limit', async () => {
+    const table = await makeTable({ capacity: 1 });
+    await joinTable(test.db, player(2), table.slug, { now });
+    await rateLimited(id(8), 'PlayerJoined', 19, 600);
 
-		await expect(joinTable(test.db, player(8), table.slug, { now })).rejects.toMatchObject({
-			name: 'TableFull'
-		});
-		const other = await makeTable();
-		await expect(joinTable(test.db, player(8), other.slug, { now })).resolves.toMatchObject({
-			status: 'confirmed'
-		});
-	});
+    await expect(joinTable(test.db, player(8), table.slug, { now })).rejects.toMatchObject({
+      name: 'TableFull',
+    });
+    const other = await makeTable();
+    await expect(joinTable(test.db, player(8), other.slug, { now })).resolves.toMatchObject({
+      status: 'confirmed',
+    });
+  });
 });
 
 describe('approveRegistration', () => {
-	it('confirms the seat and records JoinApproved', async () => {
-		const table = await makeTable({ joinMode: 'approval' });
-		await joinTable(test.db, player(2), table.slug);
+  it('confirms the seat and records JoinApproved', async () => {
+    const table = await makeTable({ joinMode: 'approval' });
+    await joinTable(test.db, player(2), table.slug);
 
-		const result = await approveRegistration(test.db, gm, table.slug, id(2));
+    const result = await approveRegistration(test.db, gm, table.slug, id(2));
 
-		expect(await statusOf(table.id, id(2))).toBe('confirmed');
-		expect(await eventTypes(result.eventIds)).toEqual(['JoinApproved']);
-	});
+    expect(await statusOf(table.id, id(2))).toBe('confirmed');
+    expect(await eventTypes(result.eventIds)).toEqual(['JoinApproved']);
+  });
 
-	it('fails with TableFull when no seat is left, and leaves the request pending', async () => {
-		const table = await makeTable({ joinMode: 'approval', capacity: 1 });
-		await joinTable(test.db, player(2), table.slug);
-		await joinTable(test.db, player(3), table.slug);
-		await approveRegistration(test.db, gm, table.slug, id(2));
+  it('fails with TableFull when no seat is left, and leaves the request pending', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 1 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
+    await approveRegistration(test.db, gm, table.slug, id(2));
 
-		await expect(approveRegistration(test.db, gm, table.slug, id(3))).rejects.toMatchObject({
-			name: 'TableFull'
-		});
-		expect(await statusOf(table.id, id(3))).toBe('pending');
-	});
+    await expect(approveRegistration(test.db, gm, table.slug, id(3))).rejects.toMatchObject({
+      name: 'TableFull',
+    });
+    expect(await statusOf(table.id, id(3))).toBe('pending');
+  });
 
-	it('lets an admin approve, and refuses another member', async () => {
-		const table = await makeTable({ joinMode: 'approval', capacity: 3 });
-		await joinTable(test.db, player(2), table.slug);
-		await joinTable(test.db, player(3), table.slug);
+  it('lets an admin approve, and refuses another member', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 3 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
 
-		await approveRegistration(test.db, admin, table.slug, id(2));
-		await expect(approveRegistration(test.db, player(4), table.slug, id(3))).rejects.toMatchObject({
-			name: 'Forbidden'
-		});
-		expect(await statusOf(table.id, id(3))).toBe('pending');
-	});
+    await approveRegistration(test.db, admin, table.slug, id(2));
+    await expect(approveRegistration(test.db, player(4), table.slug, id(3))).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
+    expect(await statusOf(table.id, id(3))).toBe('pending');
+  });
 
-	it('is NotFound when there is no pending request from that player', async () => {
-		const table = await makeTable({ joinMode: 'approval' });
+  it('is NotFound when there is no pending request from that player', async () => {
+    const table = await makeTable({ joinMode: 'approval' });
 
-		await expect(approveRegistration(test.db, gm, table.slug, id(2))).rejects.toMatchObject({
-			name: 'NotFound'
-		});
-	});
+    await expect(approveRegistration(test.db, gm, table.slug, id(2))).rejects.toMatchObject({
+      name: 'NotFound',
+    });
+  });
 });
 
 describe('declineRegistration', () => {
-	it('deletes the request and records JoinDeclined', async () => {
-		const table = await makeTable({ joinMode: 'approval' });
-		await joinTable(test.db, player(2), table.slug);
+  it('deletes the request and records JoinDeclined', async () => {
+    const table = await makeTable({ joinMode: 'approval' });
+    await joinTable(test.db, player(2), table.slug);
 
-		const result = await declineRegistration(test.db, gm, table.slug, id(2));
+    const result = await declineRegistration(test.db, gm, table.slug, id(2));
 
-		expect(await statusOf(table.id, id(2))).toBeUndefined();
-		expect(await eventTypes(result.eventIds)).toEqual(['JoinDeclined']);
-	});
+    expect(await statusOf(table.id, id(2))).toBeUndefined();
+    expect(await eventTypes(result.eventIds)).toEqual(['JoinDeclined']);
+  });
 
-	it('cannot decline a player who already has a confirmed seat, and refuses another member', async () => {
-		const table = await makeTable();
-		await joinTable(test.db, player(2), table.slug);
+  it('cannot decline a player who already has a confirmed seat, and refuses another member', async () => {
+    const table = await makeTable();
+    await joinTable(test.db, player(2), table.slug);
 
-		await expect(declineRegistration(test.db, gm, table.slug, id(2))).rejects.toMatchObject({
-			name: 'NotFound'
-		});
-		await expect(declineRegistration(test.db, player(3), table.slug, id(2))).rejects.toMatchObject({
-			name: 'Forbidden'
-		});
-	});
+    await expect(declineRegistration(test.db, gm, table.slug, id(2))).rejects.toMatchObject({
+      name: 'NotFound',
+    });
+    await expect(declineRegistration(test.db, player(3), table.slug, id(2))).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
+  });
 });
 
 describe('leaveTable', () => {
-	it('frees the seat and records PlayerLeft', async () => {
-		const table = await makeTable({ capacity: 1 });
-		await joinTable(test.db, player(2), table.slug);
+  it('frees the seat and records PlayerLeft', async () => {
+    const table = await makeTable({ capacity: 1 });
+    await joinTable(test.db, player(2), table.slug);
 
-		const result = await leaveTable(test.db, player(2), table.slug);
+    const result = await leaveTable(test.db, player(2), table.slug);
 
-		expect(await statusOf(table.id, id(2))).toBeUndefined();
-		expect(await eventTypes(result.eventIds)).toEqual(['PlayerLeft']);
-		expect((await joinTable(test.db, player(3), table.slug)).status).toBe('confirmed');
-	});
+    expect(await statusOf(table.id, id(2))).toBeUndefined();
+    expect(await eventTypes(result.eventIds)).toEqual(['PlayerLeft']);
+    expect((await joinTable(test.db, player(3), table.slug)).status).toBe('confirmed');
+  });
 
-	it('withdraws a pending request without an event, since no seat was involved', async () => {
-		const table = await makeTable({ joinMode: 'approval' });
-		await joinTable(test.db, player(2), table.slug);
+  it('withdraws a pending request without an event, since no seat was involved', async () => {
+    const table = await makeTable({ joinMode: 'approval' });
+    await joinTable(test.db, player(2), table.slug);
 
-		const result = await leaveTable(test.db, player(2), table.slug);
+    const result = await leaveTable(test.db, player(2), table.slug);
 
-		expect(await statusOf(table.id, id(2))).toBeUndefined();
-		expect(result.eventIds).toEqual([]);
-	});
+    expect(await statusOf(table.id, id(2))).toBeUndefined();
+    expect(result.eventIds).toEqual([]);
+  });
 
-	it('is NotFound when the player has no place there', async () => {
-		const table = await makeTable();
+  it('is NotFound when the player has no place there', async () => {
+    const table = await makeTable();
 
-		await expect(leaveTable(test.db, player(2), table.slug)).rejects.toMatchObject({
-			name: 'NotFound'
-		});
-	});
+    await expect(leaveTable(test.db, player(2), table.slug)).rejects.toMatchObject({
+      name: 'NotFound',
+    });
+  });
 });
 
 describe('removePlayer', () => {
-	it('deletes the registration and records PlayerLeft as removed', async () => {
-		const table = await makeTable();
-		await joinTable(test.db, player(2), table.slug);
+  it('deletes the registration and records PlayerLeft as removed', async () => {
+    const table = await makeTable();
+    await joinTable(test.db, player(2), table.slug);
 
-		const result = await removePlayer(test.db, gm, table.slug, id(2));
+    const result = await removePlayer(test.db, gm, table.slug, id(2));
 
-		expect(await statusOf(table.id, id(2))).toBeUndefined();
-		const [event] = (await test.db.select().from(events)).filter(
-			(e) => e.id === result.eventIds[0]
-		);
-		expect(event).toMatchObject({
-			type: 'PlayerLeft',
-			actorId: gm.id,
-			payload: { playerId: id(2), reason: 'removed' }
-		});
-	});
+    expect(await statusOf(table.id, id(2))).toBeUndefined();
+    const [event] = (await test.db.select().from(events)).filter(
+      (e) => e.id === result.eventIds[0],
+    );
+    expect(event).toMatchObject({
+      type: 'PlayerLeft',
+      actorId: gm.id,
+      payload: { playerId: id(2), reason: 'removed' },
+    });
+  });
 
-	it('lets an admin remove, and refuses another member and the player themselves', async () => {
-		const table = await makeTable({ capacity: 3 });
-		await joinTable(test.db, player(2), table.slug);
-		await joinTable(test.db, player(3), table.slug);
+  it('lets an admin remove, and refuses another member and the player themselves', async () => {
+    const table = await makeTable({ capacity: 3 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
 
-		await removePlayer(test.db, admin, table.slug, id(2));
-		await expect(removePlayer(test.db, player(4), table.slug, id(3))).rejects.toMatchObject({
-			name: 'Forbidden'
-		});
-		await expect(removePlayer(test.db, player(3), table.slug, id(3))).rejects.toMatchObject({
-			name: 'Forbidden'
-		});
-		expect(await statusOf(table.id, id(3))).toBe('confirmed');
-	});
+    await removePlayer(test.db, admin, table.slug, id(2));
+    await expect(removePlayer(test.db, player(4), table.slug, id(3))).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
+    await expect(removePlayer(test.db, player(3), table.slug, id(3))).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
+    expect(await statusOf(table.id, id(3))).toBe('confirmed');
+  });
 });
 
 describe('listRegistrations', () => {
-	it('gives the GM the players and the requests, with names', async () => {
-		const table = await makeTable({ joinMode: 'approval', capacity: 3 });
-		await joinTable(test.db, player(2), table.slug);
-		await joinTable(test.db, player(3), table.slug);
-		await approveRegistration(test.db, gm, table.slug, id(2));
+  it('gives the GM the players and the requests, with names', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 3 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
+    await approveRegistration(test.db, gm, table.slug, id(2));
 
-		const list = await listRegistrations(test.db, gm, table.slug);
+    const list = await listRegistrations(test.db, gm, table.slug);
 
-		expect(list).toEqual([
-			{ playerId: id(2), username: 'p2', status: 'confirmed' },
-			{ playerId: id(3), username: 'p3', status: 'pending' }
-		]);
-	});
+    expect(list).toEqual([
+      { playerId: id(2), username: 'p2', status: 'confirmed' },
+      { playerId: id(3), username: 'p3', status: 'pending' },
+    ]);
+  });
 
-	it('is Forbidden for anyone who is not the GM or an admin: names are not public', async () => {
-		const table = await makeTable();
+  it('is Forbidden for anyone who is not the GM or an admin: names are not public', async () => {
+    const table = await makeTable();
 
-		await expect(listRegistrations(test.db, player(2), table.slug)).rejects.toMatchObject({
-			name: 'Forbidden'
-		});
-	});
+    await expect(listRegistrations(test.db, player(2), table.slug)).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
+  });
 });

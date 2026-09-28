@@ -11,83 +11,83 @@ afterAll(() => test.close());
 
 const id = (n: number) => `00000000-0000-4000-8000-0000000001${String(n).padStart(2, '0')}`;
 const user = (n: number, metadata: Record<string, unknown> = {}) => ({
-	id: id(n),
-	user_metadata: metadata
+  id: id(n),
+  user_metadata: metadata,
 });
 
 describe('ensureProfile', () => {
-	it('creates a member profile from the provider name and picture on first login', async () => {
-		const profile = await ensureProfile(
-			test.db,
-			user(1, { full_name: 'Ana Souza', avatar_url: 'https://cdn.example/ana.png' })
-		);
+  it('creates a member profile from the provider name and picture on first login', async () => {
+    const profile = await ensureProfile(
+      test.db,
+      user(1, { full_name: 'Ana Souza', avatar_url: 'https://cdn.example/ana.png' }),
+    );
 
-		expect(profile).toMatchObject({
-			id: id(1),
-			name: 'Ana Souza',
-			username: null,
-			avatarUrl: 'https://cdn.example/ana.png',
-			role: 'member',
-			status: 'active'
-		});
-	});
+    expect(profile).toMatchObject({
+      id: id(1),
+      name: 'Ana Souza',
+      username: null,
+      avatarUrl: 'https://cdn.example/ana.png',
+      role: 'member',
+      status: 'active',
+    });
+  });
 
-	it.each([
-		[11, 'name', { name: 'Bruno' }, 'Bruno'],
-		[12, 'user_name', { user_name: 'bruno-gh' }, 'bruno-gh']
-	])('pre-fills the name from %s', async (n, _what, metadata, expected) => {
-		const profile = await ensureProfile(test.db, user(n, metadata));
+  it.each([
+    [11, 'name', { name: 'Bruno' }, 'Bruno'],
+    [12, 'user_name', { user_name: 'bruno-gh' }, 'bruno-gh'],
+  ])('pre-fills the name from %s', async (n, _what, metadata, expected) => {
+    const profile = await ensureProfile(test.db, user(n, metadata));
 
-		expect(profile.name).toBe(expected);
-	});
+    expect(profile.name).toBe(expected);
+  });
 
-	it.each([
-		[13, 'avatar_url', { avatar_url: 'https://cdn.example/a.png' }, 'https://cdn.example/a.png'],
-		[14, 'picture (Google)', { picture: 'https://cdn.example/c.png' }, 'https://cdn.example/c.png'],
-		[15, 'anything that is not https', { avatar_url: 'javascript:alert(1)' }, null]
-	])('takes the avatar from %s', async (n, _what, metadata, expected) => {
-		const profile = await ensureProfile(test.db, user(n, metadata));
+  it.each([
+    [13, 'avatar_url', { avatar_url: 'https://cdn.example/a.png' }, 'https://cdn.example/a.png'],
+    [14, 'picture (Google)', { picture: 'https://cdn.example/c.png' }, 'https://cdn.example/c.png'],
+    [15, 'anything that is not https', { avatar_url: 'javascript:alert(1)' }, null],
+  ])('takes the avatar from %s', async (n, _what, metadata, expected) => {
+    const profile = await ensureProfile(test.db, user(n, metadata));
 
-		expect(profile.avatarUrl).toBe(expected);
-	});
+    expect(profile.avatarUrl).toBe(expected);
+  });
 
-	it('does not derive a name from the email address, which is personal data', async () => {
-		const profile = await ensureProfile(test.db, user(2, { email: 'ana@example.com' }));
+  it('does not derive a name from the email address, which is personal data', async () => {
+    const profile = await ensureProfile(test.db, user(2, { email: 'ana@example.com' }));
 
-		expect(profile.name).toBeNull();
-		expect(JSON.stringify(profile)).not.toContain('ana@example.com');
-	});
+    expect(profile.name).toBeNull();
+    expect(JSON.stringify(profile)).not.toContain('ana@example.com');
+  });
 
-	it('trims and shortens an absurd name', async () => {
-		const profile = await ensureProfile(test.db, user(3, { name: `  ${'x'.repeat(200)}  ` }));
+  it('trims and shortens an absurd name', async () => {
+    const profile = await ensureProfile(test.db, user(3, { name: `  ${'x'.repeat(200)}  ` }));
 
-		expect(profile.name).toBe('x'.repeat(80));
-	});
+    expect(profile.name).toBe('x'.repeat(80));
+  });
 
-	it('leaves an existing profile untouched on later logins, role included', async () => {
-		await ensureProfile(test.db, user(4, { name: 'Original' }));
-		await test.db
-			.update(profiles)
-			.set({ role: 'admin' })
-			.where(eq(profiles.id, id(4)));
+  it('leaves an existing profile untouched on later logins, role included', async () => {
+    await ensureProfile(test.db, user(4, { name: 'Original' }));
+    await test.db
+      .update(profiles)
+      .set({ role: 'admin' })
+      .where(eq(profiles.id, id(4)));
 
-		const again = await ensureProfile(test.db, user(4, { name: 'Renamed at the provider' }));
+    const again = await ensureProfile(test.db, user(4, { name: 'Renamed at the provider' }));
 
-		expect(again).toMatchObject({ name: 'Original', role: 'admin' });
-	});
+    expect(again).toMatchObject({ name: 'Original', role: 'admin' });
+  });
 
-	it('creates one profile even when two first logins race', async () => {
-		const [a, b] = await Promise.all([
-			ensureProfile(test.db, user(5, { name: 'Dani' })),
-			ensureProfile(test.db, user(5, { name: 'Dani' }))
-		]);
+  it('creates one profile even when two first logins race', async () => {
+    const [a, b] = await Promise.all([
+      ensureProfile(test.db, user(5, { name: 'Dani' })),
+      ensureProfile(test.db, user(5, { name: 'Dani' })),
+    ]);
 
-		expect(a.id).toBe(b.id);
-		expect(
-			await test.db
-				.select()
-				.from(profiles)
-				.where(eq(profiles.id, id(5)))
-		).toHaveLength(1);
-	});
+    expect(a.id).toBe(b.id);
+    expect(
+      await test.db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.id, id(5))),
+    ).toHaveLength(1);
+  });
 });

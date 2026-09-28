@@ -13,20 +13,20 @@ import { migrationPlan } from '../src/lib/server/db/deploy-migrations.ts';
 const plan = migrationPlan(process.env);
 
 if (!plan.run) {
-	const line = `migrations: skipped (${plan.reason})`;
-	if (plan.warn) console.warn(`⚠️  ${line}. Run \`pnpm db:migrate\` against Supabase by hand.`);
-	else console.log(line);
-	process.exit(0);
+  const line = `migrations: skipped (${plan.reason})`;
+  if (plan.warn) console.warn(`⚠️  ${line}. Run \`pnpm db:migrate\` against Supabase by hand.`);
+  else console.log(line);
+  process.exit(0);
 }
 
 // Where it connects, for the log: user, host, port and database, never the password.
 const target = (() => {
-	try {
-		const url = new URL(plan.url);
-		return `${url.username}@${url.hostname}:${url.port || 5432}${url.pathname}`;
-	} catch {
-		return 'an unparseable MIGRATE_DATABASE_URL';
-	}
+  try {
+    const url = new URL(plan.url);
+    return `${url.username}@${url.hostname}:${url.port || 5432}${url.pathname}`;
+  } catch {
+    return 'an unparseable MIGRATE_DATABASE_URL';
+  }
 })();
 
 // Supabase signs its database certificates with its own root CA, which is not in Node's trust
@@ -40,21 +40,21 @@ url.searchParams.delete('sslmode');
 
 console.log(`migrations: applying the pending ones to production (${target})`);
 const sql = postgres(url.toString(), {
-	max: 1,
-	onnotice: () => {},
-	connect_timeout: 15,
-	ssl: { ca, rejectUnauthorized: true }
+  max: 1,
+  onnotice: () => {},
+  connect_timeout: 15,
+  ssl: { ca, rejectUnauthorized: true },
 });
 try {
-	await migrate(drizzle(sql), { migrationsFolder: 'drizzle' });
-	console.log('migrations: done');
+  await migrate(drizzle(sql), { migrationsFolder: 'drizzle' });
+  console.log('migrations: done');
 } catch (error) {
-	const { message, cause } = error as Error & { cause?: Error & { code?: string } };
-	console.error(`migrations: FAILED against ${target}`);
-	console.error(`  ${message}`);
-	if (cause) console.error(`  cause: ${cause.code ? `[${cause.code}] ` : ''}${cause.message}`);
-	// A failed migration stops the build, so the new code is not deployed onto an old schema.
-	process.exitCode = 1;
+  const { message, cause } = error as Error & { cause?: Error & { code?: string } };
+  console.error(`migrations: FAILED against ${target}`);
+  console.error(`  ${message}`);
+  if (cause) console.error(`  cause: ${cause.code ? `[${cause.code}] ` : ''}${cause.message}`);
+  // A failed migration stops the build, so the new code is not deployed onto an old schema.
+  process.exitCode = 1;
 } finally {
-	await sql.end({ timeout: 5 });
+  await sql.end({ timeout: 5 });
 }

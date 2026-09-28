@@ -11,11 +11,11 @@ import { dispatchEvent } from '../events/dispatcher';
 import { handlersFor } from '../events/handlers';
 
 type Event = {
-	locals: App.Locals;
-	url: URL;
-	request: Request;
-	platform?: App.Platform;
-	setHeaders?: (headers: Record<string, string>) => void;
+  locals: App.Locals;
+  url: URL;
+  request: Request;
+  platform?: App.Platform;
+  setHeaders?: (headers: Record<string, string>) => void;
 };
 
 /**
@@ -25,38 +25,38 @@ type Event = {
  * permission) becomes a form failure the page can show; anything else is a bug and surfaces.
  */
 export async function runRegistrationAction<T extends Record<string, unknown>>(
-	event: Event,
-	schema: z.ZodType<T>,
-	run: (db: AnyDb, actor: Actor | null, data: T) => Promise<{ eventIds: string[] }>
+  event: Event,
+  schema: z.ZodType<T>,
+  run: (db: AnyDb, actor: Actor | null, data: T) => Promise<{ eventIds: string[] }>,
 ) {
-	const { locals, url, request } = event;
-	// The page itself, not the `?/join` action address, which only makes sense as a POST.
-	await requireUser(locals, new URL(url.pathname, url));
-	if (!locals.db) error(503, 'Database not configured');
+  const { locals, url, request } = event;
+  // The page itself, not the `?/join` action address, which only makes sense as a POST.
+  await requireUser(locals, new URL(url.pathname, url));
+  if (!locals.db) error(503, 'Database not configured');
 
-	const form = await superValidate(request, zod4(schema));
-	if (!form.valid) return message(form, { code: 'invalid' }, { status: 400 });
+  const form = await superValidate(request, zod4(schema));
+  if (!form.valid) return message(form, { code: 'invalid' }, { status: 400 });
 
-	try {
-		const { eventIds } = await run(locals.db, await locals.getProfile(), form.data as T);
-		for (const id of eventIds)
-			locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), id));
-	} catch (e) {
-		if (e instanceof RateLimited) {
-			event.setHeaders?.({ 'Retry-After': String(e.retryAfterSeconds) });
-		}
-		const failure = failFrom(e);
-		return message(
-			form,
-			{
-				code: failure.data.error,
-				field: 'field' in failure.data ? failure.data.field : undefined,
-				retryAfter: 'retryAfter' in failure.data ? failure.data.retryAfter : undefined
-			},
-			{ status: failure.status as ErrorStatus }
-		);
-	}
+  try {
+    const { eventIds } = await run(locals.db, await locals.getProfile(), form.data as T);
+    for (const id of eventIds)
+      locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), id));
+  } catch (e) {
+    if (e instanceof RateLimited) {
+      event.setHeaders?.({ 'Retry-After': String(e.retryAfterSeconds) });
+    }
+    const failure = failFrom(e);
+    return message(
+      form,
+      {
+        code: failure.data.error,
+        field: 'field' in failure.data ? failure.data.field : undefined,
+        retryAfter: 'retryAfter' in failure.data ? failure.data.retryAfter : undefined,
+      },
+      { status: failure.status as ErrorStatus },
+    );
+  }
 
-	// Back to where the form was: the table page, or the dashboard when it names itself in `next`.
-	redirect(303, safeNext(String((form.data as Record<string, unknown>).next ?? ''), url.pathname));
+  // Back to where the form was: the table page, or the dashboard when it names itself in `next`.
+  redirect(303, safeNext(String((form.data as Record<string, unknown>).next ?? ''), url.pathname));
 }

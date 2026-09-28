@@ -7,4 +7,4 @@ import { localizeHref, type Locale } from '$lib/paraglide/runtime';
  * The cast is needed because localized paths (`/en/...`) are not route ids; `reroute` maps them back.
  */
 export const localizedHref = (pathname: string, locale: Locale) =>
-	resolve(localizeHref(pathname, { locale }) as Pathname);
+  resolve(localizeHref(pathname, { locale }) as Pathname);

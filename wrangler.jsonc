@@ -1,55 +1,55 @@
 {
-	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "mesaaberta",
-	"compatibility_date": "2026-09-19",
-	// `nodejs_compat` (which includes `nodejs_als`) is what postgres.js needs to run in a Worker.
-	"compatibility_flags": ["nodejs_compat"],
-	"main": ".svelte-kit/cloudflare/_worker.js",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": ".svelte-kit/cloudflare"
-	},
-	// Public by design: the GrowthBook client key only allows reading feature flags, and the Supabase
-	// URL and publishable key only identify the project (every visitor's browser is sent them anyway).
-	// They live here, not only on a `wrangler deploy --var` command, because a Git-triggered deploy
-	// replaces any variable that is not in this file. The e2e tests blank the two Supabase ones (see
-	// `preview:e2e`) so they keep covering the app before login is configured.
-	"vars": {
-		"GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
-		"GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
-		"RESEND_FROM": "no-reply@mesaaberta.app",
-		"SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl",
-		"SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co"
-	},
-	// The database, through Hyperdrive (see "Database" in the README). The id is the Hyperdrive config,
-	// not a secret. `localConnectionString` is what `wrangler dev`, `vite dev` and CI use instead:
-	// the Postgres from docker-compose.yml (`pnpm db:up`). It is ignored when deployed.
-	"hyperdrive": [
-		{
-			"binding": "HYPERDRIVE",
-			"id": "84a4286b818c4f84a360c4728a3ee79c",
-			"localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta"
-		}
-	],
-	// Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
-	// `pnpm build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
-	"triggers": { "crons": ["*/5 * * * *"] },
-	"workers_dev": true,
-	"preview_urls": true,
-	"observability": {
-		"enabled": true,
-		"head_sampling_rate": 1,
-		"redact_query_string": false,
-		"logs": {
-			"enabled": true,
-			"head_sampling_rate": 1,
-			"invocation_logs": true,
-			"persist": true
-		},
-		"traces": {
-			"enabled": true,
-			"head_sampling_rate": 1,
-			"persist": true
-		}
-	}
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mesaaberta",
+  "compatibility_date": "2026-09-19",
+  // `nodejs_compat` (which includes `nodejs_als`) is what postgres.js needs to run in a Worker.
+  "compatibility_flags": ["nodejs_compat"],
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare",
+  },
+  // Public by design: the GrowthBook client key only allows reading feature flags, and the Supabase
+  // URL and publishable key only identify the project (every visitor's browser is sent them anyway).
+  // They live here, not only on a `wrangler deploy --var` command, because a Git-triggered deploy
+  // replaces any variable that is not in this file. The e2e tests blank the two Supabase ones (see
+  // `preview:e2e`) so they keep covering the app before login is configured.
+  "vars": {
+    "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
+    "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
+    "RESEND_FROM": "no-reply@mesaaberta.app",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl",
+    "SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
+  },
+  // The database, through Hyperdrive (see "Database" in the README). The id is the Hyperdrive config,
+  // not a secret. `localConnectionString` is what `wrangler dev`, `vite dev` and CI use instead:
+  // the Postgres from docker-compose.yml (`pnpm db:up`). It is ignored when deployed.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "84a4286b818c4f84a360c4728a3ee79c",
+      "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
+    },
+  ],
+  // Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
+  // `pnpm build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "redact_query_string": false,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true,
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+    },
+  },
 }

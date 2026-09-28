@@ -7,6 +7,6 @@ import { inviteHandler, type InviteEnv } from './invites';
  * request or Cron environment rather than imported as a process-global client.
  */
 export function handlersFor(env: InviteEnv | undefined): readonly Handler[] {
-	const handler = inviteHandler(env);
-	return handler ? [handler] : [];
+  const handler = inviteHandler(env);
+  return handler ? [handler] : [];
 }

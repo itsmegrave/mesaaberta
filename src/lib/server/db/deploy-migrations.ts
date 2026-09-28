@@ -5,20 +5,20 @@
  * production database. See the README, "Deploying".
  */
 export type MigrationPlan =
-	{ run: true; url: string } | { run: false; reason: string; warn?: boolean };
+  { run: true; url: string } | { run: false; reason: string; warn?: boolean };
 
 export const PRODUCTION_BRANCH = 'main';
 
 export function migrationPlan(env: Record<string, string | undefined>): MigrationPlan {
-	if (env.WORKERS_CI !== '1') return { run: false, reason: 'not a Cloudflare build' };
+  if (env.WORKERS_CI !== '1') return { run: false, reason: 'not a Cloudflare build' };
 
-	const branch = env.WORKERS_CI_BRANCH ?? '';
-	if (branch !== PRODUCTION_BRANCH) {
-		return { run: false, reason: `branch ${branch} is not the production branch` };
-	}
+  const branch = env.WORKERS_CI_BRANCH ?? '';
+  if (branch !== PRODUCTION_BRANCH) {
+    return { run: false, reason: `branch ${branch} is not the production branch` };
+  }
 
-	const url = env.MIGRATE_DATABASE_URL;
-	if (!url) return { run: false, reason: 'MIGRATE_DATABASE_URL is not set', warn: true };
+  const url = env.MIGRATE_DATABASE_URL;
+  if (!url) return { run: false, reason: 'MIGRATE_DATABASE_URL is not set', warn: true };
 
-	return { run: true, url };
+  return { run: true, url };
 }

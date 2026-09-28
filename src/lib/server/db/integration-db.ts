@@ -8,13 +8,13 @@ import * as schema from './schema';
  * The migrations must already be applied (`pnpm db:up && pnpm db:migrate`).
  */
 export function openIntegrationDb() {
-	const url = process.env.DATABASE_URL;
-	if (!url) {
-		throw new Error(
-			'The integration tests need a real Postgres: set DATABASE_URL (see .dev.vars.example), then run `pnpm db:up && pnpm db:migrate`.'
-		);
-	}
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      'The integration tests need a real Postgres: set DATABASE_URL (see .dev.vars.example), then run `pnpm db:up && pnpm db:migrate`.',
+    );
+  }
 
-	const client = postgres(url, { max: 10, onnotice: () => {} });
-	return { db: drizzle(client, { schema }), close: () => client.end() };
+  const client = postgres(url, { max: 10, onnotice: () => {} });
+  return { db: drizzle(client, { schema }), close: () => client.end() };
 }

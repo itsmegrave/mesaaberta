@@ -2,26 +2,26 @@ import { expect, test } from '@playwright/test';
 import { sidewaysOverflow } from './support/overflow';
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+  await page.goto('/');
 });
 
 test('has a document title and exactly one top-level heading', async ({ page }) => {
-	await expect(page).toHaveTitle(/.+/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page).toHaveTitle(/.+/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 });
 
 test('does not scroll horizontally', async ({ page }) => {
-	expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+  expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
 });
 
 test('skip link is the first tab stop and moves to the main region', async ({ page }) => {
-	await page.keyboard.press('Tab');
-	const skipLink = page.getByRole('link', { name: /pular/i });
-	await expect(skipLink).toBeFocused();
-	await expect(skipLink).toBeInViewport();
+  await page.keyboard.press('Tab');
+  const skipLink = page.getByRole('link', { name: /pular/i });
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeInViewport();
 
-	await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
 
-	await expect(page).toHaveURL(/#main$/);
-	await expect(page.getByRole('main')).toHaveAttribute('id', 'main');
+  await expect(page).toHaveURL(/#main$/);
+  await expect(page.getByRole('main')).toHaveAttribute('id', 'main');
 });

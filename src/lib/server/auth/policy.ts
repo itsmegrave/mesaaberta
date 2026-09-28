@@ -13,37 +13,37 @@ export type Actor = Pick<typeof profiles.$inferSelect, 'id' | 'role' | 'status'>
 
 /** What each action needs to know about the thing it acts on. Add the next action here. */
 type Resources = {
-	'admin:access': undefined;
-	'table:create': undefined;
-	'table:edit': { gmId: string };
-	'table:disable': { gmId: string };
-	/** The facts a join depends on, read inside the capacity transaction. */
-	'table:join': {
-		gmId: string;
-		tableStatus: 'active' | 'disabled';
-		seatsLeft: number;
-		alreadyRegistered: boolean;
-	};
-	/** Rating a table and its GM: needs a confirmed seat and a first session that has ended. */
-	'table:rate': {
-		gmId: string;
-		registration: 'pending' | 'confirmed' | null;
-		firstSessionEnded: boolean;
-	};
-	/** Approve or decline a request, or remove a player. */
-	'registration:manage': { gmId: string };
-	/** A player leaving their own registration. */
-	'registration:leave': { playerId: string };
+  'admin:access': undefined;
+  'table:create': undefined;
+  'table:edit': { gmId: string };
+  'table:disable': { gmId: string };
+  /** The facts a join depends on, read inside the capacity transaction. */
+  'table:join': {
+    gmId: string;
+    tableStatus: 'active' | 'disabled';
+    seatsLeft: number;
+    alreadyRegistered: boolean;
+  };
+  /** Rating a table and its GM: needs a confirmed seat and a first session that has ended. */
+  'table:rate': {
+    gmId: string;
+    registration: 'pending' | 'confirmed' | null;
+    firstSessionEnded: boolean;
+  };
+  /** Approve or decline a request, or remove a player. */
+  'registration:manage': { gmId: string };
+  /** A player leaving their own registration. */
+  'registration:leave': { playerId: string };
 };
 
 export type Action = keyof Resources;
 
 type ResourceArgs<A extends Action> = Resources[A] extends undefined
-	? []
-	: [resource: Resources[A]];
+  ? []
+  : [resource: Resources[A]];
 
 const isGmOrAdmin = (actor: Actor, table: Resources['table:edit'] | undefined) =>
-	table !== undefined && (actor.role === 'admin' || actor.id === table.gmId);
+  table !== undefined && (actor.role === 'admin' || actor.id === table.gmId);
 
 type JoinFacts = Resources['table:join'];
 
@@ -53,15 +53,15 @@ type JoinFacts = Resources['table:join'];
  * who may ever join, whether the table takes players, a registration already there, a free seat.
  */
 export function joinBlocker(
-	actor: Actor | null,
-	facts: JoinFacts | undefined
+  actor: Actor | null,
+  facts: JoinFacts | undefined,
 ): 'forbidden' | 'inactive' | 'registered' | 'full' | null {
-	if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
-	if (facts.tableStatus !== 'active') return 'inactive';
-	if (facts.alreadyRegistered) return 'registered';
-	if (facts.seatsLeft <= 0) return 'full';
+  if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
+  if (facts.tableStatus !== 'active') return 'inactive';
+  if (facts.alreadyRegistered) return 'registered';
+  if (facts.seatsLeft <= 0) return 'full';
 
-	return null;
+  return null;
 }
 
 /**
@@ -69,45 +69,45 @@ export function joinBlocker(
  * first session has ended (you rate what you played).
  */
 export function rateBlocker(
-	actor: Actor | null,
-	facts: Resources['table:rate'] | undefined
+  actor: Actor | null,
+  facts: Resources['table:rate'] | undefined,
 ): 'forbidden' | 'not_registered' | 'too_early' | null {
-	if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
-	if (facts.registration !== 'confirmed') return 'not_registered';
-	if (!facts.firstSessionEnded) return 'too_early';
+  if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
+  if (facts.registration !== 'confirmed') return 'not_registered';
+  if (!facts.firstSessionEnded) return 'too_early';
 
-	return null;
+  return null;
 }
 
 const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean } = {
-	'admin:access': (actor) => actor.role === 'admin',
-	// Any signed-in user can open a table and becomes its GM.
-	'table:create': () => true,
-	'table:edit': isGmOrAdmin,
-	'table:disable': isGmOrAdmin,
-	'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
-	'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,
-	'registration:manage': isGmOrAdmin,
-	'registration:leave': (actor, registration) =>
-		registration !== undefined && actor.id === registration.playerId
+  'admin:access': (actor) => actor.role === 'admin',
+  // Any signed-in user can open a table and becomes its GM.
+  'table:create': () => true,
+  'table:edit': isGmOrAdmin,
+  'table:disable': isGmOrAdmin,
+  'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
+  'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,
+  'registration:manage': isGmOrAdmin,
+  'registration:leave': (actor, registration) =>
+    registration !== undefined && actor.id === registration.playerId,
 };
 
 export function can<A extends Action>(
-	actor: Actor | null,
-	action: A,
-	...[resource]: ResourceArgs<A>
+  actor: Actor | null,
+  action: A,
+  ...[resource]: ResourceArgs<A>
 ): boolean {
-	if (!actor || actor.status !== 'active') return false;
-	if (!Object.hasOwn(rules, action)) return false;
+  if (!actor || actor.status !== 'active') return false;
+  if (!Object.hasOwn(rules, action)) return false;
 
-	return rules[action](actor, resource as Resources[A]);
+  return rules[action](actor, resource as Resources[A]);
 }
 
 /** `can`, as an exception: throws `Forbidden` (see `failFrom`) when the action is not allowed. */
 export function authorize<A extends Action>(
-	actor: Actor | null,
-	action: A,
-	...args: ResourceArgs<A>
+  actor: Actor | null,
+  action: A,
+  ...args: ResourceArgs<A>
 ): void {
-	if (!can(actor, action, ...args)) throw new Forbidden(action);
+  if (!can(actor, action, ...args)) throw new Forbidden(action);
 }

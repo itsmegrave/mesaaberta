@@ -8,9 +8,9 @@ const worker = `${dir}/_worker.js`;
 const alreadyWrapped = readFileSync(worker, 'utf8').includes('Cron Trigger');
 
 if (alreadyWrapped) {
-	console.log('Worker already wrapped.');
+  console.log('Worker already wrapped.');
 } else {
-	renameSync(worker, `${dir}/_sveltekit.js`);
-	copyFileSync('scripts/worker-template.js', worker);
-	console.log('Worker wrapped with the scheduled handler.');
+  renameSync(worker, `${dir}/_sveltekit.js`);
+  copyFileSync('scripts/worker-template.js', worker);
+  console.log('Worker wrapped with the scheduled handler.');
 }

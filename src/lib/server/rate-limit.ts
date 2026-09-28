@@ -14,27 +14,27 @@ import type { EventType } from './events/types';
  * To limit another action (reports, say), record an event for it and add a named limit here.
  */
 export type RateLimit = {
-	/** The event types that use the limit up, counted together. */
-	events: readonly EventType[];
-	/** How many are allowed in any `windowSeconds`. */
-	max: number;
-	windowSeconds: number;
+  /** The event types that use the limit up, counted together. */
+  events: readonly EventType[];
+  /** How many are allowed in any `windowSeconds`. */
+  max: number;
+  windowSeconds: number;
 };
 
 // Opening a table is rare for a real GM (a campaign is one table) and one abuse would flood the
 // listing, so this is tight: 5 in an hour still leaves room for a GM setting up a small season.
 export const TABLE_CREATION_LIMIT = {
-	events: ['TableCreated'],
-	max: 5,
-	windowSeconds: 3600
+  events: ['TableCreated'],
+  max: 5,
+  windowSeconds: 3600,
 } as const satisfies RateLimit;
 
 // Someone browsing may ask for several tables in one sitting, and a request to an approval table
 // counts as much as a seat. 20 in an hour is far above that and far below a script.
 export const JOIN_LIMIT = {
-	events: ['PlayerJoined', 'JoinRequested'],
-	max: 20,
-	windowSeconds: 3600
+  events: ['PlayerJoined', 'JoinRequested'],
+  max: 20,
+  windowSeconds: 3600,
 } as const satisfies RateLimit;
 
 /**
@@ -46,30 +46,30 @@ export const JOIN_LIMIT = {
  * requests can both pass it. Use `enforceRateLimit` where the event is written.
  */
 export async function checkRateLimit(
-	db: AnyDb,
-	actorId: string,
-	limit: RateLimit,
-	now: Date = new Date()
+  db: AnyDb,
+  actorId: string,
+  limit: RateLimit,
+  now: Date = new Date(),
 ): Promise<void> {
-	const windowStart = new Date(now.getTime() - limit.windowSeconds * 1000);
-	// The newest `max` events in the window. If there are that many, the oldest of them is the one
-	// that must age out before the person is back under the limit.
-	const used = await db
-		.select({ createdAt: events.createdAt })
-		.from(events)
-		.where(
-			and(
-				eq(events.actorId, actorId),
-				inArray(events.type, [...limit.events]),
-				gt(events.createdAt, windowStart)
-			)
-		)
-		.orderBy(desc(events.createdAt))
-		.limit(limit.max);
-	if (used.length < limit.max) return;
+  const windowStart = new Date(now.getTime() - limit.windowSeconds * 1000);
+  // The newest `max` events in the window. If there are that many, the oldest of them is the one
+  // that must age out before the person is back under the limit.
+  const used = await db
+    .select({ createdAt: events.createdAt })
+    .from(events)
+    .where(
+      and(
+        eq(events.actorId, actorId),
+        inArray(events.type, [...limit.events]),
+        gt(events.createdAt, windowStart),
+      ),
+    )
+    .orderBy(desc(events.createdAt))
+    .limit(limit.max);
+  if (used.length < limit.max) return;
 
-	const frees = used[used.length - 1].createdAt.getTime() + limit.windowSeconds * 1000;
-	throw new RateLimited(Math.max(1, Math.ceil((frees - now.getTime()) / 1000)));
+  const frees = used[used.length - 1].createdAt.getTime() + limit.windowSeconds * 1000;
+  throw new RateLimited(Math.max(1, Math.ceil((frees - now.getTime()) / 1000)));
 }
 
 /**
@@ -78,14 +78,14 @@ export async function checkRateLimit(
  * requests cannot both read "one left" and both go through.
  */
 export async function enforceRateLimit(
-	db: AnyDb,
-	actorId: string,
-	limit: RateLimit,
-	now: Date = new Date()
+  db: AnyDb,
+  actorId: string,
+  limit: RateLimit,
+  now: Date = new Date(),
 ): Promise<void> {
-	await db.execute(
-		sql`select pg_advisory_xact_lock(hashtextextended(${`rate-limit:${actorId}`}, 0))`
-	);
+  await db.execute(
+    sql`select pg_advisory_xact_lock(hashtextextended(${`rate-limit:${actorId}`}, 0))`,
+  );
 
-	await checkRateLimit(db, actorId, limit, now);
+  await checkRateLimit(db, actorId, limit, now);
 }

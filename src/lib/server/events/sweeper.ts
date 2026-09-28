@@ -12,20 +12,20 @@ type Deps = { open?: typeof createDb; handlers: readonly Handler[]; log: Logger 
  * without a database. Returns how many events it tried.
  */
 export async function runSweeper(
-	env: DatabaseEnv,
-	{ open = createDb, handlers, log }: Deps
+  env: DatabaseEnv,
+  { open = createDb, handlers, log }: Deps,
 ): Promise<number> {
-	const connectionString = connectionStringFrom(env);
-	if (!connectionString) return 0;
+  const connectionString = connectionStringFrom(env);
+  if (!connectionString) return 0;
 
-	const { db, close } = open(connectionString);
-	try {
-		const swept = await sweepEvents(db, handlers);
-		if (swept > 0) log.info('event sweep', { swept });
-		const pruned = await pruneEvents(db);
-		if (pruned > 0) log.info('event prune', { pruned });
-		return swept;
-	} finally {
-		await close();
-	}
+  const { db, close } = open(connectionString);
+  try {
+    const swept = await sweepEvents(db, handlers);
+    if (swept > 0) log.info('event sweep', { swept });
+    const pruned = await pruneEvents(db);
+    if (pruned > 0) log.info('event prune', { pruned });
+    return swept;
+  } finally {
+    await close();
+  }
 }

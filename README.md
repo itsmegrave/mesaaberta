@@ -126,8 +126,8 @@ In server code, ask who is signed in through `locals.getUser()`. It asks Supabas
 import { requireUser } from '$lib/server/auth/guard';
 
 export const load = async ({ locals, url }) => {
-	const user = await requireUser(locals, url); // anonymous visitors go to /login and come back
-	// ...
+  const user = await requireUser(locals, url); // anonymous visitors go to /login and come back
+  // ...
 };
 ```
 
@@ -172,15 +172,15 @@ import { authorize } from '$lib/server/auth/policy';
 import { failFrom } from '$lib/server/errors';
 
 export const actions = {
-	edit: async ({ locals }) => {
-		try {
-			const table = await findTable(/* ... */);
-			authorize(await locals.getProfile(), 'table:edit', table); // throws Forbidden
-			// ...
-		} catch (error) {
-			return failFrom(error); // Forbidden -> 403, NotFound -> 404, anything else is rethrown
-		}
-	}
+  edit: async ({ locals }) => {
+    try {
+      const table = await findTable(/* ... */);
+      authorize(await locals.getProfile(), 'table:edit', table); // throws Forbidden
+      // ...
+    } catch (error) {
+      return failFrom(error); // Forbidden -> 403, NotFound -> 404, anything else is rethrown
+    }
+  },
 };
 ```
 
