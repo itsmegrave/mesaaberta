@@ -30,7 +30,7 @@
   const inTables = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
   const inMyTables = $derived(pathname.startsWith('/account/tables'));
   const navLink =
-    'btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-[9px]';
+    'btn hidden h-11 rounded-lg px-3.5 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
 </script>
 
 <svelte:head>
@@ -51,8 +51,8 @@
   class="mx-auto flex h-16 w-full max-w-316 items-center justify-between px-5 md:h-22 md:px-8"
 >
   <a href={localizedHref('/', locale)} class="flex items-center gap-2.5 no-underline md:gap-3">
-    <TableLogo size={34} class="size-7 md:size-[34px]" />
-    <span class="font-brand text-[19px] font-semibold tracking-[0.04em] md:text-2xl">
+    <TableLogo size={34} class="size-7 md:size-8" />
+    <span class="font-brand text-lg font-semibold tracking-[0.04em] md:text-2xl">
       Mesa Aberta
     </span>
   </a>
@@ -79,7 +79,7 @@
 
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn hidden h-11 gap-2.5 rounded-lg preset-filled-primary-500 px-4 text-[15px] font-semibold md:ml-2 md:inline-flex"
+        class="btn hidden h-11 gap-2.5 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
       >
         <svg
           width="18"
@@ -141,7 +141,7 @@
 
 <footer class="mx-auto w-full max-w-316 px-5 pb-24 md:px-8 md:pb-0">
   <div
-    class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-[15px] leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
+    class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
   >
     <div class="flex flex-col gap-3">
       <p class="flex items-center gap-2.5 text-surface-950-50">

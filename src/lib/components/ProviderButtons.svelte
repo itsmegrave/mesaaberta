@@ -27,7 +27,7 @@
         href="{resolve('/login/[provider=provider]', {
           provider: provider.id,
         })}?next={encodeURIComponent(next)}"
-        class="btn h-[54px] w-full justify-center gap-3 rounded-lg font-semibold {provider.style}"
+        class="btn h-13 w-full justify-center gap-3 rounded-lg font-semibold {provider.style}"
       >
         <ProviderLogo provider={provider.id} />
         {provider.label}

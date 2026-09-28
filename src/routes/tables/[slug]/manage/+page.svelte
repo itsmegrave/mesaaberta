@@ -129,8 +129,7 @@
   </a>
 
   <p class="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
-    <span
-      class="chip h-[26px] rounded-full preset-filled-primary-500 px-3 text-[13px] font-semibold"
+    <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"
       >{m.manage_you_are_gm()}</span
     >
     <span class="font-semibold text-muted"
@@ -140,7 +139,7 @@
     >
   </p>
   <h1
-    class="mt-3 text-[36px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[56px]"
+    class="mt-3 text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-6xl"
   >
     {table.title}
   </h1>
@@ -249,8 +248,7 @@
                 <span class="block text-sm text-muted">{m.manage_you()}</span>
               </span>
             </span>
-            <span
-              class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
+            <span class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2.5 text-xs font-semibold"
               >{m.manage_gm_badge()}</span
             >
           </li>
@@ -382,9 +380,7 @@
           </p>
         </div>
 
-        <dl
-          class="mt-4 grid grid-cols-[max-content_1fr] border-t border-surface-200-800 text-[15px]"
-        >
+        <dl class="mt-4 grid grid-cols-[max-content_1fr] border-t border-surface-200-800 text-sm">
           {#if table.platforms.length > 0}
             <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
               {m.form_platforms()}
@@ -392,7 +388,7 @@
             <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
               {#each table.platforms as platform (platform.slug)}
                 <span
-                  class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-[13px] font-semibold"
+                  class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-xs font-semibold"
                   >{platform.name}</span
                 >
               {/each}
@@ -404,7 +400,7 @@
             </dt>
             <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
               {#each table.tags as tag (tag.slug)}
-                <span class="chip h-7 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
+                <span class="chip h-7 rounded-lg bg-surface-wash px-2.5 text-xs font-semibold"
                   >{tag.name}</span
                 >
               {/each}

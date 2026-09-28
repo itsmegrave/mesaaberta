@@ -105,9 +105,7 @@
   <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
     <div class="min-w-0">
       <p class="flex flex-wrap items-center gap-3">
-        <span
-          class="chip h-[26px] rounded-full preset-filled-primary-500 px-3 text-[13px] font-semibold"
-        >
+        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
           {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
         </span>
         <a
@@ -119,7 +117,7 @@
       </p>
 
       <h1
-        class="mt-3 text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[64px]"
+        class="mt-3 text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-6xl"
       >
         {table.title}
       </h1>
@@ -197,7 +195,7 @@
       {/if}
 
       {#if table.extraInfo}
-        <h2 class="mt-10 text-[28px] font-semibold tracking-[-0.02em]">{m.table_extra_info()}</h2>
+        <h2 class="mt-10 text-3xl font-semibold tracking-[-0.02em]">{m.table_extra_info()}</h2>
         <p class="mt-2 max-w-[65ch] whitespace-pre-line">{table.extraInfo}</p>
       {/if}
 
@@ -224,7 +222,7 @@
             class="flex w-18 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
           >
             <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-            <span class="mt-1 text-[28px] font-bold">{dateBox.day}</span>
+            <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
             <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
           </div>
         {/if}
@@ -240,7 +238,7 @@
         </div>
       </div>
 
-      <dl class="mt-6 grid grid-cols-[max-content_1fr] border-t border-surface-200-800 text-[15px]">
+      <dl class="mt-6 grid grid-cols-[max-content_1fr] border-t border-surface-200-800 text-sm">
         <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
           {m.table_modality()}
         </dt>
@@ -256,7 +254,7 @@
           <dd class="flex flex-wrap gap-1.5 border-b border-surface-200-800 py-3">
             {#each table.platforms as platform (platform.slug)}
               <span
-                class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-[13px] font-semibold"
+                class="chip h-7 rounded-lg border border-surface-200-800 px-2.5 text-xs font-semibold"
                 >{platform.name}</span
               >
             {/each}
@@ -286,13 +284,13 @@
         {#each { length: table.capacity }, i (i)}
           {#if i < table.capacity - table.seatsLeft}
             <span
-              class="flex size-[34px] items-center justify-center rounded-full {seatColours[
+              class="flex size-8.5 items-center justify-center rounded-full {seatColours[
                 i % seatColours.length
               ]}"><span class="size-3 rounded-full bg-surface-950/28"></span></span
             >
           {:else}
             <span
-              class="block size-[34px] rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
+              class="block size-8.5 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
             ></span>
           {/if}
         {/each}

@@ -50,7 +50,7 @@
   const nameOf = (list: { name: string; slug: string }[], slug: string) =>
     list.find((item) => item.slug === slug)?.name ?? slug;
   const chip =
-    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 px-3.5 text-[15px] font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary-500';
+    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 px-3.5 text-sm font-semibold has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary-500';
 
   // The card the list will show, from what is typed so far.
   const preview = $derived({
@@ -111,7 +111,7 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">1</span
         >
-        <h2 id="about-table" class="text-[26px] font-semibold tracking-[-0.02em]">Sobre a mesa</h2>
+        <h2 id="about-table" class="text-2xl font-semibold tracking-[-0.02em]">Sobre a mesa</h2>
       </div>
       <div class="grid gap-6">
         <div class="min-w-0">
@@ -225,7 +225,7 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">2</span
         >
-        <h2 id="when" class="text-[26px] font-semibold tracking-[-0.02em]">Quando</h2>
+        <h2 id="when" class="text-2xl font-semibold tracking-[-0.02em]">Quando</h2>
       </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
@@ -317,9 +317,7 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">3</span
         >
-        <h2 id="seats-entry" class="text-[26px] font-semibold tracking-[-0.02em]">
-          Vagas e entrada
-        </h2>
+        <h2 id="seats-entry" class="text-2xl font-semibold tracking-[-0.02em]">Vagas e entrada</h2>
       </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
@@ -419,7 +417,7 @@
           class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
           aria-hidden="true">4</span
         >
-        <h2 id="image-section" class="text-[26px] font-semibold tracking-[-0.02em]">Imagem</h2>
+        <h2 id="image-section" class="text-2xl font-semibold tracking-[-0.02em]">Imagem</h2>
       </div>
       <div
         class="rounded-lg border-[1.5px] border-dashed border-surface-400-600 bg-surface-950-50/4 p-5"
@@ -464,7 +462,7 @@
     <div class="mt-3" inert>
       <TableCard table={preview} />
     </div>
-    <ul class="mt-4 grid gap-2 rounded-lg border border-surface-200-800 bg-panel p-5 text-[15px]">
+    <ul class="mt-4 grid gap-2 rounded-lg border border-surface-200-800 bg-panel p-5 text-sm">
       <li>
         {$form.modality === 'in_person'
           ? `${m.table_modality_in_person()}${$form.locationArea ? ` · ${$form.locationArea}` : ''}`

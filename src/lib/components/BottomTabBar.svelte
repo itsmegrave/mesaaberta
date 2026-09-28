@@ -27,7 +27,7 @@
       : 'text-muted hover:text-surface-950-50'}"
   >
     <span
-      class="flex h-[30px] w-14 items-center justify-center rounded-[15px] {isTablesActive
+      class="flex h-7 w-14 items-center justify-center rounded-full {isTablesActive
         ? 'bg-surface-200-800'
         : 'bg-transparent'}"
     >
@@ -58,7 +58,7 @@
     class="flex h-15 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold text-surface-950-50 no-underline"
   >
     <span
-      class="flex h-[30px] w-14 items-center justify-center rounded-[15px] preset-filled-primary-500 {isNewTableActive
+      class="flex h-7 w-14 items-center justify-center rounded-full preset-filled-primary-500 {isNewTableActive
         ? 'ring-2 ring-warning-500'
         : ''}"
     >
@@ -88,7 +88,7 @@
       : 'text-muted hover:text-surface-950-50'}"
   >
     <span
-      class="flex h-[30px] w-14 items-center justify-center rounded-[15px] {isMyTablesActive
+      class="flex h-7 w-14 items-center justify-center rounded-full {isMyTablesActive
         ? 'bg-surface-200-800'
         : 'bg-transparent'}"
     >
@@ -120,7 +120,7 @@
         : 'text-muted hover:text-surface-950-50'}"
     >
       <span
-        class="flex h-[30px] w-14 items-center justify-center rounded-[15px] {isAdminActive
+        class="flex h-7 w-14 items-center justify-center rounded-full {isAdminActive
           ? 'bg-surface-200-800'
           : 'bg-transparent'}"
       >

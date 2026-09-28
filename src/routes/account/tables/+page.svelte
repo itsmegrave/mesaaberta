@@ -33,9 +33,7 @@
 
 <section class="pt-2 pb-4 md:pt-12">
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-    <h1
-      class="text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[68px]"
-    >
+    <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl">
       {m.dash_title()}
     </h1>
     <div class="flex flex-col gap-3 sm:flex-row">
@@ -94,10 +92,10 @@
   <div class="mt-8 grid gap-10 lg:grid-cols-2 lg:gap-12">
     <section aria-labelledby="playing">
       <div class="flex items-baseline gap-3">
-        <h2 id="playing" class="text-[32px] font-semibold tracking-[-0.02em]">
+        <h2 id="playing" class="text-3xl font-semibold tracking-[-0.02em]">
           {m.dash_playing()}
         </h2>
-        <span class="text-[15px] font-semibold text-muted">{count(data.playing.length)}</span>
+        <span class="text-sm font-semibold text-muted">{count(data.playing.length)}</span>
       </div>
       {#if data.playing.length === 0}
         <p class="mt-3">{m.dash_playing_empty()}</p>
@@ -115,10 +113,10 @@
 
     <section aria-labelledby="running">
       <div class="flex items-baseline gap-3">
-        <h2 id="running" class="text-[32px] font-semibold tracking-[-0.02em]">
+        <h2 id="running" class="text-3xl font-semibold tracking-[-0.02em]">
           {m.dash_running()}
         </h2>
-        <span class="text-[15px] font-semibold text-muted">{count(data.running.length)}</span>
+        <span class="text-sm font-semibold text-muted">{count(data.running.length)}</span>
       </div>
       {#if data.running.length === 0}
         <p class="mt-3">{m.dash_running_empty()}</p>

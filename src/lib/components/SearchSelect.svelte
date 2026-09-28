@@ -101,7 +101,7 @@
     <Combobox.Label class={labelClass}>{label}</Combobox.Label>
     <Combobox.Control class={control}>
       <Combobox.Input
-        class="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] outline-none"
+        class="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
         aria-invalid={invalid || undefined}
       />
       <Combobox.Trigger
@@ -129,7 +129,7 @@
           {#each shown as item (item.slug)}
             <Combobox.Item
               {item}
-              class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-2 text-[15px] data-highlighted:preset-tonal"
+              class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-2 text-sm data-highlighted:preset-tonal"
             >
               <Combobox.ItemText>{item.name}</Combobox.ItemText>
               <Combobox.ItemIndicator class="shrink-0 text-primary-500">
@@ -147,7 +147,7 @@
               </Combobox.ItemIndicator>
             </Combobox.Item>
           {:else}
-            <li class="px-2.5 py-2 text-[15px] text-muted">{m.search_select_none()}</li>
+            <li class="px-2.5 py-2 text-sm text-muted">{m.search_select_none()}</li>
           {/each}
           {#if matching.length > shown.length}
             <li class="px-2.5 py-2 text-sm text-muted" aria-hidden="true">

@@ -9,9 +9,7 @@
 </script>
 
 <article class="legal mx-auto max-w-[68ch] py-8 md:py-14">
-  <h1
-    class="text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[56px]"
-  >
+  <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-6xl">
     {title}
   </h1>
   <p class="mt-3 text-muted">

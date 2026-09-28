@@ -8,8 +8,8 @@
   }: { taken: number; capacity: number; size?: 26 | 34 } = $props();
 
   const colours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
-  const dot = $derived(size === 34 ? 'size-[34px]' : 'size-[26px]');
-  const inner = $derived(size === 34 ? 'size-3' : 'size-[9px]');
+  const dot = $derived(size === 34 ? 'size-8.5' : 'size-6.5');
+  const inner = $derived(size === 34 ? 'size-3' : 'size-2');
 </script>
 
 <span aria-hidden="true" class="inline-flex flex-wrap items-center gap-1.5">

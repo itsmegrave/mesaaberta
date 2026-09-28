@@ -71,7 +71,7 @@
       <!-- Kind pill -->
       <div class="absolute top-3.5 left-3.5">
         <span
-          class="chip h-[26px] gap-1.5 preset-filled-primary-500 px-3 text-[13px] font-semibold shadow-sm"
+          class="chip h-6 gap-1.5 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm"
         >
           {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
         </span>
@@ -81,10 +81,10 @@
         <div
           class="absolute bottom-3.5 left-3.5 rounded-lg preset-filled-primary-500 px-3 py-2 shadow-sm"
         >
-          <div class="font-sans text-[22px] leading-none font-bold tracking-tight">
+          <div class="font-sans text-xl leading-none font-bold tracking-tight">
             {cardDate.dayMonth}
           </div>
-          <div class="mt-1 font-sans text-[13px] leading-tight font-medium opacity-90">
+          <div class="mt-1 font-sans text-xs leading-tight font-medium opacity-90">
             {cardDate.weekdayTime}
           </div>
         </div>
@@ -102,7 +102,7 @@
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span
-          class="chip h-[26px] gap-1.5 border border-white/15 bg-white/15 px-3 text-[13px] font-semibold"
+          class="chip h-6 gap-1.5 border border-white/15 bg-white/15 px-3 text-xs font-semibold"
         >
           {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
         </span>
@@ -136,7 +136,7 @@
       {table.system.name}
     </div>
 
-    <h3 class="mt-1 text-[26px] leading-[1.15] font-semibold tracking-tight">
+    <h3 class="mt-1 text-2xl leading-[1.15] font-semibold tracking-tight">
       <a
         href={localizedHref(`/tables/${table.slug}`, locale)}
         class="after:absolute after:inset-0 after:content-[''] hover:underline"
@@ -145,12 +145,12 @@
       </a>
     </h3>
 
-    <div class="mt-2 text-[15px] leading-normal text-muted">
+    <div class="mt-2 text-sm leading-normal text-muted">
       {m.table_gm()}: {atHandle(table.gmName)}
     </div>
 
     {#if table.modality}
-      <div class="mt-1 text-[15px] leading-normal text-muted">
+      <div class="mt-1 text-sm leading-normal text-muted">
         {table.modality === 'in_person'
           ? `${m.table_modality_in_person()} · ${table.locationArea ?? ''}`
           : m.table_modality_online()}
@@ -162,7 +162,7 @@
       <div class="mt-3 flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
         {#if firstPlatform}
           <span
-            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg border border-surface-200-800 bg-panel px-2.5 text-[13px] font-semibold"
+            class="chip h-6 shrink-0 gap-1.5 rounded-lg border border-surface-200-800 bg-panel px-2.5 text-xs font-semibold"
           >
             <svg
               width="14"
@@ -184,14 +184,14 @@
         {/if}
         {#if firstTag}
           <span
-            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
+            class="chip h-6 shrink-0 gap-1.5 rounded-lg bg-surface-wash px-2.5 text-xs font-semibold"
           >
             {firstTag}
           </span>
         {/if}
         {#if moreTagsCount > 0}
           <span
-            class="chip h-[26px] shrink-0 gap-1.5 rounded-lg bg-surface-wash px-2.5 text-[13px] font-semibold"
+            class="chip h-6 shrink-0 gap-1.5 rounded-lg bg-surface-wash px-2.5 text-xs font-semibold"
           >
             +{moreTagsCount}
           </span>

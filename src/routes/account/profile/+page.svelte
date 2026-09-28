@@ -12,7 +12,7 @@
   const locale = getLocale();
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
-  const heading = 'text-2xl leading-tight font-semibold tracking-[-0.02em] md:text-[26px]';
+  const heading = 'text-2xl leading-tight font-semibold tracking-[-0.02em]';
 
   const photoNotice = $derived(page.url.searchParams.get('foto'));
 
@@ -48,12 +48,10 @@
 {/snippet}
 
 <section class="pt-2 pb-4 md:pt-12">
-  <h1
-    class="text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[68px]"
-  >
+  <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl">
     {m.account_profile_title()}
   </h1>
-  <p class="mt-2.5 max-w-[52ch] text-[17px] text-muted md:mt-3.5 md:text-xl">
+  <p class="mt-2.5 max-w-[52ch] text-base text-muted md:mt-3.5 md:text-xl">
     {m.account_profile_lede()}
   </p>
 
@@ -94,7 +92,7 @@
                 >
               </form>
             {/if}
-            <p id="photo-hint" class="max-w-[52ch] text-[15px] text-muted">
+            <p id="photo-hint" class="max-w-[52ch] text-sm text-muted">
               {m.account_photo_hint()}
             </p>
             {#if form?.photoError}
@@ -204,7 +202,7 @@
 
     <aside aria-labelledby="seen" class={card}>
       <h2 id="seen" class="text-xl font-semibold">{m.account_seen_title()}</h2>
-      <ul class="mt-4 grid gap-3 text-[15px]">
+      <ul class="mt-4 grid gap-3 text-sm">
         <li class="flex gap-3">{@render mark(check)}{m.account_seen_username()}</li>
         <li class="flex gap-3">{@render mark(check)}{m.account_seen_rating()}</li>
         <li class="flex gap-3 text-muted">{@render mark(cross)}{m.account_seen_email()}</li>

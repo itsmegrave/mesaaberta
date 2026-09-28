@@ -32,19 +32,19 @@
   );
 
   const chip =
-    'inline-flex h-11 shrink-0 items-center rounded-full border-[1.5px] px-4 text-[15px] font-semibold whitespace-nowrap no-underline';
+    'inline-flex h-11 shrink-0 items-center rounded-full border-[1.5px] px-4 text-sm font-semibold whitespace-nowrap no-underline';
   const chipIdle = `${chip} border-surface-200-800 bg-panel hover:preset-tonal`;
   const chipActive = `${chip} border-primary-500 preset-filled-primary-500`;
   // A ticked checkbox chip: the whole chip is its label; the box itself is hidden.
   const checkChip =
-    'relative inline-flex h-11 shrink-0 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 bg-panel px-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal has-[:checked]:border-primary-500 has-[:checked]:preset-filled-primary-500 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary-500';
+    'relative inline-flex h-11 shrink-0 cursor-pointer items-center rounded-lg border-[1.5px] border-surface-200-800 bg-panel px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal has-[:checked]:border-primary-500 has-[:checked]:preset-filled-primary-500 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary-500';
 
   /** With JavaScript, ticking a chip applies it at once; without, the "Filtrar" button does. */
   const applyNow = (event: Event) =>
     (event.currentTarget as HTMLInputElement).form?.requestSubmit();
   let filterForm = $state<HTMLFormElement>();
   const rowLabel =
-    'block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]';
+    'block pb-2 text-sm font-semibold text-muted md:w-20 md:shrink-0 md:pb-0 md:leading-11';
   const catalogGroups = $derived([
     {
       name: 'platform',
@@ -75,12 +75,10 @@
 <section class="py-2 md:pt-12">
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
     <div>
-      <h1
-        class="text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[68px]"
-      >
+      <h1 class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl">
         {m.tables_title()}
       </h1>
-      <p class="mt-2.5 max-w-[46ch] text-[17px] text-muted md:mt-3.5 md:text-xl">
+      <p class="mt-2.5 max-w-[46ch] text-base text-muted md:mt-3.5 md:text-xl">
         {m.tables_lede()}
       </p>
     </div>
@@ -168,7 +166,7 @@
             {#if group.more.length > 0}
               <details class="group relative mt-2 md:mt-0">
                 <summary
-                  class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-[1.5px] border-dashed border-surface-600-400 px-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
+                  class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-[1.5px] border-dashed border-surface-600-400 px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
                   >{group.moreLabel}
                   <svg
                     width="16"
@@ -216,7 +214,7 @@
 
   {#if data.tables.length > 0}
     <div class="mt-8 hidden items-baseline justify-between gap-6 md:flex">
-      <p role="status" class="text-[15px] font-semibold text-muted">{count}</p>
+      <p role="status" class="text-sm font-semibold text-muted">{count}</p>
       <p class="text-sm text-muted">{m.tables_filter_any_note()}</p>
     </div>
     <ul class="mt-5 grid grid-cols-1 gap-4 md:mt-3.5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">

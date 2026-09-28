@@ -57,14 +57,14 @@
     {#each { length: total }, i (i)}
       {#if i < occupied}
         <span
-          class="flex size-[26px] items-center justify-center rounded-full {seatColours[
+          class="flex size-6 items-center justify-center rounded-full {seatColours[
             i % seatColours.length
           ]}"
         >
-          <span class="size-[9px] rounded-full bg-surface-950/28"></span>
+          <span class="size-2 rounded-full bg-surface-950/28"></span>
         </span>
       {:else}
-        <span class="block size-[26px] rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
+        <span class="block size-6 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
         ></span>
       {/if}
     {/each}
@@ -85,39 +85,39 @@
       Mesas de RPG com vagas abertas
     </p>
     <h1
-      class="mt-4 text-[52px] leading-[0.96] font-semibold tracking-[-0.035em] text-balance md:mt-5 md:text-6xl md:leading-none lg:text-[80px]"
+      class="mt-4 text-5xl leading-[0.96] font-semibold tracking-[-0.035em] text-balance md:mt-5 md:text-6xl md:leading-none lg:text-7xl"
     >
       {m.hero_title_before()} <span class="text-lamp">{m.hero_title_accent()}</span>
       {m.hero_title_after()}
     </h1>
-    <p class="mt-4 max-w-[34ch] text-[19px] leading-normal md:mt-7 md:text-[22px]">
+    <p class="mt-4 max-w-[34ch] text-lg leading-normal md:mt-7 md:text-xl">
       {m.hero_lede()}
     </p>
     <div class="mt-6 flex w-full flex-col gap-2.5 md:mt-9 md:w-auto md:flex-row md:gap-3">
       <a
         href={localizedHref('/tables', locale)}
-        class="btn h-[54px] w-full gap-2.5 rounded-lg preset-filled-primary-500 px-6 text-[17px] font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-13 w-full gap-2.5 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
         {@render arrow()}
       </a>
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-[54px] w-full rounded-lg border-[1.5px] border-primary-500 px-6 text-[17px] font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-13 w-full rounded-lg border-[1.5px] border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
         >{m.hero_open_cta()}</a
       >
     </div>
-    <p class="mt-7 hidden max-w-[46ch] text-[15px] text-muted md:block">
+    <p class="mt-7 hidden max-w-[46ch] text-sm text-muted md:block">
       {m.hero_open_source()}
       <a
         href="https://github.com/itsmegrave/mesaaberta"
         rel="noopener"
-        class="link-underline text-link decoration-current underline-offset-[5px]"
+        class="link-underline text-link decoration-current underline-offset-4"
         >{m.hero_open_source_link()}</a
       >.
     </p>
   </div>
-  <div class="mx-auto w-full max-w-[330px] md:mx-0 md:w-[43%] md:max-w-130 md:shrink-0">
+  <div class="mx-auto w-full max-w-xs md:mx-0 md:w-[43%] md:max-w-lg md:shrink-0">
     <TableIllustration />
   </div>
 </section>
@@ -126,7 +126,7 @@
   <div class="flex items-end justify-between gap-4">
     <h2
       id="open-tables"
-      class="text-[32px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[40px]"
+      class="text-3xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-4xl"
     >
       {m.home_open_tables_title()}
     </h2>
@@ -181,7 +181,7 @@
 >
   <h2
     id="how-it-works"
-    class="text-[32px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[40px]"
+    class="text-3xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-4xl"
   >
     {m.how_title()}
   </h2>
@@ -194,17 +194,17 @@
       {#each steps as step, i (step.title)}
         <li class="flex gap-4 md:flex-col md:items-start md:gap-0">
           <span
-            class="flex size-[52px] shrink-0 items-center justify-center rounded-full text-2xl font-bold text-surface-950 md:size-[72px] md:text-[34px] {step.colour}"
+            class="flex size-13 shrink-0 items-center justify-center rounded-full text-2xl font-bold text-surface-950 md:size-18 md:text-4xl {step.colour}"
           >
             {i + 1}
           </span>
           <div>
             <h3
-              class="text-[22px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:mt-5 md:text-[26px]"
+              class="text-xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:mt-5 md:text-2xl"
             >
               {step.title()}
             </h3>
-            <p class="mt-1 text-base text-muted md:mt-2 md:max-w-[34ch] md:text-[17px]">
+            <p class="mt-1 text-base text-muted md:mt-2 md:max-w-[34ch]">
               {step.text()}
             </p>
           </div>
@@ -225,15 +225,15 @@
   >
     <h2
       id="for-players"
-      class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[52px]"
+      class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-5xl"
     >
       {m.players_title()}
     </h2>
-    <p class="mt-3.5 text-[17px] md:mt-4 md:text-[19px]">{m.players_text()}</p>
+    <p class="mt-3.5 text-base md:mt-4 md:text-lg">{m.players_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
         href={localizedHref('/tables', locale)}
-        class="btn h-[54px] w-full gap-2.5 rounded-lg preset-filled-primary-500 px-6 text-[17px] font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-13 w-full gap-2.5 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
         {@render arrow()}
@@ -246,12 +246,11 @@
       class="mt-6 flex flex-col gap-3.5 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:mt-auto md:p-6"
     >
       <div class="flex items-center justify-between gap-3">
-        <span
-          class="chip h-[26px] rounded-full preset-filled-primary-500 px-3 text-[13px] font-semibold"
+        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"
           >Você tem uma vaga</span
         >
         <span
-          class="chip h-[26px] gap-1.5 rounded-lg border border-surface-200-800 bg-panel px-2.5 text-[13px] font-semibold"
+          class="chip h-6 gap-1.5 rounded-lg border border-surface-200-800 bg-panel px-2.5 text-xs font-semibold"
         >
           <svg
             width="14"
@@ -274,7 +273,7 @@
         <p class="text-sm font-semibold text-muted">Daggerheart · Mestre: @bruno-leal</p>
         <p class="mt-0.5 text-2xl leading-[1.15] font-semibold">Os Sinos de Sablewood</p>
       </div>
-      <p class="flex items-start gap-2.5 text-base leading-[1.45] md:text-[17px]">
+      <p class="flex items-start gap-2.5 text-base leading-[1.45]">
         <svg
           width="20"
           height="20"
@@ -295,7 +294,7 @@
       </p>
       <div class="flex items-center gap-3">
         {@render seatDots(3, 6)}
-        <span class="text-[15px] font-semibold text-muted">3 de 6 vagas ocupadas</span>
+        <span class="text-sm font-semibold text-muted">3 de 6 vagas ocupadas</span>
       </div>
       <div class="flex items-center gap-3 rounded-lg bg-lamp-wash px-3.5 py-3">
         {@render stars(18)}
@@ -310,23 +309,23 @@
   >
     <span
       aria-hidden="true"
-      class="absolute -top-35 -right-40 -z-10 size-[420px] rounded-full bg-white/6"
+      class="absolute -top-35 -right-40 -z-10 size-105 rounded-full bg-white/6"
     ></span>
     <span
       aria-hidden="true"
-      class="absolute -bottom-50 -left-30 -z-10 size-[380px] rounded-full bg-white/5"
+      class="absolute -bottom-50 -left-30 -z-10 size-95 rounded-full bg-white/5"
     ></span>
     <h2
       id="for-game-masters"
-      class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[52px]"
+      class="text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-5xl"
     >
       {m.gm_title()}
     </h2>
-    <p class="mt-3.5 text-[17px] md:mt-4 md:text-[19px]">{m.gm_text()}</p>
+    <p class="mt-3.5 text-base md:mt-4 md:text-lg">{m.gm_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-[54px] w-full gap-2.5 rounded-lg bg-white px-6 text-[17px] font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
+        class="btn h-13 w-full gap-2.5 rounded-lg bg-white px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
       >
         <svg
           width="18"
@@ -354,19 +353,19 @@
       <div class="flex items-center justify-between gap-3">
         <span>
           <span class="block text-sm font-semibold text-muted">Urban Shadows 2e</span>
-          <span class="text-lg font-semibold md:text-[22px]">Noites de Neon</span>
+          <span class="text-lg font-semibold md:text-xl">Noites de Neon</span>
         </span>
         <span
-          class="chip h-[26px] shrink-0 rounded-full border border-surface-200-800 px-3 text-[13px] font-semibold"
+          class="chip h-6 shrink-0 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
           >Campanha</span
         >
       </div>
       <div class="flex items-center gap-3">
         {@render seatDots(3, 5)}
-        <span class="text-[15px] font-semibold text-muted">3 de 5 vagas ocupadas</span>
+        <span class="text-sm font-semibold text-muted">3 de 5 vagas ocupadas</span>
       </div>
       <div>
-        <p class="mb-2 flex items-center gap-2 text-[17px] font-semibold">
+        <p class="mb-2 flex items-center gap-2 text-base font-semibold">
           <svg
             width="18"
             height="18"
@@ -383,27 +382,27 @@
           Pedidos de vaga (1)
         </p>
         <div class="flex items-center justify-between gap-3 rounded-lg bg-lamp-wash px-3 py-2.5">
-          <span class="flex min-w-0 items-center gap-3 text-[17px]">
+          <span class="flex min-w-0 items-center gap-3 text-base">
             <span
-              class="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-tertiary-400 text-sm font-bold text-surface-950"
+              class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tertiary-400 text-sm font-bold text-surface-950"
               >L</span
             >
             @lucas-ferreira
           </span>
           <span class="hidden items-center gap-2 md:flex">
             <span
-              class="flex h-10 items-center rounded-lg preset-filled-primary-500 px-4 text-[15px] font-semibold"
+              class="flex h-10 items-center rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold"
               >Aprovar</span
             >
             <span
-              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-[15px] font-semibold text-error-alert"
+              class="flex h-10 items-center rounded-lg border-[1.5px] border-surface-200-800 px-4 text-sm font-semibold text-error-alert"
               >Recusar</span
             >
           </span>
         </div>
       </div>
       <div class="flex items-center justify-between gap-3 border-t border-surface-200-800 pt-3.5">
-        <span class="text-[15px] font-semibold text-muted">Sua nota como mestre</span>
+        <span class="text-sm font-semibold text-muted">Sua nota como mestre</span>
         <span class="inline-flex items-center gap-2">
           <svg width="20" height="20" viewBox="0 0 24 24" class="shrink-0 fill-lamp">
             <path d={star} />

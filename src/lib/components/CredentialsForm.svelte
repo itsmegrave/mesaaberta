@@ -43,7 +43,7 @@
       required
       autocomplete="email"
       bind:value={$form.email}
-      class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+      class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-base"
       aria-invalid={$errors.email ? 'true' : undefined}
     />
   </FormField>
@@ -63,7 +63,7 @@
       maxlength="72"
       autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
       bind:value={$form.password}
-      class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-[17px]"
+      class="input h-13 rounded-lg border-[1.5px] border-surface-600-400 bg-panel px-4 text-base"
       aria-invalid={$errors.password ? 'true' : undefined}
     />
   </FormField>
@@ -71,7 +71,7 @@
   <div>
     <button
       type="submit"
-      class="btn h-[54px] w-full rounded-lg preset-filled-primary-500 text-[17px] font-semibold"
+      class="btn h-13 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
       aria-busy={$delayed}
     >
       {mode === 'signup' ? m.signup_submit() : m.login_submit()}

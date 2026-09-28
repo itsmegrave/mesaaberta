@@ -54,10 +54,7 @@
         <div class="flex items-center gap-3 p-2.5 pb-3">
           <Avatar src={avatarUrl} {name} size={40} />
           <div class="min-w-0 flex-1">
-            <div
-              data-testid="account-user-name"
-              class="truncate text-[17px] leading-tight font-bold"
-            >
+            <div data-testid="account-user-name" class="truncate text-base leading-tight font-bold">
               {name}
             </div>
           </div>

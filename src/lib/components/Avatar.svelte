@@ -48,7 +48,7 @@
       case 80:
         return 'size-20 text-3xl';
       case 120:
-        return 'size-[120px] text-5xl';
+        return 'size-30 text-5xl';
       default:
         return 'size-9 text-base';
     }

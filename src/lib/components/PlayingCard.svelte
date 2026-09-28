@@ -30,13 +30,11 @@
   <p class="flex flex-wrap items-center gap-2 text-sm">
     {#if item.status === 'pending'}
       <span
-        class="chip h-[26px] rounded-full bg-warning-status px-3 text-[13px] font-semibold text-surface-50-950"
+        class="chip h-6 rounded-full bg-warning-status px-3 text-xs font-semibold text-surface-50-950"
         >{m.dash_waiting()}</span
       >
     {:else}
-      <span
-        class="chip h-[26px] rounded-full preset-filled-primary-500 px-3 text-[13px] font-semibold"
-      >
+      <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
         {m.dash_you_have_seat()}
       </span>
     {/if}
@@ -47,7 +45,7 @@
   <h3 class="mt-3 text-2xl leading-tight font-semibold tracking-[-0.01em]">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
-  <p class="mt-1 text-[15px] text-muted">{m.table_gm()}: {atHandle(item.gmName)}</p>
+  <p class="mt-1 text-sm text-muted">{m.table_gm()}: {atHandle(item.gmName)}</p>
 
   {#if item.nextAt}
     <p class="mt-4 flex items-start gap-2.5">

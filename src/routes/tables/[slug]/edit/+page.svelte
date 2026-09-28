@@ -24,7 +24,7 @@
   </a>
 
   <h1
-    class="mt-6 text-[40px] leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-[68px]"
+    class="mt-6 text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-7xl"
   >
     {m.form_edit_title()}
   </h1>
