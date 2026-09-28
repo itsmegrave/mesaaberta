@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SearchSelect from '$lib/components/SearchSelect.svelte';
 	import TableCard from '$lib/components/TableCard.svelte';
 	import { localizedHref } from '$lib/i18n/locales';
 	import { m } from '$lib/paraglide/messages';
@@ -9,12 +10,10 @@
 	const locale = getLocale();
 	const listHref = localizedHref('/tables', locale);
 
-	/** The list's query string with the systems or the modality changed and every other filter kept. */
-	const query = (filters: { system?: null; modality?: string | null }) => {
-		const systems = 'system' in filters ? [] : data.pickedSystems;
-		const modality = 'modality' in filters ? filters.modality : data.modality;
+	/** The list's query string with the modality changed and every other filter kept. */
+	const query = (modality: string | null) => {
 		const parts = [
-			...systems.map((slug) => `system=${encodeURIComponent(slug)}`),
+			...data.pickedSystems.map((slug) => `system=${encodeURIComponent(slug)}`),
 			modality ? `modality=${modality}` : '',
 			...data.pickedPlatforms.map((slug) => `platform=${encodeURIComponent(slug)}`),
 			...data.pickedTags.map((slug) => `tag=${encodeURIComponent(slug)}`)
@@ -43,18 +42,10 @@
 	/** With JavaScript, ticking a chip applies it at once; without, the "Filtrar" button does. */
 	const applyNow = (event: Event) =>
 		(event.currentTarget as HTMLInputElement).form?.requestSubmit();
+	let filterForm = $state<HTMLFormElement>();
+	const rowLabel =
+		'block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]';
 	const catalogGroups = $derived([
-		{
-			name: 'system',
-			id: 'system-filter',
-			label: m.tables_filter_label(),
-			moreLabel: m.tables_filter_more(),
-			items: data.featured,
-			more: data.systems.filter(
-				(system) => !data.featured.some((featured) => featured.slug === system.slug)
-			),
-			picked: data.pickedSystems
-		},
 		{
 			name: 'platform',
 			id: 'platform-filter',
@@ -118,29 +109,51 @@
 
 	<!-- A plain GET form: it filters without JavaScript, and the URL can be shared. Every filter is a
 	     slug in the query string, and a key repeats for each value ticked. -->
-	<form method="GET" action={listHref} class="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4 md:mt-8">
+	<form
+		bind:this={filterForm}
+		method="GET"
+		action={listHref}
+		data-sveltekit-keepfocus
+		data-sveltekit-noscroll
+		class="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4 md:mt-8"
+	>
 		{#if data.modality}<input type="hidden" name="modality" value={data.modality} />{/if}
-		{#each catalogGroups as group, g (group.name)}
+		{#if data.systems.length > 0}
+			<SearchSelect
+				id="system-filter"
+				name="system"
+				label={m.tables_filter_label()}
+				labelClass={rowLabel}
+				class="md:grid md:grid-cols-[88px_minmax(0,28rem)] md:items-start md:gap-x-5"
+				items={data.systems}
+				value={data.pickedSystems}
+				placeholder={m.tables_filter_search()}
+				multiple
+				onchange={() => filterForm?.requestSubmit()}
+			/>
+		{/if}
+		<div role="group" aria-labelledby="modality-filter" class="md:flex md:items-start md:gap-5">
+			<span id="modality-filter" class={rowLabel}>{m.tables_filter_modality()}</span>
+			<div
+				class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:gap-2.5 md:px-0"
+			>
+				{#each modalities as option (option.value)}
+					<a
+						href={localizedHref(`/tables${query(option.value)}`, locale)}
+						aria-current={option.value === data.modality ? 'page' : undefined}
+						class={option.value === data.modality ? chipActive : chipIdle}>{option.label()}</a
+					>
+				{/each}
+			</div>
+		</div>
+		{#each catalogGroups as group (group.name)}
 			{#if group.items.length > 0}
 				<div role="group" aria-labelledby={group.id} class="md:flex md:items-start md:gap-5">
-					<span
-						id={group.id}
-						class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
-					>
-						{group.label}
-					</span>
+					<span id={group.id} class={rowLabel}>{group.label}</span>
 					<div class="md:flex md:flex-wrap md:gap-2.5">
 						<div class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:contents">
-							{#if group.name === 'system'}
-								<a
-									href={localizedHref(`/tables${query({ system: null })}`, locale)}
-									aria-current={data.pickedSystems.length === 0 ? 'page' : undefined}
-									class={data.pickedSystems.length === 0 ? chipActive : chipIdle}
-									>{m.tables_filter_all()}</a
-								>
-							{/if}
 							{#each group.items as item (item.slug)}
-								<label class="{checkChip} {group.name === 'system' ? 'rounded-full!' : ''}">
+								<label class={checkChip}>
 									<input
 										type="checkbox"
 										name={group.name}
@@ -155,10 +168,7 @@
 						{#if group.more.length > 0}
 							<details class="group relative mt-2 md:mt-0">
 								<summary
-									class="inline-flex h-11 cursor-pointer list-none items-center gap-2 border-[1.5px] border-dashed border-surface-600-400 px-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden {group.name ===
-									'system'
-										? 'rounded-full'
-										: 'rounded-lg'}"
+									class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-[1.5px] border-dashed border-surface-600-400 px-4 text-[15px] font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
 									>{group.moreLabel}
 									<svg
 										width="16"
@@ -191,27 +201,6 @@
 								</div>
 							</details>
 						{/if}
-					</div>
-				</div>
-			{/if}
-			{#if g === 0}
-				<div role="group" aria-labelledby="modality-filter" class="md:flex md:items-start md:gap-5">
-					<span
-						id="modality-filter"
-						class="block pb-2 text-sm font-semibold text-muted md:w-[88px] md:shrink-0 md:pb-0 md:text-[15px] md:leading-[44px]"
-					>
-						{m.tables_filter_modality()}
-					</span>
-					<div
-						class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:gap-2.5 md:px-0"
-					>
-						{#each modalities as option (option.value)}
-							<a
-								href={localizedHref(`/tables${query({ modality: option.value })}`, locale)}
-								aria-current={option.value === data.modality ? 'page' : undefined}
-								class={option.value === data.modality ? chipActive : chipIdle}>{option.label()}</a
-							>
-						{/each}
 					</div>
 				</div>
 			{/if}

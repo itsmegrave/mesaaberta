@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createTable, signIn, uniqueTitle } from './support/app';
+import { createTable, signIn, uniqueTitle, pickFromSearch } from './support/app';
 import { createUser } from './support/users';
 
 // Platforms and tags: the GM picks them, the cards and the table page show them, and the list
@@ -61,7 +61,7 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
 	const title = uniqueTitle('Com tags');
 
 	await page.goto('/tables/new');
-	await page.getByLabel('Sistema de RPG').selectOption({ label: 'Savage Worlds' });
+	await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
 	await page.getByLabel('Título').fill(title);
 	await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
 	await page.getByRole('group', { name: 'Plataformas' }).getByText('Roll20').click();

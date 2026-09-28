@@ -11,17 +11,19 @@ const systems = [
 const props = { systems, submitLabel: 'Abrir mesa' };
 
 describe('TableForm', () => {
-	it('offers every system as a choice, and asks for one', async () => {
+	it('offers every system in a searchable list, and asks for one', async () => {
 		render(TableFormHarness, props);
 
-		const select = page.getByLabelText('Sistema de RPG');
-		await expect.element(select).toBeVisible();
+		const input = page.getByRole('combobox', { name: 'Sistema de RPG' });
+		await expect.element(input).toBeVisible();
+		await expect.element(input).toHaveAttribute('placeholder', 'Escolha um sistema');
+		await expect.element(input).toBeRequired();
+
+		await input.fill('tormenta');
 		await expect
 			.element(page.getByRole('option', { name: 'Tormenta 20 (T20)' }))
 			.toBeInTheDocument();
-		await expect
-			.element(page.getByRole('option', { name: 'Escolha um sistema' }))
-			.toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Daggerheart' })).not.toBeInTheDocument();
 	});
 
 	it('starts as a one-shot without the repeat fields, and shows them for a campaign', async () => {
@@ -43,7 +45,8 @@ describe('TableForm', () => {
 		}
 
 		await page.getByLabelText('Título').fill('A Cripta do Rei Afogado');
-		await page.getByLabelText('Sistema de RPG').selectOptions('daggerheart');
+		await page.getByRole('combobox', { name: 'Sistema de RPG' }).fill('dagger');
+		await page.getByRole('option', { name: 'Daggerheart' }).click();
 		await page.getByLabelText('Vagas').fill('4');
 
 		const preview = page.getByRole('complementary');

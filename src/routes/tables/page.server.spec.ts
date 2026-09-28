@@ -51,10 +51,9 @@ describe('the table list load', () => {
 		]);
 	});
 
-	it('features the systems with the most tables first, then the catalogue order', async () => {
+	it('lists the systems with the most tables first, then the catalogue order', async () => {
 		const data = await run(event());
 
-		expect(slugs(data.featured)).toEqual(['d', 'c', 'a']);
 		expect(slugs(data.systems)).toEqual(['d', 'c', 'a', 'b', 'e']);
 		expect(slugs(data.tables)).toEqual(['t1', 't2', 't3']);
 		expect(data.tables[0]).not.toHaveProperty('gmId');
@@ -67,10 +66,10 @@ describe('the table list load', () => {
 		expect(slugs(data.tables)).toEqual(['t3']);
 	});
 
-	it('keeps a system picked from the overflow list visible as a chip', async () => {
+	it('shows no table for a system nobody runs', async () => {
 		const data = await run(event('?system=e'));
 
-		expect(slugs(data.featured)).toEqual(['d', 'c', 'a', 'e']);
+		expect(data.pickedSystems).toEqual(['e']);
 		expect(data.tables).toEqual([]);
 	});
 
