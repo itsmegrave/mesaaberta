@@ -175,13 +175,23 @@
 				>.
 			</p>
 		</div>
-		<p class="md:max-w-[380px]">
-			{m.footer_community()}
-			<a
-				href="https://linktr.ee/lenindragonsrpg"
-				rel="noopener"
-				class="link-underline text-surface-950-50">Lenindragons</a
-			>.
-		</p>
+		<div class="flex flex-col gap-3 md:max-w-[380px]">
+			<p>
+				{m.footer_community()}
+				<a
+					href="https://linktr.ee/lenindragonsrpg"
+					rel="noopener"
+					class="link-underline text-surface-950-50">Lenindragons</a
+				>.
+			</p>
+			<p>
+				{m.footer_report_bug()}
+				<a
+					href="https://github.com/itsmegrave/mesaaberta/issues"
+					rel="noopener"
+					class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
+				>.
+			</p>
+		</div>
 	</div>
 </footer>
