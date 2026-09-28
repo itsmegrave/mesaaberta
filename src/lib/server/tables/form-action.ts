@@ -5,12 +5,14 @@ import { refuse } from '$lib/forms/server';
 import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
 import { withLocation } from '../location/cep';
+import { timezoneOf } from '../time';
 import { tableFormSchema, toTableInput, type TableInput } from '$lib/tables/schema';
 
 type Event = {
 	request: Request;
 	locals: App.Locals;
 	url: URL;
+	cookies: Pick<import('@sveltejs/kit').Cookies, 'get'>;
 	setHeaders?: (headers: Record<string, string>) => void;
 };
 
@@ -24,7 +26,7 @@ type Event = {
  * itself is checked by `save` (through the policy), not here.
  */
 export async function handleTableForm(
-	{ request, locals, url, setHeaders }: Event,
+	{ request, locals, url, cookies, setHeaders }: Event,
 	save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
 	guard: () => Promise<void> = async () => {}
 ) {
@@ -36,6 +38,8 @@ export async function handleTableForm(
 	}
 
 	const data = await request.formData();
+	// The GM types the time in their own zone; whatever zone was sent, that is the one used.
+	data.set('timezone', await timezoneOf(locals, cookies));
 	const form = await superValidate(data, zod4(tableFormSchema));
 	if (!form.valid) return fail(400, { form });
 
