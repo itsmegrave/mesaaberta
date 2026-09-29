@@ -4,10 +4,10 @@ import { templateVariables, welcomeSection } from './templates';
 export type ResendEnv = { RESEND_API_KEY: string; RESEND_FROM: string };
 type Fetch = typeof fetch;
 
-const escapeHtml = (value: string) =>
+export const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-const utf8Base64 = (value: string) => {
+export const utf8Base64 = (value: string) => {
   const bytes = new TextEncoder().encode(value);
   let binary = '';
   for (let start = 0; start < bytes.length; start += 0x8000) {
@@ -21,7 +21,7 @@ const utf8Base64 = (value: string) => {
  * id and variables and the inline copy is sent only without one. `subject` stays in both: the
  * payload's subject wins over the template's default, and a template with none would fail.
  */
-const content = (mail: Mail) => {
+export const resendContent = (mail: Mail) => {
   const welcome = welcomeSection(mail.welcomeMessage);
   if (mail.template) {
     const variables = { ...mail.template.variables, WELCOME_MESSAGE: welcome };
@@ -46,7 +46,7 @@ export function resendMailer(env: ResendEnv, request: Fetch = fetch): Mailer {
           from: env.RESEND_FROM,
           to: [mail.to],
           subject: mail.subject,
-          ...content(mail),
+          ...resendContent(mail),
           attachments: mail.attachments?.map((attachment) => ({
             filename: attachment.filename,
             content: utf8Base64(attachment.content),

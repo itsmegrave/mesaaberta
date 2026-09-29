@@ -5,6 +5,7 @@ import { buildInvite, tableUrl, type CalendarTable } from '../calendar/ics';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
 import type { Mailer } from '../mail/mailer';
+import { mailpitMailer } from '../mail/mailpit';
 import { resendMailer } from '../mail/resend';
 import {
   templateIdFor,
@@ -19,6 +20,8 @@ import { NAMELESS } from '../db/public-name';
 
 /** Secrets stay in the Worker environment. Do not put any of these in `wrangler.jsonc`. */
 export type InviteEnv = TemplateEnv & {
+  /** Local/E2E provider. When present it wins over Resend and captures messages in Mailpit. */
+  MAILPIT_URL?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
   SUPABASE_URL?: string;
@@ -31,7 +34,8 @@ export type InviteEnv = TemplateEnv & {
 
 /** What the handler needs once `inviteHandler` has checked the environment and picked the admin key. */
 type InviteConfig = TemplateEnv & {
-  RESEND_API_KEY: string;
+  MAILPIT_URL?: string;
+  RESEND_API_KEY?: string;
   RESEND_FROM: string;
   SUPABASE_URL: string;
   SUPABASE_SECRET_KEY: string;
@@ -72,6 +76,18 @@ const calendarColumns = {
 
 /** Resend accepts `Name <address@example.com>`; iCalendar's ORGANIZER needs only the address. */
 const addressOf = (from: string) => from.match(/<([^<>]+)>\s*$/)?.[1] ?? from;
+
+const localFrom = 'Mesa Aberta <no-reply@mesaaberta.local>';
+
+const inviteMailer = (env: InviteConfig, request: typeof fetch) => {
+  if (env.MAILPIT_URL)
+    return mailpitMailer({ MAILPIT_URL: env.MAILPIT_URL, RESEND_FROM: env.RESEND_FROM }, request);
+  if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is required without MAILPIT_URL');
+  return resendMailer(
+    { RESEND_API_KEY: env.RESEND_API_KEY, RESEND_FROM: env.RESEND_FROM },
+    request,
+  );
+};
 
 type InviteTable = CalendarTable & { gmId: string; welcomeMessage: string | null };
 
@@ -141,7 +157,7 @@ export function createInviteHandler(
   env: InviteConfig,
   request: typeof fetch = fetch,
   admin: SupabaseAdmin = createSupabaseAdmin(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY),
-  mailer: Mailer = resendMailer(env, request),
+  mailer: Mailer = inviteMailer(env, request),
 ): Handler {
   return {
     name: 'calendar-invites-v1',
@@ -247,7 +263,9 @@ export function createInviteHandler(
 /** No secrets in local development means no handler; events still complete as audit rows. */
 export function inviteHandler(env: InviteEnv | undefined): Handler | null {
   const secretKey = env?.SUPABASE_SECRET_KEY || env?.SUPABASE_SERVICE_ROLE_KEY;
-  if (!env?.RESEND_API_KEY || !env.RESEND_FROM || !env.SUPABASE_URL || !secretKey) return null;
+  const from = env?.RESEND_FROM || (env?.MAILPIT_URL ? localFrom : undefined);
+  if (!env?.SUPABASE_URL || !secretKey || !from) return null;
+  if (!env.MAILPIT_URL && !env.RESEND_API_KEY) return null;
 
   return createInviteHandler({
     RESEND_TEMPLATE_INVITE: env.RESEND_TEMPLATE_INVITE,
@@ -255,7 +273,8 @@ export function inviteHandler(env: InviteEnv | undefined): Handler | null {
     RESEND_TEMPLATE_JOIN_REQUESTED: env.RESEND_TEMPLATE_JOIN_REQUESTED,
     RESEND_TEMPLATE_JOIN_DECLINED: env.RESEND_TEMPLATE_JOIN_DECLINED,
     RESEND_API_KEY: env.RESEND_API_KEY,
-    RESEND_FROM: env.RESEND_FROM,
+    RESEND_FROM: from,
+    MAILPIT_URL: env.MAILPIT_URL,
     SUPABASE_URL: env.SUPABASE_URL,
     SUPABASE_SECRET_KEY: secretKey,
     APP_ORIGIN: env.APP_ORIGIN || 'https://mesaaberta.app',

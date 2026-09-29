@@ -70,7 +70,9 @@ export const actions: Actions = {
       const { eventId } = await updateTable(db, await locals.getProfile(), params.slug, input, {
         imagePath,
       });
-      locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
+      if (eventId) {
+        locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
+      }
       return { slug: params.slug };
     });
   },

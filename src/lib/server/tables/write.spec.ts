@@ -489,13 +489,28 @@ describe('updateTable', () => {
     expect(await rowOf('nome-novo')).toBeUndefined();
   });
 
-  it('bumps the calendar sequence on every edit, so invites replace the old event', async () => {
+  it('does not bump the calendar sequence for a non-calendar edit', async () => {
     const { slug } = await createTable(test.db, ana, input({ title: 'Sequência' }), { now });
 
     await updateTable(test.db, ana, slug, input({ title: 'Sequência', capacity: 6 }));
-    await updateTable(test.db, ana, slug, input({ title: 'Sequência', capacity: 7 }));
 
-    expect((await rowOf(slug)).icalSequence).toBe(2);
+    expect((await rowOf(slug)).icalSequence).toBe(0);
+  });
+
+  it('bumps the calendar sequence when the session time changes, so invites replace the old event', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Sequência Horário' }), {
+      now,
+    });
+
+    const result = await updateTable(
+      test.db,
+      ana,
+      slug,
+      input({ title: 'Sequência Horário', startsAtLocal: '2026-10-10T20:00' }),
+    );
+
+    expect(result.eventId).toEqual(expect.any(String));
+    expect((await rowOf(slug)).icalSequence).toBe(1);
   });
 
   it('keeps the current image unless a new one is given', async () => {
@@ -596,6 +611,22 @@ describe('events', () => {
       payload: { slug, title: 'Evt Ciclo Novo' },
     });
     expect(off).toMatchObject({ actorId: ana.id, payload: { slug } });
+  });
+
+  it('does not record TableUpdated for an edit that does not change the calendar', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Evt Sem Calendário' }), {
+      now,
+    });
+
+    const edited = await updateTable(
+      test.db,
+      ana,
+      slug,
+      input({ title: 'Evt Sem Calendário', capacity: 7 }),
+    );
+
+    expect(edited.eventId).toBeNull();
+    expect(await eventsOf('TableUpdated')).toEqual([]);
   });
 
   it('records nothing when the action is refused', async () => {

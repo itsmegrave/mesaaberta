@@ -64,6 +64,23 @@ async function columnsOf(db: AnyDb, input: TableInput) {
   };
 }
 
+/** Fields serialized into the attendee's iCalendar event. Other form changes need no new invite. */
+function calendarChanged(
+  table: typeof gameTables.$inferSelect,
+  columns: Awaited<ReturnType<typeof columnsOf>>,
+) {
+  return (
+    table.title !== columns.title ||
+    table.description !== columns.description ||
+    table.extraInfo !== columns.extraInfo ||
+    table.startsAt.getTime() !== columns.startsAt.getTime() ||
+    table.durationMinutes !== columns.durationMinutes ||
+    table.timezone !== columns.timezone ||
+    table.recurrence !== columns.recurrence ||
+    table.until?.getTime() !== columns.until?.getTime()
+  );
+}
+
 /**
  * Creates a table; the creator becomes its GM. The slug comes from the title. The unique index
  * has the last word: if another request takes the slug between the check and the insert, this
@@ -175,8 +192,8 @@ export async function loadTableForEdit(
 }
 
 /**
- * Saves the form. The slug never changes, so shared links and calendar invites keep working, and
- * the calendar sequence goes up so invites replace the old event.
+ * Saves the form. A new calendar event is emitted only when one of its serialized fields changed;
+ * this avoids unnecessary messages when the GM edits tags, capacity or an unrelated form field.
  */
 export async function updateTable(
   db: AnyDb,
@@ -184,11 +201,12 @@ export async function updateTable(
   slug: string,
   input: TableInput,
   { imagePath }: { imagePath?: string } = {},
-): Promise<{ eventId: string }> {
+): Promise<{ eventId: string | null }> {
   const table = await findForWrite(db, slug);
   authorize(actor, 'table:edit', table);
 
   const columns = await columnsOf(db, input);
+  const changedCalendar = calendarChanged(table, columns);
   const eventId = await db.transaction(async (tx) => {
     await tx
       .update(gameTables)
@@ -196,10 +214,12 @@ export async function updateTable(
       .set({
         ...columns,
         ...(imagePath ? { imagePath } : {}),
-        icalSequence: table.icalSequence + 1,
+        ...(changedCalendar ? { icalSequence: table.icalSequence + 1 } : {}),
       })
       .where(eq(gameTables.id, table.id));
     await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
+
+    if (!changedCalendar) return null;
 
     return recordEvent(tx as unknown as AnyDb, {
       type: 'TableUpdated',

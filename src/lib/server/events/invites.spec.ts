@@ -99,6 +99,30 @@ describe('calendar invite handler', () => {
     expect(inviteHandler(env)?.name).toBe('calendar-invites-v1');
   });
 
+  it('uses Mailpit when the local provider URL is configured, without a Resend key', async () => {
+    const sent = capture();
+    const local = {
+      MAILPIT_URL: 'http://127.0.0.1:54344',
+      SUPABASE_URL: env.SUPABASE_URL,
+      SUPABASE_SECRET_KEY: env.SUPABASE_SECRET_KEY,
+      APP_ORIGIN: env.APP_ORIGIN,
+    };
+
+    expect(inviteHandler(local)?.name).toBe('calendar-invites-v1');
+
+    await createInviteHandler(
+      { ...local, RESEND_FROM: 'Mesa Aberta <no-reply@mesaaberta.local>' },
+      sent.request,
+      admin(),
+    ).handle(event('PlayerJoined'), test.db);
+
+    expect(sent.urls[0]).toBe('http://127.0.0.1:54344/api/v1/send');
+    expect(sent.bodies[0]).toMatchObject({
+      To: [{ Email: 'ana@example.com' }],
+      Subject: 'Convite: Mesa do Dragão',
+    });
+  });
+
   it('takes the admin key under either name, so the legacy service_role key keeps working', () => {
     const { SUPABASE_SECRET_KEY, ...rest } = env;
 
@@ -455,7 +479,9 @@ describe('calendar invite handler', () => {
 /** What the tests read back from a Resend request body. */
 type SentBody = {
   to: string[];
+  To?: Array<{ Email: string; Name?: string }>;
   subject: string;
+  Subject?: string;
   text?: string;
   html?: string;
   template: { id: string; variables: Record<string, string> };
@@ -466,12 +492,14 @@ type SentBody = {
 function capture(status = 200) {
   const bodies: SentBody[] = [];
   const headers: Array<Record<string, string>> = [];
-  const request = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+  const urls: string[] = [];
+  const request = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+    urls.push(String(url));
     bodies.push(JSON.parse(String(init?.body)));
     headers.push(init?.headers as Record<string, string>);
     return new Response('{}', { status });
   }) as unknown as typeof fetch;
-  return { request, bodies, headers };
+  return { request, bodies, headers, urls };
 }
 describe('the GM welcome message in the invite', () => {
   const templated = {

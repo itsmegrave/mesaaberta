@@ -12,6 +12,9 @@ const serverVars = [
   `--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`,
   // The local stack's secret key: account deletion removes the Auth user through the Admin API.
   `--var SUPABASE_SECRET_KEY:${supabase.SECRET_KEY}`,
+  // E2E uses Supabase's local Mailpit as the transactional e-mail provider, even if .dev.vars has
+  // real Resend credentials for a deliberate smoke test.
+  `--var MAILPIT_URL:${supabase.MAILPIT_URL}`,
   // E2E runs on the feature-flag defaults from the registry, never on production's live values:
   // no forced flags (unlike .dev.vars' preview mode) and no GrowthBook key, so the tests do
   // not change when someone flips a flag in GrowthBook.
@@ -44,7 +47,9 @@ export default defineConfig({
       // Overrides the Hyperdrive binding's local connection string (see wrangler.jsonc).
       env: { CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: supabase.DB_URL },
       port,
-      reuseExistingServer: !process.env.CI,
+      // Reusing a developer's server can bypass the Mailpit provider above. Failing on a busy port
+      // is intentional: it is safer than allowing an E2E test to inherit real Resend credentials.
+      reuseExistingServer: false,
       timeout: 180_000,
     },
     {
@@ -59,7 +64,7 @@ export default defineConfig({
       ].join(' '),
       env: { CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: supabase.DB_URL },
       port: maintenancePort,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 240_000,
     },
   ],
