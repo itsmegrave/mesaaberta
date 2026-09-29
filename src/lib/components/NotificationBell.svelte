@@ -12,6 +12,10 @@
 
   let { unread, latest }: { unread: number; latest: Item[] } = $props();
 
+  // Skeleton keeps a closed popover's content in the page, only hidden. The list is drawn while the
+  // menu is open, so its text never doubles what the page itself says.
+  let open = $state(false);
+
   const locale = getLocale();
   const feed = localizedHref('/notifications', locale);
   // Every form comes back to the page it was sent from.
@@ -30,7 +34,10 @@
   );
 </script>
 
-<Popover positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}>
+<Popover
+  positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}
+  onOpenChange={(details) => (open = details.open)}
+>
   <Popover.Trigger
     aria-label={label}
     class="relative btn flex size-11 items-center justify-center rounded-full p-0 hover:preset-tonal"
@@ -77,7 +84,9 @@
           {/if}
         </div>
 
-        {#if latest.length === 0}
+        {#if !open}
+          <!-- Nothing until the menu opens. -->
+        {:else if latest.length === 0}
           <p class="p-2 pb-3 text-sm text-muted">{m.notifications_empty()}</p>
         {:else}
           <ul class="flex flex-col gap-1">
