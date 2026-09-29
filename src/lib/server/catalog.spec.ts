@@ -40,6 +40,8 @@ describe('listCatalog', () => {
 
     expect(platforms[0]).toEqual({ name: 'Discord', slug: 'discord' });
     expect(platforms.map((p) => p.slug)).toContain('foundry-vtt');
+    expect(platforms).toContainEqual({ name: 'Old Dragon Online', slug: 'old-dragon-online' });
+    expect(platforms).toContainEqual({ name: 'Outro', slug: 'outro' });
     expect(tags[0]).toEqual({ name: 'Iniciantes', slug: 'iniciantes' });
   });
 
@@ -53,13 +55,17 @@ describe('listCatalog', () => {
 describe('setTableCatalog and catalogOf', () => {
   it("stores a table's picks in the order picked, and a later save replaces them", async () => {
     await setTableCatalog(test.db, tableId, {
-      gmId: gm,
-      platformSlugs: ['foundry-vtt', 'discord'],
+      platformSlugs: ['foundry-vtt', 'discord', 'old-dragon-online', 'outro'],
       tagSlugs: ['terror', 'iniciantes'],
     });
 
     const first = (await catalogOf(test.db, [tableId])).get(tableId)!;
-    expect(first.platforms.map((p) => p.name)).toEqual(['Foundry VTT', 'Discord']);
+    expect(first.platforms.map((p) => p.name)).toEqual([
+      'Foundry VTT',
+      'Discord',
+      'Old Dragon Online',
+      'Outro',
+    ]);
     expect(first.tags.map((t) => t.name)).toEqual(['Terror', 'Iniciantes']);
 
     await setTableCatalog(test.db, tableId, { gmId: gm, platformSlugs: ['roll20'], tagSlugs: [] });
