@@ -82,7 +82,12 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await page.getByRole('link', { name: 'Editar mesa' }).click();
   await expect(page.getByRole('button', { name: 'Remover Terror' })).toBeVisible();
   await page.getByRole('button', { name: 'Remover Humor' }).click();
-  await page.getByRole('button', { name: 'Salvar' }).click();
+  await page.getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(page).toHaveURL(/\/manage$/);
+  await page.goto(page.url().replace(/\/manage$/, ''));
+  await expect(
+    page.getByRole('list', { name: 'Tags' }).getByRole('link', { name: 'Terror' }),
+  ).toBeVisible();
   await expect(
     page.getByRole('list', { name: 'Tags' }).getByRole('link', { name: 'Humor' }),
   ).toHaveCount(0);

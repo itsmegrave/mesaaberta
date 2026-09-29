@@ -78,6 +78,8 @@ export const tableFormSchema = z
       .trim()
       .refine((value) => value === '' || normalizeCep(value) !== null, 'invalid')
       .default(''),
+    // Editing: take the current image off (a new image wins over it).
+    removeImage: z.boolean().default(false),
   })
   .superRefine((value, ctx) => {
     // With a CEP the server fills the area in; without one, the person types it.
@@ -127,6 +129,8 @@ export type TableInput = {
   locationNeighbourhood: string | null;
   locationCity: string | null;
   locationState: string | null;
+  /** Editing: take the current image off, unless a new one is sent. */
+  removeImage: boolean;
 };
 
 /** The validated form as what the domain wants: a repeat rule instead of a word, no empty strings. */

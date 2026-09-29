@@ -29,6 +29,8 @@ export async function handleTableForm(
   { request, locals, url, cookies, setHeaders }: Event,
   save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
   guard: () => Promise<void> = async () => {},
+  /** Where a saved table leads: its page, unless said otherwise (the edit form: its manage page). */
+  destination: (slug: string) => string = (slug) => `/tables/${slug}`,
 ) {
   if (!(await locals.getUser())) {
     redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
@@ -76,5 +78,5 @@ export async function handleTableForm(
     throw error;
   }
 
-  redirect(303, `/tables/${slug}`);
+  redirect(303, destination(slug));
 }

@@ -1,6 +1,6 @@
-import { eq, like } from 'drizzle-orm';
+import { and, count, eq, like } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, systems } from '../db/schema';
+import { gameTables, registrations, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
@@ -64,23 +64,6 @@ async function columnsOf(db: AnyDb, input: TableInput) {
   };
 }
 
-/** Fields serialized into the attendee's iCalendar event. Other form changes need no new invite. */
-function calendarChanged(
-  table: typeof gameTables.$inferSelect,
-  columns: Awaited<ReturnType<typeof columnsOf>>,
-) {
-  return (
-    table.title !== columns.title ||
-    table.description !== columns.description ||
-    table.extraInfo !== columns.extraInfo ||
-    table.startsAt.getTime() !== columns.startsAt.getTime() ||
-    table.durationMinutes !== columns.durationMinutes ||
-    table.timezone !== columns.timezone ||
-    table.recurrence !== columns.recurrence ||
-    table.until?.getTime() !== columns.until?.getTime()
-  );
-}
-
 /**
  * Creates a table; the creator becomes its GM. The slug comes from the title. The unique index
  * has the last word: if another request takes the slug between the check and the insert, this
@@ -138,6 +121,15 @@ export async function createTable(
   }
 }
 
+/** How many players hold a seat: a pending request takes none. */
+async function seatsTakenAt(db: AnyDb, tableId: string) {
+  const [row] = await db
+    .select({ taken: count() })
+    .from(registrations)
+    .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
+  return row.taken;
+}
+
 async function findForWrite(db: AnyDb, slug: string) {
   const [table] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
   if (!table) throw new NotFound(`no table with slug "${slug}"`);
@@ -166,6 +158,8 @@ export async function loadTableForEdit(
   return {
     slug: table.slug,
     catalog,
+    // The slider cannot go below them.
+    seatsTaken: await seatsTakenAt(db, table.id),
     status: table.status,
     systemSlug: system.slug,
     title: table.title,
@@ -192,8 +186,34 @@ export async function loadTableForEdit(
 }
 
 /**
- * Saves the form. A new calendar event is emitted only when one of its serialized fields changed;
- * this avoids unnecessary messages when the GM edits tags, capacity or an unrelated form field.
+ * What the players of a table see of it: what the calendar invite carries (title, text, times,
+ * repetition) and where and how to join. Only a change to one of these is news for them; seats,
+ * the join mode, the welcome message, the image and the tags are not.
+ */
+const PLAYER_FACING = [
+  'title',
+  'description',
+  'extraInfo',
+  'kind',
+  'startsAt',
+  'durationMinutes',
+  // The invite's times are written in it.
+  'timezone',
+  'recurrence',
+  'until',
+  'modality',
+  'locationArea',
+  'joinDetails',
+] as const;
+
+const sameValue = (a: unknown, b: unknown) =>
+  a instanceof Date && b instanceof Date
+    ? a.getTime() === b.getTime()
+    : (a ?? null) === (b ?? null);
+
+/**
+ * Saves the form. The slug never changes, so shared links and calendar invites keep working, and
+ * the calendar sequence goes up so invites replace the old event.
  */
 export async function updateTable(
   db: AnyDb,
@@ -206,20 +226,26 @@ export async function updateTable(
   authorize(actor, 'table:edit', table);
 
   const columns = await columnsOf(db, input);
-  const changedCalendar = calendarChanged(table, columns);
+  // Invites and notifications go out only for a change players would see.
+  const changed = PLAYER_FACING.some((field) => !sameValue(table[field], columns[field]));
+  // Fewer seats than players would leave someone at the table without one: remove players first.
+  if (input.capacity < (await seatsTakenAt(db, table.id))) {
+    throw new Invalid('capacity', 'below_taken');
+  }
+  // A new image replaces the current one; without one, the GM may take the current one off.
+  const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
     await tx
       .update(gameTables)
       // No new image leaves the current one as it is.
       .set({
         ...columns,
-        ...(imagePath ? { imagePath } : {}),
-        ...(changedCalendar ? { icalSequence: table.icalSequence + 1 } : {}),
+        ...image,
+        ...(changed ? { icalSequence: table.icalSequence + 1 } : {}),
       })
       .where(eq(gameTables.id, table.id));
     await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
-
-    if (!changedCalendar) return null;
+    if (!changed) return null;
 
     return recordEvent(tx as unknown as AnyDb, {
       type: 'TableUpdated',

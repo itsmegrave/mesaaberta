@@ -94,6 +94,36 @@ describe('TableForm', () => {
     await expect.element(seats).toHaveAttribute('aria-valuenow', '3');
   });
 
+  it('says why the seats cannot go lower, and where to remove players', async () => {
+    render(TableFormHarness, {
+      ...props,
+      values: { capacity: 4 },
+      minCapacity: 3,
+      manageHref: '/tables/mesa/manage',
+    });
+
+    await expect
+      .element(page.getByText(/3 pessoas já estão na mesa, então este é o mínimo\./))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Remover jogadores' }))
+      .toHaveAttribute('href', '/tables/mesa/manage');
+  });
+
+  it('takes the current image off on save, and can take that back', async () => {
+    render(TableFormHarness, { ...props, imageUrl: 'https://x.supabase.co/img.png' });
+    const removeField = () => document.querySelector('input[name="removeImage"]');
+
+    await expect.element(page.getByRole('button', { name: 'Trocar imagem' })).toBeVisible();
+    await page.getByRole('button', { name: 'Remover imagem' }).click();
+    await expect.element(page.getByText('A imagem sai quando você salvar.')).toBeVisible();
+    expect(removeField()?.getAttribute('value')).toBe('true');
+
+    await page.getByRole('button', { name: 'Desfazer' }).click();
+    await expect.element(page.getByRole('button', { name: 'Remover imagem' })).toBeVisible();
+    expect(removeField()).toBeNull();
+  });
+
   it('posts as multipart to its action, so an image can travel with it', async () => {
     render(TableFormHarness, { ...props, action: '?/save' });
 
