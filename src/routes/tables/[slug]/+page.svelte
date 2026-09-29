@@ -321,24 +321,24 @@
           </a>
         {:else if data.myStatus === 'confirmed'}
           <p class="font-semibold">{m.table_you_are_in()}</p>
-          <ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
-            <button
-              type="submit"
-              class="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
-            >
-              {m.table_leave()}
-            </button>
-          </ActionForm>
+          <ActionForm
+            action="?/leave"
+            class="mt-3"
+            label={m.table_leave()}
+            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            success={m.toast_left()}
+            onfail={(message) => (failed = message)}
+          />
         {:else if data.myStatus === 'pending'}
           <p class="font-semibold">{m.table_request_pending()}</p>
-          <ActionForm action="?/leave" class="mt-3" onfail={(message) => (failed = message)}>
-            <button
-              type="submit"
-              class="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
-            >
-              {m.table_cancel_request()}
-            </button>
-          </ActionForm>
+          <ActionForm
+            action="?/leave"
+            class="mt-3"
+            label={m.table_cancel_request()}
+            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            success={m.toast_request_withdrawn()}
+            onfail={(message) => (failed = message)}
+          />
         {:else if data.canJoin}
           <ActionForm
             action="?/join"
@@ -347,14 +347,9 @@
               table.joinMode === 'approval'
                 ? toast.pending(m.toast_pending())
                 : toast.success(m.toast_confirmed())}
-          >
-            <button
-              type="submit"
-              class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
-            >
-              {table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
-            </button>
-          </ActionForm>
+            label={table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
+            buttonClass="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+          />
         {/if}
       </div>
       <p class="mt-3 text-sm text-muted">
@@ -439,12 +434,11 @@
               <ActionForm
                 action="?/remove"
                 playerId={player.playerId}
+                label={m.table_remove()}
+                buttonClass="btn preset-tonal-error btn-sm"
+                success={m.toast_removed()}
                 onfail={(message) => (failed = message)}
-              >
-                <button type="submit" class="btn preset-tonal-error btn-sm"
-                  >{m.table_remove()}</button
-                >
-              </ActionForm>
+              />
             </li>
           {/each}
         </ul>
@@ -462,21 +456,19 @@
                 <ActionForm
                   action="?/approve"
                   playerId={request.playerId}
+                  label={m.table_approve()}
+                  buttonClass="btn preset-tonal-primary btn-sm"
+                  success={m.toast_approved()}
                   onfail={(message) => (failed = message)}
-                >
-                  <button type="submit" class="btn preset-tonal-primary btn-sm"
-                    >{m.table_approve()}</button
-                  >
-                </ActionForm>
+                />
                 <ActionForm
                   action="?/decline"
                   playerId={request.playerId}
+                  label={m.table_decline()}
+                  buttonClass="btn preset-tonal-error btn-sm"
+                  success={m.toast_declined()}
                   onfail={(message) => (failed = message)}
-                >
-                  <button type="submit" class="btn preset-tonal-error btn-sm"
-                    >{m.table_decline()}</button
-                  >
-                </ActionForm>
+                />
               </div>
             </li>
           {/each}

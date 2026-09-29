@@ -88,12 +88,12 @@
   {/if}
 
   <!-- Leaving, or withdrawing a request, posts to the table's own action and comes back here. -->
-  <ActionForm action="{page}?/leave" {next} class="mt-5">
-    <button
-      type="submit"
-      class="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold"
-    >
-      {item.status === 'pending' ? m.table_cancel_request() : m.table_leave()}
-    </button>
-  </ActionForm>
+  <ActionForm
+    action="{page}?/leave"
+    {next}
+    class="mt-5"
+    label={item.status === 'pending' ? m.table_cancel_request() : m.table_leave()}
+    buttonClass="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold"
+    success={item.status === 'pending' ? m.toast_request_withdrawn() : m.toast_left()}
+  />
 </article>

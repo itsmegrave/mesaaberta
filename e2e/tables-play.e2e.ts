@@ -161,6 +161,8 @@ test.describe('a table where the GM approves each player', () => {
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/tables/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    // The request has to be recorded before the GM's dashboard can list it.
+    await expect(page.getByText('Seu pedido foi enviado. O mestre vai responder.')).toBeVisible();
 
     await gmPage.goto('/account/tables');
     await gmPage.getByRole('button', { name: 'Recusar' }).click();

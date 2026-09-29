@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
+import { setError, superValidate, withFiles } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { anonymiseProfile, closeAccount, setAvatarPath } from '$lib/server/account/service';
 import { deleteAuthUser, supabaseAdminFrom } from '$lib/server/auth/admin-client';
@@ -15,6 +15,7 @@ import {
   supabaseUrlOf,
 } from '$lib/server/images';
 import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
+import { photoSchema } from '$lib/profile/photo';
 import { profileSchema } from '$lib/profile/schema';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -34,6 +35,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 
   return {
     form: await superValidate(values, zod4(profileSchema), { errors: false }),
+    photoForm: await superValidate(zod4(photoSchema)),
     email: user.email ?? '',
     avatarUrl: profile ? pictureOf(supabaseUrlOf(platform?.env), profile) : null,
     hasUploadedPhoto: Boolean(profile?.avatarPath),
@@ -61,17 +63,18 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
-    const file = (await request.formData()).get('photo');
-    if (!(file instanceof File) || file.size === 0) return fail(400, { photoError: 'empty' });
+    // Files are allowed so the schema can check the picture; every failure below strips them.
+    const photoForm = await superValidate(request, zod4(photoSchema), { allowFiles: true });
+    if (!photoForm.valid) return fail(400, withFiles({ photoForm }));
 
     try {
-      const prepared = await prepareImage(file, user.id);
+      const prepared = await prepareImage(photoForm.data.photo, user.id);
       const storage = locals.supabase?.storage.from(AVATAR_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
       const path = await storeImage(storage, prepared, locals.log);
       await removePicture(locals, await setAvatarPath(locals.db, user.id, path));
     } catch (e) {
-      if (e instanceof Invalid) return fail(400, { photoError: e.message });
+      if (e instanceof Invalid) return setError(photoForm, 'photo', e.message);
       throw e;
     }
     // A fresh request, so the header shows the new picture too.
