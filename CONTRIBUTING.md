@@ -39,6 +39,8 @@ Uma frase opcional sobre a mudança.
 - Sections are optional, but only `## Adicionado`, `## Alterado` and `## Corrigido` are allowed. Anything else fails the tests.
 - `draft: true` shows the entry only in `pnpm dev` and to admins, marked "Rascunho", for an entry that shouldn't go out yet. Remove it when the change is released.
 - Several changes going out the same day share one entry.
+- Run `pnpm changelog` after adding or editing an entry, and commit `src/lib/changelog/entries.generated.ts` with it. The Cron Trigger's Worker reads the entries from that module; a test fails while it is out of date.
+- Once deployed, a published entry is announced in everyone's notification bell on the next cron run (within minutes): its title and opening sentence, linking to it on the page. That happens once per entry, only for entries dated in the last 30 days, and never for drafts. Write the opening sentence so it stands on its own.
 
 ## Code style
 

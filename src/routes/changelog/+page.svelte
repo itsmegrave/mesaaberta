@@ -50,7 +50,11 @@
   {:else}
     <ol class="mt-8 md:mt-10">
       {#each data.entries as entry (entry.slug)}
-        <li class="border-t border-surface-200-800 py-8 first:border-t-0 first:pt-0">
+        <!-- Its own address (/changelog#slug): where the bell's announcement of it leads. -->
+        <li
+          id={entry.slug}
+          class="scroll-mt-24 border-t border-surface-200-800 py-8 first:border-t-0 first:pt-0"
+        >
           <p class="flex flex-wrap items-center gap-2 text-sm text-muted">
             <time datetime={entry.date}>{dayLabel(entry.date)}</time>
             {#if entry.draft}
@@ -90,7 +94,7 @@
 
   {#if data.pages > 1}
     <nav
-      aria-label={m.changelog_pagetion_label()}
+      aria-label={m.changelog_pagination_label()}
       class="mt-4 flex items-center justify-between gap-3 border-t border-surface-200-800 pt-6"
     >
       {#if data.page > 1}
