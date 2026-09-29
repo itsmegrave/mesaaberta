@@ -127,6 +127,13 @@
       "when": 1790605002857,
       "tag": "0017_gm_only_rating",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790640276882,
+      "tag": "0018_storage_policies",
+      "breakpoints": true
     }
   ]
 }
