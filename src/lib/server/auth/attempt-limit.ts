@@ -12,7 +12,7 @@ import { RateLimited } from '../errors';
  * person who mistypes a password a few times must not be locked out. A script is far faster.
  */
 export type AttemptLimit = {
-  action: 'sign_in' | 'sign_up' | 'password_reset';
+  action: 'sign_in' | 'sign_up' | 'password_reset' | 'cep_lookup';
   max: number;
   windowSeconds: number;
 };

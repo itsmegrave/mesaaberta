@@ -1,11 +1,15 @@
 <script lang="ts">
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { pageQuery } from '$lib/query/page.svelte';
   import TableCard from '$lib/components/TableCard.svelte';
   import TableIllustration from '$lib/components/TableIllustration.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { data } = $props();
+  let { data: serverData } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
 
   const locale = getLocale();
 
@@ -24,6 +28,7 @@
   <title>{m.home_title()}</title>
   <meta name="description" content={m.home_description()} />
 </svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 {#snippet arrow()}
   <svg

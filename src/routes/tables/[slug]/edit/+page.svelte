@@ -1,4 +1,9 @@
 <script lang="ts">
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { queryClient } from '$lib/query/context';
+  import { afterWrite } from '$lib/query/invalidate';
+  import { pageQuery } from '$lib/query/page.svelte';
+  const client = queryClient();
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import { superForm } from 'sveltekit-superforms';
@@ -11,10 +16,16 @@
   import { tableFormSchema } from '$lib/tables/schema';
 
   let { data } = $props();
+  const options = pageQuery(
+    () => data.catalogRead ?? { systems: data.systems, catalog: data.catalog },
+  );
 
   // svelte-ignore state_referenced_locally
   const superform = superForm(data.form, {
     validators: zod4Client(tableFormSchema),
+    onResult: ({ result }) => {
+      if (result.type === 'redirect') void afterWrite(client, 'table');
+    },
     // A table form is long: leaving it with changes asks first.
     taintedMessage: confirmLeave,
   });
@@ -23,6 +34,8 @@
 <svelte:head>
   <title>{m.form_edit_title()}</title>
 </svelte:head>
+
+<QueryStatus failed={options.isError} retry={() => options.refetch()} />
 
 <section class="py-10 md:py-16">
   <Breadcrumbs
@@ -46,8 +59,8 @@
 
   <TableForm
     {superform}
-    systems={data.systems}
-    catalog={data.catalog}
+    systems={options.data?.systems ?? data.systems}
+    catalog={options.data?.catalog ?? data.catalog}
     imageUrl={data.imageUrl}
     action="?/save"
     submitLabel={m.form_submit_edit()}

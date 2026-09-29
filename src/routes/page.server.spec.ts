@@ -17,7 +17,12 @@ const table = (n: number) =>
 
 const error = vi.fn();
 const event = (db: unknown = {}) =>
-  ({ locals: { db, log: { error } }, platform: undefined }) as unknown as RequestEvent;
+  ({
+    params: {},
+    url: new URL('https://x.test/'),
+    locals: { db, log: { error } },
+    platform: undefined,
+  }) as unknown as RequestEvent;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
 const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
@@ -29,7 +34,10 @@ describe('the home page load', () => {
   });
 
   it('lists nothing when there is no database yet', async () => {
-    expect(await run(event(null))).toEqual({ tables: [] });
+    expect(await run(event(null))).toMatchObject({
+      tables: [],
+      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables'] },
+    });
     expect(listed).not.toHaveBeenCalled();
   });
 
@@ -46,7 +54,10 @@ describe('the home page load', () => {
   it('still renders, without the preview, when the tables cannot be listed', async () => {
     listed.mockRejectedValue(new Error('down'));
 
-    expect(await run(event())).toEqual({ tables: [] });
+    expect(await run(event())).toMatchObject({
+      tables: [],
+      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables'] },
+    });
     expect(error).toHaveBeenCalledOnce();
   });
 });

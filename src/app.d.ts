@@ -38,6 +38,7 @@ declare global {
       userId?: string;
     }
     interface PageData {
+      cacheIdentity?: string;
       /** The zone every time is shown in, from the root layout (see `viewerTimezone`). */
       viewer?: import('$lib/time/timezone').ViewerTimezone;
     }
