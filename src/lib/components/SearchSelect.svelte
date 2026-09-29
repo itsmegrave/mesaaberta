@@ -92,8 +92,14 @@
   };
   const remove = (slug: string) => commit(value.filter((picked) => picked !== slug));
 
+  // One box, like the other inputs. Skeleton gives the Combobox input its own `input` look and the
+  // trigger a tonal button pinned inside the control; both are undone below so only this box draws.
   const control =
-    'flex h-11 w-full items-center rounded-lg border-2 border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
+    'flex h-12 w-full items-center overflow-hidden rounded-lg border border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
+  const inputClass =
+    'h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 text-sm shadow-none outline-none focus:ring-0';
+  const triggerClass =
+    'static flex h-full w-12 shrink-0 transform-none items-center justify-center rounded-none bg-transparent text-muted hover:bg-surface-wash';
 </script>
 
 {#if mounted}
@@ -123,14 +129,8 @@
   >
     <Combobox.Label class={labelClass}>{label}</Combobox.Label>
     <Combobox.Control class={control}>
-      <Combobox.Input
-        class="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
-        aria-invalid={invalid || undefined}
-      />
-      <Combobox.Trigger
-        class="flex h-full w-10 shrink-0 items-center justify-center text-muted"
-        aria-label={m.search_select_open({ label })}
-      >
+      <Combobox.Input class={inputClass} aria-invalid={invalid || undefined} />
+      <Combobox.Trigger class={triggerClass} aria-label={m.search_select_open({ label })}>
         <svg
           width="16"
           height="16"
@@ -232,7 +232,7 @@
       aria-invalid={invalid || undefined}
       class="select w-full rounded-lg border-surface-200-800 bg-panel px-3 {multiple
         ? 'h-32'
-        : 'h-11'}"
+        : 'h-12'}"
     >
       {#if !multiple}<option value="">{placeholder}</option>{/if}
       {#each items as item (item.slug)}
