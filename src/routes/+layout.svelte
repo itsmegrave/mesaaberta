@@ -1,8 +1,8 @@
 <script lang="ts">
   import './layout.css';
   import { asset, resolve } from '$app/paths';
-  import { invalidateAll } from '$app/navigation';
-  import { navigating, page } from '$app/state';
+  import { invalidateAll, onNavigate } from '$app/navigation';
+  import { navigating, page, updated } from '$app/state';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
   import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
@@ -15,6 +15,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
+  import { reloadIfUpdated } from '$lib/navigation/deploy-refresh';
   import { Slow } from '$lib/navigation/slow.svelte';
   import { syncBrowserTimezone } from '$lib/time/browser-timezone';
   import { onMount } from 'svelte';
@@ -26,6 +27,9 @@
   onMount(() => {
     if (syncBrowserTimezone(data.viewer)) invalidateAll();
   });
+
+  // After a deploy, the next in-app navigation loads the new build from the server.
+  onNavigate((navigation) => reloadIfUpdated(navigation, updated.current));
 
   const locale = getLocale();
 
