@@ -6,6 +6,12 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { toast } from '$lib/toaster';
+  import ActionForm from '$lib/components/ActionForm.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import { IMAGE_TYPES } from '$lib/forms/files';
+  import { photoSchema } from '$lib/profile/photo';
+  import { fileProxy, superForm } from 'sveltekit-superforms';
+  import { zod4Client } from 'sveltekit-superforms/adapters';
 
   let { data, form } = $props();
 
@@ -15,6 +21,13 @@
   const heading = 'text-2xl leading-tight font-semibold tracking-tight';
 
   const photoNotice = $derived(page.url.searchParams.get('foto'));
+
+  // The picture has its own form (and schema, so its own Superforms id) next to the profile's.
+  // svelte-ignore state_referenced_locally
+  const photo = superForm(data.photoForm, { validators: zod4Client(photoSchema) });
+  const { errors: photoErrorList, enhance: photoEnhance, delayed, timeout } = photo;
+  const photoFile = fileProxy(photo, 'photo');
+  const photoError = $derived($photoErrorList.photo?.[0]);
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,
@@ -66,6 +79,7 @@
               method="POST"
               action="?/photo"
               enctype="multipart/form-data"
+              use:photoEnhance
               class="flex flex-wrap items-center gap-3"
             >
               <label for="photo" class="sr-only">{m.account_photo_file()}</label>
@@ -73,31 +87,32 @@
                 id="photo"
                 name="photo"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
-                aria-describedby="photo-hint{form?.photoError ? ' photo-error' : ''}"
+                accept={IMAGE_TYPES.join(',')}
+                bind:files={$photoFile}
+                aria-invalid={photoError ? 'true' : undefined}
+                aria-describedby="photo-hint{photoError ? ' photo-error' : ''}"
                 class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-2 file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
               />
-              <button
-                type="submit"
+              <SubmitButton
+                delayed={$delayed}
+                timeout={$timeout}
                 class="btn h-11 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
-                >{m.account_photo_upload()}</button
+                >{m.account_photo_upload()}</SubmitButton
               >
             </form>
             {#if data.hasUploadedPhoto}
-              <form method="POST" action="?/removePhoto">
-                <button
-                  type="submit"
-                  class="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-                  >{m.account_photo_remove()}</button
-                >
-              </form>
+              <ActionForm
+                action="?/removePhoto"
+                label={m.account_photo_remove()}
+                buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+              />
             {/if}
             <p id="photo-hint" class="max-w-sm text-sm text-muted">
               {m.account_photo_hint()}
             </p>
-            {#if form?.photoError}
+            {#if photoError}
               <p id="photo-error" role="alert" class="text-sm font-semibold text-error-700-300">
-                {photoErrors[form.photoError]?.() ?? m.account_photo_error_failed()}
+                {photoErrors[photoError]?.() ?? m.account_photo_error_failed()}
               </p>
             {/if}
             {#if photoNotice}

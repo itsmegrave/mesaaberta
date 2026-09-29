@@ -201,15 +201,17 @@
                   </span>
                 </span>
                 <span class="flex gap-2">
-                  <ActionForm action="{tablePage}?/approve" playerId={request.playerId} next={here}>
-                    <button
-                      type="submit"
-                      class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-                      >{m.table_approve()}</button
-                    >
-                  </ActionForm>
+                  <ActionForm
+                    action="{tablePage}?/approve"
+                    playerId={request.playerId}
+                    next={here}
+                    label={m.table_approve()}
+                    buttonClass="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+                    success={m.toast_approved()}
+                  />
                   <ConfirmAction
                     action="{tablePage}?/decline"
+                    success={m.toast_declined()}
                     playerId={request.playerId}
                     next={here}
                     label={m.table_decline()}
@@ -263,6 +265,7 @@
               </span>
               <ConfirmAction
                 action="{tablePage}?/remove"
+                success={m.toast_removed()}
                 playerId={player.playerId}
                 next={here}
                 label={m.table_remove()}

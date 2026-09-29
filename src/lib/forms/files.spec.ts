@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { IMAGE_TYPES, imageFile, MAX_IMAGE_BYTES } from './files';
+import { IMAGE_TYPES, imageFile, MAX_IMAGE_BYTES, requiredImageFile } from './files';
 
 const schema = z.object({ image: imageFile });
 const file = (size: number, type = 'image/png', name = 'capa.png') =>
@@ -31,5 +31,24 @@ describe('imageFile', () => {
 
   it('refuses something that is not a file at all', () => {
     expect(codes('capa.png')).toEqual(['not_an_image']);
+  });
+});
+
+describe('requiredImageFile', () => {
+  const required = z.object({ photo: requiredImageFile });
+  const codesOf = (value: unknown) => {
+    const result = required.safeParse({ photo: value });
+    return result.success ? [] : result.error.issues.map((issue) => issue.message);
+  };
+
+  it('asks for a file when none was picked', () => {
+    expect(codesOf(undefined)).toEqual(['empty']);
+    expect(codesOf(file(0, 'application/octet-stream', ''))).toEqual(['empty']);
+  });
+
+  it('checks the size and the type like the optional one', () => {
+    expect(codesOf(file(1024))).toEqual([]);
+    expect(codesOf(file(MAX_IMAGE_BYTES + 1))).toEqual(['too_big']);
+    expect(codesOf(file(1024, 'image/gif', 'a.gif'))).toEqual(['not_an_image']);
   });
 });
