@@ -31,6 +31,15 @@ export const genderIdentity = pgEnum('gender_identity', [
   'travesti',
   'other',
 ]);
+
+export const ageRange = pgEnum('age_range', [
+  '13_17',
+  '18_24',
+  '25_34',
+  '35_44',
+  '45_54',
+  '55_plus',
+]);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
 export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot']);
 export const tableStatus = pgEnum('table_status', ['active', 'disabled']);
@@ -70,7 +79,7 @@ export const profiles = pgTable(
     username: text('username'),
     // The details below are all optional. `name` is pre-filled from the sign-in provider.
     name: text('name'),
-    age: smallint('age'),
+    ageRange: ageRange('age_range'),
     gender: genderIdentity('gender'),
     // Only with `other`: how the person describes themselves, in their own words.
     genderOther: text('gender_other'),

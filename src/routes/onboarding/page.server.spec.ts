@@ -104,7 +104,7 @@ describe('the onboarding page', () => {
 
   describe('the form action', () => {
     const fields = (over: Record<string, string> = {}): [string, string][] =>
-      Object.entries({ username: 'eva', name: '', age: '', gender: '', city: '', ...over });
+      Object.entries({ username: 'eva', name: '', ageRange: '', gender: '', city: '', ...over });
 
     it('saves the profile with its links and goes on to where the person was going', async () => {
       const thrown = await redirected(
@@ -112,7 +112,12 @@ describe('the onboarding page', () => {
           event(10, {
             search: '?next=/tables/new',
             fields: [
-              ...fields({ username: 'Eva-Lima', name: 'Eva Lima', age: '29', city: 'Recife' }),
+              ...fields({
+                username: 'Eva-Lima',
+                name: 'Eva Lima',
+                ageRange: '25_34',
+                city: 'Recife',
+              }),
               ['linkNetwork', 'instagram'],
               ['linkUrl', 'instagram.com/eva'],
               ['linkNetwork', 'website'],
@@ -130,7 +135,7 @@ describe('the onboarding page', () => {
       expect(row).toMatchObject({
         username: 'eva-lima',
         name: 'Eva Lima',
-        age: 29,
+        ageRange: '25_34',
         city: 'Recife',
       });
       const links = await test.db
@@ -152,10 +157,15 @@ describe('the onboarding page', () => {
     });
 
     it('refuses an invalid form with the field errors, and saves nothing', async () => {
-      const result = await submit(event(12, { fields: fields({ username: 'admin', age: '9' }) }));
+      const result = await submit(
+        event(12, { fields: fields({ username: 'admin', ageRange: '9' }) }),
+      );
 
       expect(result.status).toBe(400);
-      expect(result.data.form.errors).toMatchObject({ username: ['reserved'], age: ['invalid'] });
+      expect(result.data.form.errors).toMatchObject({
+        username: ['reserved'],
+        ageRange: ['invalid'],
+      });
       expect(
         await test.db
           .select()

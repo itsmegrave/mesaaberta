@@ -22,7 +22,7 @@ let counter = 0;
 beforeAll(async () => {
   test = await createTestDb();
   await test.db.insert(profiles).values([
-    { id: me, username: 'ana', name: 'Ana Souza', age: 30, city: 'Recife' },
+    { id: me, username: 'ana', name: 'Ana Souza', ageRange: '25_34', city: 'Recife' },
     { id: other, username: 'bruno' },
   ]);
   await test.db
@@ -83,7 +83,7 @@ describe('exportAccount', () => {
     expect(data.profile).toMatchObject({
       username: 'ana',
       name: 'Ana Souza',
-      age: 30,
+      ageRange: '25_34',
       city: 'Recife',
     });
     expect(data.socialLinks).toEqual([{ network: 'github', url: 'https://github.com/ana' }]);
@@ -149,7 +149,7 @@ describe('anonymiseProfile', () => {
       id: person,
       username: 'davi',
       name: 'Davi',
-      age: 40,
+      ageRange: '35_44',
       gender: 'other',
       genderOther: 'demigênero',
       city: 'Natal',
@@ -172,7 +172,7 @@ describe('anonymiseProfile', () => {
     expect(profile).toMatchObject({
       username: null,
       name: null,
-      age: null,
+      ageRange: null,
       gender: null,
       genderOther: null,
       city: null,

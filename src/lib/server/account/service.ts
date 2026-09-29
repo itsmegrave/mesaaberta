@@ -20,7 +20,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     .select({
       username: profiles.username,
       name: profiles.name,
-      age: profiles.age,
+      ageRange: profiles.ageRange,
       gender: profiles.gender,
       genderOther: profiles.genderOther,
       city: profiles.city,
@@ -169,7 +169,7 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
       .set({
         username: null,
         name: null,
-        age: null,
+        ageRange: null,
         gender: null,
         genderOther: null,
         city: null,

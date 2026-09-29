@@ -16,7 +16,7 @@ vi.mock('$app/forms', async (original) => ({
 const empty: ProfileInput = {
   username: '',
   name: '',
-  age: null,
+  ageRange: '',
   gender: '',
   genderOther: '',
   city: '',
@@ -55,10 +55,37 @@ describe('ProfileForm', () => {
       .closest('form')!;
     expect(form.method).toBe('post');
     await expect.element(page.getByLabelText('Nome de usuário')).toBeRequired();
-    for (const label of ['Nome', 'Idade', 'Gênero', 'Cidade']) {
+    for (const label of ['Nome', 'Faixa etária', 'Gênero', 'Cidade']) {
       await expect.element(page.getByLabelText(label, { exact: true })).not.toBeRequired();
     }
-    await expect.element(page.getByLabelText('Idade')).toHaveAttribute('type', 'number');
+  });
+
+  describe('age range', () => {
+    it('is a list of ranges, not an exact age, with no answer as the default', async () => {
+      await setup();
+
+      const range = page.getByLabelText('Faixa etária');
+      expect(range.element().tagName).toBe('SELECT');
+      await expect.element(range).toHaveValue('');
+      const options = [...(range.element() as unknown as HTMLSelectElement).options].map(
+        (o) => o.text,
+      );
+      expect(options).toEqual([
+        'Prefiro não informar',
+        '13 a 17 anos',
+        '18 a 24 anos',
+        '25 a 34 anos',
+        '35 a 44 anos',
+        '45 a 54 anos',
+        '55 anos ou mais',
+      ]);
+    });
+
+    it('shows the range the person saved', async () => {
+      await setup({ ageRange: '35_44' });
+
+      await expect.element(page.getByLabelText('Faixa etária')).toHaveValue('35_44');
+    });
   });
 
   describe('gender', () => {

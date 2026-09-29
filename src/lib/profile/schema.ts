@@ -16,8 +16,15 @@ export const PROFILE_LIMITS = {
   /** The own words someone picks "Outro" to write. */
   gender: 40,
   city: 80,
-  age: { min: 13, max: 120 },
 } as const;
+
+/**
+ * The age ranges, youngest first. A range is enough to find a table, so the exact age is not asked
+ * (LGPD art. 6º, III). Optional. Keep in step with the `age_range` enum in the database.
+ */
+export const AGE_RANGES = ['13_17', '18_24', '25_34', '35_44', '45_54', '55_plus'] as const;
+
+export type AgeRange = (typeof AGE_RANGES)[number];
 
 /**
  * The gender options, in the order the form lists them. Optional: no answer is the default. A
@@ -51,14 +58,8 @@ export const profileSchema = z
         if (problem) ctx.addIssue({ code: 'custom', message: problem });
       }),
     name: z.string().trim().max(PROFILE_LIMITS.name, 'too_long').default(''),
-    age: z
-      .number('invalid')
-      .int('invalid')
-      .min(PROFILE_LIMITS.age.min, 'invalid')
-      .max(PROFILE_LIMITS.age.max, 'invalid')
-      .nullable()
-      .default(null),
-    gender: z.enum(GENDER_OPTIONS, 'invalid').or(z.literal('')).default(''),
+    ageRange: z.union([z.enum(AGE_RANGES), z.literal('')], 'invalid').default(''),
+    gender: z.union([z.enum(GENDER_OPTIONS), z.literal('')], 'invalid').default(''),
     genderOther: z.string().trim().max(PROFILE_LIMITS.gender, 'too_long').default(''),
     city: z.string().trim().max(PROFILE_LIMITS.city, 'too_long').default(''),
     // An IANA zone, or empty for "not picked yet" (the browser's is used meanwhile).

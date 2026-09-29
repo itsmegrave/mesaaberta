@@ -70,7 +70,7 @@ test.describe('the onboarding form', () => {
     const username = `detalhes-${unique()}`;
 
     await page.getByLabel('Nome de usuário').fill(username);
-    await page.getByLabel('Idade', { exact: true }).fill('31');
+    await page.getByLabel('Faixa etária').selectOption('25_34');
     await page.getByLabel('Gênero').selectOption('woman');
     await page.getByLabel('Cidade').fill('Recife');
     await page.getByRole('button', { name: 'Adicionar link' }).click();
@@ -87,7 +87,12 @@ test.describe('the onboarding form', () => {
     const sql = database();
     try {
       const [profile] = await sql`select * from profiles where id = ${user.id}`;
-      expect(profile).toMatchObject({ username, age: 31, gender: 'woman', city: 'Recife' });
+      expect(profile).toMatchObject({
+        username,
+        age_range: '25_34',
+        gender: 'woman',
+        city: 'Recife',
+      });
       const links =
         await sql`select network, url from profile_social_links where profile_id = ${user.id} order by position`;
       expect(links).toEqual([
