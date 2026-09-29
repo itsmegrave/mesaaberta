@@ -3,3 +3,7 @@ allowBuilds:
   workerd: true
   # Downloads the Supabase CLI binary (a local Supabase stack in Docker for the e2e tests).
   supabase: true
+
+overrides:
+  # miniflare (via wrangler) pins undici 7.29.0, which has two high advisories fixed in 7.29.1.
+  undici@>=7.0.0 <7.29.1: '^7.29.1'
