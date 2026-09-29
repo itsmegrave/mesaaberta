@@ -106,7 +106,7 @@ describe('TableForm', () => {
       .element(page.getByText(/3 pessoas já estão na mesa, então este é o mínimo\./))
       .toBeVisible();
     await expect
-      .element(page.getByRole('link', { name: 'Remover jogadores' }))
+      .element(page.getByRole('link', { name: 'Remover pessoas da mesa' }))
       .toHaveAttribute('href', '/tables/mesa/manage');
   });
 

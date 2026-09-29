@@ -186,7 +186,7 @@
   "date_picker_close": "Fechar o calendário",
   "date_picker_calendar": "Calendário",
   "form_capacity_taken": "{count} pessoas já estão na mesa, então este é o mínimo.",
-  "form_capacity_remove_players": "Remover jogadores",
+  "form_capacity_remove_players": "Remover pessoas da mesa",
   "form_capacity_seats_one": "1 vaga",
   "form_capacity_seats": "{count} vagas",
   "form_starts_at": "Primeira sessão",
