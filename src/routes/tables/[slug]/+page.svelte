@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { atHandle } from '$lib/profile/handle';
   import { resolve } from '$app/paths';
@@ -50,7 +51,13 @@
       failed = updated.message;
     },
   });
-  const { form: ratingValues, errors: ratingErrors, enhance: ratingEnhance } = rating;
+  const {
+    form: ratingValues,
+    errors: ratingErrors,
+    enhance: ratingEnhance,
+    delayed: ratingDelayed,
+    timeout: ratingTimeout,
+  } = rating;
   const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
   const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
 
@@ -401,9 +408,13 @@
         </div>
 
         <div>
-          <button type="submit" class="btn preset-filled-primary-500">
+          <SubmitButton
+            delayed={$ratingDelayed}
+            timeout={$ratingTimeout}
+            class="btn preset-filled-primary-500"
+          >
             {data.myRating ? m.rating_update() : m.rating_submit()}
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </section>

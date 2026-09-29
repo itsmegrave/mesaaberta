@@ -1,4 +1,6 @@
 <script lang="ts">
+  import FormBanner from '$lib/components/FormBanner.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
   import AuthShell from '$lib/components/AuthShell.svelte';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -8,7 +10,7 @@
   import { m } from '$lib/paraglide/messages';
 
   let { data } = $props();
-  const { form, errors, message, enhance, delayed } = superForm(data.form, {
+  const { form, errors, message, enhance, delayed, timeout } = superForm(data.form, {
     validators: zod4Client(emailSchema),
   });
 </script>
@@ -33,11 +35,13 @@
     {/if}
 
     <form method="POST" use:enhance class="mt-6 grid gap-4">
-      {#if $message}
-        <p role="alert" class="font-semibold text-error-700-300">
-          {$message.code === 'rate_limited' ? m.auth_error_rate_limited() : m.auth_error_failed()}
-        </p>
-      {/if}
+      <FormBanner
+        text={$message
+          ? $message.code === 'rate_limited'
+            ? m.auth_error_rate_limited()
+            : m.auth_error_failed()
+          : null}
+      />
 
       <FormField
         id="email"
@@ -57,13 +61,13 @@
       </FormField>
 
       <div>
-        <button
-          type="submit"
+        <SubmitButton
+          delayed={$delayed}
+          timeout={$timeout}
           class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
-          aria-busy={$delayed}
         >
           {m.forgot_submit()}
-        </button>
+        </SubmitButton>
       </div>
     </form>
   {/if}

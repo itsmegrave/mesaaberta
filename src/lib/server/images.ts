@@ -1,7 +1,9 @@
 import { Invalid } from './errors';
 import type { Logger } from './logger';
 
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+// One limit for the form's check and the server's.
+export { MAX_IMAGE_BYTES } from '../forms/files';
+import { MAX_IMAGE_BYTES } from '../forms/files';
 /** The Supabase Storage bucket table images go in. Public read; see the README for its setup. */
 export const IMAGE_BUCKET = 'table-images';
 /** The bucket profile pictures go in, one folder per user id. See the README, "Profile pictures". */

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
   import ActionForm from '$lib/components/ActionForm.svelte';
@@ -11,7 +12,11 @@
   let { data } = $props();
 
   // svelte-ignore state_referenced_locally
-  const superform = superForm(data.form, { validators: zod4Client(tableFormSchema) });
+  const superform = superForm(data.form, {
+    validators: zod4Client(tableFormSchema),
+    // A table form is long: leaving it with changes asks first.
+    taintedMessage: confirmLeave,
+  });
 </script>
 
 <svelte:head>

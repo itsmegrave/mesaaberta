@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import '$lib/forms/zod-codes';
+import { imageFile } from '$lib/forms/files';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
 import { normalizeCep } from '$lib/location/cep';
 import { isTimeZone } from '$lib/time/timezone';
@@ -43,6 +44,8 @@ const RULES = { weekly: 'FREQ=WEEKLY', biweekly: 'FREQ=WEEKLY;INTERVAL=2' } as c
 export const tableFormSchema = z
   .object({
     systemSlug: z.string().trim().min(1),
+    // Checked here so the form refuses it before uploading; the server still reads its bytes.
+    image: imageFile,
     title: z.string().trim().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
     description: text(TABLE_LIMITS.description).default(''),
     extraInfo: text(TABLE_LIMITS.extraInfo).default(''),
@@ -124,6 +127,8 @@ export type TableInput = {
 /** The validated form as what the domain wants: a repeat rule instead of a word, no empty strings. */
 export function toTableInput(values: z.output<typeof tableFormSchema>): TableInput {
   const {
+    // The image is stored by the action, never saved as a column.
+    image: _image,
     repeat,
     until,
     extraInfo,

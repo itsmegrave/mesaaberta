@@ -1,8 +1,11 @@
 <script lang="ts">
-  import type { SuperForm } from 'sveltekit-superforms';
+  import FormBanner from '$lib/components/FormBanner.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import { fileProxy, type SuperForm } from 'sveltekit-superforms';
   import FormField from './FormField.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import type { FormMessage } from '$lib/forms/message';
+  import { IMAGE_TYPES } from '$lib/forms/files';
   import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -37,7 +40,7 @@
     cancelHref = '/tables',
     gmName = 'jogador',
   }: Props = $props();
-  const { form, errors, message, enhance, delayed } = superform;
+  const { form, errors, message, enhance, delayed, timeout } = superform;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
   const zoneOffset = $derived(
     new Intl.DateTimeFormat('pt-BR', { timeZone: $form.timezone, timeZoneName: 'shortOffset' })
@@ -78,8 +81,11 @@
     const code = firstError($errors[field]);
     return code ? errorText(code, field) : undefined;
   };
+  // The picked file, bound so the schema checks its size and type before anything is uploaded.
+  // svelte-ignore state_referenced_locally
+  const image = fileProxy(superform, 'image');
   const imageError = $derived(
-    $message?.field === 'image' ? errorText($message.code, 'image') : undefined,
+    err('image') ?? ($message?.field === 'image' ? errorText($message.code, 'image') : undefined),
   );
   const invalid = (field: keyof TableFormValues) =>
     firstError($errors[field]) ? 'true' : undefined;
@@ -100,7 +106,7 @@
     {#if hasErrors}<p role="alert" class="font-semibold text-error-700-300">
         {m.form_summary()}
       </p>{/if}
-    {#if problem}<p role="alert" class="font-semibold text-error-700-300">{problem}</p>{/if}
+    <FormBanner text={problem} />
 
     <section
       aria-labelledby="about-table"
@@ -435,7 +441,8 @@
             id="image"
             name="image"
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept={IMAGE_TYPES.join(',')}
+            bind:files={$image}
             class="block w-full text-sm file:mr-3 file:h-11 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
             aria-invalid={imageError ? 'true' : undefined}
           />
@@ -443,10 +450,11 @@
       </div>
     </section>
     <div class="flex flex-wrap items-center gap-5">
-      <button
-        type="submit"
+      <SubmitButton
+        delayed={$delayed}
+        timeout={$timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-        aria-busy={$delayed}>{submitLabel}</button
+        >{submitLabel}</SubmitButton
       >
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
       <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>

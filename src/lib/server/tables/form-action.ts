@@ -40,7 +40,8 @@ export async function handleTableForm(
   const data = await request.formData();
   // The GM types the time in their own zone; whatever zone was sent, that is the one used.
   data.set('timezone', await timezoneOf(locals, cookies));
-  const form = await superValidate(data, zod4(tableFormSchema));
+  // Files are allowed so the schema can check the image; every failure below strips them.
+  const form = await superValidate(data, zod4(tableFormSchema), { allowFiles: true });
   if (!form.valid) return fail(400, { form });
 
   let slug: string;

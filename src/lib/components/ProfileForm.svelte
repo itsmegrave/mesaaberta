@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { confirmLeave } from '$lib/forms/leave-guard.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { tick } from 'svelte';
   import { profileSchema, PROFILE_LIMITS, type ProfileInput } from '$lib/profile/schema';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
@@ -47,9 +49,10 @@
 
   // The form is set up once with what the server loaded; superforms keeps it up to date after that.
   // svelte-ignore state_referenced_locally
-  const { form, errors, allErrors, enhance, submitting } = superForm(initial, {
+  const { form, errors, allErrors, enhance, delayed, timeout } = superForm(initial, {
     validators: zod4Client(profileSchema),
     resetForm: false,
+    taintedMessage: confirmLeave,
     onUpdated: ({ form }) => {
       if (form.valid) onsaved?.();
     },
@@ -427,12 +430,12 @@
   </fieldset>
 
   <div>
-    <button
-      type="submit"
-      disabled={$submitting}
-      class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold disabled:opacity-60 sm:w-auto"
+    <SubmitButton
+      delayed={$delayed}
+      timeout={$timeout}
+      class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
-    </button>
+    </SubmitButton>
   </div>
 </form>
