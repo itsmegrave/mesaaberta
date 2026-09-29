@@ -3,9 +3,11 @@
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { tick } from 'svelte';
   import {
+    AGE_RANGES,
     GENDER_OPTIONS,
     profileSchema,
     PROFILE_LIMITS,
+    type AgeRange,
     type Gender,
     type ProfileInput,
   } from '$lib/profile/schema';
@@ -75,6 +77,15 @@
     form.update((values) => ({ ...values, timezone }), { taint: false });
   });
   const timezones = timezoneOptions();
+
+  const AGE_RANGE_LABELS: Record<AgeRange, () => string> = {
+    '13_17': m.profile_age_range_13_17,
+    '18_24': m.profile_age_range_18_24,
+    '25_34': m.profile_age_range_25_34,
+    '35_44': m.profile_age_range_35_44,
+    '45_54': m.profile_age_range_45_54,
+    '55_plus': m.profile_age_range_55_plus,
+  };
 
   const GENDER_LABELS: Record<Gender, () => string> = {
     woman: m.profile_gender_woman,
@@ -279,21 +290,24 @@
 
   <div class="grid gap-6 sm:grid-cols-2">
     <FormField
-      id="age"
-      label={m.profile_age()}
+      id="age-range"
+      label={m.profile_age_range()}
       hint={m.profile_optional()}
-      error={$errors.age ? m.profile_error_age() : undefined}
+      error={errorText($errors.ageRange?.[0])}
     >
-      <input
-        id="age"
-        name="age"
-        type="number"
-        inputmode="numeric"
-        bind:value={$form.age}
+      <select
+        id="age-range"
+        name="ageRange"
+        bind:value={$form.ageRange}
         class={input}
-        aria-invalid={$errors.age ? 'true' : undefined}
-        aria-describedby="age-hint{$errors.age ? ' age-error' : ''}"
-      />
+        aria-invalid={$errors.ageRange ? 'true' : undefined}
+        aria-describedby="age-range-hint{$errors.ageRange ? ' age-range-error' : ''}"
+      >
+        <option value="">{m.profile_age_range_none()}</option>
+        {#each AGE_RANGES as range (range)}
+          <option value={range}>{AGE_RANGE_LABELS[range]()}</option>
+        {/each}
+      </select>
     </FormField>
 
     <FormField

@@ -53,7 +53,7 @@ export async function loadProfileForm(
   return {
     username: profile.username ?? '',
     name: profile.name ?? '',
-    age: profile.age,
+    ageRange: profile.ageRange ?? '',
     gender: profile.gender ?? '',
     genderOther: profile.genderOther ?? '',
     city: profile.city ?? '',
@@ -79,7 +79,7 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
         .set({
           username: normalizeUsername(input.username),
           name: input.name || null,
-          age: input.age,
+          ageRange: input.ageRange || null,
           gender: input.gender || null,
           // Own words go with "Outro" only; picking another option forgets them.
           genderOther: (input.gender === 'other' && input.genderOther) || null,

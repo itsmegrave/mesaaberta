@@ -231,3 +231,55 @@ describe('0020_profile_gender_options', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('0021_profile_age_range', () => {
+  // The age someone saved, and the range it becomes.
+  const saved: [number, number | null, string | null][] = [
+    [1, 13, '13_17'],
+    [2, 17, '13_17'],
+    [3, 18, '18_24'],
+    [4, 24, '18_24'],
+    [5, 25, '25_34'],
+    [6, 34, '25_34'],
+    [7, 35, '35_44'],
+    [8, 44, '35_44'],
+    [9, 45, '45_54'],
+    [10, 54, '45_54'],
+    [11, 55, '55_plus'],
+    [12, 120, '55_plus'],
+    // Under the minimum the form ever took: no range rather than a wrong one.
+    [13, 9, null],
+    [14, null, null],
+  ];
+
+  let client: PGlite;
+
+  beforeAll(async () => {
+    client = new PGlite();
+    await applyMigrations(client, { through: '0020_profile_gender_options' });
+    for (const [n, age] of saved) {
+      await client.query(`insert into profiles (id, username, age) values ($1, $2, $3)`, [
+        uuid(n),
+        `pessoa-${n}`,
+        age,
+      ]);
+    }
+    await applyMigration(client, '0021_profile_age_range');
+  });
+  afterAll(() => client.close());
+
+  it.each(saved)('profile %i: age %j becomes %j', async (n, _age, range) => {
+    const { rows } = await client.query<{ age_range: string | null }>(
+      `select age_range from profiles where id = $1`,
+      [uuid(n)],
+    );
+    expect(rows[0]).toEqual({ age_range: range });
+  });
+
+  it('keeps no exact age', async () => {
+    const { rows } = await client.query(
+      `select 1 from information_schema.columns where table_name = 'profiles' and column_name = 'age'`,
+    );
+    expect(rows).toEqual([]);
+  });
+});

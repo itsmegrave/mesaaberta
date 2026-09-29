@@ -20,7 +20,7 @@ afterAll(() => test.close());
 const input = (over: Partial<ProfileInput> = {}): ProfileInput => ({
   username: 'ana',
   name: '',
-  age: null,
+  ageRange: '',
   gender: '',
   genderOther: '',
   city: '',
@@ -41,7 +41,7 @@ describe('saveProfile', () => {
     expect(profile).toMatchObject({
       username: 'ana',
       name: null,
-      age: null,
+      ageRange: null,
       gender: null,
       genderOther: null,
       city: null,
@@ -55,7 +55,7 @@ describe('saveProfile', () => {
       input({
         username: 'carla',
         name: 'Carla Dias',
-        age: 30,
+        ageRange: '25_34',
         gender: 'woman',
         city: 'Recife',
         timezone: 'America/Recife',
@@ -67,7 +67,7 @@ describe('saveProfile', () => {
     expect(await loadProfileForm(test.db, id(2))).toEqual({
       username: 'carla',
       name: 'Carla Dias',
-      age: 30,
+      ageRange: '25_34',
       gender: 'woman',
       genderOther: '',
       city: 'Recife',
@@ -158,7 +158,7 @@ describe('loadProfileForm', () => {
     expect(await loadProfileForm(test.db, id(3))).toMatchObject({
       username: 'bruno',
       name: '',
-      age: null,
+      ageRange: '',
       linkNetwork: [],
     });
   });

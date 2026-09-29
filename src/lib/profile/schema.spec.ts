@@ -8,7 +8,7 @@ const base = {
   gender: '',
   genderOther: '',
   city: '',
-  age: null,
+  ageRange: '',
   linkNetwork: [],
   linkUrl: [],
 };
@@ -25,21 +25,21 @@ describe('profileSchema', () => {
   it('needs nothing but a username, and stores it lowercase', () => {
     const parsed = profileSchema.safeParse({ ...base, username: '  Ana-Maria ' });
 
-    expect(parsed.data).toMatchObject({ username: 'ana-maria', name: '', age: null });
+    expect(parsed.data).toMatchObject({ username: 'ana-maria', name: '', ageRange: '' });
   });
 
   it('keeps the optional details, trimmed', () => {
     const parsed = profileSchema.safeParse({
       ...base,
       name: '  Ana Maria ',
-      age: 31,
+      ageRange: '25_34',
       gender: 'woman',
       city: ' Recife ',
     });
 
     expect(parsed.data).toMatchObject({
       name: 'Ana Maria',
-      age: 31,
+      ageRange: '25_34',
       gender: 'woman',
       city: 'Recife',
     });
@@ -58,14 +58,20 @@ describe('profileSchema', () => {
   });
 
   it.each([
-    ['age', 12],
-    ['age', 121],
-    ['age', 30.5],
+    ['ageRange', '31'],
+    ['ageRange', '12_17'],
     ['name', 'x'.repeat(81)],
     ['gender', 'mulher'],
     ['city', 'x'.repeat(81)],
   ])('refuses %s %j', (field, value) => {
     expect(Object.keys(problems({ [field]: value }) ?? {})).toEqual([field]);
+  });
+
+  it.each([
+    ['ageRange', '31'],
+    ['gender', 'mulher'],
+  ])('reports a %s outside the list as invalid', (field, value) => {
+    expect(problems({ [field]: value })).toEqual({ [field]: 'invalid' });
   });
 
   describe('gender', () => {
