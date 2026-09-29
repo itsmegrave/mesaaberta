@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatCardDate, formatDuration, formatSession, formatWait, zonedToDate } from './format';
+import {
+  formatCardDate,
+  formatDuration,
+  formatHours,
+  formatSession,
+  formatWait,
+  minutesToHours,
+  zonedToDate,
+} from './format';
 
 describe('formatSession', () => {
   const start = new Date('2026-10-10T22:00:00Z');
@@ -26,6 +34,36 @@ describe('formatSession', () => {
     expect(formatSession(start, 'America/Sao_Paulo', 'pt-BR')).toBe(
       formatSession(start, 'America/Sao_Paulo', 'pt-BR'),
     );
+  });
+});
+
+describe('formatHours', () => {
+  it.each([
+    [180, '3 horas'],
+    [60, '1 hora'],
+    [90, '1,5 hora'],
+    [150, '2,5 horas'],
+    [30, '0,5 hora'],
+  ])('writes %i minutes as %j, never in minutes', (minutes, text) => {
+    expect(formatHours(minutes, 'pt-BR')).toBe(text);
+  });
+
+  it('follows the locale', () => {
+    expect(formatHours(150, 'en')).toBe('2.5 hours');
+  });
+});
+
+describe('minutesToHours', () => {
+  it.each([
+    [240, 4],
+    [150, 2.5],
+    // Older tables could be saved in 5-minute steps: the form shows the nearest half hour.
+    [95, 1.5],
+    [100, 1.5],
+    [105, 2],
+    [10, 0.5],
+  ])('shows %i minutes on the form as %d hours', (minutes, hours) => {
+    expect(minutesToHours(minutes)).toBe(hours);
   });
 });
 

@@ -19,7 +19,7 @@ const valid = {
   capacity: '5',
   startsAtLocal: '2026-10-10T19:00',
   timezone: 'America/Sao_Paulo',
-  durationMinutes: '240',
+  durationHours: '4',
   repeat: '',
   until: '',
   joinMode: 'auto',
@@ -68,6 +68,12 @@ describe('parseTableForm', () => {
         tags: [],
       },
     });
+  });
+
+  it('takes the duration in hours, half hours included, and stores it in minutes', () => {
+    const result = parseTableForm(form({ durationHours: '2.5' }));
+
+    expect(result.ok && result.data.durationMinutes).toBe(150);
   });
 
   it('trims text, and an empty extra info becomes null', () => {
@@ -130,8 +136,10 @@ describe('parseTableForm', () => {
     ['capacity', { capacity: '31' }],
     ['capacity', { capacity: '2.5' }],
     ['capacity', { capacity: 'muitas' }],
-    ['durationMinutes', { durationMinutes: '5' }],
-    ['durationMinutes', { durationMinutes: '1441' }],
+    ['durationHours', { durationHours: '0' }],
+    ['durationHours', { durationHours: '24.5' }],
+    ['durationHours', { durationHours: '1.25' }],
+    ['durationHours', { durationHours: 'três' }],
     ['startsAtLocal', { startsAtLocal: 'amanhã' }],
     ['startsAtLocal', { startsAtLocal: '2026-13-40T99:99' }],
     ['timezone', { timezone: 'Mars/Olympus' }],

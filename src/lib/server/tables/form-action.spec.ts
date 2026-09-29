@@ -29,7 +29,7 @@ const fields = (over: Record<string, string | File> = {}) => ({
   capacity: '5',
   startsAtLocal: '2099-10-10T19:00',
   timezone: 'America/Sao_Paulo',
-  durationMinutes: '240',
+  durationHours: '4',
   joinMode: 'auto',
   ...over,
 });
