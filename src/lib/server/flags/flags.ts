@@ -1,5 +1,5 @@
 import { GrowthBook, type Attributes, type FeatureApiResponse } from '@growthbook/growthbook';
-import { flagDefaults, type FlagName } from './registry';
+import { flagDefaults, isFlagName, killSwitches, type FlagName } from './registry';
 
 export type Flags = {
   isEnabled(name: FlagName, attributes?: Attributes): Promise<boolean>;
@@ -8,6 +8,8 @@ export type Flags = {
 type Options = {
   /** Development-only escape hatch for exercising work hidden behind a flag. */
   forceAll?: boolean;
+  /** Fixed values that win over GrowthBook and the defaults; see `flagOverrides`. */
+  overrides?: Partial<Record<FlagName, boolean>>;
 };
 
 const localHostnames = new Set(['localhost', '127.0.0.1']);
@@ -25,13 +27,35 @@ export function shouldForceAllFlags(
 }
 
 /**
+ * Fixed flag values for a local run, from `FEATURE_FLAG_OVERRIDES` (`maintenance_mode=true,other=false`).
+ * The end-to-end tests use it to start a server with a flag on without GrowthBook. Like
+ * `shouldForceAllFlags`, it only applies to a loopback host, so a deployed Worker ignores it.
+ * Unknown names and values other than `true`/`false` are skipped.
+ */
+export function flagOverrides(
+  env: { FEATURE_FLAG_OVERRIDES?: string } | undefined,
+  hostname: string,
+): Partial<Record<FlagName, boolean>> {
+  const overrides: Partial<Record<FlagName, boolean>> = {};
+  if (!env?.FEATURE_FLAG_OVERRIDES || !localHostnames.has(hostname)) return overrides;
+
+  for (const pair of env.FEATURE_FLAG_OVERRIDES.split(',')) {
+    const [name, value] = pair.split('=').map((part) => part.trim());
+    if (isFlagName(name) && (value === 'true' || value === 'false')) {
+      overrides[name] = value === 'true';
+    }
+  }
+  return overrides;
+}
+
+/**
  * Per-request flags. Nothing is loaded until a flag is read, and the payload is loaded once however
  * many flags are read. If GrowthBook cannot answer, every flag returns its default from the registry.
  * `attributes` (user id, role, ...) feed GrowthBook's targeting rules.
  */
 export function createFlags(
   loadPayload: () => Promise<FeatureApiResponse | null>,
-  { forceAll = false }: Options = {},
+  { forceAll = false, overrides = {} }: Options = {},
 ): Flags {
   let payload: Promise<FeatureApiResponse | null> | undefined;
 
@@ -47,7 +71,9 @@ export function createFlags(
 
   return {
     async isEnabled(name, attributes = {}) {
-      if (forceAll) return true;
+      const fixed = overrides[name];
+      if (fixed !== undefined) return fixed;
+      if (forceAll) return !killSwitches.has(name);
 
       const response = await load();
       if (!response) return flagDefaults[name];

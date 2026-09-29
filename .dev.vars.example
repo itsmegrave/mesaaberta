@@ -5,6 +5,10 @@ DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
 # to requests for localhost or 127.0.0.1, so it does nothing on preview or production hosts.
 # IGNORE_FEATURE_FLAGS_IN_LOCALHOST=true
 
+# Fixed flag values, which win over GrowthBook and the defaults (localhost only). The preview mode above
+# never turns the maintenance_mode kill switch on; this does.
+# FEATURE_FLAG_OVERRIDES=maintenance_mode=true
+
 # Supabase Auth. The project URL and publishable key are in wrangler.jsonc (public by design), so
 # login works locally without anything here. Set these only to point at another Supabase project;
 # they override wrangler.jsonc.

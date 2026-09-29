@@ -425,6 +425,8 @@ describe('loadTableForEdit', () => {
       timezone: 'America/Sao_Paulo',
       kind: 'one_shot',
       status: 'disabled',
+      // Stored as 240 minutes; the form edits hours.
+      durationHours: 4,
     });
   });
 

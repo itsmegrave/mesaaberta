@@ -18,7 +18,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
   capacity: 5,
   startsAtLocal: '',
   timezone: 'America/Sao_Paulo',
-  durationMinutes: 240,
+  durationHours: 4,
   repeat: 'weekly',
   until: '',
   joinMode: 'auto',

@@ -44,31 +44,33 @@
   // page needs its own id (a row per player, a card per table). The page's data is reloaded only
   // when the action went through, so a refusal leaves what is on screen as it was.
   // svelte-ignore state_referenced_locally
-  const { enhance, delayed, timeout } = superForm<{ playerId?: string; next: string }, FormMessage>(
-    defaults({ playerId, next }, zod4(actionSchema)),
-    {
-      id: `${action}:${playerId ?? ''}`,
-      resetForm: false,
-      invalidateAll: 'pessimistic',
-      onResult({ result }) {
-        if (result.type !== 'redirect') return;
-        if (success) toast.success(success);
-        onsuccess?.();
-      },
-      onUpdated({ form }) {
-        if (form.valid || !form.message) return;
-        toast.error(registrationError(form.message.code, form.message.retryAfter));
-        onfail?.(form.message);
-      },
+  const { enhance, submitting, delayed, timeout } = superForm<
+    { playerId?: string; next: string },
+    FormMessage
+  >(defaults({ playerId, next }, zod4(actionSchema)), {
+    id: `${action}:${playerId ?? ''}`,
+    resetForm: false,
+    invalidateAll: 'pessimistic',
+    onResult({ result }) {
+      if (result.type !== 'redirect') return;
+      if (success) toast.success(success);
+      onsuccess?.();
     },
-  );
+    onUpdated({ form }) {
+      if (form.valid || !form.message) return;
+      toast.error(registrationError(form.message.code, form.message.retryAfter));
+      onfail?.(form.message);
+    },
+  });
 </script>
 
 <form method="POST" {action} use:enhance class={className}>
   {#if playerId}<input type="hidden" name="playerId" value={playerId} />{/if}
   {#if next}<input type="hidden" name="next" value={next} />{/if}
   {#if label}
-    <SubmitButton delayed={$delayed} timeout={$timeout} class={buttonClass}>{label}</SubmitButton>
+    <SubmitButton submitting={$submitting} delayed={$delayed} timeout={$timeout} class={buttonClass}
+      >{label}</SubmitButton
+    >
   {:else}
     {@render children?.()}
   {/if}

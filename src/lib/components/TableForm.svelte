@@ -11,7 +11,8 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { localizedHref } from '$lib/i18n/locales';
-  import { formatDuration, zonedToDate } from '$lib/tables/format';
+  import { formatHours, zonedToDate } from '$lib/tables/format';
+  import { TABLE_LIMITS } from '$lib/tables/schema';
   import TableCard from './TableCard.svelte';
 
   type Props = {
@@ -41,7 +42,7 @@
     cancelHref = '/tables',
     gmName = NAMELESS,
   }: Props = $props();
-  const { form, errors, message, enhance, delayed, timeout } = superform;
+  const { form, errors, message, enhance, submitting, delayed, timeout } = superform;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
   const zoneOffset = $derived(
     new Intl.DateTimeFormat('pt-BR', { timeZone: $form.timezone, timeZoneName: 'shortOffset' })
@@ -256,18 +257,19 @@
             aria-invalid={invalid('startsAtLocal')}
           /></FormField
         >
-        <FormField id="durationMinutes" label={m.form_duration()} error={err('durationMinutes')}
+        <FormField id="durationHours" label={m.form_duration()} error={err('durationHours')}
           ><input
-            id="durationMinutes"
-            name="durationMinutes"
+            id="durationHours"
+            name="durationHours"
             type="number"
+            inputmode="decimal"
             required
-            min="15"
-            max="1440"
-            step="5"
-            bind:value={$form.durationMinutes}
+            min={TABLE_LIMITS.durationHours.min}
+            max={TABLE_LIMITS.durationHours.max}
+            step={TABLE_LIMITS.durationHours.step}
+            bind:value={$form.durationHours}
             class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-            aria-invalid={invalid('durationMinutes')}
+            aria-invalid={invalid('durationHours')}
           /></FormField
         >
         <div class="min-w-0 sm:col-span-2">
@@ -452,6 +454,7 @@
     </section>
     <div class="flex flex-wrap items-center gap-5">
       <SubmitButton
+        submitting={$submitting}
         delayed={$delayed}
         timeout={$timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
@@ -480,7 +483,10 @@
           ? $form.repeat === 'biweekly'
             ? m.form_repeat_biweekly()
             : m.form_repeat_weekly()
-          : m.table_recurrence_once()}, {formatDuration(Number($form.durationMinutes) || 0)}
+          : m.table_recurrence_once()}, {formatHours(
+          (Number($form.durationHours) || 0) * 60,
+          getLocale(),
+        )}
       </li>
       <li>{$form.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}</li>
     </ul>

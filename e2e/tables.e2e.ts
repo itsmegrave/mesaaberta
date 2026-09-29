@@ -178,7 +178,7 @@ test.describe('table page', () => {
       /\/tables\?system=daggerheart$/,
     );
     await expect(page.getByText('Sessão única')).toBeVisible();
-    await expect(page.getByText('4 h')).toBeVisible();
+    await expect(page.getByText('4 horas')).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: 'Informações extras' })).toBeVisible();
   });
 

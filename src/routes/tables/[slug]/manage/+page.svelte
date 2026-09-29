@@ -9,7 +9,7 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { atHandle } from '$lib/profile/handle';
-  import { formatDuration, formatSession } from '$lib/tables/format';
+  import { formatHours, formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { onMount } from 'svelte';
 
@@ -425,7 +425,7 @@
             {m.table_schedule()}
           </dt>
           <dd class="col-span-2 border-b border-surface-200-800 py-3">
-            {recurrence}, {formatDuration(table.durationMinutes)}
+            {recurrence}, {formatHours(table.durationMinutes, locale)}
           </dd>
         </dl>
 

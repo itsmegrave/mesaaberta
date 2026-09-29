@@ -14,7 +14,7 @@
   import { fileProxy, superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
 
-  let { data, form } = $props();
+  let { data } = $props();
 
   const locale = getLocale();
 
@@ -26,9 +26,21 @@
   // The picture has its own form (and schema, so its own Superforms id) next to the profile's.
   // svelte-ignore state_referenced_locally
   const photo = superForm(data.photoForm, { validators: zod4Client(photoSchema) });
-  const { errors: photoErrorList, enhance: photoEnhance, delayed, timeout } = photo;
+  const { errors: photoErrorList, enhance: photoEnhance, submitting, delayed, timeout } = photo;
   const photoFile = fileProxy(photo, 'photo');
   const photoError = $derived($photoErrorList.photo?.[0]);
+
+  // Closing the account: a third form. The server compares the typed @username; a redirect home on success.
+  // svelte-ignore state_referenced_locally
+  const closing = superForm(data.deleteForm, { resetForm: false });
+  const {
+    form: closingData,
+    errors: closingErrors,
+    enhance: closingEnhance,
+    submitting: closingSubmitting,
+    delayed: closingDelayed,
+    timeout: closingTimeout,
+  } = closing;
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,
@@ -96,6 +108,7 @@
                 class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-2 file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
               />
               <SubmitButton
+                submitting={$submitting}
                 delayed={$delayed}
                 timeout={$timeout}
                 class="btn h-11 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
@@ -183,7 +196,7 @@
         <div class="mt-8 border-t border-surface-200-800 pt-6">
           <h3 class="text-lg font-semibold">{m.account_delete_title()}</h3>
           <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
-          <form method="POST" action="?/delete" class="mt-4 grid max-w-sm gap-3">
+          <form method="POST" action="?/delete" use:closingEnhance class="mt-4 grid max-w-sm gap-3">
             <label for="confirm" class="label-text font-semibold"
               >{m.account_delete_confirm()}</label
             >
@@ -195,22 +208,25 @@
               autocapitalize="none"
               spellcheck="false"
               placeholder={data.username}
-              aria-invalid={form?.deleteError ? 'true' : undefined}
-              aria-describedby={form?.deleteError ? 'confirm-error' : undefined}
+              bind:value={$closingData.confirm}
+              aria-invalid={$closingErrors.confirm ? 'true' : undefined}
+              aria-describedby={$closingErrors.confirm ? 'confirm-error' : undefined}
               class="input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3"
             />
-            {#if form?.deleteError}
+            {#if $closingErrors.confirm}
               <p id="confirm-error" role="alert" class="text-sm font-semibold text-error-700-300">
                 {m.account_delete_error()}
               </p>
             {/if}
             <div>
-              <button
-                type="submit"
+              <SubmitButton
+                submitting={$closingSubmitting}
+                delayed={$closingDelayed}
+                timeout={$closingTimeout}
                 class="btn h-12 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
               >
                 {m.account_delete_button()}
-              </button>
+              </SubmitButton>
             </div>
           </form>
         </div>

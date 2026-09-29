@@ -1,5 +1,9 @@
 <script lang="ts">
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import { navigating, page } from '$app/state';
+  import ListSkeleton from '$lib/components/ListSkeleton.svelte';
+  import { Slow } from '$lib/navigation/slow.svelte';
+  import NotificationAction from '$lib/components/NotificationAction.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import type { NotificationCategory } from '$lib/notifications/kinds';
@@ -9,6 +13,13 @@
   import { shownTimezone } from '$lib/time/shown-timezone';
 
   let { data } = $props();
+
+  // A filter change reloads this same page with another query: the list gives way to a skeleton
+  // if it takes a while. Coming back to the same query (after marking read, say) keeps the list.
+  const filtering = new Slow(() => {
+    const to = navigating.to;
+    return to?.route.id === page.route.id && to.url.search !== page.url.search ? to : null;
+  }, 150);
 
   const locale = getLocale();
   const feed = localizedHref('/notifications', locale);
@@ -55,15 +66,13 @@
       </p>
     </div>
     {#if unread}
-      <form method="POST" action="{feed}?/readAll" class="m-0">
-        <input type="hidden" name="next" value={here} />
-        <button
-          type="submit"
-          class="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
-        >
-          {m.notifications_mark_all()}
-        </button>
-      </form>
+      <NotificationAction
+        action="readAll"
+        next={here}
+        buttonClass="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+      >
+        {m.notifications_mark_all()}
+      </NotificationAction>
     {/if}
   </div>
 
@@ -89,7 +98,9 @@
     </ul>
   </nav>
 
-  {#if data.notifications.length === 0}
+  {#if filtering.current}
+    <ListSkeleton kind="rows" />
+  {:else if data.notifications.length === 0}
     <p class="mt-8 text-lg" role="status">{m.notifications_empty()}</p>
   {:else}
     <ul class="mt-6 grid gap-2">
@@ -102,32 +113,29 @@
           <NotificationIcon icon={notificationIcon(item)} size={22} class="mt-1 text-muted" />
           <div class="min-w-0 flex-1">
             {#if item.link}
-              <form method="POST" action="{feed}?/open" class="m-0">
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="next" value={here} />
-                <button
-                  type="submit"
-                  class="text-left link-underline {item.read ? 'font-normal' : ''}"
-                >
-                  {notificationText(item)}
-                </button>
-              </form>
+              <NotificationAction
+                action="open"
+                id={item.id}
+                next={here}
+                buttonClass="text-left link-underline {item.read ? 'font-normal' : ''}"
+              >
+                {notificationText(item)}
+              </NotificationAction>
             {:else}
               <p class={item.read ? '' : 'font-semibold'}>{notificationText(item)}</p>
             {/if}
             <p class="mt-1 text-sm text-muted">{when(item.createdAt)}</p>
           </div>
           {#if !item.read}
-            <form method="POST" action="{feed}?/read" class="m-0 shrink-0">
-              <input type="hidden" name="id" value={item.id} />
-              <input type="hidden" name="next" value={here} />
-              <button
-                type="submit"
-                class="btn h-11 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
-              >
-                {m.notifications_mark_read()}
-              </button>
-            </form>
+            <NotificationAction
+              action="read"
+              id={item.id}
+              next={here}
+              class="m-0 shrink-0"
+              buttonClass="btn h-11 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+            >
+              {m.notifications_mark_read()}
+            </NotificationAction>
           {/if}
         </li>
       {/each}

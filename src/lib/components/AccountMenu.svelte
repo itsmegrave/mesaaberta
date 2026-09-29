@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import Avatar from '$lib/components/Avatar.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -18,9 +19,14 @@
   } = $props();
 
   const locale = getLocale();
+  // Signing out is a plain POST to an endpoint (not a form action), so the page itself goes away;
+  // until it does, a second click is ignored. Coming back through the history resets it.
+  let signingOut = $state(false);
   const item =
     'btn hover:preset-tonal flex h-11 w-full items-center justify-start gap-3 rounded-lg px-3 text-left text-base font-semibold';
 </script>
+
+<svelte:window onpageshow={() => (signingOut = false)} />
 
 <Popover positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}>
   <Popover.Trigger
@@ -129,8 +135,8 @@
             </a>
           {/if}
 
-          <form method="POST" action="/logout" class="m-0">
-            <button type="submit" class={item}>
+          <form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
+            <SubmitButton submitting={signingOut} class={item}>
               <svg
                 width="20"
                 height="20"
@@ -146,7 +152,7 @@
                 <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M4 12h11M11 8l4 4-4 4" />
               </svg>
               {m.nav_sign_out()}
-            </button>
+            </SubmitButton>
           </form>
         </nav>
       </Popover.Content>

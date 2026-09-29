@@ -8,7 +8,8 @@ import Layout from './+layout.svelte';
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
 // From the profile, so the layout does not set a cookie or reload in these tests.
 const viewer = { timezone: 'America/Sao_Paulo', source: 'profile' } as const;
-const signedOut = { authEnabled: false, released: false, viewer, account: null };
+const shell = { maintenance: false, maintenanceBypass: false, viewer };
+const signedOut = { authEnabled: false, released: false, ...shell, account: null };
 const memberAccount = {
   displayName: 'Ana Souza',
   username: 'ana',
@@ -100,7 +101,7 @@ describe('+layout.svelte', () => {
     it('keeps sign-in hidden until the platform is released', async () => {
       render(Layout, {
         children,
-        data: { authEnabled: true, released: false, viewer, account: null },
+        data: { authEnabled: true, released: false, ...shell, account: null },
       });
 
       await expect.element(banner().getByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
@@ -109,7 +110,7 @@ describe('+layout.svelte', () => {
     it('offers sign-in to an anonymous visitor once login and the platform are enabled', async () => {
       render(Layout, {
         children,
-        data: { authEnabled: true, released: true, viewer, account: null },
+        data: { authEnabled: true, released: true, ...shell, account: null },
       });
 
       await expect
@@ -123,7 +124,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: false,
-          viewer,
+          ...shell,
           account: memberAccount,
         },
       });
@@ -145,7 +146,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: false,
-          viewer,
+          ...shell,
           account: memberAccount,
         },
       });
@@ -167,7 +168,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: false,
-          viewer,
+          ...shell,
           account: adminAccount,
         },
       });
@@ -187,7 +188,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: false,
-          viewer,
+          ...shell,
           account: memberAccount,
         },
       });
@@ -207,7 +208,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: true,
-          viewer,
+          ...shell,
           account: memberAccount,
         },
       });
@@ -223,7 +224,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: true,
-          viewer,
+          ...shell,
           account: {
             ...memberAccount,
             notifications: {
@@ -284,7 +285,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: true,
-          viewer,
+          ...shell,
           account: memberAccount,
         },
       });
@@ -308,7 +309,7 @@ describe('+layout.svelte', () => {
         data: {
           authEnabled: true,
           released: true,
-          viewer,
+          ...shell,
           account: adminAccount,
         },
       });
@@ -329,5 +330,33 @@ describe('+layout.svelte', () => {
 
       await expect.element(page.getByText('Vaga confirmada!')).toBeVisible();
     });
+  });
+});
+
+describe('maintenance', () => {
+  it('shows only the brand on the maintenance screen: no navigation, tab bar or footer', async () => {
+    render(Layout, { children, data: { ...signedOut, released: true, maintenance: true } });
+
+    await expect.element(page.getByRole('navigation')).not.toBeInTheDocument();
+    await expect.element(page.getByRole('contentinfo')).not.toBeInTheDocument();
+    await expect.element(page.getByRole('main')).toHaveTextContent('Page content');
+    await expect.element(page.getByRole('banner')).toHaveTextContent('Mesa Aberta');
+  });
+
+  it('tells an admin who got through that the site is down for everyone else', async () => {
+    render(Layout, {
+      children,
+      data: { ...signedOut, account: adminAccount, maintenanceBypass: true },
+    });
+
+    await expect
+      .element(page.getByRole('status').filter({ hasText: /Modo de manutenção/ }))
+      .toHaveTextContent('Modo de manutenção ativo: só a administração vê o site.');
+  });
+
+  it('has no banner while the site is up', async () => {
+    render(Layout, { children, data: signedOut });
+
+    await expect.element(page.getByText(/Modo de manutenção/)).not.toBeInTheDocument();
   });
 });

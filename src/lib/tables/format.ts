@@ -16,7 +16,22 @@ export function formatSession(date: Date, timeZone: string, locale: string): str
   }).format(date);
 }
 
-/** `240` is `4 h`, `150` is `2 h 30 min`, `45` is `45 min`. */
+/** A table's duration, stored in minutes, in hours as people say it: `180` is `3 horas`, `90` is `1,5 hora`. */
+export function formatHours(minutes: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'unit',
+    unit: 'hour',
+    unitDisplay: 'long',
+    maximumFractionDigits: 2,
+  }).format(minutes / 60);
+}
+
+/** Minutes as the table form's hours, to the nearest half hour (older tables had 5-minute steps). */
+export function minutesToHours(minutes: number): number {
+  return Math.max(0.5, Math.round(minutes / 30) / 2);
+}
+
+/** A wait: `240` is `4 h`, `150` is `2 h 30 min`, `45` is `45 min`. */
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;

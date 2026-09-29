@@ -4,8 +4,23 @@ import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifica
 import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, platform, cookies }) => {
+export const load: LayoutServerLoad = async ({ locals, platform, cookies, route }) => {
   const authEnabled = locals.supabase !== null;
+
+  // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
+  if (route.id === '/maintenance') {
+    return {
+      authEnabled,
+      released: false,
+      maintenance: true,
+      maintenanceBypass: false,
+      viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
+      account: null,
+    };
+  }
+  // An admin still uses the site while it is down, with a banner saying so.
+  const maintenanceBypass = locals.maintenance === 'bypass';
+
   // The Mesas link appears once the platform is released. The pages exist before that, unlinked.
   const released = await locals.flags.isEnabled('is_platform_released');
 
@@ -23,6 +38,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies }) => {
     return {
       authEnabled,
       released,
+      maintenance: false,
+      maintenanceBypass,
       // Every time on the site is shown in this zone.
       viewer: viewerTimezone(profile?.timezone, cookies.get(TIMEZONE_COOKIE)),
       account: profile && {
@@ -40,6 +57,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies }) => {
     return {
       authEnabled,
       released,
+      maintenance: false,
+      maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
       account: null,
     };

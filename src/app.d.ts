@@ -18,6 +18,8 @@ declare global {
     // interface Error {}
     interface Locals {
       flags: import('$lib/server/flags/flags').Flags;
+      /** Set while the `maintenance_mode` flag is on: `bypass` for an admin, `blocked` for anyone else. */
+      maintenance?: 'blocked' | 'bypass';
       /** Logs with this request's id already attached. */
       log: import('$lib/server/logger').Logger;
       /** The database, or null while none is configured (see `handleDatabase`). */

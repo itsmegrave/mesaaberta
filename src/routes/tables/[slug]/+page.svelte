@@ -6,7 +6,7 @@
   import { resolve } from '$app/paths';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
-  import { formatDuration, formatSession } from '$lib/tables/format';
+  import { formatHours, formatSession } from '$lib/tables/format';
   import type { FormMessage } from '$lib/forms/message';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
@@ -56,6 +56,7 @@
     form: ratingValues,
     errors: ratingErrors,
     enhance: ratingEnhance,
+    submitting: ratingSubmitting,
     delayed: ratingDelayed,
     timeout: ratingTimeout,
   } = rating;
@@ -275,7 +276,7 @@
           {m.table_duration()}
         </dt>
         <dd class="col-span-2 border-b border-surface-200-800 py-3">
-          {formatDuration(table.durationMinutes)}
+          {formatHours(table.durationMinutes, locale)}
         </dd>
       </dl>
 
@@ -406,6 +407,7 @@
 
         <div>
           <SubmitButton
+            submitting={$ratingSubmitting}
             delayed={$ratingDelayed}
             timeout={$ratingTimeout}
             class="btn preset-filled-primary-500"

@@ -1,7 +1,6 @@
 import '$lib/forms/zod-codes';
 import { z } from 'zod';
-
-const next = z.string().max(2000).default('');
+import { next } from '$lib/forms/next';
 
 /** Every button-only action: which player it is about (when it is about one), and where to come back to. */
 export const actionSchema = z.object({ playerId: z.guid().optional(), next });

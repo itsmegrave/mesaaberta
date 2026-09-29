@@ -8,6 +8,7 @@ import { catalogOf, setTableCatalog } from '../catalog';
 import { TABLE_CREATION_LIMIT, enforceRateLimit } from '../rate-limit';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
+import { minutesToHours } from '$lib/tables/format';
 import type { TableInput } from '$lib/tables/schema';
 import { formatCep } from '$lib/location/cep';
 
@@ -155,7 +156,7 @@ export async function loadTableForEdit(
     capacity: table.capacity,
     startsAtLocal: instantToLocal(table.startsAt, timezone),
     timezone,
-    durationMinutes: table.durationMinutes,
+    durationHours: minutesToHours(table.durationMinutes),
     repeat:
       table.recurrence === 'FREQ=WEEKLY;INTERVAL=2' ? 'biweekly' : table.recurrence ? 'weekly' : '',
     until: table.until ? instantToLocal(table.until, timezone).slice(0, 10) : '',
