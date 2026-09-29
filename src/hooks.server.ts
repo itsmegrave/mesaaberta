@@ -7,6 +7,7 @@ import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger } from '$lib/server/logger';
 import { handleRequestLog } from '$lib/server/request-log';
 import { handleMaintenance } from '$lib/server/maintenance';
+import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
@@ -75,6 +76,7 @@ export const handle: Handle = sequence(
   handleRequestLog(logger),
   handleDatabase,
   handleAuth,
+  handleAdminAccess,
   handleParaglide,
   handleFlags,
   // Needs the flags and the signed-in profile, so it comes after both.
