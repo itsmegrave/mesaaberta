@@ -157,7 +157,7 @@
   "form_disable_confirm_title": "Desativar esta mesa?",
   "form_disable_confirm_text": "A mesa some da lista e o endereço dela deixa de abrir. Os dados ficam guardados.",
   "toast_table_saved": "Mesa salva.",
-  "form_error_below_taken": "Já tem mais gente na mesa do que isso. Remova jogadores antes de diminuir as vagas.",
+  "form_error_below_taken": "Já tem mais gente na mesa do que isso. Tire pessoas da mesa antes de diminuir as vagas.",
   "form_edit_disabled": "Esta mesa está desativada e não aparece para quem joga.",
   "form_view_table": "Ver a página da mesa",
   "form_summary": "Corrija os campos marcados.",
