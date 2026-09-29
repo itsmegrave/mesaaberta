@@ -5,6 +5,7 @@
   import { navigating, page } from '$app/state';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
+  import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
   import NotificationBell from '$lib/components/NotificationBell.svelte';
   import TableLogo from '$lib/components/TableLogo.svelte';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
@@ -14,6 +15,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
+  import { Slow } from '$lib/navigation/slow.svelte';
   import { syncBrowserTimezone } from '$lib/time/browser-timezone';
   import { onMount } from 'svelte';
 
@@ -26,6 +28,21 @@
   });
 
   const locale = getLocale();
+
+  // Loading shows only after 150 ms, so a quick navigation does not flash the bar or a skeleton.
+  const loading = new Slow(() => navigating.to, 150);
+  const SKELETONS: Record<string, SkeletonKind> = {
+    '/tables': 'cards',
+    '/account/tables': 'columns',
+    '/notifications': 'rows',
+  };
+  // A list page on its way from another page: its skeleton stands in for the page being left. Within
+  // the same page (a filter), the page draws its own skeleton under the filters.
+  const arriving = $derived.by(() => {
+    const to = loading.current;
+    if (!to?.route.id || to.route.id === page.route.id) return null;
+    return SKELETONS[to.route.id] ?? null;
+  });
 
   // The header marks the section you are in, as the bottom tab bar does on phones.
   const pathname = $derived(page.url.pathname);
@@ -139,7 +156,7 @@
 </header>
 
 <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
-{#if navigating.to}
+{#if loading.current}
   <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
     <Progress.Track class="h-1">
       <Progress.Range />
@@ -151,7 +168,11 @@
 <UnsavedChangesDialog />
 
 <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
-  {@render children()}
+  {#if arriving}
+    <ListSkeleton kind={arriving} heading />
+  {:else}
+    {@render children()}
+  {/if}
 </main>
 
 {#if data.released && !data.maintenance}

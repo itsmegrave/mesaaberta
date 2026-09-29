@@ -41,7 +41,7 @@
     cancelHref = '/tables',
     gmName = NAMELESS,
   }: Props = $props();
-  const { form, errors, message, enhance, delayed, timeout } = superform;
+  const { form, errors, message, enhance, submitting, delayed, timeout } = superform;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
   const zoneOffset = $derived(
     new Intl.DateTimeFormat('pt-BR', { timeZone: $form.timezone, timeZoneName: 'shortOffset' })
@@ -452,6 +452,7 @@
     </section>
     <div class="flex flex-wrap items-center gap-5">
       <SubmitButton
+        submitting={$submitting}
         delayed={$delayed}
         timeout={$timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"

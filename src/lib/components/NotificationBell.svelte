@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
+  import NotificationAction from '$lib/components/NotificationAction.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import { notificationIcon, notificationText, type Shown } from '$lib/notifications/text';
   import { localizedHref } from '$lib/i18n/locales';
@@ -75,12 +76,13 @@
         <div class="flex items-center justify-between gap-2 p-2">
           <Popover.Title class="text-base font-bold">{m.notifications_title()}</Popover.Title>
           {#if unread > 0}
-            <form method="POST" action="{feed}?/readAll" class="m-0">
-              <input type="hidden" name="next" value={here} />
-              <button type="submit" class="btn h-9 rounded-lg px-2 text-sm font-semibold text-link">
-                {m.notifications_mark_all()}
-              </button>
-            </form>
+            <NotificationAction
+              action="readAll"
+              next={here}
+              buttonClass="btn h-9 rounded-lg px-2 text-sm font-semibold text-link"
+            >
+              {m.notifications_mark_all()}
+            </NotificationAction>
           {/if}
         </div>
 
@@ -92,27 +94,25 @@
           <ul class="flex flex-col gap-1">
             {#each latest as item (item.id)}
               <li>
-                <form method="POST" action="{feed}?/open" class="m-0">
-                  <input type="hidden" name="id" value={item.id} />
-                  <input type="hidden" name="next" value={here} />
-                  <button
-                    type="submit"
-                    class="btn flex h-auto w-full items-start justify-start gap-3 rounded-lg p-2 text-left font-normal whitespace-normal hover:preset-tonal"
-                  >
-                    <NotificationIcon icon={notificationIcon(item)} class="mt-1 text-muted" />
-                    <span class="min-w-0 flex-1">
-                      <span class="block text-sm {item.read ? '' : 'font-semibold'}"
-                        >{notificationText(item)}</span
-                      >
-                      <span class="block text-xs text-muted">{when(item.createdAt)}</span>
+                <NotificationAction
+                  action="open"
+                  id={item.id}
+                  next={here}
+                  buttonClass="btn flex h-auto w-full items-start justify-start gap-3 rounded-lg p-2 text-left font-normal whitespace-normal hover:preset-tonal"
+                >
+                  <NotificationIcon icon={notificationIcon(item)} class="mt-1 text-muted" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm {item.read ? '' : 'font-semibold'}"
+                      >{notificationText(item)}</span
+                    >
+                    <span class="block text-xs text-muted">{when(item.createdAt)}</span>
+                  </span>
+                  {#if !item.read}
+                    <span class="mt-2 size-2 shrink-0 rounded-full bg-primary-500">
+                      <span class="sr-only">{m.notifications_unread()}</span>
                     </span>
-                    {#if !item.read}
-                      <span class="mt-2 size-2 shrink-0 rounded-full bg-primary-500">
-                        <span class="sr-only">{m.notifications_unread()}</span>
-                      </span>
-                    {/if}
-                  </button>
-                </form>
+                  {/if}
+                </NotificationAction>
               </li>
             {/each}
           </ul>

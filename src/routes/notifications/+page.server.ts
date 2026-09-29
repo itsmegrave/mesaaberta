@@ -1,4 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
+import { notificationActionSchema } from '$lib/notifications/actions';
 import { NOTIFICATION_CATEGORIES, type NotificationCategory } from '$lib/notifications/kinds';
 import { requireUser } from '$lib/server/auth/guard';
 import { safeNext } from '$lib/server/auth/safe-next';
@@ -19,42 +22,39 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   };
 };
 
-/** The form's id field, when there is one. */
-const idFrom = (form: FormData) => {
-  const id = form.get('id');
-  return typeof id === 'string' && id.length > 0 ? id : null;
-};
+/**
+ * What the form sent: a field that fails the schema is dropped, so a bad id marks nothing and a bad
+ * `next` falls back to the feed. Back is always on the site (the bell is on every page).
+ */
+async function submitted(request: Request) {
+  const form = await superValidate(request, zod4(notificationActionSchema));
+  const id = form.errors.id ? undefined : form.data.id;
+  const next = form.errors.next ? null : form.data.next;
+  return { id, back: safeNext(next, '/notifications') };
+}
 
-/** Back to where the form was (the bell is on every page), never off the site. */
-const back = (form: FormData) => {
-  const next = form.get('next');
-  return safeNext(typeof next === 'string' ? next : null, '/notifications');
-};
-
-// Plain form posts, so the bell works without JavaScript. The anonymous visitor goes to log in first.
+// Superforms posts that also work as plain ones, so the bell works without JavaScript. The anonymous visitor goes to log in first.
 export const actions: Actions = {
   /** Opens a notification: marks it read and follows its link, or comes back when it has none. */
   open: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
-    const form = await request.formData();
-    const id = idFrom(form);
+    const { id, back } = await submitted(request);
     const read = id ? await markRead(locals.db, user.id, id) : null;
-    redirect(303, safeNext(read?.link, back(form)));
+    redirect(303, safeNext(read?.link, back));
   },
   read: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
-    const form = await request.formData();
-    const id = idFrom(form);
+    const { id, back } = await submitted(request);
     if (id) await markRead(locals.db, user.id, id);
-    redirect(303, back(form));
+    redirect(303, back);
   },
   readAll: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
-    const form = await request.formData();
+    const { back } = await submitted(request);
     await markAllRead(locals.db, user.id);
-    redirect(303, back(form));
+    redirect(303, back);
   },
 };

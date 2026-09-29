@@ -169,9 +169,6 @@ importers:
       '@fontsource-variable/cinzel':
         specifier: ^5.3.0
         version: 5.3.0
-      '@formkit/auto-animate':
-        specifier: ^0.10.0
-        version: 0.10.0
       '@growthbook/growthbook':
         specifier: ^1.7.0
         version: 1.7.0
@@ -980,9 +977,6 @@ packages:
 
   '@fontsource-variable/cinzel@5.3.0':
     resolution: {integrity: sha512-eFcU0TwaAP5QESF2pV8VoOPJJXJ6sSGm/6mXMwqTdMBPAJMaLhfa6oISHuOtFeddsoHP9RYm4Io0j1j3mNEz2Q==}
-
-  '@formkit/auto-animate@0.10.0':
-    resolution: {integrity: sha512-KGomRttjUfORuPUaR/ZGQw+6xfMrTM+sxnILv7JAd9AmabU9rg9i6gF/iC0Ih+QpKCubJpCA/1DX9UHKE8cX+A==}
 
   '@growthbook/growthbook@1.7.0':
     resolution: {integrity: sha512-Vmad3fWRh1XaFH4q+AS62ofX6Q3IxSTD7sBGuhEHCaad8VyZerxrVdojucjzlnJDUocfrnZFUSpEkR6R/wCV+A==}
@@ -4040,8 +4034,6 @@ snapshots:
   '@floating-ui/utils@0.2.12': {}
 
   '@fontsource-variable/cinzel@5.3.0': {}
-
-  '@formkit/auto-animate@0.10.0': {}
 
   '@growthbook/growthbook@1.7.0':
     dependencies:
