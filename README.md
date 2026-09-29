@@ -61,6 +61,24 @@ not admin credentials, so they may be committed. Do not put a GrowthBook API key
 Feature evaluation happens in the Worker, so its targeting data and payload never reach the browser; an
 encrypted SDK endpoint is not needed for this integration.
 
+### Maintenance mode (`maintenance_mode`)
+
+A kill switch, off by default. Turn it on in GrowthBook (and publish) to take the site down for
+maintenance; it reaches every visitor within the 60-second payload cache.
+
+- Every page answers `503` with `Retry-After: 3600`, `Cache-Control: no-store` and `X-Robots-Tag: noindex`,
+  and shows the maintenance screen at the address asked for. Form posts and endpoints get the same
+  sentence as plain text, and do not run. The screen says nothing technical.
+- Still reachable: `/healthz`, `/login` (with Google and Discord), `/auth/callback`, `/logout` and the
+  static files. The scheduled job does not go through the pages, so it keeps running.
+- A signed-in admin (`profiles.role = 'admin'`, active) uses the site as usual, with a banner saying it
+  is in maintenance. Anyone else who signs in still sees the screen.
+- The gate is `src/lib/server/maintenance.ts` (`handleMaintenance`, the last hook); the screen is
+  `src/routes/maintenance`, which answers 404 while the flag is off.
+- The local preview mode (`IGNORE_FEATURE_FLAGS_IN_LOCALHOST=true`) never turns it on.
+  To try it locally, set `FEATURE_FLAG_OVERRIDES=maintenance_mode=true` in `.dev.vars`. That variable
+  only works on localhost; the end-to-end tests use it for a second server (`e2e/maintenance.e2e.ts`).
+
 ## Database
 
 Postgres through [Drizzle ORM](https://orm.drizzle.team) and `postgres.js`. Supabase provides Postgres, Auth and Storage; app data goes through Drizzle from server code, never from the browser. The schema lives in `src/lib/server/db/schema.ts` and the SQL migrations in `drizzle/` (commit them).

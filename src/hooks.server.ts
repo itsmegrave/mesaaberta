@@ -1,11 +1,12 @@
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { createFlags, shouldForceAllFlags } from '$lib/server/flags/flags';
+import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/flags/flags';
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger } from '$lib/server/logger';
 import { handleRequestLog } from '$lib/server/request-log';
+import { handleMaintenance } from '$lib/server/maintenance';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
@@ -47,6 +48,10 @@ const handleFlags: Handle = ({ event, resolve }) => {
     env as { IGNORE_FEATURE_FLAGS_IN_LOCALHOST?: string } | undefined,
     event.url.hostname,
   );
+  const overrides = flagOverrides(
+    env as { FEATURE_FLAG_OVERRIDES?: string } | undefined,
+    event.url.hostname,
+  );
 
   event.locals.flags = createFlags(
     env?.GROWTHBOOK_CLIENT_KEY
@@ -58,7 +63,7 @@ const handleFlags: Handle = ({ event, resolve }) => {
           waitUntil: (promise) => ctx?.waitUntil(promise),
         })
       : async () => null,
-    { forceAll },
+    { forceAll, overrides },
   );
 
   return resolve(event);
@@ -72,6 +77,8 @@ export const handle: Handle = sequence(
   handleAuth,
   handleParaglide,
   handleFlags,
+  // Needs the flags and the signed-in profile, so it comes after both.
+  handleMaintenance,
 );
 
 // Replaces SvelteKit's default console output so an unexpected error carries the request id.

@@ -1,6 +1,6 @@
 import type { FeatureApiResponse } from '@growthbook/growthbook';
 import { describe, expect, it, vi } from 'vitest';
-import { createFlags, shouldForceAllFlags } from './flags';
+import { createFlags, flagOverrides, shouldForceAllFlags } from './flags';
 
 const payload = (features: FeatureApiResponse['features']): FeatureApiResponse => ({
   features,
@@ -22,6 +22,30 @@ describe('createFlags', () => {
 
     expect(await flags.isEnabled('is_platform_released')).toBe(true);
     expect(load).not.toHaveBeenCalled();
+  });
+
+  it('leaves the kill switches off in the local preview mode, so it never locks anyone out', async () => {
+    const flags = createFlags(serving({}), { forceAll: true });
+
+    expect(await flags.isEnabled('maintenance_mode')).toBe(false);
+  });
+
+  it('lets a fixed override win over GrowthBook, the defaults and the preview mode', async () => {
+    const load = vi.fn(serving({ maintenance_mode: { defaultValue: false } }));
+    const flags = createFlags(load, {
+      forceAll: true,
+      overrides: { maintenance_mode: true, is_platform_released: false },
+    });
+
+    expect(await flags.isEnabled('maintenance_mode')).toBe(true);
+    expect(await flags.isEnabled('is_platform_released')).toBe(false);
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('keeps the site up by default', async () => {
+    const flags = createFlags(async () => null);
+
+    expect(await flags.isEnabled('maintenance_mode')).toBe(false);
   });
 
   it('falls back to the safe default when no payload is available', async () => {
@@ -108,5 +132,34 @@ describe('shouldForceAllFlags', () => {
     });
 
     expect(await flags.isEnabled('is_platform_released')).toBe(false);
+  });
+});
+
+describe('flagOverrides', () => {
+  const env = { FEATURE_FLAG_OVERRIDES: 'maintenance_mode=true, is_platform_released = false' };
+
+  it('reads the fixed values on a loopback host', () => {
+    expect(flagOverrides(env, 'localhost')).toEqual({
+      maintenance_mode: true,
+      is_platform_released: false,
+    });
+    expect(flagOverrides(env, '127.0.0.1')).toEqual({
+      maintenance_mode: true,
+      is_platform_released: false,
+    });
+  });
+
+  it('is ignored on any other host, so a deployed Worker cannot be switched by a variable', () => {
+    expect(flagOverrides(env, 'mesaaberta.com.br')).toEqual({});
+  });
+
+  it('skips unknown flags and values that are not true or false', () => {
+    expect(
+      flagOverrides({ FEATURE_FLAG_OVERRIDES: 'nope=true,maintenance_mode=yes' }, 'localhost'),
+    ).toEqual({});
+  });
+
+  it('is empty without the variable', () => {
+    expect(flagOverrides(undefined, 'localhost')).toEqual({});
   });
 });

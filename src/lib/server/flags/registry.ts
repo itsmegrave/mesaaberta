@@ -6,6 +6,16 @@
 export const flagDefaults = {
   // Off: `/` shows the landing page. On: the released platform.
   is_platform_released: false,
+  // Off: the site as usual. On: every visitor gets the maintenance screen; admins still get through.
+  maintenance_mode: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
+
+/**
+ * Flags that take the site away rather than show hidden work. The local preview mode, which turns
+ * every flag on, leaves these off: it should never lock the developer out.
+ */
+export const killSwitches: ReadonlySet<FlagName> = new Set(['maintenance_mode']);
+
+export const isFlagName = (name: string): name is FlagName => Object.hasOwn(flagDefaults, name);
