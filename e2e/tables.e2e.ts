@@ -168,7 +168,7 @@ test.describe('table page', () => {
     await page.goto('/tables/cronicas-de-roshar');
 
     await expect(page.getByText('Toda semana')).toBeVisible();
-    await expect(page.getByText('O mestre aprova cada entrada.')).toBeVisible();
+    await expect(page.getByText('Cada entrada passa por aprovação.')).toBeVisible();
   });
 
   test('shows user text as text: markup is never interpreted', async ({ page }) => {
@@ -194,8 +194,8 @@ test.describe('table page', () => {
       /^\/login\?next=%2Ftables%2Fos-sinos-de-sablewood$/,
     );
     await expect(page.getByRole('button', { name: /pegar vaga|pedir vaga/i })).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'Jogadores' })).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Participantes' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
   });
 
   test('joining without being signed in sends the visitor to log in and takes no seat', async ({

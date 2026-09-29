@@ -502,9 +502,9 @@ describe('the GM welcome message in the invite', () => {
       );
 
       expect(body.text).toContain(
-        'Mensagem do mestre:\nBem-vinda à Mesa do Dragão! WhatsApp: (11) 99999-0000',
+        'Mensagem da mesa:\nBem-vinda à Mesa do Dragão! WhatsApp: (11) 99999-0000',
       );
-      expect(body.html).toContain('Mensagem do mestre:<br>Bem-vinda à Mesa do Dragão!');
+      expect(body.html).toContain('Mensagem da mesa:<br>Bem-vinda à Mesa do Dragão!');
     },
   );
 
@@ -515,7 +515,7 @@ describe('the GM welcome message in the invite', () => {
 
       expect(body.template.id).toBe('tpl-invite');
       expect(body.template.variables.WELCOME_MESSAGE).toBe(
-        'Mensagem do mestre:\nBem-vinda à Mesa do Dragão!',
+        'Mensagem da mesa:\nBem-vinda à Mesa do Dragão!',
       );
       expect(Object.keys(body.template.variables).sort()).toEqual([...TEMPLATE_VARIABLES].sort());
     },
@@ -529,13 +529,13 @@ describe('the GM welcome message in the invite', () => {
   });
 
   it.each([null, '', '  \n '])(
-    'leaves no "Mensagem do mestre" section when the message is %j',
+    'leaves no "Mensagem da mesa" section when the message is %j',
     async (message) => {
       const [inline] = await sentBodies('PlayerJoined', message);
       const [hosted] = await sentBodies('PlayerJoined', message, templated);
 
-      expect(inline.text).not.toContain('Mensagem do mestre');
-      expect(inline.html).not.toContain('Mensagem do mestre');
+      expect(inline.text).not.toContain('Mensagem da mesa');
+      expect(inline.html).not.toContain('Mensagem da mesa');
       expect(inline.text).toBe(inline.text?.trimEnd());
       expect(inline.text).toContain('vaga confirmada');
       expect(hosted.template.variables).not.toHaveProperty('WELCOME_MESSAGE');

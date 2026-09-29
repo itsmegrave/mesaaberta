@@ -2,6 +2,7 @@
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { fileProxy, type SuperForm } from 'sveltekit-superforms';
+  import { NAMELESS } from '$lib/profile/handle';
   import FormField from './FormField.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import type { FormMessage } from '$lib/forms/message';
@@ -38,7 +39,7 @@
     imageUrl = null,
     action,
     cancelHref = '/tables',
-    gmName = 'jogador',
+    gmName = NAMELESS,
   }: Props = $props();
   const { form, errors, message, enhance, delayed, timeout } = superform;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.

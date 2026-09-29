@@ -43,7 +43,7 @@ describe('PlayingCard', () => {
   it('shows a pending request as waiting for the GM, with a cancel action', async () => {
     render(PlayingCard, props({ status: 'pending' }));
 
-    await expect.element(page.getByText('Aguardando o mestre')).toBeVisible();
+    await expect.element(page.getByText('Aguardando aprovação')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Cancelar pedido' })).toBeVisible();
     await expect.element(page.getByText('Você tem uma vaga')).not.toBeInTheDocument();
   });
@@ -51,7 +51,7 @@ describe('PlayingCard', () => {
   it('prompts to rate after the first session, pointing at the rating form', async () => {
     render(PlayingCard, props({ canRate: true }));
 
-    await expect.element(page.getByText(/Você jogou\. Avalie/)).toBeVisible();
+    await expect.element(page.getByText(/Como foi o jogo\? Avalie/)).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Avaliar' }))
       .toHaveAttribute('href', '/tables/mesa-do-dragao#avaliar');
@@ -60,14 +60,14 @@ describe('PlayingCard', () => {
   it('shows the rating already given, and offers to change it', async () => {
     render(PlayingCard, props({ canRate: true, rating: { gmScore: 5 } }));
 
-    await expect.element(page.getByText(/Sua nota para o mestre: 5/)).toBeVisible();
+    await expect.element(page.getByText(/Sua nota para a mestragem: 5/)).toBeVisible();
     await expect.element(page.getByRole('link', { name: 'Mudar' })).toBeVisible();
   });
 
   it('does not prompt to rate before it is time', async () => {
     render(PlayingCard, props({ canRate: false }));
 
-    await expect.element(page.getByText(/Avalie o mestre/)).not.toBeInTheDocument();
+    await expect.element(page.getByText(/Avalie a mestragem/)).not.toBeInTheDocument();
   });
 
   it('says so when the table has been disabled', async () => {

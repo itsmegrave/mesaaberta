@@ -37,7 +37,7 @@ test.describe('joining a table that takes players at once', () => {
 
     // The GM sees who sat down (names are only shown to the GM).
     await gmPage.goto(`/tables/${slug}`);
-    await expect(gmPage.getByRole('heading', { name: 'Jogadores' })).toBeVisible();
+    await expect(gmPage.getByRole('heading', { name: 'Participantes' })).toBeVisible();
     await expect(gmPage.getByRole('main').getByText(players[0].username)).toBeVisible();
 
     await page.getByRole('button', { name: 'Sair da mesa' }).click();
@@ -136,7 +136,9 @@ test.describe('a table where the GM approves each player', () => {
 
     await page.goto(`/tables/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
-    await expect(page.getByText('Seu pedido foi enviado. O mestre vai responder.')).toBeVisible();
+    await expect(
+      page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
+    ).toBeVisible();
     await expect(page.getByText(seats(5)).first()).toBeVisible(); // a request takes no seat
 
     await gmPage.goto('/account/tables');
@@ -162,7 +164,9 @@ test.describe('a table where the GM approves each player', () => {
     await page.goto(`/tables/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
     // The request has to be recorded before the GM's dashboard can list it.
-    await expect(page.getByText('Seu pedido foi enviado. O mestre vai responder.')).toBeVisible();
+    await expect(
+      page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
+    ).toBeVisible();
 
     await gmPage.goto('/account/tables');
     await gmPage.getByRole('button', { name: 'Recusar' }).click();
@@ -186,7 +190,9 @@ test.describe('a table where the GM approves each player', () => {
     for (const { page } of [first, second]) {
       await page.goto(`/tables/${slug}`);
       await page.getByRole('button', { name: 'Pedir vaga' }).click();
-      await expect(page.getByText('Seu pedido foi enviado. O mestre vai responder.')).toBeVisible();
+      await expect(
+        page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
+      ).toBeVisible();
     }
 
     await gmPage.goto(`/tables/${slug}`);
@@ -220,7 +226,7 @@ test.describe('ratings', () => {
     await expect(page.getByText('Você está nesta mesa.')).toBeVisible();
 
     // The first session is years away: nothing to rate yet.
-    await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
 
     // Back-date the session, as if it had been played.
     const sql = database();
@@ -228,9 +234,9 @@ test.describe('ratings', () => {
       await sql`update game_tables set starts_at = now() - interval '3 days' where slug = ${slug}`;
 
       await page.reload();
-      await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toBeVisible();
       await page
-        .getByRole('group', { name: 'Sua nota para o mestre' })
+        .getByRole('group', { name: 'Sua nota para a mestragem' })
         .getByLabel('4', { exact: true })
         .check();
       await page.getByLabel('Comentário (opcional)').fill('Noite ótima.');
@@ -239,19 +245,22 @@ test.describe('ratings', () => {
       await expect(
         page.getByText('Sua avaliação está salva. Você pode mudá-la quando quiser.'),
       ).toBeVisible();
-      await expect(page.getByText('Nota do mestre:').first()).toContainText('4,0');
+      await expect(page.getByText('Nota de mestragem:').first()).toContainText('4,0');
 
       // The dashboard shows what was given, and the GM cannot rate their own table.
       await page.goto('/account/tables');
-      await expect(page.getByText('Sua nota para o mestre: 4')).toBeVisible();
+      await expect(page.getByText('Sua nota para a mestragem: 4')).toBeVisible();
       await gmPage.goto(`/tables/${slug}`);
-      await expect(gmPage.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
+      await expect(gmPage.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
 
       // Changing it updates the average; the comment is stored but never shown to anyone else.
       await page.goto(`/tables/${slug}`);
-      await page.getByRole('group', { name: 'O mestre' }).getByLabel('2', { exact: true }).check();
+      await page
+        .getByRole('group', { name: 'Sua nota para a mestragem' })
+        .getByLabel('2', { exact: true })
+        .check();
       await page.getByRole('button', { name: 'Atualizar avaliação' }).click();
-      await expect(page.getByText('Nota do mestre:').first()).toContainText('2,0');
+      await expect(page.getByText('Nota de mestragem:').first()).toContainText('2,0');
       await expect(gmPage.getByText('Noite ótima.')).toHaveCount(0);
 
       // Removing the player removes their rating with them.
@@ -262,7 +271,7 @@ test.describe('ratings', () => {
         await sql`select 1 from ratings r join game_tables t on t.id = r.table_id where t.slug = ${slug}`;
       expect(rows).toHaveLength(0);
       await gmPage.goto(`/tables/${slug}`);
-      await expect(gmPage.getByText('Nota do mestre:')).toHaveCount(0);
+      await expect(gmPage.getByText('Nota de mestragem:')).toHaveCount(0);
     } finally {
       await sql.end();
     }
@@ -284,7 +293,7 @@ test.describe('ratings', () => {
     }
     await page.reload();
 
-    await expect(page.getByRole('heading', { name: 'Avalie o mestre' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
     await context.close();
     await gmContext.close();
   });
