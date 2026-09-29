@@ -62,4 +62,56 @@ describe('SearchSelect.svelte', () => {
     await expect.element(input()).toHaveValue('Savage Worlds');
     expect(hiddenValues()).toEqual(['savage-worlds']);
   });
+
+  describe('with suggestions', () => {
+    const suggesting = {
+      ...base,
+      items: [...items, { name: 'Mesa de Bar', slug: 'mesa-de-bar', pending: true as const }],
+      multiple: true,
+      suggestLabel: (name: string) => `Sugerir “${name}”`,
+      pendingLabel: 'em análise',
+    };
+
+    it('offers to suggest what was typed when the list does not have it', async () => {
+      render(SearchSelect, suggesting);
+
+      await input().fill('  Tormenta  20 ');
+      await page.getByRole('option', { name: 'Sugerir “Tormenta 20”' }).click();
+
+      await vi.waitFor(() => expect(hiddenValues()).toEqual(['new:Tormenta 20']));
+      await userEvent.keyboard('{Escape}');
+      await expect
+        .element(page.getByRole('button', { name: 'Remover Tormenta 20 (em análise)' }))
+        .toBeVisible();
+    });
+
+    it('does not offer to suggest a name the list already has', async () => {
+      render(SearchSelect, suggesting);
+
+      await input().fill('savage worlds');
+
+      await expect.element(options()).toHaveLength(1);
+      await expect.element(page.getByRole('option', { name: 'Savage Worlds' })).toBeVisible();
+    });
+
+    it('marks a pending entry in the list and on its chip', async () => {
+      render(SearchSelect, { ...suggesting, value: ['mesa-de-bar'] });
+
+      await expect
+        .element(page.getByRole('button', { name: 'Remover Mesa de Bar (em análise)' }))
+        .toBeVisible();
+      await input().fill('bar');
+      await expect
+        .element(page.getByRole('option', { name: /^Mesa de Bar\s*em análise$/ }))
+        .toBeVisible();
+    });
+
+    it('offers nothing to suggest without the label for it', async () => {
+      render(SearchSelect, { ...base, multiple: true });
+
+      await input().fill('Tormenta');
+
+      await expect.element(page.getByText('Nada encontrado com esse nome.')).toBeVisible();
+    });
+  });
 });

@@ -18,7 +18,12 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
-  const [systems, catalog] = await Promise.all([listSystems(locals.db), listCatalog(locals.db)]);
+  const profile = await locals.getProfile();
+  // The GM's own pending suggestions are offered too.
+  const [systems, catalog] = await Promise.all([
+    listSystems(locals.db),
+    listCatalog(locals.db, { suggestedBy: profile?.id }),
+  ]);
 
   return {
     form: await superValidate(

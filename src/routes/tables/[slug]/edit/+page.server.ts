@@ -10,7 +10,7 @@ import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
 import { listSystems } from '$lib/server/systems';
-import { listCatalog } from '$lib/server/catalog';
+import { listCatalog, type CatalogItem } from '$lib/server/catalog';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -19,13 +19,27 @@ export const load: PageServerLoad = async ({ locals, url, params, platform, cook
   if (!locals.db) error(503, 'Database not configured');
 
   try {
-    const { slug, status, imagePath, ...values } = await loadTableForEdit(
-      locals.db,
-      await locals.getProfile(),
-      params.slug,
-      await timezoneOf(locals, cookies),
-    );
-    const [systems, catalog] = await Promise.all([listSystems(locals.db), listCatalog(locals.db)]);
+    const profile = await locals.getProfile();
+    const {
+      slug,
+      status,
+      imagePath,
+      catalog: picked,
+      ...values
+    } = await loadTableForEdit(locals.db, profile, params.slug, await timezoneOf(locals, cookies));
+    const [systems, offered] = await Promise.all([
+      listSystems(locals.db),
+      listCatalog(locals.db, { suggestedBy: profile?.id }),
+    ]);
+    // The table's pending picks are offered too, even one another GM suggested first.
+    const withPicked = (items: CatalogItem[], picks: CatalogItem[]) => [
+      ...items,
+      ...picks.filter((pick) => !items.some((item) => item.slug === pick.slug)),
+    ];
+    const catalog = {
+      platforms: withPicked(offered.platforms, picked.platforms),
+      tags: withPicked(offered.tags, picked.tags),
+    };
 
     return {
       slug,

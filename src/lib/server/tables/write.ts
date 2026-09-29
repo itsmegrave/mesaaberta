@@ -30,7 +30,8 @@ async function systemIdOf(db: AnyDb, slug: string) {
 }
 
 /** The columns a form controls. Never the slug, the GM, the status or the calendar sequence. */
-const catalogPicks = (input: TableInput) => ({
+const catalogPicks = (input: TableInput, gmId: string) => ({
+  gmId,
   platformSlugs: input.platforms,
   tagSlugs: input.tags,
 });
@@ -101,7 +102,7 @@ export async function createTable(
           .insert(gameTables)
           .values({ ...columns, slug, gmId: actor!.id })
           .returning({ id: gameTables.id });
-        await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input));
+        await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input, actor!.id));
 
         return recordEvent(
           tx as unknown as AnyDb,
@@ -142,10 +143,12 @@ export async function loadTableForEdit(
     .select({ slug: systems.slug })
     .from(systems)
     .where(eq(systems.id, table.systemId));
-  const catalog = (await catalogOf(db, [table.id])).get(table.id)!;
+  // The GM's own form shows the table's pending suggestions too.
+  const catalog = (await catalogOf(db, [table.id], { withPending: true })).get(table.id)!;
 
   return {
     slug: table.slug,
+    catalog,
     status: table.status,
     systemSlug: system.slug,
     title: table.title,
@@ -196,7 +199,7 @@ export async function updateTable(
         icalSequence: table.icalSequence + 1,
       })
       .where(eq(gameTables.id, table.id));
-    await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input));
+    await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
 
     return recordEvent(tx as unknown as AnyDb, {
       type: 'TableUpdated',
