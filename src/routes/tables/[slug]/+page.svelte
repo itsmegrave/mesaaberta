@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { atHandle } from '$lib/profile/handle';
@@ -90,9 +91,10 @@
 </svelte:head>
 
 <article class="pt-2 pb-8 md:pt-6">
+  <Breadcrumbs items={[{ label: m.nav_tables(), href: '/tables' }, { label: table.title }]} />
   <a
     href={localizedHref('/tables', locale)}
-    class="inline-flex items-center gap-2 link-underline font-semibold decoration-primary-500"
+    class="inline-flex items-center gap-2 link-underline font-semibold decoration-primary-500 md:hidden"
   >
     <svg
       width="16"

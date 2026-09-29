@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import type { NotificationCategory } from '$lib/notifications/kinds';
@@ -43,6 +44,7 @@
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
+  <Breadcrumbs class="mb-8" items={[{ label: m.notifications_title() }]} />
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
     <div>
       <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">

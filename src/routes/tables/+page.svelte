@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import SearchSelect from '$lib/components/SearchSelect.svelte';
   import TableCard from '$lib/components/TableCard.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -73,6 +74,7 @@
 </svelte:head>
 
 <section class="py-2 md:pt-12">
+  <Breadcrumbs class="mb-8" items={[{ label: m.nav_tables() }]} />
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
     <div>
       <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">

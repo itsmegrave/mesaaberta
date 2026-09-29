@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
@@ -109,9 +110,16 @@
 </svelte:head>
 
 <article class="pt-2 pb-8 md:pt-6">
+  <Breadcrumbs
+    items={[
+      { label: m.nav_my_tables(), href: '/account/tables' },
+      { label: table.title, href: `/tables/${table.slug}` },
+      { label: m.manage_breadcrumb() },
+    ]}
+  />
   <a
     href={localizedHref('/account/tables', locale)}
-    class="inline-flex items-center gap-2 link-underline font-semibold decoration-primary-500"
+    class="inline-flex items-center gap-2 link-underline font-semibold decoration-primary-500 md:hidden"
   >
     <svg
       width="16"

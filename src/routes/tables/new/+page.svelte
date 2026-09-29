@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -23,6 +24,13 @@
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
+  <Breadcrumbs
+    class="mb-8"
+    items={[
+      { label: m.nav_my_tables(), href: '/account/tables' },
+      { label: m.nav_open_table_short() },
+    ]}
+  />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.form_new_title()}
   </h1>

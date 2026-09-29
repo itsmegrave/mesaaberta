@@ -481,5 +481,8 @@
   "profile_gender_travesti": "Travesti",
   "profile_gender_other": "Outro",
   "profile_gender_other_label": "Como você se identifica?",
-  "profile_gender_other_hint": "Opcional. Só vale se você escolher “Outro”."
+  "profile_gender_other_hint": "Opcional. Só vale se você escolher “Outro”.",
+  "breadcrumbs_label": "Trilha de navegação",
+  "breadcrumbs_home": "Início",
+  "manage_breadcrumb": "Jogadores e pedidos"
 }

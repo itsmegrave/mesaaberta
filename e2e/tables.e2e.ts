@@ -148,6 +148,24 @@ test.describe("times in the visitor's timezone", () => {
 });
 
 test.describe('table page', () => {
+  test('shows where it sits: a trail with the table’s name on wide screens, a back link on phones', async ({
+    page,
+    isMobile,
+  }) => {
+    await page.goto('/tables/os-sinos-de-sablewood');
+    const trail = page.getByRole('navigation', { name: 'Trilha de navegação' });
+
+    if (isMobile) {
+      await expect(trail).toBeHidden();
+      await expect(page.getByRole('link', { name: 'Voltar para as mesas' })).toBeVisible();
+      return;
+    }
+    await expect(page.getByRole('link', { name: 'Voltar para as mesas' })).toBeHidden();
+    await expect(trail.getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
+    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/tables');
+    await expect(trail.getByText('Os Sinos de Sablewood')).toHaveAttribute('aria-current', 'page');
+  });
+
   test('shows the description, the GM, the system, the schedule and the extra info', async ({
     page,
   }) => {
