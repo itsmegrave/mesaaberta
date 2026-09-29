@@ -6,6 +6,7 @@
   import FormField from './FormField.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import SeatSlider from './SeatSlider.svelte';
+  import DateTimeField from './DateTimeField.svelte';
   import ImageUpload from './ImageUpload.svelte';
   import type { FormMessage } from '$lib/forms/message';
   import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
@@ -53,6 +54,8 @@
       .formatToParts(zonedToDate($form.startsAtLocal, $form.timezone) ?? new Date())
       .find((part) => part.type === 'timeZoneName')?.value ?? '',
   );
+  // Today where the GM is: the first day a session can be.
+  const today = $derived(new Date().toLocaleDateString('sv-SE', { timeZone: $form.timezone }));
   const previewSystem = $derived(
     systems.find((system) => system.slug === $form.systemSlug)?.name ?? m.form_system(),
   );
@@ -247,17 +250,26 @@
           </p>{/if}
       </fieldset>
       <div class="grid gap-6 sm:grid-cols-2">
-        <FormField id="startsAtLocal" label={m.form_starts_at()} error={err('startsAtLocal')}
-          ><input
+        <div class="min-w-0">
+          <DateTimeField
             id="startsAtLocal"
             name="startsAtLocal"
-            type="datetime-local"
+            label={m.form_starts_at()}
+            withTime
             required
+            min={today}
             bind:value={$form.startsAtLocal}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-            aria-invalid={invalid('startsAtLocal')}
-          /></FormField
-        >
+            invalid={!!invalid('startsAtLocal')}
+            describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
+          />
+          {#if err('startsAtLocal')}<p
+              id="startsAtLocal-error"
+              role="alert"
+              class="mt-1 text-sm font-semibold text-error-700-300"
+            >
+              {err('startsAtLocal')}
+            </p>{/if}
+        </div>
         <FormField id="durationHours" label={m.form_duration()} error={err('durationHours')}
           ><input
             id="durationHours"
@@ -300,20 +312,25 @@
               ></select
             ></FormField
           >
-          <FormField
-            id="until"
-            label={m.form_until()}
-            hint={m.form_until_hint()}
-            error={err('until')}
-            ><input
+          <div class="min-w-0">
+            <DateTimeField
               id="until"
               name="until"
-              type="date"
+              label={m.form_until()}
+              hint={m.form_until_hint()}
+              min={$form.startsAtLocal.slice(0, 10) || today}
               bind:value={$form.until}
-              class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-              aria-invalid={invalid('until')}
-            /></FormField
-          >
+              invalid={!!invalid('until')}
+              describedby={['until-hint', err('until') ? 'until-error' : ''].join(' ').trim()}
+            />
+            {#if err('until')}<p
+                id="until-error"
+                role="alert"
+                class="mt-1 text-sm font-semibold text-error-700-300"
+              >
+                {err('until')}
+              </p>{/if}
+          </div>
         </div>
       {/if}
     </section>

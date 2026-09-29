@@ -72,6 +72,18 @@ export async function setSeats(page: Page, count: number) {
   await expect(seats).toHaveAttribute('aria-valuenow', String(count));
 }
 
+/**
+ * Types the first session of a table form (`2099-06-01T19:00`) as a person would: the day as
+ * dd/mm/aaaa in the date picker, then the hour.
+ */
+export async function setFirstSession(page: Page, iso: string) {
+  const [day, time] = iso.split('T');
+  const [year, month, date] = day.split('-');
+  await page.getByLabel('Primeira sessão', { exact: true }).fill(`${date}/${month}/${year}`);
+  await page.keyboard.press('Enter');
+  await page.getByLabel('Hora de Primeira sessão').fill(time);
+}
+
 /** A title no other test uses, so tests that share a database do not collide. */
 export const uniqueTitle = (prefix: string) =>
   `${prefix} ${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
@@ -84,7 +96,7 @@ export async function createTable(page: Page, table: NewTable) {
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
   if (table.kind === 'campaign') await page.getByLabel('Campanha (várias sessões)').check();
   await setSeats(page, table.capacity ?? 5);
-  await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+  await setFirstSession(page, '2099-06-01T19:00');
   if (table.joinMode === 'approval') await page.getByLabel(/Com a sua aprovação/).check();
   if (table.inPerson) {
     await page.getByLabel('Presencial', { exact: true }).check();
