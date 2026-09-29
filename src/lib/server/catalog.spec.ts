@@ -55,6 +55,7 @@ describe('listCatalog', () => {
 describe('setTableCatalog and catalogOf', () => {
   it("stores a table's picks in the order picked, and a later save replaces them", async () => {
     await setTableCatalog(test.db, tableId, {
+      gmId: gm,
       platformSlugs: ['foundry-vtt', 'discord', 'old-dragon-online', 'outro'],
       tagSlugs: ['terror', 'iniciantes'],
     });

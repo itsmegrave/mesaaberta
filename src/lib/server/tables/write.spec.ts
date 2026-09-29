@@ -413,6 +413,16 @@ describe('modality', () => {
   });
 });
 
+describe('createTable in the past', () => {
+  it('refuses a first session that already happened', async () => {
+    await expect(
+      createTable(test.db, ana, input({ title: 'Ontem', startsAtLocal: '2026-09-30T19:00' }), {
+        now,
+      }),
+    ).rejects.toMatchObject({ field: 'startsAtLocal', message: 'in_the_past' });
+  });
+});
+
 describe('loadTableForEdit', () => {
   it("keeps the GM's new term as a pending pick, shown in their form but not in public", async () => {
     const { slug } = await createTable(

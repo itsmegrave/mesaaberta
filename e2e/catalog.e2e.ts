@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createTable, signIn, uniqueTitle, pickFromSearch } from './support/app';
+import { createTable, pickFromSearch, setFirstSession, signIn, uniqueTitle } from './support/app';
 import { createUser } from './support/users';
 
 /** Picks several entries from a multi-select, then closes its list. */
@@ -69,7 +69,7 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
-  await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+  await setFirstSession(page, '2099-06-01T19:00');
   await pickMany(page, 'Plataformas', ['Roll20']);
   await pickMany(page, 'Tags', ['Terror', 'Humor']);
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -101,7 +101,7 @@ test('a GM suggests a tag the catalog lacks: it is on the table for them, not fo
   await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
-  await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+  await setFirstSession(page, '2099-06-01T19:00');
   await page.getByRole('combobox', { name: 'Tags' }).fill(suggested);
   await page.getByRole('option', { name: `Sugerir “${suggested}”` }).click();
   await page.keyboard.press('Escape');

@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { PNG, createTable, signIn, uniqueTitle, pickFromSearch } from './support/app';
+import {
+  PNG,
+  createTable,
+  pickFromSearch,
+  setFirstSession,
+  signIn,
+  uniqueTitle,
+} from './support/app';
 import { createUser, database } from './support/users';
 
 // A signed-in GM creating and managing tables, against the local Supabase.
@@ -54,7 +61,7 @@ test.describe('creating a table', () => {
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill('ab');
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
-    await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+    await setFirstSession(page, '2099-06-01T19:00');
     // The browser's own minlength would stop it first; turn that off to reach the server's check.
     await page.getByLabel('Título').evaluate((el) => el.removeAttribute('minlength'));
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -65,17 +72,21 @@ test.describe('creating a table', () => {
     await expect(page).toHaveURL(/tables\/new$/);
   });
 
-  test('refuses a first session in the past', async ({ page }) => {
+  test('a first session in the past cannot be picked', async ({ page }) => {
     const gm = await createUser('Mestre Davi');
     await signIn(page, gm);
 
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Passada'));
-    await page.getByLabel('Primeira sessão').fill('2020-01-01T19:00');
-    await page.getByRole('button', { name: 'Abrir mesa' }).click();
+    // The calendar starts at today; a past day typed in is not taken. (The server refuses one
+    // too: see write.spec.ts, "in_the_past".)
+    await page.getByLabel('Primeira sessão', { exact: true }).fill('01/01/2020');
+    await page.keyboard.press('Enter');
 
-    await expect(page.getByText('A primeira sessão precisa ser no futuro.')).toBeVisible();
+    await expect
+      .poll(() => page.locator('input[name="startsAtLocal"]').inputValue())
+      .not.toMatch(/^2020-/);
   });
 
   test('a campaign asks how often it repeats', async ({ page }) => {
@@ -87,7 +98,7 @@ test.describe('creating a table', () => {
     await page.getByLabel('Campanha (várias sessões)').check();
 
     await expect(page.getByLabel('Repete')).toBeVisible();
-    await expect(page.getByLabel('Última sessão até')).toBeVisible();
+    await expect(page.getByLabel('Última sessão até', { exact: true })).toBeVisible();
   });
 });
 
@@ -151,7 +162,7 @@ test.describe('the welcome message', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Privada'));
-    await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+    await setFirstSession(page, '2099-06-01T19:00');
     await page.getByLabel('Mensagem de boas-vindas').fill('Segredo só para quem entrar.');
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
     await expect(page).toHaveURL(/\/tables\/[^/]+$/);
@@ -170,7 +181,7 @@ test.describe('the welcome message', () => {
 
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Longa'));
-    await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+    await setFirstSession(page, '2099-06-01T19:00');
     const field = page.getByLabel('Mensagem de boas-vindas');
     // The browser's own maxlength would stop the typing; turn it off to reach the server's check.
     await field.evaluate((el) => el.removeAttribute('maxlength'));
@@ -221,7 +232,7 @@ test.describe('images', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
-    await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+    await setFirstSession(page, '2099-06-01T19:00');
     await page.locator('input#image').setInputFiles({
       name: 'capa.png',
       mimeType: 'image/png',
