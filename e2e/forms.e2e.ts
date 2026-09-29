@@ -47,3 +47,18 @@ test('a table form refuses an image that is too big before sending anything', as
   expect(posted).toBe(false);
   await context.close();
 });
+
+test('a profile that was only opened is left without asking, even when the form filled in the timezone', async ({
+  browser,
+}) => {
+  // A new person has no timezone: the form offers the browser's, which is not an edit of theirs.
+  const { page, context } = await asUser(browser, await createUser('Pessoa Nova'));
+  await page.goto('/account/profile');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+  await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  await context.close();
+});

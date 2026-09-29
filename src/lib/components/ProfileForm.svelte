@@ -58,9 +58,12 @@
     },
   });
 
-  // Not picked yet: offer the browser's zone, so saving the form keeps it on the profile.
+  // Not picked yet: offer the browser's zone, so saving the form keeps it on the profile. It is an
+  // offer, not an edit: untainted, so leaving the page does not ask about unsaved changes.
   onMount(() => {
-    if (!$form.timezone) $form.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if ($form.timezone) return;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    form.update((values) => ({ ...values, timezone }), { taint: false });
   });
   const timezones = timezoneOptions();
 
