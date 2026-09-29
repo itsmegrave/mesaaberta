@@ -20,7 +20,8 @@ export const TABLE_LIMITS = {
   // Platforms or tags a table can pick, each.
   catalogPicks: 12,
   joinDetails: 1000,
-  durationMinutes: { min: 15, max: 1440 },
+  // Typed in hours, in half-hour steps; stored in minutes (game_tables.duration_minutes).
+  durationHours: { min: 0.5, max: 24, step: 0.5 },
 } as const;
 
 /** True when `iso` is a calendar moment that exists (not `2026-13-40`), read as UTC. */
@@ -58,7 +59,11 @@ export const tableFormSchema = z
     capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
     startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
     timezone: z.string().refine(isTimeZone, 'invalid'),
-    durationMinutes: whole(TABLE_LIMITS.durationMinutes.min, TABLE_LIMITS.durationMinutes.max),
+    durationHours: z.coerce
+      .number()
+      .min(TABLE_LIMITS.durationHours.min)
+      .max(TABLE_LIMITS.durationHours.max)
+      .multipleOf(TABLE_LIMITS.durationHours.step),
     repeat: z.string().default(''),
     until: z.string().default(''),
     joinMode: z.enum(['auto', 'approval']).default('auto'),
@@ -129,6 +134,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
   const {
     // The image is stored by the action, never saved as a column.
     image: _image,
+    durationHours,
     repeat,
     until,
     extraInfo,
@@ -143,6 +149,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
 
   return {
     ...rest,
+    durationMinutes: Math.round(durationHours * 60),
     locationArea: inPerson ? locationArea || null : null,
     postalCode: inPerson ? normalizeCep(postalCode) : null,
     locationNeighbourhood: null,

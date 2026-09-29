@@ -156,7 +156,7 @@
   "form_timezone": "Fuso horário",
   "form_timezone_note": "No seu fuso, {zone} ({offset}). Cada pessoa vê a hora no próprio fuso.",
   "form_timezone_change": "Mudar no perfil",
-  "form_duration": "Duração (minutos)",
+  "form_duration": "Duração (horas)",
   "form_repeat": "Repete",
   "form_repeat_weekly": "Toda semana",
   "form_repeat_biweekly": "A cada 2 semanas",

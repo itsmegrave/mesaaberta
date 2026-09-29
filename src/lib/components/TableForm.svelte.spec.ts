@@ -36,6 +36,18 @@ describe('TableForm', () => {
     await expect.element(page.getByLabelText('Fuso horário')).not.toBeInTheDocument();
   });
 
+  it('asks for the duration in hours, half hours allowed, and previews it in hours', async () => {
+    render(TableFormHarness, props);
+
+    const field = page.getByLabelText('Duração (horas)');
+    await expect.element(field).toHaveValue(4);
+    await expect.element(field).toHaveAttribute('step', '0.5');
+    await expect.element(field).toHaveAttribute('max', '24');
+
+    await field.fill('2.5');
+    await expect.element(page.getByText(/2,5 horas/)).toBeVisible();
+  });
+
   it('starts as a one-shot without the repeat fields, and shows them for a campaign', async () => {
     render(TableFormHarness, props);
 
