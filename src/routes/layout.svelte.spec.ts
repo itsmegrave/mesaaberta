@@ -251,6 +251,8 @@ describe('+layout.svelte', () => {
 
       const bell = banner().getByRole('button', { name: 'Notificações: 2 sem ler' });
       await expect.element(bell).toBeVisible();
+      // Closed, the menu is not in the page, so its text never doubles what the page says.
+      expect(document.body.textContent).not.toContain('pediu uma vaga');
       await bell.click();
 
       const item = page.getByRole('button', { name: /@bia pediu uma vaga em Mesa do Dragão/ });
