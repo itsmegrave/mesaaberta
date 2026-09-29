@@ -2,7 +2,7 @@
   import './layout.css';
   import { asset, resolve } from '$app/paths';
   import { invalidateAll } from '$app/navigation';
-  import { navigating, page } from '$app/state';
+  import { navigating, page, updated } from '$app/state';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
   import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
@@ -154,6 +154,18 @@
     </nav>
   {/if}
 </header>
+
+{#if updated.current}
+  <aside
+    role="status"
+    class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
+  >
+    <p>{m.version_update_available()}</p>
+    <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
+      {m.version_update_refresh()}
+    </button>
+  </aside>
+{/if}
 
 <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
 {#if loading.current}

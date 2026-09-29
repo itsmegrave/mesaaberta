@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { page } from '$app/state';
   import Avatar from '$lib/components/Avatar.svelte';
   import ProfileForm from '$lib/components/ProfileForm.svelte';
@@ -73,6 +74,7 @@
 {/snippet}
 
 <section class="pt-2 pb-4 md:pt-12">
+  <Breadcrumbs class="mb-8" items={[{ label: m.account_profile_title() }]} />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.account_profile_title()}
   </h1>

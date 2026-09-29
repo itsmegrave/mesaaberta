@@ -63,6 +63,15 @@ export async function pickFromSearch(page: Page, label: string, option: string) 
   await page.getByRole('option', { name: option, exact: true }).click();
 }
 
+/** Moves the seats slider of a table form to `count`, with the keyboard, as a person would. */
+export async function setSeats(page: Page, count: number) {
+  const seats = page.getByRole('slider', { name: 'Vagas' });
+  await seats.focus();
+  await page.keyboard.press('Home');
+  for (let seat = 1; seat < count; seat++) await page.keyboard.press('ArrowRight');
+  await expect(seats).toHaveAttribute('aria-valuenow', String(count));
+}
+
 /** A title no other test uses, so tests that share a database do not collide. */
 export const uniqueTitle = (prefix: string) =>
   `${prefix} ${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
@@ -74,7 +83,7 @@ export async function createTable(page: Page, table: NewTable) {
   await page.getByLabel('Título').fill(table.title);
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
   if (table.kind === 'campaign') await page.getByLabel('Campanha (várias sessões)').check();
-  await page.getByLabel('Vagas', { exact: true }).fill(String(table.capacity ?? 5));
+  await setSeats(page, table.capacity ?? 5);
   await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
   if (table.joinMode === 'approval') await page.getByLabel(/Com a sua aprovação/).check();
   if (table.inPerson) {

@@ -62,3 +62,45 @@ test('a profile that was only opened is left without asking, even when the form 
   await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await context.close();
 });
+
+test('the table form drags the seats, takes an image and a suggestion without a CSP violation', async ({
+  browser,
+}) => {
+  const { page, context } = await asUser(browser, await createUser('Mestra Csp'));
+  // Only the form's own: the header's menus have violations of their own, tracked apart.
+  await page.addInitScript(() =>
+    document.addEventListener('securitypolicyviolation', (event) => {
+      if (!(event.target as Element | null)?.closest?.('main')) return;
+      ((window as Window & { __violations?: string[] }).__violations ??= []).push(
+        `${event.violatedDirective} ${(event.target as Element).outerHTML.slice(0, 120)}`,
+      );
+    }),
+  );
+  await page.goto('/tables/new');
+
+  // The thumb is drawn where it can be grabbed, and the arrow keys move it a seat at a time.
+  const seats = page.getByRole('slider', { name: 'Vagas' });
+  const box = await seats.boundingBox();
+  expect(box?.width).toBeGreaterThan(0);
+  await seats.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(seats).toHaveAttribute('aria-valuenow', '6');
+  await expect(page.getByText('6 vagas', { exact: true })).toBeVisible();
+  await expect(page.getByRole('complementary').getByText('6 vagas restantes')).toBeVisible();
+
+  await page.locator('input#image').setInputFiles({
+    name: 'capa.png',
+    mimeType: 'image/png',
+    buffer: Buffer.alloc(1024),
+  });
+  await expect(page.getByRole('button', { name: 'Tirar capa.png' })).toBeVisible();
+
+  await page.getByRole('combobox', { name: 'Tags' }).fill('Mesa de teste');
+  await expect(page.getByRole('option', { name: 'Sugerir “Mesa de teste”' })).toBeVisible();
+
+  const reported = await page.evaluate(
+    () => (window as Window & { __violations?: string[] }).__violations ?? [],
+  );
+  expect(reported).toEqual([]);
+  await context.close();
+});

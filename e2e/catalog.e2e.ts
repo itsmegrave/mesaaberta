@@ -1,6 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { createTable, signIn, uniqueTitle, pickFromSearch } from './support/app';
 import { createUser } from './support/users';
+
+/** Picks several entries from a multi-select, then closes its list. */
+async function pickMany(page: Page, label: string, names: string[]) {
+  for (const name of names) await pickFromSearch(page, label, name);
+  await page.keyboard.press('Escape');
+}
 
 // Platforms and tags: the GM picks them, the cards and the table page show them, and the list
 // filters by them from the query string.
@@ -64,9 +70,8 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
   await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
-  await page.getByRole('group', { name: 'Plataformas' }).getByText('Roll20').click();
-  await page.getByRole('group', { name: 'Tags' }).getByText('Terror').click();
-  await page.getByRole('group', { name: 'Tags' }).getByText('Humor').click();
+  await pickMany(page, 'Plataformas', ['Roll20']);
+  await pickMany(page, 'Tags', ['Terror', 'Humor']);
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
   await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
@@ -75,11 +80,42 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await expect(tagList.getByRole('link', { name: 'Humor' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Editar mesa' }).click();
-  await expect(page.getByRole('group', { name: 'Tags' }).getByLabel('Terror')).toBeChecked();
-  await page.getByRole('group', { name: 'Tags' }).getByText('Humor').click();
+  await expect(page.getByRole('button', { name: 'Remover Terror' })).toBeVisible();
+  await page.getByRole('button', { name: 'Remover Humor' }).click();
   await page.getByRole('button', { name: 'Salvar' }).click();
   await expect(
     page.getByRole('list', { name: 'Tags' }).getByRole('link', { name: 'Humor' }),
   ).toHaveCount(0);
   void createTable;
+});
+
+test('a GM suggests a tag the catalog lacks: it is on the table for them, not for the public', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'signed-in flows run on desktop only');
+  await signIn(page, await createUser('Mestre Sugere'));
+  const title = uniqueTitle('Sugere tag');
+  const suggested = `Bardo ${Math.random().toString(36).slice(2, 7)}`;
+
+  await page.goto('/tables/new');
+  await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
+  await page.getByLabel('Título').fill(title);
+  await page.getByLabel('Primeira sessão').fill('2099-06-01T19:00');
+  await page.getByRole('combobox', { name: 'Tags' }).fill(suggested);
+  await page.getByRole('option', { name: `Sugerir “${suggested}”` }).click();
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByRole('button', { name: `Remover ${suggested} (em análise)` }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Abrir mesa' }).click();
+
+  await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
+  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page.getByText(suggested, { exact: true })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Editar mesa' }).click();
+  await expect(
+    page.getByRole('button', { name: `Remover ${suggested} (em análise)` }),
+  ).toBeVisible();
 });

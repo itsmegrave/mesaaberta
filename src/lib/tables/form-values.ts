@@ -65,6 +65,10 @@ export function errorText(code: string, field = ''): string {
       return m.form_error_not_an_image();
     case 'upload_failed':
       return m.form_error_upload_failed();
+    case 'suggestion_invalid':
+      return m.form_error_suggestion_invalid();
+    case 'suggestion_unavailable':
+      return m.form_error_suggestion_unavailable();
     default:
       return m.form_error_invalid();
   }

@@ -28,6 +28,11 @@ test('the GM approves a request and removes a player from the manage page, after
     .click();
   await expect(gmPage).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
   await expect(gmPage.getByRole('heading', { level: 1 })).toHaveText(title);
+  // The trail names the table (not its slug) and links back to it.
+  const trail = gmPage.getByRole('navigation', { name: 'Trilha de navegação' });
+  await expect(trail.getByRole('link', { name: 'Minhas mesas' })).toBeVisible();
+  await expect(trail.getByRole('link', { name: title })).toHaveAttribute('href', `/tables/${slug}`);
+  await expect(trail.getByText('Jogadores e pedidos')).toHaveAttribute('aria-current', 'page');
 
   const requests = gmPage.getByRole('region', { name: 'Pedidos de vaga' });
   await expect(requests.getByText(`@${bruno.username}`)).toBeVisible();

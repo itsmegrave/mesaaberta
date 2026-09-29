@@ -1,4 +1,4 @@
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import TableFormHarness from './TableFormHarness.svelte';
@@ -69,13 +69,29 @@ describe('TableForm', () => {
     await page.getByLabelText('Título').fill('A Cripta do Rei Afogado');
     await page.getByRole('combobox', { name: 'Sistema de RPG' }).fill('dagger');
     await page.getByRole('option', { name: 'Daggerheart' }).click();
-    await page.getByLabelText('Vagas').fill('4');
+    // The slider moves a seat at a time with the arrow keys.
+    const seats = page.getByRole('slider', { name: 'Vagas' });
+    await expect.element(seats).toHaveAttribute('aria-valuenow', '5');
+    (seats.element() as HTMLElement).focus();
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect.element(seats).toHaveAttribute('aria-valuenow', '4');
+    await expect.element(page.getByText('4 vagas', { exact: true })).toBeVisible();
 
     const preview = page.getByRole('complementary');
     await expect.element(preview.getByText('A Cripta do Rei Afogado')).toBeVisible();
     await expect.element(preview.getByText('Daggerheart')).toBeVisible();
     await expect.element(preview.getByText('One-shot')).toBeVisible();
     await expect.element(preview.getByText('4 vagas restantes')).toBeVisible();
+  });
+
+  it('does not let the seats go below the ones already taken', async () => {
+    render(TableFormHarness, { ...props, values: { capacity: 3 }, minCapacity: 3 });
+
+    const seats = page.getByRole('slider', { name: 'Vagas' });
+    await expect.element(seats).toHaveAttribute('aria-valuemin', '3');
+    (seats.element() as HTMLElement).focus();
+    await userEvent.keyboard('{Home}');
+    await expect.element(seats).toHaveAttribute('aria-valuenow', '3');
   });
 
   it('posts as multipart to its action, so an image can travel with it', async () => {
@@ -90,9 +106,10 @@ describe('TableForm', () => {
   it('accepts only the image types the server accepts', async () => {
     render(TableFormHarness, props);
 
-    await expect
-      .element(page.getByRole('button', { name: 'Imagem' }))
-      .toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
+    await expect.element(page.getByRole('button', { name: 'Escolher imagem' })).toBeVisible();
+    expect(document.querySelector('input#image')?.getAttribute('accept')).toBe(
+      'image/png,image/jpeg,image/webp',
+    );
   });
 
   it('keeps what was typed and marks each field that has a problem', async () => {
@@ -124,9 +141,9 @@ describe('TableForm', () => {
     render(TableFormHarness, { ...props, message: { code: 'not_an_image', field: 'image' } });
 
     await expect.element(page.getByText('Use uma imagem PNG, JPEG ou WebP.')).toBeVisible();
-    await expect
-      .element(page.getByRole('button', { name: 'Imagem' }))
-      .toHaveAttribute('aria-invalid', 'true');
+    const choose = page.getByRole('button', { name: 'Escolher imagem' });
+    await expect.element(choose).toHaveAttribute('aria-invalid', 'true');
+    await expect.element(choose).toHaveAttribute('aria-describedby', 'image-hint image-error');
   });
 
   it('says a refused permission at the top of the form', async () => {

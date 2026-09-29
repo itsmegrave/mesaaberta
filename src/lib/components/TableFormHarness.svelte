@@ -14,8 +14,18 @@
     message?: FormMessage;
     imageUrl?: string | null;
     action?: string;
+    minCapacity?: number;
   };
-  let { systems, submitLabel, values = {}, errors, message, imageUrl, action }: Props = $props();
+  let {
+    systems,
+    submitLabel,
+    values = {},
+    errors,
+    message,
+    imageUrl,
+    action,
+    minCapacity,
+  }: Props = $props();
 
   // svelte-ignore state_referenced_locally
   const superform = superForm(defaults({ ...NEW_TABLE_VALUES, ...values }, zod4(tableFormSchema)), {
@@ -43,4 +53,5 @@
   {submitLabel}
   {imageUrl}
   {action}
+  {minCapacity}
 />

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { navigating, page } from '$app/state';
   import ListSkeleton from '$lib/components/ListSkeleton.svelte';
   import { Slow } from '$lib/navigation/slow.svelte';
@@ -83,6 +84,7 @@
 </svelte:head>
 
 <section class="py-2 md:pt-12">
+  <Breadcrumbs class="mb-8" items={[{ label: m.nav_tables() }]} />
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
     <div>
       <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -24,7 +25,14 @@
 </svelte:head>
 
 <section class="py-10 md:py-16">
-  <a href={localizedHref(`/tables/${data.slug}`, getLocale())} class="anchor">
+  <Breadcrumbs
+    items={[
+      { label: m.nav_my_tables(), href: '/account/tables' },
+      { label: data.title, href: `/tables/${data.slug}` },
+      { label: m.form_edit_title() },
+    ]}
+  />
+  <a href={localizedHref(`/tables/${data.slug}`, getLocale())} class="anchor md:hidden">
     {m.form_view_table()}
   </a>
 
