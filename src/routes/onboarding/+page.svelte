@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AuthShell from '$lib/components/AuthShell.svelte';
   import ProfileForm from '$lib/components/ProfileForm.svelte';
   import { m } from '$lib/paraglide/messages';
 
@@ -10,11 +11,7 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
-<section class="py-16 md:py-24">
-  <h1 class="text-4xl font-semibold tracking-tight md:text-6xl">{m.profile_title()}</h1>
-  <p class="mt-4 max-w-md text-lg">{m.profile_lede()}</p>
-
-  <div class="mt-8">
-    <ProfileForm form={data.form} />
-  </div>
-</section>
+<!-- The last step of signing up, in the same frame as the sign-in pages. -->
+<AuthShell title={m.profile_title()} lede={m.profile_lede()}>
+  <ProfileForm form={data.form} />
+</AuthShell>

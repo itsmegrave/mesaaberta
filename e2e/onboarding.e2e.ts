@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { randomBytes } from 'crypto';
 import { signOut } from './support/app';
+import { sidewaysOverflow } from './support/overflow';
 import { PASSWORD, createUser, database } from './support/users';
 
 // The onboarding step after sign-up, and the gate that holds an incomplete profile there. Against
@@ -64,6 +65,18 @@ test.describe('an incomplete profile', () => {
 });
 
 test.describe('the onboarding form', () => {
+  test('sits in the sign-in frame, with a link added, without scrolling sideways', async ({
+    page,
+  }) => {
+    const user = await createUser('Moldura Login', { incomplete: true });
+    await signInIncomplete(page, user);
+
+    await expect(page.getByText('Tem uma cadeira vazia na mesa.')).toBeVisible();
+    await page.getByRole('button', { name: 'Adicionar link' }).click();
+    await expect(page.getByLabel('Endereço do link 1')).toBeVisible();
+    expect(await sidewaysOverflow(page)).toBe(0);
+  });
+
   test('saves the details and the links in the order chosen', async ({ page }) => {
     const user = await createUser('Cheia Detalhes', { incomplete: true });
     await signInIncomplete(page, user);
