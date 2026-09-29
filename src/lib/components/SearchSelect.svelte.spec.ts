@@ -1,3 +1,4 @@
+import '../../routes/layout.css';
 import { render } from 'vitest-browser-svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
@@ -19,6 +20,24 @@ const hiddenValues = () =>
   );
 
 describe('SearchSelect.svelte', () => {
+  it('draws one box: the input and the trigger add no border, fill or offset of their own', async () => {
+    render(SearchSelect, base);
+
+    const field = (await input().element()) as HTMLInputElement;
+    const button = (await page
+      .getByRole('button', { name: /Sistema/ })
+      .element()) as HTMLButtonElement;
+    const box = field.closest('[data-part="control"]') as HTMLElement;
+
+    expect(getComputedStyle(field).borderTopWidth).toBe('0px');
+    expect(getComputedStyle(field).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(button).position).toBe('static');
+    expect(getComputedStyle(button).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(button).transform).toBe('none');
+    expect(box.getBoundingClientRect().height).toBe(48);
+    expect(button.getBoundingClientRect().height).toBe(box.clientHeight);
+  });
+
   it('narrows the list to what was typed, ignoring case and accents', async () => {
     render(SearchSelect, base);
 
