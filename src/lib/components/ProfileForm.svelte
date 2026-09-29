@@ -2,7 +2,13 @@
   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { tick } from 'svelte';
-  import { profileSchema, PROFILE_LIMITS, type ProfileInput } from '$lib/profile/schema';
+  import {
+    GENDER_OPTIONS,
+    profileSchema,
+    PROFILE_LIMITS,
+    type Gender,
+    type ProfileInput,
+  } from '$lib/profile/schema';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
   import FormField from './FormField.svelte';
@@ -60,12 +66,27 @@
 
   // Not picked yet: offer the browser's zone, so saving the form keeps it on the profile. It is an
   // offer, not an edit: untainted, so leaving the page does not ask about unsaved changes.
+  // Set once JavaScript runs: until then every field is shown, "Outro"'s own words included.
+  let mounted = $state(false);
   onMount(() => {
+    mounted = true;
     if ($form.timezone) return;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     form.update((values) => ({ ...values, timezone }), { taint: false });
   });
   const timezones = timezoneOptions();
+
+  const GENDER_LABELS: Record<Gender, () => string> = {
+    woman: m.profile_gender_woman,
+    man: m.profile_gender_man,
+    trans_woman: m.profile_gender_trans_woman,
+    trans_man: m.profile_gender_trans_man,
+    non_binary: m.profile_gender_non_binary,
+    agender: m.profile_gender_agender,
+    genderfluid: m.profile_gender_genderfluid,
+    travesti: m.profile_gender_travesti,
+    other: m.profile_gender_other,
+  };
 
   const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
@@ -281,18 +302,44 @@
       hint={m.profile_optional()}
       error={errorText($errors.gender?.[0])}
     >
-      <input
+      <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
+      <select
         id="gender"
         name="gender"
-        type="text"
-        maxlength={PROFILE_LIMITS.gender}
         bind:value={$form.gender}
         class={input}
         aria-invalid={$errors.gender ? 'true' : undefined}
         aria-describedby="gender-hint{$errors.gender ? ' gender-error' : ''}"
-      />
+      >
+        <option value="">{m.profile_gender_none()}</option>
+        {#each GENDER_OPTIONS as option (option)}
+          <option value={option}>{GENDER_LABELS[option]()}</option>
+        {/each}
+      </select>
     </FormField>
   </div>
+
+  <!-- Own words for "Outro". Without JavaScript the field is always there (the server keeps it
+       only with "Outro"); with it, the field shows once "Outro" is picked. -->
+  {#if !mounted || $form.gender === 'other'}
+    <FormField
+      id="gender-other"
+      label={m.profile_gender_other_label()}
+      hint={m.profile_gender_other_hint()}
+      error={errorText($errors.genderOther?.[0])}
+    >
+      <input
+        id="gender-other"
+        name="genderOther"
+        type="text"
+        maxlength={PROFILE_LIMITS.gender}
+        bind:value={$form.genderOther}
+        class={input}
+        aria-invalid={$errors.genderOther ? 'true' : undefined}
+        aria-describedby="gender-other-hint{$errors.genderOther ? ' gender-other-error' : ''}"
+      />
+    </FormField>
+  {/if}
 
   <FormField
     id="city"

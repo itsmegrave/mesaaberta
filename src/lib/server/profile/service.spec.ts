@@ -22,6 +22,7 @@ const input = (over: Partial<ProfileInput> = {}): ProfileInput => ({
   name: '',
   age: null,
   gender: '',
+  genderOther: '',
   city: '',
   timezone: '',
   linkNetwork: [],
@@ -42,6 +43,7 @@ describe('saveProfile', () => {
       name: null,
       age: null,
       gender: null,
+      genderOther: null,
       city: null,
     });
   });
@@ -54,7 +56,7 @@ describe('saveProfile', () => {
         username: 'carla',
         name: 'Carla Dias',
         age: 30,
-        gender: 'mulher',
+        gender: 'woman',
         city: 'Recife',
         timezone: 'America/Recife',
         linkNetwork: ['instagram', 'website', 'x'],
@@ -66,7 +68,8 @@ describe('saveProfile', () => {
       username: 'carla',
       name: 'Carla Dias',
       age: 30,
-      gender: 'mulher',
+      gender: 'woman',
+      genderOther: '',
       city: 'Recife',
       timezone: 'America/Recife',
       linkNetwork: ['instagram', 'x'],
@@ -85,6 +88,21 @@ describe('saveProfile', () => {
       .where(eq(profileSocialLinks.profileId, id(2)));
     expect(links).toHaveLength(1);
     expect(links[0]).toMatchObject({ network: 'x', url: 'https://x.com/carla2', position: 0 });
+  });
+
+  it('keeps the own words with "Outro" only, and forgets them when another option is picked', async () => {
+    await saveProfile(test.db, id(1), input({ gender: 'other', genderOther: 'demigênero' }));
+    expect(await loadProfileForm(test.db, id(1))).toMatchObject({
+      gender: 'other',
+      genderOther: 'demigênero',
+    });
+
+    await saveProfile(test.db, id(1), input({ gender: 'agender', genderOther: 'demigênero' }));
+    const [profile] = await test.db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.id, id(1)));
+    expect(profile).toMatchObject({ gender: 'agender', genderOther: null });
   });
 
   it('says the username is taken, whatever its case, and leaves the profile as it was', async () => {

@@ -55,6 +55,7 @@ export async function loadProfileForm(
     name: profile.name ?? '',
     age: profile.age,
     gender: profile.gender ?? '',
+    genderOther: profile.genderOther ?? '',
     city: profile.city ?? '',
     timezone: profile.timezone ?? '',
     linkNetwork: links.map((link) => link.network),
@@ -80,6 +81,8 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
           name: input.name || null,
           age: input.age,
           gender: input.gender || null,
+          // Own words go with "Outro" only; picking another option forgets them.
+          genderOther: (input.gender === 'other' && input.genderOther) || null,
           city: input.city || null,
           timezone: input.timezone || null,
         })

@@ -23,6 +23,7 @@ const form = (username: string): ProfileInput => ({
   name: '',
   age: null,
   gender: '',
+  genderOther: '',
   city: '',
   timezone: '',
   linkNetwork: [],

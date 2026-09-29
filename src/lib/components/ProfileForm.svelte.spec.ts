@@ -18,6 +18,7 @@ const empty: ProfileInput = {
   name: '',
   age: null,
   gender: '',
+  genderOther: '',
   city: '',
   timezone: '',
   linkNetwork: [],
@@ -58,6 +59,51 @@ describe('ProfileForm', () => {
       await expect.element(page.getByLabelText(label, { exact: true })).not.toBeRequired();
     }
     await expect.element(page.getByLabelText('Idade')).toHaveAttribute('type', 'number');
+  });
+
+  describe('gender', () => {
+    it('is a list of options with no answer as the default', async () => {
+      await setup();
+
+      const gender = page.getByLabelText('Gênero', { exact: true });
+      expect(gender.element().tagName).toBe('SELECT');
+      await expect.element(gender).toHaveValue('');
+      const options = [...(gender.element() as unknown as HTMLSelectElement).options].map(
+        (o) => o.text,
+      );
+      expect(options).toEqual([
+        'Prefiro não informar',
+        'Mulher',
+        'Homem',
+        'Mulher trans',
+        'Homem trans',
+        'Pessoa não binária',
+        'Agênero',
+        'Gênero fluido',
+        'Travesti',
+        'Outro',
+      ]);
+    });
+
+    it('asks for own words only once "Outro" is picked', async () => {
+      await setup();
+
+      const ownWords = () => page.getByLabelText('Como você se identifica?');
+      await expect.element(ownWords()).not.toBeInTheDocument();
+
+      await page.getByLabelText('Gênero', { exact: true }).selectOptions('Outro');
+      await expect.element(ownWords()).toBeVisible();
+      await expect.element(ownWords()).not.toBeRequired();
+    });
+
+    it('shows what the person saved, own words included', async () => {
+      await setup({ gender: 'other', genderOther: 'demigênero' });
+
+      await expect.element(page.getByLabelText('Gênero', { exact: true })).toHaveValue('other');
+      await expect
+        .element(page.getByLabelText('Como você se identifica?'))
+        .toHaveValue('demigênero');
+    });
   });
 
   it('shows what it was given, such as a username suggested from the sign-in name', async () => {

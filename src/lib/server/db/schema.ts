@@ -18,6 +18,19 @@ import {
 // `member | admin`: GM is not a role. Anyone signed in can open a table and becomes its GM.
 export const profileRole = pgEnum('profile_role', ['member', 'admin']);
 export const profileStatus = pgEnum('profile_status', ['active', 'suspended']);
+// A person's gender, when they say. `other` goes with their own words in `gender_other`. Keep in
+// step with GENDER_OPTIONS (src/lib/profile/schema.ts); a test checks the two lists match.
+export const genderIdentity = pgEnum('gender_identity', [
+  'woman',
+  'man',
+  'trans_woman',
+  'trans_man',
+  'non_binary',
+  'agender',
+  'genderfluid',
+  'travesti',
+  'other',
+]);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
 export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot']);
 export const tableStatus = pgEnum('table_status', ['active', 'disabled']);
@@ -58,7 +71,9 @@ export const profiles = pgTable(
     // The details below are all optional. `name` is pre-filled from the sign-in provider.
     name: text('name'),
     age: smallint('age'),
-    gender: text('gender'),
+    gender: genderIdentity('gender'),
+    // Only with `other`: how the person describes themselves, in their own words.
+    genderOther: text('gender_other'),
     city: text('city'),
     // The picture from the sign-in provider (Google, Discord).
     avatarUrl: text('avatar_url'),

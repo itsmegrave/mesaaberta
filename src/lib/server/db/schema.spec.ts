@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb, pgErrorCode } from './test-db';
 import { eq, sql } from 'drizzle-orm';
-import { gameTables, profiles, systems } from './schema';
+import { gameTables, genderIdentity, profiles, systems } from './schema';
+import { GENDER_OPTIONS } from '$lib/profile/schema';
 
 const UNIQUE_VIOLATION = '23505';
 const FOREIGN_KEY_VIOLATION = '23503';
@@ -132,5 +133,11 @@ describe('row level security', () => {
 
     expect(result.rows.length).toBeGreaterThanOrEqual(6);
     expect(result.rows.filter((row) => !row.rls).map((row) => row.table)).toEqual([]);
+  });
+});
+
+describe('gender_identity', () => {
+  it('has exactly the options the profile form offers, in the same order', () => {
+    expect(genderIdentity.enumValues).toEqual([...GENDER_OPTIONS]);
   });
 });

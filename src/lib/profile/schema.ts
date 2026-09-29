@@ -13,10 +13,30 @@ z.config({ jitless: true });
 
 export const PROFILE_LIMITS = {
   name: 80,
+  /** The own words someone picks "Outro" to write. */
   gender: 40,
   city: 80,
   age: { min: 13, max: 120 },
 } as const;
+
+/**
+ * The gender options, in the order the form lists them. Optional: no answer is the default. A
+ * person who is not in the list picks `other` and may write their own words (`genderOther`).
+ * Keep in step with the `gender_identity` enum in the database.
+ */
+export const GENDER_OPTIONS = [
+  'woman',
+  'man',
+  'trans_woman',
+  'trans_man',
+  'non_binary',
+  'agender',
+  'genderfluid',
+  'travesti',
+  'other',
+] as const;
+
+export type Gender = (typeof GENDER_OPTIONS)[number];
 
 // The links travel as two parallel lists (`linkNetwork`, `linkUrl`) rather than a list of objects,
 // so a plain form post with JavaScript off carries them too.
@@ -38,7 +58,8 @@ export const profileSchema = z
       .max(PROFILE_LIMITS.age.max, 'invalid')
       .nullable()
       .default(null),
-    gender: z.string().trim().max(PROFILE_LIMITS.gender, 'too_long').default(''),
+    gender: z.enum(GENDER_OPTIONS, 'invalid').or(z.literal('')).default(''),
+    genderOther: z.string().trim().max(PROFILE_LIMITS.gender, 'too_long').default(''),
     city: z.string().trim().max(PROFILE_LIMITS.city, 'too_long').default(''),
     // An IANA zone, or empty for "not picked yet" (the browser's is used meanwhile).
     timezone: z
