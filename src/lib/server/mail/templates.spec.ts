@@ -96,7 +96,7 @@ describe('template variables', () => {
 describe('welcomeSection', () => {
   it('is the heading and the message, on their own lines', () => {
     expect(welcomeSection('  Bem-vinda!\nAté breve.  ')).toBe(
-      'Mensagem do mestre:\nBem-vinda!\nAté breve.',
+      'Mensagem da mesa:\nBem-vinda!\nAté breve.',
     );
   });
 

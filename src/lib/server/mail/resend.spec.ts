@@ -107,7 +107,7 @@ describe('resend mailer', () => {
 
       expect(sent.body().template.variables).toEqual({
         ...variables,
-        WELCOME_MESSAGE: 'Mensagem do mestre:\nBem-vinda! bWhatsApp/b: (11) 99999-0000',
+        WELCOME_MESSAGE: 'Mensagem da mesa:\nBem-vinda! bWhatsApp/b: (11) 99999-0000',
       });
       expect(sent.body()).not.toHaveProperty('text');
     });
@@ -132,9 +132,9 @@ describe('resend mailer', () => {
 
       await resendMailer(env, sent.request).send({ ...inline, welcomeMessage: message });
 
-      expect(sent.body().text).toBe(`${inline.text}\n\nMensagem do mestre:\n${message}`);
+      expect(sent.body().text).toBe(`${inline.text}\n\nMensagem da mesa:\n${message}`);
       expect(sent.body().html).toContain(
-        'Mensagem do mestre:<br>Bem-vinda! &lt;b&gt;WhatsApp&lt;/b&gt;',
+        'Mensagem da mesa:<br>Bem-vinda! &lt;b&gt;WhatsApp&lt;/b&gt;',
       );
       expect(sent.body().html).not.toContain('<b>');
     });
@@ -145,7 +145,7 @@ describe('resend mailer', () => {
       await resendMailer(env, sent.request).send({ ...inline, welcomeMessage: empty });
 
       expect(sent.body().text).toBe(inline.text);
-      expect(sent.body().html).not.toContain('Mensagem do mestre');
+      expect(sent.body().html).not.toContain('Mensagem da mesa');
     });
   });
 

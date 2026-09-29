@@ -33,7 +33,7 @@ test('the GM approves a request and removes a player from the manage page, after
   await expect(requests.getByText(`@${bruno.username}`)).toBeVisible();
   await requests.getByRole('button', { name: 'Aprovar' }).click();
 
-  const players = gmPage.getByRole('region', { name: 'Jogadores' });
+  const players = gmPage.getByRole('region', { name: 'Participantes' });
   await expect(players.getByText(`@${bruno.username}`)).toBeVisible();
   await expect(players.getByText(/Na mesa desde/)).toBeVisible();
   await expect(requests.getByText('Nenhum pedido esperando.')).toBeVisible();

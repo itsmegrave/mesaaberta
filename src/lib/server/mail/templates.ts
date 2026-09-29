@@ -30,7 +30,7 @@ export function templateIdFor(env: TemplateEnv, key: TemplateKey): string | unde
  * Resend reserves (`FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`, `contact`, `this`).
  * Never add an id, a token, an address or anything secret here.
  *
- * `WELCOME_MESSAGE` is optional and is the whole "Mensagem do mestre" section, heading included:
+ * `WELCOME_MESSAGE` is optional and is the whole "Mensagem da mesa" section, heading included:
  * Resend templates have no conditionals, so a template that owned the heading would show it above
  * nothing. Absent values are omitted, so the template gives it an empty fallback in the dashboard.
  */
@@ -78,7 +78,7 @@ export function templateVariables(input: TemplateVariables): TemplateVariables {
 }
 
 /** The heading shared by the inline copy and the hosted template variable. */
-export const WELCOME_HEADING = 'Mensagem do mestre';
+export const WELCOME_HEADING = 'Mensagem da mesa';
 
 /** The welcome section as text, or undefined when there is nothing to say: never a bare heading. */
 export function welcomeSection(message: string | undefined): string | undefined {

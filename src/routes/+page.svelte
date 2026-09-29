@@ -296,7 +296,7 @@
       </div>
       <div class="flex items-center gap-3 rounded-lg bg-lamp-wash p-3">
         {@render stars(18)}
-        <span class="leading-snug">Depois da sessão, avalie o mestre.</span>
+        <span class="leading-snug">Depois da sessão, avalie a mestragem.</span>
       </div>
     </div>
   </section>
@@ -400,7 +400,7 @@
         </div>
       </div>
       <div class="flex items-center justify-between gap-3 border-t border-surface-200-800 pt-3">
-        <span class="text-sm font-semibold text-muted">Sua nota como mestre</span>
+        <span class="text-sm font-semibold text-muted">Sua nota de mestragem</span>
         <span class="inline-flex items-center gap-2">
           <svg width="20" height="20" viewBox="0 0 24 24" class="shrink-0 fill-lamp">
             <path d={star} />

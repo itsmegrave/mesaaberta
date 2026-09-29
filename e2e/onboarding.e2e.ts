@@ -55,7 +55,7 @@ test.describe('an incomplete profile', () => {
     const user = await createUser('Quer Sair', { incomplete: true });
     await signInIncomplete(page, user);
 
-    await signOut(page, 'Jogador');
+    await signOut(page, 'Sem nome');
 
     // Signed out: an authenticated page asks to log in again.
     await page.goto('/tables/new');

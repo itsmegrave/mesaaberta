@@ -21,7 +21,7 @@ test.describe('creating a table', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
     await expect(page.getByRole('main').getByText(gm.username)).toBeVisible();
     await expect(page.getByText('5 vagas restantes').first()).toBeVisible();
-    await expect(page.getByText('Você é o mestre desta mesa.')).toBeVisible();
+    await expect(page.getByText('Você mestra esta mesa.')).toBeVisible();
 
     // An anonymous visitor sees the same table, at the same address, in the list too.
     const visitor = await browser.newContext();
