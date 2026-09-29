@@ -498,7 +498,9 @@ describe('updateTable', () => {
   });
 
   it('bumps the calendar sequence when the session time changes, so invites replace the old event', async () => {
-    const { slug } = await createTable(test.db, ana, input({ title: 'Sequência Horário' }), { now });
+    const { slug } = await createTable(test.db, ana, input({ title: 'Sequência Horário' }), {
+      now,
+    });
 
     const result = await updateTable(
       test.db,
