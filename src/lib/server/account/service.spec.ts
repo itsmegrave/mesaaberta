@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import {
   events,
   gameTables,
+  notifications,
   profileSocialLinks,
   profiles,
   ratings,
@@ -62,6 +63,13 @@ describe('exportAccount', () => {
     await test.db
       .insert(ratings)
       .values({ tableId: theirs.id, playerId: me, gmScore: 5, comment: 'Ótima' });
+    await test.db.insert(notifications).values({
+      recipientId: me,
+      category: 'registration',
+      type: 'join_approved',
+      link: `/tables/${theirs.slug}`,
+      metadata: { tableId: theirs.id, slug: theirs.slug, title: 'Mesa do Bruno' },
+    });
 
     const data = await exportAccount(
       test.db,
@@ -89,6 +97,9 @@ describe('exportAccount', () => {
         gmScore: 5,
         comment: 'Ótima',
       }),
+    ]);
+    expect(data.notifications).toEqual([
+      expect.objectContaining({ type: 'join_approved', readAt: null }),
     ]);
     // The players at my tables are other people's data.
     expect(JSON.stringify(data)).not.toContain(other);
@@ -132,7 +143,7 @@ describe('closeAccount', () => {
 });
 
 describe('anonymiseProfile', () => {
-  it('clears every personal field and the links, keeping only the id the old tables point at', async () => {
+  it('clears every personal field and the links and notifications, keeping only the id the old tables point at', async () => {
     const person = id(20);
     await test.db.insert(profiles).values({
       id: person,
@@ -147,6 +158,12 @@ describe('anonymiseProfile', () => {
     await test.db
       .insert(profileSocialLinks)
       .values({ profileId: person, network: 'x', url: 'https://x.com/davi', position: 0 });
+    await test.db.insert(notifications).values({
+      recipientId: person,
+      category: 'system',
+      type: 'system_announcement',
+      title: 'Oi',
+    });
 
     await anonymiseProfile(test.db, person);
 
@@ -166,6 +183,9 @@ describe('anonymiseProfile', () => {
         .select()
         .from(profileSocialLinks)
         .where(eq(profileSocialLinks.profileId, person)),
+    ).toEqual([]);
+    expect(
+      await test.db.select().from(notifications).where(eq(notifications.recipientId, person)),
     ).toEqual([]);
   });
 });

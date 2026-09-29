@@ -363,3 +363,53 @@ export const authAttempts = pgTable(
     index('auth_attempts_created_idx').on(attempt.createdAt),
   ],
 ).enableRLS();
+
+// What an in-app notification is about; the feed filters on it. Only `table`, `registration` and
+// `rating` have events today; the rest are for the catalog, moderation and announcement slices.
+export const notificationCategory = pgEnum('notification_category', [
+  'table',
+  'registration',
+  'rating',
+  'catalog',
+  'moderation',
+  'system',
+]);
+
+// The bell in the header. A domain notification keeps its type and ids only, and is worded when it
+// is shown, like the manage page's activity; `title` and `body` are for announcements written by a
+// person. One per event and recipient, so a retried handler adds nothing. Read ones are deleted
+// after NOTIFICATION_RETENTION_DAYS, and all of a person's go when their account is closed.
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    recipientId: uuid('recipient_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    actorId: uuid('actor_id').references(() => profiles.id, { onDelete: 'set null' }),
+    // The event it came from. Not a foreign key: events are pruned sooner than notifications.
+    eventId: uuid('event_id'),
+    category: notificationCategory('category').notNull(),
+    type: text('type').notNull(),
+    // Overrides the icon the type implies (announcements pick their own).
+    icon: text('icon'),
+    title: text('title'),
+    body: text('body'),
+    link: text('link'),
+    // Ids and public facts the wording needs (table slug and title). Never an email address.
+    metadata: jsonb('metadata').notNull().default({}),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (notification) => [
+    uniqueIndex('notifications_event_recipient_idx').on(
+      notification.eventId,
+      notification.recipientId,
+    ),
+    index('notifications_recipient_feed_idx').on(notification.recipientId, notification.createdAt),
+    // The badge: a person's unread count.
+    index('notifications_recipient_unread_idx')
+      .on(notification.recipientId, notification.createdAt)
+      .where(sql`${notification.readAt} IS NULL`),
+  ],
+).enableRLS();

@@ -5,6 +5,7 @@
   import { navigating, page } from '$app/state';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
+  import NotificationBell from '$lib/components/NotificationBell.svelte';
   import TableLogo from '$lib/components/TableLogo.svelte';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import Toaster from '$lib/components/Toaster.svelte';
@@ -99,6 +100,13 @@
 
     <span aria-hidden="true" class="hidden w-2 md:block"></span>
     <ThemeToggle />
+
+    {#if data.account}
+      <NotificationBell
+        unread={data.account.notifications.unread}
+        latest={data.account.notifications.latest}
+      />
+    {/if}
 
     {#if data.account}
       <AccountMenu
