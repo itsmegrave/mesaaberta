@@ -106,6 +106,19 @@ describe('storeImage', () => {
       message: 'upload_failed',
     });
   });
+
+  it('logs what Storage said, so a refused upload can be told from a missing bucket', async () => {
+    const upload = vi
+      .fn()
+      .mockResolvedValue({ error: { message: 'new row violates row-level security policy' } });
+    const log = { warn: vi.fn() };
+    const image = await prepareImage(file(bytes(PNG)));
+
+    await expect(storeImage({ upload }, image, log)).rejects.toThrow('upload_failed');
+    expect(log.warn).toHaveBeenCalledWith('image upload refused by Storage', {
+      reason: 'new row violates row-level security policy',
+    });
+  });
 });
 
 describe('prepareImage in a folder', () => {

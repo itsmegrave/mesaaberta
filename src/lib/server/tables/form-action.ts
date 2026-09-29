@@ -53,7 +53,7 @@ export async function handleTableForm(
       const prepared = await prepareImage(image);
       const storage = locals.supabase?.storage.from(IMAGE_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
-      imagePath = await storeImage(storage, prepared);
+      imagePath = await storeImage(storage, prepared, locals.log);
     }
 
     const input = locals.db

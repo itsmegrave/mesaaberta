@@ -1,4 +1,5 @@
 import { Invalid } from './errors';
+import type { Logger } from './logger';
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 /** The Supabase Storage bucket table images go in. Public read; see the README for its setup. */
@@ -53,13 +54,23 @@ export type ImageStorage = {
   ): PromiseLike<{ error: { message: string } | null }>;
 };
 
-/** Uploads a prepared image and returns its path. Never overwrites an existing file. */
-export async function storeImage(storage: ImageStorage, image: PreparedImage): Promise<string> {
+/**
+ * Uploads a prepared image and returns its path. Never overwrites an existing file. A refusal is
+ * logged with Storage's own reason (a missing policy and a missing bucket look alike on the form).
+ */
+export async function storeImage(
+  storage: ImageStorage,
+  image: PreparedImage,
+  log?: Pick<Logger, 'warn'>,
+): Promise<string> {
   const { error } = await storage.upload(image.path, image.bytes, {
     contentType: image.contentType,
     upsert: false,
   });
-  if (error) throw new Invalid('image', 'upload_failed');
+  if (error) {
+    log?.warn('image upload refused by Storage', { reason: error.message });
+    throw new Invalid('image', 'upload_failed');
+  }
 
   return image.path;
 }

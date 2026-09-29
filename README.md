@@ -87,18 +87,9 @@ pnpm dev
 
 **Filtering `/tables`** is all in the query string, with slugs as values and the key repeated for each value ticked: `/tables?system=daggerheart&system=savage-worlds&modality=online&platform=discord&tag=terror&tag=iniciantes`. Within a key any value matches; across keys a table has to match each. The filter is a plain GET form of checkboxes, so it works without JavaScript and every combination is a shareable link.
 
-**Table images** are uploaded through the server: 2 MB at most, PNG, JPEG or WebP judged by the file's first bytes (never its name or the type the browser claims), and a random file name. They live in a public Supabase Storage bucket, `table-images`. One-time setup in the Supabase SQL editor:
+**Table images** are uploaded through the server: 2 MB at most, PNG, JPEG or WebP judged by the file's first bytes (never its name or the type the browser claims), and a random file name. They live in a public Supabase Storage bucket, `table-images`. The upload goes through the signed-in person's Supabase client, so it needs a Storage policy: migration `drizzle/0018_storage_policies.sql` creates it (and the profile-picture one) on deploy. If the deploy log says `storage policies not applied`, the migration role may not change `storage.objects`; run that file's SQL once in the Supabase SQL editor. The buckets themselves exist in production; the local stack gets them from `config.toml`.
 
-```sql
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('table-images', 'table-images', true, 2097152, array['image/png', 'image/jpeg', 'image/webp'])
-on conflict (id) do nothing;
-
-create policy "signed-in users can upload table images" on storage.objects
-  for insert to authenticated with check (bucket_id = 'table-images');
-```
-
-Without it the form still works; only saving with an image fails, with a message on the image field. Replaced images are not deleted yet.
+Without the policy the form still works; only saving with an image fails, with a message on the image field, and the log says `image upload refused by Storage` with Storage's reason. Replaced images are not deleted yet.
 
 **Row level security is on for every table, with no policies** (`.enableRLS()` in `schema.ts`, and a test that fails for any table in `public` without it). Supabase serves `public` over its REST API to anyone holding the publishable key, which is public, so RLS with no policy leaves that API nothing to read or write. The app is not affected: it connects as the database owner (Hyperdrive, or the Docker Postgres), which RLS does not apply to. A new table needs `.enableRLS()`; add a policy only for one that must be reachable through the Supabase API. After deploying a migration like this, run `pnpm db:migrate` against Supabase (step 4 below).
 
@@ -152,14 +143,7 @@ export const load = async ({ locals, url }) => {
 
 Profile pictures are shown from Google's and Discord's image hosts, which the Content-Security-Policy allows (`img-src` in `vite.config.ts`).
 
-**Profile pictures.** A person can upload their own picture on `/account/profile` (same checks as table images: 2 MB, PNG, JPEG or WebP by its first bytes). It goes to the public `profile-avatars` bucket under a folder named after their user id, and it wins over the provider's picture; removing it goes back to the provider's, and a replaced file is deleted. The picture shown is `pictureOf()` in `src/lib/server/images.ts`. One-time setup in the Supabase SQL editor (the bucket exists in production; the local stack gets both from `config.toml` and `seed.sql`):
-
-```sql
-create policy "users manage their own avatar" on storage.objects
-  for all to authenticated
-  using (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text)
-  with check (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
-```
+**Profile pictures.** A person can upload their own picture on `/account/profile` (same checks as table images: 2 MB, PNG, JPEG or WebP by its first bytes). It goes to the public `profile-avatars` bucket under a folder named after their user id, and it wins over the provider's picture; removing it goes back to the provider's, and a replaced file is deleted. The picture shown is `pictureOf()` in `src/lib/server/images.ts`. Its Storage policy (each person writes only inside their own folder) comes from the same migration, `drizzle/0018_storage_policies.sql`; the local stack also gets it from `seed.sql`.
 
 To offer another provider later (Apple, Facebook, ...), enable it in Supabase, add it to `providers` in `src/lib/auth/providers.ts` and to the buttons on the login page, and allow its picture host in `img-src` if it sends one.
 

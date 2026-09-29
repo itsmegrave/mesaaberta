@@ -68,7 +68,7 @@ export const actions: Actions = {
       const prepared = await prepareImage(file, user.id);
       const storage = locals.supabase?.storage.from(AVATAR_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
-      const path = await storeImage(storage, prepared);
+      const path = await storeImage(storage, prepared, locals.log);
       await removePicture(locals, await setAvatarPath(locals.db, user.id, path));
     } catch (e) {
       if (e instanceof Invalid) return fail(400, { photoError: e.message });
