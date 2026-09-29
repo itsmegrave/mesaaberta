@@ -9,7 +9,7 @@
   let { data } = $props();
 
   const locale = getLocale();
-  const pagePath = (page: number) => (page === 1 ? '/changelog' : `/changelog?pagina=${page}`);
+  const pagePath = (page: number) => (page === 1 ? '/changelog' : `/changelog?page=${page}`);
 
   // A release day, not an instant: read it in UTC so no timezone moves it to the day before.
   const dayLabel = (date: string) =>
@@ -90,7 +90,7 @@
 
   {#if data.pages > 1}
     <nav
-      aria-label={m.changelog_pagination_label()}
+      aria-label={m.changelog_pagetion_label()}
       class="mt-4 flex items-center justify-between gap-3 border-t border-surface-200-800 pt-6"
     >
       {#if data.page > 1}

@@ -114,7 +114,7 @@ export function parseEntries(files: Record<string, string>): ChangelogEntry[] {
 export const PAGE_SIZE = 15;
 
 /**
- * The `pagina` asked for, as a page number: missing or not a positive whole number reads as the
+ * The `page` asked for, as a page number: missing or not a positive whole number reads as the
  * first page. Past the last page is `null`, a page that does not exist.
  */
 export function pageOf(param: string | null, total: number, size = PAGE_SIZE) {

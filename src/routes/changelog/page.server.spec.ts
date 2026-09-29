@@ -55,7 +55,7 @@ describe('the changelog page load', () => {
 
   it('sends one page of entries per request, not the whole list', async () => {
     const first = await run(event());
-    const second = await run(event('?pagina=2'));
+    const second = await run(event('?page=2'));
 
     expect(first).toMatchObject({ page: 1, pages: 2 });
     expect(first.entries).toHaveLength(15);
@@ -69,6 +69,6 @@ describe('the changelog page load', () => {
   });
 
   it('answers 404 for a page past the last', async () => {
-    await expect(run(event('?pagina=9'))).rejects.toMatchObject({ status: 404 });
+    await expect(run(event('?page=9'))).rejects.toMatchObject({ status: 404 });
   });
 });

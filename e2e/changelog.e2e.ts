@@ -18,6 +18,6 @@ test('the footer links to the changelog', async ({ page }) => {
 });
 
 test('a changelog page past the last one is not found', async ({ page }) => {
-  const response = await page.goto('/changelog?pagina=999');
+  const response = await page.goto('/changelog?page=999');
   expect(response?.status()).toBe(404);
 });

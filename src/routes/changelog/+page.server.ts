@@ -19,7 +19,7 @@ async function seesDrafts(locals: App.Locals) {
 export const load: PageServerLoad = async ({ locals, url }) => {
   const entries = (await seesDrafts(locals)) ? changelog : changelog.filter((e) => !e.draft);
 
-  const at = pageOf(url.searchParams.get('pagina'), entries.length);
+  const at = pageOf(url.searchParams.get('page'), entries.length);
   if (!at) error(404, 'Página não encontrada');
 
   // Only this page's entries go to the browser.
