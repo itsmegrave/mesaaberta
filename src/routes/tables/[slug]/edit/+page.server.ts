@@ -30,6 +30,8 @@ export const load: PageServerLoad = async ({ locals, url, params, platform, cook
     return {
       slug,
       status,
+      // The saved title, for the breadcrumb: the form's own may be mid-edit.
+      title: values.title,
       form: await superValidate(values, zod4(tableFormSchema), { errors: false }),
       imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
       systems: systems.map(({ name, slug }) => ({ name, slug })),

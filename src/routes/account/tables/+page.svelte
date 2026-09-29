@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import PlayingCard from '$lib/components/PlayingCard.svelte';
   import RunningCard from '$lib/components/RunningCard.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -32,6 +33,7 @@
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
+  <Breadcrumbs class="mb-8" items={[{ label: m.nav_my_tables() }]} />
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
     <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
       {m.dash_title()}
