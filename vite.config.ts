@@ -16,8 +16,8 @@ export default defineConfig({
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
       },
       adapter: adapter(),
-      // Checks for a new deploy every minute; the root layout then reloads on the next navigation
-      // (src/lib/navigation/deploy-refresh.ts).
+      // Checks for a new deploy every minute; the root layout offers a refresh without interrupting
+      // the visitor's navigation or form entry.
       version: { pollInterval: 60_000 },
       // Nonce mode: SvelteKit adds a fresh nonce to `script-src` and `style-src` for each
       // response and stamps it on the inline scripts it renders. The rest of the security
