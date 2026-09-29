@@ -158,7 +158,7 @@
 {#if updated.current}
   <aside
     role="status"
-    class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-200-700 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
+    class="border-primary-200-700 mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
   >
     <p>{m.version_update_available()}</p>
     <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
