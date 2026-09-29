@@ -15,6 +15,7 @@ const memberAccount = {
   avatarUrl: null,
   isAdmin: false,
   pendingSuggestionsCount: 0,
+  notifications: { unread: 0, latest: [] },
 };
 const adminAccount = {
   displayName: 'Mestre Silva',
@@ -22,6 +23,7 @@ const adminAccount = {
   avatarUrl: null,
   isAdmin: true,
   pendingSuggestionsCount: 3,
+  notifications: { unread: 0, latest: [] },
 };
 
 describe('+layout.svelte', () => {
@@ -213,6 +215,59 @@ describe('+layout.svelte', () => {
       await expect
         .element(banner().getByRole('link', { name: 'Abrir uma mesa' }))
         .toHaveAttribute('href', '/tables/new');
+    });
+
+    it('shows the unread count on the bell, and the latest notifications when it opens', async () => {
+      render(Layout, {
+        children,
+        data: {
+          authEnabled: true,
+          released: true,
+          viewer,
+          account: {
+            ...memberAccount,
+            notifications: {
+              unread: 2,
+              latest: [
+                {
+                  id: 'n1',
+                  type: 'join_requested',
+                  category: 'registration' as const,
+                  icon: null,
+                  title: null,
+                  body: null,
+                  link: '/tables/mesa/manage',
+                  metadata: { tableId: 't', slug: 'mesa', title: 'Mesa do Dragão' },
+                  readAt: null,
+                  read: false,
+                  createdAt: new Date('2026-10-01T12:00:00Z'),
+                  actor: 'bia',
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      const bell = banner().getByRole('button', { name: 'Notificações: 2 sem ler' });
+      await expect.element(bell).toBeVisible();
+      await bell.click();
+
+      const item = page.getByRole('button', { name: /@bia pediu uma vaga em Mesa do Dragão/ });
+      await expect.element(item).toBeVisible();
+      const form = item.element().closest('form');
+      expect(form?.getAttribute('action')).toBe('/notifications?/open');
+      await expect
+        .element(page.getByRole('link', { name: 'Ver todas' }))
+        .toHaveAttribute('href', '/notifications');
+    });
+
+    it('shows no bell to a visitor who is signed out', async () => {
+      render(Layout, { children, data: { ...signedOut, authEnabled: true, released: true } });
+
+      await expect
+        .element(banner().getByRole('button', { name: /Notificações/ }))
+        .not.toBeInTheDocument();
     });
   });
 

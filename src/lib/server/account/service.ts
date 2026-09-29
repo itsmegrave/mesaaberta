@@ -2,6 +2,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import {
   gameTables,
+  notifications,
   profileSocialLinks,
   profiles,
   ratings,
@@ -30,7 +31,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     .from(profiles)
     .where(eq(profiles.id, userId));
 
-  const [socialLinks, tablesAsGm, seats, ratingsGiven] = await Promise.all([
+  const [socialLinks, tablesAsGm, seats, ratingsGiven, notificationsReceived] = await Promise.all([
     db
       .select({ network: profileSocialLinks.network, url: profileSocialLinks.url })
       .from(profileSocialLinks)
@@ -85,6 +86,20 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       .innerJoin(gameTables, eq(ratings.tableId, gameTables.id))
       .where(eq(ratings.playerId, userId))
       .orderBy(asc(ratings.createdAt)),
+    db
+      .select({
+        type: notifications.type,
+        category: notifications.category,
+        title: notifications.title,
+        body: notifications.body,
+        link: notifications.link,
+        metadata: notifications.metadata,
+        readAt: notifications.readAt,
+        createdAt: notifications.createdAt,
+      })
+      .from(notifications)
+      .where(eq(notifications.recipientId, userId))
+      .orderBy(asc(notifications.createdAt)),
   ]);
 
   return {
@@ -95,6 +110,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     tablesAsGm,
     seats,
     ratingsGiven,
+    notifications: notificationsReceived,
   };
 }
 
@@ -140,12 +156,13 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
 }
 
 /**
- * Clears every personal field of a closed account and its links. The row itself stays, empty, because
+ * Clears every personal field of a closed account and its links and notifications. The row itself stays, empty, because
  * the disabled tables still point at it; it is suspended so nothing can act through it.
  */
 export async function anonymiseProfile(db: AnyDb, userId: string) {
   await db.transaction(async (tx) => {
     await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, userId));
+    await tx.delete(notifications).where(eq(notifications.recipientId, userId));
     await tx
       .update(profiles)
       .set({

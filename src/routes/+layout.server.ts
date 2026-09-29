@@ -1,5 +1,6 @@
 import { can } from '$lib/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
+import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifications/service';
 import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
@@ -10,6 +11,14 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies }) => {
 
   try {
     const profile = await locals.getProfile();
+    // The bell: how many are unread, and the latest few for its menu.
+    const [unread, latest] =
+      profile && locals.db
+        ? await Promise.all([
+            unreadCount(locals.db, profile.id),
+            listNotifications(locals.db, profile.id, { limit: BELL_LIMIT }),
+          ])
+        : [0, []];
 
     return {
       authEnabled,
@@ -22,6 +31,7 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies }) => {
         avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
         isAdmin: can(profile, 'admin:access'),
         pendingSuggestionsCount: 0,
+        notifications: { unread, latest },
       },
     };
   } catch (error) {

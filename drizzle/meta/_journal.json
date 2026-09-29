@@ -134,6 +134,13 @@
       "when": 1790640276882,
       "tag": "0018_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790641128086,
+      "tag": "0019_notifications",
+      "breakpoints": true
     }
   ]
 }

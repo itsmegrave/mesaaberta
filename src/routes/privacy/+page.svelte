@@ -170,6 +170,10 @@
       meses (Marco Civil da Internet, art. 15), depois são apagados.
     </li>
     <li>Registros internos dos avisos enviados pelas mesas: até 90 dias depois de processados.</li>
+    <li>
+      Notificações do sino (o que mudou nas suas mesas e nos seus pedidos de vaga): até 90 dias, e
+      somem na hora se a conta for apagada.
+    </li>
     <li>Contadores de tentativas de entrada, cadastro e recuperação de senha: até 24 horas.</li>
   </ul>
 
