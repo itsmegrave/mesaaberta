@@ -72,7 +72,6 @@
   "packageManager": "pnpm@12.4.2",
   "dependencies": {
     "@fontsource-variable/cinzel": "^5.3.0",
-    "@formkit/auto-animate": "^0.10.0",
     "@growthbook/growthbook": "^1.7.0",
     "@iconify/svelte": "^5.2.2",
     "@sindresorhus/slugify": "^3.0.1",

@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { navigating, page } from '$app/state';
+  import ListSkeleton from '$lib/components/ListSkeleton.svelte';
+  import { Slow } from '$lib/navigation/slow.svelte';
   import SearchSelect from '$lib/components/SearchSelect.svelte';
   import TableCard from '$lib/components/TableCard.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -6,6 +9,13 @@
   import { getLocale } from '$lib/paraglide/runtime';
 
   let { data } = $props();
+
+  // A filter change reloads this same page with another query: the list gives way to a skeleton
+  // if it takes a while. Coming back to the same query (after marking read, say) keeps the list.
+  const filtering = new Slow(() => {
+    const to = navigating.to;
+    return to?.route.id === page.route.id && to.url.search !== page.url.search ? to : null;
+  }, 150);
 
   const locale = getLocale();
   const listHref = localizedHref('/tables', locale);
@@ -210,7 +220,9 @@
     </noscript>
   </form>
 
-  {#if data.tables.length > 0}
+  {#if filtering.current}
+    <ListSkeleton kind="cards" />
+  {:else if data.tables.length > 0}
     <div class="mt-8 hidden items-baseline justify-between gap-6 md:flex">
       <p role="status" class="text-sm font-semibold text-muted">{count}</p>
       <p class="text-sm text-muted">{m.tables_filter_any_note()}</p>

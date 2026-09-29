@@ -3,20 +3,27 @@
   import { m } from '$lib/paraglide/messages';
 
   /**
-   * A form's submit button. Pass Superforms' `$delayed` (after `delayMs`, 500 ms by default) and
-   * `$timeout` (after `timeoutMs`, 8 s): a spinner shows once the submit is slow, and a note once it
-   * is very slow. While busy it is `aria-disabled`, not `disabled`, so it keeps its focus and its
-   * place in the tab order, and a second click does nothing.
+   * A form's submit button. Pass Superforms' `$submitting`, `$delayed` (after `delayMs`, 500 ms by
+   * default) and `$timeout` (after `timeoutMs`, 8 s). From the moment the form is sent a second click
+   * does nothing; a spinner shows once the submit is slow, and a note once it is very slow. While
+   * busy it is `aria-disabled`, not `disabled`, so it keeps its focus and its place in the tab order.
    */
   let {
+    submitting = false,
     delayed = false,
     timeout = false,
     class: className = '',
     children,
-  }: { delayed?: boolean; timeout?: boolean; class?: string; children: Snippet } = $props();
+  }: {
+    submitting?: boolean;
+    delayed?: boolean;
+    timeout?: boolean;
+    class?: string;
+    children: Snippet;
+  } = $props();
 
   const ignoreWhileBusy = (event: MouseEvent) => {
-    if (delayed) event.preventDefault();
+    if (submitting || delayed) event.preventDefault();
   };
 </script>
 

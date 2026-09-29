@@ -53,6 +53,26 @@ describe('SubmitButton', () => {
     form.remove();
   });
 
+  it('ignores a second click from the moment the form is sent, before the spinner shows', async () => {
+    let submits = 0;
+    const form = document.createElement('form');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submits++;
+    });
+    render(SubmitButton, { children, submitting: true });
+    form.appendChild(button().element());
+    document.body.appendChild(form);
+
+    (button().element() as HTMLButtonElement).click();
+
+    expect(submits).toBe(0);
+    // Nothing shows yet, so a quick submit does not flash a spinner.
+    await expect.element(button()).not.toHaveAttribute('aria-busy');
+    expect(button().element().querySelector('svg')).toBeNull();
+    form.remove();
+  });
+
   it('takes the classes of the button it replaces', async () => {
     render(SubmitButton, { children, class: 'btn h-12 preset-filled-primary-500' });
 

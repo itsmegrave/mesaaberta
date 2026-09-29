@@ -10,7 +10,7 @@
   import { m } from '$lib/paraglide/messages';
 
   let { data } = $props();
-  const { form, errors, message, enhance, delayed, timeout } = superForm(data.form, {
+  const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
     validators: zod4Client(emailSchema),
   });
 </script>
@@ -62,6 +62,7 @@
 
       <div>
         <SubmitButton
+          submitting={$submitting}
           delayed={$delayed}
           timeout={$timeout}
           class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"

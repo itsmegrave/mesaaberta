@@ -15,6 +15,7 @@ import {
   supabaseUrlOf,
 } from '$lib/server/images';
 import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
+import { deleteAccountSchema } from '$lib/profile/delete';
 import { photoSchema } from '$lib/profile/photo';
 import { profileSchema } from '$lib/profile/schema';
 import type { Actions, PageServerLoad } from './$types';
@@ -36,6 +37,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
   return {
     form: await superValidate(values, zod4(profileSchema), { errors: false }),
     photoForm: await superValidate(zod4(photoSchema)),
+    deleteForm: await superValidate(zod4(deleteAccountSchema)),
     email: user.email ?? '',
     avatarUrl: profile ? pictureOf(supabaseUrlOf(platform?.env), profile) : null,
     hasUploadedPhoto: Boolean(profile?.avatarPath),
@@ -100,10 +102,9 @@ export const actions: Actions = {
     if (!admin) error(503, 'Account deletion is not configured');
 
     const username = (await loadProfileForm(locals.db, user.id))!.username;
-    const typed = String((await request.formData()).get('confirm') ?? '')
-      .trim()
-      .toLowerCase();
-    if (typed !== username) return fail(400, { deleteError: 'confirm' as const });
+    const form = await superValidate(request, zod4(deleteAccountSchema));
+    if (!form.valid || form.data.confirm !== username)
+      return setError(form, 'confirm', 'confirm', { status: 400 });
 
     const { eventIds } = await closeAccount(locals.db, user.id);
     // Sent now, while the GM's address still exists; a failure is left to the sweeper.

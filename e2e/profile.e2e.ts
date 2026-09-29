@@ -147,3 +147,34 @@ test('refuses a file that is not a picture', async ({ page }) => {
   await page.getByRole('button', { name: 'Enviar foto' }).click();
   await expect(page.getByRole('alert')).toContainText('Envie uma foto PNG, JPEG ou WebP.');
 });
+
+test('a slow submit locks its button: it says it is busy, and a second click sends nothing', async ({
+  page,
+}) => {
+  const user = await createUser('Envio Lento');
+  await signIn(page, user, '/account/profile');
+
+  // Hold the answer, so the submit stays in flight while the test looks at the button.
+  let posts = 0;
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/account/profile?/delete', async (route) => {
+    posts++;
+    await held;
+    await route.continue();
+  });
+
+  await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
+  const submit = page.getByRole('button', { name: 'Apagar minha conta' });
+  await submit.click();
+
+  await expect(submit).toHaveAttribute('aria-busy', 'true');
+  await expect(submit).toHaveAttribute('aria-disabled', 'true');
+  // A DOM click: Playwright itself will not click an aria-disabled button, just as a person cannot.
+  await submit.evaluate((button: HTMLButtonElement) => button.click());
+
+  release();
+  await expect(page.getByRole('alert')).toContainText('O @usuário digitado não confere.');
+  await expect(submit).not.toHaveAttribute('aria-busy');
+  expect(posts).toBe(1);
+});

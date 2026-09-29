@@ -10,6 +10,7 @@ vi.mock('$lib/server/notifications/service', () => ({
 }));
 
 const user = { id: 'me' };
+const n1 = '0f8fad5b-d9cb-469f-a165-70867728950e';
 const locals = (signedIn = true) => ({
   db: {},
   getUser: async () => (signedIn ? user : null),
@@ -68,23 +69,28 @@ describe('actions', () => {
   it('open marks the notification read and follows its link', async () => {
     vi.mocked(markRead).mockResolvedValueOnce({ link: '/tables/mesa' });
 
-    expect(await location(act('open', event('', { id: 'n1', next: '/tables' })))).toBe(
+    expect(await location(act('open', event('', { id: n1, next: '/tables' })))).toBe(
       '/tables/mesa',
     );
-    expect(markRead).toHaveBeenCalledWith({}, 'me', 'n1');
+    expect(markRead).toHaveBeenCalledWith({}, 'me', n1);
   });
 
   it('open comes back to the page when the notification has no link, or is not the viewer’s', async () => {
     vi.mocked(markRead).mockResolvedValueOnce(null);
 
-    expect(await location(act('open', event('', { id: 'n1', next: '/tables' })))).toBe('/tables');
+    expect(await location(act('open', event('', { id: n1, next: '/tables' })))).toBe('/tables');
   });
 
   it('read marks one read and never leaves the site', async () => {
-    expect(await location(act('read', event('', { id: 'n1', next: 'https://evil.example' })))).toBe(
+    expect(await location(act('read', event('', { id: n1, next: 'https://evil.example' })))).toBe(
       '/notifications',
     );
-    expect(markRead).toHaveBeenCalledWith({}, 'me', 'n1');
+    expect(markRead).toHaveBeenCalledWith({}, 'me', n1);
+  });
+
+  it('read ignores an id that is not one, and still comes back', async () => {
+    expect(await location(act('read', event('', { id: 'n1', next: '/tables' })))).toBe('/tables');
+    expect(markRead).not.toHaveBeenCalled();
   });
 
   it('readAll marks every one read and goes back', async () => {

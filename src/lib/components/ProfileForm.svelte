@@ -57,7 +57,7 @@
 
   // The form is set up once with what the server loaded; superforms keeps it up to date after that.
   // svelte-ignore state_referenced_locally
-  const { form, errors, allErrors, enhance, delayed, timeout } = superForm(initial, {
+  const { form, errors, allErrors, enhance, submitting, delayed, timeout } = superForm(initial, {
     validators: zod4Client(profileSchema),
     resetForm: false,
     taintedMessage: confirmLeave,
@@ -495,6 +495,7 @@
 
   <div>
     <SubmitButton
+      submitting={$submitting}
       delayed={$delayed}
       timeout={$timeout}
       class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"

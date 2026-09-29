@@ -55,6 +55,7 @@
     form: ratingValues,
     errors: ratingErrors,
     enhance: ratingEnhance,
+    submitting: ratingSubmitting,
     delayed: ratingDelayed,
     timeout: ratingTimeout,
   } = rating;
@@ -404,6 +405,7 @@
 
         <div>
           <SubmitButton
+            submitting={$ratingSubmitting}
             delayed={$ratingDelayed}
             timeout={$ratingTimeout}
             class="btn preset-filled-primary-500"
