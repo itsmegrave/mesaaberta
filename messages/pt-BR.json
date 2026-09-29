@@ -452,5 +452,10 @@
   "notification_report_filed_admin": "Uma nova denúncia chegou para análise.",
   "notification_report_resolved": "Sua denúncia foi analisada pela moderação.",
   "notification_moderation_notice": "Há um aviso da moderação para você.",
-  "notification_unknown": "Nova notificação."
+  "notification_unknown": "Nova notificação.",
+  "form_still_saving": "Ainda salvando…",
+  "unsaved_title": "Sair sem salvar?",
+  "unsaved_text": "Você mudou este formulário e ainda não salvou. Se sair agora, as mudanças se perdem.",
+  "unsaved_stay": "Continuar editando",
+  "unsaved_leave": "Sair sem salvar"
 }

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import FormBanner from '$lib/components/FormBanner.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
   import type { SuperForm } from 'sveltekit-superforms';
   import FormField from './FormField.svelte';
   import type { CredentialsData } from '$lib/auth/credentials';
@@ -13,7 +15,7 @@
 
   let { mode, superform, action }: Props = $props();
   // svelte-ignore state_referenced_locally
-  const { form, errors, message, enhance, delayed } = superform;
+  const { form, errors, message, enhance, delayed, timeout } = superform;
 
   const messages: Record<string, () => string> = {
     invalid: m.auth_error_invalid,
@@ -25,9 +27,7 @@
 </script>
 
 <form method="POST" {action} use:enhance class="grid gap-4">
-  {#if $message && messages[$message.code]}
-    <p role="alert" class="font-semibold text-error-700-300">{messages[$message.code]()}</p>
-  {/if}
+  <FormBanner text={$message ? messages[$message.code]?.() : null} />
 
   <input type="hidden" name="next" value={$form.next} />
 
@@ -69,12 +69,12 @@
   </FormField>
 
   <div>
-    <button
-      type="submit"
+    <SubmitButton
+      delayed={$delayed}
+      timeout={$timeout}
       class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
-      aria-busy={$delayed}
     >
       {mode === 'signup' ? m.signup_submit() : m.login_submit()}
-    </button>
+    </SubmitButton>
   </div>
 </form>

@@ -184,7 +184,7 @@ describe('handleTableForm', () => {
 
     expect(result).toMatchObject({
       status: 400,
-      data: { form: { message: { code: 'not_an_image', field: 'image' } } },
+      data: { form: { errors: { image: ['not_an_image'] } } },
     });
     expect(s.upload).not.toHaveBeenCalled();
     expect(s.save).not.toHaveBeenCalled();
@@ -192,13 +192,13 @@ describe('handleTableForm', () => {
 
   it('does not save the table when the upload fails', async () => {
     const s = setup({ upload: vi.fn().mockResolvedValue({ error: { message: 'no bucket' } }) });
-    const png = new File([new Uint8Array(PNG)], 'capa.png');
+    const png = new File([new Uint8Array(PNG)], 'capa.png', { type: 'image/png' });
 
     const result = await run(request({ image: png }), s);
 
     expect(result).toMatchObject({
       status: 400,
-      data: { form: { message: { code: 'upload_failed', field: 'image' } } },
+      data: { form: { errors: { image: ['upload_failed'] } } },
     });
     expect(s.save).not.toHaveBeenCalled();
   });

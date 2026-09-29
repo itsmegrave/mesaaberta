@@ -1,4 +1,6 @@
 <script lang="ts">
+  import FormBanner from '$lib/components/FormBanner.svelte';
+  import SubmitButton from '$lib/components/SubmitButton.svelte';
   import AuthShell from '$lib/components/AuthShell.svelte';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -10,7 +12,7 @@
   import { getLocale } from '$lib/paraglide/runtime';
 
   let { data } = $props();
-  const { form, errors, message, enhance, delayed } = superForm(data.form, {
+  const { form, errors, message, enhance, delayed, timeout } = superForm(data.form, {
     validators: zod4Client(newPasswordSchema),
   });
   const problem = $derived(
@@ -44,7 +46,7 @@
     </a>
   {:else}
     <form method="POST" use:enhance class="grid gap-4">
-      {#if problem}<p role="alert" class="font-semibold text-error-700-300">{problem}</p>{/if}
+      <FormBanner text={problem} />
 
       <FormField
         id="password"
@@ -86,13 +88,13 @@
       </FormField>
 
       <div>
-        <button
-          type="submit"
+        <SubmitButton
+          delayed={$delayed}
+          timeout={$timeout}
           class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
-          aria-busy={$delayed}
         >
           {m.reset_submit()}
-        </button>
+        </SubmitButton>
       </div>
     </form>
 

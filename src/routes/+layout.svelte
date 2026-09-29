@@ -9,6 +9,7 @@
   import TableLogo from '$lib/components/TableLogo.svelte';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import Toaster from '$lib/components/Toaster.svelte';
+  import UnsavedChangesDialog from '$lib/components/UnsavedChangesDialog.svelte';
   import { Progress } from '@skeletonlabs/skeleton-svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
@@ -136,6 +137,7 @@
 {/if}
 
 <Toaster />
+<UnsavedChangesDialog />
 
 <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
   {@render children()}
