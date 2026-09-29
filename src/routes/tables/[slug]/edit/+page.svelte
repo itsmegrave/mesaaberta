@@ -50,13 +50,12 @@
   {#if data.status === 'active'}
     <div class="mt-12 max-w-2xl border-t border-surface-200-800 pt-6">
       <p class="mb-3">{m.form_disable_hint()}</p>
-      <ActionForm action="?/disable">
-        <button
-          type="submit"
-          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold text-error-alert hover:preset-tonal"
-          >{m.form_disable()}</button
-        >
-      </ActionForm>
+      <ActionForm
+        action="?/disable"
+        label={m.form_disable()}
+        buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold text-error-alert hover:preset-tonal"
+        success={m.toast_table_disabled()}
+      />
     </div>
   {/if}
 </section>

@@ -37,3 +37,26 @@ describe('ActionForm', () => {
     expect(formOf().querySelector('input[name=next]')).toBeNull();
   });
 });
+
+describe('ActionForm with a label', () => {
+  it('renders its own submit button, with the classes it is given', async () => {
+    render(ActionForm, {
+      action: '/tables/mesa?/leave',
+      label: 'Sair da mesa',
+      buttonClass: 'btn h-12 border-2',
+    });
+
+    const submit = page.getByRole('button', { name: 'Sair da mesa' });
+    await expect.element(submit).toHaveAttribute('type', 'submit');
+    await expect.element(submit).toHaveClass('btn', 'h-12', 'border-2');
+    expect(formOf().getAttribute('action')).toBe('/tables/mesa?/leave');
+  });
+
+  it('is not busy until it is submitted', async () => {
+    render(ActionForm, { action: '?/leave', label: 'Sair da mesa' });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Sair da mesa' }))
+      .not.toHaveAttribute('aria-busy');
+  });
+});

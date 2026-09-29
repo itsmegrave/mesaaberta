@@ -89,12 +89,15 @@
           >
             <span>{atHandle(request.username)}</span>
             <div class="flex gap-4">
-              {#each [['approve', m.table_approve(), 'preset-filled-primary-500'], ['decline', m.table_decline(), 'border-2 border-surface-200-800 text-error-alert']] as [action, label, tone] (action)}
-                <ActionForm action="{page}?/{action}" playerId={request.playerId} {next}>
-                  <button type="submit" class="btn h-10 rounded-lg px-4 font-semibold {tone}"
-                    >{label}</button
-                  >
-                </ActionForm>
+              {#each [['approve', m.table_approve(), 'preset-filled-primary-500', m.toast_approved()], ['decline', m.table_decline(), 'border-2 border-surface-200-800 text-error-alert', m.toast_declined()]] as [action, label, tone, success] (action)}
+                <ActionForm
+                  action="{page}?/{action}"
+                  playerId={request.playerId}
+                  {next}
+                  {label}
+                  buttonClass="btn h-10 rounded-lg px-4 font-semibold {tone}"
+                  {success}
+                />
               {/each}
             </div>
           </li>
@@ -113,13 +116,14 @@
           class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
         >
           <span>{atHandle(player.username)}</span>
-          <ActionForm action="{page}?/remove" playerId={player.playerId} {next}>
-            <button
-              type="submit"
-              class="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
-              >{m.table_remove()}</button
-            >
-          </ActionForm>
+          <ActionForm
+            action="{page}?/remove"
+            playerId={player.playerId}
+            {next}
+            label={m.table_remove()}
+            buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+            success={m.toast_removed()}
+          />
         </li>
       {/each}
     </ul>

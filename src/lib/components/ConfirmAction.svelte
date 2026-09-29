@@ -17,6 +17,8 @@
     title: string;
     text: string;
     class?: string;
+    /** Shown as a toast when the action went through. */
+    success?: string;
     onfail?: (message: FormMessage) => void;
   };
 
@@ -28,6 +30,7 @@
     title,
     text,
     class: buttonClass = '',
+    success,
     onfail,
   }: Props = $props();
 
@@ -56,25 +59,20 @@
               {action}
               {playerId}
               {next}
+              {label}
+              buttonClass="btn h-11 rounded-lg preset-filled-error-500 px-4 font-semibold"
+              {success}
               onsuccess={() => (open = false)}
               onfail={(message) => {
                 open = false;
                 onfail?.(message);
               }}
-            >
-              <button
-                type="submit"
-                class="btn h-11 rounded-lg preset-filled-error-500 px-4 font-semibold"
-                >{label}</button
-              >
-            </ActionForm>
+            />
           </div>
         </Dialog.Content>
       </Dialog.Positioner>
     </Portal>
   </Dialog>
 {:else}
-  <ActionForm {action} {playerId} {next} {onfail}>
-    <button type="submit" class={buttonClass}>{label}</button>
-  </ActionForm>
+  <ActionForm {action} {playerId} {next} {label} {buttonClass} {success} {onfail} />
 {/if}

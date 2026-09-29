@@ -28,8 +28,11 @@ export default defineConfig({
       `--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`,
       // The local stack's secret key: account deletion removes the Auth user through the Admin API.
       `--var SUPABASE_SECRET_KEY:${supabase.SECRET_KEY}`,
-      // E2E mirrors the feature-flag defaults used in CI instead of .dev.vars' local preview mode.
+      // E2E runs on the feature-flag defaults from the registry, never on production's live values:
+      // no forced flags (unlike .dev.vars' preview mode) and no GrowthBook key, so the tests do
+      // not change when someone flips a flag in GrowthBook.
       '--var IGNORE_FEATURE_FLAGS_IN_LOCALHOST:false',
+      '--var GROWTHBOOK_CLIENT_KEY:',
     ].join(' '),
     // Overrides the Hyperdrive binding's local connection string (see wrangler.jsonc).
     env: { CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: supabase.DB_URL },

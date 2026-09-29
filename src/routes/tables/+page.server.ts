@@ -2,21 +2,21 @@ import { imageUrl, supabaseUrlOf } from '$lib/server/images';
 import { listSystems } from '$lib/server/systems';
 import { listCatalog } from '$lib/server/catalog';
 import { listUpcomingTables } from '$lib/server/tables/queries';
+import { readTableFilters } from '$lib/tables/filters';
 import type { PageServerLoad } from './$types';
 
 // Tags shown as chips before "Mais tags".
 const FEATURED_TAGS = 7;
 
 export const load: PageServerLoad = async ({ locals, url, platform }) => {
-  // Every filter comes from the query string, as slugs; a key repeats for each value ticked.
-  const pickedSystems = url.searchParams.getAll('system').filter(Boolean);
-  const modalityParam = url.searchParams.get('modality');
-  const modality =
-    modalityParam === 'online' || modalityParam === 'in_person' ? modalityParam : null;
-  // Several of each can be ticked: a table matches if it has any of the platforms ticked, and any
-  // of the tags ticked.
-  const pickedPlatforms = url.searchParams.getAll('platform').filter(Boolean);
-  const pickedTags = url.searchParams.getAll('tag').filter(Boolean);
+  // Every filter comes from the query string of the GET form, validated by its schema. Several of
+  // each can be ticked: a table matches if it has any of the systems, platforms and tags ticked.
+  const {
+    systems: pickedSystems,
+    modality,
+    platforms: pickedPlatforms,
+    tags: pickedTags,
+  } = await readTableFilters(url);
   const empty = { platforms: [], tags: [], moreTags: [] };
   // No database yet (see the README): the page still renders, with nothing to list.
   if (!locals.db) {

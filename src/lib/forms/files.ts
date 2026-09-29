@@ -21,3 +21,12 @@ export const imageFile = z.preprocess(
     .refine((file) => accepted.includes(file.type), 'not_an_image')
     .optional(),
 );
+
+/** The same checks, for a form whose only point is the image (the profile picture). */
+export const requiredImageFile = z.preprocess(
+  (value) => (value instanceof File && value.size === 0 ? undefined : value),
+  z
+    .instanceof(File, { message: 'empty' })
+    .refine((file) => file.size <= MAX_IMAGE_BYTES, 'too_big')
+    .refine((file) => accepted.includes(file.type), 'not_an_image'),
+);
