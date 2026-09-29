@@ -2,12 +2,16 @@
   // A dropdown with a search box over a long list (the ~700 RPG systems), one or several picks.
   // Until JavaScript runs it is a native <select>, so a form using it works without JS; after that
   // it is Skeleton's Combobox, and the picks are submitted as hidden inputs, one per value.
+  // With `suggestLabel` (several picks only), a name the list lacks can be picked as it was typed:
+  // it is submitted as `new:<name>` (see $lib/tables/catalog) for the server to take as a suggestion.
   import { Combobox, Portal, useListCollection } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
   import { m } from '$lib/paraglide/messages';
-  import { matchesSearch } from '$lib/search';
+  import { foldForSearch, matchesSearch } from '$lib/search';
+  import { NEW_CATALOG_PREFIX, SUGGESTION_NAME, pickName } from '$lib/tables/catalog';
 
-  type Item = { name: string; slug: string };
+  /** `pending`: an entry not approved yet, marked with `pendingLabel`. */
+  type Item = { name: string; slug: string; pending?: true };
 
   let {
     id,
@@ -22,6 +26,8 @@
     labelClass = 'font-semibold',
     class: rootClass = '',
     onchange,
+    suggestLabel,
+    pendingLabel = '',
   }: {
     id: string;
     /** The form field: one value when single, the key repeated for each pick when multiple. */
@@ -38,6 +44,10 @@
     class?: string;
     /** After a pick is added or removed, once the hidden inputs are updated. */
     onchange?: (value: string[]) => void;
+    /** The option that picks a name the list lacks ("Sugerir “x”"). Without it, none is offered. */
+    suggestLabel?: (name: string) => string;
+    /** Next to a pending entry and a suggested name: "em análise". */
+    pendingLabel?: string;
   } = $props();
 
   // Rendering all ~700 options at once is slow on a phone; typing narrows the rest.
@@ -46,14 +56,27 @@
   let mounted = $state(false);
   onMount(() => (mounted = true));
 
-  const nameOf = (slug: string) => items.find((item) => item.slug === slug)?.name ?? slug;
+  const nameOf = (slug: string) => pickName(items, slug);
+  // A pick not approved yet: a pending entry, or a name suggested just now.
+  const isPending = (slug: string) =>
+    slug.startsWith(NEW_CATALOG_PREFIX) || items.some((item) => item.slug === slug && item.pending);
+  const chipName = (slug: string) =>
+    isPending(slug) && pendingLabel ? `${nameOf(slug)} (${pendingLabel})` : nameOf(slug);
 
   // What is being typed, if anything. The list is narrowed by it; otherwise the input shows the
   // picked name (single) or nothing (several, whose picks are chips).
   let typed = $state<string | null>(null);
   const inputValue = $derived(typed ?? (multiple || !value[0] ? '' : nameOf(value[0])));
   const matching = $derived(items.filter((item) => matchesSearch(item.name, typed ?? '')));
-  const shown = $derived(matching.slice(0, SHOWN));
+  // What was typed, tidied, when it can be suggested: long enough and not a name the list has.
+  const suggestion = $derived.by((): Item | null => {
+    const name = (typed ?? '').trim().replace(/\s+/g, ' ');
+    if (!suggestLabel || !multiple) return null;
+    if (name.length < SUGGESTION_NAME.min || name.length > SUGGESTION_NAME.max) return null;
+    if (items.some((item) => foldForSearch(item.name) === foldForSearch(name))) return null;
+    return { name: suggestLabel(name), slug: `${NEW_CATALOG_PREFIX}${name}` };
+  });
+  const shown = $derived([...matching.slice(0, SHOWN), ...(suggestion ? [suggestion] : [])]);
   const collection = $derived(
     useListCollection({
       items: shown,
@@ -131,7 +154,11 @@
               {item}
               class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
             >
-              <Combobox.ItemText>{item.name}</Combobox.ItemText>
+              <Combobox.ItemText
+                >{item.name}{#if item.pending && pendingLabel}
+                  <span class="text-xs font-normal text-muted">{pendingLabel}</span
+                  >{/if}</Combobox.ItemText
+              >
               <Combobox.ItemIndicator class="shrink-0 text-primary-500">
                 <svg
                   width="16"
@@ -149,9 +176,9 @@
           {:else}
             <li class="p-2 text-sm text-muted">{m.search_select_none()}</li>
           {/each}
-          {#if matching.length > shown.length}
+          {#if matching.length > SHOWN}
             <li class="p-2 text-sm text-muted" aria-hidden="true">
-              {m.search_select_more({ count: matching.length - shown.length })}
+              {m.search_select_more({ count: matching.length - SHOWN })}
             </li>
           {/if}
         </Combobox.Content>
@@ -168,10 +195,12 @@
             <button
               type="button"
               class="inline-flex h-9 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
-              aria-label={m.search_select_remove({ name: nameOf(slug) })}
+              aria-label={m.search_select_remove({ name: chipName(slug) })}
               onclick={() => remove(slug)}
             >
-              {nameOf(slug)}
+              {nameOf(slug)}{#if isPending(slug) && pendingLabel}<span
+                  class="text-xs font-normal opacity-80">· {pendingLabel}</span
+                >{/if}
               <svg
                 width="14"
                 height="14"

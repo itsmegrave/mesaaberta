@@ -414,6 +414,23 @@ describe('modality', () => {
 });
 
 describe('loadTableForEdit', () => {
+  it("keeps the GM's new term as a pending pick, shown in their form but not in public", async () => {
+    const { slug } = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Com sugestão', tags: ['terror', 'new:Taverna Sombria'] }),
+      { now },
+    );
+
+    const edit = await loadTableForEdit(test.db, ana, slug, SP);
+    expect(edit.tags).toEqual(['terror', 'taverna-sombria']);
+    expect(edit.catalog.tags).toContainEqual({
+      name: 'Taverna Sombria',
+      slug: 'taverna-sombria',
+      pending: true,
+    });
+  });
+
   it('gives the GM their table in the shape of the form, even when it is disabled', async () => {
     const { slug } = await createTable(test.db, ana, input({ title: 'Para editar' }), { now });
     await disableTable(test.db, ana, slug);

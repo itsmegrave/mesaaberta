@@ -5,24 +5,25 @@
   import { NAMELESS } from '$lib/profile/handle';
   import FormField from './FormField.svelte';
   import SearchSelect from './SearchSelect.svelte';
+  import SeatSlider from './SeatSlider.svelte';
+  import ImageUpload from './ImageUpload.svelte';
   import type { FormMessage } from '$lib/forms/message';
-  import { IMAGE_TYPES } from '$lib/forms/files';
   import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { localizedHref } from '$lib/i18n/locales';
   import { formatHours, zonedToDate } from '$lib/tables/format';
   import { TABLE_LIMITS } from '$lib/tables/schema';
+  import { pickName } from '$lib/tables/catalog';
+
+  type CatalogPick = { name: string; slug: string; pending?: true };
   import TableCard from './TableCard.svelte';
 
   type Props = {
     superform: SuperForm<TableFormValues, FormMessage>;
     systems: { name: string; slug: string }[];
-    /** The approved platforms and tags a table can pick. */
-    catalog: {
-      platforms: { name: string; slug: string }[];
-      tags: { name: string; slug: string }[];
-    };
+    /** The platforms and tags a table can pick: approved, and the GM's own pending ones. */
+    catalog: { platforms: CatalogPick[]; tags: CatalogPick[] };
     submitLabel: string;
     imageUrl?: string | null;
     action?: string;
@@ -30,6 +31,8 @@
     cancelHref?: string;
     /** Shown as the GM on the preview card. */
     gmName?: string;
+    /** The fewest seats the slider allows: the seats already taken, when editing. */
+    minCapacity?: number;
   };
 
   let {
@@ -41,6 +44,7 @@
     action,
     cancelHref = '/tables',
     gmName = NAMELESS,
+    minCapacity = TABLE_LIMITS.capacity.min,
   }: Props = $props();
   const { form, errors, message, enhance, submitting, delayed, timeout } = superform;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
@@ -52,10 +56,6 @@
   const previewSystem = $derived(
     systems.find((system) => system.slug === $form.systemSlug)?.name ?? m.form_system(),
   );
-  const nameOf = (list: { name: string; slug: string }[], slug: string) =>
-    list.find((item) => item.slug === slug)?.name ?? slug;
-  const chip =
-    'relative inline-flex h-10 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 px-3 text-sm font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-primary-500';
 
   // The card the list will show, from what is typed so far.
   const preview = $derived({
@@ -71,8 +71,8 @@
     imageUrl,
     modality: $form.modality,
     locationArea: $form.locationArea || null,
-    platforms: $form.platforms.map((slug) => nameOf(catalog.platforms, slug)),
-    tags: $form.tags.map((slug) => nameOf(catalog.tags, slug)),
+    platforms: $form.platforms.map((pick) => pickName(catalog.platforms, pick)),
+    tags: $form.tags.map((pick) => pickName(catalog.tags, pick)),
   });
   // A plain field's errors are a list; a list field's (platforms, tags) are under `_errors`.
   const firstError = (value: unknown): string | undefined =>
@@ -156,30 +156,31 @@
             aria-invalid={invalid('title')}
           />
         </FormField>
-        {#each [{ field: 'platforms', legend: m.form_platforms(), hint: m.form_platforms_hint(), items: catalog.platforms }, { field: 'tags', legend: m.form_tags(), hint: m.form_tags_hint(), items: catalog.tags }] as group (group.field)}
-          <fieldset aria-describedby="{group.field}-hint">
-            <legend class="font-semibold">{group.legend}</legend>
-            <p id="{group.field}-hint" class="text-sm text-surface-700-300">{group.hint}</p>
-            <div class="mt-2 flex flex-wrap gap-2">
-              {#each group.items as item (item.slug)}
-                <label class={chip}>
-                  <input
-                    type="checkbox"
-                    name={group.field}
-                    value={item.slug}
-                    bind:group={$form[group.field as 'platforms' | 'tags']}
-                    class="sr-only"
-                  />{item.name}
-                </label>
-              {/each}
-            </div>
-            {#if err(group.field as 'platforms' | 'tags')}<p
+        {#each [{ field: 'platforms', label: m.form_platforms(), hint: m.form_platforms_hint(), items: catalog.platforms }, { field: 'tags', label: m.form_tags(), hint: m.form_tags_hint(), items: catalog.tags }] as const as group (group.field)}
+          <div class="min-w-0">
+            <SearchSelect
+              id={group.field}
+              name={group.field}
+              label={group.label}
+              labelClass="label-text block font-semibold"
+              class="flex flex-col gap-1"
+              items={group.items}
+              multiple
+              value={$form[group.field]}
+              placeholder={m.form_catalog_search()}
+              invalid={!!invalid(group.field)}
+              suggestLabel={(name) => m.form_catalog_suggest({ name })}
+              pendingLabel={m.form_catalog_pending()}
+              onchange={(picked) => ($form[group.field] = picked)}
+            />
+            <p class="mt-1 text-sm text-surface-700-300">{group.hint}</p>
+            {#if err(group.field)}<p
                 role="alert"
                 class="mt-1 text-sm font-semibold text-error-700-300"
               >
-                {err(group.field as 'platforms' | 'tags')}
+                {err(group.field)}
               </p>{/if}
-          </fieldset>
+          </div>
         {/each}
         <FormField id="description" label={m.form_description()} error={err('description')}>
           <textarea
@@ -390,19 +391,25 @@
           class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
           aria-invalid={invalid('joinDetails')}></textarea></FormField
       >
-      <FormField id="capacity" label={m.form_capacity()} error={err('capacity')}
-        ><input
+      <div class="min-w-0">
+        <SeatSlider
           id="capacity"
           name="capacity"
-          type="number"
-          required
-          min="1"
-          max="30"
+          label={m.form_capacity()}
           bind:value={$form.capacity}
-          class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-          aria-invalid={invalid('capacity')}
-        /></FormField
-      >
+          min={minCapacity}
+          max={TABLE_LIMITS.capacity.max}
+          invalid={!!invalid('capacity')}
+          describedby={err('capacity') ? 'capacity-error' : undefined}
+        />
+        {#if err('capacity')}<p
+            id="capacity-error"
+            role="alert"
+            class="mt-1 text-sm font-semibold text-error-700-300"
+          >
+            {err('capacity')}
+          </p>{/if}
+      </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
         >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
@@ -428,29 +435,19 @@
         >
         <h2 id="image-section" class="text-2xl font-semibold tracking-tight">Imagem</h2>
       </div>
-      <div class="rounded-lg border-2 border-dashed border-surface-400-600 bg-surface-950-50/5 p-5">
-        <FormField
-          id="image"
-          label={m.form_image()}
-          hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
-          error={imageError}
-        >
-          {#if imageUrl}<img
-              src={imageUrl}
-              alt=""
-              class="mb-3 aspect-5/2 w-full max-w-sm rounded-lg object-cover"
-            />{/if}
-          <input
-            id="image"
-            name="image"
-            type="file"
-            accept={IMAGE_TYPES.join(',')}
-            bind:files={$image}
-            class="block w-full text-sm file:mr-3 file:h-11 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
-            aria-invalid={imageError ? 'true' : undefined}
-          />
-        </FormField>
-      </div>
+      <ImageUpload
+        id="image"
+        name="image"
+        label={m.form_image()}
+        hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
+        error={imageError}
+        currentUrl={imageUrl}
+        onpick={(files) => {
+          const picked = new DataTransfer();
+          for (const file of files) picked.items.add(file);
+          $image = picked.files;
+        }}
+      />
     </section>
     <div class="flex flex-wrap items-center gap-5">
       <SubmitButton
