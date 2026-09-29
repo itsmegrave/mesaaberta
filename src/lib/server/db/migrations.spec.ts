@@ -178,3 +178,56 @@ describe('0008_drop_display_name', () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+describe('0020_profile_gender_options', () => {
+  // What people typed in the free-text field, and what it becomes.
+  const typed: [number, string | null, string | null, string | null][] = [
+    [1, 'mulher', 'woman', null],
+    [2, ' Mulher ', 'woman', null],
+    [3, 'Feminino', 'woman', null],
+    [4, 'homem', 'man', null],
+    [5, 'MASCULINO', 'man', null],
+    [6, 'Mulher trans', 'trans_woman', null],
+    [7, 'homem-trans', 'trans_man', null],
+    [8, 'Não binário', 'non_binary', null],
+    [9, 'nao-binarie', 'non_binary', null],
+    [10, 'Agênero', 'agender', null],
+    [11, 'Gênero fluido', 'genderfluid', null],
+    [12, 'travesti', 'travesti', null],
+    // Nobody's answer is lost: anything else is "Outro", with their words kept.
+    [13, 'Demigênero', 'other', 'Demigênero'],
+    [14, 'f', 'other', 'f'],
+    [15, '', null, null],
+    [16, null, null, null],
+  ];
+
+  let client: PGlite;
+
+  beforeAll(async () => {
+    client = new PGlite();
+    await applyMigrations(client, { through: '0019_notifications' });
+    for (const [n, gender] of typed) {
+      await client.query(`insert into profiles (id, username, gender) values ($1, $2, $3)`, [
+        uuid(n),
+        `pessoa-${n}`,
+        gender,
+      ]);
+    }
+    await applyMigration(client, '0020_profile_gender_options');
+  });
+  afterAll(() => client.close());
+
+  it.each(typed)('profile %i: %j becomes %j (own words %j)', async (n, _typed, gender, other) => {
+    const { rows } = await client.query<{ gender: string | null; gender_other: string | null }>(
+      `select gender, gender_other from profiles where id = $1`,
+      [uuid(n)],
+    );
+    expect(rows[0]).toEqual({ gender, gender_other: other });
+  });
+
+  it('refuses a value outside the list from now on', async () => {
+    await expect(
+      client.query(`update profiles set gender = 'mulher' where id = $1`, [uuid(1)]),
+    ).rejects.toThrow();
+  });
+});

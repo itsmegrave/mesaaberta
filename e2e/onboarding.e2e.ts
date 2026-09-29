@@ -71,7 +71,7 @@ test.describe('the onboarding form', () => {
 
     await page.getByLabel('Nome de usuário').fill(username);
     await page.getByLabel('Idade', { exact: true }).fill('31');
-    await page.getByLabel('Gênero').fill('mulher');
+    await page.getByLabel('Gênero').selectOption('woman');
     await page.getByLabel('Cidade').fill('Recife');
     await page.getByRole('button', { name: 'Adicionar link' }).click();
     await page.getByLabel('Rede do link 1').selectOption('instagram');
@@ -87,7 +87,7 @@ test.describe('the onboarding form', () => {
     const sql = database();
     try {
       const [profile] = await sql`select * from profiles where id = ${user.id}`;
-      expect(profile).toMatchObject({ username, age: 31, gender: 'mulher', city: 'Recife' });
+      expect(profile).toMatchObject({ username, age: 31, gender: 'woman', city: 'Recife' });
       const links =
         await sql`select network, url from profile_social_links where profile_id = ${user.id} order by position`;
       expect(links).toEqual([

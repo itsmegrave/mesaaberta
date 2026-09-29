@@ -458,10 +458,16 @@
   "unsaved_text": "Você mudou este formulário e ainda não salvou. Se sair agora, as mudanças se perdem.",
   "unsaved_stay": "Continuar editando",
   "unsaved_leave": "Sair sem salvar",
-  "toast_left": "Você saiu da mesa.",
-  "toast_request_withdrawn": "Pedido de vaga retirado.",
-  "toast_approved": "Pedido aprovado. A vaga é da pessoa agora.",
-  "toast_declined": "Pedido recusado.",
-  "toast_removed": "Vaga encerrada.",
-  "toast_table_disabled": "Mesa desativada."
+  "profile_gender_none": "Prefiro não informar",
+  "profile_gender_woman": "Mulher",
+  "profile_gender_man": "Homem",
+  "profile_gender_trans_woman": "Mulher trans",
+  "profile_gender_trans_man": "Homem trans",
+  "profile_gender_non_binary": "Pessoa não binária",
+  "profile_gender_agender": "Agênero",
+  "profile_gender_genderfluid": "Gênero fluido",
+  "profile_gender_travesti": "Travesti",
+  "profile_gender_other": "Outro",
+  "profile_gender_other_label": "Como você se identifica?",
+  "profile_gender_other_hint": "Opcional. Só vale se você escolher “Outro”."
 }

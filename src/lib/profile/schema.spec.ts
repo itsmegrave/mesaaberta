@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_SOCIAL_LINKS } from './social-links';
-import { profileLinks, profileSchema } from './schema';
+import { GENDER_OPTIONS, profileLinks, profileSchema } from './schema';
 
 const base = {
   username: 'ana',
   name: '',
   gender: '',
+  genderOther: '',
   city: '',
   age: null,
   linkNetwork: [],
@@ -32,14 +33,14 @@ describe('profileSchema', () => {
       ...base,
       name: '  Ana Maria ',
       age: 31,
-      gender: ' mulher ',
+      gender: 'woman',
       city: ' Recife ',
     });
 
     expect(parsed.data).toMatchObject({
       name: 'Ana Maria',
       age: 31,
-      gender: 'mulher',
+      gender: 'woman',
       city: 'Recife',
     });
   });
@@ -61,10 +62,31 @@ describe('profileSchema', () => {
     ['age', 121],
     ['age', 30.5],
     ['name', 'x'.repeat(81)],
-    ['gender', 'x'.repeat(41)],
+    ['gender', 'mulher'],
     ['city', 'x'.repeat(81)],
   ])('refuses %s %j', (field, value) => {
     expect(Object.keys(problems({ [field]: value }) ?? {})).toEqual([field]);
+  });
+
+  describe('gender', () => {
+    it('takes any option from the list, or none', () => {
+      for (const gender of GENDER_OPTIONS) {
+        expect(problems({ gender })).toBeNull();
+      }
+      expect(profileSchema.parse({ ...base, gender: '' }).gender).toBe('');
+    });
+
+    it('keeps the own words trimmed (the save drops them unless "Outro" is picked)', () => {
+      expect(
+        profileSchema.parse({ ...base, gender: 'other', genderOther: ' demigênero ' }),
+      ).toMatchObject({ gender: 'other', genderOther: 'demigênero' });
+    });
+
+    it('refuses own words that are too long', () => {
+      expect(problems({ gender: 'other', genderOther: 'x'.repeat(41) })).toEqual({
+        genderOther: 'too_long',
+      });
+    });
   });
 
   describe('social links', () => {
