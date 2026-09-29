@@ -1,7 +1,7 @@
 <script lang="ts">
   import './layout.css';
   import { asset, resolve } from '$app/paths';
-  import { invalidateAll, onNavigate } from '$app/navigation';
+  import { invalidateAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
@@ -15,7 +15,6 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { reloadIfUpdated } from '$lib/navigation/deploy-refresh';
   import { Slow } from '$lib/navigation/slow.svelte';
   import { syncBrowserTimezone } from '$lib/time/browser-timezone';
   import { onMount } from 'svelte';
@@ -27,9 +26,6 @@
   onMount(() => {
     if (syncBrowserTimezone(data.viewer)) invalidateAll();
   });
-
-  // After a deploy, the next in-app navigation loads the new build from the server.
-  onNavigate((navigation) => reloadIfUpdated(navigation, updated.current));
 
   const locale = getLocale();
 
@@ -158,6 +154,18 @@
     </nav>
   {/if}
 </header>
+
+{#if updated.current}
+  <aside
+    role="status"
+    class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-200-700 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
+  >
+    <p>{m.version_update_available()}</p>
+    <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
+      {m.version_update_refresh()}
+    </button>
+  </aside>
+{/if}
 
 <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
 {#if loading.current}

@@ -68,6 +68,8 @@
   "nav_admin": "Admin",
   "nav_mobile": "Navegação móvel",
   "nav_loading": "Carregando…",
+  "version_update_available": "Uma nova versão está disponível.",
+  "version_update_refresh": "Atualizar",
   "tables_title": "Mesas abertas",
   "tables_description": "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam.",
   "tables_lede": "Escolha uma mesa, veja quantas vagas restam e quando é a próxima sessão.",

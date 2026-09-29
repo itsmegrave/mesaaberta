@@ -21,14 +21,22 @@ test('navigates inside the page while the build is current', async ({ page }) =>
   expect(await isMarked(page)).toBe(true);
 });
 
-test('loads the next page from the server once a new build is deployed', async ({ page }) => {
+test('offers a refresh instead of interrupting a navigation once a new build is deployed', async ({
+  page,
+}) => {
   await page.route('**/_app/version.json', (route) =>
     route.fulfill({ json: { version: 'a-newer-deploy' } }),
   );
   await page.clock.runFor(61_000);
+
+  await expect(page.getByRole('status')).toContainText('Uma nova versão está disponível.');
   await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
 
   await expect(page).toHaveURL('/');
+  await expect(page.getByRole('banner')).toBeVisible();
+  expect(await isMarked(page)).toBe(true);
+
+  await page.getByRole('button', { name: 'Atualizar' }).click();
   await expect(page.getByRole('banner')).toBeVisible();
   expect(await isMarked(page)).toBe(false);
 });
