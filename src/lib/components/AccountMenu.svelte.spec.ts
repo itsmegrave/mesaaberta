@@ -27,7 +27,7 @@ describe('AccountMenu.svelte', () => {
       .toHaveAttribute('href', '/account/profile');
     await expect
       .element(menu().getByRole('link', { name: 'Minhas mesas' }))
-      .toHaveAttribute('href', '/account/tables');
+      .not.toBeInTheDocument();
     await expect.element(menu().getByRole('button', { name: 'Sair' })).toBeVisible();
   });
 
@@ -41,30 +41,13 @@ describe('AccountMenu.svelte', () => {
     await expect.element(page.getByTestId('messages-count')).toHaveTextContent('3');
   });
 
-  it('renders Admin link with pending suggestion count badge for admins', async () => {
+  it('does not duplicate the Admin link in the profile menu', async () => {
     render(AccountMenu, {
       name: 'Admin User',
       avatarUrl: null,
-      isAdmin: true,
-      pendingSuggestionsCount: 5,
     });
 
     await trigger('Admin User').click();
-
-    const adminLink = menu().getByRole('link', { name: /Admin/i });
-    await expect.element(adminLink).toBeVisible();
-    await expect.element(adminLink).toHaveAttribute('href', '/admin');
-    await expect.element(adminLink).toHaveTextContent('Admin 5');
-  });
-
-  it('does not render Admin link for non-admin members', async () => {
-    render(AccountMenu, {
-      name: 'Regular Player',
-      avatarUrl: null,
-      isAdmin: false,
-    });
-
-    await trigger('Regular Player').click();
 
     await expect.element(menu().getByRole('link', { name: /Admin/i })).not.toBeInTheDocument();
   });

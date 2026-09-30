@@ -10,16 +10,12 @@
   let {
     name,
     avatarUrl,
-    isAdmin = false,
-    pendingSuggestionsCount = 0,
     messagesUnread = 0,
     placement = 'bottom-end',
     compact = false,
   }: {
     name: string;
     avatarUrl: string | null;
-    isAdmin?: boolean;
-    pendingSuggestionsCount?: number;
     /** Conversations with something unread. */
     messagesUnread?: number;
     /** Where the menu opens: under the header's button, beside the side rail's. */
@@ -100,25 +96,6 @@
             {m.nav_profile()}
           </a>
 
-          <a href={localizedHref('/account/tables', locale)} class={item}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="shrink-0"
-            >
-              <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
-              <path d="M3.5 10h17M8 3v4M16 3v4" />
-            </svg>
-            {m.nav_my_tables()}
-          </a>
-
           <a
             href={localizedHref('/messages', locale)}
             class={item}
@@ -138,34 +115,6 @@
               </span>
             {/if}
           </a>
-
-          {#if isAdmin}
-            <a href={localizedHref('/admin', locale)} class={item}>
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-                class="shrink-0"
-              >
-                <path d="M12 3l7 3v5.5c0 4.5-3 7.5-7 9.5-4-2-7-5-7-9.5V6l7-3z" />
-                <path d="M9 12l2 2 4-4" />
-              </svg>
-              {m.nav_admin()}
-              {#if pendingSuggestionsCount > 0}
-                <span
-                  class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 font-bold"
-                >
-                  {pendingSuggestionsCount}
-                </span>
-              {/if}
-            </a>
-          {/if}
 
           <form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
             <SubmitButton submitting={signingOut} class={item}>
