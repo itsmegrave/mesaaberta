@@ -54,6 +54,13 @@ In VS Code, install the recommended extensions when prompted (`.vscode/extension
 
 When you must disable an ESLint rule, say why on the same line: `// eslint-disable-next-line rule -- reason`.
 
+## Icons
+
+Icons come from [Iconify](https://iconify.design), Lucide set: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`). The drawings are bundled, never fetched (the CSP allows no request to Iconify's API):
+
+1. Add the Lucide name to `src/lib/icons/names.ts` ([browse the set](https://icon-sets.iconify.design/lucide/)).
+2. Run `pnpm icons` and commit `src/lib/icons/lucide.generated.ts`. A test fails while it is out of date.
+
 ## Translations
 
 The site is written in Brazilian Portuguese (`pt-BR`, the base language), and only that language is served today. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components. English is planned in [#31](https://github.com/itsmegrave/mesaaberta/issues/31).

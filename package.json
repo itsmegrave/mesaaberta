@@ -34,11 +34,15 @@
     "resend:templates": "node --env-file-if-exists=.dev.vars scripts/create-resend-templates.ts",
     "db:seed": "node --env-file-if-exists=.dev.vars scripts/seed.ts",
     "i18n": "node scripts/i18n.ts",
-    "changelog": "node scripts/changelog.ts"
+    "changelog": "node scripts/changelog.ts",
+    "icons": "node scripts/icons.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@eslint/js": "^10.0.1",
+    "@iconify-json/lucide": "^1.2.137",
+    "@iconify/types": "^2.0.0",
+    "@iconify/utils": "^3.1.7",
     "@inlang/paraglide-js": "^2.18.2",
     "@inlang/plugin-message-format": "^4.4.4",
     "@playwright/test": "^1.60.0",
