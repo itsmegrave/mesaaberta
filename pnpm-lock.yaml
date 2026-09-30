@@ -175,9 +175,6 @@ importers:
       '@growthbook/growthbook':
         specifier: ^1.7.0
         version: 1.7.0
-      '@iconify/svelte':
-        specifier: ^5.2.2
-        version: 5.2.2(svelte@5.57.1(@typescript-eslint/types@8.70.0))
       '@sindresorhus/slugify':
         specifier: ^3.0.1
         version: 3.0.1
@@ -211,6 +208,9 @@ importers:
       jpeg-js:
         specifier: ^0.4.4
         version: 0.4.4
+      linkifyjs:
+        specifier: ^4.3.3
+        version: 4.3.3
       marked:
         specifier: ^18.0.14
         version: 18.0.14
@@ -242,6 +242,9 @@ importers:
       '@iconify-json/lucide':
         specifier: ^1.2.137
         version: 1.2.137
+      '@iconify/svelte':
+        specifier: ^5.2.2
+        version: 5.2.2(svelte@5.57.1(@typescript-eslint/types@8.70.0))
       '@iconify/types':
         specifier: ^2.0.0
         version: 2.0.0
@@ -3055,6 +3058,9 @@ packages:
   lilconfig@2.1.0:
     resolution: {integrity: sha512-utWOt/GHzuUxnLKxB6dk81RoOeoNeHgbrXiuGk4yyF5qlRz+iIVWu56E2fqGHFrXz0QNUhLB/8nKqvRH66JKGQ==}
     engines: {node: '>=10'}
+
+  linkifyjs@4.3.3:
+    resolution: {integrity: sha512-P8aEP5U/D1/IlTY2OeYsErdwh9bGuLE30NcXtKEjgdHcahveQoQwM2yZNsioQHsWFz0P7KKudisbrzCgR0sDHg==}
 
   local-pkg@1.2.1:
     resolution: {integrity: sha512-++gUqRDEvcnN6Zhqrr+y/CkVEHhlrR96vZn3nZZPYzMcBUyBtTKzB9NadClFIsIVSsu+3i9tfk/erqy9kAmt7Q==}
@@ -6191,6 +6197,8 @@ snapshots:
       lightningcss-win32-x64-msvc: 1.33.0
 
   lilconfig@2.1.0: {}
+
+  linkifyjs@4.3.3: {}
 
   local-pkg@1.2.1:
     dependencies:

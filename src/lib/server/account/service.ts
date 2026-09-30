@@ -1,4 +1,5 @@
 import { and, asc, eq } from 'drizzle-orm';
+import { eraseMessagesOf } from '../messages/service';
 import type { AnyDb } from '../db/client';
 import {
   gameTables,
@@ -150,6 +151,7 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
     }
 
     await t.delete(registrations).where(eq(registrations.playerId, userId));
+    await eraseMessagesOf(t, userId);
     return ids;
   });
 
