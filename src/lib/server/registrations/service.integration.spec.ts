@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { events, gameTables, profiles, registrations, systems } from '../db/schema';
+import { conversations, events, gameTables, profiles, registrations, systems } from '../db/schema';
 import { openIntegrationDb } from '../db/integration-db';
 import type { Actor } from '../auth/policy';
 import { approveRegistration, joinTable, leaveTable } from './service';
@@ -56,6 +56,8 @@ afterAll(async () => {
   if (created.tables.length) {
     await db.delete(registrations).where(inArray(registrations.tableId, created.tables));
     await db.delete(events).where(inArray(sql`${events.payload}->>'tableId'`, created.tables));
+    // Joining opens the table's chat (with its members and messages, which cascade).
+    await db.delete(conversations).where(inArray(conversations.tableId, created.tables));
     await db.delete(gameTables).where(inArray(gameTables.id, created.tables));
   }
   if (created.profiles.length)
