@@ -113,4 +113,19 @@ export const ICONS: Record<IconName, IconifyIcon> = {
     width: 24,
     height: 24,
   },
+  search: {
+    body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g>',
+    width: 24,
+    height: 24,
+  },
+  'chevron-left': {
+    body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18l-6-6l6-6"/>',
+    width: 24,
+    height: 24,
+  },
+  'chevron-right': {
+    body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18l6-6l-6-6"/>',
+    width: 24,
+    height: 24,
+  },
 };

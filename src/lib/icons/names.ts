@@ -26,6 +26,9 @@ export const ICON_NAMES = [
   'refresh-cw',
   'arrow-right',
   'external-link',
+  'search',
+  'chevron-left',
+  'chevron-right',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

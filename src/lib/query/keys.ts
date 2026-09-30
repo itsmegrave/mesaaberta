@@ -1,3 +1,5 @@
+import { profileFilters } from '$lib/admin/profile-filters';
+
 export const resources = [
   'preview',
   'tables',
@@ -46,5 +48,12 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
     }
   if (resource === 'tables' && url.searchParams.has('modality'))
     params.set('modality', url.searchParams.getAll('modality').at(-1)!);
+  if (resource === 'admin') {
+    const filters = profileFilters(url.searchParams);
+    params.set('status', filters.status);
+    params.set('q', filters.query);
+    params.set('page', String(filters.page));
+    params.set('size', String(filters.pageSize));
+  }
   return params.toString();
 }
