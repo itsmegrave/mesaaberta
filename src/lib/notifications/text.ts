@@ -1,6 +1,11 @@
 import { m } from '$lib/paraglide/messages';
 import { atHandle } from '$lib/profile/handle';
-import { isNotificationType, NOTIFICATION_KINDS, type NotificationIcon } from './kinds';
+import {
+  ANNOUNCEMENT_ICONS,
+  isNotificationType,
+  NOTIFICATION_KINDS,
+  type NotificationIcon,
+} from './kinds';
 
 /** What the bell and the feed need of a notification to word it. */
 export type Shown = {
@@ -59,7 +64,10 @@ export function notificationText(item: Shown): string {
   }
 }
 
-const ICONS = new Set<string>(Object.values(NOTIFICATION_KINDS).map((kind) => kind.icon));
+const ICONS = new Set<string>([
+  ...Object.values(NOTIFICATION_KINDS).map((kind) => kind.icon),
+  ...ANNOUNCEMENT_ICONS,
+]);
 
 /** The notification's own icon when it is one the bell can draw, else its type's. */
 export function notificationIcon(item: Pick<Shown, 'type' | 'icon'>): NotificationIcon {

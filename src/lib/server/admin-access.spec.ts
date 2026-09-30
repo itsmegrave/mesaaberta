@@ -7,9 +7,15 @@ type Profile = { id: string; role: 'member' | 'admin'; status: 'active' | 'suspe
 const member: Profile = { id: 'm', role: 'member', status: 'active' };
 const admin: Profile = { id: 'a', role: 'admin', status: 'active' };
 
-function setup({ path = '/admin', method = 'GET', profile = null as Profile | null | Error } = {}) {
+function setup({
+  path = '/admin',
+  method = 'GET',
+  profile = null as Profile | null | Error,
+  routeId = null as string | null,
+} = {}) {
   const event = {
     url: new URL(`http://localhost${path}`),
+    route: { id: routeId },
     request: new Request(`http://localhost${path}`, { method }),
     locals: {
       getProfile: vi.fn(async () => {
@@ -65,4 +71,19 @@ describe('isAdminPath', () => {
   it.each(['/administrator', '/tables/admin', '/administer'])('does not recognize %s', (path) =>
     expect(isAdminPath(path)).toBe(false),
   );
+
+  it.each([
+    ['an encoded path', '/%61dmin/notifications', null],
+    ['an upper-case path', '/ADMIN', null],
+    [
+      'a localized path that lands on an admin route',
+      '/en/admin/notifications',
+      '/admin/notifications',
+    ],
+  ])('hides the admin area behind %s', async (_, path, routeId) => {
+    const { run, resolve } = setup({ path, profile: member, routeId });
+
+    await expect(run()).rejects.toMatchObject({ status: 404 });
+    expect(resolve).not.toHaveBeenCalled();
+  });
 });
