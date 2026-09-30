@@ -1,8 +1,15 @@
 import '../../layout.css';
 import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
+
+// There is no SvelteKit app around a component test, so the step that hands a result to the router
+// has nothing to talk to. What the form shows is the same either way.
+vi.mock('$app/forms', async (original) => ({
+  ...(await original<typeof import('$app/forms')>()),
+  applyAction: vi.fn(),
+}));
 
 const row = (over = {}) => ({
   id: '00000000-0000-4000-8000-000000000050',

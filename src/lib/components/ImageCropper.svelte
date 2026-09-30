@@ -4,7 +4,9 @@
   // drawing (its styles go through the CSSOM, which the CSP allows); what leaves is one new file,
   // already cut to the shape and reduced, so the upload is small and the server keeps judging it as
   // any other image. Nothing here runs without JavaScript: the plain file field is the fallback.
-  import Cropper from 'cropperjs';
+  // Loaded when the dialog opens: the library touches `HTMLElement` as it is imported, which does not
+  // exist while the server renders a page that can open this dialog.
+  import type Cropper from 'cropperjs';
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { onDestroy, onMount } from 'svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -67,7 +69,21 @@
 
   $effect(() => {
     if (!image || !stage || !preview || !url) return;
-    const instance = new Cropper(image, { container: stage });
+    let instance: Cropper | undefined;
+    let gone = false;
+    void import('cropperjs').then(({ default: Library }) => {
+      if (gone || !image || !stage || !preview) return;
+      instance = new Library(image, { container: stage });
+      frame(instance, preview);
+    });
+    return () => {
+      gone = true;
+      instance?.element?.remove?.();
+      cropper = undefined;
+    };
+  });
+
+  function frame(instance: Cropper, preview: HTMLDivElement) {
     cropper = instance;
     const canvas = instance.getCropperCanvas();
     const selection = instance.getCropperSelection();
@@ -83,13 +99,8 @@
     const viewer = document.createElement('cropper-viewer');
     viewer.setAttribute('selection', '#image-crop-selection');
     // Cropper.js's own preview element has to be placed by hand; Svelte doesn't know it.
-    // eslint-disable-next-line svelte/no-dom-manipulating
     preview.replaceChildren(viewer);
-    return () => {
-      instance.element?.remove?.();
-      cropper = undefined;
-    };
-  });
+  }
 
   const zoom = (by: number) => cropper?.getCropperImage()?.$zoom(by);
 
