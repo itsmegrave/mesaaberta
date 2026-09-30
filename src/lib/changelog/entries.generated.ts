@@ -2,4 +2,6 @@
 export const ENTRY_FILES: Record<string, string> = {
   '2026-09-29-lancamento.md':
     '---\ndate: 2026-09-29\ntitle: Lançamento da plataforma\n---\n\nA Mesa Aberta está no ar. Mestres abrem mesas de RPG, jogadores encontram uma e pegam a vaga.\n',
+  '2026-09-30-minhas-mesas-celular.md':
+    '---\ndate: 2026-09-30\ntitle: Minhas mesas no celular em abas\n---\n\nNo celular, Minhas mesas agora separa as mesas que você joga das que você mestra em duas abas.\n\n## Alterado\n\n- No celular, "Jogando" e "Mestrando" viram abas no topo de Minhas mesas, cada uma com o número de mesas. Se você só mestra, a página já abre em "Mestrando". O botão "Ver o pedido" do aviso de pedidos de vaga leva direto à mesa, na aba "Mestrando".\n- No celular, a lista de participantes de cada mesa que você mestra fica atrás do botão "Participantes (N)". Só a da primeira mesa começa aberta. Os pedidos de vaga continuam sempre à vista.\n',
 };

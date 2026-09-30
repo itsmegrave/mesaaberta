@@ -106,7 +106,7 @@
   const row =
     'flex items-center justify-between gap-3 border-b border-surface-200-800 py-3 last:border-b-0';
   const secondary =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
+    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
 </script>
 
 <svelte:head>
@@ -219,7 +219,7 @@
                     playerId={request.playerId}
                     next={here}
                     label={m.table_approve()}
-                    buttonClass="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+                    buttonClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
                     success={m.toast_approved()}
                   />
                   <ConfirmAction

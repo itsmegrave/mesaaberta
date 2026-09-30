@@ -23,7 +23,7 @@
   // until it does, a second click is ignored. Coming back through the history resets it.
   let signingOut = $state(false);
   const item =
-    'btn hover:preset-tonal flex h-11 w-full items-center justify-start gap-3 rounded-lg px-3 text-left text-base font-semibold';
+    'btn hover:preset-tonal flex h-12 w-full items-center justify-start gap-3 rounded-lg px-3 text-left text-base font-semibold';
 </script>
 
 <svelte:window onpageshow={() => (signingOut = false)} />
@@ -31,7 +31,7 @@
 <Popover positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}>
   <Popover.Trigger
     aria-label="{m.nav_account_menu()}: {name}"
-    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal md:h-11 md:w-auto md:gap-2 md:pr-3 md:pl-1"
+    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal md:h-12 md:w-auto md:gap-2 md:pr-3 md:pl-1"
   >
     <Avatar src={avatarUrl} {name} size={32} />
     <span class="hidden max-w-28 truncate md:inline">{name}</span>

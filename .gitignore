@@ -46,3 +46,6 @@ project.inlang/cache/
 
 # Sample calendar files for manual import (pnpm calendar:sample)
 /sample-invites
+
+# Vitest browser screenshots
+.vitest/

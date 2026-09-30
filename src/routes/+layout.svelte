@@ -73,7 +73,7 @@
   const inTables = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
   const inMyTables = $derived(pathname.startsWith('/account/tables'));
   const navLink =
-    'btn hidden h-11 rounded-lg px-3 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
+    'btn hidden h-12 rounded-lg px-3 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
 </script>
 
 <svelte:head>
@@ -131,7 +131,7 @@
 
           <a
             href={localizedHref('/tables/new', locale)}
-            class="btn hidden h-11 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
+            class="btn hidden h-12 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
           >
             <svg
               width="18"
@@ -171,7 +171,7 @@
         {:else if data.authEnabled && data.released}
           <a
             href={resolve('/login')}
-            class="btn h-11 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
+            class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
           >
             {m.nav_sign_in()}
           </a>

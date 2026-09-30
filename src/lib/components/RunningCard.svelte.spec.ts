@@ -1,5 +1,6 @@
+import '../../routes/layout.css';
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import RunningCard from './RunningCard.svelte';
 
@@ -20,6 +21,10 @@ const base = {
 const props = (over = {}) => ({ item: { ...base, ...over }, next: '/account/tables' });
 
 describe('RunningCard', () => {
+  beforeEach(async () => {
+    await page.viewport(1280, 800);
+  });
+
   it('shows the seats taken, the next session, and a way to edit or disable', async () => {
     render(RunningCard, props());
 
@@ -82,5 +87,44 @@ describe('RunningCard', () => {
 
     await expect.element(page.getByText('@<img src=x onerror=alert(1)>')).toBeVisible();
     expect(document.querySelectorAll('img')).toHaveLength(0);
+  });
+
+  it('on a wide screen, always shows the players under a heading, with no fold button', async () => {
+    render(RunningCard, props());
+
+    await expect.element(page.getByRole('heading', { name: 'Participantes' })).toBeVisible();
+    await expect.element(page.getByText('@Ana')).toBeVisible();
+    await expect.element(page.getByText('Participantes (2)')).not.toBeVisible();
+  });
+
+  describe('on a phone', () => {
+    beforeEach(async () => {
+      await page.viewport(390, 844);
+    });
+
+    it('folds the players behind a button that says how many there are, and opens them', async () => {
+      render(RunningCard, props());
+      const toggle = page.getByRole('button', { name: 'Participantes (2)' });
+
+      await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+      await expect.element(page.getByText('@Ana')).not.toBeVisible();
+      // The pending requests are not folded with them.
+      await expect.element(page.getByText('@Caio')).toBeVisible();
+
+      await toggle.click();
+
+      await expect.element(toggle).toHaveAttribute('aria-expanded', 'true');
+      await expect.element(page.getByText('@Ana')).toBeVisible();
+      await expect.element(page.getByRole('button', { name: 'Remover' }).first()).toBeVisible();
+    });
+
+    it('starts with the players open when asked to', async () => {
+      render(RunningCard, { ...props(), openPlayers: true });
+
+      await expect
+        .element(page.getByRole('button', { name: 'Participantes (2)' }))
+        .toHaveAttribute('aria-expanded', 'true');
+      await expect.element(page.getByText('@Bruno')).toBeVisible();
+    });
   });
 });

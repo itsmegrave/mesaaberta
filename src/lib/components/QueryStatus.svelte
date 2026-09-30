@@ -6,7 +6,7 @@
 {#if failed}
   <p role="status" class="my-3 text-sm text-muted">
     {m.api_refresh_failed()}
-    <button type="button" class="btn h-11 px-3 text-link" onclick={() => retry()}
+    <button type="button" class="btn h-12 px-3 text-link" onclick={() => retry()}
       >{m.api_refresh_retry()}</button
     >
   </p>
