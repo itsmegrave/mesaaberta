@@ -11,15 +11,23 @@ export const ANNOUNCE_WINDOW_DAYS = 30;
 
 const DAY = 24 * 3600 * 1000;
 
-/** The entry's summary (rendered Markdown) as the plain sentence a notification shows. */
+// The entities `marked` writes. Decoded in one pass, so `&amp;lt;` stays the text `&lt;`.
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  '#39': "'",
+};
+
+/**
+ * The entry's summary (rendered Markdown) as the plain sentence a notification shows. The bell
+ * prints it as text, so it is never read as HTML again.
+ */
 export function plainSummary(html: string, max = 200): string | null {
   const text = html
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&(amp|lt|gt|quot|#39);/g, (_, name: string) => ENTITIES[name])
     .replace(/\s+/g, ' ')
     .trim();
   if (!text) return null;

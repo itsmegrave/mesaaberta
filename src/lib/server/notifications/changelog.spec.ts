@@ -92,6 +92,10 @@ describe('announceChangelog', () => {
 
   it('shows the summary as plain text, shortened when long', () => {
     expect(plainSummary('<p>Uma &amp; outra.</p>\n<p>Mais.</p>')).toBe('Uma & outra. Mais.');
+    // An escaped entity stays what was written, not decoded twice.
+    expect(plainSummary('<p>Escreva &amp;lt;b&amp;gt; e &lt;b&gt;</p>')).toBe(
+      'Escreva &lt;b&gt; e <b>',
+    );
     expect(plainSummary('')).toBeNull();
     expect(plainSummary(`<p>${'a'.repeat(300)}</p>`)).toHaveLength(200);
   });
