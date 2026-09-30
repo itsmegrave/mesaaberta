@@ -3,6 +3,8 @@ import { and, eq } from 'drizzle-orm';
 import { can } from '$lib/server/auth/policy';
 import { instagramAccounts, instagramPosts } from '$lib/server/db/schema';
 import { configured, type InstagramEnv } from '$lib/server/instagram/api';
+import { publishInstagramTable } from '$lib/server/instagram/publisher';
+import { listUpcomingTables } from '$lib/server/tables/queries';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform, url }) => {
@@ -21,17 +23,47 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
     .from(instagramPosts)
     .where(eq(instagramPosts.status, 'uncertain'))
     .limit(50);
+  const upcoming = await listUpcomingTables(locals.db, new Date());
+  const posts = await locals.db
+    .select({
+      tableId: instagramPosts.tableId,
+      status: instagramPosts.status,
+      permalink: instagramPosts.permalink,
+    })
+    .from(instagramPosts);
+  const postByTable = new Map(posts.map((post) => [post.tableId, post]));
   return {
     account: account ?? null,
     configured: configured(platform?.env as InstagramEnv),
     connected: url.searchParams.get('connected') === '1',
     connectionError: url.searchParams.has('connection_error'),
     uncertain,
+    tables: upcoming.map((table) => ({
+      id: table.id,
+      title: table.title,
+      system: table.system.name,
+      nextAt: table.nextAt,
+      timezone: table.timezone,
+      instagram: postByTable.get(table.id) ?? null,
+    })),
   };
 };
 
 // Reconciliation requires an admin to inspect Instagram. It never authorizes another publish.
 export const actions: Actions = {
+  publish: async ({ locals, platform, request }) => {
+    if (!can(await locals.getProfile(), 'admin:access')) error(404);
+    if (!locals.db) error(503);
+    const form = await request.formData();
+    const tableId = String(form.get('tableId') ?? '');
+    if (!/^[0-9a-f-]{36}$/i.test(tableId)) return fail(400, { publishError: 'invalid' });
+    try {
+      const result = await publishInstagramTable(locals.db, platform?.env as InstagramEnv, tableId);
+      return { publishResult: result };
+    } catch {
+      return fail(502, { publishError: 'failed' });
+    }
+  },
   reconcile: async ({ locals, request }) => {
     if (!can(await locals.getProfile(), 'admin:access')) error(404);
     if (!locals.db) error(503);
