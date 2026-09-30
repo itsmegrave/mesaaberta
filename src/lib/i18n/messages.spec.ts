@@ -5,10 +5,16 @@ import { describe, expect, it } from 'vitest';
 const dir = join(process.cwd(), 'messages');
 const baseLocale = 'pt-BR';
 
-const load = (locale: string): Record<string, string> =>
+// A message is a string, or a list of variants (plural forms) with the text of each in `match`.
+type Message = string | { match: Record<string, string> }[];
+const load = (locale: string): Record<string, Message> =>
   JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8'));
+const texts = (message: Message | undefined) =>
+  typeof message === 'string' || message === undefined
+    ? [message ?? '']
+    : message.flatMap((variant) => Object.values(variant.match));
 
-const messageKeys = (messages: Record<string, string>) =>
+const messageKeys = (messages: Record<string, Message>) =>
   Object.keys(messages)
     .filter((key) => !key.startsWith('$'))
     .sort();
@@ -23,7 +29,9 @@ describe.each(locales)('%s messages', (locale) => {
   it('has no empty message', () => {
     const messages = load(locale);
 
-    for (const key of messageKeys(messages)) expect(messages[key].trim(), key).not.toBe('');
+    for (const key of messageKeys(messages)) {
+      for (const text of texts(messages[key])) expect(text.trim(), key).not.toBe('');
+    }
   });
 });
 
@@ -38,7 +46,10 @@ describe.each(locales.filter((locale) => locale !== baseLocale))('%s translation
 
   it('uses the same placeholders as the base locale in every message', () => {
     for (const key of messageKeys(base)) {
-      expect(placeholders(translation[key] ?? ''), key).toEqual(placeholders(base[key]));
+      const all = (message: Message | undefined) => [
+        ...new Set(texts(message).flatMap((text) => placeholders(text))),
+      ];
+      expect(all(translation[key]), key).toEqual(all(base[key]));
     }
   });
 });
