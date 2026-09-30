@@ -77,9 +77,7 @@
   const size = (audience: AnnouncementAudience) => {
     if (audience === 'specific_user') return null;
     const n = data.sizes[audience];
-    return n === 1
-      ? m.admin_announce_audience_size_one()
-      : m.admin_announce_audience_size({ count: number(n) });
+    return m.admin_announce_audience_size({ count: number(n) });
   };
 
   const fieldError = (messages: string[] | undefined) => {
@@ -120,9 +118,7 @@
       ? ''
       : shown.recipient
         ? m.admin_announce_confirm_person({ username: shown.recipient })
-        : shown.count === 1
-          ? m.admin_announce_confirm_one()
-          : m.admin_announce_confirm({ count: number(shown.count ?? 0) }),
+        : m.admin_announce_confirm({ count: number(shown.count ?? 0) }),
   );
 
   // Suggestions for the recipient field, as the admin types a username.
@@ -408,9 +404,7 @@
                     : AUDIENCE_LABELS[sent.audience]}
                 </span>
                 <span>
-                  {sent.notified === 1
-                    ? m.admin_history_notified_one()
-                    : m.admin_history_notified({ count: number(sent.notified) })}
+                  {m.admin_history_notified({ count: number(sent.notified) })}
                 </span>
                 <span>
                   {m.admin_history_by({

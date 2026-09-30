@@ -31,11 +31,7 @@
 
   const locale = getLocale();
   const seats = $derived(
-    table.seatsLeft === 0
-      ? m.table_full()
-      : table.seatsLeft === 1
-        ? m.table_seat_left()
-        : m.table_seats_left({ count: table.seatsLeft }),
+    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
   );
 
   const cardDate = $derived(
