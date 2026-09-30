@@ -279,6 +279,7 @@
   ],
   "table_kind_campaign": "Campanha",
   "table_kind_one_shot": "One-shot",
+  "table_kind_adventure": "Aventura",
   "table_seats_left": [
     {
       "declarations": ["input count"],
@@ -299,6 +300,7 @@
   "table_duration": "Duração",
   "table_extra_info": "Informações extras",
   "table_recurrence_once": "Sessão única",
+  "table_adventure_schedule": "Aventura com várias sessões; as próximas datas serão combinadas pelo grupo.",
   "table_recurrence_weekly": "Toda semana",
   "table_recurrence_weeks": "A cada {weeks} semanas",
   "table_join_auto": "Você entra na hora, se houver vaga.",
@@ -329,6 +331,7 @@
   "form_kind": "Tipo",
   "form_kind_one_shot": "One-shot (uma sessão)",
   "form_kind_campaign": "Campanha (várias sessões)",
+  "form_kind_adventure": "Aventura (várias sessões, sem recorrência fixa)",
   "form_capacity": "Vagas",
   "date_picker_open": "Abrir o calendário de {label}",
   "date_picker_time": "Hora de {label}",

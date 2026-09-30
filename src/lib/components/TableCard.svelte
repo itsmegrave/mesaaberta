@@ -13,7 +13,7 @@
   type Table = {
     slug: string;
     title: string;
-    kind: 'campaign' | 'one_shot';
+    kind: 'campaign' | 'one_shot' | 'adventure';
     system: { name: string };
     gmName: string;
     seatsLeft: number;
@@ -67,7 +67,11 @@
       <!-- Kind pill -->
       <div class="absolute top-3 left-3">
         <span class="chip h-6 gap-1 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm">
-          {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
+          {table.kind === 'campaign'
+            ? m.table_kind_campaign()
+            : table.kind === 'adventure'
+              ? m.table_kind_adventure()
+              : m.table_kind_one_shot()}
         </span>
       </div>
       <!-- Date chip -->
@@ -94,7 +98,11 @@
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span class="chip h-6 gap-1 border border-white/15 bg-white/15 px-3 text-xs font-semibold">
-          {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
+          {table.kind === 'campaign'
+            ? m.table_kind_campaign()
+            : table.kind === 'adventure'
+              ? m.table_kind_adventure()
+              : m.table_kind_one_shot()}
         </span>
         {#if table.nextAt && cardDate}
           <div>

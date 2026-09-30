@@ -34,8 +34,10 @@
   const locale = getLocale();
 
   const recurrence = $derived(
-    table.kind === 'one_shot'
-      ? m.table_recurrence_once()
+    table.kind !== 'campaign'
+      ? table.kind === 'adventure'
+        ? m.table_adventure_schedule()
+        : m.table_recurrence_once()
       : table.everyWeeks === 1
         ? m.table_recurrence_weekly()
         : table.everyWeeks
@@ -124,7 +126,11 @@
     <div class="min-w-0 lg:col-span-2">
       <p class="flex flex-wrap items-center gap-3">
         <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
-          {table.kind === 'campaign' ? m.table_kind_campaign() : m.table_kind_one_shot()}
+          {table.kind === 'campaign'
+            ? m.table_kind_campaign()
+            : table.kind === 'adventure'
+              ? m.table_kind_adventure()
+              : m.table_kind_one_shot()}
         </span>
         <a
           href="{localizedHref('/tables', locale)}?system={encodeURIComponent(table.system.slug)}"
