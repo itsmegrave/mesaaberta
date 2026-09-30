@@ -28,6 +28,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
   postalCode: '',
   platforms: [],
   tags: [],
+  removeImage: false,
 };
 
 /** The sentence for a problem that is about the whole form, not one field; null when there is none. */
@@ -67,6 +68,8 @@ export function errorText(code: string, field = ''): string {
       return m.form_error_upload_failed();
     case 'suggestion_invalid':
       return m.form_error_suggestion_invalid();
+    case 'below_taken':
+      return m.form_error_below_taken();
     case 'suggestion_unavailable':
       return m.form_error_suggestion_unavailable();
     default:

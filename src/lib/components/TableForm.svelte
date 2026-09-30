@@ -35,6 +35,10 @@
     gmName?: string;
     /** The fewest seats the slider allows: the seats already taken, when editing. */
     minCapacity?: number;
+    /** Editing: where the GM removes players, offered when seats are taken. */
+    manageHref?: string;
+    /** Editing: say that saving sends the updated calendar invite. */
+    calendarNote?: boolean;
   };
 
   let {
@@ -47,6 +51,8 @@
     cancelHref = '/tables',
     gmName = NAMELESS,
     minCapacity = TABLE_LIMITS.capacity.min,
+    manageHref,
+    calendarNote = false,
   }: Props = $props();
   const { form, errors, message, enhance, submitting, delayed, timeout } = superform;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
@@ -297,6 +303,9 @@
               >{m.form_timezone_change()}</a
             >
           </p>
+          {#if calendarNote}<p class="mt-2 text-sm text-surface-700-300">
+              {m.form_edit_calendar_note()}
+            </p>{/if}
         </div>
       </div>
       {#if $form.kind === 'campaign'}
@@ -419,8 +428,20 @@
           min={minCapacity}
           max={TABLE_LIMITS.capacity.max}
           invalid={!!invalid('capacity')}
-          describedby={err('capacity') ? 'capacity-error' : undefined}
+          describedby={[
+            minCapacity > 1 ? 'capacity-taken' : '',
+            err('capacity') ? 'capacity-error' : '',
+          ]
+            .join(' ')
+            .trim() || undefined}
         />
+        {#if minCapacity > 1}<p id="capacity-taken" class="mt-1 text-sm text-surface-700-300">
+            {m.form_capacity_taken({ count: minCapacity })}
+            {#if manageHref}
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
+              <a href={manageHref} class="anchor">{m.form_capacity_remove_players()}</a>
+            {/if}
+          </p>{/if}
         {#if err('capacity')}<p
             id="capacity-error"
             role="alert"
@@ -461,6 +482,7 @@
         hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
         error={imageError}
         currentUrl={imageUrl}
+        bind:removed={$form.removeImage}
         onpick={(files) => {
           const picked = new DataTransfer();
           for (const file of files) picked.items.add(file);

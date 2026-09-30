@@ -136,23 +136,23 @@ test.describe('the welcome message', () => {
     await expect(field).toHaveValue(/WhatsApp/);
     await field.fill('Bem-vinda! Me chama no (11) 90000-0000.');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
     expect(await welcomeOf(slug)).toBe('Bem-vinda! Me chama no (11) 90000-0000.');
 
     // Saving other changes keeps it.
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await page.goto(`/tables/${slug}/edit`);
     await page.getByLabel('Título').fill('Renomeada');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
     expect(await welcomeOf(slug)).toBe('Bem-vinda! Me chama no (11) 90000-0000.');
 
     // Emptying it means no message, not the default again.
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await page.goto(`/tables/${slug}/edit`);
     await page.getByLabel('Mensagem de boas-vindas').fill('');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
     expect(await welcomeOf(slug)).toBeNull();
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await page.goto(`/tables/${slug}/edit`);
     await expect(page.getByLabel('Mensagem de boas-vindas')).toHaveValue('');
   });
 
@@ -258,10 +258,16 @@ test.describe('editing and disabling', () => {
 
     await page.getByRole('link', { name: 'Editar mesa' }).click();
     await expect(page).toHaveURL(new RegExp(`/tables/${slug}/edit$`));
+    await expect(
+      page.getByText(/quem já está na mesa recebe o convite do calendário/),
+    ).toBeVisible();
     await page.getByLabel('Título').fill('Nome novo');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}$`));
+    // Saving goes back to the manage page, which says so.
+    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+    await expect(page.getByText('Mesa salva.')).toBeVisible();
+    await page.goto(`/tables/${slug}`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nome novo');
   });
 
@@ -296,6 +302,8 @@ test.describe('editing and disabling', () => {
     await adminPage.getByLabel('Título').fill('Editada pelo admin');
     await adminPage.getByRole('button', { name: 'Salvar alterações' }).click();
 
+    await expect(adminPage).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+    await adminPage.goto(`/tables/${slug}`);
     await expect(adminPage.getByRole('heading', { level: 1 })).toHaveText('Editada pelo admin');
     await context.close();
   });
@@ -310,7 +318,10 @@ test.describe('editing and disabling', () => {
     const slug = await createTable(page, { title });
 
     await page.goto(`/tables/${slug}/edit`);
+    // It asks first; only the dialog's button disables.
     await page.getByRole('button', { name: 'Desativar mesa' }).click();
+    const dialog = page.getByRole('alertdialog', { name: 'Desativar esta mesa?' });
+    await dialog.getByRole('button', { name: 'Desativar mesa' }).click();
     await expect(page).toHaveURL(/\/tables$/);
     await expect(page.getByRole('link', { name: title })).toHaveCount(0);
 

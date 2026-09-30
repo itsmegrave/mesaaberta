@@ -66,6 +66,7 @@ describe('parseTableForm', () => {
         locationState: null,
         platforms: [],
         tags: [],
+        removeImage: false,
       },
     });
   });

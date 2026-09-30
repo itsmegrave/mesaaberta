@@ -274,6 +274,12 @@
               class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
             >.
           </p>
+          <p>
+            {m.footer_changelog()}
+            <a href={localizedHref('/changelog', locale)} class="link-underline text-surface-950-50"
+              >{m.footer_changelog_link()}</a
+            >.
+          </p>
         </div>
       </div>
     </footer>

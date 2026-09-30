@@ -25,6 +25,7 @@ export const load: PageServerLoad = async (event) => {
       status,
       imagePath,
       catalog: _picked,
+      seatsTaken,
       ...values
     } = await loadTableForEdit(locals.db, profile, params.slug, await timezoneOf(locals, cookies));
     const catalogRead = await loadRead(event, 'editCatalog');
@@ -39,6 +40,7 @@ export const load: PageServerLoad = async (event) => {
       systems: catalogRead.systems,
       catalog: catalogRead.catalog,
       catalogRead,
+      seatsTaken,
     };
   } catch (e) {
     // Someone else's table is a 403; one that is not there is a 404.
@@ -55,15 +57,24 @@ export const actions: Actions = {
     if (!locals.db) error(503, 'Database not configured');
     const db = locals.db;
 
-    return handleTableForm(event, async (input, imagePath) => {
-      const { eventId } = await updateTable(db, await locals.getProfile(), params.slug, input, {
-        imagePath,
-      });
-      if (eventId) {
-        locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
-      }
-      return { slug: params.slug };
-    });
+    return handleTableForm(
+      event,
+      async (input, imagePath) => {
+        const { eventId } = await updateTable(db, await locals.getProfile(), params.slug, input, {
+          imagePath,
+        });
+        // Nothing players see changed: no invite, no notification.
+        if (eventId) {
+          locals.afterResponse((db) =>
+            dispatchEvent(db, handlersFor(event.platform?.env), eventId),
+          );
+        }
+        return { slug: params.slug };
+      },
+      undefined,
+      // Back where the GM manages the table, which says it was saved.
+      (slug) => `/tables/${slug}/manage`,
+    );
   },
 
   disable: async (event) => {

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, gameTables, profiles } from '../db/schema';
+import { events, gameTables, profiles, registrations } from '../db/schema';
 import { createTestDb, pgErrorCode } from '../db/test-db';
 import { findTableBySlug, joinDetailsOf, listUpcomingTables } from './queries';
 import { createTable, disableTable, loadTableForEdit, updateTable } from './write';
@@ -40,6 +40,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   locationState: null,
   platforms: [],
   tags: [],
+  removeImage: false,
   ...over,
 });
 
@@ -538,6 +539,40 @@ describe('updateTable', () => {
     expect((await rowOf(slug)).imagePath).toBe('tables/new.png');
   });
 
+  it('takes the image off when asked, and a new image wins over taking it off', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Sem capa' }), {
+      now,
+      imagePath: 'tables/old.png',
+    });
+
+    await updateTable(test.db, ana, slug, input({ title: 'Sem capa', removeImage: true }), {
+      imagePath: 'tables/new.png',
+    });
+    expect((await rowOf(slug)).imagePath).toBe('tables/new.png');
+
+    await updateTable(test.db, ana, slug, input({ title: 'Sem capa', removeImage: true }));
+    expect((await rowOf(slug)).imagePath).toBeNull();
+  });
+
+  it('does not let the seats go below the players already at the table', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Lotada', capacity: 4 }), {
+      now,
+    });
+    const table = await rowOf(slug);
+    await test.db.insert(registrations).values([
+      { tableId: table.id, playerId: id(2), status: 'confirmed' },
+      { tableId: table.id, playerId: id(99), status: 'confirmed' },
+    ]);
+
+    await expect(
+      updateTable(test.db, ana, slug, input({ title: 'Lotada', capacity: 1 })),
+    ).rejects.toMatchObject({ field: 'capacity', message: 'below_taken' });
+
+    await updateTable(test.db, ana, slug, input({ title: 'Lotada', capacity: 2 }));
+    expect((await rowOf(slug)).capacity).toBe(2);
+    expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({ seatsTaken: 2 });
+  });
+
   it('does not change who the GM is', async () => {
     const { slug } = await createTable(test.db, ana, input({ title: 'Dona' }), { now });
 
@@ -623,20 +658,47 @@ describe('events', () => {
     expect(off).toMatchObject({ actorId: ana.id, payload: { slug } });
   });
 
-  it('does not record TableUpdated for an edit that does not change the calendar', async () => {
-    const { slug } = await createTable(test.db, ana, input({ title: 'Evt Sem Calendário' }), {
-      now,
-    });
+  it('records no event, and sends no invite, when nothing players see has changed', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Evt Sem Mudança' }), { now });
+    const before = (await eventsOf('TableUpdated')).length;
 
-    const edited = await updateTable(
+    // Seats, how people join, the welcome message, the image and the tags are not in the invite.
+    const saved = await updateTable(
       test.db,
       ana,
       slug,
-      input({ title: 'Evt Sem Calendário', capacity: 7 }),
+      input({
+        title: 'Evt Sem Mudança',
+        capacity: 8,
+        joinMode: 'approval',
+        welcomeMessage: 'Oi!',
+        tags: ['terror'],
+      }),
+      { imagePath: 'tables/nova.png' },
     );
 
-    expect(edited.eventId).toBeNull();
-    expect(await eventsOf('TableUpdated')).toEqual([]);
+    expect(saved.eventId).toBeNull();
+    expect((await eventsOf('TableUpdated')).length).toBe(before);
+    const row = await rowOf(slug);
+    expect(row).toMatchObject({ capacity: 8, joinMode: 'approval', icalSequence: 0 });
+  });
+
+  it('records an event for a change players see: the time, the place, how to join', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Evt Mudança' }), { now });
+
+    for (const change of [
+      { startsAtLocal: '2026-10-10T20:00' },
+      { joinDetails: 'https://discord.gg/mesa' },
+      { modality: 'in_person' as const, locationArea: 'Boa Viagem, Recife' },
+    ]) {
+      const { eventId } = await updateTable(
+        test.db,
+        ana,
+        slug,
+        input({ title: 'Evt Mudança', ...change }),
+      );
+      expect(eventId).not.toBeNull();
+    }
   });
 
   it('records nothing when the action is refused', async () => {
