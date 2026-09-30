@@ -66,7 +66,7 @@ test('users table paginates, filters status and username, and links to the selec
     await db.end();
   }
   expect((await page.goto(`/admin/users/${userId}`))?.status()).toBe(404);
-  await signIn(page, admin, `/admin?q=${prefix}`);
+  await signIn(page, admin, `/admin/users?q=${prefix}`);
   const users = page.locator('#profiles');
   await expect(users.locator('tbody tr')).toHaveCount(20);
   await expect(users.getByText('Página 1 de 2', { exact: true })).toBeVisible();
