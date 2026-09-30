@@ -283,3 +283,40 @@ describe('0021_profile_age_range', () => {
     expect(rows).toEqual([]);
   });
 });
+
+describe('adventure migrations in one transaction', () => {
+  it('adds the enum and constraint together and preserves recurrence rules after commit', async () => {
+    const client = new PGlite();
+    try {
+      await client.exec(`
+				CREATE TYPE public.table_kind AS ENUM ('one_shot', 'campaign');
+				CREATE TABLE game_tables (
+					kind table_kind NOT NULL,
+					recurrence text,
+					CONSTRAINT game_tables_recurrence_matches_kind CHECK (
+						(kind = 'one_shot' AND recurrence IS NULL) OR
+						(kind = 'campaign' AND recurrence IS NOT NULL)
+					)
+				);
+				INSERT INTO game_tables VALUES ('one_shot', NULL), ('campaign', 'weekly');
+				BEGIN;
+			`);
+      await applyMigration(client, '0025_adventure_table_kind');
+      await applyMigration(client, '0026_adventure_recurrence_check');
+      await client.exec('COMMIT');
+      await client.exec("INSERT INTO game_tables VALUES ('adventure', NULL)");
+      expect((await client.query('SELECT * FROM game_tables')).rows).toHaveLength(3);
+      for (const [kind, recurrence] of [
+        ['adventure', 'weekly'],
+        ['one_shot', 'weekly'],
+        ['campaign', null],
+      ]) {
+        await expect(
+          client.query('INSERT INTO game_tables VALUES ($1, $2)', [kind, recurrence]),
+        ).rejects.toThrow(/game_tables_recurrence_matches_kind/);
+      }
+    } finally {
+      await client.close();
+    }
+  });
+});

@@ -239,7 +239,7 @@ export const gameTables = pgTable(
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(
       'game_tables_recurrence_matches_kind',
-      sql`(${table.kind} IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind} = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
+      sql`(${table.kind}::text IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind}::text = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
     ),
     check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
