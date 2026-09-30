@@ -1,3 +1,4 @@
+import { instagramQueueHandler } from '../instagram/publisher';
 import type { Handler } from './types';
 import { inviteHandler, type InviteEnv } from './invites';
 import { notificationHandler } from './notifications';
@@ -11,6 +12,6 @@ import { announcementHandler } from './announcements';
  */
 export function handlersFor(env: InviteEnv | undefined): readonly Handler[] {
   const handler = inviteHandler(env);
-  const bell = [notificationHandler, announcementHandler];
+  const bell = [notificationHandler, announcementHandler, instagramQueueHandler];
   return handler ? [handler, ...bell] : bell;
 }

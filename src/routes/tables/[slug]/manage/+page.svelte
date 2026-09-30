@@ -451,6 +451,25 @@
           {/if}
         </div>
 
+        {#if data.instagram && data.instagram.status !== 'skipped'}
+          <section class="mt-6 grid gap-2" aria-label={m.instagram_admin_title()}>
+            <p>
+              {data.instagram.status === 'published'
+                ? m.instagram_published()
+                : data.instagram.status === 'failed'
+                  ? m.instagram_failed()
+                  : ['uncertain', 'publishing'].includes(data.instagram.status)
+                    ? m.instagram_uncertain()
+                    : m.instagram_queued()}
+            </p>
+            {#if data.instagram.permalink}<a
+                href={data.instagram.permalink}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link-underline">{m.instagram_view()}</a
+              >{/if}
+          </section>
+        {/if}
         <div class="mt-6 grid gap-2">
           <a
             href={editPage}

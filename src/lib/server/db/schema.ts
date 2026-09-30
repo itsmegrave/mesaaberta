@@ -326,6 +326,49 @@ export const events = pgTable(
   ],
 ).enableRLS();
 
+// One service account for Mesa Aberta, never a GM's personal Instagram. Tokens are AES-GCM
+// encrypted with a Worker secret. Neither this table nor post assets are exposed through Supabase.
+export const instagramAccounts = pgTable('instagram_accounts', {
+  id: text('id').primaryKey().default('mesaaberta'),
+  userId: text('user_id').notNull(),
+  username: text('username').notNull(),
+  token: text('token').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  ...timestamps,
+}).enableRLS();
+
+export const instagramPosts = pgTable(
+  'instagram_posts',
+  {
+    tableId: uuid('table_id')
+      .primaryKey()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    eventId: uuid('event_id').notNull(),
+    status: text('status').notNull().default('queued'),
+    caption: text('caption'),
+    // Small temporary JPEGs; an unguessable capability URL expires and the cron clears the bytes.
+    assetKey: uuid('asset_key').notNull().defaultRandom(),
+    image: text('image'),
+    assetExpiresAt: timestamp('asset_expires_at', { withTimezone: true }),
+    accountId: text('account_id'),
+    containerId: text('container_id'),
+    mediaId: text('media_id'),
+    permalink: text('permalink'),
+    lastError: text('last_error'),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+    claimedUntil: timestamp('claimed_until', { withTimezone: true }),
+    ...timestamps,
+  },
+  (post) => [
+    uniqueIndex('instagram_posts_asset_idx').on(post.assetKey),
+    check(
+      'instagram_posts_status',
+      sql`${post.status} IN ('queued', 'processing', 'publishing', 'published', 'failed', 'uncertain', 'skipped')`,
+    ),
+  ],
+).enableRLS();
+
 // A player's place at a table. Only `confirmed` rows take a seat, get invites and can rate. A
 // declined request, a player who leaves and a player who is removed are deleted: the record of it is
 // the event, not a row here.
