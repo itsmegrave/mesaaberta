@@ -1,9 +1,14 @@
 /**
- * The Lucide icons the app draws, through Iconify. Add a name here, then run `pnpm icons` to copy
+ * The Lucide and Game Icons drawings the app uses, through Iconify. Add a name here, then run `pnpm icons` to copy
  * its drawing into `lucide.generated.ts`: only these are bundled, and nothing is fetched at run
- * time (the CSP allows no request to Iconify's API). Names: https://icon-sets.iconify.design/lucide/
+ * time (the CSP allows no request to Iconify's API). Names: https://icon-sets.iconify.design/; Game Icons use the game-icons: prefix.
  */
 export const ICON_NAMES = [
+  'game-icons:tabletop-players',
+  'game-icons:dungeon-gate',
+  'game-icons:meeple',
+  'game-icons:scroll-quill',
+  'game-icons:exit-door',
   'calendar',
   'circle-x',
   'user-plus',
