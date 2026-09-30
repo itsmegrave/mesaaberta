@@ -33,7 +33,8 @@
     "calendar:sample": "node scripts/sample-invite.ts",
     "resend:templates": "node --env-file-if-exists=.dev.vars scripts/create-resend-templates.ts",
     "db:seed": "node --env-file-if-exists=.dev.vars scripts/seed.ts",
-    "i18n": "node scripts/i18n.ts"
+    "i18n": "node scripts/i18n.ts",
+    "changelog": "node scripts/changelog.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -81,6 +82,7 @@
     "@supabase/supabase-js": "^2.117.1",
     "drizzle-orm": "^0.45.3",
     "ical.js": "^2.2.1",
+    "marked": "^18.0.14",
     "postgres": "^3.4.9",
     "sveltekit-superforms": "^2.30.2",
     "temporal-polyfill": "1.0.5",
