@@ -162,7 +162,7 @@
         </p>
         {#if data.ratings.gm.count > 0}
           <p
-            class="inline-flex h-11 items-center gap-2 rounded-lg border border-surface-200-800 px-3"
+            class="inline-flex h-12 items-center gap-2 rounded-lg border border-surface-200-800 px-3"
           >
             <span class="sr-only"
               >{m.rating_gm_average()}: {number.format(data.ratings.gm.average ?? 0)} ({votes(

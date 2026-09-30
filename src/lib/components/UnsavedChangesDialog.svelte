@@ -31,12 +31,12 @@
           <div class="mt-6 flex flex-wrap justify-end gap-3">
             <button
               type="button"
-              class="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+              class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
               onclick={() => answer(false)}>{m.unsaved_stay()}</button
             >
             <button
               type="button"
-              class="btn h-11 rounded-lg preset-filled-error-500 px-4 font-semibold"
+              class="btn h-12 rounded-lg preset-filled-error-500 px-4 font-semibold"
               onclick={() => answer(true)}>{m.unsaved_leave()}</button
             >
           </div>

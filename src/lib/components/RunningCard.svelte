@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import { atHandle } from '$lib/profile/handle';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
@@ -6,6 +7,7 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import ActionForm from './ActionForm.svelte';
+  import Icon from './Icon.svelte';
   import SeatDots from './SeatDots.svelte';
 
   type Person = { playerId: string; username: string };
@@ -20,7 +22,17 @@
     requests: Person[];
   };
 
-  let { item, next }: { item: Item; next: string } = $props();
+  type Props = {
+    item: Item;
+    next: string;
+    /** Whether the player list starts open on a phone. From `lg` up it is always open. */
+    openPlayers?: boolean;
+  };
+
+  let { item, next, openPlayers = false }: Props = $props();
+
+  // svelte-ignore state_referenced_locally
+  let playersOpen = $state(openPlayers);
 
   const locale = getLocale();
   const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
@@ -71,11 +83,11 @@
   <p class="mt-4 flex flex-wrap gap-3">
     <a
       href={localizedHref(`/tables/${item.slug}/manage`, locale)}
-      class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
+      class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
     >
     <a
       href={localizedHref(`/tables/${item.slug}/edit`, locale)}
-      class="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
+      class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
     >
   </p>
 
@@ -106,26 +118,41 @@
     </div>
   {/if}
 
-  <h4 class="mt-5 font-semibold">{m.dash_players()}</h4>
-  {#if item.players.length === 0}
-    <p class="mt-1">{m.dash_none_yet()}</p>
-  {:else}
-    <ul class="mt-2 grid gap-2">
-      {#each item.players as player (player.playerId)}
-        <li
-          class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
-        >
-          <span>{atHandle(player.username)}</span>
-          <ActionForm
-            action="{page}?/remove"
-            playerId={player.playerId}
-            {next}
-            label={m.table_remove()}
-            buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
-            success={m.toast_removed()}
-          />
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <Collapsible open={playersOpen} onOpenChange={(details) => (playersOpen = details.open)}>
+    <!-- A heading on a wide screen, a button that folds the list on a phone. -->
+    <h4 class="mt-5 font-semibold max-lg:hidden">{m.dash_players()}</h4>
+    <Collapsible.Trigger
+      class="mt-3 flex min-h-12 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
+    >
+      {m.dash_players_count({ count: item.players.length })}
+      <Icon name="chevron-down" class="transition-transform {playersOpen ? 'rotate-180' : ''}" />
+    </Collapsible.Trigger>
+    <Collapsible.Content>
+      {#snippet element(attributes)}
+        <div {...attributes} hidden={false} class={playersOpen ? '' : 'max-lg:hidden'}>
+          {#if item.players.length === 0}
+            <p class="mt-1">{m.dash_none_yet()}</p>
+          {:else}
+            <ul class="mt-2 grid gap-2">
+              {#each item.players as player (player.playerId)}
+                <li
+                  class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
+                >
+                  <span>{atHandle(player.username)}</span>
+                  <ActionForm
+                    action="{page}?/remove"
+                    playerId={player.playerId}
+                    {next}
+                    label={m.table_remove()}
+                    buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+                    success={m.toast_removed()}
+                  />
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
+      {/snippet}
+    </Collapsible.Content>
+  </Collapsible>
 </article>

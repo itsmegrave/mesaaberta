@@ -47,7 +47,7 @@
     }).format(date);
 
   const chip =
-    'btn h-11 shrink-0 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-tonal-primary';
+    'btn h-12 shrink-0 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-tonal-primary';
 </script>
 
 <svelte:head>
@@ -132,7 +132,7 @@
               id={item.id}
               next={here}
               class="m-0 shrink-0"
-              buttonClass="btn h-11 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+              buttonClass="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
             >
               {m.notifications_mark_read()}
             </NotificationAction>

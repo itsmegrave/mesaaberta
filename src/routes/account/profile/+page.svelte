@@ -124,7 +124,7 @@
                 submitting={$submitting}
                 delayed={$delayed}
                 timeout={$timeout}
-                class="btn h-11 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
+                class="btn h-12 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
                 >{m.account_photo_upload()}</SubmitButton
               >
             </form>
@@ -132,7 +132,7 @@
               <ActionForm
                 action="?/removePhoto"
                 label={m.account_photo_remove()}
-                buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+                buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
               />
             {/if}
             <p id="photo-hint" class="max-w-sm text-sm text-muted">
