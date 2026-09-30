@@ -40,6 +40,12 @@ const show = (data: Data) =>
 const panel = (name: string) => page.getByText(name, { exact: true });
 
 describe('Minhas mesas', () => {
+  // The banner's link leaves `#mesa-...` in the address, and that hash opens the GM's tab: clear it
+  // so a test does not start where the one before it ended.
+  beforeEach(() => {
+    history.replaceState(null, '', location.pathname + location.search);
+  });
+
   describe('on a phone', () => {
     beforeEach(async () => {
       await page.viewport(390, 844);

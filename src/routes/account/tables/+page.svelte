@@ -41,9 +41,10 @@
   // so the browser has something to scroll to.
   const showRunning = () => flushSync(() => (tab = 'running'));
   onMount(() => {
+    // Slugs are plain ASCII, so the id is the hash as is; decoding it could throw on a mangled link.
     if (location.hash.startsWith('#mesa-')) {
       showRunning();
-      document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+      document.getElementById(location.hash.slice(1))?.scrollIntoView();
     }
   });
 
