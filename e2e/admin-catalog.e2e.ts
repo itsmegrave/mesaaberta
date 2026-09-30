@@ -26,6 +26,102 @@ test('the approval queue and the catalog are for admins only', async ({ page }) 
   }
 });
 
+test('approval submits through native POST when JavaScript is disabled', async ({
+  page,
+  browser,
+}) => {
+  const admin = await createUser('Fila Sem JS', { role: 'admin' });
+  const name = `Sem JS ${Date.now().toString(36)}`;
+  await suggest('tags', [name], admin.id);
+  await signIn(page, admin, '/admin/queue');
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    storageState: await page.context().storageState(),
+    baseURL: 'http://localhost:4173',
+  });
+  try {
+    const native = await context.newPage();
+    await test.step('load the authenticated queue without scripts', async () => {
+      await native.goto('/admin/queue', { waitUntil: 'domcontentloaded' });
+      await expect(native.getByRole('button', { name: `Aprovar: ${name}` })).toBeVisible();
+    });
+    await test.step('submit the native approval form', async () => {
+      await native.getByRole('button', { name: `Aprovar: ${name}` }).click();
+      await expect(native.getByRole('heading', { name, exact: true })).toHaveCount(0);
+      await expect(native.getByText(`Aprovação de ${name} (tag)`)).toBeVisible();
+    });
+  } finally {
+    await context.close();
+  }
+});
+
+test('a refused catalog name stays in the dialog for correction', async ({ page }) => {
+  const admin = await createUser('Catálogo Erro', { role: 'admin' });
+  await signIn(page, admin, '/admin/catalog');
+  await page.getByRole('button', { name: 'Nova plataforma' }).click();
+  const field = page.getByLabel('Nome', { exact: true });
+  await field.fill('Discord');
+  await page.getByRole('button', { name: 'Adicionar' }).click();
+  await expect(field).toHaveValue('Discord');
+  await expect(field).toHaveAttribute('aria-invalid', 'true');
+  await field.fill(`Nova ${Date.now().toString(36)}`);
+  await page.getByRole('button', { name: 'Adicionar' }).click();
+  await expect(page.getByText('Entrada adicionada.')).toBeVisible();
+  await page.getByRole('button', { name: 'Nova plataforma' }).click();
+  await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('');
+});
+
+test('switching catalogs creates entries in the selected kind', async ({ page }) => {
+  const admin = await createUser('Catálogo Tipo', { role: 'admin' });
+  await signIn(page, admin, '/admin/catalog');
+  const stamp = Date.now().toString(36);
+  for (const [tab, trigger, title, name, expectedKind] of [
+    ['Tags', 'Nova tag', 'Nova tag', `Tag ${stamp}`, 'tags'],
+    ['Plataformas', 'Nova plataforma', 'Nova plataforma', `Plat ${stamp}`, 'platforms'],
+  ]) {
+    await page.getByRole('link', { name: tab, exact: true }).click();
+    await page.getByRole('button', { name: trigger, exact: true }).click();
+    await expect(page.getByRole('dialog').getByText(title, { exact: true })).toBeVisible();
+    await page.getByRole('dialog').getByLabel('Nome', { exact: true }).fill(name);
+    await page.getByRole('button', { name: 'Adicionar', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const sql = database();
+    try {
+      const [tag] = await sql`select id from tags where name = ${name}`;
+      const [platform] = await sql`select id from platforms where name = ${name}`;
+      expect(Boolean(tag)).toBe(expectedKind === 'tags');
+      expect(Boolean(platform)).toBe(expectedKind === 'platforms');
+    } finally {
+      await sql.end();
+    }
+  }
+});
+
+test('catalog fields and validation fit the viewport in both themes', async ({
+  page,
+}, testInfo) => {
+  const admin = await createUser('Catálogo Visual', { role: 'admin' });
+  await signIn(page, admin, '/admin/catalog');
+  for (const mode of ['light', 'dark']) {
+    await page.evaluate((mode) => {
+      document.documentElement.dataset.mode = mode;
+    }, mode);
+    await page.getByRole('button', { name: 'Nova plataforma' }).click();
+    const dialog = page.getByRole('dialog');
+    const field = dialog.getByLabel('Nome', { exact: true });
+    await expect(field).toBeVisible();
+    await dialog.getByRole('button', { name: 'Adicionar' }).click();
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(field).toBeFocused();
+    const bounds = await dialog.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    await page.screenshot({ path: testInfo.outputPath(`catalog-dialog-${mode}.png`) });
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+  }
+});
+
 test('an admin approves, renames and rejects suggestions, and each decision is logged', async ({
   page,
 }, testInfo) => {

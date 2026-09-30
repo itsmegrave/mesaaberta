@@ -1,7 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { CATALOG_KINDS, createSchema, pageNumber, type CatalogKind } from '$lib/admin/catalog';
+import { CATALOG_KINDS, pageNumber, type CatalogKind } from '$lib/admin/catalog';
 import { requireAdmin } from '$lib/server/admin-access';
 import { catalogActions } from '$lib/server/admin/catalog-actions';
 import { listApproved, listCatalogAdmin } from '$lib/server/admin/catalog';
@@ -27,7 +25,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     query,
     ...list,
     approved: (await listApproved(locals.db))[kind],
-    createForm: await superValidate({ kind }, zod4(createSchema)),
   };
 };
 

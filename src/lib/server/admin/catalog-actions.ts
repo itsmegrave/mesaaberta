@@ -1,6 +1,5 @@
 import { error, fail, type Action, type RequestEvent } from '@sveltejs/kit';
-import { setError, superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { validateStringForm } from '$lib/forms/contract';
 import type { z, ZodType } from 'zod';
 import { createSchema, entrySchema, mergeSchema, renameSchema } from '$lib/admin/catalog';
 import { requireAdmin } from '../admin-access';
@@ -34,7 +33,12 @@ function catalogAction<Schema extends ZodType>(
     await requireAdmin(locals);
     if (!locals.db) error(503, 'Database not configured');
 
-    const form = await superValidate(request, zod4(schema as never));
+    const form = validateStringForm(await request.formData(), schema, [
+      'kind',
+      'id',
+      'name',
+      'into',
+    ]);
     if (!form.valid) return fail(400, { form });
 
     let eventId: string;
@@ -44,7 +48,9 @@ function catalogAction<Schema extends ZodType>(
       if (e instanceof Invalid) {
         // A field the form does not show (the id) is an error of the form itself.
         const field = e.field in (form.data as object) ? e.field : '';
-        return setError(form, field as never, e.message, { status: 400 });
+        form.valid = false;
+        form.errors[field || '_errors'] = [e.message];
+        return fail(400, { form });
       }
       throw e;
     }
