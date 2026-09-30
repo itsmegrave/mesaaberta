@@ -18,8 +18,6 @@
   // Every action posted from here comes back here.
   const next = localizedHref('/account/tables', locale);
 
-  const count = (n: number) => (n === 1 ? m.dash_count_one() : m.dash_count({ count: n }));
-
   // A banner for the requests waiting on the GM, pointing at the first table that has one.
   const waiting = $derived(data.running.filter((table) => table.requests.length > 0));
   const pendingCount = $derived(waiting.reduce((sum, table) => sum + table.requests.length, 0));
@@ -28,9 +26,7 @@
       ? null
       : waiting.length > 1
         ? m.dash_banner_many({ count: pendingCount, tables: waiting.length })
-        : pendingCount === 1
-          ? m.dash_banner_one({ title: waiting[0].title })
-          : m.dash_banner({ count: pendingCount, title: waiting[0].title }),
+        : m.dash_banner({ count: pendingCount, title: waiting[0].title }),
   );
 
   // On a phone the two lists are tabs; from `lg` up they sit side by side and the tabs are not
@@ -150,7 +146,9 @@
                 <h2 id="playing" class="text-3xl font-semibold tracking-tight">
                   {m.dash_playing()}
                 </h2>
-                <span class="text-sm font-semibold text-muted">{count(data.playing.length)}</span>
+                <span class="text-sm font-semibold text-muted"
+                  >{m.dash_count({ count: data.playing.length })}</span
+                >
               </div>
               {#if data.playing.length === 0}
                 <p class="mt-3">{m.dash_playing_empty()}</p>
@@ -178,7 +176,9 @@
                 <h2 id="running" class="text-3xl font-semibold tracking-tight">
                   {m.dash_running()}
                 </h2>
-                <span class="text-sm font-semibold text-muted">{count(data.running.length)}</span>
+                <span class="text-sm font-semibold text-muted"
+                  >{m.dash_count({ count: data.running.length })}</span
+                >
               </div>
               {#if data.running.length === 0}
                 <p class="mt-3">{m.dash_running_empty()}</p>

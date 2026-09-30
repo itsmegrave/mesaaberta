@@ -42,9 +42,7 @@
     { value: 'in_person', label: m.table_modality_in_person },
   ] as const;
 
-  const count = $derived(
-    data.tables.length === 1 ? m.tables_count_one() : m.tables_count({ count: data.tables.length }),
-  );
+  const count = $derived(m.tables_count({ count: data.tables.length }));
 
   const chip =
     'inline-flex h-12 shrink-0 items-center rounded-full border-2 px-4 text-sm font-semibold whitespace-nowrap no-underline';
