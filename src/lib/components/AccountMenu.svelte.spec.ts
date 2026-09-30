@@ -15,6 +15,19 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu()).not.toBeInTheDocument();
   });
 
+  it('opens beside the side navigation when compact', async () => {
+    render(AccountMenu, {
+      name: 'Marina Alves',
+      avatarUrl: null,
+      placement: 'right-end',
+      compact: true,
+    });
+
+    await trigger().click();
+
+    await expect.element(menu()).toBeVisible();
+  });
+
   it('opens the popover on click and shows user details and navigation links', async () => {
     render(AccountMenu, { name: 'Marina Alves', avatarUrl: null });
 

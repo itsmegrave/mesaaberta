@@ -69,7 +69,11 @@ describe('+layout.svelte', () => {
     render(Layout, { children, data: signedOut });
 
     await expect
-      .element(page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }))
+      .element(
+        page
+          .getByRole('navigation', { name: 'Navegação principal' })
+          .getByRole('link', { name: 'Mesa Aberta' }),
+      )
       .toHaveAttribute('href', '/');
   });
 
@@ -93,7 +97,11 @@ describe('+layout.svelte', () => {
       render(Layout, { children, data: signedOut });
 
       await expect
-        .element(page.getByRole('banner').getByRole('link', { name: 'Mesas' }))
+        .element(
+          page
+            .getByRole('navigation', { name: 'Navegação principal' })
+            .getByRole('link', { name: 'Mesas' }),
+        )
         .not.toBeInTheDocument();
     });
 
@@ -101,18 +109,24 @@ describe('+layout.svelte', () => {
       render(Layout, { children, data: { ...signedOut, released: true } });
 
       await expect
-        .element(page.getByRole('banner').getByRole('link', { name: 'Mesas' }))
+        .element(
+          page
+            .getByRole('navigation', { name: 'Navegação principal' })
+            .getByRole('link', { name: 'Mesas' }),
+        )
         .toHaveAttribute('href', '/tables');
     });
   });
 
   describe('account area', () => {
-    const banner = () => page.getByRole('banner');
+    const navigation = () => page.getByRole('navigation', { name: 'Navegação principal' });
 
     it('has no sign-in link while login is not configured, so nobody is sent to a dead end', async () => {
       render(Layout, { children, data: signedOut });
 
-      await expect.element(banner().getByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
+      await expect
+        .element(navigation().getByRole('link', { name: 'Entrar' }))
+        .not.toBeInTheDocument();
     });
 
     it('keeps sign-in hidden until the platform is released', async () => {
@@ -121,7 +135,9 @@ describe('+layout.svelte', () => {
         data: { authEnabled: true, released: false, ...shell, account: null },
       });
 
-      await expect.element(banner().getByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
+      await expect
+        .element(navigation().getByRole('link', { name: 'Entrar' }))
+        .not.toBeInTheDocument();
     });
 
     it('offers sign-in to an anonymous visitor once login and the platform are enabled', async () => {
@@ -131,7 +147,7 @@ describe('+layout.svelte', () => {
       });
 
       await expect
-        .element(banner().getByRole('link', { name: 'Entrar' }))
+        .element(navigation().getByRole('link', { name: 'Entrar' }))
         .toHaveAttribute('href', '/login');
     });
 
@@ -146,7 +162,7 @@ describe('+layout.svelte', () => {
         },
       });
 
-      const menu = banner().getByRole('button', { name: /Ana Souza/i });
+      const menu = navigation().getByRole('button', { name: /Ana Souza/i });
       await expect.element(menu).toBeVisible();
       await expect.element(page.getByRole('button', { name: 'Sair' })).not.toBeInTheDocument();
 
@@ -167,7 +183,7 @@ describe('+layout.svelte', () => {
           account: memberAccount,
         },
       });
-      await banner()
+      await navigation()
         .getByRole('button', { name: /Ana Souza/i })
         .click();
 
@@ -176,7 +192,10 @@ describe('+layout.svelte', () => {
         .toHaveAttribute('href', '/account/profile');
       await expect
         .element(accountMenu().getByRole('link', { name: 'Minhas mesas' }))
-        .toHaveAttribute('href', '/account/tables');
+        .not.toBeInTheDocument();
+      await expect
+        .element(accountMenu().getByRole('link', { name: /Admin/i }))
+        .not.toBeInTheDocument();
     });
 
     it('shows admin link and suggestion count badge for admins', async () => {
@@ -189,11 +208,11 @@ describe('+layout.svelte', () => {
           account: adminAccount,
         },
       });
-      await banner()
+      await navigation()
         .getByRole('button', { name: /Mestre Silva/i })
         .click();
 
-      const adminLink = accountMenu().getByRole('link', { name: /Admin/i });
+      const adminLink = navigation().getByRole('link', { name: /Admin/i });
       await expect.element(adminLink).toBeVisible();
       await expect.element(adminLink).toHaveAttribute('href', '/admin');
       await expect.element(adminLink).toHaveTextContent('Admin 3');
@@ -209,7 +228,7 @@ describe('+layout.svelte', () => {
           account: memberAccount,
         },
       });
-      await banner()
+      await navigation()
         .getByRole('button', { name: /Ana Souza/i })
         .click();
 
@@ -219,7 +238,7 @@ describe('+layout.svelte', () => {
       expect(form?.getAttribute('action')).toBe('/logout');
     });
 
-    it('shows open table button in header on desktop when released and signed in', async () => {
+    it('shows the open table link on desktop when released and signed in', async () => {
       render(Layout, {
         children,
         data: {
@@ -231,7 +250,7 @@ describe('+layout.svelte', () => {
       });
 
       await expect
-        .element(banner().getByRole('link', { name: 'Abrir uma mesa' }))
+        .element(navigation().getByRole('link', { name: 'Abrir mesa' }))
         .toHaveAttribute('href', '/tables/new');
     });
 
@@ -267,7 +286,7 @@ describe('+layout.svelte', () => {
         },
       });
 
-      const bell = banner().getByRole('button', { name: 'Notificações: 2 sem ler' });
+      const bell = navigation().getByRole('button', { name: 'Notificações: 2 sem ler' });
       await expect.element(bell).toBeVisible();
       // Closed, the menu is not in the page, so its text never doubles what the page says.
       expect(document.body.textContent).not.toContain('pediu uma vaga');
@@ -286,7 +305,7 @@ describe('+layout.svelte', () => {
       render(Layout, { children, data: { ...signedOut, authEnabled: true, released: true } });
 
       await expect
-        .element(banner().getByRole('button', { name: /Notificações/ }))
+        .element(navigation().getByRole('button', { name: /Notificações/ }))
         .not.toBeInTheDocument();
     });
   });
