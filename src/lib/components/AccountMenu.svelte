@@ -13,6 +13,8 @@
     isAdmin = false,
     pendingSuggestionsCount = 0,
     messagesUnread = 0,
+    placement = 'bottom-end',
+    compact = false,
   }: {
     name: string;
     avatarUrl: string | null;
@@ -20,6 +22,10 @@
     pendingSuggestionsCount?: number;
     /** Conversations with something unread. */
     messagesUnread?: number;
+    /** Where the menu opens: under the header's button, beside the side rail's. */
+    placement?: 'bottom-end' | 'right-end';
+    /** Only the avatar, for the side rail. */
+    compact?: boolean;
   } = $props();
 
   const locale = getLocale();
@@ -32,13 +38,15 @@
 
 <svelte:window onpageshow={() => (signingOut = false)} />
 
-<Popover positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}>
+<Popover positioning={{ placement, offset: { mainAxis: 8 } }}>
   <Popover.Trigger
     aria-label="{m.nav_account_menu()}: {name}"
-    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal md:h-12 md:w-auto md:gap-2 md:pr-3 md:pl-1"
+    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal {compact
+      ? ''
+      : 'md:h-12 md:w-auto md:gap-2 md:pr-3 md:pl-1'}"
   >
     <Avatar src={avatarUrl} {name} size={32} />
-    <span class="hidden max-w-28 truncate md:inline">{name}</span>
+    <span class="hidden max-w-28 truncate {compact ? '' : 'md:inline'}">{name}</span>
     <svg
       width="16"
       height="16"
@@ -49,7 +57,7 @@
       stroke-linecap="round"
       stroke-linejoin="round"
       aria-hidden="true"
-      class="hidden shrink-0 md:block"
+      class="hidden shrink-0 {compact ? '' : 'md:block'}"
     >
       <path d="M6 9l6 6 6-6" />
     </svg>

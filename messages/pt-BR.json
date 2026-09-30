@@ -218,6 +218,8 @@
   "nav_profile": "Perfil",
   "nav_admin": "Admin",
   "nav_mobile": "Navegação móvel",
+  "nav_expand": "Expandir menu",
+  "nav_collapse": "Recolher menu",
   "nav_loading": "Carregando…",
   "version_update_available": "Uma nova versão está disponível.",
   "version_update_refresh": "Atualizar",

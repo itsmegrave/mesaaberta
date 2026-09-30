@@ -11,7 +11,16 @@
 
   type Item = Shown & { id: string; read: boolean; createdAt: Date };
 
-  let { unread, latest }: { unread: number; latest: Item[] } = $props();
+  let {
+    unread,
+    latest,
+    placement = 'bottom-end',
+  }: {
+    unread: number;
+    latest: Item[];
+    /** Where the list opens: under the header's bell, beside the side rail's. */
+    placement?: 'bottom-end' | 'right-end';
+  } = $props();
 
   // Skeleton keeps a closed popover's content in the page, only hidden. The list is drawn while the
   // menu is open, so its text never doubles what the page itself says.
@@ -36,7 +45,7 @@
 </script>
 
 <Popover
-  positioning={{ placement: 'bottom-end', offset: { mainAxis: 8 } }}
+  positioning={{ placement, offset: { mainAxis: 8 } }}
   onOpenChange={(details) => (open = details.open)}
 >
   <Popover.Trigger

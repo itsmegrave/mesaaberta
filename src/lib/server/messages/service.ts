@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, lt, ne, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, lte, lt, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import {
   conversationMembers,
@@ -166,7 +166,8 @@ export async function sendMessage(
       .where(
         and(
           eq(messages.senderId, actor.id),
-          sql`${messages.createdAt} > ${windowStart} and ${messages.createdAt} <= ${now}`,
+          gt(messages.createdAt, windowStart),
+          lte(messages.createdAt, now),
         ),
       )
       .orderBy(desc(messages.createdAt))
