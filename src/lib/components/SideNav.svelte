@@ -146,7 +146,7 @@
                 href={localizedHref('/admin', locale)}
                 aria-label={m.nav_admin()}
                 title={m.nav_admin()}
-                class="btn-icon relative flex size-11 shrink-0 items-center justify-center rounded-full hover:preset-tonal"
+                class="relative btn-icon flex size-11 shrink-0 items-center justify-center rounded-full hover:preset-tonal"
               >
                 <Icon name="shield" size={20} />
                 {#if account.pendingSuggestionsCount > 0}
