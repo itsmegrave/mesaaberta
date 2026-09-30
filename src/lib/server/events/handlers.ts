@@ -1,3 +1,4 @@
+import { mixpanelHandler, type AnalyticsEnv } from '../analytics/mixpanel';
 import { instagramQueueHandler } from '../instagram/publisher';
 import type { Handler } from './types';
 import { inviteHandler, type InviteEnv } from './invites';
@@ -10,8 +11,9 @@ import { announcementHandler } from './announcements';
  * request or Cron environment rather than imported as a process-global client. The bell needs
  * only the database, so its handlers run whatever the environment has.
  */
-export function handlersFor(env: InviteEnv | undefined): readonly Handler[] {
+export function handlersFor(env: (InviteEnv & AnalyticsEnv) | undefined): readonly Handler[] {
   const handler = inviteHandler(env);
   const bell = [notificationHandler, announcementHandler, instagramQueueHandler];
-  return handler ? [handler, ...bell] : bell;
+  const analytics = mixpanelHandler(env);
+  return [...(handler ? [handler] : []), ...bell, ...(analytics ? [analytics] : [])];
 }

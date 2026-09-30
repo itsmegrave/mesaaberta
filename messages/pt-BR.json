@@ -954,5 +954,8 @@
   "admin_toast_rename": "Nome atualizado.",
   "admin_toast_merge": "Entradas mescladas.",
   "admin_toast_disable": "Entrada desativada.",
-  "admin_toast_create": "Entrada adicionada."
+  "admin_toast_create": "Entrada adicionada.",
+  "privacy_provider_sentry": "Sentry: diagnóstico de erros e registros técnicos com contexto limitado, sem dados de formulário, cookies, endereço IP, e-mail ou identificação da conta.",
+  "privacy_provider_mixpanel": "Mixpanel: análise de uso a partir de ações como criar mesas, pedir vagas e avaliar. Enviamos identificadores opacos da conta, da mesa e do evento, o tipo da ação e seu horário; não enviamos nomes, e-mails, textos, comentários ou endereço IP.",
+  "privacy_provider_traffic": "Cloudflare Web Analytics: estatísticas de tráfego, sem cookies de análise. O Mixpanel recebe eventos pelo servidor e não usa cookies no seu navegador."
 }

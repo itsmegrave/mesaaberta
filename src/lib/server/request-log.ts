@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
 import type { Logger } from './logger';
 
@@ -10,20 +11,47 @@ export const handleRequestLog =
   (logger: Logger): Handle =>
   async ({ event, resolve }) => {
     const requestId = event.request.headers.get('cf-ray') ?? crypto.randomUUID();
-    const log = logger.child({ requestId });
+    const log = logger.child({
+      requestId,
+      environment: import.meta.env.PROD ? 'production' : 'development',
+      release: event.platform?.env.CF_VERSION_METADATA?.id,
+    });
     const started = Date.now();
+    Sentry.setTag('requestId', requestId);
+    Sentry.setTag('route', event.route?.id ?? '/unmatched');
 
     event.locals.log = log;
 
-    const response = await resolve(event);
+    let response: Response;
+    try {
+      response = await resolve(event);
+    } catch (error) {
+      log.error('request.failed', {
+        event: 'request.failed',
+        method: event.request.method,
+        route: event.route?.id ?? '/unmatched',
+        status: 500,
+        durationMs: Date.now() - started,
+        error,
+      });
+      throw error;
+    }
 
-    // Pathname only: the query string is where tokens and emails end up.
-    log.info('request', {
+    // Route templates keep slugs and other user-controlled path segments out of telemetry.
+    log[
+      response.status >= 500
+        ? 'error'
+        : response.status >= 400 && response.status !== 404
+          ? 'warn'
+          : 'info'
+    ]('request', {
       method: event.request.method,
-      path: event.url.pathname,
+      route: event.route?.id ?? '/unmatched',
+      event: 'request.completed',
+      outcome:
+        response.status >= 500 ? 'failed' : response.status >= 400 ? 'rejected' : 'succeeded',
       status: response.status,
       durationMs: Date.now() - started,
-      userId: event.locals.userId,
     });
 
     return response;

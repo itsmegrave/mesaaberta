@@ -36,7 +36,7 @@ export async function runSweeper(
 
   const { db, close } = open(connectionString);
   try {
-    const swept = await sweepEvents(db, handlers);
+    const swept = await sweepEvents(db, handlers, new Date(), 50, log);
     if (swept > 0) log.info('event sweep', { swept });
     await publishInstagramPosts(db, env);
     const pruned = await pruneEvents(db);

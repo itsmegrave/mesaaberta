@@ -50,7 +50,9 @@ function catalogAction<Schema extends ZodType>(
     }
 
     // The record is written with the change; the dispatch (no handler yet, it marks it done) comes after.
-    locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
+    locals.afterResponse((db) =>
+      dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
+    );
     return { form };
   };
 }

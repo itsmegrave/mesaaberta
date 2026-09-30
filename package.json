@@ -82,6 +82,8 @@
     "@cf-wasm/resvg": "^0.4.0",
     "@fontsource-variable/cinzel": "^5.3.0",
     "@growthbook/growthbook": "^1.7.0",
+    "@sentry/cloudflare": "11.1.0",
+    "@sentry/sveltekit": "^11.1.0",
     "@sindresorhus/slugify": "^3.0.1",
     "@skeletonlabs/skeleton": "5.0.1",
     "@skeletonlabs/skeleton-svelte": "5.0.1",

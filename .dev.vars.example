@@ -41,3 +41,7 @@ MAILPIT_URL=http://127.0.0.1:54344
 # INSTAGRAM_TOKEN_KEY=
 # INSTAGRAM_API_VERSION=v25.0
 # APP_ORIGIN=https://mesaaberta.app
+
+# Product analytics, server-side only. Set these only for deliberate analytics smoke tests locally.
+# MIXPANEL_TOKEN=
+# MIXPANEL_REGION=US

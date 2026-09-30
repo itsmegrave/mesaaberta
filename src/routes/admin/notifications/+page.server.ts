@@ -64,7 +64,9 @@ export const actions: Actions = {
 
     // After the response, so a large audience never holds up the page; the sweeper retries it.
     const { eventId } = result;
-    locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
+    locals.afterResponse((db) =>
+      dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
+    );
     redirect(303, url.pathname);
   },
 };

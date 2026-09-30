@@ -60,7 +60,13 @@ describe('the queue actions', () => {
     expect(approveEntry).toHaveBeenCalledWith({}, admin, 'tag', entry);
     expect(after).toHaveLength(1);
     await after[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith({}, expect.anything(), 'event-1');
+    expect(dispatchEvent).toHaveBeenCalledWith(
+      {},
+      expect.anything(),
+      'event-1',
+      expect.any(Date),
+      e.locals.log,
+    );
   });
 
   it('refuse an id that is not an id, and a kind that is not a catalog', async () => {

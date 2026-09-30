@@ -90,7 +90,13 @@ describe('the send action', () => {
 
     expect(after).toHaveLength(1);
     await after[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith({}, expect.anything(), 'ev1');
+    expect(dispatchEvent).toHaveBeenCalledWith(
+      {},
+      expect.anything(),
+      'ev1',
+      expect.any(Date),
+      e.locals.log,
+    );
   });
 
   it('refuses a missing title or body, and a link that leaves the site, before sending', async () => {

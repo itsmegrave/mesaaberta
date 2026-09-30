@@ -5,139 +5,86 @@ const capture = () => {
   const lines: Record<string, unknown>[] = [];
   const log = createLogger({
     write: (_level, line) => lines.push(JSON.parse(line)),
-    now: () => new Date('2026-09-19T21:00:00.000Z'),
+    now: () => new Date('2026-09-19T21:00:00Z'),
   });
-
   return { lines, log };
 };
 
 describe('logger', () => {
-  it('writes one JSON line with level, message and time', () => {
+  it('writes JSON with reserved envelope fields and operational context', () => {
     const { lines, log } = capture();
-
-    log.info('booked', { table: 7 });
-
+    log.info('request.completed', {
+      event: 'request.completed',
+      status: 200,
+      durationMs: 5,
+      level: 'fatal',
+      time: 'fake',
+      service: 'fake',
+    });
     expect(lines).toEqual([
-      { level: 'info', msg: 'booked', time: '2026-09-19T21:00:00.000Z', table: 7 },
+      {
+        event: 'request.completed',
+        status: 200,
+        durationMs: 5,
+        service: 'mesaaberta',
+        schemaVersion: 1,
+        time: '2026-09-19T21:00:00.000Z',
+        level: 'info',
+        msg: 'request.completed',
+      },
     ]);
   });
-
-  it('sends each level to its own console method', () => {
-    const calls: string[] = [];
-    const log = createLogger({ write: (level) => calls.push(level) });
-
+  it('stamps children with the request id without contaminating the parent', () => {
+    const { lines, log } = capture();
+    log.child({ requestId: '0123456789abcdef-GRU' }).info('first');
+    log.info('outside');
+    expect(lines[0]).toMatchObject({ requestId: '0123456789abcdef-GRU' });
+    expect(lines[1]).not.toHaveProperty('requestId');
+  });
+  it('drops free text, identities and nested secrets before any destination', () => {
+    const { lines, log } = capture();
+    log.info('safe', {
+      userId: 'user-1',
+      name: 'Ana',
+      email: 'ana@example.com',
+      token: 'secret',
+      request: { headers: { cookie: 'sid=secret' } },
+      form: { password: 'secret' },
+    });
+    expect(JSON.stringify(lines)).not.toMatch(/secret|Ana|ana@example|user-1/);
+  });
+  it('keeps error types and SQLSTATE without messages, stacks or causes containing values', () => {
+    const { lines, log } = capture();
+    log.error('query.failed', {
+      error: new Error('Failed query: secret', {
+        cause: Object.assign(new Error('ana@example.com'), { code: '23505' }),
+      }),
+    });
+    expect(lines[0]).toMatchObject({ errorType: 'Error', causeCode: '23505' });
+    expect(JSON.stringify(lines)).not.toMatch(/secret|ana@example/);
+  });
+  it('scrubs credentials accidentally included in a message', () => {
+    const { lines, log } = capture();
+    log.warn('rejected ana@example.com Bearer abc password=xyz');
+    expect(lines[0].msg).toBe('rejected [redacted] [redacted] [redacted]');
+  });
+  it('ignores cyclic unknown fields and survives an unavailable destination', () => {
+    const loop: Record<string, unknown> = {};
+    loop.self = loop;
+    const log = createLogger({
+      write: () => {
+        throw new Error('unavailable');
+      },
+    });
+    expect(() => log.info('safe', { loop })).not.toThrow();
+  });
+  it('preserves severity for every destination', () => {
+    const levels: string[] = [];
+    const log = createLogger({ write: (level) => levels.push(level) });
     log.debug('a');
     log.info('b');
     log.warn('c');
     log.error('d');
-
-    expect(calls).toEqual(['debug', 'info', 'warn', 'error']);
-  });
-
-  it('stamps every line of a child logger with its bindings, and the parent stays clean', () => {
-    const { lines, log } = capture();
-    const request = log.child({ requestId: '8f3a-LHR', userId: 'user-1' });
-
-    request.info('first');
-    request.warn('second');
-    log.info('outside');
-
-    expect(lines[0]).toMatchObject({ requestId: '8f3a-LHR', userId: 'user-1' });
-    expect(lines[1]).toMatchObject({ requestId: '8f3a-LHR', userId: 'user-1' });
-    expect(lines[2]).not.toHaveProperty('requestId');
-  });
-
-  it('omits the user id while nobody is signed in', () => {
-    const { lines, log } = capture();
-
-    log.child({ requestId: 'r1', userId: undefined }).info('anonymous');
-
-    expect(lines[0]).not.toHaveProperty('userId');
-  });
-
-  it('does not let a field overwrite the level, message or time', () => {
-    const { lines, log } = capture();
-
-    log.info('real', { level: 'fatal', msg: 'fake', time: 'yesterday' });
-
-    expect(lines[0]).toMatchObject({
-      level: 'info',
-      msg: 'real',
-      time: '2026-09-19T21:00:00.000Z',
-    });
-  });
-
-  describe('PII', () => {
-    it.each(['email', 'Email', 'userEmail', 'e-mail', 'token', 'accessToken', 'password', 'cpf'])(
-      'redacts the value of a "%s" field',
-      (key) => {
-        const { lines, log } = capture();
-
-        log.info('signup', { [key]: 'sensitive-value' });
-
-        expect(JSON.stringify(lines[0])).not.toContain('sensitive-value');
-        expect(lines[0][key]).toBe('[redacted]');
-      },
-    );
-
-    it('redacts sensitive fields nested inside objects and arrays', () => {
-      const { lines, log } = capture();
-
-      log.info('deep', { request: { headers: { authorization: 'Bearer abc', cookie: 'sid=1' } } });
-      log.info('list', { people: [{ name: 'Ana', phone: '+55 11 99999-0000' }] });
-
-      expect(JSON.stringify(lines)).not.toMatch(/Bearer abc|sid=1|99999/);
-      expect(lines[1].people).toEqual([{ name: 'Ana', phone: '[redacted]' }]);
-    });
-
-    it('keeps harmless fields that only look similar', () => {
-      const { lines, log } = capture();
-
-      log.info('game', { session: 12, description: 'one shot' });
-
-      expect(lines[0]).toMatchObject({ session: 12, description: 'one shot' });
-    });
-
-    it('scrubs an email address or bearer token written into a message or string value', () => {
-      const { lines, log } = capture();
-
-      log.error('rejected ana@example.com', { detail: 'sent Bearer eyJhbGciOi.payload.sig' });
-
-      expect(JSON.stringify(lines[0])).not.toMatch(/ana@example|eyJhbGciOi/);
-      expect(lines[0].msg).toBe('rejected [redacted]');
-    });
-
-    it('logs an error as its name and message, never its stack', () => {
-      const { lines, log } = capture();
-      const error = new TypeError('bad input from ana@example.com');
-
-      log.error('failed', { error });
-
-      expect(lines[0].error).toEqual({ name: 'TypeError', message: 'bad input from [redacted]' });
-    });
-
-    it("adds the code of the error's cause, and nothing else of it", () => {
-      const { lines, log } = capture();
-      const cause = Object.assign(new Error('Key (email)=(ana@example.com) exists'), {
-        code: '23505',
-      });
-
-      log.error('failed', { error: new Error('Failed query', { cause }) });
-
-      expect(lines[0].error).toEqual({
-        name: 'Error',
-        message: 'Failed query',
-        causeCode: '23505',
-      });
-    });
-  });
-
-  it('survives a self-referencing field instead of throwing', () => {
-    const { lines, log } = capture();
-    const loop: Record<string, unknown> = {};
-    loop.self = loop;
-
-    expect(() => log.info('loop', { loop })).not.toThrow();
-    expect(lines).toHaveLength(1);
+    expect(levels).toEqual(['debug', 'info', 'warn', 'error']);
   });
 });

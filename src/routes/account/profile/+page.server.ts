@@ -129,7 +129,7 @@ export const actions: Actions = {
     // Sent now, while the GM's address still exists; a failure is left to the sweeper.
     const handlers = handlersFor(platform?.env);
     for (const id of eventIds) {
-      await dispatchEvent(locals.db, handlers, id).catch((e: unknown) =>
+      await dispatchEvent(locals.db, handlers, id, new Date(), locals.log).catch((e: unknown) =>
         locals.log.error('account deletion: dispatch failed', { error: e, eventId: id }),
       );
     }

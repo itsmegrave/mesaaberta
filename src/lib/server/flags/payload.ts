@@ -1,3 +1,4 @@
+import { logger, type Logger } from '../logger';
 import type { FeatureApiResponse } from '@growthbook/growthbook';
 
 /** A tiny string store with a time to live. Deliberately free of Request/Response types. */
@@ -7,6 +8,7 @@ export type PayloadCache = {
 };
 
 type Options = {
+  log?: Pick<Logger, 'warn'>;
   apiHost: string;
   clientKey: string;
   fetch: typeof globalThis.fetch;
@@ -29,6 +31,7 @@ export function growthBookPayload({
   waitUntil,
   ttlSeconds = 60,
   timeoutMs = 800,
+  log = logger,
 }: Options): () => Promise<FeatureApiResponse | null> {
   const url = `${apiHost}/api/features/${clientKey}`;
 
@@ -38,13 +41,16 @@ export function growthBookPayload({
       if (cached) return JSON.parse(cached) as FeatureApiResponse;
 
       const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-      if (!response.ok) throw new Error(`GrowthBook answered ${response.status}`);
+      if (!response.ok)
+        throw Object.assign(new Error(`GrowthBook answered ${response.status}`), {
+          code: `HTTP_${response.status}`,
+        });
       const payload = (await response.json()) as FeatureApiResponse;
 
       if (cache) waitUntil(cache.set(url, JSON.stringify(payload), ttlSeconds));
       return payload;
     } catch (error) {
-      console.error('flags: could not load GrowthBook features:', String(error));
+      log.warn('flags.fetch.failed', { error });
       return null;
     }
   };

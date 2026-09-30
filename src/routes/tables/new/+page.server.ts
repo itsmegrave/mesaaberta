@@ -47,7 +47,13 @@ export const actions: Actions = {
         const created = await createTable(db, await locals.getProfile(), input, { imagePath });
         // After the commit and the response, so the visitor never waits for a handler.
         locals.afterResponse((db) =>
-          dispatchEvent(db, handlersFor(event.platform?.env), created.eventId),
+          dispatchEvent(
+            db,
+            handlersFor(event.platform?.env),
+            created.eventId,
+            new Date(),
+            locals.log,
+          ),
         );
         return created;
       },
