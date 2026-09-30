@@ -16,11 +16,12 @@
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
   import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
   import NotificationBell from '$lib/components/NotificationBell.svelte';
+  import SideNav from '$lib/components/SideNav.svelte';
   import TableLogo from '$lib/components/TableLogo.svelte';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import Toaster from '$lib/components/Toaster.svelte';
   import UnsavedChangesDialog from '$lib/components/UnsavedChangesDialog.svelte';
-  import { Navigation, Progress } from '@skeletonlabs/skeleton-svelte';
+  import { Progress } from '@skeletonlabs/skeleton-svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -90,13 +91,6 @@
     if (!to?.route.id || to.route.id === page.route.id) return null;
     return SKELETONS[to.route.id] ?? null;
   });
-
-  // The header marks the section you are in, as the bottom tab bar does on phones.
-  const pathname = $derived(page.url.pathname);
-  const inTables = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
-  const inMyTables = $derived(pathname.startsWith('/account/tables'));
-  const navLink =
-    'btn hidden h-12 rounded-lg px-3 font-semibold hover:preset-tonal md:flex aria-[current=page]:underline aria-[current=page]:decoration-primary-500 aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
 </script>
 
 <svelte:head>
@@ -123,195 +117,167 @@
     </p>
   {/if}
 
-  <header
-    class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 md:h-20 md:px-8"
-  >
-    <a href={localizedHref('/', locale)} class="flex items-center gap-2 no-underline md:gap-3">
-      <TableLogo size={34} class="size-7 md:size-8" />
-      <span class="font-brand text-lg font-semibold tracking-wider md:text-2xl"> Mesa Aberta </span>
-    </a>
-
+  <div class="md:flex">
     {#if !data.maintenance}
-      <Navigation layout="bar" aria-label={m.nav_main()}>
-        {#snippet element(attributes)}
-          <nav {...attributes as Record<string, unknown>}>
-            <Navigation.Content class="flex items-center gap-2 md:gap-1">
-              {#if data.released}
-                <Navigation.TriggerAnchor
-                  href={localizedHref('/tables', locale)}
-                  aria-current={inTables ? 'page' : undefined}
-                  class={navLink}
-                >
-                  {m.nav_tables()}
-                </Navigation.TriggerAnchor>
-              {/if}
-
-              {#if data.account}
-                <Navigation.TriggerAnchor
-                  href={localizedHref('/account/tables', locale)}
-                  aria-current={inMyTables ? 'page' : undefined}
-                  class={navLink}
-                >
-                  {m.nav_my_tables()}
-                </Navigation.TriggerAnchor>
-
-                <Navigation.TriggerAnchor
-                  href={localizedHref('/tables/new', locale)}
-                  class="btn hidden h-12 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                    class="shrink-0"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  {m.nav_open_table()}
-                </Navigation.TriggerAnchor>
-              {/if}
-
-              <span aria-hidden="true" class="hidden w-2 md:block"></span>
-              <ThemeToggle />
-
-              {#if data.account}
-                <NotificationBell
-                  unread={badges.data?.unread ?? data.account.notifications.unread}
-                  latest={data.account.notifications.latest}
-                />
-              {/if}
-
-              {#if data.account}
-                <AccountMenu
-                  name={data.account.displayName}
-                  avatarUrl={data.account.avatarUrl}
-                  isAdmin={data.account.isAdmin}
-                  pendingSuggestionsCount={data.account.pendingSuggestionsCount}
-                  messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
-                />
-              {:else if data.authEnabled && data.released}
-                <a
-                  href={resolve('/login')}
-                  class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
-                >
-                  {m.nav_sign_in()}
-                </a>
-              {/if}
-            </Navigation.Content>
-          </nav>
-        {/snippet}
-      </Navigation>
-    {/if}
-  </header>
-
-  {#if updated.current}
-    <aside
-      role="status"
-      class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
-    >
-      <p>{m.version_update_available()}</p>
-      <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
-        {m.version_update_refresh()}
-      </button>
-    </aside>
-  {/if}
-
-  <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
-  {#if loading.current}
-    <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
-      <Progress.Track class="h-1">
-        <Progress.Range />
-      </Progress.Track>
-    </Progress>
-  {/if}
-
-  <Toaster />
-  <UnsavedChangesDialog />
-
-  <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
-    {#if arriving}
-      <ListSkeleton kind={arriving} heading />
-    {:else}
-      {@render children()}
-    {/if}
-  </main>
-
-  {#if data.released && !data.maintenance}
-    <BottomTabBar isAdmin={data.account?.isAdmin} />
-  {/if}
-
-  {#if !data.maintenance}
-    <footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
-      <div
-        class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
-      >
-        <div class="flex flex-col gap-3">
-          <p class="flex items-center gap-2 text-surface-950-50">
-            <TableLogo size={26} />
-            <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
-          </p>
-          <p class="md:max-w-md">
-            {m.footer_made_with()}
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              role="img"
-              aria-label={m.footer_made_with_love()}
-              class="inline shrink-0 fill-secondary-300 align-middle"
-            >
-              <path
-                d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
-              />
-            </svg>
-            {m.footer_made_by()}
-            <a
-              href="https://github.com/itsmegrave"
-              rel="noopener"
-              target="_blank"
-              class="link-underline text-surface-950-50">itsmegrave</a
-            >. {m.footer_open_source()}
-            <a
-              href="https://github.com/itsmegrave/mesaaberta"
-              rel="noopener"
-              target="_blank"
-              class="link-underline text-surface-950-50">GitHub</a
-            >.
-          </p>
-        </div>
-        <div class="flex flex-col gap-3 md:max-w-sm">
-          <p>
-            {m.footer_community()}
-            <a
-              href="https://linktr.ee/lenindragonsrpg"
-              rel="noopener"
-              target="_blank"
-              class="link-underline text-surface-950-50">Lenindragons</a
-            >.
-          </p>
-          <p>
-            {m.footer_report_bug()}
-            <a
-              href="https://github.com/itsmegrave/mesaaberta/issues"
-              rel="noopener"
-              target="_blank"
-              class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
-            >.
-          </p>
-          <p>
-            {m.footer_changelog()}
-            <a href={localizedHref('/changelog', locale)} class="link-underline text-surface-950-50"
-              >{m.footer_changelog_link()}</a
-            >.
-          </p>
-        </div>
+      <div class="sticky top-0 hidden h-dvh shrink-0 md:block">
+        <SideNav
+          account={data.account}
+          released={data.released}
+          authEnabled={data.authEnabled}
+          unread={badges.data?.unread ?? data.account?.notifications.unread ?? 0}
+          latest={data.account?.notifications.latest ?? []}
+          messagesUnread={badges.data?.messages ?? data.account?.messagesUnread ?? 0}
+        />
       </div>
-    </footer>
-  {/if}
+    {/if}
+
+    <div class="min-w-0 flex-1">
+      <!-- On desktop the side rail carries the links and account; the header is the phone's. -->
+      <header
+        class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 {data.maintenance
+          ? 'md:h-20 md:px-8'
+          : 'md:hidden'}"
+      >
+        <a href={localizedHref('/', locale)} class="flex items-center gap-2 no-underline md:gap-3">
+          <TableLogo size={34} class="size-7 md:size-8" />
+          <span class="font-brand text-lg font-semibold tracking-wider md:text-2xl">
+            Mesa Aberta
+          </span>
+        </a>
+
+        {#if !data.maintenance}
+          <div class="flex items-center gap-2">
+            <ThemeToggle />
+
+            {#if data.account}
+              <NotificationBell
+                unread={badges.data?.unread ?? data.account.notifications.unread}
+                latest={data.account.notifications.latest}
+              />
+              <AccountMenu
+                name={data.account.displayName}
+                avatarUrl={data.account.avatarUrl}
+                isAdmin={data.account.isAdmin}
+                pendingSuggestionsCount={data.account.pendingSuggestionsCount}
+                messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
+              />
+            {:else if data.authEnabled && data.released}
+              <a
+                href={resolve('/login')}
+                class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
+              >
+                {m.nav_sign_in()}
+              </a>
+            {/if}
+          </div>
+        {/if}
+      </header>
+
+      {#if updated.current}
+        <aside
+          role="status"
+          class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
+        >
+          <p>{m.version_update_available()}</p>
+          <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
+            {m.version_update_refresh()}
+          </button>
+        </aside>
+      {/if}
+
+      <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
+      {#if loading.current}
+        <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
+          <Progress.Track class="h-1">
+            <Progress.Range />
+          </Progress.Track>
+        </Progress>
+      {/if}
+
+      <Toaster />
+      <UnsavedChangesDialog />
+
+      <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
+        {#if arriving}
+          <ListSkeleton kind={arriving} heading />
+        {:else}
+          {@render children()}
+        {/if}
+      </main>
+
+      {#if data.released && !data.maintenance}
+        <BottomTabBar isAdmin={data.account?.isAdmin} />
+      {/if}
+
+      {#if !data.maintenance}
+        <footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
+          <div
+            class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
+          >
+            <div class="flex flex-col gap-3">
+              <p class="flex items-center gap-2 text-surface-950-50">
+                <TableLogo size={26} />
+                <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
+              </p>
+              <p class="md:max-w-md">
+                {m.footer_made_with()}
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-label={m.footer_made_with_love()}
+                  class="inline shrink-0 fill-secondary-300 align-middle"
+                >
+                  <path
+                    d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
+                  />
+                </svg>
+                {m.footer_made_by()}
+                <a
+                  href="https://github.com/itsmegrave"
+                  rel="noopener"
+                  target="_blank"
+                  class="link-underline text-surface-950-50">itsmegrave</a
+                >. {m.footer_open_source()}
+                <a
+                  href="https://github.com/itsmegrave/mesaaberta"
+                  rel="noopener"
+                  target="_blank"
+                  class="link-underline text-surface-950-50">GitHub</a
+                >.
+              </p>
+            </div>
+            <div class="flex flex-col gap-3 md:max-w-sm">
+              <p>
+                {m.footer_community()}
+                <a
+                  href="https://linktr.ee/lenindragonsrpg"
+                  rel="noopener"
+                  target="_blank"
+                  class="link-underline text-surface-950-50">Lenindragons</a
+                >.
+              </p>
+              <p>
+                {m.footer_report_bug()}
+                <a
+                  href="https://github.com/itsmegrave/mesaaberta/issues"
+                  rel="noopener"
+                  target="_blank"
+                  class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
+                >.
+              </p>
+              <p>
+                {m.footer_changelog()}
+                <a
+                  href={localizedHref('/changelog', locale)}
+                  class="link-underline text-surface-950-50">{m.footer_changelog_link()}</a
+                >.
+              </p>
+            </div>
+          </div>
+        </footer>
+      {/if}
+    </div>
+  </div>
 </QueryClientProvider>
