@@ -228,3 +228,97 @@ export async function publishInstagramPosts(
   }
   return rows.length;
 }
+
+/** Publishes one eligible table on an explicit admin request without draining the cron queue. */
+export async function publishInstagramTable(
+  db: AnyDb,
+  env: InstagramEnv | undefined,
+  tableId: string,
+  now = new Date(),
+): Promise<'published' | 'unavailable' | 'not-eligible' | 'already-published'> {
+  if (!configured(env)) return 'unavailable';
+  const [account] = await db
+    .select()
+    .from(instagramAccounts)
+    .where(eq(instagramAccounts.id, 'mesaaberta'));
+  if (!account || account.expiresAt <= now) return 'unavailable';
+
+  const [tableRow] = await db
+    .select({ slug: gameTables.slug })
+    .from(gameTables)
+    .where(eq(gameTables.id, tableId));
+  const table = tableRow ? await findTableBySlug(db, tableRow.slug, now) : null;
+  if (!table?.nextAt) return 'not-eligible';
+
+  let token = await decryptToken(account.token, env!.INSTAGRAM_TOKEN_KEY!);
+  if (account.expiresAt.getTime() - now.getTime() < 7 * DAY) {
+    const refreshed = await refreshToken(token);
+    token = refreshed.access_token;
+    await db
+      .update(instagramAccounts)
+      .set({
+        token: await encryptToken(token, env!.INSTAGRAM_TOKEN_KEY!),
+        expiresAt: new Date(now.getTime() + refreshed.expires_in * 1000),
+      })
+      .where(eq(instagramAccounts.id, account.id));
+  }
+
+  let [post] = await db.select().from(instagramPosts).where(eq(instagramPosts.tableId, tableId));
+  if (post?.status === 'published' || (post && ['publishing', 'uncertain'].includes(post.status)))
+    return 'already-published';
+  if (!post) {
+    [post] = await db
+      .insert(instagramPosts)
+      .values({ tableId, eventId: crypto.randomUUID(), status: 'queued' })
+      .onConflictDoNothing()
+      .returning();
+    if (!post) return 'already-published';
+  }
+  if (!['queued', 'processing', 'failed', 'skipped'].includes(post.status))
+    return 'already-published';
+
+  const [claimed] = await db
+    .update(instagramPosts)
+    .set({
+      status: 'queued',
+      claimedUntil: new Date(now.getTime() + LEASE_MS),
+      nextAttemptAt: now,
+      lastError: null,
+    })
+    .where(
+      and(
+        eq(instagramPosts.tableId, tableId),
+        inArray(instagramPosts.status, ['queued', 'processing', 'failed', 'skipped']),
+        or(isNull(instagramPosts.claimedUntil), lte(instagramPosts.claimedUntil, now)),
+      ),
+    )
+    .returning();
+  if (!claimed) return 'already-published';
+
+  try {
+    await processPost(db, env!, claimed, token, account.userId, now);
+    return claimed.status === 'published' ? 'published' : 'not-eligible';
+  } catch (error) {
+    const uncertain = claimed.status === 'publishing' || claimed.status === 'uncertain';
+    await db
+      .update(instagramPosts)
+      .set({
+        status: uncertain ? 'uncertain' : 'failed',
+        attempts: claimed.attempts + 1,
+        lastError: uncertain
+          ? 'publish_outcome_unknown'
+          : error instanceof InstagramError
+            ? `api_${error.code}`
+            : 'processing_failed',
+        claimedUntil: null,
+        nextAttemptAt: new Date(now.getTime() + backoffSeconds(claimed.attempts + 1) * 1000),
+      })
+      .where(eq(instagramPosts.tableId, tableId));
+    throw error;
+  } finally {
+    await db
+      .update(instagramPosts)
+      .set({ claimedUntil: null })
+      .where(eq(instagramPosts.tableId, tableId));
+  }
+}
