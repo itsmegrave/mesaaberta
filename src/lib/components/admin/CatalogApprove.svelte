@@ -19,8 +19,9 @@
   const form = superForm(defaults({ kind, id }, zod4(entrySchema)), {
     id: `approve-${id}`,
     validators: zod4Client(entrySchema),
-    onUpdated: ({ form: result }) => {
-      if (result.valid) toast.success(m.admin_toast_approve());
+    // Not `onUpdated`: a decided suggestion leaves the list, and this form goes with it.
+    onResult: ({ result }) => {
+      if (result.type === 'success') toast.success(m.admin_toast_approve());
     },
   });
   const { errors, enhance, submitting, delayed, timeout } = form;

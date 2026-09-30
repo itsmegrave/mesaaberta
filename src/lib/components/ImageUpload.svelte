@@ -5,6 +5,7 @@
   import { FileUpload } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
   import ImageCropper from '$lib/components/ImageCropper.svelte';
+  import { isDecodable } from '$lib/forms/decodable';
   import { IMAGE_TYPES } from '$lib/forms/files';
   import { m } from '$lib/paraglide/messages';
 
@@ -35,12 +36,12 @@
   // The picked picture waits in the cropper; what comes out (or nothing, when it is cancelled) is
   // what the field then holds. A file the crop can't take goes on as it is, for the schema to refuse.
   let framing = $state<{ file: File; done: (files: File[]) => void } | null>(null);
-  const frame = (files: File[]) =>
-    new Promise<File[]>((done) => {
-      const [file] = files;
-      if (!file || !(IMAGE_TYPES as readonly string[]).includes(file.type)) return done(files);
-      framing = { file, done };
-    });
+  const frame = async (files: File[]) => {
+    const [file] = files;
+    if (!file || !(IMAGE_TYPES as readonly string[]).includes(file.type)) return files;
+    if (!(await isDecodable(file))) return files;
+    return new Promise<File[]>((done) => (framing = { file, done }));
+  };
   const finish = (files: File[]) => {
     framing?.done(files);
     framing = null;
