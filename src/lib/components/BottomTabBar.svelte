@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { page } from '$app/state';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
@@ -92,21 +93,7 @@
         ? 'bg-surface-200-800'
         : 'bg-transparent'}"
     >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        class="shrink-0"
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-      </svg>
+      <Icon name="game-icons:tabletop-players" size={22} />
     </span>
     {m.nav_my_tables()}
   </a>

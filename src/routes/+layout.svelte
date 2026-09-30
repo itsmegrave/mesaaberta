@@ -16,6 +16,7 @@
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
   import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
   import NotificationBell from '$lib/components/NotificationBell.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import SideNav from '$lib/components/SideNav.svelte';
   import TableLogo from '$lib/components/TableLogo.svelte';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
@@ -164,6 +165,7 @@
                 href={resolve('/login')}
                 class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
               >
+                <Icon name="game-icons:dungeon-gate" size={20} />
                 {m.nav_sign_in()}
               </a>
             {/if}

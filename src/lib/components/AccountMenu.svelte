@@ -39,10 +39,11 @@
     aria-label="{m.nav_account_menu()}: {name}"
     class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal {compact
       ? ''
-      : 'md:h-12 md:w-auto md:gap-2 md:pr-3 md:pl-1'}"
+      : 'md:h-12 md:w-full md:justify-start md:gap-2 md:rounded-lg md:pr-3 md:pl-1'}"
   >
     <Avatar src={avatarUrl} {name} size={32} />
-    <span class="hidden max-w-28 truncate {compact ? '' : 'md:inline'}">{name}</span>
+    <span class="hidden min-w-0 flex-1 truncate text-left {compact ? '' : 'md:inline'}">{name}</span
+    >
     <svg
       width="16"
       height="16"
@@ -64,35 +65,9 @@
       <Popover.Content
         class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
       >
-        <!-- User info header -->
-        <div class="flex items-center gap-3 p-2 pb-3">
-          <Avatar src={avatarUrl} {name} size={40} />
-          <div class="min-w-0 flex-1">
-            <div data-testid="account-user-name" class="truncate text-base leading-tight font-bold">
-              {name}
-            </div>
-          </div>
-        </div>
-
-        <hr class="mx-2 mb-1" />
-
         <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
           <a href={localizedHref('/account/profile', locale)} class={item}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="shrink-0"
-            >
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-            </svg>
+            <Icon name="game-icons:meeple" size={20} />
             {m.nav_profile()}
           </a>
 
@@ -103,7 +78,7 @@
               ? m.messages_menu_unread({ count: messagesUnread })
               : undefined}
           >
-            <Icon name="message-circle" size={20} />
+            <Icon name="game-icons:scroll-quill" size={20} />
             {m.messages_menu()}
             {#if messagesUnread > 0}
               <span
@@ -118,20 +93,7 @@
 
           <form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
             <SubmitButton submitting={signingOut} class={item}>
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-                class="shrink-0"
-              >
-                <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M4 12h11M11 8l4 4-4 4" />
-              </svg>
+              <Icon name="game-icons:exit-door" size={20} />
               {m.nav_sign_out()}
             </SubmitButton>
           </form>

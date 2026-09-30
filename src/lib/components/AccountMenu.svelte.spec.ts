@@ -28,13 +28,13 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu()).toBeVisible();
   });
 
-  it('opens the popover on click and shows user details and navigation links', async () => {
+  it('opens the popover on click and shows navigation without repeating user details', async () => {
     render(AccountMenu, { name: 'Marina Alves', avatarUrl: null });
 
     await trigger().click();
 
     await expect.element(menu()).toBeVisible();
-    await expect.element(page.getByTestId('account-user-name')).toHaveTextContent('Marina Alves');
+    await expect.element(page.getByTestId('account-user-name')).not.toBeInTheDocument();
     await expect
       .element(menu().getByRole('link', { name: 'Perfil' }))
       .toHaveAttribute('href', '/account/profile');

@@ -1,5 +1,5 @@
 <script lang="ts">
-  // The app's icons: Lucide, through Iconify's offline component. The drawings come from
+  // The app's icons: Lucide and Game Icons, through Iconify's offline component. The drawings come from
   // `$lib/icons/lucide.generated` (see `$lib/icons/names`), so nothing is fetched at run time.
   import OfflineIcon from '@iconify/svelte/dist/OfflineIcon.svelte';
   import { ICONS } from '$lib/icons/lucide.generated';
