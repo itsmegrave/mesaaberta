@@ -120,7 +120,7 @@
 
   <div class="md:flex">
     {#if !data.maintenance}
-      <div class="sticky top-0 hidden h-dvh shrink-0 md:block">
+      <div class="sticky top-0 z-20 hidden h-dvh shrink-0 md:block">
         <SideNav
           account={data.account}
           released={data.released}
@@ -132,7 +132,8 @@
       </div>
     {/if}
 
-    <div class="min-w-0 flex-1">
+    <!-- Clip full-width page backgrounds at the content boundary beside the sidebar. -->
+    <div class="min-w-0 flex-1 overflow-x-clip">
       <!-- On desktop the side rail carries the links and account; the header is the phone's. -->
       <header
         class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 {data.maintenance
