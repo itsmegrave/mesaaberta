@@ -847,5 +847,14 @@
   "instagram_reconcile_hint": "Confira a conta no Instagram antes de registrar o link de uma publicação. Uma resposta perdida não gera uma nova tentativa de publicação.",
   "instagram_permalink": "Link da publicação",
   "instagram_reconcile": "Registrar publicação",
-  "instagram_reconcile_invalid": "Informe um link válido de publicação do Instagram."
+  "instagram_reconcile_invalid": "Informe um link válido de publicação do Instagram.",
+  "image_crop_title": "Enquadrar a imagem",
+  "image_crop_hint": "Arraste a imagem para movê-la e aproxime ou afaste com os botões, a roda do mouse ou o gesto de pinça. Com o quadro em foco, as setas movem e + e − ajustam o zoom.",
+  "image_crop_area": "Área de recorte",
+  "image_crop_zoom_in": "Aproximar",
+  "image_crop_zoom_out": "Afastar",
+  "image_crop_preview": "Prévia",
+  "image_crop_use": "Usar este recorte",
+  "image_crop_cancel": "Cancelar",
+  "image_crop_failed": "Não foi possível recortar esta imagem. Tente outra."
 }
