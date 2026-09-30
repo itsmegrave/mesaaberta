@@ -157,8 +157,6 @@
               <AccountMenu
                 name={data.account.displayName}
                 avatarUrl={data.account.avatarUrl}
-                isAdmin={data.account.isAdmin}
-                pendingSuggestionsCount={data.account.pendingSuggestionsCount}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
               />
             {:else if data.authEnabled && data.released}

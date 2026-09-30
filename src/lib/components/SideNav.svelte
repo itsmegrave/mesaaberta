@@ -107,15 +107,6 @@
             <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
           {/if}
         </a>
-        <button
-          type="button"
-          onclick={toggle}
-          aria-expanded={expanded}
-          aria-label={expanded ? m.nav_collapse() : m.nav_expand()}
-          class="btn-icon size-10 rounded-lg hover:preset-tonal"
-        >
-          <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
-        </button>
       </Navigation.Header>
 
       <Navigation.Content class="flex flex-1 flex-col justify-between gap-4">
@@ -143,19 +134,34 @@
           </Navigation.Menu>
         </Navigation.Group>
 
-        <Navigation.Group
-          class="flex items-center gap-2 {expanded ? 'flex-row justify-start' : 'flex-col'}"
-        >
+        <Navigation.Group class="flex flex-col items-center gap-2 {expanded ? 'items-start' : ''}">
+          <div class="flex w-full items-center justify-center {expanded ? 'justify-start' : ''}">
+            <ThemeToggle />
+          </div>
+          <hr class="my-1 w-full border-surface-200-800" />
           {#if account}
             <NotificationBell {unread} {latest} placement="right-end" />
-          {/if}
-          <ThemeToggle />
-          {#if account}
+            {#if account.isAdmin}
+              <a
+                href={localizedHref('/admin', locale)}
+                aria-label={m.nav_admin()}
+                title={m.nav_admin()}
+                class="relative btn-icon flex size-11 shrink-0 items-center justify-center rounded-full hover:preset-tonal"
+              >
+                <Icon name="shield" size={20} />
+                {#if account.pendingSuggestionsCount > 0}
+                  <span
+                    aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
+                    class="absolute -top-1 -right-1 badge min-w-5 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
+                  >
+                    {account.pendingSuggestionsCount > 9 ? '9+' : account.pendingSuggestionsCount}
+                  </span>
+                {/if}
+              </a>
+            {/if}
             <AccountMenu
               name={account.displayName}
               avatarUrl={account.avatarUrl}
-              isAdmin={account.isAdmin}
-              pendingSuggestionsCount={account.pendingSuggestionsCount}
               {messagesUnread}
               placement="right-end"
               compact
@@ -168,6 +174,16 @@
               {m.nav_sign_in()}
             </a>
           {/if}
+          <button
+            type="button"
+            onclick={toggle}
+            aria-expanded={expanded}
+            aria-label={expanded ? m.nav_collapse() : m.nav_expand()}
+            title={expanded ? m.nav_collapse() : m.nav_expand()}
+            class="btn-icon size-11 shrink-0 rounded-full hover:preset-tonal"
+          >
+            <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
+          </button>
         </Navigation.Group>
       </Navigation.Content>
     </nav>
