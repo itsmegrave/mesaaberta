@@ -1,4 +1,5 @@
 import { loadRead } from '$lib/server/reads/load';
+import { pendingCount } from '$lib/server/admin/catalog';
 import { can } from '$lib/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
 import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifications/service';
@@ -55,7 +56,8 @@ export const load: LayoutServerLoad = async (event) => {
         username: profile.username,
         avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
         isAdmin: can(profile, 'admin:access'),
-        pendingSuggestionsCount: 0,
+        pendingSuggestionsCount:
+          locals.db && can(profile, 'admin:access') ? await pendingCount(locals.db) : 0,
         notifications: { unread, latest },
       },
     };

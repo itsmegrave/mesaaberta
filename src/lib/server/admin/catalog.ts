@@ -139,6 +139,20 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
   return entries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 }
 
+/** The approved entries of both kinds, for a merge to offer as its target. */
+export async function listApproved(db: AnyDb) {
+  const list = (kind: CatalogKind) => {
+    const table = tableOf(kind);
+    return db
+      .select({ id: table.id, name: table.name })
+      .from(table)
+      .where(eq(table.status, 'approved'))
+      .orderBy(asc(table.position), asc(table.name));
+  };
+  const [platform, tag] = await Promise.all([list('platform'), list('tag')]);
+  return { platform, tag };
+}
+
 export type Decision = {
   id: string;
   type: (typeof EVENTS)[number];
@@ -189,7 +203,10 @@ export type CatalogRow = {
   uses: number;
 };
 
-/** One kind's entries for the admin catalog: with how many tables use each, and where it came from. */
+/**
+ * One kind's entries for the admin catalog: with how many tables use each, and where it came from.
+ * A page past the last comes back empty; the route answers it with a 404.
+ */
 export async function listCatalogAdmin(
   db: AnyDb,
   kind: CatalogKind,
@@ -204,7 +221,6 @@ export async function listCatalogAdmin(
   );
   const [{ total }] = await db.select({ total: count() }).from(table).where(where);
   const pages = Math.max(1, Math.ceil(total / CATALOG_PAGE_SIZE));
-  const current = Math.min(Math.max(1, page), pages);
   const uses = db
     .select({ id: linkColumn(kind), uses: count().as('uses') })
     .from(link)
@@ -225,8 +241,8 @@ export async function listCatalogAdmin(
     .where(where)
     .orderBy(asc(table.position), asc(table.name))
     .limit(CATALOG_PAGE_SIZE)
-    .offset((current - 1) * CATALOG_PAGE_SIZE);
-  return { rows, total, page: current, pages };
+    .offset((page - 1) * CATALOG_PAGE_SIZE);
+  return { rows, total, page, pages };
 }
 
 async function entry(db: AnyDb, kind: CatalogKind, id: string) {
