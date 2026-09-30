@@ -1,3 +1,4 @@
+import { loadRead } from '$lib/server/reads/load';
 import { error } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
@@ -8,22 +9,17 @@ import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
 import { createTable } from '$lib/server/tables/write';
 import { TABLE_CREATION_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
-import { listSystems } from '$lib/server/systems';
-import { listCatalog } from '$lib/server/catalog';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, cookies }) => {
+export const load: PageServerLoad = async (event) => {
+  const { locals, url, cookies } = event;
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
-  const profile = await locals.getProfile();
   // The GM's own pending suggestions are offered too.
-  const [systems, catalog] = await Promise.all([
-    listSystems(locals.db),
-    listCatalog(locals.db, { suggestedBy: profile?.id }),
-  ]);
+  const catalogRead = await loadRead(event, 'catalog');
 
   return {
     form: await superValidate(
@@ -31,8 +27,9 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
       zod4(tableFormSchema),
       { errors: false },
     ),
-    systems: systems.map(({ name, slug }) => ({ name, slug })),
-    catalog,
+    systems: catalogRead.systems,
+    catalog: catalogRead.catalog,
+    catalogRead,
   };
 };
 

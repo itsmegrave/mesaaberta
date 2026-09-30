@@ -1,3 +1,4 @@
+import { loadRead } from '$lib/server/reads/load';
 import { error, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
@@ -9,12 +10,11 @@ import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
-import { listSystems } from '$lib/server/systems';
-import { listCatalog, type CatalogItem } from '$lib/server/catalog';
 import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, params, platform, cookies }) => {
+export const load: PageServerLoad = async (event) => {
+  const { locals, url, params, platform, cookies } = event;
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
@@ -24,23 +24,11 @@ export const load: PageServerLoad = async ({ locals, url, params, platform, cook
       slug,
       status,
       imagePath,
-      catalog: picked,
+      catalog: _picked,
       seatsTaken,
       ...values
     } = await loadTableForEdit(locals.db, profile, params.slug, await timezoneOf(locals, cookies));
-    const [systems, offered] = await Promise.all([
-      listSystems(locals.db),
-      listCatalog(locals.db, { suggestedBy: profile?.id }),
-    ]);
-    // The table's pending picks are offered too, even one another GM suggested first.
-    const withPicked = (items: CatalogItem[], picks: CatalogItem[]) => [
-      ...items,
-      ...picks.filter((pick) => !items.some((item) => item.slug === pick.slug)),
-    ];
-    const catalog = {
-      platforms: withPicked(offered.platforms, picked.platforms),
-      tags: withPicked(offered.tags, picked.tags),
-    };
+    const catalogRead = await loadRead(event, 'editCatalog');
 
     return {
       slug,
@@ -49,8 +37,9 @@ export const load: PageServerLoad = async ({ locals, url, params, platform, cook
       title: values.title,
       form: await superValidate(values, zod4(tableFormSchema), { errors: false }),
       imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
-      systems: systems.map(({ name, slug }) => ({ name, slug })),
-      catalog,
+      systems: catalogRead.systems,
+      catalog: catalogRead.catalog,
+      catalogRead,
       seatsTaken,
     };
   } catch (e) {

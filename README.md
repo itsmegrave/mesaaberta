@@ -411,3 +411,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a 
 - Conventional commits, one concern per commit.
 - Every PR builds green and includes a short test plan.
 - Test behaviour, not wording: each test should name the break it catches.
+
+## API query architecture
+
+See [API queries](docs/api-queries.md) for cache boundaries, SSR hydration, Superforms ownership and the ViaCEP flow.

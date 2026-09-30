@@ -175,6 +175,30 @@ describe('ProfileForm', () => {
       expect(check).toHaveBeenLastCalledWith('ana-maria', expect.any(AbortSignal));
     });
 
+    it('cancels an older username check and ignores its late answer', async () => {
+      let finish!: (value: 'taken') => void;
+      const check = vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              finish = resolve;
+            }),
+        )
+        .mockResolvedValue('free');
+      await setup({}, check);
+      await page.getByLabelText('Nome de usuário').fill('ana');
+      await expect.poll(() => check.mock.calls.length).toBe(1);
+      const signal = check.mock.calls[0][1] as AbortSignal;
+      await page.getByLabelText('Nome de usuário').fill('bruno');
+      await expect.element(page.getByText('Esse nome está livre.')).toBeVisible();
+      finish('taken');
+      await expect
+        .element(page.getByText('Esse nome já está em uso. Escolha outro.'))
+        .not.toBeInTheDocument();
+      expect(signal.aborted).toBe(true);
+    });
+
     it('says the name is taken, as an error tied to the field', async () => {
       await setup({}, vi.fn().mockResolvedValue('taken'));
 
