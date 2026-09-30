@@ -77,7 +77,17 @@ export function failFrom(error: unknown) {
     return fail(409, { error: 'already_registered' as const });
   if (error instanceof RateLimited)
     return fail(429, { error: 'rate_limited' as const, retryAfter: error.retryAfterSeconds });
+  if (error instanceof DirectMessagesOff)
+    return fail(409, { error: 'direct_messages_off' as const });
   if (error instanceof Invalid) return fail(400, { error: 'invalid' as const, field: error.field });
 
   throw error;
+}
+
+/** The other person turned direct messages off. Not a permission problem the sender can fix. */
+export class DirectMessagesOff extends Error {
+  constructor(message = 'direct messages are off') {
+    super(message);
+    this.name = 'DirectMessagesOff';
+  }
 }

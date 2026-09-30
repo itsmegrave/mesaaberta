@@ -7,6 +7,7 @@ import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '../errors';
 import { recordEvent } from '../events/outbox';
 import type { DomainEvent } from '../events/types';
 import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
+import { addTableMember, removeTableMember } from '../messages/service';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -93,6 +94,7 @@ export async function joinTable(
 
     const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
     await tx.insert(registrations).values({ tableId: table.id, playerId: actor!.id, status });
+    if (status === 'confirmed') await addTableMember(asDb(tx), table.id, actor!.id);
 
     const eventIds = [
       await record(
@@ -121,6 +123,7 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
     await tx
       .delete(registrations)
       .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, actor!.id)));
+    await removeTableMember(asDb(tx), table.id, actor!.id);
 
     if (registration.status === 'pending') return { eventIds: [] as string[] };
 
@@ -152,6 +155,7 @@ export async function approveRegistration(
       .update(registrations)
       .set({ status: 'confirmed' })
       .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
+    await addTableMember(asDb(tx), table.id, playerId);
 
     return {
       eventIds: [await record(tx, actor!, table, playerId, 'JoinApproved')],
@@ -195,6 +199,7 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
     await tx
       .delete(registrations)
       .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
+    await removeTableMember(asDb(tx), table.id, playerId);
 
     const eventId = await recordEvent(asDb(tx), {
       type: 'PlayerLeft',

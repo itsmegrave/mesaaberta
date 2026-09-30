@@ -3,6 +3,7 @@ import type { InstagramEnv } from '../instagram/api';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
 import type { Logger } from '../logger';
 import { pruneNotifications } from '../notifications/service';
+import { pruneTableChats } from '../messages/retention';
 import { announceChangelog } from '../notifications/changelog';
 // Relative, not $lib, and no import.meta.glob: wrangler bundles the Cron Trigger's Worker from here
 // without Vite, so it reads the generated module (`pnpm changelog`).
@@ -42,6 +43,8 @@ export async function runSweeper(
     if (pruned > 0) log.info('event prune', { pruned });
     const expired = await pruneNotifications(db);
     if (expired > 0) log.info('notification prune', { expired });
+    const chats = await pruneTableChats(db);
+    if (chats > 0) log.info('table chat prune', { chats });
     // A deploy with a new changelog entry puts it in everyone's bell on the next run.
     const announced = await announceChangelog(db, changelog);
     if (announced > 0) log.info('changelog announced', { announced });
