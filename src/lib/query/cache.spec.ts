@@ -4,6 +4,19 @@ import { createQueryClient, retryRead } from './client';
 import { readKey, readParams } from './keys';
 import { afterWrite } from './invalidate';
 describe('query cache boundaries', () => {
+  it('refreshes catalog-dependent views while preserving unrelated lookups', async () => {
+    const client = createQueryClient();
+    for (const resource of ['catalog', 'editCatalog', 'tables', 'detail', 'cep', 'username'])
+      client.setQueryData(['api', resource], {});
+    await afterWrite(client, 'catalog');
+    expect(client.getQueryState(['api', 'catalog'])?.isInvalidated).toBe(true);
+    expect(client.getQueryState(['api', 'editCatalog'])?.isInvalidated).toBe(true);
+    expect(client.getQueryState(['api', 'tables'])?.isInvalidated).toBe(true);
+    expect(client.getQueryState(['api', 'detail'])?.isInvalidated).toBe(true);
+    expect(client.getQueryState(['api', 'cep'])?.isInvalidated).toBe(false);
+    expect(client.getQueryState(['api', 'username'])?.isInvalidated).toBe(false);
+    client.clear();
+  });
   it('isolates server clients and viewer-dependent detail/catalog keys', () => {
     const a = createQueryClient(),
       b = createQueryClient();

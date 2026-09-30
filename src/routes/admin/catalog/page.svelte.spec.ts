@@ -73,6 +73,29 @@ describe('admin catalog', () => {
     await expect.element(page.getByText('Use de 2 a 40 caracteres.')).toBeVisible();
   });
 
+  it('keeps a draft during a same-kind reload and replaces defaults when the catalog kind changes', async () => {
+    const screen = await show();
+    await page.getByRole('button', { name: 'Nova plataforma' }).click();
+    await page.getByLabelText('Nome', { exact: true }).fill('Draft');
+    const updated = {
+      kind: 'platform',
+      query: '',
+      rows: [],
+      total: 0,
+      page: 1,
+      pages: 1,
+      approved: [],
+    };
+    await screen.rerender({ data: updated as never });
+    await expect.element(page.getByLabelText('Nome', { exact: true })).toHaveValue('Draft');
+    await screen.rerender({ data: { ...updated, kind: 'tag' } as never });
+    await page.getByRole('button', { name: 'Nova tag' }).click();
+    await expect
+      .element(page.getByRole('dialog').getByText('Nova tag', { exact: true }))
+      .toBeVisible();
+    await expect.element(page.getByLabelText('Nome', { exact: true })).toHaveValue('');
+  });
+
   it('renames from the row, with the current name filled in', async () => {
     show();
 

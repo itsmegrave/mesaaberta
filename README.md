@@ -551,7 +551,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a 
 
 ## API query architecture
 
-See [API queries](docs/api-queries.md) for cache boundaries, SSR hydration, Superforms ownership and the ViaCEP flow.
+See [API queries](docs/api-queries.md) for cache boundaries, SSR hydration, form ownership and the ViaCEP flow.
+
+The catalog and approval queue use TanStack Form with TanStack Query mutations. Shared form helpers preserve typed values on failure, block duplicate submissions, do not retry writes, and refresh affected reads only after success. Other flows still use Superforms during the migration tracked in [card #152](https://trello.com/c/Hh49RShb). See [Contributing](CONTRIBUTING.md#ui-and-forms) for the contract and [UI inventory](docs/ui-migration-inventory.md) for the remaining controls.
 
 ## Automatic Instagram posts
 

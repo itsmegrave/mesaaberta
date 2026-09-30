@@ -89,12 +89,17 @@
       </div>
       <button type="submit" class={ghost}>{m.admin_catalog_search_apply()}</button>
     </form>
-    <CatalogDialog
-      mode="create"
-      kind={data.kind}
-      label={data.kind === 'platform' ? m.admin_catalog_new_platform() : m.admin_catalog_new_tag()}
-      triggerClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-    />
+    <!-- A different catalog needs new defaults; refetches within the same kind preserve drafts. -->
+    {#key data.kind}
+      <CatalogDialog
+        mode="create"
+        kind={data.kind}
+        label={data.kind === 'platform'
+          ? m.admin_catalog_new_platform()
+          : m.admin_catalog_new_tag()}
+        triggerClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+      />
+    {/key}
   </div>
 
   {#if data.rows.length === 0}

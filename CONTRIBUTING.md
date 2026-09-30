@@ -54,6 +54,16 @@ In VS Code, install the recommended extensions when prompted (`.vscode/extension
 
 When you must disable an ESLint rule, say why on the same line: `// eslint-disable-next-line rule -- reason`.
 
+## UI and forms
+
+Prefer Skeleton primitives and the shared `Form`, `FormField`, `TextInput` and `SubmitButton` components. Basic controls use semantic HTML inside their wrappers because Skeleton does not provide standalone Button, TextInput or Form components. Use theme tokens and Tailwind's 4px spacing grid; document calculated layout exceptions.
+
+New form migrations use TanStack Form for values/validation and TanStack Query for mutations/cache. The catalog and approval queue are the first migrated flows. `src/lib/forms/action-form.svelte.ts` supplies a single submit handler, validation errors, pending/delayed/timeout states and failure-safe drafts. Pass the affected cache domain explicitly. Pair it with `Form` and the existing SvelteKit action; do not add a second enhancement handler or automatic write retries. Server authorization and Zod validation remain authoritative.
+
+`validateStringForm` handles only allowlisted scalar text fields. Arrays, numbers, booleans and files need explicit domain decoders before using it in other flows. Never allowlist passwords or files for echoing in action responses. Existing Superforms consumers remain transitional until card #152 is complete.
+
+Run `node scripts/ui-inventory.ts` after a migration to refresh `docs/ui-migration-inventory.md`. That report identifies markup to review; it does not certify accessibility or mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
+
 ## Icons
 
 Icons come from [Iconify](https://iconify.design), Lucide set: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`). The drawings are bundled, never fetched (the CSP allows no request to Iconify's API):

@@ -1,7 +1,4 @@
 import { error } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { entrySchema } from '$lib/admin/catalog';
 import { requireAdmin } from '$lib/server/admin-access';
 import { catalogActions } from '$lib/server/admin/catalog-actions';
 import { listApproved, listQueue, recentDecisions } from '$lib/server/admin/catalog';
@@ -20,7 +17,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     recentDecisions(locals.db),
     listApproved(locals.db),
   ]);
-  return { queue, decisions, approved, blank: await superValidate(zod4(entrySchema)) };
+  return { queue, decisions, approved };
 };
 
 export const actions: Actions = {
