@@ -107,10 +107,12 @@
           mode === 'merge' ? { ...current, into: ['pick'] } : { ...current, name: ['too_small'] },
         );
       },
-      onUpdated: ({ form: result }) => {
-        if (!result.valid) return;
+      // Not `onUpdated`: the entry may leave the list, and the dialog goes with it.
+      onResult: ({ result }) => {
+        if (result.type !== 'success') return;
         open = false;
         toast.success(success[mode]);
+        onclose?.();
       },
     },
   );

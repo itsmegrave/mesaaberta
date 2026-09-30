@@ -13,6 +13,7 @@
   import ActionForm from '$lib/components/ActionForm.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import ImageCropper from '$lib/components/ImageCropper.svelte';
+  import { isDecodable } from '$lib/forms/decodable';
   import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '$lib/forms/files';
   import { photoSchema } from '$lib/profile/photo';
   import { fileProxy, superForm } from 'sveltekit-superforms';
@@ -48,12 +49,13 @@
     if (file) list.items.add(file);
     return list.files;
   };
-  function picked(event: Event) {
+  async function picked(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     framing =
       file &&
       (IMAGE_TYPES as readonly string[]).includes(file.type) &&
-      file.size <= 20 * MAX_IMAGE_BYTES
+      file.size <= 20 * MAX_IMAGE_BYTES &&
+      (await isDecodable(file))
         ? file
         : null;
   }
