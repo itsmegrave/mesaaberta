@@ -1,13 +1,6 @@
 <script lang="ts">
-  import {
-    Users,
-    Dices,
-    Flag,
-    UserCheck,
-    RefreshCw,
-    ArrowRight,
-    ExternalLink,
-  } from '@lucide/svelte';
+  import Icon from '$lib/components/Icon.svelte';
+  import type { IconName } from '$lib/icons/names';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import { pageQuery } from '$lib/query/page.svelte';
@@ -30,25 +23,25 @@
     {
       label: m.admin_profiles(),
       value: data.people.total,
-      icon: Users,
+      icon: 'users',
       detail: m.admin_new_profiles({ count: number(data.people.new30d) }),
     },
     {
       label: m.admin_tables(),
       value: data.tables.total,
-      icon: Dices,
+      icon: 'dices',
       detail: m.admin_active_tables({ count: number(data.tables.active) }),
     },
     {
       label: m.admin_gms(),
       value: data.tables.gms,
-      icon: Flag,
+      icon: 'flag',
       detail: m.admin_gms_scope(),
     },
     {
       label: m.admin_confirmed(),
       value: data.seats.confirmed,
-      icon: UserCheck,
+      icon: 'user-check',
       detail: m.admin_pending_seats({ count: number(data.seats.pending) }),
     },
   ]);
@@ -81,13 +74,13 @@
   ]);
 </script>
 
-<svelte:head><title>{m.admin_title()} | Mesa Aberta</title></svelte:head>
+<svelte:head><title>{m.admin_overview_title()} | Mesa Aberta</title></svelte:head>
 
 <section class="py-6 md:py-10">
   <Breadcrumbs items={[{ label: m.nav_admin() }]} class="mb-6" />
   <div class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-semibold">{m.admin_title()}</h1>
+      <h1 class="text-3xl font-semibold">{m.admin_overview_title()}</h1>
       <p class="mt-2 text-sm text-muted">{m.admin_updated({ time: date(data.updatedAt) })}</p>
     </div>
     <button
@@ -96,7 +89,7 @@
       disabled={remote.isFetching}
       onclick={() => remote.refetch()}
     >
-      <RefreshCw size={18} class={remote.isFetching ? 'animate-spin' : ''} aria-hidden="true" />
+      <Icon name="refresh-cw" size={18} class={remote.isFetching ? 'animate-spin' : ''} />
       {m.admin_refresh()}
     </button>
   </div>
@@ -106,7 +99,7 @@
     {#each metrics as metric (metric.label)}
       <div class="rounded-lg border border-surface-200-800 bg-panel p-5">
         <dt class="flex items-center gap-2 text-sm font-semibold text-muted">
-          <metric.icon size={18} aria-hidden="true" />{metric.label}
+          <Icon name={metric.icon as IconName} size={18} />{metric.label}
         </dt>
         <dd class="mt-3 text-3xl font-semibold tabular-nums">{number(metric.value)}</dd>
         <dd class="mt-2 text-sm text-muted">{metric.detail}</dd>
@@ -136,7 +129,7 @@
       <a
         class="inline-flex min-h-11 items-center gap-2 anchor"
         href={localizedHref('/tables', locale)}
-        >{m.admin_browse_tables()}<ArrowRight size={18} aria-hidden="true" /></a
+        >{m.admin_browse_tables()}<Icon name="arrow-right" size={18} /></a
       >
     </div>
     {#if data.recentTables.length === 0}
@@ -161,6 +154,6 @@
     {/if}
   </section>
   <a class="mt-6 inline-flex min-h-11 items-center gap-2 anchor" href={localizedHref('/', locale)}
-    ><ExternalLink size={18} aria-hidden="true" />{m.admin_view_platform()}</a
+    ><Icon name="external-link" size={18} />{m.admin_view_platform()}</a
   >
 </section>

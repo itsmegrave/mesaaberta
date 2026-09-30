@@ -1,6 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "admin_title": "Visão geral da plataforma",
+  "admin_overview_title": "Visão geral da plataforma",
+  "admin_nav_overview": "Visão geral",
   "admin_profiles": "Perfis cadastrados",
   "admin_new_profiles": "{count} novos nos últimos 30 dias",
   "admin_tables": "Mesas",

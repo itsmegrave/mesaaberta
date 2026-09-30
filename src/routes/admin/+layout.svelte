@@ -8,7 +8,10 @@
 
   const locale = getLocale();
   // Each admin section adds its link here.
-  const sections = [{ path: '/admin/notifications', label: m.admin_nav_notifications() }];
+  const sections = [
+    { path: '/admin', label: m.admin_nav_overview() },
+    { path: '/admin/notifications', label: m.admin_nav_notifications() },
+  ];
 </script>
 
 <div class="pt-2 md:pt-12">
@@ -16,7 +19,10 @@
   <nav aria-label={m.admin_nav_label()} class="mt-3 border-b border-surface-200-800">
     <ul class="flex gap-1 overflow-x-auto">
       {#each sections as section (section.path)}
-        {@const current = page.url.pathname.startsWith(section.path)}
+        {@const current =
+          section.path === '/admin'
+            ? page.route.id === '/admin'
+            : page.route.id?.startsWith(section.path)}
         <li>
           <a
             href={localizedHref(section.path, locale)}
