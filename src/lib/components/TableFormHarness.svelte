@@ -15,6 +15,7 @@
     imageUrl?: string | null;
     action?: string;
     minCapacity?: number;
+    manageHref?: string;
   };
   let {
     systems,
@@ -25,6 +26,7 @@
     imageUrl,
     action,
     minCapacity,
+    manageHref,
   }: Props = $props();
 
   // svelte-ignore state_referenced_locally
@@ -54,4 +56,5 @@
   {imageUrl}
   {action}
   {minCapacity}
+  {manageHref}
 />

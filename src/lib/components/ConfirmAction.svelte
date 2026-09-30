@@ -10,7 +10,8 @@
 
   type Props = {
     action: string;
-    playerId: string;
+    /** The player a seat action is about; none for a table action (Desativar mesa). */
+    playerId?: string;
     next?: string;
     /** The button's text, and the confirm button's. */
     label: string;

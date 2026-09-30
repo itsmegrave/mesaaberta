@@ -3,12 +3,13 @@
   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import { superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
-  import ActionForm from '$lib/components/ActionForm.svelte';
+  import ConfirmAction from '$lib/components/ConfirmAction.svelte';
   import TableForm from '$lib/components/TableForm.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { tableFormSchema } from '$lib/tables/schema';
+  import { toast } from '$lib/toaster';
 
   let { data } = $props();
 
@@ -17,6 +18,10 @@
     validators: zod4Client(tableFormSchema),
     // A table form is long: leaving it with changes asks first.
     taintedMessage: confirmLeave,
+    // A saved table goes back to its manage page; the toast says it went through.
+    onResult: ({ result }) => {
+      if (result.type === 'redirect') toast.success(m.toast_table_saved());
+    },
   });
 </script>
 
@@ -53,15 +58,20 @@
     submitLabel={m.form_submit_edit()}
     cancelHref={localizedHref(`/tables/${data.slug}`, getLocale())}
     gmName={data.account?.username ?? undefined}
+    minCapacity={Math.max(1, data.seatsTaken)}
+    manageHref={localizedHref(`/tables/${data.slug}/manage`, getLocale())}
+    calendarNote
   />
 
   {#if data.status === 'active'}
     <div class="mt-12 max-w-2xl border-t border-surface-200-800 pt-6">
       <p class="mb-3">{m.form_disable_hint()}</p>
-      <ActionForm
+      <ConfirmAction
         action="?/disable"
         label={m.form_disable()}
-        buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold text-error-alert hover:preset-tonal"
+        title={m.form_disable_confirm_title()}
+        text={m.form_disable_confirm_text()}
+        class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold text-error-alert hover:preset-tonal"
         success={m.toast_table_disabled()}
       />
     </div>

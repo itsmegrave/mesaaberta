@@ -14,6 +14,7 @@
     hint,
     error,
     currentUrl = null,
+    removed = $bindable(false),
     onpick,
   }: {
     id: string;
@@ -23,6 +24,8 @@
     error?: string;
     /** The image the table has now, shown above the zone. */
     currentUrl?: string | null;
+    /** The current image is to be taken off on save (sent as `removeImage`). */
+    removed?: boolean;
     /** The file picked (or none, once removed), for the form to check before it is sent. */
     onpick: (files: File[]) => void;
   } = $props();
@@ -35,11 +38,33 @@
 </script>
 
 <div class="min-w-0">
-  {#if currentUrl}<img
-      src={currentUrl}
-      alt=""
-      class="mb-3 aspect-5/2 w-full max-w-sm rounded-lg object-cover"
-    />{/if}
+  {#if currentUrl && !removed}
+    <img src={currentUrl} alt="" class="aspect-5/2 w-full max-w-sm rounded-lg object-cover" />
+  {/if}
+  {#if currentUrl && mounted}
+    <div class="mt-2 mb-3 flex flex-wrap items-center gap-3">
+      {#if removed}
+        <p role="status" class="text-sm font-semibold">{m.form_image_removed()}</p>
+        <button
+          type="button"
+          class="btn h-11 rounded-lg px-3 font-semibold hover:preset-tonal"
+          onclick={() => (removed = false)}>{m.form_image_undo_remove()}</button
+        >
+        <input type="hidden" name="removeImage" value="true" />
+      {:else}
+        <button
+          type="button"
+          class="btn h-11 rounded-lg px-3 font-semibold text-error-alert hover:preset-tonal"
+          onclick={() => (removed = true)}>{m.form_image_remove_current()}</button
+        >
+      {/if}
+    </div>
+  {:else if currentUrl}
+    <label class="mt-2 mb-3 flex items-center gap-2 text-sm font-semibold">
+      <input type="checkbox" name="removeImage" value="true" class="checkbox" />
+      {m.form_image_remove_current()}
+    </label>
+  {/if}
   {#if mounted}
     <FileUpload
       {name}
@@ -72,7 +97,10 @@
         <FileUpload.Trigger
           class="btn h-11 rounded-lg border-2 border-surface-950-50 px-4 font-semibold hover:preset-tonal"
           aria-invalid={error ? 'true' : undefined}
-          aria-describedby={describedby}>{m.form_image_choose()}</FileUpload.Trigger
+          aria-describedby={describedby}
+          >{currentUrl && !removed
+            ? m.form_image_replace()
+            : m.form_image_choose()}</FileUpload.Trigger
         >
       </FileUpload.Dropzone>
       <!-- `accept` here only narrows the picker; the schema decides what is refused. -->
