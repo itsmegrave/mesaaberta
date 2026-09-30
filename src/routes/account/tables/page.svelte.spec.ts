@@ -102,5 +102,8 @@ describe('Minhas mesas', () => {
     await expect.element(panel('Jogando')).toBeVisible();
     await expect.element(panel('Mestrando')).toBeVisible();
     await expect.element(page.getByText('Jogando · 1')).not.toBeVisible();
+    // Each list is still a named region, not a tab panel without tabs.
+    await expect.element(page.getByRole('region', { name: 'Jogando' })).toBeVisible();
+    await expect.element(page.getByRole('region', { name: 'Mestrando' })).toBeVisible();
   });
 });

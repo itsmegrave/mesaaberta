@@ -92,7 +92,7 @@
     </div>
   </div>
 
-  <Tabs value={tab} onValueChange={(details) => (tab = details.value as Tab)}>
+  <Tabs value={tab} onValueChange={(details) => (tab = details.value as Tab)} composite={false}>
     <Tabs.List
       aria-label={m.dash_title()}
       class="mt-6 grid grid-cols-2 gap-1 rounded-xl bg-surface-950-50/5 p-1 lg:hidden"
@@ -137,60 +137,56 @@
     <div class="mt-6 grid gap-10 lg:mt-8 lg:grid-cols-2 lg:gap-12">
       <Tabs.Content value="playing">
         {#snippet element(attributes)}
-          <div
-            {...attributes}
-            hidden={false}
-            aria-labelledby="playing"
-            class={panelClass('playing')}
-          >
-            <div class="flex items-baseline gap-3">
-              <h2 id="playing" class="text-3xl font-semibold tracking-tight">
-                {m.dash_playing()}
-              </h2>
-              <span class="text-sm font-semibold text-muted">{count(data.playing.length)}</span>
-            </div>
-            {#if data.playing.length === 0}
-              <p class="mt-3">{m.dash_playing_empty()}</p>
-              <a href={localizedHref('/tables', locale)} class="mt-2 inline-block anchor">
-                {m.dash_find_table()}
-              </a>
-            {:else}
-              <ul class="mt-5 grid gap-5">
-                {#each data.playing as item (item.slug)}
-                  <li><PlayingCard {item} {next} /></li>
-                {/each}
-              </ul>
-            {/if}
+          <div {...attributes} hidden={false} class={panelClass('playing')}>
+            <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
+            <section aria-labelledby="playing">
+              <div class="flex items-baseline gap-3">
+                <h2 id="playing" class="text-3xl font-semibold tracking-tight">
+                  {m.dash_playing()}
+                </h2>
+                <span class="text-sm font-semibold text-muted">{count(data.playing.length)}</span>
+              </div>
+              {#if data.playing.length === 0}
+                <p class="mt-3">{m.dash_playing_empty()}</p>
+                <a href={localizedHref('/tables', locale)} class="mt-2 inline-block anchor">
+                  {m.dash_find_table()}
+                </a>
+              {:else}
+                <ul class="mt-5 grid gap-5">
+                  {#each data.playing as item (item.slug)}
+                    <li><PlayingCard {item} {next} /></li>
+                  {/each}
+                </ul>
+              {/if}
+            </section>
           </div>
         {/snippet}
       </Tabs.Content>
 
       <Tabs.Content value="running">
         {#snippet element(attributes)}
-          <div
-            {...attributes}
-            hidden={false}
-            aria-labelledby="running"
-            class={panelClass('running')}
-          >
-            <div class="flex items-baseline gap-3">
-              <h2 id="running" class="text-3xl font-semibold tracking-tight">
-                {m.dash_running()}
-              </h2>
-              <span class="text-sm font-semibold text-muted">{count(data.running.length)}</span>
-            </div>
-            {#if data.running.length === 0}
-              <p class="mt-3">{m.dash_running_empty()}</p>
-              <a href={localizedHref('/tables/new', locale)} class="mt-2 inline-block anchor">
-                {m.tables_open_cta()}
-              </a>
-            {:else}
-              <ul class="mt-5 grid gap-5">
-                {#each data.running as item, index (item.slug)}
-                  <li><RunningCard {item} {next} openPlayers={index === 0} /></li>
-                {/each}
-              </ul>
-            {/if}
+          <div {...attributes} hidden={false} class={panelClass('running')}>
+            <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
+            <section aria-labelledby="running">
+              <div class="flex items-baseline gap-3">
+                <h2 id="running" class="text-3xl font-semibold tracking-tight">
+                  {m.dash_running()}
+                </h2>
+                <span class="text-sm font-semibold text-muted">{count(data.running.length)}</span>
+              </div>
+              {#if data.running.length === 0}
+                <p class="mt-3">{m.dash_running_empty()}</p>
+                <a href={localizedHref('/tables/new', locale)} class="mt-2 inline-block anchor">
+                  {m.tables_open_cta()}
+                </a>
+              {:else}
+                <ul class="mt-5 grid gap-5">
+                  {#each data.running as item, index (item.slug)}
+                    <li><RunningCard {item} {next} openPlayers={index === 0} /></li>
+                  {/each}
+                </ul>
+              {/if}
+            </section>
           </div>
         {/snippet}
       </Tabs.Content>

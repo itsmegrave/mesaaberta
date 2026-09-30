@@ -7,6 +7,7 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import ActionForm from './ActionForm.svelte';
+  import Icon from './Icon.svelte';
   import SeatDots from './SeatDots.svelte';
 
   type Person = { playerId: string; username: string };
@@ -124,19 +125,7 @@
       class="mt-3 flex min-h-12 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
     >
       {m.dash_players_count({ count: item.players.length })}
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        class="shrink-0 transition-transform {playersOpen ? 'rotate-180' : ''}"
-        ><path d="m6 9 6 6 6-6" /></svg
-      >
+      <Icon name="chevron-down" class="transition-transform {playersOpen ? 'rotate-180' : ''}" />
     </Collapsible.Trigger>
     <Collapsible.Content>
       {#snippet element(attributes)}
