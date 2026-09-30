@@ -1,5 +1,10 @@
 // Relative imports only across `src/lib/server/events`: the Cron Trigger's Worker entry bundles
 // these files without SvelteKit's `$lib` alias.
+import type {
+  AnnouncementAudience,
+  AnnouncementIcon,
+  AnnouncementTone,
+} from '../../notifications/kinds';
 
 /**
  * Domain events, and what each one carries. The payload holds ids and public facts only, never an
@@ -20,9 +25,24 @@ export type DomainEvent =
   | { type: 'RatingSubmitted'; payload: Registration }
   // A session started (OAuth or email/password). This is the connection record Marco Civil da
   // Internet (art. 15) requires kept for 6 months — longer than other events, see CONNECTION_RETENTION_DAYS.
-  | { type: 'UserSignedIn'; payload: { ip: string | null } };
+  | { type: 'UserSignedIn'; payload: { ip: string | null } }
+  // An admin sent an announcement to the bell. The text is public by nature (everyone in the
+  // audience reads it); the one recipient of a `specific_user` announcement is kept by id.
+  | { type: 'SystemAnnouncementSent'; payload: SystemAnnouncement };
 
 type Registration = { tableId: string; slug: string; playerId: string };
+
+export type SystemAnnouncement = {
+  title: string;
+  body: string;
+  icon: AnnouncementIcon;
+  tone: AnnouncementTone;
+  link: string | null;
+  audience: AnnouncementAudience;
+  recipientId: string | null;
+  /** How many were in the audience when it was sent: what the admin confirmed. */
+  estimated: number;
+};
 
 export type EventType = DomainEvent['type'];
 
