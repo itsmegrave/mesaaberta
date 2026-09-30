@@ -12,7 +12,8 @@
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { IMAGE_TYPES } from '$lib/forms/files';
+  import ImageCropper from '$lib/components/ImageCropper.svelte';
+  import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '$lib/forms/files';
   import { photoSchema } from '$lib/profile/photo';
   import { fileProxy, superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -37,6 +38,34 @@
   const { errors: photoErrorList, enhance: photoEnhance, submitting, delayed, timeout } = photo;
   const photoFile = fileProxy(photo, 'photo');
   const photoError = $derived($photoErrorList.photo?.[0]);
+
+  // A picture that is fine to frame is cropped in the browser before it goes up; anything else goes
+  // as it is, for the schema to say what is wrong. Without JavaScript the file goes up whole.
+  let photoForm = $state<HTMLFormElement>();
+  let framing = $state<File | null>(null);
+  const files = (file?: File) => {
+    const list = new DataTransfer();
+    if (file) list.items.add(file);
+    return list.files;
+  };
+  function picked(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    framing =
+      file &&
+      (IMAGE_TYPES as readonly string[]).includes(file.type) &&
+      file.size <= 20 * MAX_IMAGE_BYTES
+        ? file
+        : null;
+  }
+  function framed(cropped: File) {
+    framing = null;
+    $photoFile = files(cropped);
+    photoForm?.requestSubmit();
+  }
+  function unframed() {
+    framing = null;
+    $photoFile = files();
+  }
 
   // Closing the account: a third form. The server compares the typed @username; a redirect home on success.
   // svelte-ignore state_referenced_locally
@@ -103,6 +132,7 @@
           <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
           <div class="grid gap-3">
             <form
+              bind:this={photoForm}
               method="POST"
               action="?/photo"
               enctype="multipart/form-data"
@@ -116,6 +146,7 @@
                 type="file"
                 accept={IMAGE_TYPES.join(',')}
                 bind:files={$photoFile}
+                onchange={picked}
                 aria-invalid={photoError ? 'true' : undefined}
                 aria-describedby="photo-hint{photoError ? ' photo-error' : ''}"
                 class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-2 file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
@@ -128,6 +159,17 @@
                 >{m.account_photo_upload()}</SubmitButton
               >
             </form>
+            {#if framing}
+              <ImageCropper
+                file={framing}
+                aspectRatio={1}
+                width={512}
+                round
+                onconfirm={framed}
+                oncancel={unframed}
+                onunreadable={() => (framing = null)}
+              />
+            {/if}
             {#if data.hasUploadedPhoto}
               <ActionForm
                 action="?/removePhoto"

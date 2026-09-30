@@ -111,14 +111,17 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
     mimeType: 'image/png',
     buffer: PNG,
   });
-  await page.getByRole('button', { name: 'Enviar foto' }).click();
+  // The picture is framed first; using the crop sends it.
+  await expect(page.getByText('Enquadrar a imagem', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Aproximar' }).click();
+  await page.getByRole('button', { name: 'Usar este recorte' }).click();
   await expect(page.getByText('Foto atualizada.')).toBeVisible();
 
   const sql = database();
   try {
     const [{ avatar_path: path }] =
       await sql`select avatar_path from profiles where id = ${user.id}`;
-    expect(path).toMatch(new RegExp(`^${user.id}/[0-9a-f-]+\\.png$`));
+    expect(path).toMatch(new RegExp(`^${user.id}/[0-9a-f-]+\\.(png|webp|jpg)$`));
     await expect(
       page.getByRole('banner').locator(`img[src$="/profile-avatars/${path}"]`),
     ).toHaveCount(1);

@@ -46,6 +46,8 @@ export default defineConfig({
             'https://cdn.discordapp.com',
             // Table images, from the project's Supabase Storage bucket.
             'https://*.supabase.co',
+            // The crop step shows the picked file from a blob URL until it is cut and sent.
+            'blob:',
             // The e2e build adds the local Supabase (see playwright.config.ts). Never set in production.
             ...(process.env.CSP_EXTRA_IMG_SRC
               ? [process.env.CSP_EXTRA_IMG_SRC as `http://${string}.${string}`]

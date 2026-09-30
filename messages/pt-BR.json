@@ -775,5 +775,14 @@
   "cep_lookup_unavailable": "Não foi possível consultar o CEP. Preencha a região para continuar.",
   "cep_lookup_missing": "CEP não encontrado. Confira os números.",
   "api_refresh_failed": "Não foi possível atualizar os dados.",
-  "api_refresh_retry": "Tentar novamente"
+  "api_refresh_retry": "Tentar novamente",
+  "image_crop_title": "Enquadrar a imagem",
+  "image_crop_hint": "Arraste a imagem para movê-la e aproxime ou afaste com os botões, a roda do mouse ou o gesto de pinça. Com o quadro em foco, as setas movem e + e − ajustam o zoom.",
+  "image_crop_area": "Área de recorte",
+  "image_crop_zoom_in": "Aproximar",
+  "image_crop_zoom_out": "Afastar",
+  "image_crop_preview": "Prévia",
+  "image_crop_use": "Usar este recorte",
+  "image_crop_cancel": "Cancelar",
+  "image_crop_failed": "Não foi possível recortar esta imagem. Tente outra."
 }

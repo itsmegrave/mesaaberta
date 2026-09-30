@@ -29,6 +29,7 @@ export const ICON_NAMES = [
   'search',
   'chevron-left',
   'chevron-right',
+  'plus',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
