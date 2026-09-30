@@ -10,6 +10,8 @@
   // Each admin section adds its link here.
   const sections = [
     { path: '/admin', label: m.admin_nav_overview() },
+    { path: '/admin/queue', label: m.admin_nav_queue() },
+    { path: '/admin/catalog', label: m.admin_nav_catalog() },
     { path: '/admin/notifications', label: m.admin_nav_notifications() },
     { path: '/admin/instagram', label: m.instagram_admin_title() },
   ];

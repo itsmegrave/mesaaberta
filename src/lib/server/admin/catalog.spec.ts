@@ -29,7 +29,7 @@ import {
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const admin = { id: id(1), role: 'admin' as const, status: 'active' as const };
-const gm = { id: id(2), role: 'user' as const, status: 'active' as const };
+const gm = { id: id(2), role: 'member' as const, status: 'active' as const };
 const tableId = (n: number) => id(100 + n);
 // The catalog ships seeded; this is one of its platforms.
 let foundryId = '';
@@ -61,7 +61,12 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-const platform = async (name: string, slug: string, status = 'pending' as const, n = 0) => {
+const platform = async (
+  name: string,
+  slug: string,
+  status: 'pending' | 'approved' = 'pending',
+  n = 0,
+) => {
   const [row] = await test.db
     .insert(platforms)
     .values({ id: id(200 + n), name, slug, status, suggestedBy: gm.id })
@@ -227,7 +232,8 @@ describe('the catalog list', () => {
     const found = await listCatalogAdmin(test.db, 'platform', { query: 'roll' });
     expect(found.rows.map((r) => r.name)).toContain('Roll 20');
     expect((await listCatalogAdmin(test.db, 'platform', { query: '%' })).total).toBe(0);
-    expect((await listCatalogAdmin(test.db, 'platform', { page: 99 })).page).toBe(1);
+    const past = await listCatalogAdmin(test.db, 'platform', { page: 99 });
+    expect([past.rows, past.pages]).toEqual([[], 1]);
   });
 });
 
