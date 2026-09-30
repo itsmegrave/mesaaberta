@@ -900,7 +900,7 @@
         },
         "game_tables_recurrence_matches_kind": {
           "name": "game_tables_recurrence_matches_kind",
-          "value": "(\"game_tables\".\"kind\" IN ('one_shot', 'adventure') AND \"game_tables\".\"recurrence\" IS NULL) OR (\"game_tables\".\"kind\" = 'campaign' AND \"game_tables\".\"recurrence\" IS NOT NULL)"
+          "value": "(\"game_tables\".\"kind\"::text IN ('one_shot', 'adventure') AND \"game_tables\".\"recurrence\" IS NULL) OR (\"game_tables\".\"kind\"::text = 'campaign' AND \"game_tables\".\"recurrence\" IS NOT NULL)"
         },
         "game_tables_capacity_positive": {
           "name": "game_tables_capacity_positive",
