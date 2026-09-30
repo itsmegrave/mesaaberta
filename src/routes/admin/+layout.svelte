@@ -14,6 +14,7 @@
     { path: '/admin/catalog', label: m.admin_nav_catalog() },
     { path: '/admin/notifications', label: m.admin_nav_notifications() },
     { path: '/admin/instagram', label: m.instagram_admin_title() },
+    { path: '/admin/operations', label: m.admin_nav_operations() },
   ];
 </script>
 
