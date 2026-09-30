@@ -45,7 +45,7 @@
     maximumFractionDigits: 1,
     minimumFractionDigits: 1,
   });
-  const votes = (count: number) => (count === 1 ? m.rating_count_one() : m.rating_count({ count }));
+  const votes = (count: number) => m.rating_count({ count });
   // svelte-ignore state_referenced_locally
   const rating = superForm(data.ratingForm, {
     validators: zod4Client(ratingSchema),
@@ -88,11 +88,7 @@
   });
 
   const seats = $derived(
-    table.seatsLeft === 0
-      ? m.table_full()
-      : table.seatsLeft === 1
-        ? m.table_seat_left()
-        : m.table_seats_left({ count: table.seatsLeft }),
+    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
   );
 </script>
 

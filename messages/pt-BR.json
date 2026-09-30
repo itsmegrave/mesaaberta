@@ -28,13 +28,43 @@
   "admin_user_updated": "Última atualização do perfil",
   "admin_user_unset": "Não informado",
   "admin_profiles": "Perfis cadastrados",
-  "admin_new_profiles": "{count} novos nos últimos 30 dias",
+  "admin_new_profiles": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum novo nos últimos 30 dias",
+        "count=1": "1 novo nos últimos 30 dias",
+        "count=*": "{count} novos nos últimos 30 dias"
+      }
+    }
+  ],
   "admin_tables": "Mesas",
-  "admin_active_tables": "{count} com status ativo",
+  "admin_active_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma com status ativo",
+        "count=1": "1 com status ativo",
+        "count=*": "{count} com status ativo"
+      }
+    }
+  ],
   "admin_gms": "Mestres",
   "admin_gms_scope": "Pessoas com pelo menos uma mesa criada",
   "admin_confirmed": "Inscrições confirmadas",
-  "admin_pending_seats": "{count} solicitações aguardando aprovação",
+  "admin_pending_seats": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma solicitação aguardando aprovação",
+        "count=1": "1 solicitação aguardando aprovação",
+        "count=*": "{count} solicitações aguardando aprovação"
+      }
+    }
+  ],
   "admin_community": "Comunidade",
   "admin_active_profiles": "Perfis ativos",
   "admin_suspended": "Perfis suspensos",
@@ -180,12 +210,30 @@
   "form_join_details_hint": "Opcional. Só você e quem tem vaga confirmada veem.",
   "table_join_details": "Como entrar",
   "table_join_details_private": "Só você e quem tem vaga confirmada veem isto.",
-  "tables_count_one": "1 mesa com sessão marcada",
-  "tables_count": "{count} mesas com sessão marcada",
+  "tables_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa com sessão marcada",
+        "count=1": "1 mesa com sessão marcada",
+        "count=*": "{count} mesas com sessão marcada"
+      }
+    }
+  ],
   "table_kind_campaign": "Campanha",
   "table_kind_one_shot": "One-shot",
-  "table_seats_left": "{count} vagas restantes",
-  "table_seat_left": "1 vaga restante",
+  "table_seats_left": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma vaga restante",
+        "count=1": "1 vaga restante",
+        "count=*": "{count} vagas restantes"
+      }
+    }
+  ],
   "table_full": "Mesa cheia",
   "table_next_session": "Próxima sessão",
   "table_no_more_sessions": "Esta mesa não tem mais sessões marcadas.",
@@ -238,10 +286,29 @@
   "date_picker_clear": "Limpar a data",
   "date_picker_close": "Fechar o calendário",
   "date_picker_calendar": "Calendário",
-  "form_capacity_taken": "{count} pessoas já estão na mesa, então este é o mínimo.",
+  "form_capacity_taken": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém está na mesa ainda, então não há mínimo.",
+        "count=1": "1 pessoa já está na mesa, então este é o mínimo.",
+        "count=*": "{count} pessoas já estão na mesa, então este é o mínimo."
+      }
+    }
+  ],
   "form_capacity_remove_players": "Remover pessoas da mesa",
-  "form_capacity_seats_one": "1 vaga",
-  "form_capacity_seats": "{count} vagas",
+  "form_capacity_seats": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma vaga",
+        "count=1": "1 vaga",
+        "count=*": "{count} vagas"
+      }
+    }
+  ],
   "form_starts_at": "Primeira sessão",
   "form_timezone": "Fuso horário",
   "form_timezone_note": "No seu fuso, {zone} ({offset}). Cada pessoa vê a hora no próprio fuso.",
@@ -342,8 +409,17 @@
   "table_error_forbidden": "Você não tem permissão para fazer isso.",
   "table_error_other": "Não deu certo. Tente de novo.",
   "rating_gm_average": "Nota de mestragem",
-  "rating_count": "{count} avaliações",
-  "rating_count_one": "1 avaliação",
+  "rating_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Sem avaliações",
+        "count=1": "1 avaliação",
+        "count=*": "{count} avaliações"
+      }
+    }
+  ],
   "rating_title": "Avalie a mestragem",
   "rating_lede": "Você jogou. Aqui você avalia a mestragem: a nota entra na média de quem mestrou, visível para todo mundo, e o comentário fica só com você.",
   "rating_the_gm": "Sua nota para a mestragem",
@@ -371,10 +447,27 @@
   "dash_seats_taken": "{taken} de {capacity} vagas ocupadas",
   "dash_edit": "Editar mesa",
   "dash_manage": "Gerenciar mesa",
-  "dash_count_one": "1 mesa",
-  "dash_count": "{count} mesas",
-  "dash_banner_one": "1 pedido de vaga esperando você em {title}",
-  "dash_banner": "{count} pedidos de vaga esperando você em {title}",
+  "dash_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa",
+        "count=1": "1 mesa",
+        "count=*": "{count} mesas"
+      }
+    }
+  ],
+  "dash_banner": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pedido de vaga esperando você em {title}",
+        "count=*": "{count} pedidos de vaga esperando você em {title}"
+      }
+    }
+  ],
   "dash_banner_many": "{count} pedidos de vaga esperando você em {tables} mesas",
   "dash_banner_action": "Ver o pedido",
   "dash_players": "Participantes",
@@ -591,8 +684,17 @@
   "admin_announce_audience_game_masters": "Quem já abriu uma mesa",
   "admin_announce_audience_active_players": "Quem tem vaga confirmada numa mesa",
   "admin_announce_audience_specific_user": "Uma pessoa",
-  "admin_announce_audience_size": "{count} contas",
-  "admin_announce_audience_size_one": "1 conta",
+  "admin_announce_audience_size": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma conta",
+        "count=1": "1 conta",
+        "count=*": "{count} contas"
+      }
+    }
+  ],
   "admin_announce_field_recipient": "Nome de usuário ou ID",
   "admin_announce_recipient_hint": "Por exemplo, @bruno-leal.",
   "admin_announce_field_link": "Link (opcional)",
@@ -603,8 +705,17 @@
   "admin_announce_review": "Revisar envio",
   "admin_announce_confirm_title": "Confirme o envio",
   "admin_announce_confirm_person": "Esta notificação vai para @{username}.",
-  "admin_announce_confirm_one": "Esta notificação vai para 1 conta.",
-  "admin_announce_confirm": "Esta notificação vai para {count} contas.",
+  "admin_announce_confirm": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Esta notificação não vai para nenhuma conta.",
+        "count=1": "Esta notificação vai para 1 conta.",
+        "count=*": "Esta notificação vai para {count} contas."
+      }
+    }
+  ],
   "admin_announce_confirm_send": "Enviar agora",
   "admin_announce_confirm_back": "Voltar e editar",
   "admin_announce_sent": "Notificação enviada.",
@@ -616,8 +727,17 @@
   "admin_history_empty": "Nenhuma notificação enviada ainda.",
   "admin_history_by": "Por {author}",
   "admin_history_to_person": "Para {username}",
-  "admin_history_notified": "Chegou a {count} contas",
-  "admin_history_notified_one": "Chegou a 1 conta",
+  "admin_history_notified": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Não chegou a nenhuma conta",
+        "count=1": "Chegou a 1 conta",
+        "count=*": "Chegou a {count} contas"
+      }
+    }
+  ],
   "admin_history_status_delivered": "Entregue",
   "admin_history_status_pending": "Na fila",
   "admin_history_status_failed": "Falhou",
