@@ -20,7 +20,7 @@
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import Toaster from '$lib/components/Toaster.svelte';
   import UnsavedChangesDialog from '$lib/components/UnsavedChangesDialog.svelte';
-  import { Progress } from '@skeletonlabs/skeleton-svelte';
+  import { Navigation, Progress } from '@skeletonlabs/skeleton-svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -132,75 +132,81 @@
     </a>
 
     {#if !data.maintenance}
-      <nav class="flex items-center gap-2 md:gap-1" aria-label={m.nav_main()}>
-        {#if data.released}
-          <a
-            href={localizedHref('/tables', locale)}
-            aria-current={inTables ? 'page' : undefined}
-            class={navLink}
-          >
-            {m.nav_tables()}
-          </a>
-        {/if}
+      <Navigation layout="bar" aria-label={m.nav_main()}>
+        {#snippet element(attributes)}
+          <nav {...attributes as Record<string, unknown>}>
+            <Navigation.Content class="flex items-center gap-2 md:gap-1">
+              {#if data.released}
+                <Navigation.TriggerAnchor
+                  href={localizedHref('/tables', locale)}
+                  aria-current={inTables ? 'page' : undefined}
+                  class={navLink}
+                >
+                  {m.nav_tables()}
+                </Navigation.TriggerAnchor>
+              {/if}
 
-        {#if data.account}
-          <a
-            href={localizedHref('/account/tables', locale)}
-            aria-current={inMyTables ? 'page' : undefined}
-            class={navLink}
-          >
-            {m.nav_my_tables()}
-          </a>
+              {#if data.account}
+                <Navigation.TriggerAnchor
+                  href={localizedHref('/account/tables', locale)}
+                  aria-current={inMyTables ? 'page' : undefined}
+                  class={navLink}
+                >
+                  {m.nav_my_tables()}
+                </Navigation.TriggerAnchor>
 
-          <a
-            href={localizedHref('/tables/new', locale)}
-            class="btn hidden h-12 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="shrink-0"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            {m.nav_open_table()}
-          </a>
-        {/if}
+                <Navigation.TriggerAnchor
+                  href={localizedHref('/tables/new', locale)}
+                  class="btn hidden h-12 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    class="shrink-0"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  {m.nav_open_table()}
+                </Navigation.TriggerAnchor>
+              {/if}
 
-        <span aria-hidden="true" class="hidden w-2 md:block"></span>
-        <ThemeToggle />
+              <span aria-hidden="true" class="hidden w-2 md:block"></span>
+              <ThemeToggle />
 
-        {#if data.account}
-          <NotificationBell
-            unread={badges.data?.unread ?? data.account.notifications.unread}
-            latest={data.account.notifications.latest}
-          />
-        {/if}
+              {#if data.account}
+                <NotificationBell
+                  unread={badges.data?.unread ?? data.account.notifications.unread}
+                  latest={data.account.notifications.latest}
+                />
+              {/if}
 
-        {#if data.account}
-          <AccountMenu
-            name={data.account.displayName}
-            avatarUrl={data.account.avatarUrl}
-            isAdmin={data.account.isAdmin}
-            pendingSuggestionsCount={data.account.pendingSuggestionsCount}
-            messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
-          />
-        {:else if data.authEnabled && data.released}
-          <a
-            href={resolve('/login')}
-            class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
-          >
-            {m.nav_sign_in()}
-          </a>
-        {/if}
-      </nav>
+              {#if data.account}
+                <AccountMenu
+                  name={data.account.displayName}
+                  avatarUrl={data.account.avatarUrl}
+                  isAdmin={data.account.isAdmin}
+                  pendingSuggestionsCount={data.account.pendingSuggestionsCount}
+                  messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
+                />
+              {:else if data.authEnabled && data.released}
+                <a
+                  href={resolve('/login')}
+                  class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
+                >
+                  {m.nav_sign_in()}
+                </a>
+              {/if}
+            </Navigation.Content>
+          </nav>
+        {/snippet}
+      </Navigation>
     {/if}
   </header>
 
