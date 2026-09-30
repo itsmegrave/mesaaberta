@@ -17,7 +17,7 @@
   "vars": {
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
     "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
-    "RESEND_FROM": "no-reply@mesaaberta.app",
+    "RESEND_FROM": "ola@mesaaberta.app",
     // Ids of the hosted Resend templates (see "Hosted e-mail templates" in the README). Not secrets.
     "RESEND_TEMPLATE_CANCEL": "09588881-360c-44f2-9ae9-652f16929591",
     "RESEND_TEMPLATE_INVITE": "dc486320-16dd-44a9-99ac-dfe1b25255eb",
