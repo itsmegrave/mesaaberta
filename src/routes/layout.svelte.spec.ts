@@ -46,6 +46,7 @@ const adminAccount = {
 
 describe('+layout.svelte', () => {
   beforeEach(async () => {
+    localStorage.removeItem('nav-expanded');
     await page.viewport(1280, 800);
   });
 
@@ -75,6 +76,28 @@ describe('+layout.svelte', () => {
           .getByRole('link', { name: 'Mesa Aberta' }),
       )
       .toHaveAttribute('href', '/');
+  });
+
+  it('shows expanded account controls and keeps labels inside the collapsed rail', async () => {
+    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+    const collapse = nav.getByRole('button', { name: 'Recolher menu' });
+    await expect.element(collapse).toHaveTextContent('Recolher menu');
+    await expect.element(nav.getByText('Mestre Silva', { exact: true })).toBeVisible();
+    const theme = nav.getByRole('button', { name: 'Tema escuro' }).element();
+    const bell = nav.getByRole('button', { name: 'Notificações', exact: true }).element();
+    expect(theme.parentElement).toBe(bell.parentElement);
+    expect(theme.parentElement?.previousElementSibling?.tagName).toBe('HR');
+    await collapse.click();
+    await expect
+      .element(nav.getByRole('button', { name: 'Expandir menu' }))
+      .toHaveAttribute('aria-expanded', 'false');
+    const label = nav.getByRole('link', { name: 'Minhas mesas' }).element()
+      .lastElementChild as HTMLElement;
+    expect(getComputedStyle(label).whiteSpace).toBe('normal');
+    expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+    await nav.getByRole('button', { name: 'Expandir menu' }).click();
+    await expect.element(collapse).toHaveTextContent('Recolher menu');
   });
 
   describe('footer credits', () => {
@@ -215,7 +238,8 @@ describe('+layout.svelte', () => {
       const adminLink = navigation().getByRole('link', { name: /Admin/i });
       await expect.element(adminLink).toBeVisible();
       await expect.element(adminLink).toHaveAttribute('href', '/admin');
-      await expect.element(adminLink).toHaveTextContent('Admin 3');
+      await expect.element(adminLink.getByText('Admin', { exact: true })).toBeVisible();
+      await expect.element(adminLink.getByLabelText('Admin: 3')).toHaveTextContent('3');
     });
 
     it('signs out with a POST to /logout, never a link', async () => {
