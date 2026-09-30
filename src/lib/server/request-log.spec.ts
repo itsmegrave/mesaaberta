@@ -12,6 +12,7 @@ const setup = () => {
     const event = {
       request: new Request(url, { method: 'POST', headers }),
       url: new URL(url),
+      route: { id: new URL(url).pathname },
       locals: {},
     } as unknown as RequestEvent;
 
@@ -45,10 +46,10 @@ describe('handleRequestLog', () => {
   it('gives routes a logger that carries the same request id', async () => {
     const { lines, run } = setup();
 
-    const event = await run('https://mesaaberta.test/', { 'cf-ray': 'abc-GRU' });
+    const event = await run('https://mesaaberta.test/', { 'cf-ray': '0123456789abcdef-GRU' });
     event.locals.log.info('from a route');
 
-    expect(lines.at(-1)).toMatchObject({ msg: 'from a route', requestId: 'abc-GRU' });
+    expect(lines.at(-1)).toMatchObject({ msg: 'from a route', requestId: '0123456789abcdef-GRU' });
   });
 
   it('logs method, path, status and duration once per request', async () => {
@@ -60,13 +61,13 @@ describe('handleRequestLog', () => {
     expect(lines[0]).toMatchObject({
       msg: 'request',
       method: 'POST',
-      path: '/healthz',
+      route: '/healthz',
       status: 204,
       durationMs: expect.any(Number),
     });
   });
 
-  it('adds the user id to the request line once a later hook has signed someone in', async () => {
+  it('keeps user identity out of telemetry after a later hook signs someone in', async () => {
     const { lines, handle } = setup();
     const event = {
       request: new Request('https://mesaaberta.test/'),
@@ -82,7 +83,7 @@ describe('handleRequestLog', () => {
       },
     });
 
-    expect(lines[0]).toMatchObject({ userId: 'user-1' });
+    expect(lines[0]).not.toHaveProperty('userId');
   });
 
   it('never logs the query string, which can carry tokens', async () => {
@@ -91,6 +92,6 @@ describe('handleRequestLog', () => {
     await run('https://mesaaberta.test/login?token=s3cret&email=ana@example.com');
 
     expect(JSON.stringify(lines)).not.toMatch(/s3cret|ana@example/);
-    expect(lines[0].path).toBe('/login');
+    expect(lines[0].route).toBe('/login');
   });
 });

@@ -12,6 +12,7 @@ import {
   RETENTION_DAYS,
   sweepEvents,
 } from './dispatcher';
+import { createLogger } from '../logger';
 import type { Handler, StoredEvent } from './types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -193,6 +194,36 @@ describe('dispatchEvent', () => {
         attempts: 1,
         nextAttemptAt: later(backoffSeconds(1)),
       });
+    });
+
+    it('correlates a failed handler and its successful retry without recording the payload', async () => {
+      const id = await record();
+      const lines: Record<string, unknown>[] = [];
+      const log = createLogger({ write: (_level, line) => lines.push(JSON.parse(line)) }).child({
+        requestId: '0123456789abcdef-GRU',
+      });
+      let broken = true;
+      const flaky = handler('mixpanel-product-events-v1', async () => {
+        if (broken) throw new Error('private payload');
+      });
+      await dispatchEvent(test.db, [flaky], id, t0, log);
+      broken = false;
+      await dispatchEvent(test.db, [flaky], id, later(backoffSeconds(1)), log);
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toMatchObject({
+        event: 'event.handler.failed',
+        eventId: id,
+        handler: flaky.name,
+        attempt: 1,
+        requestId: '0123456789abcdef-GRU',
+      });
+      expect(lines[1]).toMatchObject({
+        msg: 'event.retry.scheduled',
+        retryInSeconds: 30,
+        eventId: id,
+      });
+      expect(lines[2]).toMatchObject({ event: 'event.handler.succeeded', attempt: 2, eventId: id });
+      expect(JSON.stringify(lines)).not.toMatch(/private payload|smtp|"title"|"slug"/);
     });
 
     it('stores the error without an email address in it', async () => {

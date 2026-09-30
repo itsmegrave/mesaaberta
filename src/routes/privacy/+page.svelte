@@ -134,6 +134,9 @@
   <ul>
     <li><strong>Supabase</strong>: banco de dados, autenticação e armazenamento de imagens.</li>
     <li><strong>Cloudflare</strong>: hospedagem, rede e proteção contra ataques.</li>
+    <li>{m.privacy_provider_sentry()}</li>
+    <li>{m.privacy_provider_mixpanel()}</li>
+    <li>{m.privacy_provider_traffic()}</li>
     <li><strong>Resend</strong>: envio de e-mails (convites e avisos das mesas).</li>
     <li><strong>Google e Discord</strong>: só se você escolher entrar com eles.</li>
     <li>

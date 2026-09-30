@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
-import { scrubString } from '../logger';
+import { logger, scrubString, type Logger } from '../logger';
 import type { DomainEvent, Handler, StoredEvent } from './types';
 
 /** After this many failed attempts an event is given up on, and stays for a person to look at. */
@@ -38,6 +38,7 @@ export async function dispatchEvent(
   handlers: readonly Handler[],
   id: string,
   now = new Date(),
+  log: Logger = logger,
 ): Promise<void> {
   const [row] = await db
     .update(events)
@@ -62,13 +63,31 @@ export async function dispatchEvent(
 
   const failures: unknown[] = [];
   for (const handler of pending) {
+    const started = Date.now();
+    const context = {
+      eventId: id,
+      eventType: event.type,
+      handler: handler.name,
+      attempt: row.attempts + 1,
+    };
     try {
       await handler.handle(event, db);
       await db
         .update(events)
         .set({ handledBy: sql`array_append(${events.handledBy}, ${handler.name})` })
         .where(eq(events.id, id));
+      log.info('event.handler.succeeded', {
+        ...context,
+        event: 'event.handler.succeeded',
+        durationMs: Date.now() - started,
+      });
     } catch (error) {
+      log.warn('event.handler.failed', {
+        ...context,
+        event: 'event.handler.failed',
+        durationMs: Date.now() - started,
+        error,
+      });
       failures.push(error);
     }
   }
@@ -82,6 +101,17 @@ export async function dispatchEvent(
   }
 
   const attempts = row.attempts + 1;
+  log[attempts >= MAX_ATTEMPTS ? 'error' : 'warn'](
+    attempts >= MAX_ATTEMPTS ? 'event.exhausted' : 'event.retry.scheduled',
+    {
+      eventId: id,
+      eventType: event.type,
+      attempt: attempts,
+      outcome: attempts >= MAX_ATTEMPTS ? 'exhausted' : 'retry',
+      ...(attempts >= MAX_ATTEMPTS && { error: failures[0] }),
+      ...(attempts < MAX_ATTEMPTS && { retryInSeconds: backoffSeconds(attempts) }),
+    },
+  );
   await db
     .update(events)
     .set({
@@ -105,6 +135,7 @@ export async function sweepEvents(
   handlers: readonly Handler[],
   now = new Date(),
   limit = 50,
+  log: Logger = logger,
 ): Promise<number> {
   const rows = await db
     .select({ id: events.id })
@@ -113,7 +144,7 @@ export async function sweepEvents(
     .orderBy(asc(events.createdAt))
     .limit(limit);
 
-  for (const { id } of rows) await dispatchEvent(db, handlers, id, now);
+  for (const { id } of rows) await dispatchEvent(db, handlers, id, now, log);
 
   return rows.length;
 }

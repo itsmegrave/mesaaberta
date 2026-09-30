@@ -66,7 +66,7 @@ export const actions: Actions = {
         // Nothing players see changed: no invite, no notification.
         if (eventId) {
           locals.afterResponse((db) =>
-            dispatchEvent(db, handlersFor(event.platform?.env), eventId),
+            dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
           );
         }
         return { slug: params.slug };
@@ -84,7 +84,9 @@ export const actions: Actions = {
 
     try {
       const { eventId } = await disableTable(locals.db, await locals.getProfile(), params.slug);
-      locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), eventId));
+      locals.afterResponse((db) =>
+        dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
+      );
     } catch (e) {
       if (e instanceof Forbidden) error(403, 'Forbidden');
       if (e instanceof NotFound) error(404, 'Not found');

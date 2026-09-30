@@ -1,3 +1,4 @@
+import { logger, type Logger } from '../logger';
 import { GrowthBook, type Attributes, type FeatureApiResponse } from '@growthbook/growthbook';
 import { flagDefaults, isFlagName, killSwitches, type FlagName } from './registry';
 
@@ -6,6 +7,7 @@ export type Flags = {
 };
 
 type Options = {
+  log?: Pick<Logger, 'warn'>;
   /** Development-only escape hatch for exercising work hidden behind a flag. */
   forceAll?: boolean;
   /** Fixed values that win over GrowthBook and the defaults; see `flagOverrides`. */
@@ -55,7 +57,7 @@ export function flagOverrides(
  */
 export function createFlags(
   loadPayload: () => Promise<FeatureApiResponse | null>,
-  { forceAll = false, overrides = {} }: Options = {},
+  { forceAll = false, overrides = {}, log = logger }: Options = {},
 ): Flags {
   let payload: Promise<FeatureApiResponse | null> | undefined;
 
@@ -64,7 +66,7 @@ export function createFlags(
       try {
         return await loadPayload();
       } catch (error) {
-        console.error('flags: could not load feature payload:', String(error));
+        log.warn('flags.payload.failed', { error });
         return null;
       }
     })());
@@ -83,7 +85,7 @@ export function createFlags(
         await growthbook.setPayload(response);
         return growthbook.getFeatureValue(name, flagDefaults[name]);
       } catch (error) {
-        console.error('flags: could not evaluate features:', String(error));
+        log.warn('flags.evaluation.failed', { error });
         return flagDefaults[name];
       }
     },

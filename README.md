@@ -386,15 +386,142 @@ To limit something else (reports, say): record an event for it, add a named `Rat
 
 The available periods, durations and the number of rules depend on the plan; check them on the plan you have. Supabase Auth also has limits of its own on sign-ins and emails.
 
-## Logging
+## Logging and observability
 
-Server code logs through `locals.log` (or `logger` from `$lib/server/logger` outside a request). Each call writes one JSON line, and every line in a request carries the same `requestId`, taken from Cloudflare's `cf-ray` header so it matches the edge logs. A summary `request` line (method, path, status, duration) is written when each request ends.
+Sentry is the only external application-log and exception destination. Workers Logs remains the
+edge-local JSON destination. The Sentry wizard configured `mesa-aberta/mesa-aberta-app`;
+the server hook uses the SDK's Cloudflare request-scoped initialization, and the scheduled handler
+uses `@sentry/cloudflare`. Production telemetry runs on `mesaaberta.app`; local development,
+Vitest and browser E2E do not send it. Tracing and Session Replay are disabled.
+
+Use `locals.log` during a request, and pass it through background dispatches. The Cron creates its
+own correlation ID. Messages must be static descriptions of operations, never user input:
 
 ```ts
-locals.log.info('session booked', { tableId, players: 5 });
+locals.log.info('event.handler.succeeded', {
+  event: 'event.handler.succeeded',
+  eventId,
+  handler: 'mixpanel-product-events-v1',
+  attempt: 1,
+  durationMs: 42,
+});
 ```
 
-**Never log PII.** Pass ids and counts, not emails, names, phone numbers, CPFs, tokens or cookies. As a safety net the logger redacts fields whose names look sensitive (`email`, `token`, `password`, `cookie`, `authorization`, `phone`, `cpf`, ...) and scrubs email addresses and bearer tokens written into strings. Errors are logged as name and message only, and the query string is never logged. The net is only a net: choose what to log with care.
+Every console line has `schemaVersion`, `time` (UTC ISO timestamp), `level`, `msg` and `service`.
+Request logs add the Cloudflare `cf-ray` as `requestId` (a UUID locally), `environment`, Worker
+version `release`, method, **route template** (for example `/tables/[slug]`), status, outcome and
+duration. Raw paths and query strings are not recorded. Dispatcher logs add event ID/type, handler,
+attempt and duration. Failed handlers produce `event.handler.failed`, followed by
+`event.retry.scheduled` with `retryInSeconds`, or `event.exhausted` after eight attempts.
+
+**Privacy boundary:** `src/lib/observability/privacy.ts` defines the allowed operational fields.
+Unknown fields, nested objects, user identity, form data, headers, cookies, session IDs and payloads
+are dropped **before both destinations**. Strings have an additional credential/email scrubber.
+Errors contribute only their type and safe error code to logs; caught operational errors and
+unexpected SvelteKit errors produce Sentry issues with code locations and safe correlation tags.
+The Sentry `beforeSend` callback reconstructs exceptions without messages, request data, user data,
+breadcrumbs, source context or local variables. `beforeSendLog` independently filters SDK-added
+attributes and rejects automatic console logs. Do not add console-capture integrations.
+
+To investigate a failure, filter Sentry Logs by `requestId`, find the failed operation and error code,
+then find its issue with the same tag. For background work, filter by `eventId`: find the failed
+handler, its next retry and eventual success/exhaustion. Use `release` to identify the deployed
+Worker. The console transport uses the same IDs. Telemetry failure never changes the application's
+result; SDK flushing runs under the Worker's execution context.
+
+Source maps use the wizard's git-ignored `.env.sentry-build-plugin` locally, or `SENTRY_AUTH_TOKEN`
+in the build environment. Never put this auth token in Wrangler vars or browser code. Upload is
+skipped when neither source is configured. Sentry's DSN is public and is included in the SDK
+configuration. Source-map debug IDs are preserved after privacy filtering.
+
+Retention of Workers Logs and Sentry data is controlled by their project/account settings, **not**
+by the domain-event sweeper. Review the current provider retention in the dashboards and use the
+shortest operational window your plan supports; do not assume domain events' 90-day retention
+applies to telemetry. The Sentry project does not receive account identities.
+
+### Uptime
+
+The Sentry Uptime Monitor has been configured in `mesa-aberta-app` for **GET
+`https://mesaaberta.app/healthz`**, expecting HTTP 200, with no authentication, request body or
+custom headers. Use the project's free monitor allocation and set an alert recipient in Sentry.
+The monitor was created through the Sentry interface; the wizard token is restricted to build
+operations and does not grant monitor administration.
+
+The endpoint returns `{ "status": "ok", "database": "ok" }` when healthy and HTTP 503 when the
+configured database cannot answer. It disables caching. A deployment without a configured database
+returns `database: "not_configured"`; verify production reports `ok` when setting up the monitor.
+
+### Product analytics
+
+Cloudflare Web Analytics is already enabled through Cloudflare's automatic site integration.
+The CSP permits `static.cloudflareinsights.com` and `cloudflareinsights.com`; the application does
+not install a second beacon or a browser Mixpanel SDK.
+
+Mixpanel runs server-side through `mixpanel-product-events-v1` in the existing outbox. Set
+`MIXPANEL_TOKEN` with `wrangler secret put MIXPANEL_TOKEN`. `MIXPANEL_REGION` can be `US` (default),
+`EU` or `IN`, matching the Mixpanel project. Without a token the handler is disabled; enabling it
+does not replay already-processed historical events.
+
+Only `TableCreated`, `TableUpdated`, `TableDisabled`, `JoinRequested`, `JoinApproved`,
+`JoinDeclined`, `PlayerJoined`, `PlayerLeft` and `RatingSubmitted` are forwarded. Properties are
+limited to the actor's opaque UUID (`distinct_id`), event UUID (`$insert_id`), original timestamp
+and table UUID. No email, name, slug, table text, rating/comment, IP or connection event is sent.
+No identity profiles or browser cookies are created. The Import API accepts the token as Basic auth
+with an empty password; it allows delayed outbox retries without the Track API's five-day limit.
+
+Each import has a five-second timeout and verifies the provider's acknowledgement. Failed imports
+retry through the existing outbox and do not repeat handlers that already succeeded. The same
+`$insert_id`, actor, type and original timestamp deduplicate ambiguous network failures. Response
+bodies are never copied into error messages. No analytics failure rolls back a player's action.
+
+### Business metrics from SQL
+
+These read-only queries count recorded business activity, irrespective of external delivery.
+They use São Paulo calendar weeks. The sweeper deletes completed ordinary events after 90 days,
+so the queries deliberately cover eight weeks; they are not lifetime totals. Confirmed joins count
+`PlayerJoined` (automatic) and `JoinApproved` (manual), never `JoinRequested`. Rating submissions
+include edits; the distinct actor/table count identifies how many pairs submitted in each week.
+
+```sql
+WITH weeks AS (
+  SELECT generate_series(
+    date_trunc('week', now() AT TIME ZONE 'America/Sao_Paulo') - interval '7 weeks',
+    date_trunc('week', now() AT TIME ZONE 'America/Sao_Paulo'),
+    interval '1 week'
+  ) AS week
+), activity AS (
+  SELECT date_trunc('week', created_at AT TIME ZONE 'America/Sao_Paulo') AS week,
+    count(*) FILTER (WHERE type = 'TableCreated') AS tables_created,
+    count(*) FILTER (WHERE type IN ('PlayerJoined', 'JoinApproved')) AS confirmed_joins,
+    count(*) FILTER (WHERE type = 'RatingSubmitted') AS rating_submissions,
+    count(DISTINCT (actor_id, payload->>'tableId'))
+      FILTER (WHERE type = 'RatingSubmitted') AS rating_pairs
+  FROM events
+  WHERE created_at >= (
+    date_trunc('week', now() AT TIME ZONE 'America/Sao_Paulo') - interval '7 weeks'
+  ) AT TIME ZONE 'America/Sao_Paulo'
+  GROUP BY 1
+)
+SELECT weeks.week::date,
+  coalesce(tables_created, 0) AS tables_created,
+  coalesce(confirmed_joins, 0) AS confirmed_joins,
+  coalesce(rating_submissions, 0) AS rating_submissions,
+  coalesce(rating_pairs, 0) AS rating_pairs
+FROM weeks LEFT JOIN activity USING (week)
+ORDER BY weeks.week;
+```
+
+Check delivery health separately, without selecting event payloads or exception text:
+
+```sql
+SELECT type,
+  count(*) FILTER (WHERE processed_at IS NULL AND failed_at IS NULL) AS pending,
+  count(*) FILTER (WHERE failed_at IS NOT NULL) AS exhausted,
+  min(next_attempt_at) FILTER (WHERE processed_at IS NULL AND failed_at IS NULL) AS next_retry
+FROM events
+GROUP BY type
+ORDER BY type;
+```
 
 ## Security headers
 
@@ -402,7 +529,7 @@ locals.log.info('session booked', { tableId, players: 5 });
 
 Because inline styles are blocked, do not write `style="..."` in markup: use a class, or a `data-` attribute that CSS selects on. `e2e/security.e2e.ts` fails on any CSP violation, so a blocked style or script shows up in CI.
 
-`GET /healthz` returns `{"status":"ok"}` for uptime checks.
+`GET /healthz` reports application and database health for uptime checks (see Observability).
 
 ## TypeScript 7
 

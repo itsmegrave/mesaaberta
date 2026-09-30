@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import { resolve } from 'node:path';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { paraglideOptions } from './paraglide.config.ts';
@@ -9,6 +11,15 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
   plugins: [
+    sentrySvelteKit({
+      org: 'mesa-aberta',
+      project: 'mesa-aberta-app',
+      adapter: 'cloudflare',
+      telemetry: false,
+      autoInstrument: false,
+      autoUploadSourceMaps:
+        !!process.env.SENTRY_AUTH_TOKEN || existsSync('.env.sentry-build-plugin'),
+    }),
     tailwindcss(),
     sveltekit({
       compilerOptions: {
@@ -17,6 +28,9 @@ export default defineConfig({
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
       },
       adapter: adapter(),
+      experimental: {
+        instrumentation: { server: true },
+      },
       // Checks for a new deploy every minute; the root layout offers a refresh without interrupting
       // the visitor's navigation or form entry.
       version: { pollInterval: 60_000 },
@@ -27,7 +41,7 @@ export default defineConfig({
         mode: 'nonce',
         directives: {
           'default-src': ['self'],
-          'script-src': ['self'],
+          'script-src': ['self', 'https://static.cloudflareinsights.com'],
           'style-src': ['self'],
           // SvelteKit's own screen-reader announcer (`#svelte-announcer`) has an inline `style`
           // attribute. Only that exact string is allowed, by hash. If a SvelteKit upgrade changes
@@ -54,7 +68,11 @@ export default defineConfig({
               : []),
           ],
           'font-src': ['self'],
-          'connect-src': ['self'],
+          'connect-src': [
+            'self',
+            'https://o4512176851714048.ingest.us.sentry.io',
+            'https://cloudflareinsights.com',
+          ],
           'object-src': ['none'],
           'base-uri': ['self'],
           'form-action': ['self', 'https://www.instagram.com'],
@@ -62,7 +80,6 @@ export default defineConfig({
         },
       },
     }),
-
     paraglideVitePlugin({ ...paraglideOptions, strategy: [...paraglideOptions.strategy] }),
   ],
   test: {

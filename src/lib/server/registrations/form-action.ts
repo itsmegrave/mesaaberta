@@ -40,7 +40,9 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
   try {
     const { eventIds } = await run(locals.db, await locals.getProfile(), form.data as T);
     for (const id of eventIds)
-      locals.afterResponse((db) => dispatchEvent(db, handlersFor(event.platform?.env), id));
+      locals.afterResponse((db) =>
+        dispatchEvent(db, handlersFor(event.platform?.env), id, new Date(), locals.log),
+      );
   } catch (e) {
     if (e instanceof RateLimited) {
       event.setHeaders?.({ 'Retry-After': String(e.retryAfterSeconds) });
