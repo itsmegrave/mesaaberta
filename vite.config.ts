@@ -72,6 +72,7 @@ export default defineConfig({
         // subpath, gives up, and Vite then finds dependencies late and reloads mid-run, which breaks
         // unrelated specs. Pointing it at the file skips the exports map.
         optimizeDeps: {
+          include: ['@iconify/svelte/dist/OfflineIcon.svelte'],
           rolldownOptions: {
             resolve: {
               alias: {
