@@ -39,13 +39,13 @@
   const locale = getLocale();
   const STORAGE_KEY = 'nav-expanded';
 
-  // A narrow rail (icon over label) by default; the toggle opens it into a sidebar (label beside
-  // the icon). The choice is remembered in this browser, and read after mount so the server and the
-  // first paint agree.
-  let expanded = $state(false);
+  // The desktop navigation opens as a sidebar by default. Keep the user's explicit choice
+  // between visits, and read it after mount so the server and the first paint agree.
+  let expanded = $state(true);
   onMount(() => {
     try {
-      expanded = localStorage.getItem(STORAGE_KEY) === '1';
+      const preference = localStorage.getItem(STORAGE_KEY);
+      if (preference !== null) expanded = preference === '1';
     } catch {
       // Storage can be blocked; the rail just starts narrow.
     }
