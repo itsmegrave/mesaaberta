@@ -1,3 +1,5 @@
+import { publishInstagramPosts } from '../instagram/publisher';
+import type { InstagramEnv } from '../instagram/api';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
 import type { Logger } from '../logger';
 import { pruneNotifications } from '../notifications/service';
@@ -25,7 +27,7 @@ type Deps = {
  * without a database. Returns how many events it tried.
  */
 export async function runSweeper(
-  env: DatabaseEnv,
+  env: DatabaseEnv & InstagramEnv,
   { open = createDb, handlers, log, changelog = parseEntries(ENTRY_FILES) }: Deps,
 ): Promise<number> {
   const connectionString = connectionStringFrom(env);
@@ -35,6 +37,7 @@ export async function runSweeper(
   try {
     const swept = await sweepEvents(db, handlers);
     if (swept > 0) log.info('event sweep', { swept });
+    await publishInstagramPosts(db, env);
     const pruned = await pruneEvents(db);
     if (pruned > 0) log.info('event prune', { pruned });
     const expired = await pruneNotifications(db);

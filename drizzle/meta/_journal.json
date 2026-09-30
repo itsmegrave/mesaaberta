@@ -162,6 +162,13 @@
       "when": 1790697338871,
       "tag": "0022_platform_options",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790766655510,
+      "tag": "0023_instagram_posts",
+      "breakpoints": true
     }
   ]
 }

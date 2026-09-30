@@ -1,3 +1,5 @@
+import { eq } from 'drizzle-orm';
+import { instagramPosts } from '../db/schema';
 import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '$lib/server/errors';
@@ -22,7 +24,12 @@ export const read = async ({ locals, url, params, platform }: RequestEvent) => {
 
     // The GM's id stays on the server; the page only needs names and pictures.
     const { gmId, id, imagePath, ...table } = manage.table;
+    const [instagram] = await locals.db
+      .select({ status: instagramPosts.status, permalink: instagramPosts.permalink })
+      .from(instagramPosts)
+      .where(eq(instagramPosts.tableId, id));
     return {
+      instagram: instagram ?? null,
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
       gm: withPicture(manage.gm),
       gmRating: manage.gmRating,

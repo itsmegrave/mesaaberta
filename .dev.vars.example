@@ -33,3 +33,11 @@ MAILPIT_URL=http://127.0.0.1:54344
 # RESEND_TEMPLATE_CANCEL=
 # RESEND_TEMPLATE_JOIN_REQUESTED=
 # RESEND_TEMPLATE_JOIN_DECLINED=
+
+# Automatic Instagram sharing. Connect only the Mesa Aberta account at /admin/instagram.
+# Never commit real values. INSTAGRAM_TOKEN_KEY is base64 of 32 cryptographically random bytes.
+# INSTAGRAM_APP_ID=
+# INSTAGRAM_APP_SECRET=
+# INSTAGRAM_TOKEN_KEY=
+# INSTAGRAM_API_VERSION=v25.0
+# APP_ORIGIN=https://mesaaberta.app

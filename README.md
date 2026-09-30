@@ -415,3 +415,55 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a 
 ## API query architecture
 
 See [API queries](docs/api-queries.md) for cache boundaries, SSR hydration, Superforms ownership and the ViaCEP flow.
+
+## Automatic Instagram posts
+
+Every new public table queues one post to the Mesa Aberta Instagram account. The existing
+transactional `TableCreated` event queues the job; the five-minute cron renders and publishes it.
+Table creation never waits for Meta. Edits do not generate additional posts. Disabled tables and
+those with no future session are skipped before publishing. Jobs wait while no account is connected.
+
+The admin connects **Mesa Aberta's Business or Creator account** at `/admin/instagram` with Instagram
+Login. Configure the Instagram app in Meta's dashboard with the exact callback
+`https://mesaaberta.app/admin/instagram/callback` and the `instagram_business_basic` and
+`instagram_business_content_publish` permissions. Test with an app-role account and verify the
+app's current Standard/Advanced Access and App Review requirements before enabling production.
+Set these server-only Worker secrets (`wrangler secret put`), never public variables:
+
+- `INSTAGRAM_APP_ID`
+- `INSTAGRAM_APP_SECRET`
+- `INSTAGRAM_TOKEN_KEY`: base64 of 32 random bytes, e.g. `openssl rand -base64 32`. Preserve this
+  key across deployments; rotating it requires reconnecting the account.
+- `APP_ORIGIN`: the canonical publicly accessible HTTPS origin, e.g. `https://mesaaberta.app`.
+- `INSTAGRAM_API_VERSION` is optional (defaults to `v25.0`); check Meta's version lifecycle before
+  changing it.
+
+Tokens are encrypted using AES-GCM in the RLS-protected database and refreshed during cron runs
+when fewer than seven days remain. Expired or revoked credentials require reconnection. Neither
+credentials nor private player/join details are put in posts or the event log.
+
+Images use an SVG template, resvg WASM and a pure-JavaScript JPEG encoder, all compatible with
+Cloudflare Workers. There is no React dependency. The JPEG is 1080×1350, below 8 MB, with the table
+picture as background when present, Mesa Aberta's logo, public facts in the table's timezone, and a
+QR code. Instagram hashtags cannot contain hyphens: system slugs are normalized and one-shot is
+`#oneshot`. Bundled DejaVu Sans ships with its license in `static/fonts/`.
+
+Temporary JPEGs are held in RLS-protected job rows and served through random, expiring capability
+URLs, so Meta can fetch them without a session. They expire after 24 hours, are removed after a
+successful publish, and are cleared by cron after expiry. No extra public storage bucket is needed.
+Five jobs are attempted per cron run; bounded retries use backoff and stop after twelve failures.
+Use a paid Worker CPU budget suitable for SVG rendering and JPEG encoding; the free CPU limit is
+not sufficient for this workload. Validate CPU/memory usage with representative backgrounds before
+production and keep uploaded images within the existing upload limit.
+
+The database enforces one job per table. Job leases prevent concurrent workers from publishing the
+same table, and the container/media IDs survive retries. A publish request whose response is lost
+becomes **uncertain**: it is never blindly repeated. An admin checks Instagram and records the
+actual post URL on `/admin/instagram`. This protects against duplicate posts at the cost of manual
+reconciliation after an ambiguous network failure. GMs see the job status and resulting post link
+on their table's manage page. Meta's credentials, review approval and live-account smoke test are
+operational setup steps; tests do not send actual Instagram posts.
+
+References: [Instagram Login](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/business-login),
+[Meta's publishing collection](https://www.postman.com/meta/instagram/collection/6yqw8pt/instagram-api),
+[resvg Workers bindings](https://github.com/fineshopdesign/cf-wasm/tree/main/packages/resvg).

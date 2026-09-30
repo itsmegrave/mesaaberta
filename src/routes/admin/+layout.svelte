@@ -11,6 +11,7 @@
   const sections = [
     { path: '/admin', label: m.admin_nav_overview() },
     { path: '/admin/notifications', label: m.admin_nav_notifications() },
+    { path: '/admin/instagram', label: m.instagram_admin_title() },
   ];
 </script>
 
