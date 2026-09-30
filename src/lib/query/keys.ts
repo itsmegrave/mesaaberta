@@ -7,6 +7,7 @@ export const resources = [
   'catalog',
   'editCatalog',
   'account',
+  'admin',
 ] as const;
 export type Resource = (typeof resources)[number];
 export type ReadSeed = {
@@ -23,6 +24,7 @@ export const privateResources = new Set<Resource>([
   'account',
   'catalog',
   'editCatalog',
+  'admin',
 ]);
 export function readKey(seed: Pick<ReadSeed, 'resource' | 'viewer' | 'params'>) {
   return [
