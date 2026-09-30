@@ -26,6 +26,7 @@
     sparkles: 'sparkles',
     gift: 'gift',
     info: 'info',
+    message: 'message-circle',
   };
 </script>
 

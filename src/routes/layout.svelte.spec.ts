@@ -31,6 +31,7 @@ const memberAccount = {
   avatarUrl: null,
   isAdmin: false,
   pendingSuggestionsCount: 0,
+  messagesUnread: 0,
   notifications: { unread: 0, latest: [] },
 };
 const adminAccount = {
@@ -39,6 +40,7 @@ const adminAccount = {
   avatarUrl: null,
   isAdmin: true,
   pendingSuggestionsCount: 3,
+  messagesUnread: 0,
   notifications: { unread: 0, latest: [] },
 };
 
