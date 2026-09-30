@@ -13,7 +13,6 @@
     { path: '/admin/queue', label: m.admin_nav_queue() },
     { path: '/admin/catalog', label: m.admin_nav_catalog() },
     { path: '/admin/notifications', label: m.admin_nav_notifications() },
-    { path: '/admin/operations', label: m.admin_nav_operations() },
   ];
 </script>
 
