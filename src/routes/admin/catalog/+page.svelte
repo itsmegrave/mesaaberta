@@ -131,13 +131,6 @@
               <td class="px-4 py-3">{status(row)}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    class="btn h-12 rounded-lg px-3 font-semibold hover:preset-tonal"
-                    aria-label="{m.admin_queue_rename()}: {row.name}"
-                    onclick={() => (chosen = { mode: 'rename', row })}
-                    >{m.admin_queue_rename()}</button
-                  >
                   <Popover
                     open={menuOpen === row.id}
                     onOpenChange={(details) => (menuOpen = details.open ? row.id : null)}
@@ -152,6 +145,14 @@
                       <Popover.Content
                         class="w-48 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
                       >
+                        <button
+                          type="button"
+                          class={item}
+                          onclick={() => {
+                            menuOpen = null;
+                            chosen = { mode: 'rename', row };
+                          }}>{m.admin_queue_rename()}</button
+                        >
                         <button
                           type="button"
                           class={item}

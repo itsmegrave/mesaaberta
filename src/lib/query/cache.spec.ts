@@ -56,7 +56,8 @@ describe('query cache boundaries', () => {
     client.clear();
   });
   it('keys admin pages by normalized username, status and pagination filters', () => {
-    const params = (query: string) => readParams('admin', new URL(`https://x.test/admin?${query}`));
+    const params = (query: string) =>
+      readParams('adminUsers', new URL(`https://x.test/admin?${query}`));
     expect(params('q=ana&status=active&page=1')).not.toBe(params('q=ana&status=suspended&page=1'));
     expect(params('page=1')).not.toBe(params('page=2'));
     expect(params('size=20')).not.toBe(params('size=50'));

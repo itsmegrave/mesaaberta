@@ -24,6 +24,6 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
   return {
     user,
     avatar: pictureOf(supabaseUrlOf(platform?.env), { avatarPath, avatarUrl }),
-    back: `/admin?${back}#profiles`,
+    back: `/admin/users?${back}#profiles`,
   };
 };

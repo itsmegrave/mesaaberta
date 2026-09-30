@@ -10,6 +10,7 @@ export const resources = [
   'editCatalog',
   'account',
   'admin',
+  'adminUsers',
 ] as const;
 export type Resource = (typeof resources)[number];
 export type ReadSeed = {
@@ -27,6 +28,7 @@ export const privateResources = new Set<Resource>([
   'catalog',
   'editCatalog',
   'admin',
+  'adminUsers',
 ]);
 export function readKey(seed: Pick<ReadSeed, 'resource' | 'viewer' | 'params'>) {
   return [
@@ -48,7 +50,7 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
     }
   if (resource === 'tables' && url.searchParams.has('modality'))
     params.set('modality', url.searchParams.getAll('modality').at(-1)!);
-  if (resource === 'admin') {
+  if (resource === 'adminUsers') {
     const filters = profileFilters(url.searchParams);
     params.set('status', filters.status);
     params.set('q', filters.query);

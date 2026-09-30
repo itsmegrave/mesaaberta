@@ -1,7 +1,5 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
-  import { navigating } from '$app/state';
-  import AdminProfilesTable from '$lib/components/AdminProfilesTable.svelte';
   import type { IconName } from '$lib/icons/names';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -155,7 +153,6 @@
       </ul>
     {/if}
   </section>
-  <AdminProfilesTable data={data.profiles} busy={remote.isFetching || !!navigating.to} />
   <a class="mt-6 inline-flex min-h-11 items-center gap-2 anchor" href={localizedHref('/', locale)}
     ><Icon name="external-link" size={18} />{m.admin_view_platform()}</a
   >
