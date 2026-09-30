@@ -33,14 +33,12 @@ beforeAll(async () => {
     })
     .returning();
   tableId = table.id;
-  await db
-    .insert(instagramAccounts)
-    .values({
-      userId: 'ig-user',
-      username: 'test',
-      token: await encryptToken('token', env.INSTAGRAM_TOKEN_KEY!),
-      expiresAt: new Date(now.getTime() + 30 * 86400_000),
-    });
+  await db.insert(instagramAccounts).values({
+    userId: 'ig-user',
+    username: 'test',
+    token: await encryptToken('token', env.INSTAGRAM_TOKEN_KEY!),
+    expiresAt: new Date(now.getTime() + 30 * 86400_000),
+  });
   await db
     .insert(instagramPosts)
     .values({ tableId, eventId: crypto.randomUUID(), nextAttemptAt: now });

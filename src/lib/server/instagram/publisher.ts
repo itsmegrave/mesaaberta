@@ -136,9 +136,10 @@ export async function processPost(
     if (!result.id) throw new Error('Instagram publish response invalid');
     await save({ mediaId: result.id, status: 'processing', image: null });
   } catch (error) {
-    // A definite API refusal can be retried if transient; a timeout/crash cannot.
+    // A permanent API refusal fails the job. Transient publish errors, timeouts and crashes
+    // can conceal a completed write, so they require reconciliation rather than another POST.
     if (error instanceof InstagramError)
-      await save({ status: error.retryable ? 'processing' : 'failed' });
+      await save({ status: error.retryable ? 'uncertain' : 'failed' });
     else await save({ status: 'uncertain', lastError: 'publish_outcome_unknown' });
     throw error;
   }
