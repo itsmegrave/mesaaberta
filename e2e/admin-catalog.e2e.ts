@@ -46,7 +46,7 @@ test('an admin approves, renames and rejects suggestions, and each decision is l
   await expect(page.getByRole('heading', { name: `${tag} A` })).toHaveCount(0);
 
   await page.getByRole('button', { name: `Renomear: ${tag} B` }).click();
-  await page.getByLabel('Novo nome').fill(`${tag} Beta`);
+  await page.getByRole('dialog').getByLabel('Novo nome').fill(`${tag} Beta`);
   await page.getByRole('button', { name: 'Salvar nome' }).click();
   await expect(page.getByText('Nome atualizado.')).toBeVisible();
   await expect(page.getByRole('heading', { name: `${tag} Beta` })).toBeVisible();
