@@ -1,3 +1,9 @@
+import { error, isRedirect, redirect } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
+import { requireUser } from '$lib/server/auth/guard';
+import { gameTables } from '$lib/server/db/schema';
+import { failFrom } from '$lib/server/errors';
+import { openDirect } from '$lib/server/messages/service';
 import { loadRead } from '$lib/server/reads/load';
 import { superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
@@ -23,6 +29,30 @@ export const load: PageServerLoad = async (event) => {
 
 // Each action runs a registration operation as the signed-in player (see runRegistrationAction).
 export const actions: Actions = {
+  // "Falar com o mestre": opens the direct conversation with the GM, about this table.
+  talk: async ({ locals, url, params }) => {
+    await requireUser(locals, new URL(url.pathname, url));
+    if (!locals.db) error(503, 'Database not configured');
+
+    const [table] = await locals.db
+      .select({ gmId: gameTables.gmId, slug: gameTables.slug, status: gameTables.status })
+      .from(gameTables)
+      .where(eq(gameTables.slug, params.slug));
+    if (!table || table.status !== 'active') error(404, 'Not found');
+
+    try {
+      const conversation = await openDirect(locals.db, await locals.getProfile(), table.gmId);
+      redirect(303, `/messages/${conversation.id}?mesa=${encodeURIComponent(table.slug)}`);
+    } catch (cause) {
+      if (cause instanceof Error && cause.name === 'DirectMessagesOff') {
+        return failFrom(cause);
+      }
+      // A redirect is thrown too: let it through, and let failFrom rethrow anything unexpected.
+      if (isRedirect(cause)) throw cause;
+      return failFrom(cause);
+    }
+  },
+
   join: (event) =>
     runRegistrationAction(event, tableActionSchema, (db, actor) =>
       joinTable(db, actor, event.params.slug),

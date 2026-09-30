@@ -8,6 +8,7 @@ export const NOTIFICATION_CATEGORIES = [
   'catalog',
   'moderation',
   'system',
+  'messages',
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
@@ -28,7 +29,8 @@ export type NotificationIcon =
   | 'alert-triangle'
   | 'sparkles'
   | 'gift'
-  | 'info';
+  | 'info'
+  | 'message';
 
 /** The icons an admin can pick for an announcement. */
 export const ANNOUNCEMENT_ICONS = [
@@ -88,6 +90,7 @@ export const NOTIFICATION_KINDS = {
   report_resolved: { category: 'moderation', icon: 'shield' },
   moderation_notice: { category: 'moderation', icon: 'shield' },
   system_announcement: { category: 'system', icon: 'megaphone' },
+  message_received: { category: 'messages', icon: 'message' },
 } as const satisfies Record<string, { category: NotificationCategory; icon: NotificationIcon }>;
 
 export type NotificationType = keyof typeof NOTIFICATION_KINDS;
