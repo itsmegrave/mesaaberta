@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser } from './support/app';
+import { asUser, pickImage } from './support/app';
 import { createUser } from './support/users';
 
 test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
@@ -36,7 +36,7 @@ test('a table form refuses an image that is too big before sending anything', as
     if (request.method() === 'POST') posted = true;
   });
 
-  await page.locator('input#image').setInputFiles({
+  await pickImage(page, {
     name: 'capa.png',
     mimeType: 'image/png',
     buffer: Buffer.alloc(2 * 1024 * 1024 + 1),
@@ -88,7 +88,7 @@ test('the table form drags the seats, takes an image and a suggestion without a 
   await expect(page.getByText('6 vagas', { exact: true })).toBeVisible();
   await expect(page.getByRole('complementary').getByText('6 vagas restantes')).toBeVisible();
 
-  await page.locator('input#image').setInputFiles({
+  await pickImage(page, {
     name: 'capa.png',
     mimeType: 'image/png',
     buffer: Buffer.alloc(1024),

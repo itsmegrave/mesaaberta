@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   PNG,
   createTable,
+  pickImage,
   pickFromSearch,
   setFirstSession,
   signIn,
@@ -210,13 +211,14 @@ test.describe('images', () => {
     const sql = database();
     try {
       const [row] = await sql`select image_path from game_tables where slug = ${slug}`;
-      expect(row.image_path).toMatch(/^tables\/[0-9a-f-]{36}\.png$/);
+      // The crop step sends its own file, so the type is whatever it drew (WebP).
+      expect(row.image_path).toMatch(/^tables\/[0-9a-f-]{36}\.(png|webp)$/);
 
       // The file is really in the bucket, publicly readable.
       const url = `${process.env.E2E_API_URL ?? 'http://127.0.0.1:54341'}/storage/v1/object/public/table-images/${row.image_path}`;
       const stored = await request.get(url);
       expect(stored.status()).toBe(200);
-      expect(stored.headers()['content-type']).toContain('image/png');
+      expect(stored.headers()['content-type']).toMatch(/image\/(png|webp)/);
     } finally {
       await sql.end();
     }
@@ -233,7 +235,7 @@ test.describe('images', () => {
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
     await setFirstSession(page, '2099-06-01T19:00');
-    await page.locator('input#image').setInputFiles({
+    await pickImage(page, {
       name: 'capa.png',
       mimeType: 'image/png',
       buffer: Buffer.from('<script>alert(1)</script>'),
