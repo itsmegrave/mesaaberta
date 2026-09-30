@@ -7,6 +7,4 @@ import { localizeHref, type Locale } from '$lib/paraglide/runtime';
  * tuple so the generated route overloads accept a dynamic localized pathname.
  */
 export const localizedHref = (pathname: string, locale: Locale) =>
-  // `resolve` takes its argument as a union of one tuple per route, which TypeScript stops matching
-  // a `Pathname` against once the app has more than 25 routes; spreading the tuple keeps the call.
-  resolve(...([localizeHref(pathname, { locale })] as [Pathname] as Parameters<typeof resolve>));
+  resolve(...([localizeHref(pathname, { locale })] as Parameters<typeof resolve>));
