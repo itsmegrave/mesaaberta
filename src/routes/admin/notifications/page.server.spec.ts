@@ -56,6 +56,13 @@ async function answer(e: RequestEvent) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('the send action', () => {
+  it('answers 404 to a signed-in person who is not an admin, even if the hook is bypassed', async () => {
+    const { event: e } = event(valid);
+    e.locals.getProfile = async () => ({ ...admin, role: 'member', username: 'ana' }) as never;
+
+    await expect(send(e)).rejects.toMatchObject({ status: 404 });
+  });
+
   it('asks to confirm first, saying how many it reaches, and sends nothing', async () => {
     vi.mocked(sendAnnouncement).mockResolvedValueOnce({
       step: 'confirm',
