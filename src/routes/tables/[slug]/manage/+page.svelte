@@ -477,6 +477,10 @@
             >{m.table_edit()}</a
           >
           <a href={tablePage} class="{secondary} h-12 w-full">{m.manage_view_page()}</a>
+          <a
+            href={localizedHref(`/tables/${table.slug}/chat`, locale)}
+            class="{secondary} h-12 w-full">{m.messages_table_chat()}</a
+          >
         </div>
       </div>
     </aside>

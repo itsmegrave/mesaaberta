@@ -31,6 +31,16 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu().getByRole('button', { name: 'Sair' })).toBeVisible();
   });
 
+  it('links to the messages, with how many conversations have something unread', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null, messagesUnread: 3 });
+
+    await trigger().click();
+
+    const link = menu().getByRole('link', { name: 'Mensagens, 3 não lidas' });
+    await expect.element(link).toHaveAttribute('href', '/messages');
+    await expect.element(page.getByTestId('messages-count')).toHaveTextContent('3');
+  });
+
   it('renders Admin link with pending suggestion count badge for admins', async () => {
     render(AccountMenu, {
       name: 'Admin User',

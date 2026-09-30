@@ -20,6 +20,7 @@
   import { registrationError } from '$lib/tables/registration-errors';
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
+  import Icon from '$lib/components/Icon.svelte';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -366,6 +367,36 @@
           />
         {/if}
       </div>
+      {#if data.isGm || data.myStatus === 'confirmed'}
+        <a
+          href={localizedHref(`/tables/${table.slug}/chat`, locale)}
+          class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+        >
+          <Icon name="message-circle" size={18} />
+          {m.messages_table_chat()}
+        </a>
+      {/if}
+      {#if data.signedIn && !data.isGm}
+        {#if data.gmAcceptsDirect}
+          <ActionForm
+            action="?/talk"
+            class="mt-3"
+            label={m.messages_talk_to_gm()}
+            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+          />
+        {:else}
+          <button
+            type="button"
+            disabled
+            aria-describedby="gm-dm-off"
+            class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold"
+          >
+            <Icon name="message-circle" size={18} />
+            {m.messages_talk_to_gm()}
+          </button>
+          <p id="gm-dm-off" class="mt-2 text-sm text-muted">{m.messages_gm_dm_off()}</p>
+        {/if}
+      {/if}
       <p class="mt-3 text-sm text-muted">
         {table.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}
       </p>
