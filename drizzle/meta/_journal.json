@@ -176,6 +176,20 @@
       "when": 1790778635399,
       "tag": "0024_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790780400000,
+      "tag": "0025_adventure_table_kind",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790780401000,
+      "tag": "0026_adventure_recurrence_check",
+      "breakpoints": true
     }
   ]
 }

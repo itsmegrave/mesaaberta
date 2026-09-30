@@ -26,9 +26,10 @@ export function shareFacts(table: TableView, origin: string) {
     timeZone: table.timezone,
   }).format(table.nextAt ?? table.startsAt);
   const modality = table.modality === 'online' ? 'Online' : 'Presencial';
-  const kind = table.kind === 'one_shot' ? 'One-shot' : 'Campanha';
+  const kind =
+    table.kind === 'one_shot' ? 'One-shot' : table.kind === 'adventure' ? 'Aventura' : 'Campanha';
   const seats = `${table.seatsLeft} vagas / ${table.capacity} lugares`;
-  const caption = `${table.title}\n${table.system.name} · ${kind} · ${modality}\n${date} (${table.timezone})\n${seats}\n\nInscreva-se: ${url}\n\n#rpg #mesaaberta #${hashtag(table.system.slug)} #${modality.toLowerCase()} #${table.kind === 'one_shot' ? 'oneshot' : 'campaign'}`;
+  const caption = `${table.title}\n${table.system.name} · ${kind} · ${modality}\n${date} (${table.timezone})\n${seats}\n\nInscreva-se: ${url}\n\n#rpg #mesaaberta #${hashtag(table.system.slug)} #${modality.toLowerCase()} #${table.kind === 'one_shot' ? 'oneshot' : table.kind === 'adventure' ? 'adventure' : 'campaign'}`;
   return { url, date, modality, kind, seats, caption };
 }
 

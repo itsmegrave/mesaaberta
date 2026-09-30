@@ -248,7 +248,7 @@
       </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
-        {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()]] as [value, label] (value)}<label
+        {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()], ['adventure', m.form_kind_adventure()]] as [value, label] (value)}<label
             class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
             ><input type="radio" name="kind" {value} bind:group={$form.kind} />{label}</label
           >{/each}

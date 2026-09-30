@@ -42,7 +42,7 @@ export const ageRange = pgEnum('age_range', [
   '55_plus',
 ]);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
-export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot']);
+export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure']);
 export const tableStatus = pgEnum('table_status', ['active', 'disabled']);
 // Where the table plays: over the internet, or around a real table.
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
@@ -239,7 +239,7 @@ export const gameTables = pgTable(
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(
       'game_tables_recurrence_matches_kind',
-      sql`(${table.kind} = 'one_shot' AND ${table.recurrence} IS NULL) OR (${table.kind} = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
+      sql`(${table.kind} IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind} = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
     ),
     check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),

@@ -59,8 +59,10 @@
     };
   });
   const recurrence = $derived(
-    table.kind === 'one_shot'
-      ? m.table_recurrence_once()
+    table.kind !== 'campaign'
+      ? table.kind === 'adventure'
+        ? m.table_adventure_schedule()
+        : m.table_recurrence_once()
       : table.everyWeeks === 1
         ? m.table_recurrence_weekly()
         : table.everyWeeks
@@ -144,7 +146,9 @@
     <span class="font-semibold text-muted"
       >{table.system.name} · {table.kind === 'campaign'
         ? m.table_kind_campaign()
-        : m.table_kind_one_shot()}</span
+        : table.kind === 'adventure'
+          ? m.table_kind_adventure()
+          : m.table_kind_one_shot()}</span
     >
   </p>
   <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">

@@ -4,7 +4,7 @@
 import { Temporal } from 'temporal-polyfill';
 
 export type Schedule = {
-  kind: 'campaign' | 'one_shot';
+  kind: 'campaign' | 'one_shot' | 'adventure';
   startsAt: Date;
   timezone: string;
   /** An iCalendar RRULE: only what the table form builds (see `RECURRENCE`). */

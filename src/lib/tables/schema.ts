@@ -55,7 +55,7 @@ export const tableFormSchema = z
       .transform(cleanWelcomeMessage)
       .pipe(z.string().max(TABLE_LIMITS.welcomeMessage))
       .default(''),
-    kind: z.enum(['campaign', 'one_shot']),
+    kind: z.enum(['campaign', 'one_shot', 'adventure']),
     capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
     startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
     timezone: z.string().refine(isTimeZone, 'invalid'),
@@ -104,15 +104,15 @@ export type TableInput = {
   description: string;
   extraInfo: string | null;
   welcomeMessage: string | null;
-  kind: 'campaign' | 'one_shot';
+  kind: 'campaign' | 'one_shot' | 'adventure';
   capacity: number;
   /** Wall-clock time in `timezone`, e.g. `2026-10-10T19:00`. */
   startsAtLocal: string;
   timezone: string;
   durationMinutes: number;
-  /** An iCalendar RRULE for a campaign, null for a one-shot. */
+  /** An iCalendar RRULE for a repeating campaign, null otherwise. */
   recurrence: string | null;
-  /** Last day of a campaign, as `YYYY-MM-DD` in `timezone`. */
+  /** Last day of a repeating campaign, as `YYYY-MM-DD` in `timezone`. */
   untilLocalDate: string | null;
   joinMode: 'auto' | 'approval';
   modality: 'online' | 'in_person';
