@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
@@ -67,6 +68,20 @@ export default defineConfig({
     projects: [
       {
         extends: './vite.config.ts',
+        // The dependency scan doesn't know the `svelte` export condition, so it can't resolve this
+        // subpath, gives up, and Vite then finds dependencies late and reloads mid-run, which breaks
+        // unrelated specs. Pointing it at the file skips the exports map.
+        optimizeDeps: {
+          rolldownOptions: {
+            resolve: {
+              alias: {
+                '@iconify/svelte/dist/OfflineIcon.svelte': resolve(
+                  'node_modules/@iconify/svelte/dist/OfflineIcon.svelte',
+                ),
+              },
+            },
+          },
+        },
         test: {
           name: 'client',
           browser: {
