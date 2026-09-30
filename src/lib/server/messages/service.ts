@@ -228,7 +228,8 @@ export async function sendMessage(
       await t.execute(sql`
         insert into notifications (recipient_id, actor_id, category, type, link, metadata, created_at)
         values (${profileId}, ${actor.id}, 'messages', 'message_received',
-          ${'/messages/' + conversationId}, ${metadata}::jsonb, ${now})
+          ${'/messages/' + conversationId}, ${metadata}::jsonb,
+          ${now.toISOString()}::timestamptz)
         on conflict (recipient_id, (metadata->>'conversationId'))
           where type = 'message_received' and read_at is null
         do update set
