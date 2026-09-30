@@ -14,6 +14,7 @@ describe('query cache boundaries', () => {
       'account',
       'catalog',
       'editCatalog',
+      'admin',
     ] as const) {
       const key = readKey({ resource, viewer: 'ana', params: 'slug=mesa' });
       a.setQueryData(key, { secret: 'join link' });
@@ -53,6 +54,13 @@ describe('query cache boundaries', () => {
         !['cep', 'username'].includes(r),
       );
     client.clear();
+  });
+  it('keys admin pages by normalized username, status and pagination filters', () => {
+    const params = (query: string) => readParams('admin', new URL(`https://x.test/admin?${query}`));
+    expect(params('q=ana&status=active&page=1')).not.toBe(params('q=ana&status=suspended&page=1'));
+    expect(params('page=1')).not.toBe(params('page=2'));
+    expect(params('size=20')).not.toBe(params('size=50'));
+    expect(params('q=%20ana%20&status=invalid&page=-5&size=bad')).toBe(params('q=ana'));
   });
   it('clears all private data on logout and never retries denied reads or writes', () => {
     const client = createQueryClient();

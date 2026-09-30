@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { createUser } from './support/users';
+import { createUser, database } from './support/users';
+import { randomUUID } from 'node:crypto';
 import { signIn } from './support/app';
 
 test('admin overview is protected, refreshes and fits the viewport', async ({ page }, testInfo) => {
@@ -46,4 +47,53 @@ test('admin overview is protected, refreshes and fits the viewport', async ({ pa
     true,
   );
   await page.screenshot({ path: testInfo.outputPath('admin-notifications.png'), fullPage: true });
+});
+
+test('users table paginates, filters status and username, and links to the selected profile', async ({
+  page,
+}, testInfo) => {
+  const admin = await createUser('Users Admin', { role: 'admin' });
+  const prefix = `users-${Date.now().toString(36)}`;
+  const userId = randomUUID();
+  const username = `${prefix}-suspended`;
+  const db = database();
+  try {
+    await db`insert into profiles (id, username, status, name) values (${userId}, ${username}, 'suspended', 'Selected User')`;
+    for (let index = 0; index < 23; index++) {
+      await db`insert into profiles (id, username) values (${randomUUID()}, ${`${prefix}-${String(index).padStart(2, '0')}`})`;
+    }
+  } finally {
+    await db.end();
+  }
+  expect((await page.goto(`/admin/users/${userId}`))?.status()).toBe(404);
+  await signIn(page, admin, `/admin?q=${prefix}`);
+  const users = page.locator('#profiles');
+  await expect(users.locator('tbody tr')).toHaveCount(20);
+  await expect(users.getByText('Página 1 de 2', { exact: true })).toBeVisible();
+  await users.getByRole('button', { name: 'Próxima página' }).click();
+  await expect(users.locator('tbody tr')).toHaveCount(4);
+  await expect(users.getByText('Página 2 de 2', { exact: true })).toBeVisible();
+  await expect(users.getByRole('button', { name: 'Próxima página' })).toBeDisabled();
+  await users.getByRole('combobox', { name: 'Status', exact: true }).selectOption('suspended');
+  await users.getByRole('button', { name: 'Buscar', exact: true }).click();
+  await expect(users.locator('tbody tr')).toHaveCount(1);
+  await expect(users.getByText('Página 1 de 1', { exact: true })).toBeVisible();
+  await expect(users.getByText(userId, { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('admin-users.png'), fullPage: true });
+  await users.getByRole('link', { name: username, exact: true }).click();
+  await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
+  await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
+  await expect(page.getByText('Suspenso', { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });
+  await page.getByRole('link', { name: 'Voltar aos usuários' }).click();
+  await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
+    'suspended',
+  );
+  await expect(users.getByLabel('Buscar por username')).toHaveValue(prefix);
+  await users.getByLabel('Buscar por username').fill(`${prefix}-missing`);
+  await users.getByRole('button', { name: 'Buscar', exact: true }).click();
+  await expect(users.getByText('Nenhum perfil encontrado.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
 });
