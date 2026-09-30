@@ -34,6 +34,7 @@ export const ICON_NAMES = [
   'bell-off',
   'bell',
   'arrow-left',
+  'plus',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

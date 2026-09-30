@@ -128,6 +128,7 @@ export const ICONS: Record<IconName, IconifyIcon> = {
     width: 24,
     height: 24,
   },
+<<<<<<< HEAD
   'message-circle': {
     body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092a10 10 0 1 0-4.777-4.719"/>',
     width: 24,
@@ -150,6 +151,10 @@ export const ICONS: Record<IconName, IconifyIcon> = {
   },
   'arrow-left': {
     body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 19l-7-7l7-7m7 7H5"/>',
+=======
+  plus: {
+    body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7v14"/>',
+>>>>>>> 18d69e5 (feat: frame profile pictures and table covers before upload (#108, #111))
     width: 24,
     height: 24,
   },
