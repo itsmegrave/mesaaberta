@@ -1,0 +1,3374 @@
+From 1631d608d5303c3d95abb51df29a8904d3c7656d Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Tue, 29 Sep 2026 18:58:34 -0400
+Subject: [PATCH] feat(api): adopt TanStack Svelte Query for server state
+
+---
+ README.md                                     |   4 +
+ docs/api-queries.md                           |  54 +++
+ messages/pt-BR.json                           |   7 +-
+ package.json                                  |   2 +
+ pnpm-lock.yaml                                | 132 +++---
+ src/app.d.ts                                  |   1 +
+ src/lib/api/http.spec.ts                      |  58 +++
+ src/lib/api/http.ts                           |  35 ++
+ src/lib/components/ActionForm.svelte          |   4 +
+ src/lib/components/CepLookup.svelte           |  59 +++
+ src/lib/components/CepLookup.svelte.spec.ts   |  58 +++
+ src/lib/components/ProfileForm.svelte         |  87 ++--
+ src/lib/components/ProfileForm.svelte.spec.ts |  24 ++
+ src/lib/components/QueryStatus.svelte         |  13 +
+ src/lib/components/TableForm.svelte           |   2 +
+ src/lib/query/CepHarness.svelte               |  10 +
+ src/lib/query/QueryHarness.svelte             |  20 +
+ src/lib/query/cache.spec.ts                   |  68 +++
+ src/lib/query/client.ts                       |  19 +
+ src/lib/query/context.ts                      |  11 +
+ src/lib/query/invalidate.ts                   |  21 +
+ src/lib/query/keys.ts                         |  48 +++
+ src/lib/query/lookups.ts                      |  24 ++
+ src/lib/query/page.svelte.spec.ts             |  87 ++++
+ src/lib/query/page.svelte.ts                  |  63 +++
+ src/lib/server/auth/attempt-limit.ts          |   2 +-
+ src/lib/server/reads/account.ts               |  16 +
+ src/lib/server/reads/catalog.ts               |  14 +
+ src/lib/server/reads/dashboard.ts             |  17 +
+ src/lib/server/reads/detail.ts                |  57 +++
+ src/lib/server/reads/edit-catalog.ts          |  40 ++
+ src/lib/server/reads/load.ts                  |  55 +++
+ src/lib/server/reads/manage.ts                |  38 ++
+ src/lib/server/reads/preview.ts               |  27 ++
+ src/lib/server/reads/tables.ts                |  89 ++++
+ src/routes/+layout.server.ts                  |  12 +-
+ src/routes/+layout.svelte                     | 388 ++++++++++--------
+ src/routes/+page.server.ts                    |  28 +-
+ src/routes/+page.svelte                       |   7 +-
+ src/routes/account/profile/+page.svelte       |  17 +-
+ src/routes/account/tables/+page.server.ts     |  18 +-
+ src/routes/account/tables/+page.svelte        |   7 +-
+ src/routes/api/location/cep/+server.ts        |  24 ++
+ src/routes/api/location/cep/server.spec.ts    |  55 +++
+ src/routes/api/query/[resource]/+server.ts    |  30 ++
+ .../api/query/[resource]/server.spec.ts       |  57 +++
+ src/routes/layout.svelte.spec.ts              |  17 +-
+ src/routes/page.server.spec.ts                |  17 +-
+ src/routes/tables/+page.server.ts             |  90 +---
+ src/routes/tables/+page.svelte                |   7 +-
+ src/routes/tables/[slug]/+page.server.ts      |  67 +--
+ src/routes/tables/[slug]/+page.svelte         |  15 +-
+ src/routes/tables/[slug]/edit/+page.server.ts |  27 +-
+ src/routes/tables/[slug]/edit/+page.svelte    |  17 +-
+ .../tables/[slug]/manage/+page.server.ts      |  39 +-
+ src/routes/tables/[slug]/manage/+page.svelte  |   7 +-
+ src/routes/tables/new/+page.server.ts         |  17 +-
+ src/routes/tables/new/+page.svelte            |  17 +-
+ src/routes/tables/page.server.spec.ts         |   1 +
+ 59 files changed, 1692 insertions(+), 555 deletions(-)
+ create mode 100644 docs/api-queries.md
+ create mode 100644 src/lib/api/http.spec.ts
+ create mode 100644 src/lib/api/http.ts
+ create mode 100644 src/lib/components/CepLookup.svelte
+ create mode 100644 src/lib/components/CepLookup.svelte.spec.ts
+ create mode 100644 src/lib/components/QueryStatus.svelte
+ create mode 100644 src/lib/query/CepHarness.svelte
+ create mode 100644 src/lib/query/QueryHarness.svelte
+ create mode 100644 src/lib/query/cache.spec.ts
+ create mode 100644 src/lib/query/client.ts
+ create mode 100644 src/lib/query/context.ts
+ create mode 100644 src/lib/query/invalidate.ts
+ create mode 100644 src/lib/query/keys.ts
+ create mode 100644 src/lib/query/lookups.ts
+ create mode 100644 src/lib/query/page.svelte.spec.ts
+ create mode 100644 src/lib/query/page.svelte.ts
+ create mode 100644 src/lib/server/reads/account.ts
+ create mode 100644 src/lib/server/reads/catalog.ts
+ create mode 100644 src/lib/server/reads/dashboard.ts
+ create mode 100644 src/lib/server/reads/detail.ts
+ create mode 100644 src/lib/server/reads/edit-catalog.ts
+ create mode 100644 src/lib/server/reads/load.ts
+ create mode 100644 src/lib/server/reads/manage.ts
+ create mode 100644 src/lib/server/reads/preview.ts
+ create mode 100644 src/lib/server/reads/tables.ts
+ create mode 100644 src/routes/api/location/cep/+server.ts
+ create mode 100644 src/routes/api/location/cep/server.spec.ts
+ create mode 100644 src/routes/api/query/[resource]/+server.ts
+ create mode 100644 src/routes/api/query/[resource]/server.spec.ts
+
+diff --git a/README.md b/README.md
+index d7e0a4a..023d822 100644
+--- a/README.md
++++ b/README.md
+@@ -411,3 +411,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a
+ - Conventional commits, one concern per commit.
+ - Every PR builds green and includes a short test plan.
+ - Test behaviour, not wording: each test should name the break it catches.
++
++## API query architecture
++
++See [API queries](docs/api-queries.md) for cache boundaries, SSR hydration, Superforms ownership and the ViaCEP flow.
+diff --git a/docs/api-queries.md b/docs/api-queries.md
+new file mode 100644
+index 0000000..526c503
+--- /dev/null
++++ b/docs/api-queries.md
+@@ -0,0 +1,54 @@
++# API queries
++
++Implementation of [Trello #141](https://trello.com/c/g77W7kei). This migration is independent of the notification work.
++
++## Ownership
++
++SvelteKit server loads still authorize requests and render the initial page, including when JavaScript is disabled. Shared readers in `src/lib/server/reads` return the same DTOs to the loaders and the allowlisted `/api/query/[resource]` endpoint. Loaders fetch into a short-lived QueryClient, serialize only their read DTO plus a seed, and clear that client. The root layout creates one client per component tree; there is no process-global authenticated cache.
++
++`pageQuery` hydrates each key from that seed using `initialData`/`initialDataUpdatedAt`. Its field allowlist excludes inherited layout data and Superforms state from public caches. A newer loader response reconciles an existing key. The first mount does not duplicate the loader request. Stale reads refetch on focus, reconnect, explicit retry, and confirmed action invalidation. This is **not realtime**: there is no polling, subscription, or cross-tab broadcast.
++
++| Read                                                          | Query resource/key scope                          | Policy                                                                                          |
++| ------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
++| Home preview                                                  | `preview`, public                                 | 15s stale time                                                                                  |
++| Table list and filter catalogs                                | `tables`, public + canonical filters              | 15s; multi-select order deduplicated                                                            |
++| Table detail, viewer permissions, registration and own rating | `detail`, authenticated identity/anonymous + slug | 15s; entire mixed DTO private to its viewer                                                     |
++| Player/GM dashboard                                           | `dashboard`, identity                             | 15s; authentication rechecked                                                                   |
++| GM management                                                 | `manage`, identity + slug                         | 15s; ownership/admin policy rechecked                                                           |
++| New table catalog                                             | `catalog`, identity                               | 5min; includes own pending suggestions                                                          |
++| Edit table catalog                                            | `editCatalog`, identity + slug                    | 15s; also includes the table's pending picks                                                    |
++| Header profile summary/avatar                                 | `account`, identity                               | 15s; notification data remains loader-owned                                                     |
++| Username availability                                         | `username`, identity + normalized username        | 400ms debounce; no retained availability cache or automatic retries                             |
++| CEP                                                           | `cep`, normalized postal code                     | 400ms debounce; successful addresses fresh for 24h; outages throw, missing addresses stay stale |
++
++The whole detail DTO is viewer-scoped because it mixes public table information with join details and viewer permissions. Keeping one authorized read avoids mismatched snapshots; it deliberately sacrifices sharing the public portion between identities. Form catalogs are also private because pending suggestions are not public.
++
++## HTTP and privacy
++
++The HTTP helper accepts same-origin paths, includes cookies, propagates AbortSignal and rejects malformed/non-JSON responses. Page DTOs use `devalue` to preserve Dates. Lookup DTOs are validated with Zod. API errors expose status, not internal error details. Private responses carry the verified server identity; the client rejects an answer from another account before caching it. Client query keys never authorize a request.
++
++All query endpoint responses use `private, no-store`. Every refetch calls the same server policy as the page. Denial/not-found removes the affected query and reruns server loads. The root clears its cache when the loader's authenticated identity changes; account deletion clears it immediately. A cookie change in another tab is detected on the next private refetch/navigation. No persistent cache is used.
++
++## Forms and mutations
++
++Superforms continues to own validation, submission, pending state, multipart uploads, action results and redirects. Do not wrap its POST in `createMutation`: that would give one submission two owners. Successful callbacks call `afterWrite` to invalidate dependent query families:
++
++- Table create/edit/disable, join/leave, approve/decline/remove and ratings: preview, list, detail, dashboard, management and form catalogs.
++- Profile/avatar changes: account summary plus table views and catalogs where the identity is displayed.
++- Logout/account switch: cache cleared at the root; account deletion clears immediately.
++
++Failed actions do not invalidate queries. Existing Superforms route invalidation remains for server-owned form state and redirects. Background reads never hydrate an editable form. There are no optimistic capacity/permission updates and no automatic write retries. Use `createMutation` for a future browser-owned JSON write only if it has no existing Superforms owner.
++
++## ViaCEP
++
++The browser calls authenticated `/api/location/cep`, never ViaCEP directly. The endpoint normalizes the CEP, limits requests per account (60/minute using the existing locked attempt counter), and uses the existing `postal_codes` cache/provider service with a three-second provider timeout. The component cancels obsolete requests, ignores late answers, and fills only an empty or previously auto-filled area. Manual areas survive lookups; changing CEP clears only the previous auto-fill. The authoritative save-time validation/cache remains in `withLocation`; an outage still permits a manually supplied area.
++
++## Deliberately server-owned
++
++Auth/session cookies, Supabase Storage, feature flags, administrator reads/actions, Superforms validation, table writes, provider calls, Resend, outbox dispatch and scheduled jobs stay on the server. Existing notification flows and version banners are outside this ticket. No new database migration is required.
++
++## Verification
++
++Run `pnpm lint`, `pnpm check`, `pnpm test:unit`, `pnpm test:e2e` with the local Supabase stack, and `pnpm test:integration` with a disposable Postgres. Regression tests cover DTO boundaries, identity mismatches, key isolation, status handling, invalidation, SSR seeding without duplicate fetches, focus/reconnect, lookup cancellation and CEP endpoint throttling.
++
++Manual review: navigate between filtered lists and details; create/edit a table with pending suggestions; join/leave and moderate; rate a completed session; change profile/avatar; log out then sign in as another user; simulate offline/expired sessions; type CEPs rapidly and preserve a manually edited region. Check the same server form flows with JavaScript disabled. Coordinate conflicts with the separate table-edit PR #134 before merging.
+diff --git a/messages/pt-BR.json b/messages/pt-BR.json
+index 5066de5..42fdf71 100644
+--- a/messages/pt-BR.json
++++ b/messages/pt-BR.json
+@@ -511,5 +511,10 @@
+   "manage_breadcrumb": "Jogadores e pedidos",
+   "maintenance_title": "Voltamos em breve",
+   "maintenance_text": "A Mesa Aberta está em manutenção no momento. Tente de novo mais tarde.",
+-  "maintenance_admin_banner": "Modo de manutenção ativo: só a administração vê o site."
++  "maintenance_admin_banner": "Modo de manutenção ativo: só a administração vê o site.",
++  "cep_lookup_pending": "Consultando CEP…",
++  "cep_lookup_unavailable": "Não foi possível consultar o CEP. Preencha a região para continuar.",
++  "cep_lookup_missing": "CEP não encontrado. Confira os números.",
++  "api_refresh_failed": "Não foi possível atualizar os dados.",
++  "api_refresh_retry": "Tentar novamente"
+ }
+diff --git a/package.json b/package.json
+index b27302a..2c94cdf 100644
+--- a/package.json
++++ b/package.json
+@@ -79,6 +79,8 @@
+     "@skeletonlabs/skeleton-svelte": "5.0.1",
+     "@supabase/ssr": "^0.12.7",
+     "@supabase/supabase-js": "^2.117.1",
++    "@tanstack/svelte-query": "^6.3.0",
++    "devalue": "^6.0.2",
+     "drizzle-orm": "^0.45.3",
+     "ical.js": "^2.2.1",
+     "postgres": "^3.4.9",
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 3a9d29a..af59d61 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -174,7 +174,7 @@ importers:
+         version: 1.7.0
+       '@iconify/svelte':
+         specifier: ^5.2.2
+-        version: 5.2.2(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++        version: 5.2.2(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+       '@sindresorhus/slugify':
+         specifier: ^3.0.1
+         version: 3.0.1
+@@ -183,13 +183,19 @@ importers:
+         version: 5.0.1(tailwindcss@4.3.3)
+       '@skeletonlabs/skeleton-svelte':
+         specifier: 5.0.1
+-        version: 5.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++        version: 5.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+       '@supabase/ssr':
+         specifier: ^0.12.7
+         version: 0.12.7(@supabase/supabase-js@2.117.1)
+       '@supabase/supabase-js':
+         specifier: ^2.117.1
+         version: 2.117.1
++      '@tanstack/svelte-query':
++        specifier: ^6.3.0
++        version: 6.3.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
++      devalue:
++        specifier: ^6.0.2
++        version: 6.0.2
+       drizzle-orm:
+         specifier: ^0.45.3
+         version: 0.45.3(@electric-sql/pglite@0.5.8)(kysely@0.28.17)(postgres@3.4.9)
+@@ -201,7 +207,7 @@ importers:
+         version: 3.4.9
+       sveltekit-superforms:
+         specifier: ^2.30.2
+-        version: 2.30.2(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(@types/json-schema@7.0.15)(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)
++        version: 2.30.2(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(@types/json-schema@7.0.15)(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
+       temporal-polyfill:
+         specifier: 1.0.5
+         version: 1.0.5
+@@ -229,13 +235,13 @@ importers:
+         version: 1.63.0
+       '@sveltejs/adapter-cloudflare':
+         specifier: ^7.2.8
+-        version: 7.2.9(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(wrangler@4.137.0(@types/node@26.6.2))
++        version: 7.2.9(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(wrangler@4.137.0(@types/node@26.6.2))
+       '@sveltejs/kit':
+         specifier: ^2.70.3
+-        version: 2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
++        version: 2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+       '@sveltejs/vite-plugin-svelte':
+         specifier: ^7.3.1
+-        version: 7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
++        version: 7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+       '@tailwindcss/vite':
+         specifier: ^4.3.3
+         version: 4.3.3(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+@@ -259,7 +265,7 @@ importers:
+         version: 10.1.8(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))
+       eslint-plugin-svelte:
+         specifier: ^3.23.0
+-        version: 3.23.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++        version: 3.23.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+       eslint-plugin-tailwindcss:
+         specifier: 4.4.0
+         version: 4.4.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(typescript@6.0.3)
+@@ -274,19 +280,19 @@ importers:
+         version: 3.9.9
+       prettier-plugin-svelte:
+         specifier: ^4.1.1
+-        version: 4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++        version: 4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+       prettier-plugin-tailwindcss:
+         specifier: ^0.8.1
+-        version: 0.8.1(prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.0)))(prettier@3.9.9)
++        version: 0.8.1(prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.1)))(prettier@3.9.9)
+       supabase:
+         specifier: ^2.117.0
+         version: 2.117.0
+       svelte:
+         specifier: ^5.57.1
+-        version: 5.57.1(@typescript-eslint/types@8.70.0)
++        version: 5.57.1(@typescript-eslint/types@8.70.1)
+       svelte-check:
+         specifier: ^4.7.6
+-        version: 4.7.6(picomatch@4.0.7)(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)
++        version: 4.7.6(picomatch@4.0.7)(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
+       tailwindcss:
+         specifier: ^4.3.3
+         version: 4.3.3
+@@ -304,7 +310,7 @@ importers:
+         version: 5.0.1(@types/node@26.6.2)(@vitest/browser-playwright@5.0.1)(@vitest/ui@5.0.1)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+       vitest-browser-svelte:
+         specifier: ^3.1.0
+-        version: 3.1.0(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vitest@5.0.1)
++        version: 3.1.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vitest@5.0.1)
+       wrangler:
+         specifier: ^4.137.0
+         version: 4.137.0(@types/node@26.6.2)
+@@ -1785,6 +1791,14 @@ packages:
+     peerDependencies:
+       vite: ^5.2.0 || ^6 || ^7 || ^8
+ 
++  '@tanstack/query-core@5.104.0':
++    resolution: {integrity: sha512-JrC2r/JQlXt7khBSdUpsgxNvybzOg+aITa+ARRMlP2AFo93Y8vIqz077rp+e61mJetSZ0T6AJbwW1JHer1vrPQ==}
++
++  '@tanstack/svelte-query@6.3.0':
++    resolution: {integrity: sha512-Lzib+G+fGL6tFi8jJ3jfNKuSE94iEgjpSCz6Pdf33na+Bljfnv+r5aArSDwLecYEnZCBb8mS6uJrcfJj3dR6qg==}
++    peerDependencies:
++      svelte: ^5.25.0
++
+   '@testing-library/svelte-core@1.1.3':
+     resolution: {integrity: sha512-KkMAvXeWorxN2Yn0kdC1lfoAItxpoj4uOWzxK5leDrNxonLvS5nwBFvztrroyTszQ0Wf/EU6iLT8JhY5qcn22g==}
+     engines: {node: '>=16'}
+@@ -1872,10 +1886,6 @@ packages:
+       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
+       typescript: '>=4.8.4 <6.1.0'
+ 
+-  '@typescript-eslint/types@8.70.0':
+-    resolution: {integrity: sha512-asTOIYhDg4zdzOScCyaytrsV3cR6B4ecPQlXw/dJIm7J/MZTtCtfVII9JD8Geh4jTCrK/Xe6cg5UevoleMcoJQ==}
+-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+-
+   '@typescript-eslint/types@8.70.1':
+     resolution: {integrity: sha512-Dm1ypdhhrGCTyyehxElhgJ6kgk8MVCv5qXdoOVqPr1uqk42jX8KjrZqhROvdShczA8qrDoYiOWn1ykWlx2k81Q==}
+     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+@@ -2360,6 +2370,10 @@ packages:
+   devalue@5.9.2:
+     resolution: {integrity: sha512-po4PAY5c53tw5XMocSnf8A/5OHhbbUftpr93aEN6BBoAdntUmK7vu7wOATqvt7cXO7m1Cl4gMVn6p7n6n4mj0w==}
+ 
++  devalue@6.0.2:
++    resolution: {integrity: sha512-6V1HzU4to74skg//ScZR2mp9bdz+rESC9jQzVIIG/ha0HYgymHcXIQQCjH0+ivRaSuY82fa9fZ7Ro6QZT4s4uw==}
++    engines: {node: '>=22.17'}
++
+   dlv@1.1.3:
+     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
+ 
+@@ -4063,10 +4077,10 @@ snapshots:
+ 
+   '@humanwhocodes/retry@0.4.3': {}
+ 
+-  '@iconify/svelte@5.2.2(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
++  '@iconify/svelte@5.2.2(svelte@5.57.1(@typescript-eslint/types@8.70.1))':
+     dependencies:
+       '@iconify/types': 2.0.0
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+ 
+   '@iconify/types@2.0.0': {}
+ 
+@@ -4440,7 +4454,7 @@ snapshots:
+ 
+   '@skeletonlabs/skeleton-common@5.0.1': {}
+ 
+-  '@skeletonlabs/skeleton-svelte@5.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
++  '@skeletonlabs/skeleton-svelte@5.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))':
+     dependencies:
+       '@internationalized/date': 3.12.3
+       '@skeletonlabs/skeleton-common': 5.0.1
+@@ -4466,7 +4480,7 @@ snapshots:
+       '@zag-js/rating-group': 1.43.0
+       '@zag-js/slider': 1.43.0
+       '@zag-js/steps': 1.43.0
+-      '@zag-js/svelte': 1.43.0(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++      '@zag-js/svelte': 1.43.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+       '@zag-js/switch': 1.43.0
+       '@zag-js/tabs': 1.43.0
+       '@zag-js/tags-input': 1.43.0
+@@ -4474,7 +4488,7 @@ snapshots:
+       '@zag-js/toggle-group': 1.43.0
+       '@zag-js/tooltip': 1.43.0
+       '@zag-js/tree-view': 1.43.0
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+ 
+   '@skeletonlabs/skeleton@5.0.1(tailwindcss@4.3.3)':
+     dependencies:
+@@ -4549,18 +4563,18 @@ snapshots:
+     dependencies:
+       acorn: 8.18.0
+ 
+-  '@sveltejs/adapter-cloudflare@7.2.9(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(wrangler@4.137.0(@types/node@26.6.2))':
++  '@sveltejs/adapter-cloudflare@7.2.9(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(wrangler@4.137.0(@types/node@26.6.2))':
+     dependencies:
+       '@cloudflare/workers-types': 4.20260702.1
+-      '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
++      '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+       worktop: 0.8.0-next.18
+       wrangler: 4.137.0(@types/node@26.6.2)
+ 
+-  '@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
++  '@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
+     dependencies:
+       '@standard-schema/spec': 1.1.0
+       '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+-      '@sveltejs/vite-plugin-svelte': 7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
++      '@sveltejs/vite-plugin-svelte': 7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+       '@types/cookie': 0.6.0
+       acorn: 8.18.0
+       cookie: 0.6.0
+@@ -4571,19 +4585,19 @@ snapshots:
+       mrmime: 2.0.1
+       set-cookie-parser: 3.1.2
+       sirv: 3.0.2
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+       vite: 8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
+     optionalDependencies:
+       typescript: 6.0.3
+ 
+   '@sveltejs/load-config@0.2.3': {}
+ 
+-  '@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
++  '@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
+     dependencies:
+       deepmerge: 4.3.1
+       magic-string: 1.4.1
+       obug: 2.2.1
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+       vite: 8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
+       vitefu: 1.1.3(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+ 
+@@ -4659,9 +4673,16 @@ snapshots:
+       tailwindcss: 4.3.3
+       vite: 8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
+ 
+-  '@testing-library/svelte-core@1.1.3(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
++  '@tanstack/query-core@5.104.0': {}
++
++  '@tanstack/svelte-query@6.3.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))':
+     dependencies:
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      '@tanstack/query-core': 5.104.0
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
++
++  '@testing-library/svelte-core@1.1.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))':
++    dependencies:
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+ 
+   '@tybys/wasm-util@0.10.4':
+     dependencies:
+@@ -4762,9 +4783,6 @@ snapshots:
+     transitivePeerDependencies:
+       - supports-color
+ 
+-  '@typescript-eslint/types@8.70.0':
+-    optional: true
+-
+   '@typescript-eslint/types@8.70.1': {}
+ 
+   '@typescript-eslint/typescript-estree@8.70.1(supports-color@10.2.2)(typescript@6.0.3)':
+@@ -5210,12 +5228,12 @@ snapshots:
+     dependencies:
+       proxy-compare: 3.0.1
+ 
+-  '@zag-js/svelte@1.43.0(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
++  '@zag-js/svelte@1.43.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))':
+     dependencies:
+       '@zag-js/core': 1.43.0
+       '@zag-js/types': 1.43.0
+       '@zag-js/utils': 1.43.0
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+ 
+   '@zag-js/switch@1.43.0':
+     dependencies:
+@@ -5404,6 +5422,8 @@ snapshots:
+ 
+   devalue@5.9.2: {}
+ 
++  devalue@6.0.2: {}
++
+   dlv@1.1.3:
+     optional: true
+ 
+@@ -5535,7 +5555,7 @@ snapshots:
+     dependencies:
+       eslint: 10.11.0(jiti@2.7.0)(supports-color@10.2.2)
+ 
+-  eslint-plugin-svelte@3.23.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(svelte@5.57.1(@typescript-eslint/types@8.70.0)):
++  eslint-plugin-svelte@3.23.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(svelte@5.57.1(@typescript-eslint/types@8.70.1)):
+     dependencies:
+       '@eslint-community/eslint-utils': 4.10.1(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))
+       '@jridgewell/sourcemap-codec': 1.6.0
+@@ -5547,9 +5567,9 @@ snapshots:
+       postcss-load-config: 3.1.4(postcss@8.5.28)
+       postcss-safe-parser: 7.1.0(postcss@8.5.28)
+       semver: 7.8.5
+-      svelte-eslint-parser: 1.8.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++      svelte-eslint-parser: 1.8.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+     optionalDependencies:
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+     transitivePeerDependencies:
+       - ts-node
+ 
+@@ -5642,11 +5662,11 @@ snapshots:
+     dependencies:
+       estraverse: 5.3.0
+ 
+-  esrap@2.3.7(@typescript-eslint/types@8.70.0):
++  esrap@2.3.7(@typescript-eslint/types@8.70.1):
+     dependencies:
+       '@jridgewell/sourcemap-codec': 1.6.0
+     optionalDependencies:
+-      '@typescript-eslint/types': 8.70.0
++      '@typescript-eslint/types': 8.70.1
+ 
+   esrecurse@4.3.0:
+     dependencies:
+@@ -6058,16 +6078,16 @@ snapshots:
+ 
+   prelude-ls@1.2.1: {}
+ 
+-  prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.0)):
++  prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.1)):
+     dependencies:
+       prettier: 3.9.9
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+ 
+-  prettier-plugin-tailwindcss@0.8.1(prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.0)))(prettier@3.9.9):
++  prettier-plugin-tailwindcss@0.8.1(prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.1)))(prettier@3.9.9):
+     dependencies:
+       prettier: 3.9.9
+     optionalDependencies:
+-      prettier-plugin-svelte: 4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.0))
++      prettier-plugin-svelte: 4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+ 
+   prettier@3.9.9: {}
+ 
+@@ -6205,7 +6225,7 @@ snapshots:
+ 
+   supports-color@10.2.2: {}
+ 
+-  svelte-check@4.7.6(picomatch@4.0.7)(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3):
++  svelte-check@4.7.6(picomatch@4.0.7)(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3):
+     dependencies:
+       '@jridgewell/trace-mapping': 0.3.31
+       '@sveltejs/load-config': 0.2.3
+@@ -6213,12 +6233,12 @@ snapshots:
+       fdir: 6.5.0(picomatch@4.0.7)
+       picocolors: 1.1.1
+       sade: 1.8.1
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+       typescript: 6.0.3
+     transitivePeerDependencies:
+       - picomatch
+ 
+-  svelte-eslint-parser@1.8.1(svelte@5.57.1(@typescript-eslint/types@8.70.0)):
++  svelte-eslint-parser@1.8.1(svelte@5.57.1(@typescript-eslint/types@8.70.1)):
+     dependencies:
+       eslint-scope: 8.4.0
+       eslint-visitor-keys: 4.2.1
+@@ -6228,9 +6248,9 @@ snapshots:
+       postcss-selector-parser: 7.1.6
+       semver: 7.8.5
+     optionalDependencies:
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+ 
+-  svelte@5.57.1(@typescript-eslint/types@8.70.0):
++  svelte@5.57.1(@typescript-eslint/types@8.70.1):
+     dependencies:
+       '@jridgewell/remapping': 2.3.5
+       '@jridgewell/sourcemap-codec': 1.6.0
+@@ -6242,7 +6262,7 @@ snapshots:
+       clsx: 2.1.1
+       devalue: 5.9.2
+       esm-env: 1.2.2
+-      esrap: 2.3.7(@typescript-eslint/types@8.70.0)
++      esrap: 2.3.7(@typescript-eslint/types@8.70.1)
+       is-reference: 3.0.3
+       locate-character: 3.0.0
+       magic-string: 0.30.21
+@@ -6250,12 +6270,12 @@ snapshots:
+     transitivePeerDependencies:
+       - '@typescript-eslint/types'
+ 
+-  sveltekit-superforms@2.30.2(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(@types/json-schema@7.0.15)(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3):
++  sveltekit-superforms@2.30.2(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(@types/json-schema@7.0.15)(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3):
+     dependencies:
+-      '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
++      '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+       devalue: 5.9.2
+       memoize-weak: 1.0.2
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+       ts-deepmerge: 8.0.0
+     optionalDependencies:
+       '@exodus/schemasafe': 1.3.0
+@@ -6440,10 +6460,10 @@ snapshots:
+     optionalDependencies:
+       vite: 8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
+ 
+-  vitest-browser-svelte@3.1.0(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vitest@5.0.1):
++  vitest-browser-svelte@3.1.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vitest@5.0.1):
+     dependencies:
+-      '@testing-library/svelte-core': 1.1.3(svelte@5.57.1(@typescript-eslint/types@8.70.0))
+-      svelte: 5.57.1(@typescript-eslint/types@8.70.0)
++      '@testing-library/svelte-core': 1.1.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))
++      svelte: 5.57.1(@typescript-eslint/types@8.70.1)
+       vitest: 5.0.1(@types/node@26.6.2)(@vitest/browser-playwright@5.0.1)(@vitest/ui@5.0.1)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
+ 
+   vitest@5.0.1(@types/node@26.6.2)(@vitest/browser-playwright@5.0.1)(@vitest/ui@5.0.1)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)):
+diff --git a/src/app.d.ts b/src/app.d.ts
+index b6fc08b..ff40b40 100644
+--- a/src/app.d.ts
++++ b/src/app.d.ts
+@@ -38,6 +38,7 @@ declare global {
+       userId?: string;
+     }
+     interface PageData {
++      cacheIdentity?: string;
+       /** The zone every time is shown in, from the root layout (see `viewerTimezone`). */
+       viewer?: import('$lib/time/timezone').ViewerTimezone;
+     }
+diff --git a/src/lib/api/http.spec.ts b/src/lib/api/http.spec.ts
+new file mode 100644
+index 0000000..7c8d7bc
+--- /dev/null
++++ b/src/lib/api/http.spec.ts
+@@ -0,0 +1,58 @@
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { stringify } from 'devalue';
++import { apiRead } from './http';
++afterEach(() => vi.unstubAllGlobals());
++describe('API transport', () => {
++  it('preserves dates, cookies and cancellation through the same-origin transport', async () => {
++    const when = new Date('2026-01-01');
++    const request = vi.fn().mockResolvedValue(
++      new Response(stringify({ when }), {
++        headers: {
++          'content-type': 'application/json',
++          'x-query-codec': 'devalue',
++          'x-query-viewer': 'ana',
++        },
++      }),
++    );
++    vi.stubGlobal('fetch', request);
++    const signal = new AbortController().signal;
++    expect(await apiRead('/api/query/detail?slug=mesa', signal, 'ana')).toEqual({ when });
++    expect(request).toHaveBeenCalledWith(
++      '/api/query/detail?slug=mesa',
++      expect.objectContaining({ signal, credentials: 'same-origin' }),
++    );
++  });
++  it('refuses a response for a different signed-in account before caching its body', async () => {
++    vi.stubGlobal(
++      'fetch',
++      vi.fn().mockResolvedValue(
++        new Response('{}', {
++          headers: { 'content-type': 'application/json', 'x-query-viewer': 'bia' },
++        }),
++      ),
++    );
++    await expect(apiRead('/api/query/account', undefined, 'ana')).rejects.toMatchObject({
++      status: 401,
++    });
++  });
++  it.each([403, 404, 429, 503])('preserves status %i without a viewer header', async (status) => {
++    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status })));
++    await expect(apiRead('/api/query/manage', undefined, 'ana')).rejects.toMatchObject({ status });
++  });
++  it.each([
++    ['text/html', '<html>login</html>'],
++    ['application/json', 'broken json'],
++  ])('rejects malformed %s responses', async (type, body) => {
++    vi.stubGlobal(
++      'fetch',
++      vi.fn().mockResolvedValue(new Response(body, { headers: { 'content-type': type } })),
++    );
++    await expect(apiRead('/api/query/tables')).rejects.toMatchObject({ status: 502 });
++  });
++  it('does not fetch external URLs', async () => {
++    const request = vi.fn();
++    vi.stubGlobal('fetch', request);
++    await expect(apiRead('//example.com')).rejects.toThrow('same-origin');
++    expect(request).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/lib/api/http.ts b/src/lib/api/http.ts
+new file mode 100644
+index 0000000..3b618a7
+--- /dev/null
++++ b/src/lib/api/http.ts
+@@ -0,0 +1,35 @@
++import { parse } from 'devalue';
++
++export class ApiError extends Error {
++  constructor(
++    public status: number,
++    message = 'Request failed',
++  ) {
++    super(message);
++  }
++}
++
++/** Same-origin transport only. Cookies and abort signals are preserved; server errors stay opaque. */
++export async function apiRead<T>(path: string, signal?: AbortSignal, viewer?: string): Promise<T> {
++  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\'))
++    throw new Error('Expected a same-origin API path');
++  const response = await fetch(path, {
++    signal,
++    credentials: 'same-origin',
++    headers: { accept: 'application/json' },
++  });
++  if (!response.ok) throw new ApiError(response.status);
++  if (viewer && viewer !== 'public' && response.headers.get('x-query-viewer') !== viewer)
++    throw new ApiError(401);
++  if (!response.headers.get('content-type')?.includes('application/json'))
++    throw new ApiError(502, 'Invalid API response');
++  try {
++    return (
++      response.headers.get('x-query-codec') === 'devalue'
++        ? parse(await response.text())
++        : await response.json()
++    ) as T;
++  } catch {
++    throw new ApiError(502, 'Invalid API response');
++  }
++}
+diff --git a/src/lib/components/ActionForm.svelte b/src/lib/components/ActionForm.svelte
+index fc41faf..0220564 100644
+--- a/src/lib/components/ActionForm.svelte
++++ b/src/lib/components/ActionForm.svelte
+@@ -1,4 +1,7 @@
+ <script lang="ts">
++  import { queryClient } from '$lib/query/context';
++  import { afterWrite } from '$lib/query/invalidate';
++  const client = queryClient();
+   import type { Snippet } from 'svelte';
+   import { defaults, superForm } from 'sveltekit-superforms';
+   import { zod4 } from 'sveltekit-superforms/adapters';
+@@ -53,6 +56,7 @@
+     invalidateAll: 'pessimistic',
+     onResult({ result }) {
+       if (result.type !== 'redirect') return;
++      void afterWrite(client, action.includes('Photo') ? 'account' : 'table');
+       if (success) toast.success(success);
+       onsuccess?.();
+     },
+diff --git a/src/lib/components/CepLookup.svelte b/src/lib/components/CepLookup.svelte
+new file mode 100644
+index 0000000..22da265
+--- /dev/null
++++ b/src/lib/components/CepLookup.svelte
+@@ -0,0 +1,59 @@
++<script lang="ts">
++  import { untrack } from 'svelte';
++  import { browser } from '$app/environment';
++  import { createQuery } from '@tanstack/svelte-query';
++  import { queryClient } from '$lib/query/context';
++  import { cepLookup } from '$lib/query/lookups';
++  import { areaOf, normalizeCep } from '$lib/location/cep';
++  import { m } from '$lib/paraglide/messages';
++  let { value, area = $bindable('') }: { value: string; area?: string } = $props();
++  const client = queryClient();
++  let debounced = $state<string | null>(null);
++  let filled = $state<string | null>(null);
++  const cep = $derived(normalizeCep(value));
++  $effect(() => {
++    const next = cep;
++    debounced = null;
++    untrack(() => {
++      if (filled && area === filled) area = '';
++      filled = null;
++    });
++    if (!next) return;
++    const timer = setTimeout(() => {
++      debounced = next;
++    }, 400);
++    return () => clearTimeout(timer);
++  });
++  const lookup = createQuery(
++    () => ({
++      queryKey: ['api', 'cep', debounced],
++      queryFn: async ({ signal, queryKey }) => {
++        const requested = queryKey[2]!;
++        return { ...(await cepLookup(requested, signal)), cep: requested };
++      },
++      enabled: browser && !!debounced && debounced === cep,
++      staleTime: (query) => (query.state.data?.status === 'found' ? 86_400_000 : 0),
++      refetchOnWindowFocus: false,
++      retry: false,
++    }),
++    () => client,
++  );
++  $effect(() => {
++    if (!cep || debounced !== cep || lookup.data?.cep !== cep || lookup.data.status !== 'found')
++      return;
++    const suggested = areaOf(lookup.data.place);
++    if (!area || area === filled) {
++      area = suggested;
++      filled = suggested;
++    }
++  });
++</script>
++
++{#if cep}
++  <p class="mt-1 text-sm text-muted" role="status">
++    {#if debounced !== cep || lookup.isFetching}{m.cep_lookup_pending()}
++    {:else if lookup.isError}{m.cep_lookup_unavailable()}
++    {:else if lookup.data?.status === 'not_found'}{m.cep_lookup_missing()}
++    {:else if lookup.data?.status === 'found'}{areaOf(lookup.data.place)}{/if}
++  </p>
++{/if}
+diff --git a/src/lib/components/CepLookup.svelte.spec.ts b/src/lib/components/CepLookup.svelte.spec.ts
+new file mode 100644
+index 0000000..655f4fd
+--- /dev/null
++++ b/src/lib/components/CepLookup.svelte.spec.ts
+@@ -0,0 +1,58 @@
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { render } from 'vitest-browser-svelte';
++import { page } from 'vitest/browser';
++import Harness from '$lib/query/CepHarness.svelte';
++import CepLookup from './CepLookup.svelte';
++const found = (city: string) =>
++  Response.json({ status: 'found', place: { neighbourhood: null, city, state: 'SP' } });
++afterEach(() => vi.restoreAllMocks());
++describe('CEP query', () => {
++  it('does not call the endpoint for incomplete input', async () => {
++    const request = vi.spyOn(window, 'fetch');
++    await render(CepLookup, { value: '123' });
++    await new Promise((resolve) => setTimeout(resolve, 500));
++    expect(request).not.toHaveBeenCalled();
++  });
++  it('aborts an obsolete lookup and ignores its late result', async () => {
++    let finish!: (response: Response) => void;
++    const request = vi
++      .spyOn(window, 'fetch')
++      .mockImplementationOnce(
++        () =>
++          new Promise((resolve) => {
++            finish = resolve;
++          }),
++      )
++      .mockResolvedValue(found('Campinas'));
++    const view = await render(CepLookup, { value: '01001000' });
++    await expect.poll(() => request.mock.calls.length).toBe(1);
++    const signal = request.mock.calls[0][1]?.signal;
++    await view.rerender({ value: '13010000' });
++    await expect.element(page.getByRole('status')).toHaveTextContent('Campinas - SP');
++    finish(found('São Paulo'));
++    await expect.element(page.getByRole('status')).not.toHaveTextContent('São Paulo - SP');
++    expect(signal?.aborted).toBe(true);
++  });
++  it('shows a manual fallback after an outage', async () => {
++    vi.spyOn(window, 'fetch').mockResolvedValue(new Response('', { status: 503 }));
++    await render(CepLookup, { value: '01001000', area: 'Manual area' });
++    await expect
++      .element(page.getByRole('status'))
++      .toHaveTextContent('Não foi possível consultar o CEP. Preencha a região para continuar.');
++  });
++  it('fills an empty region, clears an obsolete auto-fill and preserves manual edits', async () => {
++    vi.spyOn(window, 'fetch').mockImplementation(async (path) =>
++      found(String(path).includes('01001000') ? 'São Paulo' : 'Campinas'),
++    );
++    const view = await render(Harness, { value: '01001000' });
++    await expect.element(page.getByLabelText('region')).toHaveValue('São Paulo - SP');
++    await view.rerender({ value: '' });
++    await expect.element(page.getByLabelText('region')).toHaveValue('');
++    await view.rerender({ value: '13010000' });
++    await expect.element(page.getByLabelText('region')).toHaveValue('Campinas - SP');
++    await page.getByLabelText('region').fill('My venue');
++    await view.rerender({ value: '01001000' });
++    await expect.element(page.getByRole('status')).toHaveTextContent('São Paulo - SP');
++    await expect.element(page.getByLabelText('region')).toHaveValue('My venue');
++  });
++});
+diff --git a/src/lib/components/ProfileForm.svelte b/src/lib/components/ProfileForm.svelte
+index 0d72770..4c68a5f 100644
+--- a/src/lib/components/ProfileForm.svelte
++++ b/src/lib/components/ProfileForm.svelte
+@@ -1,4 +1,11 @@
+ <script lang="ts">
++  import { browser } from '$app/environment';
++  import { page } from '$app/state';
++  import { createQuery } from '@tanstack/svelte-query';
++  import { queryClient } from '$lib/query/context';
++  import { usernameAvailability } from '$lib/query/lookups';
++  import { afterWrite } from '$lib/query/invalidate';
++  const client = queryClient();
+   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
+   import SubmitButton from '$lib/components/SubmitButton.svelte';
+   import { tick } from 'svelte';
+@@ -36,23 +43,13 @@
+     checkUsername?: (username: string, signal: AbortSignal) => Promise<Availability>;
+   };
+ 
+-  const askServer = async (username: string, signal: AbortSignal): Promise<Availability> => {
+-    const response = await fetch(`/onboarding/username?value=${encodeURIComponent(username)}`, {
+-      signal,
+-      headers: { accept: 'application/json' },
+-    });
+-    if (!response.ok) throw new Error(`availability check answered ${response.status}`);
+-
+-    return ((await response.json()) as { status: Availability }).status;
+-  };
+-
+   let {
+     form: initial,
+     action,
+     usernameLocked = false,
+     submitLabel,
+     onsaved,
+-    checkUsername = askServer,
++    checkUsername = usernameAvailability,
+   }: Props = $props();
+ 
+   // The form is set up once with what the server loaded; superforms keeps it up to date after that.
+@@ -62,7 +59,10 @@
+     resetForm: false,
+     taintedMessage: confirmLeave,
+     onUpdated: ({ form }) => {
+-      if (form.valid) onsaved?.();
++      if (form.valid) {
++        void afterWrite(client, 'account');
++        onsaved?.();
++      }
+     },
+   });
+ 
+@@ -142,35 +142,39 @@
+ 
+   // --- the username, checked against the server while it is typed --------------------------------
+ 
+-  const CHECK_DELAY_MS = 400;
+-  let availability = $state<'idle' | 'checking' | Availability | 'failed'>('idle');
+-  let timer: ReturnType<typeof setTimeout> | undefined;
+-  let request: AbortController | undefined;
+-
+-  function usernameChanged() {
+-    clearTimeout(timer);
+-    request?.abort();
+-    availability = 'idle';
+-
+-    // A username that is wrong anyway is not worth a round trip: the form says what is wrong.
+-    if (usernameProblem($form.username) !== null) return;
+-
+-    availability = 'checking';
+-    timer = setTimeout(async () => {
+-      request = new AbortController();
+-      const { signal } = request;
+-      try {
+-        const status = await checkUsername(normalizeUsername($form.username), signal);
+-        if (!signal.aborted) availability = status;
+-      } catch {
+-        if (!signal.aborted) availability = 'failed';
+-      }
+-    }, CHECK_DELAY_MS);
+-  }
+-
+-  // A username that arrives already filled in (a suggestion made from the sign-in name) is checked too.
+-  // svelte-ignore state_referenced_locally
+-  if ($form.username !== '' && !usernameLocked) usernameChanged();
++  let checkedUsername = $state('');
++  const normalized = $derived(normalizeUsername($form.username));
++  $effect(() => {
++    const value = normalized;
++    checkedUsername = '';
++    if (usernameLocked || usernameProblem(value) !== null) return;
++    const timer = setTimeout(() => {
++      checkedUsername = value;
++    }, 400);
++    return () => clearTimeout(timer);
++  });
++  const availabilityQuery = createQuery(
++    () => ({
++      queryKey: ['api', 'username', page.data.cacheIdentity ?? 'anonymous', checkedUsername],
++      queryFn: ({ signal }) => checkUsername(checkedUsername, signal),
++      enabled:
++        browser && !usernameLocked && checkedUsername !== '' && checkedUsername === normalized,
++      staleTime: 0,
++      gcTime: 0,
++      retry: false,
++      refetchOnWindowFocus: false,
++    }),
++    () => client,
++  );
++  const availability = $derived(
++    usernameLocked || usernameProblem(normalized) !== null
++      ? 'idle'
++      : checkedUsername !== normalized || availabilityQuery.isFetching
++        ? 'checking'
++        : availabilityQuery.isError
++          ? 'failed'
++          : (availabilityQuery.data ?? 'checking'),
++  );
+ 
+   const usernameError = $derived(
+     errorText($errors.username?.[0]) ??
+@@ -247,7 +251,6 @@
+       autocapitalize="none"
+       spellcheck="false"
+       bind:value={$form.username}
+-      oninput={usernameChanged}
+       readonly={usernameLocked}
+       class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
+       aria-invalid={usernameError ? 'true' : undefined}
+diff --git a/src/lib/components/ProfileForm.svelte.spec.ts b/src/lib/components/ProfileForm.svelte.spec.ts
+index 50dcada..dad0898 100644
+--- a/src/lib/components/ProfileForm.svelte.spec.ts
++++ b/src/lib/components/ProfileForm.svelte.spec.ts
+@@ -175,6 +175,30 @@ describe('ProfileForm', () => {
+       expect(check).toHaveBeenLastCalledWith('ana-maria', expect.any(AbortSignal));
+     });
+ 
++    it('cancels an older username check and ignores its late answer', async () => {
++      let finish!: (value: 'taken') => void;
++      const check = vi
++        .fn()
++        .mockImplementationOnce(
++          () =>
++            new Promise((resolve) => {
++              finish = resolve;
++            }),
++        )
++        .mockResolvedValue('free');
++      await setup({}, check);
++      await page.getByLabelText('Nome de usuário').fill('ana');
++      await expect.poll(() => check.mock.calls.length).toBe(1);
++      const signal = check.mock.calls[0][1] as AbortSignal;
++      await page.getByLabelText('Nome de usuário').fill('bruno');
++      await expect.element(page.getByText('Esse nome está livre.')).toBeVisible();
++      finish('taken');
++      await expect
++        .element(page.getByText('Esse nome já está em uso. Escolha outro.'))
++        .not.toBeInTheDocument();
++      expect(signal.aborted).toBe(true);
++    });
++
+     it('says the name is taken, as an error tied to the field', async () => {
+       await setup({}, vi.fn().mockResolvedValue('taken'));
+ 
+diff --git a/src/lib/components/QueryStatus.svelte b/src/lib/components/QueryStatus.svelte
+new file mode 100644
+index 0000000..7dd0017
+--- /dev/null
++++ b/src/lib/components/QueryStatus.svelte
+@@ -0,0 +1,13 @@
++<script lang="ts">
++  import { m } from '$lib/paraglide/messages';
++  let { failed, retry }: { failed: boolean; retry: () => unknown } = $props();
++</script>
++
++{#if failed}
++  <p role="status" class="my-3 text-sm text-muted">
++    {m.api_refresh_failed()}
++    <button type="button" class="btn h-11 px-3 text-link" onclick={() => retry()}
++      >{m.api_refresh_retry()}</button
++    >
++  </p>
++{/if}
+diff --git a/src/lib/components/TableForm.svelte b/src/lib/components/TableForm.svelte
+index 51e6e75..e0b9ba6 100644
+--- a/src/lib/components/TableForm.svelte
++++ b/src/lib/components/TableForm.svelte
+@@ -1,4 +1,5 @@
+ <script lang="ts">
++  import CepLookup from './CepLookup.svelte';
+   import FormBanner from '$lib/components/FormBanner.svelte';
+   import SubmitButton from '$lib/components/SubmitButton.svelte';
+   import { fileProxy, type SuperForm } from 'sveltekit-superforms';
+@@ -376,6 +377,7 @@
+             aria-invalid={invalid('postalCode')}
+           /></FormField
+         >
++        <CepLookup value={$form.postalCode} bind:area={$form.locationArea} />
+         <FormField
+           id="locationArea"
+           label={m.form_location_area()}
+diff --git a/src/lib/query/CepHarness.svelte b/src/lib/query/CepHarness.svelte
+new file mode 100644
+index 0000000..7815582
+--- /dev/null
++++ b/src/lib/query/CepHarness.svelte
+@@ -0,0 +1,10 @@
++<script lang="ts">
++  import CepLookup from '$lib/components/CepLookup.svelte';
++  let { value, initial = '' }: { value: string; initial?: string } = $props();
++  // This models a user-owned form field, initialized once.
++  // svelte-ignore state_referenced_locally
++  let area = $state(initial);
++</script>
++
++<CepLookup {value} bind:area />
++<input aria-label="region" bind:value={area} />
+diff --git a/src/lib/query/QueryHarness.svelte b/src/lib/query/QueryHarness.svelte
+new file mode 100644
+index 0000000..f59f47f
+--- /dev/null
++++ b/src/lib/query/QueryHarness.svelte
+@@ -0,0 +1,20 @@
++<script lang="ts">
++  import { QueryClientProvider, type QueryClient } from '@tanstack/svelte-query';
++  import { pageQuery } from './page.svelte';
++  import type { ReadSeed } from './keys';
++  let {
++    client,
++    data,
++  }: { client: QueryClient; data: { value: string; account?: unknown; readSeed: ReadSeed } } =
++    $props();
++  // A test owns this client's lifetime.
++  // svelte-ignore state_referenced_locally
++  const query = pageQuery(() => data, client);
++  let draft = $state('');
++</script>
++
++<QueryClientProvider {client}>
++  <output aria-label="value">{query.data?.value}</output>
++  <input aria-label="draft" bind:value={draft} />
++  <button onclick={() => query.refetch()}>Refresh</button>
++</QueryClientProvider>
+diff --git a/src/lib/query/cache.spec.ts b/src/lib/query/cache.spec.ts
+new file mode 100644
+index 0000000..f508df7
+--- /dev/null
++++ b/src/lib/query/cache.spec.ts
+@@ -0,0 +1,68 @@
++import { describe, expect, it } from 'vitest';
++import { ApiError } from '$lib/api/http';
++import { createQueryClient, retryRead } from './client';
++import { readKey, readParams } from './keys';
++import { afterWrite } from './invalidate';
++describe('query cache boundaries', () => {
++  it('isolates server clients and viewer-dependent detail/catalog keys', () => {
++    const a = createQueryClient(),
++      b = createQueryClient();
++    for (const resource of [
++      'detail',
++      'manage',
++      'dashboard',
++      'account',
++      'catalog',
++      'editCatalog',
++    ] as const) {
++      const key = readKey({ resource, viewer: 'ana', params: 'slug=mesa' });
++      a.setQueryData(key, { secret: 'join link' });
++      expect(b.getQueryData(key)).toBeUndefined();
++      expect(
++        a.getQueryData(readKey({ resource, viewer: 'bia', params: 'slug=mesa' })),
++      ).toBeUndefined();
++    }
++    a.clear();
++    b.clear();
++  });
++  it('deduplicates reordered multi-select filters without collapsing different single selections', () => {
++    const params = (s: string) => readParams('tables', new URL('https://x.test/tables?' + s));
++    expect(params('modality=online&modality=in_person')).toBe(params('modality=in_person'));
++    expect(params('system=b&system=a&system=b')).toBe(params('system=a&system=b'));
++    expect(params('modality=online&modality=in_person')).not.toBe(
++      params('modality=in_person&modality=online'),
++    );
++  });
++  it('invalidates every table view after a write, leaving unrelated lookups alone', async () => {
++    const client = createQueryClient();
++    const resources = [
++      'tables',
++      'preview',
++      'detail',
++      'dashboard',
++      'manage',
++      'catalog',
++      'editCatalog',
++      'cep',
++      'username',
++    ];
++    for (const r of resources) client.setQueryData(['api', r], {});
++    await afterWrite(client, 'table');
++    for (const r of resources)
++      expect(client.getQueryState(['api', r])?.isInvalidated).toBe(
++        !['cep', 'username'].includes(r),
++      );
++    client.clear();
++  });
++  it('clears all private data on logout and never retries denied reads or writes', () => {
++    const client = createQueryClient();
++    client.setQueryData(['api', 'account', 'ana'], { name: 'Ana' });
++    client.clear();
++    expect(client.getQueryCache().getAll()).toHaveLength(0);
++    expect(retryRead(0, new ApiError(403))).toBe(false);
++    expect(retryRead(0, new ApiError(429))).toBe(false);
++    expect(retryRead(0, new ApiError(503))).toBe(true);
++    expect(retryRead(2, new ApiError(503))).toBe(false);
++    expect(client.getDefaultOptions().mutations?.retry).toBe(false);
++  });
++});
+diff --git a/src/lib/query/client.ts b/src/lib/query/client.ts
+new file mode 100644
+index 0000000..02ce2ba
+--- /dev/null
++++ b/src/lib/query/client.ts
+@@ -0,0 +1,19 @@
++import { QueryClient } from '@tanstack/svelte-query';
++import { ApiError } from '$lib/api/http';
++export const retryRead = (count: number, error: Error) =>
++  count < 2 && (!(error instanceof ApiError) || error.status >= 500);
++/** Called per SSR request/component tree, never a process-global authenticated cache. */
++export function createQueryClient() {
++  return new QueryClient({
++    defaultOptions: {
++      queries: {
++        staleTime: 15_000,
++        gcTime: 300_000,
++        retry: retryRead,
++        refetchOnWindowFocus: true,
++        refetchOnReconnect: true,
++      },
++      mutations: { retry: false },
++    },
++  });
++}
+diff --git a/src/lib/query/context.ts b/src/lib/query/context.ts
+new file mode 100644
+index 0000000..3e374db
+--- /dev/null
++++ b/src/lib/query/context.ts
+@@ -0,0 +1,11 @@
++import { getContext, setContext } from 'svelte';
++import type { QueryClient } from '@tanstack/svelte-query';
++import { createQueryClient } from './client';
++const key = Symbol('mesa-query-client');
++export function provideQueryClient(client: QueryClient) {
++  setContext(key, client);
++}
++/** Isolated component previews/tests get a local cache too; production uses the root client. */
++export function queryClient() {
++  return getContext<QueryClient | undefined>(key) ?? createQueryClient();
++}
+diff --git a/src/lib/query/invalidate.ts b/src/lib/query/invalidate.ts
+new file mode 100644
+index 0000000..8a6a17e
+--- /dev/null
++++ b/src/lib/query/invalidate.ts
+@@ -0,0 +1,21 @@
++import type { QueryClient } from '@tanstack/svelte-query';
++/** Invalidates the domain reads affected by a confirmed server action. Never submits a write. */
++export async function afterWrite(client: QueryClient, domain: 'table' | 'account') {
++  const resources =
++    domain === 'table'
++      ? ['tables', 'preview', 'detail', 'dashboard', 'manage', 'catalog', 'editCatalog']
++      : [
++          'account',
++          'detail',
++          'manage',
++          'dashboard',
++          'preview',
++          'tables',
++          'username',
++          'catalog',
++          'editCatalog',
++        ];
++  await client.invalidateQueries({
++    predicate: ({ queryKey }) => queryKey[0] === 'api' && resources.includes(String(queryKey[1])),
++  });
++}
+diff --git a/src/lib/query/keys.ts b/src/lib/query/keys.ts
+new file mode 100644
+index 0000000..0a02978
+--- /dev/null
++++ b/src/lib/query/keys.ts
+@@ -0,0 +1,48 @@
++export const resources = [
++  'preview',
++  'tables',
++  'detail',
++  'dashboard',
++  'manage',
++  'catalog',
++  'editCatalog',
++  'account',
++] as const;
++export type Resource = (typeof resources)[number];
++export type ReadSeed = {
++  resource: Resource;
++  params: string;
++  viewer: string;
++  updatedAt: number;
++  fields: string[];
++};
++export const privateResources = new Set<Resource>([
++  'detail',
++  'dashboard',
++  'manage',
++  'account',
++  'catalog',
++  'editCatalog',
++]);
++export function readKey(seed: Pick<ReadSeed, 'resource' | 'viewer' | 'params'>) {
++  return [
++    'api',
++    seed.resource,
++    privateResources.has(seed.resource) ? seed.viewer : 'public',
++    seed.params,
++  ] as const;
++}
++export const staleTime = (resource: Resource) => (resource === 'catalog' ? 300_000 : 15_000);
++/** Canonical keys: multi-select ordering must not create duplicate caches. */
++export function readParams(resource: Resource, url: URL, slug?: string) {
++  const params = new URLSearchParams();
++  if (slug) params.set('slug', slug);
++  if (resource === 'tables')
++    for (const name of ['system', 'platform', 'tag']) {
++      for (const value of [...new Set(url.searchParams.getAll(name))].sort())
++        params.append(name, value);
++    }
++  if (resource === 'tables' && url.searchParams.has('modality'))
++    params.set('modality', url.searchParams.getAll('modality').at(-1)!);
++  return params.toString();
++}
+diff --git a/src/lib/query/lookups.ts b/src/lib/query/lookups.ts
+new file mode 100644
+index 0000000..b6256bd
+--- /dev/null
++++ b/src/lib/query/lookups.ts
+@@ -0,0 +1,24 @@
++import { z } from 'zod';
++import { apiRead, ApiError } from '$lib/api/http';
++export const availabilitySchema = z.object({ status: z.enum(['free', 'taken', 'invalid']) });
++export async function usernameAvailability(username: string, signal: AbortSignal) {
++  const result = availabilitySchema.safeParse(
++    await apiRead<unknown>(`/onboarding/username?value=${encodeURIComponent(username)}`, signal),
++  );
++  if (!result.success) throw new ApiError(502, 'Invalid availability response');
++  return result.data.status;
++}
++export const cepSchema = z.discriminatedUnion('status', [
++  z.object({
++    status: z.literal('found'),
++    place: z.object({ neighbourhood: z.string().nullable(), city: z.string(), state: z.string() }),
++  }),
++  z.object({ status: z.literal('not_found') }),
++]);
++export async function cepLookup(value: string, signal: AbortSignal) {
++  const result = cepSchema.safeParse(
++    await apiRead<unknown>(`/api/location/cep?value=${value}`, signal),
++  );
++  if (!result.success) throw new ApiError(502, 'Invalid address response');
++  return result.data;
++}
+diff --git a/src/lib/query/page.svelte.spec.ts b/src/lib/query/page.svelte.spec.ts
+new file mode 100644
+index 0000000..e177e15
+--- /dev/null
++++ b/src/lib/query/page.svelte.spec.ts
+@@ -0,0 +1,87 @@
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { render } from 'vitest-browser-svelte';
++import { page } from 'vitest/browser';
++import { focusManager, onlineManager } from '@tanstack/svelte-query';
++import { createQueryClient } from './client';
++import { readKey, type ReadSeed } from './keys';
++import { invalidateAll } from '$app/navigation';
++vi.mock('$app/navigation', () => ({ invalidateAll: vi.fn(async () => {}) }));
++import Harness from './QueryHarness.svelte';
++const seed = (): ReadSeed => ({
++  resource: 'preview',
++  params: '',
++  viewer: 'public',
++  updatedAt: Date.now(),
++  fields: ['value'],
++});
++afterEach(() => {
++  vi.restoreAllMocks();
++  focusManager.setFocused(undefined);
++  onlineManager.setOnline(true);
++});
++describe('server seeded page queries', () => {
++  it('renders loader data without a duplicate request and caches only DTO fields', async () => {
++    const request = vi.spyOn(window, 'fetch');
++    const client = createQueryClient();
++    const readSeed = seed();
++    await render(Harness, {
++      client,
++      data: { value: 'SSR', account: { secret: 'private' }, readSeed },
++    });
++    await expect.element(page.getByLabelText('value')).toHaveTextContent('SSR');
++    expect(request).not.toHaveBeenCalled();
++    expect(client.getQueryData(readKey(readSeed))).toEqual({ value: 'SSR' });
++  });
++  it('deduplicates a shared refetch and leaves an edited field untouched', async () => {
++    const request = vi.spyOn(window, 'fetch').mockResolvedValue(Response.json({ value: 'Fresh' }));
++    const client = createQueryClient();
++    const data = { value: 'SSR', readSeed: seed() };
++    const first = await render(Harness, { client, data });
++    await render(Harness, { client, data });
++    await first.locator.getByLabelText('draft').fill('unsaved');
++    await client.invalidateQueries({ queryKey: readKey(data.readSeed) });
++    await expect.element(first.locator.getByLabelText('value')).toHaveTextContent('Fresh');
++    await expect.element(first.locator.getByLabelText('draft')).toHaveValue('unsaved');
++    expect(request).toHaveBeenCalledTimes(1);
++  });
++  it('reconciles a newer server navigation for the same key', async () => {
++    const client = createQueryClient();
++    const readSeed = seed();
++    const view = await render(Harness, { client, data: { value: 'old', readSeed } });
++    await view.rerender({
++      data: { value: 'new', readSeed: { ...readSeed, updatedAt: readSeed.updatedAt + 1000 } },
++    });
++    await expect.element(page.getByLabelText('value')).toHaveTextContent('new');
++    expect(client.getQueryData(readKey(readSeed))).toEqual({ value: 'new' });
++  });
++  it('refreshes stale data on focus and reconnect', async () => {
++    const request = vi
++      .spyOn(window, 'fetch')
++      .mockImplementation(async () =>
++        Response.json({ value: 'Fresh ' + request.mock.calls.length }),
++      );
++    const client = createQueryClient();
++    await render(Harness, {
++      client,
++      data: { value: 'SSR', readSeed: { ...seed(), updatedAt: 1 } },
++    });
++    focusManager.setFocused(false);
++    focusManager.setFocused(true);
++    await expect.element(page.getByLabelText('value')).toHaveTextContent('Fresh 1');
++    client.setQueryData(readKey(seed()), { value: 'old' }, { updatedAt: 1 });
++    onlineManager.setOnline(false);
++    onlineManager.setOnline(true);
++    await expect.element(page.getByLabelText('value')).toHaveTextContent('Fresh 2');
++    expect(request).toHaveBeenCalledTimes(2);
++  });
++  it('removes a denied private read and rechecks the route without retrying', async () => {
++    const request = vi.spyOn(window, 'fetch').mockResolvedValue(new Response('', { status: 403 }));
++    const client = createQueryClient();
++    const readSeed = { ...seed(), resource: 'detail' as const, viewer: 'ana', params: 'slug=mesa' };
++    await render(Harness, { client, data: { value: 'private', readSeed } });
++    await page.getByRole('button', { name: 'Refresh' }).click();
++    await expect.poll(() => vi.mocked(invalidateAll).mock.calls.length).toBe(1);
++    expect(client.getQueryData(readKey(readSeed))).toBeUndefined();
++    expect(request).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/src/lib/query/page.svelte.ts b/src/lib/query/page.svelte.ts
+new file mode 100644
+index 0000000..fb2b5e1
+--- /dev/null
++++ b/src/lib/query/page.svelte.ts
+@@ -0,0 +1,63 @@
++import { invalidateAll } from '$app/navigation';
++import { browser } from '$app/environment';
++import { createQuery, type QueryClient } from '@tanstack/svelte-query';
++import { apiRead, ApiError } from '$lib/api/http';
++import { queryClient } from './context';
++import { readKey, staleTime, type ReadSeed } from './keys';
++
++/** Seed from the authorized server load, then reconcile newer server navigations with the cache. */
++export function pageQuery<T extends object>(
++  source: () => T & { readSeed?: ReadSeed },
++  client: QueryClient = queryClient(),
++) {
++  const query = createQuery(
++    () => {
++      const { readSeed, ...loaded } = source();
++      const initial = readSeed
++        ? Object.fromEntries(
++            readSeed.fields.map((field) => [field, loaded[field as keyof typeof loaded]]),
++          )
++        : loaded;
++      return {
++        queryKey: readSeed ? readKey(readSeed) : ['ssr-preview'],
++        queryFn: async ({ signal }: { signal: AbortSignal }) => {
++          try {
++            return await apiRead<T>(
++              `/api/query/${readSeed!.resource}?${readSeed!.params}`,
++              signal,
++              readSeed!.viewer,
++            );
++          } catch (cause) {
++            if (cause instanceof ApiError && [401, 403, 404].includes(cause.status)) {
++              client.removeQueries({ queryKey: readKey(readSeed!), exact: true });
++              void invalidateAll();
++            }
++            throw cause;
++          }
++        },
++        initialData: initial as T,
++        initialDataUpdatedAt: readSeed?.updatedAt,
++        enabled: browser && !!readSeed,
++        staleTime: readSeed ? staleTime(readSeed.resource) : Infinity,
++        // The loader just fetched this key. Focus/reconnect and invalidation still revalidate it.
++        refetchOnMount: false,
++      };
++    },
++    () => client,
++  );
++  $effect(() => {
++    const { readSeed, ...data } = source();
++    if (
++      readSeed &&
++      readSeed.updatedAt > (client.getQueryState(readKey(readSeed))?.dataUpdatedAt ?? 0)
++    )
++      client.setQueryData(
++        readKey(readSeed),
++        Object.fromEntries(
++          readSeed.fields.map((field) => [field, data[field as keyof typeof data]]),
++        ),
++        { updatedAt: readSeed.updatedAt },
++      );
++  });
++  return query;
++}
+diff --git a/src/lib/server/auth/attempt-limit.ts b/src/lib/server/auth/attempt-limit.ts
+index ccb7618..60d4045 100644
+--- a/src/lib/server/auth/attempt-limit.ts
++++ b/src/lib/server/auth/attempt-limit.ts
+@@ -12,7 +12,7 @@ import { RateLimited } from '../errors';
+  * person who mistypes a password a few times must not be locked out. A script is far faster.
+  */
+ export type AttemptLimit = {
+-  action: 'sign_in' | 'sign_up' | 'password_reset';
++  action: 'sign_in' | 'sign_up' | 'password_reset' | 'cep_lookup';
+   max: number;
+   windowSeconds: number;
+ };
+diff --git a/src/lib/server/reads/account.ts b/src/lib/server/reads/account.ts
+new file mode 100644
+index 0000000..65ea4db
+--- /dev/null
++++ b/src/lib/server/reads/account.ts
+@@ -0,0 +1,16 @@
++import type { RequestEvent } from '@sveltejs/kit';
++import { can } from '../auth/policy';
++import { pictureOf, supabaseUrlOf } from '../images';
++export async function read({ locals, platform }: RequestEvent) {
++  const profile = await locals.getProfile();
++  return {
++    summary: profile
++      ? {
++          displayName: profile.name ?? profile.username ?? 'Pessoa sem nome',
++          username: profile.username,
++          avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
++          isAdmin: can(profile, 'admin:access'),
++        }
++      : null,
++  };
++}
+diff --git a/src/lib/server/reads/catalog.ts b/src/lib/server/reads/catalog.ts
+new file mode 100644
+index 0000000..ad011bf
+--- /dev/null
++++ b/src/lib/server/reads/catalog.ts
+@@ -0,0 +1,14 @@
++import { requireUser } from '../auth/guard';
++import type { RequestEvent } from '@sveltejs/kit';
++import { listSystems } from '../systems';
++import { listCatalog } from '../catalog';
++export async function read({ locals, url }: RequestEvent) {
++  await requireUser(locals, url);
++  const profile = await locals.getProfile();
++  if (!locals.db) return { systems: [], catalog: { platforms: [], tags: [] } };
++  const [systems, catalog] = await Promise.all([
++    listSystems(locals.db),
++    listCatalog(locals.db, { suggestedBy: profile?.id }),
++  ]);
++  return { systems: systems.map(({ name, slug }) => ({ name, slug })), catalog };
++}
+diff --git a/src/lib/server/reads/dashboard.ts b/src/lib/server/reads/dashboard.ts
+new file mode 100644
+index 0000000..33c6fe2
+--- /dev/null
++++ b/src/lib/server/reads/dashboard.ts
+@@ -0,0 +1,17 @@
++import { error } from '@sveltejs/kit';
++import { requireUser } from '$lib/server/auth/guard';
++import { listPlaying, listRunning } from '$lib/server/dashboard/queries';
++import type { RequestEvent } from '@sveltejs/kit';
++
++export const read = async ({ locals, url }: RequestEvent) => {
++  const user = await requireUser(locals, url);
++  if (!locals.db) error(503, 'Database not configured');
++
++  const now = new Date();
++  const [playing, running] = await Promise.all([
++    listPlaying(locals.db, user.id, now),
++    listRunning(locals.db, user.id, now),
++  ]);
++
++  return { playing, running };
++};
+diff --git a/src/lib/server/reads/detail.ts b/src/lib/server/reads/detail.ts
+new file mode 100644
+index 0000000..3c8e6f6
+--- /dev/null
++++ b/src/lib/server/reads/detail.ts
+@@ -0,0 +1,57 @@
++import { error, type RequestEvent } from '@sveltejs/kit';
++import { can, joinBlocker, rateBlocker } from '../auth/policy';
++import { imageUrl, supabaseUrlOf } from '../images';
++import { firstSessionEnded, gmRating, ratingOf } from '../ratings/service';
++import { listRegistrations, registrationStatus } from '../registrations/service';
++import { findTableBySlug, joinDetailsOf } from '../tables/queries';
++export const read = async ({ locals, params, platform }: RequestEvent) => {
++  // Unknown, disabled, or no database at all: the same translated 404.
++  const found = locals.db && (await findTableBySlug(locals.db, params.slug!, new Date()));
++  if (!found) error(404, 'Not found');
++
++  const { gmId, id, imagePath, ...table } = found;
++  const signedIn = (await locals.getUser()) !== null;
++  const profile = await locals.getProfile().catch(() => null);
++
++  // The player's own place, and the GM's view of everyone's. Names are not public.
++  const myStatus = profile ? await registrationStatus(locals.db!, id, profile.id) : null;
++  const manage = can(profile, 'registration:manage', { gmId });
++  const canJoin =
++    joinBlocker(profile, {
++      gmId,
++      tableStatus: 'active',
++      seatsLeft: table.seatsLeft,
++      alreadyRegistered: myStatus !== null,
++    }) === null;
++
++  // Averages are public; the comment is not sent to anyone but its author.
++  const [gmScore, mine] = await Promise.all([
++    gmRating(locals.db!, gmId),
++    profile ? ratingOf(locals.db!, id, profile.id) : null,
++  ]);
++  const canRate =
++    rateBlocker(profile, {
++      gmId,
++      registration: myStatus,
++      firstSessionEnded: firstSessionEnded(found, new Date()),
++    }) === null;
++
++  return {
++    ratings: { gm: gmScore },
++    canRate,
++    myRating: mine && {
++      gmScore: mine.gmScore,
++      comment: mine.comment ?? '',
++    },
++    table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
++    canEdit: can(profile, 'table:edit', { gmId }),
++    signedIn,
++    isGm: profile?.id === gmId,
++    myStatus,
++    canJoin,
++    registrations: manage ? await listRegistrations(locals.db!, profile, params.slug!) : null,
++    // How to join is private: only the GM and the confirmed players get it.
++    joinDetails:
++      profile?.id === gmId || myStatus === 'confirmed' ? await joinDetailsOf(locals.db!, id) : null,
++  };
++};
+diff --git a/src/lib/server/reads/edit-catalog.ts b/src/lib/server/reads/edit-catalog.ts
+new file mode 100644
+index 0000000..db9c39d
+--- /dev/null
++++ b/src/lib/server/reads/edit-catalog.ts
+@@ -0,0 +1,40 @@
++import { error } from '@sveltejs/kit';
++import type { RequestEvent } from '@sveltejs/kit';
++import { requireUser } from '../auth/guard';
++import { loadTableForEdit } from '../tables/write';
++import { timezoneOf } from '../time';
++import { listSystems } from '../systems';
++import { listCatalog, type CatalogItem } from '../catalog';
++import { Forbidden, NotFound } from '../errors';
++export async function read({ locals, url, params, cookies }: RequestEvent) {
++  await requireUser(locals, url);
++  if (!locals.db) error(503, 'Database unavailable');
++  try {
++    const profile = await locals.getProfile();
++    const { catalog: picked } = await loadTableForEdit(
++      locals.db,
++      profile,
++      params.slug!,
++      await timezoneOf(locals, cookies),
++    );
++    const [systems, offered] = await Promise.all([
++      listSystems(locals.db),
++      listCatalog(locals.db, { suggestedBy: profile?.id }),
++    ]);
++    const merge = (items: CatalogItem[], picks: CatalogItem[]) => [
++      ...items,
++      ...picks.filter((p) => !items.some((i) => i.slug === p.slug)),
++    ];
++    return {
++      systems: systems.map(({ name, slug }) => ({ name, slug })),
++      catalog: {
++        platforms: merge(offered.platforms, picked.platforms),
++        tags: merge(offered.tags, picked.tags),
++      },
++    };
++  } catch (cause) {
++    if (cause instanceof Forbidden) error(403, 'Forbidden');
++    if (cause instanceof NotFound) error(404, 'Not found');
++    throw cause;
++  }
++}
+diff --git a/src/lib/server/reads/load.ts b/src/lib/server/reads/load.ts
+new file mode 100644
+index 0000000..3576184
+--- /dev/null
++++ b/src/lib/server/reads/load.ts
+@@ -0,0 +1,55 @@
++import type { RequestEvent } from '@sveltejs/kit';
++import { createQueryClient } from '$lib/query/client';
++import {
++  readKey,
++  readParams,
++  privateResources,
++  type Resource,
++  type ReadSeed,
++} from '$lib/query/keys';
++import { read as preview } from './preview';
++import { read as tables } from './tables';
++import { read as detail } from './detail';
++import { read as dashboard } from './dashboard';
++import { read as manage } from './manage';
++import { read as catalog } from './catalog';
++import { read as editCatalog } from './edit-catalog';
++import { read as account } from './account';
++export const readers = {
++  preview,
++  tables,
++  detail,
++  dashboard,
++  manage,
++  catalog,
++  editCatalog,
++  account,
++};
++export type ReadData<R extends Resource> = Awaited<ReturnType<(typeof readers)[R]>>;
++export async function loadRead<R extends Resource>(
++  event: RequestEvent,
++  resource: R,
++): Promise<ReadData<R> & { readSeed: ReadSeed }> {
++  const viewer = privateResources.has(resource)
++    ? ((await event.locals.getUser())?.id ?? 'anonymous')
++    : 'public';
++  const seed = { resource, viewer, params: readParams(resource, event.url, event.params.slug) };
++  const client = createQueryClient();
++  try {
++    const data = await client.fetchQuery({
++      queryKey: readKey(seed),
++      queryFn: () => (readers[resource] as (event: RequestEvent) => Promise<ReadData<R>>)(event),
++      retry: false,
++    });
++    return {
++      ...data,
++      readSeed: {
++        ...seed,
++        fields: Object.keys(data),
++        updatedAt: client.getQueryState(readKey(seed))!.dataUpdatedAt,
++      },
++    } as ReadData<R> & { readSeed: ReadSeed };
++  } finally {
++    client.clear();
++  }
++}
+diff --git a/src/lib/server/reads/manage.ts b/src/lib/server/reads/manage.ts
+new file mode 100644
+index 0000000..7103875
+--- /dev/null
++++ b/src/lib/server/reads/manage.ts
+@@ -0,0 +1,38 @@
++import { error } from '@sveltejs/kit';
++import { requireUser } from '$lib/server/auth/guard';
++import { Forbidden, NotFound } from '$lib/server/errors';
++import { imageUrl, pictureOf, supabaseUrlOf } from '$lib/server/images';
++import { loadManage } from '$lib/server/tables/manage';
++import type { RequestEvent } from '@sveltejs/kit';
++
++// The GM's page for one table: requests, players, recent activity. Approving, declining and removing
++// post to the table page's own actions (see ActionForm), which send the browser back here.
++export const read = async ({ locals, url, params, platform }: RequestEvent) => {
++  await requireUser(locals, url);
++  if (!locals.db) error(503, 'Database not configured');
++
++  try {
++    const manage = await loadManage(locals.db, await locals.getProfile(), params.slug!, new Date());
++    const supabaseUrl = supabaseUrlOf(platform?.env);
++    const withPicture = <T extends { avatarUrl: string | null; avatarPath: string | null }>({
++      avatarUrl,
++      avatarPath,
++      ...rest
++    }: T) => ({ ...rest, avatarUrl: pictureOf(supabaseUrl, { avatarUrl, avatarPath }) });
++
++    // The GM's id stays on the server; the page only needs names and pictures.
++    const { gmId, id, imagePath, ...table } = manage.table;
++    return {
++      table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
++      gm: withPicture(manage.gm),
++      gmRating: manage.gmRating,
++      requests: manage.requests.map(withPicture),
++      players: manage.players.map(withPicture),
++      activity: manage.activity,
++    };
++  } catch (e) {
++    if (e instanceof Forbidden) error(403, 'Forbidden');
++    if (e instanceof NotFound) error(404, 'Not found');
++    throw e;
++  }
++};
+diff --git a/src/lib/server/reads/preview.ts b/src/lib/server/reads/preview.ts
+new file mode 100644
+index 0000000..86840c4
+--- /dev/null
++++ b/src/lib/server/reads/preview.ts
+@@ -0,0 +1,27 @@
++import { imageUrl, supabaseUrlOf } from '$lib/server/images';
++import { listUpcomingTables } from '$lib/server/tables/queries';
++import type { RequestEvent } from '@sveltejs/kit';
++
++// The home page previews the next few tables; the full list lives at /tables.
++const PREVIEW_COUNT = 3;
++
++export const read = async ({ locals, platform }: RequestEvent) => {
++  // No database yet (see the README): the page still renders, with nothing to list.
++  if (!locals.db) return { tables: [] };
++
++  try {
++    const tables = await listUpcomingTables(locals.db, new Date());
++
++    return {
++      // gmId stays on the server: the page only needs the GM's name.
++      tables: tables.slice(0, PREVIEW_COUNT).map(({ gmId, imagePath, ...table }) => ({
++        ...table,
++        imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
++      })),
++    };
++  } catch (error) {
++    // The landing page is still worth showing without the preview.
++    locals.log.error('home: could not list upcoming tables', { error });
++    return { tables: [] };
++  }
++};
+diff --git a/src/lib/server/reads/tables.ts b/src/lib/server/reads/tables.ts
+new file mode 100644
+index 0000000..bb2149e
+--- /dev/null
++++ b/src/lib/server/reads/tables.ts
+@@ -0,0 +1,89 @@
++import { imageUrl, supabaseUrlOf } from '$lib/server/images';
++import { listSystems } from '$lib/server/systems';
++import { listCatalog } from '$lib/server/catalog';
++import { listUpcomingTables } from '$lib/server/tables/queries';
++import { readTableFilters } from '$lib/tables/filters';
++import type { RequestEvent } from '@sveltejs/kit';
++
++// Tags shown as chips before "Mais tags".
++const FEATURED_TAGS = 7;
++
++export const read = async ({ locals, url, platform }: RequestEvent) => {
++  // Every filter comes from the query string of the GET form, validated by its schema. Several of
++  // each can be ticked: a table matches if it has any of the systems, platforms and tags ticked.
++  const {
++    systems: pickedSystems,
++    modality,
++    platforms: pickedPlatforms,
++    tags: pickedTags,
++  } = await readTableFilters(url);
++  const empty = { platforms: [], tags: [], moreTags: [] };
++  // No database yet (see the README): the page still renders, with nothing to list.
++  if (!locals.db) {
++    return {
++      tables: [],
++      systems: [],
++      pickedSystems,
++      modality,
++      catalog: empty,
++      pickedPlatforms,
++      pickedTags,
++    };
++  }
++
++  const [upcoming, systems, catalog] = await Promise.all([
++    listUpcomingTables(locals.db, new Date()),
++    listSystems(locals.db),
++    listCatalog(locals.db),
++  ]);
++
++  // Tags in use come first; the rest wait behind "Mais tags", unless one of them is ticked.
++  const tagUse = new Map<string, number>();
++  for (const table of upcoming) {
++    for (const tag of table.tags) tagUse.set(tag.slug, (tagUse.get(tag.slug) ?? 0) + 1);
++  }
++  const rankedTags = catalog.tags
++    .map((tag, position) => ({ ...tag, use: tagUse.get(tag.slug) ?? 0, position }))
++    .sort((a, b) => b.use - a.use || a.position - b.position)
++    .map(({ name, slug }) => ({ name, slug }));
++  const shownTags = rankedTags.filter(
++    (tag, i) => i < FEATURED_TAGS || pickedTags.includes(tag.slug),
++  );
++
++  // In the dropdown, systems with the most upcoming tables come first, then the catalogue order.
++  const counts = new Map<string, number>();
++  for (const table of upcoming) {
++    counts.set(table.system.slug, (counts.get(table.system.slug) ?? 0) + 1);
++  }
++  const ranked = systems
++    .map(({ name, slug }, position) => ({ name, slug, count: counts.get(slug) ?? 0, position }))
++    .sort((a, b) => b.count - a.count || a.position - b.position)
++    .map(({ name, slug }) => ({ name, slug }));
++
++  const tables = upcoming.filter(
++    (table) =>
++      (pickedSystems.length === 0 || pickedSystems.includes(table.system.slug)) &&
++      (!modality || table.modality === modality) &&
++      (pickedPlatforms.length === 0 ||
++        table.platforms.some((p) => pickedPlatforms.includes(p.slug))) &&
++      (pickedTags.length === 0 || table.tags.some((t) => pickedTags.includes(t.slug))),
++  );
++
++  return {
++    // gmId stays on the server: the page only needs the GM's name.
++    tables: tables.map(({ gmId, imagePath, ...table }) => ({
++      ...table,
++      imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
++    })),
++    systems: ranked,
++    pickedSystems,
++    modality,
++    catalog: {
++      platforms: catalog.platforms,
++      tags: shownTags,
++      moreTags: rankedTags.filter((tag) => !shownTags.includes(tag)),
++    },
++    pickedPlatforms,
++    pickedTags,
++  };
++};
+diff --git a/src/routes/+layout.server.ts b/src/routes/+layout.server.ts
+index 742ad1a..b7eeed6 100644
+--- a/src/routes/+layout.server.ts
++++ b/src/routes/+layout.server.ts
+@@ -1,10 +1,12 @@
++import { loadRead } from '$lib/server/reads/load';
+ import { can } from '$lib/server/auth/policy';
+ import { pictureOf, supabaseUrlOf } from '$lib/server/images';
+ import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifications/service';
+ import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
+ import type { LayoutServerLoad } from './$types';
+ 
+-export const load: LayoutServerLoad = async ({ locals, platform, cookies, route }) => {
++export const load: LayoutServerLoad = async (event) => {
++  const { locals, platform, cookies, route } = event;
+   const authEnabled = locals.supabase !== null;
+ 
+   // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
+@@ -16,6 +18,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route
+       maintenanceBypass: false,
+       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
+       account: null,
++      cacheIdentity: 'anonymous',
++      accountRead: null,
+     };
+   }
+   // An admin still uses the site while it is down, with a banner saying so.
+@@ -26,6 +30,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route
+ 
+   try {
+     const profile = await locals.getProfile();
++    const cacheIdentity = (await locals.getUser())?.id ?? 'anonymous';
++    const accountRead = await loadRead(event, 'account');
+     // The bell: how many are unread, and the latest few for its menu.
+     const [unread, latest] =
+       profile && locals.db
+@@ -37,6 +43,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route
+ 
+     return {
+       authEnabled,
++      cacheIdentity,
++      accountRead,
+       released,
+       maintenance: false,
+       maintenanceBypass,
+@@ -61,6 +69,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route
+       maintenanceBypass,
+       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
+       account: null,
++      cacheIdentity: 'anonymous',
++      accountRead: null,
+     };
+   }
+ };
+diff --git a/src/routes/+layout.svelte b/src/routes/+layout.svelte
+index 48be4a0..a4f74f9 100644
+--- a/src/routes/+layout.svelte
++++ b/src/routes/+layout.svelte
+@@ -1,5 +1,11 @@
+ <script lang="ts">
+   import './layout.css';
++  import { QueryClientProvider } from '@tanstack/svelte-query';
++  import { createQueryClient } from '$lib/query/client';
++  import { provideQueryClient } from '$lib/query/context';
++  import { pageQuery } from '$lib/query/page.svelte';
++  const client = createQueryClient();
++  provideQueryClient(client);
+   import { asset, resolve } from '$app/paths';
+   import { invalidateAll } from '$app/navigation';
+   import { navigating, page, updated } from '$app/state';
+@@ -19,7 +25,25 @@
+   import { syncBrowserTimezone } from '$lib/time/browser-timezone';
+   import { onMount } from 'svelte';
+ 
+-  let { children, data } = $props();
++  let { children, data: layoutData } = $props();
++  const accountQuery = pageQuery(() => layoutData.accountRead ?? { summary: null }, client);
++  const data = $derived({
++    ...layoutData,
++    account: layoutData.account && {
++      ...layoutData.account,
++      ...(accountQuery.data?.summary ?? {}),
++    },
++  });
++  // Identity is intentionally captured once, then compared on each server navigation.
++  // svelte-ignore state_referenced_locally
++  let previousIdentity = layoutData.cacheIdentity;
++  $effect.pre(() => {
++    const identity = layoutData.cacheIdentity;
++    if (identity !== previousIdentity) {
++      client.clear();
++      previousIdentity = identity;
++    }
++  });
+ 
+   // Times follow the visitor's timezone. Without one on the profile, the browser's is sent in a
+   // cookie; the first page, rendered in the default zone, then loads again in the right one.
+@@ -62,194 +86,196 @@
+   {/if}
+ </svelte:head>
+ 
+-<a
+-  href="#main"
+-  class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-surface-100-900 focus:px-3 focus:py-2 focus:text-surface-950-50 focus:shadow-md"
+->
+-  {m.skip_to_content()}
+-</a>
+-
+-{#if data.maintenanceBypass}
+-  <p role="status" class="preset-filled-warning-500 px-5 py-2 text-center text-sm font-semibold">
+-    {m.maintenance_admin_banner()}
+-  </p>
+-{/if}
+-
+-<header
+-  class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 md:h-20 md:px-8"
+->
+-  <a href={localizedHref('/', locale)} class="flex items-center gap-2 no-underline md:gap-3">
+-    <TableLogo size={34} class="size-7 md:size-8" />
+-    <span class="font-brand text-lg font-semibold tracking-wider md:text-2xl"> Mesa Aberta </span>
++<QueryClientProvider {client}>
++  <a
++    href="#main"
++    class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-surface-100-900 focus:px-3 focus:py-2 focus:text-surface-950-50 focus:shadow-md"
++  >
++    {m.skip_to_content()}
+   </a>
+ 
+-  {#if !data.maintenance}
+-    <nav class="flex items-center gap-2 md:gap-1" aria-label={m.nav_main()}>
+-      {#if data.released}
+-        <a
+-          href={localizedHref('/tables', locale)}
+-          aria-current={inTables ? 'page' : undefined}
+-          class={navLink}
+-        >
+-          {m.nav_tables()}
+-        </a>
+-      {/if}
+-
+-      {#if data.account}
+-        <a
+-          href={localizedHref('/account/tables', locale)}
+-          aria-current={inMyTables ? 'page' : undefined}
+-          class={navLink}
+-        >
+-          {m.nav_my_tables()}
+-        </a>
+-
+-        <a
+-          href={localizedHref('/tables/new', locale)}
+-          class="btn hidden h-11 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
+-        >
+-          <svg
+-            width="18"
+-            height="18"
+-            viewBox="0 0 24 24"
+-            fill="none"
+-            stroke="currentColor"
+-            stroke-width="1.8"
+-            stroke-linecap="round"
+-            stroke-linejoin="round"
+-            aria-hidden="true"
+-            class="shrink-0"
+-          >
+-            <path d="M12 5v14M5 12h14" />
+-          </svg>
+-          {m.nav_open_table()}
+-        </a>
+-      {/if}
+-
+-      <span aria-hidden="true" class="hidden w-2 md:block"></span>
+-      <ThemeToggle />
+-
+-      {#if data.account}
+-        <NotificationBell
+-          unread={data.account.notifications.unread}
+-          latest={data.account.notifications.latest}
+-        />
+-      {/if}
+-
+-      {#if data.account}
+-        <AccountMenu
+-          name={data.account.displayName}
+-          avatarUrl={data.account.avatarUrl}
+-          isAdmin={data.account.isAdmin}
+-          pendingSuggestionsCount={data.account.pendingSuggestionsCount}
+-        />
+-      {:else if data.authEnabled && data.released}
+-        <a
+-          href={resolve('/login')}
+-          class="btn h-11 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
+-        >
+-          {m.nav_sign_in()}
+-        </a>
+-      {/if}
+-    </nav>
++  {#if data.maintenanceBypass}
++    <p role="status" class="preset-filled-warning-500 px-5 py-2 text-center text-sm font-semibold">
++      {m.maintenance_admin_banner()}
++    </p>
+   {/if}
+-</header>
+ 
+-{#if updated.current}
+-  <aside
+-    role="status"
+-    class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
++  <header
++    class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 md:h-20 md:px-8"
+   >
+-    <p>{m.version_update_available()}</p>
+-    <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
+-      {m.version_update_refresh()}
+-    </button>
+-  </aside>
+-{/if}
+-
+-<!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
+-{#if loading.current}
+-  <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
+-    <Progress.Track class="h-1">
+-      <Progress.Range />
+-    </Progress.Track>
+-  </Progress>
+-{/if}
+-
+-<Toaster />
+-<UnsavedChangesDialog />
+-
+-<main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
+-  {#if arriving}
+-    <ListSkeleton kind={arriving} heading />
+-  {:else}
+-    {@render children()}
+-  {/if}
+-</main>
++    <a href={localizedHref('/', locale)} class="flex items-center gap-2 no-underline md:gap-3">
++      <TableLogo size={34} class="size-7 md:size-8" />
++      <span class="font-brand text-lg font-semibold tracking-wider md:text-2xl"> Mesa Aberta </span>
++    </a>
+ 
+-{#if data.released && !data.maintenance}
+-  <BottomTabBar isAdmin={data.account?.isAdmin} />
+-{/if}
+-
+-{#if !data.maintenance}
+-  <footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
+-    <div
+-      class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
+-    >
+-      <div class="flex flex-col gap-3">
+-        <p class="flex items-center gap-2 text-surface-950-50">
+-          <TableLogo size={26} />
+-          <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
+-        </p>
+-        <p class="md:max-w-md">
+-          {m.footer_made_with()}
+-          <svg
+-            width="15"
+-            height="15"
+-            viewBox="0 0 24 24"
+-            role="img"
+-            aria-label={m.footer_made_with_love()}
+-            class="inline shrink-0 fill-secondary-300 align-middle"
+-          >
+-            <path
+-              d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
+-            />
+-          </svg>
+-          {m.footer_made_by()}
++    {#if !data.maintenance}
++      <nav class="flex items-center gap-2 md:gap-1" aria-label={m.nav_main()}>
++        {#if data.released}
+           <a
+-            href="https://github.com/itsmegrave"
+-            rel="noopener"
+-            target="_blank"
+-            class="link-underline text-surface-950-50">itsmegrave</a
+-          >. {m.footer_open_source()}
++            href={localizedHref('/tables', locale)}
++            aria-current={inTables ? 'page' : undefined}
++            class={navLink}
++          >
++            {m.nav_tables()}
++          </a>
++        {/if}
++
++        {#if data.account}
+           <a
+-            href="https://github.com/itsmegrave/mesaaberta"
+-            rel="noopener"
+-            target="_blank"
+-            class="link-underline text-surface-950-50">GitHub</a
+-          >.
+-        </p>
+-      </div>
+-      <div class="flex flex-col gap-3 md:max-w-sm">
+-        <p>
+-          {m.footer_community()}
++            href={localizedHref('/account/tables', locale)}
++            aria-current={inMyTables ? 'page' : undefined}
++            class={navLink}
++          >
++            {m.nav_my_tables()}
++          </a>
++
+           <a
+-            href="https://linktr.ee/lenindragonsrpg"
+-            rel="noopener"
+-            target="_blank"
+-            class="link-underline text-surface-950-50">Lenindragons</a
+-          >.
+-        </p>
+-        <p>
+-          {m.footer_report_bug()}
++            href={localizedHref('/tables/new', locale)}
++            class="btn hidden h-11 gap-2 rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold md:ml-2 md:inline-flex"
++          >
++            <svg
++              width="18"
++              height="18"
++              viewBox="0 0 24 24"
++              fill="none"
++              stroke="currentColor"
++              stroke-width="1.8"
++              stroke-linecap="round"
++              stroke-linejoin="round"
++              aria-hidden="true"
++              class="shrink-0"
++            >
++              <path d="M12 5v14M5 12h14" />
++            </svg>
++            {m.nav_open_table()}
++          </a>
++        {/if}
++
++        <span aria-hidden="true" class="hidden w-2 md:block"></span>
++        <ThemeToggle />
++
++        {#if data.account}
++          <NotificationBell
++            unread={data.account.notifications.unread}
++            latest={data.account.notifications.latest}
++          />
++        {/if}
++
++        {#if data.account}
++          <AccountMenu
++            name={data.account.displayName}
++            avatarUrl={data.account.avatarUrl}
++            isAdmin={data.account.isAdmin}
++            pendingSuggestionsCount={data.account.pendingSuggestionsCount}
++          />
++        {:else if data.authEnabled && data.released}
+           <a
+-            href="https://github.com/itsmegrave/mesaaberta/issues"
+-            rel="noopener"
+-            target="_blank"
+-            class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
+-          >.
+-        </p>
++            href={resolve('/login')}
++            class="btn h-11 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
++          >
++            {m.nav_sign_in()}
++          </a>
++        {/if}
++      </nav>
++    {/if}
++  </header>
++
++  {#if updated.current}
++    <aside
++      role="status"
++      class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
++    >
++      <p>{m.version_update_available()}</p>
++      <button class="btn preset-filled-primary-500" onclick={() => location.reload()}>
++        {m.version_update_refresh()}
++      </button>
++    </aside>
++  {/if}
++
++  <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
++  {#if loading.current}
++    <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
++      <Progress.Track class="h-1">
++        <Progress.Range />
++      </Progress.Track>
++    </Progress>
++  {/if}
++
++  <Toaster />
++  <UnsavedChangesDialog />
++
++  <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
++    {#if arriving}
++      <ListSkeleton kind={arriving} heading />
++    {:else}
++      {@render children()}
++    {/if}
++  </main>
++
++  {#if data.released && !data.maintenance}
++    <BottomTabBar isAdmin={data.account?.isAdmin} />
++  {/if}
++
++  {#if !data.maintenance}
++    <footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
++      <div
++        class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
++      >
++        <div class="flex flex-col gap-3">
++          <p class="flex items-center gap-2 text-surface-950-50">
++            <TableLogo size={26} />
++            <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
++          </p>
++          <p class="md:max-w-md">
++            {m.footer_made_with()}
++            <svg
++              width="15"
++              height="15"
++              viewBox="0 0 24 24"
++              role="img"
++              aria-label={m.footer_made_with_love()}
++              class="inline shrink-0 fill-secondary-300 align-middle"
++            >
++              <path
++                d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
++              />
++            </svg>
++            {m.footer_made_by()}
++            <a
++              href="https://github.com/itsmegrave"
++              rel="noopener"
++              target="_blank"
++              class="link-underline text-surface-950-50">itsmegrave</a
++            >. {m.footer_open_source()}
++            <a
++              href="https://github.com/itsmegrave/mesaaberta"
++              rel="noopener"
++              target="_blank"
++              class="link-underline text-surface-950-50">GitHub</a
++            >.
++          </p>
++        </div>
++        <div class="flex flex-col gap-3 md:max-w-sm">
++          <p>
++            {m.footer_community()}
++            <a
++              href="https://linktr.ee/lenindragonsrpg"
++              rel="noopener"
++              target="_blank"
++              class="link-underline text-surface-950-50">Lenindragons</a
++            >.
++          </p>
++          <p>
++            {m.footer_report_bug()}
++            <a
++              href="https://github.com/itsmegrave/mesaaberta/issues"
++              rel="noopener"
++              target="_blank"
++              class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
++            >.
++          </p>
++        </div>
+       </div>
+-    </div>
+-  </footer>
+-{/if}
++    </footer>
++  {/if}
++</QueryClientProvider>
+diff --git a/src/routes/+page.server.ts b/src/routes/+page.server.ts
+index 36c8cb0..7430305 100644
+--- a/src/routes/+page.server.ts
++++ b/src/routes/+page.server.ts
+@@ -1,27 +1,3 @@
+-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+-import { listUpcomingTables } from '$lib/server/tables/queries';
++import { loadRead } from '$lib/server/reads/load';
+ import type { PageServerLoad } from './$types';
+-
+-// The home page previews the next few tables; the full list lives at /tables.
+-const PREVIEW_COUNT = 3;
+-
+-export const load: PageServerLoad = async ({ locals, platform }) => {
+-  // No database yet (see the README): the page still renders, with nothing to list.
+-  if (!locals.db) return { tables: [] };
+-
+-  try {
+-    const tables = await listUpcomingTables(locals.db, new Date());
+-
+-    return {
+-      // gmId stays on the server: the page only needs the GM's name.
+-      tables: tables.slice(0, PREVIEW_COUNT).map(({ gmId, imagePath, ...table }) => ({
+-        ...table,
+-        imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
+-      })),
+-    };
+-  } catch (error) {
+-    // The landing page is still worth showing without the preview.
+-    locals.log.error('home: could not list upcoming tables', { error });
+-    return { tables: [] };
+-  }
+-};
++export const load: PageServerLoad = (event) => loadRead(event, 'preview');
+diff --git a/src/routes/+page.svelte b/src/routes/+page.svelte
+index 66f2e1d..ca07206 100644
+--- a/src/routes/+page.svelte
++++ b/src/routes/+page.svelte
+@@ -1,11 +1,15 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { pageQuery } from '$lib/query/page.svelte';
+   import TableCard from '$lib/components/TableCard.svelte';
+   import TableIllustration from '$lib/components/TableIllustration.svelte';
+   import { localizedHref } from '$lib/i18n/locales';
+   import { m } from '$lib/paraglide/messages';
+   import { getLocale } from '$lib/paraglide/runtime';
+ 
+-  let { data } = $props();
++  let { data: serverData } = $props();
++  const remote = pageQuery(() => serverData);
++  const data = $derived({ ...serverData, ...remote.data });
+ 
+   const locale = getLocale();
+ 
+@@ -24,6 +28,7 @@
+   <title>{m.home_title()}</title>
+   <meta name="description" content={m.home_description()} />
+ </svelte:head>
++<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+ 
+ {#snippet arrow()}
+   <svg
+diff --git a/src/routes/account/profile/+page.svelte b/src/routes/account/profile/+page.svelte
+index 462e1d9..9b3d884 100644
+--- a/src/routes/account/profile/+page.svelte
++++ b/src/routes/account/profile/+page.svelte
+@@ -1,4 +1,7 @@
+ <script lang="ts">
++  import { queryClient } from '$lib/query/context';
++  import { afterWrite } from '$lib/query/invalidate';
++  const client = queryClient();
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import { page } from '$app/state';
+   import Avatar from '$lib/components/Avatar.svelte';
+@@ -25,14 +28,24 @@
+ 
+   // The picture has its own form (and schema, so its own Superforms id) next to the profile's.
+   // svelte-ignore state_referenced_locally
+-  const photo = superForm(data.photoForm, { validators: zod4Client(photoSchema) });
++  const photo = superForm(data.photoForm, {
++    validators: zod4Client(photoSchema),
++    onResult: ({ result }) => {
++      if (result.type === 'redirect') void afterWrite(client, 'account');
++    },
++  });
+   const { errors: photoErrorList, enhance: photoEnhance, submitting, delayed, timeout } = photo;
+   const photoFile = fileProxy(photo, 'photo');
+   const photoError = $derived($photoErrorList.photo?.[0]);
+ 
+   // Closing the account: a third form. The server compares the typed @username; a redirect home on success.
+   // svelte-ignore state_referenced_locally
+-  const closing = superForm(data.deleteForm, { resetForm: false });
++  const closing = superForm(data.deleteForm, {
++    resetForm: false,
++    onResult: ({ result }) => {
++      if (result.type === 'redirect') client.clear();
++    },
++  });
+   const {
+     form: closingData,
+     errors: closingErrors,
+diff --git a/src/routes/account/tables/+page.server.ts b/src/routes/account/tables/+page.server.ts
+index 68c8689..017ba42 100644
+--- a/src/routes/account/tables/+page.server.ts
++++ b/src/routes/account/tables/+page.server.ts
+@@ -1,17 +1,3 @@
+-import { error } from '@sveltejs/kit';
+-import { requireUser } from '$lib/server/auth/guard';
+-import { listPlaying, listRunning } from '$lib/server/dashboard/queries';
++import { loadRead } from '$lib/server/reads/load';
+ import type { PageServerLoad } from './$types';
+-
+-export const load: PageServerLoad = async ({ locals, url }) => {
+-  const user = await requireUser(locals, url);
+-  if (!locals.db) error(503, 'Database not configured');
+-
+-  const now = new Date();
+-  const [playing, running] = await Promise.all([
+-    listPlaying(locals.db, user.id, now),
+-    listRunning(locals.db, user.id, now),
+-  ]);
+-
+-  return { playing, running };
+-};
++export const load: PageServerLoad = (event) => loadRead(event, 'dashboard');
+diff --git a/src/routes/account/tables/+page.svelte b/src/routes/account/tables/+page.svelte
+index 3480d80..9b4f261 100644
+--- a/src/routes/account/tables/+page.svelte
++++ b/src/routes/account/tables/+page.svelte
+@@ -1,4 +1,6 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { pageQuery } from '$lib/query/page.svelte';
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import PlayingCard from '$lib/components/PlayingCard.svelte';
+   import RunningCard from '$lib/components/RunningCard.svelte';
+@@ -6,7 +8,9 @@
+   import { m } from '$lib/paraglide/messages';
+   import { getLocale } from '$lib/paraglide/runtime';
+ 
+-  let { data } = $props();
++  let { data: serverData } = $props();
++  const remote = pageQuery(() => serverData);
++  const data = $derived({ ...serverData, ...remote.data });
+ 
+   const locale = getLocale();
+   // Every action posted from here comes back here.
+@@ -31,6 +35,7 @@
+ <svelte:head>
+   <title>{m.dash_title()}</title>
+ </svelte:head>
++<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+ 
+ <section class="pt-2 pb-4 md:pt-12">
+   <Breadcrumbs class="mb-8" items={[{ label: m.nav_my_tables() }]} />
+diff --git a/src/routes/api/location/cep/+server.ts b/src/routes/api/location/cep/+server.ts
+new file mode 100644
+index 0000000..3dd8d6b
+--- /dev/null
++++ b/src/routes/api/location/cep/+server.ts
+@@ -0,0 +1,24 @@
++import { error, json } from '@sveltejs/kit';
++import { normalizeCep } from '$lib/location/cep';
++import { lookupCep } from '$lib/server/location/cep';
++import { recordAttempt } from '$lib/server/auth/attempt-limit';
++import { RateLimited } from '$lib/server/errors';
++import type { RequestHandler } from './$types';
++export const GET: RequestHandler = async ({ locals, url, setHeaders }) => {
++  const user = await locals.getUser();
++  if (!user) error(401, 'Sign in required');
++  const value = normalizeCep(url.searchParams.get('value') ?? '');
++  if (!value) error(400, 'Invalid CEP');
++  if (!locals.db) error(503, 'Database unavailable');
++  setHeaders({ 'cache-control': 'private, no-store' });
++  try {
++    await recordAttempt(locals.db, { action: 'cep_lookup', max: 60, windowSeconds: 60 }, user.id);
++  } catch (cause) {
++    if (!(cause instanceof RateLimited)) throw cause;
++    setHeaders({ 'retry-after': String(cause.retryAfterSeconds) });
++    error(429, 'Too many lookups');
++  }
++  const result = await lookupCep(locals.db, value);
++  if (result.status === 'unavailable') error(503, 'Address lookup unavailable');
++  return json(result);
++};
+diff --git a/src/routes/api/location/cep/server.spec.ts b/src/routes/api/location/cep/server.spec.ts
+new file mode 100644
+index 0000000..6d608b7
+--- /dev/null
++++ b/src/routes/api/location/cep/server.spec.ts
+@@ -0,0 +1,55 @@
++import type { RequestEvent } from '@sveltejs/kit';
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { lookupCep } from '$lib/server/location/cep';
++import { recordAttempt } from '$lib/server/auth/attempt-limit';
++import { RateLimited } from '$lib/server/errors';
++import { GET } from './+server';
++vi.mock('$lib/server/location/cep', () => ({ lookupCep: vi.fn() }));
++vi.mock('$lib/server/auth/attempt-limit', () => ({ recordAttempt: vi.fn() }));
++const run = (value: string, user: unknown = { id: 'ana' }) => {
++  const setHeaders = vi.fn();
++  const event = {
++    locals: { getUser: async () => user, db: {} },
++    url: new URL('https://x.test/api/location/cep?value=' + value),
++    setHeaders,
++  } as unknown as RequestEvent;
++  return { result: GET(event as Parameters<typeof GET>[0]), setHeaders };
++};
++beforeEach(() => {
++  vi.resetAllMocks();
++  vi.mocked(recordAttempt).mockResolvedValue();
++});
++describe('authenticated CEP endpoint', () => {
++  it('normalizes and returns an address after the per-user limit', async () => {
++    const address = {
++      status: 'found' as const,
++      place: { neighbourhood: null, city: 'São Paulo', state: 'SP' },
++    };
++    vi.mocked(lookupCep).mockResolvedValue(address);
++    const { result, setHeaders } = run('01001-000');
++    expect(await (await result).json()).toEqual(address);
++    expect(lookupCep).toHaveBeenCalledWith({}, '01001000');
++    expect(recordAttempt).toHaveBeenCalledWith(
++      {},
++      expect.objectContaining({ action: 'cep_lookup' }),
++      'ana',
++    );
++    expect(setHeaders).toHaveBeenCalledWith({ 'cache-control': 'private, no-store' });
++  });
++  it('rejects unauthenticated and malformed requests before provider calls', async () => {
++    await expect(run('01001000', null).result).rejects.toMatchObject({ status: 401 });
++    await expect(run('abc').result).rejects.toMatchObject({ status: 400 });
++    expect(lookupCep).not.toHaveBeenCalled();
++  });
++  it('reports an outage as a failure rather than a cacheable missing address', async () => {
++    vi.mocked(lookupCep).mockResolvedValue({ status: 'unavailable' });
++    await expect(run('01001000').result).rejects.toMatchObject({ status: 503 });
++  });
++  it('honors throttling without contacting ViaCEP', async () => {
++    vi.mocked(recordAttempt).mockRejectedValue(new RateLimited(30));
++    const { result, setHeaders } = run('01001000');
++    await expect(result).rejects.toMatchObject({ status: 429 });
++    expect(setHeaders).toHaveBeenCalledWith({ 'retry-after': '30' });
++    expect(lookupCep).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/routes/api/query/[resource]/+server.ts b/src/routes/api/query/[resource]/+server.ts
+new file mode 100644
+index 0000000..73e6e85
+--- /dev/null
++++ b/src/routes/api/query/[resource]/+server.ts
+@@ -0,0 +1,30 @@
++import { error, isRedirect } from '@sveltejs/kit';
++import { stringify } from 'devalue';
++import { resources, type Resource } from '$lib/query/keys';
++import { readers } from '$lib/server/reads/load';
++import type { RequestHandler } from './$types';
++export const GET: RequestHandler = async (event) => {
++  if (!resources.includes(event.params.resource as Resource)) error(404, 'Not found');
++  const resource = event.params.resource as Resource;
++  const slug = event.url.searchParams.get('slug');
++  if ((resource === 'detail' || resource === 'manage' || resource === 'editCatalog') && !slug)
++    error(400, 'Missing slug');
++  try {
++    // All readers reuse server-side identity and policy; browser parameters never select a viewer.
++    const data = await readers[resource]({
++      ...event,
++      params: { ...event.params, ...(slug ? { slug } : {}) },
++    });
++    return new Response(stringify(data), {
++      headers: {
++        'content-type': 'application/json',
++        'x-query-codec': 'devalue',
++        'cache-control': 'private, no-store',
++        'x-query-viewer': (await event.locals.getUser())?.id ?? 'anonymous',
++      },
++    });
++  } catch (cause) {
++    if (isRedirect(cause)) error(401, 'Sign in required');
++    throw cause;
++  }
++};
+diff --git a/src/routes/api/query/[resource]/server.spec.ts b/src/routes/api/query/[resource]/server.spec.ts
+new file mode 100644
+index 0000000..e97f725
+--- /dev/null
++++ b/src/routes/api/query/[resource]/server.spec.ts
+@@ -0,0 +1,57 @@
++import type { RequestEvent } from '@sveltejs/kit';
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { parse } from 'devalue';
++import { readers, loadRead } from '$lib/server/reads/load';
++import { GET } from './+server';
++const event = (resource: string, viewer: string | null = 'ana', query = '') =>
++  ({
++    params: { resource },
++    url: new URL('https://x.test/api/query/' + resource + query),
++    locals: {
++      db: null,
++      getUser: async () => (viewer ? { id: viewer } : null),
++      getProfile: async () => null,
++    },
++    platform: undefined,
++  }) as unknown as RequestEvent;
++beforeEach(() => vi.restoreAllMocks());
++describe('query endpoint and loader', () => {
++  it('shares the sanitized public DTO between loader and API with a no-store response', async () => {
++    const e = event('preview');
++    const loaded = await loadRead(e, 'preview');
++    const response = await GET(e as Parameters<typeof GET>[0]);
++    expect(parse(await response.text())).toEqual({ tables: [] });
++    expect(loaded.readSeed).toMatchObject({
++      resource: 'preview',
++      viewer: 'public',
++      fields: ['tables'],
++    });
++    expect(response.headers.get('cache-control')).toBe('private, no-store');
++  });
++  it('never selects an identity from the caller query string', async () => {
++    const response = await GET(event('account', 'ana', '?viewer=bia') as Parameters<typeof GET>[0]);
++    expect(response.headers.get('x-query-viewer')).toBe('ana');
++  });
++  it('does not expose an arbitrary service or accept a missing table slug', async () => {
++    await expect(GET(event('secrets') as Parameters<typeof GET>[0])).rejects.toMatchObject({
++      status: 404,
++    });
++    await expect(GET(event('manage') as Parameters<typeof GET>[0])).rejects.toMatchObject({
++      status: 400,
++    });
++  });
++  it('rechecks authentication on private refetches', async () => {
++    await expect(GET(event('dashboard', null) as Parameters<typeof GET>[0])).rejects.toMatchObject({
++      status: 401,
++    });
++  });
++  it('propagates policy denial and passes only the requested slug to the authorized reader', async () => {
++    vi.spyOn(readers, 'manage').mockRejectedValue({ status: 403 });
++    await expect(
++      GET(event('manage', 'ana', '?slug=mesa') as Parameters<typeof GET>[0]),
++    ).rejects.toMatchObject({ status: 403 });
++    expect(readers.manage).toHaveBeenCalledWith(
++      expect.objectContaining({ params: { resource: 'manage', slug: 'mesa' } }),
++    );
++  });
++});
+diff --git a/src/routes/layout.svelte.spec.ts b/src/routes/layout.svelte.spec.ts
+index e224528..e28355b 100644
+--- a/src/routes/layout.svelte.spec.ts
++++ b/src/routes/layout.svelte.spec.ts
+@@ -8,7 +8,22 @@ import Layout from './+layout.svelte';
+ const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
+ // From the profile, so the layout does not set a cookie or reload in these tests.
+ const viewer = { timezone: 'America/Sao_Paulo', source: 'profile' } as const;
+-const shell = { maintenance: false, maintenanceBypass: false, viewer };
++const shell = {
++  cacheIdentity: 'anonymous',
++  accountRead: {
++    summary: null,
++    readSeed: {
++      resource: 'account' as const,
++      viewer: 'anonymous',
++      params: '',
++      fields: ['summary'],
++      updatedAt: Date.now(),
++    },
++  },
++  maintenance: false,
++  maintenanceBypass: false,
++  viewer,
++};
+ const signedOut = { authEnabled: false, released: false, ...shell, account: null };
+ const memberAccount = {
+   displayName: 'Ana Souza',
+diff --git a/src/routes/page.server.spec.ts b/src/routes/page.server.spec.ts
+index 295e556..9a5252a 100644
+--- a/src/routes/page.server.spec.ts
++++ b/src/routes/page.server.spec.ts
+@@ -17,7 +17,12 @@ const table = (n: number) =>
+ 
+ const error = vi.fn();
+ const event = (db: unknown = {}) =>
+-  ({ locals: { db, log: { error } }, platform: undefined }) as unknown as RequestEvent;
++  ({
++    params: {},
++    url: new URL('https://x.test/'),
++    locals: { db, log: { error } },
++    platform: undefined,
++  }) as unknown as RequestEvent;
+ 
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
+ const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
+@@ -29,7 +34,10 @@ describe('the home page load', () => {
+   });
+ 
+   it('lists nothing when there is no database yet', async () => {
+-    expect(await run(event(null))).toEqual({ tables: [] });
++    expect(await run(event(null))).toMatchObject({
++      tables: [],
++      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables'] },
++    });
+     expect(listed).not.toHaveBeenCalled();
+   });
+ 
+@@ -46,7 +54,10 @@ describe('the home page load', () => {
+   it('still renders, without the preview, when the tables cannot be listed', async () => {
+     listed.mockRejectedValue(new Error('down'));
+ 
+-    expect(await run(event())).toEqual({ tables: [] });
++    expect(await run(event())).toMatchObject({
++      tables: [],
++      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables'] },
++    });
+     expect(error).toHaveBeenCalledOnce();
+   });
+ });
+diff --git a/src/routes/tables/+page.server.ts b/src/routes/tables/+page.server.ts
+index c92dd7f..3fda248 100644
+--- a/src/routes/tables/+page.server.ts
++++ b/src/routes/tables/+page.server.ts
+@@ -1,89 +1,3 @@
+-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+-import { listSystems } from '$lib/server/systems';
+-import { listCatalog } from '$lib/server/catalog';
+-import { listUpcomingTables } from '$lib/server/tables/queries';
+-import { readTableFilters } from '$lib/tables/filters';
++import { loadRead } from '$lib/server/reads/load';
+ import type { PageServerLoad } from './$types';
+-
+-// Tags shown as chips before "Mais tags".
+-const FEATURED_TAGS = 7;
+-
+-export const load: PageServerLoad = async ({ locals, url, platform }) => {
+-  // Every filter comes from the query string of the GET form, validated by its schema. Several of
+-  // each can be ticked: a table matches if it has any of the systems, platforms and tags ticked.
+-  const {
+-    systems: pickedSystems,
+-    modality,
+-    platforms: pickedPlatforms,
+-    tags: pickedTags,
+-  } = await readTableFilters(url);
+-  const empty = { platforms: [], tags: [], moreTags: [] };
+-  // No database yet (see the README): the page still renders, with nothing to list.
+-  if (!locals.db) {
+-    return {
+-      tables: [],
+-      systems: [],
+-      pickedSystems,
+-      modality,
+-      catalog: empty,
+-      pickedPlatforms,
+-      pickedTags,
+-    };
+-  }
+-
+-  const [upcoming, systems, catalog] = await Promise.all([
+-    listUpcomingTables(locals.db, new Date()),
+-    listSystems(locals.db),
+-    listCatalog(locals.db),
+-  ]);
+-
+-  // Tags in use come first; the rest wait behind "Mais tags", unless one of them is ticked.
+-  const tagUse = new Map<string, number>();
+-  for (const table of upcoming) {
+-    for (const tag of table.tags) tagUse.set(tag.slug, (tagUse.get(tag.slug) ?? 0) + 1);
+-  }
+-  const rankedTags = catalog.tags
+-    .map((tag, position) => ({ ...tag, use: tagUse.get(tag.slug) ?? 0, position }))
+-    .sort((a, b) => b.use - a.use || a.position - b.position)
+-    .map(({ name, slug }) => ({ name, slug }));
+-  const shownTags = rankedTags.filter(
+-    (tag, i) => i < FEATURED_TAGS || pickedTags.includes(tag.slug),
+-  );
+-
+-  // In the dropdown, systems with the most upcoming tables come first, then the catalogue order.
+-  const counts = new Map<string, number>();
+-  for (const table of upcoming) {
+-    counts.set(table.system.slug, (counts.get(table.system.slug) ?? 0) + 1);
+-  }
+-  const ranked = systems
+-    .map(({ name, slug }, position) => ({ name, slug, count: counts.get(slug) ?? 0, position }))
+-    .sort((a, b) => b.count - a.count || a.position - b.position)
+-    .map(({ name, slug }) => ({ name, slug }));
+-
+-  const tables = upcoming.filter(
+-    (table) =>
+-      (pickedSystems.length === 0 || pickedSystems.includes(table.system.slug)) &&
+-      (!modality || table.modality === modality) &&
+-      (pickedPlatforms.length === 0 ||
+-        table.platforms.some((p) => pickedPlatforms.includes(p.slug))) &&
+-      (pickedTags.length === 0 || table.tags.some((t) => pickedTags.includes(t.slug))),
+-  );
+-
+-  return {
+-    // gmId stays on the server: the page only needs the GM's name.
+-    tables: tables.map(({ gmId, imagePath, ...table }) => ({
+-      ...table,
+-      imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
+-    })),
+-    systems: ranked,
+-    pickedSystems,
+-    modality,
+-    catalog: {
+-      platforms: catalog.platforms,
+-      tags: shownTags,
+-      moreTags: rankedTags.filter((tag) => !shownTags.includes(tag)),
+-    },
+-    pickedPlatforms,
+-    pickedTags,
+-  };
+-};
++export const load: PageServerLoad = (event) => loadRead(event, 'tables');
+diff --git a/src/routes/tables/+page.svelte b/src/routes/tables/+page.svelte
+index a41341c..094ab3d 100644
+--- a/src/routes/tables/+page.svelte
++++ b/src/routes/tables/+page.svelte
+@@ -1,4 +1,6 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { pageQuery } from '$lib/query/page.svelte';
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import { navigating, page } from '$app/state';
+   import ListSkeleton from '$lib/components/ListSkeleton.svelte';
+@@ -9,7 +11,9 @@
+   import { m } from '$lib/paraglide/messages';
+   import { getLocale } from '$lib/paraglide/runtime';
+ 
+-  let { data } = $props();
++  let { data: serverData } = $props();
++  const remote = pageQuery(() => serverData);
++  const data = $derived({ ...serverData, ...remote.data });
+ 
+   // A filter change reloads this same page with another query: the list gives way to a skeleton
+   // if it takes a while. Coming back to the same query (after marking read, say) keeps the list.
+@@ -82,6 +86,7 @@
+   <title>{m.tables_title()}</title>
+   <meta name="description" content={m.tables_description()} />
+ </svelte:head>
++<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+ 
+ <section class="py-2 md:pt-12">
+   <Breadcrumbs class="mb-8" items={[{ label: m.nav_tables() }]} />
+diff --git a/src/routes/tables/[slug]/+page.server.ts b/src/routes/tables/[slug]/+page.server.ts
+index fa46557..20d4079 100644
+--- a/src/routes/tables/[slug]/+page.server.ts
++++ b/src/routes/tables/[slug]/+page.server.ts
+@@ -1,9 +1,7 @@
+-import { error } from '@sveltejs/kit';
++import { loadRead } from '$lib/server/reads/load';
+ import { superValidate } from 'sveltekit-superforms';
+ import { zod4 } from 'sveltekit-superforms/adapters';
+-import { can, joinBlocker, rateBlocker } from '$lib/server/auth/policy';
+-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+-import { firstSessionEnded, gmRating, ratingOf, submitRating } from '$lib/server/ratings/service';
++import { submitRating } from '$lib/server/ratings/service';
+ import { ratingSchema } from '$lib/tables/rating';
+ import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
+ import { runRegistrationAction } from '$lib/server/registrations/form-action';
+@@ -12,67 +10,14 @@ import {
+   declineRegistration,
+   joinTable,
+   leaveTable,
+-  listRegistrations,
+-  registrationStatus,
+   removePlayer,
+ } from '$lib/server/registrations/service';
+-import { findTableBySlug, joinDetailsOf } from '$lib/server/tables/queries';
+ import type { Actions, PageServerLoad } from './$types';
+-
+-export const load: PageServerLoad = async ({ locals, params, platform }) => {
+-  // Unknown, disabled, or no database at all: the same translated 404.
+-  const found = locals.db && (await findTableBySlug(locals.db, params.slug, new Date()));
+-  if (!found) error(404, 'Not found');
+-
+-  const { gmId, id, imagePath, ...table } = found;
+-  const signedIn = (await locals.getUser()) !== null;
+-  const profile = await locals.getProfile().catch(() => null);
+-
+-  // The player's own place, and the GM's view of everyone's. Names are not public.
+-  const myStatus = profile ? await registrationStatus(locals.db!, id, profile.id) : null;
+-  const manage = can(profile, 'registration:manage', { gmId });
+-  const canJoin =
+-    joinBlocker(profile, {
+-      gmId,
+-      tableStatus: 'active',
+-      seatsLeft: table.seatsLeft,
+-      alreadyRegistered: myStatus !== null,
+-    }) === null;
+-
+-  // Averages are public; the comment is not sent to anyone but its author.
+-  const [gmScore, mine] = await Promise.all([
+-    gmRating(locals.db!, gmId),
+-    profile ? ratingOf(locals.db!, id, profile.id) : null,
+-  ]);
+-  const canRate =
+-    rateBlocker(profile, {
+-      gmId,
+-      registration: myStatus,
+-      firstSessionEnded: firstSessionEnded(found, new Date()),
+-    }) === null;
+-
++export const load: PageServerLoad = async (event) => {
++  const data = await loadRead(event, 'detail');
+   return {
+-    ratings: { gm: gmScore },
+-    canRate,
+-    myRating: mine && {
+-      gmScore: mine.gmScore,
+-      comment: mine.comment ?? '',
+-    },
+-    ratingForm: await superValidate(
+-      mine ? { gmScore: mine.gmScore, comment: mine.comment ?? '' } : {},
+-      zod4(ratingSchema),
+-      { errors: false },
+-    ),
+-    table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
+-    canEdit: can(profile, 'table:edit', { gmId }),
+-    signedIn,
+-    isGm: profile?.id === gmId,
+-    myStatus,
+-    canJoin,
+-    registrations: manage ? await listRegistrations(locals.db!, profile, params.slug) : null,
+-    // How to join is private: only the GM and the confirmed players get it.
+-    joinDetails:
+-      profile?.id === gmId || myStatus === 'confirmed' ? await joinDetailsOf(locals.db!, id) : null,
++    ...data,
++    ratingForm: await superValidate(data.myRating ?? {}, zod4(ratingSchema), { errors: false }),
+   };
+ };
+ 
+diff --git a/src/routes/tables/[slug]/+page.svelte b/src/routes/tables/[slug]/+page.svelte
+index 364d652..8ec8163 100644
+--- a/src/routes/tables/[slug]/+page.svelte
++++ b/src/routes/tables/[slug]/+page.svelte
+@@ -1,4 +1,9 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { queryClient } from '$lib/query/context';
++  import { afterWrite } from '$lib/query/invalidate';
++  const client = queryClient();
++  import { pageQuery } from '$lib/query/page.svelte';
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import SubmitButton from '$lib/components/SubmitButton.svelte';
+   import { shownTimezone } from '$lib/time/shown-timezone';
+@@ -16,7 +21,9 @@
+   import { toast } from '$lib/toaster';
+   import ActionForm from '$lib/components/ActionForm.svelte';
+ 
+-  let { data, form } = $props();
++  let { data: serverData, form } = $props();
++  const remote = pageQuery(() => serverData);
++  const data = $derived({ ...serverData, ...remote.data });
+ 
+   // What the last seat action answered: from a submit with JavaScript (`onfail`), or from the page the server sent back without it.
+   let failed = $state<FormMessage | null>(null);
+@@ -44,7 +51,10 @@
+     validators: zod4Client(ratingSchema),
+     resetForm: false,
+     onResult({ result }) {
+-      if (result.type === 'redirect') toast.success(m.toast_rating_saved());
++      if (result.type === 'redirect') {
++        void afterWrite(client, 'table');
++        toast.success(m.toast_rating_saved());
++      }
+     },
+     onUpdated({ form: updated }) {
+       if (updated.valid || !updated.message) return;
+@@ -90,6 +100,7 @@
+   <title>{table.title}</title>
+   <meta name="description" content="{table.system.name}. {seats}." />
+ </svelte:head>
++<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+ 
+ <article class="pt-2 pb-8 md:pt-6">
+   <Breadcrumbs items={[{ label: m.nav_tables(), href: '/tables' }, { label: table.title }]} />
+diff --git a/src/routes/tables/[slug]/edit/+page.server.ts b/src/routes/tables/[slug]/edit/+page.server.ts
+index 45a8408..99f61b2 100644
+--- a/src/routes/tables/[slug]/edit/+page.server.ts
++++ b/src/routes/tables/[slug]/edit/+page.server.ts
+@@ -1,3 +1,4 @@
++import { loadRead } from '$lib/server/reads/load';
+ import { error, redirect } from '@sveltejs/kit';
+ import { superValidate } from 'sveltekit-superforms';
+ import { zod4 } from 'sveltekit-superforms/adapters';
+@@ -9,12 +10,11 @@ import { dispatchEvent } from '$lib/server/events/dispatcher';
+ import { handlersFor } from '$lib/server/events/handlers';
+ import { handleTableForm } from '$lib/server/tables/form-action';
+ import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
+-import { listSystems } from '$lib/server/systems';
+-import { listCatalog, type CatalogItem } from '$lib/server/catalog';
+ import { tableFormSchema } from '$lib/tables/schema';
+ import type { Actions, PageServerLoad } from './$types';
+ 
+-export const load: PageServerLoad = async ({ locals, url, params, platform, cookies }) => {
++export const load: PageServerLoad = async (event) => {
++  const { locals, url, params, platform, cookies } = event;
+   await requireUser(locals, url);
+   if (!locals.db) error(503, 'Database not configured');
+ 
+@@ -24,22 +24,10 @@ export const load: PageServerLoad = async ({ locals, url, params, platform, cook
+       slug,
+       status,
+       imagePath,
+-      catalog: picked,
++      catalog: _picked,
+       ...values
+     } = await loadTableForEdit(locals.db, profile, params.slug, await timezoneOf(locals, cookies));
+-    const [systems, offered] = await Promise.all([
+-      listSystems(locals.db),
+-      listCatalog(locals.db, { suggestedBy: profile?.id }),
+-    ]);
+-    // The table's pending picks are offered too, even one another GM suggested first.
+-    const withPicked = (items: CatalogItem[], picks: CatalogItem[]) => [
+-      ...items,
+-      ...picks.filter((pick) => !items.some((item) => item.slug === pick.slug)),
+-    ];
+-    const catalog = {
+-      platforms: withPicked(offered.platforms, picked.platforms),
+-      tags: withPicked(offered.tags, picked.tags),
+-    };
++    const catalogRead = await loadRead(event, 'editCatalog');
+ 
+     return {
+       slug,
+@@ -48,8 +36,9 @@ export const load: PageServerLoad = async ({ locals, url, params, platform, cook
+       title: values.title,
+       form: await superValidate(values, zod4(tableFormSchema), { errors: false }),
+       imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
+-      systems: systems.map(({ name, slug }) => ({ name, slug })),
+-      catalog,
++      systems: catalogRead.systems,
++      catalog: catalogRead.catalog,
++      catalogRead,
+     };
+   } catch (e) {
+     // Someone else's table is a 403; one that is not there is a 404.
+diff --git a/src/routes/tables/[slug]/edit/+page.svelte b/src/routes/tables/[slug]/edit/+page.svelte
+index 86a5850..b1919bc 100644
+--- a/src/routes/tables/[slug]/edit/+page.svelte
++++ b/src/routes/tables/[slug]/edit/+page.svelte
+@@ -1,4 +1,9 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { queryClient } from '$lib/query/context';
++  import { afterWrite } from '$lib/query/invalidate';
++  import { pageQuery } from '$lib/query/page.svelte';
++  const client = queryClient();
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
+   import { superForm } from 'sveltekit-superforms';
+@@ -11,10 +16,16 @@
+   import { tableFormSchema } from '$lib/tables/schema';
+ 
+   let { data } = $props();
++  const options = pageQuery(
++    () => data.catalogRead ?? { systems: data.systems, catalog: data.catalog },
++  );
+ 
+   // svelte-ignore state_referenced_locally
+   const superform = superForm(data.form, {
+     validators: zod4Client(tableFormSchema),
++    onResult: ({ result }) => {
++      if (result.type === 'redirect') void afterWrite(client, 'table');
++    },
+     // A table form is long: leaving it with changes asks first.
+     taintedMessage: confirmLeave,
+   });
+@@ -24,6 +35,8 @@
+   <title>{m.form_edit_title()}</title>
+ </svelte:head>
+ 
++<QueryStatus failed={options.isError} retry={() => options.refetch()} />
++
+ <section class="py-10 md:py-16">
+   <Breadcrumbs
+     items={[
+@@ -46,8 +59,8 @@
+ 
+   <TableForm
+     {superform}
+-    systems={data.systems}
+-    catalog={data.catalog}
++    systems={options.data?.systems ?? data.systems}
++    catalog={options.data?.catalog ?? data.catalog}
+     imageUrl={data.imageUrl}
+     action="?/save"
+     submitLabel={m.form_submit_edit()}
+diff --git a/src/routes/tables/[slug]/manage/+page.server.ts b/src/routes/tables/[slug]/manage/+page.server.ts
+index e22c9e9..77cce8c 100644
+--- a/src/routes/tables/[slug]/manage/+page.server.ts
++++ b/src/routes/tables/[slug]/manage/+page.server.ts
+@@ -1,38 +1,3 @@
+-import { error } from '@sveltejs/kit';
+-import { requireUser } from '$lib/server/auth/guard';
+-import { Forbidden, NotFound } from '$lib/server/errors';
+-import { imageUrl, pictureOf, supabaseUrlOf } from '$lib/server/images';
+-import { loadManage } from '$lib/server/tables/manage';
++import { loadRead } from '$lib/server/reads/load';
+ import type { PageServerLoad } from './$types';
+-
+-// The GM's page for one table: requests, players, recent activity. Approving, declining and removing
+-// post to the table page's own actions (see ActionForm), which send the browser back here.
+-export const load: PageServerLoad = async ({ locals, url, params, platform }) => {
+-  await requireUser(locals, url);
+-  if (!locals.db) error(503, 'Database not configured');
+-
+-  try {
+-    const manage = await loadManage(locals.db, await locals.getProfile(), params.slug, new Date());
+-    const supabaseUrl = supabaseUrlOf(platform?.env);
+-    const withPicture = <T extends { avatarUrl: string | null; avatarPath: string | null }>({
+-      avatarUrl,
+-      avatarPath,
+-      ...rest
+-    }: T) => ({ ...rest, avatarUrl: pictureOf(supabaseUrl, { avatarUrl, avatarPath }) });
+-
+-    // The GM's id stays on the server; the page only needs names and pictures.
+-    const { gmId, id, imagePath, ...table } = manage.table;
+-    return {
+-      table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
+-      gm: withPicture(manage.gm),
+-      gmRating: manage.gmRating,
+-      requests: manage.requests.map(withPicture),
+-      players: manage.players.map(withPicture),
+-      activity: manage.activity,
+-    };
+-  } catch (e) {
+-    if (e instanceof Forbidden) error(403, 'Forbidden');
+-    if (e instanceof NotFound) error(404, 'Not found');
+-    throw e;
+-  }
+-};
++export const load: PageServerLoad = (event) => loadRead(event, 'manage');
+diff --git a/src/routes/tables/[slug]/manage/+page.svelte b/src/routes/tables/[slug]/manage/+page.svelte
+index 345d436..9712dbe 100644
+--- a/src/routes/tables/[slug]/manage/+page.svelte
++++ b/src/routes/tables/[slug]/manage/+page.svelte
+@@ -1,4 +1,6 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { pageQuery } from '$lib/query/page.svelte';
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
+   import ActionForm from '$lib/components/ActionForm.svelte';
+@@ -13,7 +15,9 @@
+   import { shownTimezone } from '$lib/time/shown-timezone';
+   import { onMount } from 'svelte';
+ 
+-  let { data } = $props();
++  let { data: serverData } = $props();
++  const remote = pageQuery(() => serverData);
++  const data = $derived({ ...serverData, ...remote.data });
+ 
+   // Recent activity is open on a wide screen and folded under the rest on a phone. Open until then,
+   // so it is there without JavaScript.
+@@ -108,6 +112,7 @@
+ <svelte:head>
+   <title>{m.manage_title({ title: table.title })}</title>
+ </svelte:head>
++<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+ 
+ <article class="pt-2 pb-8 md:pt-6">
+   <Breadcrumbs
+diff --git a/src/routes/tables/new/+page.server.ts b/src/routes/tables/new/+page.server.ts
+index 848812e..9ef7e4b 100644
+--- a/src/routes/tables/new/+page.server.ts
++++ b/src/routes/tables/new/+page.server.ts
+@@ -1,3 +1,4 @@
++import { loadRead } from '$lib/server/reads/load';
+ import { error } from '@sveltejs/kit';
+ import { superValidate } from 'sveltekit-superforms';
+ import { zod4 } from 'sveltekit-superforms/adapters';
+@@ -8,22 +9,17 @@ import { dispatchEvent } from '$lib/server/events/dispatcher';
+ import { handlersFor } from '$lib/server/events/handlers';
+ import { createTable } from '$lib/server/tables/write';
+ import { TABLE_CREATION_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
+-import { listSystems } from '$lib/server/systems';
+-import { listCatalog } from '$lib/server/catalog';
+ import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
+ import { tableFormSchema } from '$lib/tables/schema';
+ import type { Actions, PageServerLoad } from './$types';
+ 
+-export const load: PageServerLoad = async ({ locals, url, cookies }) => {
++export const load: PageServerLoad = async (event) => {
++  const { locals, url, cookies } = event;
+   await requireUser(locals, url);
+   if (!locals.db) error(503, 'Database not configured');
+ 
+-  const profile = await locals.getProfile();
+   // The GM's own pending suggestions are offered too.
+-  const [systems, catalog] = await Promise.all([
+-    listSystems(locals.db),
+-    listCatalog(locals.db, { suggestedBy: profile?.id }),
+-  ]);
++  const catalogRead = await loadRead(event, 'catalog');
+ 
+   return {
+     form: await superValidate(
+@@ -31,8 +27,9 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
+       zod4(tableFormSchema),
+       { errors: false },
+     ),
+-    systems: systems.map(({ name, slug }) => ({ name, slug })),
+-    catalog,
++    systems: catalogRead.systems,
++    catalog: catalogRead.catalog,
++    catalogRead,
+   };
+ };
+ 
+diff --git a/src/routes/tables/new/+page.svelte b/src/routes/tables/new/+page.svelte
+index 3159fb4..995d9ee 100644
+--- a/src/routes/tables/new/+page.svelte
++++ b/src/routes/tables/new/+page.svelte
+@@ -1,4 +1,9 @@
+ <script lang="ts">
++  import QueryStatus from '$lib/components/QueryStatus.svelte';
++  import { queryClient } from '$lib/query/context';
++  import { afterWrite } from '$lib/query/invalidate';
++  import { pageQuery } from '$lib/query/page.svelte';
++  const client = queryClient();
+   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
+   import { superForm } from 'sveltekit-superforms';
+@@ -10,10 +15,16 @@
+   import { tableFormSchema } from '$lib/tables/schema';
+ 
+   let { data } = $props();
++  const options = pageQuery(
++    () => data.catalogRead ?? { systems: data.systems, catalog: data.catalog },
++  );
+ 
+   // svelte-ignore state_referenced_locally
+   const superform = superForm(data.form, {
+     validators: zod4Client(tableFormSchema),
++    onResult: ({ result }) => {
++      if (result.type === 'redirect') void afterWrite(client, 'table');
++    },
+     // A table form is long: leaving it with changes asks first.
+     taintedMessage: confirmLeave,
+   });
+@@ -23,6 +34,8 @@
+   <title>{m.form_new_title()}</title>
+ </svelte:head>
+ 
++<QueryStatus failed={options.isError} retry={() => options.refetch()} />
++
+ <section class="pt-2 pb-4 md:pt-12">
+   <Breadcrumbs
+     class="mb-8"
+@@ -40,8 +53,8 @@
+ 
+   <TableForm
+     {superform}
+-    systems={data.systems}
+-    catalog={data.catalog}
++    systems={options.data?.systems ?? data.systems}
++    catalog={options.data?.catalog ?? data.catalog}
+     submitLabel={m.form_submit_new()}
+     cancelHref={localizedHref('/tables', getLocale())}
+     gmName={data.account?.username ?? undefined}
+diff --git a/src/routes/tables/page.server.spec.ts b/src/routes/tables/page.server.spec.ts
+index c168fa7..5f999c2 100644
+--- a/src/routes/tables/page.server.spec.ts
++++ b/src/routes/tables/page.server.spec.ts
+@@ -32,6 +32,7 @@ const catalogue = ['a', 'b', 'c', 'd', 'e'].map(system);
+ 
+ const event = (search = '') =>
+   ({
++    params: {},
+     locals: { db: {} },
+     url: new URL(`https://x.test/tables${search}`),
+     platform: undefined,
+-- 
+2.51.1
+
