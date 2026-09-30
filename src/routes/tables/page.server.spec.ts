@@ -32,6 +32,7 @@ const catalogue = ['a', 'b', 'c', 'd', 'e'].map(system);
 
 const event = (search = '') =>
   ({
+    params: {},
     locals: { db: {} },
     url: new URL(`https://x.test/tables${search}`),
     platform: undefined,

@@ -539,5 +539,10 @@
   "manage_breadcrumb": "Jogadores e pedidos",
   "maintenance_title": "Voltamos em breve",
   "maintenance_text": "A Mesa Aberta está em manutenção no momento. Tente de novo mais tarde.",
-  "maintenance_admin_banner": "Modo de manutenção ativo: só a administração vê o site."
+  "maintenance_admin_banner": "Modo de manutenção ativo: só a administração vê o site.",
+  "cep_lookup_pending": "Consultando CEP…",
+  "cep_lookup_unavailable": "Não foi possível consultar o CEP. Preencha a região para continuar.",
+  "cep_lookup_missing": "CEP não encontrado. Confira os números.",
+  "api_refresh_failed": "Não foi possível atualizar os dados.",
+  "api_refresh_retry": "Tentar novamente"
 }

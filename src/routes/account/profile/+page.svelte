@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { queryClient } from '$lib/query/context';
+  import { afterWrite } from '$lib/query/invalidate';
+  const client = queryClient();
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { page } from '$app/state';
   import Avatar from '$lib/components/Avatar.svelte';
@@ -25,14 +28,24 @@
 
   // The picture has its own form (and schema, so its own Superforms id) next to the profile's.
   // svelte-ignore state_referenced_locally
-  const photo = superForm(data.photoForm, { validators: zod4Client(photoSchema) });
+  const photo = superForm(data.photoForm, {
+    validators: zod4Client(photoSchema),
+    onResult: ({ result }) => {
+      if (result.type === 'redirect') void afterWrite(client, 'account');
+    },
+  });
   const { errors: photoErrorList, enhance: photoEnhance, submitting, delayed, timeout } = photo;
   const photoFile = fileProxy(photo, 'photo');
   const photoError = $derived($photoErrorList.photo?.[0]);
 
   // Closing the account: a third form. The server compares the typed @username; a redirect home on success.
   // svelte-ignore state_referenced_locally
-  const closing = superForm(data.deleteForm, { resetForm: false });
+  const closing = superForm(data.deleteForm, {
+    resetForm: false,
+    onResult: ({ result }) => {
+      if (result.type === 'redirect') client.clear();
+    },
+  });
   const {
     form: closingData,
     errors: closingErrors,
@@ -111,7 +124,7 @@
                 submitting={$submitting}
                 delayed={$delayed}
                 timeout={$timeout}
-                class="btn h-11 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
+                class="btn h-12 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
                 >{m.account_photo_upload()}</SubmitButton
               >
             </form>
@@ -119,7 +132,7 @@
               <ActionForm
                 action="?/removePhoto"
                 label={m.account_photo_remove()}
-                buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+                buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
               />
             {/if}
             <p id="photo-hint" class="max-w-sm text-sm text-muted">

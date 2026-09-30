@@ -27,7 +27,7 @@
   };
 
   const pageLink =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal';
+    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal';
 </script>
 
 <svelte:head>

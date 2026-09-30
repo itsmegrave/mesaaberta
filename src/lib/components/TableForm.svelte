@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CepLookup from './CepLookup.svelte';
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { fileProxy, type SuperForm } from 'sveltekit-superforms';
@@ -385,6 +386,7 @@
             aria-invalid={invalid('postalCode')}
           /></FormField
         >
+        <CepLookup value={$form.postalCode} bind:area={$form.locationArea} />
         <FormField
           id="locationArea"
           label={m.form_location_area()}

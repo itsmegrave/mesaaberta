@@ -121,7 +121,7 @@
         <hr class="mx-2 my-1" />
         <a
           href={feed}
-          class="btn flex h-11 w-full items-center justify-center rounded-lg font-semibold hover:preset-tonal"
+          class="btn flex h-12 w-full items-center justify-center rounded-lg font-semibold hover:preset-tonal"
         >
           {m.notifications_see_all()}
         </a>

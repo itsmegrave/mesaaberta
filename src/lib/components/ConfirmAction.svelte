@@ -53,7 +53,7 @@
           <Dialog.Description class="mt-2 text-surface-700-300">{text}</Dialog.Description>
           <div class="mt-6 flex flex-wrap justify-end gap-3">
             <Dialog.CloseTrigger
-              class="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+              class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
               >{m.confirm_cancel()}</Dialog.CloseTrigger
             >
             <ActionForm
@@ -61,7 +61,7 @@
               {playerId}
               {next}
               {label}
-              buttonClass="btn h-11 rounded-lg preset-filled-error-500 px-4 font-semibold"
+              buttonClass="btn h-12 rounded-lg preset-filled-error-500 px-4 font-semibold"
               {success}
               onsuccess={() => (open = false)}
               onfail={(message) => {

@@ -83,11 +83,11 @@
   <p class="mt-4 flex flex-wrap gap-3">
     <a
       href={localizedHref(`/tables/${item.slug}/manage`, locale)}
-      class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
+      class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
     >
     <a
       href={localizedHref(`/tables/${item.slug}/edit`, locale)}
-      class="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
+      class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
     >
   </p>
 

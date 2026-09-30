@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { queryClient } from '$lib/query/context';
+  import { afterWrite } from '$lib/query/invalidate';
+  const client = queryClient();
   import type { Snippet } from 'svelte';
   import { defaults, superForm } from 'sveltekit-superforms';
   import { zod4 } from 'sveltekit-superforms/adapters';
@@ -53,6 +56,7 @@
     invalidateAll: 'pessimistic',
     onResult({ result }) {
       if (result.type !== 'redirect') return;
+      void afterWrite(client, action.includes('Photo') ? 'account' : 'table');
       if (success) toast.success(success);
       onsuccess?.();
     },

@@ -14,7 +14,7 @@ See the [README](README.md) for setup and scripts.
 
 ## Changelog
 
-Every pull request that ships a new feature or fixes a bug people can notice adds an entry to the changelog at [/changelog](https://mesaaberta.app/changelog). Refactors, tests, tooling and dependency bumps don't.
+Every pull request that ships a new feature or fixes a bug people can notice adds an entry to the changelog at [/changelog](https://mesaaberta.app/changelog). Chores (`chore:` commits), admin-only changes, refactors, tests, tooling and dependency bumps don't.
 
 Add one Markdown file to `src/content/changelog/`, named `YYYY-MM-DD-short-name.md` after the release day:
 

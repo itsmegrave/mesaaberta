@@ -1,10 +1,12 @@
+import { loadRead } from '$lib/server/reads/load';
 import { can } from '$lib/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
 import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifications/service';
 import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, platform, cookies, route }) => {
+export const load: LayoutServerLoad = async (event) => {
+  const { locals, platform, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
 
   // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
@@ -16,6 +18,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route 
       maintenanceBypass: false,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
       account: null,
+      cacheIdentity: 'anonymous',
+      accountRead: null,
     };
   }
   // An admin still uses the site while it is down, with a banner saying so.
@@ -26,6 +30,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route 
 
   try {
     const profile = await locals.getProfile();
+    const cacheIdentity = (await locals.getUser())?.id ?? 'anonymous';
+    const accountRead = await loadRead(event, 'account');
     // The bell: how many are unread, and the latest few for its menu.
     const [unread, latest] =
       profile && locals.db
@@ -37,6 +43,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route 
 
     return {
       authEnabled,
+      cacheIdentity,
+      accountRead,
       released,
       maintenance: false,
       maintenanceBypass,
@@ -61,6 +69,8 @@ export const load: LayoutServerLoad = async ({ locals, platform, cookies, route 
       maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
       account: null,
+      cacheIdentity: 'anonymous',
+      accountRead: null,
     };
   }
 };

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { flushSync, onMount } from 'svelte';
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import PlayingCard from '$lib/components/PlayingCard.svelte';
   import RunningCard from '$lib/components/RunningCard.svelte';
@@ -8,7 +10,9 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { data } = $props();
+  let { data: serverData } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
 
   const locale = getLocale();
   // Every action posted from here comes back here.
@@ -60,6 +64,7 @@
 <svelte:head>
   <title>{m.dash_title()}</title>
 </svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <section class="pt-2 pb-4 md:pt-12">
   <Breadcrumbs class="mb-8" items={[{ label: m.nav_my_tables() }]} />
@@ -101,7 +106,7 @@
       {#each tabs as [value, label] (value)}
         <Tabs.Trigger
           {value}
-          class="btn h-11 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
+          class="btn h-12 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
           >{label}</Tabs.Trigger
         >
       {/each}
@@ -129,7 +134,7 @@
         <a
           href="#mesa-{waiting[0].slug}"
           onclick={showRunning}
-          class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
+          class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
           >{m.dash_banner_action()}</a
         >
       </div>

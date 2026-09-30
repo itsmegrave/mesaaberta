@@ -32,10 +32,10 @@ describe('NotificationAction', () => {
   });
 
   it('draws a submit button with the classes it is given, not busy until sent', async () => {
-    render(NotificationAction, { action: 'read', next: '/', buttonClass: 'btn h-11', children });
+    render(NotificationAction, { action: 'read', next: '/', buttonClass: 'btn h-12', children });
 
     await expect.element(submit()).toHaveAttribute('type', 'submit');
-    await expect.element(submit()).toHaveClass('btn', 'h-11');
+    await expect.element(submit()).toHaveClass('btn', 'h-12');
     await expect.element(submit()).not.toHaveAttribute('aria-busy');
   });
 });

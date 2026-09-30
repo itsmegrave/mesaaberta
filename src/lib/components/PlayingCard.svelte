@@ -93,7 +93,7 @@
     {next}
     class="mt-5"
     label={item.status === 'pending' ? m.table_cancel_request() : m.table_leave()}
-    buttonClass="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold"
+    buttonClass="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold"
     success={item.status === 'pending' ? m.toast_request_withdrawn() : m.toast_left()}
   />
 </article>

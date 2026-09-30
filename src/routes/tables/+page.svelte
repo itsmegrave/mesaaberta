@@ -1,4 +1,6 @@
 <script lang="ts">
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { navigating, page } from '$app/state';
   import ListSkeleton from '$lib/components/ListSkeleton.svelte';
@@ -9,7 +11,9 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { data } = $props();
+  let { data: serverData } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
 
   // A filter change reloads this same page with another query: the list gives way to a skeleton
   // if it takes a while. Coming back to the same query (after marking read, say) keeps the list.
@@ -43,12 +47,12 @@
   );
 
   const chip =
-    'inline-flex h-11 shrink-0 items-center rounded-full border-2 px-4 text-sm font-semibold whitespace-nowrap no-underline';
+    'inline-flex h-12 shrink-0 items-center rounded-full border-2 px-4 text-sm font-semibold whitespace-nowrap no-underline';
   const chipIdle = `${chip} border-surface-200-800 bg-panel hover:preset-tonal`;
   const chipActive = `${chip} border-primary-500 preset-filled-primary-500`;
   // A ticked checkbox chip: the whole chip is its label; the box itself is hidden.
   const checkChip =
-    'relative inline-flex h-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 bg-panel px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal has-checked:border-primary-500 has-checked:preset-filled-primary-500 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'relative inline-flex h-12 shrink-0 cursor-pointer items-center rounded-lg border-2 border-surface-200-800 bg-panel px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal has-checked:border-primary-500 has-checked:preset-filled-primary-500 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 
   /** With JavaScript, ticking a chip applies it at once; without, the "Filtrar" button does. */
   const applyNow = (event: Event) =>
@@ -82,6 +86,7 @@
   <title>{m.tables_title()}</title>
   <meta name="description" content={m.tables_description()} />
 </svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <section class="py-2 md:pt-12">
   <Breadcrumbs class="mb-8" items={[{ label: m.nav_tables() }]} />
@@ -176,7 +181,7 @@
             {#if group.more.length > 0}
               <details class="group relative mt-2 md:mt-0">
                 <summary
-                  class="inline-flex h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-2 border-dashed border-surface-600-400 px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
+                  class="inline-flex h-12 cursor-pointer list-none items-center gap-2 rounded-lg border-2 border-dashed border-surface-600-400 px-4 text-sm font-semibold whitespace-nowrap hover:preset-tonal [&::-webkit-details-marker]:hidden"
                   >{group.moreLabel}
                   <svg
                     width="16"
@@ -216,7 +221,7 @@
     <noscript>
       <button
         type="submit"
-        class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold md:ml-28"
+        class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold md:ml-28"
         >{m.tables_filter_apply()}</button
       >
     </noscript>
