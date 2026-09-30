@@ -5,6 +5,8 @@ import { render } from 'vitest-browser-svelte';
 import { defaults } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { announcementSchema } from '$lib/notifications/announcement';
+import { ANNOUNCEMENT_ICONS, TONE_ICON } from '$lib/notifications/kinds';
+import { ICONS } from '$lib/icons/lucide.generated';
 import Page from './+page.svelte';
 
 const sizes = { all_active_users: 120, game_masters: 14, active_players: 1 };
@@ -63,6 +65,30 @@ describe('admin notifications', () => {
     await page.getByText('Uma pessoa').click();
 
     await expect.element(page.getByLabelText('Nome de usuário ou ID')).toBeVisible();
+  });
+
+  it('draws every announcement option and updates the preview to the selected icon', async () => {
+    show({ form: form() });
+    const bodyFor = (icon: (typeof ANNOUNCEMENT_ICONS)[number]) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.innerHTML = ICONS[icon === 'alert-triangle' ? 'triangle-alert' : icon].body;
+      return svg.innerHTML;
+    };
+    for (const icon of ANNOUNCEMENT_ICONS) {
+      const input = document.querySelector<HTMLInputElement>(
+        `input[name="icon"][value="${icon}"]`,
+      )!;
+      const label = input.closest('label')!;
+      expect(label.querySelector('svg')!.innerHTML).toBe(bodyFor(icon));
+      label.click();
+      await expect
+        .poll(() => preview().element().querySelector('svg')!.innerHTML)
+        .toBe(bodyFor(icon));
+    }
+    document.querySelector<HTMLInputElement>('input[name="icon"][value=""]')!.click();
+    await expect
+      .poll(() => preview().element().querySelector('svg')!.innerHTML)
+      .toBe(bodyFor(TONE_ICON.info));
   });
 
   it('asks to confirm with the count, and editing takes the confirm step away', async () => {

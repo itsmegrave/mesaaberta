@@ -21,6 +21,11 @@
     tag: 'tag',
     shield: 'shield',
     megaphone: 'megaphone',
+    wrench: 'wrench',
+    'alert-triangle': 'triangle-alert',
+    sparkles: 'sparkles',
+    gift: 'gift',
+    info: 'info',
   };
 </script>
 
