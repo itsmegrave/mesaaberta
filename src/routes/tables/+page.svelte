@@ -1,4 +1,6 @@
 <script lang="ts">
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { navigating, page } from '$app/state';
   import ListSkeleton from '$lib/components/ListSkeleton.svelte';
@@ -9,7 +11,9 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { data } = $props();
+  let { data: serverData } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
 
   // A filter change reloads this same page with another query: the list gives way to a skeleton
   // if it takes a while. Coming back to the same query (after marking read, say) keeps the list.
@@ -82,6 +86,7 @@
   <title>{m.tables_title()}</title>
   <meta name="description" content={m.tables_description()} />
 </svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <section class="py-2 md:pt-12">
   <Breadcrumbs class="mb-8" items={[{ label: m.nav_tables() }]} />

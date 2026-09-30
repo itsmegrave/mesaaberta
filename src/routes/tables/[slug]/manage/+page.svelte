@@ -1,4 +1,6 @@
 <script lang="ts">
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import ActionForm from '$lib/components/ActionForm.svelte';
@@ -13,7 +15,9 @@
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { onMount } from 'svelte';
 
-  let { data } = $props();
+  let { data: serverData } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
 
   // Recent activity is open on a wide screen and folded under the rest on a phone. Open until then,
   // so it is there without JavaScript.
@@ -108,6 +112,7 @@
 <svelte:head>
   <title>{m.manage_title({ title: table.title })}</title>
 </svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <article class="pt-2 pb-8 md:pt-6">
   <Breadcrumbs

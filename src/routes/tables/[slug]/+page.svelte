@@ -1,4 +1,9 @@
 <script lang="ts">
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { queryClient } from '$lib/query/context';
+  import { afterWrite } from '$lib/query/invalidate';
+  const client = queryClient();
+  import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { shownTimezone } from '$lib/time/shown-timezone';
@@ -16,7 +21,9 @@
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
 
-  let { data, form } = $props();
+  let { data: serverData, form } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
 
   // What the last seat action answered: from a submit with JavaScript (`onfail`), or from the page the server sent back without it.
   let failed = $state<FormMessage | null>(null);
@@ -44,7 +51,10 @@
     validators: zod4Client(ratingSchema),
     resetForm: false,
     onResult({ result }) {
-      if (result.type === 'redirect') toast.success(m.toast_rating_saved());
+      if (result.type === 'redirect') {
+        void afterWrite(client, 'table');
+        toast.success(m.toast_rating_saved());
+      }
     },
     onUpdated({ form: updated }) {
       if (updated.valid || !updated.message) return;
@@ -90,6 +100,7 @@
   <title>{table.title}</title>
   <meta name="description" content="{table.system.name}. {seats}." />
 </svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <article class="pt-2 pb-8 md:pt-6">
   <Breadcrumbs items={[{ label: m.nav_tables(), href: '/tables' }, { label: table.title }]} />

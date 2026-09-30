@@ -8,7 +8,22 @@ import Layout from './+layout.svelte';
 const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
 // From the profile, so the layout does not set a cookie or reload in these tests.
 const viewer = { timezone: 'America/Sao_Paulo', source: 'profile' } as const;
-const shell = { maintenance: false, maintenanceBypass: false, viewer };
+const shell = {
+  cacheIdentity: 'anonymous',
+  accountRead: {
+    summary: null,
+    readSeed: {
+      resource: 'account' as const,
+      viewer: 'anonymous',
+      params: '',
+      fields: ['summary'],
+      updatedAt: Date.now(),
+    },
+  },
+  maintenance: false,
+  maintenanceBypass: false,
+  viewer,
+};
 const signedOut = { authEnabled: false, released: false, ...shell, account: null };
 const memberAccount = {
   displayName: 'Ana Souza',

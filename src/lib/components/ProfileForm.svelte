@@ -1,4 +1,11 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
+  import { page } from '$app/state';
+  import { createQuery } from '@tanstack/svelte-query';
+  import { queryClient } from '$lib/query/context';
+  import { usernameAvailability } from '$lib/query/lookups';
+  import { afterWrite } from '$lib/query/invalidate';
+  const client = queryClient();
   import { confirmLeave } from '$lib/forms/leave-guard.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { tick } from 'svelte';
@@ -36,23 +43,13 @@
     checkUsername?: (username: string, signal: AbortSignal) => Promise<Availability>;
   };
 
-  const askServer = async (username: string, signal: AbortSignal): Promise<Availability> => {
-    const response = await fetch(`/onboarding/username?value=${encodeURIComponent(username)}`, {
-      signal,
-      headers: { accept: 'application/json' },
-    });
-    if (!response.ok) throw new Error(`availability check answered ${response.status}`);
-
-    return ((await response.json()) as { status: Availability }).status;
-  };
-
   let {
     form: initial,
     action,
     usernameLocked = false,
     submitLabel,
     onsaved,
-    checkUsername = askServer,
+    checkUsername = usernameAvailability,
   }: Props = $props();
 
   // The form is set up once with what the server loaded; superforms keeps it up to date after that.
@@ -62,7 +59,10 @@
     resetForm: false,
     taintedMessage: confirmLeave,
     onUpdated: ({ form }) => {
-      if (form.valid) onsaved?.();
+      if (form.valid) {
+        void afterWrite(client, 'account');
+        onsaved?.();
+      }
     },
   });
 
@@ -142,35 +142,39 @@
 
   // --- the username, checked against the server while it is typed --------------------------------
 
-  const CHECK_DELAY_MS = 400;
-  let availability = $state<'idle' | 'checking' | Availability | 'failed'>('idle');
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let request: AbortController | undefined;
-
-  function usernameChanged() {
-    clearTimeout(timer);
-    request?.abort();
-    availability = 'idle';
-
-    // A username that is wrong anyway is not worth a round trip: the form says what is wrong.
-    if (usernameProblem($form.username) !== null) return;
-
-    availability = 'checking';
-    timer = setTimeout(async () => {
-      request = new AbortController();
-      const { signal } = request;
-      try {
-        const status = await checkUsername(normalizeUsername($form.username), signal);
-        if (!signal.aborted) availability = status;
-      } catch {
-        if (!signal.aborted) availability = 'failed';
-      }
-    }, CHECK_DELAY_MS);
-  }
-
-  // A username that arrives already filled in (a suggestion made from the sign-in name) is checked too.
-  // svelte-ignore state_referenced_locally
-  if ($form.username !== '' && !usernameLocked) usernameChanged();
+  let checkedUsername = $state('');
+  const normalized = $derived(normalizeUsername($form.username));
+  $effect(() => {
+    const value = normalized;
+    checkedUsername = '';
+    if (usernameLocked || usernameProblem(value) !== null) return;
+    const timer = setTimeout(() => {
+      checkedUsername = value;
+    }, 400);
+    return () => clearTimeout(timer);
+  });
+  const availabilityQuery = createQuery(
+    () => ({
+      queryKey: ['api', 'username', page.data.cacheIdentity ?? 'anonymous', checkedUsername],
+      queryFn: ({ signal }) => checkUsername(checkedUsername, signal),
+      enabled:
+        browser && !usernameLocked && checkedUsername !== '' && checkedUsername === normalized,
+      staleTime: 0,
+      gcTime: 0,
+      retry: false,
+      refetchOnWindowFocus: false,
+    }),
+    () => client,
+  );
+  const availability = $derived(
+    usernameLocked || usernameProblem(normalized) !== null
+      ? 'idle'
+      : checkedUsername !== normalized || availabilityQuery.isFetching
+        ? 'checking'
+        : availabilityQuery.isError
+          ? 'failed'
+          : (availabilityQuery.data ?? 'checking'),
+  );
 
   const usernameError = $derived(
     errorText($errors.username?.[0]) ??
@@ -247,7 +251,6 @@
       autocapitalize="none"
       spellcheck="false"
       bind:value={$form.username}
-      oninput={usernameChanged}
       readonly={usernameLocked}
       class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
       aria-invalid={usernameError ? 'true' : undefined}
