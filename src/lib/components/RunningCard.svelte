@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import { atHandle } from '$lib/profile/handle';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
@@ -20,7 +21,17 @@
     requests: Person[];
   };
 
-  let { item, next }: { item: Item; next: string } = $props();
+  type Props = {
+    item: Item;
+    next: string;
+    /** Whether the player list starts open on a phone. From `lg` up it is always open. */
+    openPlayers?: boolean;
+  };
+
+  let { item, next, openPlayers = false }: Props = $props();
+
+  // svelte-ignore state_referenced_locally
+  let playersOpen = $state(openPlayers);
 
   const locale = getLocale();
   const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
@@ -106,26 +117,53 @@
     </div>
   {/if}
 
-  <h4 class="mt-5 font-semibold">{m.dash_players()}</h4>
-  {#if item.players.length === 0}
-    <p class="mt-1">{m.dash_none_yet()}</p>
-  {:else}
-    <ul class="mt-2 grid gap-2">
-      {#each item.players as player (player.playerId)}
-        <li
-          class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
-        >
-          <span>{atHandle(player.username)}</span>
-          <ActionForm
-            action="{page}?/remove"
-            playerId={player.playerId}
-            {next}
-            label={m.table_remove()}
-            buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
-            success={m.toast_removed()}
-          />
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <Collapsible open={playersOpen} onOpenChange={(details) => (playersOpen = details.open)}>
+    <!-- A heading on a wide screen, a button that folds the list on a phone. -->
+    <h4 class="mt-5 font-semibold max-lg:hidden">{m.dash_players()}</h4>
+    <Collapsible.Trigger
+      class="mt-3 flex min-h-12 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
+    >
+      {m.dash_players_count({ count: item.players.length })}
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        class="shrink-0 transition-transform {playersOpen ? 'rotate-180' : ''}"
+        ><path d="m6 9 6 6 6-6" /></svg
+      >
+    </Collapsible.Trigger>
+    <Collapsible.Content>
+      {#snippet element(attributes)}
+        <div {...attributes} hidden={false} class={playersOpen ? '' : 'max-lg:hidden'}>
+          {#if item.players.length === 0}
+            <p class="mt-1">{m.dash_none_yet()}</p>
+          {:else}
+            <ul class="mt-2 grid gap-2">
+              {#each item.players as player (player.playerId)}
+                <li
+                  class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
+                >
+                  <span>{atHandle(player.username)}</span>
+                  <ActionForm
+                    action="{page}?/remove"
+                    playerId={player.playerId}
+                    {next}
+                    label={m.table_remove()}
+                    buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+                    success={m.toast_removed()}
+                  />
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
+      {/snippet}
+    </Collapsible.Content>
+  </Collapsible>
 </article>
