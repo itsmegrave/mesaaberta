@@ -169,6 +169,13 @@
       "when": 1790766655510,
       "tag": "0023_instagram_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790778635399,
+      "tag": "0024_messages",
+      "breakpoints": true
     }
   ]
 }

@@ -108,11 +108,27 @@ export async function createTable(page: Page, table: NewTable) {
   if (table.joinDetails) {
     await page.getByLabel(/Como entrar \(link/).fill(table.joinDetails);
   }
-  if (table.image) await page.locator('input#image').setInputFiles(table.image);
+  if (table.image) await pickImage(page, table.image);
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
   await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
   return new URL(page.url()).pathname.split('/').at(-1)!;
+}
+
+/**
+ * Picks the table's image. A picture the browser can draw opens the crop step first, so this uses the
+ * crop as it is; anything else is taken as it is. Either way it returns once the file is in the form.
+ */
+export async function pickImage(
+  page: Page,
+  file: { name: string; mimeType: string; buffer: Buffer },
+) {
+  await page.locator('input#image').setInputFiles(file);
+  const crop = page.getByRole('button', { name: 'Usar este recorte' });
+  const chip = page.getByRole('button', { name: /^Tirar / });
+  await crop.or(chip).first().waitFor();
+  if (await crop.isVisible()) await crop.click();
+  await chip.waitFor();
 }
 
 /** A real 1x1 PNG, for the upload. */

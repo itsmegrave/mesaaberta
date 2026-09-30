@@ -29,6 +29,12 @@ export const ICON_NAMES = [
   'search',
   'chevron-left',
   'chevron-right',
+  'message-circle',
+  'send',
+  'bell-off',
+  'bell',
+  'arrow-left',
+  'plus',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

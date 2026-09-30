@@ -228,6 +228,16 @@ The toggle is a native `<select>`, not Melt UI: it needs no popover and so no in
 
 The buttons post to the table page's own actions (`/tables/<slug>?/leave`, `?/approve`, ...), so the rules stay in one place, and carry a `next` field that sends the browser back to the dashboard (only an on-site path is honoured). Disabling is a link to the edit page rather than a one-click button: there is no way to re-enable a table yet, so it stays a deliberate step.
 
+## Messages
+
+Table chats and direct messages share one inbox (`/messages`, two panes on desktop, a thread per screen on phones); a table chat is a **group** conversation, a direct one is between two people. Tables are `conversations`, `conversation_members` and `messages` (all with RLS on and no policy, like every table). The server side is `src/lib/server/messages/`: `access.ts` holds who may read and write (a table chat follows the registrations live: the GM and confirmed players; anyone may write to the GM of an active table before joining, and a GM to their own players), `service.ts` sends, lists and marks read, and `retention.ts` deletes a table's chat 90 days after the table is disabled (called by the cron sweeper, so it imports relatively only).
+
+A person can turn direct messages off in the profile (`profiles.direct_messages_enabled`): nobody new can start a conversation with them, existing ones stop taking messages, and table chats are not affected. Membership of a table chat is synced in the same transactions that approve, join, leave or remove a player.
+
+Sending is one transaction: the message, `last_message_at`, the sender's read mark and one **grouped** `message_received` notification per other unmuted member (a partial unique index keeps one unread per conversation and the count goes up: "3 novas mensagens de @ana"). Messages do not write domain events: the event log keeps ids and public facts, and a chat is neither. The limit is `MESSAGE_LIMIT` (30 a minute), counted from the messages themselves.
+
+There is no push: the open thread polls `/api/messages/<id>` every 3 seconds while the tab is visible, the inbox refreshes every 30 seconds and the header polls `/api/badges` for the bell and the messages count. Real time is planned as a Durable Object per conversation (partyserver) behind the same reads.
+
 ## Ratings
 
 A player who had a **confirmed** seat rates the table and its GM (1 to 5 each, and an optional comment) once the **first session has ended**; the GM cannot rate their own table. The rules are one policy function, `rateBlocker` (`table:rate`), and the service is `src/lib/server/ratings/service.ts`. A rating can be edited later (one per player, the latest wins) and records `RatingSubmitted`, with no scores or comment in the event. It is tied to the registration by a foreign key with `ON DELETE CASCADE`, so a player who leaves or is removed takes their rating with them.

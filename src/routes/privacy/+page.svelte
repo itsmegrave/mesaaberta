@@ -57,6 +57,14 @@
     </li>
     <li>As avaliações que você dá aos mestres, com o comentário, se escrever um.</li>
   </ul>
+  <h3>Mensagens</h3>
+  <ul>
+    <li>
+      O texto, o horário e o autor das mensagens que você envia, no chat das mesas de que participa
+      e nas conversas diretas, e até onde você já leu cada conversa. Não guardamos anexos.
+    </li>
+    <li>Nas conversas diretas, quem escreve pode indicar sobre qual mesa está falando.</li>
+  </ul>
   <h3>Dados técnicos</h3>
   <ul>
     <li>
@@ -112,6 +120,11 @@
       médias da mesa e do mestre.
     </li>
     <li>O mestre de uma mesa vê o nome de usuário de quem entrou ou pediu vaga nela.</li>
+    <li>
+      As mensagens só são vistas por quem participa da conversa: o mestre e os jogadores confirmados
+      no chat de uma mesa, ou as duas pessoas de uma conversa direta. Quem sai da mesa perde o
+      acesso ao chat. Você pode desligar as mensagens diretas no seu perfil.
+    </li>
     <li>Os comentários das avaliações não são mostrados publicamente.</li>
     <li>Seu e-mail nunca fica visível para outras pessoas.</li>
   </ul>
@@ -173,6 +186,11 @@
     <li>
       Notificações do sino (o que mudou nas suas mesas e nos seus pedidos de vaga): até 90 dias, e
       somem na hora se a conta for apagada.
+    </li>
+    <li>
+      Mensagens: as conversas diretas ficam enquanto as contas existirem. O chat de uma mesa é
+      apagado 90 dias depois de a mesa ser desativada. Quando você apaga a conta, as suas mensagens
+      são apagadas e você sai de todas as conversas.
     </li>
     <li>Contadores de tentativas de entrada, cadastro e recuperação de senha: até 24 horas.</li>
   </ul>

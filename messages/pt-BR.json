@@ -1,5 +1,59 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "messages_title": "Mensagens",
+  "messages_lede": "Conversas diretas e os chats das suas mesas.",
+  "messages_empty": "Você ainda não tem conversas. Fale com o mestre de uma mesa ou entre em uma para abrir o chat.",
+  "messages_group_badge": "Chat da mesa",
+  "messages_preview_own": "Você: {body}",
+  "messages_preview_other": "{sender}: {body}",
+  "messages_no_messages": "Nenhuma mensagem ainda.",
+  "messages_unread": "Não lida",
+  "messages_mute": "Silenciar",
+  "messages_unmute": "Reativar avisos",
+  "messages_muted": "Silenciada",
+  "messages_back": "Voltar para as mensagens",
+  "messages_seen": "Visto",
+  "messages_about_table": "Sobre a mesa {table}",
+  "messages_load_older": "Ver mensagens anteriores",
+  "messages_composer_label": "Mensagem",
+  "messages_composer_placeholder": "Escreva uma mensagem",
+  "messages_send": "Enviar",
+  "messages_sending": "Enviando…",
+  "messages_failed": "Não enviada",
+  "messages_retry": "Tentar de novo",
+  "messages_error_required": "Escreva algo antes de enviar.",
+  "messages_error_too_long": "A mensagem passa de 2000 caracteres.",
+  "messages_error_forbidden": "Você não pode enviar mensagens nesta conversa.",
+  "messages_error_off": "Esta pessoa não recebe mensagens diretas agora.",
+  "messages_error_rate_limited": "Você enviou muitas mensagens em pouco tempo. Tente de novo em instantes.",
+  "messages_dm_off_notice": "{name} não recebe mais mensagens diretas. Você ainda pode reler a conversa.",
+  "messages_read_only_table": "Esta mesa foi desativada, então o chat ficou só para leitura.",
+  "messages_today": "Hoje",
+  "messages_yesterday": "Ontem",
+  "messages_talk_to_gm": "Falar com o mestre",
+  "messages_gm_dm_off": "O mestre não recebe mensagens diretas agora.",
+  "messages_table_chat": "Chat da mesa",
+  "messages_menu": "Mensagens",
+  "messages_menu_unread": "Mensagens, {count} não lidas",
+  "messages_setting_title": "Mensagens diretas",
+  "messages_setting_label": "Receber mensagens diretas",
+  "messages_setting_help": "Desligado, ninguém novo consegue começar uma conversa com você, nem para tirar dúvidas antes de entrar numa mesa. O chat das suas mesas continua funcionando.",
+  "messages_setting_saved": "Preferência salva.",
+  "notification_message_direct_one": "Nova mensagem de {player}",
+  "notification_message_direct_many": "{count} novas mensagens de {player}",
+  "notification_message_group_one": "Nova mensagem em {table}",
+  "notification_message_group_many": "{count} novas mensagens em {table}",
+  "notifications_filter_messages": "Mensagens",
+  "messages_inbox_label": "Suas conversas",
+  "messages_thread_label": "Conversa",
+  "messages_pagination_label": "Páginas de conversas",
+  "messages_page_previous": "Conversas mais novas",
+  "messages_page_next": "Conversas mais antigas",
+  "messages_page_status": "Página {page} de {pages}",
+  "messages_deleted_user": "Conta removida",
+  "messages_error_generic": "Não foi possível enviar a mensagem. Tente de novo.",
+  "messages_open_table": "Ver a mesa",
+  "messages_setting_failed": "Não foi possível salvar a preferência. Tente de novo.",
   "admin_overview_title": "Visão geral da plataforma",
   "admin_nav_overview": "Visão geral",
   "admin_profile_list": "Usuários",
@@ -28,13 +82,43 @@
   "admin_user_updated": "Última atualização do perfil",
   "admin_user_unset": "Não informado",
   "admin_profiles": "Perfis cadastrados",
-  "admin_new_profiles": "{count} novos nos últimos 30 dias",
+  "admin_new_profiles": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum novo nos últimos 30 dias",
+        "count=1": "1 novo nos últimos 30 dias",
+        "count=*": "{count} novos nos últimos 30 dias"
+      }
+    }
+  ],
   "admin_tables": "Mesas",
-  "admin_active_tables": "{count} com status ativo",
+  "admin_active_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma com status ativo",
+        "count=1": "1 com status ativo",
+        "count=*": "{count} com status ativo"
+      }
+    }
+  ],
   "admin_gms": "Mestres",
   "admin_gms_scope": "Pessoas com pelo menos uma mesa criada",
   "admin_confirmed": "Inscrições confirmadas",
-  "admin_pending_seats": "{count} solicitações aguardando aprovação",
+  "admin_pending_seats": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma solicitação aguardando aprovação",
+        "count=1": "1 solicitação aguardando aprovação",
+        "count=*": "{count} solicitações aguardando aprovação"
+      }
+    }
+  ],
   "admin_community": "Comunidade",
   "admin_active_profiles": "Perfis ativos",
   "admin_suspended": "Perfis suspensos",
@@ -180,12 +264,30 @@
   "form_join_details_hint": "Opcional. Só você e quem tem vaga confirmada veem.",
   "table_join_details": "Como entrar",
   "table_join_details_private": "Só você e quem tem vaga confirmada veem isto.",
-  "tables_count_one": "1 mesa com sessão marcada",
-  "tables_count": "{count} mesas com sessão marcada",
+  "tables_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa com sessão marcada",
+        "count=1": "1 mesa com sessão marcada",
+        "count=*": "{count} mesas com sessão marcada"
+      }
+    }
+  ],
   "table_kind_campaign": "Campanha",
   "table_kind_one_shot": "One-shot",
-  "table_seats_left": "{count} vagas restantes",
-  "table_seat_left": "1 vaga restante",
+  "table_seats_left": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma vaga restante",
+        "count=1": "1 vaga restante",
+        "count=*": "{count} vagas restantes"
+      }
+    }
+  ],
   "table_full": "Mesa cheia",
   "table_next_session": "Próxima sessão",
   "table_no_more_sessions": "Esta mesa não tem mais sessões marcadas.",
@@ -238,10 +340,29 @@
   "date_picker_clear": "Limpar a data",
   "date_picker_close": "Fechar o calendário",
   "date_picker_calendar": "Calendário",
-  "form_capacity_taken": "{count} pessoas já estão na mesa, então este é o mínimo.",
+  "form_capacity_taken": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém está na mesa ainda, então não há mínimo.",
+        "count=1": "1 pessoa já está na mesa, então este é o mínimo.",
+        "count=*": "{count} pessoas já estão na mesa, então este é o mínimo."
+      }
+    }
+  ],
   "form_capacity_remove_players": "Remover pessoas da mesa",
-  "form_capacity_seats_one": "1 vaga",
-  "form_capacity_seats": "{count} vagas",
+  "form_capacity_seats": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma vaga",
+        "count=1": "1 vaga",
+        "count=*": "{count} vagas"
+      }
+    }
+  ],
   "form_starts_at": "Primeira sessão",
   "form_timezone": "Fuso horário",
   "form_timezone_note": "No seu fuso, {zone} ({offset}). Cada pessoa vê a hora no próprio fuso.",
@@ -342,8 +463,17 @@
   "table_error_forbidden": "Você não tem permissão para fazer isso.",
   "table_error_other": "Não deu certo. Tente de novo.",
   "rating_gm_average": "Nota de mestragem",
-  "rating_count": "{count} avaliações",
-  "rating_count_one": "1 avaliação",
+  "rating_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Sem avaliações",
+        "count=1": "1 avaliação",
+        "count=*": "{count} avaliações"
+      }
+    }
+  ],
   "rating_title": "Avalie a mestragem",
   "rating_lede": "Você jogou. Aqui você avalia a mestragem: a nota entra na média de quem mestrou, visível para todo mundo, e o comentário fica só com você.",
   "rating_the_gm": "Sua nota para a mestragem",
@@ -371,10 +501,27 @@
   "dash_seats_taken": "{taken} de {capacity} vagas ocupadas",
   "dash_edit": "Editar mesa",
   "dash_manage": "Gerenciar mesa",
-  "dash_count_one": "1 mesa",
-  "dash_count": "{count} mesas",
-  "dash_banner_one": "1 pedido de vaga esperando você em {title}",
-  "dash_banner": "{count} pedidos de vaga esperando você em {title}",
+  "dash_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa",
+        "count=1": "1 mesa",
+        "count=*": "{count} mesas"
+      }
+    }
+  ],
+  "dash_banner": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pedido de vaga esperando você em {title}",
+        "count=*": "{count} pedidos de vaga esperando você em {title}"
+      }
+    }
+  ],
   "dash_banner_many": "{count} pedidos de vaga esperando você em {tables} mesas",
   "dash_banner_action": "Ver o pedido",
   "dash_players": "Participantes",
@@ -591,8 +738,17 @@
   "admin_announce_audience_game_masters": "Quem já abriu uma mesa",
   "admin_announce_audience_active_players": "Quem tem vaga confirmada numa mesa",
   "admin_announce_audience_specific_user": "Uma pessoa",
-  "admin_announce_audience_size": "{count} contas",
-  "admin_announce_audience_size_one": "1 conta",
+  "admin_announce_audience_size": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma conta",
+        "count=1": "1 conta",
+        "count=*": "{count} contas"
+      }
+    }
+  ],
   "admin_announce_field_recipient": "Nome de usuário ou ID",
   "admin_announce_recipient_hint": "Por exemplo, @bruno-leal.",
   "admin_announce_field_link": "Link (opcional)",
@@ -603,8 +759,17 @@
   "admin_announce_review": "Revisar envio",
   "admin_announce_confirm_title": "Confirme o envio",
   "admin_announce_confirm_person": "Esta notificação vai para @{username}.",
-  "admin_announce_confirm_one": "Esta notificação vai para 1 conta.",
-  "admin_announce_confirm": "Esta notificação vai para {count} contas.",
+  "admin_announce_confirm": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Esta notificação não vai para nenhuma conta.",
+        "count=1": "Esta notificação vai para 1 conta.",
+        "count=*": "Esta notificação vai para {count} contas."
+      }
+    }
+  ],
   "admin_announce_confirm_send": "Enviar agora",
   "admin_announce_confirm_back": "Voltar e editar",
   "admin_announce_sent": "Notificação enviada.",
@@ -616,8 +781,17 @@
   "admin_history_empty": "Nenhuma notificação enviada ainda.",
   "admin_history_by": "Por {author}",
   "admin_history_to_person": "Para {username}",
-  "admin_history_notified": "Chegou a {count} contas",
-  "admin_history_notified_one": "Chegou a 1 conta",
+  "admin_history_notified": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Não chegou a nenhuma conta",
+        "count=1": "Chegou a 1 conta",
+        "count=*": "Chegou a {count} contas"
+      }
+    }
+  ],
   "admin_history_status_delivered": "Entregue",
   "admin_history_status_pending": "Na fila",
   "admin_history_status_failed": "Falhou",
@@ -673,5 +847,100 @@
   "instagram_reconcile_hint": "Confira a conta no Instagram antes de registrar o link de uma publicação. Uma resposta perdida não gera uma nova tentativa de publicação.",
   "instagram_permalink": "Link da publicação",
   "instagram_reconcile": "Registrar publicação",
-  "instagram_reconcile_invalid": "Informe um link válido de publicação do Instagram."
+  "instagram_reconcile_invalid": "Informe um link válido de publicação do Instagram.",
+  "image_crop_title": "Enquadrar a imagem",
+  "image_crop_hint": "Arraste a imagem para movê-la e aproxime ou afaste com os botões, a roda do mouse ou o gesto de pinça. Com o quadro em foco, as setas movem e + e − ajustam o zoom.",
+  "image_crop_area": "Área de recorte",
+  "image_crop_zoom_in": "Aproximar",
+  "image_crop_zoom_out": "Afastar",
+  "image_crop_preview": "Prévia",
+  "image_crop_use": "Usar este recorte",
+  "image_crop_cancel": "Cancelar",
+  "image_crop_failed": "Não foi possível recortar esta imagem. Tente outra.",
+  "admin_nav_queue": "Fila de aprovação",
+  "admin_nav_catalog": "Catálogo",
+  "admin_kind_platform": "Plataforma",
+  "admin_kind_tag": "Tag",
+  "admin_queue_title": "Fila de aprovação",
+  "admin_queue_lede": "Sugestões de plataformas e tags de quem cria mesas. Aprove, renomeie, mescle com uma entrada que já existe ou recuse.",
+  "admin_queue_empty": "Nenhuma sugestão esperando por você.",
+  "admin_queue_suggested_by": "Sugerida por @{username}",
+  "admin_queue_suggested_by_gone": "Sugerida por uma conta que não existe mais",
+  "admin_queue_suggested_on": "em {date}",
+  "admin_queue_used_in": "Usada em",
+  "admin_queue_unused": "Nenhuma mesa usa esta sugestão agora.",
+  "admin_queue_duplicate": "Parece com “{name}”, que já está no catálogo.",
+  "admin_queue_approve": "Aprovar",
+  "admin_queue_rename": "Renomear",
+  "admin_queue_reject": "Recusar",
+  "admin_queue_merge": "Mesclar",
+  "admin_queue_merge_with": "Mesclar com {name}",
+  "admin_queue_decisions": "Decisões recentes",
+  "admin_queue_decisions_empty": "Nenhuma decisão ainda.",
+  "admin_decision_by": "por @{username}",
+  "admin_decision_by_gone": "por alguém que saiu",
+  "admin_decision_created": "Criação de {name} ({kind})",
+  "admin_decision_approved": "Aprovação de {name} ({kind})",
+  "admin_decision_rejected": "Recusa de {name} ({kind})",
+  "admin_decision_renamed": "Renomeação de {from} para {name} ({kind})",
+  "admin_decision_merged": "Mesclagem de {name} em {into} ({kind})",
+  "admin_decision_disabled": "Desativação de {name} ({kind})",
+  "admin_catalog_title": "Catálogo",
+  "admin_catalog_lede": "Plataformas e tags que quem cria mesas pode escolher. Entradas desativadas continuam nas mesas que já as têm, mas saem da lista de escolha.",
+  "admin_catalog_tab_platforms": "Plataformas",
+  "admin_catalog_tab_tags": "Tags",
+  "admin_catalog_search": "Buscar por nome",
+  "admin_catalog_search_apply": "Buscar",
+  "admin_catalog_new_platform": "Nova plataforma",
+  "admin_catalog_new_tag": "Nova tag",
+  "admin_catalog_name": "Nome",
+  "admin_catalog_origin": "Origem",
+  "admin_catalog_uses": "Mesas",
+  "admin_catalog_status": "Situação",
+  "admin_catalog_actions": "Ações",
+  "admin_catalog_origin_catalog": "Catálogo",
+  "admin_catalog_origin_suggestion": "Sugestão de @{username}",
+  "admin_catalog_status_approved": "Ativa",
+  "admin_catalog_status_pending": "Em análise",
+  "admin_catalog_status_disabled": "Desativada",
+  "admin_catalog_empty": "Nenhuma entrada encontrada.",
+  "admin_catalog_more": "Mais ações para {name}",
+  "admin_catalog_disable": "Desativar",
+  "admin_catalog_page": "Página {page} de {pages}",
+  "admin_catalog_prev": "Página anterior",
+  "admin_catalog_next": "Próxima página",
+  "admin_catalog_pages_label": "Páginas do catálogo",
+  "admin_dialog_cancel": "Cancelar",
+  "admin_dialog_error": "Não foi possível concluir. Tente de novo.",
+  "admin_dialog_merge_title": "Mesclar “{name}”",
+  "admin_dialog_merge_text": "As mesas que usam “{name}” passam a usar a entrada escolhida, e “{name}” deixa de aparecer na lista.",
+  "admin_dialog_merge_into": "Mesclar com",
+  "admin_dialog_merge_pick": "Escolha uma entrada",
+  "admin_dialog_merge_confirm": "Mesclar",
+  "admin_dialog_reject_title": "Recusar “{name}”?",
+  "admin_dialog_reject_text": "As mesas que usam “{name}” perdem esta entrada, e ela não pode ser sugerida de novo.",
+  "admin_dialog_reject_confirm": "Recusar",
+  "admin_dialog_rename_title": "Renomear “{name}”",
+  "admin_dialog_rename_label": "Novo nome",
+  "admin_dialog_rename_hint": "De {min} a {max} caracteres. O endereço muda junto.",
+  "admin_dialog_rename_slug": "Endereço: {slug}",
+  "admin_dialog_rename_confirm": "Salvar nome",
+  "admin_dialog_disable_title": "Desativar “{name}”?",
+  "admin_dialog_disable_text": "As mesas que já têm esta entrada continuam com ela, mas ninguém mais poderá escolhê-la.",
+  "admin_dialog_disable_confirm": "Desativar",
+  "admin_dialog_create_title_platform": "Nova plataforma",
+  "admin_dialog_create_title_tag": "Nova tag",
+  "admin_dialog_create_confirm": "Adicionar",
+  "admin_dialog_err_taken": "Já existe uma entrada com esse nome.",
+  "admin_dialog_err_length": "Use de {min} a {max} caracteres.",
+  "admin_dialog_err_same": "Escolha outra entrada.",
+  "admin_dialog_err_not_approved": "Só dá para escolher uma entrada ativa.",
+  "admin_dialog_err_gone": "Esta entrada não existe mais.",
+  "admin_dialog_err_not_pending": "Esta sugestão já foi analisada.",
+  "admin_toast_approve": "Sugestão aprovada.",
+  "admin_toast_reject": "Sugestão recusada.",
+  "admin_toast_rename": "Nome atualizado.",
+  "admin_toast_merge": "Entradas mescladas.",
+  "admin_toast_disable": "Entrada desativada.",
+  "admin_toast_create": "Entrada adicionada."
 }

@@ -2,7 +2,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import {
   events,
+  conversations,
   gameTables,
+  messages,
   notifications,
   profileSocialLinks,
   profiles,
@@ -106,6 +108,27 @@ describe('exportAccount', () => {
   });
 });
 
+describe('exportAccount messages', () => {
+  it('holds what the person wrote, with where, and not what others wrote to them', async () => {
+    const table = await makeTable(other, { title: 'Chat da mesa' });
+    const [chat] = await test.db
+      .insert(conversations)
+      .values({ kind: 'table', tableId: table.id })
+      .returning();
+    await test.db.insert(messages).values([
+      { conversationId: chat.id, senderId: me, body: 'oi, mestre' },
+      { conversationId: chat.id, senderId: other, body: 'segredo do bruno' },
+    ]);
+
+    const data = await exportAccount(test.db, me, 'ana@example.com');
+
+    expect(data.messagesSent).toEqual([
+      expect.objectContaining({ kind: 'table', table: 'Chat da mesa', body: 'oi, mestre' }),
+    ]);
+    expect(JSON.stringify(data)).not.toContain('segredo do bruno');
+  });
+});
+
 describe('closeAccount', () => {
   it("disables the person's active tables with an event each, and removes their seats and ratings", async () => {
     const gm = id(10);
@@ -135,6 +158,7 @@ describe('closeAccount', () => {
       await test.db.select().from(registrations).where(eq(registrations.playerId, gm)),
     ).toEqual([]);
     expect(await test.db.select().from(ratings).where(eq(ratings.playerId, gm))).toEqual([]);
+    expect(await test.db.select().from(messages).where(eq(messages.senderId, gm))).toEqual([]);
     // The other players keep their own seat record at the (now disabled) table.
     expect(
       await test.db.select().from(registrations).where(eq(registrations.tableId, active.id)),

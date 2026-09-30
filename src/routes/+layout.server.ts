@@ -1,6 +1,8 @@
 import { loadRead } from '$lib/server/reads/load';
+import { pendingCount } from '$lib/server/admin/catalog';
 import { can } from '$lib/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
+import { unreadConversations } from '$lib/server/messages/service';
 import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifications/service';
 import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
@@ -33,13 +35,14 @@ export const load: LayoutServerLoad = async (event) => {
     const cacheIdentity = (await locals.getUser())?.id ?? 'anonymous';
     const accountRead = await loadRead(event, 'account');
     // The bell: how many are unread, and the latest few for its menu.
-    const [unread, latest] =
+    const [unread, latest, messagesUnread] =
       profile && locals.db
         ? await Promise.all([
             unreadCount(locals.db, profile.id),
             listNotifications(locals.db, profile.id, { limit: BELL_LIMIT }),
+            unreadConversations(locals.db, profile.id),
           ])
-        : [0, []];
+        : [0, [], 0];
 
     return {
       authEnabled,
@@ -55,8 +58,10 @@ export const load: LayoutServerLoad = async (event) => {
         username: profile.username,
         avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
         isAdmin: can(profile, 'admin:access'),
-        pendingSuggestionsCount: 0,
+        pendingSuggestionsCount:
+          locals.db && can(profile, 'admin:access') ? await pendingCount(locals.db) : 0,
         notifications: { unread, latest },
+        messagesUnread,
       },
     };
   } catch (error) {

@@ -15,6 +15,8 @@ import {
   supabaseUrlOf,
 } from '$lib/server/images';
 import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
+import { directMessagesSchema } from '$lib/messages/schema';
+import { setDirectMessages } from '$lib/server/messages/service';
 import { deleteAccountSchema } from '$lib/profile/delete';
 import { photoSchema } from '$lib/profile/photo';
 import { profileSchema } from '$lib/profile/schema';
@@ -38,6 +40,11 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
     form: await superValidate(values, zod4(profileSchema), { errors: false }),
     photoForm: await superValidate(zod4(photoSchema)),
     deleteForm: await superValidate(zod4(deleteAccountSchema)),
+    messagesForm: await superValidate(
+      { enabled: profile?.directMessagesEnabled ?? true },
+      zod4(directMessagesSchema),
+      { errors: false },
+    ),
     email: user.email ?? '',
     avatarUrl: profile ? pictureOf(supabaseUrlOf(platform?.env), profile) : null,
     hasUploadedPhoto: Boolean(profile?.avatarPath),
@@ -59,6 +66,18 @@ export const actions: Actions = {
 
     await saveProfile(locals.db, user.id, form.data);
     return { form };
+  },
+
+  // The switch for direct messages: it saves on its own, apart from the profile form.
+  messages: async ({ request, locals, url }) => {
+    const user = await requireUser(locals, url);
+    if (!locals.db) error(503, 'Database not configured');
+
+    const messagesForm = await superValidate(request, zod4(directMessagesSchema));
+    if (!messagesForm.valid) return fail(400, { messagesForm });
+
+    await setDirectMessages(locals.db, user.id, messagesForm.data.enabled);
+    return { messagesForm };
   },
 
   photo: async ({ request, locals, url }) => {

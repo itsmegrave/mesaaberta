@@ -48,9 +48,7 @@
     <div class="flex items-baseline justify-between gap-3">
       <Slider.Label class="label-text font-semibold">{label}</Slider.Label>
       <Slider.ValueText class="text-sm font-semibold"
-        >{seats === 1
-          ? m.form_capacity_seats_one()
-          : m.form_capacity_seats({ count: seats })}</Slider.ValueText
+        >{m.form_capacity_seats({ count: seats })}</Slider.ValueText
       >
     </div>
     <Slider.Control class="flex h-12 items-center">

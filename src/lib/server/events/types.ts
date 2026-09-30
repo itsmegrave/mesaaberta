@@ -28,7 +28,17 @@ export type DomainEvent =
   | { type: 'UserSignedIn'; payload: { ip: string | null } }
   // An admin sent an announcement to the bell. The text is public by nature (everyone in the
   // audience reads it); the one recipient of a `specific_user` announcement is kept by id.
-  | { type: 'SystemAnnouncementSent'; payload: SystemAnnouncement };
+  | { type: 'SystemAnnouncementSent'; payload: SystemAnnouncement }
+  // An admin moderated the platform and tag catalog. The names are public; `into` is the entry a
+  // merge folded this one into.
+  | { type: 'CatalogEntryCreated'; payload: CatalogDecision }
+  | { type: 'CatalogEntryApproved'; payload: CatalogDecision }
+  | { type: 'CatalogEntryRejected'; payload: CatalogDecision }
+  | { type: 'CatalogEntryRenamed'; payload: CatalogDecision & { from: string } }
+  | { type: 'CatalogEntryMerged'; payload: CatalogDecision & { into: string } }
+  | { type: 'CatalogEntryDisabled'; payload: CatalogDecision };
+
+export type CatalogDecision = { kind: 'platform' | 'tag'; entryId: string; name: string };
 
 type Registration = { tableId: string; slug: string; playerId: string };
 

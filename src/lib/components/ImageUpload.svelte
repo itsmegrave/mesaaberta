@@ -4,6 +4,8 @@
   // size are checked by the form's schema, not here, so every problem reads the same way.
   import { FileUpload } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
+  import ImageCropper from '$lib/components/ImageCropper.svelte';
+  import { isDecodable } from '$lib/forms/decodable';
   import { IMAGE_TYPES } from '$lib/forms/files';
   import { m } from '$lib/paraglide/messages';
 
@@ -31,6 +33,19 @@
   } = $props();
 
   let mounted = $state(false);
+  // The picked picture waits in the cropper; what comes out (or nothing, when it is cancelled) is
+  // what the field then holds. A file the crop can't take goes on as it is, for the schema to refuse.
+  let framing = $state<{ file: File; done: (files: File[]) => void } | null>(null);
+  const frame = async (files: File[]) => {
+    const [file] = files;
+    if (!file || !(IMAGE_TYPES as readonly string[]).includes(file.type)) return files;
+    if (!(await isDecodable(file))) return files;
+    return new Promise<File[]>((done) => (framing = { file, done }));
+  };
+  const finish = (files: File[]) => {
+    framing?.done(files);
+    framing = null;
+  };
   onMount(() => (mounted = true));
 
   const accept = IMAGE_TYPES.join(',');
@@ -69,6 +84,7 @@
     <FileUpload
       {name}
       maxFiles={1}
+      transformFiles={frame}
       ids={{ hiddenInput: id }}
       onFileChange={(details) => onpick(details.acceptedFiles)}
       class="grid gap-2"
@@ -147,6 +163,16 @@
       class="mt-1 block w-full text-sm file:mr-3 file:h-12 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
       aria-invalid={error ? 'true' : undefined}
       aria-describedby={describedby}
+    />
+  {/if}
+  {#if framing}
+    <ImageCropper
+      file={framing.file}
+      aspectRatio={5 / 2}
+      width={1200}
+      onconfirm={(cropped) => finish([cropped])}
+      oncancel={() => finish([])}
+      onunreadable={() => finish([framing!.file])}
     />
   {/if}
   {#if error}<p id="{id}-error" role="alert" class="mt-1 text-sm font-semibold text-error-700-300">

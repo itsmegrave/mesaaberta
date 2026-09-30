@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   foreignKey,
   jsonb,
@@ -91,6 +92,9 @@ export const profiles = pgTable(
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
+    // Off: nobody can start a direct message with this person, and existing ones stop taking new
+    // messages. Table chats are not affected.
+    directMessagesEnabled: boolean('direct_messages_enabled').notNull().default(true),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     ...timestamps,
@@ -440,6 +444,7 @@ export const notificationCategory = pgEnum('notification_category', [
   'catalog',
   'moderation',
   'system',
+  'messages',
 ]);
 
 // The bell in the header. A domain notification keeps its type and ids only, and is worded when it
@@ -478,5 +483,87 @@ export const notifications = pgTable(
     index('notifications_recipient_unread_idx')
       .on(notification.recipientId, notification.createdAt)
       .where(sql`${notification.readAt} IS NULL`),
+    // One unread "new messages" notification per conversation: the next message updates it.
+    uniqueIndex('notifications_unread_message_idx')
+      .on(notification.recipientId, sql`(${notification.metadata}->>'conversationId')`)
+      .where(sql`${notification.type} = 'message_received' AND ${notification.readAt} IS NULL`),
+  ],
+).enableRLS();
+
+// A table's chat is a `table` conversation (one per table, its members are the GM and the confirmed
+// players); anything else is a `direct` one between two people.
+export const conversationKind = pgEnum('conversation_kind', ['table', 'direct']);
+
+export const conversations = pgTable(
+  'conversations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    kind: conversationKind('kind').notNull(),
+    // The table of a `table` conversation. Deleting a table's chat is the cron's job (see
+    // pruneTableChats), so the foreign key restricts.
+    tableId: uuid('table_id').references(() => gameTables.id),
+    // `low:high` of the two profile ids of a `direct` conversation, so a pair has one thread.
+    pairKey: text('pair_key'),
+    lastMessageAt: timestamp('last_message_at', { withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (conversation) => [
+    uniqueIndex('conversations_table_unique')
+      .on(conversation.tableId)
+      .where(sql`${conversation.kind} = 'table'`),
+    uniqueIndex('conversations_pair_unique')
+      .on(conversation.pairKey)
+      .where(sql`${conversation.kind} = 'direct'`),
+    index('conversations_last_message_idx').on(conversation.lastMessageAt),
+    check(
+      'conversations_kind_matches_columns',
+      sql`(${conversation.kind} = 'table' AND ${conversation.tableId} IS NOT NULL AND ${conversation.pairKey} IS NULL) OR (${conversation.kind} = 'direct' AND ${conversation.pairKey} IS NOT NULL AND ${conversation.tableId} IS NULL)`,
+    ),
+  ],
+).enableRLS();
+
+// Who is in a conversation, and how far they have read. A table conversation's rows follow the
+// registrations; a direct one has its two people for good.
+export const conversationMembers = pgTable(
+  'conversation_members',
+  {
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    // Messages after this are unread. Null: nothing read yet.
+    lastReadAt: timestamp('last_read_at', { withTimezone: true }),
+    // Muted: the conversation stays in the inbox but adds nothing to the bell.
+    mutedAt: timestamp('muted_at', { withTimezone: true }),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (member) => [
+    primaryKey({ columns: [member.conversationId, member.profileId] }),
+    index('conversation_members_profile_idx').on(member.profileId),
+  ],
+).enableRLS();
+
+// Plain text, at most MESSAGE_MAX_LENGTH characters. `senderId` is set null when the account is
+// closed, so the others keep the thread but not the person's words (see closeAccount).
+export const messages = pgTable(
+  'messages',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    senderId: uuid('sender_id').references(() => profiles.id, { onDelete: 'set null' }),
+    body: text('body').notNull(),
+    // What a direct message is about, when it started from a table ("Sobre a mesa X").
+    tableId: uuid('table_id').references(() => gameTables.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (message) => [
+    index('messages_conversation_created_idx').on(message.conversationId, message.createdAt.desc()),
+    index('messages_sender_idx').on(message.senderId),
+    // Mirrors MESSAGE_MAX_LENGTH in $lib/messages/schema.
+    check('messages_body_length', sql`char_length(${message.body}) BETWEEN 1 AND 2000`),
   ],
 ).enableRLS();

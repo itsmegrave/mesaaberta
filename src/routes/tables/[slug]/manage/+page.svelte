@@ -68,17 +68,13 @@
           : m.table_recurrence_weekly(),
   );
   const seats = $derived(
-    table.seatsLeft === 0
-      ? m.table_full()
-      : table.seatsLeft === 1
-        ? m.table_seat_left()
-        : m.table_seats_left({ count: table.seatsLeft }),
+    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
   );
   const number = new Intl.NumberFormat(locale, {
     maximumFractionDigits: 1,
     minimumFractionDigits: 1,
   });
-  const votes = (count: number) => (count === 1 ? m.rating_count_one() : m.rating_count({ count }));
+  const votes = (count: number) => m.rating_count({ count });
 
   const activityText = (item: (typeof data.activity)[number]) => {
     const player = atHandle(item.player ?? '');
@@ -477,6 +473,10 @@
             >{m.table_edit()}</a
           >
           <a href={tablePage} class="{secondary} h-12 w-full">{m.manage_view_page()}</a>
+          <a
+            href={localizedHref(`/tables/${table.slug}/chat`, locale)}
+            class="{secondary} h-12 w-full">{m.messages_table_chat()}</a
+          >
         </div>
       </div>
     </aside>

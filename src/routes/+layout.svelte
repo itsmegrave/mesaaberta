@@ -1,9 +1,12 @@
 <script lang="ts">
   import './layout.css';
-  import { QueryClientProvider } from '@tanstack/svelte-query';
+  import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
   import { createQueryClient } from '$lib/query/client';
   import { provideQueryClient } from '$lib/query/context';
   import { pageQuery } from '$lib/query/page.svelte';
+  import { apiRead } from '$lib/api/http';
+  import { BADGES_KEY, type Badges } from '$lib/query/badges';
+  import { browser } from '$app/environment';
   const client = createQueryClient();
   provideQueryClient(client);
   import { asset, resolve } from '$app/paths';
@@ -34,6 +37,26 @@
       ...(accountQuery.data?.summary ?? {}),
     },
   });
+  // The bell and the messages link count what is unread. The count is read again every 30 seconds
+  // while the tab is visible and when it comes back into focus (a background tab does not poll).
+  const badges = createQuery(
+    () => ({
+      queryKey: BADGES_KEY,
+      queryFn: ({ signal }: { signal: AbortSignal }) => apiRead<Badges>('/api/badges', signal),
+      enabled: browser && !!layoutData.account,
+      refetchInterval: 30_000,
+      refetchOnWindowFocus: true,
+      staleTime: 15_000,
+    }),
+    () => client,
+  );
+  // A page load with other numbers (a notification was read, say) makes the poll catch up.
+  $effect(() => {
+    void layoutData.account?.notifications.unread;
+    void layoutData.account?.messagesUnread;
+    void client.invalidateQueries({ queryKey: BADGES_KEY });
+  });
+
   // Identity is intentionally captured once, then compared on each server navigation.
   // svelte-ignore state_referenced_locally
   let previousIdentity = layoutData.cacheIdentity;
@@ -156,7 +179,7 @@
 
         {#if data.account}
           <NotificationBell
-            unread={data.account.notifications.unread}
+            unread={badges.data?.unread ?? data.account.notifications.unread}
             latest={data.account.notifications.latest}
           />
         {/if}
@@ -167,6 +190,7 @@
             avatarUrl={data.account.avatarUrl}
             isAdmin={data.account.isAdmin}
             pendingSuggestionsCount={data.account.pendingSuggestionsCount}
+            messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
           />
         {:else if data.authEnabled && data.released}
           <a

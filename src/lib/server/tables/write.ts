@@ -1,4 +1,5 @@
 import { and, count, eq, like } from 'drizzle-orm';
+import { addTableMember } from '../messages/service';
 import type { AnyDb } from '../db/client';
 import { gameTables, registrations, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
@@ -103,6 +104,7 @@ export async function createTable(
           .values({ ...columns, slug, gmId: actor!.id })
           .returning({ id: gameTables.id });
         await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input, actor!.id));
+        await addTableMember(tx as unknown as AnyDb, created.id, actor!.id);
 
         return recordEvent(
           tx as unknown as AnyDb,

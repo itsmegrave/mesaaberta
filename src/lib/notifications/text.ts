@@ -61,6 +61,18 @@ export function notificationText(item: Shown): string {
       return m.notification_moderation_notice();
     case 'system_announcement':
       return m.notification_unknown();
+    case 'message_received': {
+      const many = Number(item.metadata.count) > 1;
+      const count = Number(item.metadata.count);
+      if (item.metadata.kind === 'table') {
+        return many
+          ? m.notification_message_group_many({ count, table })
+          : m.notification_message_group_one({ table });
+      }
+      return many
+        ? m.notification_message_direct_many({ count, player })
+        : m.notification_message_direct_one({ player });
+    }
   }
 }
 

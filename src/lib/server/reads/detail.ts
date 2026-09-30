@@ -1,4 +1,6 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
+import { profiles } from '../db/schema';
 import { can, joinBlocker, rateBlocker } from '../auth/policy';
 import { imageUrl, supabaseUrlOf } from '../images';
 import { firstSessionEnded, gmRating, ratingOf } from '../ratings/service';
@@ -46,6 +48,12 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
     canEdit: can(profile, 'table:edit', { gmId }),
     signedIn,
+    // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.
+    gmAcceptsDirect: await locals
+      .db!.select({ enabled: profiles.directMessagesEnabled })
+      .from(profiles)
+      .where(eq(profiles.id, gmId))
+      .then((rows) => rows[0]?.enabled ?? false),
     isGm: profile?.id === gmId,
     myStatus,
     canJoin,
