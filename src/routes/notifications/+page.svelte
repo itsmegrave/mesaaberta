@@ -33,6 +33,7 @@
     { category: 'table', label: m.notifications_filter_table },
     { category: 'registration', label: m.notifications_filter_registration },
     { category: 'rating', label: m.notifications_filter_rating },
+    { category: 'messages', label: m.notifications_filter_messages },
   ];
 
   const unread = $derived(data.notifications.some((item) => !item.read));

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import Avatar from '$lib/components/Avatar.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
@@ -11,11 +12,14 @@
     avatarUrl,
     isAdmin = false,
     pendingSuggestionsCount = 0,
+    messagesUnread = 0,
   }: {
     name: string;
     avatarUrl: string | null;
     isAdmin?: boolean;
     pendingSuggestionsCount?: number;
+    /** Conversations with something unread. */
+    messagesUnread?: number;
   } = $props();
 
   const locale = getLocale();
@@ -105,6 +109,26 @@
               <path d="M3.5 10h17M8 3v4M16 3v4" />
             </svg>
             {m.nav_my_tables()}
+          </a>
+
+          <a
+            href={localizedHref('/messages', locale)}
+            class={item}
+            aria-label={messagesUnread > 0
+              ? m.messages_menu_unread({ count: messagesUnread })
+              : undefined}
+          >
+            <Icon name="message-circle" size={20} />
+            {m.messages_menu()}
+            {#if messagesUnread > 0}
+              <span
+                data-testid="messages-count"
+                aria-hidden="true"
+                class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 font-bold"
+              >
+                {messagesUnread > 9 ? '9+' : messagesUnread}
+              </span>
+            {/if}
           </a>
 
           {#if isAdmin}

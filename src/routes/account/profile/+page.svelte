@@ -14,6 +14,8 @@
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { IMAGE_TYPES } from '$lib/forms/files';
   import { photoSchema } from '$lib/profile/photo';
+  import { Switch } from '@skeletonlabs/skeleton-svelte';
+  import { directMessagesSchema } from '$lib/messages/schema';
   import { fileProxy, superForm } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
 
@@ -54,6 +56,25 @@
     delayed: closingDelayed,
     timeout: closingTimeout,
   } = closing;
+
+  // The direct messages switch saves as soon as it is flipped.
+  // svelte-ignore state_referenced_locally
+  const messaging = superForm(data.messagesForm, {
+    id: 'direct-messages',
+    dataType: 'json',
+    validators: zod4Client(directMessagesSchema),
+    resetForm: false,
+    invalidateAll: false,
+    onResult: ({ result }) => {
+      if (result.type === 'success') toast.success(m.messages_setting_saved());
+      else toast.error(m.messages_setting_failed());
+    },
+    onError: () => {
+      $messagingValues.enabled = !$messagingValues.enabled;
+      toast.error(m.messages_setting_failed());
+    },
+  });
+  const { form: messagingValues, enhance: messagingEnhance, submit: submitMessaging } = messaging;
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,
@@ -175,6 +196,27 @@
             onsaved={() => toast.success(m.account_profile_saved())}
           />
         </div>
+      </section>
+
+      <section aria-labelledby="direct-messages" class={card}>
+        <h2 id="direct-messages" class={heading}>{m.messages_setting_title()}</h2>
+        <form method="POST" action="?/messages" use:messagingEnhance class="mt-4">
+          <Switch
+            checked={$messagingValues.enabled}
+            onCheckedChange={(event) => {
+              $messagingValues.enabled = event.checked;
+              submitMessaging();
+            }}
+            class="flex items-center justify-between gap-4"
+          >
+            <Switch.Label class="font-semibold">{m.messages_setting_label()}</Switch.Label>
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+            <Switch.HiddenInput />
+          </Switch>
+        </form>
+        <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
       </section>
 
       <section aria-labelledby="your-data" class={card}>
