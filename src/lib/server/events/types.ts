@@ -36,7 +36,9 @@ export type DomainEvent =
   | { type: 'CatalogEntryRejected'; payload: CatalogDecision }
   | { type: 'CatalogEntryRenamed'; payload: CatalogDecision & { from: string } }
   | { type: 'CatalogEntryMerged'; payload: CatalogDecision & { into: string } }
-  | { type: 'CatalogEntryDisabled'; payload: CatalogDecision };
+  | { type: 'CatalogEntryDisabled'; payload: CatalogDecision }
+  // An admin put a failed event back in line (the operations page). Ids and types only.
+  | { type: 'QueueRetryRequested'; payload: { eventId: string; eventType: string } };
 
 export type CatalogDecision = { kind: 'platform' | 'tag'; entryId: string; name: string };
 
