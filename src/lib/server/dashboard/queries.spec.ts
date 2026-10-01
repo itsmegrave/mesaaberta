@@ -99,6 +99,7 @@ describe('listPlaying', () => {
     it('is on for a seat whose first session has ended and that has no rating yet', async () => {
       const table = await makeTable({
         title: 'Jogada',
+        status: 'concluded',
         startsAt: new Date('2026-09-01T20:00:00Z'),
       });
       await seat(table.id, me);
@@ -111,6 +112,7 @@ describe('listPlaying', () => {
     it('shows the rating instead once there is one, and offers to change it', async () => {
       const table = await makeTable({
         title: 'Avaliada',
+        status: 'concluded',
         startsAt: new Date('2026-09-01T20:00:00Z'),
       });
       await seat(table.id, me);
@@ -119,6 +121,19 @@ describe('listPlaying', () => {
       const item = (await listPlaying(test.db, me, now)).find((p) => p.title === 'Avaliada');
 
       expect(item).toMatchObject({ canRate: true, rating: { gmScore: 5 } });
+    });
+
+    it('is off until the GM confirms the session happened', async () => {
+      const table = await makeTable({
+        title: 'Aguardando',
+        status: 'awaiting_confirmation',
+        startsAt: new Date('2026-09-01T20:00:00Z'),
+      });
+      await seat(table.id, me);
+
+      const item = (await listPlaying(test.db, me, now)).find((p) => p.title === 'Aguardando');
+
+      expect(item).toMatchObject({ canRate: false, tableStatus: 'awaiting_confirmation' });
     });
 
     it('is off before the first session ends, and for a request that is still pending', async () => {

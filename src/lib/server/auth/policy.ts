@@ -1,4 +1,6 @@
 import type { profiles } from '../db/schema';
+import { nextStatus } from '../../tables/lifecycle-machine';
+import type { TableStatus } from '../../tables/status';
 import { Forbidden } from '../errors';
 
 /**
@@ -17,17 +19,20 @@ type Resources = {
   'table:create': undefined;
   'table:edit': { gmId: string };
   'table:disable': { gmId: string };
+  /** After the session: say it happened, that it did not, or move it to a new date. */
+  'table:confirm': { gmId: string; tableStatus: TableStatus };
   /** The facts a join depends on, read inside the capacity transaction. */
   'table:join': {
     gmId: string;
-    tableStatus: 'active' | 'disabled';
+    tableStatus: TableStatus;
     seatsLeft: number;
     alreadyRegistered: boolean;
   };
-  /** Rating a table and its GM: needs a confirmed seat and a first session that has ended. */
+  /** Rating a table and its GM: needs a confirmed seat and a session the GM confirmed happened. */
   'table:rate': {
     gmId: string;
     registration: 'pending' | 'confirmed' | null;
+    tableStatus: TableStatus;
     firstSessionEnded: boolean;
   };
   /** Approve or decline a request, or remove a player. */
@@ -65,8 +70,8 @@ export function joinBlocker(
 }
 
 /**
- * Why this actor may not rate, or null if they may: a confirmed registration, not the GM, and the
- * first session has ended (you rate what you played).
+ * Why this actor may not rate, or null if they may: a confirmed registration, not the GM, and a
+ * session the GM confirmed happened (you rate what you played).
  */
 export function rateBlocker(
   actor: Actor | null,
@@ -74,7 +79,8 @@ export function rateBlocker(
 ): 'forbidden' | 'not_registered' | 'too_early' | null {
   if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
   if (facts.registration !== 'confirmed') return 'not_registered';
-  if (!facts.firstSessionEnded) return 'too_early';
+  // Until the GM says the session happened, there is nothing to rate yet.
+  if (!facts.firstSessionEnded || facts.tableStatus !== 'concluded') return 'too_early';
 
   return null;
 }
@@ -85,6 +91,10 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'table:create': () => true,
   'table:edit': isGmOrAdmin,
   'table:disable': isGmOrAdmin,
+  'table:confirm': (actor, table) =>
+    table !== undefined &&
+    nextStatus(table.tableStatus, 'HAPPENED') !== null &&
+    isGmOrAdmin(actor, table),
   'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
   'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,
   'registration:manage': isGmOrAdmin,

@@ -54,7 +54,7 @@ describe('runSweeper', () => {
     const rejects = () => Promise.reject(new Error('db gone'));
     // select().from().where().orderBy().limit(), the sweep's query, failing at the end
     const chain = { from: () => chain, where: () => chain, orderBy: () => chain, limit: rejects };
-    const broken = { select: () => chain };
+    const broken = { select: () => chain, transaction: async () => [] };
     const l = log();
 
     await expect(

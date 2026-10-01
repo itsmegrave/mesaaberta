@@ -15,6 +15,8 @@ type NotifyingEvent = Extract<
     type:
       | 'TableUpdated'
       | 'TableDisabled'
+      | 'TableAwaitingConfirmation'
+      | 'TableConcluded'
       | 'JoinRequested'
       | 'JoinApproved'
       | 'JoinDeclined'
@@ -52,6 +54,14 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
         type: 'table_cancelled',
         link: null,
       };
+    case 'TableAwaitingConfirmation':
+      return { to: [gmId], type: 'session_confirmation', link: manage };
+    case 'TableConcluded':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'rating_prompt',
+        link: page,
+      };
     case 'JoinRequested':
       return { to: [gmId], type: 'join_requested', link: manage };
     case 'PlayerJoined':
@@ -79,6 +89,8 @@ export const notificationHandler: Handler = {
   types: [
     'TableUpdated',
     'TableDisabled',
+    'TableAwaitingConfirmation',
+    'TableConcluded',
     'JoinRequested',
     'JoinApproved',
     'JoinDeclined',

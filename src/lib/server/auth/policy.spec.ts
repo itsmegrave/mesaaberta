@@ -156,7 +156,12 @@ describe('registration:leave', () => {
 });
 
 describe('table:rate', () => {
-  const ready = { gmId: 'gm', registration: 'confirmed' as const, firstSessionEnded: true };
+  const ready = {
+    gmId: 'gm',
+    registration: 'confirmed' as const,
+    tableStatus: 'concluded' as const,
+    firstSessionEnded: true,
+  };
 
   it.each([
     ['a player with a confirmed seat', member, true],
@@ -179,6 +184,16 @@ describe('table:rate', () => {
       { ...ready, firstSessionEnded: false },
       'too_early',
     ],
+    [
+      'played in a session the GM has not confirmed happened',
+      { ...ready, tableStatus: 'awaiting_confirmation' as const },
+      'too_early',
+    ],
+    [
+      'was at a table the GM said did not happen',
+      { ...ready, tableStatus: 'not_held' as const },
+      'too_early',
+    ],
   ])('is refused for a player who %s, and says why', (_what, facts, reason) => {
     expect(can(member, 'table:rate', facts)).toBe(false);
     expect(rateBlocker(member, facts)).toBe(reason);
@@ -196,4 +211,25 @@ describe('table:rate', () => {
   it('refuses a rating it is given no facts for', () => {
     expect(can(member, 'table:rate', undefined as never)).toBe(false);
   });
+});
+
+describe('table:confirm', () => {
+  const waiting = { gmId: 'gm', tableStatus: 'awaiting_confirmation' as const };
+
+  it.each([
+    ['the GM of the table', gm, true],
+    ['an admin', admin, true],
+    ['another member', member, false],
+    ['an anonymous visitor', null, false],
+    ['a suspended GM', { ...gm, status: 'suspended' as const }, false],
+  ])('%s: %s', (_who, who, allowed) => {
+    expect(can(who, 'table:confirm', waiting)).toBe(allowed);
+  });
+
+  it.each(['active', 'disabled', 'concluded', 'not_held'] as const)(
+    'is refused to the GM once the table is %s: the answer is only asked once',
+    (tableStatus) => {
+      expect(can(gm, 'table:confirm', { ...waiting, tableStatus })).toBe(false);
+    },
+  );
 });

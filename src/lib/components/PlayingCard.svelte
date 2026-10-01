@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
   import { atHandle } from '$lib/profile/handle';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
@@ -13,7 +14,7 @@
     systemName: string;
     gmName: string;
     status: 'pending' | 'confirmed';
-    tableStatus: 'active' | 'disabled';
+    tableStatus: TableStatus;
     timezone: string;
     nextAt: Date | null;
     canRate: boolean;
@@ -38,7 +39,9 @@
         {m.dash_you_have_seat()}
       </span>
     {/if}
-    {#if item.tableStatus === 'disabled'}<span class="font-semibold">{m.dash_disabled()}</span>{/if}
+    {#if tableStatusLabel(item.tableStatus)}<span class="font-semibold"
+        >{tableStatusLabel(item.tableStatus)}</span
+      >{/if}
     <span class="font-semibold text-muted">{item.systemName}</span>
   </p>
 

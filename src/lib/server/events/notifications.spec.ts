@@ -144,4 +144,31 @@ describe('notificationHandler', () => {
 
     expect(await written()).toHaveLength(2);
   });
+
+  it('asks the GM, and only the GM, whether a session that is over happened', async () => {
+    const event = {
+      ...stored({ type: 'TableAwaitingConfirmation', payload: table }, gm),
+      actorId: null,
+    };
+    await handle(event);
+    await handle(event);
+
+    expect(await written()).toEqual([
+      expect.objectContaining({
+        to: gm,
+        type: 'session_confirmation',
+        link: '/tables/mesa/manage',
+      }),
+    ]);
+  });
+
+  it('invites the confirmed players, not a pending request, to rate once the GM says it happened', async () => {
+    await handle(stored({ type: 'TableConcluded', payload: table }, gm));
+
+    const rows = await written();
+    expect(rows.map((row) => row.to).sort()).toEqual([ana, bia].sort());
+    expect(rows.every((row) => row.type === 'rating_prompt' && row.link === '/tables/mesa')).toBe(
+      true,
+    );
+  });
 });

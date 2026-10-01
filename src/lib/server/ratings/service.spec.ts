@@ -27,6 +27,13 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
+// Where each table ends up once its players have joined: the GM said the session happened (only
+// then is there something to rate), unless a test says otherwise.
+const finalStatus = new Map<
+  string,
+  'concluded' | 'awaiting_confirmation' | 'not_held' | 'active'
+>();
+
 const makeTable = async (over: Partial<typeof gameTables.$inferInsert> = {}) => {
   const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
   const slug = `nota-${++counter}`;
@@ -43,8 +50,11 @@ const makeTable = async (over: Partial<typeof gameTables.$inferInsert> = {}) => 
       gmId: gm.id,
       systemId: system.id,
       ...over,
+      // Players join while it is open (see `seated`).
+      status: 'active',
     })
     .returning();
+  finalStatus.set(table.slug, (over.status as never) ?? 'concluded');
   return table;
 };
 
@@ -54,7 +64,15 @@ const input = (over: Partial<Parameters<typeof submitRating>[3]> = {}) => ({
   ...over,
 });
 
-const seated = async (n: number, slug: string) => joinTable(test.db, player(n), slug);
+const seated = async (n: number, slug: string) => {
+  await test.db.update(gameTables).set({ status: 'active' }).where(eq(gameTables.slug, slug));
+  const seat = await joinTable(test.db, player(n), slug);
+  await test.db
+    .update(gameTables)
+    .set({ status: finalStatus.get(slug) ?? 'concluded' })
+    .where(eq(gameTables.slug, slug));
+  return seat;
+};
 
 describe('firstSessionEnded', () => {
   const table = { startsAt: past, durationMinutes: 240 };
@@ -126,6 +144,19 @@ describe('submitRating', () => {
     });
     expect(await ratingOf(test.db, table.id, id(2))).toBeNull();
   });
+
+  it.each(['active', 'awaiting_confirmation', 'not_held'] as const)(
+    'refuses a rating while the table is %s, even after its session: the GM has not said it happened',
+    async (status) => {
+      const table = await makeTable({ status });
+      await seated(2, table.slug);
+
+      await expect(
+        submitRating(test.db, player(2), table.slug, input(), after),
+      ).rejects.toMatchObject({ name: 'TooEarly' });
+      expect(await ratingOf(test.db, table.id, id(2))).toBeNull();
+    },
+  );
 
   it.each([
     ['the GM of the table', () => gm],
