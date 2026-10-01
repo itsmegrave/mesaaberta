@@ -1,4 +1,4 @@
-import { mixpanelHandler, type AnalyticsEnv } from '../analytics/mixpanel';
+import { analyticsHandlers, type AnalyticsEnv } from '../analytics';
 import { instagramQueueHandler } from '../instagram/publisher';
 import type { Handler } from './types';
 import { inviteHandler, type InviteEnv } from './invites';
@@ -14,6 +14,5 @@ import { announcementHandler } from './announcements';
 export function handlersFor(env: (InviteEnv & AnalyticsEnv) | undefined): readonly Handler[] {
   const handler = inviteHandler(env);
   const bell = [notificationHandler, announcementHandler, instagramQueueHandler];
-  const analytics = mixpanelHandler(env);
-  return [...(handler ? [handler] : []), ...bell, ...(analytics ? [analytics] : [])];
+  return [...(handler ? [handler] : []), ...bell, ...analyticsHandlers(env)];
 }
