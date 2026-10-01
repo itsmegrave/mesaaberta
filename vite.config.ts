@@ -1,6 +1,5 @@
 import { existsSync } from 'node:fs';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
-import { resolve } from 'node:path';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
@@ -94,28 +93,10 @@ export default defineConfig({
     projects: [
       {
         extends: './vite.config.ts',
-        // The dependency scan doesn't know the `svelte` export condition, so it can't resolve this
-        // subpath, gives up, and Vite then finds dependencies late and reloads mid-run, which breaks
-        // unrelated specs. Pointing it at the file skips the exports map.
         optimizeDeps: {
           // Imported on demand (the emoji picker, the editor), so the scan meets them late and
           // reloads the page mid-run, which fails whichever spec is loading at that moment.
-          include: [
-            '@iconify/svelte/dist/OfflineIcon.svelte',
-            'emoji-picker-element/picker',
-            '@tiptap/core',
-            '@tiptap/starter-kit',
-            'xss',
-          ],
-          rolldownOptions: {
-            resolve: {
-              alias: {
-                '@iconify/svelte/dist/OfflineIcon.svelte': resolve(
-                  'node_modules/@iconify/svelte/dist/OfflineIcon.svelte',
-                ),
-              },
-            },
-          },
+          include: ['emoji-picker-element/picker', '@tiptap/core', '@tiptap/starter-kit', 'xss'],
         },
         test: {
           name: 'client',

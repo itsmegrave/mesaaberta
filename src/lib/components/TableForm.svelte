@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+  import { modalityIcon } from '$lib/tables/modality-icon';
   import CepLookup from './CepLookup.svelte';
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
@@ -359,13 +361,11 @@
       </div>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
-        >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as [value, label] (value)}<label
+        >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as const as [value, label] (value)}<label
             class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-            ><input
-              type="radio"
-              name="modality"
-              {value}
-              bind:group={$form.modality}
+            ><input type="radio" name="modality" {value} bind:group={$form.modality} /><Icon
+              name={modalityIcon(value)}
+              size={20}
             />{label}</label
           >{/each}
       </fieldset>
@@ -529,7 +529,8 @@
       <TableCard table={preview} />
     </div>
     <ul class="mt-4 grid gap-2 rounded-lg border border-surface-200-800 bg-panel p-5 text-sm">
-      <li>
+      <li class="flex items-center gap-2">
+        <Icon name={modalityIcon($form.modality)} size={16} />
         {$form.modality === 'in_person'
           ? `${m.table_modality_in_person()}${$form.locationArea ? ` · ${$form.locationArea}` : ''}`
           : m.table_modality_online()}

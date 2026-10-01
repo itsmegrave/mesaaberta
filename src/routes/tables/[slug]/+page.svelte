@@ -24,6 +24,7 @@
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import { modalityIcon } from '$lib/tables/modality-icon';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -281,7 +282,8 @@
         <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
           {m.table_modality()}
         </dt>
-        <dd class="col-span-2 border-b border-surface-200-800 py-3">
+        <dd class="col-span-2 flex items-center gap-2 border-b border-surface-200-800 py-3">
+          <Icon name={modalityIcon(table.modality)} size={18} />
           {table.modality === 'in_person'
             ? `${m.table_modality_in_person()} · ${table.locationArea}`
             : m.table_modality_online()}

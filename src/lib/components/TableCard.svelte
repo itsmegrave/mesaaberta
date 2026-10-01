@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+  import { modalityIcon } from '$lib/tables/modality-icon';
   import { atHandle } from '$lib/profile/handle';
   import { formatCardDate, formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
@@ -149,7 +151,8 @@
     </div>
 
     {#if table.modality}
-      <div class="mt-1 text-sm leading-normal text-muted">
+      <div class="mt-1 flex items-center gap-1.5 text-sm leading-normal text-muted">
+        <Icon name={modalityIcon(table.modality)} size={16} />
         {table.modality === 'in_person'
           ? `${m.table_modality_in_person()} · ${table.locationArea ?? ''}`
           : m.table_modality_online()}
