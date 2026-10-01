@@ -1,8 +1,14 @@
 import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import NotificationAction from './NotificationAction.svelte';
+import { postAction } from '$lib/forms/action';
+import { applyAction } from '$app/forms';
+
+vi.mock('$lib/forms/action', () => ({ postAction: vi.fn() }));
+vi.mock('$app/forms', () => ({ applyAction: vi.fn(async () => {}) }));
+afterEach(() => vi.resetAllMocks());
 
 const children = createRawSnippet(() => ({ render: () => '<span>Marcar como lida</span>' }));
 const submit = () => page.getByRole('button', { name: 'Marcar como lida' });
@@ -37,5 +43,48 @@ describe('NotificationAction', () => {
     await expect.element(submit()).toHaveAttribute('type', 'submit');
     await expect.element(submit()).toHaveClass('btn', 'h-12');
     await expect.element(submit()).not.toHaveAttribute('aria-busy');
+  });
+
+  it('submits read all once while pending and delegates the redirect to the router', async () => {
+    let finish!: (result: Awaited<ReturnType<typeof postAction>>) => void;
+    vi.mocked(postAction).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(NotificationAction, { action: 'readAll', next: '/tables', children });
+    await submit().click();
+    await expect.element(submit()).toBeDisabled();
+    formOf().requestSubmit();
+    expect(postAction).toHaveBeenCalledTimes(1);
+    const body = vi.mocked(postAction).mock.calls[0][1];
+    expect(body.get('next')).toBe('/tables');
+    expect(body.has('id')).toBe(false);
+    finish({ type: 'redirect', status: 303, location: '/tables' });
+    await vi.waitFor(() =>
+      expect(applyAction).toHaveBeenCalledWith({
+        type: 'redirect',
+        status: 303,
+        location: '/tables',
+      }),
+    );
+  });
+
+  it('shows a transport error without retrying and allows an explicit retry', async () => {
+    vi.mocked(postAction).mockRejectedValueOnce(new TypeError('offline'));
+    render(NotificationAction, { action: 'read', next: '/tables', children });
+    await submit().click();
+    await expect.element(page.getByRole('alert')).toBeVisible();
+    await expect.element(submit()).not.toBeDisabled();
+    expect(postAction).toHaveBeenCalledTimes(1);
+    vi.mocked(postAction).mockResolvedValueOnce({
+      type: 'redirect',
+      status: 303,
+      location: '/tables',
+    });
+    await submit().click();
+    await vi.waitFor(() => expect(applyAction).toHaveBeenCalledTimes(1));
+    expect(postAction).toHaveBeenCalledTimes(2);
   });
 });

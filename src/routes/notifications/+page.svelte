@@ -22,9 +22,9 @@
   }, 150);
 
   const locale = getLocale();
-  const feed = localizedHref('/notifications', locale);
   // Every form comes back to the filter it was sent from.
-  const here = $derived(data.category ? `${feed}?category=${data.category}` : feed);
+  // `resolve` can produce relative links; redirect targets must be absolute site paths.
+  const here = $derived(page.url.pathname + page.url.search);
 
   // Only the categories that have events today; catalog, moderation and announcements join the
   // filters with the slices that write them.

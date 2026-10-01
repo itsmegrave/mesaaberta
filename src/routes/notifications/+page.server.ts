@@ -1,6 +1,5 @@
 import { error, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { validateStringForm } from '$lib/forms/contract';
 import { notificationActionSchema } from '$lib/notifications/actions';
 import { NOTIFICATION_CATEGORIES, type NotificationCategory } from '$lib/notifications/kinds';
 import { requireUser } from '$lib/server/auth/guard';
@@ -27,13 +26,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
  * `next` falls back to the feed. Back is always on the site (the bell is on every page).
  */
 async function submitted(request: Request) {
-  const form = await superValidate(request, zod4(notificationActionSchema));
+  const form = validateStringForm(await request.formData(), notificationActionSchema, [
+    'id',
+    'next',
+  ]);
   const id = form.errors.id ? undefined : form.data.id;
   const next = form.errors.next ? null : form.data.next;
   return { id, back: safeNext(next, '/notifications') };
 }
 
-// Superforms posts that also work as plain ones, so the bell works without JavaScript. The anonymous visitor goes to log in first.
+// Plain POST works without JavaScript. The anonymous visitor goes to log in first.
 export const actions: Actions = {
   /** Opens a notification: marks it read and follows its link, or comes back when it has none. */
   open: async ({ locals, url, request }) => {

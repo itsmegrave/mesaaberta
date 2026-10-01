@@ -8,11 +8,11 @@ test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
 async function bellSays(page: Page, name: string | RegExp) {
   await expect(async () => {
     await page.reload();
-    await expect(page.getByRole('banner').getByRole('button', { name })).toBeVisible({
+    await expect(page.getByRole('button', { name })).toBeVisible({
       timeout: 1000,
     });
   }).toPass({ timeout: 15_000 });
-  return page.getByRole('banner').getByRole('button', { name });
+  return page.getByRole('button', { name });
 }
 
 test('the GM hears about a new player on the bell, opens it, and it is read', async ({
@@ -38,9 +38,7 @@ test('the GM hears about a new player on the bell, opens it, and it is read', as
     .click();
 
   await expect(gmPage).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
-  await expect(
-    gmPage.getByRole('banner').getByRole('button', { name: 'Notificações', exact: true }),
-  ).toBeVisible();
+  await expect(gmPage.getByRole('button', { name: 'Notificações', exact: true })).toBeVisible();
 
   // The GM removes the player, who finds it in the feed.
   await gmPage.goto(`/tables/${slug}`);

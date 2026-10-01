@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { defaults, superForm } from 'sveltekit-superforms';
-  import { zod4 } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from '$lib/components/Form.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { notificationActionSchema } from '$lib/notifications/actions';
   import { getLocale } from '$lib/paraglide/runtime';
+  import { m } from '$lib/paraglide/messages';
 
   type Props = {
     action: 'open' | 'read' | 'readAll';
@@ -21,24 +22,32 @@
 
   let { action, id, next, class: className = 'm-0', buttonClass = '', children }: Props = $props();
 
-  // A button-only form on the feed's actions, which always answer with a redirect. Each needs its
-  // own id: the bell and the page can both show the same notification.
+  // Each button owns its pending state; the feed and bell reload through the action redirect.
   // svelte-ignore state_referenced_locally
-  const { enhance, submitting, delayed, timeout } = superForm(
-    defaults({ id, next }, zod4(notificationActionSchema)),
-    { id: `notification:${action}:${id ?? ''}`, resetForm: false, invalidateAll: 'pessimistic' },
-  );
+  const form = actionForm({
+    initial: { ...(id ? { id } : {}), next },
+    schema: notificationActionSchema,
+    onSuccess: () => {},
+    errorMessage: m.error_generic_text,
+  });
 </script>
 
-<form
-  method="POST"
+<Form
   action="{localizedHref('/notifications', getLocale())}?/{action}"
-  use:enhance
+  onsubmit={form.submit}
   class={className}
 >
   {#if id}<input type="hidden" name="id" value={id} />{/if}
   <input type="hidden" name="next" value={next} />
-  <SubmitButton submitting={$submitting} delayed={$delayed} timeout={$timeout} class={buttonClass}
-    >{@render children()}</SubmitButton
+  <SubmitButton
+    submitting={form.pending}
+    delayed={form.delayed}
+    timeout={form.timeout}
+    class={buttonClass}>{@render children()}</SubmitButton
   >
-</form>
+  {#if Object.keys(form.errors).length}
+    <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
+      {m.error_generic_text()}
+    </p>
+  {/if}
+</Form>
