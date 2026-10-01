@@ -2,8 +2,6 @@
 export const ENTRY_FILES: Record<string, string> = {
   '2026-09-29-lancamento.md':
     '---\ndate: 2026-09-29\ntitle: Lançamento da plataforma\n---\n\nA Mesa Aberta está no ar. Mestres abrem mesas de RPG, jogadores encontram uma e pegam a vaga.\n',
-  '2026-09-30-feedback-links.md':
-    '---\ndate: 2026-09-30\ntitle: Links de sugestões e novidades\n---\n\n## Corrigido\n\n- Os links de feedback e novidades no rodapé agora levam à comunidade da Mesa Aberta no Canny.\n',
   '2026-09-30-instagram.md':
     '---\ndate: 2026-09-30\ntitle: Novas mesas no Instagram\n---\n\nNovas mesas públicas agora geram automaticamente uma publicação no Instagram da Mesa Aberta.\n\n## Adicionado\n\n- Acompanhe a publicação e acesse o Instagram pela página de gerenciamento da mesa.\n',
   '2026-09-30-mensagens.md':
