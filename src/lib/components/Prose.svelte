@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  /** Long-form reading text (legal pages, the changelog): headings, paragraphs, lists and links. */
+  /** Long-form reading text (legal pages): headings, paragraphs, lists and links. */
   let { children, class: className = '' }: { children: Snippet; class?: string } = $props();
 </script>
 

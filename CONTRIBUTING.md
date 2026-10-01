@@ -6,41 +6,11 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 - One issue, one small pull request that closes it.
 - Conventional commits, one concern per commit.
-- A user-facing feature or bug fix adds a [changelog entry](#changelog).
+- Publish user-facing release notes in the [Canny changelog](https://mesaaberta.canny.io/changelog).
 - The PR should build green (`pnpm lint`, `pnpm check`, `pnpm test`; and `pnpm test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
 - Tests describe behavior, not wording. Each test should name the break it catches.
 
 See the [README](README.md) for setup and scripts.
-
-## Changelog
-
-Every pull request that ships a new feature or fixes a bug people can notice adds an entry to the changelog at [/changelog](https://mesaaberta.app/changelog). Chores (`chore:` commits), admin-only changes, refactors, tests, tooling and dependency bumps don't.
-
-Add one Markdown file to `src/content/changelog/`, named `YYYY-MM-DD-short-name.md` after the release day:
-
-```md
----
-date: 2026-10-06
-title: Busca por sistema de jogo
----
-
-Uma frase opcional sobre a mudança.
-
-## Adicionado
-
-- Filtro por sistema na lista de mesas.
-
-## Corrigido
-
-- O convite de calendário agora usa o fuso de quem joga.
-```
-
-- Write for players and GMs, in pt-BR, about what changed for them, not how the code changed.
-- Sections are optional, but only `## Adicionado`, `## Alterado` and `## Corrigido` are allowed. Anything else fails the tests.
-- `draft: true` shows the entry only in `pnpm dev` and to admins, marked "Rascunho", for an entry that shouldn't go out yet. Remove it when the change is released.
-- Several changes going out the same day share one entry.
-- Run `pnpm changelog` after adding or editing an entry, and commit `src/lib/changelog/entries.generated.ts` with it. The Cron Trigger's Worker reads the entries from that module; a test fails while it is out of date.
-- Once deployed, a published entry is announced in everyone's notification bell on the next cron run (within minutes): its title and opening sentence, linking to it on the page. That happens once per entry, only for entries dated in the last 30 days, and never for drafts. Write the opening sentence so it stands on its own.
 
 ## Code style
 

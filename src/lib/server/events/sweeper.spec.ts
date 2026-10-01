@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createTestDb } from '../db/test-db';
-import { events, notifications, profiles } from '../db/schema';
+import { events } from '../db/schema';
 import { runSweeper } from './sweeper';
 import { recordEvent } from './outbox';
 import type { Handler } from './types';
@@ -47,37 +47,6 @@ describe('runSweeper', () => {
     expect(handle).toHaveBeenCalledWith(expect.objectContaining({ id }), test.db);
     expect(close).toHaveBeenCalledOnce();
     void events;
-  });
-
-  it('puts a new changelog entry in the bell of every active person', async () => {
-    await test.db
-      .insert(profiles)
-      .values({ id: '00000000-0000-4000-8000-000000000d01', username: 'leitora' });
-    const today = new Date().toISOString().slice(0, 10);
-    const l = log();
-
-    await runSweeper(
-      { DATABASE_URL: 'postgres://x' },
-      {
-        open: (() => ({ db: test.db, close: vi.fn() })) as never,
-        handlers: [],
-        log: l,
-        changelog: [
-          {
-            slug: `${today}-novidade`,
-            title: 'Novidade',
-            date: today,
-            summary: '<p>Algo novo.</p>',
-            draft: false,
-            sections: [],
-          },
-        ],
-      },
-    );
-
-    const [sent] = await test.db.select().from(notifications);
-    expect(sent).toMatchObject({ type: 'system_announcement', title: 'Novidade' });
-    expect(l.info).toHaveBeenCalledWith('changelog announced', { announced: 1 });
   });
 
   it('closes the connection and reports the error when the sweep itself fails', async () => {
