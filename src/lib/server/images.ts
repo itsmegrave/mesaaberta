@@ -52,7 +52,7 @@ export type ImageStorage = {
   upload(
     path: string,
     body: Uint8Array,
-    options: { contentType: string; upsert: boolean },
+    options: { contentType: string; upsert: boolean; cacheControl: string },
   ): PromiseLike<{ error: { message: string } | null }>;
 };
 
@@ -68,6 +68,9 @@ export async function storeImage(
   const { error } = await storage.upload(image.path, image.bytes, {
     contentType: image.contentType,
     upsert: false,
+    // Replacements get a new UUID URL, so browsers can reuse these bytes between visits.
+    // Keep avatars shorter-lived because people can remove their profile picture.
+    cacheControl: image.path.startsWith('tables/') ? '2592000' : '86400',
   });
   if (error) {
     log?.warn('image upload refused by Storage', { reason: error.message });

@@ -206,6 +206,9 @@
         <img
           src={table.imageUrl}
           alt=""
+          width="1200"
+          height="480"
+          decoding="async"
           referrerpolicy="no-referrer"
           class="mt-8 aspect-5/2 w-full rounded-lg object-cover"
         />

@@ -93,6 +93,7 @@ describe('storeImage', () => {
     expect(upload).toHaveBeenCalledWith(image.path, image.bytes, {
       contentType: 'image/png',
       upsert: false,
+      cacheControl: '2592000',
     });
   });
 
@@ -122,6 +123,16 @@ describe('storeImage', () => {
 });
 
 describe('prepareImage in a folder', () => {
+  it('keeps removed profile pictures out of long-lived browser caches', async () => {
+    const upload = vi.fn().mockResolvedValue({ error: null });
+    const image = await prepareImage(file(bytes(PNG)), 'user-1');
+    await storeImage({ upload }, image);
+    expect(upload).toHaveBeenCalledWith(image.path, image.bytes, {
+      contentType: 'image/png',
+      upsert: false,
+      cacheControl: '86400',
+    });
+  });
   it("puts a profile picture in its owner's folder, still with a random name", async () => {
     const { path } = await prepareImage(file(bytes(PNG)), 'user-1');
     expect(path).toMatch(/^user-1\/[0-9a-f-]{36}\.png$/);

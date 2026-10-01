@@ -2,6 +2,8 @@
 export const ENTRY_FILES: Record<string, string> = {
   '2026-09-29-lancamento.md':
     '---\ndate: 2026-09-29\ntitle: Lançamento da plataforma\n---\n\nA Mesa Aberta está no ar. Mestres abrem mesas de RPG, jogadores encontram uma e pegam a vaga.\n',
+  '2026-09-30-image-performance.md':
+    '---\ndate: 2026-09-30\ntitle: Imagens mais leves\n---\n\nAs novas imagens recortadas ficam mais leves, e fotos e capas podem carregar mais rápido nas próximas visitas.\n\n## Alterado\n\n- Melhorada a compressão das fotos e capas recortadas antes do envio.\n- Melhorado o reaproveitamento de imagens já carregadas pelo navegador.\n',
   '2026-09-30-instagram.md':
     '---\ndate: 2026-09-30\ntitle: Novas mesas no Instagram\n---\n\nNovas mesas públicas agora geram automaticamente uma publicação no Instagram da Mesa Aberta.\n\n## Adicionado\n\n- Acompanhe a publicação e acesse o Instagram pela página de gerenciamento da mesa.\n',
   '2026-09-30-mensagens.md':
