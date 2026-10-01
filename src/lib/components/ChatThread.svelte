@@ -12,9 +12,13 @@
   import { atHandle } from '$lib/profile/handle';
   import { BADGES_KEY } from '$lib/query/badges';
   import { queryClient } from '$lib/query/context';
-  import type { PageData } from '../../routes/messages/[id]/$types';
+  import type { ChatThreadData } from '$lib/server/messages/thread';
 
-  let { data }: { data: PageData } = $props();
+  let {
+    data,
+    drawer = false,
+    onback,
+  }: { data: ChatThreadData; drawer?: boolean; onback?: () => void } = $props();
 
   const client = queryClient();
   const locale = getLocale();
@@ -35,7 +39,7 @@
   // Polling behind one seam: swapping it for a live connection later changes only this query.
   const thread = createQuery(
     () => ({
-      queryKey: ['messages', conversationId],
+      queryKey: ['messages', viewerId, conversationId],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
         apiRead<Thread>(`/api/messages/${conversationId}`, signal, viewerId),
       refetchInterval: visible && focused ? 3_000 : 15_000,
@@ -66,6 +70,7 @@
     if (!latest || latest === lastSeen) return;
     lastSeen = latest;
     void invalidate('messages:inbox');
+    void client.invalidateQueries({ queryKey: ['messages-inbox', viewerId] });
     void client.invalidateQueries({ queryKey: BADGES_KEY });
   });
 
@@ -102,6 +107,7 @@
     await thread.refetch();
     pending = pending.filter((item) => item.id !== id);
     void invalidate('messages:inbox');
+    void client.invalidateQueries({ queryKey: ['messages-inbox', viewerId] });
   };
   const onfailed = (id: string) => {
     pending = pending.map((item) => (item.id === id ? { ...item, pending: 'failed' } : item));
@@ -119,8 +125,12 @@
 <svelte:document onvisibilitychange={syncVisibility} />
 <svelte:window onfocus={syncVisibility} onblur={syncVisibility} />
 
-<section class="flex h-128 flex-col md:h-176">
-  <ChatHeader conversation={data.conversation} />
+<section class="flex min-h-0 flex-col {drawer ? 'min-w-0 flex-1' : 'h-128 md:h-176'}">
+  <ChatHeader
+    conversation={data.conversation}
+    {onback}
+    action={drawer ? `/messages/${conversationId}?/mute` : '?/mute'}
+  />
 
   <MessageList
     {items}
@@ -142,7 +152,14 @@
         </a>
       </p>
     {/if}
-    <Composer bind:this={composer} form={data.form} {onpending} {onsent} {onfailed} />
+    <Composer
+      bind:this={composer}
+      form={data.form}
+      action={drawer ? `/messages/${conversationId}?/send` : '?/send'}
+      {onpending}
+      {onsent}
+      {onfailed}
+    />
   {:else}
     <p role="status" class="border-t border-surface-200-800 pt-3 text-muted">
       {data.conversation.kind === 'direct'

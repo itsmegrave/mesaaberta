@@ -13,6 +13,7 @@
   import { asset, resolve } from '$app/paths';
   import { invalidateAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
+  import ChatDrawer from '$lib/components/ChatDrawer.svelte';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import BottomTabBar from '$lib/components/BottomTabBar.svelte';
   import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
@@ -198,6 +199,12 @@
 
       <Toaster />
       <UnsavedChangesDialog />
+      {#if data.account && !data.maintenance && !page.url.pathname.startsWith('/messages')}
+        {#key data.cacheIdentity}<ChatDrawer
+            viewerId={data.cacheIdentity ?? 'anonymous'}
+            unread={badges.data?.messages ?? data.account.messagesUnread}
+          />{/key}
+      {/if}
 
       <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
         {#if arriving}

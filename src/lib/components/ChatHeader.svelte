@@ -12,7 +12,11 @@
 
   let {
     conversation,
+    action = '?/mute',
+    onback,
   }: {
+    action?: string;
+    onback?: () => void;
     conversation: {
       kind: 'table' | 'direct';
       table: { slug: string; title: string; imageUrl: string | null } | null;
@@ -34,7 +38,17 @@
   // svelte-ignore state_referenced_locally
   const { form, enhance, submitting, delayed, timeout } = superForm(
     defaults({ muted: !conversation.muted }, zod4(muteSchema)),
-    { id: 'mute', dataType: 'json', validators: zod4Client(muteSchema), resetForm: false },
+    {
+      id: 'mute',
+      dataType: 'json',
+      validators: zod4Client(muteSchema),
+      resetForm: false,
+      applyAction: action === '?/mute',
+      invalidateAll: action === '?/mute',
+      onUpdated({ form: updated }) {
+        if (updated.valid) conversation.muted = updated.data.muted;
+      },
+    },
   );
   // The switch always asks for the opposite of what the conversation is now.
   $effect(() => {
@@ -44,13 +58,22 @@
 </script>
 
 <header class="flex items-center gap-3 border-b border-surface-200-800 pb-3">
-  <a
-    href={localizedHref('/messages', locale)}
-    class="btn size-12 rounded-lg p-0 hover:preset-tonal md:hidden"
-    aria-label={m.messages_back()}
-  >
-    <Icon name="arrow-left" size={24} />
-  </a>
+  {#if onback}
+    <button
+      type="button"
+      onclick={onback}
+      class="btn size-12 shrink-0 p-0 hover:preset-tonal"
+      aria-label={m.messages_back()}><Icon name="arrow-left" size={24} /></button
+    >
+  {:else}
+    <a
+      href={localizedHref('/messages', locale)}
+      class="btn size-12 rounded-lg p-0 hover:preset-tonal md:hidden"
+      aria-label={m.messages_back()}
+    >
+      <Icon name="arrow-left" size={24} />
+    </a>
+  {/if}
 
   {#snippet identity()}
     <Avatar src={picture} name={title} size={40} />
@@ -71,7 +94,7 @@
     </div>
   {/if}
 
-  <form method="POST" action="?/mute" use:enhance class="m-0">
+  <form method="POST" {action} use:enhance class="m-0">
     <SubmitButton
       submitting={$submitting}
       delayed={$delayed}

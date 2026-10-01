@@ -26,9 +26,9 @@
 
 <div class="flex flex-col gap-4 pt-2 pb-4 md:flex-row md:gap-6 md:pt-8">
   <aside
-    class="min-w-0 md:block md:w-80 md:shrink-0 {currentId
+    class="min-w-0 overflow-x-hidden md:block md:max-h-176 md:w-80 md:shrink-0 md:overflow-y-auto {currentId
       ? 'hidden'
-      : ''} md:max-h-176 md:overflow-y-auto"
+      : ''}"
   >
     <InboxList
       items={data.inbox.items}
