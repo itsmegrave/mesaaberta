@@ -105,7 +105,7 @@ describe('+layout.svelte', () => {
       ['itsmegrave', 'https://github.com/itsmegrave'],
       ['GitHub', 'https://github.com/itsmegrave/mesaaberta'],
       ['Lenindragons', 'https://linktr.ee/lenindragonsrpg'],
-      ['Reporte aqui', 'https://github.com/itsmegrave/mesaaberta/issues'],
+      ['Reporte aqui', 'https://mesaaberta.canny.io/feedback'],
     ])('links %s to %s', async (name, href) => {
       render(Layout, { children, data: signedOut });
 
