@@ -20,7 +20,7 @@ const sent = {
   body: 'Sugira tags ao abrir uma mesa.',
   icon: 'sparkles' as const,
   tone: 'announcement' as const,
-  link: '/changelog',
+  link: '/tables',
   audience: 'specific_user' as const,
   recipient: 'bruno',
   author: 'admin',

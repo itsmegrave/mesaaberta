@@ -305,7 +305,7 @@
           id="link"
           name="link"
           maxlength={ANNOUNCEMENT_LIMITS.link}
-          placeholder="/changelog"
+          placeholder="/tables"
           bind:value={$form.link}
           aria-invalid={$errors.link ? 'true' : undefined}
           aria-describedby="link-hint{$errors.link ? ' link-error' : ''}"
