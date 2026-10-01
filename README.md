@@ -459,7 +459,14 @@ Cloudflare Web Analytics is already enabled through Cloudflare's automatic site 
 The CSP permits `static.cloudflareinsights.com` and `cloudflareinsights.com`; the application does
 not install a second beacon or a browser Mixpanel SDK.
 
-Mixpanel runs server-side through `mixpanel-product-events-v1` in the existing outbox. Set
+Product events go through a provider-neutral interface in `src/lib/server/analytics/`. The privacy
+filter (`product-events.ts`) turns a domain event into an `AnalyticsEvent`, and each provider is an
+adapter implementing `AnalyticsProvider` (`provider.ts`). To add or swap a provider, write an
+adapter, add its environment variables to `AnalyticsEnv` and list its factory in `index.ts`; every
+configured provider gets its own outbox handler named `<provider>-product-events-v1`, so they retry
+independently. Nothing outside this folder knows which vendor is in use.
+
+Mixpanel is the first adapter and runs server-side through `mixpanel-product-events-v1` in the existing outbox. Set
 `MIXPANEL_TOKEN` with `wrangler secret put MIXPANEL_TOKEN`. `MIXPANEL_REGION` can be `US` (default),
 `EU` or `IN`, matching the Mixpanel project. Without a token the handler is disabled; enabling it
 does not replay already-processed historical events.

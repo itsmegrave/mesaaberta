@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mixpanelHandler, productEvent } from './mixpanel';
+import { mixpanelProvider, mixpanelRecord } from './mixpanel';
+import { analyticsHandler } from './index';
+import { toAnalyticsEvent } from './product-events';
 import type { StoredEvent } from '../events/types';
 
 const event: StoredEvent = {
@@ -15,26 +17,34 @@ const event: StoredEvent = {
   attempts: 0,
 };
 const deliver = async (send: typeof fetch, item = event) => {
-  await mixpanelHandler({ MIXPANEL_TOKEN: 'test-token' }, send)!.handle(item, null as never);
+  const provider = mixpanelProvider({ MIXPANEL_TOKEN: 'test-token' }, send)!;
+  await analyticsHandler(provider).handle(item, null as never);
 };
 describe('Mixpanel event forwarding', () => {
-  it('sends only opaque ids and stable insert/time values, even on retries', async () => {
+  it('keeps the recorded handler name and sends only opaque ids and stable insert/time values, even on retries', async () => {
     const send = vi
       .fn<typeof fetch>()
       .mockImplementation(
         async () => new Response(JSON.stringify({ status: 'OK', num_records_imported: 1 })),
       );
+    expect(analyticsHandler(mixpanelProvider({ MIXPANEL_TOKEN: 't' })!).name).toBe(
+      'mixpanel-product-events-v1',
+    );
     await deliver(send);
     await deliver(send, { ...event, attempts: 3 });
     expect(send.mock.calls[0][1]?.body).toBe(send.mock.calls[1][1]?.body);
-    expect(JSON.parse(send.mock.calls[0][1]!.body as string)).toEqual([productEvent(event)]);
+    expect(JSON.parse(send.mock.calls[0][1]!.body as string)).toEqual([
+      mixpanelRecord(toAnalyticsEvent(event)!),
+    ]);
     expect(send.mock.calls[0][1]?.body).not.toMatch(/private-text|test-token/);
     expect(send.mock.calls[0][0]).toBe('https://api.mixpanel.com/import?strict=1');
   });
   it('does not forward connection IPs, administrative content or events without an actor', () => {
-    expect(productEvent({ ...event, type: 'UserSignedIn', payload: { ip: '1.2.3.4' } })).toBeNull();
-    expect(productEvent({ ...event, actorId: null })).toBeNull();
-    expect(mixpanelHandler(undefined)).toBeNull();
+    expect(
+      toAnalyticsEvent({ ...event, type: 'UserSignedIn', payload: { ip: '1.2.3.4' } }),
+    ).toBeNull();
+    expect(toAnalyticsEvent({ ...event, actorId: null })).toBeNull();
+    expect(mixpanelProvider(undefined)).toBeNull();
   });
   it('lets the outbox retry rejected events without leaking provider response text', async () => {
     const send = vi

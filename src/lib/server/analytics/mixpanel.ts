@@ -1,72 +1,48 @@
-import type { EventType, Handler, StoredEvent } from '../events/types';
+import type { AnalyticsEvent, AnalyticsProvider, AnalyticsProviderFactory } from './provider';
 
 export type AnalyticsEnv = {
   MIXPANEL_TOKEN?: string;
   MIXPANEL_REGION?: string;
 };
 
-export const PRODUCT_EVENTS = [
-  'TableCreated',
-  'TableUpdated',
-  'TableDisabled',
-  'JoinRequested',
-  'JoinApproved',
-  'JoinDeclined',
-  'PlayerJoined',
-  'PlayerLeft',
-  'RatingSubmitted',
-] as const satisfies readonly EventType[];
+const HOSTS: Record<string, string> = {
+  US: 'api.mixpanel.com',
+  EU: 'api-eu.mixpanel.com',
+  IN: 'api-in.mixpanel.com',
+};
 
-const uuid = (value: unknown): value is string =>
-  typeof value === 'string' &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-
-export function productEvent(event: StoredEvent) {
-  if (
-    !(PRODUCT_EVENTS as readonly string[]).includes(event.type) ||
-    !uuid(event.actorId) ||
-    !uuid(event.id)
-  )
-    return null;
-  const tableId = 'tableId' in event.payload ? event.payload.tableId : null;
+/** Mixpanel's Import API record for one event. */
+export function mixpanelRecord(event: AnalyticsEvent) {
   return {
-    event: event.type,
+    event: event.name,
     properties: {
-      distinct_id: event.actorId,
-      $insert_id: event.id,
-      time: Math.floor(event.createdAt.getTime() / 1000),
-      ...(uuid(tableId) && { tableId }),
+      distinct_id: event.distinctId,
+      $insert_id: event.insertId,
+      time: Math.floor(event.time.getTime() / 1000),
+      ...event.properties,
     },
   };
 }
 
-/** Uses the existing outbox for retries and Mixpanel's insert ID for deduplication. */
-export function mixpanelHandler(
+/** Mixpanel adapter. The Import API allows delayed outbox retries and deduplicates on `$insert_id`. */
+export function mixpanelProvider(
   env: AnalyticsEnv | undefined,
   send: typeof fetch = fetch,
-): Handler | null {
+): AnalyticsProvider | null {
   if (!env?.MIXPANEL_TOKEN) return null;
   const token = env.MIXPANEL_TOKEN;
-  const hosts: Record<string, string> = {
-    US: 'api.mixpanel.com',
-    EU: 'api-eu.mixpanel.com',
-    IN: 'api-in.mixpanel.com',
-  };
-  const host = hosts[env.MIXPANEL_REGION ?? 'US'];
+  const host = HOSTS[env.MIXPANEL_REGION ?? 'US'];
   if (!host) throw new Error('Invalid Mixpanel region');
   return {
-    name: 'mixpanel-product-events-v1',
-    types: PRODUCT_EVENTS,
-    async handle(event) {
-      const payload = productEvent(event);
-      if (!payload) return;
+    name: 'mixpanel',
+    async send(event) {
       const response = await send(`https://${host}/import?strict=1`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           authorization: `Basic ${btoa(`${token}:`)}`,
         },
-        body: JSON.stringify([payload]),
+        body: JSON.stringify([mixpanelRecord(event)]),
         signal: AbortSignal.timeout(5000),
       });
       // Provider response bodies can echo data: never retain them in error messages.
@@ -80,3 +56,6 @@ export function mixpanelHandler(
     },
   };
 }
+
+export const mixpanelFactory: AnalyticsProviderFactory<AnalyticsEnv> = (env) =>
+  mixpanelProvider(env);
