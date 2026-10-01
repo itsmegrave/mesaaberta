@@ -60,7 +60,8 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
     await expect(drawer.getByRole('textbox', { name: 'Mensagem' })).toBeVisible();
     await drawer.getByRole('textbox', { name: 'Mensagem' }).fill(`Drawer ${width} `);
     await drawer.getByRole('button', { name: 'Escolher emoji' }).click();
-    await drawer.getByRole('button', { name: '🎲', exact: true }).click();
+    await drawer.getByRole('combobox', { name: 'Procurar' }).fill('dado');
+    await drawer.getByRole('option', { name: /dado/ }).first().click();
     await playerPage.keyboard.press('Enter');
     await expect(drawer.getByRole('log').getByText(`Drawer ${width} 🎲`)).toBeVisible();
     await expect(drawer.getByText('Enviando…', { exact: true })).toHaveCount(0);
