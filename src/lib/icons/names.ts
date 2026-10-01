@@ -40,6 +40,8 @@ export const ICON_NAMES = [
   'bell',
   'arrow-left',
   'plus',
+  'globe',
+  'game-icons:round-table',
   'game-icons:dice-twenty-faces-twenty',
   'game-icons:card-draw',
   'game-icons:black-knight-helm',

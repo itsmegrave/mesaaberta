@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+  import { modalityIcon } from '$lib/tables/modality-icon';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
@@ -152,7 +154,11 @@
           <a
             href={localizedHref(`/tables${query(option.value)}`, locale)}
             aria-current={option.value === data.modality ? 'page' : undefined}
-            class={option.value === data.modality ? chipActive : chipIdle}>{option.label()}</a
+            class="{option.value === data.modality ? chipActive : chipIdle} gap-2"
+            >{#if option.value}<Icon
+                name={modalityIcon(option.value)}
+                size={18}
+              />{/if}{option.label()}</a
           >
         {/each}
       </div>
