@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { homeLink } from './support/app';
 
 /** Marks the loaded document: a client-side navigation keeps the mark, a full page load drops it. */
 async function markDocument(page: Page) {
@@ -15,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 
 test('navigates inside the page while the build is current', async ({ page }) => {
   await page.clock.runFor(61_000);
-  await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
+  await homeLink(page).click();
 
   await expect(page).toHaveURL('/');
   expect(await isMarked(page)).toBe(true);
@@ -30,13 +31,13 @@ test('offers a refresh instead of interrupting a navigation once a new build is 
   await page.clock.runFor(61_000);
 
   await expect(page.getByRole('status')).toContainText('Uma nova versão está disponível.');
-  await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
+  await homeLink(page).click();
 
   await expect(page).toHaveURL('/');
-  await expect(page.getByRole('banner')).toBeVisible();
+  await expect(homeLink(page)).toBeVisible();
   expect(await isMarked(page)).toBe(true);
 
   await page.getByRole('button', { name: 'Atualizar' }).click();
-  await expect(page.getByRole('banner')).toBeVisible();
+  await expect(homeLink(page)).toBeVisible();
   expect(await isMarked(page)).toBe(false);
 });
