@@ -60,6 +60,7 @@ import UnlinkIcon from '@iconify-svelte/lucide/unlink';
 import Undo2Icon from '@iconify-svelte/lucide/undo-2';
 import Redo2Icon from '@iconify-svelte/lucide/redo-2';
 import MapPinIcon from '@iconify-svelte/lucide/map-pin';
+import InstagramIcon from '@iconify-svelte/lucide/instagram';
 
 export const ICONS = {
   'game-icons:tabletop-players': GameTabletopPlayersIcon,
@@ -120,4 +121,5 @@ export const ICONS = {
   'undo-2': Undo2Icon,
   'redo-2': Redo2Icon,
   'map-pin': MapPinIcon,
+  instagram: InstagramIcon,
 } as const;

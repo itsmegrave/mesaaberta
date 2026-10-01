@@ -1,6 +1,7 @@
 <script lang="ts">
   import './layout.css';
   import { CANNY_FEEDBACK_URL, CANNY_CHANGELOG_URL } from '$lib/canny/config';
+  import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '$lib/contact';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
   import { createQueryClient } from '$lib/query/client';
   import { provideQueryClient } from '$lib/query/context';
@@ -250,6 +251,24 @@
                   class="link-underline text-surface-950-50">itsmegrave</a
                 >.
               </p>
+              <p>
+                {m.footer_help()}
+                <a href="mailto:{CONTACT_EMAIL}" class="link-underline text-surface-950-50"
+                  >{CONTACT_EMAIL}</a
+                >.
+              </p>
+              <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
+              <a
+                href={INSTAGRAM_URL}
+                rel="noopener"
+                target="_blank"
+                aria-label={m.footer_instagram_label()}
+                title="@{INSTAGRAM_HANDLE}"
+                class="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-surface-950-50 hover:preset-tonal"
+              >
+                <Icon name="instagram" size={22} />
+              </a>
+              <!-- eslint-enable svelte/no-navigation-without-resolve -->
             </div>
             <div class="flex flex-col gap-3 md:max-w-sm">
               <p>

@@ -50,6 +50,7 @@ describe('parseTableForm', () => {
         extraInfo: null,
         kind: 'one_shot',
         capacity: 5,
+        minPlayers: null,
         startsAtLocal: '2026-10-10T19:00',
         timezone: 'America/Sao_Paulo',
         durationMinutes: 240,
@@ -133,6 +134,23 @@ describe('parseTableForm', () => {
     });
   });
 
+  it('reads a blank minimum as none, and a number as that many players', () => {
+    expect(parseTableForm(form())).toMatchObject({ ok: true, data: { minPlayers: null } });
+    expect(parseTableForm(form({ minPlayers: '  ' }))).toMatchObject({
+      ok: true,
+      data: { minPlayers: null },
+    });
+    expect(parseTableForm(form({ minPlayers: '3' }))).toMatchObject({
+      ok: true,
+      data: { minPlayers: 3 },
+    });
+  });
+
+  it('accepts a minimum equal to the seats, and says a larger one is above the capacity', () => {
+    expect(parseTableForm(form({ capacity: '4', minPlayers: '4' }))).toMatchObject({ ok: true });
+    expect(errorsOf({ capacity: '4', minPlayers: '5' }).minPlayers).toBe('above_capacity');
+  });
+
   it.each([
     ['title', { title: 'ab' }],
     ['title', { title: 'x'.repeat(81) }],
@@ -144,6 +162,11 @@ describe('parseTableForm', () => {
     ['capacity', { capacity: '31' }],
     ['capacity', { capacity: '2.5' }],
     ['capacity', { capacity: 'muitas' }],
+    ['minPlayers', { minPlayers: '0' }],
+    ['minPlayers', { minPlayers: '31' }],
+    ['minPlayers', { minPlayers: '2.5' }],
+    ['minPlayers', { minPlayers: 'alguns' }],
+    ['minPlayers', { capacity: '4', minPlayers: '5' }],
     ['durationHours', { durationHours: '0' }],
     ['durationHours', { durationHours: '24.5' }],
     ['durationHours', { durationHours: '1.25' }],

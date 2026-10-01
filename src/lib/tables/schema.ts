@@ -38,6 +38,11 @@ export const isLocalDateTime = (value: string) =>
 const isLocalDate = (value: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) && isRealMoment(`${value}T00:00:00Z`, value);
 
+/** Blank, or a whole number from 1 up to the largest table. */
+const isMinPlayers = (value: string) =>
+  value === '' ||
+  (/^\d{1,3}$/.test(value) && Number(value) >= 1 && Number(value) <= TABLE_LIMITS.capacity.max);
+
 const text = (max: number) => z.string().trim().max(max);
 const whole = (min: number, max: number) => z.coerce.number().int().min(min).max(max);
 
@@ -59,6 +64,8 @@ export const tableFormSchema = z
       .default(''),
     kind: z.enum(['campaign', 'one_shot', 'adventure']),
     capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
+    // Optional: blank means the table has no minimum. A text field, like the CEP, so "empty" is not 0.
+    minPlayers: z.string().trim().refine(isMinPlayers, 'invalid').default(''),
     startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
     timezone: z.string().refine(isTimeZone, 'invalid'),
     durationHours: z.coerce
@@ -88,6 +95,10 @@ export const tableFormSchema = z
     if (value.modality === 'in_person' && !value.locationArea && !value.postalCode) {
       ctx.addIssue({ code: 'custom', message: 'required', path: ['locationArea'] });
     }
+    // The minimum cannot be more than the seats there are.
+    if (value.minPlayers !== '' && Number(value.minPlayers) > value.capacity) {
+      ctx.addIssue({ code: 'custom', message: 'above_capacity', path: ['minPlayers'] });
+    }
     if (value.kind !== 'campaign') return;
 
     if (!(value.repeat in RULES)) {
@@ -108,6 +119,8 @@ export type TableInput = {
   welcomeMessage: string | null;
   kind: 'campaign' | 'one_shot' | 'adventure';
   capacity: number;
+  /** The fewest players the GM wants, or null for no minimum. */
+  minPlayers: number | null;
   /** Wall-clock time in `timezone`, e.g. `2026-10-10T19:00`. */
   startsAtLocal: string;
   timezone: string;
@@ -148,6 +161,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     locationArea,
     joinDetails,
     postalCode,
+    minPlayers,
     ...rest
   } = values;
   const campaign = rest.kind === 'campaign';
@@ -155,6 +169,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
 
   return {
     ...rest,
+    minPlayers: minPlayers === '' ? null : Number(minPlayers),
     durationMinutes: Math.round(durationHours * 60),
     locationArea: inPerson ? locationArea || null : null,
     postalCode: inPerson ? normalizeCep(postalCode) : null,

@@ -1127,5 +1127,39 @@
   "rich_text_link_invalid": "Use um endereço http, https ou um e-mail.",
   "rich_text_undo": "Voltar alteração",
   "rich_text_redo": "Refazer alteração",
-  "rich_text_count": "{count} de {max} caracteres"
+  "rich_text_count": "{count} de {max} caracteres",
+  "admin_nav_connections": "Conexões",
+  "admin_connections_title": "Conexões",
+  "admin_connections_description": "As contas e os serviços ligados à Mesa Aberta.",
+  "instagram_profile_label": "Perfil público",
+  "instagram_status_connected": "Conectado",
+  "instagram_status_expired": "Conexão expirada",
+  "instagram_status_disconnected": "Não conectado",
+  "footer_help": "Dúvidas ou precisa de ajuda? Escreva para",
+  "footer_instagram_label": "Instagram da Mesa Aberta, @mesaaberta.app",
+  "form_min_players": "Mínimo de jogadores (opcional)",
+  "form_min_players_hint": "Quantas pessoas a mesa precisa para acontecer. Deixe em branco se não faz diferença.",
+  "form_error_min_players_above": "O mínimo não pode ser maior que o número de vagas.",
+  "form_error_min_players_invalid": "Use um número inteiro, de 1 até 30, ou deixe em branco.",
+  "table_min_players": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Mínimo: 1 jogador",
+        "count=*": "Mínimo: {count} jogadores"
+      }
+    }
+  ],
+  "table_min_players_missing": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Falta 1 para o mínimo",
+        "count=*": "Faltam {count} para o mínimo"
+      }
+    }
+  ],
+  "table_min_players_met": "Mínimo atingido"
 }

@@ -211,6 +211,13 @@
       "when": 1790885672839,
       "tag": "0029_rich_text_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790892776044,
+      "tag": "0030_min_players",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, pickImage } from './support/app';
+import { asUser, homeLink, pickImage } from './support/app';
 import { createUser } from './support/users';
 
 test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
@@ -11,7 +11,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   await page.goto('/tables/new');
   await page.getByLabel('Título').fill('Uma mesa pela metade');
 
-  await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
+  await homeLink(page).click();
 
   const dialog = page.getByRole('alertdialog', { name: 'Sair sem salvar?' });
   await expect(dialog).toBeVisible();
@@ -20,7 +20,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   await expect(page).toHaveURL(/\/tables\/new$/);
   await expect(page.getByLabel('Título')).toHaveValue('Uma mesa pela metade');
 
-  await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
+  await homeLink(page).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Sair sem salvar' }).click();
   await expect(page).toHaveURL(/\/$/);
   await context.close();
@@ -56,7 +56,7 @@ test('a profile that was only opened is left without asking, even when the form 
   await page.goto('/account/profile');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-  await page.getByRole('banner').getByRole('link', { name: 'Mesa Aberta' }).click();
+  await homeLink(page).click();
 
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('alertdialog')).toHaveCount(0);

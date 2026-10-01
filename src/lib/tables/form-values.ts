@@ -16,6 +16,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
   welcomeMessage: DEFAULT_WELCOME_MESSAGE,
   kind: 'one_shot',
   capacity: 5,
+  minPlayers: '',
   startsAtLocal: '',
   timezone: 'America/Sao_Paulo',
   durationHours: 4,
@@ -44,6 +45,8 @@ export function formProblem(message: FormMessage | undefined): string | null {
 /** A validation code (from `parseTableForm` or an `Invalid` error) as a sentence. */
 export function errorText(code: string, field = ''): string {
   if (field === 'image' && code === 'too_big') return m.form_error_image_too_big();
+  if (field === 'minPlayers' && code !== 'above_capacity')
+    return m.form_error_min_players_invalid();
   if (field === 'postalCode') {
     if (code === 'not_found') return m.form_error_cep_not_found();
     if (code === 'unavailable') return m.form_error_cep_unavailable();
@@ -70,6 +73,8 @@ export function errorText(code: string, field = ''): string {
       return m.form_error_suggestion_invalid();
     case 'below_taken':
       return m.form_error_below_taken();
+    case 'above_capacity':
+      return m.form_error_min_players_above();
     case 'suggestion_unavailable':
       return m.form_error_suggestion_unavailable();
     default:

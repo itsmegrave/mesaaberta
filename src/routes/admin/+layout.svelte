@@ -16,7 +16,8 @@
     { path: '/admin/queue', label: m.admin_nav_queue() },
     { path: '/admin/catalog', label: m.admin_nav_catalog() },
     { path: '/admin/notifications', label: m.admin_nav_notifications() },
-    { path: '/admin/instagram', label: m.instagram_admin_title() },
+    // The path stays `/admin/instagram`: Meta's OAuth redirect URI points at its callback.
+    { path: '/admin/instagram', label: m.admin_nav_connections() },
     { path: '/admin/audit', label: m.admin_audit_title() },
   ];
 </script>

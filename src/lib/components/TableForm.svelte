@@ -451,6 +451,23 @@
             {err('capacity')}
           </p>{/if}
       </div>
+      <FormField
+        id="minPlayers"
+        label={m.form_min_players()}
+        hint={m.form_min_players_hint()}
+        error={err('minPlayers')}
+        ><input
+          id="minPlayers"
+          name="minPlayers"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="2"
+          bind:value={$form.minPlayers}
+          class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+          aria-invalid={invalid('minPlayers')}
+          aria-describedby="minPlayers-hint{err('minPlayers') ? ' minPlayers-error' : ''}"
+        /></FormField
+      >
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
         >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label

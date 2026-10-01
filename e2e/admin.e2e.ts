@@ -79,11 +79,13 @@ test('users table paginates, filters status and username, and links to the selec
   await expect(users.locator('tbody tr')).toHaveCount(1);
   await expect(users.getByText('Página 1 de 1', { exact: true })).toBeVisible();
   await expect(users.getByText(userId, { exact: true })).toBeVisible();
+  // The list shows the profile's status column; the profile page shows the ban (see #172), and this
+  // profile was suspended directly in the database, with no ban recorded.
+  await expect(users.locator('tbody tr').getByText('Suspenso', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-users.png'), fullPage: true });
   await users.getByRole('link', { name: username, exact: true }).click();
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
   await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
-  await expect(page.getByText('Suspenso', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });
   await page.getByRole('link', { name: 'Voltar aos usuários' }).click();
   await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
