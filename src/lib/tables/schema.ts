@@ -31,7 +31,7 @@ const isRealMoment = (iso: string, echo: string) => {
 };
 
 /** `2026-10-10T19:00`, and a moment that exists on the calendar. */
-const isLocalDateTime = (value: string) =>
+export const isLocalDateTime = (value: string) =>
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) && isRealMoment(`${value}:00Z`, value);
 
 const isLocalDate = (value: string) =>

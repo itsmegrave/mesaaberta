@@ -75,6 +75,7 @@ export const NOTIFICATION_KINDS = {
   table_updated: { category: 'table', icon: 'calendar' },
   table_cancelled: { category: 'table', icon: 'cancel' },
   session_reminder: { category: 'table', icon: 'calendar' },
+  session_confirmation: { category: 'table', icon: 'calendar' },
   join_requested: { category: 'registration', icon: 'user-plus' },
   join_approved: { category: 'registration', icon: 'user-check' },
   join_declined: { category: 'registration', icon: 'user-x' },

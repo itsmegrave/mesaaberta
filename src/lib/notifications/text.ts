@@ -31,6 +31,8 @@ export function notificationText(item: Shown): string {
       return m.notification_table_cancelled({ table });
     case 'session_reminder':
       return m.notification_session_reminder({ table });
+    case 'session_confirmation':
+      return m.notification_session_confirmation({ table });
     case 'join_requested':
       return m.notification_join_requested({ player, table });
     case 'join_approved':

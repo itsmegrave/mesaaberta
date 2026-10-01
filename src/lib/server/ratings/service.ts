@@ -38,6 +38,7 @@ export async function submitRating(
     const blocker = rateBlocker(actor, {
       gmId: table.gmId,
       registration: registration?.status ?? null,
+      tableStatus: table.status,
       firstSessionEnded: firstSessionEnded(table, now),
     });
     if (blocker === 'too_early') throw new TooEarly();

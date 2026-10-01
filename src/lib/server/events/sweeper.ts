@@ -2,6 +2,7 @@ import { publishInstagramPosts } from '../instagram/publisher';
 import type { InstagramEnv } from '../instagram/api';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
 import type { Logger } from '../logger';
+import { closeElapsedTables } from '../tables/lifecycle';
 import { pruneNotifications } from '../notifications/service';
 import { pruneTableChats } from '../messages/retention';
 import { pruneEvents, sweepEvents } from './dispatcher';
@@ -16,7 +17,8 @@ type Deps = {
 /**
  * One run of the sweeper, called by the Cron Trigger: opens the database, dispatches the events
  * that are due (retries after backoff, and any whose first dispatch never happened), and always
- * closes the connection. It also deletes the events and notifications past their retention period,
+ * closes the connection. Before that it asks the GM of every table whose session is over whether it
+ * happened (`closeElapsedTables`). It also deletes the events and notifications past their retention period,
  * and table chats past their retention period. Does nothing without a database. Returns how many events it tried.
  */
 export async function runSweeper(
@@ -28,7 +30,11 @@ export async function runSweeper(
 
   const { db, close } = open(connectionString);
   try {
-    const swept = await sweepEvents(db, handlers, new Date(), 50, log);
+    const now = new Date();
+    // First, so the GM's question goes out in this very run: its events are due at once.
+    const closed = await closeElapsedTables(db, now);
+    if (closed.length > 0) log.info('tables awaiting confirmation', { closed: closed.length });
+    const swept = await sweepEvents(db, handlers, now, 50, log);
     if (swept > 0) log.info('event sweep', { swept });
     await publishInstagramPosts(db, env);
     const pruned = await pruneEvents(db);

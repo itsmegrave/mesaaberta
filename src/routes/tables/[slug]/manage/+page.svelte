@@ -7,6 +7,7 @@
   import Avatar from '$lib/components/Avatar.svelte';
   import ConfirmAction from '$lib/components/ConfirmAction.svelte';
   import SeatDots from '$lib/components/SeatDots.svelte';
+  import SessionConfirmation from '$lib/components/SessionConfirmation.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -154,6 +155,10 @@
   <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
     {table.title}
   </h1>
+
+  {#if table.status === 'awaiting_confirmation'}
+    <SessionConfirmation next={here} />
+  {/if}
 
   <div
     class="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-surface-200-800"

@@ -21,7 +21,7 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
   const canJoin =
     joinBlocker(profile, {
       gmId,
-      tableStatus: 'active',
+      tableStatus: found.status,
       seatsLeft: table.seatsLeft,
       alreadyRegistered: myStatus !== null,
     }) === null;
@@ -35,6 +35,7 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
     rateBlocker(profile, {
       gmId,
       registration: myStatus,
+      tableStatus: found.status,
       firstSessionEnded: firstSessionEnded(found, new Date()),
     }) === null;
 

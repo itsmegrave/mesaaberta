@@ -54,11 +54,12 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
       tableStatus: row.tableStatus,
       timezone: row.timezone,
       nextAt: nextOccurrence(row, now),
-      // The prompt to rate: a confirmed seat, and the first session is over.
+      // The prompt to rate: a confirmed seat, and the GM confirmed the session happened.
       canRate:
         rateBlocker(actor, {
           gmId: row.gmId,
           registration: row.status,
+          tableStatus: row.tableStatus,
           firstSessionEnded: firstSessionEnded(row, now),
         }) === null,
       rating: row.gmScore === null ? null : { gmScore: row.gmScore },

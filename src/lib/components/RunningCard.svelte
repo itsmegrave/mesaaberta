@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
+  import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
   import { atHandle } from '$lib/profile/handle';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
@@ -14,7 +15,7 @@
   type Item = {
     slug: string;
     title: string;
-    tableStatus: 'active' | 'disabled';
+    tableStatus: TableStatus;
     capacity: number;
     timezone: string;
     nextAt: Date | null;
@@ -43,7 +44,7 @@
   class="scroll-mt-6 rounded-lg border border-surface-200-800 bg-panel p-6"
 >
   <p class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
-    {#if item.tableStatus === 'disabled'}<span>{m.dash_disabled()}</span>{/if}
+    {#if tableStatusLabel(item.tableStatus)}<span>{tableStatusLabel(item.tableStatus)}</span>{/if}
     <span class="ml-auto"
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >

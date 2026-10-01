@@ -14,6 +14,11 @@ export type DomainEvent =
   | { type: 'TableCreated'; payload: { tableId: string; slug: string; title: string } }
   | { type: 'TableUpdated'; payload: { tableId: string; slug: string; title: string } }
   | { type: 'TableDisabled'; payload: { tableId: string; slug: string; title: string } }
+  // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
+  | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
+  // The GM confirmed the session happened, or that it did not.
+  | { type: 'TableConcluded'; payload: { tableId: string; slug: string; title: string } }
+  | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
   // A player asked for a seat at a table that approves each one. Takes no seat.
   | { type: 'JoinRequested'; payload: Registration }
   | { type: 'JoinApproved'; payload: Registration }

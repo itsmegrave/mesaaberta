@@ -1,4 +1,4 @@
-import { and, eq, sql, type SQL } from 'drizzle-orm';
+import { and, eq, ne, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
@@ -31,6 +31,7 @@ const columns = {
   taken: sql<number>`(select count(*)::int from ${registrations} where ${registrations.tableId} = ${gameTables.id} and ${registrations.status} = 'confirmed')`,
   gmName: publicName(profiles.username),
   gmId: gameTables.gmId,
+  status: gameTables.status,
 };
 
 export type TableView = ReturnType<typeof shape> & {
@@ -62,7 +63,8 @@ const shape = (row: Row, now: Date) => {
 };
 
 // A disabled table is invisible to the public, whatever else is true of it: both queries below
-// filter on status.
+// filter on status. Only an active table is listed; one past its session (awaiting the GM's
+// confirmation, concluded or not held) is still found by its slug.
 
 /**
  * Active tables that still have a session ahead, soonest first. A one-shot that is over, or a
@@ -95,15 +97,16 @@ async function withCatalog<T extends { id: string }>(db: AnyDb, list: T[]) {
 }
 
 /**
- * The active table at this slug, or null if there is none or it is disabled. A table whose sessions
- * are over is still found (`nextAt` is null), so an old shared link keeps working.
+ * The table at this slug, or null if there is none or it is disabled. A table whose session is
+ * over is still found (`nextAt` is null, and its status says where it stands), so an old shared
+ * link keeps working.
  */
 export async function findTableBySlug(
   db: AnyDb,
   slug: string,
   now: Date,
 ): Promise<TableView | null> {
-  const [row] = await query(db, and(eq(gameTables.slug, slug), eq(gameTables.status, 'active')));
+  const [row] = await query(db, and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')));
 
   return row ? (await withCatalog(db, [shape(row, now)]))[0] : null;
 }

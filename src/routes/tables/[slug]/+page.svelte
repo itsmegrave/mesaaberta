@@ -15,6 +15,7 @@
   import type { FormMessage } from '$lib/forms/message';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
+  import { tableStatusLabel } from '$lib/tables/status';
   import { getLocale } from '$lib/paraglide/runtime';
   import { ratingSchema } from '$lib/tables/rating';
   import { registrationError } from '$lib/tables/registration-errors';
@@ -260,6 +261,13 @@
               {m.table_no_more_sessions()}
             {/if}
           </p>
+          {#if tableStatusLabel(table.status)}
+            <p
+              class="mt-2 chip h-6 rounded-full preset-filled-surface-200-800 px-3 text-xs font-semibold"
+            >
+              {tableStatusLabel(table.status)}
+            </p>
+          {/if}
         </div>
       </div>
 
