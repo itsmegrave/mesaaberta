@@ -8,6 +8,8 @@ import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger } from '$lib/server/logger';
 import { handleRequestLog } from '$lib/server/request-log';
+import { createTracker } from '$lib/server/analytics/track';
+import type { AnalyticsEnv } from '$lib/server/analytics';
 import { handleMaintenance } from '$lib/server/maintenance';
 import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
@@ -41,6 +43,16 @@ const workersCache = (cache: WorkersCache): PayloadCache => ({
       }) as unknown as Parameters<WorkersCache['put']>[1],
     ),
 });
+
+// Product events for signed-in people, sent after the response (needs `afterResponse`, so it follows handleDatabase).
+const handleAnalytics: Handle = ({ event, resolve }) => {
+  event.locals.track = createTracker({
+    env: event.platform?.env as AnalyticsEnv | undefined,
+    afterResponse: (task) => event.locals.afterResponse((db) => task(db)),
+    log: event.locals.log,
+  });
+  return resolve(event);
+};
 
 // Flags load lazily: nothing is fetched unless a route reads one. Without the GrowthBook
 // settings (for example plain `vite dev`), every flag returns its default.
@@ -84,6 +96,7 @@ export const handle: Handle = sequence(
   handleSecurityHeaders,
   handleRequestLog(logger),
   handleDatabase,
+  handleAnalytics,
   handleAuth,
   handleAdminAccess,
   handleParaglide,

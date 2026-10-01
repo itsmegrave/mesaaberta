@@ -21,6 +21,16 @@ import {
 import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
   const data = await loadRead(event, 'detail');
+  const { locals, params } = event;
+  locals.track('player_mesa_detail_viewed', (await locals.getUser())?.id, async (db) => {
+    const [table] = await db
+      .select({ id: gameTables.id, gmId: gameTables.gmId })
+      .from(gameTables)
+      .where(eq(gameTables.slug, params.slug));
+    return table
+      ? { mesa_id: table.id, gm_user_id: table.gmId, seat_availability: data.table.seatsLeft }
+      : null;
+  });
   return {
     ...data,
     ratingForm: await superValidate(data.myRating ?? {}, zod4(ratingSchema), { errors: false }),
@@ -53,10 +63,23 @@ export const actions: Actions = {
     }
   },
 
-  join: (event) =>
-    runRegistrationAction(event, tableActionSchema, (db, actor) =>
+  join: async (event) => {
+    const { locals, params } = event;
+    // The attempt, before it succeeds or fails: `player_seat_claimed` comes from the outbox.
+    const playerId = (await locals.getUser())?.id;
+    locals.track('player_seat_claim_initiated', playerId, async (db) => {
+      const [table] = await db
+        .select({ id: gameTables.id })
+        .from(gameTables)
+        .where(eq(gameTables.slug, params.slug));
+      return table && playerId
+        ? { mesa_id: table.id, player_user_id: playerId, seat_claim_method: 'button_click' }
+        : null;
+    });
+    return runRegistrationAction(event, tableActionSchema, (db, actor) =>
       joinTable(db, actor, event.params.slug),
-    ),
+    );
+  },
   leave: (event) =>
     runRegistrationAction(event, tableActionSchema, (db, actor) =>
       leaveTable(db, actor, event.params.slug),

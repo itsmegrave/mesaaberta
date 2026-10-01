@@ -483,6 +483,30 @@ retry through the existing outbox and do not repeat handlers that already succee
 `$insert_id`, actor, type and original timestamp deduplicate ambiguous network failures. Response
 bodies are never copied into error messages. No analytics failure rolls back a player's action.
 
+#### Product event taxonomy
+
+The ten events of the product plan (Trello #155) are sent through the same providers. Two paths,
+both server-side, opaque ids only, no cookies:
+
+| Event                                  | Source                                                                                                                                                                                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gm_mesa_created`, `gm_mesa_published` | `TableCreated` in the outbox (a mesa has no draft step: creating it publishes it). `seats_initial_count` is the table's capacity.                                                                                                             |
+| `player_seat_claimed`                  | `PlayerJoined` (`claim_status: success`) and `JoinRequested` (`pending_approval`) in the outbox.                                                                                                                                              |
+| `player_browse_mesas_viewed`           | `/tables` load. `page_context` is `search_results` when a filter is set, else `browse_feed`; `source_channel` comes from the Referer (`direct`, `internal_link`, `referral`). Sent once per page view with `result_count`, not once per mesa. |
+| `player_mesa_detail_viewed`            | `/tables/[slug]` load: `mesa_id`, `gm_user_id`, `seat_availability`.                                                                                                                                                                          |
+| `player_seat_claim_initiated`          | the `join` action, before it succeeds or fails: `mesa_id`, `player_user_id`, `seat_claim_method: button_click`.                                                                                                                               |
+| `gm_onboarding_started`                | `/onboarding` (`profile_setup`) and `/tables/new` (`table_setup_start`) loads; `country_market` is `BR`.                                                                                                                                      |
+
+Outbox events keep retries and `$insert_id` deduplication. Request events go through
+`locals.track(name, userId, properties)`, which sends after the response, is best effort (a failure
+is logged as `analytics.track.failed`, never retried) and skips anonymous visitors, since there is
+no opaque id and no cookie to make one. Every event carries `timestamp_utc`.
+
+Not implemented: `calendar_invite_sent`, `calendar_invite_accepted` and `player_calendar_invite_declined`.
+The invite mail is sent by the invite handler, which does not record a domain event, and a calendar
+reply goes to the player's calendar app, never back to the application. They need an `InviteSent`
+domain event and an inbound-reply source first.
+
 ### Business metrics from SQL
 
 These read-only queries count recorded business activity, irrespective of external delivery.

@@ -19,6 +19,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   // Also covers someone who signed in before profiles existed: there is nothing to finish without one.
   const profile = await ensureProfile(locals.db, user);
   if (profile.username) redirect(303, next);
+  locals.track('gm_onboarding_started', user.id, {
+    gm_user_id: user.id,
+    onboarding_step: 'profile_setup',
+    country_market: 'BR',
+  });
 
   const values = (await loadProfileForm(locals.db, user.id))!;
   // The name from the sign-in provider suggests a username, unless somebody already has it.
