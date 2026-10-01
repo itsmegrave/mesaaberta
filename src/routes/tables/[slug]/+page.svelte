@@ -96,6 +96,7 @@
     };
   });
 
+  const taken = $derived(table.capacity - table.seatsLeft);
   const seats = $derived(
     table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
   );
@@ -332,6 +333,14 @@
           {/if}
         {/each}
       </p>
+      {#if table.minPlayers}
+        <p class="mt-3 text-sm text-muted">
+          {m.table_min_players({ count: table.minPlayers })} ·
+          {taken >= table.minPlayers
+            ? m.table_min_players_met()
+            : m.table_min_players_missing({ count: table.minPlayers - taken })}
+        </p>
+      {/if}
 
       {#if problem}
         <p role="alert" class="mt-5 font-semibold text-error-700-300">

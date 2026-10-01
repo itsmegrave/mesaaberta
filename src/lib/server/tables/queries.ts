@@ -17,6 +17,7 @@ const columns = {
   extraInfo: gameTables.extraInfo,
   imagePath: gameTables.imagePath,
   capacity: gameTables.capacity,
+  minPlayers: gameTables.minPlayers,
   startsAt: gameTables.startsAt,
   durationMinutes: gameTables.durationMinutes,
   timezone: gameTables.timezone,
