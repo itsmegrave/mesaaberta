@@ -15,8 +15,13 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
   const { locals, url, cookies } = event;
-  await requireUser(locals, url);
+  const user = await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
+  locals.track('gm_onboarding_started', user.id, {
+    gm_user_id: user.id,
+    onboarding_step: 'table_setup_start',
+    country_market: 'BR',
+  });
 
   // The GM's own pending suggestions are offered too.
   const catalogRead = await loadRead(event, 'catalog');

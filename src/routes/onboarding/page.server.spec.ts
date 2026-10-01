@@ -1,5 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { profileSocialLinks, profiles } from '$lib/server/db/schema';
 import { createTestDb } from '$lib/server/db/test-db';
@@ -9,6 +9,7 @@ let test: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => (test = await createTestDb()));
 afterAll(() => test.close());
 
+const tracked = vi.fn();
 const id = (n: number) => `00000000-0000-4000-8000-0000000005${String(n).padStart(2, '0')}`;
 
 const event = (
@@ -26,6 +27,7 @@ const event = (
   return {
     locals: {
       db: test.db,
+      track: tracked,
       getUser: async () => (n === null ? null : { id: id(n), user_metadata: metadata }),
     },
     url,
@@ -45,6 +47,8 @@ const redirected = (promise: Promise<unknown>) =>
 
 describe('the onboarding page', () => {
   describe('load', () => {
+    beforeEach(() => tracked.mockClear());
+
     it('sends an anonymous visitor to log in, and back here', async () => {
       expect(
         await redirected(run(load, event(null, { search: '?next=/tables/new' }))),
@@ -52,6 +56,7 @@ describe('the onboarding page', () => {
         status: 303,
         location: '/login?next=%2Fonboarding%3Fnext%3D%2Ftables%2Fnew',
       });
+      expect(tracked).not.toHaveBeenCalled();
     });
 
     it('creates the missing profile, fills in the name from the provider and suggests a username from it', async () => {
@@ -63,6 +68,11 @@ describe('the onboarding page', () => {
       expect(form.data).toMatchObject({ username: 'ana-souza', name: 'Ana Souza' });
       expect(form.errors).toEqual({});
       expect(next).toBe('/tables/new');
+      expect(tracked).toHaveBeenCalledWith('gm_onboarding_started', id(1), {
+        gm_user_id: id(1),
+        onboarding_step: 'profile_setup',
+        country_market: 'BR',
+      });
       const [row] = await test.db
         .select()
         .from(profiles)

@@ -10,7 +10,8 @@ export type AnalyticsEvent = {
   insertId: string;
   /** When the event originally happened, not when it was delivered. */
   time: Date;
-  properties: { tableId?: string };
+  /** Opaque ids, counts and fixed labels only: never names, text or contact details. */
+  properties: Record<string, string | number>;
 };
 
 /**

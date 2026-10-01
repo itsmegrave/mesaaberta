@@ -30,10 +30,13 @@ const table = (slug: string, systemSlug: string) =>
 // Catalogue order: a, b, c, d, e.
 const catalogue = ['a', 'b', 'c', 'd', 'e'].map(system);
 
-const event = (search = '') =>
+const tracked = vi.fn();
+const viewer = '00000000-0000-4000-8000-000000000001';
+const event = (search = '', referer = '') =>
   ({
     params: {},
-    locals: { db: {} },
+    locals: { db: {}, track: tracked, getUser: async () => ({ id: viewer }) },
+    request: new Request('https://x.test/tables', { headers: referer ? { referer } : {} }),
     url: new URL(`https://x.test/tables${search}`),
     platform: undefined,
   }) as unknown as RequestEvent;
@@ -44,6 +47,7 @@ const slugs = (list: { slug: string }[]) => list.map((item) => item.slug);
 
 describe('the table list load', () => {
   beforeEach(() => {
+    tracked.mockClear();
     vi.mocked(listSystems).mockResolvedValue(catalogue);
     vi.mocked(listUpcomingTables).mockResolvedValue([
       table('t1', 'd'),
@@ -80,5 +84,21 @@ describe('the table list load', () => {
     expect(slugs((await run(event('?tag=terror&tag=humor'))).tables)).toEqual(['t1']);
     // Across groups, a table has to match both.
     expect(slugs((await run(event('?tag=terror&platform=discord'))).tables)).toEqual([]);
+  });
+
+  it('records a browse view for the signed-in viewer, with where they came from and no table text', async () => {
+    await run(event('', 'https://x.test/'));
+    await run(event('?system=d', 'https://elsewhere.test/'));
+
+    expect(tracked).toHaveBeenNthCalledWith(1, 'player_browse_mesas_viewed', viewer, {
+      page_context: 'browse_feed',
+      source_channel: 'internal_link',
+      result_count: 3,
+    });
+    expect(tracked).toHaveBeenNthCalledWith(2, 'player_browse_mesas_viewed', viewer, {
+      page_context: 'search_results',
+      source_channel: 'referral',
+      result_count: 2,
+    });
   });
 });

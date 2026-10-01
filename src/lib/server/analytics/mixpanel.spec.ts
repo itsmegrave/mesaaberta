@@ -16,9 +16,12 @@ const event: StoredEvent = {
   createdAt: new Date('2026-09-30T12:00:00Z'),
   attempts: 0,
 };
+const db = {
+  select: () => ({ from: () => ({ where: async () => [{ capacity: 5 }] }) }),
+} as never;
 const deliver = async (send: typeof fetch, item = event) => {
   const provider = mixpanelProvider({ MIXPANEL_TOKEN: 'test-token' }, send)!;
-  await analyticsHandler(provider).handle(item, null as never);
+  await analyticsHandler(provider).handle(item, db);
 };
 describe('Mixpanel event forwarding', () => {
   it('keeps the recorded handler name and sends only opaque ids and stable insert/time values, even on retries', async () => {
@@ -31,12 +34,12 @@ describe('Mixpanel event forwarding', () => {
       'mixpanel-product-events-v1',
     );
     await deliver(send);
+    const first = send.mock.calls.map(([, init]) => init?.body);
     await deliver(send, { ...event, attempts: 3 });
-    expect(send.mock.calls[0][1]?.body).toBe(send.mock.calls[1][1]?.body);
-    expect(JSON.parse(send.mock.calls[0][1]!.body as string)).toEqual([
-      mixpanelRecord(toAnalyticsEvent(event)!),
-    ]);
-    expect(send.mock.calls[0][1]?.body).not.toMatch(/private-text|test-token/);
+    // A retry resends identical bodies, so the provider deduplicates on `$insert_id`.
+    expect(send.mock.calls.slice(first.length).map(([, init]) => init?.body)).toEqual(first);
+    expect(JSON.parse(first[0] as string)).toEqual([mixpanelRecord(toAnalyticsEvent(event)!)]);
+    expect(first.join()).not.toMatch(/private-text|test-token/);
     expect(send.mock.calls[0][0]).toBe('https://api.mixpanel.com/import?strict=1');
   });
   it('does not forward connection IPs, administrative content or events without an actor', () => {

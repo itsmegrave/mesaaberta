@@ -1,4 +1,5 @@
 import type { Handler } from '../events/types';
+import { taxonomyEvents } from './card-events';
 import { mixpanelFactory, type AnalyticsEnv as MixpanelEnv } from './mixpanel';
 import { PRODUCT_EVENTS, toAnalyticsEvent } from './product-events';
 import type { AnalyticsProvider, AnalyticsProviderFactory } from './provider';
@@ -16,11 +17,24 @@ export function analyticsHandler(provider: AnalyticsProvider): Handler {
   return {
     name: `${provider.name}-product-events-v1`,
     types: PRODUCT_EVENTS,
-    async handle(event) {
+    async handle(event, db) {
       const analyticsEvent = toAnalyticsEvent(event);
-      if (analyticsEvent) await provider.send(analyticsEvent);
+      // Each is deduplicated by the provider, so a retry after a partial failure repeats nothing.
+      for (const item of [
+        ...(analyticsEvent ? [analyticsEvent] : []),
+        ...(await taxonomyEvents(event, db)),
+      ])
+        await provider.send(item);
     },
   };
+}
+
+/** The providers the environment configures; none when analytics is off. */
+export function analyticsProviders(
+  env: AnalyticsEnv | undefined,
+  factories: readonly AnalyticsProviderFactory<AnalyticsEnv>[] = FACTORIES,
+): AnalyticsProvider[] {
+  return factories.flatMap((create) => create(env) ?? []);
 }
 
 /** Handlers for the providers the environment configures; none when analytics is off. */
@@ -28,8 +42,5 @@ export function analyticsHandlers(
   env: AnalyticsEnv | undefined,
   factories: readonly AnalyticsProviderFactory<AnalyticsEnv>[] = FACTORIES,
 ): Handler[] {
-  return factories.flatMap((create) => {
-    const provider = create(env);
-    return provider ? [analyticsHandler(provider)] : [];
-  });
+  return analyticsProviders(env, factories).map(analyticsHandler);
 }
