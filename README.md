@@ -190,7 +190,9 @@ export const actions = {
 
 To add an action, add it to `Resources` and `rules` in `policy.ts` and cover every role and relationship in `policy.spec.ts`. ESLint forbids reading `.role` anywhere else, so a route cannot decide access by itself.
 
-Today the policy covers creating, editing and disabling a table (any signed-in user creates; only that table's GM or an admin edits or disables). The other rows of the roadmap's permissions table (joining, rating, reporting, moderation) are added with the slices that need them.
+Today the policy covers creating, editing and disabling a table (any signed-in user creates; only that table's GM or an admin edits or disables), joining and rating, reporting (a table, or a person the reporter shares a table with, never oneself) and moderation (admins only; an admin cannot ban themselves or another admin). `activeAdmins()` is the same rule as a query condition, for finding who to notify.
+
+**Moderation.** A member reports a table or a player from the table page ("Denunciar"); one report per reporter and target waits at a time, and `REPORT_LIMIT` caps them per day. Admins work the queue at `/admin/reports`. A table report can close the table: it is disabled (players get the usual cancellation) and the justification is stored with the table and the GM is told in the bell (a disabled table is a 404, so there is no page to show it on yet). A player report can ban the profile for 7, 30 or 90 days or for good, and the person gets an e-mail with the reason (`ban-mail-v1`). A ban signs the account out, refuses its sign-in, disables the tables it runs and takes its seats; a temporary one ends by itself (`liftExpiredBans`, on the Cron and on the person's next request). The user's admin page counts the accepted reports against the tables they run and warns from `TABLE_REPORTS_WARNING`; banning from there is the admin's call. Every decision is an event, listed at `/admin/audit` for as long as events are kept.
 
 **Make yourself admin.** There is no admin signup flow. Sign in once so your profile exists, then copy your user id (the UID column in Supabase > Authentication > Users) and run it against the database you want to change:
 
@@ -263,16 +265,17 @@ This file decides what goes in an invite and checks what comes from users or the
 
 ### Hosted e-mail templates
 
-The copy of these e-mails is not built in the app. Each one is a **hosted, versioned template in the Resend dashboard**; the app sends the template id and a few variables (`src/lib/server/mail/templates.ts`), plus the per-recipient `.ics` attachment and the idempotency key. Until a template id is configured, that e-mail is sent with the short inline text it had before, so invites keep going out while the templates do not exist yet. A missing or blank id never stops the handler; each of the four is independent.
+The copy of these e-mails is not built in the app. Each one is a **hosted, versioned template in the Resend dashboard**; the app sends the template id and a few variables (`src/lib/server/mail/templates.ts`), plus the per-recipient `.ics` attachment and the idempotency key. Until a template id is configured, that e-mail is sent with the short inline text it had before, so invites keep going out while the templates do not exist yet. A missing or blank id never stops the handler; each of the five is independent. The account-banned template takes its own variables (`RECIPIENT_NAME`, `BAN_SUMMARY`, `BAN_REASON`, `FALLBACK_TEXT`) rather than the seven below.
 
 **Worker variables** (ids are not secrets). Put them in `vars` in `wrangler.jsonc` once the templates exist, next to `RESEND_FROM`: a Git-triggered deploy replaces any variable that is not in that file. Use the template's id (a UUID) or its alias. For local runs, set them in `.dev.vars` (see `.dev.vars.example`).
 
-| Worker variable                  | Template                    | Sent when                                                                       |
-| -------------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
-| `RESEND_TEMPLATE_INVITE`         | `mesaaberta-invite`         | A seat is confirmed, or a table is edited (calendar `REQUEST`, with the `.ics`) |
-| `RESEND_TEMPLATE_CANCEL`         | `mesaaberta-cancel`         | A player leaves or the table is disabled (calendar `CANCEL`, with the `.ics`)   |
-| `RESEND_TEMPLATE_JOIN_REQUESTED` | `mesaaberta-join-requested` | A player asks to join: goes to the GM                                           |
-| `RESEND_TEMPLATE_JOIN_DECLINED`  | `mesaaberta-join-declined`  | The GM declines a request: goes to the player                                   |
+| Worker variable                  | Template                    | Sent when                                                                            |
+| -------------------------------- | --------------------------- | ------------------------------------------------------------------------------------ |
+| `RESEND_TEMPLATE_INVITE`         | `mesaaberta-invite`         | A seat is confirmed, or a table is edited (calendar `REQUEST`, with the `.ics`)      |
+| `RESEND_TEMPLATE_CANCEL`         | `mesaaberta-cancel`         | A player leaves or the table is disabled (calendar `CANCEL`, with the `.ics`)        |
+| `RESEND_TEMPLATE_JOIN_REQUESTED` | `mesaaberta-join-requested` | A player asks to join: goes to the GM                                                |
+| `RESEND_TEMPLATE_JOIN_DECLINED`  | `mesaaberta-join-declined`  | The GM declines a request: goes to the player                                        |
+| `RESEND_TEMPLATE_ACCOUNT_BANNED` | `mesaaberta-account-banned` | An admin bans an account: goes to that person, with the reason (no table, no `.ics`) |
 
 **Variables.** These seven are the only values that reach Resend, and every template receives the first six, plus `WELCOME_MESSAGE` for `mesaaberta-invite` when it applies (`TEMPLATE_VARIABLES`; a unit test pins the list, and another checks that no id, address, token or secret is in the payload). Create the six in each template and give each a fallback value: Resend rejects a send when a variable in the template has neither a value nor a fallback, and we do not know whether it also rejects a variable the template does not define.
 

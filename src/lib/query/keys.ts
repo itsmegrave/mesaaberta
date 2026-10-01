@@ -53,6 +53,9 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
     }
   if (resource === 'tables' && url.searchParams.has('modality'))
     params.set('modality', url.searchParams.getAll('modality').at(-1)!);
+  // A page of "Minhas mesas" is its own cache entry; the first page has no parameter.
+  if (resource === 'dashboard' && url.searchParams.has('page'))
+    params.set('page', url.searchParams.get('page')!);
   if (resource === 'adminUsers' || resource === 'adminTables') {
     const filters =
       resource === 'adminTables'

@@ -12,10 +12,12 @@
     { path: '/admin', label: m.admin_nav_overview() },
     { path: '/admin/tables', label: m.admin_tables() },
     { path: '/admin/users', label: m.admin_profile_list() },
+    { path: '/admin/reports', label: m.admin_reports_title() },
     { path: '/admin/queue', label: m.admin_nav_queue() },
     { path: '/admin/catalog', label: m.admin_nav_catalog() },
     { path: '/admin/notifications', label: m.admin_nav_notifications() },
     { path: '/admin/instagram', label: m.instagram_admin_title() },
+    { path: '/admin/audit', label: m.admin_audit_title() },
   ];
 </script>
 

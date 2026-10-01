@@ -233,3 +233,64 @@ describe('table:confirm', () => {
     },
   );
 });
+
+describe('report:file', () => {
+  const facts = (over: { reporterSeated?: boolean } = {}) => ({
+    gmId: 'gm',
+    reporterSeated: false,
+    ...over,
+  });
+  const player = (playerId: string, playerSeated = true) =>
+    ({ type: 'player', playerId, playerSeated }) as const;
+
+  it.each([
+    ['anyone signed in reports a table', member, facts(), { type: 'table' } as const, true],
+    ['the GM reports their own table', gm, facts(), { type: 'table' } as const, false],
+    ['an anonymous visitor', null, facts(), { type: 'table' } as const, false],
+    ['a suspended member', suspendedMember, facts(), { type: 'table' } as const, false],
+    [
+      'a seated player reports the GM',
+      member,
+      facts({ reporterSeated: true }),
+      player('gm', false),
+      true,
+    ],
+    [
+      'a seated player reports another',
+      member,
+      facts({ reporterSeated: true }),
+      player('other'),
+      true,
+    ],
+    ['an outsider reports a seated player', member, facts(), player('other'), false],
+    [
+      'a seated player reports one who left',
+      member,
+      facts({ reporterSeated: true }),
+      player('other', false),
+      false,
+    ],
+    ['the GM reports a seated player', gm, facts(), player('member'), true],
+    [
+      'a seated player reports themselves',
+      member,
+      facts({ reporterSeated: true }),
+      player('member'),
+      false,
+    ],
+  ])('%s: %s', (_case, who, base, target, allowed) => {
+    expect(can(who, 'report:file', { ...base, target })).toBe(allowed);
+  });
+});
+
+describe('account:ban', () => {
+  it.each([
+    ['an admin bans a member', admin, member, true],
+    ['an admin bans themselves', admin, admin, false],
+    ['an admin bans another admin', admin, { ...admin, id: 'admin-2' }, false],
+    ['a member bans someone', member, otherMember, false],
+    ['a suspended admin', suspendedAdmin, member, false],
+  ])('%s: %s', (_case, who, target, allowed) => {
+    expect(can(who, 'account:ban', target)).toBe(allowed);
+  });
+});

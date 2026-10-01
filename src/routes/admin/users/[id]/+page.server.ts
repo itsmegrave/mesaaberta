@@ -1,9 +1,11 @@
 import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { adminProfile } from '$lib/server/admin/profiles';
+import { moderationOf } from '$lib/server/moderation/admin';
+import { accountActions } from '$lib/server/moderation/admin-actions';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
 import { profileFilters } from '$lib/admin/profile-filters';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, platform, setHeaders, url }) => {
   await requireAdmin(locals);
@@ -24,6 +26,11 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
   return {
     user,
     avatar: pictureOf(supabaseUrlOf(platform?.env), { avatarPath, avatarUrl }),
+    // Ban or revoke (never oneself, another admin, or a closed account), the ban itself, and the
+    // reports accepted against the tables they run.
+    moderation: (await moderationOf(locals.db, await locals.getProfile(), params.id))!,
     back: `/admin/users?${back}#profiles`,
   };
 };
+
+export const actions: Actions = accountActions;

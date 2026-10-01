@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events } from '../db/schema';
+import { events, profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { signInWithEmail, signUpWithEmail } from './email';
 
@@ -228,5 +228,21 @@ describe('signInWithEmail', () => {
 
     expect(await signInWithEmail(deps, input)).toBe('failed');
     expect(signOut).toHaveBeenCalled();
+  });
+});
+
+describe('signInWithEmail for a suspended account', () => {
+  it('signs the person straight out and records no connection', async () => {
+    const { deps, test, signOut } = await setup('signInWithPassword', {
+      data: { user, session: { access_token: 'x' } },
+      error: null,
+    });
+    await test.db.insert(profiles).values({ id: user.id, username: 'ana', status: 'suspended' });
+
+    expect(await signInWithEmail(deps, { email: 'ana@example.com', password: 'x' })).toBe(
+      'suspended',
+    );
+    expect(signOut).toHaveBeenCalled();
+    expect(await test.db.select().from(events).where(eq(events.actorId, user.id))).toEqual([]);
   });
 });

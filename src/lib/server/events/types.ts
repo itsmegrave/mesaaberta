@@ -41,7 +41,38 @@ export type DomainEvent =
   | { type: 'CatalogEntryRejected'; payload: CatalogDecision }
   | { type: 'CatalogEntryRenamed'; payload: CatalogDecision & { from: string } }
   | { type: 'CatalogEntryMerged'; payload: CatalogDecision & { into: string } }
-  | { type: 'CatalogEntryDisabled'; payload: CatalogDecision };
+  | { type: 'CatalogEntryDisabled'; payload: CatalogDecision }
+  // A member reported a table or a player. The details stay on the report row, admins only.
+  | { type: 'ReportFiled'; payload: ReportFiled }
+  // An admin took a report up, or closed it. `reporterId` is who hears the outcome; the reported
+  // party is never told who reported them.
+  | { type: 'ReportReviewing'; payload: ReportClosure }
+  | { type: 'ReportResolved'; payload: ReportClosure }
+  | { type: 'ReportDismissed'; payload: ReportClosure }
+  // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
+  // cancellations; this one tells the GM.
+  | { type: 'TableClosedByModeration'; payload: TableClosure }
+  // An admin banned an account, from a report or from the user's page: until `until` (an ISO
+  // time), or for good when it is null. The person is told by e-mail, with the reason. The ban is
+  // revoked by an admin (`AccountReinstated`) or ends by itself at `until` (`AccountBanLifted`).
+  | {
+      type: 'AccountBanned';
+      payload: { profileId: string; until: string | null; reportId: string | null };
+    }
+  | { type: 'AccountReinstated'; payload: { profileId: string } }
+  | { type: 'AccountBanLifted'; payload: { profileId: string } };
+
+export type TableClosure = { tableId: string; slug: string; title: string; reportId: string };
+
+export type ReportFiled = {
+  reportId: string;
+  targetType: 'table' | 'player';
+  targetId: string;
+  tableId: string;
+  reason: 'spam' | 'harassment' | 'inappropriate_content' | 'no_show' | 'other';
+};
+
+export type ReportClosure = { reportId: string; reporterId: string };
 
 export type CatalogDecision = { kind: 'platform' | 'tag'; entryId: string; name: string };
 

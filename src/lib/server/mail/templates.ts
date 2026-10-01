@@ -3,7 +3,7 @@
  * the app only says which template to use and fills in variables. See "Hosted e-mail templates" in
  * the README for what each template must contain.
  */
-export type TemplateKey = 'invite' | 'cancel' | 'joinRequested' | 'joinDeclined';
+export type TemplateKey = 'invite' | 'cancel' | 'joinRequested' | 'joinDeclined' | 'accountBanned';
 
 /** One optional Worker variable per template. Ids are not secrets, but they may not be set yet. */
 export type TemplateEnv = {
@@ -11,6 +11,7 @@ export type TemplateEnv = {
   RESEND_TEMPLATE_CANCEL?: string;
   RESEND_TEMPLATE_JOIN_REQUESTED?: string;
   RESEND_TEMPLATE_JOIN_DECLINED?: string;
+  RESEND_TEMPLATE_ACCOUNT_BANNED?: string;
 };
 
 const envNames: Record<TemplateKey, keyof TemplateEnv> = {
@@ -18,6 +19,7 @@ const envNames: Record<TemplateKey, keyof TemplateEnv> = {
   cancel: 'RESEND_TEMPLATE_CANCEL',
   joinRequested: 'RESEND_TEMPLATE_JOIN_REQUESTED',
   joinDeclined: 'RESEND_TEMPLATE_JOIN_DECLINED',
+  accountBanned: 'RESEND_TEMPLATE_ACCOUNT_BANNED',
 };
 
 /** A missing or blank variable means "not configured yet": the caller sends its inline copy. */
@@ -44,6 +46,14 @@ export const TEMPLATE_VARIABLES = [
   'WELCOME_MESSAGE',
 ] as const;
 
+/** The variables of the account-banned template, which has no table (see `BanVariables`). */
+export const BAN_TEMPLATE_VARIABLES = [
+  'RECIPIENT_NAME',
+  'BAN_SUMMARY',
+  'BAN_REASON',
+  'FALLBACK_TEXT',
+] as const;
+
 export type TemplateVariables = {
   RECIPIENT_NAME: string;
   TABLE_TITLE: string;
@@ -58,6 +68,16 @@ export type TemplateVariables = {
   WELCOME_MESSAGE?: string;
 };
 
+/** What `mesaaberta-account-banned` receives: the sentence that says until when, and the admin's reason. */
+export type BanVariables = {
+  RECIPIENT_NAME: string;
+  /** "Sua conta ... foi suspensa até <data>." or the permanent wording. */
+  BAN_SUMMARY: string;
+  /** What the admin wrote; it is the person's own business, so it goes to them alone. */
+  BAN_REASON: string;
+  FALLBACK_TEXT: string;
+};
+
 /** Resend limits a string variable to 2,000 characters. */
 const MAX_LENGTH = 2000;
 
@@ -68,13 +88,13 @@ const MAX_LENGTH = 2000;
 const clean = (value: string) => value.replace(/[<>]/g, '').slice(0, MAX_LENGTH);
 
 /** Picks the allowlisted variables and cleans them; anything else is dropped. */
-export function templateVariables(input: TemplateVariables): TemplateVariables {
+export function templateVariables<T extends TemplateVariables | BanVariables>(input: T): T {
   const picked: Record<string, string> = {};
-  for (const name of TEMPLATE_VARIABLES) {
+  for (const name of new Set([...TEMPLATE_VARIABLES, ...BAN_TEMPLATE_VARIABLES])) {
     const value = (input as Record<string, string | undefined>)[name];
     if (value !== undefined) picked[name] = clean(value);
   }
-  return picked as TemplateVariables;
+  return picked as T;
 }
 
 /** The heading shared by the inline copy and the hosted template variable. */

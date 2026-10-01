@@ -1,4 +1,4 @@
-import type { TemplateVariables } from './templates';
+import type { BanVariables, TemplateVariables } from './templates';
 
 /** A transport seam: domain handlers describe a message and never call an e-mail provider directly. */
 export type Mail = {
@@ -7,7 +7,7 @@ export type Mail = {
   /** The inline plain-text copy, sent when no hosted template is configured. */
   text: string;
   /** A hosted template; when set, the provider sends it instead of `text`. */
-  template?: { id: string; variables: TemplateVariables };
+  template?: { id: string; variables: TemplateVariables | BanVariables };
   /** The GM's welcome message, already expanded. Empty or missing means no section at all. It goes in the inline copy and as the `WELCOME_MESSAGE` template variable. */
   welcomeMessage?: string;
   attachments?: Array<{ filename: string; content: string; contentType: string }>;

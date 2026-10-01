@@ -37,6 +37,14 @@ export const JOIN_LIMIT = {
   windowSeconds: 3600,
 } as const satisfies RateLimit;
 
+// A report is a person's word against another's and lands on an admin's desk: a few in a day is a
+// bad session, dozens is someone using reports to harass.
+export const REPORT_LIMIT = {
+  events: ['ReportFiled'],
+  max: 5,
+  windowSeconds: 86_400,
+} as const satisfies RateLimit;
+
 /**
  * Throws `RateLimited` when `actorId` already used `limit` up in the window ending at `now`,
  * telling how long until one use ages out. An event is in the window while it is younger than

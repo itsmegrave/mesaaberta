@@ -6,6 +6,9 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import PlayingCard from '$lib/components/PlayingCard.svelte';
   import RunningCard from '$lib/components/RunningCard.svelte';
+  import { page } from '$app/state';
+  import { pageHref } from '$lib/admin/page-href';
+  import Icon from '$lib/components/Icon.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -18,23 +21,21 @@
   // Every action posted from here comes back here.
   const next = localizedHref('/account/tables', locale);
 
-  // A banner for the requests waiting on the GM, pointing at the first table that has one.
-  const waiting = $derived(data.running.filter((table) => table.requests.length > 0));
-  const pendingCount = $derived(waiting.reduce((sum, table) => sum + table.requests.length, 0));
+  // A banner for the requests waiting on the GM (across every page), pointing at the first table
+  // that has one, on the page it is on.
   const banner = $derived(
-    waiting.length === 0
+    !data.waiting
       ? null
-      : waiting.length > 1
-        ? m.dash_banner_many({ count: pendingCount, tables: waiting.length })
-        : m.dash_banner({ count: pendingCount, title: waiting[0].title }),
+      : data.waiting.tables > 1
+        ? m.dash_banner_many({ count: data.waiting.requests, tables: data.waiting.tables })
+        : m.dash_banner({ count: data.waiting.requests, title: data.waiting.first.title }),
   );
-
   // On a phone the two lists are tabs; from `lg` up they sit side by side and the tabs are not
   // drawn. Someone who only runs tables lands on theirs.
   type Tab = 'playing' | 'running';
   // svelte-ignore state_referenced_locally
   let tab = $state<Tab>(
-    data.playing.length === 0 && data.running.length > 0 ? 'running' : 'playing',
+    data.totals.playing === 0 && data.totals.running > 0 ? 'running' : 'playing',
   );
 
   // A link to one of the GM's tables (the banner, or a shared `#mesa-...`) opens their tab first,
@@ -49,8 +50,8 @@
   });
 
   const tabs = $derived([
-    ['playing', m.dash_tab_playing({ count: data.playing.length })],
-    ['running', m.dash_tab_running({ count: data.running.length })],
+    ['playing', m.dash_tab_playing({ count: data.totals.playing })],
+    ['running', m.dash_tab_running({ count: data.totals.running })],
   ] as const);
 
   // The tab's panel, which stays drawn from `lg` up whatever tab is selected.
@@ -127,12 +128,25 @@
           ><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15L6 16.5zM10 20.5a2 2 0 0 0 4 0" /></svg
         >
         <p class="text-lg font-semibold">{banner}</p>
-        <a
-          href="#mesa-{waiting[0].slug}"
-          onclick={showRunning}
-          class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
-          >{m.dash_banner_action()}</a
-        >
+        {#if data.waiting && data.waiting.first.page !== data.page}
+          <a
+            href="{pageHref(
+              '/account/tables',
+              page.url.searchParams,
+              data.waiting.first.page,
+              locale,
+            )}#mesa-{data.waiting.first.slug}"
+            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
+            >{m.dash_banner_action()}</a
+          >
+        {:else}
+          <a
+            href="#mesa-{data.waiting?.first.slug}"
+            onclick={showRunning}
+            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
+            >{m.dash_banner_action()}</a
+          >
+        {/if}
       </div>
     {/if}
 
@@ -147,11 +161,13 @@
                   {m.dash_playing()}
                 </h2>
                 <span class="text-sm font-semibold text-muted"
-                  >{m.dash_count({ count: data.playing.length })}</span
+                  >{m.dash_count({ count: data.totals.playing })}</span
                 >
               </div>
               {#if data.playing.length === 0}
-                <p class="mt-3">{m.dash_playing_empty()}</p>
+                <p class="mt-3">
+                  {data.totals.playing === 0 ? m.dash_playing_empty() : m.dash_page_empty()}
+                </p>
                 <a href={localizedHref('/tables', locale)} class="mt-2 inline-block anchor">
                   {m.dash_find_table()}
                 </a>
@@ -177,11 +193,13 @@
                   {m.dash_running()}
                 </h2>
                 <span class="text-sm font-semibold text-muted"
-                  >{m.dash_count({ count: data.running.length })}</span
+                  >{m.dash_count({ count: data.totals.running })}</span
                 >
               </div>
               {#if data.running.length === 0}
-                <p class="mt-3">{m.dash_running_empty()}</p>
+                <p class="mt-3">
+                  {data.totals.running === 0 ? m.dash_running_empty() : m.dash_page_empty()}
+                </p>
                 <a href={localizedHref('/tables/new', locale)} class="mt-2 inline-block anchor">
                   {m.tables_open_cta()}
                 </a>
@@ -198,4 +216,31 @@
       </Tabs.Content>
     </div>
   </Tabs>
+
+  {#if data.pages > 1}
+    <nav
+      aria-label={m.admin_pagination()}
+      class="mt-10 flex flex-wrap items-center justify-center gap-3"
+    >
+      {#if data.page > 1}
+        <a
+          class="btn size-12 rounded-lg border border-surface-200-800 p-0"
+          href={pageHref('/account/tables', page.url.searchParams, data.page - 1, locale)}
+          aria-label={m.admin_profile_previous()}
+          title={m.admin_profile_previous()}><Icon name="chevron-left" /></a
+        >
+      {/if}
+      <span class="font-semibold"
+        >{m.admin_profile_page({ page: data.page, pages: data.pages })}</span
+      >
+      {#if data.page < data.pages}
+        <a
+          class="btn size-12 rounded-lg border border-surface-200-800 p-0"
+          href={pageHref('/account/tables', page.url.searchParams, data.page + 1, locale)}
+          aria-label={m.admin_profile_next()}
+          title={m.admin_profile_next()}><Icon name="chevron-right" /></a
+        >
+      {/if}
+    </nav>
+  {/if}
 </section>

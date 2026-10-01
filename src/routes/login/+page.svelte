@@ -23,7 +23,11 @@
       role="alert"
       class="mb-5 rounded-lg border-2 border-error-alert bg-panel px-4 py-3 font-semibold"
     >
-      {data.confirmHint ? m.login_confirmed_hint() : m.login_failed()}
+      {data.suspended
+        ? m.login_suspended()
+        : data.confirmHint
+          ? m.login_confirmed_hint()
+          : m.login_failed()}
     </p>
   {/if}
 

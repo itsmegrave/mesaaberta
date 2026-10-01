@@ -6,6 +6,7 @@ import { imageUrl, supabaseUrlOf } from '../images';
 import { firstSessionEnded, gmRating, ratingOf } from '../ratings/service';
 import { listRegistrations, registrationStatus } from '../registrations/service';
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
+import { reportTargetsOf } from '../moderation/reports';
 export const read = async ({ locals, params, platform }: RequestEvent) => {
   // Unknown, disabled, or no database at all: the same translated 404.
   const found = locals.db && (await findTableBySlug(locals.db, params.slug!, new Date()));
@@ -59,6 +60,8 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
     myStatus,
     canJoin,
     registrations: manage ? await listRegistrations(locals.db!, profile, params.slug!) : null,
+    // What "Denunciar" offers this visitor: the table, and the people they share it with.
+    reportTargets: await reportTargetsOf(locals.db!, profile, { id, gmId }),
     // How to join is private: only the GM and the confirmed players get it.
     joinDetails:
       profile?.id === gmId || myStatus === 'confirmed' ? await joinDetailsOf(locals.db!, id) : null,

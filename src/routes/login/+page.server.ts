@@ -19,6 +19,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     next,
     failed: url.searchParams.has('error'),
     confirmHint: url.searchParams.get('error') === 'exchange_failed',
+    suspended: url.searchParams.get('error') === 'suspended',
     form: await superValidate({ next }, zod4(credentialsSchema), { errors: false }),
   };
 };
@@ -26,6 +27,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 const STATUS = {
   invalid: 400,
   unconfirmed: 400,
+  suspended: 403,
   failed: 500,
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignInResult, 'ok'>, number>;

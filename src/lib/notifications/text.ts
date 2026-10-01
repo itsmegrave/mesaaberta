@@ -60,7 +60,10 @@ export function notificationText(item: Shown): string {
     case 'report_resolved':
       return m.notification_report_resolved();
     case 'moderation_notice':
-      return m.notification_moderation_notice();
+      // A table an admin closed names it; the justification is on the GM's dashboard.
+      return table
+        ? m.notification_table_closed_by_moderation({ table })
+        : m.notification_moderation_notice();
     case 'system_announcement':
       return m.notification_unknown();
     case 'message_received': {

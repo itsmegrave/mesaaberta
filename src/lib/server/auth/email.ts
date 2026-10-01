@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import type { Logger } from '../logger';
 import { recordConnection } from '../events/outbox';
 import { ensureProfile } from './profile';
+import { stillBanned } from '../moderation/bans';
 import { safeNext } from './safe-next';
 
 // Email and password sign-up and sign-in. Supabase Auth does all of it: it stores the (hashed)
@@ -14,7 +15,8 @@ type Deps = { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: strin
 /** What the sign-up form should say. `check_email` is also the answer for an address that already has an account. */
 export type SignUpResult =
   'signed_in' | 'check_email' | 'weak_password' | 'rate_limited' | 'failed';
-export type SignInResult = 'ok' | 'invalid' | 'unconfirmed' | 'rate_limited' | 'failed';
+export type SignInResult =
+  'ok' | 'invalid' | 'unconfirmed' | 'suspended' | 'rate_limited' | 'failed';
 
 const RATE_LIMITED = new Set([
   'over_email_send_rate_limit',
@@ -22,20 +24,29 @@ const RATE_LIMITED = new Set([
   'over_sms_send_rate_limit',
 ]);
 
-/** Creates the profile, or signs the person out again so nobody is left half signed in. */
-async function keepProfile({ supabase, db, log }: Deps, user: User): Promise<boolean> {
+/**
+ * Creates the profile, or signs the person out again so nobody is left half signed in. Returns
+ * whether the person keeps the session: `suspended` signs them out too.
+ */
+async function keepProfile(
+  { supabase, db, log }: Deps,
+  user: User,
+): Promise<'kept' | 'suspended' | 'failed'> {
   try {
     if (!db) throw new Error('no database to create the profile in');
-    await ensureProfile(db, user);
-    return true;
+    const profile = await ensureProfile(db, user);
+    // A temporary ban that ran out is lifted here; anything else still barred is signed out.
+    if (!profile || !(await stillBanned(db, profile)).banned) return 'kept';
   } catch (error) {
     log.error('email auth: could not create the profile', { error });
     await supabase.auth.signOut();
-    return false;
+    return 'failed';
   }
+  await supabase.auth.signOut();
+  return 'suspended';
 }
 
-/** `keepProfile` already checked that `db` is there when it returns true. */
+/** `keepProfile` already checked that `db` is there when it returns `kept`. */
 const signedIn = async ({ db, ip, log }: Deps, user: User) =>
   recordConnection(db as AnyDb, { actorId: user.id, ip, log });
 
@@ -73,7 +84,8 @@ export async function signUpWithEmail(
   // the same way, so this never says whether the address was already registered.
   if (!data.session || !data.user) return 'check_email';
 
-  if (!(await keepProfile(deps, data.user))) return 'failed';
+  // A brand-new account is never suspended; anything but `kept` is a failure here.
+  if ((await keepProfile(deps, data.user)) !== 'kept') return 'failed';
   await signedIn(deps, data.user);
   return 'signed_in';
 }
@@ -93,7 +105,8 @@ export async function signInWithEmail(
     return 'failed';
   }
 
-  if (!(await keepProfile(deps, data.user))) return 'failed';
+  const kept = await keepProfile(deps, data.user);
+  if (kept !== 'kept') return kept;
   await signedIn(deps, data.user);
   return 'ok';
 }
