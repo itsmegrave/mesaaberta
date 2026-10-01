@@ -1,4 +1,5 @@
 import type { profiles } from '../db/schema';
+import { nextStatus } from '../../tables/lifecycle-machine';
 import type { TableStatus } from '../../tables/status';
 import { Forbidden } from '../errors';
 
@@ -92,7 +93,7 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'table:disable': isGmOrAdmin,
   'table:confirm': (actor, table) =>
     table !== undefined &&
-    table.tableStatus === 'awaiting_confirmation' &&
+    nextStatus(table.tableStatus, 'HAPPENED') !== null &&
     isGmOrAdmin(actor, table),
   'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
   'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,

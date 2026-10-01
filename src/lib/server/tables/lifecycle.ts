@@ -5,6 +5,7 @@ import { gameTables } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Forbidden, Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { localToInstant } from './schedule';
 
 /**
@@ -18,7 +19,7 @@ export async function closeElapsedTables(db: AnyDb, now: Date): Promise<string[]
   return db.transaction(async (tx) => {
     const closed = await tx
       .update(gameTables)
-      .set({ status: 'awaiting_confirmation' })
+      .set({ status: nextStatus('active', 'SESSION_ENDED')! })
       .where(
         and(
           eq(gameTables.status, 'active'),
@@ -61,6 +62,7 @@ async function answer(
   db: AnyDb,
   actor: Actor | null,
   slug: string,
+  move: Exclude<LifecycleEvent, 'SESSION_ENDED'>,
   change: (
     table: Awaited<ReturnType<typeof findAwaiting>>,
   ) => Partial<typeof gameTables.$inferInsert>,
@@ -71,7 +73,7 @@ async function answer(
   const eventId = await db.transaction(async (tx) => {
     const [updated] = await tx
       .update(gameTables)
-      .set(change(table))
+      .set({ ...change(table), status: nextStatus('awaiting_confirmation', move)! })
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
       .returning({ id: gameTables.id });
     if (!updated) throw new Forbidden('table:confirm');
@@ -88,11 +90,11 @@ async function answer(
 
 /** The GM says the session happened: the table is concluded, and its players are asked to rate it. */
 export const concludeTable = (db: AnyDb, actor: Actor | null, slug: string) =>
-  answer(db, actor, slug, () => ({ status: 'concluded' }), 'TableConcluded');
+  answer(db, actor, slug, 'HAPPENED', () => ({}), 'TableConcluded');
 
 /** The GM says the session did not happen. Nobody is notified and nothing can be rated. */
 export const markTableNotHeld = (db: AnyDb, actor: Actor | null, slug: string) =>
-  answer(db, actor, slug, () => ({ status: 'not_held' }), 'TableNotHeld');
+  answer(db, actor, slug, 'NOT_HELD', () => ({}), 'TableNotHeld');
 
 /**
  * The GM moves the session to a new date, read in the table's own zone, and the table is open
@@ -114,7 +116,8 @@ export async function postponeTable(
     db,
     actor,
     slug,
-    (current) => ({ status: 'active', startsAt, icalSequence: current.icalSequence + 1 }),
+    'POSTPONE',
+    (current) => ({ startsAt, icalSequence: current.icalSequence + 1 }),
     'TableUpdated',
   );
 }
