@@ -66,13 +66,13 @@
       released && {
         href: '/tables',
         label: m.nav_tables(),
-        icon: 'layout-grid' as IconName,
+        icon: 'game-icons:dice-twenty-faces-twenty' as IconName,
         current: pathname.startsWith('/tables') && pathname !== '/tables/new',
       },
       account && {
         href: '/tables/new',
         label: m.nav_open_table_short(),
-        icon: 'plus' as IconName,
+        icon: 'game-icons:card-draw' as IconName,
         current: pathname === '/tables/new',
       },
       account && {
@@ -162,7 +162,7 @@
                 <span
                   class="relative {tile} group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800"
                 >
-                  <Icon name="shield" size={20} />
+                  <Icon name="game-icons:black-knight-helm" size={20} />
                   {#if account.pendingSuggestionsCount > 0}
                     <span
                       aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
