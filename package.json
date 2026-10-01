@@ -94,6 +94,8 @@
     "cropperjs": "^2.2.0",
     "devalue": "^6.0.2",
     "drizzle-orm": "^0.45.3",
+    "emoji-picker-element": "^1.29.1",
+    "emoji-picker-element-data": "^1.8.0",
     "ical.js": "^2.2.1",
     "jpeg-js": "^0.4.4",
     "linkifyjs": "^4.3.3",

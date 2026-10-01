@@ -48,7 +48,8 @@ describe('Composer.svelte', () => {
     await box.fill('Olá mesa');
     await userEvent.keyboard('{Home}{ArrowRight}{ArrowRight}{ArrowRight}');
     await page.getByRole('button', { name: 'Escolher emoji' }).click();
-    await page.getByRole('button', { name: '🎲', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Procurar' }).fill('dado');
+    await page.getByRole('option', { name: /dado/ }).first().click();
     await expect.element(box).toHaveValue('Olá🎲 mesa');
     await expect.element(box).toHaveFocus();
     expect(onpending).not.toHaveBeenCalled();
