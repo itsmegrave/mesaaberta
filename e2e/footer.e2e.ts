@@ -10,6 +10,13 @@ for (const [name, path] of [
     const footer = page.getByRole('contentinfo');
     await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Lenindragons' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: 'contato@mesaaberta.app' })).toHaveAttribute(
+      'href',
+      'mailto:contato@mesaaberta.app',
+    );
+    await expect(
+      footer.getByRole('link', { name: 'Instagram da Mesa Aberta, @mesaaberta.app' }),
+    ).toHaveAttribute('href', 'https://www.instagram.com/mesaaberta.app/');
     await expect(footer.getByRole('link', { name: 'Reporte aqui' })).toHaveAttribute(
       'href',
       'https://github.com/itsmegrave/mesaaberta/issues',
