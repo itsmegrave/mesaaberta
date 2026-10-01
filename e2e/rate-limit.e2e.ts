@@ -27,7 +27,7 @@ test.describe('rate limits', () => {
     // Nothing was lost or half done: the form is still filled and no sixth table exists.
     await expect(page).toHaveURL(/tables\/new$/);
     await expect(page.getByLabel('Título')).toHaveValue(title);
-    await expect(page.getByLabel('Descrição')).toHaveValue('Isto deve continuar aqui.');
+    await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
     const sql = database();
     try {
       const [{ n }] = await sql`

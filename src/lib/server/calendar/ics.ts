@@ -7,6 +7,7 @@ import ICAL from 'ical.js';
 import { tzlib_get_ical_block } from 'timezones-ical-library';
 // The `.ts` extension lets `scripts/sample-invite.ts` run this module in plain Node.
 import { RECURRENCE, instantToLocal } from '../tables/schedule.ts';
+import { toPlainText } from '../../text/rich.ts';
 
 export type CalendarTable = {
   id: string;
@@ -100,7 +101,10 @@ export function buildInvite({
   const vtimezone = timezoneComponent(table.timezone);
   const end = new Date(table.startsAt.getTime() + table.durationMinutes * 60_000);
   const url = tableUrl(baseUrl, table.slug);
-  const description = [table.description, table.extraInfo, url].filter(Boolean).join('\n\n');
+  // Calendar apps show plain text, so the rich text is read as text first.
+  const description = [toPlainText(table.description), toPlainText(table.extraInfo ?? ''), url]
+    .filter(Boolean)
+    .join('\n\n');
 
   const event = new ICAL.Component('vevent');
   event.updatePropertyWithValue('uid', `${table.id}@${UID_DOMAIN}`);

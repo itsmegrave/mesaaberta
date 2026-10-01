@@ -94,9 +94,9 @@ describe('resend mailer', () => {
   });
 
   describe('the GM welcome message', () => {
-    const message = 'Bem-vinda! <b>WhatsApp</b>: (11) 99999-0000';
+    const message = '<p>Bem-vinda! <strong>WhatsApp</strong>: (11) 99999-0000</p>';
 
-    it('is the WELCOME_MESSAGE variable of a hosted template, with its heading and no angle brackets', async () => {
+    it('is the WELCOME_MESSAGE variable of a hosted template, as HTML with its heading', async () => {
       const sent = capture();
 
       await resendMailer(env, sent.request).send({
@@ -107,7 +107,8 @@ describe('resend mailer', () => {
 
       expect(sent.body().template.variables).toEqual({
         ...variables,
-        WELCOME_MESSAGE: 'Mensagem da mesa:\nBem-vinda! bWhatsApp/b: (11) 99999-0000',
+        WELCOME_MESSAGE:
+          '<h3>Mensagem da mesa</h3><p>Bem-vinda! <strong>WhatsApp</strong>: (11) 99999-0000</p>',
       });
       expect(sent.body()).not.toHaveProperty('text');
     });
@@ -127,16 +128,49 @@ describe('resend mailer', () => {
       },
     );
 
-    it('is appended to the inline copy, escaped in the HTML', async () => {
+    it('is appended to the inline copy, as text in the plain part and as HTML in the HTML part', async () => {
       const sent = capture();
 
       await resendMailer(env, sent.request).send({ ...inline, welcomeMessage: message });
 
-      expect(sent.body().text).toBe(`${inline.text}\n\nMensagem da mesa:\n${message}`);
-      expect(sent.body().html).toContain(
-        'Mensagem da mesa:<br>Bem-vinda! &lt;b&gt;WhatsApp&lt;/b&gt;',
+      expect(sent.body().text).toBe(
+        `${inline.text}\n\nMensagem da mesa:\nBem-vinda! WhatsApp: (11) 99999-0000`,
       );
-      expect(sent.body().html).not.toContain('<b>');
+      expect(sent.body().html).toContain(
+        '<h3>Mensagem da mesa</h3><p>Bem-vinda! <strong>WhatsApp</strong>: (11) 99999-0000</p>',
+      );
+    });
+
+    it('never sends a tag outside the allowed set, whatever the message holds', async () => {
+      const sent = capture();
+      const dirty = '<p onclick="x()">oi<script>alert(1)</script><img src=x onerror=y></p>';
+
+      await resendMailer(env, sent.request).send({
+        ...inline,
+        welcomeMessage: dirty,
+        template: { id: 'tpl-invite', variables },
+      });
+
+      expect(sent.body().template.variables.WELCOME_MESSAGE).toBe(
+        '<h3>Mensagem da mesa</h3><p>oi</p>',
+      );
+    });
+
+    it('is cut as plain paragraphs, never as half a tag, when it exceeds the variable limit', async () => {
+      const sent = capture();
+      const long = `<p>${'<strong>palavra</strong> '.repeat(150)}</p>`;
+
+      await resendMailer(env, sent.request).send({
+        ...inline,
+        welcomeMessage: long,
+        template: { id: 'tpl-invite', variables },
+      });
+
+      const sentVariable: string = sent.body().template.variables.WELCOME_MESSAGE;
+      expect(sentVariable.length).toBeLessThanOrEqual(2000);
+      expect(sentVariable).toMatch(/^<h3>Mensagem da mesa<\/h3><p>palavra/);
+      expect(sentVariable).toMatch(/…<\/p>$/);
+      expect(sentVariable).not.toContain('<strong>');
     });
 
     it.each([undefined, '', '  '])('leaves the inline copy untouched for %j', async (empty) => {

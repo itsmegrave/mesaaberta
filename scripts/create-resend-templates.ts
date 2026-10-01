@@ -33,7 +33,7 @@ const TEMPLATES: TemplateSpec[] = [
     html: `
 			<p>Olá, {{{RECIPIENT_NAME}}}!</p>
 			<p>Sua vaga na mesa <strong>{{{TABLE_TITLE}}}</strong> está confirmada. A sessão começa {{{STARTS_AT}}}.</p>
-			<p style="white-space: pre-line">{{{WELCOME_MESSAGE}}}</p>
+			<div>{{{WELCOME_MESSAGE}}}</div>
 			<p>O convite de calendário está anexado: abra o arquivo para adicionar a mesa à sua agenda. Se a mesa mudar, você receberá um novo convite que atualiza o evento.</p>
 			<p><a href="{{{TABLE_URL}}}">Ver a mesa</a></p>
 		`.trim(),

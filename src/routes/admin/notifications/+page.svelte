@@ -3,6 +3,8 @@
   import { superForm } from 'sveltekit-superforms';
   import FormField from '$lib/components/FormField.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
+  import RichText from '$lib/components/RichText.svelte';
+  import RichTextField from '$lib/components/RichTextField.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { ANNOUNCEMENT_LIMITS } from '$lib/notifications/announcement';
@@ -225,16 +227,15 @@
         hint={m.admin_announce_body_hint({ max: ANNOUNCEMENT_LIMITS.body })}
         error={fieldError($errors.body)}
       >
-        <textarea
+        <RichTextField
           id="body"
           name="body"
-          required
-          rows="4"
+          rows={4}
           maxlength={ANNOUNCEMENT_LIMITS.body}
           bind:value={$form.body}
-          aria-invalid={$errors.body ? 'true' : undefined}
-          aria-describedby="body-hint{$errors.body ? ' body-error' : ''}"
-          class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"></textarea>
+          invalid={Boolean($errors.body)}
+          describedby="body-hint{$errors.body ? ' body-error' : ''}"
+        />
       </FormField>
 
       <fieldset class="grid gap-3 sm:grid-cols-3">
@@ -400,7 +401,7 @@
                   >{STATUS[sent.status].label}</span
                 >
               </div>
-              <p class="mt-1 wrap-break-word whitespace-pre-line">{sent.body}</p>
+              <RichText html={sent.body} class="mt-1" />
               <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
                 <span>
                   {sent.audience === 'specific_user'

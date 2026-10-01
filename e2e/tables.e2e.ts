@@ -189,11 +189,15 @@ test.describe('table page', () => {
     await expect(page.getByText('Cada entrada passa por aprovação.')).toBeVisible();
   });
 
-  test('shows user text as text: markup is never interpreted', async ({ page }) => {
+  test('shows rich text with its formatting and never runs what is stored with it', async ({
+    page,
+  }) => {
     await page.goto('/tables/os-sinos-de-sablewood');
 
-    await expect(page.getByText('Traga dados e <b>lápis</b>.')).toBeVisible();
-    await expect(page.locator('article b')).toHaveCount(0);
+    await expect(page.getByText('Traga dados e lápis.')).toBeVisible();
+    await expect(page.locator('.rich-text strong', { hasText: 'lápis' })).toBeVisible();
+    await expect(page.locator('.rich-text script')).toHaveCount(0);
+    expect(await page.evaluate(() => (window as { __xss?: boolean }).__xss)).toBeUndefined();
   });
 
   test('offers no edit link to a visitor who is not the GM or an admin', async ({ page }) => {

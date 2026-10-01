@@ -43,6 +43,21 @@ export const ICON_NAMES = [
   'layout-grid',
   'panel-left-open',
   'panel-left-close',
+  'bold',
+  'italic',
+  'underline',
+  'strikethrough',
+  'heading-2',
+  'heading-3',
+  'list',
+  'list-ordered',
+  'quote',
+  'code',
+  'minus',
+  'link',
+  'unlink',
+  'undo-2',
+  'redo-2',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

@@ -137,7 +137,9 @@ describe('handleTableForm', () => {
     await expect(
       run(request({ title: 'Boas-vindas', welcomeMessage: 'Olá, {nome da mesa}!' }), s),
     ).rejects.toMatchObject({ status: 303 });
-    expect(s.save.mock.calls[0][0]).toMatchObject({ welcomeMessage: 'Olá, {nome da mesa}!' });
+    expect(s.save.mock.calls[0][0]).toMatchObject({
+      welcomeMessage: '<p>Olá, {nome da mesa}!</p>',
+    });
 
     const refused = await run(request({ title: 'x', welcomeMessage: 'Fale comigo.' }), setup());
     expect(refused).toMatchObject({

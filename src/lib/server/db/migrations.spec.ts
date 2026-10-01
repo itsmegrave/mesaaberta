@@ -320,3 +320,98 @@ describe('adventure migrations in one transaction', () => {
     }
   });
 });
+
+describe('0028_rich_text_fields', () => {
+  let client: PGlite;
+
+  beforeAll(async () => {
+    client = new PGlite();
+    await client.exec(`
+			CREATE TABLE game_tables (
+				id int PRIMARY KEY,
+				description text NOT NULL DEFAULT '',
+				extra_info text,
+				welcome_message text,
+				join_details text,
+				CONSTRAINT game_tables_join_details_length CHECK (char_length(join_details) <= 1000),
+				CONSTRAINT game_tables_welcome_message_length CHECK (char_length(welcome_message) <= 1000)
+			);
+			CREATE TABLE notifications (id int PRIMARY KEY, type text NOT NULL, body text);
+			CREATE TABLE events (id int PRIMARY KEY, type text NOT NULL, payload jsonb NOT NULL);
+		`);
+    await client.query(
+      `insert into game_tables values (1, $1, $2, $3, $4), (2, '', '  ', '', null)`,
+      [
+        'Primeira linha\r\nsegunda linha\r\n\r\nNova & <b>pessoa</b>',
+        'Traga dados.',
+        "Olá '{nome da mesa}'!",
+        'https://discord.gg/abc',
+      ],
+    );
+    await client.query(
+      `insert into notifications values (1, 'system_announcement', $1), (2, 'join_approved', $1), (3, 'system_announcement', null)`,
+      ['Manutenção\n\nHoje à noite'],
+    );
+    await client.query(
+      `insert into events values (1, 'SystemAnnouncementSent', $1::jsonb), (2, 'JoinApproved', $1::jsonb)`,
+      [JSON.stringify({ title: 'T', body: 'a < b\nc' })],
+    );
+    await applyMigration(client, '0028_rich_text_fields');
+  });
+
+  afterAll(async () => {
+    await client.close();
+  });
+
+  it('turns the old plain text into paragraphs, escaped, so nothing a GM typed becomes markup', async () => {
+    const { rows } = await client.query(
+      `select description, extra_info, welcome_message, join_details from game_tables where id = 1`,
+    );
+    expect(rows[0]).toEqual({
+      description:
+        '<p>Primeira linha<br>segunda linha</p><p>Nova &amp; &lt;b&gt;pessoa&lt;/b&gt;</p>',
+      extra_info: '<p>Traga dados.</p>',
+      welcome_message: "<p>Olá '{nome da mesa}'!</p>",
+      join_details: '<p>https://discord.gg/abc</p>',
+    });
+  });
+
+  it('leaves blank fields empty, with no empty paragraph', async () => {
+    const { rows } = await client.query(`select * from game_tables where id = 2`);
+    expect(rows[0]).toMatchObject({
+      description: '',
+      extra_info: null,
+      welcome_message: null,
+      join_details: null,
+    });
+  });
+
+  it('converts an announcement in its notifications and its event, and nothing else', async () => {
+    const notifications = await client.query(`select id, body from notifications order by id`);
+    expect(notifications.rows).toEqual([
+      { id: 1, body: '<p>Manutenção</p><p>Hoje à noite</p>' },
+      { id: 2, body: 'Manutenção\n\nHoje à noite' },
+      { id: 3, body: null },
+    ]);
+    const events = await client.query(`select id, payload from events order by id`);
+    expect(events.rows).toEqual([
+      { id: 1, payload: { title: 'T', body: '<p>a &lt; b<br>c</p>' } },
+      { id: 2, payload: { title: 'T', body: 'a < b\nc' } },
+    ]);
+  });
+
+  it('lets the private fields hold markup up to the new cap, and no more', async () => {
+    await client.query(`update game_tables set join_details = $1 where id = 1`, ['x'.repeat(6000)]);
+    await expect(
+      client.query(`update game_tables set join_details = $1 where id = 1`, ['x'.repeat(6001)]),
+    ).rejects.toThrow(/game_tables_join_details_length/);
+    await expect(
+      client.query(`update game_tables set welcome_message = $1 where id = 1`, ['x'.repeat(6001)]),
+    ).rejects.toThrow(/game_tables_welcome_message_length/);
+  });
+
+  it('leaves no helper function behind', async () => {
+    const { rows } = await client.query(`select 1 from pg_proc where proname = 'plain_to_html'`);
+    expect(rows).toEqual([]);
+  });
+});

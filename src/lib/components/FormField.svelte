@@ -11,7 +11,7 @@
 </script>
 
 <div class="min-w-0">
-  <label for={id} class="label-text block font-semibold">{label}</label>
+  <label for={id} id="{id}-label" class="label-text block font-semibold">{label}</label>
   {#if hint}<p id="{id}-hint" class="text-sm text-surface-700-300">{hint}</p>{/if}
   <div class="mt-1">{@render children()}</div>
   {#if error}<p id="{id}-error" role="alert" class="mt-1 text-sm font-semibold text-error-700-300">

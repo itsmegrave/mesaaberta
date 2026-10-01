@@ -273,9 +273,9 @@ export const gameTables = pgTable(
     ),
     // Mirror TABLE_LIMITS in $lib/tables/schema.
     check('game_tables_location_area_length', sql`char_length(${table.locationArea}) <= 120`),
-    check('game_tables_join_details_length', sql`char_length(${table.joinDetails}) <= 1000`),
-    // Mirrors WELCOME_MESSAGE_MAX in $lib/tables/welcome.
-    check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 1000`),
+    // Both are rich-text HTML: the visible limit (1000) times RICH_HTML_FACTOR in $lib/text/rich-schema.
+    check('game_tables_join_details_length', sql`char_length(${table.joinDetails}) <= 6000`),
+    check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 6000`),
     // Mirrors RESOLUTION_NOTE_MAX in $lib/moderation/reports.
     check('game_tables_moderation_note_length', sql`char_length(${table.moderationNote}) <= 1000`),
   ],

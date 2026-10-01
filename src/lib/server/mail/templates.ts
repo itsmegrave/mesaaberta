@@ -1,3 +1,5 @@
+import { cleanRichHtml, plainToHtml, toPlainText } from '$lib/text/rich';
+
 /**
  * Hosted Resend templates. The copy of each e-mail is written and versioned in the Resend dashboard;
  * the app only says which template to use and fills in variables. See "Hosted e-mail templates" in
@@ -32,7 +34,8 @@ export function templateIdFor(env: TemplateEnv, key: TemplateKey): string | unde
  * Resend reserves (`FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`, `contact`, `this`).
  * Never add an id, a token, an address or anything secret here.
  *
- * `WELCOME_MESSAGE` is optional and is the whole "Mensagem da mesa" section, heading included:
+ * `WELCOME_MESSAGE` is optional and is the whole "Mensagem da mesa" section as HTML (`welcomeHtml`),
+ * heading included, for `{{{WELCOME_MESSAGE}}}` in a block of its own:
  * Resend templates have no conditionals, so a template that owned the heading would show it above
  * nothing. Absent values are omitted, so the template gives it an empty fallback in the dashboard.
  */
@@ -64,7 +67,7 @@ export type TemplateVariables = {
   STARTS_AT: string;
   /** The plain-text copy. Resend refuses `text` next to a template, so it travels as a variable. */
   FALLBACK_TEXT: string;
-  /** The GM's welcome message with its heading (see `welcomeSection`); absent when there is none. */
+  /** The GM's welcome message as HTML with its heading (see `welcomeHtml`); absent when there is none. */
   WELCOME_MESSAGE?: string;
 };
 
@@ -87,12 +90,31 @@ const MAX_LENGTH = 2000;
  */
 const clean = (value: string) => value.replace(/[<>]/g, '').slice(0, MAX_LENGTH);
 
+/**
+ * The welcome section is the one variable that is markup, so angle brackets stay. It is cleaned to
+ * the allowed tags again, and when it does not fit Resend's limit it is cut as plain text (never
+ * as HTML, which would leave a tag open) and the ellipsis marks the cut.
+ */
+function welcomeVariable(html: string): string {
+  const safe = cleanRichHtml(html);
+  if (safe.length <= MAX_LENGTH) return safe;
+  const heading = `<h3>${WELCOME_HEADING}</h3>`;
+  let text = toPlainText(safe.startsWith(heading) ? safe.slice(heading.length) : safe);
+  let out: string;
+  do {
+    out = `${heading}${plainToHtml(`${text}…`)}`;
+    text = text.slice(0, Math.floor(text.length * 0.9));
+  } while (out.length > MAX_LENGTH && text.length > 0);
+  return out.length > MAX_LENGTH ? '' : out;
+}
+
 /** Picks the allowlisted variables and cleans them; anything else is dropped. */
 export function templateVariables<T extends TemplateVariables | BanVariables>(input: T): T {
   const picked: Record<string, string> = {};
   for (const name of new Set([...TEMPLATE_VARIABLES, ...BAN_TEMPLATE_VARIABLES])) {
     const value = (input as Record<string, string | undefined>)[name];
-    if (value !== undefined) picked[name] = clean(value);
+    if (value === undefined) continue;
+    picked[name] = name === 'WELCOME_MESSAGE' ? welcomeVariable(value) : clean(value);
   }
   return picked as T;
 }
@@ -102,6 +124,12 @@ export const WELCOME_HEADING = 'Mensagem da mesa';
 
 /** The welcome section as text, or undefined when there is nothing to say: never a bare heading. */
 export function welcomeSection(message: string | undefined): string | undefined {
-  const trimmed = message?.trim();
+  const trimmed = message ? toPlainText(cleanRichHtml(message)) : '';
   return trimmed ? `${WELCOME_HEADING}:\n${trimmed}` : undefined;
+}
+
+/** The same section as HTML (the message is rich-text HTML): heading and message, or undefined. */
+export function welcomeHtml(message: string | undefined): string | undefined {
+  const safe = message ? cleanRichHtml(message) : '';
+  return safe ? `<h3>${WELCOME_HEADING}</h3>${safe}` : undefined;
 }

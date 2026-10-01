@@ -8,7 +8,7 @@ export type Mail = {
   text: string;
   /** A hosted template; when set, the provider sends it instead of `text`. */
   template?: { id: string; variables: TemplateVariables | BanVariables };
-  /** The GM's welcome message, already expanded. Empty or missing means no section at all. It goes in the inline copy and as the `WELCOME_MESSAGE` template variable. */
+  /** The GM's welcome message as rich-text HTML, already expanded. Empty or missing means no section at all. It goes in the inline copy (as HTML and as text) and as the `WELCOME_MESSAGE` template variable. */
   welcomeMessage?: string;
   attachments?: Array<{ filename: string; content: string; contentType: string }>;
   /** A provider-supported idempotency key for an at-least-once domain event. */

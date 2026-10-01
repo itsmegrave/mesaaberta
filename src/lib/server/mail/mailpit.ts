@@ -1,6 +1,6 @@
 import type { Mail, Mailer } from './mailer';
 import { escapeHtml, utf8Base64 } from './resend';
-import { welcomeSection } from './templates';
+import { welcomeHtml, welcomeSection } from './templates';
 
 export type MailpitEnv = { MAILPIT_URL: string; RESEND_FROM: string };
 type Fetch = typeof fetch;
@@ -15,7 +15,8 @@ const address = (value: string) => {
 const content = (mail: Mail) => {
   const welcome = welcomeSection(mail.welcomeMessage);
   const text = welcome ? `${mail.text}\n\n${welcome}` : mail.text;
-  return { Text: text, HTML: `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>` };
+  const html = `<p>${escapeHtml(mail.text).replace(/\n/g, '<br>')}</p>${welcomeHtml(mail.welcomeMessage) ?? ''}`;
+  return { Text: text, HTML: html };
 };
 
 /** Local/E2E transport: send the same messages into Supabase's Mailpit HTTP API. */
