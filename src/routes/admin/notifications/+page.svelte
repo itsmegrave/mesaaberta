@@ -38,19 +38,25 @@
   onMount(() => (mounted = true));
 
   // svelte-ignore state_referenced_locally
-  const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
-    resetForm: true,
-    invalidateAll: true,
-    onResult({ result }) {
-      if (result.type === 'redirect') {
-        confirming = false;
-        toast.success(m.admin_announce_sent());
-      }
+  const { form, errors, message, enhance, submitting, delayed, timeout, reset } = superForm(
+    data.form,
+    {
+      // The review step answers with a valid form; resetting then would blank what the confirm
+      // post must send. Only a sent announcement clears the fields.
+      resetForm: false,
+      invalidateAll: true,
+      onResult({ result }) {
+        if (result.type === 'redirect') {
+          confirming = false;
+          reset();
+          toast.success(m.admin_announce_sent());
+        }
+      },
+      onUpdated({ form }) {
+        confirming = (form.message as AnnouncementMessage | undefined)?.code === 'confirm';
+      },
     },
-    onUpdated({ form }) {
-      confirming = (form.message as AnnouncementMessage | undefined)?.code === 'confirm';
-    },
-  });
+  );
 
   const shown = $derived($message as AnnouncementMessage | undefined);
   const confirmStep = $derived(shown?.code === 'confirm' && confirming);
