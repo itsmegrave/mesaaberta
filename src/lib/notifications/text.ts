@@ -1,5 +1,6 @@
 import { m } from '$lib/paraglide/messages';
 import { atHandle } from '$lib/profile/handle';
+import { toPlainText } from '$lib/text/rich';
 import {
   ANNOUNCEMENT_ICONS,
   isNotificationType,
@@ -17,9 +18,15 @@ export type Shown = {
   actor: string | null;
 };
 
-/** The sentence a notification is shown as. An announcement is its own title (and body). */
+/**
+ * The sentence a notification is shown as. An announcement is its own title (and body, which is
+ * rich text and reads here as one line).
+ */
 export function notificationText(item: Shown): string {
-  if (item.title) return item.body ? `${item.title}: ${item.body}` : item.title;
+  if (item.title) {
+    const body = item.body ? toPlainText(item.body).replace(/\s+/g, ' ') : '';
+    return body ? `${item.title}: ${body}` : item.title;
+  }
 
   const table = item.metadata.title ?? '';
   const player = item.actor ? atHandle(item.actor) : m.notification_someone();

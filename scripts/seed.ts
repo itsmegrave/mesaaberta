@@ -52,9 +52,10 @@ const tables = [
     kind: 'one_shot' as const,
     capacity: 5,
     startsAt: inDays(7, 22),
-    description: 'Uma aventura de uma noite para quem nunca jogou.\nNão precisa de experiência.',
-    // Markup on purpose: the pages must show it as text.
-    extraInfo: 'Traga dados e <b>lápis</b>.',
+    description:
+      '<p>Uma aventura de uma noite para quem nunca jogou.<br>Não precisa de experiência.</p>',
+    // Rich text, with a script on purpose: the page keeps the formatting and drops what could run.
+    extraInfo: '<p>Traga dados e <strong>lápis</strong>.<script>window.__xss = true</script></p>',
   },
   {
     ...base,

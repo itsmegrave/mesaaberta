@@ -32,6 +32,8 @@ New form migrations use TanStack Form for values/validation and TanStack Query f
 
 `validateStringForm` handles only allowlisted scalar text fields. Arrays, numbers, booleans and files need explicit domain decoders before using it in other flows. Never allowlist passwords or files for echoing in action responses. Existing Superforms consumers remain transitional until card #152 is complete.
 
+Multiline text a person writes for others to read (a table's description, the welcome message, an announcement) uses `RichTextField` and is shown with `RichText`. It is stored as the small HTML subset of `src/lib/text/rich.ts` (paragraphs, headings, bold, italic, underline, strikethrough, lists, quotes, code, dividers and http/https/mailto links; no images, colours or alignment, because the CSP blocks inline `style`). Validate it with `richText(max)` from `$lib/text/rich-schema`, whose limit counts what a reader sees, and show it only through `RichText`, the one place `{@html}` is allowed. Calendar, Instagram and the plain-text e-mail copy use `toPlainText`. Chat messages and rating comments stay plain `<textarea>`s.
+
 Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
 
 ## Icons

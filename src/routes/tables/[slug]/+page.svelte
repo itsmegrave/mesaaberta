@@ -1,5 +1,6 @@
 <script lang="ts">
   import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import RichText from '$lib/components/RichText.svelte';
   import { queryClient } from '$lib/query/context';
   import { afterWrite } from '$lib/query/invalidate';
   const client = queryClient();
@@ -219,14 +220,14 @@
         />
       {/if}
 
-      <!-- User text is rendered as text and never as markup; line breaks are kept by the CSS. -->
+      <!-- Rich text: RichText cleans it to a small set of tags before showing it. -->
       {#if table.description}
-        <p class="mt-8 max-w-prose text-lg whitespace-pre-line">{table.description}</p>
+        <RichText html={table.description} class="mt-8 max-w-prose text-lg" />
       {/if}
 
       {#if table.extraInfo}
         <h2 class="mt-10 text-3xl font-semibold tracking-tight">{m.table_extra_info()}</h2>
-        <p class="mt-2 max-w-prose whitespace-pre-line">{table.extraInfo}</p>
+        <RichText html={table.extraInfo} class="mt-2 max-w-prose" />
       {/if}
 
       {#if data.joinDetails}
@@ -235,7 +236,7 @@
           class="mt-8 max-w-prose rounded-lg border border-surface-200-800 bg-panel p-5"
         >
           <h2 id="join-details" class="text-xl font-semibold">{m.table_join_details()}</h2>
-          <p class="mt-2 wrap-break-word whitespace-pre-line">{data.joinDetails}</p>
+          <RichText html={data.joinDetails} class="mt-2" />
           <p class="mt-3 text-sm text-muted">{m.table_join_details_private()}</p>
         </section>
       {/if}

@@ -29,17 +29,30 @@ describe('cleanWelcomeMessage', () => {
 describe('expandWelcomeMessage', () => {
   it('puts the real table title where the token is, every time', () => {
     expect(
-      expandWelcomeMessage(`Bem-vindo à ${TITLE_TOKEN}! ${TITLE_TOKEN}`, 'Mesa do Dragão'),
-    ).toBe('Bem-vindo à Mesa do Dragão! Mesa do Dragão');
+      expandWelcomeMessage(`<p>Bem-vindo à ${TITLE_TOKEN}! ${TITLE_TOKEN}</p>`, 'Mesa do Dragão'),
+    ).toBe('<p>Bem-vindo à Mesa do Dragão! Mesa do Dragão</p>');
+  });
+
+  it('escapes the title, so a GM cannot put markup in the e-mail through it', () => {
+    expect(expandWelcomeMessage(`<p>${TITLE_TOKEN}</p>`, '<b>Mesa</b> & cia')).toBe(
+      '<p>&lt;b&gt;Mesa&lt;/b&gt; &amp; cia</p>',
+    );
+  });
+
+  it('cleans a message that was stored before it was checked', () => {
+    expect(expandWelcomeMessage('<p>oi<script>x()</script></p>', 'Mesa')).toBe('<p>oi</p>');
   });
 
   it('is nothing at all for an empty, blank or missing message', () => {
     expect(expandWelcomeMessage(null, 'Mesa')).toBeNull();
     expect(expandWelcomeMessage('', 'Mesa')).toBeNull();
     expect(expandWelcomeMessage('   \n ', 'Mesa')).toBeNull();
+    expect(expandWelcomeMessage('<p></p>', 'Mesa')).toBeNull();
   });
 
   it('does not treat a title with $ patterns as a replacement pattern', () => {
-    expect(expandWelcomeMessage(`Olá ${TITLE_TOKEN}`, "R$& '$`")).toBe("Olá R$& '$`");
+    expect(expandWelcomeMessage(`<p>Olá ${TITLE_TOKEN}</p>`, 'R$& $`')).toBe(
+      '<p>Olá R$&amp; $`</p>',
+    );
   });
 });

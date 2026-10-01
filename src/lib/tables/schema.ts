@@ -2,6 +2,7 @@ import { z } from 'zod';
 import '$lib/forms/zod-codes';
 import { imageFile } from '$lib/forms/files';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
+import { richText } from '$lib/text/rich-schema';
 import { normalizeCep } from '$lib/location/cep';
 import { isTimeZone } from '$lib/time/timezone';
 
@@ -48,12 +49,13 @@ export const tableFormSchema = z
     // Checked here so the form refuses it before uploading; the server still reads its bytes.
     image: imageFile,
     title: z.string().trim().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
-    description: text(TABLE_LIMITS.description).default(''),
-    extraInfo: text(TABLE_LIMITS.extraInfo).default(''),
+    // Rich text: stored as the small HTML subset of `$lib/text/rich`, limited by what a reader sees.
+    description: richText(TABLE_LIMITS.description).default(''),
+    extraInfo: richText(TABLE_LIMITS.extraInfo).default(''),
     welcomeMessage: z
       .string()
       .transform(cleanWelcomeMessage)
-      .pipe(z.string().max(TABLE_LIMITS.welcomeMessage))
+      .pipe(richText(TABLE_LIMITS.welcomeMessage))
       .default(''),
     kind: z.enum(['campaign', 'one_shot', 'adventure']),
     capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
@@ -69,7 +71,7 @@ export const tableFormSchema = z
     joinMode: z.enum(['auto', 'approval']).default('auto'),
     modality: z.enum(['online', 'in_person']).default('online'),
     locationArea: text(TABLE_LIMITS.locationArea).default(''),
-    joinDetails: text(TABLE_LIMITS.joinDetails).default(''),
+    joinDetails: richText(TABLE_LIMITS.joinDetails).default(''),
     // Checkboxes: every ticked one arrives under the same name. The server checks them against the catalog.
     platforms: z.array(z.string().trim().min(1)).max(TABLE_LIMITS.catalogPicks).default([]),
     tags: z.array(z.string().trim().min(1)).max(TABLE_LIMITS.catalogPicks).default([]),

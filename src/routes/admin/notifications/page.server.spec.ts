@@ -74,8 +74,10 @@ describe('the send action', () => {
     const { result } = await answer(e);
 
     expect(result.form.message).toEqual({ code: 'confirm', count: 42 });
+    // The body is rich text: the plain text a form sends without JavaScript becomes a paragraph.
     expect(vi.mocked(sendAnnouncement).mock.calls[0][2]).toMatchObject({
       ...valid,
+      body: `<p>${valid.body}</p>`,
       confirmed: false,
     });
     expect(after).toHaveLength(0);

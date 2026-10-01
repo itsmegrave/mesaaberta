@@ -329,8 +329,9 @@ describe('welcome message', () => {
     const update = (welcomeMessage: string) =>
       test.db.update(gameTables).set({ welcomeMessage }).where(eq(gameTables.slug, slug));
 
-    expect(await pgErrorCode(update('x'.repeat(1000)))).toBeUndefined();
-    expect(await pgErrorCode(update('x'.repeat(1001)))).toBe('23514');
+    // The visible limit is 1000; the stored HTML may be six times that (RICH_HTML_FACTOR).
+    expect(await pgErrorCode(update('x'.repeat(6000)))).toBeUndefined();
+    expect(await pgErrorCode(update('x'.repeat(6001)))).toBe('23514');
   });
 
   it('is never on the public table page, which is seen by people without a seat', async () => {

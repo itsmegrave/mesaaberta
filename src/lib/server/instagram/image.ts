@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import type { InstagramEnv } from './api';
 import type { TableView } from '../tables/queries';
 import { imageUrl } from '../images';
+import { toPlainText } from '$lib/text/rich';
 
 export const WIDTH = 1080;
 export const HEIGHT = 1350;
@@ -29,7 +30,10 @@ export function shareFacts(table: TableView, origin: string) {
   const kind =
     table.kind === 'one_shot' ? 'One-shot' : table.kind === 'adventure' ? 'Aventura' : 'Campanha';
   const seats = `${table.seatsLeft} vagas / ${table.capacity} lugares`;
-  const description = (table.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 1000);
+  const description = toPlainText(table.description ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 1000);
   const caption = `${table.title}\n${table.system.name} · ${kind} · ${modality}\n${date} (${table.timezone})\n${seats}\n\n${description}\n\nInscreva-se: ${url}\n\n#rpg #mesaaberta #${hashtag(table.system.slug)} #${modality.toLowerCase()} #${table.kind === 'one_shot' ? 'oneshot' : table.kind === 'adventure' ? 'adventure' : 'campaign'}`;
   return { url, date, modality, kind, seats, caption, description };
 }

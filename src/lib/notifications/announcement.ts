@@ -1,10 +1,12 @@
 import '$lib/forms/zod-codes';
 import { z } from 'zod';
+import { richText } from '$lib/text/rich-schema';
 import { ANNOUNCEMENT_AUDIENCES, ANNOUNCEMENT_ICONS, ANNOUNCEMENT_TONES } from './kinds';
 
 // Shared by the admin console's form (which shows the limits) and its action (which decides).
 z.config({ jitless: true });
 
+// `body` is the visible length of the rich-text message; it is stored as HTML (see `$lib/text/rich`).
 export const ANNOUNCEMENT_LIMITS = { title: 100, body: 500, link: 300, recipient: 80 } as const;
 
 /**
@@ -17,7 +19,7 @@ export const isSitePath = (value: string) =>
 export const announcementSchema = z
   .object({
     title: z.string().trim().min(1).max(ANNOUNCEMENT_LIMITS.title),
-    body: z.string().trim().min(1).max(ANNOUNCEMENT_LIMITS.body),
+    body: richText(ANNOUNCEMENT_LIMITS.body).refine((html) => html !== '', 'too_small'),
     // Empty: the tone's icon.
     icon: z.union([z.enum(ANNOUNCEMENT_ICONS), z.literal('')]).default(''),
     tone: z.enum(ANNOUNCEMENT_TONES).default('info'),

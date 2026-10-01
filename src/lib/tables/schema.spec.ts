@@ -46,7 +46,7 @@ describe('parseTableForm', () => {
       data: {
         systemSlug: 'daggerheart',
         title: 'Mesa do Dragão',
-        description: 'Uma noite só.',
+        description: '<p>Uma noite só.</p>',
         extraInfo: null,
         kind: 'one_shot',
         capacity: 5,
@@ -84,6 +84,13 @@ describe('parseTableForm', () => {
   });
 
   describe('recurrence', () => {
+    it('keeps the formatting a GM wrote and removes what could run code', () => {
+      const result = parseTableForm(
+        form({ description: '<p><strong>Regras</strong><script>x()</script></p>' }),
+      );
+      expect(result.ok && result.data.description).toBe('<p><strong>Regras</strong></p>');
+    });
+
     it.each([
       ['weekly', 'FREQ=WEEKLY'],
       ['biweekly', 'FREQ=WEEKLY;INTERVAL=2'],
@@ -166,7 +173,7 @@ describe('parseTableForm', () => {
       expect(result.ok && result.data).toMatchObject({
         modality: 'online',
         locationArea: null,
-        joinDetails: 'https://discord.gg/abc',
+        joinDetails: '<p>https://discord.gg/abc</p>',
       });
     });
 

@@ -1,5 +1,5 @@
 import type { Mail, Mailer } from './mailer';
-import { templateVariables, welcomeSection } from './templates';
+import { templateVariables, welcomeHtml, welcomeSection } from './templates';
 
 export type ResendEnv = { RESEND_API_KEY: string; RESEND_FROM: string };
 type Fetch = typeof fetch;
@@ -23,12 +23,14 @@ export const utf8Base64 = (value: string) => {
  */
 export const resendContent = (mail: Mail) => {
   const welcome = welcomeSection(mail.welcomeMessage);
+  const welcomeBlock = welcomeHtml(mail.welcomeMessage);
   if (mail.template) {
-    const variables = { ...mail.template.variables, WELCOME_MESSAGE: welcome };
+    const variables = { ...mail.template.variables, WELCOME_MESSAGE: welcomeBlock };
     return { template: { id: mail.template.id, variables: templateVariables(variables) } };
   }
   const text = welcome ? `${mail.text}\n\n${welcome}` : mail.text;
-  return { text, html: `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>` };
+  const html = `<p>${escapeHtml(mail.text).replace(/\n/g, '<br>')}</p>${welcomeBlock ?? ''}`;
+  return { text, html };
 };
 
 /** Resend's HTTP API is Worker-native, so no Node-only SDK or persistent process is needed. */

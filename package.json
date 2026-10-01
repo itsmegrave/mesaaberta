@@ -91,6 +91,9 @@
     "@tanstack/svelte-form": "^1.33.5",
     "@tanstack/svelte-query": "^6.3.0",
     "@tanstack/svelte-table": "^9.2.4",
+    "@tiptap/core": "^3.31.4",
+    "@tiptap/pm": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
     "cropperjs": "^2.2.0",
     "devalue": "^6.0.2",
     "drizzle-orm": "^0.45.3",
@@ -104,6 +107,7 @@
     "sveltekit-superforms": "^2.30.2",
     "temporal-polyfill": "1.0.5",
     "timezones-ical-library": "^2.3.2",
+    "xss": "^1.0.15",
     "xstate": "^5.33.2",
     "zod": "^4.6.5"
   }

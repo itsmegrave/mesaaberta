@@ -526,24 +526,26 @@ describe('the GM welcome message in the invite', () => {
     async (type) => {
       const [body] = await sentBodies(
         type,
-        `Bem-vinda à ${TITLE_TOKEN}! WhatsApp: (11) 99999-0000`,
+        `<p>Bem-vinda à ${TITLE_TOKEN}! <strong>WhatsApp</strong>: (11) 99999-0000</p>`,
       );
 
       expect(body.text).toContain(
         'Mensagem da mesa:\nBem-vinda à Mesa do Dragão! WhatsApp: (11) 99999-0000',
       );
-      expect(body.html).toContain('Mensagem da mesa:<br>Bem-vinda à Mesa do Dragão!');
+      expect(body.html).toContain(
+        '<h3>Mensagem da mesa</h3><p>Bem-vinda à Mesa do Dragão! <strong>WhatsApp</strong>',
+      );
     },
   );
 
   it.each(['JoinApproved', 'PlayerJoined'] as const)(
     'is the WELCOME_MESSAGE variable of the hosted %s template',
     async (type) => {
-      const [body] = await sentBodies(type, `Bem-vinda à ${TITLE_TOKEN}!`, templated);
+      const [body] = await sentBodies(type, `<p>Bem-vinda à ${TITLE_TOKEN}!</p>`, templated);
 
       expect(body.template.id).toBe('tpl-invite');
       expect(body.template.variables.WELCOME_MESSAGE).toBe(
-        'Mensagem da mesa:\nBem-vinda à Mesa do Dragão!',
+        '<h3>Mensagem da mesa</h3><p>Bem-vinda à Mesa do Dragão!</p>',
       );
       expect(Object.keys(body.template.variables).sort()).toEqual([...TEMPLATE_VARIABLES].sort());
     },

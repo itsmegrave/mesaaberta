@@ -5,6 +5,7 @@
   import { fileProxy, type SuperForm } from 'sveltekit-superforms';
   import { NAMELESS } from '$lib/profile/handle';
   import FormField from './FormField.svelte';
+  import RichTextField from './RichTextField.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import SeatSlider from './SeatSlider.svelte';
   import DateTimeField from './DateTimeField.svelte';
@@ -193,14 +194,14 @@
           </div>
         {/each}
         <FormField id="description" label={m.form_description()} error={err('description')}>
-          <textarea
+          <RichTextField
             id="description"
             name="description"
-            rows="5"
-            maxlength="4000"
+            rows={5}
+            maxlength={TABLE_LIMITS.description}
             bind:value={$form.description}
-            class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
-            aria-invalid={invalid('description')}></textarea>
+            invalid={invalid('description')}
+          />
         </FormField>
         <FormField
           id="extraInfo"
@@ -208,14 +209,14 @@
           hint={m.form_extra_info_hint()}
           error={err('extraInfo')}
         >
-          <textarea
+          <RichTextField
             id="extraInfo"
             name="extraInfo"
-            rows="3"
-            maxlength="2000"
+            rows={3}
+            maxlength={TABLE_LIMITS.extraInfo}
             bind:value={$form.extraInfo}
-            class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
-            aria-invalid={invalid('extraInfo')}></textarea>
+            invalid={invalid('extraInfo')}
+          />
         </FormField>
         <FormField
           id="welcomeMessage"
@@ -223,14 +224,14 @@
           hint={m.form_welcome_message_hint({ token: '{nome da mesa}' })}
           error={err('welcomeMessage')}
         >
-          <textarea
+          <RichTextField
             id="welcomeMessage"
             name="welcomeMessage"
-            rows="4"
-            maxlength="1000"
+            rows={4}
+            maxlength={TABLE_LIMITS.welcomeMessage}
             bind:value={$form.welcomeMessage}
-            class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
-            aria-invalid={invalid('welcomeMessage')}></textarea>
+            invalid={invalid('welcomeMessage')}
+          />
         </FormField>
       </div>
     </section>
@@ -410,14 +411,14 @@
           : m.form_join_details_link()}
         hint={m.form_join_details_hint()}
         error={err('joinDetails')}
-        ><textarea
+        ><RichTextField
           id="joinDetails"
           name="joinDetails"
-          rows="3"
-          maxlength="1000"
+          rows={3}
+          maxlength={TABLE_LIMITS.joinDetails}
           bind:value={$form.joinDetails}
-          class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
-          aria-invalid={invalid('joinDetails')}></textarea></FormField
+          invalid={invalid('joinDetails')}
+        /></FormField
       >
       <div class="min-w-0">
         <SeatSlider

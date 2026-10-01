@@ -98,7 +98,15 @@ export default defineConfig({
         // subpath, gives up, and Vite then finds dependencies late and reloads mid-run, which breaks
         // unrelated specs. Pointing it at the file skips the exports map.
         optimizeDeps: {
-          include: ['@iconify/svelte/dist/OfflineIcon.svelte'],
+          // Imported on demand (the emoji picker, the editor), so the scan meets them late and
+          // reloads the page mid-run, which fails whichever spec is loading at that moment.
+          include: [
+            '@iconify/svelte/dist/OfflineIcon.svelte',
+            'emoji-picker-element/picker',
+            '@tiptap/core',
+            '@tiptap/starter-kit',
+            'xss',
+          ],
           rolldownOptions: {
             resolve: {
               alias: {
