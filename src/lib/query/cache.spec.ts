@@ -15,6 +15,8 @@ describe('query cache boundaries', () => {
       'catalog',
       'editCatalog',
       'admin',
+      'adminUsers',
+      'adminTables',
     ] as const) {
       const key = readKey({ resource, viewer: 'ana', params: 'slug=mesa' });
       a.setQueryData(key, { secret: 'join link' });

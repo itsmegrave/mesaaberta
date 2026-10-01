@@ -84,8 +84,12 @@
   "admin_profiles": "Perfis cadastrados",
   "admin_new_profiles": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhum novo nos últimos 30 dias",
         "count=1": "1 novo nos últimos 30 dias",
@@ -96,8 +100,12 @@
   "admin_tables": "Mesas",
   "admin_active_tables": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhuma com status ativo",
         "count=1": "1 com status ativo",
@@ -110,8 +118,12 @@
   "admin_confirmed": "Inscrições confirmadas",
   "admin_pending_seats": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhuma solicitação aguardando aprovação",
         "count=1": "1 solicitação aguardando aprovação",
@@ -268,8 +280,12 @@
   "table_join_details_private": "Só você e quem tem vaga confirmada veem isto.",
   "tables_count": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhuma mesa com sessão marcada",
         "count=1": "1 mesa com sessão marcada",
@@ -282,8 +298,12 @@
   "table_kind_adventure": "Aventura",
   "table_seats_left": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhuma vaga restante",
         "count=1": "1 vaga restante",
@@ -347,8 +367,12 @@
   "date_picker_calendar": "Calendário",
   "form_capacity_taken": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Ninguém está na mesa ainda, então não há mínimo.",
         "count=1": "1 pessoa já está na mesa, então este é o mínimo.",
@@ -359,8 +383,12 @@
   "form_capacity_remove_players": "Remover pessoas da mesa",
   "form_capacity_seats": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhuma vaga",
         "count=1": "1 vaga",
@@ -470,8 +498,12 @@
   "rating_gm_average": "Nota de mestragem",
   "rating_count": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Sem avaliações",
         "count=1": "1 avaliação",
@@ -508,8 +540,12 @@
   "dash_manage": "Gerenciar mesa",
   "dash_count": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "nenhuma mesa",
         "count=1": "1 mesa",
@@ -519,8 +555,12 @@
   ],
   "dash_banner": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=1": "1 pedido de vaga esperando você em {title}",
         "count=*": "{count} pedidos de vaga esperando você em {title}"
@@ -745,8 +785,12 @@
   "admin_announce_audience_specific_user": "Uma pessoa",
   "admin_announce_audience_size": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Nenhuma conta",
         "count=1": "1 conta",
@@ -766,8 +810,12 @@
   "admin_announce_confirm_person": "Esta notificação vai para @{username}.",
   "admin_announce_confirm": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Esta notificação não vai para nenhuma conta.",
         "count=1": "Esta notificação vai para 1 conta.",
@@ -788,8 +836,12 @@
   "admin_history_to_person": "Para {username}",
   "admin_history_notified": [
     {
-      "declarations": ["input count"],
-      "selectors": ["count"],
+      "declarations": [
+        "input count"
+      ],
+      "selectors": [
+        "count"
+      ],
       "match": {
         "count=0": "Não chegou a nenhuma conta",
         "count=1": "Chegou a 1 conta",
@@ -957,5 +1009,24 @@
   "admin_toast_create": "Entrada adicionada.",
   "privacy_provider_sentry": "Sentry: diagnóstico de erros e registros técnicos com contexto limitado, sem dados de formulário, cookies, endereço IP, e-mail ou identificação da conta.",
   "privacy_provider_mixpanel": "Mixpanel: análise de uso a partir de ações como criar mesas, pedir vagas e avaliar. Enviamos identificadores opacos da conta, da mesa e do evento, o tipo da ação e seu horário; não enviamos nomes, e-mails, textos, comentários ou endereço IP.",
-  "privacy_provider_traffic": "Cloudflare Web Analytics: estatísticas de tráfego, sem cookies de análise. O Mixpanel recebe eventos pelo servidor e não usa cookies no seu navegador."
+  "privacy_provider_traffic": "Cloudflare Web Analytics: estatísticas de tráfego, sem cookies de análise. O Mixpanel recebe eventos pelo servidor e não usa cookies no seu navegador.",
+  "instagram_processing": "A arte está sendo processada pelo Instagram. A publicação continuará automaticamente.",
+  "instagram_reconciled": "Publicação confirmada.",
+  "instagram_publishing": "Gerando e publicando…",
+  "admin_tables_search": "Buscar mesa pelo título",
+  "admin_tables_date": "Próxima sessão",
+  "admin_tables_instagram": "Instagram",
+  "admin_tables_actions": "Ações",
+  "admin_tables_action_label": "Ações da mesa: {title}",
+  "instagram_status_queued": "Na fila",
+  "instagram_status_processing": "Processando",
+  "instagram_status_publishing": "Publicando",
+  "instagram_status_uncertain": "Verificar publicação",
+  "instagram_status_failed": "Falhou",
+  "instagram_status_skipped": "Não elegível",
+  "instagram_status_published": "Publicado",
+  "instagram_status_none": "Não publicado",
+  "admin_tables_title": "Mesa",
+  "admin_tables_empty": "Nenhuma mesa encontrada.",
+  "admin_tables_all": "Todas"
 }

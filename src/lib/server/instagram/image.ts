@@ -102,7 +102,11 @@ export async function renderShareImage(table: TableView, env: InstagramEnv): Pro
   const image = imageUrl(env.SUPABASE_URL, table.imagePath);
   if (image) {
     // Only fetch our own Storage, never a GM-provided URL. Bound time/size before decoding.
-    const response = await fetch(image, { signal: AbortSignal.timeout(15_000), redirect: 'error' });
+    // Workers supports manual/follow only. A redirect is non-OK below, so we never follow it.
+    const response = await fetch(image, {
+      signal: AbortSignal.timeout(15_000),
+      redirect: 'manual',
+    });
     if (!response.ok) throw new Error('Instagram background unavailable');
     const type = response.headers.get('content-type')?.split(';')[0];
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(type ?? ''))

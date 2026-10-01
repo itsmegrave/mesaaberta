@@ -76,7 +76,8 @@ describe('admin catalog', () => {
   it('renames from the row, with the current name filled in', async () => {
     show();
 
-    await page.getByRole('button', { name: 'Renomear: Foundry VTT' }).click();
+    await page.getByRole('button', { name: 'Mais ações para Foundry VTT' }).click();
+    await page.getByRole('button', { name: 'Renomear', exact: true }).click();
 
     await expect.element(page.getByLabelText('Novo nome')).toHaveValue('Foundry VTT');
   });

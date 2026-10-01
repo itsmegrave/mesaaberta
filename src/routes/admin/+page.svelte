@@ -123,36 +123,6 @@
     {/each}
   </div>
 
-  <section class="mt-8" aria-labelledby="recent-tables">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 id="recent-tables" class="text-xl font-semibold">{m.admin_recent_tables()}</h2>
-      <a
-        class="inline-flex min-h-11 items-center gap-2 anchor"
-        href={localizedHref('/tables', locale)}
-        >{m.admin_browse_tables()}<Icon name="arrow-right" size={18} /></a
-      >
-    </div>
-    {#if data.recentTables.length === 0}
-      <p class="py-6 text-muted">{m.admin_no_tables()}</p>
-    {:else}
-      <ul class="mt-3 divide-y divide-surface-200-800">
-        {#each data.recentTables as table (table.slug)}
-          <li class="flex flex-wrap items-center justify-between gap-3 py-4">
-            <div class="min-w-0 flex-1">
-              <a
-                class="anchor font-semibold wrap-break-word"
-                href={localizedHref(`/tables/${table.slug}`, locale)}>{table.title}</a
-              >
-              <p class="mt-1 text-sm text-muted">{table.system} · {date(table.createdAt)}</p>
-            </div>
-            <span class="text-sm font-semibold"
-              >{table.status === 'active' ? m.admin_active() : m.admin_disabled()}</span
-            >
-          </li>
-        {/each}
-      </ul>
-    {/if}
-  </section>
   <a class="mt-6 inline-flex min-h-11 items-center gap-2 anchor" href={localizedHref('/', locale)}
     ><Icon name="external-link" size={18} />{m.admin_view_platform()}</a
   >

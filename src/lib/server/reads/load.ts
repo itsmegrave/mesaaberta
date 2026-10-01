@@ -17,6 +17,7 @@ import { read as editCatalog } from './edit-catalog';
 import { read as account } from './account';
 import { read as admin } from './admin';
 import { read as adminUsers } from './admin-users';
+import { read as adminTables } from './admin-tables';
 export const readers = {
   preview,
   tables,
@@ -28,6 +29,7 @@ export const readers = {
   account,
   admin,
   adminUsers,
+  adminTables,
 };
 export type ReadData<R extends Resource> = Awaited<ReturnType<(typeof readers)[R]>>;
 export async function loadRead<R extends Resource>(

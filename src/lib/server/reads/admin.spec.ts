@@ -1,6 +1,10 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { expect, it, vi } from 'vitest';
-import { read } from './admin';
+import { read as overview } from './admin';
+import { read as users } from './admin-users';
+import { read as tables } from './admin-tables';
+
+const read = overview;
 
 it.each([
   null,
@@ -25,3 +29,17 @@ it('reports an unavailable database to an authorized admin', async () => {
     } as unknown as RequestEvent),
   ).rejects.toMatchObject({ status: 503 });
 });
+
+it.each([overview, users, tables])(
+  'protects every admin reader before querying',
+  async (reader) => {
+    const db = { select: vi.fn() };
+    await expect(
+      reader({
+        locals: { getProfile: async () => null, db },
+        setHeaders: vi.fn(),
+      } as unknown as RequestEvent),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(db.select).not.toHaveBeenCalled();
+  },
+);

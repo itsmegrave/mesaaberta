@@ -10,7 +10,7 @@ import {
   systems,
 } from '../db/schema';
 import { encryptToken, InstagramError, type InstagramEnv, graph } from './api';
-import { instagramQueueHandler, publishInstagramPosts } from './publisher';
+import { instagramQueueHandler, publishInstagramPosts, publishInstagramTable } from './publisher';
 import type { StoredEvent } from '../events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -138,7 +138,7 @@ describe('automatic Instagram publishing', () => {
     expect(await post()).toMatchObject({
       status: 'processing',
       containerId: 'container',
-      attempts: 1,
+      attempts: 0,
     });
     ready = true;
     await run(request, new Date(now.getTime() + 60_000));
@@ -200,4 +200,31 @@ describe('automatic Instagram publishing', () => {
     await publishInstagramPosts(test.db, undefined, now);
     expect((await post()).image).toBeNull();
   });
+});
+
+it('keeps a manual publish pending while Meta processes and the cron completes it once', async () => {
+  let ready = false;
+  const normal = api();
+  const request = mockApi((path, params, method) =>
+    path === 'container' && !ready
+      ? { status_code: 'IN_PROGRESS' }
+      : normal(env, 'token', path, params, method),
+  );
+  expect(await publishInstagramTable(test.db, env, tableId, now, { render, api: request })).toBe(
+    'processing',
+  );
+  expect(await post()).toMatchObject({
+    status: 'processing',
+    containerId: 'container',
+    attempts: 0,
+  });
+  ready = true;
+  await run(request, new Date(now.getTime() + 60_000));
+  expect((await post()).status).toBe('published');
+  expect(vi.mocked(request).mock.calls.filter((call) => call[2] === 'ig-user/media')).toHaveLength(
+    1,
+  );
+  expect(
+    vi.mocked(request).mock.calls.filter((call) => call[2] === 'ig-user/media_publish'),
+  ).toHaveLength(1);
 });

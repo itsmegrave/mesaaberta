@@ -10,6 +10,7 @@
   // Each admin section adds its link here.
   const sections = [
     { path: '/admin', label: m.admin_nav_overview() },
+    { path: '/admin/tables', label: m.admin_tables() },
     { path: '/admin/users', label: m.admin_profile_list() },
     { path: '/admin/queue', label: m.admin_nav_queue() },
     { path: '/admin/catalog', label: m.admin_nav_catalog() },

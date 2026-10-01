@@ -1,0 +1,26 @@
+import { error, fail } from '@sveltejs/kit';
+import { can } from '$lib/server/auth/policy';
+import { InstagramError, type InstagramEnv } from '$lib/server/instagram/api';
+import { publishInstagramTable } from '$lib/server/instagram/publisher';
+import type { RequestEvent } from '@sveltejs/kit';
+
+export const publishInstagramAction = async ({ locals, platform, request }: RequestEvent) => {
+  if (!can(await locals.getProfile(), 'admin:access')) error(404);
+  if (!locals.db) error(503);
+  const form = await request.formData();
+  const tableId = String(form.get('tableId') ?? '');
+  if (!/^[0-9a-f-]{36}$/i.test(tableId)) return fail(400, { publishError: 'invalid' });
+  try {
+    const result = await publishInstagramTable(locals.db, platform?.env as InstagramEnv, tableId);
+    return { publishResult: result };
+  } catch (cause) {
+    // Meta and database errors can include credentials or bound values. Log only safe codes.
+    const dbCode = (cause as { cause?: { code?: string } } | null)?.cause?.code;
+    locals.log.error('instagram.publish_failed', {
+      tableId,
+      errorType: cause instanceof Error ? cause.name : 'unknown',
+      code: cause instanceof InstagramError ? cause.code : dbCode,
+    });
+    return fail(502, { publishError: 'failed' });
+  }
+};
