@@ -13,6 +13,8 @@ import {
   type InstagramEnv,
 } from './api';
 import { renderShareImage, shareFacts } from './image';
+import { createFlags } from '../flags/flags';
+import { growthBookPayload } from '../flags/payload';
 import { findTableBySlug } from '../tables/queries';
 
 // Always registered, even before OAuth is configured: creation events remain decoupled from Meta.
@@ -33,7 +35,12 @@ const LEASE_MS = 10 * 60_000;
 const terminal = ['published', 'failed', 'uncertain', 'skipped'];
 type Post = typeof instagramPosts.$inferSelect;
 
-type Deps = { render?: typeof renderShareImage; api?: typeof graph; refresh?: typeof refreshToken };
+type Deps = {
+  useTableImage?: boolean;
+  render?: typeof renderShareImage;
+  api?: typeof graph;
+  refresh?: typeof refreshToken;
+};
 /**
  * At-most-once publishing: save the container, and persist `publishing` BEFORE the external write.
  * If the Worker dies or the response is lost there, never repeat media_publish. An admin must
@@ -46,7 +53,7 @@ export async function processPost(
   token: string,
   userId: string,
   now: Date,
-  { render = renderShareImage, api = graph }: Deps = {},
+  { render = renderShareImage, api = graph, useTableImage }: Deps = {},
 ) {
   const save = async (values: Partial<typeof instagramPosts.$inferInsert>) => {
     await db.update(instagramPosts).set(values).where(eq(instagramPosts.tableId, post.tableId));
@@ -79,7 +86,19 @@ export async function processPost(
     return;
   }
   if (!post.image) {
-    const image = await render(table, env);
+    const includePhoto =
+      useTableImage ??
+      (await createFlags(
+        env.GROWTHBOOK_API_HOST && env.GROWTHBOOK_CLIENT_KEY
+          ? growthBookPayload({
+              apiHost: env.GROWTHBOOK_API_HOST,
+              clientKey: env.GROWTHBOOK_CLIENT_KEY,
+              fetch,
+              waitUntil: () => {},
+            })
+          : async () => null,
+      ).isEnabled('use_table_image'));
+    const image = await render(table, env, { useTableImage: includePhoto });
     const caption = shareFacts(table, env.APP_ORIGIN!).caption;
     if (caption.length > 2200) throw new InstagramError(400, false);
     await save({
@@ -235,6 +254,45 @@ export async function publishInstagramPosts(
     }
   }
   return rows.length;
+}
+
+/** Persist first; rendering and Meta requests happen only in the background worker. */
+export async function queueInstagramTable(
+  db: AnyDb,
+  env: InstagramEnv | undefined,
+  tableId: string,
+  now = new Date(),
+) {
+  if (!configured(env)) return 'unavailable';
+  const [account] = await db
+    .select()
+    .from(instagramAccounts)
+    .where(eq(instagramAccounts.id, 'mesaaberta'));
+  if (!account || account.expiresAt <= now) return 'unavailable';
+  const [row] = await db
+    .select({ slug: gameTables.slug })
+    .from(gameTables)
+    .where(eq(gameTables.id, tableId));
+  if (!row || !(await findTableBySlug(db, row.slug, now))?.nextAt) return 'not-eligible';
+  await db
+    .insert(instagramPosts)
+    .values({ tableId, eventId: crypto.randomUUID(), status: 'queued', nextAttemptAt: now })
+    .onConflictDoNothing();
+  // A retry must never overwrite a live lease or an ambiguous/published external write.
+  await db
+    .update(instagramPosts)
+    .set({ status: 'queued', nextAttemptAt: now, lastError: null, attempts: 0 })
+    .where(
+      and(
+        eq(instagramPosts.tableId, tableId),
+        inArray(instagramPosts.status, ['failed', 'skipped']),
+        or(isNull(instagramPosts.claimedUntil), lte(instagramPosts.claimedUntil, now)),
+      ),
+    );
+  const [post] = await db.select().from(instagramPosts).where(eq(instagramPosts.tableId, tableId));
+  if (post.status === 'published') return 'already-published';
+  if (['publishing', 'uncertain'].includes(post.status)) return 'uncertain';
+  return 'queued';
 }
 
 /** Publishes one eligible table on an explicit admin request without draining the cron queue. */

@@ -29,8 +29,9 @@ export function shareFacts(table: TableView, origin: string) {
   const kind =
     table.kind === 'one_shot' ? 'One-shot' : table.kind === 'adventure' ? 'Aventura' : 'Campanha';
   const seats = `${table.seatsLeft} vagas / ${table.capacity} lugares`;
-  const caption = `${table.title}\n${table.system.name} · ${kind} · ${modality}\n${date} (${table.timezone})\n${seats}\n\nInscreva-se: ${url}\n\n#rpg #mesaaberta #${hashtag(table.system.slug)} #${modality.toLowerCase()} #${table.kind === 'one_shot' ? 'oneshot' : table.kind === 'adventure' ? 'adventure' : 'campaign'}`;
-  return { url, date, modality, kind, seats, caption };
+  const description = (table.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 1000);
+  const caption = `${table.title}\n${table.system.name} · ${kind} · ${modality}\n${date} (${table.timezone})\n${seats}\n\n${description}\n\nInscreva-se: ${url}\n\n#rpg #mesaaberta #${hashtag(table.system.slug)} #${modality.toLowerCase()} #${table.kind === 'one_shot' ? 'oneshot' : table.kind === 'adventure' ? 'adventure' : 'campaign'}`;
+  return { url, date, modality, kind, seats, caption, description };
 }
 
 // SVG text is escaped and wrapped by glyph count (conservative for this bundled bold font).
@@ -79,6 +80,9 @@ export async function shareSvg(
  ${lines(table.title)
    .map((line, i) => text(line, 64, 405 + i * 76, 64))
    .join('')}
+ ${lines(facts.description, 60, 2)
+   .map((line, i) => text(line, 64, 694 + i * 34, 26, '#d1c7eb'))
+   .join('')}
  ${text(`${facts.modality} · ${facts.kind}`, 64, 780, 38)}
  ${lines(facts.date, 42, 2)
    .map((line, i) => text(line, 64, 854 + i * 46, 34))
@@ -90,7 +94,11 @@ export async function shareSvg(
  </svg>`;
 }
 
-export async function renderShareImage(table: TableView, env: InstagramEnv): Promise<Uint8Array> {
+export async function renderShareImage(
+  table: TableView,
+  env: InstagramEnv,
+  { useTableImage = false }: { useTableImage?: boolean } = {},
+): Promise<Uint8Array> {
   const asset = async (path: string) => {
     const request = new Request(new URL(path, env.APP_ORIGIN));
     const response = env.ASSETS ? await env.ASSETS.fetch(request) : await fetch(request);
@@ -99,7 +107,7 @@ export async function renderShareImage(table: TableView, env: InstagramEnv): Pro
   };
   const font = await asset('/fonts/DejaVuSans-Bold.ttf');
   let background: string | undefined;
-  const image = imageUrl(env.SUPABASE_URL, table.imagePath);
+  const image = useTableImage ? imageUrl(env.SUPABASE_URL, table.imagePath) : null;
   if (image) {
     // Only fetch our own Storage, never a GM-provided URL. Bound time/size before decoding.
     // Workers supports manual/follow only. A redirect is non-OK below, so we never follow it.

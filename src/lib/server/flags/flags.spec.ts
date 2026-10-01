@@ -10,6 +10,14 @@ const payload = (features: FeatureApiResponse['features']): FeatureApiResponse =
 const serving = (features: FeatureApiResponse['features']) => async () => payload(features);
 
 describe('createFlags', () => {
+  it('disables table photos unless GrowthBook explicitly enables them', async () => {
+    expect(await createFlags(async () => null).isEnabled('use_table_image')).toBe(false);
+    expect(
+      await createFlags(serving({ use_table_image: { defaultValue: true } })).isEnabled(
+        'use_table_image',
+      ),
+    ).toBe(true);
+  });
   it('uses the value GrowthBook serves', async () => {
     const flags = createFlags(serving({ is_platform_released: { defaultValue: true } }));
 

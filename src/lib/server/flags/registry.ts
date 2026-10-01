@@ -8,6 +8,8 @@ export const flagDefaults = {
   is_platform_released: false,
   // Off: the site as usual. On: every visitor gets the maintenance screen; admins still get through.
   maintenance_mode: false,
+  // Off: text and QR artwork. On: include the table photo as its background.
+  use_table_image: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

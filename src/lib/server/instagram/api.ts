@@ -4,6 +4,8 @@ export type InstagramEnv = {
   INSTAGRAM_APP_SECRET?: string;
   INSTAGRAM_TOKEN_KEY?: string;
   INSTAGRAM_API_VERSION?: string;
+  GROWTHBOOK_API_HOST?: string;
+  GROWTHBOOK_CLIENT_KEY?: string;
   APP_ORIGIN?: string;
   SUPABASE_URL?: string;
   ASSETS?: { fetch(request: Request): Promise<Response> };

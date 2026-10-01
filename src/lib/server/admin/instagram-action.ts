@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { can } from '$lib/server/auth/policy';
 import { InstagramError, type InstagramEnv } from '$lib/server/instagram/api';
-import { publishInstagramTable } from '$lib/server/instagram/publisher';
+import { publishInstagramTable, queueInstagramTable } from '$lib/server/instagram/publisher';
 import type { RequestEvent } from '@sveltejs/kit';
 
 export const publishInstagramAction = async ({ locals, platform, request }: RequestEvent) => {
@@ -11,7 +11,18 @@ export const publishInstagramAction = async ({ locals, platform, request }: Requ
   const tableId = String(form.get('tableId') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(tableId)) return fail(400, { publishError: 'invalid' });
   try {
-    const result = await publishInstagramTable(locals.db, platform?.env as InstagramEnv, tableId);
+    const env = platform?.env as InstagramEnv;
+    const result = await queueInstagramTable(locals.db, env, tableId);
+    if (result === 'queued')
+      locals.afterResponse(async (db) => {
+        const useTableImage = await locals.flags.isEnabled('use_table_image');
+        // Background failures are recorded on the durable job; never log Meta payloads.
+        try {
+          await publishInstagramTable(db, env, tableId, new Date(), { useTableImage });
+        } catch {
+          locals.log.error('instagram.background_publish_failed', { tableId });
+        }
+      });
     return { publishResult: result };
   } catch (cause) {
     // Meta and database errors can include credentials or bound values. Log only safe codes.
