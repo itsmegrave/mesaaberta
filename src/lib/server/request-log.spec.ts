@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
 import { createLogger } from './logger';
 import { handleRequestLog } from './request-log';
+import { error, redirect } from '@sveltejs/kit';
 
 const setup = () => {
   const lines: Record<string, unknown>[] = [];
@@ -25,6 +26,33 @@ const setup = () => {
 };
 
 describe('handleRequestLog', () => {
+  it.each([303, 403, 404, 503])(
+    'preserves expected HTTP status %s without a false 500',
+    async (status) => {
+      const { lines, handle } = setup();
+      const event = {
+        request: new Request('https://mesaaberta.test/admin'),
+        route: { id: '/admin' },
+        locals: {},
+      } as unknown as RequestEvent;
+      await expect(
+        handle({
+          event,
+          resolve: async () => {
+            if (status === 303) redirect(303, '/login?token=private');
+            error(status, 'private details');
+          },
+        }),
+      ).rejects.toMatchObject({ status });
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toMatchObject({
+        status,
+        level: status >= 500 ? 'error' : status === 403 ? 'warn' : 'info',
+        event: 'request.completed',
+      });
+      expect(JSON.stringify(lines)).not.toMatch(/private|token/);
+    },
+  );
   it('uses the Cloudflare ray id as the request id', async () => {
     const { lines, run } = setup();
 

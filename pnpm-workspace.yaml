@@ -1,3 +1,7 @@
+overrides:
+  # Miniflare pins an undici release with high-severity WebSocket and TLS flaws.
+  undici@7.29.0: 7.29.1
+
 allowBuilds:
   esbuild: true
   workerd: true

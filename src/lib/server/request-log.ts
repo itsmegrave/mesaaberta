@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
+import { isHttpError, isRedirect } from '@sveltejs/kit';
 import type { Logger } from './logger';
 
 /**
@@ -26,6 +27,21 @@ export const handleRequestLog =
     try {
       response = await resolve(event);
     } catch (error) {
+      if (isRedirect(error) || isHttpError(error)) {
+        const status = error.status;
+        log[status >= 500 ? 'error' : status >= 400 && status !== 404 ? 'warn' : 'info'](
+          'request',
+          {
+            event: 'request.completed',
+            method: event.request.method,
+            route: event.route?.id ?? '/unmatched',
+            status,
+            outcome: status >= 500 ? 'failed' : status >= 400 ? 'rejected' : 'succeeded',
+            durationMs: Date.now() - started,
+          },
+        );
+        throw error;
+      }
       log.error('request.failed', {
         event: 'request.failed',
         method: event.request.method,
