@@ -321,7 +321,7 @@ describe('adventure migrations in one transaction', () => {
   });
 });
 
-describe('0028_rich_text_fields', () => {
+describe('0029_rich_text_fields', () => {
   let client: PGlite;
 
   beforeAll(async () => {
@@ -356,7 +356,7 @@ describe('0028_rich_text_fields', () => {
       `insert into events values (1, 'SystemAnnouncementSent', $1::jsonb), (2, 'JoinApproved', $1::jsonb)`,
       [JSON.stringify({ title: 'T', body: 'a < b\nc' })],
     );
-    await applyMigration(client, '0028_rich_text_fields');
+    await applyMigration(client, '0029_rich_text_fields');
   });
 
   afterAll(async () => {
