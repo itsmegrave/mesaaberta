@@ -84,12 +84,8 @@
   "admin_profiles": "Perfis cadastrados",
   "admin_new_profiles": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhum novo nos últimos 30 dias",
         "count=1": "1 novo nos últimos 30 dias",
@@ -100,12 +96,8 @@
   "admin_tables": "Mesas",
   "admin_active_tables": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma com status ativo",
         "count=1": "1 com status ativo",
@@ -118,12 +110,8 @@
   "admin_confirmed": "Inscrições confirmadas",
   "admin_pending_seats": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma solicitação aguardando aprovação",
         "count=1": "1 solicitação aguardando aprovação",
@@ -280,12 +268,8 @@
   "table_join_details_private": "Só você e quem tem vaga confirmada veem isto.",
   "tables_count": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma mesa com sessão marcada",
         "count=1": "1 mesa com sessão marcada",
@@ -298,12 +282,8 @@
   "table_kind_adventure": "Aventura",
   "table_seats_left": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma vaga restante",
         "count=1": "1 vaga restante",
@@ -367,12 +347,8 @@
   "date_picker_calendar": "Calendário",
   "form_capacity_taken": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Ninguém está na mesa ainda, então não há mínimo.",
         "count=1": "1 pessoa já está na mesa, então este é o mínimo.",
@@ -383,12 +359,8 @@
   "form_capacity_remove_players": "Remover pessoas da mesa",
   "form_capacity_seats": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma vaga",
         "count=1": "1 vaga",
@@ -498,12 +470,8 @@
   "rating_gm_average": "Nota de mestragem",
   "rating_count": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Sem avaliações",
         "count=1": "1 avaliação",
@@ -540,12 +508,8 @@
   "dash_manage": "Gerenciar mesa",
   "dash_count": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "nenhuma mesa",
         "count=1": "1 mesa",
@@ -555,12 +519,8 @@
   ],
   "dash_banner": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "1 pedido de vaga esperando você em {title}",
         "count=*": "{count} pedidos de vaga esperando você em {title}"
@@ -785,12 +745,8 @@
   "admin_announce_audience_specific_user": "Uma pessoa",
   "admin_announce_audience_size": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma conta",
         "count=1": "1 conta",
@@ -810,12 +766,8 @@
   "admin_announce_confirm_person": "Esta notificação vai para @{username}.",
   "admin_announce_confirm": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Esta notificação não vai para nenhuma conta.",
         "count=1": "Esta notificação vai para 1 conta.",
@@ -836,12 +788,8 @@
   "admin_history_to_person": "Para {username}",
   "admin_history_notified": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Não chegou a nenhuma conta",
         "count=1": "Chegou a 1 conta",
