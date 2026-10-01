@@ -1127,5 +1127,30 @@
   "rich_text_link_invalid": "Use um endereço http, https ou um e-mail.",
   "rich_text_undo": "Voltar alteração",
   "rich_text_redo": "Refazer alteração",
-  "rich_text_count": "{count} de {max} caracteres"
+  "rich_text_count": "{count} de {max} caracteres",
+  "form_min_players": "Mínimo de jogadores (opcional)",
+  "form_min_players_hint": "Quantas pessoas a mesa precisa para acontecer. Deixe em branco se não faz diferença.",
+  "form_error_min_players_above": "O mínimo não pode ser maior que o número de vagas.",
+  "form_error_min_players_invalid": "Use um número inteiro, de 1 até 30, ou deixe em branco.",
+  "table_min_players": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Mínimo: 1 jogador",
+        "count=*": "Mínimo: {count} jogadores"
+      }
+    }
+  ],
+  "table_min_players_missing": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Falta 1 para o mínimo",
+        "count=*": "Faltam {count} para o mínimo"
+      }
+    }
+  ],
+  "table_min_players_met": "Mínimo atingido"
 }

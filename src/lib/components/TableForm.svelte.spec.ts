@@ -110,6 +110,31 @@ describe('TableForm', () => {
       .toHaveAttribute('href', '/tables/mesa/manage');
   });
 
+  it('asks for a minimum of players as an optional field, blank by default', async () => {
+    render(TableFormHarness, props);
+
+    const field = page.getByLabelText('Mínimo de jogadores (opcional)');
+    await expect.element(field).toHaveValue('');
+    await expect.element(page.getByText(/Deixe em branco se não faz diferença\./)).toBeVisible();
+    await field.fill('3');
+    await expect.element(field).toHaveValue('3');
+  });
+
+  it('shows what is wrong with the minimum next to it', async () => {
+    render(TableFormHarness, {
+      ...props,
+      values: { capacity: 4, minPlayers: '5' },
+      errors: { minPlayers: ['above_capacity'] },
+    });
+
+    await expect
+      .element(page.getByText('O mínimo não pode ser maior que o número de vagas.'))
+      .toBeVisible();
+    await expect
+      .element(page.getByLabelText('Mínimo de jogadores (opcional)'))
+      .toHaveAttribute('aria-invalid', 'true');
+  });
+
   it('takes the current image off on save, and can take that back', async () => {
     render(TableFormHarness, { ...props, imageUrl: 'https://x.supabase.co/img.png' });
     const removeField = () => document.querySelector('input[name="removeImage"]');

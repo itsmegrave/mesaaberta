@@ -237,6 +237,9 @@ export const gameTables = pgTable(
     locationCity: text('location_city'),
     locationState: text('location_state'),
     capacity: integer('capacity').notNull(),
+    // The fewest confirmed players the GM wants before the table goes ahead. Optional: null says it
+    // makes no difference. Never more than `capacity`.
+    minPlayers: integer('min_players'),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     durationMinutes: integer('duration_minutes').notNull(),
     timezone: text('timezone').notNull(),
@@ -266,6 +269,10 @@ export const gameTables = pgTable(
       sql`(${table.kind}::text IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind}::text = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
     ),
     check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
+    check(
+      'game_tables_min_players_range',
+      sql`${table.minPlayers} IS NULL OR (${table.minPlayers} >= 1 AND ${table.minPlayers} <= ${table.capacity})`,
+    ),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
     check(
       'game_tables_in_person_has_area',
