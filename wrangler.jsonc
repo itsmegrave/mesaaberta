@@ -46,6 +46,9 @@
     "enabled": true,
     "head_sampling_rate": 1,
     "redact_query_string": true,
+    // Detects and groups production failures in the dashboard. Without this, a Wrangler deploy
+    // turns Issues off again.
+    "issues": { "enabled": true },
     "logs": {
       "enabled": true,
       "head_sampling_rate": 1,
