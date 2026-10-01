@@ -7,6 +7,10 @@
     "sentry": {
       "type": "http",
       "url": "https://mcp.sentry.dev/mcp/mesa-aberta/mesa-aberta-app"
+    },
+    "cloudflare": {
+      "type": "http",
+      "url": "https://mcp.cloudflare.com/mcp"
     }
   }
 }
