@@ -82,13 +82,6 @@
     serviço funcionar. Publique apenas o que você tem direito de usar.
   </p>
 
-  <h2>Código aberto</h2>
-  <p>
-    O código da Mesa Aberta é aberto, sob a licença MIT, e está no
-    <a href="https://github.com/itsmegrave/mesaaberta" rel="noopener">GitHub</a>. A licença vale
-    para o código, não para o conteúdo publicado pelas pessoas nem para os dados delas.
-  </p>
-
   <h2>Encerrar a conta</h2>
   <p>
     Você pode apagar a sua conta a qualquer momento, na

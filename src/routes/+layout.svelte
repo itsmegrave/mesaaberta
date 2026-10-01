@@ -1,5 +1,6 @@
 <script lang="ts">
   import './layout.css';
+  import { CANNY_FEEDBACK_URL, CANNY_CHANGELOG_URL } from '$lib/canny/config';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
   import { createQueryClient } from '$lib/query/client';
   import { provideQueryClient } from '$lib/query/context';
@@ -240,12 +241,6 @@
                   rel="noopener"
                   target="_blank"
                   class="link-underline text-surface-950-50">itsmegrave</a
-                >. {m.footer_open_source()}
-                <a
-                  href="https://github.com/itsmegrave/mesaaberta"
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">GitHub</a
                 >.
               </p>
             </div>
@@ -261,19 +256,25 @@
               </p>
               <p>
                 {m.footer_report_bug()}
+                <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
                 <a
-                  href="https://github.com/itsmegrave/mesaaberta/issues"
+                  href={CANNY_FEEDBACK_URL}
                   rel="noopener"
                   target="_blank"
                   class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
                 >.
+                <!-- eslint-enable svelte/no-navigation-without-resolve -->
               </p>
               <p>
                 {m.footer_changelog()}
+                <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
                 <a
-                  href={localizedHref('/changelog', locale)}
+                  href={CANNY_CHANGELOG_URL}
+                  rel="noopener"
+                  target="_blank"
                   class="link-underline text-surface-950-50">{m.footer_changelog_link()}</a
                 >.
+                <!-- eslint-enable svelte/no-navigation-without-resolve -->
               </p>
             </div>
           </div>
