@@ -8,11 +8,11 @@ for (const [name, path] of [
     await page.goto(path);
 
     const footer = page.getByRole('contentinfo');
-    await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: 'itsmegrave' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Lenindragons' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Reporte aqui' })).toHaveAttribute(
       'href',
-      'https://github.com/itsmegrave/mesaaberta/issues',
+      'https://mesaaberta.canny.io/feedback',
     );
   });
 }
