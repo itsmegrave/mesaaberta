@@ -553,7 +553,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), including how to fix a message or add a 
 
 See [API queries](docs/api-queries.md) for cache boundaries, SSR hydration, Superforms ownership and the ViaCEP flow.
 
-The catalog and approval queue use TanStack Form with TanStack Query mutations. Shared form helpers preserve typed values on failure, block duplicate submissions, do not retry writes, and refresh affected reads only after success. Other flows still use Superforms during the migration tracked in [card #152](https://trello.com/c/Hh49RShb). See [Contributing](CONTRIBUTING.md#ui-and-forms) for the contract. Run `node scripts/ui-inventory.ts` to generate the local inventory of remaining controls.
+The catalog and approval queue use TanStack Form with TanStack Query mutations. Shared form helpers preserve typed values on failure, block duplicate submissions, do not retry writes, and refresh affected reads only after success. Other flows still use Superforms during the migration tracked in [card #152](https://trello.com/c/Hh49RShb). See [Contributing](CONTRIBUTING.md#ui-and-forms) for the contract.
 
 ## Automatic Instagram posts
 
