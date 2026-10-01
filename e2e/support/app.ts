@@ -21,6 +21,10 @@ export const accountMenu = (page: Page, name: string) => {
   return page.getByRole('button', { name: /menu da conta/i });
 };
 
+/** The brand link that leads home: in the desktop side rail, or in the phone's header (only one is shown). */
+export const homeLink = (page: Page) =>
+  page.getByRole('link', { name: 'Mesa Aberta', exact: true });
+
 /** Signs out through the account menu. */
 export async function signOut(page: Page, name: string) {
   await accountMenu(page, name).click();

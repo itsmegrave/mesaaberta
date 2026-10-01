@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PNG, createTable, pickFromSearch, signIn, uniqueTitle } from './support/app';
+import { PNG, accountMenu, createTable, pickFromSearch, signIn, uniqueTitle } from './support/app';
 import { createUser, database } from './support/users';
 
 // The profile page: editing, the data export and closing the account. Against the local Supabase.
@@ -11,10 +11,7 @@ test('the account menu leads to the profile, where the details are saved and the
   const user = await createUser('Perfil Editado');
   await signIn(page, user);
 
-  await page
-    .getByRole('banner')
-    .getByRole('button', { name: /menu da conta/i })
-    .click();
+  await accountMenu(page, user.username).click();
   await page
     .getByRole('navigation', { name: 'Menu da conta' })
     .getByRole('link', { name: /perfil/i })
@@ -84,9 +81,7 @@ test('closing the account asks for the username, then removes the person and sig
   await page.getByLabel('Digite seu @usuário para confirmar').fill(user.username);
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
   await expect(page).toHaveURL(/localhost:\d+\/$/);
-  await expect(
-    page.getByRole('banner').getByRole('button', { name: /menu da conta/i }),
-  ).toHaveCount(0);
+  await expect(accountMenu(page, user.username)).toHaveCount(0);
 
   const sql = database();
   try {
@@ -123,7 +118,7 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
       await sql`select avatar_path from profiles where id = ${user.id}`;
     expect(path).toMatch(new RegExp(`^${user.id}/[0-9a-f-]+\\.(png|webp|jpg)$`));
     await expect(
-      page.getByRole('banner').locator(`img[src$="/profile-avatars/${path}"]`),
+      accountMenu(page, user.username).locator(`img[src$="/profile-avatars/${path}"]`),
     ).toHaveCount(1);
 
     await page.getByRole('button', { name: 'Remover foto enviada' }).click();
