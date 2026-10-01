@@ -10,7 +10,7 @@
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { onDestroy, onMount } from 'svelte';
   import Icon from '$lib/components/Icon.svelte';
-  import { MAX_IMAGE_BYTES } from '$lib/forms/files';
+  import { encodeImage } from '$lib/forms/encode-image';
   import { m } from '$lib/paraglide/messages';
 
   let {
@@ -43,18 +43,6 @@
   let url = $state('');
   let failed = $state(false);
   let busy = $state(false);
-
-  // Smaller and smaller until it fits the upload limit; WebP first, JPEG where the browser lacks it.
-  const QUALITIES = [0.92, 0.8, 0.65, 0.5];
-  async function encode(canvas: HTMLCanvasElement): Promise<Blob | null> {
-    for (const quality of QUALITIES) {
-      const blob = await new Promise<Blob | null>((done) =>
-        canvas.toBlob(done, 'image/webp', quality),
-      );
-      if (blob && blob.size <= MAX_IMAGE_BYTES) return blob;
-    }
-    return null;
-  }
 
   const extensions: Record<string, string> = {
     'image/webp': 'webp',
@@ -111,7 +99,7 @@
     failed = false;
     try {
       const canvas = await selection.$toCanvas({ width });
-      const blob = await encode(canvas);
+      const blob = await encodeImage(canvas);
       if (!blob) throw new Error('too big');
       const base = file.name.replace(/\.[^.]+$/, '') || 'imagem';
       onconfirm(

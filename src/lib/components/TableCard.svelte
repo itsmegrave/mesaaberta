@@ -61,6 +61,7 @@
         src={table.imageUrl}
         alt=""
         loading="lazy"
+        decoding="async"
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"
       />
