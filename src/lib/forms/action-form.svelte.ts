@@ -13,7 +13,8 @@ import { issueErrors, type FormErrors, type FormResult } from './contract';
 export function actionForm<T extends Record<string, string>>(options: {
   initial: T;
   schema: ZodType;
-  domain: Parameters<typeof afterWrite>[1];
+  /** Omit for route-only data, such as the notification feed and bell. */
+  domain?: Parameters<typeof afterWrite>[1];
   onSuccess: () => void;
   errorMessage: () => string;
 }) {
@@ -50,7 +51,10 @@ export function actionForm<T extends Record<string, string>>(options: {
       if (result.type === 'success') {
         options.onSuccess();
         // The write is already confirmed. A read refresh must never cause a write retry.
-        await Promise.allSettled([afterWrite(client, options.domain), invalidateAll()]);
+        await Promise.allSettled([
+          ...(options.domain ? [afterWrite(client, options.domain)] : []),
+          invalidateAll(),
+        ]);
         return;
       }
       await applyAction(result);

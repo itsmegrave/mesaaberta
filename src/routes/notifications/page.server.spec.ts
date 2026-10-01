@@ -99,4 +99,22 @@ describe('actions', () => {
     );
     expect(markAllRead).toHaveBeenCalledWith({}, 'me');
   });
+
+  it('rejects repeated notification ids without discarding a valid return address', async () => {
+    const e = event();
+    const body = new FormData();
+    body.append('id', n1);
+    body.append('id', n1);
+    body.set('next', '/tables');
+    e.request = new Request(e.url, { method: 'POST', body });
+    expect(await location(act('read', e))).toBe('/tables');
+    expect(markRead).not.toHaveBeenCalled();
+  });
+
+  it('marks a valid id even when an oversized return address falls back to the feed', async () => {
+    expect(await location(act('read', event('', { id: n1, next: '/' + 'a'.repeat(2000) })))).toBe(
+      '/notifications',
+    );
+    expect(markRead).toHaveBeenCalledWith({}, 'me', n1);
+  });
 });
