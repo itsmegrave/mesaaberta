@@ -81,7 +81,7 @@
   role="log"
   aria-live="polite"
   aria-label={m.messages_thread_label()}
-  class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto py-3"
+  class="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto py-3"
 >
   {#if hasMore}
     <button
@@ -110,9 +110,13 @@
             <Avatar src={group.avatarUrl} name={group.sender} size={32} />
           </span>
         {/if}
-        <div class="flex max-w-4/5 flex-col gap-1 {group.own ? 'items-end' : 'items-start'}">
+        <div
+          class="flex max-w-4/5 min-w-0 flex-col gap-1 {group.own ? 'items-end' : 'items-start'}"
+        >
           {#if !group.own && kind === 'table'}
-            <p class="px-1 text-xs font-semibold text-muted">{name(group.sender)}</p>
+            <p class="max-w-full truncate px-1 text-xs font-semibold text-muted">
+              {name(group.sender)}
+            </p>
           {/if}
           {#each group.messages as message (message.id)}
             <div class="flex flex-col {group.own ? 'items-end' : 'items-start'}">

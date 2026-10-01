@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import { zod4Client } from 'sveltekit-superforms/adapters';
+  import EmojiPicker from '$lib/components/EmojiPicker.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { MESSAGE_MAX_LENGTH, messageSchema, type MessageInput } from '$lib/messages/schema';
@@ -39,6 +40,7 @@
     validators: zod4Client(messageSchema),
     resetForm: false,
     invalidateAll: false,
+    applyAction: action === '?/send',
     multipleSubmits: 'prevent',
     onSubmit({ formData, cancel }) {
       const body = String(formData.get('body') ?? '').trim();
@@ -85,6 +87,24 @@
     },
   });
 
+  let selectionStart = 0;
+  let selectionEnd = 0;
+  const rememberSelection = () => {
+    selectionStart = textarea?.selectionStart ?? $form.body.length;
+    selectionEnd = textarea?.selectionEnd ?? selectionStart;
+  };
+  async function insertEmoji(emoji: string) {
+    const start = Math.min(selectionStart, $form.body.length);
+    const end = Math.min(selectionEnd, $form.body.length);
+    const next = $form.body.slice(0, start) + emoji + $form.body.slice(end);
+    if (next.length > MESSAGE_MAX_LENGTH) return;
+    $form.body = next;
+    await tick();
+    textarea?.focus();
+    textarea?.setSelectionRange(start + emoji.length, start + emoji.length);
+    rememberSelection();
+  }
+
   const remaining = $derived(MESSAGE_MAX_LENGTH - $form.body.length);
   const error = $derived($errors.body?.[0]);
 
@@ -116,10 +136,13 @@
   method="POST"
   {action}
   use:enhance
-  class="flex flex-col gap-2 border-t border-surface-200-800 pt-3"
+  class="flex min-w-0 flex-col gap-2 border-t border-surface-200-800 pt-3"
 >
   {#if $form.tableId}<input type="hidden" name="tableId" value={$form.tableId} />{/if}
-  <div class="flex items-end gap-2">
+  <div
+    class="flex items-end gap-1 rounded-xl border border-surface-200-800 bg-panel p-1 focus-within:ring-2 focus-within:ring-primary-500"
+  >
+    <EmojiPicker onselect={insertEmoji} finalFocusEl={() => textarea ?? null} />
     <label for="message-body" class="sr-only">{m.messages_composer_label()}</label>
     <textarea
       id="message-body"
@@ -127,12 +150,15 @@
       bind:this={textarea}
       bind:value={$form.body}
       onkeydown={keydown}
+      onselect={rememberSelection}
+      oninput={rememberSelection}
+      onblur={rememberSelection}
       rows="1"
       maxlength={MESSAGE_MAX_LENGTH}
       placeholder={m.messages_composer_placeholder()}
       aria-invalid={error ? 'true' : undefined}
       aria-describedby={error || notice ? 'message-notice' : undefined}
-      class="textarea field-sizing-content max-h-40 min-h-12 w-full resize-none overflow-y-auto rounded-lg border-surface-200-800 bg-panel p-3"
+      class="textarea field-sizing-content max-h-40 min-h-12 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-2 py-3 shadow-none focus:outline-none"
     ></textarea>
     <SubmitButton
       submitting={$submitting}

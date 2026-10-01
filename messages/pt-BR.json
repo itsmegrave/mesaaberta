@@ -964,5 +964,11 @@
   "instagram_status_none": "Não publicado",
   "admin_tables_title": "Mesa",
   "admin_tables_empty": "Nenhuma mesa encontrada.",
-  "admin_tables_all": "Todas"
+  "admin_tables_all": "Todas",
+  "messages_drawer_open": "Abrir chat",
+  "messages_drawer_close": "Fechar chat",
+  "messages_full_page": "Abrir página de mensagens",
+  "messages_emoji_open": "Escolher emoji",
+  "messages_emoji_title": "Emojis",
+  "messages_retry_load": "Tentar novamente"
 }

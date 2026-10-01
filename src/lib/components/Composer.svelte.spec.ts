@@ -43,4 +43,14 @@ describe('Composer.svelte', () => {
     await userEvent.keyboard('{Enter}');
     expect(onpending).not.toHaveBeenCalled();
   });
+  it('inserts an emoji at the cursor without replacing the draft or sending', async () => {
+    const { onpending, box } = await setup();
+    await box.fill('Olá mesa');
+    await userEvent.keyboard('{Home}{ArrowRight}{ArrowRight}{ArrowRight}');
+    await page.getByRole('button', { name: 'Escolher emoji' }).click();
+    await page.getByRole('button', { name: '🎲', exact: true }).click();
+    await expect.element(box).toHaveValue('Olá🎲 mesa');
+    await expect.element(box).toHaveFocus();
+    expect(onpending).not.toHaveBeenCalled();
+  });
 });

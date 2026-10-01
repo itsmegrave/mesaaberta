@@ -28,7 +28,16 @@
     page,
     pages,
     currentId = null,
-  }: { items: InboxItem[]; page: number; pages: number; currentId?: string | null } = $props();
+    onselect,
+    onpage,
+  }: {
+    items: InboxItem[];
+    page: number;
+    pages: number;
+    currentId?: string | null;
+    onselect?: (id: string) => void;
+    onpage?: (page: number) => void;
+  } = $props();
 
   const locale = getLocale();
   const now = new Date();
@@ -56,6 +65,12 @@
       <li>
         <a
           href={localizedHref(`/messages/${item.id}`, locale)}
+          onclick={(event) => {
+            if (onselect && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+              event.preventDefault();
+              onselect(item.id);
+            }
+          }}
           aria-current={item.id === currentId ? 'page' : undefined}
           class="flex items-center gap-3 rounded-lg p-3 no-underline hover:preset-tonal aria-[current=page]:preset-tonal-primary"
         >
@@ -115,13 +130,31 @@
     class="mt-4 flex flex-wrap items-center justify-between gap-2"
   >
     {#if page > 1}
-      <a href={pageHref(page - 1)} class={pageLink}>{m.messages_page_previous()}</a>
+      <a
+        href={pageHref(page - 1)}
+        onclick={(event) => {
+          if (onpage && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+            event.preventDefault();
+            onpage(page - 1);
+          }
+        }}
+        class={pageLink}>{m.messages_page_previous()}</a
+      >
     {:else}
       <span></span>
     {/if}
     <span class="text-sm text-muted">{m.messages_page_status({ page, pages })}</span>
     {#if page < pages}
-      <a href={pageHref(page + 1)} class={pageLink}>{m.messages_page_next()}</a>
+      <a
+        href={pageHref(page + 1)}
+        onclick={(event) => {
+          if (onpage && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+            event.preventDefault();
+            onpage(page + 1);
+          }
+        }}
+        class={pageLink}>{m.messages_page_next()}</a
+      >
     {/if}
   </nav>
 {/if}
