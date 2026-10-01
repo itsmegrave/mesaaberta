@@ -4,7 +4,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first: workflow, code style, translation
 
 ## UI and forms
 
-Use Skeleton primitives and existing shared controls. Form migrations use TanStack Form and Query through the shared action integration; preserve SvelteKit actions, server authorization/validation, drafts and native POST where supported. Superforms remains transitional until card #152 is complete. Follow the UI/form contract in CONTRIBUTING and keep the generated UI inventory current.
+Use Skeleton primitives and existing shared controls. Form migrations use TanStack Form and Query through the shared action integration; preserve SvelteKit actions, server authorization/validation, drafts and native POST where supported. Superforms remains transitional until card #152 is complete. Follow the UI/form contract in CONTRIBUTING.
 
 ## Changelog
 
