@@ -6,6 +6,7 @@ import type { TableView } from '../tables/queries';
 const table = {
   slug: 'a-ventura',
   title: 'Dragões & <aventuras>',
+  description: 'Uma aventura pública & emocionante.',
   system: { name: 'D&D 5e', slug: 'dnd-5e' },
   kind: 'one_shot',
   modality: 'online',
@@ -32,6 +33,7 @@ describe('Instagram share image', () => {
     const svg = await shareSvg(table, 'https://mesaaberta.app');
     expect(svg).toContain('Dragões &amp; &lt;aventuras&gt;');
     expect(svg).not.toContain('private');
+    expect(svg).toContain('Uma aventura pública &amp; emocionante.');
   });
   it('renders a real 1080×1350 JPEG below the publishing limit', async () => {
     const font = new Uint8Array(await readFile('static/fonts/DejaVuSans-Bold.ttf'));
@@ -62,6 +64,7 @@ it('uses Workers-compatible manual redirects and refuses redirected Storage imag
         SUPABASE_URL: 'https://test.supabase.co',
         ASSETS: { fetch: async () => new Response(font) },
       },
+      { useTableImage: true },
     ),
   ).rejects.toThrow('Instagram background unavailable');
   expect(fetchImage).toHaveBeenCalledWith(
@@ -69,4 +72,20 @@ it('uses Workers-compatible manual redirects and refuses redirected Storage imag
     expect.objectContaining({ redirect: 'manual' }),
   );
   expect(fetchImage).toHaveBeenCalledOnce();
+});
+
+it('does not fetch the table photo when the flag is off', async () => {
+  const font = new Uint8Array(await readFile('static/fonts/DejaVuSans-Bold.ttf'));
+  const fetchImage = vi.fn();
+  vi.stubGlobal('fetch', fetchImage);
+  const output = await renderShareImage(
+    { ...table, imagePath: 'tables/background.jpg' },
+    {
+      APP_ORIGIN: 'https://mesaaberta.app',
+      SUPABASE_URL: 'https://test.supabase.co',
+      ASSETS: { fetch: async () => new Response(font) },
+    },
+  );
+  expect(output.length).toBeGreaterThan(0);
+  expect(fetchImage).not.toHaveBeenCalled();
 });

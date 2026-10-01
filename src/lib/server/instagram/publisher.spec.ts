@@ -10,7 +10,12 @@ import {
   systems,
 } from '../db/schema';
 import { encryptToken, InstagramError, type InstagramEnv, graph } from './api';
-import { instagramQueueHandler, publishInstagramPosts, publishInstagramTable } from './publisher';
+import {
+  instagramQueueHandler,
+  publishInstagramPosts,
+  publishInstagramTable,
+  queueInstagramTable,
+} from './publisher';
 import type { StoredEvent } from '../events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -227,4 +232,38 @@ it('keeps a manual publish pending while Meta processes and the cron completes i
   expect(
     vi.mocked(request).mock.calls.filter((call) => call[2] === 'ig-user/media_publish'),
   ).toHaveLength(1);
+});
+
+it('durably queues manual publishing without rendering or calling Meta', async () => {
+  await test.db.delete(instagramPosts);
+  expect(await queueInstagramTable(test.db, env, tableId, now)).toBe('queued');
+  expect((await post()).status).toBe('queued');
+  expect(render).not.toHaveBeenCalled();
+  expect(await queueInstagramTable(test.db, env, tableId, now)).toBe('queued');
+  const request = api();
+  await publishInstagramPosts(test.db, env, now, { render, api: request, useTableImage: true });
+  expect(render).toHaveBeenCalledWith(expect.anything(), env, { useTableImage: true });
+  expect((await post()).status).toBe('published');
+  expect(await queueInstagramTable(test.db, env, tableId, now)).toBe('already-published');
+});
+
+it('does not reset uncertain jobs or live leases when queueing', async () => {
+  await queueInstagramTable(test.db, env, tableId, now);
+  const claimedUntil = new Date(now.getTime() + 60000);
+  await test.db
+    .update(instagramPosts)
+    .set({ status: 'processing', claimedUntil, containerId: 'existing' })
+    .where(eq(instagramPosts.tableId, tableId));
+  await queueInstagramTable(test.db, env, tableId, now);
+  expect(await post()).toMatchObject({
+    status: 'processing',
+    claimedUntil,
+    containerId: 'existing',
+  });
+  await test.db
+    .update(instagramPosts)
+    .set({ status: 'uncertain' })
+    .where(eq(instagramPosts.tableId, tableId));
+  expect(await queueInstagramTable(test.db, env, tableId, now)).toBe('uncertain');
+  expect((await post()).status).toBe('uncertain');
 });

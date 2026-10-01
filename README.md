@@ -614,3 +614,7 @@ operational setup steps; tests do not send actual Instagram posts.
 References: [Instagram Login](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/business-login),
 [Meta's publishing collection](https://www.postman.com/meta/instagram/collection/6yqw8pt/instagram-api),
 [resvg Workers bindings](https://github.com/fineshopdesign/cf-wasm/tree/main/packages/resvg).
+
+Instagram artwork uses the GrowthBook flag `use_table_image` (default: false). With it off, the generated JPEG contains the table title, public description, date, seats and QR code on a plain background; with it on, it fetches the table's Storage photo as the background. Private join instructions are never included. The flag is evaluated when artwork is first rendered; retries reuse the saved artwork and container.
+
+Manual Instagram publishing persists a job and returns a queue confirmation immediately. The Worker runs rendering and publishing through `waitUntil` after the response; the scheduled sweeper picks up pending jobs if that background task is interrupted. The Tables tab refreshes pending publication statuses every five seconds. Ambiguous publish outcomes still require reconciliation and are never automatically posted again.

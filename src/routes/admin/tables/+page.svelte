@@ -7,6 +7,18 @@
   import { m } from '$lib/paraglide/messages';
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
+  $effect(() => {
+    if (
+      !remote.data?.tables.rows.some((row) =>
+        ['queued', 'processing', 'publishing'].includes(row.instagramStatus ?? ''),
+      )
+    )
+      return;
+    const timer = setInterval(() => {
+      void remote.refetch();
+    }, 5000);
+    return () => clearInterval(timer);
+  });
   const data = $derived({ ...serverData, ...remote.data });
 </script>
 

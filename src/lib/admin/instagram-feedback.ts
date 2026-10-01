@@ -7,6 +7,8 @@ export function instagramFeedback(result: ActionResult) {
   if (result.type === 'error' || result.type === 'failure' || data?.publishError)
     return toast.error(m.instagram_publish_error());
   switch (data?.publishResult) {
+    case 'queued':
+      return toast.info(m.instagram_queued());
     case 'published':
       return toast.success(m.instagram_published());
     case 'processing':

@@ -842,7 +842,7 @@
   "instagram_connected": "Instagram conectado. As novas mesas públicas serão publicadas automaticamente.",
   "instagram_connection_error": "Não foi possível conectar o Instagram. Tente novamente.",
   "instagram_expired": "A conexão com o Instagram expirou. Reconecte a conta para retomar as publicações automáticas.",
-  "instagram_queued": "Sua mesa está na fila para publicação no Instagram.",
+  "instagram_queued": "Publicação adicionada à fila. Você pode continuar usando a plataforma.",
   "instagram_published": "Sua mesa foi publicada no Instagram da Mesa Aberta.",
   "instagram_failed": "Não foi possível publicar sua mesa no Instagram.",
   "instagram_uncertain": "A publicação no Instagram aguarda verificação.",
