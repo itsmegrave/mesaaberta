@@ -41,10 +41,10 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-const run = async (event: StoredEvent) => {
+const run = async (event: StoredEvent, extra: Record<string, string> = {}) => {
   const sent: Mail[] = [];
   const mailer = { send: vi.fn(async (mail: Mail) => void sent.push(mail)) };
-  await createBanMailHandler(config, fetch, admin, mailer).handle(event, test.db);
+  await createBanMailHandler({ ...config, ...extra }, fetch, admin, mailer).handle(event, test.db);
   return sent;
 };
 
@@ -65,6 +65,25 @@ describe('the ban e-mail', () => {
     expect(mail.text).toContain('8 de outubro de 2026');
     // A retry of the same event is the same message to the provider, which drops the repeat.
     expect(mail.idempotencyKey).toBe(`ban-${banned(null).id}`);
+  });
+
+  it('sends the hosted template with its own variables once its id is set', async () => {
+    await test.db
+      .update(profiles)
+      .set({ status: 'suspended', bannedAt: new Date(), banReason: 'Ofensas no chat.' })
+      .where(eq(profiles.id, userId));
+
+    const [mail] = await run(banned(null), { RESEND_TEMPLATE_ACCOUNT_BANNED: 'tpl-ban' });
+
+    expect(mail.template).toEqual({
+      id: 'tpl-ban',
+      variables: {
+        RECIPIENT_NAME: 'Ana',
+        BAN_SUMMARY: 'Sua conta na Mesa Aberta foi banida pela moderação de forma permanente.',
+        BAN_REASON: 'Ofensas no chat.',
+        FALLBACK_TEXT: expect.stringContaining('Ofensas no chat.'),
+      },
+    });
   });
 
   it('says a permanent ban is for good', () => {

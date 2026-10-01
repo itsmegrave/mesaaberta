@@ -5,10 +5,11 @@ import { NAMELESS } from '../db/public-name';
 import type { Mailer } from '../mail/mailer';
 import { mailpitMailer } from '../mail/mailpit';
 import { resendMailer } from '../mail/resend';
+import { templateIdFor, templateVariables, type TemplateEnv } from '../mail/templates';
 import type { InviteEnv } from './invites';
 import type { Handler, StoredEvent } from './types';
 
-type BanConfig = {
+type BanConfig = TemplateEnv & {
   MAILPIT_URL?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM: string;
@@ -29,11 +30,15 @@ const endOf = (until: string) =>
     timeZone: 'America/Sao_Paulo',
   }).format(new Date(until));
 
+/** The sentence that says what happened and until when. */
+export const banSummary = (until: string | null) =>
+  until
+    ? `Sua conta na Mesa Aberta foi suspensa pela moderação até ${endOf(until)}.`
+    : 'Sua conta na Mesa Aberta foi banida pela moderação de forma permanente.';
+
 /** The e-mail a banned person gets: what happened, why, and until when. Plain text, pt-BR. */
 export function banMail(input: { name: string; until: string | null; reason: string }) {
-  const how = input.until
-    ? `Sua conta na Mesa Aberta foi suspensa pela moderação até ${endOf(input.until)}.`
-    : 'Sua conta na Mesa Aberta foi banida pela moderação de forma permanente.';
+  const how = banSummary(input.until);
   const after = input.until
     ? 'Depois dessa data você pode entrar de novo normalmente. Até lá, não é possível entrar, abrir mesas nem participar delas.'
     : 'Não é possível entrar, abrir mesas nem participar delas.';
@@ -92,9 +97,26 @@ export function createBanMailHandler(
         until,
         reason: profile.banReason,
       });
+      const name = profile.name || profile.username || NAMELESS;
+      // The hosted template when its id is set; otherwise the inline text above, so a ban is never
+      // left unannounced because the template is not configured yet.
+      const id = templateIdFor(env, 'accountBanned');
       await mailer.send({
         to: await emailOf(admin, profileId),
         ...mail,
+        ...(id
+          ? {
+              template: {
+                id,
+                variables: templateVariables({
+                  RECIPIENT_NAME: name,
+                  BAN_SUMMARY: banSummary(until),
+                  BAN_REASON: profile.banReason,
+                  FALLBACK_TEXT: mail.text,
+                }),
+              },
+            }
+          : {}),
         idempotencyKey: `ban-${event.id}`,
       });
     },
@@ -109,6 +131,7 @@ export function banMailHandler(env: InviteEnv | undefined): Handler | null {
   if (!env.MAILPIT_URL && !env.RESEND_API_KEY) return null;
 
   return createBanMailHandler({
+    RESEND_TEMPLATE_ACCOUNT_BANNED: env.RESEND_TEMPLATE_ACCOUNT_BANNED,
     RESEND_API_KEY: env.RESEND_API_KEY,
     RESEND_FROM: from,
     MAILPIT_URL: env.MAILPIT_URL,
