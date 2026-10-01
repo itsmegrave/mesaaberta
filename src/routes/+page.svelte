@@ -110,15 +110,6 @@
         >{m.hero_open_cta()}</a
       >
     </div>
-    <p class="mt-7 hidden max-w-xs text-sm text-muted md:block">
-      {m.hero_open_source()}
-      <a
-        href="https://github.com/itsmegrave/mesaaberta"
-        rel="noopener"
-        class="link-underline text-link decoration-current underline-offset-4"
-        >{m.hero_open_source_link()}</a
-      >.
-    </p>
   </div>
   <div class="mx-auto w-full max-w-xs md:mx-0 md:w-5/12 md:max-w-lg md:shrink-0">
     <TableIllustration />
