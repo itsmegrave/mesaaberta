@@ -58,6 +58,7 @@ export const ICON_NAMES = [
   'unlink',
   'undo-2',
   'redo-2',
+  'instagram',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
