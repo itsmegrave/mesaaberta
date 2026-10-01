@@ -108,6 +108,31 @@ describe('game_tables', () => {
   });
 
   it.each([
+    ['zero', { minPlayers: 0 }],
+    ['more than the seats', { capacity: 4, minPlayers: 5 }],
+  ])('refuse a minimum of players of %s', async (name, overrides) => {
+    const code = await pgErrorCode(
+      test.db
+        .insert(gameTables)
+        .values(table({ slug: `minimo-${name.replace(/ /g, '-')}`, ...overrides })),
+    );
+
+    expect(code).toBe(CHECK_VIOLATION);
+  });
+
+  it('takes no minimum, or one up to the seats', async () => {
+    const [none, full] = await test.db
+      .insert(gameTables)
+      .values([
+        table({ slug: 'sem-minimo' }),
+        table({ slug: 'minimo-total', capacity: 4, minPlayers: 4 }),
+      ])
+      .returning();
+
+    expect([none.minPlayers, full.minPlayers]).toEqual([null, 4]);
+  });
+
+  it.each([
     ['capacity', { capacity: 0 }],
     ['duration', { durationMinutes: 0 }],
   ])('refuse a table with a %s of zero', async (_name, overrides) => {

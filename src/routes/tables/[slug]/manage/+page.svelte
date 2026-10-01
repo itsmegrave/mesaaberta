@@ -257,6 +257,14 @@
           <span class="sr-only">{m.table_seats_taken({ taken, total: table.capacity })}</span
           ><SeatDots {taken} capacity={table.capacity} />
         </p>
+        {#if table.minPlayers}
+          <p class="mt-2 text-sm text-muted">
+            {m.table_min_players({ count: table.minPlayers })} ·
+            {taken >= table.minPlayers
+              ? m.table_min_players_met()
+              : m.table_min_players_missing({ count: table.minPlayers - taken })}
+          </p>
+        {/if}
         <ul class="mt-3">
           <li class={row}>
             <span class="flex min-w-0 items-center gap-3">

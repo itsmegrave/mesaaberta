@@ -25,6 +25,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   welcomeMessage: null,
   kind: 'one_shot',
   capacity: 5,
+  minPlayers: null,
   startsAtLocal: '2026-10-10T19:00',
   timezone: 'America/Sao_Paulo',
   durationMinutes: 240,
@@ -553,6 +554,35 @@ describe('updateTable', () => {
 
     await updateTable(test.db, ana, slug, input({ title: 'Sem capa', removeImage: true }));
     expect((await rowOf(slug)).imagePath).toBeNull();
+  });
+
+  it('saves a minimum of players, shows it back in the edit form, and clears it', async () => {
+    const { slug } = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Com mínimo', capacity: 5, minPlayers: 3 }),
+      { now },
+    );
+    expect((await rowOf(slug)).minPlayers).toBe(3);
+    expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({ minPlayers: '3' });
+    expect(await findTableBySlug(test.db, slug, now)).toMatchObject({ minPlayers: 3 });
+
+    await updateTable(test.db, ana, slug, input({ title: 'Com mínimo', minPlayers: null }));
+    expect((await rowOf(slug)).minPlayers).toBeNull();
+    expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({ minPlayers: '' });
+  });
+
+  it('does not tell the players that only the minimum changed', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Mínimo mudou' }), { now });
+
+    const { eventId } = await updateTable(
+      test.db,
+      ana,
+      slug,
+      input({ title: 'Mínimo mudou', minPlayers: 2 }),
+    );
+
+    expect(eventId).toBeNull();
   });
 
   it('does not let the seats go below the players already at the table', async () => {
