@@ -1,0 +1,2 @@
+ALTER TABLE "game_tables" ADD COLUMN "min_players" integer;--> statement-breakpoint
+ALTER TABLE "game_tables" ADD CONSTRAINT "game_tables_min_players_range" CHECK ("game_tables"."min_players" IS NULL OR ("game_tables"."min_players" >= 1 AND "game_tables"."min_players" <= "game_tables"."capacity"));

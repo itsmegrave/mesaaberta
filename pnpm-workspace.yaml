@@ -1,6 +1,11 @@
 overrides:
   # Miniflare pins an undici release with high-severity WebSocket and TLS flaws.
   undici@7.29.0: 7.29.1
+  # Advisories on transitive copies (SvelteKit, Svelte, Superforms, drizzle-kit's loader) that the
+  # direct dependencies have not caught up with yet. Remove each line once nothing pins the old range.
+  devalue@<5.9.3: 5.9.4
+  cookie@<0.7.0: 0.7.2
+  esbuild@<0.25.0: 0.25.12
 
 allowBuilds:
   esbuild: true

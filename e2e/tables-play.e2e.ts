@@ -233,6 +233,12 @@ test.describe('ratings', () => {
     try {
       await sql`update game_tables set starts_at = now() - interval '3 days' where slug = ${slug}`;
 
+      // Played, but the GM has not said whether it happened: still nothing to rate.
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
+
+      // The GM confirmed it (see SessionConfirmation): now the form appears.
+      await sql`update game_tables set status = 'concluded' where slug = ${slug}`;
       await page.reload();
       await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toBeVisible();
       await page
