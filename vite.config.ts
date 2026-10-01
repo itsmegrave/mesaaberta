@@ -19,6 +19,13 @@ export default defineConfig({
       autoInstrument: false,
       autoUploadSourceMaps:
         !!process.env.SENTRY_AUTH_TOKEN || existsSync('.env.sentry-build-plugin'),
+      sourcemaps: {
+        // adapter-cloudflare only writes the client assets to `.svelte-kit/cloudflare`: the server
+        // code stays in `.svelte-kit/output/server` until Wrangler bundles it on deploy. Sentry's
+        // default (the adapter directory) would upload the client maps only, leaving server stack
+        // traces unmapped.
+        assets: ['.svelte-kit/cloudflare/**', '.svelte-kit/output/server/**'],
+      },
     }),
     tailwindcss(),
     sveltekit({
