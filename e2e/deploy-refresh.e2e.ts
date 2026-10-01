@@ -11,6 +11,8 @@ const isMarked = (page: Page) =>
 test.beforeEach(async ({ page }) => {
   await page.clock.install();
   await page.goto('/privacy');
+  // The scripts must have run before the click, or it is a plain link and a full page load.
+  await page.waitForLoadState('networkidle');
   await markDocument(page);
 });
 
