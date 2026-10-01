@@ -48,6 +48,29 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await playerPage.keyboard.press('Enter');
   await expect(playerPage.getByRole('log').getByText('Cheguei!')).toBeVisible();
 
+  // The full-page chat stays separate; the same conversations work in the drawer.
+  await expect(playerPage.getByRole('button', { name: 'Abrir chat' })).toHaveCount(0);
+  for (const width of [390, 1280]) {
+    await playerPage.setViewportSize({ width, height: 800 });
+    await playerPage.goto('/');
+    const trigger = playerPage.getByRole('button', { name: 'Abrir chat' });
+    await trigger.click();
+    const drawer = playerPage.getByRole('dialog', { name: 'Mensagens' });
+    await drawer.getByRole('link', { name: new RegExp(title) }).click();
+    await expect(drawer.getByRole('textbox', { name: 'Mensagem' })).toBeVisible();
+    await drawer.getByRole('textbox', { name: 'Mensagem' }).fill(`Drawer ${width} `);
+    await drawer.getByRole('button', { name: 'Escolher emoji' }).click();
+    await drawer.getByRole('button', { name: '🎲', exact: true }).click();
+    await playerPage.keyboard.press('Enter');
+    await expect(drawer.getByRole('log').getByText(`Drawer ${width} 🎲`)).toBeVisible();
+    await expect(drawer.getByText('Enviando…', { exact: true })).toHaveCount(0);
+    expect(await drawer.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+      true,
+    );
+    await playerPage.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+  }
+
   await playerSession.context.close();
   await gmSession.context.close();
 });
