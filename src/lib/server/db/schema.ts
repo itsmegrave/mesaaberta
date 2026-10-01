@@ -105,6 +105,12 @@ export const profiles = pgTable(
     directMessagesEnabled: boolean('direct_messages_enabled').notNull().default(true),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
+    // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
+    // `bannedAt` is permanent; a temporary one is lifted once that time passes (see liftExpiredBans).
+    // The reason is what the person is told by e-mail. A closed account is suspended with none of these.
+    bannedAt: timestamp('banned_at', { withTimezone: true }),
+    bannedUntil: timestamp('banned_until', { withTimezone: true }),
+    banReason: text('ban_reason'),
     ...timestamps,
   },
   (profile) => [
@@ -112,6 +118,12 @@ export const profiles = pgTable(
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    // Mirrors RESOLUTION_NOTE_MAX in $lib/moderation/reports.
+    check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
+    // Expired temporary bans, for the sweep that lifts them.
+    index('profiles_banned_until_idx')
+      .on(profile.bannedUntil)
+      .where(sql`${profile.bannedUntil} IS NOT NULL`),
   ],
 ).enableRLS();
 
@@ -234,6 +246,10 @@ export const gameTables = pgTable(
     status: tableStatus('status').notNull().default('active'),
     // Incremented on every edit so calendar clients replace the invite instead of adding one.
     icalSequence: integer('ical_sequence').notNull().default(0),
+    // Set when an admin closed the table over a report (it is `disabled` too). The justification is
+    // kept with the table (and for admins), not shown to the public.
+    moderatedAt: timestamp('moderated_at', { withTimezone: true }),
+    moderationNote: text('moderation_note'),
     gmId: uuid('gm_id')
       .notNull()
       .references(() => profiles.id),
@@ -260,6 +276,8 @@ export const gameTables = pgTable(
     check('game_tables_join_details_length', sql`char_length(${table.joinDetails}) <= 1000`),
     // Mirrors WELCOME_MESSAGE_MAX in $lib/tables/welcome.
     check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 1000`),
+    // Mirrors RESOLUTION_NOTE_MAX in $lib/moderation/reports.
+    check('game_tables_moderation_note_length', sql`char_length(${table.moderationNote}) <= 1000`),
   ],
 ).enableRLS();
 
@@ -573,5 +591,59 @@ export const messages = pgTable(
     index('messages_sender_idx').on(message.senderId),
     // Mirrors MESSAGE_MAX_LENGTH in $lib/messages/schema.
     check('messages_body_length', sql`char_length(${message.body}) BETWEEN 1 AND 2000`),
+  ],
+).enableRLS();
+
+// Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in $lib/moderation/reports.
+export const reportTarget = pgEnum('report_target', ['table', 'player']);
+export const reportReason = pgEnum('report_reason', [
+  'spam',
+  'harassment',
+  'inappropriate_content',
+  'no_show',
+  'other',
+]);
+// `open` and `reviewing` wait on an admin; `resolved` and `dismissed` are closed.
+export const reportStatus = pgEnum('report_status', ['open', 'reviewing', 'resolved', 'dismissed']);
+
+// A member flagging a table, or a player they share a table with, for an admin to look at. The
+// reported party is never told who reported them. `tableId` is where it happened: the table itself,
+// or the table the two share. What the admin did is the event; the row keeps the outcome.
+export const reports = pgTable(
+  'reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    reporterId: uuid('reporter_id')
+      .notNull()
+      .references(() => profiles.id),
+    targetType: reportTarget('target_type').notNull(),
+    // The table or the player's profile, by `targetType`. Not a foreign key: it points at either.
+    targetId: uuid('target_id').notNull(),
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id),
+    reason: reportReason('reason').notNull(),
+    details: text('details').notNull().default(''),
+    status: reportStatus('status').notNull().default('open'),
+    // The admin who closed it. Not a foreign key, like `events.actor_id`.
+    resolvedBy: uuid('resolved_by'),
+    resolutionNote: text('resolution_note'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (report) => [
+    // One report still waiting per reporter and target: a repeat is refused, not queued twice.
+    uniqueIndex('reports_open_unique')
+      .on(report.reporterId, report.targetType, report.targetId)
+      .where(sql`${report.status} IN ('open', 'reviewing')`),
+    // The admin queue, filtered by status, newest first.
+    index('reports_status_created_idx').on(report.status, report.createdAt),
+    // Mirror REPORT_DETAILS_MAX and RESOLUTION_NOTE_MAX in $lib/moderation/reports.
+    check('reports_details_length', sql`char_length(${report.details}) <= 1000`),
+    check('reports_resolution_note_length', sql`char_length(${report.resolutionNote}) <= 1000`),
+    check(
+      'reports_table_target',
+      sql`${report.targetType} <> 'table' OR ${report.targetId} = ${report.tableId}`,
+    ),
   ],
 ).enableRLS();

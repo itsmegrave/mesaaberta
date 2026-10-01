@@ -18,6 +18,9 @@ import {
   leaveTable,
   removePlayer,
 } from '$lib/server/registrations/service';
+import { reportSchema } from '$lib/moderation/reports';
+import { moderationAction } from '$lib/server/moderation/form-action';
+import { fileReport } from '$lib/server/moderation/reports';
 import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
   const data = await loadRead(event, 'detail');
@@ -99,6 +102,13 @@ export const actions: Actions = {
         comment: data.comment || null,
       }),
     ),
+  // "Denunciar": the table, or someone the reporter shares it with. Admins see it in the queue.
+  report: moderationAction(
+    reportSchema,
+    ['targetType', 'playerId', 'reason', 'details'],
+    async (db, actor, data, event) =>
+      (await fileReport(db, actor, event.params.slug!, data)).eventId,
+  ),
   remove: (event) =>
     runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
       removePlayer(db, actor, event.params.slug, playerId),

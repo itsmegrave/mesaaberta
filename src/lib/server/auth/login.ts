@@ -4,6 +4,7 @@ import type { Logger } from '../logger';
 import type { Provider } from '$lib/auth/providers';
 import { recordConnection } from '../events/outbox';
 import { ensureProfile } from './profile';
+import { stillBanned } from '../moderation/bans';
 import { needsOnboarding, onboardingUrl } from './onboarding';
 import { safeNext } from './safe-next';
 
@@ -55,6 +56,12 @@ export async function finishLogin(
     log.error('login: could not create the profile', { error });
     await supabase.auth.signOut();
     return '/login?error=profile_failed';
+  }
+
+  // A banned account gets no session at all (a temporary ban that ran out is lifted here).
+  if ((await stillBanned(db, profile)).banned) {
+    await supabase.auth.signOut();
+    return '/login?error=suspended';
   }
 
   await recordConnection(db, { actorId: data.user.id, ip, log });

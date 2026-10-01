@@ -1,4 +1,5 @@
-import type { profiles } from '../db/schema';
+import { and, eq } from 'drizzle-orm';
+import { profiles } from '../db/schema';
 import { nextStatus } from '../../tables/lifecycle-machine';
 import type { TableStatus } from '../../tables/status';
 import { Forbidden } from '../errors';
@@ -39,6 +40,19 @@ type Resources = {
   'registration:manage': { gmId: string };
   /** A player leaving their own registration. */
   'registration:leave': { playerId: string };
+  /**
+   * Reporting a table, or a player the reporter shares it with. "Shares" means the GM or a
+   * confirmed player; `reporterSeated` and `playerSeated` say whether each has a confirmed seat.
+   */
+  'report:file': {
+    gmId: string;
+    reporterSeated: boolean;
+    target: { type: 'table' } | { type: 'player'; playerId: string; playerSeated: boolean };
+  };
+  /** The report queue, its decisions and the audit log. */
+  'moderation:manage': undefined;
+  /** Banning an account or revoking a ban. Never one's own, never another admin's. */
+  'account:ban': Pick<Actor, 'id' | 'role'>;
 };
 
 export type Action = keyof Resources;
@@ -100,6 +114,20 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'registration:manage': isGmOrAdmin,
   'registration:leave': (actor, registration) =>
     registration !== undefined && actor.id === registration.playerId,
+  'report:file': (actor, facts) => {
+    if (!facts) return false;
+    if (facts.target.type === 'table') return actor.id !== facts.gmId;
+    const { playerId, playerSeated } = facts.target;
+    const reporterShares = actor.id === facts.gmId || facts.reporterSeated;
+    const playerShares = playerId === facts.gmId || playerSeated;
+    return playerId !== actor.id && reporterShares && playerShares;
+  },
+  'moderation:manage': (actor) => actor.role === 'admin',
+  'account:ban': (actor, target) =>
+    target !== undefined &&
+    actor.role === 'admin' &&
+    target.id !== actor.id &&
+    target.role !== 'admin',
 };
 
 export function can<A extends Action>(
@@ -121,3 +149,9 @@ export function authorize<A extends Action>(
 ): void {
   if (!can(actor, action, ...args)) throw new Forbidden(action);
 }
+
+/**
+ * The profiles `admin:access` lets in, as a query condition, for finding who to tell (a new
+ * report). It mirrors the rule above so nothing else has to read a role.
+ */
+export const activeAdmins = () => and(eq(profiles.role, 'admin'), eq(profiles.status, 'active'));

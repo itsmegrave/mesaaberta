@@ -20,6 +20,7 @@
   const messages: Record<string, () => string> = {
     invalid: m.auth_error_invalid,
     unconfirmed: m.auth_error_unconfirmed,
+    suspended: m.auth_error_suspended,
     weak_password: m.auth_error_weak,
     rate_limited: m.auth_error_rate_limited,
     failed: m.auth_error_failed,

@@ -132,6 +132,14 @@ describe('finishLogin', () => {
     expect(log.warn).toHaveBeenCalled();
   });
 
+  it('signs a suspended account out again and says why on the login page', async () => {
+    const { run, signOut, test } = await setup({ data: { user }, error: null });
+    await test.db.insert(profiles).values({ id: user.id, username: 'ana', status: 'suspended' });
+
+    expect(await run('abc', '/tables')).toBe('/login?error=suspended');
+    expect(signOut).toHaveBeenCalled();
+  });
+
   it('signs the user out again if the profile cannot be created, rather than leave a half login', async () => {
     const { run, signOut, test, log } = await setup({ data: { user }, error: null });
     await test.close();

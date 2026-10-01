@@ -19,6 +19,7 @@
   import { getLocale } from '$lib/paraglide/runtime';
   import { ratingSchema } from '$lib/tables/rating';
   import { registrationError } from '$lib/tables/registration-errors';
+  import ReportDialog from '$lib/components/ReportDialog.svelte';
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -29,7 +30,10 @@
 
   // What the last seat action answered: from a submit with JavaScript (`onfail`), or from the page the server sent back without it.
   let failed = $state<FormMessage | null>(null);
-  const problem = $derived(failed ?? form?.form?.message ?? null);
+  // The report dialog shows its own errors; only the seat actions answer with a `message`.
+  const problem = $derived(
+    failed ?? (form?.form && 'message' in form.form ? form.form.message : null) ?? null,
+  );
 
   const table = $derived(data.table);
   const locale = getLocale();
@@ -413,6 +417,14 @@
       <p class="mt-3 text-sm text-muted">
         {table.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}
       </p>
+      {#if data.reportTargets.table || data.reportTargets.people.length > 0}
+        <div class="mt-5 border-t border-surface-200-800 pt-4">
+          <ReportDialog
+            targets={data.reportTargets}
+            triggerClass="btn h-11 gap-2 rounded-lg px-3 text-sm font-semibold text-muted hover:preset-tonal"
+          />
+        </div>
+      {/if}
     </aside>
   </div>
 

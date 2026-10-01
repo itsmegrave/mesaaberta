@@ -5,6 +5,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/flags/flags';
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
+import { handleSuspended } from '$lib/server/auth/suspended';
 import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger } from '$lib/server/logger';
 import { handleRequestLog } from '$lib/server/request-log';
@@ -98,6 +99,7 @@ export const handle: Handle = sequence(
   handleDatabase,
   handleAnalytics,
   handleAuth,
+  handleSuspended,
   handleAdminAccess,
   handleParaglide,
   handleFlags,

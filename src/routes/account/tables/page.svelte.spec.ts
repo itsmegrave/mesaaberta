@@ -31,10 +31,27 @@ const running = {
   requests: [] as ReturnType<typeof person>[],
 };
 
-type Data = { playing: (typeof playing)[]; running: (typeof running)[] };
-const show = (data: Data) =>
-  // The page's own data; the layout's is not used here.
-  render(Page, { data: data as never });
+type Running = typeof running;
+type Data = { playing: (typeof playing)[]; running: Running[]; page?: number; pages?: number };
+/** The page's own data, worked out as the server read does; the layout's is not used here. */
+const show = ({ page = 1, pages = 1, ...data }: Data) => {
+  const waiting = data.running.filter((table) => table.requests.length > 0);
+  return render(Page, {
+    data: {
+      ...data,
+      page,
+      pages,
+      totals: { playing: data.playing.length, running: data.running.length },
+      waiting: waiting.length
+        ? {
+            requests: waiting.reduce((sum, table) => sum + table.requests.length, 0),
+            tables: waiting.length,
+            first: { slug: waiting[0].slug, title: waiting[0].title, page: 1 },
+          }
+        : null,
+    } as never,
+  });
+};
 
 // By text, not by role: a list or tab that is hidden has no role to find it by.
 const panel = (name: string) => page.getByText(name, { exact: true });
@@ -111,5 +128,17 @@ describe('Minhas mesas', () => {
     // Each list is still a named region, not a tab panel without tabs.
     await expect.element(page.getByRole('region', { name: 'Jogando' })).toBeVisible();
     await expect.element(page.getByRole('region', { name: 'Mestrando' })).toBeVisible();
+  });
+
+  it('pages through the tables, with no previous link on the first page', async () => {
+    await page.viewport(1280, 800);
+    show({ playing: [playing], running: [running], page: 1, pages: 3 });
+
+    const pages = page.getByRole('navigation', { name: 'Páginas' });
+    await expect.element(pages.getByText('Página 1 de 3')).toBeVisible();
+    await expect
+      .element(pages.getByRole('link', { name: 'Próxima página' }))
+      .toHaveAttribute('href', expect.stringContaining('page=2'));
+    expect(pages.getByRole('link', { name: 'Página anterior' }).elements()).toHaveLength(0);
   });
 });

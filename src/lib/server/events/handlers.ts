@@ -4,6 +4,8 @@ import type { Handler } from './types';
 import { inviteHandler, type InviteEnv } from './invites';
 import { notificationHandler } from './notifications';
 import { announcementHandler } from './announcements';
+import { moderationHandler } from './moderation';
+import { banMailHandler } from './ban-mail';
 
 /**
  * Every handler that reacts to domain events. Each is idempotent (see `Handler`), so the sweeper
@@ -13,6 +15,12 @@ import { announcementHandler } from './announcements';
  */
 export function handlersFor(env: (InviteEnv & AnalyticsEnv) | undefined): readonly Handler[] {
   const handler = inviteHandler(env);
-  const bell = [notificationHandler, announcementHandler, instagramQueueHandler];
-  return [...(handler ? [handler] : []), ...bell, ...analyticsHandlers(env)];
+  const bell = [notificationHandler, announcementHandler, moderationHandler, instagramQueueHandler];
+  const banMail = banMailHandler(env);
+  return [
+    ...(handler ? [handler] : []),
+    ...(banMail ? [banMail] : []),
+    ...bell,
+    ...analyticsHandlers(env),
+  ];
 }
