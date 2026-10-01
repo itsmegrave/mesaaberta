@@ -561,7 +561,15 @@ Table creation never waits for Meta. Edits do not generate additional posts. Dis
 those with no future session are skipped before publishing. Jobs wait while no account is connected.
 
 The admin connects **Mesa Aberta's Business or Creator account** at `/admin/instagram` with Instagram
-Login. Configure the Instagram app in Meta's dashboard with the exact callback
+Login. The connect button is hidden while the connected account is valid; expired accounts can reconnect.
+Manual publication is available in each row's **Ações** menu at `/admin/tables`, alongside the
+searchable, paginated TanStack Table. `/admin/users` keeps profile filters and pagination separate
+from the overview, which shows aggregate metrics only. Publishing shows loading feedback and
+results in toasts. When Meta reports `IN_PROGRESS`, the job stays pending for the cron instead
+of being marked failed. Background downloads use Workers-compatible manual redirect handling
+and reject redirects.
+
+Configure the Instagram app in Meta's dashboard with the exact callback
 `https://mesaaberta.app/admin/instagram/callback` and the `instagram_business_basic` and
 `instagram_business_content_publish` permissions. Test with an app-role account and verify the
 app's current Standard/Advanced Access and App Review requirements before enabling production.

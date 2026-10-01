@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { openIntegrationDb } from '../db/integration-db';
 import { gameTables, instagramAccounts, instagramPosts, profiles, systems } from '../db/schema';
 import { encryptToken, type InstagramEnv, type graph } from './api';
-import { publishInstagramPosts } from './publisher';
+import { publishInstagramPosts, publishInstagramTable } from './publisher';
 
 const { db, close } = openIntegrationDb();
 const gmId = crypto.randomUUID();
@@ -50,7 +50,7 @@ afterAll(async () => {
   await close();
 });
 describe('Instagram job leases on real Postgres', () => {
-  it('publishes once when two cron executions claim the same job concurrently', async () => {
+  it('publishes once when a manual request races the cron', async () => {
     const request = vi.fn(async (_env, _token, path) => {
       if (path === 'ig-user/media') return { id: 'container' };
       if (path === 'container') return { status_code: 'FINISHED' };
@@ -60,7 +60,7 @@ describe('Instagram job leases on real Postgres', () => {
     const render = vi.fn(async () => new Uint8Array([255, 216, 255, 217]));
     const deps = { render, api: request as unknown as typeof graph };
     await Promise.all([
-      publishInstagramPosts(db, env, now, deps),
+      publishInstagramTable(db, env, tableId, now, deps),
       publishInstagramPosts(db, env, now, deps),
     ]);
     const [post] = await db

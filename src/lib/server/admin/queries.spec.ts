@@ -19,16 +19,15 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-it('returns zero counts and an empty recent list on an empty platform', async () => {
+it('returns zero counts on an empty platform', async () => {
   const data = await adminOverview(test.db, now);
   expect(data.people).toEqual({ total: 0, active: 0, suspended: 0, new30d: 0 });
   expect(data.tables).toEqual({ total: 0, active: 0, disabled: 0, online: 0, inPerson: 0, gms: 0 });
   expect(data.seats).toEqual({ confirmed: 0, pending: 0 });
   expect(data.queue).toEqual({ pending: 0, failed: 0 });
-  expect(data.recentTables).toEqual([]);
 });
 
-it('aggregates statuses independently, counts distinct GMs, limits recent tables and omits private fields', async () => {
+it('aggregates statuses independently, counts distinct GMs, omits private fields', async () => {
   await test.db.insert(profiles).values([
     { id: id(1), createdAt: new Date('2026-08-01') },
     { id: id(2), status: 'suspended', createdAt: new Date('2026-09-01T12:00:00Z') },
@@ -75,12 +74,5 @@ it('aggregates statuses independently, counts distinct GMs, limits recent tables
   expect(data.seats).toEqual({ confirmed: 1, pending: 1 });
   expect(data.queue).toEqual({ pending: 1, failed: 1 });
   expect(data.suggestions).toEqual({ platforms: 1, tags: 0 });
-  expect(data.recentTables.map((t) => t.slug)).toEqual([
-    'admin-6',
-    'admin-5',
-    'admin-4',
-    'admin-3',
-    'admin-2',
-  ]);
   expect(JSON.stringify(data)).not.toContain('PRIVATE');
 });

@@ -1,0 +1,35 @@
+<script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+  import { navigating } from '$app/state';
+  import AdminTablesTable from '$lib/components/AdminTablesTable.svelte';
+  import QueryStatus from '$lib/components/QueryStatus.svelte';
+  import { pageQuery } from '$lib/query/page.svelte';
+  import { m } from '$lib/paraglide/messages';
+  let { data: serverData } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
+</script>
+
+<svelte:head><title>{m.admin_tables()} | Mesa Aberta</title></svelte:head>
+<section class="py-6 md:py-10">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-3xl font-semibold">{m.admin_tables()}</h1>
+    <button
+      type="button"
+      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
+      disabled={remote.isFetching}
+      onclick={() => remote.refetch()}
+      ><Icon
+        name="refresh-cw"
+        size={18}
+        class={remote.isFetching ? 'animate-spin' : ''}
+      />{m.admin_refresh()}</button
+    >
+  </div>
+  <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+  <AdminTablesTable
+    data={data.tables}
+    instagramAvailable={data.instagramAvailable}
+    busy={remote.isFetching || !!navigating.to}
+  />
+</section>

@@ -123,7 +123,15 @@ export async function processPost(
     await save({ status: 'uncertain', lastError: 'publish_outcome_unknown' });
     return;
   }
-  if (container.status_code !== 'FINISHED') throw new Error('Instagram container not ready');
+  if (container.status_code === 'IN_PROGRESS') {
+    await save({
+      status: 'processing',
+      nextAttemptAt: new Date(now.getTime() + 60_000),
+      lastError: null,
+    });
+    return;
+  }
+  if (container.status_code !== 'FINISHED') throw new Error('Instagram container response invalid');
   await save({ status: 'publishing' });
   try {
     const result = await api<{ id: string }>(
@@ -235,7 +243,10 @@ export async function publishInstagramTable(
   env: InstagramEnv | undefined,
   tableId: string,
   now = new Date(),
-): Promise<'published' | 'unavailable' | 'not-eligible' | 'already-published'> {
+  deps: Deps = {},
+): Promise<
+  'published' | 'processing' | 'uncertain' | 'unavailable' | 'not-eligible' | 'already-published'
+> {
   if (!configured(env)) return 'unavailable';
   const [account] = await db
     .select()
@@ -252,7 +263,7 @@ export async function publishInstagramTable(
 
   let token = await decryptToken(account.token, env!.INSTAGRAM_TOKEN_KEY!);
   if (account.expiresAt.getTime() - now.getTime() < 7 * DAY) {
-    const refreshed = await refreshToken(token);
+    const refreshed = await (deps.refresh ?? refreshToken)(token);
     token = refreshed.access_token;
     await db
       .update(instagramAccounts)
@@ -264,8 +275,8 @@ export async function publishInstagramTable(
   }
 
   let [post] = await db.select().from(instagramPosts).where(eq(instagramPosts.tableId, tableId));
-  if (post?.status === 'published' || (post && ['publishing', 'uncertain'].includes(post.status)))
-    return 'already-published';
+  if (post?.status === 'published') return 'already-published';
+  if (post && ['publishing', 'uncertain'].includes(post.status)) return 'uncertain';
   if (!post) {
     [post] = await db
       .insert(instagramPosts)
@@ -293,17 +304,22 @@ export async function publishInstagramTable(
       ),
     )
     .returning();
-  if (!claimed) return 'already-published';
+  if (!claimed) return 'processing';
 
   try {
-    await processPost(db, env!, claimed, token, account.userId, now);
-    return claimed.status === 'published' ? 'published' : 'not-eligible';
+    await processPost(db, env!, claimed, token, account.userId, now, deps);
+    if (claimed.status === 'published') return 'published';
+    if (claimed.status === 'processing') return 'processing';
+    if (claimed.status === 'uncertain') return 'uncertain';
+    if (claimed.status === 'failed') throw new Error('Instagram container failed');
+    return 'not-eligible';
   } catch (error) {
     const uncertain = claimed.status === 'publishing' || claimed.status === 'uncertain';
+    const retryable = !uncertain && error instanceof InstagramError && error.retryable;
     await db
       .update(instagramPosts)
       .set({
-        status: uncertain ? 'uncertain' : 'failed',
+        status: uncertain ? 'uncertain' : retryable ? 'processing' : 'failed',
         attempts: claimed.attempts + 1,
         lastError: uncertain
           ? 'publish_outcome_unknown'

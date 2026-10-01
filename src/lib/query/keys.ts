@@ -1,3 +1,4 @@
+import { tableFilters } from '$lib/admin/table-filters';
 import { profileFilters } from '$lib/admin/profile-filters';
 
 export const resources = [
@@ -11,6 +12,7 @@ export const resources = [
   'account',
   'admin',
   'adminUsers',
+  'adminTables',
 ] as const;
 export type Resource = (typeof resources)[number];
 export type ReadSeed = {
@@ -29,6 +31,7 @@ export const privateResources = new Set<Resource>([
   'editCatalog',
   'admin',
   'adminUsers',
+  'adminTables',
 ]);
 export function readKey(seed: Pick<ReadSeed, 'resource' | 'viewer' | 'params'>) {
   return [
@@ -50,8 +53,11 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
     }
   if (resource === 'tables' && url.searchParams.has('modality'))
     params.set('modality', url.searchParams.getAll('modality').at(-1)!);
-  if (resource === 'adminUsers') {
-    const filters = profileFilters(url.searchParams);
+  if (resource === 'adminUsers' || resource === 'adminTables') {
+    const filters =
+      resource === 'adminTables'
+        ? tableFilters(url.searchParams)
+        : profileFilters(url.searchParams);
     params.set('status', filters.status);
     params.set('q', filters.query);
     params.set('page', String(filters.page));
