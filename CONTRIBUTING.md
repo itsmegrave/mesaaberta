@@ -62,7 +62,7 @@ New form migrations use TanStack Form for values/validation and TanStack Query f
 
 `validateStringForm` handles only allowlisted scalar text fields. Arrays, numbers, booleans and files need explicit domain decoders before using it in other flows. Never allowlist passwords or files for echoing in action responses. Existing Superforms consumers remain transitional until card #152 is complete.
 
-Run `node scripts/ui-inventory.ts` after a migration to refresh `docs/ui-migration-inventory.md`. That report identifies markup to review; it does not certify accessibility or mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
+Run `node scripts/ui-inventory.ts` after a migration to generate the local, untracked `docs/ui-migration-inventory.md`. Keep generated reports out of the PR. That report identifies markup to review; it does not certify accessibility or mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
 
 ## Icons
 
