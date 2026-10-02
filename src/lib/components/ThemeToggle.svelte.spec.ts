@@ -91,7 +91,7 @@ describe('ThemeToggle', () => {
 
     const toggle = page.getByRole('switch', { name: 'Tema escuro' });
     await expect.element(toggle).not.toBeChecked();
-    await page.getByText('Tema escuro').click();
+    await toggle.click();
 
     await expect.element(toggle).toBeChecked();
     expect(root.dataset.mode).toBe('dark');

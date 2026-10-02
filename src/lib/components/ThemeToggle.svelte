@@ -2,7 +2,6 @@
   import Button from '$lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import Icon from '$lib/components/Icon.svelte';
-  import { Switch } from '@skeletonlabs/skeleton-svelte';
   import { m } from '$lib/paraglide/messages';
   import { applyChoice, readChoice, type ThemeChoice } from '$lib/theme/theme';
 
@@ -43,17 +42,32 @@
 </script>
 
 {#if variant === 'switch'}
-  <Switch
-    checked={isDark}
-    onCheckedChange={(details) => handlePressedChange(details.checked)}
-    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+  <!--
+    A plain `role="switch"` button: Skeleton's Switch draws its hidden input with an inline `style`
+    attribute, which the CSP blocks (only SvelteKit's announcer style is allowed, by hash).
+  -->
+  <Button
+    size="custom"
+    type="button"
+    role="switch"
+    aria-checked={isDark}
+    onclick={() => handlePressedChange(!isDark)}
+    class="btn flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
   >
-    <Switch.Label>{m.theme_dark_label()}</Switch.Label>
-    <Switch.Control>
-      <Switch.Thumb />
-    </Switch.Control>
-    <Switch.HiddenInput role="switch" />
-  </Switch>
+    <span>{m.theme_dark_label()}</span>
+    <span
+      aria-hidden="true"
+      class="flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors {isDark
+        ? 'bg-primary-500'
+        : 'bg-surface-300-700'}"
+    >
+      <span
+        class="size-5 rounded-full bg-white shadow transition-transform {isDark
+          ? 'translate-x-5'
+          : 'translate-x-0'}"
+      ></span>
+    </span>
+  </Button>
 {:else}
   <Button
     size="custom"
