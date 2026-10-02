@@ -1,5 +1,5 @@
 import { parse, stringify } from 'devalue';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { applyAction } from '$app/forms';
@@ -24,6 +24,33 @@ const response = (type: string, data: unknown = {}, status = 200) =>
 afterEach(() => {
   vi.restoreAllMocks();
   vi.clearAllMocks();
+});
+
+describe('errors on blur', () => {
+  it('shows nothing while someone is typing, and the error once they leave the field', async () => {
+    render(Harness, { onSuccess: vi.fn() });
+    const name = page.getByLabelText('name');
+
+    await name.fill('a');
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    await userEvent.tab();
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('too_small');
+  });
+
+  it('clears the error as soon as the value is edited, and checks again on leaving', async () => {
+    render(Harness, { onSuccess: vi.fn() });
+    const name = page.getByLabelText('name');
+    await name.fill('a');
+    await userEvent.tab();
+    await expect.element(page.getByRole('alert')).toBeVisible();
+
+    await name.fill('valid name');
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    await userEvent.tab();
+
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+  });
 });
 
 describe('action form submission', () => {
