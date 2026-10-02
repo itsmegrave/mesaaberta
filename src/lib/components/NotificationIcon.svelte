@@ -9,8 +9,8 @@
     class: className = '',
   }: { icon: NotificationIcon; size?: number; class?: string } = $props();
 
-  // A notification's icon name (stored on the row) and the Lucide icon that draws it.
-  const LUCIDE: Record<NotificationIcon, IconName> = {
+  // A notification's icon name (stored on the row) and the icon that draws it.
+  const ICONS: Record<NotificationIcon, IconName> = {
     calendar: 'calendar',
     cancel: 'circle-x',
     'user-plus': 'user-plus',
@@ -26,8 +26,8 @@
     sparkles: 'sparkles',
     gift: 'gift',
     info: 'info',
-    message: 'message-circle',
+    message: 'game-icons:scroll-quill',
   };
 </script>
 
-<Icon name={LUCIDE[icon] ?? 'megaphone'} {size} class={className} />
+<Icon name={ICONS[icon] ?? 'megaphone'} {size} class={className} />

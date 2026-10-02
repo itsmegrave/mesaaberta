@@ -14,7 +14,7 @@
   <h1
     class="text-4xl leading-none font-semibold tracking-tight text-balance md:flex md:items-center md:gap-3 md:text-5xl"
   >
-    <Icon name="message-circle" size={40} class="hidden text-muted md:block" />
+    <Icon name="game-icons:scroll-quill" size={40} class="hidden text-muted md:block" />
     {m.messages_title()}
   </h1>
   <p class="mt-3 hidden max-w-md text-center text-muted md:block md:text-xl">

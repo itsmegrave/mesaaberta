@@ -108,18 +108,7 @@
         ? 'hidden'
         : 'inline-flex'}"
     >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        class="shrink-0"><path d="M12 5v14M5 12h14" /></svg
-      >
+      <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
       {m.tables_open_cta()}
     </a>
   </div>

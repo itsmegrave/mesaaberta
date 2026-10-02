@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -428,7 +429,9 @@
             </dd>
           {/if}
           <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-            {m.manage_entry()}
+            <span class="inline-flex items-center gap-2"
+              ><Icon name="game-icons:dungeon-gate" size={18} />{m.manage_entry()}</span
+            >
           </dt>
           <dd class="col-span-2 border-b border-surface-200-800 py-3">
             {table.joinMode === 'approval' ? m.manage_entry_approval() : m.manage_entry_auto()}

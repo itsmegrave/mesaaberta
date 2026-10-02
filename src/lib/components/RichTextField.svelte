@@ -65,7 +65,10 @@
   };
 
   type Tool = {
-    icon: IconName;
+    id: string;
+    /** The icon set has none for strikethrough, headings or numbered lists: those draw a text `glyph`. */
+    icon?: IconName;
+    glyph?: { text: string; class?: string };
     label: () => string;
     active?: (e: Editor) => boolean;
     run: (e: Editor) => void;
@@ -75,25 +78,29 @@
   const TOOLS: Tool[][] = [
     [
       {
+        id: 'bold',
         icon: 'bold',
         label: () => m.rich_text_bold(),
         active: (e) => e.isActive('bold'),
         run: (e) => e.chain().focus().toggleBold().run(),
       },
       {
+        id: 'italic',
         icon: 'italic',
         label: () => m.rich_text_italic(),
         active: (e) => e.isActive('italic'),
         run: (e) => e.chain().focus().toggleItalic().run(),
       },
       {
+        id: 'underline',
         icon: 'underline',
         label: () => m.rich_text_underline(),
         active: (e) => e.isActive('underline'),
         run: (e) => e.chain().focus().toggleUnderline().run(),
       },
       {
-        icon: 'strikethrough',
+        id: 'strikethrough',
+        glyph: { text: 'S', class: 'line-through' },
         label: () => m.rich_text_strike(),
         active: (e) => e.isActive('strike'),
         run: (e) => e.chain().focus().toggleStrike().run(),
@@ -101,13 +108,15 @@
     ],
     [
       {
-        icon: 'heading-2',
+        id: 'heading-2',
+        glyph: { text: 'H2' },
         label: () => m.rich_text_heading_2(),
         active: (e) => e.isActive('heading', { level: 2 }),
         run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
       },
       {
-        icon: 'heading-3',
+        id: 'heading-3',
+        glyph: { text: 'H3' },
         label: () => m.rich_text_heading_3(),
         active: (e) => e.isActive('heading', { level: 3 }),
         run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
@@ -115,24 +124,28 @@
     ],
     [
       {
+        id: 'list',
         icon: 'list',
         label: () => m.rich_text_bullet_list(),
         active: (e) => e.isActive('bulletList'),
         run: (e) => e.chain().focus().toggleBulletList().run(),
       },
       {
-        icon: 'list-ordered',
+        id: 'list-ordered',
+        glyph: { text: '1.' },
         label: () => m.rich_text_ordered_list(),
         active: (e) => e.isActive('orderedList'),
         run: (e) => e.chain().focus().toggleOrderedList().run(),
       },
       {
+        id: 'quote',
         icon: 'quote',
         label: () => m.rich_text_quote(),
         active: (e) => e.isActive('blockquote'),
         run: (e) => e.chain().focus().toggleBlockquote().run(),
       },
       {
+        id: 'code',
         icon: 'code',
         label: () => m.rich_text_code(),
         active: (e) => e.isActive('code') || e.isActive('codeBlock'),
@@ -144,6 +157,7 @@
         },
       },
       {
+        id: 'minus',
         icon: 'minus',
         label: () => m.rich_text_rule(),
         run: (e) => e.chain().focus().setHorizontalRule().run(),
@@ -151,6 +165,7 @@
     ],
     [
       {
+        id: 'link',
         icon: 'link',
         label: () => m.rich_text_link(),
         active: (e) => e.isActive('link'),
@@ -159,12 +174,14 @@
     ],
     [
       {
+        id: 'undo-2',
         icon: 'undo-2',
         label: () => m.rich_text_undo(),
         run: (e) => e.chain().focus().undo().run(),
         disabled: (e) => !e.can().undo(),
       },
       {
+        id: 'redo-2',
         icon: 'redo-2',
         label: () => m.rich_text_redo(),
         run: (e) => e.chain().focus().redo().run(),
@@ -330,7 +347,7 @@
       {#if groupIndex > 0}
         <span class="mx-1 h-5 w-px bg-surface-200-800" aria-hidden="true"></span>
       {/if}
-      {#each group as tool (tool.icon)}
+      {#each group as tool (tool.id)}
         {@const pressed = pressedOf(tool)}
         {@const disabled = disabledOf(tool)}
         <Button
@@ -340,14 +357,20 @@
           aria-label={tool.label()}
           aria-pressed={tool.active ? pressed : undefined}
           {disabled}
-          tabindex={groupIndex === 0 && tool.icon === 'bold' ? 0 : -1}
+          tabindex={groupIndex === 0 && tool.id === 'bold' ? 0 : -1}
           onmousedown={(event) => event.preventDefault()}
           onclick={() => editor && tool.run(editor)}
           class="btn-icon size-9 rounded-md hover:preset-tonal disabled:opacity-40 {pressed
             ? 'preset-tonal-primary'
             : ''}"
         >
-          <Icon name={tool.icon} size={18} />
+          {#if tool.icon}
+            <Icon name={tool.icon} size={18} />
+          {:else if tool.glyph}
+            <span aria-hidden="true" class="text-sm font-bold {tool.glyph.class ?? ''}"
+              >{tool.glyph.text}</span
+            >
+          {/if}
         </Button>
       {/each}
     {/each}

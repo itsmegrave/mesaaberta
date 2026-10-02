@@ -33,8 +33,8 @@ describe('BottomTabBar.svelte', () => {
   it('uses the new game artwork for every mobile tab', async () => {
     render(BottomTabBar, { isAdmin: true });
     const expected = {
-      '/tables': 'game-icons:dice-twenty-faces-twenty',
-      '/tables/new': 'game-icons:card-draw',
+      '/tables': 'game-icons:tavern-sign',
+      '/tables/new': 'game-icons:dice-twenty-faces-twenty',
       '/account/tables': 'game-icons:tabletop-players',
       '/admin': 'game-icons:black-knight-helm',
     };
