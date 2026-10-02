@@ -97,4 +97,15 @@ describe('ThemeToggle', () => {
     expect(root.dataset.mode).toBe('dark');
     expect(localStorage.getItem('theme')).toBe('dark');
   });
+
+  it('shows the moon while light and the sun while dark, so the icon names what a click does', async () => {
+    render(ThemeToggle);
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    expect(button.element().querySelector('[data-icon="moon"]')).not.toBeNull();
+    await button.click();
+
+    expect(button.element().querySelector('[data-icon="sun"]')).not.toBeNull();
+    expect(button.element().querySelector('[data-icon="moon"]')).toBeNull();
+  });
 });

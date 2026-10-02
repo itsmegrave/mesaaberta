@@ -11,6 +11,8 @@ import GameExitDoorIcon from '@iconify-svelte/game-icons/exit-door';
 import GameTavernSignIcon from '@iconify-svelte/game-icons/tavern-sign';
 import GameHouseIcon from '@iconify-svelte/game-icons/house';
 import SquarePenIcon from '@iconify-svelte/reicon/edit-filled';
+import MoonIcon from '@iconify-svelte/reicon/moon-filled';
+import SunIcon from '@iconify-svelte/reicon/sun-filled';
 import CalendarIcon from '@iconify-svelte/reicon/calendar-filled';
 import CircleXIcon from '@iconify-svelte/reicon/close-circle-filled';
 import UserPlusIcon from '@iconify-svelte/reicon/user-add-filled';
@@ -94,6 +96,8 @@ export const ICONS = {
   'game-icons:house': GameHouseIcon,
   'game-icons:tavern-sign': GameTavernSignIcon,
   'square-pen': SquarePenIcon,
+  moon: MoonIcon,
+  sun: SunIcon,
   calendar: CalendarIcon,
   'circle-x': CircleXIcon,
   'user-plus': UserPlusIcon,
