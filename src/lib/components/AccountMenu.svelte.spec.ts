@@ -36,7 +36,7 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu()).toBeVisible();
     await expect.element(page.getByTestId('account-user-name')).not.toBeInTheDocument();
     await expect
-      .element(menu().getByRole('link', { name: 'Perfil' }))
+      .element(menu().getByRole('link', { name: 'Editar perfil' }))
       .toHaveAttribute('href', '/account/profile');
     await expect
       .element(menu().getByRole('link', { name: 'Minhas mesas' }))
@@ -63,5 +63,25 @@ describe('AccountMenu.svelte', () => {
     await trigger('Admin User').click();
 
     await expect.element(menu().getByRole('link', { name: /Admin/i })).not.toBeInTheDocument();
+  });
+
+  it('links "Ver meu perfil" to the public page, without an @ in the address', async () => {
+    render(AccountMenu, { name: 'Marina Alves', username: 'marina', avatarUrl: null });
+
+    await trigger().click();
+
+    await expect
+      .element(menu().getByRole('link', { name: 'Ver meu perfil' }))
+      .toHaveAttribute('href', '/u/marina');
+  });
+
+  it('has no public profile to show before a username is chosen', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null });
+
+    await trigger().click();
+
+    await expect
+      .element(menu().getByRole('link', { name: 'Ver meu perfil' }))
+      .not.toBeInTheDocument();
   });
 });

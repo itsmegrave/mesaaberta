@@ -85,4 +85,16 @@ describe('ThemeToggle', () => {
     mql.dispatchEvent(new MediaQueryListEvent('change', { matches: false }));
     expect(root.dataset.mode).toBe('dark');
   });
+
+  it('as a switch is labelled "Tema escuro" and saves the choice when flipped', async () => {
+    render(ThemeToggle, { variant: 'switch' });
+
+    const toggle = page.getByRole('switch', { name: 'Tema escuro' });
+    await expect.element(toggle).not.toBeChecked();
+    await page.getByText('Tema escuro').click();
+
+    await expect.element(toggle).toBeChecked();
+    expect(root.dataset.mode).toBe('dark');
+    expect(localStorage.getItem('theme')).toBe('dark');
+  });
 });

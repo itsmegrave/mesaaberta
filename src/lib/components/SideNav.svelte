@@ -73,7 +73,7 @@
       },
       account && {
         href: '/tables/new',
-        label: m.nav_open_table_short(),
+        label: expanded ? m.nav_open_table() : m.nav_open_table_short(),
         icon: 'game-icons:card-draw' as IconName,
         current: pathname === '/tables/new',
       },
@@ -89,6 +89,66 @@
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
 </script>
 
+{#snippet count(value: number)}
+  <span
+    aria-hidden="true"
+    class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 text-xs font-bold"
+  >
+    {value > 9 ? '9+' : value}
+  </span>
+{/snippet}
+
+{#snippet collapseButton()}
+  <Button
+    size="custom"
+    type="button"
+    onclick={toggle}
+    aria-expanded={expanded}
+    aria-label={expanded ? m.nav_collapse() : m.nav_expand()}
+    title={expanded ? m.nav_collapse() : m.nav_expand()}
+    class="btn flex size-11 shrink-0 items-center justify-center rounded-lg p-0 hover:preset-tonal"
+  >
+    <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
+  </Button>
+{/snippet}
+
+{#snippet adminLink()}
+  {#if account?.isAdmin}
+    <a
+      href={localizedHref('/admin', locale)}
+      aria-label={expanded ? undefined : m.nav_admin()}
+      title={expanded ? undefined : m.nav_admin()}
+      aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
+      class="group flex w-full items-center rounded-lg p-1 text-sm font-semibold no-underline {expanded
+        ? 'gap-3 hover:preset-tonal'
+        : 'flex-col justify-center gap-1 text-xs leading-tight'}"
+    >
+      <span
+        class="relative {tile} group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800"
+      >
+        <Icon name="game-icons:black-knight-helm" size={20} />
+        {#if !expanded && account.pendingSuggestionsCount > 0}
+          <span
+            aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
+            class="absolute -top-1 -right-1 badge min-w-5 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
+          >
+            {account.pendingSuggestionsCount > 9 ? '9+' : account.pendingSuggestionsCount}
+          </span>
+        {/if}
+      </span>
+      <span>{m.nav_admin()}</span>
+      {#if expanded && account.pendingSuggestionsCount > 0}
+        <span
+          aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
+          class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
+        >
+          {account.pendingSuggestionsCount > 9 ? '9+' : account.pendingSuggestionsCount}
+        </span>
+      {/if}
+    </a>
+  {/if}
+{/snippet}
+
 <Navigation
   layout={expanded ? 'sidebar' : 'rail'}
   aria-label={m.nav_main()}
@@ -98,17 +158,22 @@
 >
   {#snippet element(attributes)}
     <nav {...attributes as Record<string, unknown>}>
-      <Navigation.Header class="flex flex-col gap-4 {expanded ? 'items-start' : 'items-center'}">
+      <Navigation.Header
+        class="flex gap-4 {expanded
+          ? 'flex-row items-center justify-between'
+          : 'flex-col items-center'}"
+      >
         <a
           href={localizedHref('/', locale)}
           aria-label="Mesa Aberta"
-          class="flex items-center gap-3 no-underline {expanded ? 'px-1' : ''}"
+          class="flex min-w-0 items-center gap-3 no-underline {expanded ? 'px-1' : ''}"
         >
           <TableLogo size={32} />
           {#if expanded}
             <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
           {/if}
         </a>
+        {@render collapseButton()}
       </Navigation.Header>
 
       <Navigation.Content class="flex flex-1 flex-col justify-between gap-4">
@@ -138,51 +203,46 @@
           </Navigation.Menu>
         </Navigation.Group>
 
-        <Navigation.Group class="flex flex-col gap-2 {expanded ? 'items-start' : 'items-center'}">
+        <Navigation.Group class="flex flex-col gap-2 {expanded ? 'items-stretch' : 'items-center'}">
           <hr class="my-1 w-full border-surface-200-800" />
-          <div
-            class="flex w-full items-center gap-2 {expanded
-              ? 'flex-row justify-start'
-              : 'flex-col justify-center'}"
-          >
-            <ThemeToggle />
+          {#if expanded}
             {#if account}
-              <NotificationBell {unread} {latest} placement="right-end" />
-            {/if}
-          </div>
-          {#if account}
-            {#if account.isAdmin}
-              <a
-                href={localizedHref('/admin', locale)}
-                aria-label={m.nav_admin()}
-                title={m.nav_admin()}
-                aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
-                class="group flex w-full items-center rounded-lg p-1 text-sm font-semibold no-underline {expanded
-                  ? 'gap-3 hover:preset-tonal'
-                  : 'flex-col justify-center gap-1 text-xs leading-tight'}"
+              <Navigation.Label
+                class="px-3 text-xs font-semibold tracking-wide text-muted uppercase"
+                >{m.nav_account_group()}</Navigation.Label
               >
-                <span
-                  class="relative {tile} group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800"
-                >
-                  <Icon name="game-icons:black-knight-helm" size={20} />
-                  {#if account.pendingSuggestionsCount > 0}
-                    <span
-                      aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
-                      class="absolute -top-1 -right-1 badge min-w-5 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
-                    >
-                      {account.pendingSuggestionsCount > 9 ? '9+' : account.pendingSuggestionsCount}
-                    </span>
-                  {/if}
-                </span>
-                <span>{m.nav_admin()}</span>
+              <a
+                href={localizedHref('/messages', locale)}
+                aria-current={pathname.startsWith('/messages') ? 'page' : undefined}
+                aria-label={messagesUnread > 0
+                  ? m.messages_menu_unread({ count: messagesUnread })
+                  : undefined}
+                class="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold no-underline hover:preset-tonal aria-[current=page]:bg-surface-200-800"
+              >
+                <Icon name="game-icons:scroll-quill" size={20} />
+                {m.messages_menu()}
+                {#if messagesUnread > 0}{@render count(messagesUnread)}{/if}
               </a>
+              <NotificationBell {unread} {latest} placement="right-end" labelled />
+              {@render adminLink()}
             {/if}
+            <ThemeToggle variant="switch" />
+          {:else}
+            <div class="flex w-full flex-col items-center justify-center gap-2">
+              <ThemeToggle />
+              {#if account}
+                <NotificationBell {unread} {latest} placement="right-end" />
+              {/if}
+            </div>
+            {@render adminLink()}
+          {/if}
+          {#if account}
             <AccountMenu
               name={account.displayName}
               username={account.username}
               avatarUrl={account.avatarUrl}
               {messagesUnread}
-              placement="right-end"
+              placement={expanded ? 'top-start' : 'right-end'}
               compact={!expanded}
             />
           {:else if authEnabled && released}
@@ -196,20 +256,6 @@
               {m.nav_sign_in()}
             </a>
           {/if}
-          <Button
-            size="custom"
-            type="button"
-            onclick={toggle}
-            aria-expanded={expanded}
-            aria-label={expanded ? m.nav_collapse() : m.nav_expand()}
-            title={expanded ? m.nav_collapse() : m.nav_expand()}
-            class="btn flex h-11 shrink-0 items-center rounded-lg hover:preset-tonal {expanded
-              ? 'w-full justify-start gap-3 px-3'
-              : 'w-11 justify-center p-0'}"
-          >
-            <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
-            {#if expanded}<span>{m.nav_collapse()}</span>{/if}
-          </Button>
         </Navigation.Group>
       </Navigation.Content>
     </nav>

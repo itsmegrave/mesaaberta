@@ -22,8 +22,8 @@
     avatarUrl: string | null;
     /** Conversations with something unread. */
     messagesUnread?: number;
-    /** Where the menu opens: under the header's button, beside the side rail's. */
-    placement?: 'bottom-end' | 'right-end';
+    /** Where the menu opens: under the header's button, beside the side rail's, above the open side nav's. */
+    placement?: 'bottom-end' | 'right-end' | 'top-start';
     /** Only the avatar, for the side rail. */
     compact?: boolean;
   } = $props();
@@ -76,9 +76,15 @@
           class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
         >
           <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
+            {#if username}
+              <a href={localizedHref(`/u/${username}`, locale)} class={item}>
+                <Icon name="game-icons:meeple" size={20} />
+                {m.nav_view_profile()}
+              </a>
+            {/if}
             <a href={localizedHref('/account/profile', locale)} class={item}>
-              <Icon name="game-icons:meeple" size={20} />
-              {m.nav_profile()}
+              <Icon name="square-pen" size={20} />
+              {m.nav_edit_profile()}
             </a>
 
             <a

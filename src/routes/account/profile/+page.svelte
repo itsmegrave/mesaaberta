@@ -4,6 +4,7 @@
   const client = queryClient();
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { page } from '$app/state';
+  import { atHandle } from '$lib/profile/handle';
   import Avatar from '$lib/components/Avatar.svelte';
   import ProfileForm from '$lib/components/ProfileForm.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -136,7 +137,13 @@
 {/snippet}
 
 <section class="pt-2 pb-4 md:pt-12">
-  <Breadcrumbs class="mb-8" items={[{ label: m.account_profile_title() }]} />
+  <Breadcrumbs
+    class="mb-8"
+    items={[
+      ...(data.username ? [{ label: atHandle(data.username), href: `/u/${data.username}` }] : []),
+      { label: m.nav_edit_profile() },
+    ]}
+  />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
     {m.account_profile_title()}
   </h1>
