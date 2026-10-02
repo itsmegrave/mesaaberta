@@ -9,6 +9,8 @@ import RichText from './RichText.svelte';
 const editor = () => page.getByRole('textbox', { name: 'Notas' });
 const ready = () => expect.element(page.getByRole('toolbar')).toBeVisible();
 const stored = () => page.getByTestId('value').element().textContent;
+// Select-all is Command+A in macOS Chromium and Control+A on the Linux CI runner.
+const selectAll = /Mac/.test(navigator.platform) ? '{Meta>}a{/Meta}' : '{Control>}a{/Control}';
 
 describe('RichTextField.svelte', () => {
   it('stands in as a plain textarea with the same name until the editor is ready, then keeps the name on a hidden input', async () => {
@@ -58,7 +60,7 @@ describe('RichTextField.svelte', () => {
     await ready();
 
     await userEvent.click(editor());
-    await userEvent.keyboard('{Control>}a{/Control}{Backspace}');
+    await userEvent.keyboard(`${selectAll}{Backspace}`);
 
     await expect.poll(stored).toBe('');
   });
@@ -67,7 +69,7 @@ describe('RichTextField.svelte', () => {
     render(RichTextFieldHarness, { initial: '<p>site</p>' });
     await ready();
     await userEvent.click(editor());
-    await userEvent.keyboard('{Control>}a{/Control}');
+    await userEvent.keyboard(selectAll);
 
     await page.getByRole('button', { name: 'Link' }).click();
     await page.getByLabelText('Endereço do link').fill('javascript:alert(1)');
