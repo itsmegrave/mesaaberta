@@ -14,6 +14,8 @@
 </script>
 
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
+  import UserLink from '$lib/components/UserLink.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -62,7 +64,12 @@
 {:else}
   <ul aria-label={m.messages_inbox_label()} class="grid gap-1">
     {#each items as item (item.id)}
-      <li>
+      <li
+        class="relative flex items-center gap-3 rounded-lg p-3 hover:preset-tonal {item.id ===
+        currentId
+          ? 'preset-tonal-primary'
+          : ''}"
+      >
         <a
           href={localizedHref(`/messages/${item.id}`, locale)}
           onclick={(event) => {
@@ -72,53 +79,58 @@
             }
           }}
           aria-current={item.id === currentId ? 'page' : undefined}
-          class="flex items-center gap-3 rounded-lg p-3 no-underline hover:preset-tonal aria-[current=page]:preset-tonal-primary"
-        >
-          <span class="relative shrink-0">
-            <Avatar
-              src={item.kind === 'table' ? item.imageUrl : item.avatarUrl}
-              name={item.title}
-              size={48}
-            />
-            {#if item.kind === 'table'}
-              <span
-                title={m.messages_group_badge()}
-                class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border border-surface-200-800 bg-surface-100-900"
-              >
-                <Icon name="message-circle" size={12} />
-                <span class="sr-only">{m.messages_group_badge()}</span>
-              </span>
+          aria-label={`${name(item)} ${preview(item)}${item.unread > 0 ? ` ${m.messages_unread()}` : ''}`}
+          class="absolute inset-0 z-1 rounded-lg focus-visible:outline-2 focus-visible:outline-primary-500"
+        ></a>
+        <span class="relative shrink-0">
+          <Avatar
+            src={item.kind === 'table' ? item.imageUrl : item.avatarUrl}
+            name={item.title}
+            size={48}
+          />
+          {#if item.kind === 'table'}
+            <span
+              title={m.messages_group_badge()}
+              class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border border-surface-200-800 bg-surface-100-900"
+            >
+              <Icon name="message-circle" size={12} />
+              <span class="sr-only">{m.messages_group_badge()}</span>
+            </span>
+          {/if}
+        </span>
+
+        <span class="min-w-0 flex-1">
+          <span class="flex items-baseline justify-between gap-2">
+            <span class="truncate {item.unread > 0 ? 'font-bold' : 'font-semibold'}"
+              >{#if item.kind === 'direct'}<UserLink username={item.title} />{:else}{name(
+                  item,
+                )}{/if}</span
+            >
+            <time datetime={item.lastMessageAt.toISOString()} class="shrink-0 text-xs text-muted">
+              {shortTime(item.lastMessageAt, now, locale, zone)}
+            </time>
+          </span>
+          <span class="flex items-center gap-2">
+            <span
+              class="min-w-0 flex-1 truncate text-sm {item.unread > 0
+                ? 'font-semibold'
+                : 'text-muted'}"
+            >
+              {#if item.kind === 'table' && item.preview && !item.preview.own}<UserText
+                  text={preview(item)}
+                  username={item.preview.sender}
+                />{:else}{preview(item)}{/if}
+            </span>
+            {#if item.muted}
+              <Icon name="bell-off" size={16} class="text-muted" />
+              <span class="sr-only">{m.messages_muted()}</span>
+            {/if}
+            {#if item.unread > 0}
+              <span aria-hidden="true" class="size-3 shrink-0 rounded-full bg-primary-500"></span>
+              <span class="sr-only">{m.messages_unread()}</span>
             {/if}
           </span>
-
-          <span class="min-w-0 flex-1">
-            <span class="flex items-baseline justify-between gap-2">
-              <span class="truncate {item.unread > 0 ? 'font-bold' : 'font-semibold'}"
-                >{name(item)}</span
-              >
-              <time datetime={item.lastMessageAt.toISOString()} class="shrink-0 text-xs text-muted">
-                {shortTime(item.lastMessageAt, now, locale, zone)}
-              </time>
-            </span>
-            <span class="flex items-center gap-2">
-              <span
-                class="min-w-0 flex-1 truncate text-sm {item.unread > 0
-                  ? 'font-semibold'
-                  : 'text-muted'}"
-              >
-                {preview(item)}
-              </span>
-              {#if item.muted}
-                <Icon name="bell-off" size={16} class="text-muted" />
-                <span class="sr-only">{m.messages_muted()}</span>
-              {/if}
-              {#if item.unread > 0}
-                <span aria-hidden="true" class="size-3 shrink-0 rounded-full bg-primary-500"></span>
-                <span class="sr-only">{m.messages_unread()}</span>
-              {/if}
-            </span>
-          </span>
-        </a>
+        </span>
       </li>
     {/each}
   </ul>

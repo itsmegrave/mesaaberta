@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   import { createQuery } from '@tanstack/svelte-query';
   import { invalidate } from '$app/navigation';
   import ChatHeader from '$lib/components/ChatHeader.svelte';
@@ -162,9 +163,14 @@
     />
   {:else}
     <p role="status" class="border-t border-surface-200-800 pt-3 text-muted">
-      {data.conversation.kind === 'direct'
-        ? m.messages_dm_off_notice({ name: otherName })
-        : m.messages_read_only_table()}
+      {#if data.conversation.kind === 'direct'}
+        <UserText
+          text={m.messages_dm_off_notice({ name: otherName })}
+          username={data.conversation.other?.username}
+        />
+      {:else}
+        {m.messages_read_only_table()}
+      {/if}
     </p>
   {/if}
 </section>

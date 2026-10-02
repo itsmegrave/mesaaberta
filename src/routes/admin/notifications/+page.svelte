@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   import { onMount } from 'svelte';
   import { superForm } from 'sveltekit-superforms';
   import FormField from '$lib/components/FormField.svelte';
@@ -329,7 +330,7 @@
           <h3 id="confirm-title" class="text-lg font-semibold">
             {m.admin_announce_confirm_title()}
           </h3>
-          <p class="mt-1">{confirmText}</p>
+          <p class="mt-1"><UserText text={confirmText} username={shown?.recipient} /></p>
           <div class="mt-4 flex flex-wrap gap-3">
             <button
               type="submit"
@@ -404,19 +405,23 @@
               <RichText html={sent.body} class="mt-1" />
               <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
                 <span>
-                  {sent.audience === 'specific_user'
-                    ? m.admin_history_to_person({
+                  {#if sent.audience === 'specific_user'}<UserText
+                      text={m.admin_history_to_person({
                         username: sent.recipient ? `@${sent.recipient}` : m.admin_history_someone(),
-                      })
-                    : AUDIENCE_LABELS[sent.audience]}
+                      })}
+                      username={sent.recipient}
+                    />{:else}{AUDIENCE_LABELS[sent.audience]}{/if}
                 </span>
                 <span>
                   {m.admin_history_notified({ count: number(sent.notified) })}
                 </span>
                 <span>
-                  {m.admin_history_by({
-                    author: sent.author ? `@${sent.author}` : m.admin_history_someone(),
-                  })}
+                  <UserText
+                    text={m.admin_history_by({
+                      author: sent.author ? `@${sent.author}` : m.admin_history_someone(),
+                    })}
+                    username={sent.author}
+                  />
                 </span>
                 <time datetime={sent.sentAt.toISOString()}>{when(sent.sentAt)}</time>
                 <span>{TONE_LABELS[sent.tone]}</span>

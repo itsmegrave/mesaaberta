@@ -161,6 +161,7 @@
               />
               <AccountMenu
                 name={data.account.displayName}
+                username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
               />

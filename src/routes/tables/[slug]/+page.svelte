@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import RichText from '$lib/components/RichText.svelte';
   import { queryClient } from '$lib/query/context';
@@ -519,7 +520,7 @@
             <li
               class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
             >
-              <span>{atHandle(player.username)}</span>
+              <span><UserLink username={player.username} /></span>
               <ActionForm
                 action="?/remove"
                 playerId={player.playerId}
@@ -540,7 +541,7 @@
             <li
               class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
             >
-              <span>{atHandle(request.username)}</span>
+              <span><UserLink username={request.username} /></span>
               <div class="flex gap-4">
                 <ActionForm
                   action="?/approve"

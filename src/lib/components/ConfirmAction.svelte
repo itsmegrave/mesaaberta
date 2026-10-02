@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   // A seat action that asks first (Remover, Recusar): the button opens a dialog that says what will
   // happen, and only its confirm button posts. Until JavaScript runs there is no dialog, so the
   // button posts straight away, as it did before.
@@ -16,6 +17,7 @@
     /** The button's text, and the confirm button's. */
     label: string;
     title: string;
+    username?: string | null;
     text: string;
     class?: string;
     /** Shown as a toast when the action went through. */
@@ -29,6 +31,7 @@
     next = '',
     label,
     title,
+    username,
     text,
     class: buttonClass = '',
     success,
@@ -49,7 +52,9 @@
         <Dialog.Content
           class="w-full max-w-md card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
         >
-          <Dialog.Title class="text-xl font-semibold">{title}</Dialog.Title>
+          <Dialog.Title class="text-xl font-semibold"
+            ><UserText text={title} {username} /></Dialog.Title
+          >
           <Dialog.Description class="mt-2 text-surface-700-300">{text}</Dialog.Description>
           <div class="mt-6 flex flex-wrap justify-end gap-3">
             <Dialog.CloseTrigger

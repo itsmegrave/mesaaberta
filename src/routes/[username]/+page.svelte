@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { page } from '$app/state';
   import Avatar from '$lib/components/Avatar.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
@@ -52,7 +53,7 @@
           <h1
             class="text-4xl leading-none font-semibold tracking-tight wrap-break-word md:text-6xl"
           >
-            {atHandle(profile.username)}
+            <UserLink username={profile.username} />
           </h1>
           {#if profile.links.length > 0}
             <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">

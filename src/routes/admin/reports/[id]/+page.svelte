@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -66,7 +67,10 @@
       {isTable ? m.admin_report_kind_table() : m.admin_report_kind_player()}
     </p>
     <h1 class="mt-1 text-3xl leading-tight font-semibold wrap-break-word md:text-5xl">
-      {target}
+      {#if isTable}{target}{:else}<UserLink
+          username={report.player?.username}
+          label={target}
+        />{/if}
     </h1>
     <p class="mt-3 flex flex-wrap items-center gap-3">
       <span class={chip}>{reportStatusLabel(report.report.status)}</span>
@@ -98,10 +102,15 @@
           <div class={row}>
             <dt class="text-sm font-semibold text-muted">{m.admin_report_reporter()}</dt>
             <dd>
+              <UserLink
+                username={report.reporter.username}
+                label={handle(report.reporter.username)}
+                class="font-semibold"
+              />
               <a
-                class="anchor font-semibold"
+                class="ml-2 anchor text-sm"
                 href={localizedHref(`/admin/users/${report.reporter.id}`, locale)}
-                >{handle(report.reporter.username)}</a
+                >{m.admin_user_title()}</a
               >
             </dd>
           </div>
@@ -131,10 +140,15 @@
             <div class={row}>
               <dt class="text-sm font-semibold text-muted">{m.admin_report_profile()}</dt>
               <dd class="flex flex-wrap items-center gap-2">
+                <UserLink
+                  username={report.player.username}
+                  label={handle(report.player.username)}
+                  class="font-semibold"
+                />
                 <a
-                  class="anchor font-semibold"
+                  class="ml-2 anchor text-sm"
                   href={localizedHref(`/admin/users/${report.player.id}`, locale)}
-                  >{handle(report.player.username)}</a
+                  >{m.admin_user_title()}</a
                 >
                 {#if report.player.status === 'suspended'}
                   <span class={chip}>{m.admin_profile_banned()}</span>
@@ -164,10 +178,15 @@
           <div class={row}>
             <dt class="text-sm font-semibold text-muted">{m.admin_report_gm()}</dt>
             <dd class="flex flex-wrap items-center gap-2">
+              <UserLink
+                username={report.gm.username}
+                label={handle(report.gm.username)}
+                class="font-semibold"
+              />
               <a
-                class="anchor font-semibold"
+                class="ml-2 anchor text-sm"
                 href={localizedHref(`/admin/users/${report.gm.id}`, locale)}
-                >{handle(report.gm.username)}</a
+                >{m.admin_user_title()}</a
               >
               {#if report.gm.status === 'suspended'}
                 <span class={chip}>{m.admin_profile_banned()}</span>
@@ -219,8 +238,9 @@
             hint: m.moderation_ban_reason_hint({ max: RESOLUTION_NOTE_MAX }),
             required: true,
           }}
-          label={m.admin_ban_named({ user: handle(report.player.username) })}
+          label={m.admin_ban()}
           title={m.admin_ban_title({ user: handle(report.player.username) })}
+          username={report.player.username}
           text={m.admin_ban_text()}
           confirm={m.admin_ban()}
           success={m.admin_ban_done()}

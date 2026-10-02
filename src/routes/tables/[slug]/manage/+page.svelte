@@ -1,4 +1,6 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
+  import UserLink from '$lib/components/UserLink.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
@@ -212,7 +214,9 @@
                 <span class="flex min-w-0 items-center gap-3">
                   <Avatar src={request.avatarUrl} name={request.username} size={40} />
                   <span class="min-w-0">
-                    <span class="block truncate font-semibold">{atHandle(request.username)}</span>
+                    <span class="block truncate font-semibold"
+                      ><UserLink username={request.username} /></span
+                    >
                     <span class="block text-sm text-muted"
                       >{m.manage_requested_at({ date: moment(request.since) })}</span
                     >
@@ -234,6 +238,7 @@
                     next={here}
                     label={m.table_decline()}
                     title={m.confirm_decline_title({ player: atHandle(request.username) })}
+                    username={request.username}
                     text={m.confirm_decline_text()}
                     class={secondary}
                   />
@@ -270,7 +275,9 @@
             <span class="flex min-w-0 items-center gap-3">
               <Avatar src={data.gm.avatarUrl} name={data.gm.username} size={40} />
               <span class="min-w-0">
-                <span class="block truncate font-semibold">{atHandle(data.gm.username)}</span>
+                <span class="block truncate font-semibold"
+                  ><UserLink username={data.gm.username} /></span
+                >
                 <span class="block text-sm text-muted">{m.manage_you()}</span>
               </span>
             </span>
@@ -283,7 +290,9 @@
               <span class="flex min-w-0 items-center gap-3">
                 <Avatar src={player.avatarUrl} name={player.username} size={40} />
                 <span class="min-w-0">
-                  <span class="block truncate font-semibold">{atHandle(player.username)}</span>
+                  <span class="block truncate font-semibold"
+                    ><UserLink username={player.username} /></span
+                  >
                   <span class="block text-sm text-muted"
                     >{m.manage_since({ date: day(player.since) })}</span
                   >
@@ -296,6 +305,7 @@
                 next={here}
                 label={m.table_remove()}
                 title={m.confirm_remove_title({ player: atHandle(player.username) })}
+                username={player.username}
                 text={m.confirm_remove_text()}
                 class={secondary}
               />
@@ -352,7 +362,9 @@
                       class="mt-1 block size-2 shrink-0 rounded-full bg-primary-500"
                     ></span>
                     <span>
-                      <span class="block">{activityText(item)}</span>
+                      <span class="block"
+                        ><UserText text={activityText(item)} username={item.player} /></span
+                      >
                       <span class="block text-sm text-muted">{moment(item.at)}</span>
                     </span>
                   </li>

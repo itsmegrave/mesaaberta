@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { tick } from 'svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import MessageBubble from '$lib/components/MessageBubble.svelte';
@@ -115,7 +116,7 @@
         >
           {#if !group.own && kind === 'table'}
             <p class="max-w-full truncate px-1 text-xs font-semibold text-muted">
-              {name(group.sender)}
+              <UserLink username={group.sender} label={name(group.sender)} />
             </p>
           {/if}
           {#each group.messages as message (message.id)}

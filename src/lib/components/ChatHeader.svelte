@@ -88,6 +88,13 @@
     >
       {@render identity()}
     </a>
+  {:else if conversation.other?.username}
+    <a
+      href={localizedHref(`/${encodeURIComponent(conversation.other.username)}`, locale)}
+      class="flex min-w-0 flex-1 items-center gap-3 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-primary-500"
+    >
+      {@render identity()}
+    </a>
   {:else}
     <div class="flex min-w-0 flex-1 items-center gap-3">
       {@render identity()}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -9,12 +10,14 @@
 
   let {
     name,
+    username,
     avatarUrl,
     messagesUnread = 0,
     placement = 'bottom-end',
     compact = false,
   }: {
     name: string;
+    username?: string | null;
     avatarUrl: string | null;
     /** Conversations with something unread. */
     messagesUnread?: number;
@@ -34,71 +37,78 @@
 
 <svelte:window onpageshow={() => (signingOut = false)} />
 
-<Popover positioning={{ placement, offset: { mainAxis: 8 } }}>
-  <Popover.Trigger
-    aria-label="{m.nav_account_menu()}: {name}"
-    class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal {compact
-      ? ''
-      : 'md:h-12 md:w-full md:justify-start md:gap-2 md:rounded-lg md:pr-3 md:pl-1'}"
-  >
-    <Avatar src={avatarUrl} {name} size={32} />
-    <span class="hidden min-w-0 flex-1 truncate text-left {compact ? '' : 'md:inline'}">{name}</span
+<div class="flex min-w-0 items-center gap-2">
+  {#if !compact}
+    <UserLink
+      {username}
+      label={name}
+      class="hidden min-w-0 truncate text-sm font-semibold md:inline"
+    />
+  {/if}
+  <Popover positioning={{ placement, offset: { mainAxis: 8 } }}>
+    <Popover.Trigger
+      aria-label="{m.nav_account_menu()}: {name}"
+      class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal {compact
+        ? ''
+        : 'md:h-12 md:w-auto md:gap-2 md:rounded-lg md:px-1'}"
     >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-      class="hidden shrink-0 {compact ? '' : 'md:block'}"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  </Popover.Trigger>
-
-  <Portal>
-    <Popover.Positioner class="z-50!">
-      <Popover.Content
-        class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+      <Avatar src={avatarUrl} {name} size={32} />
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        class="hidden shrink-0 {compact ? '' : 'md:block'}"
       >
-        <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
-          <a href={localizedHref('/account/profile', locale)} class={item}>
-            <Icon name="game-icons:meeple" size={20} />
-            {m.nav_profile()}
-          </a>
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </Popover.Trigger>
 
-          <a
-            href={localizedHref('/messages', locale)}
-            class={item}
-            aria-label={messagesUnread > 0
-              ? m.messages_menu_unread({ count: messagesUnread })
-              : undefined}
-          >
-            <Icon name="game-icons:scroll-quill" size={20} />
-            {m.messages_menu()}
-            {#if messagesUnread > 0}
-              <span
-                data-testid="messages-count"
-                aria-hidden="true"
-                class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 font-bold"
-              >
-                {messagesUnread > 9 ? '9+' : messagesUnread}
-              </span>
-            {/if}
-          </a>
+    <Portal>
+      <Popover.Positioner class="z-50!">
+        <Popover.Content
+          class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+        >
+          <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
+            <a href={localizedHref('/account/profile', locale)} class={item}>
+              <Icon name="game-icons:meeple" size={20} />
+              {m.nav_profile()}
+            </a>
 
-          <form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
-            <SubmitButton submitting={signingOut} class={item}>
-              <Icon name="game-icons:exit-door" size={20} />
-              {m.nav_sign_out()}
-            </SubmitButton>
-          </form>
-        </nav>
-      </Popover.Content>
-    </Popover.Positioner>
-  </Portal>
-</Popover>
+            <a
+              href={localizedHref('/messages', locale)}
+              class={item}
+              aria-label={messagesUnread > 0
+                ? m.messages_menu_unread({ count: messagesUnread })
+                : undefined}
+            >
+              <Icon name="game-icons:scroll-quill" size={20} />
+              {m.messages_menu()}
+              {#if messagesUnread > 0}
+                <span
+                  data-testid="messages-count"
+                  aria-hidden="true"
+                  class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 font-bold"
+                >
+                  {messagesUnread > 9 ? '9+' : messagesUnread}
+                </span>
+              {/if}
+            </a>
+
+            <form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
+              <SubmitButton submitting={signingOut} class={item}>
+                <Icon name="game-icons:exit-door" size={20} />
+                {m.nav_sign_out()}
+              </SubmitButton>
+            </form>
+          </nav>
+        </Popover.Content>
+      </Popover.Positioner>
+    </Portal>
+  </Popover>
+</div>

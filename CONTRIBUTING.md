@@ -40,7 +40,7 @@ Review migrated controls for accessibility and mobile/desktop and light/dark vis
 
 Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Lucide (`@iconify-svelte/lucide`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`).
 
-To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Lucide](https://icon-sets.iconify.design/lucide/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). Game Icons names carry the `game-icons:` prefix.
+To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Lucide](https://icon-sets.iconify.design/lucide/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). Game Icons names carry the `game-icons:` prefix. Run `pnpm icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
 
 ## Translations
 

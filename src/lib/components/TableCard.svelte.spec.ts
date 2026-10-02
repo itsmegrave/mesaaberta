@@ -33,6 +33,19 @@ describe('TableCard', () => {
     await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeInTheDocument();
   });
 
+  it('links the GM to their public profile independently of the table', async () => {
+    render(TableCard, { table: { ...base, gmName: 'ana' } });
+    await expect
+      .element(page.getByRole('link', { name: '@ana', exact: true }))
+      .toHaveAttribute('href', '/ana');
+    expect(document.querySelector('a a')).toBeNull();
+    const link = document.querySelector<HTMLAnchorElement>('a[href="/ana"]')!;
+    const rect = link.getBoundingClientRect();
+    expect(
+      document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('a'),
+    ).toBe(link);
+  });
+
   it('badges a campaign as one', async () => {
     render(TableCard, { table: { ...base, kind: 'campaign' } });
 
