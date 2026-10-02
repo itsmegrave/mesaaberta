@@ -30,6 +30,17 @@ Prefer Skeleton primitives and the shared `Form`, `FormField`, `TextInput` and `
 
 New form migrations use TanStack Form for values/validation and TanStack Query for mutations/cache. The catalog, approval queue and notification actions are migrated flows. `src/lib/forms/action-form.svelte.ts` supplies a single submit handler, validation errors, pending/delayed/timeout states and failure-safe drafts. Pass the affected cache domain explicitly for Query-backed reads; route-only data such as notifications reloads through SvelteKit. Pair it with `Form` and the existing SvelteKit action; do not add a second enhancement handler or automatic write retries. Server authorization and Zod validation remain authoritative.
 
+### Native form elements that stay
+
+Raw `<input>`, `<select>`, `<textarea>`, `<button>` and `<form>` appear only in these cases; anything else should use the shared controls:
+
+- **Wrappers.** `Form`, `ActionForm`, `TextInput`, `TextArea`, `SelectInput` and the test harnesses under `src/lib/forms` and `src/lib/query`.
+- **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and keep the form working without JavaScript.
+- **Radio groups and the remove-image checkbox** in `TableForm`, `ImageUpload` and `/admin/notifications`: native radios keep keyboard behavior and no-JS submission, and Skeleton has no standalone radio group.
+- **Native `<select>`** in `ProfileForm`, because a positioned popup needs inline styles, which the CSP forbids, and the `SearchSelect` no-JS fallback.
+
+Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui-migration-plan.md).
+
 `validateStringForm` handles only allowlisted scalar text fields. Arrays, numbers, booleans and files need explicit domain decoders before using it in other flows. Never allowlist passwords or files for echoing in action responses. Use `validateFormData` with explicit defaults and array/boolean/file fields for compound forms. Strip files with `responseForm` and passwords with `withoutSecrets` before returning any action response.
 
 Multiline text a person writes for others to read (a table's description, the welcome message, an announcement) uses `RichTextField` and is shown with `RichText`. It is stored as the small HTML subset of `src/lib/text/rich.ts` (paragraphs, headings, bold, italic, underline, strikethrough, lists, quotes, code, dividers and http/https/mailto links; no images, colours or alignment, because the CSP blocks inline `style`). Validate it with `richText(max)` from `$lib/text/rich-schema`, whose limit counts what a reader sees, and show it only through `RichText`, the one place `{@html}` is allowed. Calendar, Instagram and the plain-text e-mail copy use `toPlainText`. Chat messages and rating comments use the plain-text `TextArea` wrapper.
