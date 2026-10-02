@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
+  import Icon from '$lib/components/Icon.svelte';
   import NotificationAction from '$lib/components/NotificationAction.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import { notificationIcon, notificationText, type Shown } from '$lib/notifications/text';
@@ -57,20 +58,7 @@
       ? 'min-h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm'
       : 'size-11 justify-center rounded-full p-0'}"
   >
-    <svg
-      width={labelled ? 20 : 22}
-      height={labelled ? 20 : 22}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-    </svg>
+    <Icon name="bell" size={labelled ? 20 : 22} />
     {#if labelled}<span aria-hidden="true" class="font-semibold">{m.notifications_title()}</span
       >{/if}
     {#if unread > 0}

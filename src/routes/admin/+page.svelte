@@ -43,7 +43,7 @@
     {
       label: m.admin_confirmed(),
       value: data.seats.confirmed,
-      icon: 'user-check',
+      icon: 'game-icons:meeple',
       detail: m.admin_pending_seats({ count: number(data.seats.pending) }),
     },
   ]);

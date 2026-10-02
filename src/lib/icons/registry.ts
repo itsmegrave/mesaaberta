@@ -16,10 +16,6 @@ import MoonIcon from '@iconify-svelte/reicon/moon-filled';
 import SunIcon from '@iconify-svelte/reicon/sun-filled';
 import CalendarIcon from '@iconify-svelte/reicon/calendar-filled';
 import CircleXIcon from '@iconify-svelte/reicon/close-circle-filled';
-import UserPlusIcon from '@iconify-svelte/reicon/user-add-filled';
-import UserCheckIcon from '@iconify-svelte/reicon/user-tick-filled';
-import UserXIcon from '@iconify-svelte/reicon/user-remove-filled';
-import UserMinusIcon from '@iconify-svelte/reicon/user-minus-filled';
 import StarIcon from '@iconify-svelte/reicon/star-filled';
 import TagIcon from '@iconify-svelte/reicon/tag-filled';
 import ShieldIcon from '@iconify-svelte/reicon/shield-filled';
@@ -102,10 +98,6 @@ export const ICONS = {
   sun: SunIcon,
   calendar: CalendarIcon,
   'circle-x': CircleXIcon,
-  'user-plus': UserPlusIcon,
-  'user-check': UserCheckIcon,
-  'user-x': UserXIcon,
-  'user-minus': UserMinusIcon,
   star: StarIcon,
   tag: TagIcon,
   shield: ShieldIcon,
