@@ -1,4 +1,9 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
+  import { PROFILE_STATUSES } from '$lib/profile/status';
+  import Form from '$lib/components/Form.svelte';
+  import SelectInput from '$lib/components/SelectInput.svelte';
+  import Button from '$lib/components/Button.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -75,7 +80,7 @@
       {m.admin_profile_total({ count: data.total })}
     </p>
   </div>
-  <form
+  <Form
     method="GET"
     action={page.url.pathname}
     class="mt-4 flex flex-wrap items-end gap-3"
@@ -95,26 +100,30 @@
   >
     <label class="min-w-0 flex-1 basis-64 text-sm font-semibold">
       {m.admin_profile_search()}
-      <input
+      <TextInput
         class="mt-2 input h-11 w-full"
         type="search"
         name="q"
-        maxlength="100"
+        maxlength={100}
         value={data.query}
       />
     </label>
     <label class="text-sm font-semibold">
       {m.admin_profile_status()}
-      <select class="select mt-2 h-11 min-w-44" name="status" value={data.status}>
+      <SelectInput class="select mt-2 h-11 min-w-44" name="status" value={data.status}>
         <option value="all">{m.admin_profile_all()}</option>
-        <option value="active">{m.admin_active_profiles()}</option>
-        <option value="suspended">{m.admin_suspended()}</option>
-      </select>
+        {#each PROFILE_STATUSES as status (status)}
+          <option value={status}
+            >{status === 'active' ? m.admin_profile_active() : m.admin_profile_suspended()}</option
+          >
+        {/each}
+      </SelectInput>
     </label>
-    <button
+    <Button
+      size="custom"
       class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-4"
       type="submit"
-      disabled={busy}><Icon name="search" size={18} />{m.admin_profile_apply()}</button
+      disabled={busy}><Icon name="search" size={18} />{m.admin_profile_apply()}</Button
     >
     {#if data.query || data.status !== 'all'}
       <a
@@ -122,7 +131,7 @@
         href={localizedHref(`${page.url.pathname}#profiles`, locale)}>{m.admin_profile_clear()}</a
       >
     {/if}
-  </form>
+  </Form>
   <div class="mt-5 overflow-x-auto">
     <table class="w-full text-left text-sm">
       <thead class="border-b border-surface-200-800">
@@ -167,7 +176,7 @@
   <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
     <label class="flex items-center gap-2 text-sm">
       {m.admin_profile_size()}
-      <select
+      <SelectInput
         class="select h-11 w-20"
         value={data.pageSize}
         disabled={busy}
@@ -175,27 +184,29 @@
           table.setPagination({ pageIndex: 0, pageSize: Number(event.currentTarget.value) })}
       >
         {#each [20, 50, 100] as size (size)}<option value={size}>{size}</option>{/each}
-      </select>
+      </SelectInput>
     </label>
     <div class="flex items-center gap-3">
       <span class="text-sm" aria-live="polite"
         >{m.admin_profile_page({ page: data.page, pages: Math.max(1, table.getPageCount()) })}</span
       >
-      <button
+      <Button
+        size="custom"
         class="btn size-11 rounded-lg border border-surface-200-800 p-0"
         type="button"
         aria-label={m.admin_profile_previous()}
         title={m.admin_profile_previous()}
         disabled={busy || !table.getCanPreviousPage()}
-        onclick={() => table.previousPage()}><Icon name="chevron-left" /></button
+        onclick={() => table.previousPage()}><Icon name="chevron-left" /></Button
       >
-      <button
+      <Button
+        size="custom"
         class="btn size-11 rounded-lg border border-surface-200-800 p-0"
         type="button"
         aria-label={m.admin_profile_next()}
         title={m.admin_profile_next()}
         disabled={busy || !table.getCanNextPage()}
-        onclick={() => table.nextPage()}><Icon name="chevron-right" /></button
+        onclick={() => table.nextPage()}><Icon name="chevron-right" /></Button
       >
     </div>
   </div>

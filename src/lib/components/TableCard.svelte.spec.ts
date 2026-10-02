@@ -37,9 +37,9 @@ describe('TableCard', () => {
     render(TableCard, { table: { ...base, gmName: 'ana' } });
     await expect
       .element(page.getByRole('link', { name: '@ana', exact: true }))
-      .toHaveAttribute('href', '/ana');
+      .toHaveAttribute('href', '/u/ana');
     expect(document.querySelector('a a')).toBeNull();
-    const link = document.querySelector<HTMLAnchorElement>('a[href="/ana"]')!;
+    const link = document.querySelector<HTMLAnchorElement>('a[href="/u/ana"]')!;
     const rect = link.getBoundingClientRect();
     expect(
       document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('a'),

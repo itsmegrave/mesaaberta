@@ -1,21 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm, issueErrors } from './contract';
 import { z } from 'zod';
 import '$lib/forms/zod-codes';
-import type { FormMessage } from './message';
-import { refuse, withoutSecrets } from './server';
+import { refuse, responseForm, withoutSecrets } from './server';
 
 const schema = z.object({ email: z.string().min(3), password: z.string().min(8) });
-const filled = () =>
-  superValidate<z.infer<typeof schema>, FormMessage>(
-    { email: 'ana@example.com', password: 'a-long-password' },
-    zod4(schema),
-  );
+const validated = (values: { email: string; password: string }) => {
+  const result = schema.safeParse(values);
+  return {
+    ...initialForm(values),
+    valid: result.success,
+    errors: result.success ? {} : issueErrors(result.error.issues),
+  };
+};
+const filled = () => validated({ email: 'ana@example.com', password: 'a-long-password' });
 
 describe('zod codes', () => {
   it('reports the code of the rule that failed, not English text', async () => {
-    const form = await superValidate({ email: 'a', password: 'b' }, zod4(schema));
+    const form = validated({ email: 'a', password: 'b' });
 
     expect(form.valid).toBe(false);
     expect(form.errors.email).toEqual(['too_small']);
@@ -59,4 +61,14 @@ describe('refuse', () => {
       data: { form: { message: { code: 'invalid_field', field: '__proto__' } } },
     });
   });
+});
+
+it('removes file bytes from validation failures before action serialization', () => {
+  const result = responseForm({
+    valid: false,
+    data: { title: 'Draft', image: new File(['private bytes'], 'photo.png') },
+    errors: { image: ['too_big'] },
+  });
+  expect(result.data).toEqual({ title: 'Draft' });
+  expect(result.errors.image).toEqual(['too_big']);
 });

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import SelectInput from '$lib/components/SelectInput.svelte';
+  import TextArea from '$lib/components/TextArea.svelte';
   // "Denunciar": a table, or someone the reporter shares it with. The server decides again who may
   // be reported; this only offers what the read said is allowed.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
@@ -89,7 +91,7 @@
 
             {#if several}
               <FormField id="report-target" label={m.report_target()}>
-                <select
+                <SelectInput
                   id="report-target"
                   class="select h-12 w-full rounded-lg border-surface-200-800 px-3"
                   value={target}
@@ -103,7 +105,7 @@
                   {#each targets.people as person (person.id)}
                     <option value={person.id}>{atHandle(person.username)}</option>
                   {/each}
-                </select>
+                </SelectInput>
               </FormField>
             {/if}
 
@@ -112,7 +114,7 @@
             {/if}
 
             <FormField id="report-reason" label={m.report_reason()} error={reasonError}>
-              <select
+              <SelectInput
                 id="report-reason"
                 name="reason"
                 required
@@ -126,7 +128,7 @@
                 {#each REPORT_REASONS as reason (reason)}
                   <option value={reason}>{reasonLabel(reason)}</option>
                 {/each}
-              </select>
+              </SelectInput>
             </FormField>
 
             <FormField
@@ -135,17 +137,17 @@
               hint={m.report_details_hint({ max: REPORT_DETAILS_MAX })}
               error={detailsError}
             >
-              <textarea
+              <TextArea
                 id="report-details"
                 name="details"
-                rows="4"
+                rows={4}
                 maxlength={REPORT_DETAILS_MAX}
                 class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
                 value={data.details}
                 oninput={(event) => form.change('details', event.currentTarget.value)}
                 aria-invalid={detailsError ? 'true' : undefined}
                 aria-describedby="report-details-hint{detailsError ? ' report-details-error' : ''}"
-              ></textarea>
+              ></TextArea>
             </FormField>
 
             {#if formError}

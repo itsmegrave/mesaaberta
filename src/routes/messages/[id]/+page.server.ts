@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
-import { message, superValidate, type ErrorStatus } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { validateStringForm, validateFormData } from '$lib/forms/contract';
+import { formMessage } from '$lib/forms/server';
 import { messageSchema, muteSchema } from '$lib/messages/schema';
 import { requireUser } from '$lib/server/auth/guard';
 import { RateLimited, failFrom } from '$lib/server/errors';
@@ -15,7 +15,7 @@ export const actions: Actions = {
     await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
 
-    const form = await superValidate(request, zod4(messageSchema));
+    const form = validateStringForm(await request.formData(), messageSchema, ['body', 'tableId']);
     if (!form.valid) return fail(400, { form });
 
     try {
@@ -27,23 +27,28 @@ export const actions: Actions = {
         setHeaders({ 'Retry-After': String(cause.retryAfterSeconds) });
       }
       const failure = failFrom(cause);
-      return message(form, { code: failure.data.error }, { status: failure.status as ErrorStatus });
+      return formMessage(form, { code: failure.data.error }, { status: failure.status });
     }
     // The body is cleared for the next message; the thread refreshes itself.
-    return message({ ...form, data: { ...form.data, body: '' } }, { code: 'sent' });
+    return formMessage({ ...form, data: { ...form.data, body: '' } }, { code: 'sent' });
   },
 
   mute: async ({ request, locals, url, params }) => {
     await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
 
-    const form = await superValidate(request, zod4(muteSchema));
+    const form = validateFormData(
+      await request.formData(),
+      muteSchema,
+      { muted: false },
+      { booleans: ['muted'] },
+    );
     if (!form.valid) return fail(400, { form });
     try {
       await setMuted(locals.db, await locals.getProfile(), params.id, form.data.muted);
     } catch (cause) {
       const failure = failFrom(cause);
-      return message(form, { code: failure.data.error }, { status: failure.status as ErrorStatus });
+      return formMessage(form, { code: failure.data.error }, { status: failure.status });
     }
     return { form };
   },

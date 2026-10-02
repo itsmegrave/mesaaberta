@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { defaults, superForm } from 'sveltekit-superforms';
-  import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
   import CredentialsForm from './CredentialsForm.svelte';
   import { credentialsSchema } from '$lib/auth/credentials';
   import type { FormMessage } from '$lib/forms/message';
@@ -16,13 +15,14 @@
   let { mode, next = '/', email = '', message, errors, action }: Props = $props();
 
   // svelte-ignore state_referenced_locally
-  const superform = superForm(defaults({ email, password: '', next }, zod4(credentialsSchema)), {
-    validators: zod4Client(credentialsSchema),
+  const controller = actionForm({
+    initial: { email, password: '', next },
+    schema: credentialsSchema,
+    initialErrors: errors,
+    initialMessage: message,
+    onSuccess: () => {},
+    errorMessage: () => 'failed',
   });
-  // svelte-ignore state_referenced_locally
-  if (message) superform.message.set(message);
-  // svelte-ignore state_referenced_locally
-  if (errors) superform.errors.set(errors);
 </script>
 
-<CredentialsForm {mode} {superform} {action} />
+<CredentialsForm {mode} {controller} {action} />

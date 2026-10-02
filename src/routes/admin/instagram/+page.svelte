@@ -1,4 +1,7 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
+  import Form from '$lib/components/Form.svelte';
+  import Button from '$lib/components/Button.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
   import { toast } from '$lib/toaster';
@@ -58,7 +61,7 @@
       {#if expired}<p>{m.instagram_expired()}</p>{/if}
     {/if}
     {#if !data.account || expired}
-      <form
+      <Form
         onsubmit={(event) => {
           if (connecting) event.preventDefault();
           else connecting = true;
@@ -66,13 +69,14 @@
         method="POST"
         action={localizedHref('/admin/instagram/connect', getLocale())}
       >
-        <button
+        <Button
+          size="custom"
           disabled={!data.configured || connecting}
           aria-busy={connecting}
           class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-          >{m.instagram_connect()}</button
+          >{m.instagram_connect()}</Button
         >
-      </form>
+      </Form>
     {/if}
     {#if data.uncertain.length}
       <h3 class="mt-2 text-lg font-semibold">{m.instagram_reconcile_title()}</h3>
@@ -84,7 +88,7 @@
               <p class="break-all">{post.tableId} · {post.containerId}</p>
               <input type="hidden" name="tableId" value={post.tableId} />
               <label class="grid gap-2"
-                >{m.instagram_permalink()}<input
+                >{m.instagram_permalink()}<TextInput
                   class="input"
                   type="url"
                   name="permalink"
@@ -92,11 +96,12 @@
                   placeholder="https://www.instagram.com/p/.../"
                 /></label
               >
-              <button
+              <Button
+                size="custom"
                 disabled={pending}
                 aria-busy={pending}
                 class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-                >{m.instagram_reconcile()}</button
+                >{m.instagram_reconcile()}</Button
               >
             {/snippet}</AdminActionForm
           >

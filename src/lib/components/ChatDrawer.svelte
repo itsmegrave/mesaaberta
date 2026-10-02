@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { createQuery } from '@tanstack/svelte-query';
@@ -97,17 +98,19 @@
             {#if selected}
               {#if thread.isError}
                 <p role="alert">{m.messages_error_generic()}</p>
-                <button class="btn preset-tonal" onclick={() => thread.refetch()}
-                  >{m.messages_retry_load()}</button
+                <Button size="custom" class="btn preset-tonal" onclick={() => thread.refetch()}
+                  >{m.messages_retry_load()}</Button
                 >
-                <button class="btn preset-tonal" onclick={back}>{m.messages_back()}</button>
+                <Button size="custom" class="btn preset-tonal" onclick={back}
+                  >{m.messages_back()}</Button
+                >
               {:else if thread.data}
                 {#key selected}<ChatThread data={thread.data} drawer onback={back} />{/key}
               {:else}<p role="status">{m.nav_loading()}</p>{/if}
             {:else if inbox.isError}
               <p role="alert">{m.messages_error_generic()}</p>
-              <button class="btn preset-tonal" onclick={() => inbox.refetch()}
-                >{m.messages_retry_load()}</button
+              <Button size="custom" class="btn preset-tonal" onclick={() => inbox.refetch()}
+                >{m.messages_retry_load()}</Button
               >
             {:else if inbox.data}
               <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">

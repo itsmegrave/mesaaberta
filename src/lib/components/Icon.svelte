@@ -7,12 +7,26 @@
   let {
     name,
     size = 20,
+    motion = true,
     class: className = '',
-  }: { name: IconName; size?: number; class?: string } = $props();
+  }: { name: IconName; size?: number; motion?: boolean; class?: string } = $props();
 
   const Component = $derived(ICONS[name]);
   // Embed SVG attributes for SSR and offline rendering; no CSS geometry or remote fallback.
-  const drawing = $derived({ content: DRAWINGS[name], fallback: DRAWINGS[name] });
+  const drawing = $derived({
+    content: {
+      ...DRAWINGS[name],
+      body: motion
+        ? DRAWINGS[name].body
+        : DRAWINGS[name].body.replace(/<animateTransform[^>]*\/>/g, ''),
+    },
+    fallback: {
+      ...DRAWINGS[name],
+      body: motion
+        ? DRAWINGS[name].body
+        : DRAWINGS[name].body.replace(/<animateTransform[^>]*\/>/g, ''),
+    },
+  });
 </script>
 
 <!-- Decorative: the text next to an icon says what it means. -->

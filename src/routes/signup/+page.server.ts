@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
-import { fail, message, superValidate, type SuperValidated } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { credentialsSchema, type CredentialsData } from '$lib/auth/credentials';
-import type { FormMessage } from '$lib/forms/message';
+import { fail } from '@sveltejs/kit';
+import { initialForm, validateStringForm } from '$lib/forms/contract';
+import { formMessage } from '$lib/forms/server';
+import { credentialsSchema } from '$lib/auth/credentials';
 import { withoutSecrets } from '$lib/forms/server';
 import { SIGN_UP_LIMIT, attemptWait } from '$lib/server/auth/attempt-limit';
 import { signUpWithEmail, type SignUpResult } from '$lib/server/auth/email';
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const next = safeNext(url.searchParams.get('next'));
   if (await locals.getUser()) redirect(303, next);
 
-  return { next, form: await superValidate({ next }, zod4(credentialsSchema), { errors: false }) };
+  return { next, form: initialForm({ email: '', password: '', next }) };
 };
 
 const STATUS = {
@@ -27,10 +27,11 @@ export const actions: Actions = {
   default: async ({ request, locals, url, getClientAddress, setHeaders }) => {
     if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
-    const form: SuperValidated<CredentialsData, FormMessage> = await superValidate(
-      request,
-      zod4(credentialsSchema),
-    );
+    const form = validateStringForm(await request.formData(), credentialsSchema, [
+      'email',
+      'password',
+      'next',
+    ]);
     const next = safeNext(form.data.next);
     const { email, password } = form.data;
     withoutSecrets(form, ['password']);
@@ -38,7 +39,7 @@ export const actions: Actions = {
     const wait = await attemptWait(locals.db, SIGN_UP_LIMIT, getClientAddress());
     if (wait !== null) {
       setHeaders({ 'Retry-After': String(wait) });
-      return message(form, { code: 'rate_limited', retryAfter: wait }, { status: 429 });
+      return formMessage(form, { code: 'rate_limited', retryAfter: wait }, { status: 429 });
     }
 
     const result = await signUpWithEmail(
@@ -48,8 +49,8 @@ export const actions: Actions = {
 
     if (result === 'signed_in') redirect(303, await afterSignIn(locals, next));
     // Says the same whether or not the address already had an account.
-    if (result === 'check_email') return message(form, { code: 'check_email' });
+    if (result === 'check_email') return formMessage(form, { code: 'check_email' });
 
-    return message(form, { code: result }, { status: STATUS[result] });
+    return formMessage(form, { code: result }, { status: STATUS[result] });
   },
 };

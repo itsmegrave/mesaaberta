@@ -1,12 +1,12 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { setError, superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm, validateFormData } from '$lib/forms/contract';
+import { refuse } from '$lib/forms/server';
 import { requireUser } from '$lib/server/auth/guard';
 import { ensureProfile } from '$lib/server/auth/profile';
 import { safeNext } from '$lib/server/auth/safe-next';
 import { Invalid } from '$lib/server/errors';
 import { isUsernameAvailable, loadProfileForm, saveProfile } from '$lib/server/profile/service';
-import { profileSchema } from '$lib/profile/schema';
+import { profileSchema, PROFILE_DEFAULTS } from '$lib/profile/schema';
 import { suggestUsername } from '$lib/profile/username';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (suggestion && (await isUsernameAvailable(locals.db, suggestion)))
     values.username = suggestion;
 
-  return { form: await superValidate(values, zod4(profileSchema), { errors: false }), next };
+  return { form: initialForm(values), next };
 };
 
 export const actions: Actions = {
@@ -39,7 +39,9 @@ export const actions: Actions = {
     const user = await requireUser(locals, url, { allowIncomplete: true });
     if (!locals.db) error(503, 'Database not configured');
 
-    const form = await superValidate(request, zod4(profileSchema));
+    const form = validateFormData(await request.formData(), profileSchema, PROFILE_DEFAULTS, {
+      arrays: ['linkNetwork', 'linkUrl'],
+    });
     if (!form.valid) return fail(400, { form });
 
     try {
@@ -48,7 +50,7 @@ export const actions: Actions = {
     } catch (e) {
       // The unique index decided: somebody took the name after the availability check.
       if (e instanceof Invalid && e.field === 'username') {
-        return setError(form, 'username', 'taken', { status: 400 });
+        return refuse(form, 400, 'taken', 'username');
       }
       throw e;
     }

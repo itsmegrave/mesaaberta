@@ -2,6 +2,7 @@
 // (https://iconify.design/docs/usage/svg-css/svelte/). Import the icon here, add it to ICONS, then use it
 // by name: `<Icon name="wrench" />`. Lucide icons come from @iconify-svelte/lucide, Game Icons
 // from @iconify-svelte/game-icons (names carry the `game-icons:` prefix).
+import TadpoleIcon from '@iconify-svelte/svg-spinners/tadpole';
 import GameTabletopPlayersIcon from '@iconify-svelte/game-icons/tabletop-players';
 import GameDungeonGateIcon from '@iconify-svelte/game-icons/dungeon-gate';
 import GameMeepleIcon from '@iconify-svelte/game-icons/meeple';
@@ -74,6 +75,7 @@ import BrandGithubIcon from '@iconify-svelte/simple-icons/github';
 import BrandLinkedinIcon from '@iconify-svelte/lucide/linkedin';
 
 export const ICONS = {
+  'svg-spinners:tadpole': TadpoleIcon,
   'brand:instagram': BrandInstagramIcon,
   'brand:x': BrandXIcon,
   'brand:bluesky': BrandBlueskyIcon,

@@ -9,6 +9,30 @@ test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
 const uniqueEmail = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}@example.test`;
 
+test('keeps credentials typed before hydration and signs in with them', async ({ page }) => {
+  const user = await createUser('Early login');
+  let release!: () => void;
+  const hydration = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(/\/_app\/immutable\/.*\.js$/, async (route) => {
+    await hydration;
+    await route.continue();
+  });
+  try {
+    await page.goto('/login', { waitUntil: 'commit' });
+    await page.getByLabel('Email').fill(user.email);
+    await page.getByLabel('Senha').fill(user.password);
+  } finally {
+    release();
+  }
+  await page.locator('#svelte-announcer').waitFor({ state: 'attached' });
+  await expect(page.getByLabel('Email')).toHaveValue(user.email);
+  await expect(page.getByLabel('Senha')).toHaveValue(user.password);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(accountMenu(page, user.username)).toBeVisible();
+});
+
 test.describe('sign up', () => {
   test('creates the account, asks to confirm by email, and the link signs the person in', async ({
     page,
@@ -37,7 +61,7 @@ test.describe('sign up', () => {
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
     // Then on to where the sign-up was going, showing the username.
-    await expect(page).toHaveURL(/localhost:4173\/$/);
+    await expect(page).toHaveURL(/localhost:\d+\/$/);
     await expect(accountMenu(page, username)).toBeVisible();
 
     const sql = database();
@@ -157,7 +181,7 @@ test.describe('sign in and out', () => {
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 
     await expect(accountMenu(page, user.username)).toBeVisible();
-    expect(new URL(page.url()).host).toBe('localhost:4173');
+    expect(new URL(page.url()).origin).toBe(new URL(test.info().project.use.baseURL!).origin);
   });
 });
 

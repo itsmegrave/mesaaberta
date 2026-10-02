@@ -1,13 +1,9 @@
 <script lang="ts">
   import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import { queryClient } from '$lib/query/context';
-  import { afterWrite } from '$lib/query/invalidate';
   import { pageQuery } from '$lib/query/page.svelte';
-  const client = queryClient();
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { confirmLeave } from '$lib/forms/leave-guard.svelte';
-  import { superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { guardDraft } from '$lib/forms/guard.svelte';
+  import { actionForm } from '$lib/forms/action-form.svelte';
   import ConfirmAction from '$lib/components/ConfirmAction.svelte';
   import TableForm from '$lib/components/TableForm.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -16,24 +12,23 @@
   import { tableFormSchema } from '$lib/tables/schema';
   import { toast } from '$lib/toaster';
 
-  let { data } = $props();
+  let { data, form = null } = $props();
   const options = pageQuery(
     () => data.catalogRead ?? { systems: data.systems, catalog: data.catalog },
   );
 
   // svelte-ignore state_referenced_locally
-  const superform = superForm(data.form, {
-    validators: zod4Client(tableFormSchema),
-    // A table form is long: leaving it with changes asks first.
-    taintedMessage: confirmLeave,
-    // A saved table goes back to its manage page; the toast says it went through.
-    onResult: ({ result }) => {
-      if (result.type === 'redirect') {
-        void afterWrite(client, 'table');
-        toast.success(m.toast_table_saved());
-      }
-    },
+  const initial = form?.form ?? data.form;
+  const controller = actionForm({
+    initial: initial.data,
+    initialErrors: initial.errors,
+    initialMessage: initial.message,
+    schema: tableFormSchema,
+    domain: 'table',
+    onSuccess: () => toast.success(m.toast_table_saved()),
+    errorMessage: m.form_error_unavailable,
   });
+  guardDraft(controller);
 </script>
 
 <svelte:head>
@@ -63,7 +58,7 @@
   {/if}
 
   <TableForm
-    {superform}
+    {controller}
     systems={options.data?.systems ?? data.systems}
     catalog={options.data?.catalog ?? data.catalog}
     imageUrl={data.imageUrl}

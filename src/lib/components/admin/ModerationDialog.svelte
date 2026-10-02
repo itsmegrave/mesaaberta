@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TextArea from '$lib/components/TextArea.svelte';
   import UserText from '$lib/components/UserText.svelte';
   // One moderation decision behind a confirmation: accept, dismiss, close a table, ban or revoke a
   // ban. Mounted per action; the server authorizes it again.
@@ -159,10 +160,10 @@
                 hint={write.hint}
                 error={textError}
               >
-                <textarea
+                <TextArea
                   id="{id}-{write.name}"
                   name={write.name}
-                  rows="3"
+                  rows={3}
                   maxlength={RESOLUTION_NOTE_MAX}
                   required={write.required}
                   class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
@@ -171,7 +172,8 @@
                   aria-invalid={textError ? 'true' : undefined}
                   aria-describedby="{id}-{write.name}-hint{textError
                     ? ` ${id}-${write.name}-error`
-                    : ''}"></textarea>
+                    : ''}"
+                ></TextArea>
               </FormField>
             {/if}
             {#if formError}

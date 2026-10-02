@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * What a form says above its fields: the sentence for Superforms' `$message`, which each form
+   * What a form says above its fields: the sentence for the action message, which each form
    * picks from its codes. A problem is an alert (read at once); a success is a status (read when
    * the reader is free). Nothing is rendered without a text.
    */

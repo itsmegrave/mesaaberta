@@ -23,7 +23,7 @@ test('anonymous direct entry renders identity, safe social links and cards witho
   page,
   request,
 }) => {
-  const response = await request.get(`/${gm.username}`);
+  const response = await request.get(`/u/${gm.username}`);
   expect(response.status()).toBe(200);
   expect(response.headers()['cache-control']).toContain('no-store');
   const html = await response.text();
@@ -37,8 +37,15 @@ test('anonymous direct entry renders identity, safe social links and cards witho
   ])
     expect(html).not.toContain(privateText);
 
-  await page.goto(`/${gm.username}`);
+  await page.goto(`/u/${gm.username}`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`@${gm.username}`);
+  const breadcrumbs = page.getByRole('navigation', { name: 'Trilha de navegação' });
+  await expect(breadcrumbs).toBeVisible();
+  await expect(breadcrumbs.getByRole('link', { name: 'Mesas abertas' })).toHaveAttribute(
+    'href',
+    '/tables',
+  );
+  await expect(page.getByRole('link', { name: 'Voltar para mesas' })).toHaveCount(0);
   await expect(page.getByText('Ainda sem avaliações')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Editar perfil' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Abrir Instagram em nova aba' })).toHaveAttribute(
@@ -59,10 +66,10 @@ test('pagination and the profile work without JavaScript', async ({ browser }) =
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   try {
-    await page.goto(`/${gm.username}`);
+    await page.goto(`/u/${gm.username}`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(`@${gm.username}`);
     await page.getByRole('link', { name: 'Próxima página' }).click();
-    await expect(page).toHaveURL(new RegExp(`/${gm.username}\\?page=2$`));
+    await expect(page).toHaveURL(new RegExp(`/u/${gm.username}\\?page=2$`));
     await expect(page.locator('main article')).toHaveCount(1);
     await page.getByRole('link', { name: 'Página anterior' }).click();
     await expect(page.locator('main article')).toHaveCount(12);
@@ -74,13 +81,13 @@ test('pagination and the profile work without JavaScript', async ({ browser }) =
 test('capitalization redirects to the canonical username and static routes remain available', async ({
   request,
 }) => {
-  const response = await request.get(`/${gm.username.toUpperCase()}`, { maxRedirects: 0 });
+  const response = await request.get(`/u/${gm.username.toUpperCase()}`, { maxRedirects: 0 });
   expect(response.status()).toBe(308);
-  expect(new URL(response.headers().location, response.url()).pathname).toBe(`/${gm.username}`);
+  expect(new URL(response.headers().location, response.url()).pathname).toBe(`/u/${gm.username}`);
   for (const path of ['/tables', '/privacy', '/terms', '/favicon.ico'])
     expect((await request.get(path)).status()).toBe(200);
-  expect((await request.get(`/${gm.username}?page=99`)).status()).toBe(404);
-  expect((await request.get('/no-such-public-profile')).status()).toBe(404);
+  expect((await request.get(`/u/${gm.username}?page=99`)).status()).toBe(404);
+  expect((await request.get('/u/no-such-public-profile')).status()).toBe(404);
 });
 
 test('the table links to its GM, and the account offers the public page with an owner edit action', async ({
@@ -105,17 +112,17 @@ test('profiles without tables render, and suspension and rename invalidate direc
   const user = await createUser('Sem Mesas Publicas');
   const sql = database();
   try {
-    await page.goto(`/${user.username}`);
+    await page.goto(`/u/${user.username}`);
     await expect(page.getByText('Nenhuma próxima mesa por aqui.')).toBeVisible();
     await expect(page.getByRole('list', { name: 'Redes sociais e site' })).toHaveCount(0);
     const renamed = `${user.username}-new`;
     await sql`update profiles set username = ${renamed} where id = ${user.id}`;
-    expect((await request.get(`/${user.username}`)).status()).toBe(404);
-    expect((await request.get(`/${renamed}`)).status()).toBe(200);
+    expect((await request.get(`/u/${user.username}`)).status()).toBe(404);
+    expect((await request.get(`/u/${renamed}`)).status()).toBe(200);
     await sql`update profiles set status = 'suspended' where id = ${user.id}`;
-    expect((await request.get(`/${renamed}`)).status()).toBe(404);
+    expect((await request.get(`/u/${renamed}`)).status()).toBe(404);
     await sql`update profiles set username = null where id = ${user.id}`;
-    expect((await request.get(`/${renamed}`)).status()).toBe(404);
+    expect((await request.get(`/u/${renamed}`)).status()).toBe(404);
   } finally {
     await sql.end();
   }
@@ -147,7 +154,7 @@ test('long handles and all social icons remain usable at narrow widths and in bo
     await sql.end();
   }
   await page.setViewportSize({ width: 320, height: 900 });
-  await page.goto(`/${handle}`);
+  await page.goto(`/u/${handle}`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`@${handle}`);
   await expect(
     page.getByRole('list', { name: 'Redes sociais e site' }).locator('a svg'),

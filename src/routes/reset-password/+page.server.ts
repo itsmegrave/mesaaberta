@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
-import { fail, message, superValidate, type SuperValidated } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { fail } from '@sveltejs/kit';
+import { initialForm, validateStringForm } from '$lib/forms/contract';
+import { formMessage } from '$lib/forms/server';
 import { newPasswordSchema } from '$lib/auth/credentials';
-import type { FormMessage } from '$lib/forms/message';
 import { withoutSecrets } from '$lib/forms/server';
 import { changePassword, type ChangePasswordResult } from '$lib/server/auth/password';
 import type { Actions, PageServerLoad } from './$types';
@@ -12,7 +12,10 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals, url }) => {
   if (!(await locals.getUser())) redirect(303, '/forgot-password?error=link');
 
-  return { done: url.searchParams.has('done'), form: await superValidate(zod4(newPasswordSchema)) };
+  return {
+    done: url.searchParams.has('done'),
+    form: initialForm({ password: '', passwordConfirm: '' }),
+  };
 };
 
 const STATUS = {
@@ -26,8 +29,10 @@ export const actions: Actions = {
   default: async ({ request, locals }) => {
     if (!locals.supabase || !(await locals.getUser())) redirect(303, '/forgot-password?error=link');
 
-    const form: SuperValidated<{ password: string; passwordConfirm: string }, FormMessage> =
-      await superValidate(request, zod4(newPasswordSchema));
+    const form = validateStringForm(await request.formData(), newPasswordSchema, [
+      'password',
+      'passwordConfirm',
+    ]);
     const { password } = form.data;
     // Nothing typed is handed back: not even the password's length.
     withoutSecrets(form, ['password', 'passwordConfirm']);
@@ -41,6 +46,6 @@ export const actions: Actions = {
     if (result === 'ok') redirect(303, '/reset-password?done=1');
     if (result === 'no_session') redirect(303, '/forgot-password?error=link');
 
-    return message(form, { code: result }, { status: STATUS[result] });
+    return formMessage(form, { code: result }, { status: STATUS[result] });
   },
 };

@@ -1,5 +1,3 @@
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
 import { z } from 'zod';
 
 // Catalog slugs: lower case, digits and dashes (see `slugify`).
@@ -7,8 +5,7 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
  * The filters of `/tables`, all in the query string of a plain GET form, a key repeated for each
- * value ticked. Superforms does not handle GET forms, so the load validates the query string
- * with this schema itself.
+ * value ticked. GET filters are read directly from the URL; no client form state is needed.
  */
 export const tableFilterSchema = z.object({
   system: z.array(z.string().max(80)).default([]),
@@ -32,7 +29,17 @@ const slugsOf = (list: string[]) => list.filter((value) => SLUG.test(value));
  * still shows, just without that filter.
  */
 export async function readTableFilters(url: URL): Promise<TableFilters> {
-  const { data } = await superValidate(url.searchParams, zod4(tableFilterSchema));
+  const pick = (name: 'system' | 'platform' | 'tag') =>
+    url.searchParams
+      .getAll(name)
+      .filter((value) => tableFilterSchema.shape[name].unwrap().element.safeParse(value).success);
+  const data = {
+    system: pick('system'),
+    platform: pick('platform'),
+    tag: pick('tag'),
+    modality:
+      tableFilterSchema.shape.modality.safeParse(url.searchParams.get('modality') ?? '').data ?? '',
+  };
   return {
     systems: slugsOf(data.system),
     modality: data.modality === 'online' || data.modality === 'in_person' ? data.modality : null,

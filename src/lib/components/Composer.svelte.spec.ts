@@ -1,10 +1,8 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm } from '$lib/forms/contract';
 import Composer from './Composer.svelte';
-import { messageSchema } from '$lib/messages/schema';
 
 // There is no SvelteKit app around a component test, so handing a result to the router has nothing
 // to talk to (the failed request below has nowhere to go).
@@ -13,9 +11,9 @@ vi.mock('$app/forms', async (original) => ({
   applyAction: vi.fn(),
 }));
 
-const setup = async () => {
+const setup = async (tableId?: string) => {
   const onpending = vi.fn(() => 'pending-1');
-  const form = await superValidate({ body: '' }, zod4(messageSchema), { errors: false });
+  const form = initialForm({ body: '', tableId });
   render(Composer, { form, onpending, onsent: vi.fn(), onfailed: vi.fn() });
   return { onpending, box: page.getByRole('textbox', { name: 'Mensagem' }) };
 };

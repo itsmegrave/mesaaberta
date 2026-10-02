@@ -3,7 +3,7 @@
   import ProfileForm from '$lib/components/ProfileForm.svelte';
   import { m } from '$lib/paraglide/messages';
 
-  let { data } = $props();
+  let { data, form = null } = $props();
 </script>
 
 <svelte:head>
@@ -13,5 +13,5 @@
 
 <!-- The last step of signing up, in the same frame as the sign-in pages. -->
 <AuthShell title={m.profile_title()} lede={m.profile_lede()}>
-  <ProfileForm form={data.form} />
+  <ProfileForm form={form?.form ?? data.form} />
 </AuthShell>

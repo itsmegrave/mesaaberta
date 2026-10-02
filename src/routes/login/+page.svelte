@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
   import { resolve } from '$app/paths';
   import CredentialsForm from '$lib/components/CredentialsForm.svelte';
   import LegalConsent from '$lib/components/LegalConsent.svelte';
@@ -9,8 +8,18 @@
   import { credentialsSchema } from '$lib/auth/credentials';
   import { m } from '$lib/paraglide/messages';
 
-  let { data } = $props();
-  const superform = superForm(data.form, { validators: zod4Client(credentialsSchema) });
+  let { data, form: result = null } = $props();
+  // svelte-ignore state_referenced_locally
+  const initial = result?.form ?? data.form;
+  const controller = actionForm({
+    initial: initial.data,
+    initialErrors: initial.errors,
+    initialMessage: initial.message,
+    schema: credentialsSchema,
+    domain: 'account',
+    onSuccess: () => {},
+    errorMessage: m.auth_error_failed,
+  });
 </script>
 
 <svelte:head>
@@ -33,7 +42,7 @@
 
   {#if data.authEnabled}
     <div class="grid gap-5">
-      <CredentialsForm mode="login" {superform} action="?/email" />
+      <CredentialsForm mode="login" {controller} action="?/email" />
 
       <p>
         <a href={resolve('/forgot-password')} class="link-underline font-semibold text-link"

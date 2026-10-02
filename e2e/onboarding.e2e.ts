@@ -49,7 +49,7 @@ test.describe('an incomplete profile', () => {
     await page.goto('/tables');
     await expect(page).toHaveURL(/\/tables$/);
     await page.goto('/');
-    await expect(page).toHaveURL(/localhost:4173\/$/);
+    await expect(page).toHaveURL(/localhost:\d+\/$/);
   });
 
   test('can still sign out from the onboarding', async ({ page }) => {
@@ -96,7 +96,7 @@ test.describe('the onboarding form', () => {
     await page.getByRole('button', { name: 'Subir link 2' }).click();
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
-    await expect(page).toHaveURL(/localhost:4173\/$/);
+    await expect(page).toHaveURL(/localhost:\d+\/$/);
     const sql = database();
     try {
       const [profile] = await sql`select * from profiles where id = ${user.id}`;
@@ -171,7 +171,7 @@ test.describe('the onboarding form', () => {
     await expect(plain).toHaveURL(/\/onboarding/);
     await plain.getByLabel('Nome de usuário').fill(`semscript-${unique()}`);
     await plain.getByRole('button', { name: 'Salvar e continuar' }).click();
-    await expect(plain).toHaveURL(/localhost:4173\/$/);
+    await expect(plain).toHaveURL(/localhost:\d+\/$/);
     await plain.context().close();
   });
 

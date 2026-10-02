@@ -10,13 +10,17 @@
    * the current page (text, `aria-current`). Wide screens only: on a phone the page keeps its
    * "← Voltar" link, as a trail does not fit a narrow bar.
    */
-  let { items, class: className = '' }: { items: Crumb[]; class?: string } = $props();
+  let {
+    items,
+    mobile = false,
+    class: className = '',
+  }: { items: Crumb[]; mobile?: boolean; class?: string } = $props();
 
   const locale = getLocale();
   const trail = $derived([{ label: m.breadcrumbs_home(), href: '/' }, ...items]);
 </script>
 
-<nav aria-label={m.breadcrumbs_label()} class="hidden md:block {className}">
+<nav aria-label={m.breadcrumbs_label()} class="{mobile ? 'block' : 'hidden md:block'} {className}">
   <ol class="flex flex-wrap items-center gap-2 text-sm text-muted">
     {#each trail as crumb, index (index)}
       <li class="flex min-w-0 items-center gap-2">

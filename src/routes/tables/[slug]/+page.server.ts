@@ -5,8 +5,7 @@ import { gameTables } from '$lib/server/db/schema';
 import { failFrom } from '$lib/server/errors';
 import { openDirect } from '$lib/server/messages/service';
 import { loadRead } from '$lib/server/reads/load';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+
 import { submitRating } from '$lib/server/ratings/service';
 import { ratingSchema } from '$lib/tables/rating';
 import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
@@ -36,7 +35,11 @@ export const load: PageServerLoad = async (event) => {
   });
   return {
     ...data,
-    ratingForm: await superValidate(data.myRating ?? {}, zod4(ratingSchema), { errors: false }),
+    ratingForm: {
+      valid: false,
+      data: { gmScore: data.myRating?.gmScore ?? 0, comment: data.myRating?.comment ?? '' },
+      errors: {},
+    },
   };
 };
 

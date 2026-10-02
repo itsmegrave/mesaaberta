@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { queryClient } from '$lib/query/context';
-  import { afterWrite } from '$lib/query/invalidate';
-  const client = queryClient();
   import type { Snippet } from 'svelte';
-  import { defaults, superForm } from 'sveltekit-superforms';
-  import { zod4 } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from './Form.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import type { FormMessage } from '$lib/forms/message';
   import { actionSchema } from '$lib/tables/registration';
@@ -43,39 +40,35 @@
     children,
   }: Props = $props();
 
-  // A button-only form: the server validates, so the browser has nothing to check. Each form on a
-  // page needs its own id (a row per player, a card per table). The page's data is reloaded only
-  // when the action went through, so a refusal leaves what is on screen as it was.
   // svelte-ignore state_referenced_locally
-  const { enhance, submitting, delayed, timeout } = superForm<
-    { playerId?: string; next: string },
-    FormMessage
-  >(defaults({ playerId, next }, zod4(actionSchema)), {
-    id: `${action}:${playerId ?? ''}`,
-    resetForm: false,
-    invalidateAll: 'pessimistic',
-    onResult({ result }) {
-      if (result.type !== 'redirect') return;
-      void afterWrite(client, action.includes('Photo') ? 'account' : 'table');
+  const form = actionForm({
+    initial: { playerId, next },
+    schema: actionSchema,
+    domain: action.includes('Photo') ? 'account' : 'table',
+    errorMessage: () => registrationError('invalid'),
+    onSuccess() {
       if (success) toast.success(success);
       onsuccess?.();
     },
-    onUpdated({ form }) {
-      if (form.valid || !form.message) return;
-      toast.error(registrationError(form.message.code, form.message.retryAfter));
-      onfail?.(form.message);
+    onFailure(updated) {
+      const message = updated?.message ?? { code: 'invalid' };
+      toast.error(registrationError(message.code, message.retryAfter));
+      onfail?.(message);
     },
   });
 </script>
 
-<form method="POST" {action} use:enhance class={className}>
+<Form {action} onsubmit={form.submit} class={className}>
   {#if playerId}<input type="hidden" name="playerId" value={playerId} />{/if}
   {#if next}<input type="hidden" name="next" value={next} />{/if}
   {#if label}
-    <SubmitButton submitting={$submitting} delayed={$delayed} timeout={$timeout} class={buttonClass}
-      >{label}</SubmitButton
+    <SubmitButton
+      submitting={form.pending}
+      delayed={form.delayed}
+      timeout={form.timeout}
+      class={buttonClass}>{label}</SubmitButton
     >
   {:else}
     {@render children?.()}
   {/if}
-</form>
+</Form>

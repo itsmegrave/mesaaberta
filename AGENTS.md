@@ -4,8 +4,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the project workflow, code style, tr
 
 ## UI libraries and components
 
-- Prefer the project's existing Skeleton Svelte components and wrappers whenever they provide the control or interaction. Use TanStack Query for client-side server state, TanStack Table for interactive tables, and TanStack Form for form state and validation. Existing Superforms consumers are transitional until card #152 is complete.
-- Use shared themed components for buttons and fields and shared TanStack Form/Query integration for forms. Reuse or extend existing wrappers before adding new ones. When Skeleton has no standalone primitive, keep the semantic HTML inside the shared wrapper instead of repeating control markup and styling across screens. TanStack Table is for data tables.
+- Prefer the project's existing Skeleton Svelte components and wrappers whenever they provide the control or interaction. Use TanStack Query for client-side server state, TanStack Table for interactive tables, and TanStack Form for form state and validation. Superforms has been removed; use the shared actionForm contract for native POST and Query mutations.
+- Use shared Button, SubmitButton, TextInput, TextArea, SelectInput, FormField and Form components and shared TanStack Form/Query integration for forms. Reuse or extend existing wrappers before adding new ones. When Skeleton has no standalone primitive, keep the semantic HTML inside the shared wrapper instead of repeating control markup and styling across screens. TanStack Table is for data tables.
 - Keep semantic HTML for document structure and use native form elements when these libraries do not provide an equivalent, progressive enhancement requires them, or a documented accessibility or CSP constraint requires them. Basic buttons and fields may use semantic HTML styled with Skeleton's shared classes when there is no standalone component.
 - Before adding a custom control, inspect the installed library components and existing project wrappers. Preserve keyboard behavior, labels, validation, focus states and responsive behavior.
 

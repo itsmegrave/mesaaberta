@@ -1,9 +1,10 @@
-import { message, setError, type ErrorStatus, type SuperValidated } from 'sveltekit-superforms';
+import { fail } from '@sveltejs/kit';
+import { flattenErrors, type FormResult } from './contract';
 import type { FormMessage } from './message';
 
-type Form<T extends Record<string, unknown>> = SuperValidated<T, FormMessage>;
+type Form<T> = { data: T; valid: boolean; errors: Record<string, unknown>; message?: FormMessage };
 
-/** Never send a secret back to the browser: not even when the form is refused. */
+/** Never echo passwords, including when the request is refused. */
 export function withoutSecrets<T extends Record<string, unknown>>(
   form: Form<T>,
   fields: (keyof T)[],
@@ -12,17 +13,45 @@ export function withoutSecrets<T extends Record<string, unknown>>(
   return form;
 }
 
-/**
- * Refuses a submit for a reason that is not a schema rule: the code lands on the field it names
- * (so the form shows it there), or in the form message when the field is not one the schema knows.
- */
+export function formMessage<T extends Record<string, unknown>>(
+  form: Form<T>,
+  message: FormMessage,
+  { status = 200 }: { status?: number } = {},
+) {
+  const result = responseForm(form);
+  result.message = message;
+  if (status >= 400) {
+    result.valid = false;
+    return fail(status, { form: result });
+  }
+  return { form: result };
+}
+
 export function refuse<T extends Record<string, unknown>>(
   form: Form<T>,
-  status: ErrorStatus,
+  status: number,
   code: string,
   field?: string,
 ) {
-  if (field && Object.hasOwn(form.data, field))
-    return setError(form, field as never, code, { status });
-  return message(form, { code, field }, { status });
+  form.valid = false;
+  if (field && Object.hasOwn(form.data, field)) {
+    form.errors = { ...form.errors, [field]: [code] };
+    return fail(status, { form: responseForm(form) });
+  }
+  return formMessage(form, { code, field }, { status });
+}
+
+/** Form responses may contain text, booleans and arrays, never uploaded file bytes. */
+export function responseForm<T extends Record<string, unknown>>(form: Form<T>): FormResult<T> {
+  const data = { ...form.data };
+  for (const field of Object.keys(data)) {
+    if ((data as Record<string, unknown>)[field] instanceof File)
+      delete (data as Record<string, unknown>)[field];
+  }
+  return {
+    valid: form.valid,
+    data,
+    errors: flattenErrors(form.errors),
+    ...(form.message ? { message: form.message } : {}),
+  };
 }

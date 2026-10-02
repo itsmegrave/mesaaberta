@@ -5,8 +5,8 @@ import { m } from '$lib/paraglide/messages';
  * Once the session is over it waits for the GM (`awaiting_confirmation`), who says it happened
  * (`concluded`) or that it did not (`not_held`), or moves it to a new date (back to `active`).
  */
-export type TableStatus =
-  'active' | 'disabled' | 'awaiting_confirmation' | 'concluded' | 'not_held';
+export { TABLE_STATUSES, type TableStatus } from './status-values';
+import type { TableStatus } from './status-values';
 
 /** The tag a table carries once it is not open, or null while it is `active`. */
 export function tableStatusLabel(status: TableStatus): string | null {

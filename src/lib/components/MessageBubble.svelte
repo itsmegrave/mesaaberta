@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   import { linkifyBody } from '$lib/messages/linkify';
   import type { ThreadItem } from '$lib/messages/group';
   import { localizedHref } from '$lib/i18n/locales';
@@ -48,8 +49,8 @@
 {:else if message.pending === 'failed'}
   <p class="mt-1 text-xs font-semibold text-error-700-300">
     {m.messages_failed()} ·
-    <button type="button" class="underline" onclick={() => onretry?.(message)}>
+    <Button size="custom" type="button" class="underline" onclick={() => onretry?.(message)}>
       {m.messages_retry()}
-    </button>
+    </Button>
   </p>
 {/if}

@@ -37,7 +37,7 @@ test('approval submits through native POST when JavaScript is disabled', async (
   const context = await browser.newContext({
     javaScriptEnabled: false,
     storageState: await page.context().storageState(),
-    baseURL: 'http://localhost:4173',
+    baseURL: test.info().project.use.baseURL,
   });
   try {
     const native = await context.newPage();

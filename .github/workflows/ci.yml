@@ -120,7 +120,7 @@ jobs:
       # The same Supabase as production (Postgres, Auth, Storage) in Docker, with a mail inbox: the
       # tests sign up, confirm by email and reset passwords for real. It also runs the migrations.
       - run: pnpm run e2e:up
-      - run: pnpm run test:e2e -- --shard=${{ matrix.shard }}
+      - run: pnpm exec playwright test --shard=${{ matrix.shard }}
       - run: pnpm exec supabase stop
         if: always()
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -7,7 +7,9 @@ import UserText from './UserText.svelte';
 describe('public profile links', () => {
   it('links a handle to the public route', async () => {
     render(UserLink, { username: 'ana' });
-    await expect.element(page.getByRole('link', { name: '@ana' })).toHaveAttribute('href', '/ana');
+    await expect
+      .element(page.getByRole('link', { name: '@ana' }))
+      .toHaveAttribute('href', '/u/ana');
   });
 
   it.each([null, undefined, '', 'sem nome'])(
@@ -21,7 +23,9 @@ describe('public profile links', () => {
 
   it('preserves a translated sentence and escapes user content', async () => {
     render(UserText, { username: 'ana', text: 'por @ana: <img src=x>' });
-    await expect.element(page.getByRole('link', { name: '@ana' })).toHaveAttribute('href', '/ana');
+    await expect
+      .element(page.getByRole('link', { name: '@ana' }))
+      .toHaveAttribute('href', '/u/ana');
     await expect.element(page.getByText('por @ana: <img src=x>')).toBeVisible();
     expect(document.querySelector('img')).toBeNull();
   });

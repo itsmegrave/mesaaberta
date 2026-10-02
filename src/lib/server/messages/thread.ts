@@ -1,8 +1,6 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { messageSchema } from '$lib/messages/schema';
+import { initialForm } from '$lib/forms/contract';
 import { requireUser } from '$lib/server/auth/guard';
 import { gameTables } from '$lib/server/db/schema';
 import { NotFound } from '$lib/server/errors';
@@ -47,9 +45,7 @@ export const loadChatThread = async (
       messages: withPictures(supabaseUrl, thread.messages),
       hasMore: thread.hasMore,
       context: conversation.kind === 'direct' ? (context ?? null) : null,
-      form: await superValidate({ body: '', tableId: context?.id }, zod4(messageSchema), {
-        errors: false,
-      }),
+      form: initialForm({ body: '', tableId: context?.id }),
     };
   } catch (cause) {
     if (cause instanceof NotFound) error(404, 'Not found');

@@ -15,6 +15,8 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   const player = await createUser('Bruno');
   const playerSession = await asUser(browser, player);
   const playerPage = playerSession.page;
+  const errors: string[] = [];
+  playerPage.on('pageerror', (error) => errors.push(error.message));
 
   // Before joining: a direct message to the GM.
   await playerPage.goto(`/tables/${slug}`);
@@ -74,6 +76,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
     await expect(trigger).toBeFocused();
   }
 
+  expect(errors).toEqual([]);
   await playerSession.context.close();
   await gmSession.context.close();
 });

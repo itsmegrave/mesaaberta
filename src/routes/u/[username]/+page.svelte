@@ -16,7 +16,7 @@
   const locale = getLocale();
   const profile = $derived(data.profile);
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
-  const path = $derived(`/${profile.username}`);
+  const path = $derived(`/u/${profile.username}`);
 </script>
 
 <svelte:head>
@@ -37,13 +37,11 @@
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
-  <Breadcrumbs class="mb-8" items={[{ label: atHandle(profile.username) }]} />
-  <a
-    href={localizedHref('/tables', locale)}
-    class="mb-6 inline-flex h-12 items-center gap-2 link-underline md:hidden"
-  >
-    <Icon name="arrow-left" />{m.table_back()}
-  </a>
+  <Breadcrumbs
+    mobile
+    class="mb-6 md:mb-8"
+    items={[{ label: m.tables_title(), href: '/tables' }, { label: atHandle(profile.username) }]}
+  />
 
   <header class="rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8">
     <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">

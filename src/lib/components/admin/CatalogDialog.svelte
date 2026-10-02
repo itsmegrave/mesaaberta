@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SelectInput from '$lib/components/SelectInput.svelte';
   // Mounted for one entry/mode; server loads never overwrite edited values.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { actionForm } from '$lib/forms/action-form.svelte';
@@ -206,7 +207,7 @@
                 <label for={fieldId} class="label-text font-semibold"
                   >{m.admin_dialog_merge_into()}</label
                 >
-                <select
+                <SelectInput
                   id={fieldId}
                   name="into"
                   value={data.into}
@@ -219,7 +220,7 @@
                   {#each candidates.filter((candidate) => candidate.id !== entry?.id) as candidate (candidate.id)}
                     <option value={candidate.id}>{candidate.name}</option>
                   {/each}
-                </select>
+                </SelectInput>
               </div>
             {/if}
             {#if fieldError && mode === 'merge'}

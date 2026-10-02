@@ -1,7 +1,6 @@
 import { loadRead } from '$lib/server/reads/load';
 import { error } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm } from '$lib/forms/contract';
 import { requireUser } from '$lib/server/auth/guard';
 import { timezoneOf } from '$lib/server/time';
 import { handleTableForm } from '$lib/server/tables/form-action';
@@ -10,7 +9,6 @@ import { handlersFor } from '$lib/server/events/handlers';
 import { createTable } from '$lib/server/tables/write';
 import { TABLE_CREATION_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
-import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -27,11 +25,7 @@ export const load: PageServerLoad = async (event) => {
   const catalogRead = await loadRead(event, 'catalog');
 
   return {
-    form: await superValidate(
-      { ...NEW_TABLE_VALUES, timezone: await timezoneOf(locals, cookies) },
-      zod4(tableFormSchema),
-      { errors: false },
-    ),
+    form: initialForm({ ...NEW_TABLE_VALUES, timezone: await timezoneOf(locals, cookies) }),
     systems: catalogRead.systems,
     catalog: catalogRead.catalog,
     catalogRead,

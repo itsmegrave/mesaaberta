@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
@@ -195,7 +196,8 @@
               {m.nav_sign_in()}
             </a>
           {/if}
-          <button
+          <Button
+            size="custom"
             type="button"
             onclick={toggle}
             aria-expanded={expanded}
@@ -207,7 +209,7 @@
           >
             <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
             {#if expanded}<span>{m.nav_collapse()}</span>{/if}
-          </button>
+          </Button>
         </Navigation.Group>
       </Navigation.Content>
     </nav>

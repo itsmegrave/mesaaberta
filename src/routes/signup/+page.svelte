@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
   import { resolve } from '$app/paths';
   import AuthShell from '$lib/components/AuthShell.svelte';
   import CredentialsForm from '$lib/components/CredentialsForm.svelte';
@@ -9,9 +8,18 @@
   import { credentialsSchema } from '$lib/auth/credentials';
   import { m } from '$lib/paraglide/messages';
 
-  let { data } = $props();
-  const superform = superForm(data.form, { validators: zod4Client(credentialsSchema) });
-  const { message } = superform;
+  let { data, form: result = null } = $props();
+  // svelte-ignore state_referenced_locally
+  const initial = result?.form ?? data.form;
+  const controller = actionForm({
+    initial: initial.data,
+    initialErrors: initial.errors,
+    initialMessage: initial.message,
+    schema: credentialsSchema,
+    domain: 'account',
+    onSuccess: () => {},
+    errorMessage: m.auth_error_failed,
+  });
 </script>
 
 <svelte:head>
@@ -20,11 +28,13 @@
 
 <AuthShell
   title={m.signup_title()}
-  lede={data.authEnabled && $message?.code !== 'check_email' ? m.signup_lede() : undefined}
+  lede={data.authEnabled && controller.message?.code !== 'check_email'
+    ? m.signup_lede()
+    : undefined}
 >
   {#if !data.authEnabled}
     <p class="max-w-sm">{m.login_unavailable()}</p>
-  {:else if $message?.code === 'check_email'}
+  {:else if controller.message?.code === 'check_email'}
     <div role="status" class="rounded-lg border border-surface-200-800 bg-panel p-6">
       <h2 class="text-2xl font-semibold">{m.signup_check_email_title()}</h2>
       <p class="mt-3 text-lg">{m.signup_check_email_text()}</p>
@@ -37,7 +47,7 @@
     </div>
   {:else}
     <div class="grid gap-5">
-      <CredentialsForm mode="signup" {superform} />
+      <CredentialsForm mode="signup" {controller} />
 
       <p class="flex items-center gap-3" aria-hidden="true">
         <span class="h-px grow bg-surface-200-800"></span>

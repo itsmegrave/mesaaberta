@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
-import { message, superValidate, type ErrorStatus } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { validateStringForm } from '$lib/forms/contract';
+import { formMessage } from '$lib/forms/server';
 import type { z } from 'zod';
 import type { AnyDb } from '../db/client';
 import { requireUser } from '../auth/guard';
@@ -34,8 +34,13 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
   await requireUser(locals, new URL(url.pathname, url));
   if (!locals.db) error(503, 'Database not configured');
 
-  const form = await superValidate(request, zod4(schema));
-  if (!form.valid) return message(form, { code: 'invalid' }, { status: 400 });
+  const form = validateStringForm(await request.formData(), schema, [
+    'playerId',
+    'next',
+    'gmScore',
+    'comment',
+  ]);
+  if (!form.valid) return formMessage(form, { code: 'invalid' }, { status: 400 });
 
   try {
     const { eventIds } = await run(locals.db, await locals.getProfile(), form.data as T);
@@ -48,14 +53,14 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
       event.setHeaders?.({ 'Retry-After': String(e.retryAfterSeconds) });
     }
     const failure = failFrom(e);
-    return message(
+    return formMessage(
       form,
       {
         code: failure.data.error,
         field: 'field' in failure.data ? failure.data.field : undefined,
         retryAfter: 'retryAfter' in failure.data ? failure.data.retryAfter : undefined,
       },
-      { status: failure.status as ErrorStatus },
+      { status: failure.status },
     );
   }
 

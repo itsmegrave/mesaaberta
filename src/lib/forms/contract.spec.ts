@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createSchema, mergeSchema } from '$lib/admin/catalog';
-import { validateStringForm } from './contract';
+import { z } from 'zod';
+import { validateFormData, validateStringForm } from './contract';
 
 const fields = ['kind', 'name', 'id', 'into'];
 const form = (values: Record<string, string>) => {
@@ -43,5 +44,38 @@ describe('scalar action contract', () => {
     const id = '00000000-0000-4000-8000-000000000001';
     const result = validateStringForm(form({ kind: 'tag', id, into: id }), mergeSchema, fields);
     expect(result.errors.into).toEqual(['same']);
+  });
+});
+
+describe('compound native POST decoding', () => {
+  const schema = z.object({
+    tags: z.array(z.string()),
+    enabled: z.boolean(),
+    image: z.instanceof(File).optional(),
+  });
+  const defaults = { tags: [], enabled: false, image: undefined };
+  const options = { arrays: ['tags'], booleans: ['enabled'], files: ['image'] };
+  it('keeps repeated values in order and accepts an unchecked checkbox and empty upload', () => {
+    const data = new FormData();
+    data.append('tags', 'first');
+    data.append('tags', 'second');
+    data.append('image', new File([], ''));
+    data.append('secret', 'unlisted');
+    expect(validateFormData(data, schema, defaults, options)).toEqual({
+      valid: true,
+      data: { tags: ['first', 'second'], enabled: false, image: undefined },
+      errors: {},
+    });
+  });
+  it('rejects ambiguous flags while retaining a genuine upload for validation', () => {
+    const data = new FormData();
+    const image = new File(['bytes'], 'image.png');
+    data.append('enabled', 'true');
+    data.append('enabled', 'false');
+    data.append('image', image);
+    const result = validateFormData(data, schema, defaults, options);
+    expect(result.valid).toBe(false);
+    expect(result.errors.enabled).toEqual(['invalid']);
+    expect(result.data.image).toEqual(image);
   });
 });

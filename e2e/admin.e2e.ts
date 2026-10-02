@@ -83,7 +83,11 @@ test('users table paginates, filters status and username, and links to the selec
   // profile was suspended directly in the database, with no ban recorded.
   await expect(users.locator('tbody tr').getByText('Suspenso', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-users.png'), fullPage: true });
-  await users.getByRole('link', { name: username, exact: true }).click();
+  await expect(users.getByRole('link', { name: `@${username}`, exact: true })).toHaveAttribute(
+    'href',
+    `/u/${username}`,
+  );
+  await users.getByRole('link', { name: userId, exact: true }).click();
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
   await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });
@@ -98,4 +102,38 @@ test('users table paginates, filters status and username, and links to the selec
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
+});
+
+test('admin tables filter and display every real lifecycle status', async ({ page }) => {
+  const admin = await createUser('Lifecycle Admin', { role: 'admin' });
+  const prefix = `lifecycle-${randomUUID().slice(0, 8)}`;
+  const states = [
+    ['active', 'Ativas'],
+    ['disabled', 'Mesa desativada'],
+    ['awaiting_confirmation', 'Aguardando confirmação do mestre'],
+    ['concluded', 'Mesa concluída'],
+    ['not_held', 'Mesa não realizada'],
+  ] as const;
+  const sql = database();
+  try {
+    for (const [status] of states) {
+      await sql`insert into game_tables (slug, title, system_id, gm_id, kind, capacity, starts_at, duration_minutes, timezone, status) values (${`${prefix}-${status}`}, ${`${prefix}-${status}`}, (select id from systems where slug = 'daggerheart'), ${admin.id}, 'one_shot', 4, ${new Date('2099-01-01')}, 180, 'America/Sao_Paulo', ${status})`;
+    }
+  } finally {
+    await sql.end();
+  }
+  await signIn(page, admin, '/admin/tables');
+  const section = page.locator('#tables');
+  await section.getByLabel('Buscar mesa pelo título').fill(prefix);
+  for (const [status, label] of states) {
+    await section.getByRole('combobox', { name: 'Status', exact: true }).selectOption(status);
+    await section.getByRole('button', { name: 'Buscar', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`status=${status}`));
+    await expect(section.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
+      status,
+    );
+    await expect(section.locator('tbody tr')).toHaveCount(1);
+    await expect(section.locator('tbody')).toContainText(`${prefix}-${status}`);
+    await expect(section.locator('tbody')).toContainText(label);
+  }
 });

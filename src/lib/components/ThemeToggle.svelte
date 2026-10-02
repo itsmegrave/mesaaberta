@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import { m } from '$lib/paraglide/messages';
   import { applyChoice, readChoice, type ThemeChoice } from '$lib/theme/theme';
@@ -36,7 +37,8 @@
   }
 </script>
 
-<button
+<Button
+  size="custom"
   type="button"
   aria-label="Tema escuro"
   aria-pressed={isDark}
@@ -80,4 +82,4 @@
       <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />
     </svg>
   {/if}
-</button>
+</Button>

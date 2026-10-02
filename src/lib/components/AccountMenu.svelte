@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Form from '$lib/components/Form.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import Avatar from '$lib/components/Avatar.svelte';
@@ -100,12 +101,12 @@
               {/if}
             </a>
 
-            <form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
+            <Form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
               <SubmitButton submitting={signingOut} class={item}>
                 <Icon name="game-icons:exit-door" size={20} />
                 {m.nav_sign_out()}
               </SubmitButton>
-            </form>
+            </Form>
           </nav>
         </Popover.Content>
       </Popover.Positioner>

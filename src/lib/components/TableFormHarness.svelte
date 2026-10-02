@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { defaults, superForm } from 'sveltekit-superforms';
-  import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
   import TableForm from './TableForm.svelte';
   import type { FormMessage } from '$lib/forms/message';
   import { NEW_TABLE_VALUES, type TableFormValues } from '$lib/tables/form-values';
@@ -30,17 +29,18 @@
   }: Props = $props();
 
   // svelte-ignore state_referenced_locally
-  const superform = superForm(defaults({ ...NEW_TABLE_VALUES, ...values }, zod4(tableFormSchema)), {
-    validators: zod4Client(tableFormSchema),
+  const controller = actionForm({
+    initial: { ...NEW_TABLE_VALUES, ...values },
+    schema: tableFormSchema,
+    initialErrors: errors,
+    initialMessage: message,
+    onSuccess: () => {},
+    errorMessage: () => 'failed',
   });
-  // svelte-ignore state_referenced_locally
-  if (errors) superform.errors.set(errors);
-  // svelte-ignore state_referenced_locally
-  if (message) superform.message.set(message);
 </script>
 
 <TableForm
-  {superform}
+  {controller}
   {systems}
   catalog={{
     platforms: [

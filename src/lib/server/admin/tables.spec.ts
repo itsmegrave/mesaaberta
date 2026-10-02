@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createTestDb } from '../db/test-db';
 import { gameTables, instagramPosts, profiles, systems } from '../db/schema';
+import { TABLE_STATUSES } from '$lib/tables/status-values';
 import { listAdminTables } from './tables';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T00:00:00Z');
@@ -55,3 +56,17 @@ it('filters title literally and includes disabled tables for admins', async () =
     21,
   );
 });
+
+it.each(TABLE_STATUSES)(
+  'filters the actual database status %s without treating it as disabled',
+  async (status) => {
+    const [base] = await test.db.select().from(gameTables).limit(1);
+    await test.db
+      .insert(gameTables)
+      .values({ ...base, id: crypto.randomUUID(), slug: `status-${status}`, status });
+    const data = await listAdminTables(test.db, new URLSearchParams({ status }), now);
+    expect(data.status).toBe(status);
+    expect(data.rows.length).toBeGreaterThan(0);
+    expect(data.rows.every((row) => row.status === status)).toBe(true);
+  },
+);

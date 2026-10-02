@@ -1,7 +1,9 @@
+import { PROFILE_STATUSES, type ProfileStatus } from '$lib/profile/status';
 export function profileFilters(params: URLSearchParams) {
   const status = params.get('status');
-  const selectedStatus: 'all' | 'active' | 'suspended' =
-    status === 'active' || status === 'suspended' ? status : 'all';
+  const selectedStatus: 'all' | ProfileStatus = PROFILE_STATUSES.includes(status as ProfileStatus)
+    ? (status as ProfileStatus)
+    : 'all';
   const page = params.get('page') ?? '1';
   const size = Number(params.get('size') ?? 20);
   return {

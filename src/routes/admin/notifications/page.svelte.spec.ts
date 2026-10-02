@@ -2,9 +2,8 @@ import '../../layout.css';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { defaults } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { announcementSchema } from '$lib/notifications/announcement';
+import { initialForm } from '$lib/forms/contract';
+import { ANNOUNCEMENT_DEFAULTS } from '$lib/notifications/announcement';
 import { ANNOUNCEMENT_ICONS, TONE_ICON } from '$lib/notifications/kinds';
 import Icon from '$lib/components/Icon.svelte';
 import type { IconName } from '$lib/icons/names';
@@ -12,7 +11,7 @@ import Page from './+page.svelte';
 
 const sizes = { all_active_users: 120, game_masters: 14, active_players: 1 };
 const form = (over = {}, message?: unknown) => ({
-  ...defaults({ ...over }, zod4(announcementSchema)),
+  ...initialForm({ ...ANNOUNCEMENT_DEFAULTS, ...over }),
   ...(message ? { message } : {}),
 });
 const sent = {
@@ -31,7 +30,7 @@ const sent = {
 };
 
 const show = (data: { form: unknown; history?: unknown[] }) =>
-  render(Page, { data: { sizes, history: [], ...data } as never });
+  render(Page, { data: { sizes, history: [], ...data } as never, form: null });
 
 const preview = () => page.getByTestId('announcement-preview');
 const previewText = () => preview().element().textContent ?? '';

@@ -17,7 +17,7 @@
 
 {#if username && username !== NAMELESS}
   <a
-    href={localizedHref(`/${encodeURIComponent(username)}`, locale)}
+    href={localizedHref(`/u/${encodeURIComponent(username)}`, locale)}
     class="relative z-10 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {className}"
     >{label ?? atHandle(username)}</a
   >

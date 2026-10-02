@@ -1,10 +1,13 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
+  import SelectInput from '$lib/components/SelectInput.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
   import CepLookup from './CepLookup.svelte';
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { fileProxy, type SuperForm } from 'sveltekit-superforms';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from './Form.svelte';
   import { NAMELESS } from '$lib/profile/handle';
   import FormField from './FormField.svelte';
   import RichTextField from './RichTextField.svelte';
@@ -12,7 +15,6 @@
   import SeatSlider from './SeatSlider.svelte';
   import DateTimeField from './DateTimeField.svelte';
   import ImageUpload from './ImageUpload.svelte';
-  import type { FormMessage } from '$lib/forms/message';
   import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -25,7 +27,7 @@
   import TableCard from './TableCard.svelte';
 
   type Props = {
-    superform: SuperForm<TableFormValues, FormMessage>;
+    controller: ReturnType<typeof actionForm<TableFormValues>>;
     systems: { name: string; slug: string }[];
     /** The platforms and tags a table can pick: approved, and the GM's own pending ones. */
     catalog: { platforms: CatalogPick[]; tags: CatalogPick[] };
@@ -45,7 +47,7 @@
   };
 
   let {
-    superform,
+    controller,
     systems,
     catalog,
     submitLabel,
@@ -57,35 +59,36 @@
     manageHref,
     calendarNote = false,
   }: Props = $props();
-  const { form, errors, message, enhance, submitting, delayed, timeout } = superform;
+  // svelte-ignore state_referenced_locally
+  const { draft } = controller;
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
   const zoneOffset = $derived(
-    new Intl.DateTimeFormat('pt-BR', { timeZone: $form.timezone, timeZoneName: 'shortOffset' })
-      .formatToParts(zonedToDate($form.startsAtLocal, $form.timezone) ?? new Date())
+    new Intl.DateTimeFormat('pt-BR', { timeZone: $draft.timezone, timeZoneName: 'shortOffset' })
+      .formatToParts(zonedToDate($draft.startsAtLocal, $draft.timezone) ?? new Date())
       .find((part) => part.type === 'timeZoneName')?.value ?? '',
   );
   // Today where the GM is: the first day a session can be.
-  const today = $derived(new Date().toLocaleDateString('sv-SE', { timeZone: $form.timezone }));
+  const today = $derived(new Date().toLocaleDateString('sv-SE', { timeZone: $draft.timezone }));
   const previewSystem = $derived(
-    systems.find((system) => system.slug === $form.systemSlug)?.name ?? m.form_system(),
+    systems.find((system) => system.slug === $draft.systemSlug)?.name ?? m.form_system(),
   );
 
   // The card the list will show, from what is typed so far.
   const preview = $derived({
     slug: 'preview',
-    title: $form.title || m.form_preview_title(),
-    kind: $form.kind,
+    title: $draft.title || m.form_preview_title(),
+    kind: $draft.kind,
     system: { name: previewSystem },
     gmName,
-    capacity: Number($form.capacity) || 1,
-    seatsLeft: Number($form.capacity) || 1,
-    timezone: $form.timezone,
-    nextAt: zonedToDate($form.startsAtLocal, $form.timezone),
+    capacity: Number($draft.capacity) || 1,
+    seatsLeft: Number($draft.capacity) || 1,
+    timezone: $draft.timezone,
+    nextAt: zonedToDate($draft.startsAtLocal, $draft.timezone),
     imageUrl,
-    modality: $form.modality,
-    locationArea: $form.locationArea || null,
-    platforms: $form.platforms.map((pick) => pickName(catalog.platforms, pick)),
-    tags: $form.tags.map((pick) => pickName(catalog.tags, pick)),
+    modality: $draft.modality,
+    locationArea: $draft.locationArea || null,
+    platforms: $draft.platforms.map((pick) => pickName(catalog.platforms, pick)),
+    tags: $draft.tags.map((pick) => pickName(catalog.tags, pick)),
   });
   // A plain field's errors are a list; a list field's (platforms, tags) are under `_errors`.
   const firstError = (value: unknown): string | undefined =>
@@ -93,28 +96,28 @@
       ? (value[0] as string | undefined)
       : ((value as { _errors?: string[] } | undefined)?._errors?.[0] ?? undefined);
   const err = (field: keyof TableFormValues) => {
-    const code = firstError($errors[field]);
+    const code = firstError(controller.errors[field]);
     return code ? errorText(code, field) : undefined;
   };
-  // The picked file, bound so the schema checks its size and type before anything is uploaded.
-  // svelte-ignore state_referenced_locally
-  const image = fileProxy(superform, 'image');
   const imageError = $derived(
-    err('image') ?? ($message?.field === 'image' ? errorText($message.code, 'image') : undefined),
+    err('image') ??
+      (controller.message?.field === 'image'
+        ? errorText(controller.message.code, 'image')
+        : undefined),
   );
   const invalid = (field: keyof TableFormValues) =>
-    firstError($errors[field]) ? 'true' : undefined;
-  const problem = $derived(formProblem($message));
+    firstError(controller.errors[field]) ? 'true' : undefined;
+  const problem = $derived(formProblem(controller.message));
   const hasErrors = $derived(
-    Object.values($errors).some((list) => Array.isArray(list) && list.length > 0) || !!imageError,
+    Object.values(controller.errors).some((list) => Array.isArray(list) && list.length > 0) ||
+      !!imageError,
   );
 </script>
 
-<form
-  method="POST"
+<Form
   {action}
   enctype="multipart/form-data"
-  use:enhance
+  onsubmit={controller.submit}
   class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
 >
   <div class="grid gap-8 lg:col-span-2">
@@ -143,11 +146,11 @@
             labelClass="label-text block font-semibold"
             class="grid gap-1"
             items={systems}
-            value={$form.systemSlug ? [$form.systemSlug] : []}
+            value={$draft.systemSlug ? [$draft.systemSlug] : []}
             placeholder={m.form_system_choose()}
             required
             invalid={!!invalid('systemSlug')}
-            onchange={(picked) => ($form.systemSlug = picked[0] ?? '')}
+            onchange={(picked) => ($draft.systemSlug = picked[0] ?? '')}
           />
           {#if err('systemSlug')}<p
               id="systemSlug-error"
@@ -158,13 +161,13 @@
             </p>{/if}
         </div>
         <FormField id="title" label={m.form_title()} error={err('title')}>
-          <input
+          <TextInput
             id="title"
             name="title"
             required
-            minlength="3"
-            maxlength="80"
-            bind:value={$form.title}
+            minlength={3}
+            maxlength={80}
+            bind:value={$draft.title}
             class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
             aria-invalid={invalid('title')}
           />
@@ -179,12 +182,12 @@
               class="flex flex-col gap-1"
               items={group.items}
               multiple
-              value={$form[group.field]}
+              value={$draft[group.field]}
               placeholder={m.form_catalog_search()}
               invalid={!!invalid(group.field)}
               suggestLabel={(name) => m.form_catalog_suggest({ name })}
               pendingLabel={m.form_catalog_pending()}
-              onchange={(picked) => ($form[group.field] = picked)}
+              onchange={(picked) => ($draft[group.field] = picked)}
             />
             <p class="mt-1 text-sm text-surface-700-300">{group.hint}</p>
             {#if err(group.field)}<p
@@ -201,7 +204,7 @@
             name="description"
             rows={5}
             maxlength={TABLE_LIMITS.description}
-            bind:value={$form.description}
+            bind:value={$draft.description}
             invalid={invalid('description')}
           />
         </FormField>
@@ -216,7 +219,7 @@
             name="extraInfo"
             rows={3}
             maxlength={TABLE_LIMITS.extraInfo}
-            bind:value={$form.extraInfo}
+            bind:value={$draft.extraInfo}
             invalid={invalid('extraInfo')}
           />
         </FormField>
@@ -231,7 +234,7 @@
             name="welcomeMessage"
             rows={4}
             maxlength={TABLE_LIMITS.welcomeMessage}
-            bind:value={$form.welcomeMessage}
+            bind:value={$draft.welcomeMessage}
             invalid={invalid('welcomeMessage')}
           />
         </FormField>
@@ -253,9 +256,12 @@
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
         {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()], ['adventure', m.form_kind_adventure()]] as [value, label] (value)}<label
             class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-            ><input type="radio" name="kind" {value} bind:group={$form.kind} />{label}</label
+            ><input type="radio" name="kind" {value} bind:group={$draft.kind} />{label}</label
           >{/each}
-        {#if $errors.kind}<p role="alert" class="text-sm font-semibold text-error-700-300">
+        {#if controller.errors.kind}<p
+            role="alert"
+            class="text-sm font-semibold text-error-700-300"
+          >
             {err('kind')}
           </p>{/if}
       </fieldset>
@@ -268,7 +274,7 @@
             withTime
             required
             min={today}
-            bind:value={$form.startsAtLocal}
+            bind:value={$draft.startsAtLocal}
             invalid={!!invalid('startsAtLocal')}
             describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
           />
@@ -290,16 +296,16 @@
             min={TABLE_LIMITS.durationHours.min}
             max={TABLE_LIMITS.durationHours.max}
             step={TABLE_LIMITS.durationHours.step}
-            bind:value={$form.durationHours}
+            bind:value={$draft.durationHours}
             class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
             aria-invalid={invalid('durationHours')}
           /></FormField
         >
         <div class="min-w-0 sm:col-span-2">
-          <input type="hidden" name="timezone" value={$form.timezone} />
+          <input type="hidden" name="timezone" value={$draft.timezone} />
           <p class="text-sm text-surface-700-300">
             {m.form_timezone_note({
-              zone: $form.timezone.replaceAll('_', ' '),
+              zone: $draft.timezone.replaceAll('_', ' '),
               offset: zoneOffset,
             })}
             <a href={localizedHref('/account/profile', getLocale())} class="anchor"
@@ -311,18 +317,18 @@
             </p>{/if}
         </div>
       </div>
-      {#if $form.kind === 'campaign'}
+      {#if $draft.kind === 'campaign'}
         <div class="grid gap-6 sm:grid-cols-2">
           <FormField id="repeat" label={m.form_repeat()} error={err('repeat')}
-            ><select
+            ><SelectInput
               id="repeat"
               name="repeat"
-              bind:value={$form.repeat}
+              bind:value={$draft.repeat}
               class="select h-12 rounded-lg border-surface-200-800 bg-panel px-3"
               aria-invalid={invalid('repeat')}
               ><option value="weekly">{m.form_repeat_weekly()}</option><option value="biweekly"
                 >{m.form_repeat_biweekly()}</option
-              ></select
+              ></SelectInput
             ></FormField
           >
           <div class="min-w-0">
@@ -331,8 +337,8 @@
               name="until"
               label={m.form_until()}
               hint={m.form_until_hint()}
-              min={$form.startsAtLocal.slice(0, 10) || today}
-              bind:value={$form.until}
+              min={$draft.startsAtLocal.slice(0, 10) || today}
+              bind:value={$draft.until}
               invalid={!!invalid('until')}
               describedby={['until-hint', err('until') ? 'until-error' : ''].join(' ').trim()}
             />
@@ -363,42 +369,42 @@
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
         >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as const as [value, label] (value)}<label
             class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-            ><input type="radio" name="modality" {value} bind:group={$form.modality} /><Icon
+            ><input type="radio" name="modality" {value} bind:group={$draft.modality} /><Icon
               name={modalityIcon(value)}
               size={20}
             />{label}</label
           >{/each}
       </fieldset>
-      {#if $form.modality === 'in_person'}
+      {#if $draft.modality === 'in_person'}
         <FormField
           id="postalCode"
           label={m.form_postal_code()}
           hint={m.form_postal_code_hint()}
           error={err('postalCode')}
-          ><input
+          ><TextInput
             id="postalCode"
             name="postalCode"
             inputmode="numeric"
             autocomplete="postal-code"
-            maxlength="10"
+            maxlength={10}
             placeholder="00000-000"
-            bind:value={$form.postalCode}
+            bind:value={$draft.postalCode}
             class="input h-12 max-w-48 rounded-lg border-surface-200-800 bg-panel px-3"
             aria-invalid={invalid('postalCode')}
           /></FormField
         >
-        <CepLookup value={$form.postalCode} bind:area={$form.locationArea} />
+        <CepLookup value={$draft.postalCode} bind:area={$draft.locationArea} />
         <FormField
           id="locationArea"
           label={m.form_location_area()}
-          hint={$form.postalCode ? m.form_location_area_hint_cep() : m.form_location_area_hint()}
+          hint={$draft.postalCode ? m.form_location_area_hint_cep() : m.form_location_area_hint()}
           error={err('locationArea')}
-          ><input
+          ><TextInput
             id="locationArea"
             name="locationArea"
-            maxlength="120"
+            maxlength={120}
             autocomplete="off"
-            bind:value={$form.locationArea}
+            bind:value={$draft.locationArea}
             class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
             aria-invalid={invalid('locationArea')}
           /></FormField
@@ -406,7 +412,7 @@
       {/if}
       <FormField
         id="joinDetails"
-        label={$form.modality === 'in_person'
+        label={$draft.modality === 'in_person'
           ? m.form_join_details_place()
           : m.form_join_details_link()}
         hint={m.form_join_details_hint()}
@@ -416,7 +422,7 @@
           name="joinDetails"
           rows={3}
           maxlength={TABLE_LIMITS.joinDetails}
-          bind:value={$form.joinDetails}
+          bind:value={$draft.joinDetails}
           invalid={invalid('joinDetails')}
         /></FormField
       >
@@ -425,7 +431,7 @@
           id="capacity"
           name="capacity"
           label={m.form_capacity()}
-          bind:value={$form.capacity}
+          bind:value={$draft.capacity}
           min={minCapacity}
           max={TABLE_LIMITS.capacity.max}
           invalid={!!invalid('capacity')}
@@ -456,13 +462,13 @@
         label={m.form_min_players()}
         hint={m.form_min_players_hint()}
         error={err('minPlayers')}
-        ><input
+        ><TextInput
           id="minPlayers"
           name="minPlayers"
           inputmode="numeric"
           autocomplete="off"
-          maxlength="2"
-          bind:value={$form.minPlayers}
+          maxlength={2}
+          bind:value={$draft.minPlayers}
           class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
           aria-invalid={invalid('minPlayers')}
           aria-describedby="minPlayers-hint{err('minPlayers') ? ' minPlayers-error' : ''}"
@@ -476,7 +482,7 @@
               type="radio"
               name="joinMode"
               {value}
-              bind:group={$form.joinMode}
+              bind:group={$draft.joinMode}
             />{label}</label
           >{/each}
       </fieldset>
@@ -500,19 +506,18 @@
         hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
         error={imageError}
         currentUrl={imageUrl}
-        bind:removed={$form.removeImage}
+        bind:removed={$draft.removeImage}
         onpick={(files) => {
-          const picked = new DataTransfer();
-          for (const file of files) picked.items.add(file);
-          $image = picked.files;
+          controller.change('image', files[0]);
+          controller.validateField('image');
         }}
       />
     </section>
     <div class="flex flex-wrap items-center gap-5">
       <SubmitButton
-        submitting={$submitting}
-        delayed={$delayed}
-        timeout={$timeout}
+        submitting={controller.pending}
+        delayed={controller.delayed}
+        timeout={controller.timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
         >{submitLabel}</SubmitButton
       >
@@ -530,22 +535,22 @@
     </div>
     <ul class="mt-4 grid gap-2 rounded-lg border border-surface-200-800 bg-panel p-5 text-sm">
       <li class="flex items-center gap-2">
-        <Icon name={modalityIcon($form.modality)} size={16} />
-        {$form.modality === 'in_person'
-          ? `${m.table_modality_in_person()}${$form.locationArea ? ` · ${$form.locationArea}` : ''}`
+        <Icon name={modalityIcon($draft.modality)} size={16} />
+        {$draft.modality === 'in_person'
+          ? `${m.table_modality_in_person()}${$draft.locationArea ? ` · ${$draft.locationArea}` : ''}`
           : m.table_modality_online()}
       </li>
       <li>
-        {$form.kind === 'campaign'
-          ? $form.repeat === 'biweekly'
+        {$draft.kind === 'campaign'
+          ? $draft.repeat === 'biweekly'
             ? m.form_repeat_biweekly()
             : m.form_repeat_weekly()
           : m.table_recurrence_once()}, {formatHours(
-          (Number($form.durationHours) || 0) * 60,
+          (Number($draft.durationHours) || 0) * 60,
           getLocale(),
         )}
       </li>
-      <li>{$form.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}</li>
+      <li>{$draft.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}</li>
     </ul>
   </aside>
-</form>
+</Form>
