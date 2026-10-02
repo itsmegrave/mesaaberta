@@ -23,6 +23,7 @@ describe('icon registry', () => {
         'game-icons:dice-twenty-faces-twenty',
         'game-icons:tabletop-players',
         'game-icons:house',
+        'game-icons:bar-stool',
       ]),
     );
     expect(Object.keys(ICONS)).not.toContain('game-icons:card-draw');

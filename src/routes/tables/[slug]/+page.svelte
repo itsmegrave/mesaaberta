@@ -370,7 +370,7 @@
                 ? toast.pending(m.toast_pending())
                 : toast.success(m.toast_confirmed())}
             label={table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
-            icon="game-icons:dungeon-gate"
+            icon="game-icons:bar-stool"
             buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
           />
         {/if}

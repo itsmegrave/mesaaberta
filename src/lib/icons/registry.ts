@@ -9,6 +9,7 @@ import GameMeepleIcon from '@iconify-svelte/game-icons/meeple';
 import GameScrollQuillIcon from '@iconify-svelte/game-icons/scroll-quill';
 import GameExitDoorIcon from '@iconify-svelte/game-icons/exit-door';
 import GameTavernSignIcon from '@iconify-svelte/game-icons/tavern-sign';
+import GameBarStoolIcon from '@iconify-svelte/game-icons/bar-stool';
 import GameHouseIcon from '@iconify-svelte/game-icons/house';
 import SquarePenIcon from '@iconify-svelte/reicon/edit-filled';
 import MoonIcon from '@iconify-svelte/reicon/moon-filled';
@@ -94,6 +95,7 @@ export const ICONS = {
   'game-icons:scroll-quill': GameScrollQuillIcon,
   'game-icons:exit-door': GameExitDoorIcon,
   'game-icons:house': GameHouseIcon,
+  'game-icons:bar-stool': GameBarStoolIcon,
   'game-icons:tavern-sign': GameTavernSignIcon,
   'square-pen': SquarePenIcon,
   moon: MoonIcon,
