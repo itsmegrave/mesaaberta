@@ -187,6 +187,9 @@ importers:
       '@iconify-svelte/lucide':
         specifier: ^1.0.66
         version: 1.0.66(svelte@5.57.1(@typescript-eslint/types@8.70.0))
+      '@iconify-svelte/simple-icons':
+        specifier: 1.0.44
+        version: 1.0.44(svelte@5.57.1(@typescript-eslint/types@8.70.0))
       '@sentry/cloudflare':
         specifier: 11.1.0
         version: 11.1.0(wrangler@4.137.0(@types/node@26.6.2))
@@ -983,6 +986,9 @@ packages:
 
   '@iconify-svelte/lucide@1.0.66':
     resolution: {integrity: sha512-uAye+K7p9Tvk+Lo+wbWoZ3ZCVxX9P4GQTWWBLEMu6DlCwz/uC48YKbx++8BMoNL1R45h29dsQFTy3lmuhUQ1Iw==}
+
+  '@iconify-svelte/simple-icons@1.0.44':
+    resolution: {integrity: sha512-X44aeHbNGrsk0llzf4OdszR513h+pEZxMI8ClOapKqKhLqTEGZ7hEN2ZtTf4TRei17T7WZawTj6qJFsWldqvfQ==}
 
   '@iconify/css-svelte@1.0.1':
     resolution: {integrity: sha512-f9w1anXXBm48VjDEWDrGTybdiwnDTIChcUpBK/UtXR/AhNp/Co/VPp00t7dO93j+4Je0OwMKyc/HvI7Lpv3PKg==}
@@ -4687,6 +4693,12 @@ snapshots:
       - svelte
 
   '@iconify-svelte/lucide@1.0.66(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
+    dependencies:
+      '@iconify/css-svelte': 1.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))
+    transitivePeerDependencies:
+      - svelte
+
+  '@iconify-svelte/simple-icons@1.0.44(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
     dependencies:
       '@iconify/css-svelte': 1.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))
     transitivePeerDependencies:

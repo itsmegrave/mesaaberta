@@ -62,7 +62,28 @@ import Redo2Icon from '@iconify-svelte/lucide/redo-2';
 import MapPinIcon from '@iconify-svelte/lucide/map-pin';
 import InstagramIcon from '@iconify-svelte/lucide/instagram';
 
+import BrandInstagramIcon from '@iconify-svelte/simple-icons/instagram';
+import BrandXIcon from '@iconify-svelte/simple-icons/x';
+import BrandBlueskyIcon from '@iconify-svelte/simple-icons/bluesky';
+import BrandFacebookIcon from '@iconify-svelte/simple-icons/facebook';
+import BrandTiktokIcon from '@iconify-svelte/simple-icons/tiktok';
+import BrandYoutubeIcon from '@iconify-svelte/simple-icons/youtube';
+import BrandTwitchIcon from '@iconify-svelte/simple-icons/twitch';
+import BrandDiscordIcon from '@iconify-svelte/simple-icons/discord';
+import BrandGithubIcon from '@iconify-svelte/simple-icons/github';
+import BrandLinkedinIcon from '@iconify-svelte/lucide/linkedin';
+
 export const ICONS = {
+  'brand:instagram': BrandInstagramIcon,
+  'brand:x': BrandXIcon,
+  'brand:bluesky': BrandBlueskyIcon,
+  'brand:facebook': BrandFacebookIcon,
+  'brand:tiktok': BrandTiktokIcon,
+  'brand:youtube': BrandYoutubeIcon,
+  'brand:twitch': BrandTwitchIcon,
+  'brand:discord': BrandDiscordIcon,
+  'brand:github': BrandGithubIcon,
+  'brand:linkedin': BrandLinkedinIcon,
   'game-icons:tabletop-players': GameTabletopPlayersIcon,
   'game-icons:dungeon-gate': GameDungeonGateIcon,
   'game-icons:meeple': GameMeepleIcon,

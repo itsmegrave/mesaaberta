@@ -88,6 +88,26 @@ export async function listUpcomingTables(
   return withCatalog(db, upcoming);
 }
 
+/** A master's public upcoming tables: filter in SQL, then paginate the calculated occurrences. */
+export async function listUpcomingTablesByGm(
+  db: AnyDb,
+  gmId: string,
+  now: Date,
+  page: number,
+  pageSize: number,
+) {
+  const rows = await query(db, and(eq(gameTables.gmId, gmId), eq(gameTables.status, 'active')));
+  const upcoming = rows
+    .map((row) => shape(row, now))
+    .filter((table) => table.nextAt !== null)
+    .sort((a, b) => a.nextAt!.getTime() - b.nextAt!.getTime() || a.slug.localeCompare(b.slug));
+  // LIMIT by startsAt would lose older campaigns whose next occurrence is still ahead.
+  return {
+    total: upcoming.length,
+    tables: await withCatalog(db, upcoming.slice((page - 1) * pageSize, page * pageSize)),
+  };
+}
+
 /** Adds each table's approved platforms and tags. */
 async function withCatalog<T extends { id: string }>(db: AnyDb, list: T[]) {
   const catalog = await catalogOf(

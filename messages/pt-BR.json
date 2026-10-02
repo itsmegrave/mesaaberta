@@ -609,8 +609,8 @@
   "account_email_hint": "Vem da sua conta. Só você vê, e ele não aparece para mais ninguém.",
   "account_details": "Nome, @usuário e detalhes",
   "account_seen_title": "O que as outras pessoas veem",
-  "account_seen_username": "Seu @usuário e seu nome, nas mesas em que você está.",
-  "account_seen_rating": "A média da sua nota de mestragem.",
+  "account_seen_username": "Seu @usuário, sua foto e seus links sociais, no perfil público.",
+  "account_seen_rating": "Sua avaliação como mestre e os totais de mesas jogadas e mestradas.",
   "account_seen_email": "Seu email. Ele nunca aparece.",
   "account_seen_comments": "Os comentários das avaliações. Não são mostrados publicamente.",
   "account_data_title": "Seus dados",
@@ -1161,5 +1161,17 @@
       }
     }
   ],
-  "table_min_players_met": "Mínimo atingido"
+  "table_min_players_met": "Mínimo atingido",
+  "public_profile_description": "Conheça {username}, sua avaliação como mestre e suas próximas mesas de RPG no Mesa Aberta.",
+  "public_profile_social_links": "Redes sociais e site",
+  "public_profile_social_link": "Abrir {network} em nova aba",
+  "public_profile_edit": "Editar perfil",
+  "public_profile_view": "Ver perfil público",
+  "public_profile_played": "Mesas jogadas",
+  "public_profile_hosted": "Mesas mestradas",
+  "public_profile_counts_hint": "Mesas que o mestre confirmou como realizadas. Mesas jogadas consideram suas inscrições confirmadas atuais.",
+  "public_profile_rating": "Avaliação como mestre",
+  "public_profile_unrated": "Ainda sem avaliações",
+  "public_profile_upcoming": "Próximas mesas",
+  "public_profile_no_tables": "Nenhuma próxima mesa por aqui."
 }

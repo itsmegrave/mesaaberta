@@ -40,7 +40,17 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
       firstSessionEnded: firstSessionEnded(found, new Date()),
     }) === null;
 
+  const [gm] = await locals
+    .db!.select({
+      enabled: profiles.directMessagesEnabled,
+      username: profiles.username,
+      status: profiles.status,
+    })
+    .from(profiles)
+    .where(eq(profiles.id, gmId));
+
   return {
+    gmUsername: gm?.status === 'active' ? gm.username : null,
     ratings: { gm: gmScore },
     canRate,
     myRating: mine && {
@@ -51,11 +61,7 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
     canEdit: can(profile, 'table:edit', { gmId }),
     signedIn,
     // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.
-    gmAcceptsDirect: await locals
-      .db!.select({ enabled: profiles.directMessagesEnabled })
-      .from(profiles)
-      .where(eq(profiles.id, gmId))
-      .then((rows) => rows[0]?.enabled ?? false),
+    gmAcceptsDirect: gm?.enabled ?? false,
     isGm: profile?.id === gmId,
     myStatus,
     canJoin,
