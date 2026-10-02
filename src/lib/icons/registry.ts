@@ -14,6 +14,20 @@ import GameHouseIcon from '@iconify-svelte/game-icons/house';
 import SquarePenIcon from '@iconify-svelte/reicon/edit-filled';
 import MoonIcon from '@iconify-svelte/reicon/moon-filled';
 import SunIcon from '@iconify-svelte/reicon/sun-filled';
+import MoreHIcon from '@iconify-svelte/reicon/more-h-filled';
+import CopyIcon from '@iconify-svelte/reicon/copy-filled';
+import EyeIcon from '@iconify-svelte/reicon/eye-filled';
+import TrashIcon from '@iconify-svelte/reicon/trash-filled';
+import RoutingIcon from '@iconify-svelte/reicon/routing-filled';
+import LockIcon from '@iconify-svelte/reicon/lock-filled';
+import FilterIcon from '@iconify-svelte/reicon/filter-filled';
+import ClockIcon from '@iconify-svelte/reicon/clock-filled';
+import CategoryIcon from '@iconify-svelte/reicon/category-filled';
+import CheckIcon from '@iconify-svelte/reicon/check';
+import XmarkIcon from '@iconify-svelte/reicon/xmark';
+import UploadIcon from '@iconify-svelte/reicon/upload-filled';
+import ImageIcon from '@iconify-svelte/reicon/image-filled';
+import RepeatIcon from '@iconify-svelte/reicon/repeat-filled';
 import CalendarIcon from '@iconify-svelte/reicon/calendar-filled';
 import CircleXIcon from '@iconify-svelte/reicon/close-circle-filled';
 import StarIcon from '@iconify-svelte/reicon/star-filled';
@@ -96,6 +110,20 @@ export const ICONS = {
   'square-pen': SquarePenIcon,
   moon: MoonIcon,
   sun: SunIcon,
+  more: MoreHIcon,
+  copy: CopyIcon,
+  eye: EyeIcon,
+  trash: TrashIcon,
+  routing: RoutingIcon,
+  lock: LockIcon,
+  filter: FilterIcon,
+  clock: ClockIcon,
+  category: CategoryIcon,
+  check: CheckIcon,
+  xmark: XmarkIcon,
+  upload: UploadIcon,
+  image: ImageIcon,
+  repeat: RepeatIcon,
   calendar: CalendarIcon,
   'circle-x': CircleXIcon,
   star: StarIcon,
