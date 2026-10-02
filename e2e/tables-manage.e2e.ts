@@ -378,9 +378,9 @@ test.describe('editing and disabling', () => {
     expect(response?.status()).toBe(404);
     await visitor.close();
 
-    // The GM still finds it, marked, on their dashboard.
+    // The GM still finds it on their dashboard, with no table status: those are for admin.
     await page.goto('/account/tables');
     await expect(page.getByText(title)).toBeVisible();
-    await expect(page.getByText('Mesa desativada')).toBeVisible();
+    await expect(page.getByText('Mesa desativada')).toHaveCount(0);
   });
 });
