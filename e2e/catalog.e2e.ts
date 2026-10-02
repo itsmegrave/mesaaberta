@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createTable, pickFromSearch, setFirstSession, signIn, uniqueTitle } from './support/app';
+import {
+  chooseFromMenu,
+  createTable,
+  pickFromSearch,
+  setFirstSession,
+  signIn,
+  uniqueTitle,
+} from './support/app';
 import { createUser } from './support/users';
 
 /** Picks several entries from a multi-select, then closes its list. */
@@ -79,7 +86,7 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await expect(tagList.getByRole('link', { name: 'Terror' })).toBeVisible();
   await expect(tagList.getByRole('link', { name: 'Humor' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Editar mesa' }).click();
+  await chooseFromMenu(page, 'Editar');
   await expect(page.getByRole('button', { name: 'Remover Terror' })).toBeVisible();
   await page.getByRole('button', { name: 'Remover Humor' }).click();
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
@@ -119,7 +126,7 @@ test('a GM suggests a tag the catalog lacks: it is on the table for them, not fo
   await expect(page.getByRole('main')).toBeVisible();
   await expect(page.getByText(suggested, { exact: true })).toHaveCount(0);
 
-  await page.getByRole('link', { name: 'Editar mesa' }).click();
+  await chooseFromMenu(page, 'Editar');
   await expect(
     page.getByRole('button', { name: `Remover ${suggested} (em análise)` }),
   ).toBeVisible();

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import {
   PNG,
+  chooseFromMenu,
+  pageMenu,
   createTable,
   pickImage,
   pickFromSearch,
@@ -174,7 +176,7 @@ test.describe('the welcome message', () => {
     const slug = await createTable(page, { title: uniqueTitle('Com boas-vindas') });
     expect(await welcomeOf(slug)).toContain("na mesa '{nome da mesa}'");
 
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await chooseFromMenu(page, 'Editar');
     const field = page.getByLabel('Mensagem de boas-vindas');
     await expect(field).toHaveText(/WhatsApp/);
     await field.fill('Bem-vinda! Me chama no (11) 90000-0000.');
@@ -299,7 +301,7 @@ test.describe('editing and disabling', () => {
     await signIn(page, gm);
     const slug = await createTable(page, { title: uniqueTitle('Nome antigo') });
 
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await chooseFromMenu(page, 'Editar');
     await expect(page).toHaveURL(new RegExp(`/tables/${slug}/edit$`));
     await expect(
       page.getByText(/quem já está na mesa recebe o convite do calendário/),
@@ -324,7 +326,8 @@ test.describe('editing and disabling', () => {
     const otherPage = await context.newPage();
     await signIn(otherPage, other);
     await otherPage.goto(`/tables/${slug}`);
-    await expect(otherPage.getByRole('link', { name: 'Editar mesa' })).toHaveCount(0);
+    await pageMenu(otherPage).click();
+    await expect(otherPage.getByRole('menuitem', { name: 'Editar' })).toHaveCount(0);
 
     const response = await otherPage.goto(`/tables/${slug}/edit`);
     expect(response?.status()).toBe(403);
@@ -341,7 +344,7 @@ test.describe('editing and disabling', () => {
     const adminPage = await context.newPage();
     await signIn(adminPage, admin);
     await adminPage.goto(`/tables/${slug}`);
-    await adminPage.getByRole('link', { name: 'Editar mesa' }).click();
+    await chooseFromMenu(adminPage, 'Editar');
     await adminPage.getByLabel('Título').fill('Editada pelo admin');
     await adminPage.getByRole('button', { name: 'Salvar alterações' }).click();
 
@@ -362,8 +365,9 @@ test.describe('editing and disabling', () => {
 
     await page.goto(`/tables/${slug}/edit`);
     // It asks first; only the dialog's button disables.
-    await page.getByRole('button', { name: 'Desativar mesa' }).click();
+    await chooseFromMenu(page, 'Desativar mesa…');
     const dialog = page.getByRole('alertdialog', { name: 'Desativar esta mesa?' });
+    await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Desativar mesa' }).click();
     await expect(page).toHaveURL(/\/tables$/);
     await expect(page.getByRole('link', { name: title })).toHaveCount(0);

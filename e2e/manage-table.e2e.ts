@@ -47,13 +47,16 @@ test('the GM approves a request and removes a player from the manage page, after
   );
 
   // Removing asks first; Cancelar keeps the player.
-  await players.getByRole('button', { name: 'Remover' }).click();
+  const rowMenu = players.getByRole('button', { name: `Mais ações: @${bruno.username}` });
+  await rowMenu.click();
+  await gmPage.getByRole('menuitem', { name: 'Remover da mesa…' }).click();
   const dialog = gmPage.getByRole('alertdialog');
   await expect(dialog).toContainText(`Remover @${bruno.username} da mesa?`);
   await dialog.getByRole('button', { name: 'Cancelar' }).click();
   await expect(players.getByText(`@${bruno.username}`)).toBeVisible();
 
-  await players.getByRole('button', { name: 'Remover' }).click();
+  await rowMenu.click();
+  await gmPage.getByRole('menuitem', { name: 'Remover da mesa…' }).click();
   await gmPage.getByRole('alertdialog').getByRole('button', { name: 'Remover' }).click();
   await expect(players.getByText(`@${bruno.username}`)).toHaveCount(0);
   await expect(gmPage.getByRole('region', { name: 'Atividade recente' })).toContainText(

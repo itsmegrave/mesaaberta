@@ -151,3 +151,12 @@ export async function asUser(
   await signIn(page, user);
   return { page, context };
 }
+
+/** The "3 dots" beside a page's title (the first "Mais ações: …" on the page). */
+export const pageMenu = (page: Page) => page.getByRole('button', { name: /^Mais ações:/ }).first();
+
+/** Opens the page's title menu and picks an item. */
+export async function chooseFromMenu(page: Page, item: string | RegExp) {
+  await pageMenu(page).click();
+  await page.getByRole('menuitem', { name: item }).click();
+}

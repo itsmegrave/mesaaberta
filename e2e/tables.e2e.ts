@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { pageMenu } from './support/app';
 import { sidewaysOverflow } from './support/overflow';
 
 // These need the seeded database: `pnpm db:up && pnpm db:migrate && pnpm db:seed` (CI does the same).
@@ -192,10 +193,13 @@ test.describe('table page', () => {
     expect(await page.evaluate(() => (window as { __xss?: boolean }).__xss)).toBeUndefined();
   });
 
-  test('offers no edit link to a visitor who is not the GM or an admin', async ({ page }) => {
+  test('offers no edit item to a visitor who is not the GM or an admin', async ({ page }) => {
     await page.goto('/tables/os-sinos-de-sablewood');
 
-    await expect(page.getByRole('link', { name: 'Editar mesa' })).toHaveCount(0);
+    await pageMenu(page).click();
+    await expect(page.getByRole('menuitem', { name: 'Copiar link' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Editar' })).toHaveCount(0);
+    await expect(page.getByRole('menuitem', { name: 'Desativar mesa…' })).toHaveCount(0);
   });
 
   test('asks an anonymous visitor to sign in to take a seat, and never shows the players', async ({
