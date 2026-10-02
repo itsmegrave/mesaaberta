@@ -32,23 +32,7 @@
         ? 'bg-surface-200-800'
         : 'bg-transparent'}"
     >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        class="shrink-0"
-      >
-        <rect x="4" y="4" width="7" height="7" rx="2" />
-        <rect x="13" y="4" width="7" height="7" rx="2" />
-        <rect x="4" y="13" width="7" height="7" rx="2" />
-        <rect x="13" y="13" width="7" height="7" rx="2" />
-      </svg>
+      <Icon name="game-icons:dice-twenty-faces-twenty" size={22} />
     </span>
     {m.nav_tables()}
   </a>
@@ -63,20 +47,7 @@
         ? 'ring-2 ring-warning-500'
         : ''}"
     >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        class="shrink-0"
-      >
-        <path d="M12 5v14M5 12h14" />
-      </svg>
+      <Icon name="game-icons:card-draw" size={22} />
     </span>
     {m.nav_open_table_short()}
   </a>
@@ -111,21 +82,7 @@
           ? 'bg-surface-200-800'
           : 'bg-transparent'}"
       >
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          class="shrink-0"
-        >
-          <path d="M12 3l7 3v5.5c0 4.5-3 7.5-7 9.5-4-2-7-5-7-9.5V6l7-3z" />
-          <path d="M9 12l2 2 4-4" />
-        </svg>
+        <Icon name="game-icons:black-knight-helm" size={22} />
       </span>
       {m.nav_admin()}
     </a>

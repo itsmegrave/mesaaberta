@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   import CatalogApprove from '$lib/components/admin/CatalogApprove.svelte';
   import CatalogDialog from '$lib/components/admin/CatalogDialog.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -65,9 +66,10 @@
                 >
               </div>
               <p class="mt-1 text-sm text-muted">
-                {entry.suggestedBy
-                  ? m.admin_queue_suggested_by({ username: entry.suggestedBy })
-                  : m.admin_queue_suggested_by_gone()}
+                {#if entry.suggestedBy}<UserText
+                    text={m.admin_queue_suggested_by({ username: entry.suggestedBy })}
+                    username={entry.suggestedBy}
+                  />{:else}{m.admin_queue_suggested_by_gone()}{/if}
                 {m.admin_queue_suggested_on({ date: day.format(entry.createdAt) })}
               </p>
               <p class="mt-3 text-sm">
@@ -152,9 +154,10 @@
             <li class="border-l-2 border-surface-200-800 pl-3 text-sm">
               <p class="font-semibold">{decisionText(decision)}</p>
               <p class="text-muted">
-                {decision.by
-                  ? m.admin_decision_by({ username: decision.by })
-                  : m.admin_decision_by_gone()} · {day.format(decision.at)}
+                {#if decision.by}<UserText
+                    text={m.admin_decision_by({ username: decision.by })}
+                    username={decision.by}
+                  />{:else}{m.admin_decision_by_gone()}{/if} · {day.format(decision.at)}
               </p>
             </li>
           {/each}

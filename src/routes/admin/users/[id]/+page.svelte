@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -56,7 +57,7 @@
       <div class="min-w-0">
         <p class="font-semibold text-muted">{m.admin_user_title()}</p>
         <h1 class="mt-1 text-3xl leading-tight font-semibold wrap-break-word md:text-5xl">
-          {handle}
+          <UserLink username={data.user.username} label={handle} />
         </h1>
         <p class="mt-2 flex flex-wrap items-center gap-3">
           <span
@@ -79,6 +80,7 @@
           fields={{ profileId: data.user.id }}
           label={m.admin_revoke()}
           title={m.admin_revoke_title({ user: handle })}
+          username={data.user.username}
           text={m.admin_revoke_text()}
           confirm={m.admin_revoke()}
           success={m.admin_revoke_done()}
@@ -99,6 +101,7 @@
           }}
           label={m.admin_ban()}
           title={m.admin_ban_title({ user: handle })}
+          username={data.user.username}
           text={m.admin_ban_text()}
           confirm={m.admin_ban()}
           success={m.admin_ban_done()}
@@ -140,7 +143,12 @@
     {#each details as [label, value] (label)}
       <div class="grid gap-2 py-4 sm:grid-cols-2">
         <dt class="text-sm font-semibold text-muted">{label}</dt>
-        <dd class="text-sm break-all">{value}</dd>
+        <dd class="text-sm break-all">
+          {#if label === m.admin_profile_username()}<UserLink
+              username={data.user.username}
+              label={value}
+            />{:else}{value}{/if}
+        </dd>
       </div>
     {/each}
   </dl>

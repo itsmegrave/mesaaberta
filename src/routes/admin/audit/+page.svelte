@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   import { page } from '$app/state';
   import { pageHref } from '$lib/admin/page-href';
   import Icon from '$lib/components/Icon.svelte';
@@ -80,7 +81,7 @@
       {#each data.log.rows as entry (entry.id)}
         <li class="border-l-2 border-surface-200-800 pl-4">
           <p class="font-semibold wrap-break-word">
-            {entryText(entry)}
+            <UserText text={entryText(entry)} username={entry.subject} />
             {#if entry.reportId}
               <a
                 class="ml-1 anchor text-sm font-normal"
@@ -90,7 +91,10 @@
             {/if}
           </p>
           <p class="text-sm text-muted">
-            {entry.by ? m.admin_decision_by({ username: entry.by }) : m.admin_decision_by_gone()} ·
+            {#if entry.by}<UserText
+                text={m.admin_decision_by({ username: entry.by })}
+                username={entry.by}
+              />{:else}{m.admin_decision_by_gone()}{/if} ·
             <time datetime={entry.at.toISOString()}>{when(entry.at)}</time>
           </p>
         </li>

@@ -1,6 +1,6 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
-  import { atHandle } from '$lib/profile/handle';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -48,7 +48,7 @@
   <h3 class="mt-3 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
-  <p class="mt-1 text-sm text-muted">{m.table_gm()}: {atHandle(item.gmName)}</p>
+  <p class="mt-1 text-sm text-muted">{m.table_gm()}: <UserLink username={item.gmName} /></p>
 
   {#if item.nextAt}
     <p class="mt-4 flex items-start gap-2">

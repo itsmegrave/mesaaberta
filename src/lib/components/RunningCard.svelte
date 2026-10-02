@@ -1,7 +1,7 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
-  import { atHandle } from '$lib/profile/handle';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -100,7 +100,7 @@
           <li
             class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-panel px-3 py-2"
           >
-            <span>{atHandle(request.username)}</span>
+            <span><UserLink username={request.username} /></span>
             <div class="flex gap-4">
               {#each [['approve', m.table_approve(), 'preset-filled-primary-500', m.toast_approved()], ['decline', m.table_decline(), 'border-2 border-surface-200-800 text-error-alert', m.toast_declined()]] as [action, label, tone, success] (action)}
                 <ActionForm
@@ -139,7 +139,7 @@
                 <li
                   class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
                 >
-                  <span>{atHandle(player.username)}</span>
+                  <span><UserLink username={player.username} /></span>
                   <ActionForm
                     action="{page}?/remove"
                     playerId={player.playerId}

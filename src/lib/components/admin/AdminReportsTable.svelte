@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { page } from '$app/state';
   import { createTable, FlexRender, tableFeatures, type ColumnDef } from '@tanstack/svelte-table';
   import { pageHref } from '$lib/admin/page-href';
@@ -103,13 +104,19 @@
           <tr class="hover:bg-surface-100-900">
             {#each row.getAllCells() as cell (cell.id)}
               <td class="wrap-break-word">
-                <a
-                  class="block px-3 py-4 {cell.column.id === 'target'
-                    ? 'anchor font-semibold'
-                    : ''}"
-                  href={localizedHref(`/admin/reports/${row.original.id}`, locale)}
-                  tabindex={cell.column.id === 'target' ? 0 : -1}><FlexRender {cell} /></a
-                >
+                {#if cell.column.id === 'target' && row.original.targetType !== 'table'}<span
+                    class="block px-3 py-4 font-semibold"
+                    ><UserLink
+                      username={row.original.player}
+                      label={row.original.player ? undefined : m.admin_profile_no_username()}
+                    /></span
+                  >{:else}<a
+                    class="block px-3 py-4 {cell.column.id === 'target'
+                      ? 'anchor font-semibold'
+                      : ''}"
+                    href={localizedHref(`/admin/reports/${row.original.id}`, locale)}
+                    ><FlexRender {cell} /></a
+                  >{/if}
               </td>
             {/each}
           </tr>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   // One moderation decision behind a confirmation: accept, dismiss, close a table, ban or revoke a
   // ban. Mounted per action; the server authorizes it again.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
@@ -16,6 +17,7 @@
     schema,
     fields,
     title,
+    username,
     text,
     confirm,
     label,
@@ -31,6 +33,7 @@
     /** The hidden fields the action takes (the report, the profile). */
     fields: Record<string, string>;
     title: string;
+    username?: string | null;
     text: string;
     confirm: string;
     /** The trigger's text. */
@@ -107,7 +110,9 @@
         <Dialog.Content
           class="max-h-full w-full max-w-md overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
         >
-          <Dialog.Title class="text-xl font-semibold">{title}</Dialog.Title>
+          <Dialog.Title class="text-xl font-semibold"
+            ><UserText text={title} {username} /></Dialog.Title
+          >
           <Dialog.Description class="mt-2 text-surface-700-300">{text}</Dialog.Description>
           <Form method="POST" {action} onsubmit={form.submit} class="mt-4 grid gap-4">
             {#each Object.keys(fields) as name (name)}

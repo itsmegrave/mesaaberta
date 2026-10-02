@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import {
@@ -139,16 +140,18 @@
             >{#each row.getAllCells() as cell (cell.id)}
               <td
                 class={cell.column.id === 'id' ? 'font-mono text-xs break-all' : 'wrap-break-word'}
-                ><a
-                  class="block px-3 py-4 {cell.column.id === 'username'
-                    ? 'anchor font-semibold'
-                    : ''}"
-                  href={localizedHref(
-                    `/admin/users/${row.original.id}?${page.url.searchParams}`,
-                    locale,
-                  )}
-                  tabindex={cell.column.id === 'username' ? 0 : -1}><FlexRender {cell} /></a
-                ></td
+                >{#if cell.column.id === 'username'}<span class="block px-3 py-4 font-semibold"
+                    ><UserLink
+                      username={row.original.username}
+                      label={row.original.username ? undefined : m.admin_profile_no_username()}
+                    /></span
+                  >{:else}<a
+                    class="block px-3 py-4"
+                    href={localizedHref(
+                      `/admin/users/${row.original.id}?${page.url.searchParams}`,
+                      locale,
+                    )}><FlexRender {cell} /></a
+                  >{/if}</td
               >
             {/each}</tr
           >

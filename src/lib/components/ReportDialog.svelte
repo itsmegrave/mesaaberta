@@ -5,6 +5,7 @@
   import { actionForm } from '$lib/forms/action-form.svelte';
   import { REPORT_DETAILS_MAX, REPORT_REASONS, reportSchema } from '$lib/moderation/reports';
   import { reasonLabel } from '$lib/moderation/labels';
+  import UserLink from '$lib/components/UserLink.svelte';
   import Form from '$lib/components/Form.svelte';
   import FormField from '$lib/components/FormField.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -40,6 +41,7 @@
     },
   });
   const data = $derived(form.values);
+  const selectedPerson = $derived(targets.people.find((person) => person.id === data.playerId));
   const target = $derived(data.targetType === 'table' ? 'table' : data.playerId);
 
   const codes: Record<string, () => string> = {
@@ -103,6 +105,10 @@
                   {/each}
                 </select>
               </FormField>
+            {/if}
+
+            {#if data.targetType === 'player' && selectedPerson}
+              <p class="text-sm"><UserLink username={selectedPerson.username} /></p>
             {/if}
 
             <FormField id="report-reason" label={m.report_reason()} error={reasonError}>

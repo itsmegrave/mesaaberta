@@ -30,4 +30,19 @@ describe('BottomTabBar.svelte', () => {
       .element(nav().getByRole('link', { name: 'Admin' }))
       .toHaveAttribute('href', '/admin');
   });
+  it('uses the new game artwork for every mobile tab', async () => {
+    render(BottomTabBar, { isAdmin: true });
+    const expected = {
+      '/tables': 'game-icons:dice-twenty-faces-twenty',
+      '/tables/new': 'game-icons:card-draw',
+      '/account/tables': 'game-icons:tabletop-players',
+      '/admin': 'game-icons:black-knight-helm',
+    };
+    for (const [href, icon] of Object.entries(expected)) {
+      const svg = document.querySelector<SVGSVGElement>(`a[href="${href}"] svg`);
+      expect(svg?.getAttribute('data-icon')).toBe(icon);
+      expect(svg?.getAttribute('viewBox')).toBe('0 0 512 512');
+      expect(svg?.querySelector('path')?.getBBox().width).toBeGreaterThan(0);
+    }
+  });
 });

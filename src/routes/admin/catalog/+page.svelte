@@ -1,4 +1,5 @@
 <script lang="ts">
+  import UserText from '$lib/components/UserText.svelte';
   import { Popover } from '@skeletonlabs/skeleton-svelte';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
   import CatalogDialog from '$lib/components/admin/CatalogDialog.svelte';
@@ -128,9 +129,10 @@
                 <span class="block text-sm font-normal text-muted">{row.slug}</span>
               </th>
               <td class="px-4 py-3">
-                {row.suggestedBy
-                  ? m.admin_catalog_origin_suggestion({ username: row.suggestedBy })
-                  : m.admin_catalog_origin_catalog()}
+                {#if row.suggestedBy}<UserText
+                    text={m.admin_catalog_origin_suggestion({ username: row.suggestedBy })}
+                    username={row.suggestedBy}
+                  />{:else}{m.admin_catalog_origin_catalog()}{/if}
               </td>
               <td class="px-4 py-3 text-right tabular-nums">{number.format(row.uses)}</td>
               <td class="px-4 py-3">{status(row)}</td>

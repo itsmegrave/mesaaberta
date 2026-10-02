@@ -15,6 +15,7 @@
 
   type Account = {
     displayName: string;
+    username?: string | null;
     avatarUrl: string | null;
     isAdmin: boolean;
     pendingSuggestionsCount: number;
@@ -177,6 +178,7 @@
             {/if}
             <AccountMenu
               name={account.displayName}
+              username={account.username}
               avatarUrl={account.avatarUrl}
               {messagesUnread}
               placement="right-end"

@@ -1,7 +1,7 @@
 <script lang="ts">
+  import UserLink from '$lib/components/UserLink.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
-  import { atHandle } from '$lib/profile/handle';
   import { formatCardDate, formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -147,7 +147,7 @@
     </h3>
 
     <div class="mt-2 text-sm leading-normal text-muted">
-      {m.table_gm()}: {atHandle(table.gmName)}
+      {m.table_gm()}: <UserLink username={table.gmName} />
     </div>
 
     {#if table.modality}
