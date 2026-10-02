@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
   import TextArea from '$lib/components/TextArea.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -10,13 +9,13 @@
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { atHandle } from '$lib/profile/handle';
   import { resolve } from '$app/paths';
+  import { page } from '$app/state';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import Form from '$lib/components/Form.svelte';
   import { formatHours, formatSession } from '$lib/tables/format';
   import type { FormMessage } from '$lib/forms/message';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
-  import { tableStatusLabel } from '$lib/tables/status';
   import { getLocale } from '$lib/paraglide/runtime';
   import { ratingSchema } from '$lib/tables/rating';
   import { registrationError } from '$lib/tables/registration-errors';
@@ -24,6 +23,8 @@
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
 
   let { data: serverData, form } = $props();
@@ -86,6 +87,67 @@
     };
   });
 
+  // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
+  let disableOpen = $state(false);
+  let reportOpen = $state(false);
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(
+        new URL(localizedHref(`/tables/${table.slug}`, locale), page.url.origin).href,
+      );
+      toast.success(m.toast_link_copied());
+    } catch {
+      // Clipboard access refused: nothing was copied, and nothing is claimed.
+    }
+  }
+  const menu = $derived.by(() => {
+    const items: KebabItem[] = [];
+    if (data.canEdit) {
+      items.push({
+        id: 'edit',
+        label: m.menu_edit(),
+        icon: 'square-pen',
+        href: localizedHref(`/tables/${table.slug}/edit`, locale),
+      });
+      if (data.registrations) {
+        items.push({
+          id: 'players',
+          label: m.menu_players(),
+          icon: 'game-icons:meeple',
+          href: localizedHref(`/tables/${table.slug}/manage`, locale),
+        });
+      }
+    }
+    items.push({ id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink });
+    if (data.signedIn && !data.isGm && data.gmAcceptsDirect) {
+      items.push({
+        id: 'talk',
+        label: m.menu_message_gm(),
+        icon: 'game-icons:scroll-quill',
+        onselect: () => document.getElementById('talk-to-gm')?.click(),
+      });
+    }
+    if (data.canEdit && table.status === 'active') {
+      items.push({
+        id: 'disable',
+        label: m.menu_disable_table(),
+        icon: 'trash',
+        destructive: true,
+        onselect: () => (disableOpen = true),
+      });
+    }
+    if (data.reportTargets.table || data.reportTargets.people.length > 0) {
+      items.push({
+        id: 'report',
+        label: m.menu_report(),
+        icon: 'flag',
+        destructive: true,
+        onselect: () => (reportOpen = true),
+      });
+    }
+    return items;
+  });
+
   const taken = $derived(table.capacity - table.seatsLeft);
   const seats = $derived(
     table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
@@ -119,9 +181,12 @@
         </a>
       </p>
 
-      <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-        {table.title}
-      </h1>
+      <div class="mt-3 flex items-start justify-between gap-3">
+        <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+          {table.title}
+        </h1>
+        <KebabMenu name={table.title} items={menu} />
+      </div>
 
       {#if table.tags.length > 0}
         <ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">
@@ -172,21 +237,6 @@
           </p>
         {/if}
       </div>
-
-      {#if data.canEdit}
-        <p class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-          {#if data.registrations}
-            <a
-              href={localizedHref(`/tables/${table.slug}/manage`, locale)}
-              class="link-underline font-semibold">{m.dash_manage()}</a
-            >
-          {/if}
-          <a
-            href={localizedHref(`/tables/${table.slug}/edit`, locale)}
-            class="link-underline font-semibold">{m.table_edit()}</a
-          >
-        </p>
-      {/if}
 
       {#if table.imageUrl}
         <img
@@ -246,13 +296,6 @@
               {m.table_no_more_sessions()}
             {/if}
           </p>
-          {#if tableStatusLabel(table.status)}
-            <p
-              class="mt-2 chip h-6 rounded-full preset-filled-surface-200-800 px-3 text-xs font-semibold"
-            >
-              {tableStatusLabel(table.status)}
-            </p>
-          {/if}
         </div>
       </div>
 
@@ -384,42 +427,30 @@
           {m.messages_table_chat()}
         </a>
       {/if}
-      {#if data.signedIn && !data.isGm}
-        {#if data.gmAcceptsDirect}
-          <ActionForm
-            action="?/talk"
-            class="mt-3"
-            label={m.messages_talk_to_gm()}
-            icon="game-icons:scroll-quill"
-            buttonClass="btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
-          />
-        {:else}
-          <Button
-            size="custom"
-            type="button"
-            disabled
-            aria-describedby="gm-dm-off"
-            class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold"
-          >
-            <Icon name="game-icons:scroll-quill" size={18} />
-            {m.messages_talk_to_gm()}
-          </Button>
-          <p id="gm-dm-off" class="mt-2 text-sm text-muted">{m.messages_gm_dm_off()}</p>
-        {/if}
+      {#if data.signedIn && !data.isGm && data.gmAcceptsDirect}
+        <!-- Opened from the title menu ("Mandar mensagem ao mestre"). -->
+        <ActionForm action="?/talk" class="hidden">
+          <button id="talk-to-gm" type="submit" tabindex="-1" aria-hidden="true"></button>
+        </ActionForm>
       {/if}
       <p class="mt-3 text-sm text-muted">
         {table.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}
       </p>
-      {#if data.reportTargets.table || data.reportTargets.people.length > 0}
-        <div class="mt-5 border-t border-surface-200-800 pt-4">
-          <ReportDialog
-            targets={data.reportTargets}
-            triggerClass="btn h-11 gap-2 rounded-lg px-3 text-sm font-semibold text-muted hover:preset-tonal"
-          />
-        </div>
-      {/if}
     </aside>
   </div>
+
+  <ReportDialog targets={data.reportTargets} trigger={false} bind:open={reportOpen} />
+  {#if data.canEdit}
+    <ConfirmDialog
+      bind:open={disableOpen}
+      action="{localizedHref(`/tables/${table.slug}/edit`, locale)}?/disable"
+      label={m.form_disable()}
+      title={m.form_disable_confirm_title()}
+      text={m.form_disable_confirm_text()}
+      success={m.toast_table_disabled()}
+      onfail={(message) => (failed = message)}
+    />
+  {/if}
 
   <!-- Only someone who played (a confirmed seat, and the first session is over) can rate. -->
   {#if data.canRate}

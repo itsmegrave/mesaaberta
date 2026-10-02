@@ -19,12 +19,16 @@
   let {
     targets,
     triggerClass = '',
+    trigger = true,
+    open = $bindable(false),
   }: {
     targets: { table: boolean; people: { id: string; username: string }[] };
     triggerClass?: string;
+    /** Draws its own "Denunciar" button; off when a menu item opens it through `open`. */
+    trigger?: boolean;
+    open?: boolean;
   } = $props();
 
-  let open = $state(false);
   // svelte-ignore state_referenced_locally
   const firstTarget = targets.table ? 'table' : (targets.people[0]?.id ?? 'table');
   const form = actionForm({
@@ -70,10 +74,12 @@
     open = details.open;
   }}
 >
-  <Dialog.Trigger class={triggerClass}>
-    <Icon name="flag" size={18} />
-    {m.report_trigger()}
-  </Dialog.Trigger>
+  {#if trigger}
+    <Dialog.Trigger class={triggerClass}>
+      <Icon name="flag" size={18} />
+      {m.report_trigger()}
+    </Dialog.Trigger>
+  {/if}
   {#if open}
     <Portal>
       <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />

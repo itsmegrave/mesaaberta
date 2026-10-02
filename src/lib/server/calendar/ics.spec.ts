@@ -1,6 +1,6 @@
 import ICAL from 'ical.js';
 import { describe, expect, it } from 'vitest';
-import { buildInvite, type CalendarTable } from './ics';
+import { buildCalendar, buildInvite, type CalendarTable } from './ics';
 
 const table: CalendarTable = {
   id: '3f1c2d4e-1111-4222-8333-444455556666',
@@ -387,5 +387,54 @@ describe('read back by an independent parser (ical.js)', () => {
     expect(calendar.getFirstPropertyValue('method')).toBe('CANCEL');
     expect(vevent.getFirstPropertyValue('status')).toBe('CANCELLED');
     expect(vevent.getFirstPropertyValue('sequence')).toBe(2);
+  });
+});
+
+describe('a whole calendar', () => {
+  const second: CalendarTable = {
+    ...table,
+    id: '9a9a9a9a-1111-4222-8333-444455556666',
+    slug: 'a-torre',
+    title: 'A Torre',
+    kind: 'campaign',
+    recurrence: 'FREQ=WEEKLY',
+    timezone: 'America/Recife',
+  };
+  const calendar = buildCalendar({ tables: [table, second], baseUrl: base.baseUrl, now: base.now });
+
+  it('has an event for each table and the rules of each zone once', () => {
+    expect(named(calendar, 'BEGIN').filter((l) => l === 'BEGIN:VEVENT')).toHaveLength(2);
+    expect(named(calendar, 'TZID').filter((l) => l.startsWith('TZID:'))).toHaveLength(2);
+    expect(
+      buildCalendar({ tables: [table, table], baseUrl: base.baseUrl, now: base.now }).match(
+        /BEGIN:VTIMEZONE/g,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('keeps a stable UID per table, so importing it again does not duplicate the events', () => {
+    expect(named(calendar, 'UID')).toEqual([
+      `UID:${table.id}@mesaaberta.app`,
+      `UID:${second.id}@mesaaberta.app`,
+    ]);
+  });
+
+  it('is the person’s own file: no method, organizer or attendee', () => {
+    expect(named(calendar, 'METHOD')).toHaveLength(0);
+    expect(named(calendar, 'ORGANIZER')).toHaveLength(0);
+    expect(named(calendar, 'ATTENDEE')).toHaveLength(0);
+  });
+
+  it('refuses a table whose id is not what this system produces', () => {
+    expect(() =>
+      buildCalendar({ tables: [{ ...table, id: 'x\r\nBEGIN:VEVENT' }], baseUrl: base.baseUrl }),
+    ).toThrow('Invalid table id');
+  });
+
+  it('is an empty calendar for a person with no tables', () => {
+    const empty = buildCalendar({ tables: [], baseUrl: base.baseUrl, now: base.now });
+
+    expect(empty.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true);
+    expect(named(empty, 'BEGIN').filter((l) => l === 'BEGIN:VEVENT')).toHaveLength(0);
   });
 });

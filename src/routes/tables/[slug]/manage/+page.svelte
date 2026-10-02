@@ -8,6 +8,10 @@
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import ConfirmAction from '$lib/components/ConfirmAction.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
+  import { page } from '$app/state';
+  import { toast } from '$lib/toaster';
   import SeatDots from '$lib/components/SeatDots.svelte';
   import SessionConfirmation from '$lib/components/SessionConfirmation.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -34,6 +38,60 @@
   const tablePage = $derived(localizedHref(`/tables/${table.slug}`, locale));
   const editPage = $derived(localizedHref(`/tables/${table.slug}/edit`, locale));
   const taken = $derived(table.capacity - table.seatsLeft);
+
+  // The "3 dots": beside the title for the table, on each player's row for that player.
+  let disableOpen = $state(false);
+  let removing = $state<{ playerId: string; username: string | null } | null>(null);
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(new URL(tablePage, page.url.origin).href);
+      toast.success(m.toast_link_copied());
+    } catch {
+      // Clipboard access refused: nothing was copied, and nothing is claimed.
+    }
+  }
+  const tableMenu = $derived.by(() => {
+    const items: KebabItem[] = [
+      { id: 'edit', label: m.table_edit(), icon: 'square-pen', href: editPage },
+      { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
+      { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
+    ];
+    if (table.status === 'active') {
+      items.push({
+        id: 'disable',
+        label: m.menu_disable_table(),
+        icon: 'trash',
+        destructive: true,
+        onselect: () => (disableOpen = true),
+      });
+    }
+    return items;
+  });
+  const playerMenu = (player: { playerId: string; username: string | null }): KebabItem[] => [
+    ...(player.username
+      ? [
+          {
+            id: 'profile',
+            label: m.menu_view_profile(),
+            icon: 'game-icons:meeple' as const,
+            href: localizedHref(`/u/${encodeURIComponent(player.username)}`, locale),
+          },
+        ]
+      : []),
+    {
+      id: 'message',
+      label: m.menu_message_player(),
+      icon: 'game-icons:scroll-quill',
+      onselect: () => document.getElementById(`message-${player.playerId}`)?.click(),
+    },
+    {
+      id: 'remove',
+      label: m.menu_remove_player(),
+      icon: 'trash',
+      destructive: true,
+      onselect: () => (removing = player),
+    },
+  ];
 
   /** "12 de setembro". */
   const day = (date: Date) =>
@@ -136,9 +194,12 @@
           : m.table_kind_one_shot()}</span
     >
   </p>
-  <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-    {table.title}
-  </h1>
+  <div class="mt-3 flex items-start justify-between gap-3">
+    <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+      {table.title}
+    </h1>
+    <KebabMenu name={table.title} items={tableMenu} />
+  </div>
 
   {#if table.status === 'awaiting_confirmation'}
     <SessionConfirmation next={here} />
@@ -280,17 +341,16 @@
                   >
                 </span>
               </span>
-              <ConfirmAction
-                action="{tablePage}?/remove"
-                success={m.toast_removed()}
-                playerId={player.playerId}
-                next={here}
-                label={m.table_remove()}
-                title={m.confirm_remove_title({ player: atHandle(player.username) })}
-                username={player.username}
-                text={m.confirm_remove_text()}
-                class={secondary}
-              />
+              <KebabMenu name={atHandle(player.username)} items={playerMenu(player)} />
+              <!-- Opened from the row's menu ("Mandar mensagem"). -->
+              <ActionForm action="?/message" playerId={player.playerId} class="hidden">
+                <button
+                  id="message-{player.playerId}"
+                  type="submit"
+                  tabindex="-1"
+                  aria-hidden="true"
+                ></button>
+              </ActionForm>
             </li>
           {/each}
           {#each { length: table.seatsLeft }, i (i)}
@@ -473,4 +533,26 @@
       </div>
     </aside>
   </div>
+
+  <ConfirmDialog
+    bind:open={disableOpen}
+    action="{editPage}?/disable"
+    label={m.form_disable()}
+    title={m.form_disable_confirm_title()}
+    text={m.form_disable_confirm_text()}
+    success={m.toast_table_disabled()}
+  />
+  {#if removing}
+    <ConfirmDialog
+      bind:open={() => removing !== null, (value) => !value && (removing = null)}
+      action="{tablePage}?/remove"
+      playerId={removing.playerId}
+      next={here}
+      label={m.table_remove()}
+      title={m.confirm_remove_title({ player: atHandle(removing.username) })}
+      username={removing.username}
+      text={m.confirm_remove_text()}
+      success={m.toast_removed()}
+    />
+  {/if}
 </article>

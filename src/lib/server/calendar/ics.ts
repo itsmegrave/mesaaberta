@@ -78,27 +78,19 @@ function timezoneComponent(tzid: string): InstanceType<typeof ICAL.Component> {
 export const tableUrl = (baseUrl: string, slug: string) =>
   `${baseUrl.replace(/\/$/, '')}/tables/${encodeURIComponent(slug)}`;
 
-/**
- * One `.ics` for one recipient. A one-shot is a single event; a campaign is one recurring event
- * with a stable UID, so an edit (a higher SEQUENCE) replaces it. Throws on an address, a UID, a
- * timezone or a recurrence that is not what this system produces, rather than writing it out.
- */
-export function buildInvite({
-  table,
-  method,
-  attendee,
-  organizer,
-  baseUrl,
-  now = new Date(),
-}: InviteInput): string {
-  if (!EMAIL.test(attendee.email)) throw new Error('Invalid attendee email address');
-  if (!EMAIL.test(organizer.email)) throw new Error('Invalid organizer email address');
+/** Refuses an id or a recurrence that is not what this system produces. */
+function checkTable(table: CalendarTable) {
   if (!/^[0-9a-f-]{8,64}$/i.test(table.id)) throw new Error('Invalid table id');
   if (table.recurrence !== null && !RECURRENCE.test(table.recurrence)) {
     throw new Error(`Unsupported recurrence: ${JSON.stringify(table.recurrence)}`);
   }
+}
 
-  const vtimezone = timezoneComponent(table.timezone);
+/** The event for one table: one event for a one-shot, one recurring event for a campaign. */
+function tableEvent(
+  table: CalendarTable,
+  { baseUrl, now, cancelled }: { baseUrl: string; now: Date; cancelled: boolean },
+) {
   const end = new Date(table.startsAt.getTime() + table.durationMinutes * 60_000);
   const url = tableUrl(baseUrl, table.slug);
   // Calendar apps show plain text, so the rich text is read as text first.
@@ -131,8 +123,31 @@ export function buildInvite({
   event.updatePropertyWithValue('summary', clean(table.title));
   event.updatePropertyWithValue('description', clean(description));
   event.updatePropertyWithValue('url', url);
-  event.updatePropertyWithValue('status', method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED');
+  event.updatePropertyWithValue('status', cancelled ? 'CANCELLED' : 'CONFIRMED');
   event.updatePropertyWithValue('transp', 'OPAQUE');
+
+  return event;
+}
+
+/**
+ * One `.ics` for one recipient. A one-shot is a single event; a campaign is one recurring event
+ * with a stable UID, so an edit (a higher SEQUENCE) replaces it. Throws on an address, a UID, a
+ * timezone or a recurrence that is not what this system produces, rather than writing it out.
+ */
+export function buildInvite({
+  table,
+  method,
+  attendee,
+  organizer,
+  baseUrl,
+  now = new Date(),
+}: InviteInput): string {
+  if (!EMAIL.test(attendee.email)) throw new Error('Invalid attendee email address');
+  if (!EMAIL.test(organizer.email)) throw new Error('Invalid organizer email address');
+  checkTable(table);
+
+  const vtimezone = timezoneComponent(table.timezone);
+  const event = tableEvent(table, { baseUrl, now, cancelled: method === 'CANCEL' });
 
   event
     .addPropertyWithValue('organizer', `mailto:${organizer.email}`)
@@ -151,6 +166,40 @@ export function buildInvite({
   calendar.updatePropertyWithValue('method', method);
   calendar.addSubcomponent(vtimezone);
   calendar.addSubcomponent(event);
+
+  return `${calendar.toString()}\r\n`;
+}
+
+/**
+ * Everything a person plays in or runs, as one calendar to download: an event per table, and the
+ * rules of each time zone once. No attendees and no organizer, since it is the person's own file.
+ */
+export function buildCalendar({
+  tables,
+  baseUrl,
+  now = new Date(),
+}: {
+  tables: CalendarTable[];
+  baseUrl: string;
+  now?: Date;
+}): string {
+  const calendar = new ICAL.Component(['vcalendar', [], []]);
+  calendar.updatePropertyWithValue('version', '2.0');
+  calendar.updatePropertyWithValue('prodid', '-//Mesa Aberta//mesaaberta.app//PT');
+  calendar.updatePropertyWithValue('calscale', 'GREGORIAN');
+  calendar.updatePropertyWithValue('x-wr-calname', 'Mesa Aberta');
+
+  const zones = new Set<string>();
+  for (const table of tables) {
+    checkTable(table);
+    if (!zones.has(table.timezone)) {
+      zones.add(table.timezone);
+      calendar.addSubcomponent(timezoneComponent(table.timezone));
+    }
+  }
+  for (const table of tables) {
+    calendar.addSubcomponent(tableEvent(table, { baseUrl, now, cancelled: false }));
+  }
 
   return `${calendar.toString()}\r\n`;
 }

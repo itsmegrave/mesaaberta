@@ -1,6 +1,6 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
-  import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
+  import type { TableStatus } from '$lib/tables/status';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -39,9 +39,6 @@
         {m.dash_you_have_seat()}
       </span>
     {/if}
-    {#if tableStatusLabel(item.tableStatus)}<span class="font-semibold"
-        >{tableStatusLabel(item.tableStatus)}</span
-      >{/if}
     <span class="font-semibold text-muted">{item.systemName}</span>
   </p>
 

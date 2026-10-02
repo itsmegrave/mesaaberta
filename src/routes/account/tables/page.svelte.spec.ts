@@ -141,4 +141,54 @@ describe('Minhas mesas', () => {
       .toHaveAttribute('href', expect.stringContaining('page=2'));
     expect(pages.getByRole('link', { name: 'Página anterior' }).elements()).toHaveLength(0);
   });
+
+  describe('a session whose date has passed', () => {
+    const awaiting = { ...running, tableStatus: 'awaiting_confirmation' as const };
+
+    it('asks the GM whether it happened, posting to the table’s manage page and coming back here', async () => {
+      await page.viewport(1280, 800);
+      show({ playing: [], running: [awaiting] });
+
+      const prompt = page.getByRole('group', { name: 'A sessão de Crônicas de Arton aconteceu?' });
+      await expect.element(prompt).toBeVisible();
+      const yes = prompt.getByRole('button', { name: 'Sim, aconteceu' });
+      const no = prompt.getByRole('button', { name: 'Não aconteceu' });
+      expect(yes.element().closest('form')?.getAttribute('action')).toBe(
+        '/tables/cronicas/manage?/happened',
+      );
+      expect(no.element().closest('form')?.getAttribute('action')).toBe(
+        '/tables/cronicas/manage?/notHeld',
+      );
+    });
+
+    it('does not ask about a table that is still open', async () => {
+      await page.viewport(1280, 800);
+      show({ playing: [], running: [running] });
+
+      expect(page.getByText('aconteceu?').elements()).toHaveLength(0);
+    });
+
+    it('shows no table status to a player or a GM: statuses are only for admin', async () => {
+      await page.viewport(1280, 800);
+      show({
+        playing: [{ ...playing, tableStatus: 'concluded' as const }],
+        running: [awaiting],
+      });
+
+      for (const word of ['Aguardando confirmação', 'Concluída', 'Mesa concluída', 'Desativada']) {
+        expect(page.getByText(word).elements()).toHaveLength(0);
+      }
+    });
+  });
+
+  it('offers the calendar download from the title’s 3 dots', async () => {
+    await page.viewport(1280, 800);
+    show({ playing: [playing], running: [running] });
+
+    await page.getByRole('button', { name: 'Mais ações: Minhas mesas' }).click();
+
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Baixar calendário (.ics)' }))
+      .toBeVisible();
+  });
 });
