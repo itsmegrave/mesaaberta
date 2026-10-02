@@ -28,4 +28,13 @@ describe('icon registry', () => {
     );
     expect(Object.keys(ICONS)).not.toContain('game-icons:card-draw');
   });
+
+  it('draws every person as the meeple, without separate user icons', () => {
+    const names = Object.keys(ICONS);
+
+    expect(names).toContain('game-icons:meeple');
+    for (const gone of ['user-plus', 'user-check', 'user-x', 'user-minus', 'users']) {
+      expect(names).not.toContain(gone);
+    }
+  });
 });
