@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mesaaberta-local",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-09-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "binding": "ASSETS", "directory": ".svelte-kit/cloudflare" },
+  // Copy to a local configuration. These are self-host examples, never our production values.
+  // The active production file is retained until the private deployment pipeline is verified.
+  "vars": {
+    "APP_ORIGIN": "http://localhost:5173",
+    "CALENDAR_UID_DOMAIN": "localhost",
+    "CONTACT_EMAIL": "contact@example.invalid",
+    "PRIVACY_CONTROLLER_NAME": "Responsável pela instância",
+    "PRIVACY_EMAIL": "privacy@example.invalid",
+    "RESEND_FROM": "Mesa Aberta <no-reply@example.invalid>",
+    "MAILPIT_URL": "http://127.0.0.1:54344",
+    "GROWTHBOOK_CLIENT_KEY": "",
+    "SUPABASE_URL": "",
+    "SUPABASE_PUBLISHABLE_KEY": "",
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Placeholder for local emulation; replace with your own ID only if deploying to Cloudflare.
+      "id": "00000000000000000000000000000000",
+      "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
+    },
+  ],
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "workers_dev": false,
+  "preview_urls": false,
+}

@@ -1,5 +1,6 @@
 import prettier from 'eslint-config-prettier';
 import path from 'node:path';
+import { builtinModules } from 'node:module';
 import js from '@eslint/js';
 import svelte from 'eslint-plugin-svelte';
 import tailwindcss from 'eslint-plugin-tailwindcss';
@@ -62,6 +63,20 @@ export default defineConfig(
       'tailwindcss/no-contradicting-classname': 'error',
       // The v4 plugin currently rewrites valid fractional line-heights to invalid dynamic utilities.
       'tailwindcss/no-unnecessary-arbitrary-value': 'off',
+    },
+  },
+  {
+    // Shared packages must build on workerd as well as the self-host runtime.
+    files: ['packages/**/*.{ts,js}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: builtinModules.filter((name) => !name.startsWith('node:')),
+          patterns: ['node:*', 'bun', 'bun:*', 'cloudflare:*', '$app/*', '$env/*'],
+        },
+      ],
+      'no-restricted-globals': ['error', 'Bun', 'process', 'Buffer', '__dirname', '__filename'],
     },
   },
   {
