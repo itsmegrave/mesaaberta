@@ -15,11 +15,14 @@
     unread,
     latest,
     placement = 'bottom-end',
+    labelled = false,
   }: {
     unread: number;
     latest: Item[];
     /** Where the list opens: under the header's bell, beside the side rail's. */
     placement?: 'bottom-end' | 'right-end';
+    /** A full-width row with the word "Notificações" and the count, for the open side nav. */
+    labelled?: boolean;
   } = $props();
 
   // Skeleton keeps a closed popover's content in the page, only hidden. The list is drawn while the
@@ -50,11 +53,13 @@
 >
   <Popover.Trigger
     aria-label={label}
-    class="relative btn flex size-11 items-center justify-center rounded-full p-0 hover:preset-tonal"
+    class="relative btn flex items-center hover:preset-tonal {labelled
+      ? 'min-h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm'
+      : 'size-11 justify-center rounded-full p-0'}"
   >
     <svg
-      width="22"
-      height="22"
+      width={labelled ? 20 : 22}
+      height={labelled ? 20 : 22}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -66,11 +71,15 @@
       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
       <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
     </svg>
+    {#if labelled}<span aria-hidden="true" class="font-semibold">{m.notifications_title()}</span
+      >{/if}
     {#if unread > 0}
       <span
         data-testid="notification-count"
         aria-hidden="true"
-        class="absolute top-1 right-1 badge h-5 min-w-5 rounded-full preset-filled-error-500 px-1 text-xs font-bold"
+        class="badge h-5 min-w-5 rounded-full preset-filled-error-500 px-1 text-xs font-bold {labelled
+          ? 'ml-auto'
+          : 'absolute top-1 right-1'}"
       >
         {unread > 9 ? '9+' : unread}
       </span>

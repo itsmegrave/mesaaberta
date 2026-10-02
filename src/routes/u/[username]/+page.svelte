@@ -37,11 +37,7 @@
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
-  <Breadcrumbs
-    mobile
-    class="mb-6 md:mb-8"
-    items={[{ label: m.tables_title(), href: '/tables' }, { label: atHandle(profile.username) }]}
-  />
+  <Breadcrumbs class="mb-6 md:mb-8" items={[{ label: atHandle(profile.username) }]} />
 
   <header class="rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8">
     <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">

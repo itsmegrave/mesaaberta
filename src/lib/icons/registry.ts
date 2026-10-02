@@ -8,6 +8,8 @@ import GameDungeonGateIcon from '@iconify-svelte/game-icons/dungeon-gate';
 import GameMeepleIcon from '@iconify-svelte/game-icons/meeple';
 import GameScrollQuillIcon from '@iconify-svelte/game-icons/scroll-quill';
 import GameExitDoorIcon from '@iconify-svelte/game-icons/exit-door';
+import GameHouseIcon from '@iconify-svelte/game-icons/house';
+import SquarePenIcon from '@iconify-svelte/lucide/square-pen';
 import CalendarIcon from '@iconify-svelte/lucide/calendar';
 import CircleXIcon from '@iconify-svelte/lucide/circle-x';
 import UserPlusIcon from '@iconify-svelte/lucide/user-plus';
@@ -91,6 +93,8 @@ export const ICONS = {
   'game-icons:meeple': GameMeepleIcon,
   'game-icons:scroll-quill': GameScrollQuillIcon,
   'game-icons:exit-door': GameExitDoorIcon,
+  'game-icons:house': GameHouseIcon,
+  'square-pen': SquarePenIcon,
   calendar: CalendarIcon,
   'circle-x': CircleXIcon,
   'user-plus': UserPlusIcon,

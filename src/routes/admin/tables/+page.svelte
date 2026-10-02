@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Spinner from '$lib/components/Spinner.svelte';
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -26,6 +27,10 @@
 
 <svelte:head><title>{m.admin_tables()} | Mesa Aberta</title></svelte:head>
 <section class="py-6 md:py-10">
+  <Breadcrumbs
+    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_tables() }]}
+    class="mb-6"
+  />
   <div class="flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-3xl font-semibold">{m.admin_tables()}</h1>
     <Button

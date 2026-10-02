@@ -123,24 +123,6 @@
       { label: m.manage_breadcrumb() },
     ]}
   />
-  <a
-    href={localizedHref('/account/tables', locale)}
-    class="inline-flex items-center gap-2 link-underline font-semibold decoration-primary-500 md:hidden"
-  >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-      class="shrink-0"><path d="M19 12H5M11 6l-6 6 6 6" /></svg
-    >
-    {m.manage_back()}
-  </a>
 
   <p class="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
     <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"

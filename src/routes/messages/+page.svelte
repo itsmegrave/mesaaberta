@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { m } from '$lib/paraglide/messages';
 </script>
@@ -8,6 +9,7 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
+<Breadcrumbs items={[{ label: m.messages_title() }]} class="pt-2" />
 <section class="md:flex md:h-full md:flex-col md:items-center md:justify-center md:py-24">
   <h1
     class="text-4xl leading-none font-semibold tracking-tight text-balance md:flex md:items-center md:gap-3 md:text-5xl"

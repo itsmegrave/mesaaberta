@@ -14,7 +14,7 @@ test('the account menu leads to the profile, where the details are saved and the
   await accountMenu(page, user.username).click();
   await page
     .getByRole('navigation', { name: 'Menu da conta' })
-    .getByRole('link', { name: /perfil/i })
+    .getByRole('link', { name: 'Editar perfil' })
     .click();
   await expect(page).toHaveURL(/\/account\/profile$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Seu perfil');

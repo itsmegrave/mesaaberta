@@ -44,6 +44,7 @@
 <AuthShell
   title={data.done ? m.reset_done_title() : m.reset_title()}
   lede={data.done ? undefined : m.reset_lede()}
+  parents={[{ label: m.login_title(), href: '/login' }]}
 >
   {#if data.done}
     <p role="status" class="max-w-sm text-lg">{m.reset_done_text()}</p>
@@ -113,6 +114,9 @@
       </div>
     </Form>
 
-    <p class="mt-8"><a href={resolve('/login')} class="anchor">{m.forgot_back()}</a></p>
+    <p class="mt-8">
+      {m.forgot_remembered()}
+      <a href={resolve('/login')} class="anchor">{m.login_title()}</a>
+    </p>
   {/if}
 </AuthShell>

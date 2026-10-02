@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import CatalogApprove from '$lib/components/admin/CatalogApprove.svelte';
   import CatalogDialog from '$lib/components/admin/CatalogDialog.svelte';
@@ -42,6 +43,10 @@
 <svelte:head><title>{m.admin_queue_title()}</title></svelte:head>
 
 <section class="pt-8 pb-4">
+  <Breadcrumbs
+    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_queue_title() }]}
+    class="mb-6"
+  />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
     {m.admin_queue_title()}
   </h1>

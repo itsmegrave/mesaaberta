@@ -78,26 +78,68 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('href', '/');
   });
 
-  it('shows expanded account controls and keeps labels inside the collapsed rail', async () => {
-    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+  it('opens as a sidebar: collapse beside the wordmark, an account group, a theme switch and the account pinned last', async () => {
+    render(Layout, {
+      children,
+      data: {
+        ...signedOut,
+        released: true,
+        account: { ...adminAccount, messagesUnread: 2, notifications: { unread: 4, latest: [] } },
+      },
+    });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     const collapse = nav.getByRole('button', { name: 'Recolher menu' });
-    await expect.element(collapse).toHaveTextContent('Recolher menu');
-    await expect.element(nav.getByText('Mestre Silva', { exact: true })).toBeVisible();
+    const brand = nav.getByRole('link', { name: 'Mesa Aberta' }).element();
+
+    expect(collapse.element().parentElement).toBe(brand.parentElement);
+    for (const name of ['Mesas', 'Abrir uma mesa', 'Minhas mesas']) {
+      await expect.element(nav.getByRole('link', { name })).toBeVisible();
+    }
+    await expect.element(nav.getByText('Sua conta', { exact: true })).toBeVisible();
+    await expect
+      .element(nav.getByRole('link', { name: 'Mensagens, 2 não lidas' }))
+      .toHaveAttribute('href', '/messages');
+    await expect
+      .element(nav.getByRole('button', { name: 'Notificações: 4 sem ler' }))
+      .toBeVisible();
+    await expect.element(nav.getByRole('link', { name: /Admin/ })).toBeVisible();
+    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
+    expect(nav.element().contains(account)).toBe(true);
+    // The switch comes before the account block, which is last.
+    expect(account.compareDocumentPosition(nav.getByRole('switch').element())).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
+  it('draws the open side nav without an inline style, which the CSP blocks', async () => {
+    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+
+    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
+  });
+
+  it('keeps labels inside the collapsed rail, with the theme button and bell together', async () => {
+    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+    await nav.getByRole('button', { name: 'Recolher menu' }).click();
+
+    await expect
+      .element(nav.getByRole('button', { name: 'Expandir menu' }))
+      .toHaveAttribute('aria-expanded', 'false');
     const theme = nav.getByRole('button', { name: 'Tema escuro' }).element();
     const bell = nav.getByRole('button', { name: 'Notificações', exact: true }).element();
     expect(theme.parentElement).toBe(bell.parentElement);
     expect(theme.parentElement?.previousElementSibling?.tagName).toBe('HR');
-    await collapse.click();
-    await expect
-      .element(nav.getByRole('button', { name: 'Expandir menu' }))
-      .toHaveAttribute('aria-expanded', 'false');
     const label = nav.getByRole('link', { name: 'Minhas mesas' }).element()
       .lastElementChild as HTMLElement;
     expect(getComputedStyle(label).whiteSpace).toBe('normal');
     expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
     await nav.getByRole('button', { name: 'Expandir menu' }).click();
-    await expect.element(collapse).toHaveTextContent('Recolher menu');
+    await expect
+      .element(nav.getByRole('button', { name: 'Recolher menu' }))
+      .toHaveAttribute('aria-expanded', 'true');
   });
 
   describe('footer credits', () => {
@@ -212,7 +254,10 @@ describe('+layout.svelte', () => {
         .click();
 
       await expect
-        .element(accountMenu().getByRole('link', { name: 'Perfil' }))
+        .element(accountMenu().getByRole('link', { name: 'Ver meu perfil' }))
+        .toHaveAttribute('href', '/u/ana');
+      await expect
+        .element(accountMenu().getByRole('link', { name: 'Editar perfil' }))
         .toHaveAttribute('href', '/account/profile');
       await expect
         .element(accountMenu().getByRole('link', { name: 'Minhas mesas' }))
@@ -275,7 +320,7 @@ describe('+layout.svelte', () => {
       });
 
       await expect
-        .element(navigation().getByRole('link', { name: 'Abrir mesa' }))
+        .element(navigation().getByRole('link', { name: 'Abrir uma mesa' }))
         .toHaveAttribute('href', '/tables/new');
     });
 

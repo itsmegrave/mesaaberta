@@ -41,11 +41,9 @@ test('anonymous direct entry renders identity, safe social links and cards witho
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`@${gm.username}`);
   const breadcrumbs = page.getByRole('navigation', { name: 'Trilha de navegação' });
   await expect(breadcrumbs).toBeVisible();
-  await expect(breadcrumbs.getByRole('link', { name: 'Mesas abertas' })).toHaveAttribute(
-    'href',
-    '/tables',
-  );
-  await expect(page.getByRole('link', { name: 'Voltar para mesas' })).toHaveCount(0);
+  await expect(breadcrumbs.getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
+  await expect(breadcrumbs.getByText(`@${gm.username}`)).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: /^Voltar/ })).toHaveCount(0);
   await expect(page.getByText('Ainda sem avaliações')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Editar perfil' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Abrir Instagram em nova aba' })).toHaveAttribute(

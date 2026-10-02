@@ -51,4 +51,47 @@ describe('Breadcrumbs', () => {
       expect(svg.getAttribute('aria-hidden')).toBe('true');
     }
   });
+
+  it('starts with the house icon on "Início"', async () => {
+    render(Breadcrumbs, { items: [{ label: 'Mesas' }] });
+
+    const home = trail().getByRole('link', { name: 'Início' }).element();
+    expect(home.querySelector('[data-icon="game-icons:house"]')).not.toBeNull();
+  });
+
+  it('keeps a short trail whole, with no "…" menu', async () => {
+    render(Breadcrumbs, {
+      items: [{ label: 'Minhas mesas', href: '/account/tables' }, { label: 'Abrir mesa' }],
+    });
+
+    expect(trail().getByRole('button').elements()).toHaveLength(0);
+  });
+
+  it('folds the middle of a trail over three levels into a menu for phones', async () => {
+    render(Breadcrumbs, {
+      items: [
+        { label: 'Minhas mesas', href: '/account/tables' },
+        { label: 'A Torre das Marés Mortas', href: '/tables/a-torre' },
+        { label: 'Editar mesa' },
+      ],
+    });
+
+    await expect
+      .element(trail().getByRole('button', { name: 'Mostrar os níveis do meio' }))
+      .toBeInTheDocument();
+  });
+
+  it('lists each level once, folded or not, so assistive technology and tests see one trail', async () => {
+    render(Breadcrumbs, {
+      items: [
+        { label: 'Minhas mesas', href: '/account/tables' },
+        { label: 'A Torre das Marés Mortas', href: '/tables/a-torre' },
+        { label: 'Editar mesa' },
+      ],
+    });
+
+    expect(trail().getByText('Editar mesa').elements()).toHaveLength(1);
+    expect(trail().getByText('Minhas mesas').elements()).toHaveLength(1);
+    expect(trail().element().querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
 });

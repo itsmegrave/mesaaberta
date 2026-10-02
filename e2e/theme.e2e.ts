@@ -64,8 +64,16 @@ const contrast = (a: string, b: string) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
+// A phone has the header's icon button; the open side nav (desktop) has a labelled switch. Only
+// one of them is visible at a time.
 const toggle = (page: import('@playwright/test').Page) =>
-  page.getByRole('button', { name: 'Tema escuro' });
+  page
+    .getByRole('button', { name: 'Tema escuro' })
+    .or(page.getByRole('switch', { name: 'Tema escuro' }));
+const isOn = (page: import('@playwright/test').Page) =>
+  toggle(page).evaluate(
+    (el) => (el.getAttribute('aria-checked') ?? el.getAttribute('aria-pressed')) === 'true',
+  );
 
 test.describe('the mode follows the system by default', () => {
   test('a dark system gets a dark page and a light system a pale one, both readable', async ({
@@ -113,7 +121,7 @@ test.describe('a manual choice overrides the system', () => {
     await page.reload();
 
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
-    await expect(toggle(page)).toHaveAttribute('aria-pressed', 'true');
+    expect(await isOn(page)).toBe(true);
     await context.close();
   });
 
