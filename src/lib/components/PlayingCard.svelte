@@ -1,6 +1,5 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
-  import type { TableStatus } from '$lib/tables/status';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -14,7 +13,6 @@
     systemName: string;
     gmName: string;
     status: 'pending' | 'confirmed';
-    tableStatus: TableStatus;
     timezone: string;
     nextAt: Date | null;
     canRate: boolean;

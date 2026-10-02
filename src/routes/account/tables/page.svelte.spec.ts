@@ -2,6 +2,7 @@ import '../../layout.css';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import type { TableStatus } from '$lib/tables/status';
 import Page from './+page.svelte';
 
 const person = (n: number, name: string) => ({
@@ -14,7 +15,7 @@ const playing = {
   systemName: 'Daggerheart',
   gmName: 'Mestra Ana',
   status: 'confirmed' as const,
-  tableStatus: 'active' as const,
+  tableStatus: 'active' as TableStatus,
   timezone: 'America/Sao_Paulo',
   nextAt: new Date('2026-10-10T22:00:00Z'),
   canRate: false,
@@ -23,7 +24,7 @@ const playing = {
 const running = {
   slug: 'cronicas',
   title: 'Crônicas de Arton',
-  tableStatus: 'active' as const,
+  tableStatus: 'active' as TableStatus,
   capacity: 4,
   timezone: 'America/Sao_Paulo',
   nextAt: new Date('2026-10-10T22:00:00Z'),
@@ -143,7 +144,7 @@ describe('Minhas mesas', () => {
   });
 
   describe('a session whose date has passed', () => {
-    const awaiting = { ...running, tableStatus: 'awaiting_confirmation' as const };
+    const awaiting = { ...running, tableStatus: 'awaiting_confirmation' as TableStatus };
 
     it('asks the GM whether it happened, posting to the table’s manage page and coming back here', async () => {
       await page.viewport(1280, 800);
@@ -171,7 +172,7 @@ describe('Minhas mesas', () => {
     it('shows no table status to a player or a GM: statuses are only for admin', async () => {
       await page.viewport(1280, 800);
       show({
-        playing: [{ ...playing, tableStatus: 'concluded' as const }],
+        playing: [{ ...playing, tableStatus: 'concluded' as TableStatus }],
         running: [awaiting],
       });
 
