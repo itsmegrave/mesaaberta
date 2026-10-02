@@ -2,6 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { initialForm } from '$lib/forms/contract';
+import { MESSAGE_MAX_LENGTH } from '$lib/messages/schema';
 import Composer from './Composer.svelte';
 
 // There is no SvelteKit app around a component test, so handing a result to the router has nothing
@@ -50,6 +51,32 @@ describe('Composer.svelte', () => {
     await page.getByRole('option', { name: /dado/ }).first().click();
     await expect.element(box).toHaveValue('Olá🎲 mesa');
     await expect.element(box).toHaveFocus();
+    expect(onpending).not.toHaveBeenCalled();
+  });
+
+  it('does not send while an input method is composing', async () => {
+    const { onpending, box } = await setup();
+    await box.fill('にほん');
+    const element = box.element() as HTMLTextAreaElement;
+    element.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Enter',
+        isComposing: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(onpending).not.toHaveBeenCalled();
+  });
+
+  it('refuses an emoji that would pass the message limit', async () => {
+    const { onpending, box } = await setup();
+    await box.fill('a'.repeat(MESSAGE_MAX_LENGTH));
+    await page.getByRole('button', { name: 'Escolher emoji' }).click();
+    await page.getByRole('combobox', { name: 'Procurar' }).fill('dado');
+    await page.getByRole('option', { name: /dado/ }).first().click();
+    await expect.element(box).toHaveValue('a'.repeat(MESSAGE_MAX_LENGTH));
     expect(onpending).not.toHaveBeenCalled();
   });
 });
