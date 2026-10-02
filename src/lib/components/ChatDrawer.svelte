@@ -65,7 +65,7 @@
       class="fixed right-4 bottom-24 z-30 btn size-14 rounded-full preset-filled-primary-500 p-0 shadow-lg md:right-6 md:bottom-6"
       aria-label={m.messages_drawer_open()}
     >
-      <Icon name="message-circle" size={24} />
+      <Icon name="game-icons:scroll-quill" size={24} />
       {#if unread > 0}<span class="absolute -top-1 -right-1 badge preset-filled-error-500"
           >{unread}</span
         >{/if}

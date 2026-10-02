@@ -93,7 +93,7 @@
               title={m.messages_group_badge()}
               class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border border-surface-200-800 bg-surface-100-900"
             >
-              <Icon name="message-circle" size={12} />
+              <Icon name="game-icons:scroll-quill" size={12} />
               <span class="sr-only">{m.messages_group_badge()}</span>
             </span>
           {/if}

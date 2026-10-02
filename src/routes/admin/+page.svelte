@@ -25,13 +25,13 @@
     {
       label: m.admin_profiles(),
       value: data.people.total,
-      icon: 'users',
+      icon: 'game-icons:meeple',
       detail: m.admin_new_profiles({ count: number(data.people.new30d) }),
     },
     {
       label: m.admin_tables(),
       value: data.tables.total,
-      icon: 'dices',
+      icon: 'game-icons:tavern-sign',
       detail: m.admin_active_tables({ count: number(data.tables.active) }),
     },
     {

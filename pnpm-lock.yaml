@@ -184,9 +184,9 @@ importers:
       '@iconify-svelte/game-icons':
         specifier: ^1.0.3
         version: 1.0.3(svelte@5.57.1(@typescript-eslint/types@8.70.0))
-      '@iconify-svelte/lucide':
-        specifier: ^1.0.66
-        version: 1.0.66(svelte@5.57.1(@typescript-eslint/types@8.70.0))
+      '@iconify-svelte/reicon':
+        specifier: ^1.0.3
+        version: 1.0.3(svelte@5.57.1(@typescript-eslint/types@8.70.0))
       '@iconify-svelte/simple-icons':
         specifier: 1.0.44
         version: 1.0.44(svelte@5.57.1(@typescript-eslint/types@8.70.0))
@@ -965,8 +965,8 @@ packages:
   '@iconify-svelte/game-icons@1.0.3':
     resolution: {integrity: sha512-7M52ntCWfpSEG44MtPgVn+SMJsuCOyFcx517VasH0qyAevsFG6RwYVH2+nxOIhAVI8yyuNXezTjmwwvlfoMMlw==}
 
-  '@iconify-svelte/lucide@1.0.66':
-    resolution: {integrity: sha512-uAye+K7p9Tvk+Lo+wbWoZ3ZCVxX9P4GQTWWBLEMu6DlCwz/uC48YKbx++8BMoNL1R45h29dsQFTy3lmuhUQ1Iw==}
+  '@iconify-svelte/reicon@1.0.3':
+    resolution: {integrity: sha512-VvT8rOjSh4X/ttPPZ9cmGeq/XWDJy4iSIJDdORq05eH7TYL+bzCREEhKOot00b1LC3+qSLYFTmEXFp+11gCNpw==}
 
   '@iconify-svelte/simple-icons@1.0.44':
     resolution: {integrity: sha512-X44aeHbNGrsk0llzf4OdszR513h+pEZxMI8ClOapKqKhLqTEGZ7hEN2ZtTf4TRei17T7WZawTj6qJFsWldqvfQ==}
@@ -4519,7 +4519,7 @@ snapshots:
     transitivePeerDependencies:
       - svelte
 
-  '@iconify-svelte/lucide@1.0.66(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
+  '@iconify-svelte/reicon@1.0.3(svelte@5.57.1(@typescript-eslint/types@8.70.0))':
     dependencies:
       '@iconify/css-svelte': 1.0.1(svelte@5.57.1(@typescript-eslint/types@8.70.0))
     transitivePeerDependencies:

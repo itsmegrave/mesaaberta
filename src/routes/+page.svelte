@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import { pageQuery } from '$lib/query/page.svelte';
   import TableCard from '$lib/components/TableCard.svelte';
@@ -106,8 +107,8 @@
       </a>
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-12 w-full rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
-        >{m.hero_open_cta()}</a
+        class="btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+        ><Icon name="game-icons:dice-twenty-faces-twenty" size={20} />{m.hero_open_cta()}</a
       >
     </div>
   </div>
@@ -321,20 +322,7 @@
         href={localizedHref('/tables/new', locale)}
         class="btn h-12 w-full gap-2 rounded-lg bg-white px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          class="shrink-0"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
+        <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.hero_open_cta()}
       </a>
     </div>

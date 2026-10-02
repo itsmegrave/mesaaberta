@@ -2,6 +2,8 @@
   import type { Snippet } from 'svelte';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import Form from './Form.svelte';
+  import Icon from './Icon.svelte';
+  import type { IconName } from '$lib/icons/names';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import type { FormMessage } from '$lib/forms/message';
   import { actionSchema } from '$lib/tables/registration';
@@ -16,6 +18,8 @@
     class?: string;
     /** The button's text. With it, the form draws its own `SubmitButton`, busy while it posts. */
     label?: string;
+    /** An icon before `label`. */
+    icon?: IconName;
     buttonClass?: string;
     /** Shown as a toast when the action went through. */
     success?: string;
@@ -33,6 +37,7 @@
     next = '',
     class: className = '',
     label,
+    icon,
     buttonClass = '',
     success,
     onsuccess,
@@ -66,7 +71,8 @@
       submitting={form.pending}
       delayed={form.delayed}
       timeout={form.timeout}
-      class={buttonClass}>{label}</SubmitButton
+      class={buttonClass}
+      >{#if icon}<Icon name={icon} size={20} />{/if}{label}</SubmitButton
     >
   {:else}
     {@render children?.()}

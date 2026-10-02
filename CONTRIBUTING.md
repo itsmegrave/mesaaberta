@@ -38,9 +38,9 @@ Review migrated controls for accessibility and mobile/desktop and light/dark vis
 
 ## Icons
 
-Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Lucide (`@iconify-svelte/lucide`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`).
+Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`).
 
-To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Lucide](https://icon-sets.iconify.design/lucide/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). Game Icons names carry the `game-icons:` prefix. Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `pnpm icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
+To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Reicon](https://icon-sets.iconify.design/reicon/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). UI glyphs use Reicon's filled weight (the `-filled` names) so they sit with the solid Game Icons; arrows, chevrons, add, check and close have only a line version. Game Icons names carry the `game-icons:` prefix, and navigation, roles and messaging use them: `tavern-sign` (Mesas), `dice-twenty-faces-twenty` (Abrir mesa), `tabletop-players` (Minhas mesas), `black-knight-helm` (Admin), `meeple` (people), `dungeon-gate` (Entrar only), `bar-stool` (Pedir vaga), `exit-door` (Sair), `scroll-quill` (every messaging icon, no speech bubbles) and `house` (Início in breadcrumbs). Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `pnpm icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
 
 ## Translations
 

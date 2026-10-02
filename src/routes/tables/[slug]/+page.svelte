@@ -370,7 +370,8 @@
                 ? toast.pending(m.toast_pending())
                 : toast.success(m.toast_confirmed())}
             label={table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
-            buttonClass="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+            icon="game-icons:bar-stool"
+            buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
           />
         {/if}
       </div>
@@ -379,7 +380,7 @@
           href={localizedHref(`/tables/${table.slug}/chat`, locale)}
           class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
         >
-          <Icon name="message-circle" size={18} />
+          <Icon name="game-icons:scroll-quill" size={18} />
           {m.messages_table_chat()}
         </a>
       {/if}
@@ -389,7 +390,8 @@
             action="?/talk"
             class="mt-3"
             label={m.messages_talk_to_gm()}
-            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            icon="game-icons:scroll-quill"
+            buttonClass="btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
           />
         {:else}
           <Button
@@ -399,7 +401,7 @@
             aria-describedby="gm-dm-off"
             class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold"
           >
-            <Icon name="message-circle" size={18} />
+            <Icon name="game-icons:scroll-quill" size={18} />
             {m.messages_talk_to_gm()}
           </Button>
           <p id="gm-dm-off" class="mt-2 text-sm text-muted">{m.messages_gm_dm_off()}</p>

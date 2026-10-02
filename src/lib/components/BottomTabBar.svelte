@@ -32,7 +32,7 @@
         ? 'bg-surface-200-800'
         : 'bg-transparent'}"
     >
-      <Icon name="game-icons:dice-twenty-faces-twenty" size={22} />
+      <Icon name="game-icons:tavern-sign" size={22} />
     </span>
     {m.nav_tables()}
   </a>
@@ -47,7 +47,7 @@
         ? 'ring-2 ring-warning-500'
         : ''}"
     >
-      <Icon name="game-icons:card-draw" size={22} />
+      <Icon name="game-icons:dice-twenty-faces-twenty" size={22} />
     </span>
     {m.nav_open_table_short()}
   </a>

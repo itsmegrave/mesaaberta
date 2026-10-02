@@ -68,13 +68,13 @@
       released && {
         href: '/tables',
         label: m.nav_tables(),
-        icon: 'game-icons:dice-twenty-faces-twenty' as IconName,
+        icon: 'game-icons:tavern-sign' as IconName,
         current: pathname.startsWith('/tables') && pathname !== '/tables/new',
       },
       account && {
         href: '/tables/new',
         label: expanded ? m.nav_open_table() : m.nav_open_table_short(),
-        icon: 'game-icons:card-draw' as IconName,
+        icon: 'game-icons:dice-twenty-faces-twenty' as IconName,
         current: pathname === '/tables/new',
       },
       account && {

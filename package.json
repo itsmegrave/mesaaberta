@@ -77,7 +77,7 @@
     "@fontsource-variable/cinzel": "^5.3.0",
     "@growthbook/growthbook": "^1.7.0",
     "@iconify-svelte/game-icons": "^1.0.3",
-    "@iconify-svelte/lucide": "^1.0.66",
+    "@iconify-svelte/reicon": "^1.0.3",
     "@iconify-svelte/simple-icons": "1.0.44",
     "@iconify-svelte/svg-spinners": "^1.0.2",
     "@sentry/cloudflare": "11.1.0",

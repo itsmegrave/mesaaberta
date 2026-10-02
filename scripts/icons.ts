@@ -8,6 +8,10 @@ const registry = readFileSync('src/lib/icons/registry.ts', 'utf8');
 const drawings = new Map<string, { body: string; width: number; height: number }>();
 const attributes = new Set([
   'fill',
+  'fill-rule',
+  'clip-rule',
+  'fill-opacity',
+  'opacity',
   'stroke',
   'stroke-linecap',
   'stroke-linejoin',
