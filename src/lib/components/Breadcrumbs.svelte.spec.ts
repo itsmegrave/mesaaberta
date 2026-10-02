@@ -80,4 +80,18 @@ describe('Breadcrumbs', () => {
       .element(trail().getByRole('button', { name: 'Mostrar os níveis do meio' }))
       .toBeInTheDocument();
   });
+
+  it('lists each level once, folded or not, so assistive technology and tests see one trail', async () => {
+    render(Breadcrumbs, {
+      items: [
+        { label: 'Minhas mesas', href: '/account/tables' },
+        { label: 'A Torre das Marés Mortas', href: '/tables/a-torre' },
+        { label: 'Editar mesa' },
+      ],
+    });
+
+    expect(trail().getByText('Editar mesa').elements()).toHaveLength(1);
+    expect(trail().getByText('Minhas mesas').elements()).toHaveLength(1);
+    expect(trail().element().querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
 });
