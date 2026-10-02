@@ -198,6 +198,20 @@ describe('direct messages', () => {
     await expect(openDirect(test.db, gm, gm.id)).rejects.toThrow(Forbidden);
   });
 
+  it('lets an admin write to anyone who takes direct messages, and no one else to a stranger', async () => {
+    const admin: Actor = { id: id(8), role: 'admin', status: 'active' };
+    await test.db.insert(profiles).values({ id: admin.id, username: 'p8' });
+    const stranger = person(4);
+
+    await expect(openDirect(test.db, admin, stranger.id)).resolves.toBeDefined();
+    // Still not oneself, and still not someone who turned direct messages off.
+    await expect(openDirect(test.db, admin, admin.id)).rejects.toThrow(Forbidden);
+    await setDirectMessages(test.db, stranger.id, false);
+    await expect(openDirect(test.db, admin, person(3).id)).resolves.toBeDefined();
+    await expect(openDirect(test.db, person(2), stranger.id)).rejects.toThrow();
+    await setDirectMessages(test.db, stranger.id, true);
+  });
+
   it('cannot be started when the GM turned direct messages off, and stops taking new ones', async () => {
     const other = person(5);
     const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);

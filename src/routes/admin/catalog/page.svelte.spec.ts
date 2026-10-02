@@ -46,8 +46,8 @@ describe('admin catalog', () => {
     show();
 
     await expect.element(page.getByRole('rowheader', { name: /Foundry VTT/ })).toBeVisible();
-    await expect.element(page.getByText('Sugestão de @bruno')).toBeVisible();
-    await expect.element(page.getByText('Catálogo', { exact: true }).nth(1)).toBeInTheDocument();
+    await expect.element(page.getByText('Sugerida por @bruno')).toBeVisible();
+    await expect.element(page.getByText('Criada por admin')).toBeVisible();
     await expect.element(page.getByText('12', { exact: true })).toBeVisible();
   });
 
@@ -99,8 +99,8 @@ describe('admin catalog', () => {
   it('renames from the row, with the current name filled in', async () => {
     show();
 
-    await page.getByRole('button', { name: 'Mais ações para Foundry VTT' }).click();
-    await page.getByRole('button', { name: 'Renomear', exact: true }).click();
+    await page.getByRole('button', { name: 'Mais ações: Foundry VTT' }).click();
+    await page.getByRole('menuitem', { name: 'Renomear', exact: true }).click();
 
     await expect.element(page.getByLabelText('Novo nome')).toHaveValue('Foundry VTT');
   });
@@ -108,9 +108,11 @@ describe('admin catalog', () => {
   it('keeps Mesclar and Desativar in the row menu, and Desativar asks first', async () => {
     show();
 
-    await page.getByRole('button', { name: 'Mais ações para Foundry VTT' }).click();
-    await expect.element(page.getByRole('button', { name: 'Mesclar', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Desativar', exact: true }).click();
+    await page.getByRole('button', { name: 'Mais ações: Foundry VTT' }).click();
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Mesclar…', exact: true }))
+      .toBeVisible();
+    await page.getByRole('menuitem', { name: 'Desativar…', exact: true }).click();
 
     await expect.element(page.getByText('Desativar “Foundry VTT”?')).toBeVisible();
     await expect

@@ -7,7 +7,7 @@ import {
   profiles,
   registrations,
 } from '../db/schema';
-import type { Actor } from '../auth/policy';
+import { can, type Actor } from '../auth/policy';
 
 type Conversation = typeof conversations.$inferSelect;
 
@@ -84,8 +84,8 @@ export async function canSend(db: AnyDb, actor: Actor | null, conversation: Conv
 
 /**
  * Whether the actor may start a direct message to `recipientId`, and why not. A person may write to
- * the GM of an active table (before joining too), and a GM may write to anyone with a request or a
- * seat at one of their tables. Either way the recipient must take direct messages.
+ * the GM of an active table (before joining too), a GM may write to anyone with a request or a
+ * seat at one of their tables, and an admin may write to anyone. Either way the recipient must take direct messages.
  */
 export async function directBlocker(
   db: AnyDb,
@@ -99,6 +99,9 @@ export async function directBlocker(
     .from(profiles)
     .where(eq(profiles.id, recipientId));
   if (!recipient || recipient.status !== 'active') return 'forbidden';
+
+  // An admin may write to anyone (from the user's page in admin), if they take direct messages.
+  if (can(actor, 'moderation:manage')) return recipient.enabled ? null : 'disabled';
 
   const [toGm] = await db
     .select({ id: gameTables.id })

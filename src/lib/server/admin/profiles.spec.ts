@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createTestDb } from '../db/test-db';
-import { profiles } from '../db/schema';
-import { adminProfile, listAdminProfiles } from './profiles';
+import { gameTables, profiles, ratings, registrations, systems } from '../db/schema';
+import { adminActivity, adminProfile, listAdminProfiles } from './profiles';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -109,4 +109,49 @@ it('loads a selected profile by ID, even when suspended or without a username', 
   expect(await adminProfile(test.db, id(1))).toMatchObject({ id: id(1), username: null });
   expect(await adminProfile(test.db, id(100))).toBeNull();
   expect(await adminProfile(test.db, id(1))).not.toHaveProperty('genderOther');
+});
+
+it('counts what someone plays in and runs, and how they are rated as a GM', async () => {
+  const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+  const table = (n: number, gmId: string, status: 'active' | 'disabled' = 'active') => ({
+    id: id(100 + n),
+    slug: `atividade-${n}`,
+    title: `Mesa ${n}`,
+    kind: 'one_shot' as const,
+    capacity: 4,
+    startsAt: new Date('2099-01-01T20:00:00Z'),
+    durationMinutes: 60,
+    timezone: 'UTC',
+    gmId,
+    systemId: system.id,
+    status,
+  });
+  await test.db
+    .insert(gameTables)
+    .values([table(1, id(3)), table(2, id(3)), table(3, id(3), 'disabled'), table(4, id(5))]);
+  await test.db.insert(registrations).values([
+    { tableId: id(104), playerId: id(3), status: 'confirmed' },
+    { tableId: id(101), playerId: id(7), status: 'pending' },
+    // The ratings come from confirmed seats.
+    { tableId: id(101), playerId: id(9), status: 'confirmed' },
+    { tableId: id(102), playerId: id(9), status: 'confirmed' },
+  ]);
+  await test.db.insert(ratings).values([
+    { tableId: id(101), playerId: id(9), gmScore: 5 },
+    { tableId: id(102), playerId: id(9), gmScore: 4 },
+  ]);
+
+  expect(await adminActivity(test.db, id(3))).toEqual({
+    playing: 1,
+    running: 2,
+    ratings: 2,
+    rating: 4.5,
+  });
+  // A pending request is not a seat, and nobody rated them yet.
+  expect(await adminActivity(test.db, id(7))).toEqual({
+    playing: 0,
+    running: 0,
+    ratings: 0,
+    rating: null,
+  });
 });

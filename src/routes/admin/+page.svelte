@@ -2,6 +2,7 @@
   import Spinner from '$lib/components/Spinner.svelte';
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import KebabMenu from '$lib/components/KebabMenu.svelte';
   import type { IconName } from '$lib/icons/names';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -92,16 +93,29 @@
       <h1 class="text-3xl font-semibold">{m.admin_overview_title()}</h1>
       <p class="mt-2 text-sm text-muted">{m.admin_updated({ time: date(data.updatedAt) })}</p>
     </div>
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
-      disabled={remote.isFetching}
-      onclick={() => remote.refetch()}
-    >
-      {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
-      {m.admin_refresh()}
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button
+        size="custom"
+        type="button"
+        class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
+        disabled={remote.isFetching}
+        onclick={() => remote.refetch()}
+      >
+        {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
+        {m.admin_refresh()}
+      </Button>
+      <KebabMenu
+        name={m.admin_overview_title()}
+        items={[
+          {
+            id: 'platform',
+            label: m.admin_view_platform(),
+            icon: 'external-link',
+            href: localizedHref('/', locale),
+          },
+        ]}
+      />
+    </div>
   </div>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
@@ -132,8 +146,4 @@
       </section>
     {/each}
   </div>
-
-  <a class="mt-6 inline-flex min-h-11 items-center gap-2 anchor" href={localizedHref('/', locale)}
-    ><Icon name="external-link" size={18} />{m.admin_view_platform()}</a
-  >
 </section>

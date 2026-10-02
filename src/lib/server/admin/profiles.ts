@@ -73,6 +73,8 @@ export async function adminProfile(db: AnyDb, id: string) {
       username: profiles.username,
       name: profiles.name,
       status: profiles.status,
+      bannedAt: profiles.bannedAt,
+      bannedUntil: profiles.bannedUntil,
       city: profiles.city,
       timezone: profiles.timezone,
       createdAt: profiles.createdAt,
@@ -84,4 +86,35 @@ export async function adminProfile(db: AnyDb, id: string) {
     .where(eq(profiles.id, id))
     .limit(1);
   return profile ?? null;
+}
+
+/**
+ * What a person does on the platform, for the admin's page about them: the tables they play in and
+ * run (active ones), how the players rated them as a GM, and the reports accepted against the
+ * tables they run.
+ */
+export async function adminActivity(db: AnyDb, id: string) {
+  const [row] = await db
+    .select({
+      playing:
+        sql<number>`(select count(*) from registrations r join game_tables t on t.id = r.table_id where r.player_id = "profiles"."id" and r.status = 'confirmed' and t.status = 'active')`.mapWith(
+          Number,
+        ),
+      running:
+        sql<number>`(select count(*) from game_tables t where t.gm_id = "profiles"."id" and t.status = 'active')`.mapWith(
+          Number,
+        ),
+      ratings:
+        sql<number>`(select count(*) from ratings x join game_tables t on t.id = x.table_id where t.gm_id = "profiles"."id")`.mapWith(
+          Number,
+        ),
+      rating: sql<
+        number | null
+      >`(select avg(x.gm_score) from ratings x join game_tables t on t.id = x.table_id where t.gm_id = "profiles"."id")`.mapWith(
+        (value) => (value === null ? null : Number(value)),
+      ),
+    })
+    .from(profiles)
+    .where(eq(profiles.id, id));
+  return row ?? { playing: 0, running: 0, ratings: 0, rating: null };
 }

@@ -26,6 +26,9 @@
     danger = false,
     write,
     durations = false,
+    choices = BAN_DURATIONS,
+    trigger = true,
+    open = $bindable(false),
     triggerClass = '',
   }: {
     /** The form action, `?/<name>`. */
@@ -46,16 +49,20 @@
     write?: { name: 'note' | 'reason'; label: string; hint: string; required?: boolean };
     /** Asks how long a ban lasts. */
     durations?: boolean;
+    /** The lengths offered: all of them, or one (permanent, for "Banir"), which is not asked. */
+    choices?: readonly BanDuration[];
+    /** Draws its own button; off when a menu item opens the dialog through `open`. */
+    trigger?: boolean;
+    open?: boolean;
     triggerClass?: string;
   } = $props();
 
-  let open = $state(false);
   // svelte-ignore state_referenced_locally
   const form = actionForm<Record<string, string>>({
     initial: {
       ...fields,
       ...(write ? { [write.name]: '' } : {}),
-      ...(durations ? { duration: '' } : {}),
+      ...(durations ? { duration: choices.length === 1 ? choices[0] : '' } : {}),
     },
     schema,
     errorMessage: m.admin_dialog_error,
@@ -103,7 +110,7 @@
   }}
   role={danger ? 'alertdialog' : 'dialog'}
 >
-  <Dialog.Trigger class={triggerClass}>{label}</Dialog.Trigger>
+  {#if trigger}<Dialog.Trigger class={triggerClass}>{label}</Dialog.Trigger>{/if}
   {#if open}
     <Portal>
       <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
@@ -119,14 +126,16 @@
             {#each Object.keys(fields) as name (name)}
               <input type="hidden" {name} value={data[name]} />
             {/each}
-            {#if durations}
+            {#if durations && choices.length === 1}
+              <input type="hidden" name="duration" value={choices[0]} />
+            {:else if durations}
               <fieldset
                 class="grid gap-2"
                 aria-describedby={durationError ? `${id}-duration-error` : undefined}
               >
                 <legend class="label-text font-semibold">{m.moderation_ban_duration()}</legend>
                 <div class="grid grid-cols-2 gap-2">
-                  {#each BAN_DURATIONS as duration (duration)}
+                  {#each choices as duration (duration)}
                     <label
                       class="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-surface-200-800 px-3 has-checked:border-primary-500 has-checked:preset-tonal-primary"
                     >
