@@ -13,7 +13,7 @@ describe('Icon', () => {
     expect(svg.innerHTML).toContain('<path');
   });
   it('embeds the tadpole spinner geometry and can remove animation for reduced motion', async () => {
-    const { container } = render(Icon, { name: 'svg-spinners:tadpole', motion: false });
+    const { container } = await render(Icon, { name: 'svg-spinners:tadpole', motion: false });
     const path = container.querySelector('path')!;
     expect(path.getAttribute('d')).toContain('M12,23');
     expect(container.querySelector('animateTransform')).toBeNull();

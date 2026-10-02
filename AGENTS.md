@@ -14,5 +14,3 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the project workflow, code style, tr
 - Use Tailwind's 4px spacing grid and existing theme tokens for spacing, sizing, radius, borders and color. Avoid arbitrary values and one-off values; add a named token only when the design needs a value the existing scale cannot express.
 - Calculated layout values and precise illustration geometry may use arbitrary values when needed; leave a short code comment explaining non-obvious cases.
 - When changing a screen or component, review its mobile and desktop padding, gaps, border weight and color, radius, and focus treatment for consistency with nearby UI.
-
-See docs/ui-migration-inventory.md for the control inventory and native POST exceptions.

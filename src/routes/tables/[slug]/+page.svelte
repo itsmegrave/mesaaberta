@@ -159,8 +159,9 @@
         <p>
           <span class="block text-sm font-semibold text-muted">{m.table_gm()}</span>
           {#if data.gmUsername}
-            <a href={localizedHref(`/${data.gmUsername}`, locale)} class="text-lg link-underline"
-              >{atHandle(table.gmName)}</a
+            <a
+              href={localizedHref(`/u/${encodeURIComponent(data.gmUsername)}`, locale)}
+              class="text-lg link-underline">{atHandle(table.gmName)}</a
             >
           {:else}
             <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>

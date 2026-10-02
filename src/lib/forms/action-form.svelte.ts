@@ -45,8 +45,9 @@ export function actionForm<T extends Record<string, unknown>>(options: {
     }),
     () => client,
   );
+  const initialValues = structuredClone($state.snapshot(options.initial)) as T;
   const form = createForm(() => ({
-    defaultValues: options.initial,
+    defaultValues: initialValues,
     validators: {
       onSubmit: ({ value }) => {
         const parsed = options.schema.safeParse(value);
@@ -87,12 +88,20 @@ export function actionForm<T extends Record<string, unknown>>(options: {
   }));
   const values = form.useSelector((state) => state.values);
   const dirty = form.useSelector((state) => state.isDirty);
+  const currentValues = (): T => {
+    // Track the selector, but read the store synchronously: hydration can restore an
+    // input before the selector subscribes, and must not overwrite that first edit.
+    void values.current;
+    return form.state.values;
+  };
   // A cloned writable Svelte binding for compound fields; TanStack remains the source of truth.
   // Never mutate TanStack's snapshot in place through a nested bind:value/group.
+  // Form values are plain fields, arrays and Files; removing proxies preserves that contract.
+  const snapshot = (value: T): T => structuredClone($state.snapshot(value)) as T;
   const draft = toStore(
-    () => structuredClone($state.snapshot(values.current)),
-    (next) => {
-      next = $state.snapshot(next);
+    () => snapshot(currentValues()),
+    (next: T) => {
+      next = snapshot(next);
       for (const field of Object.keys(next)) {
         form.setFieldValue(field as DeepKeys<T>, next[field] as DeepValue<T, DeepKeys<T>>);
       }
@@ -101,10 +110,11 @@ export function actionForm<T extends Record<string, unknown>>(options: {
   return {
     draft,
     get dirty() {
-      return dirty.current;
+      void dirty.current;
+      return form.state.isDirty;
     },
     get values() {
-      return values.current;
+      return currentValues();
     },
     get message() {
       return message;
@@ -125,7 +135,7 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       // Edits made while the request was in flight remain unsaved.
       if (
         sentValues &&
-        JSON.stringify($state.snapshot(values.current)) === JSON.stringify(sentValues)
+        JSON.stringify($state.snapshot(currentValues())) === JSON.stringify(sentValues)
       ) {
         form.reset(sentValues);
         errors = {};
@@ -147,7 +157,7 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       event.preventDefault();
       if (pending) return;
       const element = event.currentTarget as HTMLFormElement;
-      sentValues = structuredClone($state.snapshot(values.current));
+      sentValues = snapshot(currentValues());
       submission = { action: element.action, data: new FormData(element, event.submitter) };
       pending = true;
       const slow = setTimeout(() => {
