@@ -75,10 +75,10 @@ describe('RunningCard', () => {
     await expect.element(page.getByText('Ninguém ainda.')).toBeVisible();
   });
 
-  it('says so when the table is disabled or has no session left', async () => {
+  it('says so when the table has no session left, without a table status', async () => {
     render(RunningCard, props({ tableStatus: 'disabled', nextAt: null }));
 
-    await expect.element(page.getByText('Mesa desativada')).toBeVisible();
+    await expect.element(page.getByText('Mesa desativada')).not.toBeInTheDocument();
     await expect.element(page.getByText('Esta mesa não tem mais sessões marcadas.')).toBeVisible();
   });
 

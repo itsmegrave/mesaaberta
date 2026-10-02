@@ -264,11 +264,13 @@ export type InboxItem = Awaited<ReturnType<typeof listInbox>>['items'][number];
  * conversation nobody wrote in yet is left out. `page` is 1-based; a page past the last throws
  * `NotFound`.
  */
-export async function listInbox(db: AnyDb, profileId: string, page = 1) {
+export async function listInbox(db: AnyDb, profileId: string, page = 1, kind?: 'direct' | 'table') {
   const visible = and(
     eq(conversationMembers.profileId, profileId),
     sql`(${conversations.kind} = 'table' OR exists (select 1 from ${messages} where ${messages.conversationId} = ${conversations.id}))`,
+    kind ? eq(conversations.kind, kind) : undefined,
   );
+  const unreadByKind = await unreadConversationsByKind(db, profileId);
   const [{ total }] = await db
     .select({ total: count() })
     .from(conversationMembers)
@@ -296,7 +298,7 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1) {
     .limit(INBOX_PAGE_SIZE)
     .offset((page - 1) * INBOX_PAGE_SIZE);
   const ids = rows.map((row) => row.id);
-  if (ids.length === 0) return { items: [], page, pages, total };
+  if (ids.length === 0) return { items: [], page, pages, total, unreadByKind };
 
   const last = await db
     .selectDistinctOn([messages.conversationId], {
@@ -375,7 +377,7 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1) {
       muted: row.mutedAt !== null,
     };
   });
-  return { items, page, pages, total };
+  return { items, page, pages, total, unreadByKind };
 }
 
 /** A conversation with what the header needs, for a member. Throws `NotFound` for anyone else. */
@@ -550,6 +552,36 @@ export async function setMuted(
     )
     .returning({ id: conversationMembers.conversationId });
   if (updated.length === 0) throw new NotFound('no such conversation');
+}
+
+/** The conversations with something unread, direct ones and the tables' apart: the inbox's tabs. */
+export async function unreadConversationsByKind(
+  db: AnyDb,
+  profileId: string,
+): Promise<{ direct: number; table: number }> {
+  const rows = await db
+    .select({
+      kind: conversations.kind,
+      unread: sql<number>`count(distinct ${messages.conversationId})::int`,
+    })
+    .from(messages)
+    .innerJoin(conversations, eq(conversations.id, messages.conversationId))
+    .innerJoin(
+      conversationMembers,
+      and(
+        eq(conversationMembers.conversationId, messages.conversationId),
+        eq(conversationMembers.profileId, profileId),
+      ),
+    )
+    .where(
+      and(
+        sql`${messages.senderId} is distinct from ${profileId}`,
+        sql`(${conversationMembers.lastReadAt} is null or ${messages.createdAt} > ${conversationMembers.lastReadAt})`,
+      ),
+    )
+    .groupBy(conversations.kind);
+  const of = (kind: 'direct' | 'table') => rows.find((row) => row.kind === kind)?.unread ?? 0;
+  return { direct: of('direct'), table: of('table') };
 }
 
 /** How many conversations have messages the person has not read. The inbox badge. */

@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import { onMount } from 'svelte';
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+  import { Dialog, Portal, Tabs } from '@skeletonlabs/skeleton-svelte';
   import { createQuery } from '@tanstack/svelte-query';
   import ChatThread from './ChatThread.svelte';
   import InboxList, { type InboxItem } from './InboxList.svelte';
@@ -21,17 +21,23 @@
   onMount(() => (mounted = true));
   let selected = $state<string | null>(null);
   let inboxPage = $state(1);
+  // "Diretas" and "Mesas": two lists of the same inbox, each with how many conversations have
+  // something unread.
+  type Kind = 'direct' | 'table';
+  let tab = $state<Kind>('direct');
+  let unreadByKind = $state<{ direct: number; table: number } | null>(null);
   const client = queryClient();
   const locale = getLocale();
   const inbox = createQuery(
     () => ({
-      queryKey: ['messages-inbox', viewerId, inboxPage],
+      queryKey: ['messages-inbox', viewerId, tab, inboxPage],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
-        apiRead<{ items: InboxItem[]; page: number; pages: number }>(
-          `/api/messages/inbox?page=${inboxPage}`,
-          signal,
-          viewerId,
-        ),
+        apiRead<{
+          items: InboxItem[];
+          page: number;
+          pages: number;
+          unreadByKind: { direct: number; table: number };
+        }>(`/api/messages/inbox?page=${inboxPage}&kind=${tab}`, signal, viewerId),
       enabled: open && !selected,
       refetchInterval: open && !selected ? 30_000 : false,
     }),
@@ -47,6 +53,22 @@
     }),
     () => client,
   );
+  $effect(() => {
+    if (inbox.data) unreadByKind = inbox.data.unreadByKind;
+  });
+  // Opening the drawer lands on the tab with something to read, direct messages first.
+  let landed = false;
+  $effect(() => {
+    if (!open) landed = false;
+    else if (!landed && unreadByKind) {
+      landed = true;
+      if (unreadByKind.direct === 0 && unreadByKind.table > 0) changeTab('table');
+    }
+  });
+  const changeTab = (next: Kind) => {
+    tab = next;
+    inboxPage = 1;
+  };
   const back = () => {
     selected = null;
     void inbox.refetch();
@@ -63,7 +85,9 @@
   >
     <Dialog.Trigger
       class="fixed right-4 bottom-24 z-30 btn size-14 rounded-full preset-filled-primary-500 p-0 shadow-lg md:right-6 md:bottom-6"
-      aria-label={m.messages_drawer_open()}
+      aria-label={unread > 0
+        ? m.messages_drawer_open_unread({ count: unread })
+        : m.messages_drawer_open()}
     >
       <Icon name="game-icons:scroll-quill" size={24} />
       {#if unread > 0}<span class="absolute -top-1 -right-1 badge preset-filled-error-500"
@@ -102,27 +126,65 @@
                   >{m.messages_retry_load()}</Button
                 >
                 <Button size="custom" class="btn preset-tonal" onclick={back}
-                  >{m.messages_back()}</Button
+                  >{m.messages_title()}</Button
                 >
               {:else if thread.data}
                 {#key selected}<ChatThread data={thread.data} drawer onback={back} />{/key}
               {:else}<p role="status">{m.nav_loading()}</p>{/if}
-            {:else if inbox.isError}
-              <p role="alert">{m.messages_error_generic()}</p>
-              <Button size="custom" class="btn preset-tonal" onclick={() => inbox.refetch()}
-                >{m.messages_retry_load()}</Button
+            {:else}
+              <Tabs
+                value={tab}
+                onValueChange={(details) => changeTab(details.value as Kind)}
+                class="flex min-h-0 flex-1 flex-col"
               >
-            {:else if inbox.data}
-              <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
-                <InboxList
-                  items={inbox.data.items}
-                  page={inbox.data.page}
-                  pages={inbox.data.pages}
-                  onselect={(id) => (selected = id)}
-                  onpage={(page) => (inboxPage = page)}
-                />
-              </div>
-            {:else}<p role="status">{m.nav_loading()}</p>{/if}
+                <Tabs.List
+                  aria-label={m.messages_tabs_label()}
+                  class="mb-3 grid shrink-0 grid-cols-2 gap-1 rounded-xl bg-surface-950-50/5 p-1"
+                >
+                  {#each [['direct', m.messages_tab_direct(), m.messages_tab_direct_unread], ['table', m.messages_tab_tables(), m.messages_tab_tables_unread]] as const as [value, label, withCount] (value)}
+                    {@const count = unreadByKind?.[value] ?? 0}
+                    <Tabs.Trigger
+                      {value}
+                      aria-label={count > 0 ? withCount({ count }) : undefined}
+                      class="btn h-12 gap-2 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
+                    >
+                      {label}
+                      {#if count > 0}
+                        <span
+                          aria-hidden="true"
+                          class="badge min-w-6 rounded-full preset-filled-error-500 px-1 text-xs font-bold"
+                          >{count > 9 ? '9+' : count}</span
+                        >
+                      {/if}
+                    </Tabs.Trigger>
+                  {/each}
+                </Tabs.List>
+                {#each ['direct', 'table'] as const as value (value)}
+                  <Tabs.Content {value} class="min-h-0 min-w-0 flex-1">
+                    {#if tab === value}
+                      {#if inbox.isError}
+                        <p role="alert">{m.messages_error_generic()}</p>
+                        <Button
+                          size="custom"
+                          class="btn preset-tonal"
+                          onclick={() => inbox.refetch()}>{m.messages_retry_load()}</Button
+                        >
+                      {:else if inbox.data}
+                        <div class="h-full min-h-0 min-w-0 overflow-x-hidden overflow-y-auto">
+                          <InboxList
+                            items={inbox.data.items}
+                            page={inbox.data.page}
+                            pages={inbox.data.pages}
+                            onselect={(id) => (selected = id)}
+                            onpage={(page) => (inboxPage = page)}
+                          />
+                        </div>
+                      {:else}<p role="status">{m.nav_loading()}</p>{/if}
+                    {/if}
+                  </Tabs.Content>
+                {/each}
+              </Tabs>
+            {/if}
           {/if}
         </Dialog.Content>
       </Dialog.Positioner>

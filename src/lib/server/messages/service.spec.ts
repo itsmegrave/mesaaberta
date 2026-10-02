@@ -257,6 +257,33 @@ describe('inbox and threads', () => {
     expect(await unreadConversations(test.db, reader.id)).toBe(1);
   });
 
+  it('lists the direct conversations and the tables’ apart, each counting what is unread', async () => {
+    // Someone new, so what other tests left unread does not count.
+    const reader = person(7);
+    await test.db.insert(profiles).values({ id: reader.id, username: 'p7' });
+    const table = await makeTable({ joinMode: 'auto' });
+    const group = await ensureTableConversation(test.db, table.id);
+    await joinTable(test.db, reader, table.slug);
+    const direct = await openDirect(test.db, gm, reader.id);
+    await sendMessage(test.db, gm, group.id, 'no grupo', { now: new Date('2030-02-01T10:00:00Z') });
+    await sendMessage(test.db, gm, direct.id, 'no privado', {
+      now: new Date('2030-02-01T11:00:00Z'),
+    });
+
+    const directOnly = await listInbox(test.db, reader.id, 1, 'direct');
+    const tablesOnly = await listInbox(test.db, reader.id, 1, 'table');
+
+    expect(directOnly.items.map((item) => item.id)).toEqual([direct.id]);
+    expect(tablesOnly.items.map((item) => item.id)).toEqual([group.id]);
+    expect(tablesOnly.items.every((item) => item.kind === 'table')).toBe(true);
+    // The counts do not depend on which tab is open.
+    expect(directOnly.unreadByKind).toEqual({ direct: 1, table: 1 });
+    expect(tablesOnly.unreadByKind).toEqual({ direct: 1, table: 1 });
+
+    await markConversationRead(test.db, reader, direct.id, new Date('2030-06-01T00:00:00Z'));
+    expect((await listInbox(test.db, reader.id)).unreadByKind).toEqual({ direct: 0, table: 1 });
+  });
+
   it('answers 404 past the last inbox page', async () => {
     await expect(listInbox(test.db, ana.id, 999)).rejects.toThrow(NotFound);
   });
