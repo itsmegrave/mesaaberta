@@ -1,8 +1,10 @@
-import { PROFILE_STATUSES, type ProfileStatus } from '$lib/profile/status';
+import { PROFILE_STANDINGS, type ProfileStanding } from '$lib/profile/standing';
 export function profileFilters(params: URLSearchParams) {
   const status = params.get('status');
-  const selectedStatus: 'all' | ProfileStatus = PROFILE_STATUSES.includes(status as ProfileStatus)
-    ? (status as ProfileStatus)
+  const selectedStatus: 'all' | ProfileStanding = PROFILE_STANDINGS.includes(
+    status as ProfileStanding,
+  )
+    ? (status as ProfileStanding)
     : 'all';
   const page = params.get('page') ?? '1';
   const size = Number(params.get('size') ?? 20);

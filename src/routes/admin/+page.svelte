@@ -32,7 +32,10 @@
       label: m.admin_tables(),
       value: data.tables.total,
       icon: 'game-icons:tavern-sign',
-      detail: m.admin_active_tables({ count: number(data.tables.active) }),
+      detail:
+        data.tables.total > 0 && data.tables.active === data.tables.total
+          ? m.admin_tables_all_active()
+          : m.admin_active_tables({ count: number(data.tables.active) }),
     },
     {
       label: m.admin_gms(),
@@ -53,12 +56,16 @@
       rows: [
         [m.admin_active_profiles(), data.people.active],
         [m.admin_suspended(), data.people.suspended],
+        [m.admin_banned(), data.people.banned],
       ],
     },
     {
       title: m.admin_tables(),
       rows: [
         [m.admin_active(), data.tables.active],
+        [m.admin_awaiting_confirmation(), data.tables.awaiting],
+        [m.admin_concluded(), data.tables.concluded],
+        [m.admin_not_held(), data.tables.notHeld],
         [m.admin_disabled(), data.tables.disabled],
         [m.admin_online(), data.tables.online],
         [m.admin_in_person(), data.tables.inPerson],

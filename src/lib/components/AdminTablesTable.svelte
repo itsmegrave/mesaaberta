@@ -1,7 +1,7 @@
 <script lang="ts">
   import TextInput from '$lib/components/TextInput.svelte';
   import { TABLE_STATUSES } from '$lib/tables/status-values';
-  import { tableStatusLabel } from '$lib/tables/status';
+  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import Spinner from './Spinner.svelte';
   import Form from '$lib/components/Form.svelte';
   import SelectInput from '$lib/components/SelectInput.svelte';
@@ -39,11 +39,7 @@
     { accessorKey: 'title', header: () => m.admin_tables_title() },
     { accessorKey: 'system', header: () => m.table_system() },
     { accessorKey: 'nextAt', header: () => m.admin_tables_date() },
-    {
-      accessorKey: 'status',
-      header: () => m.admin_profile_status(),
-      cell: ({ row }) => tableStatusLabel(row.original.status) ?? m.admin_active(),
-    },
+    { accessorKey: 'status', header: () => m.admin_profile_status() },
     {
       accessorKey: 'instagramStatus',
       header: () => m.admin_tables_instagram(),
@@ -90,7 +86,7 @@
   <div class="flex flex-wrap items-baseline justify-between gap-3">
     <h2 id="tables-title" class="text-xl font-semibold">{m.admin_tables()}</h2>
     <p class="text-sm text-muted" aria-live="polite">
-      {m.admin_profile_total({ count: data.total })}
+      {m.admin_tables_total({ count: data.total })}
     </p>
   </div>
   <Form
@@ -126,7 +122,7 @@
       <SelectInput class="select mt-2 h-11 min-w-44" name="status" value={data.status}>
         <option value="all">{m.admin_tables_all()}</option>
         {#each TABLE_STATUSES as status (status)}
-          <option value={status}>{tableStatusLabel(status) ?? m.admin_active()}</option>
+          <option value={status}>{m[`status_table_${status}`]()}</option>
         {/each}
       </SelectInput>
     </label>
@@ -143,9 +139,9 @@
       >
     {/if}
   </Form>
-  <div class="mt-5 overflow-x-auto">
-    <table class="w-full text-left text-sm">
-      <thead class="border-b border-surface-200-800">
+  <div class="mt-5">
+    <table class="w-full text-left text-sm max-md:block">
+      <thead class="border-b border-surface-200-800 max-md:sr-only">
         {#each table.getHeaderGroups() as group (group.id)}
           <tr
             >{#each group.headers as header (header.id)}<th scope="col" class="p-3 font-semibold"
@@ -154,11 +150,17 @@
           >
         {/each}
       </thead>
-      <tbody class="divide-y divide-surface-200-800">
+      <tbody class="divide-y divide-surface-200-800 max-md:block">
         {#each table.getRowModel().rows as row (row.id)}
-          <tr class="hover:bg-surface-100-900"
+          <tr
+            class="hover:bg-surface-100-900 max-md:flex max-md:flex-wrap max-md:items-center max-md:justify-between max-md:gap-x-3 max-md:px-1 max-md:py-3"
             >{#each row.getAllCells() as cell (cell.id)}
-              <td class="px-3 py-4 wrap-break-word">
+              <td
+                class="min-w-0 p-3 wrap-break-word max-md:px-2 max-md:py-1 {cell.column.id ===
+                'title'
+                  ? 'max-md:basis-full'
+                  : ''}"
+              >
                 {#if cell.column.id === 'title'}
                   <a
                     class="anchor font-semibold"
@@ -173,6 +175,8 @@
                         timeZone: row.original.timezone,
                       }).format(new Date(row.original.nextAt))
                     : '—'}
+                {:else if cell.column.id === 'status'}
+                  <StatusBadge status={`table:${row.original.status}` as Status} />
                 {:else if cell.column.id === 'actions'}
                   <Popover
                     open={menuOpen === row.id}
@@ -180,14 +184,14 @@
                     positioning={{ placement: 'bottom-end', offset: { mainAxis: 4 } }}
                   >
                     <Popover.Trigger
-                      class="btn h-11 gap-2 rounded-lg border border-surface-200-800 px-3"
+                      class="btn size-11 rounded-lg p-0 hover:preset-tonal"
                       aria-label={m.admin_tables_action_label({ title: row.original.title })}
                       aria-busy={publishing === row.id}
                     >
-                      {#if publishing === row.id}<Spinner />{/if}{m.admin_tables_actions()}<Icon
-                        name="chevron-down"
-                        size={18}
-                      />
+                      {#if publishing === row.id}<Spinner />{:else}<Icon
+                          name="more"
+                          size={20}
+                        />{/if}
                     </Popover.Trigger>
                     <Popover.Positioner class="z-40!">
                       <Popover.Content

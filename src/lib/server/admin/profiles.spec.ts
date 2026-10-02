@@ -17,29 +17,71 @@ beforeAll(async () => {
       createdAt: new Date('2026-09-30'),
     })),
   );
+  // A ban that never ends, and one with an end date.
+  await test.db.insert(profiles).values([
+    {
+      id: id(26),
+      username: 'banido',
+      status: 'suspended',
+      bannedAt: new Date('2026-09-01'),
+      bannedUntil: null,
+      createdAt: new Date('2026-09-29'),
+    },
+    {
+      id: id(27),
+      username: 'suspensa',
+      status: 'suspended',
+      bannedAt: new Date('2026-09-01'),
+      bannedUntil: new Date('2026-12-01'),
+      createdAt: new Date('2026-09-28'),
+    },
+  ]);
 });
 afterAll(() => test.close());
 const list = (query = '') => listAdminProfiles(test.db, new URLSearchParams(query));
 
-it('paginates all users with deterministic ordering and only the requested columns', async () => {
+it('paginates all users with deterministic ordering', async () => {
   const first = await list();
   const second = await list('page=2');
-  expect(first.total).toBe(25);
+  expect(first.total).toBe(27);
   expect(first.rows).toHaveLength(20);
-  expect(second.rows).toHaveLength(5);
-  expect(first.rows[0]).toEqual({ id: id(25), username: 'user-25', status: 'active' });
-  expect(second.rows.at(-1)).toEqual({ id: id(1), username: null, status: 'active' });
-  expect(new Set([...first.rows, ...second.rows].map((row) => row.id)).size).toBe(25);
+  expect(second.rows).toHaveLength(7);
+  expect(first.rows[0]).toMatchObject({ id: id(25), username: 'user-25', standing: 'active' });
+  // The oldest sign-ups come last; the 25 from the same day are ordered by id.
+  expect(second.rows.at(-1)).toMatchObject({ id: id(27), username: 'suspensa' });
+  expect(second.rows.at(-3)).toMatchObject({ id: id(1), username: null, standing: 'active' });
+  expect(new Set([...first.rows, ...second.rows].map((row) => row.id)).size).toBe(27);
 });
 
-it('filters active and suspended users, including unfinished onboarding', async () => {
+it('lists what the users table shows: the name, when they joined, and their tables', async () => {
+  const [row] = (await list()).rows;
+  expect(row).toMatchObject({
+    name: 'Private name',
+    createdAt: new Date('2026-09-30'),
+    playing: 0,
+    running: 0,
+  });
+  expect(Object.keys(row)).not.toContain('genderOther');
+});
+
+it('tells a ban that never ends (banned) from one with an end date (suspended)', async () => {
+  const all = (await list('size=100')).rows;
+  expect(all.find((row) => row.username === 'banido')?.standing).toBe('banned');
+  expect(all.find((row) => row.username === 'suspensa')?.standing).toBe('suspended');
+  // A closed account, suspended with no ban, is suspended too.
+  expect(all.find((row) => row.username === 'user-02')?.standing).toBe('suspended');
+});
+
+it('filters active, suspended and banned users, including unfinished onboarding', async () => {
   const active = await list('status=active');
   const suspended = await list('status=suspended');
+  const banned = await list('status=banned');
   expect(active.total).toBe(13);
-  expect(active.rows.every((row) => row.status === 'active')).toBe(true);
+  expect(active.rows.every((row) => row.standing === 'active')).toBe(true);
   expect(active.rows.some((row) => row.username === null)).toBe(true);
-  expect(suspended.total).toBe(12);
-  expect(suspended.rows.every((row) => row.status === 'suspended')).toBe(true);
+  expect(suspended.total).toBe(13);
+  expect(suspended.rows.every((row) => row.standing === 'suspended')).toBe(true);
+  expect(banned.rows.map((row) => row.username)).toEqual(['banido']);
 });
 
 it('combines status with case-insensitive username search and treats wildcards literally', async () => {
@@ -54,7 +96,7 @@ it('bounds pages and page sizes and handles empty results', async () => {
   expect((await list('page=999999999&size=20')).page).toBe(2);
   expect((await list('page=-1&size=1000')).page).toBe(1);
   expect((await list('page=-1&size=1000')).pageSize).toBe(20);
-  expect((await list('page=2&size=50')).rows).toHaveLength(25);
+  expect((await list('page=2&size=50')).rows).toHaveLength(27);
   expect(await list('q=not-found&page=8')).toMatchObject({ total: 0, rows: [], page: 1 });
 });
 

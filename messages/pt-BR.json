@@ -62,12 +62,45 @@
   "admin_profile_all": "Todos",
   "admin_profile_active": "Ativo",
   "admin_profile_suspended": "Suspenso",
-  "admin_profile_search": "Buscar por username",
+  "admin_profile_search": "Buscar usuário",
   "admin_profile_apply": "Buscar",
   "admin_profile_clear": "Limpar filtros",
   "admin_profile_no_username": "Ainda sem username",
   "admin_profile_empty": "Nenhum perfil encontrado.",
-  "admin_profile_total": "Total: {count}",
+  "admin_profile_total": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum usuário",
+        "count=1": "1 usuário",
+        "count=*": "{count} usuários"
+      }
+    }
+  ],
+  "admin_tables_total": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa",
+        "count=1": "1 mesa",
+        "count=*": "{count} mesas"
+      }
+    }
+  ],
+  "admin_profile_user": "Usuário",
+  "admin_profile_tables": "Mesas",
+  "admin_profile_joined": "Cadastro",
+  "admin_profile_actions": "Ações",
+  "admin_profile_no_name": "Sem nome",
+  "admin_profile_tables_playing": "{count} jogando",
+  "admin_profile_tables_running": "{count} mestrando",
+  "admin_profile_tables_none": "Nenhuma ainda",
+  "admin_menu_details": "Ver detalhes",
+  "admin_menu_public_profile": "Abrir perfil público",
+  "admin_menu_copy_id": "Copiar ID",
+  "toast_id_copied": "ID copiado.",
   "admin_profile_page": "Página {page} de {pages}",
   "admin_profile_size": "Por página",
   "admin_profile_previous": "Página anterior",
@@ -98,38 +131,43 @@
       "declarations": ["input count"],
       "selectors": ["count"],
       "match": {
-        "count=0": "Nenhuma com status ativo",
-        "count=1": "1 com status ativo",
-        "count=*": "{count} com status ativo"
+        "count=0": "Nenhuma ativa",
+        "count=1": "1 ativa",
+        "count=*": "{count} ativas"
       }
     }
   ],
+  "admin_tables_all_active": "Todas ativas",
   "admin_gms": "Mestres",
   "admin_gms_scope": "Pessoas com pelo menos uma mesa criada",
-  "admin_confirmed": "Inscrições confirmadas",
+  "admin_confirmed": "Vagas confirmadas",
   "admin_pending_seats": [
     {
       "declarations": ["input count"],
       "selectors": ["count"],
       "match": {
-        "count=0": "Nenhuma solicitação aguardando aprovação",
-        "count=1": "1 solicitação aguardando aprovação",
-        "count=*": "{count} solicitações aguardando aprovação"
+        "count=0": "Nenhum pedido esperando o mestre",
+        "count=1": "1 pedido esperando o mestre",
+        "count=*": "{count} pedidos esperando o mestre"
       }
     }
   ],
   "admin_community": "Comunidade",
   "admin_active_profiles": "Perfis ativos",
   "admin_suspended": "Perfis suspensos",
+  "admin_banned": "Perfis banidos",
   "admin_active": "Ativas",
   "admin_disabled": "Desativadas",
+  "admin_awaiting_confirmation": "Aguardando confirmação",
+  "admin_concluded": "Concluídas",
+  "admin_not_held": "Não realizadas",
   "admin_online": "Online",
   "admin_in_person": "Presenciais",
   "admin_pending": "Pendências operacionais",
   "admin_platform_suggestions": "Sugestões de plataformas",
   "admin_tag_suggestions": "Sugestões de tags",
-  "admin_events_pending": "Eventos aguardando processamento",
-  "admin_events_failed": "Eventos com falha definitiva",
+  "admin_events_pending": "Eventos na fila",
+  "admin_events_failed": "Eventos que falharam",
   "admin_updated": "Atualizado em {time}",
   "admin_refresh": "Atualizar",
   "admin_recent_tables": "Mesas criadas recentemente",
