@@ -64,9 +64,16 @@ const contrast = (a: string, b: string) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-// The open side nav (desktop) has it as a labelled switch.
+// A phone has the header's icon button; the open side nav (desktop) has a labelled switch. Only
+// one of them is visible at a time.
 const toggle = (page: import('@playwright/test').Page) =>
-  page.getByRole('switch', { name: 'Tema escuro' });
+  page
+    .getByRole('button', { name: 'Tema escuro' })
+    .or(page.getByRole('switch', { name: 'Tema escuro' }));
+const isOn = (page: import('@playwright/test').Page) =>
+  toggle(page).evaluate(
+    (el) => (el.getAttribute('aria-checked') ?? el.getAttribute('aria-pressed')) === 'true',
+  );
 
 test.describe('the mode follows the system by default', () => {
   test('a dark system gets a dark page and a light system a pale one, both readable', async ({
@@ -107,15 +114,14 @@ test.describe('a manual choice overrides the system', () => {
     const { page, context } = await open(browser, 'light');
     const before = (await colours(page)).background;
 
-    // The switch's input is visually hidden; its label takes the click.
-    await page.locator('label', { hasText: 'Tema escuro' }).click();
+    await toggle(page).click();
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
     expect((await colours(page)).background).not.toBe(before);
 
     await page.reload();
 
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
-    await expect(toggle(page)).toBeChecked();
+    expect(await isOn(page)).toBe(true);
     await context.close();
   });
 

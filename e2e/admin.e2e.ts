@@ -51,6 +51,7 @@ test('admin overview is protected, refreshes and fits the viewport', async ({ pa
 
 test('users table paginates, filters status and username, and links to the selected profile', async ({
   page,
+  isMobile,
 }, testInfo) => {
   const admin = await createUser('Users Admin', { role: 'admin' });
   const prefix = `users-${Date.now().toString(36)}`;
@@ -91,10 +92,14 @@ test('users table paginates, filters status and username, and links to the selec
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
   await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });
-  await page
-    .getByRole('navigation', { name: 'Trilha de navegação' })
-    .getByRole('link', { name: 'Usuários' })
-    .click();
+  const trail = page.getByRole('navigation', { name: 'Trilha de navegação' });
+  if (isMobile) {
+    // A phone folds the middle of a trail over three levels into a "…" menu.
+    await trail.getByRole('button', { name: 'Mostrar os níveis do meio' }).click();
+    await page.getByRole('menuitem', { name: 'Usuários' }).click();
+  } else {
+    await trail.getByRole('link', { name: 'Usuários' }).click();
+  }
   await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
     'suspended',
   );

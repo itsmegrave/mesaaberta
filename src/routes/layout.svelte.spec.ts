@@ -112,6 +112,14 @@ describe('+layout.svelte', () => {
     );
   });
 
+  it('draws the open side nav without an inline style, which the CSP blocks', async () => {
+    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+
+    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
+  });
+
   it('keeps labels inside the collapsed rail, with the theme button and bell together', async () => {
     render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
