@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import Button from '$lib/components/Button.svelte';
   import UserText from '$lib/components/UserText.svelte';
@@ -192,6 +193,10 @@
 </svelte:head>
 
 <section class="pt-8 pb-4">
+  <Breadcrumbs
+    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_announce_title() }]}
+    class="mb-6"
+  />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
     {m.admin_announce_title()}
   </h1>

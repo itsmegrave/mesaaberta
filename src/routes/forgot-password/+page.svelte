@@ -28,7 +28,7 @@
   <title>{m.forgot_title()}</title>
 </svelte:head>
 
-<AuthShell title={m.forgot_title()}>
+<AuthShell title={m.forgot_title()} parents={[{ label: m.login_title(), href: '/login' }]}>
   {#if !data.authEnabled}
     <p class="max-w-sm">{m.login_unavailable()}</p>
   {:else if controller.message?.code === 'sent'}
@@ -83,6 +83,7 @@
   {/if}
 
   <p class="mt-8">
-    <a href={resolve('/login')} class="link-underline font-semibold text-link">{m.forgot_back()}</a>
+    {m.forgot_remembered()}
+    <a href={resolve('/login')} class="link-underline font-semibold text-link">{m.login_title()}</a>
   </p>
 </AuthShell>

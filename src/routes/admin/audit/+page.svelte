@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import { page } from '$app/state';
   import { pageHref } from '$lib/admin/page-href';
@@ -67,6 +68,10 @@
 <svelte:head><title>{m.admin_audit_title()} | Mesa Aberta</title></svelte:head>
 
 <section class="py-6 md:py-10">
+  <Breadcrumbs
+    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_audit_title() }]}
+    class="mb-6"
+  />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
     {m.admin_audit_title()}
   </h1>

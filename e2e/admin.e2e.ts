@@ -91,7 +91,10 @@ test('users table paginates, filters status and username, and links to the selec
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
   await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });
-  await page.getByRole('link', { name: 'Voltar aos usuários' }).click();
+  await page
+    .getByRole('navigation', { name: 'Trilha de navegação' })
+    .getByRole('link', { name: 'Usuários' })
+    .click();
   await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
     'suspended',
   );

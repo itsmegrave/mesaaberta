@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import Form from '$lib/components/Form.svelte';
   import Button from '$lib/components/Button.svelte';
@@ -32,6 +33,10 @@
 
 <svelte:head><title>{m.admin_connections_title()} · Mesa Aberta</title></svelte:head>
 <section class="grid max-w-2xl gap-6 py-8">
+  <Breadcrumbs
+    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_connections_title() }]}
+    class="mb-6"
+  />
   <div>
     <h1 class="text-3xl font-semibold">{m.admin_connections_title()}</h1>
     <p class="mt-1 text-muted">{m.admin_connections_description()}</p>

@@ -82,6 +82,11 @@ export const DRAWINGS = {
     width: 512,
     height: 512,
   },
+  'game-icons:house': {
+    body: '<path fill="currentColor" d="M256 19.27L25.637 249.638L19.27 256L32 268.73l6.363-6.367L256 44.727l217.637 217.636L480 268.73L492.73 256l-6.367-6.363zM96 48v107.273l64-64.002V48zm160 20.727l-192 192V486h64V320h96v166h224V260.727zM288 320h96v80h-96z"/>',
+    width: 512,
+    height: 512,
+  },
   calendar: {
     body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M8 2v3m8-3v3"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></g>',
     width: 24,

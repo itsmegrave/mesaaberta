@@ -2,9 +2,7 @@
   import UserLink from '$lib/components/UserLink.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import Icon from '$lib/components/Icon.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
   import {
     accountSchema,
     banSchema,
@@ -41,12 +39,13 @@
 <svelte:head><title>{data.user.username ?? m.admin_user_title()} | Mesa Aberta</title></svelte:head>
 <section class="py-6 md:py-10">
   <Breadcrumbs
-    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_user_title() }]}
+    items={[
+      { label: m.nav_admin(), href: '/admin' },
+      { label: m.admin_profile_list(), href: data.back },
+      { label: m.admin_user_title() },
+    ]}
     class="mb-6"
   />
-  <a class="inline-flex min-h-11 items-center gap-2 anchor" href={localizedHref(data.back, locale)}
-    ><Icon name="chevron-left" />{m.admin_user_back()}</a
-  >
   <header class="mt-6 flex flex-wrap items-start justify-between gap-6">
     <div class="flex min-w-0 items-center gap-5">
       <Avatar

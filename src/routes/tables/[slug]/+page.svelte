@@ -100,24 +100,6 @@
 
 <article class="pt-2 pb-8 md:pt-6">
   <Breadcrumbs items={[{ label: m.nav_tables(), href: '/tables' }, { label: table.title }]} />
-  <a
-    href={localizedHref('/tables', locale)}
-    class="inline-flex items-center gap-2 link-underline font-semibold decoration-primary-500 md:hidden"
-  >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-      class="shrink-0"><path d="M19 12H5M11 6l-6 6 6 6" /></svg
-    >
-    {m.table_back()}
-  </a>
 
   <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-3 lg:gap-16">
     <div class="min-w-0 lg:col-span-2">

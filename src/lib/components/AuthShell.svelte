@@ -1,14 +1,27 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { m } from '$lib/paraglide/messages';
+  import Breadcrumbs from './Breadcrumbs.svelte';
   import TableIllustration from './TableIllustration.svelte';
 
   // The frame of the sign-in pages (login, sign-up, password): the blue panel with the table on large
   // screens, and the page's own content on the right.
-  let { title, lede, children }: { title: string; lede?: string; children: Snippet } = $props();
+  // `parents` are the levels between "Início" and the page, for the password pages that sit under "Entrar".
+  let {
+    title,
+    lede,
+    parents = [],
+    children,
+  }: {
+    title: string;
+    lede?: string;
+    parents?: { label: string; href: string }[];
+    children: Snippet;
+  } = $props();
 </script>
 
-<section class="grid items-center gap-10 pt-2 pb-6 md:pt-8 lg:grid-cols-2 lg:gap-24">
+<Breadcrumbs items={[...parents, { label: title }]} class="pt-2 md:pt-6" />
+<section class="grid items-center gap-10 py-6 md:pt-8 lg:grid-cols-2 lg:gap-24">
   <div
     class="relative hidden h-160 flex-col items-center justify-center gap-7 overflow-hidden rounded-lg bg-primary-500 p-10 text-white lg:flex"
   >
