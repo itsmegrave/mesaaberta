@@ -48,10 +48,11 @@
 {/snippet}
 
 <nav aria-label={m.breadcrumbs_label()} class="min-w-0 {className}">
-  <!-- Every level, from tablets up (and on a phone while the trail has three levels or fewer). -->
-  <ol class="{folds ? 'hidden md:flex' : 'flex'} items-center gap-2 text-sm text-muted">
+  <ol class="flex items-center gap-2 text-sm text-muted">
     {#each trail as crumb, index (index)}
-      <li class="flex min-w-0 items-center gap-2">
+      {@const middle = index > 0 && index < trail.length - 1}
+      <!-- On a phone the middle of a long trail is folded into the "…" menu below. -->
+      <li class="min-w-0 items-center gap-2 {middle && folds ? 'hidden md:flex' : 'flex'}">
         {#if index > 0}{@render separator()}{/if}
         {#if index === 0}
           {@render home()}
@@ -66,45 +67,40 @@
           <span class="block max-w-37.5 truncate">{crumb.label}</span>
         {/if}
       </li>
+      {#if folds && index === 0}
+        <li class="flex items-center gap-2 md:hidden">
+          {@render separator()}
+          <Menu
+            positioning={{ placement: 'bottom-start', offset: { mainAxis: 4 } }}
+            onSelect={({ value }) => open(value)}
+          >
+            <Menu.Trigger
+              aria-label={m.breadcrumbs_more()}
+              class="btn inline-flex size-11 items-center justify-center rounded-lg p-0 hover:preset-tonal"
+            >
+              <span aria-hidden="true">…</span>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner class="z-50!">
+                <Menu.Content
+                  class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+                >
+                  {#each hidden as crumb (crumb.label)}
+                    {#if crumb.href}
+                      <Menu.Item
+                        value={localizedHref(crumb.href, locale)}
+                        class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+                      >
+                        <span class="truncate">{crumb.label}</span>
+                      </Menu.Item>
+                    {/if}
+                  {/each}
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu>
+        </li>
+      {/if}
     {/each}
   </ol>
-
-  {#if folds}
-    <ol class="flex items-center gap-2 text-sm text-muted md:hidden">
-      <li class="flex items-center gap-2">{@render home()}</li>
-      <li class="flex items-center gap-2">
-        {@render separator()}
-        <Menu
-          positioning={{ placement: 'bottom-start', offset: { mainAxis: 4 } }}
-          onSelect={({ value }) => open(value)}
-        >
-          <Menu.Trigger
-            aria-label={m.breadcrumbs_more()}
-            class="btn inline-flex size-11 items-center justify-center rounded-lg p-0 hover:preset-tonal"
-          >
-            <span aria-hidden="true">…</span>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner class="z-50!">
-              <Menu.Content
-                class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
-              >
-                {#each hidden as crumb (crumb.label)}
-                  {#if crumb.href}
-                    <Menu.Item
-                      value={localizedHref(crumb.href, locale)}
-                      class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
-                    >
-                      <span class="truncate">{crumb.label}</span>
-                    </Menu.Item>
-                  {/if}
-                {/each}
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu>
-      </li>
-      <li class="flex min-w-0 items-center gap-2">{@render separator()}{@render here()}</li>
-    </ol>
-  {/if}
 </nav>
