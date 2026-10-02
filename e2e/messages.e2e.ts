@@ -23,6 +23,8 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await playerPage.getByRole('textbox', { name: 'Mensagem' }).fill('Ainda tem vaga?');
   await playerPage.keyboard.press('Enter');
   await expect(playerPage.getByRole('log').getByText('Ainda tem vaga?')).toBeVisible();
+  // The thread renders optimistically; wait for persistence before opening the GM's inbox.
+  await expect(playerPage.getByText('Enviando…', { exact: true })).toHaveCount(0);
 
   // The GM sees it on the bell and in the inbox, and answers.
   const gmPage = gmSession.page;
@@ -82,7 +84,7 @@ test('turning direct messages off hides "Falar com o mestre"', async ({ browser 
   const slug = await createTable(gmSession.page, { title: uniqueTitle('Mesa') });
 
   await gmSession.page.goto('/account/profile');
-  await gmSession.page.getByRole('switch', { name: 'Receber mensagens diretas' }).click();
+  await gmSession.page.getByText('Receber mensagens diretas', { exact: true }).click();
   await expect(gmSession.page.getByText('Preferência salva.')).toBeVisible();
 
   const player = await createUser('Duda');
