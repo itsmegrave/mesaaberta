@@ -1,18 +1,17 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
+  import TextArea from '$lib/components/TextArea.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import RichText from '$lib/components/RichText.svelte';
-  import { queryClient } from '$lib/query/context';
-  import { afterWrite } from '$lib/query/invalidate';
-  const client = queryClient();
   import { pageQuery } from '$lib/query/page.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { atHandle } from '$lib/profile/handle';
   import { resolve } from '$app/paths';
-  import { superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from '$lib/components/Form.svelte';
   import { formatHours, formatSession } from '$lib/tables/format';
   import type { FormMessage } from '$lib/forms/message';
   import { localizedHref } from '$lib/i18n/locales';
@@ -58,29 +57,18 @@
   });
   const votes = (count: number) => m.rating_count({ count });
   // svelte-ignore state_referenced_locally
-  const rating = superForm(data.ratingForm, {
-    validators: zod4Client(ratingSchema),
-    resetForm: false,
-    onResult({ result }) {
-      if (result.type === 'redirect') {
-        void afterWrite(client, 'table');
-        toast.success(m.toast_rating_saved());
-      }
-    },
-    onUpdated({ form: updated }) {
-      if (updated.valid || !updated.message) return;
+  const rating = actionForm({
+    initial: data.ratingForm.data,
+    schema: ratingSchema,
+    domain: 'table',
+    errorMessage: () => registrationError('invalid'),
+    onSuccess: () => toast.success(m.toast_rating_saved()),
+    onFailure(updated) {
+      if (!updated?.message) return;
       toast.error(registrationError(updated.message.code, updated.message.retryAfter));
       failed = updated.message;
     },
   });
-  const {
-    form: ratingValues,
-    errors: ratingErrors,
-    enhance: ratingEnhance,
-    submitting: ratingSubmitting,
-    delayed: ratingDelayed,
-    timeout: ratingTimeout,
-  } = rating;
   const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
   const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
 
@@ -421,7 +409,8 @@
             buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
           />
         {:else}
-          <button
+          <Button
+            size="custom"
             type="button"
             disabled
             aria-describedby="gm-dm-off"
@@ -429,7 +418,7 @@
           >
             <Icon name="message-circle" size={18} />
             {m.messages_talk_to_gm()}
-          </button>
+          </Button>
           <p id="gm-dm-off" class="mt-2 text-sm text-muted">{m.messages_gm_dm_off()}</p>
         {/if}
       {/if}
@@ -454,7 +443,7 @@
       <p class="mt-2 max-w-prose">{m.rating_lede()}</p>
       {#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
 
-      <form method="POST" action="?/rate" use:ratingEnhance class="mt-4 grid gap-6">
+      <Form action="?/rate" onsubmit={rating.submit} class="mt-4 grid gap-6">
         {#each scoreFields as { name, label } (name)}
           <fieldset>
             <legend class="font-semibold">{label}</legend>
@@ -466,13 +455,14 @@
                     {name}
                     value={score}
                     required
-                    bind:group={$ratingValues[name]}
+                    checked={rating.values[name] === score}
+                    onchange={() => rating.change(name, score)}
                   />
                   <span aria-label={m.rating_score_label({ score })}>{score}</span>
                 </label>
               {/each}
             </div>
-            {#if $ratingErrors[name]}
+            {#if rating.errors[name]}
               <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
                 {m.table_error_invalid()}
               </p>
@@ -482,26 +472,27 @@
 
         <div>
           <label for="comment" class="label-text block font-semibold">{m.rating_comment()}</label>
-          <textarea
+          <TextArea
             id="comment"
             name="comment"
-            rows="3"
-            maxlength="1000"
-            bind:value={$ratingValues.comment}
-            class="mt-1 textarea"></textarea>
+            rows={3}
+            maxlength={1000}
+            bind:value={() => rating.values.comment, (value) => rating.change('comment', value)}
+            class="mt-1 textarea"
+          ></TextArea>
         </div>
 
         <div>
           <SubmitButton
-            submitting={$ratingSubmitting}
-            delayed={$ratingDelayed}
-            timeout={$ratingTimeout}
+            submitting={rating.pending}
+            delayed={rating.delayed}
+            timeout={rating.timeout}
             class="btn preset-filled-primary-500"
           >
             {data.myRating ? m.rating_update() : m.rating_submit()}
           </SubmitButton>
         </div>
-      </form>
+      </Form>
     </section>
   {/if}
 

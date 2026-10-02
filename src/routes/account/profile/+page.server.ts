@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { setError, superValidate, withFiles } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm, validateFormData, validateStringForm } from '$lib/forms/contract';
+import { refuse, responseForm } from '$lib/forms/server';
 import { anonymiseProfile, closeAccount, setAvatarPath } from '$lib/server/account/service';
 import { deleteAuthUser, supabaseAdminFrom } from '$lib/server/auth/admin-client';
 import { requireUser } from '$lib/server/auth/guard';
@@ -19,7 +19,7 @@ import { directMessagesSchema } from '$lib/messages/schema';
 import { setDirectMessages } from '$lib/server/messages/service';
 import { deleteAccountSchema } from '$lib/profile/delete';
 import { photoSchema } from '$lib/profile/photo';
-import { profileSchema } from '$lib/profile/schema';
+import { profileSchema, PROFILE_DEFAULTS } from '$lib/profile/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Deletes a replaced picture. Best effort: a leftover file is harmless, a failed save is not. */
@@ -37,14 +37,10 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
   const profile = await locals.getProfile();
 
   return {
-    form: await superValidate(values, zod4(profileSchema), { errors: false }),
-    photoForm: await superValidate(zod4(photoSchema)),
-    deleteForm: await superValidate(zod4(deleteAccountSchema)),
-    messagesForm: await superValidate(
-      { enabled: profile?.directMessagesEnabled ?? true },
-      zod4(directMessagesSchema),
-      { errors: false },
-    ),
+    form: initialForm(values),
+    photoForm: initialForm({ photo: undefined as File | undefined }),
+    deleteForm: initialForm({ confirm: '' }),
+    messagesForm: initialForm({ enabled: profile?.directMessagesEnabled ?? true }),
     email: user.email ?? '',
     avatarUrl: profile ? pictureOf(supabaseUrlOf(platform?.env), profile) : null,
     hasUploadedPhoto: Boolean(profile?.avatarPath),
@@ -57,12 +53,13 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
-    const form = await superValidate(request, zod4(profileSchema));
-    // The username is chosen once, at onboarding: whatever was sent, the stored one stays.
-    const current = (await loadProfileForm(locals.db, user.id))!.username;
-    form.data.username = current;
-    delete form.errors.username;
-    if (Object.keys(form.errors).length > 0) return fail(400, { form });
+    // The username is chosen once: validate with the stored identity, including normalization of other fields.
+    const values = await request.formData();
+    values.set('username', (await loadProfileForm(locals.db, user.id))!.username);
+    const form = validateFormData(values, profileSchema, PROFILE_DEFAULTS, {
+      arrays: ['linkNetwork', 'linkUrl'],
+    });
+    if (!form.valid) return fail(400, { form });
 
     await saveProfile(locals.db, user.id, form.data);
     return { form };
@@ -73,11 +70,16 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
-    const messagesForm = await superValidate(request, zod4(directMessagesSchema));
-    if (!messagesForm.valid) return fail(400, { messagesForm });
+    const messagesForm = validateFormData(
+      await request.formData(),
+      directMessagesSchema,
+      { enabled: false },
+      { booleans: ['enabled'] },
+    );
+    if (!messagesForm.valid) return fail(400, { form: messagesForm });
 
     await setDirectMessages(locals.db, user.id, messagesForm.data.enabled);
-    return { messagesForm };
+    return { form: messagesForm };
   },
 
   photo: async ({ request, locals, url }) => {
@@ -85,8 +87,13 @@ export const actions: Actions = {
     if (!locals.db) error(503, 'Database not configured');
 
     // Files are allowed so the schema can check the picture; every failure below strips them.
-    const photoForm = await superValidate(request, zod4(photoSchema), { allowFiles: true });
-    if (!photoForm.valid) return fail(400, withFiles({ photoForm }));
+    const photoForm = validateFormData(
+      await request.formData(),
+      photoSchema,
+      { photo: undefined },
+      { files: ['photo'] },
+    );
+    if (!photoForm.valid) return fail(400, { form: responseForm(photoForm) });
 
     try {
       const prepared = await prepareImage(photoForm.data.photo, user.id);
@@ -95,7 +102,7 @@ export const actions: Actions = {
       const path = await storeImage(storage, prepared, locals.log);
       await removePicture(locals, await setAvatarPath(locals.db, user.id, path));
     } catch (e) {
-      if (e instanceof Invalid) return setError(photoForm, 'photo', e.message);
+      if (e instanceof Invalid) return refuse(photoForm, 400, e.message, 'photo');
       throw e;
     }
     // A fresh request, so the header shows the new picture too.
@@ -121,9 +128,9 @@ export const actions: Actions = {
     if (!admin) error(503, 'Account deletion is not configured');
 
     const username = (await loadProfileForm(locals.db, user.id))!.username;
-    const form = await superValidate(request, zod4(deleteAccountSchema));
+    const form = validateStringForm(await request.formData(), deleteAccountSchema, ['confirm']);
     if (!form.valid || form.data.confirm !== username)
-      return setError(form, 'confirm', 'confirm', { status: 400 });
+      return refuse(form, 400, 'confirm', 'confirm');
 
     const { eventIds } = await closeAccount(locals.db, user.id);
     // Sent now, while the GM's address still exists; a failure is left to the sweeper.

@@ -118,3 +118,15 @@ export function profileLinks({
     return url && isNetwork(network) ? [{ network, url }] : [];
   });
 }
+
+export const PROFILE_DEFAULTS: ProfileInput = {
+  username: '',
+  name: '',
+  ageRange: '',
+  gender: '',
+  genderOther: '',
+  city: '',
+  timezone: '',
+  linkNetwork: [],
+  linkUrl: [],
+};

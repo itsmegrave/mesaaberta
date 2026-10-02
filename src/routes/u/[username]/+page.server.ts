@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
     supabaseUrl: supabaseUrlOf(platform?.env),
   });
   if (!data || data.page > data.pages) error(404, 'Not found');
-  const path = localizedHref(`/${data.profile.username}`, getLocale());
+  const path = localizedHref(`/u/${data.profile.username}`, getLocale());
   if (params.username !== data.profile.username) redirect(308, `${path}${url.search}`);
   return { ...data, canonical: new URL(path, url.origin).href };
 };

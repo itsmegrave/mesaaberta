@@ -32,7 +32,7 @@ describe('the public profile route', () => {
     const { promise, setHeaders } = run();
     await expect(promise).resolves.toMatchObject({
       ...result,
-      canonical: 'https://mesaaberta.app/ana',
+      canonical: 'https://mesaaberta.app/u/ana',
     });
     expect(setHeaders).toHaveBeenCalledWith({ 'cache-control': 'private, no-store' });
     expect(publicProfile).toHaveBeenCalledWith(
@@ -44,7 +44,7 @@ describe('the public profile route', () => {
   it('redirects capitalization while preserving pagination', async () => {
     await expect(run('Ana', '?page=1').promise).rejects.toMatchObject({
       status: 308,
-      location: '/ana?page=1',
+      location: '/u/ana?page=1',
     });
   });
   it('returns 404 for an unavailable profile', async () => {

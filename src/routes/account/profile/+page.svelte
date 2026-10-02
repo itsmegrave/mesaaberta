@@ -1,6 +1,6 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
   import { queryClient } from '$lib/query/context';
-  import { afterWrite } from '$lib/query/invalidate';
   const client = queryClient();
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { page } from '$app/state';
@@ -18,10 +18,12 @@
   import { photoSchema } from '$lib/profile/photo';
   import { Switch } from '@skeletonlabs/skeleton-svelte';
   import { directMessagesSchema } from '$lib/messages/schema';
-  import { fileProxy, superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { deleteAccountSchema } from '$lib/profile/delete';
+  import { tick } from 'svelte';
+  import Form from '$lib/components/Form.svelte';
 
-  let { data } = $props();
+  let { data, form: result = null } = $props();
 
   const locale = getLocale();
 
@@ -30,17 +32,17 @@
 
   const photoNotice = $derived(page.url.searchParams.get('foto'));
 
-  // The picture has its own form (and schema, so its own Superforms id) next to the profile's.
   // svelte-ignore state_referenced_locally
-  const photo = superForm(data.photoForm, {
-    validators: zod4Client(photoSchema),
-    onResult: ({ result }) => {
-      if (result.type === 'redirect') void afterWrite(client, 'account');
-    },
+  const photo = actionForm({
+    initial: data.photoForm.data,
+    schema: photoSchema,
+    domain: 'account',
+    initialErrors: result?.form && 'photo' in result.form.data ? result.form.errors : {},
+    onSuccess: () => {},
+    errorMessage: m.account_photo_error_failed,
   });
-  const { errors: photoErrorList, enhance: photoEnhance, submitting, delayed, timeout } = photo;
-  const photoFile = fileProxy(photo, 'photo');
-  const photoError = $derived($photoErrorList.photo?.[0]);
+  let photoFiles = $state<FileList>();
+  const photoError = $derived(photo.errors.photo?.[0]);
 
   // A picture that is fine to frame is cropped in the browser before it goes up; anything else goes
   // as it is, for the schema to say what is wrong. Without JavaScript the file goes up whole.
@@ -53,6 +55,7 @@
   };
   async function picked(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    photo.change('photo', file);
     framing =
       file &&
       (IMAGE_TYPES as readonly string[]).includes(file.type) &&
@@ -61,51 +64,45 @@
         ? file
         : null;
   }
-  function framed(cropped: File) {
+  async function framed(cropped: File) {
     framing = null;
-    $photoFile = files(cropped);
+    photoFiles = files(cropped);
+    photo.change('photo', cropped);
+    await tick();
     photoForm?.requestSubmit();
   }
   function unframed() {
     framing = null;
-    $photoFile = files();
+    photoFiles = files();
+    photo.change('photo', undefined);
   }
 
-  // Closing the account: a third form. The server compares the typed @username; a redirect home on success.
   // svelte-ignore state_referenced_locally
-  const closing = superForm(data.deleteForm, {
-    resetForm: false,
-    onResult: ({ result }) => {
-      if (result.type === 'redirect') client.clear();
-    },
+  const closing = actionForm({
+    initial:
+      result?.form && 'confirm' in result.form.data ? result.form.data : data.deleteForm.data,
+    schema: deleteAccountSchema,
+    initialErrors: result?.form && 'confirm' in result.form.data ? result.form.errors : {},
+    onSuccess: () => client.clear(),
+    errorMessage: m.auth_error_failed,
   });
-  const {
-    form: closingData,
-    errors: closingErrors,
-    enhance: closingEnhance,
-    submitting: closingSubmitting,
-    delayed: closingDelayed,
-    timeout: closingTimeout,
-  } = closing;
-
-  // The direct messages switch saves as soon as it is flipped.
+  const { draft: closingData } = closing;
+  let messagingForm = $state<HTMLFormElement>();
+  const restoreMessaging = () => {
+    messaging.change('enabled', !messaging.values.enabled);
+    toast.error(m.messages_setting_failed());
+  };
   // svelte-ignore state_referenced_locally
-  const messaging = superForm(data.messagesForm, {
-    id: 'direct-messages',
-    dataType: 'json',
-    validators: zod4Client(directMessagesSchema),
-    resetForm: false,
-    invalidateAll: false,
-    onResult: ({ result }) => {
-      if (result.type === 'success') toast.success(m.messages_setting_saved());
-      else toast.error(m.messages_setting_failed());
-    },
-    onError: () => {
-      $messagingValues.enabled = !$messagingValues.enabled;
-      toast.error(m.messages_setting_failed());
-    },
+  const messaging = actionForm({
+    initial: data.messagesForm.data,
+    schema: directMessagesSchema,
+    refresh: false,
+    domain: 'account',
+    onSuccess: () => toast.success(m.messages_setting_saved()),
+    onFailure: restoreMessaging,
+    onError: restoreMessaging,
+    errorMessage: m.messages_setting_failed,
   });
-  const { form: messagingValues, enhance: messagingEnhance, submit: submitMessaging } = messaging;
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,
@@ -149,7 +146,7 @@
 
   {#if data.username}
     <a
-      href={localizedHref(`/${data.username}`, locale)}
+      href={localizedHref(`/u/${data.username}`, locale)}
       class="mt-5 btn h-12 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
       >{m.public_profile_view()}</a
     >
@@ -162,12 +159,11 @@
         <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
           <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
           <div class="grid gap-3">
-            <form
-              bind:this={photoForm}
-              method="POST"
+            <Form
+              bind:element={photoForm}
               action="?/photo"
               enctype="multipart/form-data"
-              use:photoEnhance
+              onsubmit={photo.submit}
               class="flex flex-wrap items-center gap-3"
             >
               <label for="photo" class="sr-only">{m.account_photo_file()}</label>
@@ -176,20 +172,20 @@
                 name="photo"
                 type="file"
                 accept={IMAGE_TYPES.join(',')}
-                bind:files={$photoFile}
+                bind:files={photoFiles}
                 onchange={picked}
                 aria-invalid={photoError ? 'true' : undefined}
                 aria-describedby="photo-hint{photoError ? ' photo-error' : ''}"
                 class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-2 file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
               />
               <SubmitButton
-                submitting={$submitting}
-                delayed={$delayed}
-                timeout={$timeout}
+                submitting={photo.pending}
+                delayed={photo.delayed}
+                timeout={photo.timeout}
                 class="btn h-12 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
                 >{m.account_photo_upload()}</SubmitButton
               >
-            </form>
+            </Form>
             {#if framing}
               <ImageCropper
                 file={framing}
@@ -230,7 +226,7 @@
         <div class="mt-6 grid max-w-xl gap-1">
           <label for="email" class="label-text block font-semibold">{m.account_email()}</label>
           <p id="email-hint" class="text-sm text-surface-700-300">{m.account_email_hint()}</p>
-          <input
+          <TextInput
             id="email"
             type="email"
             value={data.email}
@@ -241,7 +237,9 @@
         </div>
         <div class="mt-6">
           <ProfileForm
-            form={data.form}
+            form={result?.form && 'username' in result.form.data
+              ? { ...result.form, data: result.form.data }
+              : data.form}
             action="?/save"
             usernameLocked
             submitLabel={m.account_profile_save()}
@@ -252,12 +250,18 @@
 
       <section aria-labelledby="direct-messages" class={card}>
         <h2 id="direct-messages" class={heading}>{m.messages_setting_title()}</h2>
-        <form method="POST" action="?/messages" use:messagingEnhance class="mt-4">
+        <Form
+          bind:element={messagingForm}
+          action="?/messages"
+          onsubmit={messaging.submit}
+          class="mt-4"
+        >
           <Switch
-            checked={$messagingValues.enabled}
+            checked={messaging.values.enabled}
+            disabled={messaging.pending}
             onCheckedChange={(event) => {
-              $messagingValues.enabled = event.checked;
-              submitMessaging();
+              messaging.change('enabled', event.checked);
+              void tick().then(() => messagingForm?.requestSubmit());
             }}
             class="flex items-center justify-between gap-4"
           >
@@ -266,8 +270,9 @@
               <Switch.Thumb />
             </Switch.Control>
             <Switch.HiddenInput />
+            <input type="hidden" name="enabled" value={String(messaging.values.enabled)} />
           </Switch>
-        </form>
+        </Form>
         <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
       </section>
 
@@ -303,11 +308,11 @@
         <div class="mt-8 border-t border-surface-200-800 pt-6">
           <h3 class="text-lg font-semibold">{m.account_delete_title()}</h3>
           <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
-          <form method="POST" action="?/delete" use:closingEnhance class="mt-4 grid max-w-sm gap-3">
+          <Form action="?/delete" onsubmit={closing.submit} class="mt-4 grid max-w-sm gap-3">
             <label for="confirm" class="label-text font-semibold"
               >{m.account_delete_confirm()}</label
             >
-            <input
+            <TextInput
               id="confirm"
               name="confirm"
               type="text"
@@ -316,26 +321,26 @@
               spellcheck="false"
               placeholder={data.username}
               bind:value={$closingData.confirm}
-              aria-invalid={$closingErrors.confirm ? 'true' : undefined}
-              aria-describedby={$closingErrors.confirm ? 'confirm-error' : undefined}
+              aria-invalid={closing.errors.confirm ? 'true' : undefined}
+              aria-describedby={closing.errors.confirm ? 'confirm-error' : undefined}
               class="input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3"
             />
-            {#if $closingErrors.confirm}
+            {#if closing.errors.confirm}
               <p id="confirm-error" role="alert" class="text-sm font-semibold text-error-700-300">
                 {m.account_delete_error()}
               </p>
             {/if}
             <div>
               <SubmitButton
-                submitting={$closingSubmitting}
-                delayed={$closingDelayed}
-                timeout={$closingTimeout}
+                submitting={closing.pending}
+                delayed={closing.delayed}
+                timeout={closing.timeout}
                 class="btn h-12 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
               >
                 {m.account_delete_button()}
               </SubmitButton>
             </div>
-          </form>
+          </Form>
         </div>
       </section>
     </div>

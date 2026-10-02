@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Form from '$lib/components/Form.svelte';
+  import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -124,8 +126,8 @@
 
   <!-- A plain GET form: it filters without JavaScript, and the URL can be shared. Every filter is a
 	     slug in the query string, and a key repeats for each value ticked. -->
-  <form
-    bind:this={filterForm}
+  <Form
+    bind:element={filterForm}
     method="GET"
     action={listHref}
     data-sveltekit-keepfocus
@@ -223,13 +225,14 @@
       {/if}
     {/each}
     <noscript>
-      <button
+      <Button
+        size="custom"
         type="submit"
         class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold md:ml-28"
-        >{m.tables_filter_apply()}</button
+        >{m.tables_filter_apply()}</Button
       >
     </noscript>
-  </form>
+  </Form>
 
   {#if filtering.current}
     <ListSkeleton kind="cards" />

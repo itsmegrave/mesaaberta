@@ -42,3 +42,14 @@ export const announcementSchema = z
   });
 
 export type AnnouncementInput = z.infer<typeof announcementSchema>;
+
+export const ANNOUNCEMENT_DEFAULTS: AnnouncementInput = {
+  title: '',
+  body: '',
+  icon: '',
+  tone: 'info',
+  audience: 'all_active_users',
+  recipient: '',
+  link: '',
+  confirmed: false,
+};

@@ -29,9 +29,12 @@ for (const javaScriptEnabled of [true, false]) {
     });
     try {
       const feed = await context.newPage();
-      await feed.goto('http://localhost:4173/notifications?category=table', {
-        waitUntil: 'domcontentloaded',
-      });
+      await feed.goto(
+        new URL('/notifications?category=table', test.info().project.use.baseURL).href,
+        {
+          waitUntil: 'domcontentloaded',
+        },
+      );
       const main = feed.getByRole('main');
       const row = main.getByRole('listitem').filter({ hasText: 'Ler uma' });
       await row.getByRole('button', { name: 'Marcar como lida', exact: true }).click();
@@ -41,9 +44,12 @@ for (const javaScriptEnabled of [true, false]) {
       await expect(feed).toHaveURL(/\/notifications\?category=table$/);
       await main.getByRole('button', { name: 'Abrir destino', exact: true }).click();
       await expect(feed).toHaveURL(/\/account\/tables$/);
-      await feed.goto('http://localhost:4173/notifications?category=table', {
-        waitUntil: 'domcontentloaded',
-      });
+      await feed.goto(
+        new URL('/notifications?category=table', test.info().project.use.baseURL).href,
+        {
+          waitUntil: 'domcontentloaded',
+        },
+      );
       await feed
         .getByRole('main')
         .getByRole('button', { name: 'Marcar todas como lidas', exact: true })

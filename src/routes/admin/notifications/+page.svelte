@@ -1,14 +1,20 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
+  import Button from '$lib/components/Button.svelte';
   import UserText from '$lib/components/UserText.svelte';
+  import { createQuery } from '@tanstack/svelte-query';
+  import { queryClient } from '$lib/query/context';
+  import { apiRead } from '$lib/api/http';
   import { onMount } from 'svelte';
-  import { superForm } from 'sveltekit-superforms';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from '$lib/components/Form.svelte';
   import FormField from '$lib/components/FormField.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import RichText from '$lib/components/RichText.svelte';
   import RichTextField from '$lib/components/RichTextField.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
-  import { ANNOUNCEMENT_LIMITS } from '$lib/notifications/announcement';
+  import { ANNOUNCEMENT_LIMITS, announcementSchema } from '$lib/notifications/announcement';
   import type { AnnouncementMessage } from '$lib/notifications/announcement-message';
   import {
     ANNOUNCEMENT_AUDIENCES,
@@ -25,7 +31,7 @@
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { toast } from '$lib/toaster';
 
-  let { data } = $props();
+  let { data, form: result = null } = $props();
 
   const locale = getLocale();
   const number = (n: number) => new Intl.NumberFormat(locale).format(n);
@@ -35,33 +41,34 @@
   // always what was counted.
   // svelte-ignore state_referenced_locally
   let confirming = $state(
-    (data.form.message as AnnouncementMessage | undefined)?.code === 'confirm',
+    ((result?.form ?? data.form).message as AnnouncementMessage | undefined)?.code === 'confirm',
   );
   let mounted = $state(false);
   onMount(() => (mounted = true));
 
   // svelte-ignore state_referenced_locally
-  const { form, errors, message, enhance, submitting, delayed, timeout, reset } = superForm(
-    data.form,
-    {
-      // The review step answers with a valid form; resetting then would blank what the confirm
-      // post must send. Only a sent announcement clears the fields.
-      resetForm: false,
-      invalidateAll: true,
-      onResult({ result }) {
-        if (result.type === 'redirect') {
-          confirming = false;
-          reset();
-          toast.success(m.admin_announce_sent());
-        }
-      },
-      onUpdated({ form }) {
-        confirming = (form.message as AnnouncementMessage | undefined)?.code === 'confirm';
-      },
+  const initial = result?.form ?? data.form;
+  const controller = actionForm({
+    initial: initial.data,
+    initialErrors: initial.errors,
+    initialMessage: initial.message,
+    schema: announcementSchema,
+    errorMessage: m.admin_announce_error_invalid,
+    onSuccess() {
+      confirming = false;
+      controller.reset();
+      toast.success(m.admin_announce_sent());
     },
-  );
+    onResult(result) {
+      if (result.type === 'success') {
+        confirming = controller.message?.code === 'confirm';
+        return true;
+      }
+    },
+  });
+  const { draft } = controller;
 
-  const shown = $derived($message as AnnouncementMessage | undefined);
+  const shown = $derived(controller.message as AnnouncementMessage | undefined);
   const confirmStep = $derived(shown?.code === 'confirm' && confirming);
 
   const ICON_LABELS: Record<AnnouncementIcon, string> = {
@@ -108,14 +115,14 @@
   };
 
   // The bell's own wording and icon, from what is typed so far.
-  const previewIcon = $derived(($form.icon || TONE_ICON[$form.tone]) as AnnouncementIcon);
+  const previewIcon = $derived(($draft.icon || TONE_ICON[$draft.tone]) as AnnouncementIcon);
   const previewText = $derived(
-    $form.title.trim()
+    $draft.title.trim()
       ? notificationText({
           type: 'system_announcement',
           icon: previewIcon,
-          title: $form.title.trim(),
-          body: $form.body.trim() || null,
+          title: $draft.title.trim(),
+          body: $draft.body.trim() || null,
           metadata: {},
           actor: null,
         })
@@ -131,26 +138,32 @@
   );
 
   // Suggestions for the recipient field, as the admin types a username.
-  let suggestions = $state<string[]>([]);
-  let lookup: ReturnType<typeof setTimeout> | undefined;
+  const client = queryClient();
+  let recipientQuery = $state('');
+  const recipientLookup = createQuery(
+    () => ({
+      queryKey: ['admin-recipient', 'admin', recipientQuery],
+      enabled: recipientQuery.length >= 2 && $draft.audience === 'specific_user',
+      queryFn: ({ signal }) =>
+        apiRead<string[]>(
+          `${localizedHref('/admin/notifications/users', locale)}?q=${encodeURIComponent(recipientQuery)}`,
+          signal,
+        ),
+      staleTime: 30_000,
+      retry: false,
+    }),
+    () => client,
+  );
+  const suggestions = $derived(recipientQuery.length >= 2 ? (recipientLookup.data ?? []) : []);
+  let recipientInput = $state('');
   function suggest(value: string) {
-    clearTimeout(lookup);
-    const query = value.trim().replace(/^@/, '');
-    if (query.length < 2) {
-      suggestions = [];
-      return;
-    }
-    lookup = setTimeout(async () => {
-      try {
-        const response = await fetch(
-          `${localizedHref('/admin/notifications/users', locale)}?q=${encodeURIComponent(query)}`,
-        );
-        if (response.ok) suggestions = await response.json();
-      } catch {
-        // No suggestions; the field still takes what is typed.
-      }
-    }, 200);
+    recipientInput = value.trim().replace(/^@/, '');
   }
+  $effect(() => {
+    const value = recipientInput;
+    const timer = setTimeout(() => (recipientQuery = value), 200);
+    return () => clearTimeout(timer);
+  });
 
   const when = (date: Date) =>
     new Intl.DateTimeFormat(locale, {
@@ -185,9 +198,8 @@
   <p class="mt-4 max-w-2xl text-lg">{m.admin_announce_lede()}</p>
 
   <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
-    <form
-      method="POST"
-      use:enhance
+    <Form
+      onsubmit={controller.submit}
       oninput={() => (confirming = false)}
       class="grid gap-6"
       aria-labelledby="compose"
@@ -208,16 +220,16 @@
         id="title"
         label={m.admin_announce_field_title()}
         hint={m.admin_announce_length_hint({ max: ANNOUNCEMENT_LIMITS.title })}
-        error={fieldError($errors.title)}
+        error={fieldError(controller.errors.title)}
       >
-        <input
+        <TextInput
           id="title"
           name="title"
           required
           maxlength={ANNOUNCEMENT_LIMITS.title}
-          bind:value={$form.title}
-          aria-invalid={$errors.title ? 'true' : undefined}
-          aria-describedby="title-hint{$errors.title ? ' title-error' : ''}"
+          bind:value={$draft.title}
+          aria-invalid={controller.errors.title ? 'true' : undefined}
+          aria-describedby="title-hint{controller.errors.title ? ' title-error' : ''}"
           class="{input} w-full"
         />
       </FormField>
@@ -226,16 +238,16 @@
         id="body"
         label={m.admin_announce_field_body()}
         hint={m.admin_announce_body_hint({ max: ANNOUNCEMENT_LIMITS.body })}
-        error={fieldError($errors.body)}
+        error={fieldError(controller.errors.body)}
       >
         <RichTextField
           id="body"
           name="body"
           rows={4}
           maxlength={ANNOUNCEMENT_LIMITS.body}
-          bind:value={$form.body}
-          invalid={Boolean($errors.body)}
-          describedby="body-hint{$errors.body ? ' body-error' : ''}"
+          bind:value={$draft.body}
+          invalid={Boolean(controller.errors.body)}
+          describedby="body-hint{controller.errors.body ? ' body-error' : ''}"
         />
       </FormField>
 
@@ -243,7 +255,7 @@
         <legend class="mb-2 font-semibold sm:col-span-3">{m.admin_announce_field_tone()}</legend>
         {#each ANNOUNCEMENT_TONES as tone (tone)}
           <label class={choice}>
-            <input type="radio" name="tone" value={tone} bind:group={$form.tone} />
+            <input type="radio" name="tone" value={tone} bind:group={$draft.tone} />
             {TONE_LABELS[tone]}
           </label>
         {/each}
@@ -252,13 +264,13 @@
       <fieldset class="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <legend class="mb-2 font-semibold sm:col-span-4">{m.admin_announce_field_icon()}</legend>
         <label class={choice}>
-          <input type="radio" name="icon" value="" bind:group={$form.icon} />
-          <NotificationIcon icon={TONE_ICON[$form.tone]} class="text-muted" />
+          <input type="radio" name="icon" value="" bind:group={$draft.icon} />
+          <NotificationIcon icon={TONE_ICON[$draft.tone]} class="text-muted" />
           {m.admin_announce_icon_auto()}
         </label>
         {#each ANNOUNCEMENT_ICONS as icon (icon)}
           <label class={choice}>
-            <input type="radio" name="icon" value={icon} bind:group={$form.icon} />
+            <input type="radio" name="icon" value={icon} bind:group={$draft.icon} />
             <NotificationIcon {icon} />
             {ICON_LABELS[icon]}
           </label>
@@ -270,7 +282,7 @@
         {#each ANNOUNCEMENT_AUDIENCES as audience (audience)}
           <label class="{choice} justify-between">
             <span class="flex items-center gap-3">
-              <input type="radio" name="audience" value={audience} bind:group={$form.audience} />
+              <input type="radio" name="audience" value={audience} bind:group={$draft.audience} />
               {AUDIENCE_LABELS[audience]}
             </span>
             {#if size(audience)}<span class="text-sm text-muted">{size(audience)}</span>{/if}
@@ -278,23 +290,23 @@
         {/each}
       </fieldset>
 
-      {#if $form.audience === 'specific_user' || !mounted}
+      {#if $draft.audience === 'specific_user' || !mounted}
         <FormField
           id="recipient"
           label={m.admin_announce_field_recipient()}
           hint={m.admin_announce_recipient_hint()}
-          error={fieldError($errors.recipient)}
+          error={fieldError(controller.errors.recipient)}
         >
-          <input
+          <TextInput
             id="recipient"
             name="recipient"
             list="recipient-suggestions"
             autocomplete="off"
             maxlength={ANNOUNCEMENT_LIMITS.recipient}
-            bind:value={$form.recipient}
+            bind:value={$draft.recipient}
             oninput={(event) => suggest(event.currentTarget.value)}
-            aria-invalid={$errors.recipient ? 'true' : undefined}
-            aria-describedby="recipient-hint{$errors.recipient ? ' recipient-error' : ''}"
+            aria-invalid={controller.errors.recipient ? 'true' : undefined}
+            aria-describedby="recipient-hint{controller.errors.recipient ? ' recipient-error' : ''}"
             class="{input} w-full"
           />
           <datalist id="recipient-suggestions">
@@ -307,16 +319,16 @@
         id="link"
         label={m.admin_announce_field_link()}
         hint={m.admin_announce_link_hint()}
-        error={fieldError($errors.link)}
+        error={fieldError(controller.errors.link)}
       >
-        <input
+        <TextInput
           id="link"
           name="link"
           maxlength={ANNOUNCEMENT_LIMITS.link}
           placeholder="/tables"
-          bind:value={$form.link}
-          aria-invalid={$errors.link ? 'true' : undefined}
-          aria-describedby="link-hint{$errors.link ? ' link-error' : ''}"
+          bind:value={$draft.link}
+          aria-invalid={controller.errors.link ? 'true' : undefined}
+          aria-describedby="link-hint{controller.errors.link ? ' link-error' : ''}"
           class="{input} w-full"
         />
       </FormField>
@@ -332,33 +344,35 @@
           </h3>
           <p class="mt-1"><UserText text={confirmText} username={shown?.recipient} /></p>
           <div class="mt-4 flex flex-wrap gap-3">
-            <button
+            <Button
+              size="custom"
               type="submit"
               name="confirmed"
               value="true"
               class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-              >{m.admin_announce_confirm_send()}</button
+              >{m.admin_announce_confirm_send()}</Button
             >
-            <button
+            <Button
+              size="custom"
               type="button"
               onclick={() => (confirming = false)}
               class="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold"
-              >{m.admin_announce_confirm_back()}</button
+              >{m.admin_announce_confirm_back()}</Button
             >
           </div>
         </div>
       {:else}
         <p>
           <SubmitButton
-            submitting={$submitting}
-            delayed={$delayed}
-            timeout={$timeout}
+            submitting={controller.pending}
+            delayed={controller.delayed}
+            timeout={controller.timeout}
             class="btn h-12 rounded-lg preset-filled-primary-500 px-6 font-semibold"
             >{m.admin_announce_review()}</SubmitButton
           >
         </p>
       {/if}
-    </form>
+    </Form>
 
     <aside aria-labelledby="preview" class="lg:sticky lg:top-6 lg:self-start">
       <h2 id="preview" class="text-2xl font-semibold tracking-tight">

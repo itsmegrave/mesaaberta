@@ -1,7 +1,9 @@
+import { TABLE_STATUSES, type TableStatus } from '$lib/tables/status-values';
 export function tableFilters(params: URLSearchParams) {
   const raw = params.get('status');
-  const status: 'all' | 'active' | 'disabled' =
-    raw === 'active' || raw === 'disabled' ? raw : 'all';
+  const status: 'all' | TableStatus = TABLE_STATUSES.includes(raw as TableStatus)
+    ? (raw as TableStatus)
+    : 'all';
   const page = params.get('page') ?? '1';
   const size = Number(params.get('size') ?? 20);
   return {

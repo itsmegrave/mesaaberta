@@ -1,7 +1,7 @@
 import { loadRead } from '$lib/server/reads/load';
 import { error, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm } from '$lib/forms/contract';
+import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { requireUser } from '$lib/server/auth/guard';
 import { timezoneOf } from '$lib/server/time';
 import { Forbidden, NotFound } from '$lib/server/errors';
@@ -10,7 +10,6 @@ import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
-import { tableFormSchema } from '$lib/tables/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -35,7 +34,7 @@ export const load: PageServerLoad = async (event) => {
       status,
       // The saved title, for the breadcrumb: the form's own may be mid-edit.
       title: values.title,
-      form: await superValidate(values, zod4(tableFormSchema), { errors: false }),
+      form: initialForm({ ...NEW_TABLE_VALUES, ...values }),
       imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
       systems: catalogRead.systems,
       catalog: catalogRead.catalog,

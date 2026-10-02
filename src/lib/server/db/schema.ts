@@ -1,3 +1,5 @@
+import { TABLE_STATUSES } from '../../tables/status-values.ts';
+import { PROFILE_STATUSES } from '../../profile/status.ts';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
@@ -18,7 +20,7 @@ import {
 
 // `member | admin`: GM is not a role. Anyone signed in can open a table and becomes its GM.
 export const profileRole = pgEnum('profile_role', ['member', 'admin']);
-export const profileStatus = pgEnum('profile_status', ['active', 'suspended']);
+export const profileStatus = pgEnum('profile_status', PROFILE_STATUSES);
 // A person's gender, when they say. `other` goes with their own words in `gender_other`. Keep in
 // step with GENDER_OPTIONS (src/lib/profile/schema.ts); a test checks the two lists match.
 export const genderIdentity = pgEnum('gender_identity', [
@@ -45,13 +47,7 @@ export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
 export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure']);
 // `active` is open; `disabled` is the GM cancelling before the session; after the session the GM
 // confirms it: `awaiting_confirmation` until they answer, then `concluded` or `not_held`.
-export const tableStatus = pgEnum('table_status', [
-  'active',
-  'disabled',
-  'awaiting_confirmation',
-  'concluded',
-  'not_held',
-]);
+export const tableStatus = pgEnum('table_status', TABLE_STATUSES);
 // Where the table plays: over the internet, or around a real table.
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for

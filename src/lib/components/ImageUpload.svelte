@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   // The table's image: Skeleton's File Upload, a zone to drop a file on or a button to pick one.
   // Until JavaScript runs it is a plain file field, so the form works without it. The type and the
   // size are checked by the form's schema, not here, so every problem reads the same way.
@@ -60,17 +61,19 @@
     <div class="mt-2 mb-3 flex flex-wrap items-center gap-3">
       {#if removed}
         <p role="status" class="text-sm font-semibold">{m.form_image_removed()}</p>
-        <button
+        <Button
+          size="custom"
           type="button"
           class="btn h-12 rounded-lg px-3 font-semibold hover:preset-tonal"
-          onclick={() => (removed = false)}>{m.form_image_undo_remove()}</button
+          onclick={() => (removed = false)}>{m.form_image_undo_remove()}</Button
         >
         <input type="hidden" name="removeImage" value="true" />
       {:else}
-        <button
+        <Button
+          size="custom"
           type="button"
           class="btn h-12 rounded-lg px-3 font-semibold text-error-alert hover:preset-tonal"
-          onclick={() => (removed = true)}>{m.form_image_remove_current()}</button
+          onclick={() => (removed = true)}>{m.form_image_remove_current()}</Button
         >
       {/if}
     </div>

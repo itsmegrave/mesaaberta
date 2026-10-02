@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { defaults, superForm } from 'sveltekit-superforms';
-  import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
+  import Button from '$lib/components/Button.svelte';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from './Form.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
@@ -36,34 +37,28 @@
   );
 
   // svelte-ignore state_referenced_locally
-  const { form, enhance, submitting, delayed, timeout } = superForm(
-    defaults({ muted: !conversation.muted }, zod4(muteSchema)),
-    {
-      id: 'mute',
-      dataType: 'json',
-      validators: zod4Client(muteSchema),
-      resetForm: false,
-      applyAction: action === '?/mute',
-      invalidateAll: action === '?/mute',
-      onUpdated({ form: updated }) {
-        if (updated.valid) conversation.muted = updated.data.muted;
-      },
+  const controller = actionForm({
+    initial: { muted: !conversation.muted },
+    schema: muteSchema,
+    refresh: action === '?/mute',
+    errorMessage: m.messages_error_generic,
+    onSuccess() {
+      conversation.muted = controller.values.muted;
     },
-  );
-  // The switch always asks for the opposite of what the conversation is now.
+  });
   $effect(() => {
-    const next = !conversation.muted;
-    form.update((values) => ({ ...values, muted: next }));
+    controller.change('muted', !conversation.muted);
   });
 </script>
 
 <header class="flex items-center gap-3 border-b border-surface-200-800 pb-3">
   {#if onback}
-    <button
+    <Button
+      size="custom"
       type="button"
       onclick={onback}
       class="btn size-12 shrink-0 p-0 hover:preset-tonal"
-      aria-label={m.messages_back()}><Icon name="arrow-left" size={24} /></button
+      aria-label={m.messages_back()}><Icon name="arrow-left" size={24} /></Button
     >
   {:else}
     <a
@@ -90,7 +85,7 @@
     </a>
   {:else if conversation.other?.username}
     <a
-      href={localizedHref(`/${encodeURIComponent(conversation.other.username)}`, locale)}
+      href={localizedHref(`/u/${encodeURIComponent(conversation.other.username)}`, locale)}
       class="flex min-w-0 flex-1 items-center gap-3 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-primary-500"
     >
       {@render identity()}
@@ -101,11 +96,12 @@
     </div>
   {/if}
 
-  <form method="POST" {action} use:enhance class="m-0">
+  <Form {action} onsubmit={controller.submit} class="m-0">
+    <input type="hidden" name="muted" value={String(controller.values.muted)} />
     <SubmitButton
-      submitting={$submitting}
-      delayed={$delayed}
-      timeout={$timeout}
+      submitting={controller.pending}
+      delayed={controller.delayed}
+      timeout={controller.timeout}
       class="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
     >
       <Icon name={conversation.muted ? 'bell' : 'bell-off'} size={18} />
@@ -116,5 +112,5 @@
         >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
       >
     </SubmitButton>
-  </form>
+  </Form>
 </header>

@@ -1,3 +1,4 @@
+import '../../routes/layout.css';
 import { render } from 'vitest-browser-svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
@@ -21,10 +22,10 @@ describe('inbox profile links', () => {
     const onselect = vi.fn();
     render(InboxList, { items: [direct], page: 1, pages: 1, onselect });
     const profile = page.getByRole('link', { name: '@ana', exact: true });
-    await expect.element(profile).toHaveAttribute('href', '/ana');
+    await expect.element(profile).toHaveAttribute('href', '/u/ana');
     expect(document.querySelector('a a')).toBeNull();
     document
-      .querySelector('a[href="/ana"]')!
+      .querySelector('a[href="/u/ana"]')!
       .addEventListener('click', (event) => event.preventDefault(), { once: true });
     await profile.click();
     expect(onselect).not.toHaveBeenCalled();
@@ -40,7 +41,7 @@ describe('inbox profile links', () => {
     });
     await expect
       .element(page.getByRole('link', { name: '@ana', exact: true }))
-      .toHaveAttribute('href', '/ana');
+      .toHaveAttribute('href', '/u/ana');
     await expect
       .element(page.getByRole('link', { name: 'Aventura @ana: Olá!', exact: true }))
       .toHaveAttribute('href', '/messages/chat-ana');

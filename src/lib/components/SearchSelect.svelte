@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
+  import SelectInput from '$lib/components/SelectInput.svelte';
   // A dropdown with a search box over a long list (the ~700 RPG systems), one or several picks.
   // Until JavaScript runs it is a native <select>, so a form using it works without JS; after that
   // it is Skeleton's Combobox, and the picks are submitted as hidden inputs, one per value.
@@ -192,7 +194,8 @@
       >
         {#each value as slug (slug)}
           <li>
-            <button
+            <Button
+              size="custom"
               type="button"
               class="inline-flex h-9 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
               aria-label={m.search_select_remove({ name: chipName(slug) })}
@@ -211,7 +214,7 @@
                 stroke-linecap="round"
                 aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg
               >
-            </button>
+            </Button>
           </li>
         {/each}
       </ul>
@@ -224,10 +227,11 @@
 {:else}
   <div class={rootClass}>
     <label for={id} class="block {labelClass}">{label}</label>
-    <select
+    <SelectInput
       {id}
       {name}
       {multiple}
+      value={multiple ? value : (value[0] ?? '')}
       {required}
       aria-invalid={invalid || undefined}
       class="select w-full rounded-lg border-surface-200-800 bg-panel px-3 {multiple
@@ -238,6 +242,6 @@
       {#each items as item (item.slug)}
         <option value={item.slug} selected={value.includes(item.slug)}>{item.name}</option>
       {/each}
-    </select>
+    </SelectInput>
   </div>
 {/if}

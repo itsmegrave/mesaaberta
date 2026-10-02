@@ -1,8 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
+import { initialForm, issueErrors } from '$lib/forms/contract';
 import ProfileForm from './ProfileForm.svelte';
 import { profileSchema, type ProfileInput } from '$lib/profile/schema';
 
@@ -31,9 +30,9 @@ const setup = async (
   checkUsername = vi.fn(),
   { withErrors = false } = {},
 ) => {
-  const form = await superValidate({ ...empty, ...values }, zod4(profileSchema), {
-    errors: withErrors,
-  });
+  const form = initialForm({ ...empty, ...values });
+  const parsed = profileSchema.safeParse(form.data);
+  if (withErrors && !parsed.success) form.errors = issueErrors(parsed.error.issues);
   render(ProfileForm, { form, checkUsername });
 
   return { checkUsername };

@@ -3,11 +3,12 @@
   import type { HTMLFormAttributes } from 'svelte/elements';
   let {
     children,
+    element = $bindable(),
     method = 'POST',
     ...attributes
-  }: HTMLFormAttributes & { children: Snippet } = $props();
+  }: HTMLFormAttributes & { children: Snippet; element?: HTMLFormElement } = $props();
 </script>
 
-<form {method} {...attributes}>
+<form bind:this={element} {method} {...attributes}>
   {@render children()}
 </form>

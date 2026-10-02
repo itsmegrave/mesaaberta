@@ -1,6 +1,7 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   // Mounted once, in the root layout. It opens when a form with unsaved changes calls
-  // `confirmLeave` (Superforms' `taintedMessage`) and answers it.
+  // `confirmLeave` (the shared draft guard) and answers it.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { leaveGuard } from '$lib/forms/leave-guard.svelte';
   import { m } from '$lib/paraglide/messages';
@@ -29,15 +30,17 @@
             >{m.unsaved_text()}</Dialog.Description
           >
           <div class="mt-6 flex flex-wrap justify-end gap-3">
-            <button
+            <Button
+              size="custom"
               type="button"
               class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-              onclick={() => answer(false)}>{m.unsaved_stay()}</button
+              onclick={() => answer(false)}>{m.unsaved_stay()}</Button
             >
-            <button
+            <Button
+              size="custom"
               type="button"
               class="btn h-12 rounded-lg preset-filled-error-500 px-4 font-semibold"
-              onclick={() => answer(true)}>{m.unsaved_leave()}</button
+              onclick={() => answer(true)}>{m.unsaved_leave()}</Button
             >
           </div>
         </Dialog.Content>

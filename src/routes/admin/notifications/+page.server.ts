@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
-import { message, setError, superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { announcementSchema } from '$lib/notifications/announcement';
+import { initialForm, validateFormData } from '$lib/forms/contract';
+import { formMessage, refuse } from '$lib/forms/server';
+import { announcementSchema, ANNOUNCEMENT_DEFAULTS } from '$lib/notifications/announcement';
 import type { AnnouncementMessage } from '$lib/notifications/announcement-message';
 import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (!locals.db) error(503, 'Database not configured');
 
   const [form, sizes, history] = await Promise.all([
-    superValidate(zod4(announcementSchema)),
+    Promise.resolve(initialForm(ANNOUNCEMENT_DEFAULTS)),
     audienceSizes(locals.db),
     listAnnouncements(locals.db),
   ]);
@@ -37,25 +37,30 @@ export const actions: Actions = {
     await requireAdmin(locals);
     if (!locals.db) error(503, 'Database not configured');
 
-    const form = await superValidate(request, zod4(announcementSchema));
+    const form = validateFormData(
+      await request.formData(),
+      announcementSchema,
+      ANNOUNCEMENT_DEFAULTS,
+      { booleans: ['confirmed'] },
+    );
     if (!form.valid)
-      return message(form, { code: 'invalid' } as AnnouncementMessage, { status: 400 });
+      return formMessage(form, { code: 'invalid' } as AnnouncementMessage, { status: 400 });
 
     let result;
     try {
       result = await sendAnnouncement(locals.db, await locals.getProfile(), form.data);
     } catch (e) {
       if (e instanceof Invalid && e.field === 'recipient') {
-        return setError(form, 'recipient', e.message);
+        return refuse(form, 400, e.message, 'recipient');
       }
       if (e instanceof Invalid && e.field === 'audience') {
-        return message(form, { code: 'empty' } as AnnouncementMessage, { status: 400 });
+        return formMessage(form, { code: 'empty' } as AnnouncementMessage, { status: 400 });
       }
       throw e;
     }
 
     if (result.step === 'confirm') {
-      return message(form, {
+      return formMessage(form, {
         code: 'confirm',
         count: result.count,
         recipient: result.recipient?.username,

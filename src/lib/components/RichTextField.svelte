@@ -1,4 +1,7 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
+  import TextArea from '$lib/components/TextArea.svelte';
+  import Button from '$lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import type { Editor } from '@tiptap/core';
   import Icon from './Icon.svelte';
@@ -295,7 +298,7 @@
 {#if ready}
   <input type="hidden" {name} value={html} />
 {:else}
-  <textarea
+  <TextArea
     {id}
     {name}
     {rows}
@@ -303,7 +306,8 @@
     oninput={(event) => (value = event.currentTarget.value)}
     class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
     aria-invalid={invalid ? 'true' : undefined}
-    aria-describedby={describedby}></textarea>
+    aria-describedby={describedby}
+  ></TextArea>
 {/if}
 
 <!-- Always in the page, so the editor has an element to mount in; shown once it is ready. -->
@@ -329,7 +333,8 @@
       {#each group as tool (tool.icon)}
         {@const pressed = pressedOf(tool)}
         {@const disabled = disabledOf(tool)}
-        <button
+        <Button
+          size="custom"
           type="button"
           title={tool.label()}
           aria-label={tool.label()}
@@ -343,7 +348,7 @@
             : ''}"
         >
           <Icon name={tool.icon} size={18} />
-        </button>
+        </Button>
       {/each}
     {/each}
   </div>
@@ -351,9 +356,9 @@
   {#if linkOpen}
     <div class="flex flex-wrap items-center gap-2 border-b border-surface-200-800 p-2">
       <label class="sr-only" for="{id}-link">{m.rich_text_link_url()}</label>
-      <input
+      <TextInput
         id="{id}-link"
-        bind:this={linkInput}
+        bind:element={linkInput}
         bind:value={linkUrl}
         type="text"
         inputmode="url"
@@ -372,16 +377,22 @@
         }}
         class="input h-9 min-w-0 flex-1 rounded-lg border-surface-200-800 px-3"
       />
-      <button type="button" class="btn preset-filled-primary-500 btn-sm" onclick={applyLink}
-        >{m.rich_text_link_apply()}</button
+      <Button
+        size="custom"
+        type="button"
+        class="btn preset-filled-primary-500 btn-sm"
+        onclick={applyLink}>{m.rich_text_link_apply()}</Button
       >
       {#if editor?.isActive('link')}
-        <button type="button" class="btn btn-sm hover:preset-tonal" onclick={removeLink}
-          >{m.rich_text_link_remove()}</button
+        <Button
+          size="custom"
+          type="button"
+          class="btn btn-sm hover:preset-tonal"
+          onclick={removeLink}>{m.rich_text_link_remove()}</Button
         >
       {/if}
-      <button type="button" class="btn btn-sm hover:preset-tonal" onclick={closeLink}
-        >{m.rich_text_link_cancel()}</button
+      <Button size="custom" type="button" class="btn btn-sm hover:preset-tonal" onclick={closeLink}
+        >{m.rich_text_link_cancel()}</Button
       >
       {#if linkInvalid}
         <p

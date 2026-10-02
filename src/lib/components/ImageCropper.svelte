@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   // Frames a picked image before it is sent: drag to move, zoom with the buttons, the mouse wheel
   // or a pinch, or nudge with the arrow keys and +/- once the frame has focus. Cropper.js does the
   // drawing (its styles go through the CSSOM, which the CSP allows); what leaves is one new file,
@@ -135,17 +136,19 @@
           <img bind:this={image} src={url} alt="" class="hidden" onerror={() => onunreadable?.()} />
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-3">
-          <button
+          <Button
+            size="custom"
             type="button"
             class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
             aria-label={m.image_crop_zoom_out()}
-            onclick={() => zoom(-0.1)}>−</button
+            onclick={() => zoom(-0.1)}>−</Button
           >
-          <button
+          <Button
+            size="custom"
             type="button"
             class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
             aria-label={m.image_crop_zoom_in()}
-            onclick={() => zoom(0.1)}><Icon name="plus" size={18} /></button
+            onclick={() => zoom(0.1)}><Icon name="plus" size={18} /></Button
           >
           <div class="ml-auto flex items-center gap-3">
             <span class="text-sm text-muted">{m.image_crop_preview()}</span>
@@ -164,16 +167,18 @@
           </p>
         {/if}
         <div class="mt-6 flex flex-wrap justify-end gap-3">
-          <button
+          <Button
+            size="custom"
             type="button"
             class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-            onclick={oncancel}>{m.image_crop_cancel()}</button
+            onclick={oncancel}>{m.image_crop_cancel()}</Button
           >
-          <button
+          <Button
+            size="custom"
             type="button"
             class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
             disabled={busy}
-            onclick={confirm}>{m.image_crop_use()}</button
+            onclick={confirm}>{m.image_crop_use()}</Button
           >
         </div>
       </Dialog.Content>

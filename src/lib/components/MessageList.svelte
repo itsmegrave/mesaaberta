@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import { tick } from 'svelte';
   import Avatar from '$lib/components/Avatar.svelte';
@@ -85,14 +86,15 @@
   class="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto py-3"
 >
   {#if hasMore}
-    <button
+    <Button
+      size="custom"
       type="button"
       onclick={older}
       aria-disabled={loadingOlder || undefined}
       class="mx-auto mb-2 btn h-12 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal"
     >
       {loadingOlder ? m.nav_loading() : m.messages_load_older()}
-    </button>
+    </Button>
   {/if}
 
   {#if items.length === 0}

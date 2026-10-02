@@ -2,16 +2,25 @@
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import AuthShell from '$lib/components/AuthShell.svelte';
-  import { superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from '$lib/components/Form.svelte';
+  import TextInput from '$lib/components/TextInput.svelte';
   import { resolve } from '$app/paths';
   import { emailSchema } from '$lib/auth/credentials';
   import FormField from '$lib/components/FormField.svelte';
   import { m } from '$lib/paraglide/messages';
 
-  let { data } = $props();
-  const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
-    validators: zod4Client(emailSchema),
+  let { data, form: result = null } = $props();
+  // svelte-ignore state_referenced_locally
+  const initial = result?.form ?? data.form;
+  const controller = actionForm({
+    initial: initial.data,
+    initialErrors: initial.errors,
+    initialMessage: initial.message,
+    schema: emailSchema,
+    domain: 'account',
+    onSuccess: () => {},
+    errorMessage: m.auth_error_failed,
   });
 </script>
 
@@ -22,7 +31,7 @@
 <AuthShell title={m.forgot_title()}>
   {#if !data.authEnabled}
     <p class="max-w-sm">{m.login_unavailable()}</p>
-  {:else if $message?.code === 'sent'}
+  {:else if controller.message?.code === 'sent'}
     <div role="status" class="rounded-lg border border-surface-200-800 bg-panel p-6">
       <h2 class="text-2xl font-semibold">{m.forgot_sent_title()}</h2>
       <p class="mt-3 text-lg">{m.forgot_sent_text()}</p>
@@ -34,10 +43,10 @@
       <p role="alert" class="mt-6 max-w-sm font-semibold">{m.forgot_link_expired()}</p>
     {/if}
 
-    <form method="POST" use:enhance class="mt-6 grid gap-4">
+    <Form onsubmit={controller.submit} class="mt-6 grid gap-4">
       <FormBanner
-        text={$message
-          ? $message.code === 'rate_limited'
+        text={controller.message
+          ? controller.message.code === 'rate_limited'
             ? m.auth_error_rate_limited()
             : m.auth_error_failed()
           : null}
@@ -46,31 +55,31 @@
       <FormField
         id="email"
         label={m.auth_email()}
-        error={$errors.email ? m.auth_error_email() : undefined}
+        error={controller.errors.email ? m.auth_error_email() : undefined}
       >
-        <input
+        <TextInput
           id="email"
           name="email"
           type="email"
           required
           autocomplete="email"
-          bind:value={$form.email}
-          class="input h-12 rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={$errors.email ? 'true' : undefined}
+          bind:value={() => controller.values.email, (value) => controller.change('email', value)}
+          class="border-2 border-surface-600-400 bg-panel px-4 text-base"
+          aria-invalid={controller.errors.email ? 'true' : undefined}
         />
       </FormField>
 
       <div>
         <SubmitButton
-          submitting={$submitting}
-          delayed={$delayed}
-          timeout={$timeout}
+          submitting={controller.pending}
+          delayed={controller.delayed}
+          timeout={controller.timeout}
           class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.forgot_submit()}
         </SubmitButton>
       </div>
-    </form>
+    </Form>
   {/if}
 
   <p class="mt-8">

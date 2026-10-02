@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Form from '$lib/components/Form.svelte';
   import type { Snippet } from 'svelte';
   import { deserialize, applyAction } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
@@ -44,7 +45,7 @@
   );
 </script>
 
-<form
+<Form
   method="POST"
   {action}
   aria-busy={mutation.isPending}
@@ -56,4 +57,4 @@
   }}
 >
   {@render children(mutation.isPending)}
-</form>
+</Form>

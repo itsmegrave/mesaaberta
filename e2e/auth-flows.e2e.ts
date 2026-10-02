@@ -37,7 +37,7 @@ test.describe('sign up', () => {
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
     // Then on to where the sign-up was going, showing the username.
-    await expect(page).toHaveURL(/localhost:4173\/$/);
+    await expect(page).toHaveURL(/localhost:\d+\/$/);
     await expect(accountMenu(page, username)).toBeVisible();
 
     const sql = database();
@@ -157,7 +157,7 @@ test.describe('sign in and out', () => {
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 
     await expect(accountMenu(page, user.username)).toBeVisible();
-    expect(new URL(page.url()).host).toBe('localhost:4173');
+    expect(new URL(page.url()).origin).toBe(new URL(test.info().project.use.baseURL!).origin);
   });
 });
 

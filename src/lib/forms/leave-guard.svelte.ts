@@ -1,6 +1,6 @@
 /**
  * The question a form with unsaved changes asks before the page is left. Pass `confirmLeave` as
- * Superforms' `taintedMessage`: it opens the dialog in the root layout (`UnsavedChangesDialog`)
+ * the shared draft guard: it opens the dialog in the root layout (`UnsavedChangesDialog`)
  * and resolves with the answer, true to leave. Closing the tab or reloading still gets the
  * browser's own prompt, which no page can restyle.
  */

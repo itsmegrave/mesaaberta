@@ -1,7 +1,8 @@
 import { redirect } from '@sveltejs/kit';
-import { fail, message, superValidate } from 'sveltekit-superforms';
-import { zod4 } from 'sveltekit-superforms/adapters';
-import { refuse } from '$lib/forms/server';
+import { fail } from '@sveltejs/kit';
+import { validateFormData } from '$lib/forms/contract';
+import { formMessage, refuse, responseForm } from '$lib/forms/server';
+import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '../images';
 import { withLocation } from '../location/cep';
@@ -43,8 +44,13 @@ export async function handleTableForm(
   // The GM types the time in their own zone; whatever zone was sent, that is the one used.
   data.set('timezone', await timezoneOf(locals, cookies));
   // Files are allowed so the schema can check the image; every failure below strips them.
-  const form = await superValidate(data, zod4(tableFormSchema), { allowFiles: true });
-  if (!form.valid) return fail(400, { form });
+  const form = validateFormData(
+    data,
+    tableFormSchema,
+    { ...NEW_TABLE_VALUES, image: undefined },
+    { arrays: ['platforms', 'tags'], booleans: ['removeImage'], files: ['image'] },
+  );
+  if (!form.valid) return fail(400, { form: responseForm(form) });
 
   let slug: string;
   try {
@@ -65,11 +71,12 @@ export async function handleTableForm(
     ({ slug } = await save(input, imagePath));
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
-    if (error instanceof Forbidden) return message(form, { code: 'forbidden' }, { status: 403 });
-    if (error instanceof NotFound) return message(form, { code: 'not_found' }, { status: 404 });
+    if (error instanceof Forbidden)
+      return formMessage(form, { code: 'forbidden' }, { status: 403 });
+    if (error instanceof NotFound) return formMessage(form, { code: 'not_found' }, { status: 404 });
     if (error instanceof RateLimited) {
       setHeaders?.({ 'Retry-After': String(error.retryAfterSeconds) });
-      return message(
+      return formMessage(
         form,
         { code: 'rate_limited', retryAfter: error.retryAfterSeconds },
         { status: 429 },

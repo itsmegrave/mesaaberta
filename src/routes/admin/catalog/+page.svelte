@@ -1,4 +1,7 @@
 <script lang="ts">
+  import TextInput from '$lib/components/TextInput.svelte';
+  import Form from '$lib/components/Form.svelte';
+  import Button from '$lib/components/Button.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import { Popover } from '@skeletonlabs/skeleton-svelte';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
@@ -69,7 +72,7 @@
   </nav>
 
   <div class="mt-6 flex flex-wrap items-end justify-between gap-4">
-    <form
+    <Form
       method="GET"
       action={localizedHref('/admin/catalog', locale)}
       class="flex items-end gap-3"
@@ -79,17 +82,17 @@
         <label for="catalog-search" class="label-text font-semibold"
           >{m.admin_catalog_search()}</label
         >
-        <input
+        <TextInput
           id="catalog-search"
           name="q"
           type="search"
           value={data.query}
-          maxlength="40"
+          maxlength={40}
           class="input h-12 rounded-lg border-surface-200-800 px-3"
         />
       </div>
-      <button type="submit" class={ghost}>{m.admin_catalog_search_apply()}</button>
-    </form>
+      <Button size="custom" type="submit" class={ghost}>{m.admin_catalog_search_apply()}</Button>
+    </Form>
     <!-- A different catalog needs new defaults; refetches within the same kind preserve drafts. -->
     {#key data.kind}
       <CatalogDialog
@@ -152,30 +155,33 @@
                       <Popover.Content
                         class="w-48 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
                       >
-                        <button
+                        <Button
+                          size="custom"
                           type="button"
                           class={item}
                           onclick={() => {
                             menuOpen = null;
                             chosen = { mode: 'rename', row };
-                          }}>{m.admin_queue_rename()}</button
+                          }}>{m.admin_queue_rename()}</Button
                         >
-                        <button
+                        <Button
+                          size="custom"
                           type="button"
                           class={item}
                           onclick={() => {
                             menuOpen = null;
                             chosen = { mode: 'merge', row };
-                          }}>{m.admin_queue_merge()}</button
+                          }}>{m.admin_queue_merge()}</Button
                         >
                         {#if row.status === 'approved'}
-                          <button
+                          <Button
+                            size="custom"
                             type="button"
                             class="{item} text-error-700-300"
                             onclick={() => {
                               menuOpen = null;
                               chosen = { mode: 'disable', row };
-                            }}>{m.admin_catalog_disable()}</button
+                            }}>{m.admin_catalog_disable()}</Button
                           >
                         {/if}
                       </Popover.Content>

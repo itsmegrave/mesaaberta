@@ -2,8 +2,9 @@
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import AuthShell from '$lib/components/AuthShell.svelte';
-  import { superForm } from 'sveltekit-superforms';
-  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Form from '$lib/components/Form.svelte';
+  import TextInput from '$lib/components/TextInput.svelte';
   import { resolve } from '$app/paths';
   import { newPasswordSchema } from '$lib/auth/credentials';
   import FormField from '$lib/components/FormField.svelte';
@@ -11,18 +12,26 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { data } = $props();
-  const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
-    validators: zod4Client(newPasswordSchema),
+  let { data, form: result = null } = $props();
+  // svelte-ignore state_referenced_locally
+  const initial = result?.form ?? data.form;
+  const controller = actionForm({
+    initial: initial.data,
+    initialErrors: initial.errors,
+    initialMessage: initial.message,
+    schema: newPasswordSchema,
+    domain: 'account',
+    onSuccess: () => {},
+    errorMessage: m.auth_error_failed,
   });
   const problem = $derived(
-    $message?.code === 'weak_password'
+    controller.message?.code === 'weak_password'
       ? m.auth_error_weak()
-      : $message?.code === 'same_password'
+      : controller.message?.code === 'same_password'
         ? m.auth_error_same()
-        : $message?.code === 'rate_limited'
+        : controller.message?.code === 'rate_limited'
           ? m.auth_error_rate_limited()
-          : $message
+          : controller.message
             ? m.auth_error_failed()
             : null,
   );
@@ -45,59 +54,64 @@
       {m.reset_done_link()}
     </a>
   {:else}
-    <form method="POST" use:enhance class="grid gap-4">
+    <Form onsubmit={controller.submit} class="grid gap-4">
       <FormBanner text={problem} />
 
       <FormField
         id="password"
         label={m.reset_password()}
         hint={m.auth_password_hint()}
-        error={$errors.password ? m.auth_error_password() : undefined}
+        error={controller.errors.password ? m.auth_error_password() : undefined}
       >
-        <input
+        <TextInput
           id="password"
           name="password"
           type="password"
           required
-          minlength="8"
-          maxlength="72"
+          minlength={8}
+          maxlength={72}
           autocomplete="new-password"
-          bind:value={$form.password}
-          class="input h-12 rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={$errors.password ? 'true' : undefined}
+          bind:value={
+            () => controller.values.password, (value) => controller.change('password', value)
+          }
+          class="border-2 border-surface-600-400 bg-panel px-4 text-base"
+          aria-invalid={controller.errors.password ? 'true' : undefined}
         />
       </FormField>
 
       <FormField
         id="passwordConfirm"
         label={m.reset_confirm()}
-        error={$errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
+        error={controller.errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
       >
-        <input
+        <TextInput
           id="passwordConfirm"
           name="passwordConfirm"
           type="password"
           required
-          minlength="8"
-          maxlength="72"
+          minlength={8}
+          maxlength={72}
           autocomplete="new-password"
-          bind:value={$form.passwordConfirm}
-          class="input h-12 rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={$errors.passwordConfirm ? 'true' : undefined}
+          bind:value={
+            () => controller.values.passwordConfirm,
+            (value) => controller.change('passwordConfirm', value)
+          }
+          class="border-2 border-surface-600-400 bg-panel px-4 text-base"
+          aria-invalid={controller.errors.passwordConfirm ? 'true' : undefined}
         />
       </FormField>
 
       <div>
         <SubmitButton
-          submitting={$submitting}
-          delayed={$delayed}
-          timeout={$timeout}
+          submitting={controller.pending}
+          delayed={controller.delayed}
+          timeout={controller.timeout}
           class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.reset_submit()}
         </SubmitButton>
       </div>
-    </form>
+    </Form>
 
     <p class="mt-8"><a href={resolve('/login')} class="anchor">{m.forgot_back()}</a></p>
   {/if}

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Spinner from '$lib/components/Spinner.svelte';
+  import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
@@ -83,15 +85,16 @@
       <h1 class="text-3xl font-semibold">{m.admin_overview_title()}</h1>
       <p class="mt-2 text-sm text-muted">{m.admin_updated({ time: date(data.updatedAt) })}</p>
     </div>
-    <button
+    <Button
+      size="custom"
       type="button"
       class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
       disabled={remote.isFetching}
       onclick={() => remote.refetch()}
     >
-      <Icon name="refresh-cw" size={18} class={remote.isFetching ? 'animate-spin' : ''} />
+      {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
       {m.admin_refresh()}
-    </button>
+    </Button>
   </div>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
