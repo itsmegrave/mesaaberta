@@ -508,7 +508,8 @@
         currentUrl={imageUrl}
         bind:removed={$draft.removeImage}
         onpick={(files) => {
-          $draft.image = files[0];
+          controller.change('image', files[0]);
+          controller.validateField('image');
         }}
       />
     </section>

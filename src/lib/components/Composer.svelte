@@ -74,7 +74,6 @@
     },
     onError: () => failBubble('network'),
   });
-  const { draft } = controller;
   async function send(event: SubmitEvent) {
     if (!messageSchema.safeParse(controller.values).success) {
       event.preventDefault();
@@ -89,22 +88,22 @@
   let selectionStart = 0;
   let selectionEnd = 0;
   const rememberSelection = () => {
-    selectionStart = textarea?.selectionStart ?? $draft.body.length;
+    selectionStart = textarea?.selectionStart ?? controller.values.body.length;
     selectionEnd = textarea?.selectionEnd ?? selectionStart;
   };
   async function insertEmoji(emoji: string) {
-    const start = Math.min(selectionStart, $draft.body.length);
-    const end = Math.min(selectionEnd, $draft.body.length);
-    const next = $draft.body.slice(0, start) + emoji + $draft.body.slice(end);
+    const start = Math.min(selectionStart, controller.values.body.length);
+    const end = Math.min(selectionEnd, controller.values.body.length);
+    const next = controller.values.body.slice(0, start) + emoji + controller.values.body.slice(end);
     if (next.length > MESSAGE_MAX_LENGTH) return;
-    $draft.body = next;
+    controller.change('body', next);
     await tick();
     textarea?.focus();
     textarea?.setSelectionRange(start + emoji.length, start + emoji.length);
     rememberSelection();
   }
 
-  const remaining = $derived(MESSAGE_MAX_LENGTH - $draft.body.length);
+  const remaining = $derived(MESSAGE_MAX_LENGTH - controller.values.body.length);
   const error = $derived(controller.errors.body?.[0]);
 
   const keydown = (event: KeyboardEvent) => {
@@ -112,15 +111,15 @@
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229)
       return;
     event.preventDefault();
-    if ($draft.body.trim()) formEl?.requestSubmit();
+    if (controller.values.body.trim()) formEl?.requestSubmit();
   };
 
   /** Sends a failed message again, keeping what is being typed in the box. */
   export async function retry(id: string, body: string) {
     if (inFlight || controller.pending) return;
-    savedDraft = $draft.body;
+    savedDraft = controller.values.body;
     retrying = id;
-    $draft.body = body;
+    controller.change('body', body);
     await tick();
     formEl?.requestSubmit();
   }
@@ -136,7 +135,11 @@
   onsubmit={send}
   class="flex min-w-0 flex-col gap-2 border-t border-surface-200-800 pt-3"
 >
-  {#if $draft.tableId}<input type="hidden" name="tableId" value={$draft.tableId} />{/if}
+  {#if controller.values.tableId}<input
+      type="hidden"
+      name="tableId"
+      value={controller.values.tableId}
+    />{/if}
   <div
     class="flex items-end gap-1 rounded-xl border border-surface-200-800 bg-panel p-1 focus-within:ring-2 focus-within:ring-primary-500"
   >
@@ -146,7 +149,7 @@
       id="message-body"
       name="body"
       bind:element={textarea}
-      bind:value={$draft.body}
+      bind:value={() => controller.values.body, (value) => controller.change('body', value)}
       onkeydown={keydown}
       onselect={rememberSelection}
       oninput={rememberSelection}
@@ -178,7 +181,9 @@
       {/if}
     </p>
     {#if remaining <= 200}
-      <p class="ml-auto text-muted" aria-live="polite">{$draft.body.length}/{MESSAGE_MAX_LENGTH}</p>
+      <p class="ml-auto text-muted" aria-live="polite">
+        {controller.values.body.length}/{MESSAGE_MAX_LENGTH}
+      </p>
     {/if}
   </div>
 </Form>

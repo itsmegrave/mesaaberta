@@ -83,7 +83,11 @@ test('users table paginates, filters status and username, and links to the selec
   // profile was suspended directly in the database, with no ban recorded.
   await expect(users.locator('tbody tr').getByText('Suspenso', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-users.png'), fullPage: true });
-  await users.getByRole('link', { name: username, exact: true }).click();
+  await expect(users.getByRole('link', { name: `@${username}`, exact: true })).toHaveAttribute(
+    'href',
+    `/u/${username}`,
+  );
+  await users.getByRole('link', { name: userId, exact: true }).click();
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
   await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });

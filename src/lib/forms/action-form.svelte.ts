@@ -103,6 +103,8 @@ export function actionForm<T extends Record<string, unknown>>(options: {
     (next: T) => {
       next = snapshot(next);
       for (const field of Object.keys(next)) {
+        // Component bindings can echo their current scalar value during mount.
+        if (Object.is(next[field], currentValues()[field])) continue;
         form.setFieldValue(field as DeepKeys<T>, next[field] as DeepValue<T, DeepKeys<T>>);
       }
     },
@@ -152,6 +154,14 @@ export function actionForm<T extends Record<string, unknown>>(options: {
     change<K extends DeepKeys<T>>(field: K, value: DeepValue<T, K>) {
       form.setFieldValue(field, value);
       errors = Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field));
+    },
+    validateField(field: DeepKeys<T>) {
+      const parsed = options.schema.safeParse(currentValues());
+      const fieldErrors = parsed.success ? {} : issueErrors(parsed.error.issues);
+      errors = {
+        ...Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field)),
+        ...(fieldErrors[field] ? { [field]: fieldErrors[field] } : {}),
+      };
     },
     async submit(event: SubmitEvent) {
       event.preventDefault();

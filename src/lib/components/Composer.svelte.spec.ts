@@ -11,9 +11,9 @@ vi.mock('$app/forms', async (original) => ({
   applyAction: vi.fn(),
 }));
 
-const setup = async () => {
+const setup = async (tableId?: string) => {
   const onpending = vi.fn(() => 'pending-1');
-  const form = initialForm({ body: '' });
+  const form = initialForm({ body: '', tableId });
   render(Composer, { form, onpending, onsent: vi.fn(), onfailed: vi.fn() });
   return { onpending, box: page.getByRole('textbox', { name: 'Mensagem' }) };
 };
