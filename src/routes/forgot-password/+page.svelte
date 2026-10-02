@@ -64,7 +64,7 @@
           required
           autocomplete="email"
           bind:value={() => controller.values.email, (value) => controller.change('email', value)}
-          class="border-2 border-surface-600-400 bg-panel px-4 text-base"
+          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
           aria-invalid={controller.errors.email ? 'true' : undefined}
         />
       </FormField>

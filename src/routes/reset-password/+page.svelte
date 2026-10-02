@@ -74,7 +74,7 @@
           bind:value={
             () => controller.values.password, (value) => controller.change('password', value)
           }
-          class="border-2 border-surface-600-400 bg-panel px-4 text-base"
+          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
           aria-invalid={controller.errors.password ? 'true' : undefined}
         />
       </FormField>
@@ -96,7 +96,7 @@
             () => controller.values.passwordConfirm,
             (value) => controller.change('passwordConfirm', value)
           }
-          class="border-2 border-surface-600-400 bg-panel px-4 text-base"
+          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
           aria-invalid={controller.errors.passwordConfirm ? 'true' : undefined}
         />
       </FormField>
