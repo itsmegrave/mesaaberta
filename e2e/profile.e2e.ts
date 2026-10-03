@@ -18,7 +18,7 @@ test('the account menu leads to the profile, where the details are saved and the
     .click();
   await page.getByRole('link', { name: 'Editar perfil' }).click();
   await expect(page).toHaveURL(/\/account\/profile$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Seu perfil');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Editar perfil');
 
   await expect(page.getByLabel('Email')).toHaveValue(user.email);
   await expect(page.getByLabel('Nome de usuário')).toHaveAttribute('readonly', '');

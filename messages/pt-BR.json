@@ -672,7 +672,7 @@
   "profile_username": "Nome de usuário",
   "profile_username_hint": "É como as outras pessoas vão ver você. De 3 a 30 letras minúsculas, números ou hífens.",
   "profile_username_locked_hint": "Você escolheu ao criar a conta e não dá para mudar. Aparece nas mesas em que você está.",
-  "account_profile_title": "Seu perfil",
+  "account_profile_title": "Editar perfil",
   "account_profile_lede": "Como você aparece para quem mestra e quem joga, e o que acontece com os seus dados.",
   "account_profile_save": "Salvar perfil",
   "account_profile_saved": "Perfil salvo.",
