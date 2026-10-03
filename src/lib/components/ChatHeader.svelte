@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Button from '$lib/components/Button.svelte';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import Form from './Form.svelte';
@@ -46,54 +48,67 @@
       conversation.muted = controller.values.muted;
     },
   });
+  // Only a change of `muted` should run this: `change` also reads and rewrites the form's errors,
+  // which would make the effect depend on (and retrigger) itself.
   $effect(() => {
-    controller.change('muted', !conversation.muted);
+    const next = !conversation.muted;
+    untrack(() => controller.change('muted', next));
   });
 </script>
 
 <header class="flex items-center gap-3 border-b border-surface-200-800 pb-3">
-  {#if onback}
-    <Button
-      size="custom"
-      type="button"
-      onclick={onback}
-      class="btn size-12 shrink-0 p-0 hover:preset-tonal"
-      aria-label={m.messages_back()}><Icon name="arrow-left" size={24} /></Button
-    >
-  {:else}
-    <a
-      href={localizedHref('/messages', locale)}
-      class="btn size-12 rounded-lg p-0 hover:preset-tonal md:hidden"
-      aria-label={m.messages_back()}
-    >
-      <Icon name="arrow-left" size={24} />
-    </a>
-  {/if}
-
+  <!-- "Mensagens › nome": the way back is the first crumb, not an arrow. In the drawer it is a
+       button that shows the list again; on a page, the shared trail from "Início". -->
   {#snippet identity()}
-    <Avatar src={picture} name={title} size={40} />
-    <h1 class="min-w-0 truncate text-lg font-semibold">{title}</h1>
+    <Avatar src={picture} name={title} size={32} />
+    <h1 class="min-w-0 truncate text-base font-semibold">{title}</h1>
+  {/snippet}
+  {#snippet current()}
+    {#if conversation.kind === 'table' && conversation.table}
+      <a
+        href={localizedHref(`/tables/${conversation.table.slug}`, locale)}
+        title={m.messages_open_table()}
+        aria-current="page"
+        class="flex min-w-0 items-center gap-2 no-underline"
+      >
+        {@render identity()}
+      </a>
+    {:else if conversation.other?.username}
+      <a
+        href={localizedHref(`/u/${encodeURIComponent(conversation.other.username)}`, locale)}
+        aria-current="page"
+        class="flex min-w-0 items-center gap-2 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-primary-500"
+      >
+        {@render identity()}
+      </a>
+    {:else}
+      <span aria-current="page" class="flex min-w-0 items-center gap-2">{@render identity()}</span>
+    {/if}
   {/snippet}
 
-  {#if conversation.kind === 'table' && conversation.table}
-    <a
-      href={localizedHref(`/tables/${conversation.table.slug}`, locale)}
-      title={m.messages_open_table()}
-      class="flex min-w-0 flex-1 items-center gap-3 no-underline"
-    >
-      {@render identity()}
-    </a>
-  {:else if conversation.other?.username}
-    <a
-      href={localizedHref(`/u/${encodeURIComponent(conversation.other.username)}`, locale)}
-      class="flex min-w-0 flex-1 items-center gap-3 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-primary-500"
-    >
-      {@render identity()}
-    </a>
+  {#if onback}
+    <nav aria-label={m.breadcrumbs_label()} class="min-w-0 flex-1">
+      <ol class="flex items-center gap-2 text-sm text-muted">
+        <li class="flex shrink-0 items-center">
+          <Button
+            size="custom"
+            type="button"
+            onclick={onback}
+            class="btn h-11 rounded-lg px-2 link-underline font-semibold"
+            >{m.messages_title()}</Button
+          >
+        </li>
+        <li class="flex min-w-0 items-center gap-2 text-surface-950-50">
+          <Icon name="chevron-right" size={16} class="text-muted" />
+          {@render current()}
+        </li>
+      </ol>
+    </nav>
   {:else}
-    <div class="flex min-w-0 flex-1 items-center gap-3">
-      {@render identity()}
-    </div>
+    <Breadcrumbs
+      class="min-w-0 flex-1"
+      items={[{ label: m.messages_title(), href: '/messages' }, { label: title }]}
+    />
   {/if}
 
   <Form {action} onsubmit={controller.submit} class="m-0">

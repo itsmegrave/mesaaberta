@@ -109,6 +109,14 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       }
     },
   );
+  function validateField(field: DeepKeys<T>) {
+    const parsed = options.schema.safeParse(currentValues());
+    const fieldErrors = parsed.success ? {} : issueErrors(parsed.error.issues);
+    errors = {
+      ...Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field)),
+      ...(fieldErrors[field] ? { [field]: fieldErrors[field] } : {}),
+    };
+  }
   return {
     draft,
     get dirty() {
@@ -155,13 +163,15 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       form.setFieldValue(field, value);
       errors = Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field));
     },
-    validateField(field: DeepKeys<T>) {
-      const parsed = options.schema.safeParse(currentValues());
-      const fieldErrors = parsed.success ? {} : issueErrors(parsed.error.issues);
-      errors = {
-        ...Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field)),
-        ...(fieldErrors[field] ? { [field]: fieldErrors[field] } : {}),
-      };
+    validateField,
+    /**
+     * `onfocusout` of the form: checks the field that was just left, so an error shows once someone
+     * has been in the field and out of it (and on a submit attempt), never while they are typing.
+     */
+    blur(event: FocusEvent) {
+      const field = (event.target as { name?: unknown } | null)?.name;
+      if (typeof field !== 'string' || !(field in currentValues())) return;
+      validateField(field as DeepKeys<T>);
     },
     async submit(event: SubmitEvent) {
       event.preventDefault();

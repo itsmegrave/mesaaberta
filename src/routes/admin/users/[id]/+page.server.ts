@@ -1,6 +1,9 @@
-import { error } from '@sveltejs/kit';
+import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
-import { adminProfile } from '$lib/server/admin/profiles';
+import { adminActivity, adminProfile } from '$lib/server/admin/profiles';
+import { failFrom } from '$lib/server/errors';
+import { openDirect } from '$lib/server/messages/service';
+import { standingOf } from '$lib/profile/standing';
 import { moderationOf } from '$lib/server/moderation/admin';
 import { accountActions } from '$lib/server/moderation/admin-actions';
 import { pictureOf, supabaseUrlOf } from '$lib/server/images';
@@ -15,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
   if (!locals.db) error(503, 'Database not configured');
   const profile = await adminProfile(locals.db, params.id);
   if (!profile) error(404, 'Not found');
-  const { avatarPath, avatarUrl, ...user } = profile;
+  const { avatarPath, avatarUrl, bannedAt, bannedUntil, ...user } = profile;
   const filters = profileFilters(url.searchParams);
   const back = new URLSearchParams({
     status: filters.status,
@@ -25,6 +28,8 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
   });
   return {
     user,
+    standing: standingOf({ status: user.status, bannedAt, bannedUntil }),
+    activity: await adminActivity(locals.db, params.id),
     avatar: pictureOf(supabaseUrlOf(platform?.env), { avatarPath, avatarUrl }),
     // Ban or revoke (never oneself, another admin, or a closed account), the ban itself, and the
     // reports accepted against the tables they run.
@@ -33,4 +38,20 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
   };
 };
 
-export const actions: Actions = accountActions;
+export const actions: Actions = {
+  ...accountActions,
+
+  // "Mandar mensagem": the direct conversation with this person (an admin may write to anyone who
+  // takes direct messages).
+  message: async ({ locals, params }) => {
+    await requireAdmin(locals);
+    if (!locals.db) error(503, 'Database not configured');
+    try {
+      const conversation = await openDirect(locals.db, await locals.getProfile(), params.id);
+      redirect(303, `/messages/${conversation.id}`);
+    } catch (cause) {
+      if (isRedirect(cause)) throw cause;
+      return failFrom(cause);
+    }
+  },
+};

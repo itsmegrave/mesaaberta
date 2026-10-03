@@ -55,7 +55,9 @@ describe('ProfileForm', () => {
     expect(form.method).toBe('post');
     await expect.element(page.getByLabelText('Nome de usuário')).toBeRequired();
     for (const label of ['Nome', 'Faixa etária', 'Gênero', 'Cidade']) {
-      await expect.element(page.getByLabelText(label, { exact: true })).not.toBeRequired();
+      await expect
+        .element(page.getByLabelText(new RegExp(`^${label}\\s*\\(opcional\\)`)))
+        .not.toBeRequired();
     }
   });
 
@@ -63,7 +65,7 @@ describe('ProfileForm', () => {
     it('is a list of ranges, not an exact age, with no answer as the default', async () => {
       await setup();
 
-      const range = page.getByLabelText('Faixa etária');
+      const range = page.getByLabelText(/^Faixa etária/);
       expect(range.element().tagName).toBe('SELECT');
       await expect.element(range).toHaveValue('');
       const options = [...(range.element() as unknown as HTMLSelectElement).options].map(
@@ -83,7 +85,7 @@ describe('ProfileForm', () => {
     it('shows the range the person saved', async () => {
       await setup({ ageRange: '35_44' });
 
-      await expect.element(page.getByLabelText('Faixa etária')).toHaveValue('35_44');
+      await expect.element(page.getByLabelText(/^Faixa etária/)).toHaveValue('35_44');
     });
   });
 
@@ -91,7 +93,7 @@ describe('ProfileForm', () => {
     it('is a list of options with no answer as the default', async () => {
       await setup();
 
-      const gender = page.getByLabelText('Gênero', { exact: true });
+      const gender = page.getByLabelText(/^Gênero/);
       expect(gender.element().tagName).toBe('SELECT');
       await expect.element(gender).toHaveValue('');
       const options = [...(gender.element() as unknown as HTMLSelectElement).options].map(
@@ -117,7 +119,7 @@ describe('ProfileForm', () => {
       const ownWords = () => page.getByLabelText('Como você se identifica?');
       await expect.element(ownWords()).not.toBeInTheDocument();
 
-      await page.getByLabelText('Gênero', { exact: true }).selectOptions('Outro');
+      await page.getByLabelText(/^Gênero/).selectOptions('Outro');
       await expect.element(ownWords()).toBeVisible();
       await expect.element(ownWords()).not.toBeRequired();
     });
@@ -125,7 +127,7 @@ describe('ProfileForm', () => {
     it('shows what the person saved, own words included', async () => {
       await setup({ gender: 'other', genderOther: 'demigênero' });
 
-      await expect.element(page.getByLabelText('Gênero', { exact: true })).toHaveValue('other');
+      await expect.element(page.getByLabelText(/^Gênero/)).toHaveValue('other');
       await expect
         .element(page.getByLabelText('Como você se identifica?'))
         .toHaveValue('demigênero');
@@ -136,7 +138,7 @@ describe('ProfileForm', () => {
     await setup({ username: 'ana-souza', name: 'Ana Souza' });
 
     await expect.element(page.getByLabelText('Nome de usuário')).toHaveValue('ana-souza');
-    await expect.element(page.getByLabelText('Nome', { exact: true })).toHaveValue('Ana Souza');
+    await expect.element(page.getByLabelText(/^Nome(?! de usuário)/)).toHaveValue('Ana Souza');
   });
 
   it('does not post a form that is not valid', async () => {

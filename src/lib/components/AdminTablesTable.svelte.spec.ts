@@ -41,7 +41,7 @@ it('keeps publishing in the row menu, shows pending feedback and reports failure
   render(Toaster);
   render(Table, { data: data as never, instagramAvailable: true });
   await page.getByRole('button', { name: 'Ações da mesa: Rompe-Cofres' }).click();
-  await page.getByRole('button', { name: 'Gerar e publicar' }).click();
+  await page.getByRole('button', { name: 'Gerar e publicar no Instagram' }).click();
   await expect.element(page.getByRole('button', { name: 'Gerando e publicando…' })).toBeDisabled();
   expect(request).toHaveBeenCalledOnce();
   finish(new Response('{}'));
@@ -59,5 +59,7 @@ it('keeps publishing in the row menu, shows pending feedback and reports failure
 it('prevents publishing when Instagram is unavailable', async () => {
   render(Table, { data: data as never, instagramAvailable: false });
   await page.getByRole('button', { name: 'Ações da mesa: Rompe-Cofres' }).click();
-  await expect.element(page.getByRole('button', { name: 'Gerar e publicar' })).toBeDisabled();
+  await expect
+    .element(page.getByRole('button', { name: 'Gerar e publicar no Instagram' }))
+    .toBeDisabled();
 });

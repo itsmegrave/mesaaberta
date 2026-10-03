@@ -77,11 +77,8 @@
     {/if}
   </div>
 
-  <nav
-    aria-label={m.notifications_filter_label()}
-    class="-mx-5 mt-8 overflow-x-auto px-5 md:mx-0 md:px-0"
-  >
-    <ul class="flex gap-2">
+  <nav aria-label={m.notifications_filter_label()} class="mt-8">
+    <ul class="flex flex-wrap gap-2">
       {#each filters as filter (filter.category)}
         <li>
           <a

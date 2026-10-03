@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createTable, pickFromSearch, setFirstSession, signIn, uniqueTitle } from './support/app';
+import {
+  chooseFromMenu,
+  createTable,
+  pickFromSearch,
+  setFirstSession,
+  soonSession,
+  signIn,
+  uniqueTitle,
+} from './support/app';
 import { createUser } from './support/users';
 
 /** Picks several entries from a multi-select, then closes its list. */
@@ -18,7 +26,7 @@ test('the list filters by platform and by tag, any of the ticked ones, kept in t
   const cards = page.getByRole('article');
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(0);
-  await expect(page.getByRole('group', { name: 'Tags' }).getByLabel('Dungeon crawl')).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Tirar o filtro Dungeon crawl' })).toBeVisible();
 
   await page.goto('/tables?tag=dungeon-crawl&tag=iniciantes');
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
@@ -29,17 +37,23 @@ test('the list filters by platform and by tag, any of the ticked ones, kept in t
   await expect(cards.filter({ hasText: 'Crônicas de Roshar' })).toHaveCount(0);
 });
 
-test('ticking a chip applies it at once, and the system filter keeps it', async ({ page }) => {
+test('ticking a platform applies it at once, and the modality keeps it', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/tables');
+  // A desktop has a popover for the platforms; a phone, the "Filtros" sheet.
+  await page.getByRole('button', { name: isMobile ? 'Filtros' : 'Plataformas' }).click();
   await page.getByRole('group', { name: 'Plataformas' }).getByText('Owlbear Rodeo').click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
+  // Closed, so the list behind it is readable again.
+  await page.keyboard.press('Escape');
   await expect(
     page.getByRole('article').filter({ hasText: 'A Cripta do Rei Afogado' }),
   ).toHaveCount(1);
-
   await page
     .getByRole('group', { name: 'Modalidade' })
-    .getByRole('link', { name: 'Online' })
+    .getByRole('button', { name: 'Online' })
     .click();
   await expect(page).toHaveURL(/modality=online/);
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
@@ -69,7 +83,7 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   await pickMany(page, 'Plataformas', ['Roll20']);
   await pickMany(page, 'Tags', ['Terror', 'Humor']);
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -79,7 +93,7 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await expect(tagList.getByRole('link', { name: 'Terror' })).toBeVisible();
   await expect(tagList.getByRole('link', { name: 'Humor' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Editar mesa' }).click();
+  await chooseFromMenu(page, 'Editar');
   await expect(page.getByRole('button', { name: 'Remover Terror' })).toBeVisible();
   await page.getByRole('button', { name: 'Remover Humor' }).click();
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
@@ -106,7 +120,7 @@ test('a GM suggests a tag the catalog lacks: it is on the table for them, not fo
   await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   await page.getByRole('combobox', { name: 'Tags' }).fill(suggested);
   await page.getByRole('option', { name: `Sugerir “${suggested}”` }).click();
   await page.keyboard.press('Escape');
@@ -119,7 +133,7 @@ test('a GM suggests a tag the catalog lacks: it is on the table for them, not fo
   await expect(page.getByRole('main')).toBeVisible();
   await expect(page.getByText(suggested, { exact: true })).toHaveCount(0);
 
-  await page.getByRole('link', { name: 'Editar mesa' }).click();
+  await chooseFromMenu(page, 'Editar');
   await expect(
     page.getByRole('button', { name: `Remover ${suggested} (em análise)` }),
   ).toBeVisible();

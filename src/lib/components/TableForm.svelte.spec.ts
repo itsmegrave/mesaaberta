@@ -36,11 +36,13 @@ describe('TableForm', () => {
     await expect.element(page.getByLabelText('Fuso horário')).not.toBeInTheDocument();
   });
 
-  it('asks for the duration in hours, half hours allowed, and previews it in hours', async () => {
+  it('offers 2, 3 and 4 hours or another length in half hours, and previews it in hours', async () => {
     render(TableFormHarness, props);
 
-    const field = page.getByLabelText('Duração (horas)');
-    await expect.element(field).toHaveValue(4);
+    await expect.element(page.getByRole('radio', { name: '4 h' })).toBeChecked();
+
+    await page.getByRole('radio', { name: 'Outra' }).click();
+    const field = page.getByLabelText('Duração em horas');
     await expect.element(field).toHaveAttribute('step', '0.5');
     await expect.element(field).toHaveAttribute('max', '24');
 
@@ -113,7 +115,7 @@ describe('TableForm', () => {
   it('asks for a minimum of players as an optional field, blank by default', async () => {
     render(TableFormHarness, props);
 
-    const field = page.getByLabelText('Mínimo de jogadores (opcional)');
+    const field = page.getByLabelText(/Mínimo de jogadores/);
     await expect.element(field).toHaveValue('');
     await expect.element(page.getByText(/Deixe em branco se não faz diferença\./)).toBeVisible();
     await field.fill('3');
@@ -131,7 +133,7 @@ describe('TableForm', () => {
       .element(page.getByText('O mínimo não pode ser maior que o número de vagas.'))
       .toBeVisible();
     await expect
-      .element(page.getByLabelText('Mínimo de jogadores (opcional)'))
+      .element(page.getByLabelText(/Mínimo de jogadores/))
       .toHaveAttribute('aria-invalid', 'true');
   });
 
@@ -177,7 +179,7 @@ describe('TableForm', () => {
     await expect.element(page.getByLabelText('Título')).toHaveValue('ab');
     await expect.element(page.getByLabelText('Título')).toHaveAttribute('aria-invalid', 'true');
     await expect.element(page.getByText('Muito curto ou pequeno demais.')).toBeVisible();
-    await expect.element(page.getByText('Corrija os campos marcados.')).toBeVisible();
+    await expect.element(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
   });
 
   it('shows the current image when editing', async () => {
@@ -189,7 +191,9 @@ describe('TableForm', () => {
   it('has no problem message when there is nothing wrong', async () => {
     render(TableFormHarness, props);
 
-    await expect.element(page.getByText('Corrija os campos marcados.')).not.toBeInTheDocument();
+    await expect
+      .element(page.getByText(/Corrija \d+ campos? para continuar/))
+      .not.toBeInTheDocument();
   });
 
   it('shows the image problem next to the image field, from the form message', async () => {

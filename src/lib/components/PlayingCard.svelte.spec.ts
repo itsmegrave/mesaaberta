@@ -70,9 +70,9 @@ describe('PlayingCard', () => {
     await expect.element(page.getByText(/Avalie a mestragem/)).not.toBeInTheDocument();
   });
 
-  it('says so when the table has been disabled', async () => {
+  it('shows no table status: a player only ever sees active tables', async () => {
     render(PlayingCard, props({ tableStatus: 'disabled' }));
 
-    await expect.element(page.getByText('Mesa desativada')).toBeVisible();
+    await expect.element(page.getByText('Mesa desativada')).not.toBeInTheDocument();
   });
 });

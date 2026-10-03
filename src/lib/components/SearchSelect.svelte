@@ -22,6 +22,7 @@
     items,
     value = $bindable([]),
     multiple = false,
+    showPicks = true,
     placeholder,
     required = false,
     invalid = false,
@@ -38,6 +39,8 @@
     items: Item[];
     value?: string[];
     multiple?: boolean;
+    /** Several picks: show them as removable chips under the box. Off when the page shows them. */
+    showPicks?: boolean;
     placeholder: string;
     required?: boolean;
     invalid?: boolean;
@@ -67,6 +70,9 @@
 
   // What is being typed, if anything. The list is narrowed by it; otherwise the input shows the
   // picked name (single) or nothing (several, whose picks are chips).
+  // The list is built when it opens: a closed one would put an inline `style` on the page, which
+  // the CSP refuses.
+  let open = $state(false);
   let typed = $state<string | null>(null);
   const inputValue = $derived(typed ?? (multiple || !value[0] ? '' : nameOf(value[0])));
   const matching = $derived(items.filter((item) => matchesSearch(item.name, typed ?? '')));
@@ -99,15 +105,16 @@
   const control =
     'flex h-12 w-full items-center overflow-hidden rounded-lg border border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
   const inputClass =
-    'h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 text-sm shadow-none outline-none focus:ring-0';
+    'h-full min-w-0 flex-1 rounded-none! border-0! bg-transparent px-3 text-sm shadow-none! ring-0! outline-none focus:ring-0!';
   const triggerClass =
-    'static flex h-full w-12 shrink-0 transform-none items-center justify-center rounded-none bg-transparent text-muted hover:bg-surface-wash';
+    'static flex h-full w-12 shrink-0 transform-none items-center justify-center rounded-none! border-0! bg-transparent text-muted hover:bg-surface-wash';
 </script>
 
 {#if mounted}
   <Combobox
     class={rootClass}
     {collection}
+    {open}
     {multiple}
     {value}
     {inputValue}
@@ -125,6 +132,7 @@
       typed = details.reason === 'input-change' ? details.inputValue : null;
     }}
     onOpenChange={(details) => {
+      open = details.open;
       if (!details.open) typed = null;
     }}
     onValueChange={(details) => commit(details.value)}
@@ -146,48 +154,48 @@
         >
       </Combobox.Trigger>
     </Combobox.Control>
-    <Portal>
-      <Combobox.Positioner class="z-50!">
-        <Combobox.Content
-          class="max-h-72 overflow-y-auto card border border-surface-200-800 bg-surface-100-900 p-1 shadow-2xl"
-        >
-          {#each shown as item (item.slug)}
-            <Combobox.Item
-              {item}
-              class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
-            >
-              <Combobox.ItemText
-                >{item.name}{#if item.pending && pendingLabel}
-                  <span class="text-xs font-normal text-muted">{pendingLabel}</span
-                  >{/if}</Combobox.ItemText
+    {#if open}<Portal>
+        <Combobox.Positioner class="z-50!">
+          <Combobox.Content
+            class="max-h-72 overflow-y-auto card border border-surface-200-800 bg-surface-100-900 p-1 shadow-2xl"
+          >
+            {#each shown as item (item.slug)}
+              <Combobox.Item
+                {item}
+                class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
               >
-              <Combobox.ItemIndicator class="shrink-0 text-primary-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg
+                <Combobox.ItemText
+                  >{item.name}{#if item.pending && pendingLabel}
+                    <span class="text-xs font-normal text-muted">{pendingLabel}</span
+                    >{/if}</Combobox.ItemText
                 >
-              </Combobox.ItemIndicator>
-            </Combobox.Item>
-          {:else}
-            <li class="p-2 text-sm text-muted">{m.search_select_none()}</li>
-          {/each}
-          {#if matching.length > SHOWN}
-            <li class="p-2 text-sm text-muted" aria-hidden="true">
-              {m.search_select_more({ count: matching.length - SHOWN })}
-            </li>
-          {/if}
-        </Combobox.Content>
-      </Combobox.Positioner>
-    </Portal>
+                <Combobox.ItemIndicator class="shrink-0 text-primary-500">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg
+                  >
+                </Combobox.ItemIndicator>
+              </Combobox.Item>
+            {:else}
+              <li class="p-2 text-sm text-muted">{m.search_select_none()}</li>
+            {/each}
+            {#if matching.length > SHOWN}
+              <li class="p-2 text-sm text-muted" aria-hidden="true">
+                {m.search_select_more({ count: matching.length - SHOWN })}
+              </li>
+            {/if}
+          </Combobox.Content>
+        </Combobox.Positioner>
+      </Portal>{/if}
 
-    {#if multiple && value.length > 0}
+    {#if multiple && showPicks && value.length > 0}
       <ul
         class="mt-2 flex flex-wrap gap-2 md:col-start-2"
         aria-label={m.search_select_picked({ label })}
@@ -197,7 +205,7 @@
             <Button
               size="custom"
               type="button"
-              class="inline-flex h-9 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
+              class="inline-flex h-11 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
               aria-label={m.search_select_remove({ name: chipName(slug) })}
               onclick={() => remove(slug)}
             >

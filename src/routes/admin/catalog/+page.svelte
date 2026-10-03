@@ -4,7 +4,7 @@
   import Form from '$lib/components/Form.svelte';
   import Button from '$lib/components/Button.svelte';
   import UserText from '$lib/components/UserText.svelte';
-  import { Popover } from '@skeletonlabs/skeleton-svelte';
+  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
   import CatalogDialog from '$lib/components/admin/CatalogDialog.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -40,11 +40,33 @@
   // The row menu only picks; the dialog is mounted next to the table, so closing the menu does not
   // take it away.
   let chosen = $state<{ mode: 'merge' | 'disable' | 'rename'; row: Row } | null>(null);
-  let menuOpen = $state<string | null>(null);
+  const menuOf = (row: Row): KebabItem[] => [
+    {
+      id: 'rename',
+      label: m.admin_queue_rename(),
+      icon: 'square-pen',
+      onselect: () => (chosen = { mode: 'rename', row }),
+    },
+    {
+      id: 'merge',
+      label: m.admin_catalog_menu_merge(),
+      icon: 'routing',
+      onselect: () => (chosen = { mode: 'merge', row }),
+    },
+    ...(row.status === 'approved'
+      ? [
+          {
+            id: 'disable',
+            label: m.admin_catalog_menu_disable(),
+            icon: 'trash' as const,
+            destructive: true,
+            onselect: () => (chosen = { mode: 'disable', row }),
+          },
+        ]
+      : []),
+  ];
   const ghost =
     'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
-  const item =
-    'btn flex h-12 w-full items-center justify-start rounded-lg px-3 text-left font-semibold hover:preset-tonal';
   const tab = '-mb-px inline-flex h-11 items-center border-b-2 px-3 font-semibold';
 </script>
 
@@ -116,9 +138,9 @@
       {m.admin_catalog_empty()}
     </p>
   {:else}
-    <div class="mt-6 overflow-x-auto rounded-lg border border-surface-200-800">
-      <table class="w-full min-w-176 text-left">
-        <thead class="border-b border-surface-200-800 text-sm text-muted">
+    <div class="mt-6 rounded-lg border border-surface-200-800">
+      <table class="w-full text-left max-md:block">
+        <thead class="border-b border-surface-200-800 text-sm text-muted max-md:sr-only">
           <tr>
             <th scope="col" class="px-4 py-3 font-semibold">{m.admin_catalog_name()}</th>
             <th scope="col" class="px-4 py-3 font-semibold">{m.admin_catalog_origin()}</th>
@@ -129,10 +151,12 @@
             >
           </tr>
         </thead>
-        <tbody>
+        <tbody class="max-md:block">
           {#each data.rows as row (row.id)}
-            <tr class="border-b border-surface-200-800 last:border-b-0">
-              <th scope="row" class="px-4 py-3 font-semibold">
+            <tr
+              class="border-b border-surface-200-800 last:border-b-0 max-md:flex max-md:flex-wrap max-md:items-center max-md:justify-between max-md:gap-x-3 max-md:px-2 max-md:py-3"
+            >
+              <th scope="row" class="px-4 py-3 font-semibold max-md:basis-full max-md:py-1">
                 {row.name}
                 <span class="block text-sm font-normal text-muted">{row.slug}</span>
               </th>
@@ -145,53 +169,8 @@
               <td class="px-4 py-3 text-right tabular-nums">{number.format(row.uses)}</td>
               <td class="px-4 py-3">{status(row)}</td>
               <td class="px-4 py-3">
-                <div class="flex items-center justify-end gap-2">
-                  <Popover
-                    open={menuOpen === row.id}
-                    onOpenChange={(details) => (menuOpen = details.open ? row.id : null)}
-                    positioning={{ placement: 'bottom-end', offset: { mainAxis: 4 } }}
-                  >
-                    <Popover.Trigger
-                      aria-label={m.admin_catalog_more({ name: row.name })}
-                      class="btn size-12 rounded-lg p-0 hover:preset-tonal"
-                      ><Icon name="chevron-down" size={18} /></Popover.Trigger
-                    >
-                    <Popover.Positioner class="z-40!">
-                      <Popover.Content
-                        class="w-48 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
-                      >
-                        <Button
-                          size="custom"
-                          type="button"
-                          class={item}
-                          onclick={() => {
-                            menuOpen = null;
-                            chosen = { mode: 'rename', row };
-                          }}>{m.admin_queue_rename()}</Button
-                        >
-                        <Button
-                          size="custom"
-                          type="button"
-                          class={item}
-                          onclick={() => {
-                            menuOpen = null;
-                            chosen = { mode: 'merge', row };
-                          }}>{m.admin_queue_merge()}</Button
-                        >
-                        {#if row.status === 'approved'}
-                          <Button
-                            size="custom"
-                            type="button"
-                            class="{item} text-error-700-300"
-                            onclick={() => {
-                              menuOpen = null;
-                              chosen = { mode: 'disable', row };
-                            }}>{m.admin_catalog_disable()}</Button
-                          >
-                        {/if}
-                      </Popover.Content>
-                    </Popover.Positioner>
-                  </Popover>
+                <div class="flex items-center justify-end">
+                  <KebabMenu name={row.name} items={menuOf(row)} />
                 </div>
               </td>
             </tr>

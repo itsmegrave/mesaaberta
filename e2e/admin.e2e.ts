@@ -79,7 +79,8 @@ test('users table paginates, filters status and username, and links to the selec
   await users.getByRole('button', { name: 'Buscar', exact: true }).click();
   await expect(users.locator('tbody tr')).toHaveCount(1);
   await expect(users.getByText('Página 1 de 1', { exact: true })).toBeVisible();
-  await expect(users.getByText(userId, { exact: true })).toBeVisible();
+  // The list names the person, not their ID; the ID is in the row's menu and on the profile page.
+  await expect(users.getByText('Selected User', { exact: true })).toBeVisible();
   // The list shows the profile's status column; the profile page shows the ban (see #172), and this
   // profile was suspended directly in the database, with no ban recorded.
   await expect(users.locator('tbody tr').getByText('Suspenso', { exact: true })).toBeVisible();
@@ -88,9 +89,10 @@ test('users table paginates, filters status and username, and links to the selec
     'href',
     `/u/${username}`,
   );
-  await users.getByRole('link', { name: userId, exact: true }).click();
+  await users.getByRole('button', { name: `Mais ações: @${username}` }).click();
+  await page.getByRole('menuitem', { name: 'Ver detalhes' }).click();
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
-  await expect(page.getByText('Selected User', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Dados' }).getByText(userId)).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-user-profile.png'), fullPage: true });
   const trail = page.getByRole('navigation', { name: 'Trilha de navegação' });
   if (isMobile) {
@@ -103,8 +105,8 @@ test('users table paginates, filters status and username, and links to the selec
   await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
     'suspended',
   );
-  await expect(users.getByLabel('Buscar por username')).toHaveValue(prefix);
-  await users.getByLabel('Buscar por username').fill(`${prefix}-missing`);
+  await expect(users.getByLabel('Buscar usuário')).toHaveValue(prefix);
+  await users.getByLabel('Buscar usuário').fill(`${prefix}-missing`);
   await users.getByRole('button', { name: 'Buscar', exact: true }).click();
   await expect(users.getByText('Nenhum perfil encontrado.', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
@@ -116,11 +118,11 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
   const admin = await createUser('Lifecycle Admin', { role: 'admin' });
   const prefix = `lifecycle-${randomUUID().slice(0, 8)}`;
   const states = [
-    ['active', 'Ativas'],
-    ['disabled', 'Mesa desativada'],
-    ['awaiting_confirmation', 'Aguardando confirmação do mestre'],
-    ['concluded', 'Mesa concluída'],
-    ['not_held', 'Mesa não realizada'],
+    ['active', 'Ativa'],
+    ['disabled', 'Desativada'],
+    ['awaiting_confirmation', 'Aguardando confirmação'],
+    ['concluded', 'Concluída'],
+    ['not_held', 'Não realizada'],
   ] as const;
   const sql = database();
   try {

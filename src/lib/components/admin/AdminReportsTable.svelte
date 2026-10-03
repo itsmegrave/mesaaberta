@@ -88,9 +88,9 @@
     </p>
   </div>
 
-  <div class="mt-5 overflow-x-auto rounded-lg border border-surface-200-800 bg-panel">
-    <table class="w-full text-left text-sm">
-      <thead class="border-b border-surface-200-800">
+  <div class="mt-5 rounded-lg border border-surface-200-800 bg-panel">
+    <table class="w-full text-left text-sm max-md:block">
+      <thead class="border-b border-surface-200-800 max-md:sr-only">
         {#each table.getHeaderGroups() as group (group.id)}
           <tr>
             {#each group.headers as header (header.id)}
@@ -99,11 +99,16 @@
           </tr>
         {/each}
       </thead>
-      <tbody class="divide-y divide-surface-200-800">
+      <tbody class="divide-y divide-surface-200-800 max-md:block">
         {#each table.getRowModel().rows as row (row.id)}
-          <tr class="hover:bg-surface-100-900">
-            {#each row.getAllCells() as cell (cell.id)}
-              <td class="wrap-break-word">
+          <tr
+            class="hover:bg-surface-100-900 max-md:flex max-md:flex-wrap max-md:items-center max-md:gap-x-3 max-md:px-1 max-md:py-2"
+            >{#each row.getAllCells() as cell (cell.id)}
+              <td
+                class="min-w-0 wrap-break-word {cell.column.id === 'target'
+                  ? 'max-md:basis-full'
+                  : ''}"
+              >
                 {#if cell.column.id === 'target' && row.original.targetType !== 'table'}<span
                     class="block px-3 py-4 font-semibold"
                     ><UserLink

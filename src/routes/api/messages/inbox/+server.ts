@@ -11,7 +11,9 @@ export const GET: RequestHandler = async ({ locals, url, platform }) => {
   if (!locals.db) error(503, 'Database not configured');
   const raw = url.searchParams.get('page');
   const page = raw && /^[1-9][0-9]*$/.test(raw) ? Number(raw) : 1;
-  const inbox = await listInbox(locals.db, user.id, page);
+  const kindParam = url.searchParams.get('kind');
+  const kind = kindParam === 'direct' || kindParam === 'table' ? kindParam : undefined;
+  const inbox = await listInbox(locals.db, user.id, page, kind);
   return new Response(
     stringify({ ...inbox, items: inboxWithPictures(supabaseUrlOf(platform?.env), inbox.items) }),
     {

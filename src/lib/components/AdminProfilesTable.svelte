@@ -1,6 +1,10 @@
 <script lang="ts">
   import TextInput from '$lib/components/TextInput.svelte';
-  import { PROFILE_STATUSES } from '$lib/profile/status';
+  import { PROFILE_STANDINGS } from '$lib/profile/standing';
+  import Avatar from '$lib/components/Avatar.svelte';
+  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
+  import { toast } from '$lib/toaster';
   import Form from '$lib/components/Form.svelte';
   import SelectInput from '$lib/components/SelectInput.svelte';
   import Button from '$lib/components/Button.svelte';
@@ -14,29 +18,56 @@
     rowPaginationFeature,
     type ColumnDef,
   } from '@tanstack/svelte-table';
-  import type { AdminProfiles } from '$lib/server/admin/profiles';
+  import type { AdminProfilesView } from '$lib/server/reads/admin-users';
   import Icon from './Icon.svelte';
   import { m } from '$lib/paraglide/messages';
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { data, busy = false }: { data: AdminProfiles; busy?: boolean } = $props();
+  let { data, busy = false }: { data: AdminProfilesView; busy?: boolean } = $props();
   const features = tableFeatures({ rowPaginationFeature });
   const locale = getLocale();
-  type Profile = AdminProfiles['rows'][number];
+  type Profile = AdminProfilesView['rows'][number];
   const columns: ColumnDef<typeof features, Profile>[] = [
-    { accessorKey: 'id', header: () => m.admin_profile_id() },
-    {
-      accessorKey: 'username',
-      header: () => m.admin_profile_username(),
-      cell: ({ row }) => row.original.username ?? m.admin_profile_no_username(),
-    },
-    {
-      accessorKey: 'status',
-      header: () => m.admin_profile_status(),
-      cell: ({ row }) =>
-        row.original.status === 'active' ? m.admin_profile_active() : m.admin_profile_suspended(),
-    },
+    { id: 'user', header: () => m.admin_profile_user() },
+    { id: 'tables', header: () => m.admin_profile_tables() },
+    { accessorKey: 'createdAt', header: () => m.admin_profile_joined() },
+    { accessorKey: 'standing', header: () => m.admin_profile_status() },
+    { id: 'actions', header: () => m.admin_profile_actions() },
+  ];
+  const joined = (date: Date) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date);
+  const tablesOf = (row: Profile) => {
+    const parts = [
+      row.playing > 0 ? m.admin_profile_tables_playing({ count: row.playing }) : null,
+      row.running > 0 ? m.admin_profile_tables_running({ count: row.running }) : null,
+    ].filter((part) => part !== null);
+    return parts.length > 0 ? parts.join(' · ') : m.admin_profile_tables_none();
+  };
+  const badge = (row: Profile) => `user:${row.standing}` as Status;
+  const detailsHref = (id: string) =>
+    localizedHref(`/admin/users/${id}?${page.url.searchParams}`, locale);
+  async function copyId(id: string) {
+    try {
+      await navigator.clipboard.writeText(id);
+      toast.success(m.toast_id_copied());
+    } catch {
+      // Clipboard access refused: nothing was copied, and nothing is claimed.
+    }
+  }
+  const menuOf = (row: Profile): KebabItem[] => [
+    { id: 'details', label: m.admin_menu_details(), icon: 'eye', href: detailsHref(row.id) },
+    ...(row.username
+      ? [
+          {
+            id: 'public',
+            label: m.admin_menu_public_profile(),
+            icon: 'game-icons:meeple' as const,
+            href: localizedHref(`/u/${encodeURIComponent(row.username)}`, locale),
+          },
+        ]
+      : []),
+    { id: 'copy', label: m.admin_menu_copy_id(), icon: 'copy', onselect: () => copyId(row.id) },
   ];
   const pagination = $derived({ pageIndex: data.page - 1, pageSize: data.pageSize });
   const table = createTable({
@@ -112,10 +143,8 @@
       {m.admin_profile_status()}
       <SelectInput class="select mt-2 h-11 min-w-44" name="status" value={data.status}>
         <option value="all">{m.admin_profile_all()}</option>
-        {#each PROFILE_STATUSES as status (status)}
-          <option value={status}
-            >{status === 'active' ? m.admin_profile_active() : m.admin_profile_suspended()}</option
-          >
+        {#each PROFILE_STANDINGS as status (status)}
+          <option value={status}>{m[`status_user_${status}`]()}</option>
         {/each}
       </SelectInput>
     </label>
@@ -132,9 +161,9 @@
       >
     {/if}
   </Form>
-  <div class="mt-5 overflow-x-auto">
-    <table class="w-full text-left text-sm">
-      <thead class="border-b border-surface-200-800">
+  <div class="mt-5">
+    <table class="w-full text-left text-sm max-md:block">
+      <thead class="border-b border-surface-200-800 max-md:sr-only">
         {#each table.getHeaderGroups() as group (group.id)}
           <tr
             >{#each group.headers as header (header.id)}<th scope="col" class="p-3 font-semibold"
@@ -143,27 +172,49 @@
           >
         {/each}
       </thead>
-      <tbody class="divide-y divide-surface-200-800">
+      <tbody class="divide-y divide-surface-200-800 max-md:block">
         {#each table.getRowModel().rows as row (row.id)}
-          <tr class="hover:bg-surface-100-900"
-            >{#each row.getAllCells() as cell (cell.id)}
-              <td
-                class={cell.column.id === 'id' ? 'font-mono text-xs break-all' : 'wrap-break-word'}
-                >{#if cell.column.id === 'username'}<span class="block px-3 py-4 font-semibold"
-                    ><UserLink
-                      username={row.original.username}
-                      label={row.original.username ? undefined : m.admin_profile_no_username()}
-                    /></span
-                  >{:else}<a
-                    class="block px-3 py-4"
-                    href={localizedHref(
-                      `/admin/users/${row.original.id}?${page.url.searchParams}`,
-                      locale,
-                    )}><FlexRender {cell} /></a
-                  >{/if}</td
-              >
-            {/each}</tr
+          <tr
+            class="hover:bg-surface-100-900 max-md:flex max-md:flex-wrap max-md:items-center max-md:justify-between max-md:gap-x-3 max-md:px-1 max-md:py-3"
           >
+            {#each row.getAllCells() as cell (cell.id)}
+              {@const user = row.original}
+              <td
+                class="min-w-0 p-3 max-md:px-2 max-md:py-1 {cell.column.id === 'user' ||
+                cell.column.id === 'tables'
+                  ? 'max-md:basis-full'
+                  : ''} {cell.column.id === 'createdAt' ? 'tabular-nums' : ''}"
+              >
+                {#if cell.column.id === 'user'}
+                  <span class="flex min-w-0 items-center gap-3">
+                    <Avatar src={user.avatar} name={user.name ?? user.username} size={40} />
+                    <span class="min-w-0">
+                      <span class="block truncate font-semibold">
+                        <UserLink
+                          username={user.username}
+                          label={user.username ? undefined : m.admin_profile_no_username()}
+                        />
+                      </span>
+                      <span class="block truncate text-sm text-muted"
+                        >{user.name ?? m.admin_profile_no_name()}</span
+                      >
+                    </span>
+                  </span>
+                {:else if cell.column.id === 'tables'}
+                  {tablesOf(user)}
+                {:else if cell.column.id === 'createdAt'}
+                  {joined(user.createdAt)}
+                {:else if cell.column.id === 'standing'}
+                  <StatusBadge status={badge(user)} />
+                {:else if cell.column.id === 'actions'}
+                  <KebabMenu
+                    name={user.username ? `@${user.username}` : m.admin_profile_no_username()}
+                    items={menuOf(user)}
+                  />
+                {/if}
+              </td>
+            {/each}
+          </tr>
         {:else}
           <tr
             ><td colspan={columns.length} class="px-3 py-6 text-muted">{m.admin_profile_empty()}</td

@@ -373,7 +373,7 @@
           </span>
           <span class="hidden items-center gap-2 md:flex">
             <span
-              class="flex h-10 items-center rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold"
+              class="flex h-11 items-center rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold"
               >Aprovar</span
             >
             <span

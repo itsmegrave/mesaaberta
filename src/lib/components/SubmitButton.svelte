@@ -5,9 +5,11 @@
   import { m } from '$lib/paraglide/messages';
 
   /**
-   * A form's submit button. Pass the controller’s `pending`, `delayed` (500 ms) and `timeout` (8 s). From the moment the form is sent a second click
-   * does nothing; a spinner shows once the submit is slow, and a note once it is very slow. While
-   * busy it is `aria-disabled`, not `disabled`, so it keeps its focus and its place in the tab order.
+   * A form's submit button. Pass the controller’s `pending`, `delayed` (500 ms) and `timeout` (8 s).
+   * It is never disabled before the first attempt. From the moment the form is sent it is
+   * `aria-disabled` and `aria-busy` and a second click does nothing; the spinner waits for the submit
+   * to be slow, so a quick one does not flash it, and a note shows once it is very slow. It is
+   * `aria-disabled`, not `disabled`, so it keeps its focus and its place in the tab order.
    */
   let {
     submitting = false,
@@ -32,8 +34,8 @@
   size="custom"
   type="submit"
   class="gap-2 {className}"
-  aria-busy={delayed || undefined}
-  aria-disabled={delayed || undefined}
+  aria-busy={submitting || delayed || undefined}
+  aria-disabled={submitting || delayed || undefined}
   onclick={ignoreWhileBusy}
 >
   {#if delayed}

@@ -11,7 +11,7 @@
   });
 </script>
 
-<form method="POST" action="?/create" onsubmit={form.submit}>
+<form method="POST" action="?/create" onsubmit={form.submit} onfocusout={form.blur}>
   <input type="hidden" name="kind" value="tag" />
   <input
     aria-label="name"

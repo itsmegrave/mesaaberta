@@ -21,6 +21,16 @@ describe('notificationText', () => {
     );
   });
 
+  it('names the suggestion an admin decided on, and where a merge sent it', () => {
+    const metadata = { kind: 'tag', name: 'Gore', into: 'Terror' };
+    expect(notificationText(shown({ type: 'catalog_suggestion_rejected', metadata }))).toBe(
+      'Sua sugestão “Gore” não foi aceita no catálogo.',
+    );
+    expect(notificationText(shown({ type: 'catalog_suggestion_merged', metadata }))).toBe(
+      'Sua sugestão “Gore” foi unida a “Terror”, que já existia.',
+    );
+  });
+
   it('says someone when the account behind it is gone', () => {
     expect(notificationText(shown({ type: 'player_left' }))).toBe('Alguém saiu de Mesa do Dragão.');
   });

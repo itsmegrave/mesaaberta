@@ -37,7 +37,7 @@ describe('AccountMenu.svelte', () => {
     await expect.element(page.getByTestId('account-user-name')).not.toBeInTheDocument();
     await expect
       .element(menu().getByRole('link', { name: 'Editar perfil' }))
-      .toHaveAttribute('href', '/account/profile');
+      .not.toBeInTheDocument();
     await expect
       .element(menu().getByRole('link', { name: 'Minhas mesas' }))
       .not.toBeInTheDocument();

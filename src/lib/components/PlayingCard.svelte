@@ -1,6 +1,5 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
-  import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -14,7 +13,6 @@
     systemName: string;
     gmName: string;
     status: 'pending' | 'confirmed';
-    tableStatus: TableStatus;
     timezone: string;
     nextAt: Date | null;
     canRate: boolean;
@@ -39,9 +37,6 @@
         {m.dash_you_have_seat()}
       </span>
     {/if}
-    {#if tableStatusLabel(item.tableStatus)}<span class="font-semibold"
-        >{tableStatusLabel(item.tableStatus)}</span
-      >{/if}
     <span class="font-semibold text-muted">{item.systemName}</span>
   </p>
 
@@ -83,7 +78,7 @@
         {m.dash_rate_prompt()}
         <a
           href="{page}#avaliar"
-          class="btn h-10 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
+          class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
           >{m.dash_rate_action()}</a
         >
       {/if}

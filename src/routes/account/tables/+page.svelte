@@ -9,6 +9,7 @@
   import { page } from '$app/state';
   import { pageHref } from '$lib/admin/page-href';
   import Icon from '$lib/components/Icon.svelte';
+  import KebabMenu from '$lib/components/KebabMenu.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -82,6 +83,19 @@
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.tables_open_cta()}
       </a>
+      <KebabMenu
+        name={m.dash_title()}
+        class="self-end sm:self-auto"
+        items={[
+          {
+            id: 'calendar',
+            label: m.menu_download_calendar(),
+            icon: 'calendar',
+            href: '/account/tables/calendar',
+            download: true,
+          },
+        ]}
+      />
     </div>
   </div>
 

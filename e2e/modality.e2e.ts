@@ -3,6 +3,7 @@ import {
   createTable,
   pickFromSearch,
   setFirstSession,
+  soonSession,
   setSeats,
   signIn,
   uniqueTitle,
@@ -36,8 +37,8 @@ test('an in-person table shows its area to everyone and its address only to the 
 
   await visitor.goto('/tables?modality=in_person');
   await expect(
-    visitor.getByRole('group', { name: 'Modalidade' }).getByRole('link', { name: 'Presencial' }),
-  ).toHaveAttribute('aria-current', 'page');
+    visitor.getByRole('group', { name: 'Modalidade' }).getByRole('button', { name: 'Presencial' }),
+  ).toHaveAttribute('aria-pressed', 'true');
   await expect(visitor.getByRole('article').filter({ hasText: title })).toContainText(
     'Presencial · Boa Viagem, Recife',
   );
@@ -71,7 +72,7 @@ test('a CEP fills the neighbourhood and city in, from the local cache, and never
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   await page.getByLabel('Título').fill(uniqueTitle('Com CEP'));
   await setSeats(page, 4);
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   await page.getByLabel('Presencial', { exact: true }).check();
   await page.getByLabel('CEP', { exact: true }).fill('52011-000');
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -86,10 +87,10 @@ test('a CEP in the wrong shape is refused next to the field', async ({ page }) =
   await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   await page.getByLabel('Título').fill(uniqueTitle('CEP ruim'));
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   await page.getByLabel('Presencial', { exact: true }).check();
   await page.getByLabel('CEP', { exact: true }).fill('1234');
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-  await expect(page.getByText('O CEP tem 8 números, por exemplo 50030-230.')).toBeVisible();
+  await expect(page.locator('#postalCode-error')).toBeVisible();
 });

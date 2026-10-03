@@ -1,10 +1,13 @@
 import { expect, test } from '@playwright/test';
 import {
   PNG,
+  chooseFromMenu,
+  pageMenu,
   createTable,
   pickImage,
   pickFromSearch,
   setFirstSession,
+  soonSession,
   signIn,
   uniqueTitle,
 } from './support/app';
@@ -33,7 +36,7 @@ test.describe('rich text', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Com formatação'));
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
 
     const description = page.getByLabel('Descrição');
     await expect(page.getByRole('toolbar').first()).toBeVisible();
@@ -103,12 +106,12 @@ test.describe('creating a table', () => {
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill('ab');
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     // The browser's own minlength would stop it first; turn that off to reach the server's check.
     await page.getByLabel('Título').evaluate((el) => el.removeAttribute('minlength'));
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-    await expect(page.getByText('Corrija os campos marcados.')).toBeVisible();
+    await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(page.getByLabel('Título')).toHaveValue('ab');
     // A rich-text editor, not an input: its text, not a value.
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
@@ -122,14 +125,14 @@ test.describe('creating a table', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Passada'));
-    // The calendar starts at today; a past day typed in is not taken. (The server refuses one
-    // too: see write.spec.ts, "in_the_past".)
-    await page.getByLabel('Primeira sessão', { exact: true }).fill('01/01/2020');
-    await page.keyboard.press('Enter');
-
-    await expect
-      .poll(() => page.locator('input[name="startsAtLocal"]').inputValue())
-      .not.toMatch(/^2020-/);
+    // The calendar starts at today: a day before it cannot be picked. (The server refuses one too:
+    // see write.spec.ts, "in_the_past".)
+    await expect(page.getByRole('button', { name: 'Mês anterior' })).toBeDisabled();
+    await page
+      .getByRole('button', { name: /, indisponível$/ })
+      .first()
+      .click({ force: true });
+    await expect(page.locator('input[name="startsAtLocal"]')).toHaveValue('');
   });
 
   test('a campaign asks how often it repeats', async ({ page }) => {
@@ -174,7 +177,7 @@ test.describe('the welcome message', () => {
     const slug = await createTable(page, { title: uniqueTitle('Com boas-vindas') });
     expect(await welcomeOf(slug)).toContain("na mesa '{nome da mesa}'");
 
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await chooseFromMenu(page, 'Editar');
     const field = page.getByLabel('Mensagem de boas-vindas');
     await expect(field).toHaveText(/WhatsApp/);
     await field.fill('Bem-vinda! Me chama no (11) 90000-0000.');
@@ -205,7 +208,7 @@ test.describe('the welcome message', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Privada'));
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     await page.getByLabel('Mensagem de boas-vindas').fill('Segredo só para quem entrar.');
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
     await expect(page).toHaveURL(/\/tables\/[^/]+$/);
@@ -224,13 +227,13 @@ test.describe('the welcome message', () => {
 
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Longa'));
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     const field = page.getByLabel('Mensagem de boas-vindas');
     // The editor does not stop the typing: it counts what is seen and the server refuses the excess.
     await field.fill('x'.repeat(1001));
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-    await expect(page.getByText('Corrija os campos marcados.')).toBeVisible();
+    await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(field).toHaveText('x'.repeat(1001));
     await expect(page).toHaveURL(/tables\/new$/);
   });
@@ -275,7 +278,7 @@ test.describe('images', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     await pickImage(page, {
       name: 'capa.png',
       mimeType: 'image/png',
@@ -283,7 +286,7 @@ test.describe('images', () => {
     });
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-    await expect(page.getByText('Use uma imagem PNG, JPEG ou WebP.')).toBeVisible();
+    await expect(page.locator('#image-error')).toBeVisible();
     const sql = database();
     try {
       expect(await sql`select 1 from game_tables where title = ${title}`).toHaveLength(0);
@@ -299,7 +302,7 @@ test.describe('editing and disabling', () => {
     await signIn(page, gm);
     const slug = await createTable(page, { title: uniqueTitle('Nome antigo') });
 
-    await page.getByRole('link', { name: 'Editar mesa' }).click();
+    await chooseFromMenu(page, 'Editar');
     await expect(page).toHaveURL(new RegExp(`/tables/${slug}/edit$`));
     await expect(
       page.getByText(/quem já está na mesa recebe o convite do calendário/),
@@ -324,7 +327,8 @@ test.describe('editing and disabling', () => {
     const otherPage = await context.newPage();
     await signIn(otherPage, other);
     await otherPage.goto(`/tables/${slug}`);
-    await expect(otherPage.getByRole('link', { name: 'Editar mesa' })).toHaveCount(0);
+    await pageMenu(otherPage).click();
+    await expect(otherPage.getByRole('menuitem', { name: 'Editar' })).toHaveCount(0);
 
     const response = await otherPage.goto(`/tables/${slug}/edit`);
     expect(response?.status()).toBe(403);
@@ -341,7 +345,7 @@ test.describe('editing and disabling', () => {
     const adminPage = await context.newPage();
     await signIn(adminPage, admin);
     await adminPage.goto(`/tables/${slug}`);
-    await adminPage.getByRole('link', { name: 'Editar mesa' }).click();
+    await chooseFromMenu(adminPage, 'Editar');
     await adminPage.getByLabel('Título').fill('Editada pelo admin');
     await adminPage.getByRole('button', { name: 'Salvar alterações' }).click();
 
@@ -362,8 +366,9 @@ test.describe('editing and disabling', () => {
 
     await page.goto(`/tables/${slug}/edit`);
     // It asks first; only the dialog's button disables.
-    await page.getByRole('button', { name: 'Desativar mesa' }).click();
+    await chooseFromMenu(page, 'Desativar mesa…');
     const dialog = page.getByRole('alertdialog', { name: 'Desativar esta mesa?' });
+    await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Desativar mesa' }).click();
     await expect(page).toHaveURL(/\/tables$/);
     await expect(page.getByRole('link', { name: title })).toHaveCount(0);
@@ -374,9 +379,9 @@ test.describe('editing and disabling', () => {
     expect(response?.status()).toBe(404);
     await visitor.close();
 
-    // The GM still finds it, marked, on their dashboard.
+    // The GM still finds it on their dashboard, with no table status: those are for admin.
     await page.goto('/account/tables');
     await expect(page.getByText(title)).toBeVisible();
-    await expect(page.getByText('Mesa desativada')).toBeVisible();
+    await expect(page.getByText('Mesa desativada')).toHaveCount(0);
   });
 });

@@ -5,6 +5,7 @@ import { inviteHandler, type InviteEnv } from './invites';
 import { notificationHandler } from './notifications';
 import { announcementHandler } from './announcements';
 import { moderationHandler } from './moderation';
+import { catalogHandler } from './catalog';
 import { banMailHandler } from './ban-mail';
 
 /**
@@ -15,7 +16,13 @@ import { banMailHandler } from './ban-mail';
  */
 export function handlersFor(env: (InviteEnv & AnalyticsEnv) | undefined): readonly Handler[] {
   const handler = inviteHandler(env);
-  const bell = [notificationHandler, announcementHandler, moderationHandler, instagramQueueHandler];
+  const bell = [
+    notificationHandler,
+    announcementHandler,
+    moderationHandler,
+    catalogHandler,
+    instagramQueueHandler,
+  ];
   const banMail = banMailHandler(env);
   return [
     ...(handler ? [handler] : []),

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, createTable, uniqueTitle } from './support/app';
+import { asUser, chooseFromMenu, createTable, pageMenu, uniqueTitle } from './support/app';
 import { createUser } from './support/users';
 
 test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
@@ -20,7 +20,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
 
   // Before joining: a direct message to the GM.
   await playerPage.goto(`/tables/${slug}`);
-  await playerPage.getByRole('button', { name: 'Falar com o mestre' }).click();
+  await chooseFromMenu(playerPage, 'Mandar mensagem ao mestre');
   await expect(playerPage).toHaveURL(/\/messages\/[0-9a-f-]+/);
   await playerPage.getByRole('textbox', { name: 'Mensagem' }).fill('Ainda tem vaga?');
   await playerPage.keyboard.press('Enter');
@@ -81,7 +81,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await gmSession.context.close();
 });
 
-test('turning direct messages off hides "Falar com o mestre"', async ({ browser }) => {
+test('turning direct messages off hides "Mandar mensagem ao mestre"', async ({ browser }) => {
   const gm = await createUser('Mestre Caio');
   const gmSession = await asUser(browser, gm);
   const slug = await createTable(gmSession.page, { title: uniqueTitle('Mesa') });
@@ -93,12 +93,11 @@ test('turning direct messages off hides "Falar com o mestre"', async ({ browser 
   const player = await createUser('Duda');
   const playerSession = await asUser(browser, player);
   await playerSession.page.goto(`/tables/${slug}`);
+  await pageMenu(playerSession.page).click();
+  await expect(playerSession.page.getByRole('menuitem', { name: 'Copiar link' })).toBeVisible();
   await expect(
-    playerSession.page.getByText('O mestre não recebe mensagens diretas agora.'),
-  ).toBeVisible();
-  await expect(
-    playerSession.page.getByRole('button', { name: 'Falar com o mestre' }),
-  ).toBeDisabled();
+    playerSession.page.getByRole('menuitem', { name: 'Mandar mensagem ao mestre' }),
+  ).toHaveCount(0);
 
   await playerSession.context.close();
   await gmSession.context.close();

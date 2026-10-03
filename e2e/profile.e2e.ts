@@ -14,8 +14,9 @@ test('the account menu leads to the profile, where the details are saved and the
   await accountMenu(page, user.username).click();
   await page
     .getByRole('navigation', { name: 'Menu da conta' })
-    .getByRole('link', { name: 'Editar perfil' })
+    .getByRole('link', { name: 'Ver meu perfil' })
     .click();
+  await page.getByRole('link', { name: 'Editar perfil' }).click();
   await expect(page).toHaveURL(/\/account\/profile$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Seu perfil');
 
@@ -24,8 +25,10 @@ test('the account menu leads to the profile, where the details are saved and the
   await page.getByLabel('Cidade').fill('Recife');
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
   await expect(page.getByText('Perfil salvo.')).toBeVisible();
+  // Saved: back on the public page.
+  await expect(page).toHaveURL(new RegExp(`/u/${user.username}$`));
 
-  await page.reload();
+  await page.goto('/account/profile');
   await expect(page.getByLabel('Cidade')).toHaveValue('Recife');
   await expect(page.getByLabel('Nome de usuário')).toHaveValue(user.username);
 });
@@ -101,7 +104,7 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
   await signIn(page, user, '/account/profile');
   await expect(page.getByRole('button', { name: 'Remover foto enviada' })).toHaveCount(0);
 
-  await page.getByLabel('Escolher foto').setInputFiles({
+  await page.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',
     buffer: PNG,
@@ -137,12 +140,11 @@ test('refuses a file that is not a picture', async ({ page }) => {
   const user = await createUser('Foto Falsa');
   await signIn(page, user, '/account/profile');
 
-  await page.getByLabel('Escolher foto').setInputFiles({
+  await page.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',
     buffer: Buffer.from('<svg onload="alert(1)"></svg>'),
   });
-  await page.getByRole('button', { name: 'Enviar foto' }).click();
   await expect(page.getByRole('alert')).toContainText('Envie uma foto PNG, JPEG ou WebP.');
 });
 

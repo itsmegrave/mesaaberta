@@ -12,7 +12,8 @@
 
   const isTablesActive = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
   const isNewTableActive = $derived(pathname === '/tables/new');
-  const isMyTablesActive = $derived(pathname.startsWith('/account'));
+  // Only the tables' own pages: the profile and the rest of the account are not "Minhas mesas".
+  const isMyTablesActive = $derived(pathname.startsWith('/account/tables'));
   const isAdminActive = $derived(pathname.startsWith('/admin'));
 </script>
 

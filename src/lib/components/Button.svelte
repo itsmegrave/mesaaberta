@@ -18,7 +18,7 @@
   } = $props();
   const sizes = {
     md: 'h-12 rounded-lg px-4',
-    sm: 'h-10 rounded-lg px-3',
+    sm: 'h-11 rounded-lg px-3',
     icon: 'size-12 rounded-lg p-0',
     custom: '',
   };

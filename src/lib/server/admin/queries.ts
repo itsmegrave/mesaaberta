@@ -12,7 +12,14 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
       .select({
         total: sql<number>`count(*)`.mapWith(Number),
         active: countWhere(sql`${profiles.status} = 'active'`),
-        suspended: countWhere(sql`${profiles.status} = 'suspended'`),
+        // A ban that never ends is "banned"; the rest of the suspended (a ban with an end date, or a
+        // closed account) are "suspended".
+        banned: countWhere(
+          sql`${profiles.status} = 'suspended' and ${profiles.bannedAt} is not null and ${profiles.bannedUntil} is null`,
+        ),
+        suspended: countWhere(
+          sql`${profiles.status} = 'suspended' and not (${profiles.bannedAt} is not null and ${profiles.bannedUntil} is null)`,
+        ),
         new30d: countWhere(
           sql`${profiles.createdAt} >= ${since.toISOString()}::timestamptz and ${profiles.createdAt} <= ${now.toISOString()}::timestamptz`,
         ),
@@ -23,6 +30,9 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
         total: sql<number>`count(*)`.mapWith(Number),
         active: countWhere(sql`${gameTables.status} = 'active'`),
         disabled: countWhere(sql`${gameTables.status} = 'disabled'`),
+        awaiting: countWhere(sql`${gameTables.status} = 'awaiting_confirmation'`),
+        concluded: countWhere(sql`${gameTables.status} = 'concluded'`),
+        notHeld: countWhere(sql`${gameTables.status} = 'not_held'`),
         online: countWhere(sql`${gameTables.modality} = 'online'`),
         inPerson: countWhere(sql`${gameTables.modality} = 'in_person'`),
         gms: sql<number>`count(distinct ${gameTables.gmId})`.mapWith(Number),

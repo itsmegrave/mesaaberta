@@ -2,6 +2,7 @@
   import Spinner from '$lib/components/Spinner.svelte';
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import KebabMenu from '$lib/components/KebabMenu.svelte';
   import type { IconName } from '$lib/icons/names';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -32,7 +33,10 @@
       label: m.admin_tables(),
       value: data.tables.total,
       icon: 'game-icons:tavern-sign',
-      detail: m.admin_active_tables({ count: number(data.tables.active) }),
+      detail:
+        data.tables.total > 0 && data.tables.active === data.tables.total
+          ? m.admin_tables_all_active()
+          : m.admin_active_tables({ count: number(data.tables.active) }),
     },
     {
       label: m.admin_gms(),
@@ -53,12 +57,16 @@
       rows: [
         [m.admin_active_profiles(), data.people.active],
         [m.admin_suspended(), data.people.suspended],
+        [m.admin_banned(), data.people.banned],
       ],
     },
     {
       title: m.admin_tables(),
       rows: [
         [m.admin_active(), data.tables.active],
+        [m.admin_awaiting_confirmation(), data.tables.awaiting],
+        [m.admin_concluded(), data.tables.concluded],
+        [m.admin_not_held(), data.tables.notHeld],
         [m.admin_disabled(), data.tables.disabled],
         [m.admin_online(), data.tables.online],
         [m.admin_in_person(), data.tables.inPerson],
@@ -85,16 +93,29 @@
       <h1 class="text-3xl font-semibold">{m.admin_overview_title()}</h1>
       <p class="mt-2 text-sm text-muted">{m.admin_updated({ time: date(data.updatedAt) })}</p>
     </div>
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
-      disabled={remote.isFetching}
-      onclick={() => remote.refetch()}
-    >
-      {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
-      {m.admin_refresh()}
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button
+        size="custom"
+        type="button"
+        class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
+        disabled={remote.isFetching}
+        onclick={() => remote.refetch()}
+      >
+        {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
+        {m.admin_refresh()}
+      </Button>
+      <KebabMenu
+        name={m.admin_overview_title()}
+        items={[
+          {
+            id: 'platform',
+            label: m.admin_view_platform(),
+            icon: 'external-link',
+            href: localizedHref('/', locale),
+          },
+        ]}
+      />
+    </div>
   </div>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
@@ -125,8 +146,4 @@
       </section>
     {/each}
   </div>
-
-  <a class="mt-6 inline-flex min-h-11 items-center gap-2 anchor" href={localizedHref('/', locale)}
-    ><Icon name="external-link" size={18} />{m.admin_view_platform()}</a
-  >
 </section>

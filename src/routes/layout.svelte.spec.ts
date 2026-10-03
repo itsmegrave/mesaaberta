@@ -258,7 +258,7 @@ describe('+layout.svelte', () => {
         .toHaveAttribute('href', '/u/ana');
       await expect
         .element(accountMenu().getByRole('link', { name: 'Editar perfil' }))
-        .toHaveAttribute('href', '/account/profile');
+        .not.toBeInTheDocument();
       await expect
         .element(accountMenu().getByRole('link', { name: 'Minhas mesas' }))
         .not.toBeInTheDocument();

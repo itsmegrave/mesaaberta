@@ -28,6 +28,13 @@ describe('SubmitButton', () => {
     await expect.element(button()).toHaveTextContent('Salvar');
   });
 
+  it('is aria-disabled and busy from the moment it is sending, never before the first attempt', async () => {
+    render(SubmitButton, { children, submitting: true });
+
+    await expect.element(button()).toHaveAttribute('aria-disabled', 'true');
+    await expect.element(button()).toHaveAttribute('aria-busy', 'true');
+  });
+
   it('says it is still saving when the submit takes very long', async () => {
     render(SubmitButton, { children, delayed: true, timeout: true });
 
@@ -67,8 +74,8 @@ describe('SubmitButton', () => {
     (button().element() as HTMLButtonElement).click();
 
     expect(submits).toBe(0);
-    // Nothing shows yet, so a quick submit does not flash a spinner.
-    await expect.element(button()).not.toHaveAttribute('aria-busy');
+    // Announced as busy at once, but nothing is drawn yet, so a quick submit does not flash a spinner.
+    await expect.element(button()).toHaveAttribute('aria-busy', 'true');
     expect(button().element().querySelector('svg')).toBeNull();
     form.remove();
   });

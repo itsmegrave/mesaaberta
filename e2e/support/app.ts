@@ -76,16 +76,44 @@ export async function setSeats(page: Page, count: number) {
   await expect(seats).toHaveAttribute('aria-valuenow', String(count));
 }
 
+/** The first of the month after next at 19:00 (`2026-12-01T19:00`): always ahead, and a few key presses away. */
+export function soonSession(now = new Date()) {
+  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+  return `${first.toISOString().slice(0, 10)}T19:00`;
+}
+
 /**
- * Types the first session of a table form (`2099-06-01T19:00`) as a person would: the day as
- * dd/mm/aaaa in the date picker, then the hour.
+ * Picks the first session of a table form (`2026-12-01T19:00`) as a person would with the keyboard:
+ * any day on the inline calendar, then page keys to the month and year, arrows to the day, Enter;
+ * then the hour and the minutes on their selects.
  */
 export async function setFirstSession(page: Page, iso: string) {
   const [day, time] = iso.split('T');
-  const [year, month, date] = day.split('-');
-  await page.getByLabel('Primeira sessão', { exact: true }).fill(`${date}/${month}/${year}`);
+  const [hour, minute] = time.split(':');
+  const hidden = page.locator('input[name="startsAtLocal"]');
+  await page
+    .getByRole('button', { name: /^Escolher / })
+    .first()
+    .click();
+  const picked = (await hidden.inputValue()).slice(0, 10);
+  const from = new Date(`${picked}T12:00:00Z`);
+  const to = new Date(`${day}T12:00:00Z`);
+  const years = to.getUTCFullYear() - from.getUTCFullYear();
+  const months = to.getUTCMonth() - from.getUTCMonth();
+  for (let step = 0; step < Math.abs(years); step++) {
+    await page.keyboard.press(years > 0 ? 'Shift+PageDown' : 'Shift+PageUp');
+  }
+  for (let step = 0; step < Math.abs(months); step++) {
+    await page.keyboard.press(months > 0 ? 'PageDown' : 'PageUp');
+  }
+  const days = to.getUTCDate() - from.getUTCDate();
+  for (let step = 0; step < Math.abs(days); step++) {
+    await page.keyboard.press(days > 0 ? 'ArrowRight' : 'ArrowLeft');
+  }
   await page.keyboard.press('Enter');
-  await page.getByLabel('Hora de Primeira sessão').fill(time);
+  await expect(hidden).toHaveValue(new RegExp(`^${day}T`));
+  await page.getByRole('combobox', { name: 'Hora' }).selectOption(hour);
+  await page.getByRole('combobox', { name: 'Minutos' }).selectOption(minute);
 }
 
 /** A title no other test uses, so tests that share a database do not collide. */
@@ -100,7 +128,7 @@ export async function createTable(page: Page, table: NewTable) {
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
   if (table.kind === 'campaign') await page.getByLabel('Campanha (várias sessões)').check();
   await setSeats(page, table.capacity ?? 5);
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   if (table.joinMode === 'approval') await page.getByLabel(/Com a sua aprovação/).check();
   if (table.inPerson) {
     await page.getByLabel('Presencial', { exact: true }).check();
@@ -150,4 +178,13 @@ export async function asUser(
   const page = await context.newPage();
   await signIn(page, user);
   return { page, context };
+}
+
+/** The "3 dots" beside a page's title (the first "Mais ações: …" on the page). */
+export const pageMenu = (page: Page) => page.getByRole('button', { name: /^Mais ações:/ }).first();
+
+/** Opens the page's title menu and picks an item. */
+export async function chooseFromMenu(page: Page, item: string | RegExp) {
+  await pageMenu(page).click();
+  await page.getByRole('menuitem', { name: item }).click();
 }

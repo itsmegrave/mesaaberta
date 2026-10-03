@@ -1,7 +1,7 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
-  import { tableStatusLabel, type TableStatus } from '$lib/tables/status';
+  import type { TableStatus } from '$lib/tables/status';
   import { formatSession } from '$lib/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
@@ -37,6 +37,7 @@
 
   const locale = getLocale();
   const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
+  const manage = $derived(localizedHref(`/tables/${item.slug}/manage`, locale));
 </script>
 
 <article
@@ -44,11 +45,38 @@
   class="scroll-mt-6 rounded-lg border border-surface-200-800 bg-panel p-6"
 >
   <p class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
-    {#if tableStatusLabel(item.tableStatus)}<span>{tableStatusLabel(item.tableStatus)}</span>{/if}
     <span class="ml-auto"
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >
   </p>
+
+  <!-- The date has passed: the GM says whether it happened. Table statuses are only for admin. -->
+  {#if item.tableStatus === 'awaiting_confirmation'}
+    <div
+      role="group"
+      aria-label={m.dash_session_prompt({ title: item.title })}
+      class="mb-4 rounded-lg border-2 border-primary-500 p-4"
+    >
+      <p class="font-semibold">{m.dash_session_prompt({ title: item.title })}</p>
+      <p class="mt-1 text-sm text-muted">{m.dash_session_prompt_text()}</p>
+      <div class="mt-3 flex flex-wrap gap-3">
+        <ActionForm
+          action="{manage}?/happened"
+          {next}
+          label={m.dash_session_yes()}
+          buttonClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+          success={m.toast_table_concluded()}
+        />
+        <ActionForm
+          action="{manage}?/notHeld"
+          {next}
+          label={m.dash_session_no()}
+          buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+          success={m.toast_table_not_held()}
+        />
+      </div>
+    </div>
+  {/if}
 
   <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
@@ -108,7 +136,7 @@
                   playerId={request.playerId}
                   {next}
                   {label}
-                  buttonClass="btn h-10 rounded-lg px-4 font-semibold {tone}"
+                  buttonClass="btn h-11 rounded-lg px-4 font-semibold {tone}"
                   {success}
                 />
               {/each}
@@ -145,7 +173,7 @@
                     playerId={player.playerId}
                     {next}
                     label={m.table_remove()}
-                    buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+                    buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
                     success={m.toast_removed()}
                   />
                 </li>
