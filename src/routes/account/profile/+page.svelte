@@ -43,6 +43,34 @@
   });
   const photoError = $derived(photo.errors.photo?.[0]);
 
+  // Which photo is on: the one sent, else the account's, else the initial of the name.
+  const sources = $derived([
+    {
+      id: 'upload',
+      title: m.account_photo_source_upload(),
+      note: data.hasUploadedPhoto ? m.account_photo_note_sent() : m.account_photo_note_none(),
+    },
+    {
+      id: 'account',
+      title: m.account_photo_source_account(),
+      note: m.account_photo_note_account(),
+    },
+    {
+      id: 'initial',
+      title: m.account_photo_source_initial(),
+      note: m.account_photo_note_initial(),
+    },
+  ]);
+  const inUse = $derived.by(() => {
+    const id = data.hasUploadedPhoto ? 'upload' : data.avatarUrl ? 'account' : 'initial';
+    const note = {
+      upload: m.account_photo_now_sent(),
+      account: m.account_photo_now_account(),
+      initial: m.account_photo_now_initial(),
+    }[id];
+    return { id, note };
+  });
+
   // The photo goes up as soon as it is picked (and cropped, see ImageUpload).
   let photoForm = $state<HTMLFormElement>();
   async function picked(files: File[]) {
@@ -129,43 +157,68 @@
     <div class="grid gap-6 lg:col-span-2">
       <section aria-labelledby="photo-heading" class={card}>
         <h2 id="photo-heading" class={heading}>{m.account_photo()}</h2>
-        <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
-          <!-- Without a picture, the upload shows the initial the app draws in its place. -->
-          {#if !data.avatarUrl}
-            <Avatar src={null} name={data.form.data.name || data.username} size={80} />
+        <div class="mt-5 grid gap-5">
+          <!-- The photo in use, and where it comes from. -->
+          <div class="flex items-center gap-4 rounded-lg border border-surface-200-800 p-3">
+            <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
+            <div class="min-w-0">
+              <p class="font-semibold">{m.account_photo_current()}</p>
+              <p class="text-sm text-surface-700-300">{inUse.note}</p>
+            </div>
+          </div>
+          <Form
+            bind:element={photoForm}
+            action="?/photo"
+            enctype="multipart/form-data"
+            onsubmit={photo.submit}
+          >
+            <ImageUpload
+              id="photo"
+              name="photo"
+              kind="avatar"
+              label={m.account_photo()}
+              hint={m.account_photo_hint()}
+              dropText={m.account_photo_drop()}
+              error={photoError
+                ? (photoErrors[photoError]?.() ?? m.account_photo_error_failed())
+                : undefined}
+              currentUrl={data.avatarUrl}
+              onpick={picked}
+            />
+          </Form>
+          {#if data.hasUploadedPhoto}
+            <ActionForm
+              action="?/removePhoto"
+              label={m.account_photo_remove()}
+              buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+            />
           {/if}
-          <div class="grid gap-3">
-            <Form
-              bind:element={photoForm}
-              action="?/photo"
-              enctype="multipart/form-data"
-              onsubmit={photo.submit}
-            >
-              <ImageUpload
-                id="photo"
-                name="photo"
-                kind="avatar"
-                label={m.account_photo()}
-                hint={m.account_photo_hint()}
-                error={photoError
-                  ? (photoErrors[photoError]?.() ?? m.account_photo_error_failed())
-                  : undefined}
-                currentUrl={data.avatarUrl}
-                onpick={picked}
-              />
-            </Form>
-            {#if data.hasUploadedPhoto}
-              <ActionForm
-                action="?/removePhoto"
-                label={m.account_photo_remove()}
-                buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-              />
-            {/if}
-            {#if photoNotice}
-              <p role="status" class="text-sm font-semibold">
-                {photoNotice === 'salva' ? m.account_photo_saved() : m.account_photo_removed()}
-              </p>
-            {/if}
+          {#if photoNotice}
+            <p role="status" class="text-sm font-semibold">
+              {photoNotice === 'salva' ? m.account_photo_saved() : m.account_photo_removed()}
+            </p>
+          {/if}
+          <div>
+            <p class="mb-2 text-sm font-semibold">{m.account_photo_order()}</p>
+            <ol class="grid gap-2">
+              {#each sources as source (source.id)}
+                <li
+                  class="flex items-center gap-3 rounded-lg border-2 p-3 {source.id === inUse.id
+                    ? 'border-primary-500'
+                    : 'border-surface-200-800'}"
+                >
+                  <span class="min-w-0 flex-1">
+                    <span class="block font-semibold">{source.title}</span>
+                    <span class="block text-sm text-surface-700-300">{source.note}</span>
+                  </span>
+                  {#if source.id === inUse.id}
+                    <span class="badge shrink-0 rounded-full preset-filled-primary-500 px-3"
+                      >{m.account_photo_in_use()}</span
+                    >
+                  {/if}
+                </li>
+              {/each}
+            </ol>
           </div>
         </div>
       </section>

@@ -17,6 +17,7 @@
     hint,
     error,
     kind = 'image',
+    dropText,
     currentUrl = null,
     removed = $bindable(false),
     onpick,
@@ -31,6 +32,8 @@
      * (square, cropped in a circle; whoever uses it removes the photo on their own).
      */
     kind?: 'image' | 'avatar';
+    /** What the drop zone says; "Arraste uma imagem para cá" by default. */
+    dropText?: string;
     /** The image the table has now, shown above the zone. */
     currentUrl?: string | null;
     /** The current image is to be taken off on save (sent as `removeImage`). */
@@ -61,14 +64,9 @@
 </script>
 
 <div class="min-w-0">
-  {#if currentUrl && !removed}
-    <img
-      src={currentUrl}
-      alt=""
-      class={avatar
-        ? 'mb-3 size-20 rounded-full object-cover'
-        : 'aspect-5/2 w-full max-w-sm rounded-lg object-cover'}
-    />
+  <!-- A person's photo is shown by the page, in its own "Foto atual" panel. -->
+  {#if currentUrl && !removed && !avatar}
+    <img src={currentUrl} alt="" class="aspect-5/2 w-full max-w-sm rounded-lg object-cover" />
   {/if}
   {#if avatar}
     <!-- The photo is taken off by its own action, not with the form. -->
@@ -127,7 +125,7 @@
             d="M21 16l-5-5-9 9"
           /></svg
         >
-        <p class="text-sm">{m.form_image_drop()}</p>
+        <p class="text-sm">{dropText ?? m.form_image_drop()}</p>
         <FileUpload.Trigger
           class="btn h-12 rounded-lg border-2 border-surface-950-50 px-4 font-semibold hover:preset-tonal"
           aria-invalid={error ? 'true' : undefined}

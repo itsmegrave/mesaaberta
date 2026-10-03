@@ -20,11 +20,16 @@ describe('ImageUpload.svelte', () => {
     expect(document.querySelector('img')?.className).toContain('aspect-5/2');
   });
 
-  it("shows a person's photo as a circle, and leaves taking it off to its own action", async () => {
-    render(ImageUpload, { ...base, kind: 'avatar' });
+  it("leaves a person's photo to the page, and its removal to its own action", async () => {
+    render(ImageUpload, {
+      ...base,
+      kind: 'avatar',
+      dropText: 'Arraste uma imagem para cá. Você ajusta o corte.',
+    });
 
     await expect.element(page.getByRole('button', { name: 'Trocar imagem' })).toBeVisible();
-    expect(document.querySelector('img')?.className).toContain('rounded-full');
+    await expect.element(page.getByText('Você ajusta o corte.', { exact: false })).toBeVisible();
+    expect(document.querySelector('img')).toBeNull();
     expect(page.getByRole('button', { name: 'Remover imagem' }).elements()).toHaveLength(0);
     expect(document.querySelector('input[name="removeImage"]')).toBeNull();
   });
