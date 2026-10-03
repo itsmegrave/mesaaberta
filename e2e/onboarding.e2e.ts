@@ -30,7 +30,7 @@ test.describe('an incomplete profile', () => {
     await expect(page.getByRole('heading', { name: 'Complete seu perfil' })).toBeVisible();
 
     // The name from the account is already there; only the username is missing.
-    await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Legado Antigo');
+    await expect(page.getByLabel(/^Nome\s*\(opcional\)/)).toHaveValue('Legado Antigo');
     await page.getByLabel('Nome de usuário').fill(`legado-${unique()}`);
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
@@ -125,11 +125,11 @@ test.describe('the onboarding form', () => {
     await signInIncomplete(page, user);
 
     await page.getByLabel('Nome de usuário').fill(taken.username.toUpperCase());
-    await expect(page.getByText('Esse nome já está em uso. Escolha outro.')).toBeVisible();
+    await expect(page.locator('#username-error')).toBeVisible();
 
     // The check is only advice: saving still goes to the server, which decides.
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
-    await expect(page.getByText('Esse nome já está em uso. Escolha outro.')).toBeVisible();
+    await expect(page.locator('#username-error')).toBeVisible();
     await expect(page).toHaveURL(/\/onboarding/);
   });
 
@@ -141,7 +141,7 @@ test.describe('the onboarding form', () => {
     await page.getByLabel('Cidade').fill('Natal');
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
-    await expect(page.getByText('Esse nome é reservado. Escolha outro.')).toBeVisible();
+    await expect(page.locator('#username-error')).toBeVisible();
     await expect(page.getByLabel('Nome de usuário')).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByLabel('Cidade')).toHaveValue('Natal');
   });

@@ -260,10 +260,8 @@ test.describe('ratings', () => {
 
       // Changing it updates the average; the comment is stored but never shown to anyone else.
       await page.goto(`/tables/${slug}`);
-      await page
-        .getByRole('group', { name: 'Sua nota para a mestragem' })
-        .getByLabel('2', { exact: true })
-        .check();
+      await page.locator('[data-scope="rating-group"][data-part="item"]').nth(1).click();
+      await expect(page.locator('input[name="gmScore"]')).toHaveValue('2');
       await page.getByRole('button', { name: 'Atualizar avaliação' }).click();
       await expect(page.getByText('Nota de mestragem:').first()).toContainText('2,0');
       await expect(gmPage.getByText('Noite ótima.')).toHaveCount(0);

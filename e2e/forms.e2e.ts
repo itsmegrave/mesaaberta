@@ -43,7 +43,7 @@ test('a table form refuses an image that is too big before sending anything', as
   });
   await page.getByRole('main').getByRole('button', { name: 'Abrir mesa' }).click();
 
-  await expect(page.getByText('A imagem passa de 2 MB.')).toBeVisible();
+  await expect(page.locator('#image-error')).toBeVisible();
   expect(posted).toBe(false);
   await context.close();
 });

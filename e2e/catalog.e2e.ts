@@ -25,7 +25,7 @@ test('the list filters by platform and by tag, any of the ticked ones, kept in t
   const cards = page.getByRole('article');
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(0);
-  await expect(page.getByRole('group', { name: 'Tags' }).getByLabel('Dungeon crawl')).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Tirar o filtro Dungeon crawl' })).toBeVisible();
 
   await page.goto('/tables?tag=dungeon-crawl&tag=iniciantes');
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
@@ -45,11 +45,11 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
   await page.getByRole('button', { name: isMobile ? 'Filtros' : 'Plataformas' }).click();
   await page.getByRole('group', { name: 'Plataformas' }).getByText('Owlbear Rodeo').click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
+  // Closed, so the list behind it is readable again.
+  await page.keyboard.press('Escape');
   await expect(
     page.getByRole('article').filter({ hasText: 'A Cripta do Rei Afogado' }),
   ).toHaveCount(1);
-
-  await page.keyboard.press('Escape');
   await page
     .getByRole('group', { name: 'Modalidade' })
     .getByRole('button', { name: 'Online' })

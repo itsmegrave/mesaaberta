@@ -43,6 +43,7 @@
           <a
             href={localizedHref(section.path, locale)}
             aria-current={current ? 'page' : undefined}
+            aria-label={section.label}
             class="inline-flex h-11 items-center border-b-2 px-3 font-semibold whitespace-nowrap focus-visible:-outline-offset-2 {current
               ? 'border-primary-500'
               : 'border-transparent text-muted hover:text-inherit'}"

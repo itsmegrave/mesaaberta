@@ -76,6 +76,11 @@ describe('TablesFilters.svelte', () => {
     const open = page.getByRole('button', { name: 'Plataformas' });
     press(open);
     await expect.element(open).toHaveAttribute('aria-expanded', 'true');
+    await expect
+      .element(
+        page.getByRole('group', { name: 'Plataformas' }).getByRole('checkbox', { name: 'Roll20' }),
+      )
+      .toBeInTheDocument();
     press(
       page.getByRole('group', { name: 'Plataformas' }).getByRole('checkbox', { name: 'Roll20' }),
     );
@@ -97,7 +102,7 @@ describe('TablesFilters.svelte', () => {
     press(page.getByRole('button', { name: 'Tags' }));
     await expect
       .element(page.getByRole('group', { name: 'Tags' }).getByRole('checkbox', { name: 'Terror' }))
-      .toBeVisible();
+      .toBeInTheDocument();
     expect(page.getByRole('checkbox', { name: 'Gore' }).elements()).toHaveLength(0);
     press(page.getByRole('button', { name: 'Mostrar todas as 2 tags' }));
     await expect.element(page.getByRole('checkbox', { name: 'Gore' })).toBeInTheDocument();

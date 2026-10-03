@@ -110,7 +110,7 @@ test.describe('creating a table', () => {
     await page.getByLabel('Título').evaluate((el) => el.removeAttribute('minlength'));
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-    await expect(page.getByText('Corrija os campos marcados.')).toBeVisible();
+    await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(page.getByLabel('Título')).toHaveValue('ab');
     // A rich-text editor, not an input: its text, not a value.
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
@@ -126,7 +126,7 @@ test.describe('creating a table', () => {
     await page.getByLabel('Título').fill(uniqueTitle('Passada'));
     // The calendar starts at today: a day before it cannot be picked. (The server refuses one too:
     // see write.spec.ts, "in_the_past".)
-    await page.getByRole('button', { name: 'Mês anterior' }).click();
+    await expect(page.getByRole('button', { name: 'Mês anterior' })).toBeDisabled();
     await page
       .getByRole('button', { name: /, indisponível$/ })
       .first()
@@ -232,7 +232,7 @@ test.describe('the welcome message', () => {
     await field.fill('x'.repeat(1001));
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-    await expect(page.getByText('Corrija os campos marcados.')).toBeVisible();
+    await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(field).toHaveText('x'.repeat(1001));
     await expect(page).toHaveURL(/tables\/new$/);
   });
@@ -285,7 +285,7 @@ test.describe('images', () => {
     });
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-    await expect(page.getByText('Use uma imagem PNG, JPEG ou WebP.')).toBeVisible();
+    await expect(page.locator('#image-error')).toBeVisible();
     const sql = database();
     try {
       expect(await sql`select 1 from game_tables where title = ${title}`).toHaveLength(0);

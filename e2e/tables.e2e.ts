@@ -181,6 +181,8 @@ test.describe('table page', () => {
 
   test('offers no edit item to a visitor who is not the GM or an admin', async ({ page }) => {
     await page.goto('/tables/os-sinos-de-sablewood');
+    // The menu answers once the page has hydrated.
+    await page.waitForLoadState('networkidle');
 
     await pageMenu(page).click();
     await expect(page.getByRole('menuitem', { name: 'Copiar link' })).toBeVisible();

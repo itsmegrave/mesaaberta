@@ -40,6 +40,9 @@
     class?: string;
   } = $props();
 
+  // The menu's content is built when it opens: a closed one would put an inline `style` on the
+  // page, which the CSP refuses.
+  let open = $state(false);
   const regular = $derived(items.filter((item) => !item.destructive));
   const destructive = $derived(items.filter((item) => item.destructive));
 
@@ -68,24 +71,29 @@
   </Menu.Item>
 {/snippet}
 
-<Menu positioning={{ placement, offset: { mainAxis: 4 } }} onSelect={({ value }) => select(value)}>
+<Menu
+  {open}
+  onOpenChange={(details) => (open = details.open)}
+  positioning={{ placement, offset: { mainAxis: 4 } }}
+  onSelect={({ value }) => select(value)}
+>
   <Menu.Trigger
     aria-label={m.kebab_label({ name })}
     class="btn inline-flex size-11 shrink-0 items-center justify-center rounded-lg p-0 hover:preset-tonal {className}"
   >
     <Icon name="more" size={20} />
   </Menu.Trigger>
-  <Portal>
-    <Menu.Positioner class="z-50!">
-      <Menu.Content
-        class="w-66 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
-      >
-        {#each regular as item (item.id)}{@render entry(item)}{/each}
-        {#if regular.length > 0 && destructive.length > 0}
-          <Menu.Separator class="my-1 border-surface-200-800" />
-        {/if}
-        {#each destructive as item (item.id)}{@render entry(item)}{/each}
-      </Menu.Content>
-    </Menu.Positioner>
-  </Portal>
+  {#if open}<Portal>
+      <Menu.Positioner class="z-50!">
+        <Menu.Content
+          class="w-66 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+        >
+          {#each regular as item (item.id)}{@render entry(item)}{/each}
+          {#if regular.length > 0 && destructive.length > 0}
+            <Menu.Separator class="my-1 border-surface-200-800" />
+          {/if}
+          {#each destructive as item (item.id)}{@render entry(item)}{/each}
+        </Menu.Content>
+      </Menu.Positioner>
+    </Portal>{/if}
 </Menu>

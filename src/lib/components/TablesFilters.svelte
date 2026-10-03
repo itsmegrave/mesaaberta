@@ -81,6 +81,9 @@
   const clearAll = () => apply({ systems: [], modality: null, platforms: [], tags: [] });
 
   let sheetOpen = $state(false);
+  // Content is built when it opens: a closed one would put an inline `style` on the page, which the
+  // CSP refuses.
+  let openGroup = $state<'platforms' | 'tags' | null>(null);
 
   const segment =
     'inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold no-underline hover:preset-tonal';
@@ -112,39 +115,43 @@
 {#snippet group(kind: 'platforms' | 'tags')}
   {@const label = kind === 'platforms' ? m.form_platforms() : m.form_tags()}
   {@const n = picked[kind].length}
-  <Popover positioning={{ placement: 'bottom-start', offset: { mainAxis: 8 } }}>
+  <Popover
+    open={openGroup === kind}
+    onOpenChange={(details) => (openGroup = details.open ? kind : null)}
+    positioning={{ placement: 'bottom-start', offset: { mainAxis: 8 } }}
+  >
     <Popover.Trigger class={trigger}>
       {label}{#if n > 0}<span class="badge rounded-full preset-filled-primary-500 px-2">{n}</span
         >{/if}
     </Popover.Trigger>
-    <Portal>
-      <Popover.Positioner class="z-50!">
-        <Popover.Content
-          class="w-96 max-w-[calc(100vw-2rem)] card border border-surface-200-800 bg-surface-100-900 p-4 shadow-2xl"
-        >
-          <FilterChecklist
-            {label}
-            items={kind === 'platforms' ? catalog.platforms : catalog.tags}
-            more={kind === 'tags' ? catalog.moreTags : []}
-            moreLabel={(count) => m.tables_filter_all_tags({ count })}
-            picked={picked[kind]}
-            onchange={(next) => apply({ [kind]: next })}
-          />
-          <div class="mt-4 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              class="btn min-h-11 px-0 anchor font-semibold"
-              disabled={n === 0}
-              onclick={() => apply({ [kind]: [] })}>{m.tables_filter_clear_group()}</button
-            >
-            <Popover.CloseTrigger
-              class="btn min-h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-              >{m.tables_filter_show({ count })}</Popover.CloseTrigger
-            >
-          </div>
-        </Popover.Content>
-      </Popover.Positioner>
-    </Portal>
+    {#if openGroup === kind}<Portal>
+        <Popover.Positioner class="z-50!">
+          <Popover.Content
+            class="w-96 max-w-[calc(100vw-2rem)] card border border-surface-200-800 bg-surface-100-900 p-4 shadow-2xl"
+          >
+            <FilterChecklist
+              {label}
+              items={kind === 'platforms' ? catalog.platforms : catalog.tags}
+              more={kind === 'tags' ? catalog.moreTags : []}
+              moreLabel={(count) => m.tables_filter_all_tags({ count })}
+              picked={picked[kind]}
+              onchange={(next) => apply({ [kind]: next })}
+            />
+            <div class="mt-4 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                class="btn min-h-11 px-0 anchor font-semibold"
+                disabled={n === 0}
+                onclick={() => apply({ [kind]: [] })}>{m.tables_filter_clear_group()}</button
+              >
+              <Popover.CloseTrigger
+                class="btn min-h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+                >{m.tables_filter_show({ count })}</Popover.CloseTrigger
+              >
+            </div>
+          </Popover.Content>
+        </Popover.Positioner>
+      </Portal>{/if}
   </Popover>
 {/snippet}
 
@@ -204,66 +211,66 @@
 </div>
 
 <Dialog open={sheetOpen} onOpenChange={(details) => (sheetOpen = details.open)}>
-  <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-    <Dialog.Positioner class="fixed inset-0 z-50 md:hidden">
-      <Dialog.Content class="flex size-full flex-col bg-surface-50-950">
-        <header
-          class="flex items-center justify-between gap-3 border-b border-surface-200-800 px-5 py-3"
-        >
-          <Dialog.Title class="text-xl font-semibold">{m.tables_filters_title()}</Dialog.Title>
-          <Dialog.CloseTrigger
-            class="btn size-11 rounded-lg p-0 hover:preset-tonal"
-            aria-label={m.confirm_cancel()}><Icon name="xmark" size={20} /></Dialog.CloseTrigger
+  {#if sheetOpen}<Portal>
+      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
+      <Dialog.Positioner class="fixed inset-0 z-50 md:hidden">
+        <Dialog.Content class="flex size-full flex-col bg-surface-50-950">
+          <header
+            class="flex items-center justify-between gap-3 border-b border-surface-200-800 px-5 py-3"
           >
-        </header>
-        <div class="grid flex-1 content-start gap-6 overflow-y-auto p-5">
-          {#if systems.length > 0}
-            <SearchSelect
-              id="system-filter-sheet"
-              name="system"
-              label={m.tables_filter_label()}
-              labelClass="label-text block pb-1 font-semibold"
-              class="grid"
-              items={systems}
-              value={picked.systems}
-              placeholder={m.tables_filter_search()}
-              multiple
-              showPicks={false}
-              onchange={(next) => apply({ systems: next })}
-            />
-          {/if}
-          {#if catalog.platforms.length > 0}
-            <FilterChecklist
-              label={m.form_platforms()}
-              items={catalog.platforms}
-              picked={picked.platforms}
-              onchange={(next) => apply({ platforms: next })}
-            />
-          {/if}
-          {#if allTags.length > 0}
-            <FilterChecklist
-              label={m.form_tags()}
-              items={catalog.tags}
-              more={catalog.moreTags}
-              moreLabel={(count) => m.tables_filter_all_tags({ count })}
-              picked={picked.tags}
-              onchange={(next) => apply({ tags: next })}
-            />
-          {/if}
-        </div>
-        <footer
-          class="flex items-center justify-between gap-3 border-t border-surface-200-800 px-5 py-3"
-        >
-          <button type="button" class="btn min-h-11 px-0 anchor font-semibold" onclick={clearAll}
-            >{m.tables_filters_clear_everything()}</button
+            <Dialog.Title class="text-xl font-semibold">{m.tables_filters_title()}</Dialog.Title>
+            <Dialog.CloseTrigger
+              class="btn size-11 rounded-lg p-0 hover:preset-tonal"
+              aria-label={m.confirm_cancel()}><Icon name="xmark" size={20} /></Dialog.CloseTrigger
+            >
+          </header>
+          <div class="grid flex-1 content-start gap-6 overflow-y-auto p-5">
+            {#if systems.length > 0}
+              <SearchSelect
+                id="system-filter-sheet"
+                name="system"
+                label={m.tables_filter_label()}
+                labelClass="label-text block pb-1 font-semibold"
+                class="grid"
+                items={systems}
+                value={picked.systems}
+                placeholder={m.tables_filter_search()}
+                multiple
+                showPicks={false}
+                onchange={(next) => apply({ systems: next })}
+              />
+            {/if}
+            {#if catalog.platforms.length > 0}
+              <FilterChecklist
+                label={m.form_platforms()}
+                items={catalog.platforms}
+                picked={picked.platforms}
+                onchange={(next) => apply({ platforms: next })}
+              />
+            {/if}
+            {#if allTags.length > 0}
+              <FilterChecklist
+                label={m.form_tags()}
+                items={catalog.tags}
+                more={catalog.moreTags}
+                moreLabel={(count) => m.tables_filter_all_tags({ count })}
+                picked={picked.tags}
+                onchange={(next) => apply({ tags: next })}
+              />
+            {/if}
+          </div>
+          <footer
+            class="flex items-center justify-between gap-3 border-t border-surface-200-800 px-5 py-3"
           >
-          <Dialog.CloseTrigger
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
-            >{m.tables_filter_show({ count })}</Dialog.CloseTrigger
-          >
-        </footer>
-      </Dialog.Content>
-    </Dialog.Positioner>
-  </Portal>
+            <button type="button" class="btn min-h-11 px-0 anchor font-semibold" onclick={clearAll}
+              >{m.tables_filters_clear_everything()}</button
+            >
+            <Dialog.CloseTrigger
+              class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
+              >{m.tables_filter_show({ count })}</Dialog.CloseTrigger
+            >
+          </footer>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Portal>{/if}
 </Dialog>

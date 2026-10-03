@@ -176,8 +176,8 @@ test('the catalog lists, searches, pages with ?page=N and merges', async ({ page
   expect((await page.goto(`/admin/catalog?q=${stamp}&page=abc`))?.status()).toBe(200);
 
   await page.goto(`/admin/catalog?q=${names[0]}`);
-  await page.getByRole('button', { name: `Mais ações para ${names[0]}` }).click();
-  await page.getByRole('button', { name: 'Mesclar', exact: true }).click();
+  await page.getByRole('button', { name: `Mais ações: ${names[0]}` }).click();
+  await page.getByRole('menuitem', { name: 'Mesclar em outra entrada…' }).click();
   await page.getByLabel('Mesclar com').selectOption({ label: 'Discord' });
   await page.getByRole('button', { name: 'Mesclar', exact: true }).last().click();
   await expect(page.getByText('Entradas mescladas.')).toBeVisible();

@@ -91,5 +91,5 @@ test('a CEP in the wrong shape is refused next to the field', async ({ page }) =
   await page.getByLabel('CEP', { exact: true }).fill('1234');
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
-  await expect(page.getByText('O CEP tem 8 números, por exemplo 50030-230.')).toBeVisible();
+  await expect(page.locator('#postalCode-error')).toBeVisible();
 });

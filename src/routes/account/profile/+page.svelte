@@ -247,7 +247,10 @@
             onsaved={() => {
               toast.success(m.account_profile_saved());
               // Saved: back to the page everyone else sees.
-              if (data.username) void goto(localizedHref(`/u/${data.username}`, locale));
+              // After a tick, so the leave guard sees the draft as saved.
+              if (data.username) {
+                void tick().then(() => goto(localizedHref(`/u/${data.username}`, locale)));
+              }
             }}
           />
         </div>
