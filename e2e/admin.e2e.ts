@@ -151,8 +151,11 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
   }
   await signIn(page, admin, '/admin/tables');
   const rows = listRows(page, isMobile);
-  await shown(page.getByLabel('Buscar mesa, sistema ou @mestre')).fill(prefix);
-  // The search applies a moment after the typing stops; a filter picked before would be undone by it.
+  // Enter applies the search at once, hydrated or not (the form is a plain GET before that); a
+  // filter picked before it applied would be undone by it.
+  const search = shown(page.getByLabel('Buscar mesa, sistema ou @mestre'));
+  await search.fill(prefix);
+  await search.press('Enter');
   await expect(page).toHaveURL(/q=lifecycle-/);
   for (const [status, label] of states) {
     // On a phone the status filter is in the "Filtros" sheet.
