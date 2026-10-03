@@ -8,5 +8,6 @@ test('a session is written in its own zone, not the viewer’s, so 19:00 stays 1
   expect(dayLabel(session, 'pt-BR', 'America/Sao_Paulo')).toBe('dom, 4 out');
   expect(timeLabel(session, 'pt-BR', 'America/Sao_Paulo')).toBe('19:00 GMT-3');
   // The same moment in another zone is another day and hour: the zone is the table's.
-  expect(timeLabel(session, 'pt-BR', 'UTC')).toBe('22:00 GMT');
+  // The zone's name for UTC differs by runtime: "GMT" or "GMT+0".
+  expect(timeLabel(session, 'pt-BR', 'UTC')).toMatch(/^22:00 GMT(\+0)?$/);
 });

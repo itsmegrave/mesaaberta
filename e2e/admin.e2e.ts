@@ -8,8 +8,10 @@ const listRows = (page: Page, isMobile: boolean) =>
   isMobile ? page.getByTestId('list-rows').locator('> li') : page.locator('tbody tr');
 // The filter and the search are drawn once for each screen size; the one that shows is the one used.
 const shown = (locator: Locator) => locator.locator('visible=true');
+// A segment of the filter is a radio hidden behind its label; the one of the screen size that
+// shows is the only one in the accessibility tree.
 const segment = (page: Page, name: string) =>
-  shown(page.locator('label', { hasText: new RegExp(`^${name}`) })).first();
+  page.getByRole('radio', { name: new RegExp(`^${name}`) });
 
 test('admin overview is protected, refreshes and fits the viewport', async ({
   page,
@@ -45,9 +47,7 @@ test('admin overview is protected, refreshes and fits the viewport', async ({
   );
   await page.screenshot({ path: testInfo.outputPath('admin-dashboard.png'), fullPage: true });
   await (await adminSection(page, isMobile, 'Notificações')).click();
-  await expect(
-    page.getByRole('heading', { name: 'Notificações do sistema', level: 1 }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notificações', level: 1 })).toBeVisible();
   const icons = page.locator('input[name="icon"]');
   await expect(icons).toHaveCount(7);
   const drawings = await icons.evaluateAll((inputs) =>
@@ -94,7 +94,7 @@ test('users table paginates, filters status and username, and links to the selec
     await expect(rows).toHaveCount(4);
     await expect(page.getByText('21–24 de 24 usuários')).toBeVisible();
   }
-  await segment(page, 'Suspenso').click();
+  await segment(page, 'Suspenso').check({ force: true });
   await expect(page).toHaveURL(/status=suspended/);
   await expect(rows).toHaveCount(1);
   // The list names the person, not their ID; the ID is in the row's menu and on the profile page.
@@ -153,7 +153,10 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
   const rows = listRows(page, isMobile);
   await shown(page.getByLabel('Buscar mesa, sistema ou @mestre')).fill(prefix);
   for (const [status, label] of states) {
-    await segment(page, label).click();
+    // On a phone the status filter is in the "Filtros" sheet.
+    if (isMobile && !(await segment(page, label).isVisible()))
+      await page.getByRole('button', { name: /^Filtros/ }).click();
+    await segment(page, label).check({ force: true });
     await expect(page).toHaveURL(new RegExp(`status=${status}`));
     await expect(rows).toHaveCount(1);
     await expect(rows).toContainText(`${prefix}-${status}`);

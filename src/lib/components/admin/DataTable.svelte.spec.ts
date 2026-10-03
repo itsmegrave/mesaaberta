@@ -95,6 +95,12 @@ describe('admin DataTable', () => {
 
     await expect.element(page.getByRole('table')).not.toBeInTheDocument();
     await expect.element(page.getByRole('listitem').first()).toBeVisible();
+    // The segmented filter sits under the search; a person presses its label.
+    await expect.element(page.getByRole('radiogroup', { name: 'Status' })).toBeVisible();
+    const labels = [...document.querySelectorAll('label')].filter((label) =>
+      label.textContent?.trim().startsWith('Ligados'),
+    );
+    expect(labels.map((label) => label.getBoundingClientRect().width > 0)).toEqual([false, true]);
     await expect
       .element(page.getByRole('link', { name: /Mostrar mais/ }))
       .toHaveAttribute('href', '/admin/things?size=50');
