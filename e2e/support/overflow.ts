@@ -5,6 +5,9 @@ import type { Page } from '@playwright/test';
  * first: the app uses the system font, which is wider on the Linux CI runner than on a Mac, so a
  * layout that only fits with a narrow font must fail here too, not only in CI.
  */
+/** What stuck out on the last check, for the message of a failure. */
+export let sidewaysCulprits = '';
+
 export async function sidewaysOverflow(page: Page) {
   const { overflow, wide } = await page.evaluate(() => {
     for (const element of document.querySelectorAll<HTMLElement>('body *')) {
@@ -26,6 +29,6 @@ export async function sidewaysOverflow(page: Page) {
     return { overflow, wide: [] as string[] };
   });
   // The culprits go to the log of the run, next to the failure.
-  if (overflow > 0) console.log(`sideways by ${overflow}px: ${wide.join(' | ')}`);
+  sidewaysCulprits = wide.join(' | ');
   return overflow;
 }
