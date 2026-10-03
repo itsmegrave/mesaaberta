@@ -90,6 +90,8 @@ export default defineConfig({
   ],
   test: {
     expect: { requireAssertions: true },
+    // Concurrent PGlite startup can exceed the hook timeout under Bun on developer machines.
+    maxWorkers: 2,
     projects: [
       {
         extends: './vite.config.ts',
