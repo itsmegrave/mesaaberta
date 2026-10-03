@@ -38,7 +38,7 @@ const setup = async (
   return { checkUsername };
 };
 
-const urlFields = () => page.getByLabelText(/^Endereço do link/);
+const urlFields = () => page.getByLabelText(/^(Endereço|Usuário) do link/);
 // The networks sent, in row order: the combobox keeps each one in a hidden field.
 const networks = () =>
   [...document.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="linkNetwork"]')].map(
@@ -282,14 +282,29 @@ describe('ProfileForm', () => {
       await expect.element(page.getByRole('combobox', { name: 'Rede do link 2' })).toBeVisible();
     });
 
+    it('asks for a handle on a network and for an address on the website', async () => {
+      await setup({
+        username: 'ana',
+        linkNetwork: ['instagram', 'website'],
+        linkUrl: ['ana', 'https://ana.example'],
+      });
+
+      await expect
+        .element(page.getByLabelText('Usuário do link 1'))
+        .toHaveAttribute('placeholder', '@usuario');
+      await expect
+        .element(page.getByLabelText('Endereço do link 2'))
+        .toHaveAttribute('placeholder', 'https://');
+    });
+
     it('adds a row, focused, and sends the links as parallel fields the server reads in order', async () => {
       await setup({ username: 'ana' });
 
       await page.getByRole('button', { name: 'Adicionar link' }).click();
 
-      await expect.element(page.getByLabelText('Endereço do link 1')).toHaveFocus();
+      await expect.element(page.getByLabelText('Usuário do link 1')).toHaveFocus();
       await expect
-        .element(page.getByLabelText('Endereço do link 1'))
+        .element(page.getByLabelText('Usuário do link 1'))
         .toHaveAttribute('name', 'linkUrl');
       await expect.poll(networks).toEqual(['instagram']);
       await expect.element(page.getByRole('combobox', { name: 'Rede do link 1' })).toBeVisible();
@@ -349,7 +364,7 @@ describe('ProfileForm', () => {
         .element(page.getByLabelText('Endereço do link 2'))
         .toHaveAttribute('aria-invalid', 'true');
       await expect
-        .element(page.getByLabelText('Endereço do link 1'))
+        .element(page.getByLabelText('Usuário do link 1'))
         .not.toHaveAttribute('aria-invalid');
     });
   });

@@ -73,7 +73,7 @@ describe('saveProfile', () => {
       city: 'Recife',
       timezone: 'America/Recife',
       linkNetwork: ['instagram', 'x'],
-      linkUrl: ['https://instagram.com/carla', 'https://x.com/carla'],
+      linkUrl: ['carla', 'carla'],
     });
 
     await saveProfile(
@@ -87,7 +87,12 @@ describe('saveProfile', () => {
       .from(profileSocialLinks)
       .where(eq(profileSocialLinks.profileId, id(2)));
     expect(links).toHaveLength(1);
-    expect(links[0]).toMatchObject({ network: 'x', url: 'https://x.com/carla2', position: 0 });
+    expect(links[0]).toMatchObject({
+      network: 'x',
+      handle: 'carla2',
+      url: 'https://x.com/carla2',
+      position: 0,
+    });
   });
 
   it('keeps the own words with "Outro" only, and forgets them when another option is picked', async () => {

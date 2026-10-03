@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { usernameProblem } from './username';
-import { MAX_SOCIAL_LINKS, isNetwork, parseSocialUrl, type Network } from './social-links';
+import {
+  MAX_SOCIAL_LINKS,
+  handleUrl,
+  isNetwork,
+  parseHandle,
+  parseSocialUrl,
+  takesHandle,
+  type Network,
+} from './social-links';
 import { isTimeZone } from '$lib/time/timezone';
 
 // Zod compiles a faster parser with `new Function` when it can. In the browser our Content-Security-Policy
@@ -88,34 +96,58 @@ export const profileSchema = z
       // A row left empty is skipped, but it still counts for the position of the ones after it.
       if (raw.trim() === '') return;
 
-      if (!isNetwork(linkNetwork[index])) {
+      const network = linkNetwork[index];
+      if (!isNetwork(network)) {
         ctx.addIssue({ code: 'custom', message: 'invalid_network', path: ['linkNetwork', index] });
         return;
       }
 
-      const url = parseSocialUrl(raw);
-      if (!url) {
-        ctx.addIssue({ code: 'custom', message: 'invalid_url', path: ['linkUrl', index] });
-      } else if (seen.has(url)) {
+      // What identifies the link: a network's handle, or the website's address.
+      const key = takesHandle(network)
+        ? (() => {
+            const handle = parseHandle(network, raw);
+            return handle && `${network}:${handle.toLowerCase()}`;
+          })()
+        : parseSocialUrl(raw);
+      if (!key) {
+        ctx.addIssue({
+          code: 'custom',
+          message: takesHandle(network) ? 'invalid_handle' : 'invalid_url',
+          path: ['linkUrl', index],
+        });
+      } else if (seen.has(key)) {
         ctx.addIssue({ code: 'custom', message: 'duplicate', path: ['linkUrl', index] });
       } else {
-        seen.add(url);
+        seen.add(key);
       }
     });
   });
 
 export type ProfileInput = z.infer<typeof profileSchema>;
 
-/** The links to store, in the order sent: empty rows dropped, addresses normalised. Validate first. */
+/**
+ * The links to store, in the order sent: empty rows dropped, addresses normalised. A network gives
+ * its handle and the address built from it; `website` gives only its address. Validate first.
+ */
 export function profileLinks({
   linkNetwork,
   linkUrl,
-}: Pick<ProfileInput, 'linkNetwork' | 'linkUrl'>): { network: Network; url: string }[] {
-  return linkUrl.flatMap((raw, index) => {
-    const url = parseSocialUrl(raw);
+}: Pick<ProfileInput, 'linkNetwork' | 'linkUrl'>): {
+  network: Network;
+  handle: string | null;
+  url: string | null;
+}[] {
+  type Stored = { network: Network; handle: string | null; url: string | null };
+  return linkUrl.flatMap((raw, index): Stored[] => {
     const network = linkNetwork[index];
+    if (!isNetwork(network)) return [];
 
-    return url && isNetwork(network) ? [{ network, url }] : [];
+    if (takesHandle(network)) {
+      const handle = parseHandle(network, raw);
+      return handle ? [{ network, handle, url: handleUrl(network, handle) }] : [];
+    }
+    const url = parseSocialUrl(raw);
+    return url ? [{ network, handle: null, url }] : [];
   });
 }
 

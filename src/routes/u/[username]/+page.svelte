@@ -22,6 +22,10 @@
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const path = $derived(`/u/${profile.username}`);
 
+  // One social link: the network's icon with the handle beside it.
+  const chip =
+    'inline-flex h-10 max-w-full items-center gap-2 rounded-lg border border-surface-200-800 px-3 text-sm font-semibold text-surface-950-50';
+
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(data.canonical);
@@ -101,18 +105,27 @@
             <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
               {#each profile.links as link, index (`${link.network}-${index}`)}
                 <li>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={m.public_profile_social_link({
-                      network: networkLabels[link.network](),
-                    })}
-                    title={networkLabels[link.network]()}
-                    class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50 hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
-                  >
-                    <Icon name={networkIcons[link.network]} size={24} />
-                  </a>
+                  {#if link.href}
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={m.public_profile_social_link({
+                        network: networkLabels[link.network](),
+                      })}
+                      title={networkLabels[link.network]()}
+                      class="{chip} hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+                    >
+                      <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
+                      <span class="truncate">{link.text}</span>
+                    </a>
+                  {:else}
+                    <span title={networkLabels[link.network]()} class={chip}>
+                      <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
+                      <span class="sr-only">{networkLabels[link.network]()}:</span>
+                      <span class="truncate">{link.text}</span>
+                    </span>
+                  {/if}
                 </li>
               {/each}
             </ul>

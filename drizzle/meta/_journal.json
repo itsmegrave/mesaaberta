@@ -232,6 +232,13 @@
       "when": 1791059615088,
       "tag": "0032_gm_score_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791061175750,
+      "tag": "0033_social_handles",
+      "breakpoints": true
     }
   ]
 }

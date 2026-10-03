@@ -40,7 +40,11 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
   const [socialLinks, tablesAsGm, seats, ratingsGiven, notificationsReceived, messagesSent] =
     await Promise.all([
       db
-        .select({ network: profileSocialLinks.network, url: profileSocialLinks.url })
+        .select({
+          network: profileSocialLinks.network,
+          handle: profileSocialLinks.handle,
+          url: profileSocialLinks.url,
+        })
         .from(profileSocialLinks)
         .where(eq(profileSocialLinks.profileId, userId))
         .orderBy(asc(profileSocialLinks.position)),

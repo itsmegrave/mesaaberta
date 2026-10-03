@@ -28,7 +28,7 @@
   import { timezoneOptions } from '$lib/time/timezone';
   import { onMount } from 'svelte';
   import { m } from '$lib/paraglide/messages';
-  import { MAX_SOCIAL_LINKS, NETWORKS, type Network } from '$lib/profile/social-links';
+  import { MAX_SOCIAL_LINKS, NETWORKS, takesHandle, type Network } from '$lib/profile/social-links';
   import { MAX_USERNAME_LENGTH, normalizeUsername, usernameProblem } from '$lib/profile/username';
 
   /** What the server says about a username: free, taken, or not acceptable at all. */
@@ -128,6 +128,7 @@
     reserved: m.profile_error_reserved,
     taken: m.profile_error_taken,
     invalid_url: m.profile_error_invalid_url,
+    invalid_handle: m.profile_error_invalid_handle,
     invalid_network: m.profile_error_invalid_network,
     duplicate: m.profile_error_duplicate,
     too_many: m.profile_error_too_many,
@@ -462,11 +463,15 @@
               id="link-url-{id}"
               name="linkUrl"
               type="text"
-              inputmode="url"
+              inputmode={takesHandle($draft.linkNetwork[index] as Network) ? 'text' : 'url'}
               autocapitalize="none"
               spellcheck="false"
-              placeholder="https://"
-              aria-label={m.profile_link_url({ n: index + 1 })}
+              placeholder={takesHandle($draft.linkNetwork[index] as Network)
+                ? m.profile_link_handle_placeholder()
+                : 'https://'}
+              aria-label={takesHandle($draft.linkNetwork[index] as Network)
+                ? m.profile_link_handle({ n: index + 1 })
+                : m.profile_link_url({ n: index + 1 })}
               bind:value={$draft.linkUrl[index]}
               class="{input} sm:col-span-3"
               aria-invalid={urlError ? 'true' : undefined}
