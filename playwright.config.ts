@@ -28,7 +28,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
-  // Signed-in flows share one database, so tests run one after the other, not in parallel.
+  // Signed-in flows share one database, so tests run one after the other, not in parallel; CI splits
+  // the suite across runners (--shard), each with its own database.
   workers: 1,
   use: {
     baseURL: `http://localhost:${port}`,

@@ -60,13 +60,16 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
     const trigger = playerPage.getByRole('button', { name: 'Abrir chat' });
     await trigger.click();
     const drawer = playerPage.getByRole('dialog', { name: 'Mensagens' });
+    // Nothing is unread, so the drawer opens on "Diretas"; the table chat is in "Mesas".
+    await drawer.getByRole('tab', { name: /^Mesas/ }).click();
     await drawer.getByRole('link', { name: new RegExp(title) }).click();
     await expect(drawer.getByRole('textbox', { name: 'Mensagem' })).toBeVisible();
     await drawer.getByRole('textbox', { name: 'Mensagem' }).fill(`Drawer ${width} `);
     await drawer.getByRole('button', { name: 'Escolher emoji' }).click();
     await drawer.getByRole('combobox', { name: 'Procurar' }).fill('dado');
     await drawer.getByRole('option', { name: /dado/ }).first().click();
-    await playerPage.keyboard.press('Enter');
+    // The emoji list took the focus: send from the box itself.
+    await drawer.getByRole('textbox', { name: 'Mensagem' }).press('Enter');
     await expect(drawer.getByRole('log').getByText(`Drawer ${width} 🎲`)).toBeVisible();
     await expect(drawer.getByText('Enviando…', { exact: true })).toHaveCount(0);
     expect(await drawer.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
