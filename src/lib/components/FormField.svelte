@@ -38,8 +38,7 @@
 <div class="min-w-0">
   <div class="flex items-baseline justify-between gap-3">
     <label for={id} id="{id}-label" class="label-text block font-semibold"
-      >{label}{#if optional}<span class="font-normal text-muted">
-          ({m.form_optional()})</span
+      >{label}{#if optional}<span class="font-normal text-muted">&nbsp;({m.form_optional()})</span
         >{/if}</label
     >
     {#if counter}

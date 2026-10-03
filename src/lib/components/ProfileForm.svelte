@@ -108,6 +108,8 @@
   };
 
   const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
+  // Native selects (Skeleton has no Select): the `select` look, with its arrow, like the table form.
+  const select = 'select h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
     'btn h-12 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
 
@@ -332,7 +334,7 @@
         id="age-range"
         name="ageRange"
         bind:value={$draft.ageRange}
-        class={input}
+        class={select}
         aria-invalid={controller.errors.ageRange ? 'true' : undefined}
         aria-describedby="age-range-hint{controller.errors.ageRange ? ' age-range-error' : ''}"
       >
@@ -354,7 +356,7 @@
         id="gender"
         name="gender"
         bind:value={$draft.gender}
-        class={input}
+        class={select}
         aria-invalid={controller.errors.gender ? 'true' : undefined}
         aria-describedby="gender-hint{controller.errors.gender ? ' gender-error' : ''}"
       >
@@ -455,7 +457,7 @@
               name="linkNetwork"
               aria-label={m.profile_link_network({ n: index + 1 })}
               bind:value={$draft.linkNetwork[index]}
-              class={input}
+              class={select}
               aria-invalid={networkError ? 'true' : undefined}
             >
               {#each NETWORKS as network (network)}
