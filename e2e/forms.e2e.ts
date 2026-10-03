@@ -96,7 +96,6 @@ test('the table form drags the seats, takes an image and a suggestion without a 
   await expect(page.getByRole('button', { name: 'Tirar capa.png' })).toBeVisible();
 
   // The first session: a day on the calendar (next month, so never in the past), then the hour.
-  await page.getByRole('button', { name: 'Abrir o calendário de Primeira sessão' }).click();
   await page.getByRole('button', { name: 'Próximo mês' }).click();
   await page.getByRole('button', { name: /^Escolher .*, 15 de / }).click();
   await expect(page.locator('input[name="startsAtLocal"]')).toHaveValue(/^\d{4}-\d{2}-15T19:00$/);

@@ -124,14 +124,14 @@ test.describe('creating a table', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Passada'));
-    // The calendar starts at today; a past day typed in is not taken. (The server refuses one
-    // too: see write.spec.ts, "in_the_past".)
-    await page.getByLabel('Primeira sessão', { exact: true }).fill('01/01/2020');
-    await page.keyboard.press('Enter');
-
-    await expect
-      .poll(() => page.locator('input[name="startsAtLocal"]').inputValue())
-      .not.toMatch(/^2020-/);
+    // The calendar starts at today: a day before it cannot be picked. (The server refuses one too:
+    // see write.spec.ts, "in_the_past".)
+    await page.getByRole('button', { name: 'Mês anterior' }).click();
+    await page
+      .getByRole('button', { name: /, indisponível$/ })
+      .first()
+      .click({ force: true });
+    await expect(page.locator('input[name="startsAtLocal"]')).toHaveValue('');
   });
 
   test('a campaign asks how often it repeats', async ({ page }) => {

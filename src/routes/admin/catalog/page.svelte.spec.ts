@@ -110,7 +110,7 @@ describe('admin catalog', () => {
 
     await page.getByRole('button', { name: 'Mais ações: Foundry VTT' }).click();
     await expect
-      .element(page.getByRole('menuitem', { name: 'Mesclar…', exact: true }))
+      .element(page.getByRole('menuitem', { name: 'Mesclar em outra entrada…', exact: true }))
       .toBeVisible();
     await page.getByRole('menuitem', { name: 'Desativar…', exact: true }).click();
 

@@ -22,6 +22,7 @@
   import { instagramStatus } from '$lib/admin/instagram-status';
   import Icon from './Icon.svelte';
   import { m } from '$lib/paraglide/messages';
+  import { toast } from '$lib/toaster';
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
 
@@ -31,6 +32,17 @@
     instagramAvailable = false,
   }: { data: AdminTables; busy?: boolean; instagramAvailable?: boolean } = $props();
   let menuOpen = $state<string | null>(null);
+  async function copyLink(slug: string) {
+    menuOpen = null;
+    try {
+      await navigator.clipboard.writeText(
+        new URL(localizedHref(`/tables/${slug}`, locale), page.url.origin).href,
+      );
+      toast.success(m.toast_link_copied());
+    } catch {
+      // Clipboard access refused: nothing was copied, and nothing is claimed.
+    }
+  }
   let publishing = $state<string | null>(null);
   const features = tableFeatures({ rowPaginationFeature });
   const locale = getLocale();
@@ -197,6 +209,20 @@
                       <Popover.Content
                         class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
                       >
+                        <a
+                          href={localizedHref(`/tables/${row.original.slug}`, locale)}
+                          class="btn flex min-h-11 w-full items-center justify-start gap-2 rounded-lg px-3 text-left font-semibold hover:preset-tonal"
+                        >
+                          <Icon name="eye" size={20} />{m.menu_view_table()}
+                        </a>
+                        <Button
+                          size="custom"
+                          type="button"
+                          class="btn min-h-11 w-full justify-start gap-2 rounded-lg px-3 text-left font-semibold hover:preset-tonal"
+                          onclick={() => copyLink(row.original.slug)}
+                        >
+                          <Icon name="copy" size={20} />{m.menu_copy_link()}
+                        </Button>
                         <AdminActionForm
                           action="?/publish"
                           onbusy={(value) => (publishing = value ? row.id : null)}

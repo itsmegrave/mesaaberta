@@ -24,6 +24,7 @@
   import type { FormResult } from '$lib/forms/contract';
   import Form from './Form.svelte';
   import FormField from './FormField.svelte';
+  import ErrorSummary from './ErrorSummary.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import { timezoneOptions } from '$lib/time/timezone';
   import { onMount } from 'svelte';
@@ -186,6 +187,25 @@
     ['username-hint', usernameError ? 'username-error' : 'username-status'].join(' '),
   );
 
+  // Each invalid field, in the order the form asks for them, for the summary at the top.
+  const summary = $derived(
+    (
+      [
+        ['username', m.profile_username(), usernameLocked ? undefined : usernameError],
+        ['name', m.profile_name(), errorText(controller.errors.name?.[0])],
+        ['age-range', m.profile_age_range(), errorText(controller.errors.ageRange?.[0])],
+        ['gender', m.profile_gender(), errorText(controller.errors.gender?.[0])],
+        [
+          'gender-other',
+          m.profile_gender_other_label(),
+          errorText(controller.errors.genderOther?.[0]),
+        ],
+        ['city', m.profile_city(), errorText(controller.errors.city?.[0])],
+        ['timezone', m.profile_timezone(), errorText(controller.errors.timezone?.[0])],
+      ] as const
+    ).flatMap(([id, label, message]) => (message ? [{ id, label, message }] : [])),
+  );
+
   // --- the links: a list to add to, remove from and reorder -------------------------------------
 
   // Each row keeps an id of its own, so a row that moves keeps what was typed in it and its focus.
@@ -232,10 +252,13 @@
 
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its
      own words, and show validation in the same translated messages as the server. -->
-<Form {action} onsubmit={controller.submit} class="grid max-w-xl gap-6">
-  {#if Object.keys(controller.errors).length > 0}
-    <p role="alert" class="font-semibold text-error-700-300">{m.profile_error_form()}</p>
-  {/if}
+<Form
+  {action}
+  onsubmit={controller.submit}
+  onfocusout={controller.blur}
+  class="grid max-w-xl gap-6"
+>
+  <ErrorSummary errors={summary} />
 
   <FormField
     id="username"
@@ -278,6 +301,8 @@
     id="name"
     label={m.profile_name()}
     hint={m.profile_name_hint()}
+    optional
+    counter={{ count: $draft.name.length, max: PROFILE_LIMITS.name }}
     error={errorText(controller.errors.name?.[0])}
   >
     <TextInput
@@ -297,7 +322,7 @@
     <FormField
       id="age-range"
       label={m.profile_age_range()}
-      hint={m.profile_optional()}
+      optional
       error={errorText(controller.errors.ageRange?.[0])}
     >
       <SelectInput
@@ -318,7 +343,7 @@
     <FormField
       id="gender"
       label={m.profile_gender()}
-      hint={m.profile_optional()}
+      optional
       error={errorText(controller.errors.gender?.[0])}
     >
       <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
@@ -365,7 +390,7 @@
   <FormField
     id="city"
     label={m.profile_city()}
-    hint={m.profile_optional()}
+    optional
     error={errorText(controller.errors.city?.[0])}
   >
     <TextInput

@@ -82,10 +82,6 @@
                 {m.nav_view_profile()}
               </a>
             {/if}
-            <a href={localizedHref('/account/profile', locale)} class={item}>
-              <Icon name="square-pen" size={20} />
-              {m.nav_edit_profile()}
-            </a>
 
             <a
               href={localizedHref('/messages', locale)}

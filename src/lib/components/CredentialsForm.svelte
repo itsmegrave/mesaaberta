@@ -26,7 +26,7 @@
   };
 </script>
 
-<Form {action} onsubmit={controller.submit} class="grid gap-4">
+<Form {action} onsubmit={controller.submit} onfocusout={controller.blur} class="grid gap-4">
   <FormBanner text={controller.message ? messages[controller.message.code]?.() : null} />
 
   <input type="hidden" name="next" value={controller.values.next} />

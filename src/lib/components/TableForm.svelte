@@ -10,10 +10,12 @@
   import Form from './Form.svelte';
   import { NAMELESS } from '$lib/profile/handle';
   import FormField from './FormField.svelte';
+  import ErrorSummary from './ErrorSummary.svelte';
   import RichTextField from './RichTextField.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import SeatSlider from './SeatSlider.svelte';
   import DateTimeField from './DateTimeField.svelte';
+  import SessionPicker from './SessionPicker.svelte';
   import ImageUpload from './ImageUpload.svelte';
   import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
   import { m } from '$lib/paraglide/messages';
@@ -108,9 +110,37 @@
   const invalid = (field: keyof TableFormValues) =>
     firstError(controller.errors[field]) ? 'true' : undefined;
   const problem = $derived(formProblem(controller.message));
-  const hasErrors = $derived(
-    Object.values(controller.errors).some((list) => Array.isArray(list) && list.length > 0) ||
-      !!imageError,
+  // Each invalid field, in the order the form asks for them, for the summary at the top.
+  const summary = $derived(
+    (
+      [
+        ['systemSlug', m.form_system()],
+        ['title', m.form_title()],
+        ['platforms', m.form_platforms()],
+        ['tags', m.form_tags()],
+        ['description', m.form_description()],
+        ['extraInfo', m.form_extra_info()],
+        ['welcomeMessage', m.form_welcome_message()],
+        ['kind', m.form_kind()],
+        ['startsAtLocal', m.form_starts_at()],
+        ['durationHours', m.session_duration()],
+        ['repeat', m.form_repeat()],
+        ['until', m.form_until()],
+        ['postalCode', m.form_postal_code()],
+        ['locationArea', m.form_location_area()],
+        ['joinDetails', m.form_join_details_link()],
+        ['capacity', m.form_capacity()],
+        ['minPlayers', m.form_min_players()],
+      ] as const
+    ).flatMap(([field, label]) => {
+      const message = err(field);
+      return message ? [{ id: field, label, message }] : [];
+    }),
+  );
+  const problems = $derived(
+    imageError
+      ? [...summary, { id: 'image', label: m.form_image(), message: imageError }]
+      : summary,
   );
 </script>
 
@@ -118,12 +148,11 @@
   {action}
   enctype="multipart/form-data"
   onsubmit={controller.submit}
+  onfocusout={controller.blur}
   class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
 >
   <div class="grid gap-8 lg:col-span-2">
-    {#if hasErrors}<p role="alert" class="font-semibold text-error-700-300">
-        {m.form_summary()}
-      </p>{/if}
+    <ErrorSummary errors={problems} />
     <FormBanner text={problem} />
 
     <section
@@ -160,7 +189,12 @@
               {err('systemSlug')}
             </p>{/if}
         </div>
-        <FormField id="title" label={m.form_title()} error={err('title')}>
+        <FormField
+          id="title"
+          label={m.form_title()}
+          error={err('title')}
+          counter={{ count: $draft.title.length, max: TABLE_LIMITS.title.max }}
+        >
           <TextInput
             id="title"
             name="title"
@@ -198,7 +232,13 @@
               </p>{/if}
           </div>
         {/each}
-        <FormField id="description" label={m.form_description()} error={err('description')}>
+        <FormField
+          id="description"
+          label={m.form_description()}
+          optional
+          error={err('description')}
+          counter={{ count: $draft.description.length, max: TABLE_LIMITS.description }}
+        >
           <RichTextField
             id="description"
             name="description"
@@ -211,6 +251,8 @@
         <FormField
           id="extraInfo"
           label={m.form_extra_info()}
+          optional
+          counter={{ count: $draft.extraInfo.length, max: TABLE_LIMITS.extraInfo }}
           hint={m.form_extra_info_hint()}
           error={err('extraInfo')}
         >
@@ -226,6 +268,8 @@
         <FormField
           id="welcomeMessage"
           label={m.form_welcome_message()}
+          optional
+          counter={{ count: $draft.welcomeMessage.length, max: TABLE_LIMITS.welcomeMessage }}
           hint={m.form_welcome_message_hint({ token: '{nome da mesa}' })}
           error={err('welcomeMessage')}
         >
@@ -266,41 +310,25 @@
           </p>{/if}
       </fieldset>
       <div class="grid gap-6 sm:grid-cols-2">
-        <div class="min-w-0">
-          <DateTimeField
-            id="startsAtLocal"
-            name="startsAtLocal"
-            label={m.form_starts_at()}
-            withTime
-            required
+        <div class="min-w-0 sm:col-span-2">
+          <SessionPicker
+            bind:startsAt={$draft.startsAtLocal}
+            bind:duration={$draft.durationHours}
+            timezone={$draft.timezone}
             min={today}
-            bind:value={$draft.startsAtLocal}
-            invalid={!!invalid('startsAtLocal')}
+            invalid={!!invalid('startsAtLocal') || !!invalid('durationHours')}
             describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
           />
-          {#if err('startsAtLocal')}<p
-              id="startsAtLocal-error"
-              role="alert"
-              class="mt-1 text-sm font-semibold text-error-700-300"
-            >
-              {err('startsAtLocal')}
-            </p>{/if}
+          {#each ['startsAtLocal', 'durationHours'] as const as field (field)}
+            {#if err(field)}<p
+                id="{field}-error"
+                role="alert"
+                class="mt-1 text-sm font-semibold text-error-700-300"
+              >
+                {err(field)}
+              </p>{/if}
+          {/each}
         </div>
-        <FormField id="durationHours" label={m.form_duration()} error={err('durationHours')}
-          ><input
-            id="durationHours"
-            name="durationHours"
-            type="number"
-            inputmode="decimal"
-            required
-            min={TABLE_LIMITS.durationHours.min}
-            max={TABLE_LIMITS.durationHours.max}
-            step={TABLE_LIMITS.durationHours.step}
-            bind:value={$draft.durationHours}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-            aria-invalid={invalid('durationHours')}
-          /></FormField
-        >
         <div class="min-w-0 sm:col-span-2">
           <input type="hidden" name="timezone" value={$draft.timezone} />
           <p class="text-sm text-surface-700-300">
@@ -417,6 +445,7 @@
           : m.form_join_details_link()}
         hint={m.form_join_details_hint()}
         error={err('joinDetails')}
+        counter={{ count: $draft.joinDetails.length, max: TABLE_LIMITS.joinDetails }}
         ><RichTextField
           id="joinDetails"
           name="joinDetails"
@@ -460,6 +489,7 @@
       <FormField
         id="minPlayers"
         label={m.form_min_players()}
+        optional
         hint={m.form_min_players_hint()}
         error={err('minPlayers')}
         ><TextInput
@@ -502,7 +532,7 @@
       <ImageUpload
         id="image"
         name="image"
-        label={m.form_image()}
+        label="{m.form_image()} ({m.form_optional()})"
         hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
         error={imageError}
         currentUrl={imageUrl}
