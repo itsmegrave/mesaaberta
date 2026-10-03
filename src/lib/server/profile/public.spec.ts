@@ -146,6 +146,7 @@ describe('public profiles', () => {
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
       'gmName',
+      'gmRating',
       'imageUrl',
       'kind',
       'locationArea',
@@ -196,7 +197,7 @@ describe('public profiles', () => {
 
   it('has an empty state for a person who has never run a table', async () => {
     expect(await read('sem-mesas')).toMatchObject({
-      profile: { totals: { played: 1, hosted: 0 }, rating: { average: null, count: 0 } },
+      profile: { totals: { played: 1, hosted: 0 }, rating: { score: null, count: 0, isNew: true } },
       tables: [],
       total: 0,
       pages: 1,
@@ -233,9 +234,13 @@ describe('public profiles', () => {
     expect((await read('jogador-bia'))?.profile.totals).toEqual({ played: 1, hosted: 0 });
   });
 
-  it('uses the existing GM average and keeps unreviewed profiles distinct from zero', async () => {
-    expect((await read())?.profile.rating).toEqual({ average: 4, count: 2 });
-    expect((await read('foto-provedor'))?.profile.rating).toEqual({ average: null, count: 0 });
+  it('uses the GM score and keeps unreviewed profiles distinct from zero', async () => {
+    expect((await read())?.profile.rating).toEqual({ score: 4, count: 2, isNew: true });
+    expect((await read('foto-provedor'))?.profile.rating).toEqual({
+      score: null,
+      count: 0,
+      isNew: true,
+    });
   });
 
   it('paginates the right GM after recurrence calculation, with deterministic ordering and seats', async () => {

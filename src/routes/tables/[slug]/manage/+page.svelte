@@ -1,4 +1,5 @@
 <script lang="ts">
+  import GmRating from '$lib/components/GmRating.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
@@ -133,11 +134,6 @@
   const seats = $derived(
     table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
   );
-  const number = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1,
-    minimumFractionDigits: 1,
-  });
-  const votes = (count: number) => m.rating_count({ count });
 
   const activityText = (item: (typeof data.activity)[number]) => {
     const player = atHandle(item.player ?? '');
@@ -510,19 +506,7 @@
 
         <div class="mt-4">
           <p class="text-sm font-semibold text-muted">{m.manage_gm_rating()}</p>
-          {#if data.gmRating.count > 0}
-            <p class="mt-1 flex items-center gap-2">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" class="fill-lamp"
-                ><path
-                  d="M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.6l-5.9 3.2 1.2-6.5L2.5 9.7l6.6-.9z"
-                /></svg
-              >
-              <strong class="text-lg">{number.format(data.gmRating.average ?? 0)}</strong>
-              <span class="text-sm text-muted">({votes(data.gmRating.count)})</span>
-            </p>
-          {:else}
-            <p class="mt-1">{m.manage_gm_rating_none()}</p>
-          {/if}
+          <GmRating rating={data.gmRating} class="mt-1 text-lg" />
         </div>
 
         <div class="mt-6 grid gap-2">

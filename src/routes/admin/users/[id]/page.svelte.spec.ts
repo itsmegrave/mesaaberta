@@ -24,7 +24,7 @@ const show = (over = {}) =>
     data: {
       user,
       standing: 'active',
-      activity: { playing: 2, running: 1, ratings: 3, rating: 4.5 },
+      activity: { playing: 2, running: 1, rating: { score: 4.5, count: 3, isNew: false } },
       avatar: null,
       moderation: { ban: null, canModerate: true, acceptedTableReports: 1 },
       back: '/admin/users',
@@ -66,7 +66,7 @@ describe('admin user page', () => {
       data: {
         user,
         standing: 'banned',
-        activity: { playing: 0, running: 0, ratings: 0, rating: null },
+        activity: { playing: 0, running: 0, rating: { score: null, count: 0, isNew: true } },
         avatar: null,
         moderation: { ban: ban(null), canModerate: true, acceptedTableReports: 0 },
         back: '/admin/users',
@@ -85,14 +85,14 @@ describe('admin user page', () => {
     const activity = page.getByRole('region', { name: 'Atividade' });
     await expect.element(activity.getByText('Jogando')).toBeVisible();
     await expect.element(activity.getByText('Mestrando')).toBeVisible();
-    await expect.element(activity.getByText('4,5 (3 avaliações)')).toBeVisible();
+    await expect.element(activity.getByText('4,5 · 3 avaliações')).toBeVisible();
     await expect.element(activity.getByText('Denúncias aceitas')).toBeVisible();
   });
 
-  it('says "Sem avaliações" for someone nobody rated', async () => {
-    show({ activity: { playing: 0, running: 0, ratings: 0, rating: null } });
+  it('says "Novo mestre" for someone nobody rated', async () => {
+    show({ activity: { playing: 0, running: 0, rating: { score: null, count: 0, isNew: true } } });
 
-    await expect.element(page.getByText('Sem avaliações')).toBeVisible();
+    await expect.element(page.getByText('Novo mestre')).toBeVisible();
   });
 
   it('has a "Mandar mensagem" button and puts the rest in the title’s 3 dots', async () => {

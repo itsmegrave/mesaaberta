@@ -33,6 +33,14 @@ export class TooEarly extends Error {
   }
 }
 
+/** The player already rated this table's GM. A rating is final: it is not edited. */
+export class AlreadyRated extends Error {
+  constructor(message = 'already rated') {
+    super(message);
+    this.name = 'AlreadyRated';
+  }
+}
+
 /** The player already has a place at this table, confirmed or pending. */
 export class AlreadyRegistered extends Error {
   constructor(message = 'already registered') {
@@ -75,6 +83,7 @@ export function failFrom(error: unknown) {
   if (error instanceof TooEarly) return fail(409, { error: 'too_early' as const });
   if (error instanceof AlreadyRegistered)
     return fail(409, { error: 'already_registered' as const });
+  if (error instanceof AlreadyRated) return fail(409, { error: 'already_rated' as const });
   if (error instanceof RateLimited)
     return fail(429, { error: 'rate_limited' as const, retryAfter: error.retryAfterSeconds });
   if (error instanceof DirectMessagesOff)

@@ -2,7 +2,7 @@ import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, profileSocialLinks, registrations } from '../db/schema';
 import { pictureOf, imageUrl } from '../images';
-import { gmRating } from '../ratings/service';
+import { gmRatingOf } from '../ratings/service';
 import { listUpcomingTablesByGm } from '../tables/queries';
 import { isNetwork, parseSocialUrl } from '$lib/profile/social-links';
 import { normalizeUsername, usernameProblem } from '$lib/profile/username';
@@ -68,7 +68,7 @@ export async function publicProfile(
       .where(eq(profileSocialLinks.profileId, found.id))
       .orderBy(asc(profileSocialLinks.position), asc(profileSocialLinks.id)),
     tableCounts(db, found.id),
-    gmRating(db, found.id),
+    gmRatingOf(db, found.id),
     listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
   ]);
 
@@ -98,6 +98,7 @@ export async function publicProfile(
       locationArea: table.locationArea,
       platforms: table.platforms,
       tags: table.tags,
+      gmRating: table.gmRating,
     })),
     page,
     pages: Math.max(1, Math.ceil(upcoming.total / PUBLIC_PROFILE_PAGE_SIZE)),

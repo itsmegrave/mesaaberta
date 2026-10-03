@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, ilike, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { profiles } from '../db/schema';
+import { gmRatingOf } from '../ratings/service';
 import { standingOf } from '$lib/profile/standing';
 import { profileFilters } from '$lib/admin/profile-filters';
 
@@ -116,17 +117,13 @@ export async function adminActivity(db: AnyDb, id: string) {
         sql<number>`(select count(*) from game_tables t where t.gm_id = "profiles"."id" and t.status = 'active')`.mapWith(
           Number,
         ),
-      ratings:
-        sql<number>`(select count(*) from ratings x join game_tables t on t.id = x.table_id where t.gm_id = "profiles"."id")`.mapWith(
-          Number,
-        ),
-      rating: sql<
-        number | null
-      >`(select avg(x.gm_score) from ratings x join game_tables t on t.id = x.table_id where t.gm_id = "profiles"."id")`.mapWith(
-        (value) => (value === null ? null : Number(value)),
-      ),
     })
     .from(profiles)
     .where(eq(profiles.id, id));
-  return row ?? { playing: 0, running: 0, ratings: 0, rating: null };
+  // The score the players and the GM see: the same weighted, cached value, never a plain average.
+  return {
+    playing: row?.playing ?? 0,
+    running: row?.running ?? 0,
+    rating: await gmRatingOf(db, id),
+  };
 }

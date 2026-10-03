@@ -1,9 +1,10 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { eraseMessagesOf } from '../messages/service';
 import type { AnyDb } from '../db/client';
 import {
   conversations,
   gameTables,
+  gmScores,
   messages,
   notifications,
   profileSocialLinks,
@@ -137,9 +138,11 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 
 /**
  * The database side of deleting an account, in one transaction: the person's active tables are
- * disabled (each with a `TableDisabled` event, so the players get the calendar cancellation), and
- * their seats go, taking their ratings with them (cascade). Returns the events to dispatch. Run it
- * before the Auth user is deleted: the cancellation mail looks up the GM's address.
+ * disabled (each with a `TableDisabled` event, so the players get the calendar cancellation), their
+ * seats go, and so do the ratings of the tables they ran, with the cached score. The ratings they gave
+ * stay, final, and count for those GMs; only the comments go, with their other texts. A finished
+ * table stays as it was. Returns the events to dispatch. Run it before the Auth user is deleted:
+ * the cancellation mail looks up the GM's address.
  */
 export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventIds: string[] }> {
   const eventIds = await db.transaction(async (tx) => {
@@ -170,6 +173,16 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
     }
 
     await t.delete(registrations).where(eq(registrations.playerId, userId));
+    await t
+      .delete(ratings)
+      .where(
+        inArray(
+          ratings.tableId,
+          t.select({ id: gameTables.id }).from(gameTables).where(eq(gameTables.gmId, userId)),
+        ),
+      );
+    await t.delete(gmScores).where(eq(gmScores.gmId, userId));
+    await t.update(ratings).set({ comment: null }).where(eq(ratings.playerId, userId));
     await eraseMessagesOf(t, userId);
     return ids;
   });

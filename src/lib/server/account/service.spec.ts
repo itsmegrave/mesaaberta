@@ -157,7 +157,10 @@ describe('closeAccount', () => {
     expect(
       await test.db.select().from(registrations).where(eq(registrations.playerId, gm)),
     ).toEqual([]);
-    expect(await test.db.select().from(ratings).where(eq(ratings.playerId, gm))).toEqual([]);
+    // A rating given stays and counts; only its comment goes.
+    expect(
+      (await test.db.select().from(ratings).where(eq(ratings.playerId, gm))).map((r) => r.comment),
+    ).toEqual([null]);
     expect(await test.db.select().from(messages).where(eq(messages.senderId, gm))).toEqual([]);
     // The other players keep their own seat record at the (now disabled) table.
     expect(

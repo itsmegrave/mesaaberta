@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { profiles } from '../db/schema';
 import { can, joinBlocker, rateBlocker } from '../auth/policy';
 import { imageUrl, supabaseUrlOf } from '../images';
-import { firstSessionEnded, gmRating, ratingOf } from '../ratings/service';
+import { firstSessionEnded, ratingOf } from '../ratings/service';
 import { listRegistrations, registrationStatus } from '../registrations/service';
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { reportTargetsOf } from '../moderation/reports';
@@ -27,12 +27,11 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
       alreadyRegistered: myStatus !== null,
     }) === null;
 
-  // Averages are public; the comment is not sent to anyone but its author.
-  const [gmScore, mine] = await Promise.all([
-    gmRating(locals.db!, gmId),
-    profile ? ratingOf(locals.db!, id, profile.id) : null,
-  ]);
+  // The score is public (it comes with the table); the comment goes to no one but its author.
+  const mine = profile ? await ratingOf(locals.db!, id, profile.id) : null;
+  // A rating is final: once given there is nothing left to do, only to show it.
   const canRate =
+    !mine &&
     rateBlocker(profile, {
       gmId,
       registration: myStatus,
@@ -51,14 +50,13 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
 
   return {
     gmUsername: gm?.status === 'active' ? gm.username : null,
-    ratings: { gm: gmScore },
     canRate,
     myRating: mine && {
       gmScore: mine.gmScore,
       comment: mine.comment ?? '',
     },
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
-    canEdit: can(profile, 'table:edit', { gmId }),
+    canEdit: can(profile, 'table:edit', { gmId, tableStatus: found.status }),
     signedIn,
     // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.
     gmAcceptsDirect: gm?.enabled ?? false,

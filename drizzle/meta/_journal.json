@@ -225,6 +225,13 @@
       "when": 1791030393752,
       "tag": "0031_registration_message",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791059615088,
+      "tag": "0032_gm_score_cache",
+      "breakpoints": true
     }
   ]
 }

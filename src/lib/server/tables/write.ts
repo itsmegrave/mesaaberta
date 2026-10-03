@@ -149,7 +149,7 @@ export async function loadTableForEdit(
   timezone: string,
 ) {
   const table = await findForWrite(db, slug);
-  authorize(actor, 'table:edit', table);
+  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
 
   const [system] = await db
     .select({ slug: systems.slug })
@@ -227,7 +227,7 @@ export async function updateTable(
   { imagePath }: { imagePath?: string } = {},
 ): Promise<{ eventId: string | null }> {
   const table = await findForWrite(db, slug);
-  authorize(actor, 'table:edit', table);
+  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
 
   const columns = await columnsOf(db, input);
   // Invites and notifications go out only for a change players would see.
@@ -268,7 +268,7 @@ export async function disableTable(
   slug: string,
 ): Promise<{ eventId: string }> {
   const table = await findForWrite(db, slug);
-  authorize(actor, 'table:disable', table);
+  authorize(actor, 'table:disable', { gmId: table.gmId, tableStatus: table.status });
 
   const eventId = await db.transaction(async (tx) => {
     await tx

@@ -7,6 +7,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
+  import GmRating from './GmRating.svelte';
   import SeatRing from './SeatRing.svelte';
 
   type PlatformItem = string | { name: string; slug?: string };
@@ -18,6 +19,8 @@
     kind: 'campaign' | 'one_shot' | 'adventure';
     system: { name: string };
     gmName: string;
+    /** The GM's score. Absent where there is nothing to show yet, such as the form's preview. */
+    gmRating?: { score: number | null; count: number; isNew: boolean };
     seatsLeft: number;
     capacity?: number;
     timezone: string;
@@ -146,8 +149,9 @@
       </a>
     </h3>
 
-    <div class="mt-2 text-sm leading-normal text-muted">
-      {m.table_gm()}: <UserLink username={table.gmName} />
+    <div class="mt-2 flex flex-wrap items-center gap-x-3 text-sm leading-normal text-muted">
+      <span>{m.table_gm()}: <UserLink username={table.gmName} /></span>
+      {#if table.gmRating}<GmRating rating={table.gmRating} />{/if}
     </div>
 
     {#if table.modality}
