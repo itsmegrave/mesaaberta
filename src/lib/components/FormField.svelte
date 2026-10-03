@@ -23,8 +23,11 @@
     error?: string;
     /** Marks the field "(opcional)". */
     optional?: boolean;
-    /** What is typed against what is allowed; goes red past the limit. */
-    counter?: { count: number; max: number };
+    /**
+     * What is typed against what is allowed; goes red past the limit. With `remaining` it shows the
+     * characters left ("477 restantes") instead of "23 / 500".
+     */
+    counter?: { count: number; max: number; remaining?: boolean };
     children: Snippet<[{ 'aria-describedby'?: string; 'aria-invalid'?: 'true' }]>;
   } = $props();
 
@@ -46,7 +49,10 @@
         aria-hidden="true"
         class="shrink-0 text-sm tabular-nums {counter.count > counter.max
           ? 'font-semibold text-error-700-300'
-          : 'text-muted'}">{counter.count} / {counter.max}</span
+          : 'text-muted'}"
+        >{counter.remaining
+          ? m.form_chars_left({ count: Math.max(0, counter.max - counter.count) })
+          : `${counter.count} / ${counter.max}`}</span
       >
     {/if}
   </div>

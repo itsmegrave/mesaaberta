@@ -23,6 +23,13 @@ const WELCOME_MESSAGE_VARIABLE: Variable = {
   fallbackValue: '',
 };
 
+// `PLAYER_MESSAGE` must exist with an empty fallback, and only on `mesaaberta-join-requested` (README).
+const PLAYER_MESSAGE_VARIABLE: Variable = {
+  key: 'PLAYER_MESSAGE',
+  type: 'string',
+  fallbackValue: '',
+};
+
 type TemplateSpec = { alias: string; subject: string; html: string; variables: Variable[] };
 
 const TEMPLATES: TemplateSpec[] = [
@@ -51,10 +58,11 @@ const TEMPLATES: TemplateSpec[] = [
   {
     alias: 'mesaaberta-join-requested',
     subject: 'Nova solicitação: {{{TABLE_TITLE}}}',
-    variables: COMMON_VARIABLES,
+    variables: [...COMMON_VARIABLES, PLAYER_MESSAGE_VARIABLE],
     html: `
 			<p>Olá, {{{RECIPIENT_NAME}}}!</p>
 			<p>Há uma nova solicitação para entrar na sua mesa <strong>{{{TABLE_TITLE}}}</strong>. Abra a mesa para aprovar ou recusar.</p>
+			<div>{{{PLAYER_MESSAGE}}}</div>
 			<p><a href="{{{TABLE_URL}}}">Ver a mesa</a></p>
 		`.trim(),
   },

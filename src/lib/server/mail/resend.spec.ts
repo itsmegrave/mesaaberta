@@ -89,7 +89,9 @@ describe('resend mailer', () => {
     });
 
     expect(Object.keys(sent.body().template.variables).sort()).toEqual(
-      [...TEMPLATE_VARIABLES].filter((name) => name !== 'WELCOME_MESSAGE').sort(),
+      [...TEMPLATE_VARIABLES]
+        .filter((name) => name !== 'WELCOME_MESSAGE' && name !== 'PLAYER_MESSAGE')
+        .sort(),
     );
   });
 

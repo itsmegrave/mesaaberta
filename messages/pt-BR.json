@@ -479,6 +479,7 @@
   "table_edit": "Editar mesa",
   "table_join_now": "Pegar vaga",
   "table_join_request": "Pedir vaga",
+  "form_chars_left": "{count} restantes",
   "join_request_title": "Pedir vaga",
   "join_request_lede": "O mestre aprova cada pessoa. Se quiser, apresente-se: ele lê a sua mensagem antes de decidir.",
   "join_request_message": "Mensagem para o mestre",

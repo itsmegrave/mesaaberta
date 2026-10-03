@@ -78,13 +78,14 @@
               hint={m.join_request_message_hint()}
               error={messageError}
               optional
-              counter={{ count: data.message.length, max: JOIN_MESSAGE_MAX }}
+              counter={{ count: data.message.length, max: JOIN_MESSAGE_MAX, remaining: true }}
             >
               {#snippet children(aria)}
                 <TextArea
                   id="join-message"
                   name="message"
                   rows={5}
+                  maxlength={JOIN_MESSAGE_MAX}
                   class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
                   value={data.message}
                   oninput={(event) => form.change('message', event.currentTarget.value)}

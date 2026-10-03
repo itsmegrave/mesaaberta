@@ -38,6 +38,9 @@ export function templateIdFor(env: TemplateEnv, key: TemplateKey): string | unde
  * heading included, for `{{{WELCOME_MESSAGE}}}` in a block of its own:
  * Resend templates have no conditionals, so a template that owned the heading would show it above
  * nothing. Absent values are omitted, so the template gives it an empty fallback in the dashboard.
+ *
+ * `PLAYER_MESSAGE` works the same way for `mesaaberta-join-requested`: the introduction the player
+ * wrote when asking for the seat, as an `<h3>Mensagem de @user</h3>` section for `{{{PLAYER_MESSAGE}}}`.
  */
 export const TEMPLATE_VARIABLES = [
   'RECIPIENT_NAME',
@@ -47,6 +50,7 @@ export const TEMPLATE_VARIABLES = [
   'STARTS_AT',
   'FALLBACK_TEXT',
   'WELCOME_MESSAGE',
+  'PLAYER_MESSAGE',
 ] as const;
 
 /** The variables of the account-banned template, which has no table (see `BanVariables`). */
@@ -69,6 +73,8 @@ export type TemplateVariables = {
   FALLBACK_TEXT: string;
   /** The GM's welcome message as HTML with its heading (see `welcomeHtml`); absent when there is none. */
   WELCOME_MESSAGE?: string;
+  /** The player's introduction as HTML with its heading (see `playerMessageHtml`); only on a join request that has one. */
+  PLAYER_MESSAGE?: string;
 };
 
 /** What `mesaaberta-account-banned` receives: the sentence that says until when, and the admin's reason. */
@@ -91,15 +97,16 @@ const MAX_LENGTH = 2000;
 const clean = (value: string) => value.replace(/[<>]/g, '').slice(0, MAX_LENGTH);
 
 /**
- * The welcome section is the one variable that is markup, so angle brackets stay. It is cleaned to
- * the allowed tags again, and when it does not fit Resend's limit it is cut as plain text (never
- * as HTML, which would leave a tag open) and the ellipsis marks the cut.
+ * The welcome and player-message sections are the variables that are markup, so angle brackets
+ * stay. Each is cleaned to the allowed tags again, and when it does not fit Resend's limit it is
+ * cut as plain text (never as HTML, which would leave a tag open) and the ellipsis marks the cut.
+ * Both start with an `<h3>` heading, which is kept whole.
  */
-function welcomeVariable(html: string): string {
+function sectionVariable(html: string): string {
   const safe = cleanRichHtml(html);
   if (safe.length <= MAX_LENGTH) return safe;
-  const heading = `<h3>${WELCOME_HEADING}</h3>`;
-  let text = toPlainText(safe.startsWith(heading) ? safe.slice(heading.length) : safe);
+  const heading = safe.match(/^<h3>[^<]*<\/h3>/)?.[0] ?? '';
+  let text = toPlainText(safe.slice(heading.length));
   let out: string;
   do {
     out = `${heading}${plainToHtml(`${text}…`)}`;
@@ -108,13 +115,15 @@ function welcomeVariable(html: string): string {
   return out.length > MAX_LENGTH ? '' : out;
 }
 
+const SECTION_VARIABLES = new Set(['WELCOME_MESSAGE', 'PLAYER_MESSAGE']);
+
 /** Picks the allowlisted variables and cleans them; anything else is dropped. */
 export function templateVariables<T extends TemplateVariables | BanVariables>(input: T): T {
   const picked: Record<string, string> = {};
   for (const name of new Set([...TEMPLATE_VARIABLES, ...BAN_TEMPLATE_VARIABLES])) {
     const value = (input as Record<string, string | undefined>)[name];
     if (value === undefined) continue;
-    picked[name] = name === 'WELCOME_MESSAGE' ? welcomeVariable(value) : clean(value);
+    picked[name] = SECTION_VARIABLES.has(name) ? sectionVariable(value) : clean(value);
   }
   return picked as T;
 }
@@ -132,4 +141,20 @@ export function welcomeSection(message: string | undefined): string | undefined 
 export function welcomeHtml(message: string | undefined): string | undefined {
   const safe = message ? cleanRichHtml(message) : '';
   return safe ? `<h3>${WELCOME_HEADING}</h3>${safe}` : undefined;
+}
+
+/**
+ * What a player wrote when asking for the seat, for the GM: a heading naming the player (`who`, as
+ * people see them, like `@ana`) and the text (plain text, so escaped), or undefined when there is
+ * nothing to say. Never a bare heading.
+ */
+export function playerMessageHtml(who: string, message: string | null | undefined) {
+  const html = message ? plainToHtml(message) : '';
+  return html ? `<h3>Mensagem de ${who.replace(/[<>&]/g, '')}</h3>${html}` : undefined;
+}
+
+/** The same section as plain text, for the inline e-mail and `FALLBACK_TEXT`. */
+export function playerMessageText(who: string, message: string | null | undefined) {
+  const trimmed = message?.trim();
+  return trimmed ? `Mensagem de ${who}:\n${trimmed}` : undefined;
 }

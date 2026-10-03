@@ -18,6 +18,18 @@ describe('JoinRequestDialog', () => {
     await expect.element(page.getByRole('button', { name: 'Enviar pedido' })).toBeVisible();
   });
 
+  it('counts the characters left as the player types, and stops at the limit', async () => {
+    render(JoinRequestDialog, {});
+
+    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    const message = page.getByRole('textbox', { name: /Mensagem para o mestre/ });
+    await expect.element(page.getByText('500 restantes')).toBeVisible();
+
+    await message.fill('Oi, mestre!');
+    await expect.element(page.getByText('489 restantes')).toBeVisible();
+    await expect.element(message).toHaveAttribute('maxlength', '500');
+  });
+
   it('closes without asking for anything when cancelled', async () => {
     render(JoinRequestDialog, {});
 
