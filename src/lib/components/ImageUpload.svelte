@@ -16,6 +16,7 @@
     label,
     hint,
     error,
+    kind = 'image',
     currentUrl = null,
     removed = $bindable(false),
     onpick,
@@ -25,6 +26,11 @@
     label: string;
     hint: string;
     error?: string;
+    /**
+     * What it is for: a table's image (5:2, kept or taken off with the form), or a person's photo
+     * (square, cropped in a circle; whoever uses it removes the photo on their own).
+     */
+    kind?: 'image' | 'avatar';
     /** The image the table has now, shown above the zone. */
     currentUrl?: string | null;
     /** The current image is to be taken off on save (sent as `removeImage`). */
@@ -33,6 +39,7 @@
     onpick: (files: File[]) => void;
   } = $props();
 
+  const avatar = $derived(kind === 'avatar');
   let mounted = $state(false);
   // The picked picture waits in the cropper; what comes out (or nothing, when it is cancelled) is
   // what the field then holds. A file the crop can't take goes on as it is, for the schema to refuse.
@@ -55,9 +62,17 @@
 
 <div class="min-w-0">
   {#if currentUrl && !removed}
-    <img src={currentUrl} alt="" class="aspect-5/2 w-full max-w-sm rounded-lg object-cover" />
+    <img
+      src={currentUrl}
+      alt=""
+      class={avatar
+        ? 'mb-3 size-20 rounded-full object-cover'
+        : 'aspect-5/2 w-full max-w-sm rounded-lg object-cover'}
+    />
   {/if}
-  {#if currentUrl && mounted}
+  {#if avatar}
+    <!-- The photo is taken off by its own action, not with the form. -->
+  {:else if currentUrl && mounted}
     <div class="mt-2 mb-3 flex flex-wrap items-center gap-3">
       {#if removed}
         <p role="status" class="text-sm font-semibold">{m.form_image_removed()}</p>
@@ -171,8 +186,9 @@
   {#if framing}
     <ImageCropper
       file={framing.file}
-      aspectRatio={5 / 2}
-      width={1200}
+      aspectRatio={avatar ? 1 : 5 / 2}
+      width={avatar ? 512 : 1200}
+      round={avatar}
       onconfirm={(cropped) => finish([cropped])}
       oncancel={() => finish([])}
       onunreadable={() => finish([framing!.file])}

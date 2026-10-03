@@ -678,8 +678,6 @@
   "account_profile_saved": "Perfil salvo.",
   "account_photo": "Foto",
   "account_photo_hint": "PNG, JPEG ou WebP, até 2 MB. Aparece, nesta ordem: a foto que você enviar, a da sua conta Google ou Discord, ou a inicial do seu nome.",
-  "account_photo_file": "Escolher foto",
-  "account_photo_upload": "Enviar foto",
   "account_photo_remove": "Remover foto enviada",
   "account_photo_saved": "Foto atualizada.",
   "account_photo_removed": "Foto removida. Voltou a da sua conta.",

@@ -7,6 +7,7 @@
   import { page } from '$app/state';
   import { atHandle } from '$lib/profile/handle';
   import Avatar from '$lib/components/Avatar.svelte';
+  import ImageUpload from '$lib/components/ImageUpload.svelte';
   import ProfileForm from '$lib/components/ProfileForm.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
@@ -14,9 +15,6 @@
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import ImageCropper from '$lib/components/ImageCropper.svelte';
-  import { isDecodable } from '$lib/forms/decodable';
-  import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '$lib/forms/files';
   import { photoSchema } from '$lib/profile/photo';
   import { Switch } from '@skeletonlabs/skeleton-svelte';
   import { directMessagesSchema } from '$lib/messages/schema';
@@ -43,40 +41,15 @@
     onSuccess: () => {},
     errorMessage: m.account_photo_error_failed,
   });
-  let photoFiles = $state<FileList>();
   const photoError = $derived(photo.errors.photo?.[0]);
 
-  // A picture that is fine to frame is cropped in the browser before it goes up; anything else goes
-  // as it is, for the schema to say what is wrong. Without JavaScript the file goes up whole.
+  // The photo goes up as soon as it is picked (and cropped, see ImageUpload).
   let photoForm = $state<HTMLFormElement>();
-  let framing = $state<File | null>(null);
-  const files = (file?: File) => {
-    const list = new DataTransfer();
-    if (file) list.items.add(file);
-    return list.files;
-  };
-  async function picked(event: Event) {
-    const file = (event.currentTarget as HTMLInputElement).files?.[0];
-    photo.change('photo', file);
-    framing =
-      file &&
-      (IMAGE_TYPES as readonly string[]).includes(file.type) &&
-      file.size <= 20 * MAX_IMAGE_BYTES &&
-      (await isDecodable(file))
-        ? file
-        : null;
-  }
-  async function framed(cropped: File) {
-    framing = null;
-    photoFiles = files(cropped);
-    photo.change('photo', cropped);
+  async function picked(files: File[]) {
+    photo.change('photo', files[0]);
+    if (!files[0]) return;
     await tick();
     photoForm?.requestSubmit();
-  }
-  function unframed() {
-    framing = null;
-    photoFiles = files();
-    photo.change('photo', undefined);
   }
 
   // svelte-ignore state_referenced_locally
@@ -157,60 +130,36 @@
       <section aria-labelledby="photo-heading" class={card}>
         <h2 id="photo-heading" class={heading}>{m.account_photo()}</h2>
         <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
-          <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
+          <!-- Without a picture, the upload shows the initial the app draws in its place. -->
+          {#if !data.avatarUrl}
+            <Avatar src={null} name={data.form.data.name || data.username} size={80} />
+          {/if}
           <div class="grid gap-3">
             <Form
               bind:element={photoForm}
               action="?/photo"
               enctype="multipart/form-data"
               onsubmit={photo.submit}
-              class="flex flex-wrap items-center gap-3"
             >
-              <label for="photo" class="sr-only">{m.account_photo_file()}</label>
-              <input
+              <ImageUpload
                 id="photo"
                 name="photo"
-                type="file"
-                accept={IMAGE_TYPES.join(',')}
-                bind:files={photoFiles}
-                onchange={picked}
-                aria-invalid={photoError ? 'true' : undefined}
-                aria-describedby="photo-hint{photoError ? ' photo-error' : ''}"
-                class="max-w-full text-sm file:mr-3 file:rounded-lg file:border-2 file:border-surface-200-800 file:bg-panel file:px-3 file:py-2 file:font-semibold"
+                kind="avatar"
+                label={m.account_photo()}
+                hint={m.account_photo_hint()}
+                error={photoError
+                  ? (photoErrors[photoError]?.() ?? m.account_photo_error_failed())
+                  : undefined}
+                currentUrl={data.avatarUrl}
+                onpick={picked}
               />
-              <SubmitButton
-                submitting={photo.pending}
-                delayed={photo.delayed}
-                timeout={photo.timeout}
-                class="btn h-12 rounded-lg border-2 border-surface-950-50 px-4 font-semibold"
-                >{m.account_photo_upload()}</SubmitButton
-              >
             </Form>
-            {#if framing}
-              <ImageCropper
-                file={framing}
-                aspectRatio={1}
-                width={512}
-                round
-                onconfirm={framed}
-                oncancel={unframed}
-                onunreadable={() => (framing = null)}
-              />
-            {/if}
             {#if data.hasUploadedPhoto}
               <ActionForm
                 action="?/removePhoto"
                 label={m.account_photo_remove()}
                 buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
               />
-            {/if}
-            <p id="photo-hint" class="max-w-sm text-sm text-muted">
-              {m.account_photo_hint()}
-            </p>
-            {#if photoError}
-              <p id="photo-error" role="alert" class="text-sm font-semibold text-error-700-300">
-                {photoErrors[photoError]?.() ?? m.account_photo_error_failed()}
-              </p>
             {/if}
             {#if photoNotice}
               <p role="status" class="text-sm font-semibold">
