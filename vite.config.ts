@@ -90,7 +90,7 @@ export default defineConfig({
   ],
   test: {
     expect: { requireAssertions: true },
-    // Concurrent PGlite startup can exceed the hook timeout under Bun on developer machines.
+    // Limit concurrent PGlite startup under Bun in local and CI runs without relaxing timeouts.
     maxWorkers: 2,
     projects: [
       {

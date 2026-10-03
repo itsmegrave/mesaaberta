@@ -10,11 +10,11 @@ SvelteKit (Svelte 5, TypeScript) · Tailwind CSS · Paraglide (i18n) · Vitest �
 
 ## Getting started
 
-Requirements: Bun 1.4.2, pinned in `.bun-version`, `.tool-versions` and `packageManager` in `package.json`. Production still runs on Cloudflare workerd.
+Requirements: Bun 1.4.2, pinned in `.bun-version`, `.tool-versions` and `packageManager` in `package.json`. Node 26.8.2 (pinned in `.nvmrc`) runs Wrangler/Miniflare and the Playwright CLI; Bun remains the package manager and the runtime for project scripts and Vitest. Production still runs on Cloudflare workerd.
 
 ```sh
 bun install
-bun run --bun playwright install chromium   # component and e2e tests run in a real browser
+bun run playwright install chromium   # component and e2e tests run in a real browser
 bun run dev
 ```
 
@@ -211,7 +211,7 @@ A profile has a required, public **username** (`profiles.username`: 3 to 30 lowe
 **Deploying.** Migrations run **before** the new code serves traffic, as the first step of `bun run build` on the Cloudflare Workers Build of `main` (`scripts/migrate-on-deploy.ts`). The build applies what is pending, and a failed migration fails the build, so the Worker is never deployed onto an older schema. Local builds, GitHub CI and preview branches skip it and never touch production. One-time setup in the Cloudflare dashboard (Workers & Pages > mesaaberta > Settings > Build):
 
 1. Set build variables `BUN_VERSION=1.4.2` and `SKIP_DEPENDENCY_INSTALL=true`; Cloudflare's default Bun version is older than the project's pin.
-2. Build command: `bun install --frozen-lockfile && bun run build`. Deploy command: `bun run --bun wrangler deploy`. The build keeps the existing migration and scheduled-handler steps.
+2. Build command: `bun install --frozen-lockfile && bun run build`. Deploy command: `bun run wrangler deploy`. The build keeps the existing migration and scheduled-handler steps.
 3. Build variables and secrets: add a **secret** `MIGRATE_DATABASE_URL` with the Supabase **session pooler** connection string (Project Settings > Database > Connection string > Session pooler, port 5432; the build machines have no IPv6, so not the direct one).
 
 Apply these build settings with the Bun tooling release. Workers Builds can continue deploying throughout the architecture migration; the deployed runtime remains workerd. See [Cloudflare's build version settings](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/).

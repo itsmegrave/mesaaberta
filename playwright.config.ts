@@ -41,7 +41,7 @@ export default defineConfig({
       // The built app on the Workers runtime, pointed at the local Supabase instead of production.
       command: [
         `CSP_EXTRA_IMG_SRC=${supabase.API_URL} bun run build &&`,
-        `bun run --bun wrangler dev .svelte-kit/cloudflare/_worker.js --port ${port}`,
+        `bun run wrangler dev .svelte-kit/cloudflare/_worker.js --port ${port}`,
         ...serverVars,
       ].join(' '),
       // Overrides the Hyperdrive binding's local connection string (see wrangler.jsonc).
@@ -57,7 +57,7 @@ export default defineConfig({
       // Playwright starts both servers at once, so this one waits for the first, which builds.
       command: [
         `until curl -sf -o /dev/null http://localhost:${port}/healthz; do sleep 1; done &&`,
-        `bun run --bun wrangler dev .svelte-kit/cloudflare/_worker.js --port ${maintenancePort}`,
+        `bun run wrangler dev .svelte-kit/cloudflare/_worker.js --port ${maintenancePort}`,
         '--persist-to .wrangler/state-maintenance',
         ...serverVars,
         '--var FEATURE_FLAG_OVERRIDES:maintenance_mode=true',
