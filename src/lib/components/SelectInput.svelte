@@ -15,6 +15,14 @@
   } = $props();
 </script>
 
-<select bind:this={element} bind:value {onchange} {...attributes} class={className}>
+<!-- A real border, not only Skeleton's inset ring: iPhones draw their own select and ignore the ring,
+     which left the field without an edge. The ring is turned off so the edge is not drawn twice. -->
+<select
+  bind:this={element}
+  bind:value
+  {onchange}
+  {...attributes}
+  class="border border-surface-300-700 ring-0 focus:border-primary-500 {className}"
+>
   {@render children()}
 </select>
