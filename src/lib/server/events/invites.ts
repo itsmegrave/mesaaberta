@@ -8,6 +8,8 @@ import type { Mailer } from '../mail/mailer';
 import { mailpitMailer } from '../mail/mailpit';
 import { resendMailer } from '../mail/resend';
 import {
+  playerMessageHtml,
+  playerMessageText,
   templateIdFor,
   templateVariables,
   type TemplateEnv,
@@ -17,6 +19,7 @@ import {
 import { formatSession } from '../../tables/format';
 import type { Handler, StoredEvent } from './types';
 import { NAMELESS } from '../db/public-name';
+import { atHandle } from '../../profile/handle';
 
 /** Secrets stay in the Worker environment. Do not put any of these in `wrangler.jsonc`. */
 export type InviteEnv = TemplateEnv & {
@@ -105,6 +108,16 @@ async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
   return profile ? [profile] : [];
 }
 
+/** The introduction a player left with a request, and who they are; none once the request is gone. */
+async function requestMessageOf(db: AnyDb, tableId: string, playerId: string) {
+  const [row] = await db
+    .select({ message: registrations.message, username: profiles.username })
+    .from(registrations)
+    .innerJoin(profiles, eq(profiles.id, registrations.playerId))
+    .where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)));
+  return row;
+}
+
 async function confirmedRecipients(db: AnyDb, tableId: string): Promise<Recipient[]> {
   return db
     .select(recipientColumns)
@@ -187,6 +200,7 @@ export function createInviteHandler(
         context: Context,
         recipient: Recipient,
         fallbackText: string,
+        playerMessage?: string,
       ) => {
         const id = templateIdFor(env, key);
         if (!id) return {};
@@ -197,6 +211,7 @@ export function createInviteHandler(
           CONTEXT: context,
           STARTS_AT: startsAtFor(recipient),
           FALLBACK_TEXT: fallbackText,
+          PLAYER_MESSAGE: playerMessage,
         });
         return { template: { id, variables } };
       };
@@ -209,9 +224,17 @@ export function createInviteHandler(
         const email = await emailOf(admin, recipient.id);
         if (notification) {
           const toGm = event.type === 'JoinRequested';
-          const text = toGm
+          // The player's introduction goes to the GM alone, read now: the event never carries it.
+          const request =
+            toGm && 'playerId' in event.payload
+              ? await requestMessageOf(db, table.id, event.payload.playerId)
+              : undefined;
+          const who = atHandle(request?.username);
+          const intro = playerMessageText(who, request?.message);
+          const base = toGm
             ? `Há uma nova solicitação para a mesa "${table.title}".`
             : `Sua solicitação para a mesa "${table.title}" foi recusada.`;
+          const text = intro ? `${base}\n\n${intro}` : base;
           await mailer.send({
             to: email,
             subject: toGm
@@ -219,7 +242,13 @@ export function createInviteHandler(
               : `Solicitação recusada: ${table.title}`,
             text,
             ...(toGm
-              ? hosted('joinRequested', 'JOIN_REQUESTED', recipient, text)
+              ? hosted(
+                  'joinRequested',
+                  'JOIN_REQUESTED',
+                  recipient,
+                  text,
+                  playerMessageHtml(who, request?.message),
+                )
               : hosted('joinDeclined', 'JOIN_DECLINED', recipient, text)),
             idempotencyKey: `${event.id}:${recipient.id}:notification`,
           });

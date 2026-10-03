@@ -49,6 +49,7 @@ describe('template variables', () => {
       'STARTS_AT',
       'FALLBACK_TEXT',
       'WELCOME_MESSAGE',
+      'PLAYER_MESSAGE',
     ]);
     const reserved = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'UNSUBSCRIBE_URL', 'contact', 'this'];
     expect(TEMPLATE_VARIABLES.filter((name) => reserved.includes(name))).toEqual([]);

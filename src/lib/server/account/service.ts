@@ -74,6 +74,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
           table: gameTables.title,
           slug: gameTables.slug,
           status: registrations.status,
+          message: registrations.message,
           createdAt: registrations.createdAt,
         })
         .from(registrations)

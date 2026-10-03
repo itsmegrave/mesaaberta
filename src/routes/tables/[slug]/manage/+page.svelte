@@ -286,6 +286,13 @@
                     class={secondary}
                   />
                 </span>
+                {#if request.message}
+                  <p class="basis-full text-sm whitespace-pre-line text-surface-700-300">
+                    <span class="sr-only"
+                      >{m.manage_request_message({ player: atHandle(request.username) })}:
+                    </span>{request.message}
+                  </p>
+                {/if}
               </li>
             {/each}
           </ul>

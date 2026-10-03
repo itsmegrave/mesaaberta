@@ -46,6 +46,7 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
         status: registrations.status,
         // A confirmed row changes only when it is confirmed: its last update is when the seat was given.
         since: registrations.updatedAt,
+        message: registrations.message,
         ...person,
       })
       .from(registrations)

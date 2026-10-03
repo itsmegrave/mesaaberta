@@ -161,6 +161,52 @@ describe('joinTable on a table that approves each player', () => {
   });
 });
 
+describe('joinTable with an introduction message', () => {
+  const messageOf = async (tableId: string, playerId: string) =>
+    (
+      await test.db
+        .select({ message: registrations.message })
+        .from(registrations)
+        .where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)))
+    )[0]?.message;
+
+  it('keeps the message with a pending request and lists it for the GM', async () => {
+    const table = await makeTable({ joinMode: 'approval' });
+
+    await joinTable(test.db, player(2), table.slug, { message: 'Oi! Já mestrei D&D 5e.' });
+
+    expect(await messageOf(table.id, id(2))).toBe('Oi! Já mestrei D&D 5e.');
+    const listed = await listRegistrations(test.db, gm, table.slug);
+    expect(listed.find((r) => r.playerId === id(2))?.message).toBe('Oi! Já mestrei D&D 5e.');
+  });
+
+  it('stores nothing when the message is empty or missing', async () => {
+    const table = await makeTable({ joinMode: 'approval', capacity: 3 });
+
+    await joinTable(test.db, player(2), table.slug, { message: '' });
+    await joinTable(test.db, player(3), table.slug);
+
+    expect(await messageOf(table.id, id(2))).toBeNull();
+    expect(await messageOf(table.id, id(3))).toBeNull();
+  });
+
+  it('drops the message on a table where players join directly', async () => {
+    const table = await makeTable({ joinMode: 'auto' });
+
+    await joinTable(test.db, player(2), table.slug, { message: 'Ninguém lê isto.' });
+
+    expect(await messageOf(table.id, id(2))).toBeNull();
+  });
+
+  it('refuses a message past the database limit', async () => {
+    const table = await makeTable({ joinMode: 'approval' });
+
+    await expect(
+      joinTable(test.db, player(2), table.slug, { message: 'a'.repeat(501) }),
+    ).rejects.toThrow();
+  });
+});
+
 describe('joinTable rate limit', () => {
   const now = new Date('2026-10-01T12:00:00Z');
   const rateLimited = (playerId: string, type: string, count: number, ageInSeconds: number) =>
@@ -373,8 +419,8 @@ describe('listRegistrations', () => {
     const list = await listRegistrations(test.db, gm, table.slug);
 
     expect(list).toEqual([
-      { playerId: id(2), username: 'p2', status: 'confirmed' },
-      { playerId: id(3), username: 'p3', status: 'pending' },
+      { playerId: id(2), username: 'p2', status: 'confirmed', message: null },
+      { playerId: id(3), username: 'p3', status: 'pending', message: null },
     ]);
   });
 

@@ -22,6 +22,7 @@
   import ReportDialog from '$lib/components/ReportDialog.svelte';
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
+  import JoinRequestDialog from '$lib/components/JoinRequestDialog.svelte';
   import StarRating from '$lib/components/StarRating.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
@@ -405,15 +406,17 @@
             success={m.toast_request_withdrawn()}
             onfail={(message) => (failed = message)}
           />
+        {:else if data.canJoin && table.joinMode === 'approval'}
+          <JoinRequestDialog
+            onfail={(message) => (failed = message)}
+            triggerClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+          />
         {:else if data.canJoin}
           <ActionForm
             action="?/join"
             onfail={(message) => (failed = message)}
-            onsuccess={() =>
-              table.joinMode === 'approval'
-                ? toast.pending(m.toast_pending())
-                : toast.success(m.toast_confirmed())}
-            label={table.joinMode === 'approval' ? m.table_join_request() : m.table_join_now()}
+            onsuccess={() => toast.success(m.toast_confirmed())}
+            label={m.table_join_now()}
             icon="game-icons:bar-stool"
             buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
           />
@@ -538,7 +541,7 @@
         <ul class="mt-3 grid gap-2">
           {#each requests as request (request.playerId)}
             <li
-              class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
+              class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-surface-200-800 bg-panel p-3"
             >
               <span><UserLink username={request.username} /></span>
               <div class="flex gap-4">
@@ -559,6 +562,11 @@
                   onfail={(message) => (failed = message)}
                 />
               </div>
+              {#if request.message}
+                <p class="basis-full text-sm whitespace-pre-line text-surface-700-300">
+                  {request.message}
+                </p>
+              {/if}
             </li>
           {/each}
         </ul>

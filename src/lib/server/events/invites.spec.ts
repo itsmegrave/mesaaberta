@@ -234,6 +234,27 @@ describe('calendar invite handler', () => {
     });
   });
 
+  it("adds the player's introduction to the inline request e-mail, for the GM only", async () => {
+    await test.db
+      .insert(registrations)
+      .values({ tableId, playerId: player, status: 'pending', message: 'Oi, mestre!' });
+    const sent = capture();
+
+    await createInviteHandler(env, sent.request, admin('mestre@example.com')).handle(
+      event('JoinRequested'),
+      test.db,
+    );
+    await createInviteHandler(env, sent.request, admin('ana@example.com')).handle(
+      event('JoinDeclined'),
+      test.db,
+    );
+
+    expect(sent.bodies[0].text).toBe(
+      'Há uma nova solicitação para a mesa "Mesa do Dragão".\n\nMensagem de @ana-souza:\nOi, mestre!',
+    );
+    expect(sent.bodies[1].text).toBe('Sua solicitação para a mesa "Mesa do Dragão" foi recusada.');
+  });
+
   it('invites only the GM when a table is created', async () => {
     const sent = capture();
 
@@ -394,6 +415,42 @@ describe('calendar invite handler', () => {
       });
     });
 
+    it("puts the player's introduction in the join-requested template, as a section of its own", async () => {
+      await test.db.insert(registrations).values({
+        tableId,
+        playerId: player,
+        status: 'pending',
+        message: 'Oi <b>mestre</b>!\n\nJogo há 2 anos.',
+      });
+      const sent = capture();
+
+      await createInviteHandler(templated, sent.request, admin('mestre@example.com')).handle(
+        event('JoinRequested'),
+        test.db,
+      );
+
+      const { variables } = sent.bodies[0].template;
+      expect(variables.PLAYER_MESSAGE).toBe(
+        '<h3>Mensagem de @ana-souza</h3><p>Oi &lt;b&gt;mestre&lt;/b&gt;!</p><p>Jogo há 2 anos.</p>',
+      );
+      // The plain-text copy goes through the same angle-bracket removal as every other variable.
+      expect(variables.FALLBACK_TEXT).toContain('Mensagem de @ana-souza:\nOi bmestre/b!');
+    });
+
+    it('leaves PLAYER_MESSAGE out when the player wrote nothing', async () => {
+      await test.db
+        .insert(registrations)
+        .values({ tableId, playerId: player, status: 'pending', message: null });
+      const sent = capture();
+
+      await createInviteHandler(templated, sent.request, admin('mestre@example.com')).handle(
+        event('JoinRequested'),
+        test.db,
+      );
+
+      expect(sent.bodies[0].template.variables).not.toHaveProperty('PLAYER_MESSAGE');
+    });
+
     it('sends the join-declined template to the player, without an attachment', async () => {
       const sent = capture();
 
@@ -442,7 +499,9 @@ describe('calendar invite handler', () => {
       expect(sent.bodies).toHaveLength(4);
       for (const body of sent.bodies) {
         expect(Object.keys(body.template.variables).sort()).toEqual(
-          [...TEMPLATE_VARIABLES].filter((name) => name !== 'WELCOME_MESSAGE').sort(),
+          [...TEMPLATE_VARIABLES]
+            .filter((name) => name !== 'WELCOME_MESSAGE' && name !== 'PLAYER_MESSAGE')
+            .sort(),
         );
         const variables = JSON.stringify(body.template.variables);
         for (const forbidden of [
@@ -547,7 +606,9 @@ describe('the GM welcome message in the invite', () => {
       expect(body.template.variables.WELCOME_MESSAGE).toBe(
         '<h3>Mensagem da mesa</h3><p>Bem-vinda à Mesa do Dragão!</p>',
       );
-      expect(Object.keys(body.template.variables).sort()).toEqual([...TEMPLATE_VARIABLES].sort());
+      expect(Object.keys(body.template.variables).sort()).toEqual(
+        [...TEMPLATE_VARIABLES].filter((name) => name !== 'PLAYER_MESSAGE').sort(),
+      );
     },
   );
 
