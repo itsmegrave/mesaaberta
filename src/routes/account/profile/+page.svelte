@@ -7,6 +7,7 @@
   import { page } from '$app/state';
   import { atHandle } from '$lib/profile/handle';
   import Avatar from '$lib/components/Avatar.svelte';
+  import ConnectedAccounts from '$lib/components/ConnectedAccounts.svelte';
   import ImageUpload from '$lib/components/ImageUpload.svelte';
   import ProfileForm from '$lib/components/ProfileForm.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -206,6 +207,10 @@
           />
         </div>
       </section>
+
+      {#if data.connections}
+        <ConnectedAccounts connections={data.connections} class={card} />
+      {/if}
 
       <section aria-labelledby="direct-messages" class={card}>
         <h2 id="direct-messages" class={heading}>{m.messages_setting_title()}</h2>

@@ -4,9 +4,10 @@ import { refuse, responseForm } from '$lib/forms/server';
 import { anonymiseProfile, closeAccount, setAvatarPath } from '$lib/server/account/service';
 import { deleteAuthUser, supabaseAdminFrom } from '$lib/server/auth/admin-client';
 import { requireUser } from '$lib/server/auth/guard';
+import { connections, unlink } from '$lib/server/auth/identities';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
-import { Invalid } from '$lib/server/errors';
+import { Forbidden, Invalid, NotFound } from '$lib/server/errors';
 import {
   AVATAR_BUCKET,
   pictureOf,
@@ -18,6 +19,7 @@ import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
 import { directMessagesSchema } from '$lib/messages/schema';
 import { setDirectMessages } from '$lib/server/messages/service';
 import { deleteAccountSchema } from '$lib/profile/delete';
+import { disconnectSchema } from '$lib/profile/connections';
 import { photoSchema } from '$lib/profile/photo';
 import { profileSchema, PROFILE_DEFAULTS } from '$lib/profile/schema';
 import type { Actions, PageServerLoad } from './$types';
@@ -40,6 +42,9 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
     form: initialForm(values),
     photoForm: initialForm({ photo: undefined as File | undefined }),
     deleteForm: initialForm({ confirm: '' }),
+    disconnectForm: initialForm({ provider: 'google' as const }),
+    // The ways to sign in: provider names only, never anything else Auth knows about them.
+    connections: locals.supabase ? await connections(locals.supabase) : null,
     messagesForm: initialForm({ enabled: profile?.directMessagesEnabled ?? true }),
     email: user.email ?? '',
     avatarUrl: profile ? pictureOf(supabaseUrlOf(platform?.env), profile) : null,
@@ -80,6 +85,25 @@ export const actions: Actions = {
 
     await setDirectMessages(locals.db, user.id, messagesForm.data.enabled);
     return { form: messagesForm };
+  },
+
+  // Disconnects a provider from the account. Never the last way to sign in.
+  disconnect: async ({ request, locals, url }) => {
+    await requireUser(locals, url);
+    if (!locals.supabase) error(503, 'Auth not configured');
+
+    const form = validateStringForm(await request.formData(), disconnectSchema, ['provider']);
+    if (!form.valid) return fail(400, { form });
+
+    try {
+      await unlink(locals.supabase, form.data.provider);
+    } catch (e) {
+      if (e instanceof Forbidden) return refuse(form, 409, 'last_identity', 'provider');
+      if (e instanceof NotFound) return refuse(form, 404, 'not_connected', 'provider');
+      if (e instanceof Invalid) return refuse(form, 502, e.message, 'provider');
+      throw e;
+    }
+    redirect(303, `${url.pathname}?conta=desconectada`);
   },
 
   photo: async ({ request, locals, url }) => {

@@ -80,6 +80,9 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = false
+# Lets a signed-in person connect another provider (`auth.linkIdentity`) from their profile.
+# Production needs the same switch: Authentication > Sign In / Providers > "Allow manual linking".
+enable_manual_linking = true
 # The same as production: the form asks for 8 or more.
 minimum_password_length = 8
 password_requirements = ""
