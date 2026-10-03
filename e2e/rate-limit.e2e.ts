@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { asUser, createTable, pickFromSearch, setFirstSession, uniqueTitle } from './support/app';
+import {
+  asUser,
+  createTable,
+  pickFromSearch,
+  setFirstSession,
+  soonSession,
+  uniqueTitle,
+} from './support/app';
 import { createUser, database } from './support/users';
 
 // The per-person limits on creating and joining tables, against the local Supabase.
@@ -18,7 +25,7 @@ test.describe('rate limits', () => {
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
 
     await expect(page.getByRole('alert').filter({ hasText: 'muitas vezes' })).toContainText(

@@ -3,6 +3,7 @@ import {
   createTable,
   pickFromSearch,
   setFirstSession,
+  soonSession,
   setSeats,
   signIn,
   uniqueTitle,
@@ -71,7 +72,7 @@ test('a CEP fills the neighbourhood and city in, from the local cache, and never
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   await page.getByLabel('Título').fill(uniqueTitle('Com CEP'));
   await setSeats(page, 4);
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   await page.getByLabel('Presencial', { exact: true }).check();
   await page.getByLabel('CEP', { exact: true }).fill('52011-000');
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -86,7 +87,7 @@ test('a CEP in the wrong shape is refused next to the field', async ({ page }) =
   await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   await page.getByLabel('Título').fill(uniqueTitle('CEP ruim'));
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   await page.getByLabel('Presencial', { exact: true }).check();
   await page.getByLabel('CEP', { exact: true }).fill('1234');
   await page.getByRole('button', { name: 'Abrir mesa' }).click();

@@ -76,8 +76,14 @@ export async function setSeats(page: Page, count: number) {
   await expect(seats).toHaveAttribute('aria-valuenow', String(count));
 }
 
+/** The first of the month after next at 19:00 (`2026-12-01T19:00`): always ahead, and a few key presses away. */
+export function soonSession(now = new Date()) {
+  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+  return `${first.toISOString().slice(0, 10)}T19:00`;
+}
+
 /**
- * Picks the first session of a table form (`2099-06-01T19:00`) as a person would with the keyboard:
+ * Picks the first session of a table form (`2026-12-01T19:00`) as a person would with the keyboard:
  * any day on the inline calendar, then page keys to the month and year, arrows to the day, Enter;
  * then the hour and the minutes on their selects.
  */
@@ -122,7 +128,7 @@ export async function createTable(page: Page, table: NewTable) {
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
   if (table.kind === 'campaign') await page.getByLabel('Campanha (várias sessões)').check();
   await setSeats(page, table.capacity ?? 5);
-  await setFirstSession(page, '2099-06-01T19:00');
+  await setFirstSession(page, soonSession());
   if (table.joinMode === 'approval') await page.getByLabel(/Com a sua aprovação/).check();
   if (table.inPerson) {
     await page.getByLabel('Presencial', { exact: true }).check();

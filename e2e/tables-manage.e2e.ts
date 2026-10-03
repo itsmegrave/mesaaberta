@@ -7,6 +7,7 @@ import {
   pickImage,
   pickFromSearch,
   setFirstSession,
+  soonSession,
   signIn,
   uniqueTitle,
 } from './support/app';
@@ -35,7 +36,7 @@ test.describe('rich text', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Com formatação'));
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
 
     const description = page.getByLabel('Descrição');
     await expect(page.getByRole('toolbar').first()).toBeVisible();
@@ -105,7 +106,7 @@ test.describe('creating a table', () => {
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill('ab');
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     // The browser's own minlength would stop it first; turn that off to reach the server's check.
     await page.getByLabel('Título').evaluate((el) => el.removeAttribute('minlength'));
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
@@ -207,7 +208,7 @@ test.describe('the welcome message', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Privada'));
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     await page.getByLabel('Mensagem de boas-vindas').fill('Segredo só para quem entrar.');
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
     await expect(page).toHaveURL(/\/tables\/[^/]+$/);
@@ -226,7 +227,7 @@ test.describe('the welcome message', () => {
 
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Longa'));
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     const field = page.getByLabel('Mensagem de boas-vindas');
     // The editor does not stop the typing: it counts what is seen and the server refuses the excess.
     await field.fill('x'.repeat(1001));
@@ -277,7 +278,7 @@ test.describe('images', () => {
     await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
-    await setFirstSession(page, '2099-06-01T19:00');
+    await setFirstSession(page, soonSession());
     await pickImage(page, {
       name: 'capa.png',
       mimeType: 'image/png',
