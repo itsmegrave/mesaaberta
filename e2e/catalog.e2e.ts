@@ -36,17 +36,23 @@ test('the list filters by platform and by tag, any of the ticked ones, kept in t
   await expect(cards.filter({ hasText: 'Crônicas de Roshar' })).toHaveCount(0);
 });
 
-test('ticking a chip applies it at once, and the system filter keeps it', async ({ page }) => {
+test('ticking a platform applies it at once, and the modality keeps it', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/tables');
+  // A desktop has a popover for the platforms; a phone, the "Filtros" sheet.
+  await page.getByRole('button', { name: isMobile ? 'Filtros' : 'Plataformas' }).click();
   await page.getByRole('group', { name: 'Plataformas' }).getByText('Owlbear Rodeo').click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
   await expect(
     page.getByRole('article').filter({ hasText: 'A Cripta do Rei Afogado' }),
   ).toHaveCount(1);
 
+  await page.keyboard.press('Escape');
   await page
     .getByRole('group', { name: 'Modalidade' })
-    .getByRole('link', { name: 'Online' })
+    .getByRole('button', { name: 'Online' })
     .click();
   await expect(page).toHaveURL(/modality=online/);
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);

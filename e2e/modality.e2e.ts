@@ -36,8 +36,8 @@ test('an in-person table shows its area to everyone and its address only to the 
 
   await visitor.goto('/tables?modality=in_person');
   await expect(
-    visitor.getByRole('group', { name: 'Modalidade' }).getByRole('link', { name: 'Presencial' }),
-  ).toHaveAttribute('aria-current', 'page');
+    visitor.getByRole('group', { name: 'Modalidade' }).getByRole('button', { name: 'Presencial' }),
+  ).toHaveAttribute('aria-pressed', 'true');
   await expect(visitor.getByRole('article').filter({ hasText: title })).toContainText(
     'Presencial · Boa Viagem, Recife',
   );

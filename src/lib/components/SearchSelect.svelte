@@ -22,6 +22,7 @@
     items,
     value = $bindable([]),
     multiple = false,
+    showPicks = true,
     placeholder,
     required = false,
     invalid = false,
@@ -38,6 +39,8 @@
     items: Item[];
     value?: string[];
     multiple?: boolean;
+    /** Several picks: show them as removable chips under the box. Off when the page shows them. */
+    showPicks?: boolean;
     placeholder: string;
     required?: boolean;
     invalid?: boolean;
@@ -187,7 +190,7 @@
       </Combobox.Positioner>
     </Portal>
 
-    {#if multiple && value.length > 0}
+    {#if multiple && showPicks && value.length > 0}
       <ul
         class="mt-2 flex flex-wrap gap-2 md:col-start-2"
         aria-label={m.search_select_picked({ label })}
