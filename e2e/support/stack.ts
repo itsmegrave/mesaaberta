@@ -12,7 +12,7 @@ export type Stack = {
 let cached: Stack | undefined;
 
 /**
- * The running local stack (`pnpm e2e:up`). Read once from the Supabase CLI, so nothing about ports or
+ * The running local stack (`bun run e2e:up`). Read once from the Supabase CLI, so nothing about ports or
  * keys is written down in two places. Throws a clear message when the stack is not running.
  */
 export function stack(): Stack {
@@ -29,7 +29,7 @@ export function stack(): Stack {
     return cached;
   } catch {
     throw new Error(
-      'The local Supabase is not running. Start it with `pnpm e2e:up` (it needs Docker).',
+      'The local Supabase is not running. Start it with `bun run e2e:up` (it needs Docker).',
     );
   }
 }

@@ -1,6 +1,6 @@
 import { withSentry } from '@sentry/cloudflare';
 import { sentryOptions } from '../../src/lib/observability/privacy.ts';
-// The Worker's entry after `pnpm build`: SvelteKit's own Worker (renamed `_sveltekit.js`) plus the
+// The Worker's entry after `bun run build`: SvelteKit's own Worker (renamed `_sveltekit.js`) plus the
 // Cron Trigger's `scheduled` handler, which the adapter does not export. `scripts/wrap-worker.ts`
 // copies this file over `.svelte-kit/cloudflare/_worker.js`, so the paths are relative to there.
 // wrangler bundles the imports, TypeScript included.

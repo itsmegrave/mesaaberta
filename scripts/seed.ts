@@ -1,5 +1,5 @@
 // Development data: one GM and a few tables. The RPG systems themselves come from the migrations. Safe to run again; existing rows are left alone.
-// Usage: pnpm db:seed (needs DATABASE_URL, see .dev.vars.example)
+// Usage: bun run db:seed (needs DATABASE_URL, see .dev.vars.example)
 import { eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
@@ -37,7 +37,7 @@ const base = { timezone: 'America/Sao_Paulo', durationMinutes: 240, gmId: gm.id 
 
 const systemId = async (slug: string) => {
   const [system] = await db.select({ id: systems.id }).from(systems).where(eq(systems.slug, slug));
-  if (!system) throw new Error(`No system "${slug}". Run pnpm db:migrate first.`);
+  if (!system) throw new Error(`No system "${slug}". Run bun run db:migrate first.`);
   return system.id;
 };
 

@@ -124,7 +124,7 @@ export default defineConfig({
       },
 
       {
-        // Needs a real Postgres (DATABASE_URL): `pnpm test:integration`.
+        // Needs a real Postgres (DATABASE_URL): `bun run test:integration`.
         extends: './vite.config.ts',
         test: {
           name: 'integration',

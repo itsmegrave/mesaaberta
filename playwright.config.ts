@@ -4,7 +4,7 @@ import { stack } from './e2e/support/stack';
 const port = 4173;
 // A second server on the same build with the site in maintenance (see e2e/maintenance.e2e.ts).
 const maintenancePort = 4183;
-// The local Supabase (`pnpm e2e:up`): its Postgres is the app's database and its Auth is the app's login.
+// The local Supabase (`bun run e2e:up`): its Postgres is the app's database and its Auth is the app's login.
 const supabase = stack();
 
 const serverVars = [
@@ -40,8 +40,8 @@ export default defineConfig({
     {
       // The built app on the Workers runtime, pointed at the local Supabase instead of production.
       command: [
-        `CSP_EXTRA_IMG_SRC=${supabase.API_URL} pnpm run build &&`,
-        `wrangler dev .svelte-kit/cloudflare/_worker.js --port ${port}`,
+        `CSP_EXTRA_IMG_SRC=${supabase.API_URL} bun run build &&`,
+        `bun run --bun wrangler dev .svelte-kit/cloudflare/_worker.js --port ${port}`,
         ...serverVars,
       ].join(' '),
       // Overrides the Hyperdrive binding's local connection string (see wrangler.jsonc).
@@ -57,7 +57,7 @@ export default defineConfig({
       // Playwright starts both servers at once, so this one waits for the first, which builds.
       command: [
         `until curl -sf -o /dev/null http://localhost:${port}/healthz; do sleep 1; done &&`,
-        `wrangler dev .svelte-kit/cloudflare/_worker.js --port ${maintenancePort}`,
+        `bun run --bun wrangler dev .svelte-kit/cloudflare/_worker.js --port ${maintenancePort}`,
         '--persist-to .wrangler/state-maintenance',
         ...serverVars,
         '--var FEATURE_FLAG_OVERRIDES:maintenance_mode=true',

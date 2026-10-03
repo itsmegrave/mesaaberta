@@ -1,5 +1,5 @@
 // Writes sample invites to ./sample-invites/ so they can be imported by hand into Gmail, Outlook and
-// Apple Calendar (double-click, or attach them to an email to yourself). Usage: pnpm calendar:sample
+// Apple Calendar (double-click, or attach them to an email to yourself). Usage: bun run calendar:sample
 // [your@email]. Nothing is sent anywhere.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { buildInvite, type CalendarTable } from '../src/lib/server/calendar/ics.ts';
