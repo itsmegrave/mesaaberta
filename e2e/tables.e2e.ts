@@ -2,7 +2,7 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
 import { pageMenu } from './support/app';
 import { sidewaysOverflow } from './support/overflow';
 
-// These need the seeded database: `pnpm db:up && pnpm db:migrate && pnpm db:seed` (CI does the same).
+// These need the seeded database: `bun run db:up && bun run db:migrate && bun run db:seed` (CI does the same).
 // Locally they skip when there is none; in CI a missing database is a failure, not a skip.
 const databaseIsUp = async (request: APIRequestContext) =>
   (await (await request.get('/healthz')).json()).database === 'ok';

@@ -7,7 +7,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Makes an existing profile an admin. There is no admin signup flow on purpose: the first admin is
- * made by whoever runs the deploy, with `pnpm db:make-admin <user id>`. Returns false when the
+ * made by whoever runs the deploy, with `bun run db:make-admin <user id>`. Returns false when the
  * person has no profile yet (they must sign in once first).
  */
 export async function promoteToAdmin(db: AnyDb, userId: string): Promise<boolean> {

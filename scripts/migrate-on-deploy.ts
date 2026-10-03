@@ -1,4 +1,4 @@
-// Runs first in `pnpm build`. On a Cloudflare Workers Build of main it applies the pending
+// Runs first in `bun run build`. On a Cloudflare Workers Build of main it applies the pending
 // migrations to production before the new Worker is deployed, so the code never runs ahead of the
 // schema. Anywhere else it does nothing. See src/lib/server/db/deploy-migrations.ts.
 //
@@ -14,7 +14,7 @@ const plan = migrationPlan(process.env);
 
 if (!plan.run) {
   const line = `migrations: skipped (${plan.reason})`;
-  if (plan.warn) console.warn(`⚠️  ${line}. Run \`pnpm db:migrate\` against Supabase by hand.`);
+  if (plan.warn) console.warn(`⚠️  ${line}. Run \`bun run db:migrate\` against Supabase by hand.`);
   else console.log(line);
   process.exit(0);
 }

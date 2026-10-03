@@ -1,5 +1,5 @@
 # A local Supabase for the end-to-end tests: Postgres, Auth, Storage and an inbox that catches the
-# emails Auth sends. `pnpm e2e:up` starts it (in Docker); nothing here touches production.
+# emails Auth sends. `bun run e2e:up` starts it (in Docker); nothing here touches production.
 # The app's own tables come from the Drizzle migrations, not from this folder.
 project_id = "mesaaberta"
 

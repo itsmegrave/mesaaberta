@@ -7,7 +7,7 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 - One issue, one small pull request that closes it.
 - Conventional commits, one concern per commit.
 - Publish user-facing release notes in the [Canny changelog](https://mesaaberta.canny.io/changelog).
-- The PR should build green (`pnpm lint`, `pnpm check`, `pnpm test`; and `pnpm test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
+- The PR should build green (`bun run lint`, `bun run check`, `bun run test`; and `bun run test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
 - Tests describe behavior, not wording. Each test should name the break it catches.
 
 See the [README](README.md) for setup and scripts.
@@ -16,9 +16,9 @@ See the [README](README.md) for setup and scripts.
 
 Tabs for indentation and semicolons at the end of statements (YAML is the one exception and uses spaces). Prettier is the only formatter: `prettier.config.js` sets the rules and `.editorconfig` tells editors the same. ESLint checks code quality and never formatting.
 
-- `pnpm format` rewrites every file to the style.
-- `pnpm lint:fix` does the same and applies ESLint's automatic fixes.
-- `pnpm lint` (Prettier check, then ESLint) is what CI runs, and a badly formatted file fails it.
+- `bun run format` rewrites every file to the style.
+- `bun run lint:fix` does the same and applies ESLint's automatic fixes.
+- `bun run lint` (Prettier check, then ESLint) is what CI runs, and a badly formatted file fails it.
 
 In VS Code, install the recommended extensions when prompted (`.vscode/extensions.json`) and files are formatted on save. Any other editor needs the Prettier plugin and EditorConfig support.
 
@@ -51,7 +51,7 @@ Review migrated controls for accessibility and mobile/desktop and light/dark vis
 
 Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`).
 
-To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Reicon](https://icon-sets.iconify.design/reicon/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). UI glyphs use Reicon's filled weight (the `-filled` names) so they sit with the solid Game Icons; arrows, chevrons, add, check and close have only a line version. Game Icons names carry the `game-icons:` prefix, and navigation, roles and messaging use them: `tavern-sign` (Mesas), `dice-twenty-faces-twenty` (Abrir mesa), `tabletop-players` (Minhas mesas), `black-knight-helm` (Admin), `meeple` (people), `dungeon-gate` (Entrar only), `bar-stool` (Pedir vaga), `exit-door` (Sair), `scroll-quill` (every messaging icon, no speech bubbles) and `house` (Início in breadcrumbs). Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `pnpm icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
+To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Reicon](https://icon-sets.iconify.design/reicon/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). UI glyphs use Reicon's filled weight (the `-filled` names) so they sit with the solid Game Icons; arrows, chevrons, add, check and close have only a line version. Game Icons names carry the `game-icons:` prefix, and navigation, roles and messaging use them: `tavern-sign` (Mesas), `dice-twenty-faces-twenty` (Abrir mesa), `tabletop-players` (Minhas mesas), `black-knight-helm` (Admin), `meeple` (people), `dungeon-gate` (Entrar only), `bar-stool` (Pedir vaga), `exit-door` (Sair), `scroll-quill` (every messaging icon, no speech bubbles) and `house` (Início in breadcrumbs). Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `bun run icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
 
 ## Translations
 
@@ -63,7 +63,7 @@ The site is written in Brazilian Portuguese (`pt-BR`, the base language), and on
 
 1. Copy `messages/pt-BR.json` to `messages/en.json` and translate every value.
 2. Add `"en"` to `locales` in `project.inlang/settings.json`.
-3. Run `pnpm test`. A test fails if your file is missing a key or changes a placeholder.
+3. Run `bun run test`. A test fails if your file is missing a key or changes a placeholder.
 4. There is no language switch yet, because only one language is served. It ships with the second language (see #31).
 
 A new language is served under its own prefix (`/en`), and pt-BR stays at `/`. Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are.

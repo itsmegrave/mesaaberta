@@ -6,33 +6,33 @@ The roadmap and architecture decisions live in [issue #1](https://github.com/its
 
 ## Stack
 
-SvelteKit (Svelte 5, TypeScript) · Tailwind CSS · Paraglide (i18n) · Vitest · Playwright · pnpm · Node 26
+SvelteKit (Svelte 5, TypeScript) · Tailwind CSS · Paraglide (i18n) · Vitest · Playwright · Bun 1.4.2
 
 ## Getting started
 
-Requirements: Node and pnpm at the versions in `.tool-versions` and `packageManager` in `package.json`.
+Requirements: Bun 1.4.2, pinned in `.bun-version`, `.tool-versions` and `packageManager` in `package.json`. Node 26.8.2 (pinned in `.nvmrc`) runs Wrangler/Miniflare and the Playwright CLI; Bun remains the package manager and the runtime for project scripts and Vitest. Production still runs on Cloudflare workerd.
 
 ```sh
-pnpm install
-pnpm exec playwright install chromium   # component and e2e tests run in a real browser
-pnpm dev
+bun install
+bun run playwright install chromium   # component and e2e tests run in a real browser
+bun run dev
 ```
 
 ## Scripts
 
-| Script           | What it does                                                                        |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| `pnpm dev`       | Dev server                                                                          |
-| `pnpm build`     | Production build                                                                    |
-| `pnpm lint`      | Prettier check and ESLint                                                           |
-| `pnpm format`    | Prettier write                                                                      |
-| `pnpm i18n`      | Compile `messages/*.json` into `src/lib/paraglide` (run by `prepare` and `check`)   |
-| `pnpm check`     | Type-check `.ts` and `.svelte` files                                                |
-| `pnpm test:unit` | Vitest: component tests (Chromium) and unit tests (Node)                            |
-| `pnpm e2e:up`    | Local Supabase in Docker (Postgres, Auth, Storage, mail inbox), migrated and seeded |
-| `pnpm test:e2e`  | Playwright against a production build and that Supabase, on mobile and desktop      |
-| `pnpm e2e:down`  | Stops the local Supabase                                                            |
-| `pnpm test`      | Unit tests, then e2e                                                                |
+| Script              | What it does                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `bun run dev`       | Dev server                                                                          |
+| `bun run build`     | Production build                                                                    |
+| `bun run lint`      | Prettier check and ESLint                                                           |
+| `bun run format`    | Prettier write                                                                      |
+| `bun run i18n`      | Compile `messages/*.json` into `src/lib/paraglide` (run by `prepare` and `check`)   |
+| `bun run check`     | Type-check `.ts` and `.svelte` files                                                |
+| `bun run test:unit` | Vitest: component tests (Chromium) and unit tests (Bun)                             |
+| `bun run e2e:up`    | Local Supabase in Docker (Postgres, Auth, Storage, mail inbox), migrated and seeded |
+| `bun run test:e2e`  | Playwright against a production build and that Supabase, on mobile and desktop      |
+| `bun run e2e:down`  | Stops the local Supabase                                                            |
+| `bun run test`      | Unit tests, then e2e                                                                |
 
 ## Project layout
 
@@ -87,15 +87,15 @@ Postgres through [Drizzle ORM](https://orm.drizzle.team) and `postgres.js`. Supa
 
 ```sh
 cp .dev.vars.example .dev.vars   # DATABASE_URL for the local database
-pnpm db:up                       # Postgres in Docker, waits until it is healthy
-pnpm db:migrate                  # apply the migrations
-pnpm db:seed                     # optional: a GM and two tables
-pnpm dev
+bun run db:up                       # Postgres in Docker, waits until it is healthy
+bun run db:migrate                  # apply the migrations
+bun run db:seed                     # optional: a GM and two tables
+bun run dev
 ```
 
-`pnpm db:down` stops it. After changing the schema, run `pnpm db:generate`, read the SQL it wrote, and commit it. Tests run the real migrations on an in-process Postgres (PGlite), so `pnpm test` needs no Docker.
+`bun run db:down` stops it. After changing the schema, run `bun run db:generate`, read the SQL it wrote, and commit it. Tests run the real migrations on an in-process Postgres (PGlite), so `bun run test` needs no Docker.
 
-**RPG systems.** The systems tables are are rows in `systems`, seeded by a migration so every environment has them after `pnpm db:migrate`. Each keeps its name exactly as written and has a unique slug for its URL, made by `slugify()` in `src/lib/slug.ts`; `position` keeps the source order (most played first, then A to Z). `game_tables.system_id` points at a system. Read them with `listSystems(db)` and `findSystemBySlug(db, slug)` from `$lib/server/systems`, and never keep a second list of systems. Slugs never change once shipped, because URLs and invites use them. To add a system, write a new migration with an `INSERT ... ON CONFLICT ("slug") DO NOTHING`.
+**RPG systems.** The systems tables are are rows in `systems`, seeded by a migration so every environment has them after `bun run db:migrate`. Each keeps its name exactly as written and has a unique slug for its URL, made by `slugify()` in `src/lib/slug.ts`; `position` keeps the source order (most played first, then A to Z). `game_tables.system_id` points at a system. Read them with `listSystems(db)` and `findSystemBySlug(db, slug)` from `$lib/server/systems`, and never keep a second list of systems. Slugs never change once shipped, because URLs and invites use them. To add a system, write a new migration with an `INSERT ... ON CONFLICT ("slug") DO NOTHING`.
 
 **Browsing tables.** `/tables` lists active tables that still have a session ahead (soonest first, filterable by system) and `/tables/<slug>` shows one; an unknown or disabled slug is the translated 404. A table past its session (awaiting the GM's confirmation, concluded or not held) is out of the list but still found at its slug, so old links work, with its status shown. The queries are in `src/lib/server/tables/queries.ts` and the next-session logic in `schedule.ts`: a weekly campaign keeps its wall-clock time in its own timezone across daylight-saving changes, and only `FREQ=WEEKLY` (with `INTERVAL`) is understood. The header link "Mesas" appears when the `is_platform_released` flag is on; the pages exist, unlinked, before that. Seats left are every seat until registrations exist (#11). The end-to-end tests for these pages need the seeded database and skip locally when there is none (CI always has one).
 
@@ -111,7 +111,7 @@ pnpm dev
 
 Without the policy the form still works; only saving with an image fails, with a message on the image field, and the log says `image upload refused by Storage` with Storage's reason. Replaced images are not deleted yet.
 
-**Row level security is on for every table, with no policies** (`.enableRLS()` in `schema.ts`, and a test that fails for any table in `public` without it). Supabase serves `public` over its REST API to anyone holding the publishable key, which is public, so RLS with no policy leaves that API nothing to read or write. The app is not affected: it connects as the database owner (Hyperdrive, or the Docker Postgres), which RLS does not apply to. A new table needs `.enableRLS()`; add a policy only for one that must be reachable through the Supabase API. After deploying a migration like this, run `pnpm db:migrate` against Supabase (step 4 below).
+**Row level security is on for every table, with no policies** (`.enableRLS()` in `schema.ts`, and a test that fails for any table in `public` without it). Supabase serves `public` over its REST API to anyone holding the publishable key, which is public, so RLS with no policy leaves that API nothing to read or write. The app is not affected: it connects as the database owner (Hyperdrive, or the Docker Postgres), which RLS does not apply to. A new table needs `.enableRLS()`; add a policy only for one that must be reachable through the Supabase API. After deploying a migration like this, run `bun run db:migrate` against Supabase (step 4 below).
 
 Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
 
@@ -120,10 +120,10 @@ Server code reads the database from `locals.db`, which is `null` when none is co
 1. In Supabase, open Connect and copy the **session pooler** connection string (port 5432). Hyperdrive does its own pooling, so do not use the transaction pooler (port 6543).
 2. `wrangler hyperdrive create mesaaberta-db --connection-string="<that string>"` prints an id.
 3. Put the id in the `hyperdrive` block of `wrangler.jsonc`.
-4. Run the migrations against Supabase once: `DATABASE_URL="<direct or session string>" pnpm db:migrate`.
+4. Run the migrations against Supabase once: `DATABASE_URL="<direct or session string>" bun run db:migrate`.
 5. Deploy, then check `/healthz` shows `"database": "ok"`.
 
-**Locally**, the binding's `localConnectionString` points at the Docker Postgres, so `pnpm dev`, `wrangler dev` and the e2e tests use it without `.dev.vars`: run `pnpm db:up && pnpm db:migrate` first. With the binding in place and no database running, `/healthz` reports `down` (503) rather than `not_configured`. The `db:*` scripts still read `DATABASE_URL` from `.dev.vars`.
+**Locally**, the binding's `localConnectionString` points at the Docker Postgres, so `bun run dev`, `wrangler dev` and the e2e tests use it without `.dev.vars`: run `bun run db:up && bun run db:migrate` first. With the binding in place and no database running, `/healthz` reports `down` (503) rather than `not_configured`. The `db:*` scripts still read `DATABASE_URL` from `.dev.vars`.
 
 Limits checked on 2026-09-19: Supabase's free Nano compute allows 60 direct and 200 pooler connections ([compute and disk](https://supabase.com/docs/guides/platform/compute-and-disk)); Hyperdrive on the free plan allows about 20 origin connections per configuration and 10 configurations per account ([limits](https://developers.cloudflare.com/hyperdrive/platform/limits/)). The Worker opens at most 5 connections per request, so both are comfortable for now. Check the pages again before relying on the numbers.
 
@@ -197,7 +197,7 @@ Today the policy covers creating, editing and disabling a table (any signed-in u
 **Make yourself admin.** There is no admin signup flow. Sign in once so your profile exists, then copy your user id (the UID column in Supabase > Authentication > Users) and run it against the database you want to change:
 
 ```sh
-pnpm db:make-admin <user id>
+bun run db:make-admin <user id>
 ```
 
 or, in the Supabase SQL editor: `update profiles set role = 'admin' where id = '<user id>';`
@@ -208,12 +208,15 @@ A profile has a required, public **username** (`profiles.username`: 3 to 30 lowe
 
 **Onboarding.** Right after a first sign-in (OAuth or email) the person lands on `/onboarding?next=<where they were going>`, a form built with TanStack Form and TanStack Query (Zod validation in the browser and on the server, one mutation per submit, and a native POST fallback). The username is checked while it is typed through `GET /onboarding/username?value=...`, which answers only `free`, `taken` or `invalid` and only to signed-in people; it is advice, the unique index still decides. The gate is `requireUser` (`src/lib/server/auth/guard.ts`): someone without a username is sent to the onboarding from every authenticated page and form action, and brought back afterwards. Public pages stay public and so does logging out. Profiles that predate usernames get one from their old display name by the migration where an acceptable one comes out of it (a numeric suffix on a repeat), and pick one at the onboarding otherwise. Until then they show as "jogador".
 
-**Deploying.** Migrations run **before** the new code serves traffic, as the first step of `pnpm build` on the Cloudflare Workers Build of `main` (`scripts/migrate-on-deploy.ts`). The build applies what is pending, and a failed migration fails the build, so the Worker is never deployed onto an older schema. Local builds, GitHub CI and preview branches skip it and never touch production. One-time setup in the Cloudflare dashboard (Workers & Pages > mesaaberta > Settings > Build):
+**Deploying.** Migrations run **before** the new code serves traffic, as the first step of `bun run build` on the Cloudflare Workers Build of `main` (`scripts/migrate-on-deploy.ts`). The build applies what is pending, and a failed migration fails the build, so the Worker is never deployed onto an older schema. Local builds, GitHub CI and preview branches skip it and never touch production. One-time setup in the Cloudflare dashboard (Workers & Pages > mesaaberta > Settings > Build):
 
-1. Build command: `pnpm build` (not plain `vite build`).
-2. Build variables and secrets: add a **secret** `MIGRATE_DATABASE_URL` with the Supabase **session pooler** connection string (Project Settings > Database > Connection string > Session pooler, port 5432; the build machines have no IPv6, so not the direct one).
+1. Set build variables `BUN_VERSION=1.4.2` and `SKIP_DEPENDENCY_INSTALL=true`; Cloudflare's default Bun version is older than the project's pin.
+2. Build command: `bun install --frozen-lockfile && bun run build`. Deploy command: `bun run wrangler deploy`. The build keeps the existing migration and scheduled-handler steps.
+3. Build variables and secrets: add a **secret** `MIGRATE_DATABASE_URL` with the Supabase **session pooler** connection string (Project Settings > Database > Connection string > Session pooler, port 5432; the build machines have no IPv6, so not the direct one).
 
-The connection verifies Supabase's certificate against its root CA, kept at `supabase/prod-ca-2021.crt` (public; valid until 2031, when Supabase rotates it, replace the file). Without the secret the build warns and deploys anyway; then run `DATABASE_URL="<same string>" pnpm db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
+Apply these build settings with the Bun tooling release. Workers Builds can continue deploying throughout the architecture migration; the deployed runtime remains workerd. See [Cloudflare's build version settings](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/).
+
+The connection verifies Supabase's certificate against its root CA, kept at `supabase/prod-ca-2021.crt` (public; valid until 2031, when Supabase rotates it, replace the file). Without the secret the build warns and deploys anyway; then run `DATABASE_URL="<same string>" bun run db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
 
 ## Theme
 
@@ -261,7 +264,7 @@ This file decides what goes in an invite and checks what comes from users or the
 - **Every line break in a text is turned into a plain `\n` before the library sees it.** ical.js escapes `\n` but leaves a `\r` as it is, and a bare CR ends a line for a lenient parser, so without this a title could add an attendee. An address, UID, timezone or recurrence that is not what this system produces throws. Tests prove a newline in a title, description, extra info, slug or attendee name cannot add an attendee or an event, and that the output is identical whatever time zone the machine runs in.
 - **Known small deviation:** ical.js folds at 75 bytes of content plus the folding space, so a continuation line can be 76 octets (the standard says "should not exceed 75"; every mainstream client reads it). It never splits a character.
 
-**Check it in real calendars by hand** (this is not automated): `pnpm calendar:sample you@example.com` writes three files to `sample-invites/` (a one-shot, a weekly campaign, and its cancellation). Open them, or attach them to an email to yourself, in Gmail, Outlook and Apple Calendar. Import the campaign request, then the cancel: the event should disappear.
+**Check it in real calendars by hand** (this is not automated): `bun run calendar:sample you@example.com` writes three files to `sample-invites/` (a one-shot, a weekly campaign, and its cancellation). Open them, or attach them to an email to yourself, in Gmail, Outlook and Apple Calendar. Import the campaign request, then the cancel: the event should disappear.
 
 ### Hosted e-mail templates
 
@@ -343,9 +346,9 @@ A table can also carry an optional **minimum of players** (`game_tables.min_play
 
 Capacity holds under concurrency because each operation that can take a seat first locks the table's row (`SELECT ... FOR UPDATE`) inside its transaction: two of them on one table run one after the other, and the second counts seats after the first has committed. The events (`JoinRequested`, `JoinApproved`, `JoinDeclined`, `PlayerJoined` when a seat is confirmed, `PlayerLeft` when a seat is freed) are written in the same transaction. Withdrawing a pending request frees no seat and records no event. Player names are only shown to the GM and admins.
 
-**End-to-end tests.** They run against a real Supabase in Docker, not against mocks: `pnpm e2e:up` (starts the stack, applies the migrations, seeds), `pnpm test:e2e`, `pnpm e2e:down`. Playwright builds the app and starts a fresh `wrangler dev` on port 4173, pointed at that stack (its URL, key, database and Mailpit URL come from `supabase status`). It never reuses a server already on that port, and forces transactional e-mail through Mailpit, so E2E tests cannot deliver calendar e-mail through Resend even if `.dev.vars` has real credentials. Sign-up, email confirmation, password reset and app calendar invites read from the stack's Mailpit inbox (http://127.0.0.1:54344); signed-in flows create users through the Auth admin API and sign in through the real form; the table image goes to the real Storage bucket. The stack uses ports 54341 to 54344, so it does not clash with `pnpm db:up` (5432) or a Supabase you run for other projects. The tests run one at a time because they share the database. To try a branch whose migrations that stack does not have yet without touching its database, create a database of your own in the same Postgres, migrate and seed it with `DATABASE_URL`, and run Playwright with `E2E_DB_URL` pointing at it. The Docker Postgres from `pnpm db:up` is still what `pnpm dev` and the integration tests use.
+**End-to-end tests.** They run against a real Supabase in Docker, not against mocks: `bun run e2e:up` (starts the stack, applies the migrations, seeds), `bun run test:e2e`, `bun run e2e:down`. Playwright builds the app and starts a fresh `wrangler dev` on port 4173, pointed at that stack (its URL, key, database and Mailpit URL come from `supabase status`). It never reuses a server already on that port, and forces transactional e-mail through Mailpit, so E2E tests cannot deliver calendar e-mail through Resend even if `.dev.vars` has real credentials. Sign-up, email confirmation, password reset and app calendar invites read from the stack's Mailpit inbox (http://127.0.0.1:54344); signed-in flows create users through the Auth admin API and sign in through the real form; the table image goes to the real Storage bucket. The stack uses ports 54341 to 54344, so it does not clash with `bun run db:up` (5432) or a Supabase you run for other projects. The tests run one at a time because they share the database. To try a branch whose migrations that stack does not have yet without touching its database, create a database of your own in the same Postgres, migrate and seed it with `DATABASE_URL`, and run Playwright with `E2E_DB_URL` pointing at it. The Docker Postgres from `bun run db:up` is still what `bun run dev` and the integration tests use.
 
-**Integration tests.** PGlite is one connection and cannot race, so the concurrency tests (`*.integration.spec.ts`) run against real Postgres: `pnpm db:up && pnpm db:migrate && pnpm test:integration`. CI runs them against a Postgres service. They fail if the row lock is removed.
+**Integration tests.** PGlite is one connection and cannot race, so the concurrency tests (`*.integration.spec.ts`) run against real Postgres: `bun run db:up && bun run db:migrate && bun run test:integration`. CI runs them against a Postgres service. They fail if the row lock is removed.
 
 ## Domain events
 
@@ -361,7 +364,7 @@ select id, type, attempts, last_error, created_at from events where failed_at is
 
 To add an event, add it to `DomainEvent` in `src/lib/server/events/types.ts`, record it with `recordEvent(tx, ...)` inside the change's transaction, and dispatch it with `locals.afterResponse((db) => dispatchEvent(db, handlers, eventId))`. Today creating, editing and disabling a table emit `TableCreated`, `TableUpdated` and `TableDisabled`; nothing reacts to them yet (invites are #13).
 
-The adapter only exports `fetch`, so `pnpm build` ends with `scripts/wrap-worker.ts`, which wraps SvelteKit's Worker with the `scheduled` handler. If the deploy runs plain `vite build` instead of `pnpm build`, the site works but the sweeper does not run. To try the sweeper locally: `pnpm build`, then `wrangler dev --test-scheduled` and `curl "http://localhost:8787/cdn-cgi/handler/scheduled"`.
+The adapter only exports `fetch`, so `bun run build` ends with `scripts/wrap-worker.ts`, which wraps SvelteKit's Worker with the `scheduled` handler. If the deploy runs plain `vite build` instead of `bun run build`, the site works but the sweeper does not run. To try the sweeper locally: `bun run build`, then `wrangler dev --test-scheduled` and `curl "http://localhost:8787/cdn-cgi/handler/scheduled"`.
 
 ## Rate limiting
 

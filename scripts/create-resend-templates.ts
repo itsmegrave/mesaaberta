@@ -3,7 +3,7 @@
 // paste into `vars` in wrangler.jsonc. Safe to re-run: Resend refuses a duplicate alias, so an
 // existing template is reported and skipped rather than overwritten.
 //
-// Usage: RESEND_API_KEY=re_... node --env-file-if-exists=.dev.vars scripts/create-resend-templates.ts
+// Usage: RESEND_API_KEY=re_... bun --env-file=.dev.vars scripts/create-resend-templates.ts
 
 type Variable = { key: string; type: 'string'; fallbackValue: string };
 

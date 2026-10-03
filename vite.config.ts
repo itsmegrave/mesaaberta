@@ -90,6 +90,8 @@ export default defineConfig({
   ],
   test: {
     expect: { requireAssertions: true },
+    // Limit concurrent PGlite startup under Bun in local and CI runs without relaxing timeouts.
+    maxWorkers: 2,
     projects: [
       {
         extends: './vite.config.ts',
@@ -124,7 +126,7 @@ export default defineConfig({
       },
 
       {
-        // Needs a real Postgres (DATABASE_URL): `pnpm test:integration`.
+        // Needs a real Postgres (DATABASE_URL): `bun run test:integration`.
         extends: './vite.config.ts',
         test: {
           name: 'integration',

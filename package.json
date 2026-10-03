@@ -5,36 +5,37 @@
   "license": "MIT",
   "type": "module",
   "engines": {
+    "bun": ">=1.4.2",
     "node": ">=26"
   },
   "scripts": {
-    "dev": "vite dev",
-    "build": "node scripts/migrate-on-deploy.ts && wrangler types && vite build && node scripts/wrap-worker.ts",
-    "preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
-    "prepare": "svelte-kit sync && pnpm run i18n && wrangler types || echo ''",
-    "check": "wrangler types && pnpm run i18n && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json",
-    "check:watch": "wrangler types && pnpm run i18n && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json --watch",
-    "lint": "prettier --check . && eslint .",
-    "lint:fix": "prettier --write . && eslint . --fix",
-    "format": "prettier --write .",
-    "test:unit": "vitest run --project client --project server",
-    "test:integration": "node --env-file-if-exists=.dev.vars ./node_modules/vitest/vitest.mjs run --project integration",
-    "test": "pnpm run test:unit && pnpm run test:e2e",
-    "test:unit:watch": "vitest",
-    "test:e2e": "playwright test",
-    "e2e:up": "supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,postgres-meta,supavisor && node scripts/e2e-prepare.ts",
+    "dev": "bun run --bun vite dev",
+    "build": "bun scripts/migrate-on-deploy.ts && bun run wrangler types && bun run --bun vite build && bun scripts/wrap-worker.ts",
+    "preview": "bun run wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
+    "prepare": "bun run --bun svelte-kit sync && bun run i18n && bun run wrangler types || echo ''",
+    "check": "bun run wrangler types && bun run i18n && bun run --bun svelte-kit sync && bun run --bun svelte-check --tsgo --tsconfig ./tsconfig.json",
+    "check:watch": "bun run wrangler types && bun run i18n && bun run --bun svelte-kit sync && bun run --bun svelte-check --tsgo --tsconfig ./tsconfig.json --watch",
+    "lint": "bun run --bun prettier --check . && bun run --bun eslint .",
+    "lint:fix": "bun run --bun prettier --write . && bun run --bun eslint . --fix",
+    "format": "bun run --bun prettier --write .",
+    "test:unit": "bun run --bun vitest run --project client --project server",
+    "test:integration": "bun --env-file=.dev.vars ./node_modules/vitest/vitest.mjs run --project integration",
+    "test": "bun run test:unit && bun run test:e2e",
+    "test:unit:watch": "bun run --bun vitest",
+    "test:e2e": "bun run playwright test",
+    "e2e:up": "supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,postgres-meta,supavisor && bun scripts/e2e-prepare.ts",
     "e2e:down": "supabase stop",
-    "gen": "wrangler types",
+    "gen": "bun run wrangler types",
     "db:up": "docker compose up -d --wait db",
     "db:down": "docker compose down",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "node --env-file-if-exists=.dev.vars ./node_modules/drizzle-kit/bin.cjs migrate",
-    "db:make-admin": "node --env-file-if-exists=.dev.vars scripts/make-admin.ts",
-    "calendar:sample": "node scripts/sample-invite.ts",
-    "resend:templates": "node --env-file-if-exists=.dev.vars scripts/create-resend-templates.ts",
-    "db:seed": "node --env-file-if-exists=.dev.vars scripts/seed.ts",
-    "i18n": "node scripts/i18n.ts",
-    "icons": "node scripts/icons.ts"
+    "db:generate": "bun run --bun drizzle-kit generate",
+    "db:migrate": "bun --env-file=.dev.vars ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:make-admin": "bun --env-file=.dev.vars scripts/make-admin.ts",
+    "calendar:sample": "bun scripts/sample-invite.ts",
+    "resend:templates": "bun --env-file=.dev.vars scripts/create-resend-templates.ts",
+    "db:seed": "bun --env-file=.dev.vars scripts/seed.ts",
+    "i18n": "bun scripts/i18n.ts",
+    "icons": "bun scripts/icons.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -71,7 +72,7 @@
     "vitest-browser-svelte": "^3.1.0",
     "wrangler": "^4.137.0"
   },
-  "packageManager": "pnpm@12.4.2",
+  "packageManager": "bun@1.4.2",
   "dependencies": {
     "@cf-wasm/resvg": "^0.4.0",
     "@fontsource-variable/cinzel": "^5.3.0",
@@ -108,5 +109,20 @@
     "xss": "^1.0.15",
     "xstate": "^5.33.2",
     "zod": "^4.6.5"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "trustedDependencies": [
+    "esbuild",
+    "workerd",
+    "supabase"
+  ],
+  "overrides": {
+    "undici@7.29.0": "7.29.1",
+    "devalue@<5.9.3": "5.9.4",
+    "cookie@<0.7.0": "0.7.2",
+    "esbuild@<0.25.0": "0.25.12"
   }
 }

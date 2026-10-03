@@ -1,0 +1,3 @@
+[install]
+# Preserve pnpm's dependency boundaries instead of exposing transitive packages at the root.
+linker = "isolated"
