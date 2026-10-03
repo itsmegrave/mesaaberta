@@ -42,6 +42,8 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
   isMobile,
 }) => {
   await page.goto('/tables');
+  // The popover answers once the page has hydrated.
+  await page.waitForLoadState('networkidle');
   // A desktop has a popover for the platforms; a phone, the "Filtros" sheet.
   await page.getByRole('button', { name: isMobile ? 'Filtros' : 'Plataformas' }).click();
   await page.getByRole('group', { name: 'Plataformas' }).getByText('Owlbear Rodeo').click();

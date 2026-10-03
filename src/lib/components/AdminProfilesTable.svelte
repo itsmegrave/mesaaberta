@@ -247,8 +247,11 @@
         value={[String(data.pageSize)]}
         placeholder={String(data.pageSize)}
         disabled={busy}
-        onchange={(picked) =>
-          table.setPagination({ pageIndex: 0, pageSize: Number(picked[0] ?? data.pageSize) })}
+        onchange={(picked) => {
+          // The list also reports the size the page already has; only a new size starts over.
+          const size = Number(picked[0] ?? data.pageSize);
+          if (size !== data.pageSize) table.setPagination({ pageIndex: 0, pageSize: size });
+        }}
       />
     </div>
     <div class="flex items-center gap-3">
