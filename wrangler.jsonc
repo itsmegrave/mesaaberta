@@ -29,7 +29,7 @@
   },
   // The database, through Hyperdrive (see "Database" in the README). The id is the Hyperdrive config,
   // not a secret. `localConnectionString` is what `wrangler dev`, `vite dev` and CI use instead:
-  // the Postgres from docker-compose.yml (`pnpm db:up`). It is ignored when deployed.
+  // the Postgres from docker-compose.yml (`bun run db:up`). It is ignored when deployed.
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
@@ -38,7 +38,7 @@
     },
   ],
   // Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
-  // `pnpm build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
+  // `bun run build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
   "triggers": { "crons": ["*/5 * * * *"] },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "workers_dev": true,
