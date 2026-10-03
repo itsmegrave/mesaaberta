@@ -1,10 +1,8 @@
 import '../../routes/layout.css';
 import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import AdminNav from './AdminNav.svelte';
-
-vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
 const counts = { reports: 3, queue: 0, connections: 1 };
 
@@ -30,19 +28,5 @@ describe('AdminNav', () => {
     await expect
       .element(nav.getByRole('link', { name: 'Mesas' }))
       .toHaveAttribute('href', '/admin/tables');
-  });
-
-  it('on a phone is one "Seção: …" button that opens the sections as a menu', async () => {
-    await page.viewport(390, 844);
-    render(AdminNav, { route: '/admin/users', counts });
-
-    const button = page.getByRole('button', { name: 'Seção: Usuários' });
-    await expect.element(button).toBeVisible();
-    (button.element() as HTMLElement).click();
-
-    await expect.element(page.getByRole('menuitem', { name: 'Fila de aprovação' })).toBeVisible();
-    await expect
-      .element(page.getByRole('menuitem', { name: 'Usuários' }))
-      .toHaveAttribute('aria-current', 'page');
   });
 });

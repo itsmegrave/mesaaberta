@@ -1,20 +1,65 @@
-import { and, desc, eq, ilike, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, systems, instagramPosts } from '../db/schema';
-import { tableFilters } from '$lib/admin/table-filters';
+import { gameTables, systems, instagramPosts, profiles } from '../db/schema';
+import { tableFilters, type InstagramFilter } from '$lib/admin/table-filters';
+import { TABLE_STATUSES, type TableStatus } from '$lib/tables/status-values';
 import { nextOccurrence } from '../tables/schedule';
+
+/** The posts the filter names; `none` is a table that never had one, or one that was skipped. */
+const instagramWhere = (filter: InstagramFilter): SQL | undefined => {
+  switch (filter) {
+    case 'all':
+      return undefined;
+    case 'published':
+      return eq(instagramPosts.status, 'published');
+    case 'queued':
+      return inArray(instagramPosts.status, ['queued', 'processing', 'publishing']);
+    case 'uncertain':
+      return eq(instagramPosts.status, 'uncertain');
+    case 'failed':
+      return eq(instagramPosts.status, 'failed');
+    case 'none':
+      return or(isNull(instagramPosts.status), eq(instagramPosts.status, 'skipped'));
+  }
+};
+
 export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = new Date()) {
   const filters = tableFilters(params);
   const search = filters.query.replace(/[\\%_]/g, '\\$&');
+  // The segmented filter counts what each status would show with the other filters kept.
+  const others = and(
+    search
+      ? or(
+          ilike(gameTables.title, `%${search}%`),
+          ilike(systems.name, `%${search}%`),
+          ilike(profiles.username, `%${search}%`),
+        )
+      : undefined,
+    instagramWhere(filters.instagram),
+  );
   const where = and(
     filters.status === 'all' ? undefined : eq(gameTables.status, filters.status),
-    search ? ilike(gameTables.title, `%${search}%`) : undefined,
+    others,
   );
-  const [count] = await db
-    .select({ total: sql<number>`count(*)`.mapWith(Number) })
+  const counted = await db
+    .select({ status: gameTables.status, total: sql<number>`count(*)`.mapWith(Number) })
     .from(gameTables)
-    .where(where);
-  const page = Math.min(filters.page, Math.max(1, Math.ceil(count.total / filters.pageSize)));
+    .innerJoin(systems, eq(systems.id, gameTables.systemId))
+    .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
+    .leftJoin(instagramPosts, eq(instagramPosts.tableId, gameTables.id))
+    .where(others)
+    .groupBy(gameTables.status);
+  const counts = Object.fromEntries(
+    TABLE_STATUSES.map((status) => [
+      status,
+      counted.find((row) => row.status === status)?.total ?? 0,
+    ]),
+  ) as Record<TableStatus, number>;
+  const all = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  const total = filters.status === 'all' ? all : counts[filters.status];
+  const page = Math.min(filters.page, Math.max(1, Math.ceil(total / filters.pageSize)));
+  const { id: sortId, dir } = filters.sort;
+  const direction = dir === 'asc' ? asc : desc;
   const rows = await db
     .select({
       id: gameTables.id,
@@ -22,6 +67,14 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = 
       title: gameTables.title,
       status: gameTables.status,
       system: systems.name,
+      gm: profiles.username,
+      gmId: profiles.id,
+      imagePath: gameTables.imagePath,
+      capacity: gameTables.capacity,
+      seats:
+        sql<number>`(select count(*) from registrations r where r.table_id = "game_tables"."id" and r.status = 'confirmed')`.mapWith(
+          Number,
+        ),
       startsAt: gameTables.startsAt,
       kind: gameTables.kind,
       recurrence: gameTables.recurrence,
@@ -32,14 +85,19 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = 
     })
     .from(gameTables)
     .innerJoin(systems, eq(systems.id, gameTables.systemId))
+    .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
     .leftJoin(instagramPosts, eq(instagramPosts.tableId, gameTables.id))
     .where(where)
-    .orderBy(desc(gameTables.createdAt), desc(gameTables.id))
+    .orderBy(
+      sortId === 'title' ? direction(gameTables.title) : direction(gameTables.createdAt),
+      direction(gameTables.id),
+    )
     .limit(filters.pageSize)
     .offset((page - 1) * filters.pageSize);
   return {
     rows: rows.map((row) => ({ ...row, nextAt: nextOccurrence(row, now) })),
-    total: count.total,
+    total,
+    counts: { all, ...counts },
     ...filters,
     page,
   };

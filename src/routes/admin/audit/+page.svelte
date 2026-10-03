@@ -1,10 +1,13 @@
 <script lang="ts">
-  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import UserText from '$lib/components/UserText.svelte';
   import { page } from '$app/state';
-  import { pageHref } from '$lib/admin/page-href';
-  import Icon from '$lib/components/Icon.svelte';
+  import AdminPage from '$lib/components/admin/AdminPage.svelte';
+  import ListSearch from '$lib/components/admin/ListSearch.svelte';
+  import Pager from '$lib/components/admin/Pager.svelte';
+  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
+  import UserText from '$lib/components/UserText.svelte';
+  import { dayLabel, timeLabel } from '$lib/admin/format';
+  import { listPath, listQuery, pageRange } from '$lib/admin/list';
+  import { AUDIT_KINDS, type AuditKind } from '$lib/admin/report-filters';
   import { localizedHref } from '$lib/i18n/locales';
   import { atHandle } from '$lib/profile/handle';
   import type { AuditLog } from '$lib/server/moderation/admin';
@@ -13,12 +16,35 @@
 
   let { data } = $props();
   const locale = getLocale();
-  const when = (value: Date) =>
-    new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: data.viewer.timezone,
-    }).format(value);
+  const zone = $derived(data.viewer.timezone);
+  const kindLabel = (kind: AuditKind) =>
+    ({
+      all: m.admin_audit_kind_all,
+      reports: m.admin_audit_kind_reports,
+      accounts: m.admin_audit_kind_accounts,
+      tables: m.admin_audit_kind_tables,
+      catalog: m.admin_audit_kind_catalog,
+      announcements: m.admin_audit_kind_announcements,
+    })[kind]();
+  const kinds = AUDIT_KINDS.map((value) => ({ value, label: kindLabel(value) }));
+  // The log is newest first, so the day headings follow the rows in order.
+  const days = $derived.by(() => {
+    const groups: { day: string; rows: AuditLog['rows'] }[] = [];
+    for (const row of data.log.rows) {
+      const day = dayLabel(row.at, locale, zone);
+      const last = groups.at(-1);
+      if (last?.day === day) last.rows.push(row);
+      else groups.push({ day, rows: [row] });
+    }
+    return groups;
+  });
+  const range = $derived(pageRange(data.log.page, data.log.pageSize, data.log.total));
+  const pageLink = (next: number) =>
+    localizedHref(
+      listPath(page.url.pathname, listQuery(page.url.searchParams, { page: next })),
+      locale,
+    );
+  const filtered = $derived(data.log.kind !== 'all' || !!data.log.query);
   const handle = (username: string | null) =>
     username ? atHandle(username) : m.admin_profile_no_username();
 
@@ -68,67 +94,84 @@
 
 <svelte:head><title>{m.admin_audit_title()} | Mesa Aberta</title></svelte:head>
 
-<section class="py-6 md:py-10">
-  <Breadcrumbs
-    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_audit_title() }]}
-    class="mb-6"
-  />
-  <AdminPageHead title={m.admin_audit_title()} lede={m.admin_audit_lede()} />
+<AdminPage title={m.admin_audit_title()} lede={m.admin_audit_lede()}>
+  <section
+    aria-label={m.admin_audit_title()}
+    class="mt-6 rounded-lg border border-surface-200-800 bg-panel"
+  >
+    <div class="grid gap-3 border-b border-surface-200-800 p-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <ListSearch value={data.log.query} label={m.admin_audit_search()} />
+        <p role="status" class="ml-auto text-sm font-semibold text-muted">
+          {m.admin_audit_total({ count: data.log.total })}
+        </p>
+      </div>
+      <SegmentedFilter
+        name="kind"
+        label={m.admin_audit_kind()}
+        options={kinds}
+        value={data.log.kind}
+      />
+    </div>
 
-  {#if data.log.rows.length === 0}
-    <p class="mt-8 rounded-lg border border-surface-200-800 bg-panel p-6" role="status">
-      {m.admin_audit_empty()}
-    </p>
-  {:else}
-    <ol class="mt-8 grid max-w-3xl gap-4">
-      {#each data.log.rows as entry (entry.id)}
-        <li class="border-l-2 border-surface-200-800 pl-4">
-          <p class="font-semibold wrap-break-word">
-            <UserText text={entryText(entry)} username={entry.subject} />
-            {#if entry.reportId}
-              <a
-                class="ml-1 anchor text-sm font-normal"
-                href={localizedHref(`/admin/reports/${entry.reportId}`, locale)}
-                >{m.admin_audit_see_report()}</a
+    {#if data.log.rows.length === 0}
+      <p class="p-6 text-center text-muted" role="status">
+        {filtered ? m.admin_audit_filtered_empty() : m.admin_audit_empty()}
+      </p>
+      {#if filtered}
+        <p class="pb-6 text-center">
+          <a
+            class="inline-flex min-h-11 items-center anchor font-semibold"
+            href={localizedHref(page.url.pathname, locale)}>{m.admin_list_clear()}</a
+          >
+        </p>
+      {/if}
+    {:else}
+      {#each days as group (group.day)}
+        <h2 class="bg-surface-wash px-4 py-2 text-sm font-semibold text-muted">{group.day}</h2>
+        <ol class="divide-y divide-surface-200-800">
+          {#each group.rows as entry (entry.id)}
+            <li class="flex min-h-17 items-start gap-4 px-4 py-3">
+              <time
+                datetime={entry.at.toISOString()}
+                class="w-24 shrink-0 pt-0.5 text-sm text-muted tabular-nums"
+                >{timeLabel(entry.at, locale, zone)}</time
               >
-            {/if}
-          </p>
-          <p class="text-sm text-muted">
-            {#if entry.by}<UserText
-                text={m.admin_decision_by({ username: entry.by })}
-                username={entry.by}
-              />{:else}{m.admin_decision_by_gone()}{/if} ·
-            <time datetime={entry.at.toISOString()}>{when(entry.at)}</time>
-          </p>
-        </li>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold wrap-break-word">
+                  <UserText text={entryText(entry)} username={entry.subject} />
+                  {#if entry.reportId}
+                    <a
+                      class="ml-1 anchor text-sm font-normal"
+                      href={localizedHref(`/admin/reports/${entry.reportId}`, locale)}
+                      >{m.admin_audit_see_report()}</a
+                    >
+                  {/if}
+                </p>
+                <p class="text-sm text-muted">
+                  {#if entry.by}<UserText
+                      text={m.admin_decision_by({ username: entry.by })}
+                      username={entry.by}
+                    />{:else}{m.admin_decision_by_gone()}{/if}
+                </p>
+              </div>
+            </li>
+          {/each}
+        </ol>
       {/each}
-    </ol>
-  {/if}
+    {/if}
 
-  {#if data.log.pages > 1}
-    <nav
-      aria-label={m.admin_pagination()}
-      class="mt-6 flex max-w-3xl flex-wrap items-center justify-end gap-3"
+    <div
+      class="flex flex-wrap items-center justify-between gap-4 border-t border-surface-200-800 px-4 py-3"
     >
-      <span class="text-sm"
-        >{m.admin_profile_page({ page: data.log.page, pages: data.log.pages })}</span
-      >
-      {#if data.log.page > 1}
-        <a
-          class="btn size-11 rounded-lg border border-surface-200-800 p-0"
-          href={pageHref('/admin/audit', page.url.searchParams, data.log.page - 1, locale)}
-          aria-label={m.admin_profile_previous()}
-          title={m.admin_profile_previous()}><Icon name="chevron-left" /></a
-        >
-      {/if}
-      {#if data.log.page < data.log.pages}
-        <a
-          class="btn size-11 rounded-lg border border-surface-200-800 p-0"
-          href={pageHref('/admin/audit', page.url.searchParams, data.log.page + 1, locale)}
-          aria-label={m.admin_profile_next()}
-          title={m.admin_profile_next()}><Icon name="chevron-right" /></a
-        >
-      {/if}
-    </nav>
-  {/if}
-</section>
+      <p class="text-sm text-muted" aria-live="polite">
+        {#if data.log.total > 0}{m.admin_list_range({
+            from: range.from,
+            to: range.to,
+            total: m.admin_audit_total({ count: data.log.total }),
+          })}{/if}
+      </p>
+      <Pager page={data.log.page} pages={data.log.pages} href={pageLink} />
+    </div>
+  </section>
+</AdminPage>

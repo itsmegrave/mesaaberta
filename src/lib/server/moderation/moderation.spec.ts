@@ -225,6 +225,22 @@ describe('the report queue', () => {
     expect(closed?.rows).toHaveLength(0);
   });
 
+  it('counts what each status would show, and narrows to tables or players', async () => {
+    const table = await makeTable();
+    await fileReport(test.db, member(2), table.slug, { ...tableReport, details: '' });
+
+    const all = await listReports(test.db, admin, new URLSearchParams());
+    expect(all?.counts).toMatchObject({ all: 1, waiting: 1, resolved: 0, dismissed: 0 });
+    expect(all?.rows[0]).toMatchObject({ targetType: 'table', table: table.title });
+    expect(all?.rows[0].gm).toEqual(expect.any(String));
+    // Counts follow the kind of report, so "Perfis" shows none of the table's.
+    const players = await listReports(test.db, admin, new URLSearchParams('target=player'));
+    expect(players?.counts).toMatchObject({ all: 0, waiting: 0 });
+    expect(players?.rows).toHaveLength(0);
+    const oldest = await listReports(test.db, admin, new URLSearchParams('sort=filed&dir=asc'));
+    expect(oldest?.sort).toEqual({ id: 'filed', dir: 'asc' });
+  });
+
   it('moves a report from open to reviewing to resolved, once each', async () => {
     const table = await makeTable();
     await fileReport(test.db, member(2), table.slug, { ...tableReport, details: '' });
@@ -439,7 +455,7 @@ describe('auditLog', () => {
     const byBan = await makeTable();
     await banAccount(test.db, admin, gm.id, { until: null, reason: 'x' });
 
-    const log = await auditLog(test.db, admin, 1);
+    const log = await auditLog(test.db, admin, new URLSearchParams());
     const types = log!.rows.map((row) => row.type);
     expect(types).toContain('AccountBanned');
     // The ban closed the open table (an admin did it); the GM's own cancellation is not a decision.
@@ -452,8 +468,27 @@ describe('auditLog', () => {
       by: 'admin',
       subject: 'm1',
     });
-    expect(await auditLog(test.db, admin, 2)).toBeNull();
-    await expect(auditLog(test.db, member(2), 1)).rejects.toBeInstanceOf(Forbidden);
+    expect(await auditLog(test.db, admin, new URLSearchParams('page=2'))).toBeNull();
+    await expect(auditLog(test.db, member(2), new URLSearchParams())).rejects.toBeInstanceOf(
+      Forbidden,
+    );
+  });
+
+  it('narrows the log to one kind of decision and to what the admin typed', async () => {
+    await makeTable();
+    await banAccount(test.db, admin, gm.id, { until: null, reason: 'x' });
+
+    const accounts = await auditLog(test.db, admin, new URLSearchParams('kind=accounts'));
+    expect(accounts!.rows.map((row) => row.type)).toEqual(['AccountBanned']);
+    expect(accounts!.total).toBe(1);
+    const tables = await auditLog(test.db, admin, new URLSearchParams('kind=tables'));
+    expect(tables!.rows.every((row) => row.type === 'TableDisabled')).toBe(true);
+    // The admin who decided is found by their @, with or without it.
+    const byAdmin = await auditLog(test.db, admin, new URLSearchParams('q=@admin'));
+    expect(byAdmin!.total).toBeGreaterThan(0);
+    const nobody = await auditLog(test.db, admin, new URLSearchParams('q=ninguem-assim'));
+    expect(nobody!.total).toBe(0);
+    expect(nobody!.rows).toEqual([]);
   });
 });
 

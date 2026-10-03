@@ -22,6 +22,14 @@ const show = (over = {}) =>
       seats: { confirmed: 12, pending: 0 },
       queue: { pending: 1, failed: 0 },
       suggestions: { platforms: 0, tags: 0 },
+      attention: {
+        reports: { oldestAt: null },
+        posts: { count: 0, first: null },
+        awaiting: { count: 0, first: null },
+        suggestions: { platforms: 0, tags: 0, duplicates: 0 },
+      },
+      recent: [],
+      adminCounts: { reports: 0, queue: 0, connections: 0 },
       updatedAt: new Date('2026-10-02T12:00:00Z'),
       viewer: { timezone: 'America/Sao_Paulo' },
       ...over,
@@ -90,8 +98,46 @@ describe('admin overview', () => {
   it('puts "Ver plataforma" in the title’s 3 dots', async () => {
     show();
 
-    await page.getByRole('button', { name: 'Mais ações: Visão geral da plataforma' }).click();
+    await page.getByRole('button', { name: 'Mais ações: Visão geral' }).click();
 
     await expect.element(page.getByRole('menuitem', { name: 'Ver plataforma' })).toBeVisible();
+  });
+
+  it('lists what waits on an admin, and says when nothing does', async () => {
+    show();
+    await expect.element(page.getByText('Nada esperando por você agora.')).toBeVisible();
+
+    show({
+      adminCounts: { reports: 2, queue: 0, connections: 0 },
+      attention: {
+        reports: { oldestAt: new Date('2026-10-01T12:00:00Z') },
+        posts: { count: 0, first: null },
+        awaiting: { count: 0, first: null },
+        suggestions: { platforms: 1, tags: 2, duplicates: 1 },
+      },
+    });
+    await expect.element(page.getByText('Denúncias aguardando')).toBeVisible();
+    await expect.element(page.getByText('Sugestões no catálogo')).toBeVisible();
+  });
+
+  it('lists the newest tables', async () => {
+    show({
+      recent: [
+        {
+          id: 't1',
+          slug: 'cripta',
+          title: 'A cripta esquecida',
+          status: 'active',
+          system: 'D&D 5e',
+          gm: 'ana',
+          gmId: 'g1',
+          cover: null,
+          startsAt: new Date('2026-10-10T22:00:00Z'),
+          timezone: 'America/Sao_Paulo',
+          nextAt: new Date('2026-10-10T22:00:00Z'),
+        },
+      ],
+    });
+    await expect.element(page.getByRole('link', { name: 'A cripta esquecida' })).toBeVisible();
   });
 });

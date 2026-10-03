@@ -10,7 +10,20 @@
     | 'table:not_held'
     | 'table:disabled'
     | 'seat:pending'
-    | 'seat:confirmed';
+    | 'seat:confirmed'
+    | 'report:open'
+    | 'report:reviewing'
+    | 'report:resolved'
+    | 'report:dismissed'
+    | 'catalog:approved'
+    | 'catalog:pending'
+    | 'catalog:disabled'
+    | 'notification:delivered'
+    | 'notification:pending'
+    | 'notification:failed'
+    | 'instagram:connected'
+    | 'instagram:expired'
+    | 'instagram:disconnected';
 </script>
 
 <script lang="ts">
@@ -41,6 +54,32 @@
     'table:disabled': { label: () => m.status_table_disabled(), dot: 'bg-surface-500' },
     'seat:pending': { label: () => m.status_seat_pending(), dot: 'bg-warning-500' },
     'seat:confirmed': { label: () => m.status_seat_confirmed(), dot: 'bg-success-500' },
+    // Admin only: a report waits (open, in review), or it was decided (accepted, archived).
+    'report:open': { label: () => m.report_status_open(), dot: 'bg-error-500' },
+    'report:reviewing': { label: () => m.report_status_reviewing(), dot: 'bg-warning-500' },
+    'report:resolved': { label: () => m.report_status_resolved(), dot: 'bg-success-500' },
+    'report:dismissed': {
+      label: () => m.report_status_dismissed(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    'catalog:approved': { label: () => m.admin_catalog_status_approved(), dot: 'bg-success-500' },
+    'catalog:pending': { label: () => m.admin_catalog_status_pending(), dot: 'bg-warning-500' },
+    'catalog:disabled': { label: () => m.admin_catalog_status_disabled(), dot: 'bg-surface-500' },
+    'notification:delivered': {
+      label: () => m.admin_history_status_delivered(),
+      dot: 'bg-success-500',
+    },
+    'notification:pending': {
+      label: () => m.admin_history_status_pending(),
+      dot: 'bg-warning-500',
+    },
+    'notification:failed': { label: () => m.admin_history_status_failed(), dot: 'bg-error-500' },
+    'instagram:connected': { label: () => m.instagram_status_connected(), dot: 'bg-success-500' },
+    'instagram:expired': { label: () => m.instagram_status_expired(), dot: 'bg-warning-500' },
+    'instagram:disconnected': {
+      label: () => m.instagram_status_disconnected(),
+      dot: 'bg-surface-500',
+    },
   };
   const look = $derived(LOOKS[status]);
 </script>

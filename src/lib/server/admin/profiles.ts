@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { profiles } from '../db/schema';
 import { standingOf } from '$lib/profile/standing';
@@ -18,15 +18,21 @@ export async function listAdminProfiles(db: AnyDb, params: URLSearchParams) {
     suspended: and(eq(profiles.status, 'suspended'), sql`not coalesce(${banned}, false)`),
     banned,
   };
-  const where = and(
-    filters.status === 'all' ? undefined : byStanding[filters.status],
-    search ? ilike(profiles.username, `%${search}%`) : undefined,
-  );
-  const [count] = await db
-    .select({ total: sql<number>`count(*)`.mapWith(Number) })
+  const matching = search ? ilike(profiles.username, `%${search}%`) : undefined;
+  const where = and(filters.status === 'all' ? undefined : byStanding[filters.status], matching);
+  // The segmented filter counts what each standing would show with the search kept.
+  const [counted] = await db
+    .select({
+      all: sql<number>`count(*)`.mapWith(Number),
+      active: sql<number>`count(*) filter (where ${byStanding.active})`.mapWith(Number),
+      suspended: sql<number>`count(*) filter (where ${byStanding.suspended})`.mapWith(Number),
+      banned: sql<number>`count(*) filter (where ${banned})`.mapWith(Number),
+    })
     .from(profiles)
-    .where(where);
-  const page = Math.min(filters.page, Math.max(1, Math.ceil(count.total / filters.pageSize)));
+    .where(matching);
+  const total = filters.status === 'all' ? counted.all : counted[filters.status];
+  const page = Math.min(filters.page, Math.max(1, Math.ceil(total / filters.pageSize)));
+  const direction = filters.sort.dir === 'asc' ? asc : desc;
   const rows = await db
     .select({
       id: profiles.id,
@@ -50,7 +56,12 @@ export async function listAdminProfiles(db: AnyDb, params: URLSearchParams) {
     })
     .from(profiles)
     .where(where)
-    .orderBy(desc(profiles.createdAt), desc(profiles.id))
+    .orderBy(
+      filters.sort.id === 'user'
+        ? direction(sql`lower(coalesce(${profiles.username}, ''))`)
+        : direction(profiles.createdAt),
+      direction(profiles.id),
+    )
     .limit(filters.pageSize)
     .offset((page - 1) * filters.pageSize);
   return {
@@ -58,7 +69,8 @@ export async function listAdminProfiles(db: AnyDb, params: URLSearchParams) {
       ...row,
       standing: standingOf({ status: row.status, bannedAt, bannedUntil }),
     })),
-    total: count.total,
+    total,
+    counts: counted,
     ...filters,
     page,
   };

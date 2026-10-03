@@ -1,4 +1,5 @@
 import { and, asc, count, desc, eq, ilike, inArray, ne, sql } from 'drizzle-orm';
+import type { Sort } from '$lib/admin/list';
 import { slugify } from '$lib/slug';
 import { SUGGESTION_NAME } from '$lib/tables/catalog';
 import type { AnyDb } from '../db/client';
@@ -203,29 +204,72 @@ export type CatalogRow = {
   uses: number;
 };
 
+export const CATALOG_STATUS_FILTERS = ['all', 'active', 'disabled'] as const;
+export type CatalogStatusFilter = (typeof CATALOG_STATUS_FILTERS)[number];
+export const CATALOG_SORTS = ['name', 'uses'] as const;
+
 /**
  * One kind's entries for the admin catalog: with how many tables use each, and where it came from.
+ * `active` is what GMs can pick (approved, or waiting for approval), `disabled` what was retired.
  * A page past the last comes back empty; the route answers it with a 404.
  */
 export async function listCatalogAdmin(
   db: AnyDb,
   kind: CatalogKind,
-  { query = '', page = 1 }: { query?: string; page?: number } = {},
-): Promise<{ rows: CatalogRow[]; total: number; page: number; pages: number }> {
+  {
+    query = '',
+    page = 1,
+    pageSize = CATALOG_PAGE_SIZE,
+    status = 'all',
+    sort,
+  }: {
+    query?: string;
+    page?: number;
+    pageSize?: number;
+    status?: CatalogStatusFilter;
+    sort?: Sort<(typeof CATALOG_SORTS)[number]> | null;
+  } = {},
+): Promise<{
+  rows: CatalogRow[];
+  total: number;
+  page: number;
+  pages: number;
+  pageSize: number;
+  counts: Record<CatalogStatusFilter, number>;
+}> {
   const table = tableOf(kind);
   const link = linkOf(kind);
   const search = query.trim().replace(/[\\%_]/g, '\\$&');
-  const where = and(
+  const matching = and(
     ne(table.status, 'rejected'),
     search ? ilike(table.name, `%${search}%`) : undefined,
   );
-  const [{ total }] = await db.select({ total: count() }).from(table).where(where);
-  const pages = Math.max(1, Math.ceil(total / CATALOG_PAGE_SIZE));
+  const disabled = eq(table.status, 'disabled');
+  const where = and(
+    matching,
+    status === 'all' ? undefined : status === 'disabled' ? disabled : ne(table.status, 'disabled'),
+  );
+  const [counted] = await db
+    .select({
+      all: count(),
+      disabled: sql<number>`count(*) filter (where ${disabled})`.mapWith(Number),
+    })
+    .from(table)
+    .where(matching);
+  const counts = {
+    all: counted.all,
+    disabled: counted.disabled,
+    active: counted.all - counted.disabled,
+  };
+  const total = counts[status];
+  const pages = Math.max(1, Math.ceil(total / pageSize));
   const uses = db
     .select({ id: linkColumn(kind), uses: count().as('uses') })
     .from(link)
     .groupBy(linkColumn(kind))
     .as('uses');
+  const direction = sort?.dir === 'desc' ? desc : asc;
+  const usesOf = sql`coalesce(${uses.uses}, 0)`;
   const rows = await db
     .select({
       id: table.id,
@@ -239,10 +283,16 @@ export async function listCatalogAdmin(
     .leftJoin(profiles, eq(profiles.id, table.suggestedBy))
     .leftJoin(uses, eq(uses.id, table.id))
     .where(where)
-    .orderBy(asc(table.position), asc(table.name))
-    .limit(CATALOG_PAGE_SIZE)
-    .offset((page - 1) * CATALOG_PAGE_SIZE);
-  return { rows, total, page, pages };
+    .orderBy(
+      ...(sort?.id === 'uses'
+        ? [direction(usesOf), asc(table.name)]
+        : sort?.id === 'name'
+          ? [direction(sql`lower(${table.name})`)]
+          : [asc(table.position), asc(table.name)]),
+    )
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+  return { rows, total, page, pages, pageSize, counts };
 }
 
 async function entry(db: AnyDb, kind: CatalogKind, id: string) {

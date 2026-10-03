@@ -48,6 +48,35 @@ it('paginates all admin tables and joins publishing status without private field
   expect(last.page).toBe(2);
   expect(last.rows).toHaveLength(2);
 });
+it('counts what each status shows, and tells who runs the table and how many seats are taken', async () => {
+  const data = await listAdminTables(test.db, new URLSearchParams(), now);
+  expect(data.counts).toMatchObject({ all: 22, active: 21, disabled: 1 });
+  expect(data.rows[0]).toMatchObject({ capacity: 5, seats: 0 });
+  expect(data.rows[0]).toHaveProperty('gm');
+  // The counts follow the search, not the status picked.
+  const searched = await listAdminTables(
+    test.db,
+    new URLSearchParams('q=Mesa 2&status=disabled'),
+    now,
+  );
+  expect(searched.counts.all).toBe(3);
+  expect(searched.total).toBe(0);
+});
+
+it('filters by the state of the Instagram post and orders by title when asked', async () => {
+  const published = await listAdminTables(test.db, new URLSearchParams('instagram=published'), now);
+  expect(published.total).toBe(1);
+  expect(published.rows[0].title).toBe('Mesa 21');
+  expect((await listAdminTables(test.db, new URLSearchParams('instagram=none'), now)).total).toBe(
+    21,
+  );
+  expect((await listAdminTables(test.db, new URLSearchParams('instagram=failed'), now)).total).toBe(
+    0,
+  );
+  const byTitle = await listAdminTables(test.db, new URLSearchParams('sort=title&dir=asc'), now);
+  expect(byTitle.rows[0].title).toBe('Mesa 1');
+});
+
 it('filters title literally and includes disabled tables for admins', async () => {
   const data = await listAdminTables(test.db, new URLSearchParams('q=100%&status=disabled'), now);
   expect(data.total).toBe(1);

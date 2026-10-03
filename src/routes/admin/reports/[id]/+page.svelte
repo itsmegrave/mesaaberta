@@ -1,9 +1,10 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import AdminPage from '$lib/components/admin/AdminPage.svelte';
+  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
   import { localizedHref } from '$lib/i18n/locales';
-  import { reasonLabel, reportStatusLabel } from '$lib/moderation/labels';
+  import { reasonLabel } from '$lib/moderation/labels';
   import {
     banFromReportSchema,
     closeReportSchema,
@@ -52,41 +53,33 @@
 
 <svelte:head><title>{m.admin_report_title()} | Mesa Aberta</title></svelte:head>
 
-<section class="py-6 md:py-10">
-  <Breadcrumbs
-    items={[
-      { label: m.nav_admin(), href: '/admin' },
-      { label: m.admin_reports_title(), href: '/admin/reports' },
-      { label: m.admin_report_title() },
-    ]}
-    class="mb-6"
-  />
-
-  <header class="min-w-0">
-    <p class="font-semibold text-muted">
-      {isTable ? m.admin_report_kind_table() : m.admin_report_kind_player()}
-    </p>
-    <h1 class="mt-1 text-3xl leading-tight font-semibold wrap-break-word md:text-5xl">
-      {#if isTable}{target}{:else}<UserLink
-          username={report.player?.username}
-          label={target}
-        />{/if}
-    </h1>
-    <p class="mt-3 flex flex-wrap items-center gap-3">
-      <span class={chip}>{reportStatusLabel(report.report.status)}</span>
+<AdminPage
+  title={target}
+  eyebrow={m.admin_report_eyebrow({ date: when(report.report.createdAt) })}
+  crumbs={[
+    { label: m.nav_admin(), href: '/admin' },
+    { label: m.admin_reports_title(), href: '/admin/reports' },
+    { label: m.admin_report_title() },
+  ]}
+>
+  {#snippet status()}
+    <p class="flex flex-wrap items-center gap-3">
+      <StatusBadge status={`report:${report.report.status}` as Status} />
       <span class="text-sm text-muted">
-        {reasonLabel(report.report.reason)} · {when(report.report.createdAt)}
+        {isTable ? m.admin_report_kind_table() : m.admin_report_kind_player()} · {reasonLabel(
+          report.report.reason,
+        )}
       </span>
     </p>
-  </header>
+  {/snippet}
 
-  <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)] lg:gap-12">
-    <div class="grid content-start gap-8">
+  <div class="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="grid content-start gap-6">
       <section
         aria-labelledby="report-what"
-        class="rounded-lg border border-surface-200-800 bg-panel p-6"
+        class="rounded-lg border border-surface-200-800 bg-panel p-5"
       >
-        <h2 id="report-what" class="text-xl font-semibold">{m.admin_report_what()}</h2>
+        <h2 id="report-what" class="text-lg font-semibold">{m.admin_report_what()}</h2>
         <dl class="mt-4 divide-y divide-surface-200-800 border-y border-surface-200-800">
           <div class={row}>
             <dt class="text-sm font-semibold text-muted">{m.report_reason()}</dt>
@@ -132,9 +125,9 @@
 
       <section
         aria-labelledby="report-context"
-        class="rounded-lg border border-surface-200-800 bg-panel p-6"
+        class="rounded-lg border border-surface-200-800 bg-panel p-5"
       >
-        <h2 id="report-context" class="text-xl font-semibold">{m.admin_report_context()}</h2>
+        <h2 id="report-context" class="text-lg font-semibold">{m.admin_report_context()}</h2>
         <dl class="mt-4 divide-y divide-surface-200-800 border-y border-surface-200-800">
           {#if report.player}
             <div class={row}>
@@ -200,8 +193,11 @@
       </section>
     </div>
 
-    <aside aria-labelledby="report-actions" class="grid content-start gap-3">
-      <h2 id="report-actions" class="text-xl font-semibold">{m.admin_report_actions()}</h2>
+    <aside
+      aria-labelledby="report-actions"
+      class="grid h-fit content-start gap-3 rounded-lg border border-surface-200-800 bg-panel p-5 xl:sticky xl:top-6"
+    >
+      <h2 id="report-actions" class="text-lg font-semibold">{m.admin_report_decision()}</h2>
       {#if !report.can.close}
         <p class="text-muted">{m.admin_report_nothing_left()}</p>
       {/if}
@@ -288,4 +284,4 @@
       {/if}
     </aside>
   </div>
-</section>
+</AdminPage>

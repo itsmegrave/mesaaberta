@@ -162,7 +162,10 @@ test('an admin approves, renames and rejects suggestions, and each decision is l
   await page.screenshot({ path: testInfo.outputPath('admin-queue.png'), fullPage: true });
 });
 
-test('the catalog lists, searches, pages with ?page=N and merges', async ({ page }, testInfo) => {
+test('the catalog lists, searches, pages with ?page=N and merges', async ({
+  page,
+  isMobile,
+}, testInfo) => {
   const gm = await createUser('Mestre Catálogo');
   const admin = await createUser('Catálogo Admin', { role: 'admin' });
   const stamp = Date.now().toString(36);
@@ -170,21 +173,28 @@ test('the catalog lists, searches, pages with ?page=N and merges', async ({ page
   await suggest('platforms', names, gm.id);
 
   await signIn(page, admin, `/admin/catalog?q=${stamp}`);
-  await expect(page.getByText('Página 1 de 2')).toBeVisible();
-  await expect(page.locator('tbody tr')).toHaveCount(20);
-  await page.getByRole('link', { name: 'Próxima página' }).click();
-  await expect(page).toHaveURL(/page=2/);
-  await expect(page.locator('tbody tr')).toHaveCount(2);
+  const rows = isMobile ? page.getByTestId('list-rows').locator('> li') : page.locator('tbody tr');
+  await expect(rows).toHaveCount(20);
+  // A phone has no page numbers: "Mostrar mais" asks for the next size, and the address says so.
+  await page
+    .getByRole('link', { name: isMobile ? /Mostrar mais/ : 'Próxima página' })
+    .locator('visible=true')
+    .click();
+  await expect(page).toHaveURL(isMobile ? /size=50/ : /page=2/);
+  await expect(rows).toHaveCount(isMobile ? 22 : 2);
   expect((await page.goto(`/admin/catalog?q=${stamp}&page=3`))?.status()).toBe(404);
   expect((await page.goto(`/admin/catalog?q=${stamp}&page=abc`))?.status()).toBe(200);
 
   await page.goto(`/admin/catalog?q=${names[0]}`);
-  await page.getByRole('button', { name: `Mais ações: ${names[0]}` }).click();
+  await page
+    .getByRole('button', { name: `Mais ações: ${names[0]}` })
+    .locator('visible=true')
+    .click();
   await page.getByRole('menuitem', { name: 'Mesclar em outra entrada…' }).click();
   await pickFromSearch(page, 'Mesclar com', 'Discord');
   await page.getByRole('button', { name: 'Mesclar', exact: true }).last().click();
   await expect(page.getByText('Entradas mescladas.')).toBeVisible();
-  await expect(page.getByText('Nenhuma entrada encontrada.')).toBeVisible();
+  await expect(page.getByText('Nenhuma entrada encontrada.').locator('visible=true')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-catalog.png'), fullPage: true });
 
   await page.getByRole('button', { name: 'Nova plataforma' }).click();
