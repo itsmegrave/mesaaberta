@@ -1,0 +1,2 @@
+ALTER TABLE "registrations" ADD COLUMN "message" text;--> statement-breakpoint
+ALTER TABLE "registrations" ADD CONSTRAINT "registrations_message_length" CHECK (char_length("registrations"."message") <= 500);

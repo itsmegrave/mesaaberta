@@ -17,6 +17,8 @@ test('the GM approves a request and removes a player from the manage page, after
   const { page, context } = await asUser(browser, bruno);
   await page.goto(`/tables/${slug}`);
   await page.getByRole('button', { name: 'Pedir vaga' }).click();
+  await page.getByLabel(/Mensagem para o mestre/).fill('Sou o Bruno, nunca joguei Tormenta.');
+  await page.getByRole('button', { name: 'Enviar pedido' }).click();
   await expect(page.getByText(/pedido/i).first()).toBeVisible();
 
   // From Minhas mesas, "Gerenciar mesa" opens the manage page.
@@ -36,6 +38,7 @@ test('the GM approves a request and removes a player from the manage page, after
 
   const requests = gmPage.getByRole('region', { name: 'Pedidos de vaga' });
   await expect(requests.getByText(`@${bruno.username}`)).toBeVisible();
+  await expect(requests.getByText('Sou o Bruno, nunca joguei Tormenta.')).toBeVisible();
   await requests.getByRole('button', { name: 'Aprovar' }).click();
 
   const players = gmPage.getByRole('region', { name: 'Participantes' });

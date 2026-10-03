@@ -52,8 +52,8 @@
       entrar (link ou endereço, visível só para você e os jogadores confirmados).
     </li>
     <li>
-      As mesas em que você entra ou pede vaga, e o andamento desses pedidos (aprovado, recusado,
-      saída).
+      As mesas em que você entra ou pede vaga, a mensagem de apresentação do pedido, se escrever
+      uma, e o andamento desses pedidos (aprovado, recusado, saída).
     </li>
     <li>As avaliações que você dá aos mestres, com o comentário, se escrever um.</li>
   </ul>
@@ -119,7 +119,10 @@
       Nas mesas que você abre, qualquer visitante vê o seu nome de usuário como mestre e as notas
       médias da mesa e do mestre.
     </li>
-    <li>O mestre de uma mesa vê o nome de usuário de quem entrou ou pediu vaga nela.</li>
+    <li>
+      O mestre de uma mesa vê o nome de usuário de quem entrou ou pediu vaga nela, e a mensagem de
+      apresentação que a pessoa escreveu ao pedir.
+    </li>
     <li>
       As mensagens só são vistas por quem participa da conversa: o mestre e os jogadores confirmados
       no chat de uma mesa, ou as duas pessoas de uma conversa direta. Quem sai da mesa perde o

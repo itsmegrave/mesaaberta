@@ -136,11 +136,15 @@ test.describe('a table where the GM approves each player', () => {
 
     await page.goto(`/tables/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await page.getByLabel(/Mensagem para o mestre/).fill('Oi! Jogo há dois anos.');
+    await page.getByRole('button', { name: 'Enviar pedido' }).click();
     await expect(
       page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
     ).toBeVisible();
     await expect(page.getByText(seats(5)).first()).toBeVisible(); // a request takes no seat
 
+    await gmPage.goto(`/tables/${slug}`);
+    await expect(gmPage.getByText('Oi! Jogo há dois anos.')).toBeVisible();
     await gmPage.goto('/account/tables');
     await expect(gmPage.getByRole('heading', { name: 'Pedidos de vaga (1)' })).toBeVisible();
     await expect(gmPage.getByText(players[0].username)).toBeVisible();
@@ -163,6 +167,7 @@ test.describe('a table where the GM approves each player', () => {
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/tables/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await page.getByRole('button', { name: 'Enviar pedido' }).click();
     // The request has to be recorded before the GM's dashboard can list it.
     await expect(
       page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
@@ -190,6 +195,7 @@ test.describe('a table where the GM approves each player', () => {
     for (const { page } of [first, second]) {
       await page.goto(`/tables/${slug}`);
       await page.getByRole('button', { name: 'Pedir vaga' }).click();
+      await page.getByRole('button', { name: 'Enviar pedido' }).click();
       await expect(
         page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
       ).toBeVisible();
@@ -287,6 +293,7 @@ test.describe('ratings', () => {
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/tables/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await page.getByRole('button', { name: 'Enviar pedido' }).click();
 
     const sql = database();
     try {

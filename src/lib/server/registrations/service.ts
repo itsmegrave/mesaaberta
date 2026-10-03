@@ -67,13 +67,14 @@ const record = (
  * The signed-in player takes a seat, or asks for one when the GM approves each player. The seat
  * count is read under the table lock, so the last seat goes to exactly one of two racing players.
  * Throws `RateLimited` past `JOIN_LIMIT`, but only for a join that would otherwise have worked, so
- * a full table or a repeat join never uses the limit up.
+ * a full table or a repeat join never uses the limit up. `message` is the player's optional
+ * introduction to the GM, kept only with a request.
  */
 export async function joinTable(
   db: AnyDb,
   actor: Actor | null,
   slug: string,
-  { now = new Date() }: { now?: Date } = {},
+  { now = new Date(), message = null }: { now?: Date; message?: string | null } = {},
 ) {
   return db.transaction(async (tx) => {
     const table = await lockTable(tx, slug);
@@ -93,7 +94,13 @@ export async function joinTable(
     await enforceRateLimit(asDb(tx), actor!.id, JOIN_LIMIT, now);
 
     const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
-    await tx.insert(registrations).values({ tableId: table.id, playerId: actor!.id, status });
+    // The introduction is for the GM who approves; a direct join has no one to read it.
+    await tx.insert(registrations).values({
+      tableId: table.id,
+      playerId: actor!.id,
+      status,
+      message: status === 'pending' ? message || null : null,
+    });
     if (status === 'confirmed') await addTableMember(asDb(tx), table.id, actor!.id);
 
     const eventIds = [
@@ -221,6 +228,7 @@ export async function listRegistrations(db: AnyDb, actor: Actor | null, slug: st
       playerId: registrations.playerId,
       username: publicName(profiles.username),
       status: registrations.status,
+      message: registrations.message,
     })
     .from(registrations)
     .innerJoin(profiles, eq(registrations.playerId, profiles.id))

@@ -415,11 +415,16 @@ export const registrations = pgTable(
       .notNull()
       .references(() => profiles.id),
     status: registrationStatus('status').notNull().default('pending'),
+    // How the player introduced themselves to the GM when asking for the seat. Optional, plain text,
+    // and only kept for a request that needs approval.
+    message: text('message'),
     ...timestamps,
   },
   (registration) => [
     primaryKey({ columns: [registration.tableId, registration.playerId] }),
     index('registrations_player_idx').on(registration.playerId),
+    // Mirror JOIN_MESSAGE_MAX in $lib/tables/registration.
+    check('registrations_message_length', sql`char_length(${registration.message}) <= 500`),
   ],
 ).enableRLS();
 

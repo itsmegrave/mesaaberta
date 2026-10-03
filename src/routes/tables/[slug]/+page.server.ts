@@ -8,7 +8,7 @@ import { loadRead } from '$lib/server/reads/load';
 
 import { submitRating } from '$lib/server/ratings/service';
 import { ratingSchema } from '$lib/tables/rating';
-import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
+import { joinSchema, playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from '$lib/server/registrations/form-action';
 import {
   approveRegistration,
@@ -82,8 +82,8 @@ export const actions: Actions = {
         ? { mesa_id: table.id, player_user_id: playerId, seat_claim_method: 'button_click' }
         : null;
     });
-    return runRegistrationAction(event, tableActionSchema, (db, actor) =>
-      joinTable(db, actor, event.params.slug),
+    return runRegistrationAction(event, joinSchema, (db, actor, { message }) =>
+      joinTable(db, actor, event.params.slug, { message }),
     );
   },
   leave: (event) =>
