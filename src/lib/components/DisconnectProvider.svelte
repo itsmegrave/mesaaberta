@@ -1,11 +1,10 @@
 <script lang="ts">
   // The button that disconnects one provider from the account, and why the server refused if it did.
-  import { goto } from '$app/navigation';
-  import { resolve } from '$app/paths';
   import Form from '$lib/components/Form.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import { disconnectSchema } from '$lib/profile/connections';
+  import { toast } from '$lib/toaster';
   import { m } from '$lib/paraglide/messages';
   import type { Provider } from '$lib/auth/providers';
 
@@ -22,8 +21,7 @@
     initial: { provider },
     schema: disconnectSchema,
     domain: 'account',
-    onSuccess: () =>
-      void goto(`${resolve('/account/profile')}?conta=desconectada`, { invalidateAll: true }),
+    onSuccess: () => toast.success(m.account_connections_disconnected_notice()),
     errorMessage: m.account_connections_failed,
   });
   const code = $derived(disconnecting.errors.provider?.[0]);
