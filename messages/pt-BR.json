@@ -1339,17 +1339,5 @@
   "public_profile_previewing": "Você está vendo o perfil como um visitante vê.",
   "public_profile_stop_previewing": "Voltar ao meu perfil",
   "account_photo_current": "Foto atual",
-  "account_photo_drop": "Arraste uma imagem para cá. Você ajusta o corte (quadrado, em círculo) antes de salvar.",
-  "account_photo_order": "Qual foto aparece, nesta ordem",
-  "account_photo_in_use": "Em uso agora",
-  "account_photo_source_upload": "A que você enviar",
-  "account_photo_source_account": "A da sua conta Google ou Discord",
-  "account_photo_source_initial": "A inicial do seu nome",
-  "account_photo_note_none": "Nenhuma enviada ainda.",
-  "account_photo_note_sent": "Enviada por você.",
-  "account_photo_note_account": "Quando você não enviou nenhuma.",
-  "account_photo_note_initial": "Quando não há nenhuma das outras.",
-  "account_photo_now_sent": "A que você enviou.",
-  "account_photo_now_account": "Da sua conta. Nenhuma enviada ainda.",
-  "account_photo_now_initial": "A inicial do seu nome. Nenhuma enviada e a conta não tem foto."
+  "account_photo_drop": "Arraste uma imagem para cá. Você ajusta o corte (quadrado, em círculo) antes de salvar."
 }
