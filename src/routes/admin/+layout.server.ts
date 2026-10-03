@@ -8,10 +8,9 @@ import type { LayoutServerLoad } from './$types';
 
 // What waits on an admin, for the counts in the navigation. Only admins get this far:
 // `handleAdminAccess` answers 404 to anyone else, and the load checks again.
-export const load: LayoutServerLoad = async ({ locals, setHeaders }) => {
+export const load: LayoutServerLoad = async ({ locals }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503, 'Database not configured');
-  setHeaders({ 'cache-control': 'private, no-store' });
 
   const [reports, queue, [{ posts }]] = await Promise.all([
     waitingReports(locals.db),

@@ -49,8 +49,9 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
   await page.getByRole('combobox', { name: 'Plataformas' }).last().click();
   await page.getByRole('option', { name: 'Owlbear Rodeo' }).click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
-  // Closed, so the list behind it is readable again.
+  // Closed, so the list behind it is readable again: the box's list, then (on a phone) the sheet.
   await page.keyboard.press('Escape');
+  if (isMobile) await page.keyboard.press('Escape');
   await expect(
     page.getByRole('article').filter({ hasText: 'A Cripta do Rei Afogado' }),
   ).toHaveCount(1);
