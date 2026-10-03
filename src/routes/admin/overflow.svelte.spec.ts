@@ -35,7 +35,32 @@ vi.mock('$lib/query/page.svelte', () => ({
 }));
 
 const long = 'Uma mesa com um título realmente muito longo para testar a quebra de linha na tela';
-const sideways = () => document.documentElement.scrollWidth - window.innerWidth;
+// Where an element's box really ends on the right: an ancestor that clips (a truncated line, a
+// scroller) cuts it, but <body> does not count, since clipping the whole page is what hides the bug.
+function right(element: HTMLElement) {
+  let edge = element.getBoundingClientRect().right;
+  for (let up = element.parentElement; up && up !== document.body; up = up.parentElement) {
+    if (getComputedStyle(up).overflowX !== 'visible') {
+      edge = Math.min(edge, up.getBoundingClientRect().right);
+    }
+  }
+  return edge;
+}
+const wide = () =>
+  [...document.querySelectorAll<HTMLElement>('body *')].filter(
+    (element) => right(element) > window.innerWidth,
+  );
+// How far anything sticks out on the right. Measured on every element, not the document's scroll
+// width: the app clips sideways overflow (body and the content column), so in Chromium a too-wide
+// list does not scroll, it is cut off, and iOS Safari lays the whole page out wider instead.
+const sideways = () =>
+  Math.max(0, ...[...document.querySelectorAll<HTMLElement>('body *')].map(right)) -
+  window.innerWidth;
+const culprits = () =>
+  wide()
+    .slice(0, 6)
+    .map((element) => `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 60)}`)
+    .join(' | ');
 
 describe('admin pages on a phone', () => {
   beforeEach(async () => {
@@ -83,7 +108,7 @@ describe('admin pages on a phone', () => {
       } as never,
     });
     await expect.element(page.getByRole('link', { name: long })).toBeVisible();
-    expect(sideways()).toBeLessThanOrEqual(0);
+    expect(sideways(), culprits()).toBeLessThanOrEqual(0);
   });
 
   it('Usuários does not scroll sideways', async () => {
@@ -113,7 +138,7 @@ describe('admin pages on a phone', () => {
       } as never,
     });
     await expect.element(page.getByRole('link', { name: /um_usuario/ }).last()).toBeVisible();
-    expect(sideways()).toBeLessThanOrEqual(0);
+    expect(sideways(), culprits()).toBeLessThanOrEqual(0);
   });
 
   it('Denúncias does not scroll sideways', async () => {
@@ -145,7 +170,7 @@ describe('admin pages on a phone', () => {
       } as never,
     });
     await expect.element(page.getByRole('link').first()).toBeVisible();
-    expect(sideways()).toBeLessThanOrEqual(0);
+    expect(sideways(), culprits()).toBeLessThanOrEqual(0);
   });
 
   it('Catálogo does not scroll sideways', async () => {
@@ -176,7 +201,7 @@ describe('admin pages on a phone', () => {
     await expect
       .element(page.getByText('Uma plataforma com nome comprido demais').last())
       .toBeVisible();
-    expect(sideways()).toBeLessThanOrEqual(0);
+    expect(sideways(), culprits()).toBeLessThanOrEqual(0);
   });
 
   it('Visão geral does not scroll sideways', async () => {
@@ -226,6 +251,6 @@ describe('admin pages on a phone', () => {
       } as never,
     });
     await expect.element(page.getByText('Precisa de você')).toBeVisible();
-    expect(sideways()).toBeLessThanOrEqual(0);
+    expect(sideways(), culprits()).toBeLessThanOrEqual(0);
   });
 });

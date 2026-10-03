@@ -28,4 +28,21 @@ describe('StatusBadge', () => {
     expect(dot).not.toBeNull();
     expect(dot?.className).toContain('bg-transparent');
   });
+
+  it('is the design system pill, with a hollow ring for a pending seat', async () => {
+    const { container } = await render(StatusBadge, { status: 'seat:pending' });
+
+    const pill = container.firstElementChild as HTMLElement;
+    expect(pill.className).toMatch(/\bh-7\b/);
+    expect(pill.className).toContain('rounded-full');
+    expect(pill.className).toContain('border');
+    expect(pill.querySelector('span[aria-hidden="true"]')?.className).toContain('bg-transparent');
+  });
+
+  it('writes "Banido" in the danger colour and the closed states muted', async () => {
+    const banned = await render(StatusBadge, { status: 'user:banned' });
+    expect((banned.container.firstElementChild as HTMLElement).className).toContain('text-error');
+    const disabled = await render(StatusBadge, { status: 'table:disabled' });
+    expect((disabled.container.firstElementChild as HTMLElement).className).toContain('text-muted');
+  });
 });
