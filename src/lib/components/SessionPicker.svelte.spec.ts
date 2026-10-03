@@ -26,8 +26,10 @@ describe('SessionPicker.svelte', () => {
     await page.getByRole('button', { name: /15/ }).first().click();
     await expect.poll(() => hidden('startsAtLocal')).toMatch(/^\d{4}-\d{2}-15T19:00$/);
 
-    await page.getByRole('combobox', { name: 'Hora' }).selectOptions('21');
-    await page.getByRole('combobox', { name: 'Minutos' }).selectOptions('45');
+    await page.getByRole('button', { name: 'Abrir a lista: Hora' }).click();
+    await page.getByRole('option', { name: '21', exact: true }).click();
+    await page.getByRole('button', { name: 'Abrir a lista: Minutos' }).click();
+    await page.getByRole('option', { name: '45', exact: true }).click();
     await expect.poll(() => hidden('startsAtLocal')).toMatch(/-15T21:45$/);
   });
 

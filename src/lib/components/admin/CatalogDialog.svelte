@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SelectInput from '$lib/components/SelectInput.svelte';
+  import SearchSelect from '$lib/components/SearchSelect.svelte';
   // Mounted for one entry/mode; server loads never overwrite edited values.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { actionForm } from '$lib/forms/action-form.svelte';
@@ -203,25 +203,21 @@
                 </p>
               </FormField>
             {:else if mode === 'merge'}
-              <div class="grid gap-1">
-                <label for={fieldId} class="label-text font-semibold"
-                  >{m.admin_dialog_merge_into()}</label
-                >
-                <SelectInput
-                  id={fieldId}
-                  name="into"
-                  value={data.into}
-                  onchange={(event) => form.change('into', event.currentTarget.value)}
-                  aria-invalid={fieldError ? 'true' : undefined}
-                  aria-describedby={fieldError ? `${fieldId}-error` : undefined}
-                  class="select h-12 w-full rounded-lg border-surface-200-800 px-3"
-                >
-                  <option value="">{m.admin_dialog_merge_pick()}</option>
-                  {#each candidates.filter((candidate) => candidate.id !== entry?.id) as candidate (candidate.id)}
-                    <option value={candidate.id}>{candidate.name}</option>
-                  {/each}
-                </SelectInput>
-              </div>
+              <SearchSelect
+                id={fieldId}
+                name="into"
+                label={m.admin_dialog_merge_into()}
+                labelClass="label-text block font-semibold"
+                class="grid gap-1"
+                inDialog
+                invalid={!!fieldError}
+                items={candidates
+                  .filter((candidate) => candidate.id !== entry?.id)
+                  .map((candidate) => ({ name: candidate.name, slug: candidate.id }))}
+                value={data.into ? [data.into] : []}
+                placeholder={m.admin_dialog_merge_pick()}
+                onchange={(picked) => form.change('into', picked[0] ?? '')}
+              />
             {/if}
             {#if fieldError && mode === 'merge'}
               <p id="{fieldId}-error" role="alert" class="text-sm font-semibold text-error-700-300">

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import { signIn } from './support/app';
+import { pickFromSearch, signIn } from './support/app';
 import { createUser, database } from './support/users';
 
 const suggest = async (kind: 'platforms' | 'tags', names: string[], by: string) => {
@@ -178,7 +178,7 @@ test('the catalog lists, searches, pages with ?page=N and merges', async ({ page
   await page.goto(`/admin/catalog?q=${names[0]}`);
   await page.getByRole('button', { name: `Mais ações: ${names[0]}` }).click();
   await page.getByRole('menuitem', { name: 'Mesclar em outra entrada…' }).click();
-  await page.getByLabel('Mesclar com').selectOption({ label: 'Discord' });
+  await pickFromSearch(page, 'Mesclar com', 'Discord');
   await page.getByRole('button', { name: 'Mesclar', exact: true }).last().click();
   await expect(page.getByText('Entradas mescladas.')).toBeVisible();
   await expect(page.getByText('Nenhuma entrada encontrada.')).toBeVisible();

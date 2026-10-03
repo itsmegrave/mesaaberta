@@ -49,7 +49,7 @@ describe('AdminProfilesTable', () => {
       .toHaveAttribute('href', '/u/ana');
     await expect.element(page.getByText('Ana Souza')).toBeVisible();
     await expect.element(page.getByText('2 jogando · 1 mestrando')).toBeVisible();
-    await expect.element(page.getByText('Ativo', { exact: true }).nth(1)).toBeVisible();
+    await expect.element(page.getByText('Ativo', { exact: true }).first()).toBeVisible();
   });
 
   it('says "Sem nome" without a name and "Nenhuma ainda" without tables', async () => {
@@ -70,8 +70,8 @@ describe('AdminProfilesTable', () => {
       }),
     ]);
 
-    await expect.element(page.getByText('Suspenso', { exact: true }).nth(1)).toBeVisible();
-    await expect.element(page.getByText('Banido', { exact: true }).nth(1)).toBeVisible();
+    await expect.element(page.getByText('Suspenso', { exact: true }).first()).toBeVisible();
+    await expect.element(page.getByText('Banido', { exact: true }).first()).toBeVisible();
   });
 
   it('puts the actions in a 3-dots menu: details, the public profile and the ID', async () => {
@@ -89,16 +89,15 @@ describe('AdminProfilesTable', () => {
   it('filters by Ativo, Suspenso and Banido', async () => {
     show();
 
-    const options = page
-      .getByRole('combobox', { name: 'Status' })
-      .element()
-      .querySelectorAll('option');
-    expect([...options].map((option) => option.textContent?.trim())).toEqual([
-      'Todos',
-      'Ativo',
-      'Suspenso',
-      'Banido',
-    ]);
+    await page.getByRole('button', { name: 'Abrir a lista: Status' }).click();
+    await expect
+      .poll(() =>
+        page
+          .getByRole('option')
+          .elements()
+          .map((option) => option.textContent?.trim()),
+      )
+      .toEqual(['Todos', 'Ativo', 'Suspenso', 'Banido']);
   });
 
   it('counts the users and searches by "Buscar usuário"', async () => {

@@ -39,6 +39,11 @@ const setup = async (
 };
 
 const urlFields = () => page.getByLabelText(/^Endereço do link/);
+// The networks sent, in row order: the combobox keeps each one in a hidden field.
+const networks = () =>
+  [...document.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="linkNetwork"]')].map(
+    (input) => input.value,
+  );
 const urls = () =>
   urlFields()
     .elements()
@@ -273,7 +278,8 @@ describe('ProfileForm', () => {
       });
 
       expect(urls()).toEqual(['https://instagram.com/ana', 'https://ana.example']);
-      await expect.element(page.getByLabelText('Rede do link 2')).toHaveValue('website');
+      expect(networks()).toEqual(['instagram', 'website']);
+      await expect.element(page.getByRole('combobox', { name: 'Rede do link 2' })).toBeVisible();
     });
 
     it('adds a row, focused, and sends the links as parallel fields the server reads in order', async () => {
@@ -285,9 +291,8 @@ describe('ProfileForm', () => {
       await expect
         .element(page.getByLabelText('Endereço do link 1'))
         .toHaveAttribute('name', 'linkUrl');
-      await expect
-        .element(page.getByLabelText('Rede do link 1'))
-        .toHaveAttribute('name', 'linkNetwork');
+      await expect.poll(networks).toEqual(['instagram']);
+      await expect.element(page.getByRole('combobox', { name: 'Rede do link 1' })).toBeVisible();
     });
 
     it('removes a row and keeps the others as they were typed', async () => {
@@ -300,7 +305,7 @@ describe('ProfileForm', () => {
       await page.getByRole('button', { name: 'Remover link 2' }).click();
 
       expect(urls()).toEqual(['https://instagram.com/a', 'https://a.example']);
-      await expect.element(page.getByLabelText('Rede do link 2')).toHaveValue('website');
+      await expect.poll(networks).toEqual(['instagram', 'website']);
       await expect.element(page.getByText('Link removido.')).toBeInTheDocument();
     });
 
@@ -314,8 +319,7 @@ describe('ProfileForm', () => {
       await page.getByRole('button', { name: 'Subir link 2' }).click();
 
       expect(urls()).toEqual(['https://x.com/a', 'https://instagram.com/a']);
-      await expect.element(page.getByLabelText('Rede do link 1')).toHaveValue('x');
-      await expect.element(page.getByLabelText('Rede do link 2')).toHaveValue('instagram');
+      await expect.poll(networks).toEqual(['x', 'instagram']);
       await expect.element(page.getByRole('button', { name: 'Subir link 1' })).toBeDisabled();
       await expect.element(page.getByRole('button', { name: 'Descer link 2' })).toBeDisabled();
     });

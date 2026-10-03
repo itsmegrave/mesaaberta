@@ -112,8 +112,8 @@ export async function setFirstSession(page: Page, iso: string) {
   }
   await page.keyboard.press('Enter');
   await expect(hidden).toHaveValue(new RegExp(`^${day}T`));
-  await page.getByRole('combobox', { name: 'Hora' }).selectOption(hour);
-  await page.getByRole('combobox', { name: 'Minutos' }).selectOption(minute);
+  await pickFromSearch(page, 'Hora', hour);
+  await pickFromSearch(page, 'Minutos', minute);
 }
 
 /** A title no other test uses, so tests that share a database do not collide. */

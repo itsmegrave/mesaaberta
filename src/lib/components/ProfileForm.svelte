@@ -1,6 +1,5 @@
 <script lang="ts">
   import TextInput from '$lib/components/TextInput.svelte';
-  import SelectInput from '$lib/components/SelectInput.svelte';
   import Button from '$lib/components/Button.svelte';
   import { browser } from '$app/environment';
   import { page } from '$app/state';
@@ -116,8 +115,6 @@
   }));
 
   const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
-  // The network of a link stays a native select (the row has no room for a list).
-  const select = 'select h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
     'btn h-12 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
 
@@ -445,18 +442,22 @@
         {@const networkError = itemError('linkNetwork', index)}
         <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
           <div class="grid gap-2 sm:grid-cols-4">
-            <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
-            <SelectInput
+            <SearchSelect
+              id="link-network-{id}"
               name="linkNetwork"
-              aria-label={m.profile_link_network({ n: index + 1 })}
-              bind:value={$draft.linkNetwork[index]}
-              class={select}
-              aria-invalid={networkError ? 'true' : undefined}
-            >
-              {#each NETWORKS as network (network)}
-                <option value={network}>{NETWORK_LABELS[network]()}</option>
-              {/each}
-            </SelectInput>
+              label={m.profile_link_network({ n: index + 1 })}
+              labelClass="sr-only"
+              class="grid"
+              items={NETWORKS.map((network) => ({
+                name: NETWORK_LABELS[network](),
+                slug: network,
+              }))}
+              value={[$draft.linkNetwork[index]]}
+              placeholder={m.profile_link_network({ n: index + 1 })}
+              invalid={!!networkError}
+              onchange={(picked) =>
+                ($draft.linkNetwork[index] = (picked[0] ?? 'instagram') as Network)}
+            />
             <TextInput
               id="link-url-{id}"
               name="linkUrl"
