@@ -57,11 +57,14 @@ export function notificationText(item: Shown): string {
     case 'rating_prompt':
       return m.notification_rating_prompt({ table });
     case 'catalog_suggestion_approved':
-      return m.notification_catalog_suggestion_approved();
+      return m.notification_catalog_suggestion_approved({ name: item.metadata.name ?? '' });
     case 'catalog_suggestion_merged':
-      return m.notification_catalog_suggestion_merged();
+      return m.notification_catalog_suggestion_merged({
+        name: item.metadata.name ?? '',
+        into: item.metadata.into ?? '',
+      });
     case 'catalog_suggestion_rejected':
-      return m.notification_catalog_suggestion_rejected();
+      return m.notification_catalog_suggestion_rejected({ name: item.metadata.name ?? '' });
     case 'report_filed_admin':
       return m.notification_report_filed_admin();
     case 'report_resolved':

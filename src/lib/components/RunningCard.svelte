@@ -136,7 +136,7 @@
                   playerId={request.playerId}
                   {next}
                   {label}
-                  buttonClass="btn h-10 rounded-lg px-4 font-semibold {tone}"
+                  buttonClass="btn h-11 rounded-lg px-4 font-semibold {tone}"
                   {success}
                 />
               {/each}
@@ -173,7 +173,7 @@
                     playerId={player.playerId}
                     {next}
                     label={m.table_remove()}
-                    buttonClass="btn h-10 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+                    buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
                     success={m.toast_removed()}
                   />
                 </li>

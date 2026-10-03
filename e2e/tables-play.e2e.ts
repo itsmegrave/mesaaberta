@@ -241,10 +241,9 @@ test.describe('ratings', () => {
       await sql`update game_tables set status = 'concluded' where slug = ${slug}`;
       await page.reload();
       await expect(page.getByRole('heading', { name: 'Avalie a mestragem' })).toBeVisible();
-      await page
-        .getByRole('group', { name: 'Sua nota para a mestragem' })
-        .getByLabel('4', { exact: true })
-        .check();
+      // Four stars of five.
+      await page.locator('[data-scope="rating-group"][data-part="item"]').nth(3).click();
+      await expect(page.locator('input[name="gmScore"]')).toHaveValue('4');
       await page.getByLabel('Comentário (opcional)').fill('Noite ótima.');
       await page.getByRole('button', { name: 'Enviar avaliação' }).click();
 

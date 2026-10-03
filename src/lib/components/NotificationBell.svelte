@@ -85,7 +85,7 @@
             <NotificationAction
               action="readAll"
               next={here}
-              buttonClass="btn h-9 rounded-lg px-2 text-sm font-semibold text-link"
+              buttonClass="btn h-11 rounded-lg px-2 text-sm font-semibold text-link"
             >
               {m.notifications_mark_all()}
             </NotificationAction>

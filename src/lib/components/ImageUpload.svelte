@@ -135,7 +135,7 @@
                 <FileUpload.ItemName class="min-w-0 grow truncate font-semibold" />
                 <FileUpload.ItemSizeText class="shrink-0 text-muted" />
                 <FileUpload.ItemDeleteTrigger
-                  class="btn size-9 shrink-0 rounded-lg hover:preset-tonal"
+                  class="btn size-11 shrink-0 rounded-lg hover:preset-tonal"
                   aria-label={m.form_image_remove({ name: file.name })}
                 >
                   <svg

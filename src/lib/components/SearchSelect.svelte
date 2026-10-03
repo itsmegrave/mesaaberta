@@ -157,7 +157,7 @@
           {#each shown as item (item.slug)}
             <Combobox.Item
               {item}
-              class="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
+              class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
             >
               <Combobox.ItemText
                 >{item.name}{#if item.pending && pendingLabel}
@@ -200,7 +200,7 @@
             <Button
               size="custom"
               type="button"
-              class="inline-flex h-9 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
+              class="inline-flex h-11 items-center gap-1 rounded-lg preset-filled-primary-500 pr-2 pl-3 text-sm font-semibold"
               aria-label={m.search_select_remove({ name: chipName(slug) })}
               onclick={() => remove(slug)}
             >

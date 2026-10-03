@@ -22,6 +22,7 @@
   import ReportDialog from '$lib/components/ReportDialog.svelte';
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
+  import StarRating from '$lib/components/StarRating.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -461,29 +462,20 @@
 
       <Form action="?/rate" onsubmit={rating.submit} class="mt-4 grid gap-6">
         {#each scoreFields as { name, label } (name)}
-          <fieldset>
-            <legend class="font-semibold">{label}</legend>
-            <div class="mt-2 flex flex-wrap gap-3">
-              {#each [1, 2, 3, 4, 5] as score (score)}
-                <label class="flex items-center gap-1">
-                  <input
-                    type="radio"
-                    {name}
-                    value={score}
-                    required
-                    checked={rating.values[name] === score}
-                    onchange={() => rating.change(name, score)}
-                  />
-                  <span aria-label={m.rating_score_label({ score })}>{score}</span>
-                </label>
-              {/each}
-            </div>
+          <div>
+            <StarRating
+              {name}
+              {label}
+              value={rating.values[name]}
+              invalid={!!rating.errors[name]}
+              onchange={(score) => rating.change(name, score)}
+            />
             {#if rating.errors[name]}
               <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
                 {m.table_error_invalid()}
               </p>
             {/if}
-          </fieldset>
+          </div>
         {/each}
 
         <div>

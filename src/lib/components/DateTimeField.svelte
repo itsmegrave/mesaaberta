@@ -55,7 +55,7 @@
 
   const control =
     'flex h-12 w-full items-center rounded-lg border-2 border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
-  const navButton = 'btn size-9 rounded-lg hover:preset-tonal';
+  const navButton = 'btn size-11 rounded-lg hover:preset-tonal';
 </script>
 
 {#if mounted}
@@ -184,7 +184,7 @@
                           {#each week as date (date.toString())}
                             <DatePicker.TableCell value={date}>
                               <DatePicker.TableCellTrigger
-                                class="mx-auto flex size-9 items-center justify-center rounded-lg hover:preset-tonal data-disabled:opacity-40 data-outside-range:opacity-40 data-selected:preset-filled-primary-500 data-today:font-bold"
+                                class="mx-auto flex size-11 items-center justify-center rounded-lg hover:preset-tonal data-disabled:opacity-40 data-outside-range:opacity-40 data-selected:preset-filled-primary-500 data-today:font-bold"
                                 >{date.day}</DatePicker.TableCellTrigger
                               >
                             </DatePicker.TableCell>

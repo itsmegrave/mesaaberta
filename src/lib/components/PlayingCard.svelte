@@ -78,7 +78,7 @@
         {m.dash_rate_prompt()}
         <a
           href="{page}#avaliar"
-          class="btn h-10 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
+          class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
           >{m.dash_rate_action()}</a
         >
       {/if}

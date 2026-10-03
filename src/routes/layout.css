@@ -113,3 +113,11 @@ body {
 @utility grid-cols-filter {
   grid-template-columns: calc(var(--spacing) * 20) minmax(0, var(--container-md));
 }
+
+/* Keyboard focus is always visible: a ring on whatever takes it, unless the control draws its own. */
+@layer base {
+  :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+}

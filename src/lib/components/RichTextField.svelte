@@ -360,7 +360,7 @@
           tabindex={groupIndex === 0 && tool.id === 'bold' ? 0 : -1}
           onmousedown={(event) => event.preventDefault()}
           onclick={() => editor && tool.run(editor)}
-          class="btn-icon size-9 rounded-md hover:preset-tonal disabled:opacity-40 {pressed
+          class="btn-icon size-11 rounded-md hover:preset-tonal disabled:opacity-40 {pressed
             ? 'preset-tonal-primary'
             : ''}"
         >
@@ -398,7 +398,7 @@
             closeLink();
           }
         }}
-        class="input h-9 min-w-0 flex-1 rounded-lg border-surface-200-800 px-3"
+        class="input h-11 min-w-0 flex-1 rounded-lg border-surface-200-800 px-3"
       />
       <Button
         size="custom"
