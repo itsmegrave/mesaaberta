@@ -60,40 +60,58 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = 
   const page = Math.min(filters.page, Math.max(1, Math.ceil(total / filters.pageSize)));
   const { id: sortId, dir } = filters.sort;
   const direction = dir === 'asc' ? asc : desc;
-  const rows = await db
-    .select({
-      id: gameTables.id,
-      slug: gameTables.slug,
-      title: gameTables.title,
-      status: gameTables.status,
-      system: systems.name,
-      gm: profiles.username,
-      gmId: profiles.id,
-      imagePath: gameTables.imagePath,
-      capacity: gameTables.capacity,
-      seats:
-        sql<number>`(select count(*) from registrations r where r.table_id = "game_tables"."id" and r.status = 'confirmed')`.mapWith(
-          Number,
-        ),
-      startsAt: gameTables.startsAt,
-      kind: gameTables.kind,
-      recurrence: gameTables.recurrence,
-      until: gameTables.until,
-      timezone: gameTables.timezone,
-      instagramStatus: instagramPosts.status,
-      permalink: instagramPosts.permalink,
-    })
-    .from(gameTables)
-    .innerJoin(systems, eq(systems.id, gameTables.systemId))
-    .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
-    .leftJoin(instagramPosts, eq(instagramPosts.tableId, gameTables.id))
-    .where(where)
-    .orderBy(
-      sortId === 'title' ? direction(gameTables.title) : direction(gameTables.createdAt),
-      direction(gameTables.id),
-    )
-    .limit(filters.pageSize)
-    .offset((page - 1) * filters.pageSize);
+  const columns = {
+    id: gameTables.id,
+    slug: gameTables.slug,
+    title: gameTables.title,
+    status: gameTables.status,
+    system: systems.name,
+    gm: profiles.username,
+    gmId: profiles.id,
+    imagePath: gameTables.imagePath,
+    capacity: gameTables.capacity,
+    seats:
+      sql<number>`(select count(*) from registrations r where r.table_id = "game_tables"."id" and r.status = 'confirmed')`.mapWith(
+        Number,
+      ),
+    startsAt: gameTables.startsAt,
+    kind: gameTables.kind,
+    recurrence: gameTables.recurrence,
+    until: gameTables.until,
+    timezone: gameTables.timezone,
+    instagramStatus: instagramPosts.status,
+    permalink: instagramPosts.permalink,
+  };
+  const listed = () =>
+    db
+      .select(columns)
+      .from(gameTables)
+      .innerJoin(systems, eq(systems.id, gameTables.systemId))
+      .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
+      .leftJoin(instagramPosts, eq(instagramPosts.tableId, gameTables.id))
+      .where(where);
+  const offset = (page - 1) * filters.pageSize;
+  let rows;
+  if (sortId === 'next') {
+    // The next session is worked out from the schedule (weekly repeats, the table's zone), not
+    // stored, so this order is made here: the tables with a session left by date, the rest after.
+    const all = (await listed()).map((row) => ({ row, nextAt: nextOccurrence(row, now) }));
+    const order = dir === 'asc' ? 1 : -1;
+    all.sort((a, b) => {
+      if (!a.nextAt || !b.nextAt)
+        return a.nextAt ? -1 : b.nextAt ? 1 : a.row.id.localeCompare(b.row.id);
+      return order * (a.nextAt.getTime() - b.nextAt.getTime()) || a.row.id.localeCompare(b.row.id);
+    });
+    rows = all.slice(offset, offset + filters.pageSize).map(({ row }) => row);
+  } else {
+    rows = await listed()
+      .orderBy(
+        sortId === 'title' ? direction(gameTables.title) : direction(gameTables.createdAt),
+        direction(gameTables.id),
+      )
+      .limit(filters.pageSize)
+      .offset(offset);
+  }
   return {
     rows: rows.map((row) => ({ ...row, nextAt: nextOccurrence(row, now) })),
     total,

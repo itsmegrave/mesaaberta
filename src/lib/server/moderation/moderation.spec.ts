@@ -21,6 +21,7 @@ import {
   listReports,
   banAccount,
   closeReportedTable,
+  closeTableByAdmin,
   moderationOf,
   reportDetail,
   revokeBan,
@@ -280,6 +281,35 @@ describe('the report queue', () => {
     const aboutTable = await reportDetail(test.db, admin, tableReportRow.id);
     // Reporting a table bans no one from here: its GM is banned from their own page.
     expect(aboutTable?.can).toEqual({ review: true, close: true, closeTable: true, ban: false });
+  });
+});
+
+describe('closeTableByAdmin', () => {
+  it('closes an active table with the justification and tells the GM, with no report', async () => {
+    const table = await makeTable();
+
+    const eventIds = await closeTableByAdmin(test.db, admin, table.id, 'Divulgação de servidor.');
+
+    const [after] = await test.db.select().from(gameTables).where(eq(gameTables.id, table.id));
+    expect(after).toMatchObject({ status: 'disabled', moderationNote: 'Divulgação de servidor.' });
+    const types = (await test.db.select().from(events))
+      .filter((event) => eventIds.includes(event.id))
+      .map((event) => event.type)
+      .sort();
+    expect(types).toEqual(['TableClosedByModeration', 'TableDisabled']);
+    await moderationHandler.handle(await stored(eventIds.at(-1)!), test.db);
+    const [notice] = await test.db.select().from(notifications);
+    expect(notice).toMatchObject({ recipientId: gm.id, type: 'moderation_notice' });
+  });
+
+  it('refuses a table that is not active, an unknown one and anyone but an admin', async () => {
+    const closed = await makeTable({ status: 'concluded' });
+    await expect(closeTableByAdmin(test.db, admin, closed.id, 'x')).rejects.toBeInstanceOf(Invalid);
+    await expect(
+      closeTableByAdmin(test.db, admin, crypto.randomUUID(), 'x'),
+    ).rejects.toBeInstanceOf(Invalid);
+    const open = await makeTable();
+    await expect(closeTableByAdmin(test.db, member(2), open.id, 'x')).rejects.toThrow();
   });
 });
 

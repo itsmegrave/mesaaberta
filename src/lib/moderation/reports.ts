@@ -56,6 +56,12 @@ export const closeTableSchema = z.object({
   note: z.string().trim().min(1).max(RESOLUTION_NOTE_MAX),
 });
 
+/** Closing a table from the tables list: the same justification, with no report behind it. */
+export const closeTableByIdSchema = z.object({
+  tableId: uuid,
+  note: z.string().trim().min(1).max(RESOLUTION_NOTE_MAX),
+});
+
 /** How long a ban lasts: a number of days, or for good. */
 export const BAN_DURATIONS = ['7', '30', '90', 'permanent'] as const;
 export type BanDuration = (typeof BAN_DURATIONS)[number];

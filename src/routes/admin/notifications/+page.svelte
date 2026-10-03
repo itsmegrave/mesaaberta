@@ -13,6 +13,7 @@
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import RichText from '$lib/components/RichText.svelte';
   import RichTextField from '$lib/components/RichTextField.svelte';
+  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { ANNOUNCEMENT_LIMITS, announcementSchema } from '$lib/notifications/announcement';
@@ -176,12 +177,6 @@
       minute: '2-digit',
       hourCycle: 'h23',
     }).format(date);
-
-  const STATUS: Record<string, { label: string; tone: string }> = {
-    delivered: { label: m.admin_history_status_delivered(), tone: 'preset-tonal-success' },
-    pending: { label: m.admin_history_status_pending(), tone: 'preset-tonal-warning' },
-    failed: { label: m.admin_history_status_failed(), tone: 'preset-tonal-error' },
-  };
 
   const input = 'input h-12 rounded-lg border-surface-200-800 bg-panel px-3';
   const choice =
@@ -409,9 +404,7 @@
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <h3 class="font-semibold wrap-break-word">{sent.title}</h3>
-                  <span class="badge rounded-full text-xs font-semibold {STATUS[sent.status].tone}"
-                    >{STATUS[sent.status].label}</span
-                  >
+                  <StatusBadge status={`notification:${sent.status}` as Status} />
                 </div>
                 <RichText html={sent.body} class="mt-1" />
                 <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">

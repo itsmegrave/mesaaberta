@@ -21,6 +21,14 @@
     | 'notification:delivered'
     | 'notification:pending'
     | 'notification:failed'
+    | 'post:published'
+    | 'post:queued'
+    | 'post:processing'
+    | 'post:publishing'
+    | 'post:uncertain'
+    | 'post:failed'
+    | 'post:skipped'
+    | 'post:none'
     | 'instagram:connected'
     | 'instagram:expired'
     | 'instagram:disconnected';
@@ -74,6 +82,21 @@
       dot: 'bg-warning-500',
     },
     'notification:failed': { label: () => m.admin_history_status_failed(), dot: 'bg-error-500' },
+    // A table's Instagram post: published, on its way, to be checked, failed, or none to speak of.
+    'post:published': { label: () => m.instagram_status_published(), dot: 'bg-success-500' },
+    'post:queued': { label: () => m.instagram_status_queued(), dot: 'bg-primary-500' },
+    'post:processing': { label: () => m.instagram_status_processing(), dot: 'bg-primary-500' },
+    'post:publishing': { label: () => m.instagram_status_publishing(), dot: 'bg-primary-500' },
+    'post:uncertain': { label: () => m.instagram_status_uncertain(), dot: 'bg-warning-500' },
+    'post:failed': { label: () => m.instagram_status_failed(), dot: 'bg-error-500' },
+    'post:skipped': {
+      label: () => m.instagram_status_skipped(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    'post:none': {
+      label: () => m.instagram_status_none(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
     'instagram:connected': { label: () => m.instagram_status_connected(), dot: 'bg-success-500' },
     'instagram:expired': { label: () => m.instagram_status_expired(), dot: 'bg-warning-500' },
     'instagram:disconnected': {

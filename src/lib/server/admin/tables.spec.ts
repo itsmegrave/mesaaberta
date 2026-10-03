@@ -99,3 +99,31 @@ it.each(TABLE_STATUSES)(
     expect(data.rows.every((row) => row.status === status)).toBe(true);
   },
 );
+it('orders by the next session, the tables with none left last, either way', async () => {
+  const [gm] = await test.db.select().from(profiles).limit(1);
+  const [system] = await test.db.select().from(systems).limit(1);
+  const starts: [string, string][] = [
+    ['Ordem A', '2099-03-01'],
+    ['Ordem B', '2099-02-01'],
+    ['Ordem C', '2020-01-01'],
+  ];
+  for (const [title, date] of starts)
+    await test.db.insert(gameTables).values({
+      gmId: gm.id,
+      systemId: system.id,
+      title,
+      slug: title.toLowerCase().replace(' ', '-'),
+      kind: 'one_shot',
+      status: 'active',
+      startsAt: new Date(date),
+      capacity: 5,
+      durationMinutes: 180,
+      timezone: 'UTC',
+      joinDetails: 'x',
+    });
+  const titles = async (query: string) =>
+    (await listAdminTables(test.db, new URLSearchParams(query), now)).rows.map((row) => row.title);
+
+  expect(await titles('q=Ordem&sort=next&dir=asc')).toEqual(['Ordem B', 'Ordem A', 'Ordem C']);
+  expect(await titles('q=Ordem&sort=next&dir=desc')).toEqual(['Ordem A', 'Ordem B', 'Ordem C']);
+});

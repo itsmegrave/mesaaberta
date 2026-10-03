@@ -32,7 +32,9 @@
   } = $props();
 </script>
 
-<header class="grid gap-4 md:flex md:flex-wrap md:items-end md:justify-between md:gap-x-4">
+<header
+  class="grid grid-cols-[minmax(0,1fr)] gap-4 md:flex md:flex-wrap md:items-end md:justify-between md:gap-x-4"
+>
   <div class="flex min-w-0 items-center gap-4">
     {#if lead}{@render lead()}{/if}
     <div class="min-w-0">

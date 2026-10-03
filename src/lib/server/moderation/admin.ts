@@ -287,6 +287,49 @@ export async function closeReportedTable(
 }
 
 /**
+ * Closes an active table from the admin's tables list, with no report behind it: the same effect as
+ * closing a reported one (disabled, the players cancelled, the justification kept for its GM and the
+ * GM told in the bell). Returns the events to dispatch.
+ */
+export async function closeTableByAdmin(
+  db: AnyDb,
+  actor: Actor | null,
+  tableId: string,
+  note: string,
+  { now = new Date() }: { now?: Date } = {},
+): Promise<string[]> {
+  authorize(actor, 'moderation:manage');
+  return db.transaction(async (tx) => {
+    const t = tx as unknown as AnyDb;
+    const [table] = await t
+      .select()
+      .from(gameTables)
+      .where(eq(gameTables.id, tableId))
+      .for('update');
+    if (!table) throw new Invalid('tableId', 'not_found');
+    if (table.status !== 'active') throw new Invalid('tableId', 'closed');
+    await t
+      .update(gameTables)
+      .set({
+        status: 'disabled',
+        icalSequence: table.icalSequence + 1,
+        moderatedAt: now,
+        moderationNote: note,
+      })
+      .where(eq(gameTables.id, table.id));
+    const facts = { tableId: table.id, slug: table.slug, title: table.title };
+    return [
+      await recordEvent(t, { type: 'TableDisabled', actorId: actor!.id, payload: facts }),
+      await recordEvent(t, {
+        type: 'TableClosedByModeration',
+        actorId: actor!.id,
+        payload: { ...facts, reportId: null },
+      }),
+    ];
+  });
+}
+
+/**
  * Bans an account until `until` (null: for good), with the reason it is told by e-mail. It is signed
  * out and cannot sign in, open a table or join one; the tables it runs that are still open are
  * disabled (`TableDisabled` cancels the invites) and it leaves the tables it plays at

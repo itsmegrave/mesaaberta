@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signIn } from './support/app';
-import { sidewaysOverflow } from './support/overflow';
+import { sidewaysCulprits, sidewaysOverflow } from './support/overflow';
 import { createUser } from './support/users';
 
 // The rules every page follows (see the redesign card): no page scrolls sideways, every page but the
@@ -10,7 +10,8 @@ async function followsTheRules(page: Page, path: string, { home = false } = {}) 
   const response = await page.goto(path);
   expect(response?.status(), `${path} answers`).toBeLessThan(400);
   await expect(page.getByRole('main')).toBeVisible();
-  expect(await sidewaysOverflow(page), `${path} scrolls sideways`).toBeLessThanOrEqual(0);
+  const overflow = await sidewaysOverflow(page);
+  expect(overflow, `${path} scrolls sideways: ${sidewaysCulprits}`).toBeLessThanOrEqual(0);
   const trail = page.getByRole('navigation', { name: 'Trilha de navegação' });
   if (home) await expect(trail).toHaveCount(0);
   else await expect(trail, `${path} has breadcrumbs`).toHaveCount(1);

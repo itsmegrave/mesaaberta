@@ -8,6 +8,7 @@
   import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import QueryStatus from '$lib/components/QueryStatus.svelte';
   import Spinner from '$lib/components/Spinner.svelte';
@@ -20,6 +21,7 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { pageQuery } from '$lib/query/page.svelte';
+  import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '$lib/moderation/reports';
   import { toast } from '$lib/toaster';
   import { TABLE_STATUSES } from '$lib/tables/status-values';
   import type { AdminTablesView } from '$lib/server/reads/admin-tables';
@@ -33,15 +35,17 @@
   const locale = getLocale();
   const columns: DataColumn[] = [
     { id: 'title', header: m.admin_tables_col_table(), sortable: true },
-    { id: 'next', header: m.admin_tables_date(), width: 'w-40' },
+    { id: 'next', header: m.admin_tables_date(), sortable: true, width: 'w-40' },
     { id: 'seats', header: m.admin_tables_col_seats(), align: 'right', width: 'w-24' },
     { id: 'status', header: m.admin_tables_col_status(), width: 'w-56' },
     { id: 'actions', header: m.admin_tables_actions(), hideHeader: true, width: 'w-16' },
   ];
   // The sort order the list opens on has no parameter; "Mesa" orders by title.
-  const sort = $derived(tables.sort.id === 'title' ? tables.sort : null);
+  const sort = $derived(tables.sort.id === 'created' ? null : tables.sort);
 
   let publishing = $state<string | null>(null);
+  // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
+  let closing = $state<Row | null>(null);
   const href = (row: Row) => localizedHref(`/tables/${row.slug}`, locale);
   async function copyLink(row: Row) {
     try {
@@ -58,6 +62,7 @@
     !['published', 'publishing', 'uncertain', 'queued', 'processing'].includes(
       row.instagramStatus ?? '',
     );
+  const postOf = (row: Row) => `post:${row.instagramStatus ?? 'none'}` as Status;
   const items = (row: Row): KebabItem[] => [
     { id: 'view', label: m.menu_view_table(), icon: 'eye', href: href(row) },
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
@@ -71,6 +76,17 @@
         void publishTable(row.id).finally(() => (publishing = null));
       },
     },
+    ...(row.status === 'active'
+      ? [
+          {
+            id: 'close',
+            label: m.admin_tables_close(),
+            icon: 'lock' as const,
+            destructive: true,
+            onselect: () => (closing = row),
+          },
+        ]
+      : []),
   ];
 
   const instagramOptions = $derived(
@@ -120,7 +136,7 @@
     page={tables.page}
     pageSize={tables.pageSize}
     {sort}
-    sortLabel={m.admin_tables_col_table()}
+    sortLabel={tables.sort.id === 'next' ? m.admin_tables_sort_next() : m.admin_tables_col_table()}
     search={{ value: tables.query, label: m.admin_tables_search_label(), maxlength: 100 }}
     filterKeys={['q', 'status', 'instagram', 'page']}
     {filtered}
@@ -188,7 +204,7 @@
         {m.admin_tables_seats({ taken: row.seats, capacity: row.capacity })}
       {:else if id === 'status'}
         <StatusBadge status={`table:${row.status}` as Status} />
-        <p class="mt-1 text-muted">{instagramStatus(row.instagramStatus)}</p>
+        <StatusBadge status={postOf(row)} class="mt-1" />
       {:else if id === 'actions'}
         {#if publishing === row.id}<Spinner />{:else}
           <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
@@ -214,7 +230,7 @@
           <span class="text-sm text-muted"
             >{m.admin_tables_seats_phone({ taken: row.seats, capacity: row.capacity })}</span
           >
-          <span class="text-sm text-muted">{instagramStatus(row.instagramStatus)}</span>
+          <StatusBadge status={postOf(row)} />
         {/snippet}
         {#snippet action()}
           <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
@@ -223,4 +239,27 @@
     {/snippet}
   </DataTable>
   <p class="mt-4 max-w-2xl text-sm text-muted">{m.admin_tables_footnote()}</p>
+  {#if closing}
+    {#key closing.id}
+      <ModerationDialog
+        bind:open={() => closing !== null, (value) => !value && (closing = null)}
+        trigger={false}
+        action="?/close"
+        schema={closeTableByIdSchema}
+        fields={{ tableId: closing.id }}
+        danger
+        write={{
+          name: 'note',
+          label: m.moderation_close_table_note(),
+          hint: m.moderation_close_table_hint({ max: RESOLUTION_NOTE_MAX }),
+          required: true,
+        }}
+        label={m.admin_tables_close()}
+        title={m.admin_report_close_table_title({ table: closing.title })}
+        text={m.admin_tables_close_text()}
+        confirm={m.admin_report_close_table()}
+        success={m.admin_tables_close_done()}
+      />
+    {/key}
+  {/if}
 </AdminPage>
