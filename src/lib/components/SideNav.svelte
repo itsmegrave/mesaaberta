@@ -89,15 +89,6 @@
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
 </script>
 
-{#snippet count(value: number)}
-  <span
-    aria-hidden="true"
-    class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 text-xs font-bold"
-  >
-    {value > 9 ? '9+' : value}
-  </span>
-{/snippet}
-
 {#snippet collapseButton()}
   <Button
     size="custom"
