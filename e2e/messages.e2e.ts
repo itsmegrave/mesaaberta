@@ -68,7 +68,8 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
     await drawer.getByRole('button', { name: 'Escolher emoji' }).click();
     await drawer.getByRole('combobox', { name: 'Procurar' }).fill('dado');
     await drawer.getByRole('option', { name: /dado/ }).first().click();
-    await playerPage.keyboard.press('Enter');
+    // The emoji list took the focus: send from the box itself.
+    await drawer.getByRole('textbox', { name: 'Mensagem' }).press('Enter');
     await expect(drawer.getByRole('log').getByText(`Drawer ${width} 🎲`)).toBeVisible();
     await expect(drawer.getByText('Enviando…', { exact: true })).toHaveCount(0);
     expect(await drawer.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
