@@ -188,3 +188,13 @@ export async function chooseFromMenu(page: Page, item: string | RegExp) {
   await pageMenu(page).click();
   await page.getByRole('menuitem', { name: item }).click();
 }
+
+/**
+ * An admin section's entry in the navigation: a link in the column of a desktop, an item of the
+ * "Seção: …" menu on a phone (which is opened here).
+ */
+export async function adminSection(page: Page, isMobile: boolean, name: string) {
+  if (!isMobile) return page.getByRole('link', { name, exact: true });
+  await page.getByRole('button', { name: /^Seção: / }).click();
+  return page.getByRole('menuitem', { name, exact: true });
+}

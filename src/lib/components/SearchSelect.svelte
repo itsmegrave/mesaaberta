@@ -1,5 +1,7 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
+  import Icon from '$lib/components/Icon.svelte';
+  import type { IconName } from '$lib/icons/names';
   // A dropdown with a search box over a long list (the ~700 RPG systems), one or several picks.
   // Skeleton's Combobox; the picks are submitted as hidden inputs, one per value. Until the page is
   // interactive an inert box of the same size stands in.
@@ -25,6 +27,8 @@
     compact = false,
     disabled = false,
     inDialog = false,
+    icon,
+    summary = false,
     placeholder,
     required = false,
     invalid = false,
@@ -51,6 +55,10 @@
      * is positioned on the screen, so the dialog's own scrolling does not cut it.
      */
     inDialog?: boolean;
+    /** Drawn at the start of the box. */
+    icon?: IconName;
+    /** Several picks, shown closed as the first one and "+N" ("Discord +1") instead of as chips. */
+    summary?: boolean;
     placeholder: string;
     required?: boolean;
     invalid?: boolean;
@@ -84,7 +92,12 @@
   // the CSP refuses.
   let open = $state(false);
   let typed = $state<string | null>(null);
-  const inputValue = $derived(typed ?? (multiple || !value[0] ? '' : nameOf(value[0])));
+  const summarized = $derived(
+    value.length > 1 ? `${nameOf(value[0])} +${value.length - 1}` : nameOf(value[0]),
+  );
+  const inputValue = $derived(
+    typed ?? (!value[0] ? '' : multiple ? (summary && !open ? summarized : '') : nameOf(value[0])),
+  );
   const matching = $derived(items.filter((item) => matchesSearch(item.name, typed ?? '')));
   // What was typed, tidied, when it can be suggested: long enough and not a name the list has.
   const suggestion = $derived.by((): Item | null => {
@@ -113,7 +126,7 @@
   // One box, like the other inputs. Skeleton gives the Combobox input its own `input` look and the
   // trigger a tonal button pinned inside the control; both are undone below so only this box draws.
   const control = $derived(
-    `flex ${compact ? 'h-11' : 'h-12'} w-full items-center overflow-hidden rounded-lg border border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500`,
+    `flex ${compact ? 'h-11' : 'h-12'} w-full items-center overflow-hidden rounded-lg border ${summary && value.length > 0 ? 'border-primary-500' : 'border-surface-200-800'} bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500`,
   );
   const inputClass =
     'h-full min-w-0 flex-1 rounded-none! border-0! bg-transparent px-3 text-sm shadow-none! ring-0! outline-none focus:ring-0!';
@@ -192,6 +205,7 @@
   >
     <Combobox.Label class={labelClass}>{label}</Combobox.Label>
     <Combobox.Control class={control}>
+      {#if icon}<Icon name={icon} size={18} class="ml-3 text-muted" />{/if}
       <Combobox.Input class={inputClass} aria-invalid={invalid || undefined} />
       <Combobox.Trigger class={triggerClass} aria-label={m.search_select_open({ label })}>
         <svg
@@ -253,8 +267,11 @@
   <div class={rootClass}>
     <span class="block {labelClass}">{label}</span>
     <div class={control} aria-hidden="true">
-      <span class="min-w-0 flex-1 truncate px-3 text-sm {!multiple && value[0] ? '' : 'text-muted'}"
-        >{!multiple && value[0] ? nameOf(value[0]) : placeholder}</span
+      {#if icon}<Icon name={icon} size={18} class="ml-3 text-muted" />{/if}
+      <span
+        class="min-w-0 flex-1 truncate px-3 text-sm {value[0] && (!multiple || summary)
+          ? ''
+          : 'text-muted'}">{value[0] && (!multiple || summary) ? summarized : placeholder}</span
       >
     </div>
   </div>

@@ -69,43 +69,34 @@ describe('TablesFilters.svelte', () => {
   // these tests click the elements themselves.
   const press = (locator: { element: () => Element }) => (locator.element() as HTMLElement).click();
 
-  it('adds a platform from its popover', async () => {
+  it('adds a platform from its box, which searches as it opens', async () => {
     await page.viewport(1280, 800);
     render(TablesFilters, props);
 
-    const open = page.getByRole('button', { name: 'Plataformas' });
-    press(open);
-    await expect.element(open).toHaveAttribute('aria-expanded', 'true');
-    await expect
-      .element(
-        page.getByRole('group', { name: 'Plataformas' }).getByRole('checkbox', { name: 'Roll20' }),
-      )
-      .toBeInTheDocument();
-    press(
-      page.getByRole('group', { name: 'Plataformas' }).getByRole('checkbox', { name: 'Roll20' }),
-    );
+    press(page.getByRole('button', { name: 'Abrir a lista: Plataformas' }));
+    await expect.element(page.getByRole('option', { name: 'Roll20' })).toBeInTheDocument();
+    press(page.getByRole('option', { name: 'Roll20' }));
 
-    expect(lastUrl()).toBe('/tables?platform=roll20');
+    await expect.poll(lastUrl).toBe('/tables?platform=roll20');
   });
 
-  it('counts the picks on the button that opens a group', async () => {
+  it('shows the first pick and how many more, closed', async () => {
+    await page.viewport(1280, 800);
     render(TablesFilters, { ...props, picked: { ...none, platforms: ['discord', 'roll20'] } });
-    await page.viewport(1280, 800);
 
-    await expect.element(page.getByRole('button', { name: /^Plataformas\s*2$/ })).toBeVisible();
+    await expect
+      .element(page.getByRole('combobox', { name: 'Plataformas' }))
+      .toHaveValue('Discord +1');
+    await expect.element(page.getByRole('combobox', { name: 'Tags' })).toHaveValue('');
   });
 
-  it('keeps the tags past the featured ones behind "Mostrar todas as 2 tags"', async () => {
+  it('offers every tag in one list, the featured and the rest', async () => {
     await page.viewport(1280, 800);
     render(TablesFilters, props);
 
-    press(page.getByRole('button', { name: 'Tags' }));
-    await expect
-      .element(page.getByRole('group', { name: 'Tags' }).getByRole('checkbox', { name: 'Terror' }))
-      .toBeInTheDocument();
-    expect(page.getByRole('checkbox', { name: 'Gore' }).elements()).toHaveLength(0);
-    press(page.getByRole('button', { name: 'Mostrar todas as 2 tags' }));
-    await expect.element(page.getByRole('checkbox', { name: 'Gore' })).toBeInTheDocument();
+    press(page.getByRole('button', { name: 'Abrir a lista: Tags' }));
+    await expect.element(page.getByRole('option', { name: 'Terror' })).toBeInTheDocument();
+    await expect.element(page.getByRole('option', { name: 'Gore' })).toBeInTheDocument();
   });
 
   it('on a phone, opens all the filters in a sheet with the count of tables', async () => {

@@ -1,13 +1,12 @@
 <script lang="ts">
-  // The list's filters. On a desktop one row: the system, the modality, a popover each for the
-  // platforms and the tags. On a phone the modality and a "Filtros (N)" button that opens a
+  // The list's filters. On a desktop one row: the system, the modality, a multi-select box each for
+  // the platforms and the tags. On a phone the modality and a "Filtros (N)" button that opens a
   // full-screen sheet with all of them. A change applies at once (the list reloads on the new
   // query); the picks show as removable chips under it. The query string is the contract: a slug
   // per pick, a key repeated per value, so a link to a filtered list keeps working.
   import { goto } from '$app/navigation';
-  import { Dialog, Popover, Portal } from '@skeletonlabs/skeleton-svelte';
+  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import Icon from '$lib/components/Icon.svelte';
-  import FilterChecklist from '$lib/components/FilterChecklist.svelte';
   import SearchSelect from '$lib/components/SearchSelect.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
   import { localizedHref } from '$lib/i18n/locales';
@@ -81,9 +80,6 @@
   const clearAll = () => apply({ systems: [], modality: null, platforms: [], tags: [] });
 
   let sheetOpen = $state(false);
-  // Content is built when it opens: a closed one would put an inline `style` on the page, which the
-  // CSP refuses.
-  let openGroup = $state<'platforms' | 'tags' | null>(null);
 
   const segment =
     'inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold no-underline hover:preset-tonal';
@@ -112,49 +108,6 @@
   </div>
 {/snippet}
 
-{#snippet group(kind: 'platforms' | 'tags')}
-  {@const label = kind === 'platforms' ? m.form_platforms() : m.form_tags()}
-  {@const n = picked[kind].length}
-  <Popover
-    open={openGroup === kind}
-    onOpenChange={(details) => (openGroup = details.open ? kind : null)}
-    positioning={{ placement: 'bottom-start', offset: { mainAxis: 8 } }}
-  >
-    <Popover.Trigger class={trigger}>
-      {label}{#if n > 0}<span class="badge rounded-full preset-filled-primary-500 px-2">{n}</span
-        >{/if}
-    </Popover.Trigger>
-    {#if openGroup === kind}<Portal>
-        <Popover.Positioner class="z-50!">
-          <Popover.Content
-            class="w-96 max-w-[calc(100vw-2rem)] card border border-surface-200-800 bg-surface-100-900 p-4 shadow-2xl"
-          >
-            <FilterChecklist
-              {label}
-              items={kind === 'platforms' ? catalog.platforms : catalog.tags}
-              more={kind === 'tags' ? catalog.moreTags : []}
-              moreLabel={(count) => m.tables_filter_all_tags({ count })}
-              picked={picked[kind]}
-              onchange={(next) => apply({ [kind]: next })}
-            />
-            <div class="mt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                class="btn min-h-11 px-0 anchor font-semibold"
-                disabled={n === 0}
-                onclick={() => apply({ [kind]: [] })}>{m.tables_filter_clear_group()}</button
-              >
-              <Popover.CloseTrigger
-                class="btn min-h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-                >{m.tables_filter_show({ count })}</Popover.CloseTrigger
-              >
-            </div>
-          </Popover.Content>
-        </Popover.Positioner>
-      </Portal>{/if}
-  </Popover>
-{/snippet}
-
 <div class="mt-5 grid gap-4 md:mt-8">
   <div class="flex flex-wrap items-end gap-3">
     {#if systems.length > 0}
@@ -175,10 +128,28 @@
       </div>
     {/if}
     {@render modality()}
-    <div class="hidden gap-3 md:flex">
-      {#if catalog.platforms.length > 0}{@render group('platforms')}{/if}
-      {#if allTags.length > 0}{@render group('tags')}{/if}
-    </div>
+    {#each [{ kind: 'platforms', icon: 'category', label: m.form_platforms(), items: catalog.platforms }, { kind: 'tags', icon: 'tag', label: m.form_tags(), items: allTags }] as const as group (group.kind)}
+      {#if group.items.length > 0}
+        <div class="hidden w-60 md:block">
+          <SearchSelect
+            id="{group.kind}-filter"
+            name={group.kind}
+            label={group.label}
+            labelClass="sr-only"
+            class="grid"
+            compact
+            icon={group.icon}
+            items={group.items}
+            value={picked[group.kind]}
+            placeholder={group.label}
+            multiple
+            summary
+            showPicks={false}
+            onchange={(next) => apply({ [group.kind]: next })}
+          />
+        </div>
+      {/if}
+    {/each}
     <button type="button" class="{trigger} md:hidden" onclick={() => (sheetOpen = true)}>
       {m.tables_filters_button()}
       {#if chips.length > 0}<span class="badge rounded-full preset-filled-primary-500 px-2"
@@ -235,29 +206,29 @@
                 items={systems}
                 value={picked.systems}
                 placeholder={m.tables_filter_search()}
+                inDialog
                 multiple
-                showPicks={false}
                 onchange={(next) => apply({ systems: next })}
               />
             {/if}
-            {#if catalog.platforms.length > 0}
-              <FilterChecklist
-                label={m.form_platforms()}
-                items={catalog.platforms}
-                picked={picked.platforms}
-                onchange={(next) => apply({ platforms: next })}
-              />
-            {/if}
-            {#if allTags.length > 0}
-              <FilterChecklist
-                label={m.form_tags()}
-                items={catalog.tags}
-                more={catalog.moreTags}
-                moreLabel={(count) => m.tables_filter_all_tags({ count })}
-                picked={picked.tags}
-                onchange={(next) => apply({ tags: next })}
-              />
-            {/if}
+            {#each [{ kind: 'platforms', icon: 'category', label: m.form_platforms(), items: catalog.platforms }, { kind: 'tags', icon: 'tag', label: m.form_tags(), items: allTags }] as const as group (group.kind)}
+              {#if group.items.length > 0}
+                <SearchSelect
+                  id="{group.kind}-filter-sheet"
+                  name={group.kind}
+                  label={group.label}
+                  labelClass="label-text block pb-1 font-semibold"
+                  class="grid"
+                  inDialog
+                  icon={group.icon}
+                  items={group.items}
+                  value={picked[group.kind]}
+                  placeholder={group.label}
+                  multiple
+                  onchange={(next) => apply({ [group.kind]: next })}
+                />
+              {/if}
+            {/each}
           </div>
           <footer
             class="flex items-center justify-between gap-3 border-t border-surface-200-800 px-5 py-3"

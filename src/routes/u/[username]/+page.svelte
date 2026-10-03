@@ -77,11 +77,25 @@
       <div class="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
         <Avatar src={profile.avatarUrl} name={profile.username} size={80} />
         <div class="min-w-0">
-          <h1
-            class="text-4xl leading-none font-semibold tracking-tight wrap-break-word md:text-6xl"
-          >
-            <UserLink username={profile.username} />
-          </h1>
+          <div class="flex flex-wrap items-center gap-3">
+            <h1
+              class="text-4xl leading-none font-semibold tracking-tight wrap-break-word md:text-6xl"
+            >
+              <UserLink username={profile.username} />
+            </h1>
+            {#if !data.isOwner}
+              <ActionForm action="?/message">
+                <button
+                  type="submit"
+                  class="btn size-11 rounded-lg preset-outlined-primary-500 p-0"
+                  aria-label={m.public_profile_message_to({ username: atHandle(profile.username) })}
+                  title={m.public_profile_message()}
+                >
+                  <Icon name="game-icons:scroll-quill" size={22} />
+                </button>
+              </ActionForm>
+            {/if}
+          </div>
           {#if profile.links.length > 0}
             <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
               {#each profile.links as link, index (`${link.network}-${index}`)}
@@ -111,13 +125,6 @@
             class="btn h-12 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
             >{m.public_profile_edit()}</a
           >
-        {:else}
-          <ActionForm
-            action="?/message"
-            label={m.public_profile_message()}
-            icon="game-icons:scroll-quill"
-            buttonClass="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-5 font-semibold"
-          />
         {/if}
         <KebabMenu name={atHandle(profile.username)} items={menu} />
       </div>

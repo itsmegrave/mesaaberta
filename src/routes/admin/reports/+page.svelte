@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import AdminReportsTable from '$lib/components/admin/AdminReportsTable.svelte';
   import { m } from '$lib/paraglide/messages';
@@ -13,9 +14,6 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_reports_title() }]}
     class="mb-6"
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-    {m.admin_reports_title()}
-  </h1>
-  <p class="mt-4 max-w-2xl text-lg">{m.admin_reports_lede()}</p>
+  <AdminPageHead title={m.admin_reports_title()} lede={m.admin_reports_lede()} />
   <AdminReportsTable data={data.reports} />
 </section>

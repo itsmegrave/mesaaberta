@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import Button from '$lib/components/Button.svelte';
@@ -197,10 +198,7 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_announce_title() }]}
     class="mb-6"
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-    {m.admin_announce_title()}
-  </h1>
-  <p class="mt-4 max-w-2xl text-lg">{m.admin_announce_lede()}</p>
+  <AdminPageHead title={m.admin_announce_title()} lede={m.admin_announce_lede()} />
 
   <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
     <Form

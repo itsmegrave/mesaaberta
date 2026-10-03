@@ -124,6 +124,7 @@ test('catalog fields and validation fit the viewport in both themes', async ({
 
 test('an admin approves, renames and rejects suggestions, and each decision is logged', async ({
   page,
+  isMobile,
 }, testInfo) => {
   const gm = await createUser('Mestre Sugestão');
   const admin = await createUser('Fila Admin', { role: 'admin' });
@@ -132,10 +133,12 @@ test('an admin approves, renames and rejects suggestions, and each decision is l
 
   await signIn(page, admin, '/admin/queue');
   await expect(page.getByRole('heading', { name: 'Fila de aprovação', level: 1 })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Fila de aprovação' })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  if (!isMobile) {
+    await expect(page.getByRole('link', { name: /^Fila de aprovação/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  }
 
   await page.getByRole('button', { name: `Aprovar: ${tag} A` }).click();
   await expect(page.getByText('Sugestão aprovada.')).toBeVisible();

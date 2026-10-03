@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { createUser, database } from './support/users';
 import { randomUUID } from 'node:crypto';
-import { pickFromSearch, signIn } from './support/app';
+import { adminSection, pickFromSearch, signIn } from './support/app';
 
-test('admin overview is protected, refreshes and fits the viewport', async ({ page }, testInfo) => {
+test('admin overview is protected, refreshes and fits the viewport', async ({
+  page,
+  isMobile,
+}, testInfo) => {
   expect((await page.goto('/admin'))?.status()).toBe(404);
   expect((await page.request.get('/api/query/admin')).status()).toBe(404);
 
@@ -23,19 +26,20 @@ test('admin overview is protected, refreshes and fits the viewport', async ({ pa
   await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
   expect((await refreshed).status()).toBe(200);
   await expect(page.getByRole('button', { name: 'Atualizar', exact: true })).toBeEnabled();
-  await expect(page.getByRole('link', { name: 'Visão geral', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  if (!isMobile) {
+    await expect(await adminSection(page, false, 'Visão geral')).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await page.screenshot({ path: testInfo.outputPath('admin-dashboard.png'), fullPage: true });
-  await page.getByRole('link', { name: 'Notificações', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Notificações', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  await (await adminSection(page, isMobile, 'Notificações')).click();
+  await expect(
+    page.getByRole('heading', { name: 'Notificações do sistema', level: 1 }),
+  ).toBeVisible();
   const icons = page.locator('input[name="icon"]');
   await expect(icons).toHaveCount(7);
   const drawings = await icons.evaluateAll((inputs) =>
