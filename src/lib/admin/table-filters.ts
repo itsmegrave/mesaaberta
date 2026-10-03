@@ -1,7 +1,7 @@
 import { TABLE_STATUSES, type TableStatus } from '$lib/tables/status-values';
 import { pageSizeOf, sortOf } from './list';
 
-export const TABLE_SORTS = ['created', 'title'] as const;
+export const TABLE_SORTS = ['created', 'title', 'next'] as const;
 /** The Instagram post's state, as the filter names it: `none` is a table with no post to speak of. */
 export const INSTAGRAM_FILTERS = [
   'all',

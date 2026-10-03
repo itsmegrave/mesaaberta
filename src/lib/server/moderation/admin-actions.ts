@@ -5,13 +5,21 @@ import {
   banFromReportSchema,
   banSchema,
   closeReportSchema,
+  closeTableByIdSchema,
   closeTableSchema,
   reportIdSchema,
 } from '$lib/moderation/reports';
 import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { Invalid } from '../errors';
-import { banAccount, closeReport, closeReportedTable, revokeBan, startReview } from './admin';
+import {
+  banAccount,
+  closeReport,
+  closeReportedTable,
+  closeTableByAdmin,
+  revokeBan,
+  startReview,
+} from './admin';
 import { moderationAction } from './form-action';
 
 const admin = { admin: true };
@@ -85,6 +93,16 @@ export const accountActions = {
     accountSchema,
     ['profileId'],
     (db, actor, { profileId }) => revokeBan(db, actor, profileId),
+    admin,
+  ),
+};
+
+/** Closing a table from the tables list, `/admin/tables`. */
+export const tableActions = {
+  close: moderationAction(
+    closeTableByIdSchema,
+    ['tableId', 'note'],
+    (db, actor, { tableId, note }) => closeTableByAdmin(db, actor, tableId, note),
     admin,
   ),
 };

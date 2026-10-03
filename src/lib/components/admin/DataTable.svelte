@@ -282,7 +282,7 @@
   </div>
 
   <!-- Phone: no table. One list of cards, the filters in a sheet, and "Mostrar mais". -->
-  <div class="grid gap-3 md:hidden">
+  <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:hidden">
     {#if search || sheet}
       <div class="flex items-center gap-2">
         {#if search}

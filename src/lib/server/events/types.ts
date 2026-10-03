@@ -62,7 +62,13 @@ export type DomainEvent =
   | { type: 'AccountReinstated'; payload: { profileId: string } }
   | { type: 'AccountBanLifted'; payload: { profileId: string } };
 
-export type TableClosure = { tableId: string; slug: string; title: string; reportId: string };
+// `reportId` is null when an admin closed the table from the tables list, with no report behind it.
+export type TableClosure = {
+  tableId: string;
+  slug: string;
+  title: string;
+  reportId: string | null;
+};
 
 export type ReportFiled = {
   reportId: string;

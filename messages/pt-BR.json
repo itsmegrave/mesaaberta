@@ -1404,5 +1404,8 @@
   "admin_audit_total": "{count} registros",
   "admin_audit_filtered_empty": "Nenhum registro com esses filtros.",
   "admin_report_eyebrow": "Denúncia · recebida em {date}",
-  "admin_report_decision": "Decisão"
+  "admin_report_decision": "Decisão",
+  "admin_tables_close": "Fechar a mesa…",
+  "admin_tables_close_text": "A mesa sai das páginas públicas, os jogadores recebem o cancelamento e o mestre é avisado. A justificativa fica registrada com a mesa.",
+  "admin_tables_close_done": "Mesa fechada."
 }

@@ -13,7 +13,6 @@
     RESOLUTION_NOTE_MAX,
   } from '$lib/moderation/reports';
   import { atHandle } from '$lib/profile/handle';
-  import { tableStatusLabel } from '$lib/tables/status';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
@@ -46,8 +45,6 @@
   const primary = 'btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const danger =
     'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
-  const chip =
-    'chip h-6 rounded-full border border-surface-200-800 px-3 text-xs font-semibold whitespace-nowrap';
   const row = 'grid gap-1 py-3 sm:grid-cols-[10rem_1fr] sm:gap-4';
 </script>
 
@@ -144,7 +141,7 @@
                   >{m.admin_user_title()}</a
                 >
                 {#if report.player.status === 'suspended'}
-                  <span class={chip}>{m.admin_profile_banned()}</span>
+                  <StatusBadge status="user:banned" />
                 {/if}
               </dd>
             </div>
@@ -163,9 +160,7 @@
                   >{report.table.title}</a
                 >
               {/if}
-              <span class={chip}>
-                {tableStatusLabel(report.table.status) ?? m.admin_report_table_open()}
-              </span>
+              <StatusBadge status={`table:${report.table.status}` as Status} />
             </dd>
           </div>
           <div class={row}>
@@ -182,7 +177,7 @@
                 >{m.admin_user_title()}</a
               >
               {#if report.gm.status === 'suspended'}
-                <span class={chip}>{m.admin_profile_banned()}</span>
+                <StatusBadge status="user:banned" />
               {/if}
             </dd>
           </div>
