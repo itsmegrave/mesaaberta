@@ -95,8 +95,9 @@ describe('admin approval queue', () => {
 
     await page.getByRole('button', { name: 'Mesclar com Foundry VTT' }).click();
 
-    const select = page.getByLabelText('Mesclar com');
-    await expect.element(select).toHaveValue(approved.platform[0].id);
+    const target = page.getByRole('combobox', { name: 'Mesclar com' });
+    await expect.element(target).toHaveValue('Foundry VTT');
+    await page.getByRole('button', { name: 'Abrir a lista: Mesclar com' }).click();
     await expect.element(page.getByRole('option', { name: 'Discord' })).toBeInTheDocument();
   });
 

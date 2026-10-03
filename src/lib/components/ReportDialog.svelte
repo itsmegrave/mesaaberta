@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SelectInput from '$lib/components/SelectInput.svelte';
+  import SearchSelect from '$lib/components/SearchSelect.svelte';
   import TextArea from '$lib/components/TextArea.svelte';
   // "Denunciar": a table, or someone the reporter shares it with. The server decides again who may
   // be reported; this only offers what the read said is allowed.
@@ -96,46 +96,60 @@
             <input type="hidden" name="playerId" value={data.playerId} />
 
             {#if several}
-              <FormField id="report-target" label={m.report_target()}>
-                <SelectInput
-                  id="report-target"
-                  class="select h-12 w-full rounded-lg border-surface-200-800 px-3"
-                  value={target}
-                  onchange={(event) => {
-                    const value = event.currentTarget.value;
-                    form.change('targetType', value === 'table' ? 'table' : 'player');
-                    form.change('playerId', value === 'table' ? '' : value);
-                  }}
-                >
-                  {#if targets.table}<option value="table">{m.report_target_table()}</option>{/if}
-                  {#each targets.people as person (person.id)}
-                    <option value={person.id}>{atHandle(person.username)}</option>
-                  {/each}
-                </SelectInput>
-              </FormField>
+              <SearchSelect
+                id="report-target"
+                name="target"
+                label={m.report_target()}
+                labelClass="label-text block font-semibold"
+                class="grid gap-1"
+                inDialog
+                items={[
+                  ...(targets.table ? [{ name: m.report_target_table(), slug: 'table' }] : []),
+                  ...targets.people.map((person) => ({
+                    name: atHandle(person.username),
+                    slug: person.id,
+                  })),
+                ]}
+                value={target ? [target] : []}
+                placeholder={m.report_target()}
+                onchange={(picked) => {
+                  const value = picked[0] ?? '';
+                  form.change('targetType', value === 'table' ? 'table' : 'player');
+                  form.change('playerId', value === 'table' ? '' : value);
+                }}
+              />
             {/if}
 
             {#if data.targetType === 'player' && selectedPerson}
               <p class="text-sm"><UserLink username={selectedPerson.username} /></p>
             {/if}
 
-            <FormField id="report-reason" label={m.report_reason()} error={reasonError}>
-              <SelectInput
+            <div class="min-w-0">
+              <SearchSelect
                 id="report-reason"
                 name="reason"
+                label={m.report_reason()}
+                labelClass="label-text block font-semibold"
+                class="grid gap-1"
+                inDialog
                 required
-                class="select h-12 w-full rounded-lg border-surface-200-800 px-3"
-                value={data.reason}
-                onchange={(event) => form.change('reason', event.currentTarget.value)}
-                aria-invalid={reasonError ? 'true' : undefined}
-                aria-describedby={reasonError ? 'report-reason-error' : undefined}
-              >
-                <option value="" disabled>{m.report_reason_pick()}</option>
-                {#each REPORT_REASONS as reason (reason)}
-                  <option value={reason}>{reasonLabel(reason)}</option>
-                {/each}
-              </SelectInput>
-            </FormField>
+                invalid={!!reasonError}
+                items={REPORT_REASONS.map((reason) => ({
+                  name: reasonLabel(reason),
+                  slug: reason,
+                }))}
+                value={data.reason ? [data.reason] : []}
+                placeholder={m.report_reason_pick()}
+                onchange={(picked) => form.change('reason', picked[0] ?? '')}
+              />
+              {#if reasonError}<p
+                  id="report-reason-error"
+                  role="alert"
+                  class="mt-1 text-sm font-semibold text-error-700-300"
+                >
+                  {reasonError}
+                </p>{/if}
+            </div>
 
             <FormField
               id="report-details"

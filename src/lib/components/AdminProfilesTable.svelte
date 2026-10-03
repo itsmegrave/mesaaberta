@@ -6,7 +6,7 @@
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import { toast } from '$lib/toaster';
   import Form from '$lib/components/Form.svelte';
-  import SelectInput from '$lib/components/SelectInput.svelte';
+  import SearchSelect from '$lib/components/SearchSelect.svelte';
   import Button from '$lib/components/Button.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import { goto } from '$app/navigation';
@@ -139,15 +139,25 @@
         value={data.query}
       />
     </label>
-    <label class="text-sm font-semibold">
-      {m.admin_profile_status()}
-      <SelectInput class="select mt-2 h-11 min-w-44" name="status" value={data.status}>
-        <option value="all">{m.admin_profile_all()}</option>
-        {#each PROFILE_STANDINGS as status (status)}
-          <option value={status}>{m[`status_user_${status}`]()}</option>
-        {/each}
-      </SelectInput>
-    </label>
+    <div class="w-52">
+      <SearchSelect
+        id="status-filter"
+        name="status"
+        label={m.admin_profile_status()}
+        labelClass="text-sm font-semibold"
+        class="grid gap-2"
+        compact
+        items={[
+          { name: m.admin_profile_all(), slug: 'all' },
+          ...PROFILE_STANDINGS.map((status) => ({
+            name: m[`status_user_${status}`](),
+            slug: status,
+          })),
+        ]}
+        value={[data.status]}
+        placeholder={m.admin_profile_all()}
+      />
+    </div>
     <Button
       size="custom"
       class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-4"
@@ -225,18 +235,25 @@
     </table>
   </div>
   <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
-    <label class="flex items-center gap-2 text-sm">
-      {m.admin_profile_size()}
-      <SelectInput
-        class="select h-11 w-20"
-        value={data.pageSize}
+    <div class="w-48">
+      <SearchSelect
+        id="page-size"
+        name="size"
+        label={m.admin_profile_size()}
+        labelClass="text-sm"
+        class="flex items-center gap-2"
+        compact
+        items={[20, 50, 100].map((size) => ({ name: String(size), slug: String(size) }))}
+        value={[String(data.pageSize)]}
+        placeholder={String(data.pageSize)}
         disabled={busy}
-        onchange={(event) =>
-          table.setPagination({ pageIndex: 0, pageSize: Number(event.currentTarget.value) })}
-      >
-        {#each [20, 50, 100] as size (size)}<option value={size}>{size}</option>{/each}
-      </SelectInput>
-    </label>
+        onchange={(picked) => {
+          // The list also reports the size the page already has; only a new size starts over.
+          const size = Number(picked[0] ?? data.pageSize);
+          if (size !== data.pageSize) table.setPagination({ pageIndex: 0, pageSize: size });
+        }}
+      />
+    </div>
     <div class="flex items-center gap-3">
       <span class="text-sm" aria-live="polite"
         >{m.admin_profile_page({ page: data.page, pages: Math.max(1, table.getPageCount()) })}</span

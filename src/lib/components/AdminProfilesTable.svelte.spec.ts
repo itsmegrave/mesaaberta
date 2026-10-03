@@ -2,6 +2,7 @@ import '../../routes/layout.css';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { goto } from '$app/navigation';
 import AdminProfilesTable from './AdminProfilesTable.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/admin/users') } }));
@@ -49,7 +50,7 @@ describe('AdminProfilesTable', () => {
       .toHaveAttribute('href', '/u/ana');
     await expect.element(page.getByText('Ana Souza')).toBeVisible();
     await expect.element(page.getByText('2 jogando · 1 mestrando')).toBeVisible();
-    await expect.element(page.getByText('Ativo', { exact: true }).nth(1)).toBeVisible();
+    await expect.element(page.getByText('Ativo', { exact: true }).first()).toBeVisible();
   });
 
   it('says "Sem nome" without a name and "Nenhuma ainda" without tables', async () => {
@@ -70,8 +71,8 @@ describe('AdminProfilesTable', () => {
       }),
     ]);
 
-    await expect.element(page.getByText('Suspenso', { exact: true }).nth(1)).toBeVisible();
-    await expect.element(page.getByText('Banido', { exact: true }).nth(1)).toBeVisible();
+    await expect.element(page.getByText('Suspenso', { exact: true }).first()).toBeVisible();
+    await expect.element(page.getByText('Banido', { exact: true }).first()).toBeVisible();
   });
 
   it('puts the actions in a 3-dots menu: details, the public profile and the ID', async () => {
@@ -89,16 +90,15 @@ describe('AdminProfilesTable', () => {
   it('filters by Ativo, Suspenso and Banido', async () => {
     show();
 
-    const options = page
-      .getByRole('combobox', { name: 'Status' })
-      .element()
-      .querySelectorAll('option');
-    expect([...options].map((option) => option.textContent?.trim())).toEqual([
-      'Todos',
-      'Ativo',
-      'Suspenso',
-      'Banido',
-    ]);
+    await page.getByRole('button', { name: 'Abrir a lista: Status' }).click();
+    await expect
+      .poll(() =>
+        page
+          .getByRole('option')
+          .elements()
+          .map((option) => option.textContent?.trim()),
+      )
+      .toEqual(['Todos', 'Ativo', 'Suspenso', 'Banido']);
   });
 
   it('counts the users and searches by "Buscar usuário"', async () => {
@@ -106,5 +106,19 @@ describe('AdminProfilesTable', () => {
 
     await expect.element(page.getByText('26 usuários')).toBeVisible();
     await expect.element(page.getByLabelText('Buscar usuário')).toBeVisible();
+  });
+
+  it('keeps the page when the page size is the one it already has, and starts over for a new one', async () => {
+    vi.mocked(goto).mockClear();
+    show([row()], { total: 60, page: 2 });
+
+    await page.getByRole('button', { name: 'Abrir a lista: Por página' }).click();
+    await page.getByRole('option', { name: '20', exact: true }).click();
+    expect(goto).not.toHaveBeenCalled();
+
+    await page.getByRole('button', { name: 'Abrir a lista: Por página' }).click();
+    await page.getByRole('option', { name: '50', exact: true }).click();
+    await expect.poll(() => String(vi.mocked(goto).mock.calls.at(-1)?.[0])).toContain('size=50');
+    expect(String(vi.mocked(goto).mock.calls.at(-1)?.[0])).toContain('page=1');
   });
 });

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import { page } from '$app/state';
@@ -72,10 +73,7 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_audit_title() }]}
     class="mb-6"
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-    {m.admin_audit_title()}
-  </h1>
-  <p class="mt-4 max-w-2xl text-lg">{m.admin_audit_lede()}</p>
+  <AdminPageHead title={m.admin_audit_title()} lede={m.admin_audit_lede()} />
 
   {#if data.log.rows.length === 0}
     <p class="mt-8 rounded-lg border border-surface-200-800 bg-panel p-6" role="status">

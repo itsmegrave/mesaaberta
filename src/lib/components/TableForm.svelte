@@ -1,6 +1,5 @@
 <script lang="ts">
   import TextInput from '$lib/components/TextInput.svelte';
-  import SelectInput from '$lib/components/SelectInput.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
   import CepLookup from './CepLookup.svelte';
@@ -347,18 +346,31 @@
       </div>
       {#if $draft.kind === 'campaign'}
         <div class="grid gap-6 sm:grid-cols-2">
-          <FormField id="repeat" label={m.form_repeat()} error={err('repeat')}
-            ><SelectInput
+          <div class="min-w-0">
+            <SearchSelect
               id="repeat"
               name="repeat"
-              bind:value={$draft.repeat}
-              class="select h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-              aria-invalid={invalid('repeat')}
-              ><option value="weekly">{m.form_repeat_weekly()}</option><option value="biweekly"
-                >{m.form_repeat_biweekly()}</option
-              ></SelectInput
-            ></FormField
-          >
+              label={m.form_repeat()}
+              labelClass="label-text block font-semibold"
+              class="grid gap-1"
+              items={[
+                { name: m.form_repeat_weekly(), slug: 'weekly' },
+                { name: m.form_repeat_biweekly(), slug: 'biweekly' },
+              ]}
+              value={[$draft.repeat]}
+              placeholder={m.form_repeat()}
+              invalid={!!invalid('repeat')}
+              onchange={(picked) =>
+                ($draft.repeat = picked[0] === 'biweekly' ? 'biweekly' : 'weekly')}
+            />
+            {#if err('repeat')}<p
+                id="repeat-error"
+                role="alert"
+                class="mt-1 text-sm font-semibold text-error-700-300"
+              >
+                {err('repeat')}
+              </p>{/if}
+          </div>
           <div class="min-w-0">
             <DateTimeField
               id="until"

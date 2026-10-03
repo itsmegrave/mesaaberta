@@ -1,6 +1,5 @@
 <script lang="ts">
   import TextInput from '$lib/components/TextInput.svelte';
-  import SelectInput from '$lib/components/SelectInput.svelte';
   import Button from '$lib/components/Button.svelte';
   import { browser } from '$app/environment';
   import { page } from '$app/state';
@@ -107,9 +106,15 @@
     other: m.profile_gender_other,
   };
 
+  // What "Prefiro não informar" stands for in the list: the form sends nothing for it.
+  const NO_ANSWER = '__none';
+  const ageItems = AGE_RANGES.map((range) => ({ name: AGE_RANGE_LABELS[range](), slug: range }));
+  const genderItems = GENDER_OPTIONS.map((option) => ({
+    name: GENDER_LABELS[option](),
+    slug: option,
+  }));
+
   const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
-  // Native selects (Skeleton has no Select): the `select` look, with its arrow, like the table form.
-  const select = 'select h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
     'btn h-12 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
 
@@ -324,48 +329,33 @@
   </FormField>
 
   <div class="grid gap-6 sm:grid-cols-2">
-    <FormField
-      id="age-range"
-      label={m.profile_age_range()}
-      optional
-      error={errorText(controller.errors.ageRange?.[0])}
-    >
-      <SelectInput
-        id="age-range"
-        name="ageRange"
-        bind:value={$draft.ageRange}
-        class={select}
-        aria-invalid={controller.errors.ageRange ? 'true' : undefined}
-        aria-describedby="age-range-hint{controller.errors.ageRange ? ' age-range-error' : ''}"
-      >
-        <option value="">{m.profile_age_range_none()}</option>
-        {#each AGE_RANGES as range (range)}
-          <option value={range}>{AGE_RANGE_LABELS[range]()}</option>
-        {/each}
-      </SelectInput>
-    </FormField>
-
-    <FormField
-      id="gender"
-      label={m.profile_gender()}
-      optional
-      error={errorText(controller.errors.gender?.[0])}
-    >
-      <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
-      <SelectInput
-        id="gender"
-        name="gender"
-        bind:value={$draft.gender}
-        class={select}
-        aria-invalid={controller.errors.gender ? 'true' : undefined}
-        aria-describedby="gender-hint{controller.errors.gender ? ' gender-error' : ''}"
-      >
-        <option value="">{m.profile_gender_none()}</option>
-        {#each GENDER_OPTIONS as option (option)}
-          <option value={option}>{GENDER_LABELS[option]()}</option>
-        {/each}
-      </SelectInput>
-    </FormField>
+    {#each [{ id: 'age-range', field: 'ageRange', label: m.profile_age_range(), none: m.profile_age_range_none(), items: ageItems }, { id: 'gender', field: 'gender', label: m.profile_gender(), none: m.profile_gender_none(), items: genderItems }] as const as picker (picker.id)}
+      <div class="min-w-0">
+        <!-- The same combobox as the timezone. "Prefiro não informar" clears it. -->
+        <SearchSelect
+          id={picker.id}
+          name={picker.field}
+          label="{picker.label} ({m.form_optional()})"
+          labelClass="label-text block font-semibold"
+          class="grid gap-1"
+          items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
+          value={$draft[picker.field] ? [$draft[picker.field]] : []}
+          placeholder={picker.none}
+          invalid={Boolean(controller.errors[picker.field])}
+          onchange={(picked) =>
+            ($draft[picker.field] = (
+              picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
+            ) as never)}
+        />
+        {#if controller.errors[picker.field]}<p
+            id="{picker.id}-error"
+            role="alert"
+            class="mt-1 text-sm font-semibold text-error-700-300"
+          >
+            {errorText(controller.errors[picker.field]?.[0])}
+          </p>{/if}
+      </div>
+    {/each}
   </div>
 
   <!-- Own words for "Outro". Without JavaScript the field is always there (the server keeps it
@@ -452,18 +442,22 @@
         {@const networkError = itemError('linkNetwork', index)}
         <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
           <div class="grid gap-2 sm:grid-cols-4">
-            <!-- A native <select>: a positioned popup would need inline styles, which the CSP forbids. -->
-            <SelectInput
+            <SearchSelect
+              id="link-network-{id}"
               name="linkNetwork"
-              aria-label={m.profile_link_network({ n: index + 1 })}
-              bind:value={$draft.linkNetwork[index]}
-              class={select}
-              aria-invalid={networkError ? 'true' : undefined}
-            >
-              {#each NETWORKS as network (network)}
-                <option value={network}>{NETWORK_LABELS[network]()}</option>
-              {/each}
-            </SelectInput>
+              label={m.profile_link_network({ n: index + 1 })}
+              labelClass="sr-only"
+              class="grid"
+              items={NETWORKS.map((network) => ({
+                name: NETWORK_LABELS[network](),
+                slug: network,
+              }))}
+              value={[$draft.linkNetwork[index]]}
+              placeholder={m.profile_link_network({ n: index + 1 })}
+              invalid={!!networkError}
+              onchange={(picked) =>
+                ($draft.linkNetwork[index] = (picked[0] ?? 'instagram') as Network)}
+            />
             <TextInput
               id="link-url-{id}"
               name="linkUrl"

@@ -89,15 +89,6 @@
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
 </script>
 
-{#snippet count(value: number)}
-  <span
-    aria-hidden="true"
-    class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 text-xs font-bold"
-  >
-    {value > 9 ? '9+' : value}
-  </span>
-{/snippet}
-
 {#snippet collapseButton()}
   <Button
     size="custom"
@@ -211,18 +202,6 @@
                 class="px-3 text-xs font-semibold tracking-wide text-muted uppercase"
                 >{m.nav_account_group()}</Navigation.Label
               >
-              <a
-                href={localizedHref('/messages', locale)}
-                aria-current={pathname.startsWith('/messages') ? 'page' : undefined}
-                aria-label={messagesUnread > 0
-                  ? m.messages_menu_unread({ count: messagesUnread })
-                  : undefined}
-                class="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold no-underline hover:preset-tonal aria-[current=page]:bg-surface-200-800"
-              >
-                <Icon name="game-icons:scroll-quill" size={20} />
-                {m.messages_menu()}
-                {#if messagesUnread > 0}{@render count(messagesUnread)}{/if}
-              </a>
               <NotificationBell {unread} {latest} placement="right-end" labelled />
               {@render adminLink()}
             {/if}

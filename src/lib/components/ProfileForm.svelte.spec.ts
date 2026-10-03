@@ -39,6 +39,11 @@ const setup = async (
 };
 
 const urlFields = () => page.getByLabelText(/^Endereço do link/);
+// The networks sent, in row order: the combobox keeps each one in a hidden field.
+const networks = () =>
+  [...document.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="linkNetwork"]')].map(
+    (input) => input.value,
+  );
 const urls = () =>
   urlFields()
     .elements()
@@ -61,31 +66,54 @@ describe('ProfileForm', () => {
     }
   });
 
+  // The age and the gender are the same combobox as the timezone: type to narrow, or open the list.
+  const openList = (label: RegExp | string) =>
+    page.getByRole('button', { name: new RegExp(`^Abrir a lista: ${label}`) }).click();
+  const sent = (name: string) =>
+    document.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`)?.value;
+
   describe('age range', () => {
     it('is a list of ranges, not an exact age, with no answer as the default', async () => {
       await setup();
 
-      const range = page.getByLabelText(/^Faixa etária/);
-      expect(range.element().tagName).toBe('SELECT');
+      const range = page.getByRole('combobox', { name: /^Faixa etária/ });
       await expect.element(range).toHaveValue('');
-      const options = [...(range.element() as unknown as HTMLSelectElement).options].map(
-        (o) => o.text,
-      );
-      expect(options).toEqual([
-        'Prefiro não informar',
-        '13 a 17 anos',
-        '18 a 24 anos',
-        '25 a 34 anos',
-        '35 a 44 anos',
-        '45 a 54 anos',
-        '55 anos ou mais',
-      ]);
+      await expect.element(range).toHaveAttribute('placeholder', 'Prefiro não informar');
+      await openList('Faixa etária');
+      await expect
+        .poll(() =>
+          page
+            .getByRole('option')
+            .elements()
+            .map((option) => option.textContent?.trim()),
+        )
+        .toEqual([
+          'Prefiro não informar',
+          '13 a 17 anos',
+          '18 a 24 anos',
+          '25 a 34 anos',
+          '35 a 44 anos',
+          '45 a 54 anos',
+          '55 anos ou mais',
+        ]);
     });
 
-    it('shows the range the person saved', async () => {
+    it('shows the range the person saved, and sends it', async () => {
       await setup({ ageRange: '35_44' });
 
-      await expect.element(page.getByLabelText(/^Faixa etária/)).toHaveValue('35_44');
+      await expect
+        .element(page.getByRole('combobox', { name: /^Faixa etária/ }))
+        .toHaveValue('35 a 44 anos');
+      expect(sent('ageRange')).toBe('35_44');
+    });
+
+    it('sends nothing for "Prefiro não informar"', async () => {
+      await setup({ ageRange: '35_44' });
+
+      await openList('Faixa etária');
+      await page.getByRole('option', { name: 'Prefiro não informar' }).click();
+
+      await expect.poll(() => sent('ageRange')).toBeUndefined();
     });
   });
 
@@ -93,24 +121,28 @@ describe('ProfileForm', () => {
     it('is a list of options with no answer as the default', async () => {
       await setup();
 
-      const gender = page.getByLabelText(/^Gênero/);
-      expect(gender.element().tagName).toBe('SELECT');
+      const gender = page.getByRole('combobox', { name: /^Gênero/ });
       await expect.element(gender).toHaveValue('');
-      const options = [...(gender.element() as unknown as HTMLSelectElement).options].map(
-        (o) => o.text,
-      );
-      expect(options).toEqual([
-        'Prefiro não informar',
-        'Mulher',
-        'Homem',
-        'Mulher trans',
-        'Homem trans',
-        'Pessoa não binária',
-        'Agênero',
-        'Gênero fluido',
-        'Travesti',
-        'Outro',
-      ]);
+      await openList('Gênero');
+      await expect
+        .poll(() =>
+          page
+            .getByRole('option')
+            .elements()
+            .map((option) => option.textContent?.trim()),
+        )
+        .toEqual([
+          'Prefiro não informar',
+          'Mulher',
+          'Homem',
+          'Mulher trans',
+          'Homem trans',
+          'Pessoa não binária',
+          'Agênero',
+          'Gênero fluido',
+          'Travesti',
+          'Outro',
+        ]);
     });
 
     it('asks for own words only once "Outro" is picked', async () => {
@@ -119,7 +151,8 @@ describe('ProfileForm', () => {
       const ownWords = () => page.getByLabelText('Como você se identifica?');
       await expect.element(ownWords()).not.toBeInTheDocument();
 
-      await page.getByLabelText(/^Gênero/).selectOptions('Outro');
+      await openList('Gênero');
+      await page.getByRole('option', { name: 'Outro' }).click();
       await expect.element(ownWords()).toBeVisible();
       await expect.element(ownWords()).not.toBeRequired();
     });
@@ -127,7 +160,8 @@ describe('ProfileForm', () => {
     it('shows what the person saved, own words included', async () => {
       await setup({ gender: 'other', genderOther: 'demigênero' });
 
-      await expect.element(page.getByLabelText(/^Gênero/)).toHaveValue('other');
+      await expect.element(page.getByRole('combobox', { name: /^Gênero/ })).toHaveValue('Outro');
+      expect(sent('gender')).toBe('other');
       await expect
         .element(page.getByLabelText('Como você se identifica?'))
         .toHaveValue('demigênero');
@@ -244,7 +278,8 @@ describe('ProfileForm', () => {
       });
 
       expect(urls()).toEqual(['https://instagram.com/ana', 'https://ana.example']);
-      await expect.element(page.getByLabelText('Rede do link 2')).toHaveValue('website');
+      expect(networks()).toEqual(['instagram', 'website']);
+      await expect.element(page.getByRole('combobox', { name: 'Rede do link 2' })).toBeVisible();
     });
 
     it('adds a row, focused, and sends the links as parallel fields the server reads in order', async () => {
@@ -256,9 +291,8 @@ describe('ProfileForm', () => {
       await expect
         .element(page.getByLabelText('Endereço do link 1'))
         .toHaveAttribute('name', 'linkUrl');
-      await expect
-        .element(page.getByLabelText('Rede do link 1'))
-        .toHaveAttribute('name', 'linkNetwork');
+      await expect.poll(networks).toEqual(['instagram']);
+      await expect.element(page.getByRole('combobox', { name: 'Rede do link 1' })).toBeVisible();
     });
 
     it('removes a row and keeps the others as they were typed', async () => {
@@ -271,7 +305,7 @@ describe('ProfileForm', () => {
       await page.getByRole('button', { name: 'Remover link 2' }).click();
 
       expect(urls()).toEqual(['https://instagram.com/a', 'https://a.example']);
-      await expect.element(page.getByLabelText('Rede do link 2')).toHaveValue('website');
+      await expect.poll(networks).toEqual(['instagram', 'website']);
       await expect.element(page.getByText('Link removido.')).toBeInTheDocument();
     });
 
@@ -285,8 +319,7 @@ describe('ProfileForm', () => {
       await page.getByRole('button', { name: 'Subir link 2' }).click();
 
       expect(urls()).toEqual(['https://x.com/a', 'https://instagram.com/a']);
-      await expect.element(page.getByLabelText('Rede do link 1')).toHaveValue('x');
-      await expect.element(page.getByLabelText('Rede do link 2')).toHaveValue('instagram');
+      await expect.poll(networks).toEqual(['x', 'instagram']);
       await expect.element(page.getByRole('button', { name: 'Subir link 1' })).toBeDisabled();
       await expect.element(page.getByRole('button', { name: 'Descer link 2' })).toBeDisabled();
     });

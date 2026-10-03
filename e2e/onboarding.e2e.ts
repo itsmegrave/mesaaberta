@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { randomBytes } from 'crypto';
-import { signOut } from './support/app';
+import { pickFromSearch, signOut } from './support/app';
 import { sidewaysOverflow } from './support/overflow';
 import { PASSWORD, createUser, database } from './support/users';
 
@@ -83,14 +83,14 @@ test.describe('the onboarding form', () => {
     const username = `detalhes-${unique()}`;
 
     await page.getByLabel('Nome de usuário').fill(username);
-    await page.getByLabel('Faixa etária').selectOption('25_34');
-    await page.getByLabel('Gênero').selectOption('woman');
+    await pickFromSearch(page, 'Faixa etária', '25 a 34 anos');
+    await pickFromSearch(page, 'Gênero', 'Mulher');
     await page.getByLabel('Cidade').fill('Recife');
     await page.getByRole('button', { name: 'Adicionar link' }).click();
-    await page.getByLabel('Rede do link 1').selectOption('instagram');
+    await pickFromSearch(page, 'Rede do link 1', 'Instagram');
     await page.getByLabel('Endereço do link 1').fill('instagram.com/detalhes');
     await page.getByRole('button', { name: 'Adicionar link' }).click();
-    await page.getByLabel('Rede do link 2').selectOption('github');
+    await pickFromSearch(page, 'Rede do link 2', 'GitHub');
     await page.getByLabel('Endereço do link 2').fill('https://github.com/detalhes');
     // Reordered with the keyboard-operable buttons.
     await page.getByRole('button', { name: 'Subir link 2' }).click();

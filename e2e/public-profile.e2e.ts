@@ -98,13 +98,13 @@ test('the table links to its GM, and the public page offers its owner an edit ac
   if (isMobile) return;
   await signIn(page, gm, `/u/${gm.username}`);
   await expect(page.getByRole('link', { name: 'Editar perfil' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Mandar mensagem' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Mandar mensagem para @/ })).toHaveCount(0);
 
   // "Ver como visitante": the owner's action gives way to the visitor's.
   await page.getByRole('button', { name: `Mais ações: @${gm.username}` }).click();
   await page.getByRole('menuitem', { name: 'Ver como visitante' }).click();
   await expect(page.getByRole('link', { name: 'Editar perfil' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Mandar mensagem' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Mandar mensagem para @/ })).toBeVisible();
   await page.getByRole('link', { name: 'Voltar ao meu perfil' }).click();
   await page.getByRole('link', { name: 'Editar perfil' }).click();
   await expect(page).toHaveURL(/\/account\/profile$/);

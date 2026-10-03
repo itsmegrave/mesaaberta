@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { navigating } from '$app/state';
   import AdminProfilesTable from '$lib/components/AdminProfilesTable.svelte';
@@ -16,7 +17,7 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_profile_list() }]}
     class="mb-6"
   />
-  <h1 class="text-3xl font-semibold">{m.admin_profile_list()}</h1>
+  <AdminPageHead title={m.admin_profile_list()} lede={m.admin_users_lede()} />
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
   <AdminProfilesTable data={data.profiles} busy={remote.isFetching || !!navigating.to} />
 </section>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import Form from '$lib/components/Form.svelte';
@@ -37,10 +38,7 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_connections_title() }]}
     class="mb-6"
   />
-  <div>
-    <h1 class="text-3xl font-semibold">{m.admin_connections_title()}</h1>
-    <p class="mt-1 text-muted">{m.admin_connections_description()}</p>
-  </div>
+  <AdminPageHead title={m.admin_connections_title()} lede={m.admin_connections_description()} />
 
   <section
     aria-labelledby="instagram"

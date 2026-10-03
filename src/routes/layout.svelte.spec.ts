@@ -96,9 +96,8 @@ describe('+layout.svelte', () => {
       await expect.element(nav.getByRole('link', { name })).toBeVisible();
     }
     await expect.element(nav.getByText('Sua conta', { exact: true })).toBeVisible();
-    await expect
-      .element(nav.getByRole('link', { name: 'Mensagens, 2 não lidas' }))
-      .toHaveAttribute('href', '/messages');
+    // Mensagens lives in the account menu, not in the group.
+    expect(nav.getByRole('link', { name: /^Mensagens/ }).elements()).toHaveLength(0);
     await expect
       .element(nav.getByRole('button', { name: 'Notificações: 4 sem ler' }))
       .toBeVisible();

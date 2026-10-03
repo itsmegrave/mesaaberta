@@ -42,12 +42,16 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
   isMobile,
 }) => {
   await page.goto('/tables');
-  // A desktop has a popover for the platforms; a phone, the "Filtros" sheet.
-  await page.getByRole('button', { name: isMobile ? 'Filtros' : 'Plataformas' }).click();
-  await page.getByRole('group', { name: 'Plataformas' }).getByText('Owlbear Rodeo').click();
+  // The popover answers once the page has hydrated.
+  await page.waitForLoadState('networkidle');
+  // A desktop has a box for the platforms; a phone, the "Filtros" sheet with one.
+  if (isMobile) await page.getByRole('button', { name: 'Filtros' }).click();
+  await page.getByRole('combobox', { name: 'Plataformas' }).last().click();
+  await page.getByRole('option', { name: 'Owlbear Rodeo' }).click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
-  // Closed, so the list behind it is readable again.
+  // Closed, so the list behind it is readable again: the box's list, then (on a phone) the sheet.
   await page.keyboard.press('Escape');
+  if (isMobile) await page.keyboard.press('Escape');
   await expect(
     page.getByRole('article').filter({ hasText: 'A Cripta do Rei Afogado' }),
   ).toHaveCount(1);

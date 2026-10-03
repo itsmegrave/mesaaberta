@@ -5,6 +5,7 @@
   import { DatePicker, parseDate } from '@skeletonlabs/skeleton-svelte';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
+  import SearchSelect from '$lib/components/SearchSelect.svelte';
   import { TABLE_LIMITS } from '$lib/tables/schema';
 
   let {
@@ -68,7 +69,6 @@
 
   const segment =
     'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
-  const selectClass = 'select h-12 rounded-lg border-surface-200-800 bg-panel px-3';
   const navButton = 'btn size-11 rounded-lg hover:preset-tonal';
 </script>
 
@@ -169,30 +169,22 @@
   </div>
 
   <div class="flex flex-wrap gap-4">
-    <div class="grid gap-1">
-      <span class="label-text font-semibold" aria-hidden="true">{m.session_hour()}</span>
-      <select
-        class={selectClass}
-        aria-label={m.session_hour()}
-        value={hour}
-        disabled={!day}
-        onchange={(event) => set(day, event.currentTarget.value, minute)}
-      >
-        {#each hours as option (option)}<option value={option}>{option}</option>{/each}
-      </select>
-    </div>
-    <div class="grid gap-1">
-      <span class="label-text font-semibold" aria-hidden="true">{m.session_minute()}</span>
-      <select
-        class={selectClass}
-        aria-label={m.session_minute()}
-        value={minute}
-        disabled={!day}
-        onchange={(event) => set(day, hour, event.currentTarget.value)}
-      >
-        {#each minutes as option (option)}<option value={option}>{option}</option>{/each}
-      </select>
-    </div>
+    {#each [{ id: 'session-hour', label: m.session_hour(), options: hours, current: hour, pick: (next: string) => set(day, next, minute) }, { id: 'session-minute', label: m.session_minute(), options: minutes, current: minute, pick: (next: string) => set(day, hour, next) }] as field (field.id)}
+      <div class="w-32">
+        <SearchSelect
+          id={field.id}
+          name={field.id}
+          label={field.label}
+          labelClass="label-text block font-semibold"
+          class="grid gap-1"
+          items={field.options.map((option) => ({ name: option, slug: option }))}
+          value={[field.current]}
+          placeholder={field.current}
+          disabled={!day}
+          onchange={(picked) => picked[0] && field.pick(picked[0])}
+        />
+      </div>
+    {/each}
   </div>
 
   <fieldset class="grid gap-2">

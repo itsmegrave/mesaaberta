@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Spinner from '$lib/components/Spinner.svelte';
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -88,35 +89,32 @@
 
 <section class="py-6 md:py-10">
   <Breadcrumbs items={[{ label: m.nav_admin() }]} class="mb-6" />
-  <div class="flex flex-wrap items-center justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-semibold">{m.admin_overview_title()}</h1>
-      <p class="mt-2 text-sm text-muted">{m.admin_updated({ time: date(data.updatedAt) })}</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <Button
-        size="custom"
-        type="button"
-        class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
-        disabled={remote.isFetching}
-        onclick={() => remote.refetch()}
-      >
-        {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
-        {m.admin_refresh()}
-      </Button>
-      <KebabMenu
-        name={m.admin_overview_title()}
-        items={[
-          {
-            id: 'platform',
-            label: m.admin_view_platform(),
-            icon: 'external-link',
-            href: localizedHref('/', locale),
-          },
-        ]}
-      />
-    </div>
-  </div>
+  <AdminPageHead
+    title={m.admin_overview_title()}
+    lede={m.admin_updated({ time: date(data.updatedAt) })}
+  >
+    <Button
+      size="custom"
+      type="button"
+      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
+      disabled={remote.isFetching}
+      onclick={() => remote.refetch()}
+    >
+      {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
+      {m.admin_refresh()}
+    </Button>
+    <KebabMenu
+      name={m.admin_overview_title()}
+      items={[
+        {
+          id: 'platform',
+          label: m.admin_view_platform(),
+          icon: 'external-link',
+          href: localizedHref('/', locale),
+        },
+      ]}
+    />
+  </AdminPageHead>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
   <dl class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

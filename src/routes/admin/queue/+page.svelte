@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import CatalogApprove from '$lib/components/admin/CatalogApprove.svelte';
@@ -47,10 +48,7 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_queue_title() }]}
     class="mb-6"
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-    {m.admin_queue_title()}
-  </h1>
-  <p class="mt-4 max-w-2xl text-lg">{m.admin_queue_lede()}</p>
+  <AdminPageHead title={m.admin_queue_title()} lede={m.admin_queue_lede()} />
 
   <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
     <div>

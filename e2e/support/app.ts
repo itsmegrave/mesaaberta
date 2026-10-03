@@ -112,8 +112,8 @@ export async function setFirstSession(page: Page, iso: string) {
   }
   await page.keyboard.press('Enter');
   await expect(hidden).toHaveValue(new RegExp(`^${day}T`));
-  await page.getByRole('combobox', { name: 'Hora' }).selectOption(hour);
-  await page.getByRole('combobox', { name: 'Minutos' }).selectOption(minute);
+  await pickFromSearch(page, 'Hora', hour);
+  await pickFromSearch(page, 'Minutos', minute);
 }
 
 /** A title no other test uses, so tests that share a database do not collide. */
@@ -187,4 +187,14 @@ export const pageMenu = (page: Page) => page.getByRole('button', { name: /^Mais 
 export async function chooseFromMenu(page: Page, item: string | RegExp) {
   await pageMenu(page).click();
   await page.getByRole('menuitem', { name: item }).click();
+}
+
+/**
+ * An admin section's entry in the navigation: a link in the column of a desktop, an item of the
+ * "Seção: …" menu on a phone (which is opened here).
+ */
+export async function adminSection(page: Page, isMobile: boolean, name: string) {
+  if (!isMobile) return page.getByRole('link', { name, exact: true });
+  await page.getByRole('button', { name: /^Seção: / }).click();
+  return page.getByRole('menuitem', { name, exact: true });
 }

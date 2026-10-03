@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import { signIn } from './support/app';
+import { pickFromSearch, signIn } from './support/app';
 import { createUser, database } from './support/users';
 
 const suggest = async (kind: 'platforms' | 'tags', names: string[], by: string) => {
@@ -124,6 +124,7 @@ test('catalog fields and validation fit the viewport in both themes', async ({
 
 test('an admin approves, renames and rejects suggestions, and each decision is logged', async ({
   page,
+  isMobile,
 }, testInfo) => {
   const gm = await createUser('Mestre Sugestão');
   const admin = await createUser('Fila Admin', { role: 'admin' });
@@ -132,10 +133,12 @@ test('an admin approves, renames and rejects suggestions, and each decision is l
 
   await signIn(page, admin, '/admin/queue');
   await expect(page.getByRole('heading', { name: 'Fila de aprovação', level: 1 })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Fila de aprovação' })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  if (!isMobile) {
+    await expect(page.getByRole('link', { name: /^Fila de aprovação/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  }
 
   await page.getByRole('button', { name: `Aprovar: ${tag} A` }).click();
   await expect(page.getByText('Sugestão aprovada.')).toBeVisible();
@@ -178,7 +181,7 @@ test('the catalog lists, searches, pages with ?page=N and merges', async ({ page
   await page.goto(`/admin/catalog?q=${names[0]}`);
   await page.getByRole('button', { name: `Mais ações: ${names[0]}` }).click();
   await page.getByRole('menuitem', { name: 'Mesclar em outra entrada…' }).click();
-  await page.getByLabel('Mesclar com').selectOption({ label: 'Discord' });
+  await pickFromSearch(page, 'Mesclar com', 'Discord');
   await page.getByRole('button', { name: 'Mesclar', exact: true }).last().click();
   await expect(page.getByText('Entradas mescladas.')).toBeVisible();
   await expect(page.getByText('Nenhuma entrada encontrada.')).toBeVisible();

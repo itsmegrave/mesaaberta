@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { createUser, database } from './support/users';
 import { randomUUID } from 'node:crypto';
-import { signIn } from './support/app';
+import { adminSection, pickFromSearch, signIn } from './support/app';
 
-test('admin overview is protected, refreshes and fits the viewport', async ({ page }, testInfo) => {
+test('admin overview is protected, refreshes and fits the viewport', async ({
+  page,
+  isMobile,
+}, testInfo) => {
   expect((await page.goto('/admin'))?.status()).toBe(404);
   expect((await page.request.get('/api/query/admin')).status()).toBe(404);
 
@@ -23,19 +26,20 @@ test('admin overview is protected, refreshes and fits the viewport', async ({ pa
   await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
   expect((await refreshed).status()).toBe(200);
   await expect(page.getByRole('button', { name: 'Atualizar', exact: true })).toBeEnabled();
-  await expect(page.getByRole('link', { name: 'Visão geral', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  if (!isMobile) {
+    await expect(await adminSection(page, false, 'Visão geral')).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await page.screenshot({ path: testInfo.outputPath('admin-dashboard.png'), fullPage: true });
-  await page.getByRole('link', { name: 'Notificações', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Notificações', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  await (await adminSection(page, isMobile, 'Notificações')).click();
+  await expect(
+    page.getByRole('heading', { name: 'Notificações do sistema', level: 1 }),
+  ).toBeVisible();
   const icons = page.locator('input[name="icon"]');
   await expect(icons).toHaveCount(7);
   const drawings = await icons.evaluateAll((inputs) =>
@@ -75,7 +79,7 @@ test('users table paginates, filters status and username, and links to the selec
   await expect(users.locator('tbody tr')).toHaveCount(4);
   await expect(users.getByText('Página 2 de 2', { exact: true })).toBeVisible();
   await expect(users.getByRole('button', { name: 'Próxima página' })).toBeDisabled();
-  await users.getByRole('combobox', { name: 'Status', exact: true }).selectOption('suspended');
+  await pickFromSearch(page, 'Status', 'Suspenso');
   await users.getByRole('button', { name: 'Buscar', exact: true }).click();
   await expect(users.locator('tbody tr')).toHaveCount(1);
   await expect(users.getByText('Página 1 de 1', { exact: true })).toBeVisible();
@@ -103,7 +107,7 @@ test('users table paginates, filters status and username, and links to the selec
     await trail.getByRole('link', { name: 'Usuários' }).click();
   }
   await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
-    'suspended',
+    'Suspenso',
   );
   await expect(users.getByLabel('Buscar usuário')).toHaveValue(prefix);
   await users.getByLabel('Buscar usuário').fill(`${prefix}-missing`);
@@ -136,12 +140,10 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
   const section = page.locator('#tables');
   await section.getByLabel('Buscar mesa pelo título').fill(prefix);
   for (const [status, label] of states) {
-    await section.getByRole('combobox', { name: 'Status', exact: true }).selectOption(status);
+    await pickFromSearch(page, 'Status', label);
     await section.getByRole('button', { name: 'Buscar', exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`status=${status}`));
-    await expect(section.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
-      status,
-    );
+    await expect(section.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(label);
     await expect(section.locator('tbody tr')).toHaveCount(1);
     await expect(section.locator('tbody')).toContainText(`${prefix}-${status}`);
     await expect(section.locator('tbody')).toContainText(label);

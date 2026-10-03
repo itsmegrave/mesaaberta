@@ -43,34 +43,6 @@
   });
   const photoError = $derived(photo.errors.photo?.[0]);
 
-  // Which photo is on: the one sent, else the account's, else the initial of the name.
-  const sources = $derived([
-    {
-      id: 'upload',
-      title: m.account_photo_source_upload(),
-      note: data.hasUploadedPhoto ? m.account_photo_note_sent() : m.account_photo_note_none(),
-    },
-    {
-      id: 'account',
-      title: m.account_photo_source_account(),
-      note: m.account_photo_note_account(),
-    },
-    {
-      id: 'initial',
-      title: m.account_photo_source_initial(),
-      note: m.account_photo_note_initial(),
-    },
-  ]);
-  const inUse = $derived.by(() => {
-    const id = data.hasUploadedPhoto ? 'upload' : data.avatarUrl ? 'account' : 'initial';
-    const note = {
-      upload: m.account_photo_now_sent(),
-      account: m.account_photo_now_account(),
-      initial: m.account_photo_now_initial(),
-    }[id];
-    return { id, note };
-  });
-
   // The photo goes up as soon as it is picked (and cropped, see ImageUpload).
   let photoForm = $state<HTMLFormElement>();
   async function picked(files: File[]) {
@@ -163,7 +135,6 @@
             <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
             <div class="min-w-0">
               <p class="font-semibold">{m.account_photo_current()}</p>
-              <p class="text-sm text-surface-700-300">{inUse.note}</p>
             </div>
           </div>
           <Form
@@ -198,28 +169,6 @@
               {photoNotice === 'salva' ? m.account_photo_saved() : m.account_photo_removed()}
             </p>
           {/if}
-          <div>
-            <p class="mb-2 text-sm font-semibold">{m.account_photo_order()}</p>
-            <ol class="grid gap-2">
-              {#each sources as source (source.id)}
-                <li
-                  class="flex items-center gap-3 rounded-lg border-2 p-3 {source.id === inUse.id
-                    ? 'border-primary-500'
-                    : 'border-surface-200-800'}"
-                >
-                  <span class="min-w-0 flex-1">
-                    <span class="block font-semibold">{source.title}</span>
-                    <span class="block text-sm text-surface-700-300">{source.note}</span>
-                  </span>
-                  {#if source.id === inUse.id}
-                    <span class="badge shrink-0 rounded-full preset-filled-primary-500 px-3"
-                      >{m.account_photo_in_use()}</span
-                    >
-                  {/if}
-                </li>
-              {/each}
-            </ol>
-          </div>
         </div>
       </section>
 

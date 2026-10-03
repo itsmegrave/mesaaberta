@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Spinner from '$lib/components/Spinner.svelte';
   import Button from '$lib/components/Button.svelte';
@@ -31,8 +32,7 @@
     items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_tables() }]}
     class="mb-6"
   />
-  <div class="flex flex-wrap items-center justify-between gap-4">
-    <h1 class="text-3xl font-semibold">{m.admin_tables()}</h1>
+  <AdminPageHead title={m.admin_tables()} lede={m.admin_tables_lede()}>
     <Button
       size="custom"
       type="button"
@@ -44,7 +44,7 @@
           size={18}
         />{/if}{m.admin_refresh()}</Button
     >
-  </div>
+  </AdminPageHead>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
   <AdminTablesTable
     data={data.tables}
