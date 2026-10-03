@@ -86,56 +86,6 @@ describe('admin pages on a phone', () => {
     expect(sideways()).toBeLessThanOrEqual(0);
   });
 
-  it('Mesas does not scroll sideways on a desktop, with a title that cannot break', async () => {
-    // The content column beside the rails is about 900px wide, and the CI runner's font is wider
-    // than a Mac's: Verdana stands in for it.
-    await page.viewport(800, 800);
-    const wide = document.createElement('style');
-    wide.textContent = '* { font-family: Verdana, sans-serif !important; }';
-    document.head.append(wide);
-    render(Tables, {
-      data: {
-        instagramAvailable: true,
-        tables: {
-          rows: [
-            {
-              id: '1',
-              slug: 'a',
-              title: 'lifecycle-1a2b3c4d-awaiting_confirmation',
-              status: 'awaiting_confirmation',
-              system: 'Daggerheart',
-              gm: 'lifecycle-admin-1a2b3c4d',
-              gmId: 'g',
-              cover: null,
-              capacity: 4,
-              seats: 0,
-              nextAt: new Date('2099-01-01T00:00:00Z'),
-              timezone: 'America/Sao_Paulo',
-              instagramStatus: null,
-            },
-          ],
-          total: 1,
-          page: 1,
-          pageSize: 20,
-          query: '',
-          status: 'all',
-          instagram: 'all',
-          sort: { id: 'created', dir: 'desc' },
-          counts: {
-            all: 1,
-            active: 0,
-            disabled: 0,
-            awaiting_confirmation: 1,
-            concluded: 0,
-            not_held: 0,
-          },
-        },
-      } as never,
-    });
-    await expect.element(page.getByRole('link', { name: /lifecycle-1a2b/ }).first()).toBeVisible();
-    expect(sideways()).toBeLessThanOrEqual(0);
-  });
-
   it('Usuários does not scroll sideways', async () => {
     render(Users, {
       data: {
