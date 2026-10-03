@@ -222,7 +222,7 @@ test.describe('a table where the GM approves each player', () => {
 });
 
 test.describe('ratings', () => {
-  test('only after the first session: the form appears, averages follow, and it goes when the player does', async ({
+  test('only after the first session: the form appears, the rating is final, and it outlives the seat', async ({
     browser,
   }) => {
     const { gmPage, gmContext, slug, players } = await setup(browser, { capacity: 3 });
@@ -253,34 +253,27 @@ test.describe('ratings', () => {
       await page.getByLabel('Comentário (opcional)').fill('Noite ótima.');
       await page.getByRole('button', { name: 'Enviar avaliação' }).click();
 
+      // Final: the form is gone and what was given is only shown. One rating is "Novo mestre".
       await expect(
-        page.getByText('Sua avaliação está salva. Você pode mudá-la quando quiser.'),
+        page.getByText('Sua avaliação foi enviada e não pode ser alterada.'),
       ).toBeVisible();
-      await expect(page.getByText('Nota de mestragem:').first()).toContainText('4,0');
+      await expect(page.getByRole('button', { name: 'Enviar avaliação' })).toHaveCount(0);
+      await expect(page.getByText('Novo mestre · 1 avaliação').first()).toBeVisible();
 
       // The dashboard shows what was given, and the GM cannot rate their own table.
       await page.goto('/account/tables');
       await expect(page.getByText('Sua nota para a mestragem: 4')).toBeVisible();
       await gmPage.goto(`/tables/${slug}`);
       await expect(gmPage.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
-
-      // Changing it updates the average; the comment is stored but never shown to anyone else.
-      await page.goto(`/tables/${slug}`);
-      await page.locator('[data-scope="rating-group"][data-part="item"]').nth(1).click();
-      await expect(page.locator('input[name="gmScore"]')).toHaveValue('2');
-      await page.getByRole('button', { name: 'Atualizar avaliação' }).click();
-      await expect(page.getByText('Nota de mestragem:').first()).toContainText('2,0');
       await expect(gmPage.getByText('Noite ótima.')).toHaveCount(0);
 
-      // Removing the player removes their rating with them.
+      // The rating outlives the seat: removing the player does not take it away.
       await gmPage.goto(`/tables/${slug}`);
       await gmPage.getByRole('button', { name: 'Remover' }).click();
       await expect(gmPage.getByText('Ninguém entrou ainda.')).toBeVisible();
       const rows =
         await sql`select 1 from ratings r join game_tables t on t.id = r.table_id where t.slug = ${slug}`;
-      expect(rows).toHaveLength(0);
-      await gmPage.goto(`/tables/${slug}`);
-      await expect(gmPage.getByText('Nota de mestragem:')).toHaveCount(0);
+      expect(rows).toHaveLength(1);
     } finally {
       await sql.end();
     }
