@@ -102,9 +102,9 @@
   const control =
     'flex h-12 w-full items-center overflow-hidden rounded-lg border border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
   const inputClass =
-    'h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 text-sm shadow-none outline-none focus:ring-0';
+    'h-full min-w-0 flex-1 rounded-none! border-0! bg-transparent px-3 text-sm shadow-none! ring-0! outline-none focus:ring-0!';
   const triggerClass =
-    'static flex h-full w-12 shrink-0 transform-none items-center justify-center rounded-none bg-transparent text-muted hover:bg-surface-wash';
+    'static flex h-full w-12 shrink-0 transform-none items-center justify-center rounded-none! border-0! bg-transparent text-muted hover:bg-surface-wash';
 </script>
 
 {#if mounted}
