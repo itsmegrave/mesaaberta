@@ -1,7 +1,17 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { createUser, database } from './support/users';
 import { randomUUID } from 'node:crypto';
-import { adminSection, pickFromSearch, signIn } from './support/app';
+import { adminSection, signIn } from './support/app';
+
+// A list is a table on a desktop and a list of cards on a phone: the rows of the one that shows.
+const listRows = (page: Page, isMobile: boolean) =>
+  isMobile ? page.getByTestId('list-rows').locator('> li') : page.locator('tbody tr');
+// The filter and the search are drawn once for each screen size; the one that shows is the one used.
+const shown = (locator: Locator) => locator.locator('visible=true');
+// A segment of the filter is a radio hidden behind its label; the one of the screen size that
+// shows is the only one in the accessibility tree.
+const segment = (page: Page, name: string) =>
+  page.getByRole('radio', { name: new RegExp(`^${name}`) });
 
 test('admin overview is protected, refreshes and fits the viewport', async ({
   page,
@@ -18,10 +28,10 @@ test('admin overview is protected, refreshes and fits the viewport', async ({
   const admin = await createUser('Dashboard Admin', { role: 'admin' });
   await page.context().clearCookies();
   await signIn(page, admin, '/admin');
-  await expect(page.getByRole('heading', { name: 'Visão geral da plataforma' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visão geral', level: 1 })).toBeVisible();
   await expect(page.getByText('Perfis cadastrados', { exact: true })).toBeVisible();
   await expect(page.locator('dt svg')).toHaveCount(4);
-  await expect(page.getByRole('heading', { name: 'Pendências operacionais' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Operação' })).toBeVisible();
   const refreshed = page.waitForResponse((response) => response.url().includes('/api/query/admin'));
   await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
   expect((await refreshed).status()).toBe(200);
@@ -37,9 +47,7 @@ test('admin overview is protected, refreshes and fits the viewport', async ({
   );
   await page.screenshot({ path: testInfo.outputPath('admin-dashboard.png'), fullPage: true });
   await (await adminSection(page, isMobile, 'Notificações')).click();
-  await expect(
-    page.getByRole('heading', { name: 'Notificações do sistema', level: 1 }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notificações', level: 1 })).toBeVisible();
   const icons = page.locator('input[name="icon"]');
   await expect(icons).toHaveCount(7);
   const drawings = await icons.evaluateAll((inputs) =>
@@ -72,28 +80,35 @@ test('users table paginates, filters status and username, and links to the selec
   }
   expect((await page.goto(`/admin/users/${userId}`))?.status()).toBe(404);
   await signIn(page, admin, `/admin/users?q=${prefix}`);
-  const users = page.locator('#profiles');
-  await expect(users.locator('tbody tr')).toHaveCount(20);
-  await expect(users.getByText('Página 1 de 2', { exact: true })).toBeVisible();
-  await users.getByRole('button', { name: 'Próxima página' }).click();
-  await expect(users.locator('tbody tr')).toHaveCount(4);
-  await expect(users.getByText('Página 2 de 2', { exact: true })).toBeVisible();
-  await expect(users.getByRole('button', { name: 'Próxima página' })).toBeDisabled();
-  await pickFromSearch(page, 'Status', 'Suspenso');
-  await users.getByRole('button', { name: 'Buscar', exact: true }).click();
-  await expect(users.locator('tbody tr')).toHaveCount(1);
-  await expect(users.getByText('Página 1 de 1', { exact: true })).toBeVisible();
+  const rows = listRows(page, isMobile);
+  await expect(rows).toHaveCount(20);
+  if (isMobile) {
+    // A phone has no pages: "Mostrar mais" asks for the next size.
+    await page.getByRole('link', { name: /Mostrar mais/ }).click();
+    await expect(page).toHaveURL(/size=50/);
+    await expect(rows).toHaveCount(24);
+  } else {
+    await expect(page.getByText('1–20 de 24 usuários')).toBeVisible();
+    await page.getByRole('link', { name: 'Próxima página' }).click();
+    await expect(page).toHaveURL(/page=2/);
+    await expect(rows).toHaveCount(4);
+    await expect(page.getByText('21–24 de 24 usuários')).toBeVisible();
+  }
+  await segment(page, 'Suspenso').check({ force: true });
+  await expect(page).toHaveURL(/status=suspended/);
+  await expect(rows).toHaveCount(1);
   // The list names the person, not their ID; the ID is in the row's menu and on the profile page.
-  await expect(users.getByText('Selected User', { exact: true })).toBeVisible();
-  // The list shows the profile's status column; the profile page shows the ban (see #172), and this
+  await expect(
+    page.getByText('Selected User', { exact: true }).locator('visible=true'),
+  ).toBeVisible();
+  // The list shows the profile's status; the profile page shows the ban (see #172), and this
   // profile was suspended directly in the database, with no ban recorded.
-  await expect(users.locator('tbody tr').getByText('Suspenso', { exact: true })).toBeVisible();
+  await expect(rows.getByText('Suspenso', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-users.png'), fullPage: true });
-  await expect(users.getByRole('link', { name: `@${username}`, exact: true })).toHaveAttribute(
-    'href',
-    `/u/${username}`,
-  );
-  await users.getByRole('button', { name: `Mais ações: @${username}` }).click();
+  await expect(
+    shown(page.getByRole('link', { name: `@${username}`, exact: true })).first(),
+  ).toHaveAttribute('href', `/u/${username}`);
+  await shown(page.getByRole('button', { name: `Mais ações: @${username}` })).click();
   await page.getByRole('menuitem', { name: 'Ver detalhes' }).click();
   await expect(page.getByRole('heading', { name: `@${username}` })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Dados' }).getByText(userId)).toBeVisible();
@@ -106,19 +121,17 @@ test('users table paginates, filters status and username, and links to the selec
   } else {
     await trail.getByRole('link', { name: 'Usuários' }).click();
   }
-  await expect(users.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(
-    'Suspenso',
-  );
-  await expect(users.getByLabel('Buscar usuário')).toHaveValue(prefix);
-  await users.getByLabel('Buscar usuário').fill(`${prefix}-missing`);
-  await users.getByRole('button', { name: 'Buscar', exact: true }).click();
-  await expect(users.getByText('Nenhum perfil encontrado.', { exact: true })).toBeVisible();
+  // Back on the list, the filters are as they were left.
+  await expect(page).toHaveURL(/status=suspended/);
+  await expect(shown(page.getByLabel('Buscar usuário'))).toHaveValue(prefix);
+  await shown(page.getByLabel('Buscar usuário')).fill(`${prefix}-missing`);
+  await expect(page.getByText('Nenhum perfil encontrado.').locator('visible=true')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
 });
 
-test('admin tables filter and display every real lifecycle status', async ({ page }) => {
+test('admin tables filter and display every real lifecycle status', async ({ page, isMobile }) => {
   const admin = await createUser('Lifecycle Admin', { role: 'admin' });
   const prefix = `lifecycle-${randomUUID().slice(0, 8)}`;
   const states = [
@@ -137,15 +150,16 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
     await sql.end();
   }
   await signIn(page, admin, '/admin/tables');
-  const section = page.locator('#tables');
-  await section.getByLabel('Buscar mesa pelo título').fill(prefix);
+  const rows = listRows(page, isMobile);
+  await shown(page.getByLabel('Buscar mesa, sistema ou @mestre')).fill(prefix);
   for (const [status, label] of states) {
-    await pickFromSearch(page, 'Status', label);
-    await section.getByRole('button', { name: 'Buscar', exact: true }).click();
+    // On a phone the status filter is in the "Filtros" sheet.
+    if (isMobile && !(await segment(page, label).isVisible()))
+      await page.getByRole('button', { name: /^Filtros/ }).click();
+    await segment(page, label).check({ force: true });
     await expect(page).toHaveURL(new RegExp(`status=${status}`));
-    await expect(section.getByRole('combobox', { name: 'Status', exact: true })).toHaveValue(label);
-    await expect(section.locator('tbody tr')).toHaveCount(1);
-    await expect(section.locator('tbody')).toContainText(`${prefix}-${status}`);
-    await expect(section.locator('tbody')).toContainText(label);
+    await expect(rows).toHaveCount(1);
+    await expect(rows).toContainText(`${prefix}-${status}`);
+    await expect(rows).toContainText(label);
   }
 });

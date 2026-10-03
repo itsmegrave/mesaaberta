@@ -53,6 +53,18 @@ it('paginates all users with deterministic ordering', async () => {
   expect(new Set([...first.rows, ...second.rows].map((row) => row.id)).size).toBe(27);
 });
 
+it('counts each standing with the search kept, and orders by username when asked', async () => {
+  const all = await list();
+  expect(all.counts).toEqual({ all: 27, active: 13, suspended: 13, banned: 1 });
+  expect((await list('status=banned')).total).toBe(all.counts.banned);
+  // The counts follow the search, so "user-1" does not count "banido".
+  expect((await list('q=user-1')).counts.all).toBe(10);
+  const byName = await list('sort=user&dir=asc&size=100');
+  const names = byName.rows.map((row) => row.username ?? '');
+  expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  expect(byName.sort).toEqual({ id: 'user', dir: 'asc' });
+});
+
 it('lists what the users table shows: the name, when they joined, and their tables', async () => {
   const [row] = (await list()).rows;
   expect(row).toMatchObject({

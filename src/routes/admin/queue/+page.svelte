@@ -1,6 +1,5 @@
 <script lang="ts">
-  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import AdminPage from '$lib/components/admin/AdminPage.svelte';
   import UserText from '$lib/components/UserText.svelte';
   import CatalogApprove from '$lib/components/admin/CatalogApprove.svelte';
   import CatalogDialog from '$lib/components/admin/CatalogDialog.svelte';
@@ -41,16 +40,10 @@
     'btn h-12 rounded-lg px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
-<svelte:head><title>{m.admin_queue_title()}</title></svelte:head>
+<svelte:head><title>{m.admin_queue_title()} | Mesa Aberta</title></svelte:head>
 
-<section class="pt-8 pb-4">
-  <Breadcrumbs
-    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_queue_title() }]}
-    class="mb-6"
-  />
-  <AdminPageHead title={m.admin_queue_title()} lede={m.admin_queue_lede()} />
-
-  <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
+<AdminPage title={m.admin_queue_title()} lede={m.admin_queue_lede()}>
+  <div class="mt-8 grid gap-8 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
     <div>
       {#if data.queue.length === 0}
         <p class="rounded-lg border border-surface-200-800 bg-panel p-6" role="status">
@@ -62,7 +55,7 @@
             {@const candidates = data.approved[entry.kind]}
             <li class="rounded-lg border border-surface-200-800 bg-panel p-5">
               <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 class="text-xl font-semibold">{entry.name}</h2>
+                <h2 class="text-lg font-semibold">{entry.name}</h2>
                 <span
                   class="rounded-full border border-surface-200-800 px-2 py-0.5 text-xs font-semibold text-muted"
                   >{kindLabel(entry.kind)}</span
@@ -95,7 +88,7 @@
                   {m.admin_queue_duplicate({ name: entry.duplicateOf.name })}
                 </p>
               {/if}
-              <div class="mt-4 flex flex-wrap items-start gap-3">
+              <div class="mt-4 grid grid-cols-2 items-start gap-3 sm:flex sm:flex-wrap">
                 {#if entry.duplicateOf}
                   <CatalogDialog
                     mode="merge"
@@ -147,8 +140,18 @@
       {/if}
     </div>
 
-    <aside aria-labelledby="decisions-title">
-      <h2 id="decisions-title" class="text-xl font-semibold">{m.admin_queue_decisions()}</h2>
+    <aside
+      aria-labelledby="decisions-title"
+      class="h-fit rounded-lg border border-surface-200-800 bg-panel p-5"
+    >
+      <div class="flex items-baseline justify-between gap-3">
+        <h2 id="decisions-title" class="text-lg font-semibold">{m.admin_queue_decisions()}</h2>
+        <a
+          class="inline-flex min-h-11 items-center anchor text-sm font-semibold"
+          href={localizedHref('/admin/audit?kind=catalog', locale)}
+          >{m.admin_queue_decisions_all()}</a
+        >
+      </div>
       {#if data.decisions.length === 0}
         <p class="mt-3 text-muted">{m.admin_queue_decisions_empty()}</p>
       {:else}
@@ -168,4 +171,4 @@
       {/if}
     </aside>
   </div>
-</section>
+</AdminPage>

@@ -4,6 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
 
+// The lists read their filters from the address, so the test says which one it is on.
+const location = vi.hoisted(() => ({ search: '' }));
+vi.mock('$app/state', () => ({
+  navigating: { to: null },
+  page: {
+    get url() {
+      return new URL(`http://localhost/admin/catalog${location.search}`);
+    },
+    route: { id: '/admin/catalog' },
+    data: {
+      viewer: { timezone: 'America/Sao_Paulo' },
+      adminCounts: { reports: 0, queue: 0, connections: 0 },
+    },
+  },
+}));
+
 // There is no SvelteKit app around a component test, so the step that hands a result to the router
 // has nothing to talk to. What the form shows is the same either way.
 vi.mock('$app/forms', async (original) => ({
@@ -32,6 +48,10 @@ const show = (over = {}) =>
       total: 2,
       page: 1,
       pages: 1,
+      pageSize: 20,
+      status: 'all',
+      sort: null,
+      counts: { all: 2, active: 2, disabled: 0 },
       approved: [{ id: '2', name: 'Roll20' }],
       ...over,
     } as never,
@@ -40,14 +60,15 @@ const show = (over = {}) =>
 describe('admin catalog', () => {
   beforeEach(async () => {
     await page.viewport(1280, 900);
+    location.search = '';
   });
 
   it('lists the entries with their origin and how many tables use them', async () => {
     show();
 
-    await expect.element(page.getByRole('rowheader', { name: /Foundry VTT/ })).toBeVisible();
-    await expect.element(page.getByText('Sugerida por @bruno')).toBeVisible();
-    await expect.element(page.getByText('Criada por admin')).toBeVisible();
+    await expect.element(page.getByRole('cell', { name: 'Foundry VTT foundry-vtt' })).toBeVisible();
+    await expect.element(page.getByText('Sugerida por @bruno').first()).toBeVisible();
+    await expect.element(page.getByText('Criada por admin').first()).toBeVisible();
     await expect.element(page.getByText('12', { exact: true })).toBeVisible();
   });
 
@@ -84,6 +105,10 @@ describe('admin catalog', () => {
       total: 0,
       page: 1,
       pages: 1,
+      pageSize: 20,
+      status: 'all',
+      sort: null,
+      counts: { all: 0, active: 0, disabled: 0 },
       approved: [],
     };
     await screen.rerender({ data: updated as never });
@@ -121,9 +146,9 @@ describe('admin catalog', () => {
   });
 
   it('links the neighbouring pages with ?page=N, the first without a parameter', async () => {
-    show({ page: 2, pages: 3, query: 'ro' });
+    location.search = '?kind=platform&q=ro&page=2';
+    show({ page: 2, pages: 3, total: 50, query: 'ro' });
 
-    await expect.element(page.getByText('Página 2 de 3')).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Página anterior' }))
       .toHaveAttribute('href', '/admin/catalog?kind=platform&q=ro');
@@ -134,6 +159,6 @@ describe('admin catalog', () => {
 
   it('says so when the search finds nothing', async () => {
     show({ rows: [], total: 0, query: 'zzz' });
-    await expect.element(page.getByText('Nenhuma entrada encontrada.')).toBeVisible();
+    await expect.element(page.getByText('Nenhuma entrada encontrada.').first()).toBeVisible();
   });
 });

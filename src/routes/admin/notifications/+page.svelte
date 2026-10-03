@@ -1,6 +1,5 @@
 <script lang="ts">
-  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import AdminPage from '$lib/components/admin/AdminPage.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import Button from '$lib/components/Button.svelte';
   import UserText from '$lib/components/UserText.svelte';
@@ -193,21 +192,15 @@
   <title>{m.admin_announce_title()} · {m.admin_title()}</title>
 </svelte:head>
 
-<section class="pt-8 pb-4">
-  <Breadcrumbs
-    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_announce_title() }]}
-    class="mb-6"
-  />
-  <AdminPageHead title={m.admin_announce_title()} lede={m.admin_announce_lede()} />
-
-  <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
+<AdminPage title={m.admin_nav_notifications()} lede={m.admin_announce_lede()}>
+  <div class="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
     <Form
       onsubmit={controller.submit}
       oninput={() => (confirming = false)}
-      class="grid gap-6"
+      class="grid h-fit gap-6 rounded-lg border border-surface-200-800 bg-panel p-5"
       aria-labelledby="compose"
     >
-      <h2 id="compose" class="text-2xl font-semibold tracking-tight">
+      <h2 id="compose" class="text-lg font-semibold">
         {m.admin_announce_compose()}
       </h2>
 
@@ -377,12 +370,12 @@
       {/if}
     </Form>
 
-    <aside aria-labelledby="preview" class="lg:sticky lg:top-6 lg:self-start">
-      <h2 id="preview" class="text-2xl font-semibold tracking-tight">
+    <aside aria-labelledby="preview" class="xl:sticky xl:top-6 xl:self-start">
+      <h2 id="preview" class="text-lg font-semibold">
         {m.admin_announce_preview()}
       </h2>
       <div
-        class="mt-4 w-80 max-w-full card border border-surface-200-800 bg-surface-100-900 p-2 shadow-xl"
+        class="mt-4 w-full max-w-80 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-xl"
       >
         <div
           data-testid="announcement-preview"
@@ -400,54 +393,58 @@
       </div>
     </aside>
   </div>
-</section>
 
-<section aria-labelledby="history" class="mt-12 pb-8">
-  <h2 id="history" class="text-3xl font-semibold tracking-tight">{m.admin_history_title()}</h2>
-  {#if data.history.length === 0}
-    <p class="mt-3">{m.admin_history_empty()}</p>
-  {:else}
-    <ul class="mt-5 grid gap-4">
-      {#each data.history as sent (sent.id)}
-        <li class="rounded-lg border border-surface-200-800 bg-panel p-5">
-          <div class="flex items-start gap-3">
-            <NotificationIcon icon={sent.icon} class="mt-1 text-muted" />
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <h3 class="text-lg font-semibold wrap-break-word">{sent.title}</h3>
-                <span class="badge rounded-full text-xs font-semibold {STATUS[sent.status].tone}"
-                  >{STATUS[sent.status].label}</span
-                >
-              </div>
-              <RichText html={sent.body} class="mt-1" />
-              <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-                <span>
-                  {#if sent.audience === 'specific_user'}<UserText
-                      text={m.admin_history_to_person({
-                        username: sent.recipient ? `@${sent.recipient}` : m.admin_history_someone(),
+  <section aria-labelledby="history" class="mt-8">
+    <h2 id="history" class="text-lg font-semibold">{m.admin_history_title()}</h2>
+    {#if data.history.length === 0}
+      <p class="mt-3">{m.admin_history_empty()}</p>
+    {:else}
+      <ul
+        class="mt-3 divide-y divide-surface-200-800 rounded-lg border border-surface-200-800 bg-panel"
+      >
+        {#each data.history as sent (sent.id)}
+          <li class="p-4 md:p-5">
+            <div class="flex items-start gap-3">
+              <NotificationIcon icon={sent.icon} class="mt-1 text-muted" />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h3 class="font-semibold wrap-break-word">{sent.title}</h3>
+                  <span class="badge rounded-full text-xs font-semibold {STATUS[sent.status].tone}"
+                    >{STATUS[sent.status].label}</span
+                  >
+                </div>
+                <RichText html={sent.body} class="mt-1" />
+                <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+                  <span>
+                    {#if sent.audience === 'specific_user'}<UserText
+                        text={m.admin_history_to_person({
+                          username: sent.recipient
+                            ? `@${sent.recipient}`
+                            : m.admin_history_someone(),
+                        })}
+                        username={sent.recipient}
+                      />{:else}{AUDIENCE_LABELS[sent.audience]}{/if}
+                  </span>
+                  <span>
+                    {m.admin_history_notified({ count: number(sent.notified) })}
+                  </span>
+                  <span>
+                    <UserText
+                      text={m.admin_history_by({
+                        author: sent.author ? `@${sent.author}` : m.admin_history_someone(),
                       })}
-                      username={sent.recipient}
-                    />{:else}{AUDIENCE_LABELS[sent.audience]}{/if}
-                </span>
-                <span>
-                  {m.admin_history_notified({ count: number(sent.notified) })}
-                </span>
-                <span>
-                  <UserText
-                    text={m.admin_history_by({
-                      author: sent.author ? `@${sent.author}` : m.admin_history_someone(),
-                    })}
-                    username={sent.author}
-                  />
-                </span>
-                <time datetime={sent.sentAt.toISOString()}>{when(sent.sentAt)}</time>
-                <span>{TONE_LABELS[sent.tone]}</span>
-                {#if sent.link}<span>{sent.link}</span>{/if}
-              </p>
+                      username={sent.author}
+                    />
+                  </span>
+                  <time datetime={sent.sentAt.toISOString()}>{when(sent.sentAt)}</time>
+                  <span>{TONE_LABELS[sent.tone]}</span>
+                  {#if sent.link}<span>{sent.link}</span>{/if}
+                </p>
+              </div>
             </div>
-          </div>
-        </li>
-      {/each}
-    </ul>
-  {/if}
-</section>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+</AdminPage>

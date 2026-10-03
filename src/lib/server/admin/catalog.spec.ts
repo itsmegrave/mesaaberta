@@ -235,6 +235,24 @@ describe('the catalog list', () => {
     const past = await listCatalogAdmin(test.db, 'platform', { page: 99 });
     expect([past.rows, past.pages]).toEqual([[], 1]);
   });
+
+  it('counts what each status shows, and orders by name or by use when asked', async () => {
+    const all = await listCatalogAdmin(test.db, 'platform');
+    expect(all.counts.all).toBe(all.total);
+    expect(all.counts.active + all.counts.disabled).toBe(all.counts.all);
+    const active = await listCatalogAdmin(test.db, 'platform', { status: 'active' });
+    expect(active.total).toBe(all.counts.active);
+    expect(active.rows.some((row) => row.status === 'disabled')).toBe(false);
+
+    const byUse = await listCatalogAdmin(test.db, 'platform', {
+      sort: { id: 'uses', dir: 'desc' },
+    });
+    expect(byUse.rows[0].name).toBe('Foundry VTT');
+    const names = (
+      await listCatalogAdmin(test.db, 'platform', { sort: { id: 'name', dir: 'asc' } })
+    ).rows.map((row) => row.name.toLowerCase());
+    expect(names).toEqual([...names].sort());
+  });
 });
 
 describe('near duplicates', () => {

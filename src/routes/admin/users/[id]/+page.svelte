@@ -1,10 +1,10 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import AdminPage from '$lib/components/admin/AdminPage.svelte';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Icon from '$lib/components/Icon.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
+  import { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
   import { localizedHref } from '$lib/i18n/locales';
@@ -110,47 +110,41 @@
     hint: m.moderation_ban_reason_hint({ max: RESOLUTION_NOTE_MAX }),
     required: true,
   } as const;
-  const card = 'rounded-lg border border-surface-200-800 bg-panel p-6';
+  const card = 'rounded-lg border border-surface-200-800 bg-panel p-5';
 </script>
 
 <svelte:head><title>{data.user.username ?? m.admin_user_title()} | Mesa Aberta</title></svelte:head>
-<section class="py-6 md:py-10">
-  <Breadcrumbs
-    items={[
-      { label: m.nav_admin(), href: '/admin' },
-      { label: m.admin_profile_list(), href: data.back },
-      { label: m.admin_user_title() },
-    ]}
-    class="mb-6"
-  />
-  <header class="mt-6 flex flex-wrap items-start justify-between gap-6">
-    <div class="flex min-w-0 items-center gap-5">
-      <Avatar
-        src={data.avatar}
-        name={data.user.name ?? data.user.username ?? m.admin_user_title()}
-        size={72}
-      />
-      <div class="min-w-0">
-        <p class="font-semibold text-muted">{m.admin_user_title()}</p>
-        <h1 class="mt-1 text-3xl leading-tight font-semibold wrap-break-word md:text-5xl">
-          <UserLink username={data.user.username} label={handle} />
-        </h1>
-        <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <StatusBadge status={`user:${data.standing}`} />
-          <span class="text-sm text-muted">{meaning}</span>
-        </p>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <ActionForm
-        action="?/message"
-        label={m.admin_user_message()}
-        icon="game-icons:scroll-quill"
-        buttonClass="btn h-12 gap-2 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-      />
-      <KebabMenu name={handle} items={menu} />
-    </div>
-  </header>
+<AdminPage
+  title={handle}
+  eyebrow={m.admin_user_title()}
+  crumbs={[
+    { label: m.nav_admin(), href: '/admin' },
+    { label: m.admin_profile_list(), href: data.back },
+    { label: m.admin_user_title() },
+  ]}
+  {menu}
+>
+  {#snippet lead()}
+    <Avatar
+      src={data.avatar}
+      name={data.user.name ?? data.user.username ?? m.admin_user_title()}
+      size={72}
+    />
+  {/snippet}
+  {#snippet status()}
+    <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <StatusBadge status={`user:${data.standing}`} />
+      <span class="text-sm text-muted">{meaning}</span>
+    </p>
+  {/snippet}
+  {#snippet actions()}
+    <ActionForm
+      action="?/message"
+      label={m.admin_user_message()}
+      icon="game-icons:scroll-quill"
+      buttonClass="btn h-11 gap-2 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+    />
+  {/snippet}
 
   {#if data.moderation.canModerate}
     {#if ban}
@@ -208,9 +202,9 @@
   {#if ban}
     <section
       aria-labelledby="ban-title"
-      class="mt-8 max-w-3xl rounded-lg border border-error-500 bg-panel p-6"
+      class="mt-8 rounded-lg border border-error-500 bg-panel p-5"
     >
-      <h2 id="ban-title" class="text-xl font-semibold">
+      <h2 id="ban-title" class="text-lg font-semibold">
         {ban.until ? m.admin_ban_until({ date: date(ban.until) }) : m.admin_ban_forever()}
       </h2>
       <p class="mt-1 text-sm text-muted">{m.admin_ban_since({ date: date(ban.at) })}</p>
@@ -220,7 +214,7 @@
 
   <div class="mt-8 grid gap-6 lg:grid-cols-2">
     <section aria-labelledby="user-data" class={card}>
-      <h2 id="user-data" class="text-xl font-semibold">{m.admin_user_data()}</h2>
+      <h2 id="user-data" class="text-lg font-semibold">{m.admin_user_data()}</h2>
       <dl class="mt-3 divide-y divide-surface-200-800">
         {#each details as [label, value] (label)}
           <div class="grid gap-1 py-3 sm:grid-cols-2">
@@ -241,7 +235,7 @@
     </section>
 
     <section aria-labelledby="user-activity" class={card}>
-      <h2 id="user-activity" class="text-xl font-semibold">{m.admin_user_activity()}</h2>
+      <h2 id="user-activity" class="text-lg font-semibold">{m.admin_user_activity()}</h2>
       <dl class="mt-3 divide-y divide-surface-200-800">
         <div class="grid gap-1 py-3 sm:grid-cols-2">
           <dt class="text-sm font-semibold text-muted">{m.admin_user_playing()}</dt>
@@ -280,4 +274,4 @@
       {/if}
     </section>
   </div>
-</section>
+</AdminPage>

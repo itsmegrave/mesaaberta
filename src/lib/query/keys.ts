@@ -62,7 +62,10 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
         ? tableFilters(url.searchParams)
         : profileFilters(url.searchParams);
     params.set('status', filters.status);
+    if ('instagram' in filters) params.set('instagram', filters.instagram);
     params.set('q', filters.query);
+    params.set('sort', filters.sort.id);
+    params.set('dir', filters.sort.dir);
     params.set('page', String(filters.page));
     params.set('size', String(filters.pageSize));
   }

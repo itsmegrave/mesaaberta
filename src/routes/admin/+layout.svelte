@@ -5,7 +5,8 @@
   let { children, data } = $props();
 </script>
 
-<div class="grid gap-6 pt-2 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10 md:pt-12">
+<!-- The sections' column is 236px and the content sits 28px (gap-7) to its right. -->
+<div class="grid gap-6 md:grid-cols-[auto_minmax(0,1fr)] md:gap-7">
   <AdminNav route={page.route.id} counts={data.adminCounts} />
   <div class="min-w-0">{@render children()}</div>
 </div>

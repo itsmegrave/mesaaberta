@@ -121,3 +121,20 @@ it('aggregates statuses independently, counts distinct GMs, omits private fields
   expect(data.suggestions).toEqual({ platforms: 1, tags: 0 });
   expect(JSON.stringify(data)).not.toContain('PRIVATE');
 });
+
+it('names what waits on an admin and lists the newest tables', async () => {
+  const data = await adminOverview(test.db, now);
+  expect(data.attention.suggestions).toEqual({ platforms: 1, tags: 0, duplicates: 0 });
+  expect(data.attention.awaiting).toMatchObject({ count: 1, first: { title: 'Mesa 3' } });
+  expect(data.attention.reports.oldestAt).toBeNull();
+  expect(data.attention.posts).toEqual({ count: 0, first: null });
+  // Newest first, five at most, with who runs each and when it meets next.
+  expect(data.recent.map((row) => row.title)).toEqual([
+    'Mesa 6',
+    'Mesa 5',
+    'Mesa 4',
+    'Mesa 3',
+    'Mesa 2',
+  ]);
+  expect(data.recent[0]).toMatchObject({ gm: null, system: expect.any(String) });
+});

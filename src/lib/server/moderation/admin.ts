@@ -1,9 +1,9 @@
-import { and, count, desc, eq, inArray, isNotNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNotNull, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import {
-  AUDIT_PAGE_SIZE,
-  REPORT_PAGE_SIZE,
+  auditFilters,
   reportFilters,
+  type AuditKind,
   type ReportFilter,
 } from '$lib/admin/report-filters';
 import { OPEN_REPORT_STATUSES, type ReportStatus } from '$lib/moderation/reports';
@@ -27,18 +27,37 @@ const statusesOf = (filter: ReportFilter): readonly ReportStatus[] | null =>
   filter === 'all' ? null : filter === 'waiting' ? OPEN_REPORT_STATUSES : [filter];
 
 /**
- * One page of the queue, newest first. `page` past the last one is `null`, so the route answers
- * 404 (the first page always exists, even empty).
+ * One page of the queue, newest first unless the admin turns it around. `page` past the last one is
+ * `null`, so the route answers 404 (the first page always exists, even empty). The filter's counts
+ * are what each status would show with the same kind of report.
  */
 export async function listReports(db: AnyDb, actor: Actor | null, params: URLSearchParams) {
   authorize(actor, 'moderation:manage');
   const filters = reportFilters(params);
   const statuses = statusesOf(filters.status);
-  const where = statuses ? inArray(reports.status, [...statuses]) : undefined;
+  const aboutTarget = filters.target === 'all' ? undefined : eq(reports.targetType, filters.target);
+  const where = and(statuses ? inArray(reports.status, [...statuses]) : undefined, aboutTarget);
 
-  const [{ total }] = await db.select({ total: count() }).from(reports).where(where);
-  const pages = Math.max(1, Math.ceil(total / REPORT_PAGE_SIZE));
+  const [counted] = await db
+    .select({
+      all: count(),
+      waiting:
+        sql<number>`count(*) filter (where ${inArray(reports.status, [...OPEN_REPORT_STATUSES])})`.mapWith(
+          Number,
+        ),
+      resolved: sql<number>`count(*) filter (where ${eq(reports.status, 'resolved')})`.mapWith(
+        Number,
+      ),
+      dismissed: sql<number>`count(*) filter (where ${eq(reports.status, 'dismissed')})`.mapWith(
+        Number,
+      ),
+    })
+    .from(reports)
+    .where(aboutTarget);
+  const total = counted[filters.status];
+  const pages = Math.max(1, Math.ceil(total / filters.pageSize));
   if (filters.page > pages) return null;
+  const direction = filters.sort.dir === 'asc' ? asc : desc;
 
   const rows = await db
     .select({
@@ -48,19 +67,21 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       status: reports.status,
       createdAt: reports.createdAt,
       table: gameTables.title,
+      gm: gm.username,
       player: reported.username,
       reporter: reporter.username,
     })
     .from(reports)
     .innerJoin(gameTables, eq(gameTables.id, reports.tableId))
+    .innerJoin(gm, eq(gm.id, gameTables.gmId))
     .innerJoin(reporter, eq(reporter.id, reports.reporterId))
     .leftJoin(reported, and(eq(reports.targetType, 'player'), eq(reported.id, reports.targetId)))
     .where(where)
-    .orderBy(desc(reports.createdAt), desc(reports.id))
-    .limit(REPORT_PAGE_SIZE)
-    .offset((filters.page - 1) * REPORT_PAGE_SIZE);
+    .orderBy(direction(reports.createdAt), direction(reports.id))
+    .limit(filters.pageSize)
+    .offset((filters.page - 1) * filters.pageSize);
 
-  return { rows, total, pages, pageSize: REPORT_PAGE_SIZE, ...filters };
+  return { rows, total, pages, counts: counted, ...filters };
 }
 
 export type AdminReports = NonNullable<Awaited<ReturnType<typeof listReports>>>;
@@ -443,13 +464,31 @@ export const AUDIT_EVENT_TYPES = [
   'SystemAnnouncementSent',
 ] as const satisfies readonly EventType[];
 
+/** The events each kind of decision is made of; `all` is every decision the log keeps. */
+const AUDIT_KIND_TYPES: Record<Exclude<AuditKind, 'all'>, readonly EventType[]> = {
+  reports: ['ReportReviewing', 'ReportResolved', 'ReportDismissed'],
+  accounts: ['AccountBanned', 'AccountReinstated', 'AccountBanLifted', 'PlayerLeft'],
+  tables: ['TableClosedByModeration', 'TableDisabled'],
+  catalog: [
+    'CatalogEntryCreated',
+    'CatalogEntryApproved',
+    'CatalogEntryRejected',
+    'CatalogEntryRenamed',
+    'CatalogEntryMerged',
+    'CatalogEntryDisabled',
+  ],
+  announcements: ['SystemAnnouncementSent'],
+};
+
 /**
  * The audit log: every admin decision, newest first, with who made it. A table disabled or a player
  * removed counts when someone other than the table's GM did it (an admin, or a suspension). Events
- * are pruned after their retention, so this covers that window. `null` past the last page.
+ * are pruned after their retention, so this covers that window. `null` past the last page. The
+ * decisions can be narrowed to a kind and to what an admin typed: who decided, the table or the name.
  */
-export async function auditLog(db: AnyDb, actor: Actor | null, page: number) {
+export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearchParams) {
   authorize(actor, 'moderation:manage');
+  const filters = auditFilters(params);
   const byOther = and(
     isNotNull(events.actorId),
     ne(events.actorId, gameTables.gmId),
@@ -458,17 +497,31 @@ export async function auditLog(db: AnyDb, actor: Actor | null, page: number) {
       and(eq(events.type, 'PlayerLeft'), sql`${events.payload}->>'reason' = 'removed'`),
     ),
   );
-  const where = or(inArray(events.type, [...AUDIT_EVENT_TYPES]), byOther);
   const tableOf = sql`(${events.payload}->>'tableId')::uuid`;
   const actorProfile = alias(profiles, 'actor');
+  const search = filters.query.replace(/^@/, '').replace(/[\\%_]/g, '\\$&');
+  const kinds = filters.kind === 'all' ? null : AUDIT_KIND_TYPES[filters.kind];
+  const where = and(
+    or(inArray(events.type, [...AUDIT_EVENT_TYPES]), byOther),
+    kinds ? inArray(events.type, [...kinds]) : undefined,
+    search
+      ? or(
+          ilike(actorProfile.username, `%${search}%`),
+          ilike(gameTables.title, `%${search}%`),
+          sql`${events.payload}->>'name' ilike ${`%${search}%`}`,
+          sql`${events.payload}->>'title' ilike ${`%${search}%`}`,
+        )
+      : undefined,
+  );
 
   const [{ total }] = await db
     .select({ total: count() })
     .from(events)
     .leftJoin(gameTables, eq(gameTables.id, tableOf))
+    .leftJoin(actorProfile, eq(actorProfile.id, events.actorId))
     .where(where);
-  const pages = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));
-  if (page > pages) return null;
+  const pages = Math.max(1, Math.ceil(total / filters.pageSize));
+  if (filters.page > pages) return null;
 
   const rows = await db
     .select({
@@ -484,8 +537,8 @@ export async function auditLog(db: AnyDb, actor: Actor | null, page: number) {
     .leftJoin(actorProfile, eq(actorProfile.id, events.actorId))
     .where(where)
     .orderBy(desc(events.createdAt), desc(events.id))
-    .limit(AUDIT_PAGE_SIZE)
-    .offset((page - 1) * AUDIT_PAGE_SIZE);
+    .limit(filters.pageSize)
+    .offset((filters.page - 1) * filters.pageSize);
 
   // Name the profiles the payloads point at (the suspended account, the removed player).
   const ids = [
@@ -523,8 +576,8 @@ export async function auditLog(db: AnyDb, actor: Actor | null, page: number) {
       };
     }),
     total,
-    page,
     pages,
+    ...filters,
   };
 }
 

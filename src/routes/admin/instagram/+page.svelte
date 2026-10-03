@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import AdminPage from '$lib/components/admin/AdminPage.svelte';
+  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import Form from '$lib/components/Form.svelte';
   import Button from '$lib/components/Button.svelte';
@@ -17,12 +17,12 @@
   let connecting = $state(false);
   let connectionFeedbackShown = $state(false);
   const expired = $derived(Boolean(data.account && new Date(data.account.expiresAt) <= new Date()));
-  const status = $derived(
+  const status = $derived<Status>(
     !data.account
-      ? { label: m.instagram_status_disconnected(), tone: 'preset-tonal' }
+      ? 'instagram:disconnected'
       : expired
-        ? { label: m.instagram_status_expired(), tone: 'preset-tonal-warning' }
-        : { label: m.instagram_status_connected(), tone: 'preset-tonal-success' },
+        ? 'instagram:expired'
+        : 'instagram:connected',
   );
   $effect(() => {
     if (connectionFeedbackShown) return;
@@ -33,21 +33,15 @@
 </script>
 
 <svelte:head><title>{m.admin_connections_title()} · Mesa Aberta</title></svelte:head>
-<section class="grid max-w-2xl gap-6 py-8">
-  <Breadcrumbs
-    items={[{ label: m.nav_admin(), href: '/admin' }, { label: m.admin_connections_title() }]}
-    class="mb-6"
-  />
-  <AdminPageHead title={m.admin_connections_title()} lede={m.admin_connections_description()} />
-
+<AdminPage title={m.admin_connections_title()} lede={m.admin_connections_description()}>
   <section
     aria-labelledby="instagram"
-    class="grid gap-4 rounded-lg border border-surface-200-800 bg-panel p-5"
+    class="mt-8 grid max-w-3xl gap-4 rounded-lg border border-surface-200-800 bg-panel p-5"
   >
     <div class="flex flex-wrap items-center gap-3">
       <Icon name="instagram" size={28} />
-      <h2 id="instagram" class="text-xl font-semibold">{m.instagram_admin_title()}</h2>
-      <span class="badge rounded-full text-xs font-semibold {status.tone}">{status.label}</span>
+      <h2 id="instagram" class="text-lg font-semibold">{m.instagram_admin_title()}</h2>
+      <StatusBadge {status} />
     </div>
     <p>{m.instagram_admin_description()}</p>
     <p>
@@ -63,24 +57,35 @@
       <p>{m.instagram_account({ username: data.account.username })}</p>
       {#if expired}<p>{m.instagram_expired()}</p>{/if}
     {/if}
-    {#if !data.account || expired}
-      <Form
-        onsubmit={(event) => {
-          if (connecting) event.preventDefault();
-          else connecting = true;
-        }}
-        method="POST"
-        action={localizedHref('/admin/instagram/connect', getLocale())}
-      >
-        <Button
-          size="custom"
-          disabled={!data.configured || connecting}
-          aria-busy={connecting}
-          class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-          >{m.instagram_connect()}</Button
+    <div class="flex flex-wrap items-center gap-3">
+      {#if !data.account || expired}
+        <Form
+          onsubmit={(event) => {
+            if (connecting) event.preventDefault();
+            else connecting = true;
+          }}
+          method="POST"
+          action={localizedHref('/admin/instagram/connect', getLocale())}
         >
-      </Form>
-    {/if}
+          <Button
+            size="custom"
+            disabled={!data.configured || connecting}
+            aria-busy={connecting}
+            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+            >{m.instagram_connect()}</Button
+          >
+        </Form>
+      {/if}
+      <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
+      <a
+        href={INSTAGRAM_URL}
+        rel="noopener"
+        target="_blank"
+        class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+        >{m.instagram_view_profile()}</a
+      >
+      <!-- eslint-enable svelte/no-navigation-without-resolve -->
+    </div>
     {#if data.uncertain.length}
       <h3 class="mt-2 text-lg font-semibold">{m.instagram_reconcile_title()}</h3>
       <p>{m.instagram_reconcile_hint()}</p>
@@ -112,4 +117,4 @@
       {/each}
     {/if}
   </section>
-</section>
+</AdminPage>
