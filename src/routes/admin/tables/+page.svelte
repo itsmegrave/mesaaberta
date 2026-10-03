@@ -5,6 +5,7 @@
   import FilterSelect from '$lib/components/admin/FilterSelect.svelte';
   import ListCard from '$lib/components/admin/ListCard.svelte';
   import Media from '$lib/components/admin/Media.svelte';
+  import PostStatus from '$lib/components/admin/PostStatus.svelte';
   import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -62,7 +63,6 @@
     !['published', 'publishing', 'uncertain', 'queued', 'processing'].includes(
       row.instagramStatus ?? '',
     );
-  const postOf = (row: Row) => `post:${row.instagramStatus ?? 'none'}` as Status;
   const items = (row: Row): KebabItem[] => [
     { id: 'view', label: m.menu_view_table(), icon: 'eye', href: href(row) },
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
@@ -203,8 +203,10 @@
       {:else if id === 'seats'}
         {m.admin_tables_seats({ taken: row.seats, capacity: row.capacity })}
       {:else if id === 'status'}
-        <StatusBadge status={`table:${row.status}` as Status} />
-        <StatusBadge status={postOf(row)} class="mt-1" />
+        <div class="grid justify-items-start gap-1">
+          <StatusBadge status={`table:${row.status}` as Status} />
+          <PostStatus status={row.instagramStatus} />
+        </div>
       {:else if id === 'actions'}
         {#if publishing === row.id}<Spinner />{:else}
           <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
@@ -230,7 +232,7 @@
           <span class="text-sm text-muted"
             >{m.admin_tables_seats_phone({ taken: row.seats, capacity: row.capacity })}</span
           >
-          <StatusBadge status={postOf(row)} />
+          <PostStatus status={row.instagramStatus} />
         {/snippet}
         {#snippet action()}
           <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />

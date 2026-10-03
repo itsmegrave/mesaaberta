@@ -75,11 +75,19 @@ describe('admin tables', () => {
     await page.viewport(1280, 900);
   });
 
-  it('says the status of the table and of its Instagram post as badges', async () => {
-    show([row()]);
+  it('shows the table status as a badge and the Instagram post as a line under it', async () => {
+    show([row(), row({ id: '2', slug: 'b', instagramStatus: 'failed' })]);
 
-    await expect.element(page.getByText('Ativa').first()).toBeVisible();
-    await expect.element(page.getByText('Publicado').first()).toBeVisible();
+    const status = page.getByText('Ativa').first().element();
+    // The design system's StatusBadge: a 28px pill with a hairline border.
+    expect(status.className).toMatch(/\bh-7\b/);
+    expect(status.className).toContain('rounded-full');
+    expect(status.className).toContain('border');
+    const post = page.getByText('Publicado').first().element();
+    expect(post.className).not.toContain('rounded-full');
+    expect(post.querySelector('svg')).not.toBeNull();
+    // Red only when it needs action.
+    expect(page.getByText('Falhou').first().element().className).toContain('text-error');
     await expect.element(page.getByText('3/5').first()).toBeVisible();
   });
 

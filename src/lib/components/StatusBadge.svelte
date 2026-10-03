@@ -38,16 +38,18 @@
   import { m } from '$lib/paraglide/messages';
 
   /**
-   * A status as a dot and a word, never colour alone. Table statuses appear only in admin: players
+   * A status as a dot and a word in a pill (the design system's StatusBadge: 28px, a hairline border
+   * on the surface, 650 weight), never colour alone. A filled dot is a current state; a hollow ring
+   * is "not (yet) going ahead". Table statuses appear only in admin: players
    * and GMs only ever see active tables.
    */
   let { status, class: className = '' }: { status: Status; class?: string } = $props();
 
-  type Look = { label: () => string; dot: string };
+  type Look = { label: () => string; dot: string; text?: 'muted' | 'danger' };
   const LOOKS: Record<Status, Look> = {
     'user:active': { label: () => m.status_user_active(), dot: 'bg-success-500' },
     'user:suspended': { label: () => m.status_user_suspended(), dot: 'bg-warning-500' },
-    'user:banned': { label: () => m.status_user_banned(), dot: 'bg-error-500' },
+    'user:banned': { label: () => m.status_user_banned(), dot: 'bg-error-500', text: 'danger' },
     'table:active': { label: () => m.status_table_active(), dot: 'bg-success-500' },
     'table:awaiting_confirmation': {
       label: () => m.status_table_awaiting_confirmation(),
@@ -58,9 +60,18 @@
     'table:not_held': {
       label: () => m.status_table_not_held(),
       dot: 'border-2 border-surface-500 bg-transparent',
+      text: 'muted',
     },
-    'table:disabled': { label: () => m.status_table_disabled(), dot: 'bg-surface-500' },
-    'seat:pending': { label: () => m.status_seat_pending(), dot: 'bg-warning-500' },
+    'table:disabled': {
+      label: () => m.status_table_disabled(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
+    // A hollow ring: the request takes no seat yet.
+    'seat:pending': {
+      label: () => m.status_seat_pending(),
+      dot: 'border-2 border-warning-500 bg-transparent',
+    },
     'seat:confirmed': { label: () => m.status_seat_confirmed(), dot: 'bg-success-500' },
     // Admin only: a report waits (open, in review), or it was decided (accepted, archived).
     'report:open': { label: () => m.report_status_open(), dot: 'bg-error-500' },
@@ -107,7 +118,14 @@
   const look = $derived(LOOKS[status]);
 </script>
 
-<span class="inline-flex items-center gap-2 text-sm font-semibold whitespace-nowrap {className}">
-  <span aria-hidden="true" class="size-2.5 shrink-0 rounded-full {look.dot}"></span>
+<span
+  class="inline-flex h-7 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-3 text-sm font-[650] whitespace-nowrap {look.text ===
+  'danger'
+    ? 'text-error-700-300'
+    : look.text === 'muted'
+      ? 'text-muted'
+      : ''} {className}"
+>
+  <span aria-hidden="true" class="size-2 shrink-0 rounded-full {look.dot}"></span>
   {look.label()}
 </span>
