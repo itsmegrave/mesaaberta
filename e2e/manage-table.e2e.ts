@@ -37,7 +37,7 @@ test('the GM approves a request and removes a player from the manage page, after
   await expect(trail.getByText('Jogadores e pedidos')).toHaveAttribute('aria-current', 'page');
 
   const requests = gmPage.getByRole('region', { name: 'Pedidos de vaga' });
-  await expect(requests.getByText(`@${bruno.username}`)).toBeVisible();
+  await expect(requests.getByRole('link', { name: `@${bruno.username}` })).toBeVisible();
   await expect(requests.getByText('Sou o Bruno, nunca joguei Tormenta.')).toBeVisible();
   await requests.getByRole('button', { name: 'Aprovar' }).click();
 
