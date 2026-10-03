@@ -2,6 +2,38 @@ import { describe, expect, it } from 'vitest';
 import { publicConfig, readConfig } from '../../packages/config/src/index';
 
 describe('portable deployment configuration', () => {
+  const productionEnv = {
+    APP_ORIGIN: 'https://mesaaberta.app',
+    CONTACT_EMAIL: 'contact@example.org',
+    PRIVACY_CONTROLLER_NAME: 'Mesa Aberta',
+    PRIVACY_EMAIL: 'privacy@example.org',
+    CALENDAR_UID_DOMAIN: 'mesaaberta.app',
+  };
+
+  it('requires explicit production identity and calendar settings', () => {
+    expect(() => readConfig({}, { mode: 'production' })).toThrow(
+      'Invalid deployment configuration: APP_ORIGIN, CONTACT_EMAIL, PRIVACY_CONTROLLER_NAME, PRIVACY_EMAIL, CALENDAR_UID_DOMAIN',
+    );
+  });
+
+  it.each(Object.keys(productionEnv))('rejects a blank production setting: %s', (field) => {
+    expect(() => readConfig({ ...productionEnv, [field]: '  ' }, { mode: 'production' })).toThrow(
+      `Invalid deployment configuration: ${field}`,
+    );
+  });
+
+  it('preserves existing calendar identifiers when the production origin changes', () => {
+    expect(
+      readConfig(
+        { ...productionEnv, APP_ORIGIN: 'https://new.example.org' },
+        { mode: 'production' },
+      ),
+    ).toMatchObject({
+      APP_ORIGIN: 'https://new.example.org',
+      CALENDAR_UID_DOMAIN: 'mesaaberta.app',
+    });
+  });
+
   it('runs with local defaults and optional integrations disabled', () => {
     const config = readConfig();
     expect(config.APP_ORIGIN).toBe('http://localhost:5173');

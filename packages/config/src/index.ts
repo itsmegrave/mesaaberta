@@ -43,10 +43,10 @@ const hostname = z
 
 /** Only these values may cross the SSR boundary. Unknown fields (including secrets) are stripped. */
 export const publicConfigSchema = z.object({
-  APP_ORIGIN: origin.default('http://localhost:5173'),
-  CONTACT_EMAIL: z.email().default('contact@example.invalid'),
-  PRIVACY_CONTROLLER_NAME: z.string().trim().min(1).default('Responsável pela instância'),
-  PRIVACY_EMAIL: z.email().default('privacy@example.invalid'),
+  APP_ORIGIN: origin,
+  CONTACT_EMAIL: z.email(),
+  PRIVACY_CONTROLLER_NAME: z.string().trim().min(1),
+  PRIVACY_EMAIL: z.email(),
   INSTAGRAM_HANDLE: z
     .string()
     .regex(/^[a-zA-Z0-9._]{1,30}$/)
@@ -61,6 +61,14 @@ export const publicConfigSchema = z.object({
 
 const configSchema = publicConfigSchema.extend({
   // Stable across releases and origin changes. Set before sending the first calendar invite.
+  CALENDAR_UID_DOMAIN: hostname,
+});
+
+const localConfigSchema = configSchema.extend({
+  APP_ORIGIN: origin.default('http://localhost:5173'),
+  CONTACT_EMAIL: z.email().default('contact@example.invalid'),
+  PRIVACY_CONTROLLER_NAME: z.string().trim().min(1).default('Responsável pela instância'),
+  PRIVACY_EMAIL: z.email().default('privacy@example.invalid'),
   CALENDAR_UID_DOMAIN: hostname.default('localhost'),
 });
 
@@ -76,8 +84,12 @@ const withoutBlanks = (env: ConfigEnv) =>
     ]),
   );
 
-export function readConfig(env: ConfigEnv = {}): Config {
-  const parsed = configSchema.safeParse(withoutBlanks(env));
+export function readConfig(
+  env: ConfigEnv = {},
+  options: { mode: 'local' | 'production' } = { mode: 'local' },
+): Config {
+  const schema = options.mode === 'production' ? configSchema : localConfigSchema;
+  const parsed = schema.safeParse(withoutBlanks(env));
   if (!parsed.success) {
     // Do not include raw input or provider secrets in a build/Worker error.
     const fields = [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))];
