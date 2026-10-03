@@ -70,6 +70,9 @@
 
   // What is being typed, if anything. The list is narrowed by it; otherwise the input shows the
   // picked name (single) or nothing (several, whose picks are chips).
+  // The list is built when it opens: a closed one would put an inline `style` on the page, which
+  // the CSP refuses.
+  let open = $state(false);
   let typed = $state<string | null>(null);
   const inputValue = $derived(typed ?? (multiple || !value[0] ? '' : nameOf(value[0])));
   const matching = $derived(items.filter((item) => matchesSearch(item.name, typed ?? '')));
@@ -111,6 +114,7 @@
   <Combobox
     class={rootClass}
     {collection}
+    {open}
     {multiple}
     {value}
     {inputValue}
@@ -128,6 +132,7 @@
       typed = details.reason === 'input-change' ? details.inputValue : null;
     }}
     onOpenChange={(details) => {
+      open = details.open;
       if (!details.open) typed = null;
     }}
     onValueChange={(details) => commit(details.value)}
@@ -149,46 +154,46 @@
         >
       </Combobox.Trigger>
     </Combobox.Control>
-    <Portal>
-      <Combobox.Positioner class="z-50!">
-        <Combobox.Content
-          class="max-h-72 overflow-y-auto card border border-surface-200-800 bg-surface-100-900 p-1 shadow-2xl"
-        >
-          {#each shown as item (item.slug)}
-            <Combobox.Item
-              {item}
-              class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
-            >
-              <Combobox.ItemText
-                >{item.name}{#if item.pending && pendingLabel}
-                  <span class="text-xs font-normal text-muted">{pendingLabel}</span
-                  >{/if}</Combobox.ItemText
+    {#if open}<Portal>
+        <Combobox.Positioner class="z-50!">
+          <Combobox.Content
+            class="max-h-72 overflow-y-auto card border border-surface-200-800 bg-surface-100-900 p-1 shadow-2xl"
+          >
+            {#each shown as item (item.slug)}
+              <Combobox.Item
+                {item}
+                class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md p-2 text-sm data-highlighted:preset-tonal"
               >
-              <Combobox.ItemIndicator class="shrink-0 text-primary-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg
+                <Combobox.ItemText
+                  >{item.name}{#if item.pending && pendingLabel}
+                    <span class="text-xs font-normal text-muted">{pendingLabel}</span
+                    >{/if}</Combobox.ItemText
                 >
-              </Combobox.ItemIndicator>
-            </Combobox.Item>
-          {:else}
-            <li class="p-2 text-sm text-muted">{m.search_select_none()}</li>
-          {/each}
-          {#if matching.length > SHOWN}
-            <li class="p-2 text-sm text-muted" aria-hidden="true">
-              {m.search_select_more({ count: matching.length - SHOWN })}
-            </li>
-          {/if}
-        </Combobox.Content>
-      </Combobox.Positioner>
-    </Portal>
+                <Combobox.ItemIndicator class="shrink-0 text-primary-500">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg
+                  >
+                </Combobox.ItemIndicator>
+              </Combobox.Item>
+            {:else}
+              <li class="p-2 text-sm text-muted">{m.search_select_none()}</li>
+            {/each}
+            {#if matching.length > SHOWN}
+              <li class="p-2 text-sm text-muted" aria-hidden="true">
+                {m.search_select_more({ count: matching.length - SHOWN })}
+              </li>
+            {/if}
+          </Combobox.Content>
+        </Combobox.Positioner>
+      </Portal>{/if}
 
     {#if multiple && showPicks && value.length > 0}
       <ul
