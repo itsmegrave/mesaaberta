@@ -60,6 +60,8 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
     const trigger = playerPage.getByRole('button', { name: 'Abrir chat' });
     await trigger.click();
     const drawer = playerPage.getByRole('dialog', { name: 'Mensagens' });
+    // Nothing is unread, so the drawer opens on "Diretas"; the table chat is in "Mesas".
+    await drawer.getByRole('tab', { name: /^Mesas/ }).click();
     await drawer.getByRole('link', { name: new RegExp(title) }).click();
     await expect(drawer.getByRole('textbox', { name: 'Mensagem' })).toBeVisible();
     await drawer.getByRole('textbox', { name: 'Mensagem' }).fill(`Drawer ${width} `);
