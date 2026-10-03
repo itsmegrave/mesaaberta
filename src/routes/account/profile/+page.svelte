@@ -3,6 +3,7 @@
   import { queryClient } from '$lib/query/context';
   const client = queryClient();
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { atHandle } from '$lib/profile/handle';
   import Avatar from '$lib/components/Avatar.svelte';
@@ -151,14 +152,6 @@
     {m.account_profile_lede()}
   </p>
 
-  {#if data.username}
-    <a
-      href={localizedHref(`/u/${data.username}`, locale)}
-      class="mt-5 btn h-12 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
-      >{m.public_profile_view()}</a
-    >
-  {/if}
-
   <div class="mt-8 grid gap-6 lg:grid-cols-3 lg:items-start">
     <div class="grid gap-6 lg:col-span-2">
       <section aria-labelledby="photo-heading" class={card}>
@@ -250,7 +243,12 @@
             action="?/save"
             usernameLocked
             submitLabel={m.account_profile_save()}
-            onsaved={() => toast.success(m.account_profile_saved())}
+            cancelHref={data.username ? localizedHref(`/u/${data.username}`, locale) : undefined}
+            onsaved={() => {
+              toast.success(m.account_profile_saved());
+              // Saved: back to the page everyone else sees.
+              if (data.username) void goto(localizedHref(`/u/${data.username}`, locale));
+            }}
           />
         </div>
       </section>

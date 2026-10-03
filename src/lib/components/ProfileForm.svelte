@@ -41,6 +41,8 @@
     /** On the profile page the username is shown but cannot change: it was chosen at onboarding. */
     usernameLocked?: boolean;
     submitLabel?: string;
+    /** Where "Cancelar" goes: the page the person came from. Without it there is no Cancelar. */
+    cancelHref?: string;
     /** Called after a save that stays on the page (the profile page), to confirm it. */
     onsaved?: () => void;
     /** Asks the server if a (well formed) username is free. Replaced in tests. */
@@ -52,6 +54,7 @@
     action,
     usernameLocked = false,
     submitLabel,
+    cancelHref,
     onsaved,
     checkUsername = usernameAvailability,
   }: Props = $props();
@@ -529,7 +532,7 @@
     <p class="sr-only" role="status">{announcement}</p>
   </fieldset>
 
-  <div>
+  <div class="flex flex-wrap items-center gap-5">
     <SubmitButton
       submitting={controller.pending}
       delayed={controller.delayed}
@@ -538,5 +541,9 @@
     >
       {submitLabel ?? m.profile_submit()}
     </SubmitButton>
+    {#if cancelHref}
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
+      <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
+    {/if}
   </div>
 </Form>

@@ -41,6 +41,22 @@ describe('the public profile route', () => {
       expect.objectContaining({ viewerId: undefined, page: 1 }),
     );
   });
+  it('shows the owner the page as a visitor sees it with ?as=visitor, and only the owner', async () => {
+    const owned = { ...result, isOwner: true };
+    vi.mocked(publicProfile).mockResolvedValue(
+      owned as unknown as NonNullable<Awaited<ReturnType<typeof publicProfile>>>,
+    );
+    await expect(run('ana', '?as=visitor').promise).resolves.toMatchObject({
+      isOwner: false,
+      previewing: true,
+    });
+    await expect(run('ana').promise).resolves.toMatchObject({ isOwner: true, previewing: false });
+
+    vi.mocked(publicProfile).mockResolvedValue(
+      result as unknown as NonNullable<Awaited<ReturnType<typeof publicProfile>>>,
+    );
+    await expect(run('ana', '?as=visitor').promise).resolves.toMatchObject({ previewing: false });
+  });
   it('redirects capitalization while preserving pagination', async () => {
     await expect(run('Ana', '?page=1').promise).rejects.toMatchObject({
       status: 308,

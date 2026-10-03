@@ -135,7 +135,6 @@
   "admin_suspend_text": "A pessoa sai da conta e não consegue entrar até o fim da suspensão. As mesas abertas que ela mestra são desativadas e ela sai das mesas em que joga. Ela recebe um e-mail com o motivo.",
   "admin_suspend_confirm": "Suspender",
   "admin_suspend_done": "Usuário suspenso. O e-mail está a caminho.",
-  "admin_user_back": "Voltar aos usuários",
   "admin_user_name": "Nome",
   "admin_user_city": "Cidade",
   "admin_user_timezone": "Fuso horário",
@@ -361,7 +360,6 @@
   "table_recurrence_weeks": "A cada {weeks} semanas",
   "table_join_auto": "Você entra na hora, se houver vaga.",
   "table_join_approval": "Cada entrada passa por aprovação.",
-  "table_back": "Voltar para as mesas",
   "table_seats_taken": "{taken} de {total} lugares",
   "nav_main": "Navegação principal",
   "tables_open_cta": "Abrir uma mesa",
@@ -505,7 +503,6 @@
   "toast_table_concluded": "Mesa concluída. Os jogadores foram convidados a avaliar.",
   "toast_table_not_held": "Mesa marcada como não realizada.",
   "toast_table_postponed": "Mesa adiada. Ela voltou a ficar aberta.",
-  "manage_back": "Voltar para Minhas mesas",
   "manage_you_are_gm": "Você mestra esta mesa",
   "manage_sections": "Seções da mesa",
   "manage_tab_players": "Participantes e pedidos",
@@ -1338,5 +1335,9 @@
         "count=*": "{count} mesas encontradas"
       }
     }
-  ]
+  ],
+  "public_profile_message": "Mandar mensagem",
+  "menu_view_as_visitor": "Ver como visitante",
+  "public_profile_previewing": "Você está vendo o perfil como um visitante vê.",
+  "public_profile_stop_previewing": "Voltar ao meu perfil"
 }

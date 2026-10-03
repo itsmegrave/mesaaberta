@@ -4,7 +4,10 @@
   import Avatar from '$lib/components/Avatar.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import ActionForm from '$lib/components/ActionForm.svelte';
+  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import TableCard from '$lib/components/TableCard.svelte';
+  import { toast } from '$lib/toaster';
   import { pageHref } from '$lib/admin/page-href';
   import { localizedHref } from '$lib/i18n/locales';
   import { atHandle } from '$lib/profile/handle';
@@ -17,6 +20,29 @@
   const profile = $derived(data.profile);
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const path = $derived(`/u/${profile.username}`);
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(data.canonical);
+      toast.success(m.toast_link_copied());
+    } catch {
+      // Clipboard access refused: nothing was copied, and nothing is claimed.
+    }
+  }
+  const menu = $derived.by(() => {
+    const items: KebabItem[] = [
+      { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
+    ];
+    if (data.isOwner) {
+      items.push({
+        id: 'visitor',
+        label: m.menu_view_as_visitor(),
+        icon: 'eye',
+        href: localizedHref(`${path}?as=visitor`, locale),
+      });
+    }
+    return items;
+  });
 </script>
 
 <svelte:head>
@@ -38,6 +64,13 @@
 
 <section class="pt-2 pb-4 md:pt-12">
   <Breadcrumbs class="mb-6 md:mb-8" items={[{ label: atHandle(profile.username) }]} />
+
+  {#if data.previewing}
+    <p role="status" class="mb-4 flex flex-wrap items-center gap-3 font-semibold">
+      {m.public_profile_previewing()}
+      <a href={localizedHref(path, locale)} class="anchor">{m.public_profile_stop_previewing()}</a>
+    </p>
+  {/if}
 
   <header class="rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8">
     <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
@@ -71,13 +104,23 @@
           {/if}
         </div>
       </div>
-      {#if data.isOwner}
-        <a
-          href={localizedHref('/account/profile', locale)}
-          class="btn h-12 shrink-0 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
-          >{m.public_profile_edit()}</a
-        >
-      {/if}
+      <div class="flex shrink-0 flex-wrap items-center gap-3">
+        {#if data.isOwner}
+          <a
+            href={localizedHref('/account/profile', locale)}
+            class="btn h-12 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
+            >{m.public_profile_edit()}</a
+          >
+        {:else}
+          <ActionForm
+            action="?/message"
+            label={m.public_profile_message()}
+            icon="game-icons:scroll-quill"
+            buttonClass="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-5 font-semibold"
+          />
+        {/if}
+        <KebabMenu name={atHandle(profile.username)} items={menu} />
+      </div>
     </div>
 
     <div class="mt-8 grid gap-6 border-t border-surface-200-800 pt-6 lg:grid-cols-2">

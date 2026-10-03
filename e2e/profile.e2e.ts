@@ -25,8 +25,10 @@ test('the account menu leads to the profile, where the details are saved and the
   await page.getByLabel('Cidade').fill('Recife');
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
   await expect(page.getByText('Perfil salvo.')).toBeVisible();
+  // Saved: back on the public page.
+  await expect(page).toHaveURL(new RegExp(`/u/${user.username}$`));
 
-  await page.reload();
+  await page.goto('/account/profile');
   await expect(page.getByLabel('Cidade')).toHaveValue('Recife');
   await expect(page.getByLabel('Nome de usuário')).toHaveValue(user.username);
 });
