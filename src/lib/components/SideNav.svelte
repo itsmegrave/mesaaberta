@@ -24,14 +24,12 @@
 
   let {
     account,
-    released,
     authEnabled,
     unread,
     latest,
     messagesUnread,
   }: {
     account: Account | null;
-    released: boolean;
     authEnabled: boolean;
     unread: number;
     latest: NonNullable<Parameters<typeof NotificationBell>[1]>['latest'];
@@ -65,7 +63,7 @@
   const pathname = $derived(page.url.pathname);
   const links = $derived(
     [
-      released && {
+      {
         href: '/tables',
         label: m.nav_tables(),
         icon: 'game-icons:tavern-sign' as IconName,
@@ -224,7 +222,7 @@
               placement={expanded ? 'top-start' : 'right-end'}
               compact={!expanded}
             />
-          {:else if authEnabled && released}
+          {:else if authEnabled}
             <a
               href={resolve('/login')}
               class="btn flex w-full items-center rounded-lg p-2 text-sm font-semibold whitespace-normal hover:preset-tonal {expanded

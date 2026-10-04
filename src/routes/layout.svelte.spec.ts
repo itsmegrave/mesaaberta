@@ -24,7 +24,7 @@ const shell = {
   maintenanceBypass: false,
   viewer,
 };
-const signedOut = { authEnabled: false, released: false, ...shell, account: null };
+const signedOut = { authEnabled: false, ...shell, account: null };
 const memberAccount = {
   displayName: 'Ana Souza',
   username: 'ana',
@@ -83,7 +83,6 @@ describe('+layout.svelte', () => {
       children,
       data: {
         ...signedOut,
-        released: true,
         account: { ...adminAccount, messagesUnread: 2, notifications: { unread: 4, latest: [] } },
       },
     });
@@ -112,7 +111,7 @@ describe('+layout.svelte', () => {
   });
 
   it('draws the open side nav without an inline style, which the CSP blocks', async () => {
-    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+    render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
 
     await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
@@ -120,7 +119,7 @@ describe('+layout.svelte', () => {
   });
 
   it('keeps labels inside the collapsed rail, with the theme button and bell together', async () => {
-    render(Layout, { children, data: { ...signedOut, released: true, account: adminAccount } });
+    render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     await nav.getByRole('button', { name: 'Recolher menu' }).click();
 
@@ -158,20 +157,8 @@ describe('+layout.svelte', () => {
   });
 
   describe('tables link', () => {
-    it('is hidden until the platform is released, so nobody is sent to an unfinished page', async () => {
-      render(Layout, { children, data: signedOut });
-
-      await expect
-        .element(
-          page
-            .getByRole('navigation', { name: 'Navegação principal' })
-            .getByRole('link', { name: 'Mesas' }),
-        )
-        .not.toBeInTheDocument();
-    });
-
-    it('appears once it is released on desktop', async () => {
-      render(Layout, { children, data: { ...signedOut, released: true } });
+    it('is available to anonymous visitors on desktop', async () => {
+      render(Layout, { children, data: { ...signedOut } });
 
       await expect
         .element(
@@ -194,21 +181,10 @@ describe('+layout.svelte', () => {
         .not.toBeInTheDocument();
     });
 
-    it('keeps sign-in hidden until the platform is released', async () => {
+    it('offers sign-in to an anonymous visitor when login is configured', async () => {
       render(Layout, {
         children,
-        data: { authEnabled: true, released: false, ...shell, account: null },
-      });
-
-      await expect
-        .element(navigation().getByRole('link', { name: 'Entrar' }))
-        .not.toBeInTheDocument();
-    });
-
-    it('offers sign-in to an anonymous visitor once login and the platform are enabled', async () => {
-      render(Layout, {
-        children,
-        data: { authEnabled: true, released: true, ...shell, account: null },
+        data: { authEnabled: true, ...shell, account: null },
       });
 
       await expect
@@ -221,7 +197,6 @@ describe('+layout.svelte', () => {
         children,
         data: {
           authEnabled: true,
-          released: false,
           ...shell,
           account: memberAccount,
         },
@@ -243,7 +218,6 @@ describe('+layout.svelte', () => {
         children,
         data: {
           authEnabled: true,
-          released: false,
           ...shell,
           account: memberAccount,
         },
@@ -271,7 +245,6 @@ describe('+layout.svelte', () => {
         children,
         data: {
           authEnabled: true,
-          released: false,
           ...shell,
           account: adminAccount,
         },
@@ -292,7 +265,6 @@ describe('+layout.svelte', () => {
         children,
         data: {
           authEnabled: true,
-          released: false,
           ...shell,
           account: memberAccount,
         },
@@ -307,12 +279,11 @@ describe('+layout.svelte', () => {
       expect(form?.getAttribute('action')).toBe('/logout');
     });
 
-    it('shows the open table link on desktop when released and signed in', async () => {
+    it('shows the open table link on desktop when signed in', async () => {
       render(Layout, {
         children,
         data: {
           authEnabled: true,
-          released: true,
           ...shell,
           account: memberAccount,
         },
@@ -328,7 +299,6 @@ describe('+layout.svelte', () => {
         children,
         data: {
           authEnabled: true,
-          released: true,
           ...shell,
           account: {
             ...memberAccount,
@@ -371,7 +341,7 @@ describe('+layout.svelte', () => {
     });
 
     it('shows no bell to a visitor who is signed out', async () => {
-      render(Layout, { children, data: { ...signedOut, authEnabled: true, released: true } });
+      render(Layout, { children, data: { ...signedOut, authEnabled: true } });
 
       await expect
         .element(navigation().getByRole('button', { name: /Notificações/ }))
@@ -384,12 +354,11 @@ describe('+layout.svelte', () => {
       await page.viewport(390, 844);
     });
 
-    it('renders bottom tab bar when released', async () => {
+    it('renders the bottom tab bar for signed-in visitors', async () => {
       render(Layout, {
         children,
         data: {
           authEnabled: true,
-          released: true,
           ...shell,
           account: memberAccount,
         },
@@ -408,12 +377,24 @@ describe('+layout.svelte', () => {
         .toHaveAttribute('href', '/account/tables');
     });
 
+    it('offers navigation and sign-in to anonymous visitors on mobile', async () => {
+      render(Layout, { children, data: { ...signedOut, authEnabled: true } });
+
+      const nav = page.getByRole('navigation', { name: 'Navegação móvel' });
+      await expect.element(nav).toBeVisible();
+      await expect
+        .element(nav.getByRole('link', { name: 'Mesas' }))
+        .toHaveAttribute('href', '/tables');
+      await expect
+        .element(page.getByRole('banner').getByRole('link', { name: 'Entrar' }))
+        .toHaveAttribute('href', '/login');
+    });
+
     it('includes Admin tab on bottom tab bar for admins', async () => {
       render(Layout, {
         children,
         data: {
           authEnabled: true,
-          released: true,
           ...shell,
           account: adminAccount,
         },
@@ -440,7 +421,7 @@ describe('+layout.svelte', () => {
 
 describe('maintenance', () => {
   it('shows only the brand on the maintenance screen: no navigation, tab bar or footer', async () => {
-    render(Layout, { children, data: { ...signedOut, released: true, maintenance: true } });
+    render(Layout, { children, data: { ...signedOut, maintenance: true } });
 
     await expect.element(page.getByRole('navigation')).not.toBeInTheDocument();
     await expect.element(page.getByRole('contentinfo')).not.toBeInTheDocument();

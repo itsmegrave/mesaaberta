@@ -52,12 +52,10 @@
         {m.tables_lede()}
       </p>
     </div>
-    <!-- On a phone the tab bar offers this once the platform is released; until then, the page does. -->
+    <!-- On a phone the bottom tab bar already offers this action. -->
     <a
       href={localizedHref('/tables/new', locale)}
-      class="btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex {data.released
-        ? 'hidden'
-        : 'inline-flex'}"
+      class="btn hidden h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex"
     >
       <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
       {m.tables_open_cta()}

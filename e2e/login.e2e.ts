@@ -39,10 +39,18 @@ test.describe('the login page', () => {
     await expect(page.getByRole('button', { name: 'Enviar link' })).toBeVisible();
   });
 
-  test('the header does not offer a way in while the platform is unreleased', async ({ page }) => {
+  test('the navigation offers sign-in to anonymous visitors', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar' })).toHaveCount(0);
+    await expect(
+      page.getByRole('link', { name: 'Entrar', exact: true }).filter({ visible: true }),
+    ).toHaveAttribute('href', '/login');
+    await expect(
+      page
+        .getByRole('navigation')
+        .getByRole('link', { name: 'Mesas', exact: true })
+        .filter({ visible: true }),
+    ).toHaveAttribute('href', '/tables');
   });
 
   for (const [provider, host, clientId] of [

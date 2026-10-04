@@ -4,8 +4,6 @@
  * new flags default to `false`. Create a feature with the same key in GrowthBook.
  */
 export const flagDefaults = {
-  // Off: `/` shows the landing page. On: the released platform.
-  is_platform_released: false,
   // Off: the site as usual. On: every visitor gets the maintenance screen; admins still get through.
   maintenance_mode: false,
   // Off: text and QR artwork. On: include the table photo as its background.
