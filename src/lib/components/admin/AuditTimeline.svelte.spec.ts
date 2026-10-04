@@ -1,4 +1,4 @@
-import '../../../layout.css';
+import '../../../routes/layout.css';
 import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -32,7 +32,7 @@ describe('AuditTimeline', () => {
   it('shows who did it, what happened and when', async () => {
     show([entry({ type: 'TableCreated' })]);
     await expect.element(page.getByText('@ana')).toBeVisible();
-    await expect.element(page.getByText('criou a mesa')).toBeVisible();
+    expect(document.body.textContent).toMatch(/@ana\s+criou a mesa/);
     expect(document.querySelector('time')?.getAttribute('datetime')).toBe(
       '2026-10-01T15:30:00.000Z',
     );

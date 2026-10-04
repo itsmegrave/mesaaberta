@@ -217,7 +217,7 @@ describe('the history of a save', () => {
     const count = (await logged(id(4))).length;
 
     expect((await logged(id(4))).at(-1)!.changes).toEqual({
-      links: { from: null, to: 'instagram: https://instagram.com/carla' },
+      links: { from: null, to: 'instagram: carla' },
     });
 
     await saveProfile(

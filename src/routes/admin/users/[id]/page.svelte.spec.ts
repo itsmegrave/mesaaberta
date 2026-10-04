@@ -71,6 +71,7 @@ describe('admin user page', () => {
         avatar: null,
         moderation: { ban: ban(null), canModerate: true, acceptedTableReports: 0 },
         back: '/admin/users',
+        history: { entries: [], more: false, retentionDays: 90 },
         viewer: { timezone: 'America/Recife' },
       } as never,
     });
