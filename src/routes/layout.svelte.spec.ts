@@ -141,13 +141,14 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'true');
   });
 
-  describe('footer credits', () => {
+  describe('footer links', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
       ['Lenindragons', 'https://linktr.ee/lenindragonsrpg'],
       ['Reporte aqui', 'https://mesaaberta.canny.io/feedback'],
       ['contato@mesaaberta.app', 'mailto:contato@mesaaberta.app'],
       ['Instagram da Mesa Aberta, @mesaaberta.app', 'https://www.instagram.com/mesaaberta.app/'],
+      ['novidades', 'https://mesaaberta.canny.io/changelog'],
     ])('links %s to %s', async (name, href) => {
       render(Layout, { children, data: signedOut });
 
