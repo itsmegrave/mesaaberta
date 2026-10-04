@@ -1,7 +1,7 @@
 import type { IconName } from '$lib/icons/names';
 import { m } from '$lib/paraglide/messages';
 
-export type AdminCounts = { reports: number; queue: number; connections: number };
+export type AdminCounts = { reports: number; queue: number; connections: number; events: number };
 export type AdminSection = { path: string; label: string; icon: IconName; count?: number };
 export type AdminGroup = { key: string; label: string; sections: AdminSection[] };
 
@@ -55,7 +55,15 @@ export function adminGroups(counts: AdminCounts): AdminGroup[] {
     {
       key: 'log',
       label: m.admin_group_log(),
-      sections: [{ path: '/admin/audit', label: m.admin_audit_title(), icon: 'clock' }],
+      sections: [
+        { path: '/admin/audit', label: m.admin_audit_title(), icon: 'clock' },
+        {
+          path: '/admin/events',
+          label: m.admin_nav_events(),
+          icon: 'refresh-cw',
+          count: counts.events,
+        },
+      ],
     },
   ];
 }

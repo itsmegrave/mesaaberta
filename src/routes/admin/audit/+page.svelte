@@ -86,6 +86,8 @@
         return m.audit_catalog_merged({ name });
       case 'CatalogEntryDisabled':
         return m.audit_catalog_disabled({ name });
+      case 'EventForced':
+        return m.audit_event_forced({ type: entry.eventType ?? '' });
       default:
         return entry.type;
     }

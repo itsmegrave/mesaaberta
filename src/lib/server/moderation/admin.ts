@@ -505,6 +505,7 @@ export const AUDIT_EVENT_TYPES = [
   'CatalogEntryMerged',
   'CatalogEntryDisabled',
   'SystemAnnouncementSent',
+  'EventForced',
 ] as const satisfies readonly EventType[];
 
 /** The events each kind of decision is made of; `all` is every decision the log keeps. */
@@ -616,6 +617,7 @@ export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearch
         name: typeof facts.name === 'string' ? facts.name : null,
         title: typeof facts.title === 'string' ? facts.title : null,
         reportId: typeof facts.reportId === 'string' ? facts.reportId : null,
+        eventType: typeof facts.eventType === 'string' ? facts.eventType : null,
       };
     }),
     total,

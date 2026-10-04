@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { can } from '$lib/server/auth/policy';
+import { failedEventCount } from '$lib/server/admin/event-queue';
 import { pendingCount } from '$lib/server/admin/catalog';
 import { instagramPosts } from '$lib/server/db/schema';
 import { waitingReports } from '$lib/server/moderation/admin';
@@ -12,13 +13,14 @@ export const load: LayoutServerLoad = async ({ locals }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503, 'Database not configured');
 
-  const [reports, queue, [{ posts }]] = await Promise.all([
+  const [reports, queue, events, [{ posts }]] = await Promise.all([
     waitingReports(locals.db),
     pendingCount(locals.db),
+    failedEventCount(locals.db),
     locals.db
       .select({ posts: count() })
       .from(instagramPosts)
       .where(eq(instagramPosts.status, 'uncertain')),
   ]);
-  return { adminCounts: { reports, queue, connections: posts } };
+  return { adminCounts: { reports, queue, connections: posts, events } };
 };

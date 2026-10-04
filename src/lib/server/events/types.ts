@@ -68,7 +68,10 @@ export type DomainEvent =
   | { type: 'AccountBanLifted'; payload: { profileId: string } }
   // A person saved their profile. `changes` names the fields; the personal ones (name, age range,
   // gender, city) are hidden, so the log says that they changed and not what they became.
-  | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } };
+  | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
+  // An admin ran an event again from the event queue (one is recorded per event, also when they ask
+  // for every given-up one). No handler listens to it: it is for the audit log alone.
+  | { type: 'EventForced'; payload: { eventId: string; eventType: string } };
 
 /** What an edit changed, per field. A hidden field says that it changed, never the value. */
 export type FieldChange =
