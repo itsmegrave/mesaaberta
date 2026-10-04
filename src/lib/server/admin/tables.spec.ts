@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createTestDb } from '../db/test-db';
 import { gameTables, instagramPosts, profiles, systems } from '../db/schema';
 import { TABLE_STATUSES } from '$lib/tables/status-values';
-import { listAdminTables } from './tables';
+import { adminTable, listAdminTables } from './tables';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T00:00:00Z');
 beforeAll(async () => {
@@ -116,4 +116,18 @@ it('orders by the session date, either way', async () => {
 
   expect(await titles('q=Ordem&sort=next&dir=asc')).toEqual(['Ordem C', 'Ordem B', 'Ordem A']);
   expect(await titles('q=Ordem&sort=next&dir=desc')).toEqual(['Ordem A', 'Ordem B', 'Ordem C']);
+});
+
+it('reads one table for its admin page: who runs it, its date and status, nothing private', async () => {
+  const [{ id }] = await test.db.select({ id: gameTables.id }).from(gameTables).limit(1);
+
+  const table = await adminTable(test.db, id);
+
+  expect(table).toMatchObject({ id, status: expect.any(String), timezone: 'UTC', capacity: 5 });
+  expect(table?.startsAt).toEqual(new Date('2099-01-01'));
+  expect(JSON.stringify(table)).not.toContain('PRIVATE');
+});
+
+it('has nothing for a table that does not exist', async () => {
+  expect(await adminTable(test.db, crypto.randomUUID())).toBeNull();
 });
