@@ -97,7 +97,11 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
       const [before] = await tx.select().from(profiles).where(eq(profiles.id, profileId));
       if (!before) throw new NotFound(`no profile ${profileId}`);
       const linksBefore = await tx
-        .select({ network: profileSocialLinks.network, url: profileSocialLinks.url })
+        .select({
+          network: profileSocialLinks.network,
+          handle: profileSocialLinks.handle,
+          url: profileSocialLinks.url,
+        })
         .from(profileSocialLinks)
         .where(eq(profileSocialLinks.profileId, profileId))
         .orderBy(asc(profileSocialLinks.position));
@@ -112,8 +116,8 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
 
       // The history: what the person changed, by themselves. Who they are (name, age range, gender,
       // city) is personal data, so it says that it changed and what it became is not kept.
-      const linkText = (rows: { network: string; url: string }[]) =>
-        rows.map((link) => `${link.network}: ${link.url}`);
+      const linkText = (rows: { network: string; handle?: string | null; url: string | null }[]) =>
+        rows.map((link) => `${link.network}: ${link.handle ?? link.url}`);
       const changes = diffFields(
         { ...before, links: linkText(linksBefore) },
         { ...values, links: linkText(links) },
