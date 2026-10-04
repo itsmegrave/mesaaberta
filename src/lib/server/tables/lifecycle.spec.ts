@@ -1,10 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { events, gameTables, profiles, systems } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '../auth/policy';
 import { findTableBySlug, listUpcomingTables } from './queries';
-import { closeElapsedTables, concludeTable, markTableNotHeld, postponeTable } from './lifecycle';
+import {
+  closeElapsedTables,
+  concludeTable,
+  markTableNotHeld,
+  postponeTable,
+  sessionEndedBy,
+} from './lifecycle';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000030${String(n).padStart(2, '0')}`;
@@ -229,5 +236,15 @@ describe('postponeTable', () => {
     await expect(
       postponeTable(test.db, gm, open.slug, '2026-10-10T19:00', now),
     ).rejects.toMatchObject({ name: 'Forbidden' });
+  });
+});
+
+describe('sessionEndedBy', () => {
+  // The Worker's postgres.js sends a bound `Date` as is, and throws. PGlite accepts one, so check
+  // the parameters themselves.
+  it('binds the time as a string, never a Date', () => {
+    const { params } = new PgDialect().sqlToQuery(sessionEndedBy(now));
+
+    expect(params).toEqual([now.toISOString()]);
   });
 });

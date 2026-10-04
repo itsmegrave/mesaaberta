@@ -11,6 +11,14 @@ import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine'
 import { localToInstant } from './schedule';
 
 /**
+ * Whether a table's session is over at `now`. `now` goes in as an ISO string: a `sql` template
+ * skips the column encoder, and the postgres.js driver Drizzle wraps sends a raw `Date` as is,
+ * which throws `ERR_INVALID_ARG_TYPE` in the Worker.
+ */
+export const sessionEndedBy = (now: Date) =>
+  sql`${gameTables.startsAt} + make_interval(mins => ${gameTables.durationMinutes}) <= ${now.toISOString()}::timestamptz`;
+
+/**
  * Moves every active table whose session is over (`startsAt` plus its duration) to
  * `awaiting_confirmation`, and records one event per table so its GM is asked whether it happened.
  * A table is only ever one run's: the update takes `active` rows, so a repeat finds nothing to do.
@@ -22,12 +30,7 @@ export async function closeElapsedTables(db: AnyDb, now: Date): Promise<string[]
     const closed = await tx
       .update(gameTables)
       .set({ status: nextStatus('active', 'SESSION_ENDED')! })
-      .where(
-        and(
-          eq(gameTables.status, 'active'),
-          sql`${gameTables.startsAt} + make_interval(mins => ${gameTables.durationMinutes}) <= ${now}`,
-        ),
-      )
+      .where(and(eq(gameTables.status, 'active'), sessionEndedBy(now)))
       .returning({ id: gameTables.id, slug: gameTables.slug, title: gameTables.title });
 
     const eventIds: string[] = [];
