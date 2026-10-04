@@ -156,14 +156,12 @@ it('counts what someone plays in and runs, and how they are rated as a GM', asyn
   expect(await adminActivity(test.db, id(3))).toEqual({
     playing: 1,
     running: 2,
-    ratings: 2,
-    rating: 4.5,
+    rating: { score: 4.5, count: 2, isNew: true },
   });
   // A pending request is not a seat, and nobody rated them yet.
   expect(await adminActivity(test.db, id(7))).toEqual({
     playing: 0,
     running: 0,
-    ratings: 0,
-    rating: null,
+    rating: { score: null, count: 0, isNew: true },
   });
 });

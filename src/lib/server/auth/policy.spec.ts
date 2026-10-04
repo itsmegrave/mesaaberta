@@ -9,7 +9,7 @@ const suspendedMember: Actor = { id: 'member', role: 'member', status: 'suspende
 const suspendedGm: Actor = { id: 'gm', role: 'member', status: 'suspended' };
 const suspendedAdmin: Actor = { id: 'admin', role: 'admin', status: 'suspended' };
 
-const table = { gmId: 'gm' };
+const table = { gmId: 'gm', tableStatus: 'active' as const };
 
 describe('can', () => {
   describe('table:create', () => {
@@ -49,9 +49,24 @@ describe('can', () => {
     });
 
     it('is decided by the table it is asked about, not by who else owns tables', () => {
-      expect(can(gm, action, { gmId: 'someone-else' })).toBe(false);
-      expect(can(gm, action, { gmId: 'gm' })).toBe(true);
+      expect(can(gm, action, { ...table, gmId: 'someone-else' })).toBe(false);
+      expect(can(gm, action, { ...table, gmId: 'gm' })).toBe(true);
     });
+  });
+
+  describe.each(['table:edit', 'table:disable'] as const)('%s on a finished table', (action) => {
+    it.each([
+      ['active', true],
+      ['awaiting_confirmation', true],
+      ['not_held', true],
+      ['concluded', false],
+    ] as const)(
+      'a table that is %s: allowed=%s, for its GM and for an admin alike',
+      (status, ok) => {
+        expect(can(gm, action, { ...table, tableStatus: status })).toBe(ok);
+        expect(can(admin, action, { ...table, tableStatus: status })).toBe(ok);
+      },
+    );
   });
 
   it('denies an action it does not know, whoever asks', () => {

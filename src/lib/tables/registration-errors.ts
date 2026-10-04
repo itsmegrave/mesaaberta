@@ -12,6 +12,8 @@ export function registrationError(code: string, retryAfter?: number): string {
       return m.table_error_already();
     case 'forbidden':
       return m.table_error_forbidden();
+    case 'already_rated':
+      return m.table_error_already_rated();
     case 'too_early':
       return m.table_error_too_early();
     case 'invalid':

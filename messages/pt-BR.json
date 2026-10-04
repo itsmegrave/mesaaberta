@@ -111,17 +111,6 @@
   "admin_user_playing": "Jogando",
   "admin_user_running": "Mestrando",
   "admin_user_rating": "Nota como mestre",
-  "admin_user_rating_none": "Sem avaliações",
-  "admin_user_rating_value": [
-    {
-      "declarations": ["input count"],
-      "selectors": ["count"],
-      "match": {
-        "count=1": "{score} (1 avaliação)",
-        "count=*": "{score} ({count} avaliações)"
-      }
-    }
-  ],
   "admin_user_reports": "Denúncias aceitas",
   "admin_user_message": "Mandar mensagem",
   "admin_user_meaning_active": "Entra, abre mesas e joga normalmente.",
@@ -540,7 +529,6 @@
   "manage_entry_auto": "Direta",
   "manage_entry_approval": "Com a sua aprovação",
   "manage_gm_rating": "Sua nota de mestragem",
-  "manage_gm_rating_none": "Ainda sem avaliações",
   "confirm_cancel": "Cancelar",
   "confirm_remove_title": "Remover {player} da mesa?",
   "confirm_remove_text": "A pessoa perde a vaga e recebe o cancelamento do convite no calendário.",
@@ -551,6 +539,7 @@
   "table_error_forbidden": "Você não tem permissão para fazer isso.",
   "table_error_other": "Não deu certo. Tente de novo.",
   "rating_gm_average": "Nota de mestragem",
+  "gm_rating_new": "Novo mestre",
   "rating_count": [
     {
       "declarations": ["input count"],
@@ -568,8 +557,9 @@
   "rating_score_label": "{score} de 5",
   "rating_comment": "Comentário (opcional)",
   "rating_submit": "Enviar avaliação",
-  "rating_update": "Atualizar avaliação",
-  "rating_saved": "Sua avaliação está salva. Você pode mudá-la quando quiser.",
+  "rating_given_title": "Sua avaliação da mestragem",
+  "rating_final": "Sua avaliação foi enviada e não pode ser alterada.",
+  "table_error_already_rated": "Você já avaliou esta mestragem. A avaliação não pode ser alterada.",
   "table_error_too_early": "Você poderá avaliar depois que a primeira sessão terminar.",
   "table_error_invalid": "Escolha uma nota de 1 a 5 para a mestragem.",
   "nav_my_tables": "Minhas mesas",
@@ -1297,7 +1287,6 @@
   "public_profile_hosted": "Mesas mestradas",
   "public_profile_counts_hint": "Mesas que o mestre confirmou como realizadas. Mesas jogadas consideram suas inscrições confirmadas atuais.",
   "public_profile_rating": "Avaliação como mestre",
-  "public_profile_unrated": "Ainda sem avaliações",
   "public_profile_upcoming": "Próximas mesas",
   "public_profile_no_tables": "Nenhuma próxima mesa por aqui.",
   "session_day": "Dia da primeira sessão",

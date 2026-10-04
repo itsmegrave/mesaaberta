@@ -18,8 +18,9 @@ export type Actor = Pick<typeof profiles.$inferSelect, 'id' | 'role' | 'status'>
 type Resources = {
   'admin:access': undefined;
   'table:create': undefined;
-  'table:edit': { gmId: string };
-  'table:disable': { gmId: string };
+  /** A concluded table is frozen: its ratings describe it as it was. */
+  'table:edit': { gmId: string; tableStatus: TableStatus };
+  'table:disable': { gmId: string; tableStatus: TableStatus };
   /** After the session: say it happened, that it did not, or move it to a new date. */
   'table:confirm': { gmId: string; tableStatus: TableStatus };
   /** The facts a join depends on, read inside the capacity transaction. */
@@ -61,8 +62,12 @@ type ResourceArgs<A extends Action> = Resources[A] extends undefined
   ? []
   : [resource: Resources[A]];
 
-const isGmOrAdmin = (actor: Actor, table: Resources['table:edit'] | undefined) =>
+const isGmOrAdmin = (actor: Actor, table: { gmId: string } | undefined) =>
   table !== undefined && (actor.role === 'admin' || actor.id === table.gmId);
+
+/** Editing and disabling stop once the GM confirmed the session happened: players rate it then. */
+const changeable = (actor: Actor, table: Resources['table:edit'] | undefined) =>
+  table !== undefined && table.tableStatus !== 'concluded' && isGmOrAdmin(actor, table);
 
 type JoinFacts = Resources['table:join'];
 
@@ -103,8 +108,8 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'admin:access': (actor) => actor.role === 'admin',
   // Any signed-in user can open a table and becomes its GM.
   'table:create': () => true,
-  'table:edit': isGmOrAdmin,
-  'table:disable': isGmOrAdmin,
+  'table:edit': changeable,
+  'table:disable': changeable,
   'table:confirm': (actor, table) =>
     table !== undefined &&
     nextStatus(table.tableStatus, 'HAPPENED') !== null &&

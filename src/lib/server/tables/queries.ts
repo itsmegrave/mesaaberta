@@ -4,6 +4,7 @@ import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
 import { nextOccurrence, weeklyInterval } from './schedule';
 import { catalogOf } from '../catalog';
+import { gmRatings, type GmRating } from '../ratings/service';
 
 /** Seats still free: the capacity minus the confirmed registrations. */
 export const seatsLeft = (capacity: number, taken = 0) => Math.max(0, capacity - taken);
@@ -38,6 +39,8 @@ const columns = {
 export type TableView = ReturnType<typeof shape> & {
   platforms: { name: string; slug: string }[];
   tags: { name: string; slug: string }[];
+  /** The GM's score, the same everywhere it is shown. */
+  gmRating: GmRating;
 };
 
 const query = (db: AnyDb, where: SQL | undefined) =>
@@ -85,7 +88,7 @@ export async function listUpcomingTables(
     .map((row) => shape(row, now))
     .filter((table) => table.nextAt !== null)
     .sort((a, b) => a.nextAt!.getTime() - b.nextAt!.getTime());
-  return withCatalog(db, upcoming);
+  return withExtras(db, upcoming, now);
 }
 
 /** A master's public upcoming tables: filter in SQL, then paginate the calculated occurrences. */
@@ -104,17 +107,31 @@ export async function listUpcomingTablesByGm(
   // LIMIT by startsAt would lose older campaigns whose next occurrence is still ahead.
   return {
     total: upcoming.length,
-    tables: await withCatalog(db, upcoming.slice((page - 1) * pageSize, page * pageSize)),
+    tables: await withExtras(db, upcoming.slice((page - 1) * pageSize, page * pageSize), now),
   };
 }
 
-/** Adds each table's approved platforms and tags. */
-async function withCatalog<T extends { id: string }>(db: AnyDb, list: T[]) {
-  const catalog = await catalogOf(
-    db,
-    list.map((table) => table.id),
-  );
-  return list.map((table) => ({ ...table, ...catalog.get(table.id)! }));
+/**
+ * Adds each table's approved platforms and tags, and its GM's score: one query for the catalogue
+ * and one for all the GMs on the page, so a list does not cost a query per table.
+ */
+async function withExtras<T extends { id: string; gmId: string }>(db: AnyDb, list: T[], now: Date) {
+  const [catalog, scores] = await Promise.all([
+    catalogOf(
+      db,
+      list.map((table) => table.id),
+    ),
+    gmRatings(
+      db,
+      list.map((table) => table.gmId),
+      now,
+    ),
+  ]);
+  return list.map((table) => ({
+    ...table,
+    ...catalog.get(table.id)!,
+    gmRating: scores.get(table.gmId)!,
+  }));
 }
 
 /**
@@ -129,7 +146,7 @@ export async function findTableBySlug(
 ): Promise<TableView | null> {
   const [row] = await query(db, and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')));
 
-  return row ? (await withCatalog(db, [shape(row, now)]))[0] : null;
+  return row ? (await withExtras(db, [shape(row, now)], now))[0] : null;
 }
 
 /**

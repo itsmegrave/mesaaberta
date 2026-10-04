@@ -4,7 +4,7 @@ import { publicName } from '../db/public-name';
 import { events, profiles, registrations } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { NotFound } from '../errors';
-import { gmRating } from '../ratings/service';
+import { gmRatingOf } from '../ratings/service';
 import { findTableBySlug } from './queries';
 
 /** The events a GM sees in "Atividade recente": what people did at the table, newest first. */
@@ -54,7 +54,7 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
       .where(eq(registrations.tableId, table.id))
       .orderBy(asc(registrations.updatedAt), asc(profiles.username)),
     db.select(person).from(profiles).where(eq(profiles.id, table.gmId)),
-    gmRating(db, table.gmId),
+    gmRatingOf(db, table.gmId),
     db
       .select({ type: events.type, payload: events.payload, at: events.createdAt })
       .from(events)

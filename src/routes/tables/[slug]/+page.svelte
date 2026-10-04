@@ -23,6 +23,7 @@
   import { toast } from '$lib/toaster';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import JoinRequestDialog from '$lib/components/JoinRequestDialog.svelte';
+  import GmRating from '$lib/components/GmRating.svelte';
   import StarRating from '$lib/components/StarRating.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
@@ -54,11 +55,6 @@
           ? m.table_recurrence_weeks({ weeks: table.everyWeeks })
           : null,
   );
-  const number = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1,
-    minimumFractionDigits: 1,
-  });
-  const votes = (count: number) => m.rating_count({ count });
   // svelte-ignore state_referenced_locally
   const rating = actionForm({
     initial: data.ratingForm.data,
@@ -111,14 +107,15 @@
         icon: 'square-pen',
         href: localizedHref(`/tables/${table.slug}/edit`, locale),
       });
-      if (data.registrations) {
-        items.push({
-          id: 'players',
-          label: m.menu_players(),
-          icon: 'game-icons:meeple',
-          href: localizedHref(`/tables/${table.slug}/manage`, locale),
-        });
-      }
+    }
+    // The players stay reachable once the table is frozen: that is where the GM sees the rating.
+    if (data.registrations) {
+      items.push({
+        id: 'players',
+        label: m.menu_players(),
+        icon: 'game-icons:meeple',
+        href: localizedHref(`/tables/${table.slug}/manage`, locale),
+      });
     }
     items.push({ id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink });
     if (data.signedIn && !data.isGm && data.gmAcceptsDirect) {
@@ -216,28 +213,10 @@
             <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
           {/if}
         </p>
-        {#if data.ratings.gm.count > 0}
-          <p
-            class="inline-flex h-12 items-center gap-2 rounded-lg border border-surface-200-800 px-3"
-          >
-            <span class="sr-only"
-              >{m.rating_gm_average()}: {number.format(data.ratings.gm.average ?? 0)} ({votes(
-                data.ratings.gm.count,
-              )})</span
-            >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" class="fill-lamp"
-              ><path
-                d="M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.6l-5.9 3.2 1.2-6.5L2.5 9.7l6.6-.9z"
-              /></svg
-            >
-            <strong aria-hidden="true" class="text-lg"
-              >{number.format(data.ratings.gm.average ?? 0)}</strong
-            >
-            <span aria-hidden="true" class="text-sm text-muted"
-              >({votes(data.ratings.gm.count)})</span
-            >
-          </p>
-        {/if}
+        <GmRating
+          rating={table.gmRating}
+          class="h-12 rounded-lg border border-surface-200-800 px-3 text-lg"
+        />
       </div>
 
       {#if table.imageUrl}
@@ -456,12 +435,28 @@
     />
   {/if}
 
-  <!-- Only someone who played (a confirmed seat, and the first session is over) can rate. -->
+  <!-- Their rating, once given: final, so it is only shown. -->
+  {#if data.myRating}
+    <section id="avaliar" class="mt-12 max-w-2xl">
+      <h2 class="text-2xl font-semibold">{m.rating_given_title()}</h2>
+      <p class="mt-2 flex items-center gap-2">
+        <Icon name="star" size={24} class="text-lamp" />
+        <strong class="text-2xl tabular-nums"
+          >{m.rating_score_label({ score: data.myRating.gmScore })}</strong
+        >
+      </p>
+      {#if data.myRating.comment}
+        <p class="mt-2 max-w-prose whitespace-pre-line">{data.myRating.comment}</p>
+      {/if}
+      <p class="mt-3 text-sm text-muted">{m.rating_final()}</p>
+    </section>
+  {/if}
+
+  <!-- Only someone who played (a confirmed seat, and the GM confirmed the session) can rate, once. -->
   {#if data.canRate}
     <section id="avaliar" class="mt-12 max-w-2xl">
       <h2 class="text-2xl font-semibold">{m.rating_title()}</h2>
       <p class="mt-2 max-w-prose">{m.rating_lede()}</p>
-      {#if data.myRating}<p role="status" class="mt-2 font-semibold">{m.rating_saved()}</p>{/if}
 
       <Form action="?/rate" onsubmit={rating.submit} class="mt-4 grid gap-6">
         {#each scoreFields as { name, label } (name)}
@@ -500,7 +495,7 @@
             timeout={rating.timeout}
             class="btn preset-filled-primary-500"
           >
-            {data.myRating ? m.rating_update() : m.rating_submit()}
+            {m.rating_submit()}
           </SubmitButton>
         </div>
       </Form>

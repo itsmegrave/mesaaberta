@@ -3,6 +3,7 @@
   import { page } from '$app/state';
   import Avatar from '$lib/components/Avatar.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import GmRating from '$lib/components/GmRating.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
@@ -150,20 +151,7 @@
       </div>
       <section aria-labelledby="gm-rating">
         <h2 id="gm-rating" class="text-lg font-semibold">{m.public_profile_rating()}</h2>
-        {#if profile.rating.average !== null && profile.rating.count > 0}
-          <p class="mt-3 flex flex-wrap items-center gap-2">
-            <Icon name="star" class="text-lamp" size={24} />
-            <strong class="text-3xl tabular-nums"
-              >{number.format(profile.rating.average)}<span class="text-lg text-muted">
-                / 5</span
-              ></strong
-            >
-            <span class="text-sm text-muted">{m.rating_count({ count: profile.rating.count })}</span
-            >
-          </p>
-        {:else}
-          <p class="mt-3 text-muted">{m.public_profile_unrated()}</p>
-        {/if}
+        <GmRating rating={profile.rating} class="mt-3 text-2xl" />
       </section>
     </div>
   </header>

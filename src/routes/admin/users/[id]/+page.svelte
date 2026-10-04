@@ -1,4 +1,5 @@
 <script lang="ts">
+  import GmRating from '$lib/components/GmRating.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import AdminPage from '$lib/components/admin/AdminPage.svelte';
@@ -247,19 +248,7 @@
         </div>
         <div class="grid gap-1 py-3 sm:grid-cols-2">
           <dt class="text-sm font-semibold text-muted">{m.admin_user_rating()}</dt>
-          <dd class="text-sm tabular-nums">
-            {#if activity.rating === null}
-              {m.admin_user_rating_none()}
-            {:else}
-              {m.admin_user_rating_value({
-                score: new Intl.NumberFormat(locale, {
-                  minimumFractionDigits: 1,
-                  maximumFractionDigits: 1,
-                }).format(activity.rating),
-                count: activity.ratings,
-              })}
-            {/if}
-          </dd>
+          <dd class="text-sm"><GmRating rating={activity.rating} /></dd>
         </div>
         <div class="grid gap-1 py-3 sm:grid-cols-2">
           <dt class="text-sm font-semibold text-muted">{m.admin_user_reports()}</dt>

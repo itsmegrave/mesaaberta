@@ -2,9 +2,11 @@ import { TABLE_STATUSES } from '../../tables/status-values.ts';
 import { PROFILE_STATUSES } from '../../profile/status.ts';
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
   check,
-  foreignKey,
+  date,
+  doublePrecision,
   jsonb,
   index,
   integer,
@@ -428,30 +430,45 @@ export const registrations = pgTable(
   ],
 ).enableRLS();
 
-// What a player thought of the GM of a table they played at: tables are not rated, GMs are. One per registration, and it
-// goes with it: a player who is removed takes their rating with them (cascade). A GM's average is
-// computed by a query, never stored.
+// What a player thought of the GM of a table they played at: tables are not rated, GMs are. A
+// rating is made once, after the GM confirmed the session happened, and is final: it is not edited,
+// and it outlives the seat (a player who leaves or is removed keeps what they said about a session
+// that took place). It goes only with its table, or with the GM's account (see `closeAccount`).
 export const ratings = pgTable(
   'ratings',
   {
-    tableId: uuid('table_id').notNull(),
-    playerId: uuid('player_id').notNull(),
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id),
     gmScore: smallint('gm_score').notNull(),
     comment: text('comment'),
     ...timestamps,
   },
   (rating) => [
     primaryKey({ columns: [rating.tableId, rating.playerId] }),
-    foreignKey({
-      name: 'ratings_registration_fk',
-      columns: [rating.tableId, rating.playerId],
-      foreignColumns: [registrations.tableId, registrations.playerId],
-    }).onDelete('cascade'),
     check('ratings_gm_score_range', sql`${rating.gmScore} BETWEEN 1 AND 5`),
     check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
     index('ratings_table_idx').on(rating.tableId),
   ],
 ).enableRLS();
+
+// A GM's score, worked out from their ratings and kept until it can change: when the month turns
+// (the weights age by months) or when a rating is added or removed (a trigger on `ratings` raises
+// `version`, even for a GM with no row yet). Read it through `gmRatings`, never by hand.
+export const gmScores = pgTable('gm_scores', {
+  gmId: uuid('gm_id')
+    .primaryKey()
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  score: doublePrecision('score'),
+  count: integer('count').notNull().default(0),
+  // The first day (UTC) of the month the score was worked out for.
+  month: date('month', { mode: 'string' }).notNull(),
+  version: bigint('version', { mode: 'number' }).notNull().default(0),
+  computedVersion: bigint('computed_version', { mode: 'number' }).notNull().default(0),
+}).enableRLS();
 
 // Attempts at the sign-in, sign-up and password-reset forms, to limit them per network before
 // anyone is signed in (see auth/attempt-limit.ts). `key` is a hash of the action and the IP, never
