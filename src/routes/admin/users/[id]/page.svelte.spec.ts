@@ -28,6 +28,7 @@ const show = (over = {}) =>
       avatar: null,
       moderation: { ban: null, canModerate: true, acceptedTableReports: 1 },
       back: '/admin/users',
+      history: { entries: [], more: false, retentionDays: 90 },
       viewer: { timezone: 'America/Recife' },
       ...over,
     } as never,
@@ -142,5 +143,29 @@ describe('admin user page', () => {
 
     expect(page.getByRole('menuitem', { name: 'Banir…' }).elements()).toHaveLength(0);
     expect(page.getByRole('menuitem', { name: 'Suspender…' }).elements()).toHaveLength(0);
+  });
+
+  it('lists what happened to the person, with who did it', async () => {
+    show({
+      history: {
+        entries: [
+          {
+            id: 'e1',
+            type: 'AccountBanned',
+            at: new Date('2026-09-10T12:00:00Z'),
+            actor: { id: 'x', username: 'admin' },
+            subject: 'ana',
+            table: null,
+            removed: false,
+            changes: null,
+          },
+        ],
+        more: false,
+        retentionDays: 90,
+      },
+    });
+
+    await expect.element(page.getByRole('heading', { name: 'Histórico' })).toBeVisible();
+    await expect.element(page.getByText('@admin')).toBeVisible();
   });
 });

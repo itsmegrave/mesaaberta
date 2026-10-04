@@ -582,7 +582,12 @@ describe('updateTable', () => {
       input({ title: 'Mínimo mudou', minPlayers: 2 }),
     );
 
-    expect(eventId).toBeNull();
+    // The change is in the history, as an event nobody follows: no invite and no bell.
+    const [event] = await test.db.select().from(events).where(eq(events.id, eventId!));
+    expect(event).toMatchObject({
+      type: 'TableEdited',
+      payload: { changes: { minPlayers: { from: null, to: 2 } } },
+    });
   });
 
   it('does not let the seats go below the players already at the table', async () => {
@@ -689,7 +694,7 @@ describe('events', () => {
     expect(off).toMatchObject({ actorId: ana.id, payload: { slug } });
   });
 
-  it('records no event, and sends no invite, when nothing players see has changed', async () => {
+  it('sends no invite, and logs only for the history, when nothing players see has changed', async () => {
     const { slug } = await createTable(test.db, ana, input({ title: 'Evt Sem Mudança' }), { now });
     const before = (await eventsOf('TableUpdated')).length;
 
@@ -708,10 +713,80 @@ describe('events', () => {
       { imagePath: 'tables/nova.png' },
     );
 
-    expect(saved.eventId).toBeNull();
+    // Nobody is told: the event is not a TableUpdated, which the invites and the bell follow.
     expect((await eventsOf('TableUpdated')).length).toBe(before);
+    const [edited] = (await eventsOf('TableEdited')).filter((e) => e.id === saved.eventId);
+    expect(edited).toMatchObject({ actorId: ana.id, payload: { slug, title: 'Evt Sem Mudança' } });
+    expect((edited.payload as { changes: unknown }).changes).toEqual({
+      capacity: { from: 5, to: 8 },
+      joinMode: { from: 'auto', to: 'approval' },
+      welcomeMessage: { redacted: true },
+      tags: { from: null, to: 'terror' },
+      image: { redacted: true },
+    });
     const row = await rowOf(slug);
     expect(row).toMatchObject({ capacity: 8, joinMode: 'approval', icalSequence: 0 });
+  });
+
+  it('logs nothing when a save changes nothing', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Evt Igual' }), { now });
+    const before = (await test.db.select().from(events)).length;
+
+    const saved = await updateTable(test.db, ana, slug, input({ title: 'Evt Igual' }));
+
+    expect(saved.eventId).toBeNull();
+    expect((await test.db.select().from(events)).length).toBe(before);
+  });
+
+  it('says what changed in what players see, with the old and the new value', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Evt Diff' }), { now });
+
+    const saved = await updateTable(
+      test.db,
+      ana,
+      slug,
+      input({ title: 'Evt Diff Novo', startsAtLocal: '2026-10-10T20:00', durationMinutes: 180 }),
+    );
+
+    const [updated] = (await eventsOf('TableUpdated')).filter((e) => e.id === saved.eventId);
+    expect((updated.payload as { changes: unknown }).changes).toEqual({
+      title: { from: 'Evt Diff', to: 'Evt Diff Novo' },
+      startsAt: { from: '2026-10-10T22:00:00.000Z', to: '2026-10-10T23:00:00.000Z' },
+      durationMinutes: { from: 240, to: 180 },
+    });
+  });
+
+  it('never writes a private value into the log: a join link or an address only says it changed', async () => {
+    const { slug } = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Evt Segredo', joinDetails: 'https://discord.gg/antigo' }),
+      { now },
+    );
+
+    const saved = await updateTable(
+      test.db,
+      ana,
+      slug,
+      input({
+        title: 'Evt Segredo',
+        joinDetails: 'https://discord.gg/novo',
+        welcomeMessage: 'Senha da sala: 1234',
+        postalCode: '50000000',
+        locationCity: 'Recife',
+      }),
+    );
+
+    const [event] = (await eventsOf('TableUpdated')).filter((e) => e.id === saved.eventId);
+    expect((event.payload as { changes: unknown }).changes).toEqual({
+      joinDetails: { redacted: true },
+      welcomeMessage: { redacted: true },
+      postalCode: { redacted: true },
+      locationCity: { redacted: true },
+    });
+    const stored = JSON.stringify(event.payload);
+    for (const secret of ['discord.gg', 'Senha da sala', '50000000', 'Recife'])
+      expect(stored).not.toContain(secret);
   });
 
   it('records an event for a change players see: the time, the place, how to join', async () => {

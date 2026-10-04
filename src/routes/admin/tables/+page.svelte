@@ -65,6 +65,12 @@
     );
   const items = (row: Row): KebabItem[] => [
     { id: 'view', label: m.menu_view_table(), icon: 'eye', href: href(row) },
+    {
+      id: 'history',
+      label: m.history_title(),
+      icon: 'clock',
+      href: localizedHref(`/admin/tables/${row.id}`, locale),
+    },
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
     {
       id: 'publish',

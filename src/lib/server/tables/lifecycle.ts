@@ -5,6 +5,8 @@ import { gameTables } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Forbidden, Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { diffFields } from '../events/changes';
+import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { localToInstant } from './schedule';
 
@@ -67,6 +69,7 @@ async function answer(
     table: Awaited<ReturnType<typeof findAwaiting>>,
   ) => Partial<typeof gameTables.$inferInsert>,
   event: 'TableConcluded' | 'TableNotHeld' | 'TableUpdated',
+  changes?: Changes,
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
 
@@ -81,7 +84,12 @@ async function answer(
     return recordEvent(tx as unknown as AnyDb, {
       type: event,
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, title: table.title },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        title: table.title,
+        ...(changes ? { changes } : {}),
+      },
     });
   });
 
@@ -119,5 +127,6 @@ export async function postponeTable(
     'POSTPONE',
     (current) => ({ startsAt, icalSequence: current.icalSequence + 1 }),
     'TableUpdated',
+    diffFields({ startsAt: table.startsAt }, { startsAt }),
   );
 }

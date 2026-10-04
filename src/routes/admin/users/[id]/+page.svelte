@@ -3,6 +3,7 @@
   import UserLink from '$lib/components/UserLink.svelte';
   import Avatar from '$lib/components/Avatar.svelte';
   import AdminPage from '$lib/components/admin/AdminPage.svelte';
+  import AuditTimeline from '$lib/components/admin/AuditTimeline.svelte';
   import ActionForm from '$lib/components/ActionForm.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { type KebabItem } from '$lib/components/KebabMenu.svelte';
@@ -263,4 +264,9 @@
       {/if}
     </section>
   </div>
+
+  <section aria-labelledby="user-history" class="mt-6 {card}">
+    <h2 id="user-history" class="text-lg font-semibold">{m.history_title()}</h2>
+    <AuditTimeline history={data.history} zone={data.viewer.timezone} showTable />
+  </section>
 </AdminPage>

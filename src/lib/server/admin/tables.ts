@@ -108,3 +108,26 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams) {
   };
 }
 export type AdminTables = Awaited<ReturnType<typeof listAdminTables>>;
+
+/** One table as the admin's page about it shows it: who runs it, its one date, where it stands. */
+export async function adminTable(db: AnyDb, id: string) {
+  const [row] = await db
+    .select({
+      id: gameTables.id,
+      slug: gameTables.slug,
+      title: gameTables.title,
+      status: gameTables.status,
+      system: systems.name,
+      gm: profiles.username,
+      gmId: profiles.id,
+      startsAt: gameTables.startsAt,
+      timezone: gameTables.timezone,
+      capacity: gameTables.capacity,
+    })
+    .from(gameTables)
+    .innerJoin(systems, eq(systems.id, gameTables.systemId))
+    .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
+    .where(eq(gameTables.id, id))
+    .limit(1);
+  return row ?? null;
+}

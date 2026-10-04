@@ -1,6 +1,7 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { adminActivity, adminProfile } from '$lib/server/admin/profiles';
+import { profileHistory } from '$lib/server/admin/history';
 import { failFrom } from '$lib/server/errors';
 import { openDirect } from '$lib/server/messages/service';
 import { standingOf } from '$lib/profile/standing';
@@ -30,6 +31,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
     user,
     standing: standingOf({ status: user.status, bannedAt, bannedUntil }),
     activity: await adminActivity(locals.db, params.id),
+    history: await profileHistory(locals.db, await locals.getProfile(), params.id),
     avatar: pictureOf(supabaseUrlOf(platform?.env), { avatarPath, avatarUrl }),
     // Ban or revoke (never oneself, another admin, or a closed account), the ban itself, and the
     // reports accepted against the tables they run.

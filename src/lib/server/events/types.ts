@@ -12,7 +12,12 @@ import type {
  */
 export type DomainEvent =
   | { type: 'TableCreated'; payload: { tableId: string; slug: string; title: string } }
-  | { type: 'TableUpdated'; payload: { tableId: string; slug: string; title: string } }
+  // The GM edited something players see (the invite and the bell follow it) or moved the session.
+  // `changes` says what, for the history an admin reads; rows from before it have none.
+  | { type: 'TableUpdated'; payload: TableChange }
+  // The GM edited only what players do not see (seats, join mode, welcome message, image, tags).
+  // Nobody is told: it is for the history alone, and no handler listens to it.
+  | { type: 'TableEdited'; payload: TableChange }
   | { type: 'TableDisabled'; payload: { tableId: string; slug: string; title: string } }
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
@@ -60,7 +65,18 @@ export type DomainEvent =
       payload: { profileId: string; until: string | null; reportId: string | null };
     }
   | { type: 'AccountReinstated'; payload: { profileId: string } }
-  | { type: 'AccountBanLifted'; payload: { profileId: string } };
+  | { type: 'AccountBanLifted'; payload: { profileId: string } }
+  // A person saved their profile. `changes` names the fields; the personal ones (name, age range,
+  // gender, city) are hidden, so the log says that they changed and not what they became.
+  | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } };
+
+/** What an edit changed, per field. A hidden field says that it changed, never the value. */
+export type FieldChange =
+  | { from: string | number | boolean | null; to: string | number | boolean | null }
+  | { redacted: true };
+export type Changes = Record<string, FieldChange>;
+
+export type TableChange = { tableId: string; slug: string; title: string; changes?: Changes };
 
 // `reportId` is null when an admin closed the table from the tables list, with no report behind it.
 export type TableClosure = {
