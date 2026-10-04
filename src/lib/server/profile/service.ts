@@ -4,6 +4,7 @@ import { profileSocialLinks, profiles } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { normalizeUsername } from '$lib/profile/username';
 import { profileLinks, type ProfileInput } from '$lib/profile/schema';
+import { isNetwork, typedValue } from '$lib/profile/social-links';
 
 /** A Postgres unique violation on the username index (drizzle wraps the driver's error as `cause`). */
 function isUsernameConflict(error: unknown): boolean {
@@ -45,7 +46,11 @@ export async function loadProfileForm(
   if (!profile) return null;
 
   const links = await db
-    .select({ network: profileSocialLinks.network, url: profileSocialLinks.url })
+    .select({
+      network: profileSocialLinks.network,
+      handle: profileSocialLinks.handle,
+      url: profileSocialLinks.url,
+    })
     .from(profileSocialLinks)
     .where(eq(profileSocialLinks.profileId, profileId))
     .orderBy(asc(profileSocialLinks.position));
@@ -59,7 +64,10 @@ export async function loadProfileForm(
     city: profile.city ?? '',
     timezone: profile.timezone ?? '',
     linkNetwork: links.map((link) => link.network),
-    linkUrl: links.map((link) => link.url),
+    // What the person typed: the handle of a network, the address of a website.
+    linkUrl: links.map((link) =>
+      typedValue({ ...link, network: isNetwork(link.network) ? link.network : 'website' }),
+    ),
   };
 }
 

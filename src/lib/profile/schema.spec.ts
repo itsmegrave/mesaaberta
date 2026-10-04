@@ -102,7 +102,28 @@ describe('profileSchema', () => {
           linkNetwork: ['instagram', 'website', 'x'],
           linkUrl: ['https://instagram.com/ana', '', 'javascript:alert(1)'],
         }),
-      ).toEqual({ 'linkUrl.2': 'invalid_url' });
+      ).toEqual({ 'linkUrl.2': 'invalid_handle' });
+    });
+
+    it('takes a handle for a network, and a full address only for the website', () => {
+      expect(
+        problems({
+          linkNetwork: ['instagram', 'website', 'discord'],
+          linkUrl: ['@mesaaberta', 'https://mesaaberta.com.br', 'mesa.aberta'],
+        }),
+      ).toBeNull();
+      expect(problems({ linkNetwork: ['website'], linkUrl: ['mesaaberta'] })).toEqual({
+        'linkUrl.0': 'invalid_url',
+      });
+    });
+
+    it('sees the same handle typed two ways as a duplicate', () => {
+      expect(
+        problems({
+          linkNetwork: ['instagram', 'instagram'],
+          linkUrl: ['@ana', 'https://instagram.com/ana'],
+        }),
+      ).toEqual({ 'linkUrl.1': 'duplicate' });
     });
 
     it('refuses an unknown network', () => {
@@ -145,8 +166,20 @@ describe('profileLinks', () => {
         linkUrl: ['instagram.com/ana', '', 'https://x.com/ana'],
       }),
     ).toEqual([
-      { network: 'instagram', url: 'https://instagram.com/ana' },
-      { network: 'x', url: 'https://x.com/ana' },
+      { network: 'instagram', handle: 'ana', url: 'https://instagram.com/ana' },
+      { network: 'x', handle: 'ana', url: 'https://x.com/ana' },
+    ]);
+  });
+
+  it('keeps a website as its address, and a Discord handle with no address', () => {
+    expect(
+      profileLinks({
+        linkNetwork: ['website', 'discord'],
+        linkUrl: ['example.com/a', '@Ana.Dados'],
+      }),
+    ).toEqual([
+      { network: 'website', handle: null, url: 'https://example.com/a' },
+      { network: 'discord', handle: 'ana.dados', url: null },
     ]);
   });
 });

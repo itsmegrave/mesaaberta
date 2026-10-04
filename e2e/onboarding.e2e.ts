@@ -73,7 +73,7 @@ test.describe('the onboarding form', () => {
 
     await expect(page.getByText('Tem uma cadeira vazia na mesa.')).toBeVisible();
     await page.getByRole('button', { name: 'Adicionar link' }).click();
-    await expect(page.getByLabel('Endereço do link 1')).toBeVisible();
+    await expect(page.getByLabel('Usuário do link 1')).toBeVisible();
     expect(await sidewaysOverflow(page)).toBe(0);
   });
 
@@ -88,10 +88,10 @@ test.describe('the onboarding form', () => {
     await page.getByLabel('Cidade').fill('Recife');
     await page.getByRole('button', { name: 'Adicionar link' }).click();
     await pickFromSearch(page, 'Rede do link 1', 'Instagram');
-    await page.getByLabel('Endereço do link 1').fill('instagram.com/detalhes');
+    await page.getByLabel('Usuário do link 1').fill('@detalhes');
     await page.getByRole('button', { name: 'Adicionar link' }).click();
     await pickFromSearch(page, 'Rede do link 2', 'GitHub');
-    await page.getByLabel('Endereço do link 2').fill('https://github.com/detalhes');
+    await page.getByLabel('Usuário do link 2').fill('detalhes');
     // Reordered with the keyboard-operable buttons.
     await page.getByRole('button', { name: 'Subir link 2' }).click();
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
@@ -107,10 +107,10 @@ test.describe('the onboarding form', () => {
         city: 'Recife',
       });
       const links =
-        await sql`select network, url from profile_social_links where profile_id = ${user.id} order by position`;
+        await sql`select network, handle, url from profile_social_links where profile_id = ${user.id} order by position`;
       expect(links).toEqual([
-        { network: 'github', url: 'https://github.com/detalhes' },
-        { network: 'instagram', url: 'https://instagram.com/detalhes' },
+        { network: 'github', handle: 'detalhes', url: 'https://github.com/detalhes' },
+        { network: 'instagram', handle: 'detalhes', url: 'https://instagram.com/detalhes' },
       ]);
     } finally {
       await sql.end();

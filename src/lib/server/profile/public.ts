@@ -4,7 +4,7 @@ import { gameTables, profiles, profileSocialLinks, registrations } from '../db/s
 import { pictureOf, imageUrl } from '../images';
 import { gmRatingOf } from '../ratings/service';
 import { listUpcomingTablesByGm } from '../tables/queries';
-import { isNetwork, parseSocialUrl } from '$lib/profile/social-links';
+import { isNetwork, socialTarget } from '$lib/profile/social-links';
 import { normalizeUsername, usernameProblem } from '$lib/profile/username';
 
 export const PUBLIC_PROFILE_PAGE_SIZE = 12;
@@ -63,7 +63,11 @@ export async function publicProfile(
 
   const [links, totals, rating, upcoming] = await Promise.all([
     db
-      .select({ network: profileSocialLinks.network, url: profileSocialLinks.url })
+      .select({
+        network: profileSocialLinks.network,
+        handle: profileSocialLinks.handle,
+        url: profileSocialLinks.url,
+      })
       .from(profileSocialLinks)
       .where(eq(profileSocialLinks.profileId, found.id))
       .orderBy(asc(profileSocialLinks.position), asc(profileSocialLinks.id)),
@@ -76,9 +80,11 @@ export async function publicProfile(
     profile: {
       username: found.username!,
       avatarUrl: pictureOf(supabaseUrl, found),
-      links: links.flatMap(({ network, url }) => {
-        const safe = parseSocialUrl(url);
-        return isNetwork(network) && safe ? [{ network, url: safe }] : [];
+      // `text` is shown next to the icon; `href` is null where there is nothing to open (Discord).
+      links: links.flatMap((link) => {
+        if (!isNetwork(link.network)) return [];
+        const target = socialTarget({ ...link, network: link.network });
+        return target ? [{ network: link.network, ...target }] : [];
       }),
       totals,
       rating,

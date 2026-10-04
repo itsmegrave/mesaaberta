@@ -88,7 +88,9 @@ describe('exportAccount', () => {
       ageRange: '25_34',
       city: 'Recife',
     });
-    expect(data.socialLinks).toEqual([{ network: 'github', url: 'https://github.com/ana' }]);
+    expect(data.socialLinks).toEqual([
+      { network: 'github', handle: null, url: 'https://github.com/ana' },
+    ]);
     expect(data.tablesAsGm.map((t) => t.title)).toContain('Minha mesa');
     expect(data.seats).toEqual([
       expect.objectContaining({ table: 'Mesa do Bruno', status: 'confirmed' }),

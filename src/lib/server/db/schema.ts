@@ -135,11 +135,21 @@ export const profileSocialLinks = pgTable(
       .references(() => profiles.id, { onDelete: 'cascade' }),
     // One of the networks in `$lib/profile/social-links`, or `website`.
     network: text('network').notNull(),
-    url: text('url').notNull(),
+    // What the person typed for a network (`mesaaberta`, no `@`). Null for `website`, and for links
+    // saved before handles, which only have an address.
+    handle: text('handle'),
+    // Where it opens. Null for a handle with no address (Discord).
+    url: text('url'),
     position: integer('position').notNull(),
     ...timestamps,
   },
-  (link) => [index('profile_social_links_profile_idx').on(link.profileId, link.position)],
+  (link) => [
+    index('profile_social_links_profile_idx').on(link.profileId, link.position),
+    check(
+      'profile_social_links_target_check',
+      sql`${link.handle} IS NOT NULL OR ${link.url} IS NOT NULL`,
+    ),
+  ],
 ).enableRLS();
 
 // The RPG systems (D&D 5e, Tormenta 20, ...). They double as the categories tables are browsed by,

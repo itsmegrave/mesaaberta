@@ -180,8 +180,8 @@ describe('public profiles', () => {
 
   it('reads only safe known social links in the saved order', async () => {
     expect((await read())?.profile.links).toEqual([
-      { network: 'instagram', url: 'https://instagram.com/ana' },
-      { network: 'website', url: 'https://example.com/' },
+      { network: 'instagram', text: '@ana', href: 'https://instagram.com/ana' },
+      { network: 'website', text: 'example.com', href: 'https://example.com/' },
     ]);
   });
 
