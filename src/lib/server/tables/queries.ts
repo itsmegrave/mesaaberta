@@ -1,8 +1,8 @@
-import { and, eq, ne, sql, type SQL } from 'drizzle-orm';
+import { and, eq, gt, ne, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
-import { nextOccurrence, weeklyInterval } from './schedule';
+import { weeklyInterval } from './schedule';
 import { catalogOf } from '../catalog';
 import { gmRatings, type GmRating } from '../ratings/service';
 
@@ -49,30 +49,32 @@ const query = (db: AnyDb, where: SQL | undefined) =>
     .from(gameTables)
     .innerJoin(systems, eq(gameTables.systemId, systems.id))
     .innerJoin(profiles, eq(gameTables.gmId, profiles.id))
-    .where(where);
+    .where(where)
+    // Soonest first; the slug keeps tables that start together in a steady order.
+    .orderBy(gameTables.startsAt, gameTables.slug);
 
 type Row = Awaited<ReturnType<typeof query>>[number];
 
-const shape = (row: Row, now: Date) => {
+const shape = (row: Row) => {
   const { systemName, systemSlug, ...table } = row;
 
   return {
     ...table,
     system: { name: systemName, slug: systemSlug },
     seatsLeft: seatsLeft(row.capacity, row.taken),
-    // Weeks between sessions for a weekly campaign; null for a one-shot.
+    // Weeks between sessions for a weekly campaign; null for a one-shot. Information only: the
+    // platform keeps one date per table, `startsAt`.
     everyWeeks: row.kind === 'campaign' ? weeklyInterval(row.recurrence) : null,
-    nextAt: nextOccurrence(row, now),
   };
 };
 
 // A disabled table is invisible to the public, whatever else is true of it: both queries below
-// filter on status. Only an active table is listed; one past its session (awaiting the GM's
-// confirmation, concluded or not held) is still found by its slug.
+// filter on status. Only an active table that has not started is listed; one past its start
+// (awaiting the GM's confirmation, concluded or not held) is still found by its slug.
 
 /**
- * Active tables that still have a session ahead, soonest first. A one-shot that is over, or a
- * campaign past its end date, is left out. `systemSlug` narrows the list to one system.
+ * Active tables that have not started yet, soonest first. A table leaves the list the moment its
+ * session begins. `systemSlug` narrows the list to one system.
  */
 export async function listUpcomingTables(
   db: AnyDb,
@@ -81,17 +83,17 @@ export async function listUpcomingTables(
 ): Promise<TableView[]> {
   const rows = await query(
     db,
-    and(eq(gameTables.status, 'active'), systemSlug ? eq(systems.slug, systemSlug) : undefined),
+    and(
+      eq(gameTables.status, 'active'),
+      gt(gameTables.startsAt, now),
+      systemSlug ? eq(systems.slug, systemSlug) : undefined,
+    ),
   );
 
-  const upcoming = rows
-    .map((row) => shape(row, now))
-    .filter((table) => table.nextAt !== null)
-    .sort((a, b) => a.nextAt!.getTime() - b.nextAt!.getTime());
-  return withExtras(db, upcoming, now);
+  return withExtras(db, rows.map(shape), now);
 }
 
-/** A master's public upcoming tables: filter in SQL, then paginate the calculated occurrences. */
+/** A master's public upcoming tables, soonest first, one page of them and the total. */
 export async function listUpcomingTablesByGm(
   db: AnyDb,
   gmId: string,
@@ -99,12 +101,11 @@ export async function listUpcomingTablesByGm(
   page: number,
   pageSize: number,
 ) {
-  const rows = await query(db, and(eq(gameTables.gmId, gmId), eq(gameTables.status, 'active')));
-  const upcoming = rows
-    .map((row) => shape(row, now))
-    .filter((table) => table.nextAt !== null)
-    .sort((a, b) => a.nextAt!.getTime() - b.nextAt!.getTime() || a.slug.localeCompare(b.slug));
-  // LIMIT by startsAt would lose older campaigns whose next occurrence is still ahead.
+  const rows = await query(
+    db,
+    and(eq(gameTables.gmId, gmId), eq(gameTables.status, 'active'), gt(gameTables.startsAt, now)),
+  );
+  const upcoming = rows.map(shape);
   return {
     total: upcoming.length,
     tables: await withExtras(db, upcoming.slice((page - 1) * pageSize, page * pageSize), now),
@@ -135,9 +136,8 @@ async function withExtras<T extends { id: string; gmId: string }>(db: AnyDb, lis
 }
 
 /**
- * The table at this slug, or null if there is none or it is disabled. A table whose session is
- * over is still found (`nextAt` is null, and its status says where it stands), so an old shared
- * link keeps working.
+ * The table at this slug, or null if there is none or it is disabled. A table whose session has
+ * begun is still found (its status says where it stands), so an old shared link keeps working.
  */
 export async function findTableBySlug(
   db: AnyDb,
@@ -146,7 +146,7 @@ export async function findTableBySlug(
 ): Promise<TableView | null> {
   const [row] = await query(db, and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')));
 
-  return row ? (await withExtras(db, [shape(row, now)], now))[0] : null;
+  return row ? (await withExtras(db, [shape(row)], now))[0] : null;
 }
 
 /**

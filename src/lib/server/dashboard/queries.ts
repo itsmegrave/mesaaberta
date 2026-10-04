@@ -4,13 +4,19 @@ import { gameTables, profiles, ratings, registrations, systems } from '../db/sch
 import { publicName } from '../db/public-name';
 import { rateBlocker } from '../auth/policy';
 import { firstSessionEnded } from '../ratings/service';
-import { nextOccurrence } from '../tables/schedule';
+import { hasStarted } from '../tables/schedule';
 import { seatsLeft } from '../tables/queries';
 
 // The "My tables" page: what I play in, and what I run. Sessions coming up come first, soonest
-// first; a table with no session left goes last.
-const byNextSession = <T extends { nextAt: Date | null }>(items: T[]) =>
-  items.sort((a, b) => (a.nextAt?.getTime() ?? Infinity) - (b.nextAt?.getTime() ?? Infinity));
+// first; the ones that have started go last, the most recent first.
+const byStart = <T extends { startsAt: Date }>(items: T[], now: Date) =>
+  items.sort((a, b) => {
+    const aStarted = hasStarted(a.startsAt, now);
+    const bStarted = hasStarted(b.startsAt, now);
+    if (aStarted !== bStarted) return aStarted ? 1 : -1;
+    const order = a.startsAt.getTime() - b.startsAt.getTime();
+    return aStarted ? -order : order;
+  });
 
 /** The tables where this person has a seat or a pending request. */
 export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
@@ -23,8 +29,6 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
       startsAt: gameTables.startsAt,
       durationMinutes: gameTables.durationMinutes,
       timezone: gameTables.timezone,
-      recurrence: gameTables.recurrence,
-      until: gameTables.until,
       tableStatus: gameTables.status,
       gmId: gameTables.gmId,
       gmName: publicName(gm.username),
@@ -44,7 +48,7 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
 
   const actor = { id: playerId, role: 'member', status: 'active' } as const;
 
-  return byNextSession(
+  return byStart(
     rows.map((row) => ({
       slug: row.slug,
       title: row.title,
@@ -53,7 +57,7 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
       status: row.status,
       tableStatus: row.tableStatus,
       timezone: row.timezone,
-      nextAt: nextOccurrence(row, now),
+      startsAt: row.startsAt,
       // The prompt to rate: a confirmed seat, and the GM confirmed the session happened.
       canRate:
         rateBlocker(actor, {
@@ -64,6 +68,7 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
         }) === null,
       rating: row.gmScore === null ? null : { gmScore: row.gmScore },
     })),
+    now,
   );
 }
 
@@ -93,7 +98,7 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
     )
     .orderBy(asc(registrations.createdAt), asc(profiles.username));
 
-  return byNextSession(
+  return byStart(
     tables.map((table) => {
       const mine = people.filter((person) => person.tableId === table.id);
       const players = mine
@@ -111,10 +116,11 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
         capacity: table.capacity,
         seatsLeft: seatsLeft(table.capacity, players.length),
         timezone: table.timezone,
-        nextAt: nextOccurrence(table, now),
+        startsAt: table.startsAt,
         players,
         requests,
       };
     }),
+    now,
   );
 }

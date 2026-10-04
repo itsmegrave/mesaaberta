@@ -18,7 +18,7 @@
     tableStatus: TableStatus;
     capacity: number;
     timezone: string;
-    nextAt: Date | null;
+    startsAt: Date;
     players: Person[];
     requests: Person[];
   };
@@ -100,12 +100,8 @@
       /></svg
     >
     <span>
-      {#if item.nextAt}
-        <span class="font-semibold">{m.table_next_session()}:</span>
-        {formatSession(item.nextAt, shownTimezone(item.timezone), locale)}
-      {:else}
-        {m.table_no_more_sessions()}
-      {/if}
+      <span class="font-semibold">{m.table_next_session()}:</span>
+      {formatSession(item.startsAt, shownTimezone(item.timezone), locale)}
     </span>
   </p>
 

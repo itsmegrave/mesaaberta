@@ -134,7 +134,6 @@ describe('admin overview', () => {
           cover: null,
           startsAt: new Date('2026-10-10T22:00:00Z'),
           timezone: 'America/Sao_Paulo',
-          nextAt: new Date('2026-10-10T22:00:00Z'),
         },
       ],
     });

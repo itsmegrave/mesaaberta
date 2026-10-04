@@ -2,6 +2,8 @@ import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { profileSocialLinks, profiles } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
+import { diffFields, hasChanges } from '../events/changes';
+import { recordEvent } from '../events/outbox';
 import { normalizeUsername } from '$lib/profile/username';
 import { profileLinks, type ProfileInput } from '$lib/profile/schema';
 import { isNetwork, typedValue } from '$lib/profile/social-links';
@@ -79,31 +81,54 @@ export async function loadProfileForm(
  */
 export async function saveProfile(db: AnyDb, profileId: string, input: ProfileInput) {
   const links = profileLinks(input);
+  const values = {
+    username: normalizeUsername(input.username),
+    name: input.name || null,
+    ageRange: input.ageRange || null,
+    gender: input.gender || null,
+    // Own words go with "Outro" only; picking another option forgets them.
+    genderOther: (input.gender === 'other' && input.genderOther) || null,
+    city: input.city || null,
+    timezone: input.timezone || null,
+  };
 
   try {
     await db.transaction(async (tx) => {
-      const updated = await tx
-        .update(profiles)
-        .set({
-          username: normalizeUsername(input.username),
-          name: input.name || null,
-          ageRange: input.ageRange || null,
-          gender: input.gender || null,
-          // Own words go with "Outro" only; picking another option forgets them.
-          genderOther: (input.gender === 'other' && input.genderOther) || null,
-          city: input.city || null,
-          timezone: input.timezone || null,
+      const [before] = await tx.select().from(profiles).where(eq(profiles.id, profileId));
+      if (!before) throw new NotFound(`no profile ${profileId}`);
+      const linksBefore = await tx
+        .select({
+          network: profileSocialLinks.network,
+          handle: profileSocialLinks.handle,
+          url: profileSocialLinks.url,
         })
-        .where(eq(profiles.id, profileId))
-        .returning({ id: profiles.id });
-      if (updated.length === 0) throw new NotFound(`no profile ${profileId}`);
+        .from(profileSocialLinks)
+        .where(eq(profileSocialLinks.profileId, profileId))
+        .orderBy(asc(profileSocialLinks.position));
 
+      await tx.update(profiles).set(values).where(eq(profiles.id, profileId));
       await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, profileId));
       if (links.length > 0) {
         await tx
           .insert(profileSocialLinks)
           .values(links.map((link, position) => ({ profileId, ...link, position })));
       }
+
+      // The history: what the person changed, by themselves. Who they are (name, age range, gender,
+      // city) is personal data, so it says that it changed and what it became is not kept.
+      const linkText = (rows: { network: string; handle?: string | null; url: string | null }[]) =>
+        rows.map((link) => `${link.network}: ${link.handle ?? link.url}`);
+      const changes = diffFields(
+        { ...before, links: linkText(linksBefore) },
+        { ...values, links: linkText(links) },
+        { hidden: ['name', 'ageRange', 'gender', 'genderOther', 'city'] },
+      );
+      if (hasChanges(changes))
+        await recordEvent(tx as unknown as AnyDb, {
+          type: 'ProfileUpdated',
+          actorId: profileId,
+          payload: { profileId, changes },
+        });
     });
   } catch (error) {
     if (isUsernameConflict(error)) throw new Invalid('username', 'taken');

@@ -6,12 +6,14 @@ import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { catalogOf, setTableCatalog } from '../catalog';
+import { diffFields, hasChanges, type Fact } from '../events/changes';
 import { TABLE_CREATION_LIMIT, enforceRateLimit } from '../rate-limit';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
 import { minutesToHours } from '$lib/tables/format';
 import type { TableInput } from '$lib/tables/schema';
 import { formatCep } from '$lib/location/cep';
+import { NEW_CATALOG_PREFIX } from '$lib/tables/catalog';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
@@ -210,6 +212,53 @@ const PLAYER_FACING = [
   'joinDetails',
 ] as const;
 
+/** The fields an edit is logged by, and the ones whose value the log never keeps. */
+const AUDITED = [
+  'title',
+  'description',
+  'extraInfo',
+  'welcomeMessage',
+  'kind',
+  'capacity',
+  'minPlayers',
+  'startsAt',
+  'durationMinutes',
+  'timezone',
+  'recurrence',
+  'until',
+  'joinMode',
+  'modality',
+  'locationArea',
+  'joinDetails',
+  'postalCode',
+  'locationNeighbourhood',
+  'locationCity',
+  'locationState',
+] as const;
+const PRIVATE_FIELDS = [
+  'welcomeMessage',
+  'joinDetails',
+  'postalCode',
+  'locationNeighbourhood',
+  'locationCity',
+  'locationState',
+] as const;
+
+type Audited = (typeof AUDITED)[number] | 'system' | 'platforms' | 'tags' | 'image';
+
+/** A pick as a person reads it: the slug, or the name of a term suggested on the spot. */
+const picked = (picks: readonly string[]) =>
+  picks
+    .map((pick) =>
+      pick.startsWith(NEW_CATALOG_PREFIX) ? pick.slice(NEW_CATALOG_PREFIX.length) : pick,
+    )
+    .sort();
+
+/** What an edit changed in a table, for the event: see `diffFields`. */
+function tableChanges(before: Record<Audited, Fact>, after: Record<Audited, Fact>) {
+  return diffFields(before, after, { hidden: [...PRIVATE_FIELDS, 'image'] });
+}
+
 const sameValue = (a: unknown, b: unknown) =>
   a instanceof Date && b instanceof Date
     ? a.getTime() === b.getTime()
@@ -232,6 +281,11 @@ export async function updateTable(
   const columns = await columnsOf(db, input);
   // Invites and notifications go out only for a change players would see.
   const changed = PLAYER_FACING.some((field) => !sameValue(table[field], columns[field]));
+  const [current] = await db
+    .select({ slug: systems.slug })
+    .from(systems)
+    .where(eq(systems.id, table.systemId));
+  const linked = (await catalogOf(db, [table.id], { withPending: true })).get(table.id)!;
   // Fewer seats than players would leave someone at the table without one: remove players first.
   if (input.capacity < (await seatsTakenAt(db, table.id))) {
     throw new Invalid('capacity', 'below_taken');
@@ -249,12 +303,31 @@ export async function updateTable(
       })
       .where(eq(gameTables.id, table.id));
     await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
-    if (!changed) return null;
 
+    const changes = tableChanges(
+      {
+        ...Object.fromEntries(AUDITED.map((field) => [field, table[field]])),
+        system: current.slug,
+        platforms: picked(linked.platforms.map((item) => item.slug)),
+        tags: picked(linked.tags.map((item) => item.slug)),
+        // The picture itself is not logged, only that it was replaced or taken off.
+        image: table.imagePath,
+      } as unknown as Record<Audited, Fact>,
+      {
+        ...Object.fromEntries(AUDITED.map((field) => [field, columns[field]])),
+        system: input.systemSlug,
+        platforms: picked(input.platforms),
+        tags: picked(input.tags),
+        image: 'imagePath' in image ? image.imagePath : table.imagePath,
+      } as unknown as Record<Audited, Fact>,
+    );
+    if (!changed && !hasChanges(changes)) return null;
+
+    // Players hear about what they see; anything else is written for the history alone.
     return recordEvent(tx as unknown as AnyDb, {
-      type: 'TableUpdated',
+      type: changed ? 'TableUpdated' : 'TableEdited',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, title: input.title },
+      payload: { tableId: table.id, slug: table.slug, title: input.title, changes },
     });
   });
 

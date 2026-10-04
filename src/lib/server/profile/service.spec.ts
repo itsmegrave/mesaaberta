@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { profileSocialLinks, profiles } from '../db/schema';
+import { events, profileSocialLinks, profiles } from '../db/schema';
 import { createTestDb } from '../db/test-db';
 import { Invalid, NotFound } from '../errors';
 import { isUsernameAvailable, loadProfileForm, saveProfile } from './service';
@@ -13,7 +13,7 @@ beforeAll(async () => {
   test = await createTestDb();
   await test.db
     .insert(profiles)
-    .values([{ id: id(1) }, { id: id(2) }, { id: id(3), username: 'bruno' }]);
+    .values([{ id: id(1) }, { id: id(2) }, { id: id(3), username: 'bruno' }, { id: id(4) }]);
 });
 afterAll(() => test.close());
 
@@ -142,6 +142,100 @@ describe('saveProfile', () => {
     await expect(
       saveProfile(test.db, id(1), input({ username: '-bad' })),
     ).rejects.not.toBeInstanceOf(Invalid);
+  });
+});
+
+describe('the history of a save', () => {
+  const logged = async (profileId: string) =>
+    (await test.db.select().from(events).where(eq(events.type, 'ProfileUpdated')))
+      .filter((event) => (event.payload as { profileId: string }).profileId === profileId)
+      .map((event) => ({ actorId: event.actorId, changes: (event.payload as never)['changes'] }));
+
+  it('records who changed what, by themselves, with the old and the new username', async () => {
+    await saveProfile(test.db, id(4), input({ username: 'historia-a' }));
+    await saveProfile(
+      test.db,
+      id(4),
+      input({ username: 'historia-b', timezone: 'America/Recife' }),
+    );
+
+    expect(await logged(id(4))).toEqual([
+      { actorId: id(4), changes: { username: { from: null, to: 'historia-a' } } },
+      {
+        actorId: id(4),
+        changes: {
+          username: { from: 'historia-a', to: 'historia-b' },
+          timezone: { from: null, to: 'America/Recife' },
+        },
+      },
+    ]);
+  });
+
+  it('says that personal details changed, and never what they became', async () => {
+    await saveProfile(
+      test.db,
+      id(4),
+      input({
+        username: 'historia-b',
+        timezone: 'America/Recife',
+        name: 'Carla Souza',
+        city: 'Recife',
+        gender: 'other',
+        genderOther: 'agênero',
+        ageRange: '25_34',
+      }),
+    );
+
+    const last = (await logged(id(4))).at(-1)!;
+    expect(last.changes).toEqual({
+      name: { redacted: true },
+      city: { redacted: true },
+      gender: { redacted: true },
+      genderOther: { redacted: true },
+      ageRange: { redacted: true },
+    });
+    for (const secret of ['Carla Souza', 'Recife', 'agênero', '25_34'])
+      expect(JSON.stringify(last)).not.toContain(secret);
+  });
+
+  it('lists the links that were added or taken off, and logs nothing for a save that changes nothing', async () => {
+    await saveProfile(
+      test.db,
+      id(4),
+      input({
+        username: 'historia-b',
+        timezone: 'America/Recife',
+        name: 'Carla Souza',
+        city: 'Recife',
+        gender: 'other',
+        genderOther: 'agênero',
+        ageRange: '25_34',
+        linkNetwork: ['instagram'],
+        linkUrl: ['https://instagram.com/carla'],
+      }),
+    );
+    const count = (await logged(id(4))).length;
+
+    expect((await logged(id(4))).at(-1)!.changes).toEqual({
+      links: { from: null, to: 'instagram: carla' },
+    });
+
+    await saveProfile(
+      test.db,
+      id(4),
+      input({
+        username: 'historia-b',
+        timezone: 'America/Recife',
+        name: 'Carla Souza',
+        city: 'Recife',
+        gender: 'other',
+        genderOther: 'agênero',
+        ageRange: '25_34',
+        linkNetwork: ['instagram'],
+        linkUrl: ['https://instagram.com/carla'],
+      }),
+    );
+    expect((await logged(id(4))).length).toBe(count);
   });
 });
 

@@ -75,7 +75,7 @@ describe('listPlaying', () => {
       slug: table.slug,
       gmName: 'mestra',
       timezone: 'UTC',
-      nextAt: new Date('2026-10-20T22:00:00Z'),
+      startsAt: new Date('2026-10-20T22:00:00Z'),
       tableStatus: 'active',
     });
     expect(item?.systemName).toEqual(expect.any(String));

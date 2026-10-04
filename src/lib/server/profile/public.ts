@@ -98,7 +98,7 @@ export async function publicProfile(
       seatsLeft: table.seatsLeft,
       capacity: table.capacity,
       timezone: table.timezone,
-      nextAt: table.nextAt,
+      startsAt: table.startsAt,
       imageUrl: imageUrl(supabaseUrl, table.imagePath),
       modality: table.modality,
       locationArea: table.locationArea,

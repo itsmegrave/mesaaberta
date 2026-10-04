@@ -14,7 +14,7 @@ const base = {
   tableStatus: 'active' as const,
   capacity: 4,
   timezone: 'America/Sao_Paulo',
-  nextAt: new Date('2026-10-10T22:00:00Z'),
+  startsAt: new Date('2026-10-10T22:00:00Z'),
   players: [person(1, 'Ana'), person(2, 'Bruno')],
   requests: [person(3, 'Caio')],
 };
@@ -75,11 +75,11 @@ describe('RunningCard', () => {
     await expect.element(page.getByText('Ninguém ainda.')).toBeVisible();
   });
 
-  it('says so when the table has no session left, without a table status', async () => {
-    render(RunningCard, props({ tableStatus: 'disabled', nextAt: null }));
+  it('keeps showing the session date for a table that is not active, without a table status', async () => {
+    render(RunningCard, props({ tableStatus: 'disabled' }));
 
     await expect.element(page.getByText('Mesa desativada')).not.toBeInTheDocument();
-    await expect.element(page.getByText('Esta mesa não tem mais sessões marcadas.')).toBeVisible();
+    await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
   });
 
   it('shows names as text, never as markup', async () => {

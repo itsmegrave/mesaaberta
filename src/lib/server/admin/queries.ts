@@ -12,7 +12,6 @@ import {
   systems,
   tags,
 } from '../db/schema';
-import { nextOccurrence } from '../tables/schedule';
 import { listQueue } from './catalog';
 
 const countWhere = (condition: SQL) =>
@@ -107,8 +106,6 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
         imagePath: gameTables.imagePath,
         startsAt: gameTables.startsAt,
         kind: gameTables.kind,
-        recurrence: gameTables.recurrence,
-        until: gameTables.until,
         timezone: gameTables.timezone,
       })
       .from(gameTables)
@@ -140,7 +137,7 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
         duplicates: suggestions.filter((entry) => entry.duplicateOf).length,
       },
     },
-    recent: recent.map((row) => ({ ...row, nextAt: nextOccurrence(row, now) })),
+    recent,
     people: people[0],
     tables: tables[0],
     seats: seats[0],

@@ -109,10 +109,9 @@
     }).format(date);
 
   const dateBox = $derived.by(() => {
-    if (!table.nextAt) return null;
     const part = (options: Intl.DateTimeFormatOptions) =>
       new Intl.DateTimeFormat(locale, { timeZone: zone, ...options })
-        .format(table.nextAt!)
+        .format(table.startsAt)
         .replace('.', '');
     return {
       weekday: part({ weekday: 'short' }),
@@ -435,24 +434,18 @@
       {/if}
       <div class="p-6">
         <div class="flex items-start gap-4">
-          {#if dateBox}
-            <div
-              aria-hidden="true"
-              class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
-            >
-              <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-              <span class="mt-1 text-2xl font-bold">{dateBox.day}</span>
-              <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
-            </div>
-          {/if}
+          <div
+            aria-hidden="true"
+            class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
+          >
+            <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
+            <span class="mt-1 text-2xl font-bold">{dateBox.day}</span>
+            <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
+          </div>
           <div>
             <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
             <p class="mt-1 text-lg leading-snug font-semibold">
-              {#if table.nextAt}
-                {formatSession(table.nextAt, zone, locale)}
-              {:else}
-                {m.table_no_more_sessions()}
-              {/if}
+              {formatSession(table.startsAt, zone, locale)}
             </p>
           </div>
         </div>

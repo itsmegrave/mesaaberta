@@ -3,7 +3,6 @@ import type { AnyDb } from '../db/client';
 import { gameTables, systems, instagramPosts, profiles } from '../db/schema';
 import { tableFilters, type InstagramFilter } from '$lib/admin/table-filters';
 import { TABLE_STATUSES, type TableStatus } from '$lib/tables/status-values';
-import { nextOccurrence } from '../tables/schedule';
 
 /** The posts the filter names; `none` is a table that never had one, or one that was skipped. */
 const instagramWhere = (filter: InstagramFilter): SQL | undefined => {
@@ -23,7 +22,7 @@ const instagramWhere = (filter: InstagramFilter): SQL | undefined => {
   }
 };
 
-export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = new Date()) {
+export async function listAdminTables(db: AnyDb, params: URLSearchParams) {
   const filters = tableFilters(params);
   const search = filters.query.replace(/[\\%_]/g, '\\$&');
   // The segmented filter counts what each status would show with the other filters kept.
@@ -76,8 +75,6 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = 
       ),
     startsAt: gameTables.startsAt,
     kind: gameTables.kind,
-    recurrence: gameTables.recurrence,
-    until: gameTables.until,
     timezone: gameTables.timezone,
     instagramStatus: instagramPosts.status,
     permalink: instagramPosts.permalink,
@@ -91,29 +88,19 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = 
       .leftJoin(instagramPosts, eq(instagramPosts.tableId, gameTables.id))
       .where(where);
   const offset = (page - 1) * filters.pageSize;
-  let rows;
-  if (sortId === 'next') {
-    // The next session is worked out from the schedule (weekly repeats, the table's zone), not
-    // stored, so this order is made here: the tables with a session left by date, the rest after.
-    const all = (await listed()).map((row) => ({ row, nextAt: nextOccurrence(row, now) }));
-    const order = dir === 'asc' ? 1 : -1;
-    all.sort((a, b) => {
-      if (!a.nextAt || !b.nextAt)
-        return a.nextAt ? -1 : b.nextAt ? 1 : a.row.id.localeCompare(b.row.id);
-      return order * (a.nextAt.getTime() - b.nextAt.getTime()) || a.row.id.localeCompare(b.row.id);
-    });
-    rows = all.slice(offset, offset + filters.pageSize).map(({ row }) => row);
-  } else {
-    rows = await listed()
-      .orderBy(
-        sortId === 'title' ? direction(gameTables.title) : direction(gameTables.createdAt),
-        direction(gameTables.id),
-      )
-      .limit(filters.pageSize)
-      .offset(offset);
-  }
+  // `next` is the session date: a table has one, `startsAt`.
+  const sortColumn =
+    sortId === 'title'
+      ? gameTables.title
+      : sortId === 'next'
+        ? gameTables.startsAt
+        : gameTables.createdAt;
+  const rows = await listed()
+    .orderBy(direction(sortColumn), direction(gameTables.id))
+    .limit(filters.pageSize)
+    .offset(offset);
   return {
-    rows: rows.map((row) => ({ ...row, nextAt: nextOccurrence(row, now) })),
+    rows,
     total,
     counts: { all, ...counts },
     ...filters,
@@ -121,3 +108,26 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams, now = 
   };
 }
 export type AdminTables = Awaited<ReturnType<typeof listAdminTables>>;
+
+/** One table as the admin's page about it shows it: who runs it, its one date, where it stands. */
+export async function adminTable(db: AnyDb, id: string) {
+  const [row] = await db
+    .select({
+      id: gameTables.id,
+      slug: gameTables.slug,
+      title: gameTables.title,
+      status: gameTables.status,
+      system: systems.name,
+      gm: profiles.username,
+      gmId: profiles.id,
+      startsAt: gameTables.startsAt,
+      timezone: gameTables.timezone,
+      capacity: gameTables.capacity,
+    })
+    .from(gameTables)
+    .innerJoin(systems, eq(systems.id, gameTables.systemId))
+    .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
+    .where(eq(gameTables.id, id))
+    .limit(1);
+  return row ?? null;
+}

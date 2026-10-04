@@ -59,12 +59,18 @@
   const canPublish = (row: Row) =>
     data.instagramAvailable &&
     row.status === 'active' &&
-    !!row.nextAt &&
+    row.startsAt.getTime() > Date.now() &&
     !['published', 'publishing', 'uncertain', 'queued', 'processing'].includes(
       row.instagramStatus ?? '',
     );
   const items = (row: Row): KebabItem[] => [
     { id: 'view', label: m.menu_view_table(), icon: 'eye', href: href(row) },
+    {
+      id: 'history',
+      label: m.history_title(),
+      icon: 'clock',
+      href: localizedHref(`/admin/tables/${row.id}`, locale),
+    },
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
     {
       id: 'publish',
@@ -194,12 +200,8 @@
           </div>
         </div>
       {:else if id === 'next'}
-        {#if row.nextAt}
-          <p class="font-semibold">{dayLabel(row.nextAt, locale, row.timezone)}</p>
-          <p class="text-muted">{timeLabel(row.nextAt, locale, row.timezone)}</p>
-        {:else}
-          <span class="text-muted">—</span>
-        {/if}
+        <p class="font-semibold">{dayLabel(row.startsAt, locale, row.timezone)}</p>
+        <p class="text-muted">{timeLabel(row.startsAt, locale, row.timezone)}</p>
       {:else if id === 'seats'}
         {m.admin_tables_seats({ taken: row.seats, capacity: row.capacity })}
       {:else if id === 'status'}
@@ -220,11 +222,11 @@
         {#snippet meta()}
           <p class="truncate">{m.admin_tables_gm_of({ system: row.system, gm: `@${row.gm}` })}</p>
           <p>
-            {#if row.nextAt}{dayLabel(row.nextAt, locale, row.timezone)} · {timeLabel(
-                row.nextAt,
-                locale,
-                row.timezone,
-              )}{:else}{m.admin_tables_no_session()}{/if}
+            {dayLabel(row.startsAt, locale, row.timezone)} · {timeLabel(
+              row.startsAt,
+              locale,
+              row.timezone,
+            )}
           </p>
         {/snippet}
         {#snippet badges()}

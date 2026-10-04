@@ -39,51 +39,41 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 it('paginates all admin tables and joins publishing status without private fields', async () => {
-  const data = await listAdminTables(test.db, new URLSearchParams(), now);
+  const data = await listAdminTables(test.db, new URLSearchParams());
   expect(data.total).toBe(22);
   expect(data.rows).toHaveLength(20);
   expect(data.rows[0]).toMatchObject({ title: 'Mesa 21', instagramStatus: 'published' });
   expect(JSON.stringify(data)).not.toContain('PRIVATE');
-  const last = await listAdminTables(test.db, new URLSearchParams('page=99'), now);
+  const last = await listAdminTables(test.db, new URLSearchParams('page=99'));
   expect(last.page).toBe(2);
   expect(last.rows).toHaveLength(2);
 });
 it('counts what each status shows, and tells who runs the table and how many seats are taken', async () => {
-  const data = await listAdminTables(test.db, new URLSearchParams(), now);
+  const data = await listAdminTables(test.db, new URLSearchParams());
   expect(data.counts).toMatchObject({ all: 22, active: 21, disabled: 1 });
   expect(data.rows[0]).toMatchObject({ capacity: 5, seats: 0 });
   expect(data.rows[0]).toHaveProperty('gm');
   // The counts follow the search, not the status picked.
-  const searched = await listAdminTables(
-    test.db,
-    new URLSearchParams('q=Mesa 2&status=disabled'),
-    now,
-  );
+  const searched = await listAdminTables(test.db, new URLSearchParams('q=Mesa 2&status=disabled'));
   expect(searched.counts.all).toBe(3);
   expect(searched.total).toBe(0);
 });
 
 it('filters by the state of the Instagram post and orders by title when asked', async () => {
-  const published = await listAdminTables(test.db, new URLSearchParams('instagram=published'), now);
+  const published = await listAdminTables(test.db, new URLSearchParams('instagram=published'));
   expect(published.total).toBe(1);
   expect(published.rows[0].title).toBe('Mesa 21');
-  expect((await listAdminTables(test.db, new URLSearchParams('instagram=none'), now)).total).toBe(
-    21,
-  );
-  expect((await listAdminTables(test.db, new URLSearchParams('instagram=failed'), now)).total).toBe(
-    0,
-  );
-  const byTitle = await listAdminTables(test.db, new URLSearchParams('sort=title&dir=asc'), now);
+  expect((await listAdminTables(test.db, new URLSearchParams('instagram=none'))).total).toBe(21);
+  expect((await listAdminTables(test.db, new URLSearchParams('instagram=failed'))).total).toBe(0);
+  const byTitle = await listAdminTables(test.db, new URLSearchParams('sort=title&dir=asc'));
   expect(byTitle.rows[0].title).toBe('Mesa 1');
 });
 
 it('filters title literally and includes disabled tables for admins', async () => {
-  const data = await listAdminTables(test.db, new URLSearchParams('q=100%&status=disabled'), now);
+  const data = await listAdminTables(test.db, new URLSearchParams('q=100%&status=disabled'));
   expect(data.total).toBe(1);
   expect(data.rows[0].title).toBe('Mesa 100%');
-  expect((await listAdminTables(test.db, new URLSearchParams('status=active'), now)).total).toBe(
-    21,
-  );
+  expect((await listAdminTables(test.db, new URLSearchParams('status=active'))).total).toBe(21);
 });
 
 it.each(TABLE_STATUSES)(
@@ -93,13 +83,13 @@ it.each(TABLE_STATUSES)(
     await test.db
       .insert(gameTables)
       .values({ ...base, id: crypto.randomUUID(), slug: `status-${status}`, status });
-    const data = await listAdminTables(test.db, new URLSearchParams({ status }), now);
+    const data = await listAdminTables(test.db, new URLSearchParams({ status }));
     expect(data.status).toBe(status);
     expect(data.rows.length).toBeGreaterThan(0);
     expect(data.rows.every((row) => row.status === status)).toBe(true);
   },
 );
-it('orders by the next session, the tables with none left last, either way', async () => {
+it('orders by the session date, either way', async () => {
   const [gm] = await test.db.select().from(profiles).limit(1);
   const [system] = await test.db.select().from(systems).limit(1);
   const starts: [string, string][] = [
@@ -122,8 +112,8 @@ it('orders by the next session, the tables with none left last, either way', asy
       joinDetails: 'x',
     });
   const titles = async (query: string) =>
-    (await listAdminTables(test.db, new URLSearchParams(query), now)).rows.map((row) => row.title);
+    (await listAdminTables(test.db, new URLSearchParams(query))).rows.map((row) => row.title);
 
-  expect(await titles('q=Ordem&sort=next&dir=asc')).toEqual(['Ordem B', 'Ordem A', 'Ordem C']);
+  expect(await titles('q=Ordem&sort=next&dir=asc')).toEqual(['Ordem C', 'Ordem B', 'Ordem A']);
   expect(await titles('q=Ordem&sort=next&dir=desc')).toEqual(['Ordem A', 'Ordem B', 'Ordem C']);
 });

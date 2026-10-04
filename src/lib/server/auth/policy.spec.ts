@@ -107,6 +107,7 @@ describe('table:join', () => {
   const open = {
     gmId: 'gm',
     tableStatus: 'active' as const,
+    started: false,
     seatsLeft: 2,
     alreadyRegistered: false,
   };
@@ -123,6 +124,11 @@ describe('table:join', () => {
 
   it.each([
     ['the table is disabled', { ...open, tableStatus: 'disabled' as const }, 'inactive'],
+    [
+      'the session has started, though the table is still active',
+      { ...open, started: true },
+      'inactive',
+    ],
     ['there is no seat left', { ...open, seatsLeft: 0 }, 'full'],
     ['the player already has a registration', { ...open, alreadyRegistered: true }, 'registered'],
   ])('is refused when %s, and says why', (_what, facts, reason) => {
