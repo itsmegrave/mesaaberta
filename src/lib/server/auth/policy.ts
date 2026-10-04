@@ -27,6 +27,8 @@ type Resources = {
   'table:join': {
     gmId: string;
     tableStatus: TableStatus;
+    /** The session has begun: the status only follows once its duration is over, but seats close now. */
+    started: boolean;
     seatsLeft: number;
     alreadyRegistered: boolean;
   };
@@ -74,14 +76,15 @@ type JoinFacts = Resources['table:join'];
 /**
  * Why this actor may not join, or null if they may. The reasons let the caller answer precisely
  * (a full table is not a permission problem) without deciding anything itself. Checked in order:
- * who may ever join, whether the table takes players, a registration already there, a free seat.
+ * who may ever join, whether the table takes players (active and not started), a registration
+ * already there, a free seat.
  */
 export function joinBlocker(
   actor: Actor | null,
   facts: JoinFacts | undefined,
 ): 'forbidden' | 'inactive' | 'registered' | 'full' | null {
   if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
-  if (facts.tableStatus !== 'active') return 'inactive';
+  if (facts.tableStatus !== 'active' || facts.started) return 'inactive';
   if (facts.alreadyRegistered) return 'registered';
   if (facts.seatsLeft <= 0) return 'full';
 

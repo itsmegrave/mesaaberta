@@ -6,6 +6,7 @@ import { imageUrl, supabaseUrlOf } from '../images';
 import { firstSessionEnded, ratingOf } from '../ratings/service';
 import { listRegistrations, registrationStatus } from '../registrations/service';
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
+import { hasStarted } from '../tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
 export const read = async ({ locals, params, platform }: RequestEvent) => {
   // Unknown, disabled, or no database at all: the same translated 404.
@@ -23,6 +24,7 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
     joinBlocker(profile, {
       gmId,
       tableStatus: found.status,
+      started: hasStarted(found.startsAt, new Date()),
       seatsLeft: table.seatsLeft,
       alreadyRegistered: myStatus !== null,
     }) === null;

@@ -12,7 +12,7 @@ const base = {
   seatsLeft: 3,
   capacity: 5,
   timezone: 'America/Sao_Paulo',
-  nextAt: new Date('2026-10-10T22:00:00Z'),
+  startsAt: new Date('2026-10-10T22:00:00Z'),
 };
 
 describe('TableCard', () => {

@@ -40,7 +40,7 @@ const row = (over = {}) => ({
   cover: null,
   capacity: 5,
   seats: 3,
-  nextAt: new Date('2026-10-10T22:00:00Z'),
+  startsAt: new Date('2026-10-10T22:00:00Z'),
   timezone: 'America/Sao_Paulo',
   instagramStatus: 'published',
   ...over,

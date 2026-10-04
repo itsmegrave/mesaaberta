@@ -41,17 +41,26 @@ beforeAll(async () => {
     title: 'Weekly',
     kind: 'campaign',
     recurrence: 'FREQ=WEEKLY',
-    startsAt: new Date('2026-09-05T21:00:00Z'),
+    startsAt: new Date('2026-10-03T21:00:00Z'),
     systemSlug: 'tormenta-20-t20',
   });
+  // A campaign whose first date has passed: the platform keeps one date per table, so it is over.
+  await add({
+    slug: 'started-campaign',
+    title: 'Started campaign',
+    kind: 'campaign',
+    recurrence: 'FREQ=WEEKLY',
+    startsAt: new Date('2026-09-05T21:00:00Z'),
+  });
+  await add({ slug: 'starting-now', title: 'Starting now', startsAt: now });
 });
 afterAll(() => test.close());
 
 describe('listUpcomingTables', () => {
-  it('lists active tables that still have a session ahead, soonest first', async () => {
+  it('lists active tables that have not started, soonest first', async () => {
     const list = await listUpcomingTables(test.db, now);
 
-    // weekly's next session is 3 Oct, before sooner's 5 Oct
+    // weekly starts on 3 Oct, before sooner's 5 Oct
     expect(list.map((t) => t.slug)).toEqual(['weekly', 'sooner', 'later']);
   });
 
@@ -61,14 +70,15 @@ describe('listUpcomingTables', () => {
     expect(list.map((t) => t.slug)).not.toContain('off');
   });
 
-  it('leaves out a one-shot that is already over, and keeps a campaign that recurs', async () => {
+  it('leaves out a table the moment its session starts, whatever its kind', async () => {
     const slugs = (await listUpcomingTables(test.db, now)).map((t) => t.slug);
 
     expect(slugs).not.toContain('over');
-    expect(slugs).toContain('weekly');
+    expect(slugs).not.toContain('started-campaign');
+    expect(slugs).not.toContain('starting-now');
   });
 
-  it('gives each table what a card needs: system, GM, kind, seats and its next session', async () => {
+  it('gives each table what a card needs: system, GM, kind, seats and its date', async () => {
     const weekly = (await listUpcomingTables(test.db, now)).find((t) => t.slug === 'weekly');
 
     expect(weekly).toMatchObject({
@@ -81,8 +91,7 @@ describe('listUpcomingTables', () => {
       everyWeeks: 1,
       timezone: 'America/Sao_Paulo',
     });
-    // 2026-09-05 + 4 weeks = 2026-10-03, the first at or after the 1st
-    expect(weekly?.nextAt).toEqual(new Date('2026-10-03T21:00:00Z'));
+    expect(weekly?.startsAt).toEqual(new Date('2026-10-03T21:00:00Z'));
   });
 
   it('can be narrowed to one system', async () => {
@@ -108,7 +117,7 @@ describe('findTableBySlug', () => {
       gmName: 'mestre-ana',
       system: { slug: 'daggerheart' },
       durationMinutes: 240,
-      nextAt: new Date('2026-10-10T22:00:00Z'),
+      startsAt: new Date('2026-10-10T22:00:00Z'),
     });
   });
 
@@ -120,8 +129,11 @@ describe('findTableBySlug', () => {
     expect(await findTableBySlug(test.db, 'off', now)).toBeNull();
   });
 
-  it('still opens a table whose sessions are over, saying there is no next one', async () => {
-    expect(await findTableBySlug(test.db, 'over', now)).toMatchObject({ nextAt: null });
+  it('still opens a table whose session has started, with its date and status', async () => {
+    expect(await findTableBySlug(test.db, 'over', now)).toMatchObject({
+      startsAt: new Date('2026-09-01T22:00:00Z'),
+      status: 'active',
+    });
   });
 });
 

@@ -17,7 +17,7 @@ const playing = {
   status: 'confirmed' as const,
   tableStatus: 'active' as TableStatus,
   timezone: 'America/Sao_Paulo',
-  nextAt: new Date('2026-10-10T22:00:00Z'),
+  startsAt: new Date('2026-10-10T22:00:00Z'),
   canRate: false,
   rating: null,
 };
@@ -27,7 +27,7 @@ const running = {
   tableStatus: 'active' as TableStatus,
   capacity: 4,
   timezone: 'America/Sao_Paulo',
-  nextAt: new Date('2026-10-10T22:00:00Z'),
+  startsAt: new Date('2026-10-10T22:00:00Z'),
   players: [person(1, 'Bruno')],
   requests: [] as ReturnType<typeof person>[],
 };

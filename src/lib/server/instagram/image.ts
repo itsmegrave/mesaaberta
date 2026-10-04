@@ -25,7 +25,7 @@ export function shareFacts(table: TableView, origin: string) {
     dateStyle: 'long',
     timeStyle: 'short',
     timeZone: table.timezone,
-  }).format(table.nextAt ?? table.startsAt);
+  }).format(table.startsAt);
   const modality = table.modality === 'online' ? 'Online' : 'Presencial';
   const kind =
     table.kind === 'one_shot' ? 'One-shot' : table.kind === 'adventure' ? 'Aventura' : 'Campanha';

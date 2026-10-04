@@ -67,7 +67,10 @@ const input = (over: Partial<Parameters<typeof submitRating>[3]> = {}) => ({
 
 const seated = async (n: number, slug: string) => {
   await test.db.update(gameTables).set({ status: 'active' }).where(eq(gameTables.slug, slug));
-  const seat = await joinTable(test.db, player(n), slug);
+  // The tables here started long ago; seats close at the start, so the player joins just before it.
+  const seat = await joinTable(test.db, player(n), slug, {
+    now: new Date(past.getTime() - 60_000),
+  });
   await test.db
     .update(gameTables)
     .set({ status: finalStatus.get(slug) ?? 'concluded' })

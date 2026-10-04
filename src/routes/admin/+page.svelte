@@ -278,10 +278,8 @@
       </p>
     </div>
     <p class="w-40 text-sm">
-      {#if row.nextAt}
-        <span class="font-semibold">{dayLabel(row.nextAt, locale, row.timezone)}</span>
-        <span class="block text-muted">{timeLabel(row.nextAt, locale, row.timezone)}</span>
-      {:else}<span class="text-muted">{m.admin_tables_no_session()}</span>{/if}
+      <span class="font-semibold">{dayLabel(row.startsAt, locale, row.timezone)}</span>
+      <span class="block text-muted">{timeLabel(row.startsAt, locale, row.timezone)}</span>
     </p>
     <StatusBadge status={`table:${row.status}` as Status} />
   </li>

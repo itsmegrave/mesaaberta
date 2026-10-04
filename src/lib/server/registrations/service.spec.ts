@@ -128,6 +128,23 @@ describe('joinTable on an automatic table', () => {
       name: 'NotFound',
     });
   });
+
+  it('closes at the start of the session, even while the table is still active', async () => {
+    const startsAt = new Date('2026-10-10T22:00:00Z');
+    const table = await makeTable({ startsAt });
+
+    // The status only changes when the sweeper runs, after the session's duration.
+    await expect(
+      joinTable(test.db, player(2), table.slug, { now: startsAt }),
+    ).rejects.toMatchObject({ name: 'NotFound' });
+    expect(
+      (
+        await joinTable(test.db, player(3), table.slug, {
+          now: new Date(startsAt.getTime() - 1000),
+        })
+      ).status,
+    ).toBe('confirmed');
+  });
 });
 
 describe('joinTable on a table that approves each player', () => {

@@ -24,7 +24,8 @@
     seatsLeft: number;
     capacity?: number;
     timezone: string;
-    nextAt: Date | null;
+    /** The session date. Null only in the form's preview, before a date is typed. */
+    startsAt: Date | null;
     imageUrl?: string | null;
     modality?: 'online' | 'in_person';
     locationArea?: string | null;
@@ -40,7 +41,7 @@
   );
 
   const cardDate = $derived(
-    table.nextAt ? formatCardDate(table.nextAt, shownTimezone(table.timezone), locale) : null,
+    table.startsAt ? formatCardDate(table.startsAt, shownTimezone(table.timezone), locale) : null,
   );
 
   const platformNames = $derived(
@@ -81,7 +82,7 @@
         </span>
       </div>
       <!-- Date chip -->
-      {#if table.nextAt && cardDate}
+      {#if table.startsAt && cardDate}
         <div
           class="absolute bottom-3 left-3 rounded-lg preset-filled-primary-500 px-3 py-2 shadow-sm"
         >
@@ -110,7 +111,7 @@
               ? m.table_kind_adventure()
               : m.table_kind_one_shot()}
         </span>
-        {#if table.nextAt && cardDate}
+        {#if table.startsAt && cardDate}
           <div>
             <div class="font-sans text-4xl leading-none font-bold tracking-tight">
               {cardDate.dayMonth}
@@ -128,9 +129,9 @@
   {/if}
 
   <!-- Full accessible date for screen readers -->
-  {#if table.nextAt}
-    <time datetime={table.nextAt.toISOString()} class="sr-only">
-      {formatSession(table.nextAt, shownTimezone(table.timezone), locale)}
+  {#if table.startsAt}
+    <time datetime={table.startsAt.toISOString()} class="sr-only">
+      {formatSession(table.startsAt, shownTimezone(table.timezone), locale)}
     </time>
   {/if}
 

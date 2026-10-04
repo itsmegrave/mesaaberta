@@ -13,6 +13,7 @@
   import { actionForm } from '$lib/forms/action-form.svelte';
   import Form from '$lib/components/Form.svelte';
   import { formatHours, formatSession } from '$lib/tables/format';
+  import { tableStatusLabel } from '$lib/tables/status';
   import type { FormMessage } from '$lib/forms/message';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
@@ -73,10 +74,9 @@
 
   // The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
   const dateBox = $derived.by(() => {
-    if (!table.nextAt) return null;
     const part = (options: Intl.DateTimeFormatOptions) =>
       new Intl.DateTimeFormat(locale, { timeZone: shownTimezone(table.timezone), ...options })
-        .format(table.nextAt!)
+        .format(table.startsAt)
         .replace('.', '');
     return {
       weekday: part({ weekday: 'short' }),
@@ -84,6 +84,8 @@
       month: part({ month: 'short' }),
     };
   });
+  // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
+  const stateLabel = $derived(tableStatusLabel(table.status));
 
   // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
   let disableOpen = $state(false);
@@ -258,25 +260,22 @@
       class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
     >
       <div class="flex items-start gap-4">
-        {#if dateBox}
-          <div
-            aria-hidden="true"
-            class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
-          >
-            <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-            <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
-            <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
-          </div>
-        {/if}
+        <div
+          aria-hidden="true"
+          class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
+        >
+          <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
+          <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
+          <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
+        </div>
         <div>
           <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
           <p class="mt-1 text-xl leading-snug font-semibold">
-            {#if table.nextAt}
-              {formatSession(table.nextAt, shownTimezone(table.timezone), locale)}
-            {:else}
-              {m.table_no_more_sessions()}
-            {/if}
+            {formatSession(table.startsAt, shownTimezone(table.timezone), locale)}
           </p>
+          {#if stateLabel}
+            <p class="mt-1 text-sm font-semibold text-muted">{stateLabel}</p>
+          {/if}
         </div>
       </div>
 

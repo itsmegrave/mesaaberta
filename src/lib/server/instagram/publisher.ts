@@ -16,6 +16,7 @@ import { renderShareImage, shareFacts } from './image';
 import { createFlags } from '../flags/flags';
 import { growthBookPayload } from '../flags/payload';
 import { findTableBySlug } from '../tables/queries';
+import { hasStarted } from '../tables/schedule';
 
 // Always registered, even before OAuth is configured: creation events remain decoupled from Meta.
 export const instagramQueueHandler: Handler = {
@@ -77,7 +78,7 @@ export async function processPost(
     .from(gameTables)
     .where(eq(gameTables.id, post.tableId));
   const table = row ? await findTableBySlug(db, row.slug, now) : null;
-  if (!table || !table.nextAt) {
+  if (!table || hasStarted(table.startsAt, now)) {
     await save({ status: 'skipped', image: null });
     return;
   }
@@ -273,7 +274,8 @@ export async function queueInstagramTable(
     .select({ slug: gameTables.slug })
     .from(gameTables)
     .where(eq(gameTables.id, tableId));
-  if (!row || !(await findTableBySlug(db, row.slug, now))?.nextAt) return 'not-eligible';
+  const listed = row ? await findTableBySlug(db, row.slug, now) : null;
+  if (!listed || hasStarted(listed.startsAt, now)) return 'not-eligible';
   await db
     .insert(instagramPosts)
     .values({ tableId, eventId: crypto.randomUUID(), status: 'queued', nextAttemptAt: now })
@@ -317,7 +319,7 @@ export async function publishInstagramTable(
     .from(gameTables)
     .where(eq(gameTables.id, tableId));
   const table = tableRow ? await findTableBySlug(db, tableRow.slug, now) : null;
-  if (!table?.nextAt) return 'not-eligible';
+  if (!table || hasStarted(table.startsAt, now)) return 'not-eligible';
 
   let token = await decryptToken(account.token, env!.INSTAGRAM_TOKEN_KEY!);
   if (account.expiresAt.getTime() - now.getTime() < 7 * DAY) {

@@ -13,7 +13,6 @@ const table = {
   capacity: 5,
   seatsLeft: 3,
   startsAt: new Date('2026-10-10T22:00:00Z'),
-  nextAt: new Date('2026-10-10T22:00:00Z'),
   timezone: 'America/Sao_Paulo',
   imagePath: null,
   joinDetails: 'private-address',

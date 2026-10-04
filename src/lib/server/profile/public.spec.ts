@@ -151,10 +151,10 @@ describe('public profiles', () => {
       'kind',
       'locationArea',
       'modality',
-      'nextAt',
       'platforms',
       'seatsLeft',
       'slug',
+      'startsAt',
       'system',
       'tags',
       'timezone',
@@ -243,19 +243,20 @@ describe('public profiles', () => {
     });
   });
 
-  it('paginates the right GM after recurrence calculation, with deterministic ordering and seats', async () => {
+  it("paginates the right GM's tables that have not started, in a steady order, with seats", async () => {
     const first = (await read())!;
     const second = (await read('mestre-ana', 2))!;
-    expect(first).toMatchObject({ total: 15, pages: 2, page: 1 });
+    // A campaign whose first date has passed is not listed again: a table has one date.
+    expect(first).toMatchObject({ total: 14, pages: 2, page: 1 });
     expect(first.tables).toHaveLength(12);
     expect(first.tables[0]).toMatchObject({
-      slug: 'recurring',
-      nextAt: new Date('2026-10-03T21:00:00Z'),
+      slug: 'future-00',
+      seatsLeft: 4,
+      startsAt: new Date('2026-10-05T18:00:00Z'),
     });
-    expect(first.tables[1]).toMatchObject({ slug: 'future-00', seatsLeft: 4 });
-    expect(first.tables[2].slug).toBe('future-01');
-    expect(second.tables.map((t) => t.slug)).toEqual(['future-11', 'future-12', 'future-13']);
-    expect(new Set([...first.tables, ...second.tables].map((t) => t.slug)).size).toBe(15);
+    expect(first.tables[1].slug).toBe('future-01');
+    expect(second.tables.map((t) => t.slug)).toEqual(['future-12', 'future-13']);
+    expect(new Set([...first.tables, ...second.tables].map((t) => t.slug)).size).toBe(14);
   });
 
   it('immediately reflects rename and suspension without serving an old public projection', async () => {

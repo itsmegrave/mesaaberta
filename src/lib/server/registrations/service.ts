@@ -8,6 +8,7 @@ import { recordEvent } from '../events/outbox';
 import type { DomainEvent } from '../events/types';
 import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
 import { addTableMember, removeTableMember } from '../messages/service';
+import { hasStarted } from '../tables/schedule';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -84,6 +85,7 @@ export async function joinTable(
     const blocker = joinBlocker(actor, {
       gmId: table.gmId,
       tableStatus: table.status,
+      started: hasStarted(table.startsAt, now),
       seatsLeft,
       alreadyRegistered: existing !== undefined,
     });

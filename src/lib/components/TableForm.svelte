@@ -84,7 +84,7 @@
     capacity: Number($draft.capacity) || 1,
     seatsLeft: Number($draft.capacity) || 1,
     timezone: $draft.timezone,
-    nextAt: zonedToDate($draft.startsAtLocal, $draft.timezone),
+    startsAt: zonedToDate($draft.startsAtLocal, $draft.timezone),
     imageUrl,
     modality: $draft.modality,
     locationArea: $draft.locationArea || null,
