@@ -1,6 +1,7 @@
-import { and, asc, eq, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
+import { recordEvent } from './outbox';
 import { logger, scrubString, type Logger } from '../logger';
 import type { DomainEvent, Handler, StoredEvent } from './types';
 
@@ -123,6 +124,108 @@ export async function dispatchEvent(
         : { nextAttemptAt: new Date(now.getTime() + backoffSeconds(attempts) * 1000) }),
     })
     .where(eq(events.id, id));
+}
+
+/** What `forceEvent` did with an event. */
+export type ForceOutcome =
+  /** Every handler succeeded now. */
+  | 'processed'
+  /** A handler failed again: it waits for its next attempt, or was given up on once more. */
+  | 'failed'
+  /** Someone else is running it at this moment. */
+  | 'running'
+  /** Done before: there is nothing left to run. */
+  | 'already_processed'
+  | 'not_found';
+
+/**
+ * An admin's "run it now": makes the event due and dispatches it at once, instead of waiting for
+ * its backoff. A given-up event gets a fresh round of `MAX_ATTEMPTS`. The handlers that already
+ * succeeded are not run again (`handledBy`), so it is as safe as the sweeper's own retry. Refused
+ * while another dispatcher holds the lease, and a processed event has nothing to run. The one
+ * conditional UPDATE is what makes it due, so it cannot race the sweeper. Each forced run is
+ * recorded (`EventForced`) for the audit log.
+ */
+export async function forceEvent(
+  db: AnyDb,
+  handlers: readonly Handler[],
+  id: string,
+  adminId: string,
+  now = new Date(),
+  log: Logger = logger,
+): Promise<ForceOutcome> {
+  const [row] = await db
+    .update(events)
+    .set({
+      attempts: sql`CASE WHEN ${events.failedAt} IS NOT NULL THEN 0 ELSE ${events.attempts} END`,
+      failedAt: null,
+      nextAttemptAt: now,
+    })
+    .where(
+      and(
+        eq(events.id, id),
+        isNull(events.processedAt),
+        or(isNull(events.claimedUntil), lte(events.claimedUntil, now)),
+      ),
+    )
+    .returning({ type: events.type });
+  if (!row) {
+    const [found] = await db
+      .select({ processedAt: events.processedAt })
+      .from(events)
+      .where(eq(events.id, id));
+    if (!found) return 'not_found';
+    return found.processedAt ? 'already_processed' : 'running';
+  }
+
+  log.info('event.forced', { event: 'event.forced', eventId: id, eventType: row.type, adminId });
+  const recorded = await recordEvent(
+    db,
+    { type: 'EventForced', actorId: adminId, payload: { eventId: id, eventType: row.type } },
+    { now },
+  );
+  await dispatchEvent(db, handlers, id, now, log);
+  await dispatchEvent(db, handlers, recorded, now, log);
+
+  const [after] = await db
+    .select({ processedAt: events.processedAt })
+    .from(events)
+    .where(eq(events.id, id));
+  return after?.processedAt ? 'processed' : 'failed';
+}
+
+/** How many given-up events one "run them all" takes up: a bound, so one request stays short. */
+export const RETRY_ALL_LIMIT = 25;
+
+/**
+ * "Run all the failed ones": forces the given-up events, oldest first, up to `RETRY_ALL_LIMIT`,
+ * each one recorded as `EventForced`. Returns how many it ran and how many of those went
+ * through; `remaining` is what is still given up on after this call.
+ */
+export async function forceFailedEvents(
+  db: AnyDb,
+  handlers: readonly Handler[],
+  adminId: string,
+  now = new Date(),
+  log: Logger = logger,
+) {
+  const rows = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(and(isNull(events.processedAt), isNotNull(events.failedAt)))
+    .orderBy(asc(events.createdAt))
+    .limit(RETRY_ALL_LIMIT);
+
+  let processed = 0;
+  for (const { id } of rows) {
+    if ((await forceEvent(db, handlers, id, adminId, now, log)) === 'processed') processed++;
+  }
+  const [{ remaining }] = await db
+    .select({ remaining: sql<number>`count(*)`.mapWith(Number) })
+    .from(events)
+    .where(and(isNull(events.processedAt), isNotNull(events.failedAt)));
+
+  return { tried: rows.length, processed, remaining };
 }
 
 /**

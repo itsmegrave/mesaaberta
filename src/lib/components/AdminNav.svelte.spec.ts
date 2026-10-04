@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import AdminNav from './AdminNav.svelte';
 
-const counts = { reports: 3, queue: 0, connections: 1 };
+const counts = { reports: 3, queue: 0, connections: 1, events: 0 };
 
 describe('AdminNav', () => {
   beforeEach(async () => {

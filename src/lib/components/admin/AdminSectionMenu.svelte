@@ -11,7 +11,9 @@
   import { getLocale } from '$lib/paraglide/runtime';
 
   const locale = getLocale();
-  const counts = $derived(page.data.adminCounts ?? { reports: 0, queue: 0, connections: 0 });
+  const counts = $derived(
+    page.data.adminCounts ?? { reports: 0, queue: 0, connections: 0, events: 0 },
+  );
   const groups = $derived(adminGroups(counts));
   const current = $derived(sectionOf(groups, page.route.id));
   const waiting = $derived(counts.reports + counts.queue + counts.connections);
