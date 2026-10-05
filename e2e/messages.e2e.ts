@@ -20,13 +20,17 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
 
   // Before joining: a direct message to the GM.
   await playerPage.goto(`/tables/${slug}`);
+  // The floating chat mounts after hydration; wait before opening the client-side menu.
+  await expect(playerPage.getByRole('button', { name: 'Abrir chat' })).toBeVisible();
   await chooseFromMenu(playerPage, 'Mandar mensagem ao mestre');
   await expect(playerPage).toHaveURL(/\/messages\/[0-9a-f-]+/);
   await playerPage.getByRole('textbox', { name: 'Mensagem' }).fill('Ainda tem vaga?');
   await playerPage.keyboard.press('Enter');
   await expect(playerPage.getByRole('log').getByText('Ainda tem vaga?')).toBeVisible();
-  // The thread renders optimistically; wait for persistence before opening the GM's inbox.
+  // The optimistic bubble appears before the write; wait for confirmation before reading
+  // the other person's inbox or navigating away from a message that is still in flight.
   await expect(playerPage.getByText('Enviando…', { exact: true })).toHaveCount(0);
+  await expect(playerPage.getByText('Não enviada', { exact: true })).toHaveCount(0);
 
   // The GM sees it on the bell and in the inbox, and answers.
   const gmPage = gmSession.page;
@@ -36,6 +40,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await gmPage.getByRole('textbox', { name: 'Mensagem' }).fill('Tem, sim. Pode pedir!');
   await gmPage.keyboard.press('Enter');
   await expect(gmPage.getByRole('log').getByText('Tem, sim. Pode pedir!')).toBeVisible();
+  await expect(gmPage.getByText('Enviando…', { exact: true })).toHaveCount(0);
 
   // The answer reaches the player without a reload (the thread polls).
   await expect(playerPage.getByRole('log').getByText('Tem, sim. Pode pedir!')).toBeVisible({
@@ -51,6 +56,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await playerPage.getByRole('textbox', { name: 'Mensagem' }).fill('Cheguei!');
   await playerPage.keyboard.press('Enter');
   await expect(playerPage.getByRole('log').getByText('Cheguei!')).toBeVisible();
+  await expect(playerPage.getByText('Enviando…', { exact: true })).toHaveCount(0);
 
   // The full-page chat stays separate; the same conversations work in the drawer.
   await expect(playerPage.getByRole('button', { name: 'Abrir chat' })).toHaveCount(0);
@@ -60,21 +66,34 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
     const trigger = playerPage.getByRole('button', { name: 'Abrir chat' });
     await trigger.click();
     const drawer = playerPage.getByRole('dialog', { name: 'Mensagens' });
+    const bounds = await drawer.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.height).toBeLessThan(800 - 48);
+    expect(bounds!.width).toBeLessThanOrEqual(384);
+    expect(bounds!.x).toBeGreaterThan(0);
+    expect(bounds!.y).toBeGreaterThan(0);
+    await expect(drawer).not.toHaveAttribute('aria-modal', 'true');
+    // The compact window leaves the page usable, without dismissing the conversation.
+    await playerPage.getByRole('contentinfo').getByRole('link', { name: 'itsmegrave' }).focus();
+    await expect(drawer).toBeVisible();
     // Nothing is unread, so the drawer opens on "Diretas"; the table chat is in "Mesas".
     await drawer.getByRole('tab', { name: /^Mesas/ }).click();
     await drawer.getByRole('link', { name: new RegExp(title) }).click();
     await expect(drawer.getByRole('textbox', { name: 'Mensagem' })).toBeVisible();
-    await drawer.getByRole('textbox', { name: 'Mensagem' }).fill(`Drawer ${width} `);
+    const composer = drawer.getByRole('textbox', { name: 'Mensagem' });
+    await composer.fill(`Drawer ${width}`);
     await drawer.getByRole('button', { name: 'Escolher emoji' }).click();
     await drawer.getByRole('combobox', { name: 'Procurar' }).fill('dado');
     await drawer.getByRole('option', { name: /dado/ }).first().click();
-    // The emoji list took the focus: send from the box itself.
-    await drawer.getByRole('textbox', { name: 'Mensagem' }).press('Enter');
-    await expect(drawer.getByRole('log').getByText(`Drawer ${width} 🎲`)).toBeVisible();
+    await expect(composer).toHaveValue(`Drawer ${width}🎲`);
+    await expect(composer).toBeFocused();
+    await composer.press('Enter');
+    await expect(drawer.getByRole('log').getByText(`Drawer ${width}🎲`)).toBeVisible();
     await expect(drawer.getByText('Enviando…', { exact: true })).toHaveCount(0);
     expect(await drawer.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
       true,
     );
+    await playerPage.screenshot({ path: test.info().outputPath(`chat-window-${width}.png`) });
     await playerPage.keyboard.press('Escape');
     await expect(trigger).toBeFocused();
   }
@@ -96,6 +115,7 @@ test('turning direct messages off hides "Mandar mensagem ao mestre"', async ({ b
   const player = await createUser('Duda');
   const playerSession = await asUser(browser, player);
   await playerSession.page.goto(`/tables/${slug}`);
+  await expect(playerSession.page.getByRole('button', { name: 'Abrir chat' })).toBeVisible();
   await pageMenu(playerSession.page).click();
   await expect(playerSession.page.getByRole('menuitem', { name: 'Copiar link' })).toBeVisible();
   await expect(
