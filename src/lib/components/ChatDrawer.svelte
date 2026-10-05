@@ -109,7 +109,7 @@
         >
           <!-- Leave room for the mobile navigation and keep the floating window inside short viewports. -->
           <Dialog.Content
-            class="pointer-events-auto flex h-144 max-h-[calc(100dvh-8rem)] w-96 max-w-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-surface-200-800 bg-surface-50-950 p-3 shadow-2xl md:max-h-[calc(100dvh-3rem)] md:p-4"
+            class="pointer-events-auto flex h-144 max-h-[calc(100dvh-8rem)] w-96 max-w-full min-w-0 flex-col overflow-x-hidden rounded-xl border border-surface-200-800 bg-surface-50-950 p-4 shadow-2xl md:max-h-[calc(100dvh-3rem)] md:p-4"
           >
             <div class="mb-4 flex shrink-0 items-center justify-between gap-2">
               <Dialog.Title class="min-w-0 flex-1 truncate text-xl font-semibold"
