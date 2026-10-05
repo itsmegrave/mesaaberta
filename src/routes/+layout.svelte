@@ -127,7 +127,6 @@
       <div class="sticky top-0 z-20 hidden h-dvh shrink-0 md:block">
         <SideNav
           account={data.account}
-          released={data.released}
           authEnabled={data.authEnabled}
           unread={badges.data?.unread ?? data.account?.notifications.unread ?? 0}
           latest={data.account?.notifications.latest ?? []}
@@ -166,7 +165,7 @@
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
               />
-            {:else if data.authEnabled && data.released}
+            {:else if data.authEnabled}
               <a
                 href={resolve('/login')}
                 class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
@@ -221,7 +220,7 @@
         {/if}
       </main>
 
-      {#if data.released && !data.maintenance}
+      {#if !data.maintenance}
         <BottomTabBar isAdmin={data.account?.isAdmin} />
       {/if}
 

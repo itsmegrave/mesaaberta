@@ -19,16 +19,16 @@ describe('createFlags', () => {
     ).toBe(true);
   });
   it('uses the value GrowthBook serves', async () => {
-    const flags = createFlags(serving({ is_platform_released: { defaultValue: true } }));
+    const flags = createFlags(serving({ use_table_image: { defaultValue: true } }));
 
-    expect(await flags.isEnabled('is_platform_released')).toBe(true);
+    expect(await flags.isEnabled('use_table_image')).toBe(true);
   });
 
   it('forces every flag on without loading GrowthBook when the local override is enabled', async () => {
-    const load = vi.fn(serving({ is_platform_released: { defaultValue: false } }));
+    const load = vi.fn(serving({ use_table_image: { defaultValue: false } }));
     const flags = createFlags(load, { forceAll: true });
 
-    expect(await flags.isEnabled('is_platform_released')).toBe(true);
+    expect(await flags.isEnabled('use_table_image')).toBe(true);
     expect(load).not.toHaveBeenCalled();
   });
 
@@ -42,11 +42,11 @@ describe('createFlags', () => {
     const load = vi.fn(serving({ maintenance_mode: { defaultValue: false } }));
     const flags = createFlags(load, {
       forceAll: true,
-      overrides: { maintenance_mode: true, is_platform_released: false },
+      overrides: { maintenance_mode: true, use_table_image: false },
     });
 
     expect(await flags.isEnabled('maintenance_mode')).toBe(true);
-    expect(await flags.isEnabled('is_platform_released')).toBe(false);
+    expect(await flags.isEnabled('use_table_image')).toBe(false);
     expect(load).not.toHaveBeenCalled();
   });
 
@@ -59,7 +59,7 @@ describe('createFlags', () => {
   it('falls back to the safe default when no payload is available', async () => {
     const flags = createFlags(async () => null);
 
-    expect(await flags.isEnabled('is_platform_released')).toBe(false);
+    expect(await flags.isEnabled('use_table_image')).toBe(false);
   });
 
   it('falls back to the safe default when the loader throws', async () => {
@@ -67,18 +67,18 @@ describe('createFlags', () => {
       throw new Error('boom');
     });
 
-    expect(await flags.isEnabled('is_platform_released')).toBe(false);
+    expect(await flags.isEnabled('use_table_image')).toBe(false);
   });
 
   it('falls back to the safe default for a flag GrowthBook does not know yet', async () => {
     const flags = createFlags(serving({}));
 
-    expect(await flags.isEnabled('is_platform_released')).toBe(false);
+    expect(await flags.isEnabled('use_table_image')).toBe(false);
   });
 
   it('evaluates targeting rules against the attributes it is given', async () => {
     const features = {
-      is_platform_released: {
+      use_table_image: {
         defaultValue: false,
         rules: [{ condition: { role: 'admin' }, force: true }],
       },
@@ -86,16 +86,16 @@ describe('createFlags', () => {
 
     const flags = createFlags(serving(features));
 
-    expect(await flags.isEnabled('is_platform_released', { role: 'admin' })).toBe(true);
-    expect(await flags.isEnabled('is_platform_released', { role: 'member' })).toBe(false);
+    expect(await flags.isEnabled('use_table_image', { role: 'admin' })).toBe(true);
+    expect(await flags.isEnabled('use_table_image', { role: 'member' })).toBe(false);
   });
 
   it('loads the payload only once, however many flags are read', async () => {
-    const load = vi.fn(serving({ is_platform_released: { defaultValue: true } }));
+    const load = vi.fn(serving({ use_table_image: { defaultValue: true } }));
     const flags = createFlags(load);
 
-    await flags.isEnabled('is_platform_released');
-    await flags.isEnabled('is_platform_released');
+    await flags.isEnabled('use_table_image');
+    await flags.isEnabled('use_table_image');
 
     expect(load).toHaveBeenCalledTimes(1);
   });
@@ -135,25 +135,25 @@ describe('shouldForceAllFlags', () => {
   });
 
   it('keeps evaluating flags normally when the bypass is off', async () => {
-    const flags = createFlags(serving({ is_platform_released: { defaultValue: false } }), {
+    const flags = createFlags(serving({ use_table_image: { defaultValue: false } }), {
       forceAll: shouldForceAllFlags(on, 'mesaaberta.app'),
     });
 
-    expect(await flags.isEnabled('is_platform_released')).toBe(false);
+    expect(await flags.isEnabled('use_table_image')).toBe(false);
   });
 });
 
 describe('flagOverrides', () => {
-  const env = { FEATURE_FLAG_OVERRIDES: 'maintenance_mode=true, is_platform_released = false' };
+  const env = { FEATURE_FLAG_OVERRIDES: 'maintenance_mode=true, use_table_image = false' };
 
   it('reads the fixed values on a loopback host', () => {
     expect(flagOverrides(env, 'localhost')).toEqual({
       maintenance_mode: true,
-      is_platform_released: false,
+      use_table_image: false,
     });
     expect(flagOverrides(env, '127.0.0.1')).toEqual({
       maintenance_mode: true,
-      is_platform_released: false,
+      use_table_image: false,
     });
   });
 

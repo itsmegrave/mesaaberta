@@ -15,7 +15,6 @@ export const load: LayoutServerLoad = async (event) => {
   if (route.id === '/maintenance') {
     return {
       authEnabled,
-      released: false,
       maintenance: true,
       maintenanceBypass: false,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
@@ -26,9 +25,6 @@ export const load: LayoutServerLoad = async (event) => {
   }
   // An admin still uses the site while it is down, with a banner saying so.
   const maintenanceBypass = locals.maintenance === 'bypass';
-
-  // The Mesas link appears once the platform is released. The pages exist before that, unlinked.
-  const released = await locals.flags.isEnabled('is_platform_released');
 
   try {
     const profile = await locals.getProfile();
@@ -48,7 +44,6 @@ export const load: LayoutServerLoad = async (event) => {
       authEnabled,
       cacheIdentity,
       accountRead,
-      released,
       maintenance: false,
       maintenanceBypass,
       // Every time on the site is shown in this zone.
@@ -69,7 +64,6 @@ export const load: LayoutServerLoad = async (event) => {
     locals.log.error('layout: could not load the profile', { error });
     return {
       authEnabled,
-      released,
       maintenance: false,
       maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
