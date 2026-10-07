@@ -200,3 +200,25 @@ describe('readRemoteImage', () => {
     ).toBeNull();
   });
 });
+
+describe('readMeta attributes', () => {
+  const base = new URL('https://catarse.me/projeto');
+
+  it('reads double, single and unquoted values and ignores case in names', () => {
+    const meta = readMeta(
+      `<head><META PROPERTY='og:title' CONTENT=Sem&amp;Aspas><meta property=og:image content="/a.png"></head>`,
+      base,
+    );
+
+    expect(meta).toEqual({ title: 'Sem&Aspas', imageUrl: 'https://catarse.me/a.png' });
+  });
+
+  it('survives stray quotes, slashes and bare words inside a tag', () => {
+    const meta = readMeta(
+      `<head><meta " ' / disabled property = "og:title" content = "Ainda lê" /></head>`,
+      base,
+    );
+
+    expect(meta.title).toBe('Ainda lê');
+  });
+});

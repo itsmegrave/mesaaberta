@@ -14,6 +14,7 @@ import {
   fileCrowdfundingReport,
   findListedByUrl,
   listCrowdfundings,
+  takeLinkRead,
 } from './service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -426,5 +427,29 @@ describe('listAdminCrowdfundings', () => {
     await expect(
       listAdminCrowdfundings(test.db, bruno, new URLSearchParams()),
     ).rejects.toBeInstanceOf(Forbidden);
+  });
+});
+
+describe('takeLinkRead', () => {
+  it('lets a member read a link 30 times an hour, then refuses and says when to try again', async () => {
+    for (let n = 0; n < 30; n++) await takeLinkRead(test.db, ana.id, { now });
+
+    await expect(takeLinkRead(test.db, ana.id, { now })).rejects.toBeInstanceOf(RateLimited);
+    // Another member has their own allowance.
+    await expect(takeLinkRead(test.db, bruno.id, { now })).resolves.toBeUndefined();
+  });
+
+  it('frees up once the hour has passed', async () => {
+    for (let n = 0; n < 30; n++) await takeLinkRead(test.db, ana.id, { now });
+
+    const later = new Date(now.getTime() + 3_601_000);
+    await expect(takeLinkRead(test.db, ana.id, { now: later })).resolves.toBeUndefined();
+  });
+
+  it('is not shown in the admin audit trail, which lists only decisions', async () => {
+    await takeLinkRead(test.db, ana.id, { now });
+
+    const [row] = await test.db.select().from(events);
+    expect(row).toMatchObject({ type: 'CrowdfundingLinkRead', actorId: ana.id, payload: {} });
   });
 });

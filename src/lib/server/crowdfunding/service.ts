@@ -26,9 +26,26 @@ import { publicName } from '../db/public-name';
 import { crowdfundings, profiles, reports } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
-import { CROWDFUNDING_LIMIT, enforceRateLimit, REPORT_LIMIT } from '../rate-limit';
+import { CROWDFUNDING_LIMIT, enforceRateLimit, LINK_READ_LIMIT, REPORT_LIMIT } from '../rate-limit';
 
 export type CrowdfundingInput = Omit<CrowdfundingFormInput, 'image'>;
+
+/**
+ * Takes one of a member's link reads before the server fetches an address for them, under a lock,
+ * so simultaneous requests cannot all slip through. Every path that fetches a member's link (the
+ * preview endpoint and the add form) goes through here. Throws `RateLimited` past LINK_READ_LIMIT.
+ */
+export async function takeLinkRead(
+  db: AnyDb,
+  actorId: string,
+  { now = new Date() }: { now?: Date } = {},
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const t = tx as unknown as AnyDb;
+    await enforceRateLimit(t, actorId, LINK_READ_LIMIT, now);
+    await recordEvent(t, { type: 'CrowdfundingLinkRead', actorId, payload: {} }, { now });
+  });
+}
 
 /**
  * A member adds a campaign: public at once, credited to them, its platform read from the link.

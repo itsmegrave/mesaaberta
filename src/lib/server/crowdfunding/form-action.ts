@@ -10,7 +10,7 @@ import { IMAGE_BUCKET } from '../images';
 import { CROWDFUNDING_LIMIT, checkRateLimit } from '../rate-limit';
 import { campaignImagePath } from './image';
 import { readLinkPreview } from './link-preview';
-import { addCrowdfunding, findListedByUrl } from './service';
+import { addCrowdfunding, findListedByUrl, takeLinkRead } from './service';
 
 export const NEW_CROWDFUNDING_VALUES = {
   url: '',
@@ -68,7 +68,17 @@ export async function handleCrowdfundingForm({
     if (existing) return refuse(form, 400, 'already_listed', 'url');
 
     const upload = form.data.image;
-    const pageImageUrl = !upload && link ? (await readLinkPreview(link)).imageUrl : null;
+    // The page's own picture is only a convenience: a member past the link-read limit just gets none,
+    // so the page is never fetched more often than the preview endpoint would allow.
+    let pageImageUrl: string | null = null;
+    if (!upload && link && actor) {
+      try {
+        await takeLinkRead(db, actor.id);
+        pageImageUrl = (await readLinkPreview(link)).imageUrl;
+      } catch (error) {
+        if (!(error instanceof RateLimited)) throw error;
+      }
+    }
     const imagePath = await campaignImagePath(locals.supabase?.storage.from(IMAGE_BUCKET), {
       upload,
       pageImageUrl,

@@ -171,13 +171,38 @@ const MAX_META_TAGS = 200;
 const MAX_TAG_LENGTH = 2_000;
 const MAX_TITLE_LENGTH = 500;
 
+const isSpace = (char: string) =>
+  char === ' ' || char === '\n' || char === '\t' || char === '\r' || char === '\f';
+
+/** The `name="value"` pairs of a tag, read in one left-to-right pass (no pattern, so no backtracking). */
 const attributesOf = (tag: string) => {
   const found = new Map<string, string>();
-  for (const [, name, double, single, bare] of tag.matchAll(
-    /([^\s=/>"']+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))/g,
-  )) {
-    const key = name.toLowerCase();
-    if (!found.has(key)) found.set(key, decodeEntities(double ?? single ?? bare ?? ''));
+  let i = 0;
+  while (i < tag.length) {
+    while (i < tag.length && (isSpace(tag[i]) || tag[i] === '/')) i++;
+    const nameStart = i;
+    while (i < tag.length && !isSpace(tag[i]) && !'=/>"\''.includes(tag[i])) i++;
+    const name = tag.slice(nameStart, i).toLowerCase();
+    while (i < tag.length && isSpace(tag[i])) i++;
+    if (tag[i] !== '=') {
+      // A bare word (or a stray quote): skip it and look for the next name.
+      if (i === nameStart) i++;
+      continue;
+    }
+    i++;
+    while (i < tag.length && isSpace(tag[i])) i++;
+    const quote = tag[i] === '"' || tag[i] === "'" ? tag[i] : null;
+    if (quote) i++;
+    const valueStart = i;
+    if (quote) {
+      const close = tag.indexOf(quote, i);
+      i = close === -1 ? tag.length : close;
+    } else {
+      while (i < tag.length && !isSpace(tag[i])) i++;
+    }
+    const value = tag.slice(valueStart, i);
+    if (quote) i++;
+    if (name && !found.has(name)) found.set(name, decodeEntities(value));
   }
   return found;
 };
