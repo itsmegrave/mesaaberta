@@ -165,24 +165,59 @@ const decodeEntities = (text: string) =>
     return ENTITIES[entity.toLowerCase()] ?? whole;
   });
 
-const attributeOf = (tag: string, name: string) => {
-  const found = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
-  return found ? decodeEntities(found[1] ?? found[2] ?? found[3] ?? '') : null;
+// The page is untrusted and up to 256 KB, so it is scanned with `indexOf` and a bounded slice per
+// tag, never with a pattern that can backtrack over the whole document.
+const MAX_META_TAGS = 200;
+const MAX_TAG_LENGTH = 2_000;
+const MAX_TITLE_LENGTH = 500;
+
+const attributesOf = (tag: string) => {
+  const found = new Map<string, string>();
+  for (const [, name, double, single, bare] of tag.matchAll(
+    /([^\s=/>"']+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))/g,
+  )) {
+    const key = name.toLowerCase();
+    if (!found.has(key)) found.set(key, decodeEntities(double ?? single ?? bare ?? ''));
+  }
+  return found;
 };
+
+/** Each `<meta ...>` tag of `html`, found in one pass: at most MAX_META_TAGS, each at most MAX_TAG_LENGTH. */
+function* metaTags(html: string) {
+  const lower = html.toLowerCase();
+  let from = 0;
+  for (let count = 0; count < MAX_META_TAGS; count++) {
+    const start = lower.indexOf('<meta', from);
+    if (start === -1) return;
+    const end = lower.indexOf('>', start);
+    if (end === -1) return;
+    from = end + 1;
+    if (end - start <= MAX_TAG_LENGTH) yield html.slice(start + 5, end);
+  }
+}
+
+function titleOf(html: string): string | null {
+  const lower = html.toLowerCase();
+  const open = lower.indexOf('<title');
+  if (open === -1) return null;
+  const start = lower.indexOf('>', open);
+  const end = start === -1 ? -1 : lower.indexOf('</title>', start);
+  if (end === -1) return null;
+  return html.slice(start + 1, Math.min(end, start + 1 + MAX_TITLE_LENGTH));
+}
 
 /** The title and picture a page declares: Open Graph first, then Twitter's, then the <title>. */
 export function readMeta(html: string, base: URL): LinkPreview {
-  const head = html.slice(
-    0,
-    html.search(/<\/head>/i) === -1 ? undefined : html.search(/<\/head>/i),
-  );
+  const headEnd = html.toLowerCase().indexOf('</head>');
+  const head = headEnd === -1 ? html : html.slice(0, headEnd);
   const meta = new Map<string, string>();
-  for (const tag of head.match(/<meta\b[^>]*>/gi) ?? []) {
-    const key = (attributeOf(tag, 'property') ?? attributeOf(tag, 'name'))?.toLowerCase();
-    const content = attributeOf(tag, 'content');
+  for (const tag of metaTags(head)) {
+    const attributes = attributesOf(tag);
+    const key = (attributes.get('property') ?? attributes.get('name'))?.toLowerCase();
+    const content = attributes.get('content');
     if (key && content && !meta.has(key)) meta.set(key, content.trim());
   }
-  const titleTag = head.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
+  const titleTag = titleOf(head);
   const title =
     meta.get('og:title') ??
     meta.get('twitter:title') ??

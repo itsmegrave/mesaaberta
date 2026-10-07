@@ -16,11 +16,12 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 
   const profile = await locals.getProfile();
   const supabase = supabaseUrlOf(platform?.env);
-  const card = ({ imagePath, ...campaign }: (typeof list.running)[number]) => ({
+  // The submitter's id stays on the server: the page needs their handle and whether they may be reported.
+  const card = ({ imagePath, submitterId, ...campaign }: (typeof list.running)[number]) => ({
     ...campaign,
     imageUrl: imageUrl(supabase, imagePath),
     // Only a member can report, and not their own: the button is offered only where it would work.
-    canReport: can(profile, 'crowdfunding:report', { submitterId: campaign.submitterId }),
+    canReport: can(profile, 'crowdfunding:report', { submitterId }),
   });
   return {
     filters,

@@ -53,6 +53,14 @@ export const CROWDFUNDING_LIMIT = {
   windowSeconds: 86_400,
 } as const satisfies RateLimit;
 
+// Reading a link makes this server fetch an address a member typed. Filling one form takes a few
+// reads (a mistyped link is read again); a script walking addresses takes hundreds.
+export const LINK_READ_LIMIT = {
+  events: ['CrowdfundingLinkRead'],
+  max: 30,
+  windowSeconds: 3600,
+} as const satisfies RateLimit;
+
 /**
  * Throws `RateLimited` when `actorId` already used `limit` up in the window ending at `now`,
  * telling how long until one use ages out. An event is in the window while it is younger than

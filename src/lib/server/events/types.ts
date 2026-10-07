@@ -56,6 +56,9 @@ export type DomainEvent =
   | { type: 'ReportDismissed'; payload: ReportClosure }
   // A member added a crowdfunding campaign. It is public at once; nobody is told.
   | { type: 'CrowdfundingAdded'; payload: CrowdfundingFact }
+  // The server read a campaign link for a member (to fill the name). No handler listens to it: it
+  // only counts against the rate limit, and the address itself is not kept.
+  | { type: 'CrowdfundingLinkRead'; payload: Record<string, never> }
   // An admin took a campaign down. `submitterId` is who is told, with the reason.
   | { type: 'CrowdfundingRemoved'; payload: CrowdfundingRemoval }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the

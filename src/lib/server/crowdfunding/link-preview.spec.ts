@@ -32,6 +32,26 @@ describe('readMeta', () => {
 
     expect(meta.title).toBeNull();
   });
+
+  it('reads a hostile page in linear time: tags that never close, attributes that never end', () => {
+    const started = performance.now();
+
+    const unclosedMeta = readMeta('<head>' + '<meta a=b '.repeat(25_000), base);
+    const unclosedTitle = readMeta('<head>' + '<title>x'.repeat(30_000), base);
+    const noEquals = readMeta('<head><meta ' + 'a'.repeat(200_000) + '>', base);
+
+    expect(unclosedMeta).toEqual({ title: null, imageUrl: null });
+    expect(unclosedTitle.title).toBeNull();
+    expect(noEquals).toEqual({ title: null, imageUrl: null });
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+
+  it('keeps a title of a sane length and a tag that is within bounds', () => {
+    const long = readMeta(`<head><title>${'t'.repeat(5_000)}</title></head>`, base);
+
+    expect(long.title).toHaveLength(500);
+    expect(readMeta('<head><meta property="og:title" content="Ok"></head>', base).title).toBe('Ok');
+  });
 });
 
 describe('readLinkPreview', () => {
