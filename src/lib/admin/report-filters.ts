@@ -5,8 +5,8 @@ import { pageSizeOf, sortOf } from './list';
 export const REPORT_FILTERS = ['waiting', 'resolved', 'dismissed', 'all'] as const;
 export type ReportFilter = (typeof REPORT_FILTERS)[number];
 
-/** What a report is about: a table, a player, or either. */
-export const REPORT_TARGETS = ['all', 'table', 'player'] as const;
+/** What a report is about: a table, a player, a crowdfunding campaign, or any. */
+export const REPORT_TARGETS = ['all', 'table', 'player', 'crowdfunding'] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
 export const REPORT_SORTS = ['filed'] as const;

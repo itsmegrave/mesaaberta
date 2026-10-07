@@ -6,7 +6,7 @@ z.config({ jitless: true });
 // Shared by the report forms and the server. Keep in step with the `report_*` enums and checks in
 // src/lib/server/db/schema.ts.
 
-export const REPORT_TARGETS = ['table', 'player'] as const;
+export const REPORT_TARGETS = ['table', 'player', 'crowdfunding'] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
 export const REPORT_REASONS = [
@@ -15,8 +15,30 @@ export const REPORT_REASONS = [
   'inappropriate_content',
   'no_show',
   'other',
+  'broken_link',
+  'scam',
+  'off_topic',
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
+
+/** What a member can give for a table or a player. The rest of `REPORT_REASONS` are for campaigns. */
+export const TABLE_REPORT_REASONS = [
+  'spam',
+  'harassment',
+  'inappropriate_content',
+  'no_show',
+  'other',
+] as const satisfies readonly ReportReason[];
+
+/** What a member can give for a crowdfunding campaign, and what an admin can remove one for. */
+export const CROWDFUNDING_REPORT_REASONS = [
+  'broken_link',
+  'scam',
+  'off_topic',
+  'spam',
+  'inappropriate_content',
+  'other',
+] as const satisfies readonly ReportReason[];
 
 // `open` and `reviewing` are still waiting on an admin; the other two are closed.
 export const REPORT_STATUSES = ['open', 'reviewing', 'resolved', 'dismissed'] as const;
@@ -34,12 +56,19 @@ const uuid = z.uuid();
 
 /** What a member sends: the table it happened at, and the player when the report is about one. */
 export const reportSchema = z.object({
-  targetType: z.enum(REPORT_TARGETS),
+  targetType: z.enum(['table', 'player']),
   playerId: z.union([z.literal(''), uuid]),
-  reason: z.enum(REPORT_REASONS),
+  reason: z.enum(TABLE_REPORT_REASONS),
   details: z.string().trim().max(REPORT_DETAILS_MAX),
 });
 export type ReportInput = z.output<typeof reportSchema>;
+
+/** What a member sends about a crowdfunding campaign, which names no table and no player. */
+export const crowdfundingReportSchema = z.object({
+  reason: z.enum(CROWDFUNDING_REPORT_REASONS),
+  details: z.string().trim().max(REPORT_DETAILS_MAX),
+});
+export type CrowdfundingReportInput = z.output<typeof crowdfundingReportSchema>;
 
 /** An admin closing a report: accepted (`resolved`) or dismissed, with an optional note. */
 export const closeReportSchema = z.object({

@@ -255,7 +255,7 @@ export async function closeReportedTable(
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     const report = await reportForDecision(t, id);
-    if (report.targetType !== 'table') throw new Invalid('id', 'not_found');
+    if (report.targetType !== 'table' || !report.tableId) throw new Invalid('id', 'not_found');
     const [table] = await t
       .select()
       .from(gameTables)
