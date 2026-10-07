@@ -19,7 +19,9 @@ test.describe('crowdfunding list, anonymous', () => {
     await expect(page).toHaveURL(/\/login\?next=%2Fcrowdfunding%2Fnew/);
   });
 
-  test('the link reader, which fetches addresses for a member, refuses a visitor', async ({ request }) => {
+  test('the link reader, which fetches addresses for a member, refuses a visitor', async ({
+    request,
+  }) => {
     const reader = await request.get('/crowdfunding/preview?url=https://catarse.me/x', {
       maxRedirects: 0,
     });
