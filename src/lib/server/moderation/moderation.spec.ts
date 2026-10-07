@@ -271,7 +271,13 @@ describe('the report queue', () => {
     const aboutPlayer = await reportDetail(test.db, admin, playerReportId);
     expect(aboutPlayer?.player).toMatchObject({ id: id(3) });
     expect(aboutPlayer?.reporter.id).toBe(id(2));
-    expect(aboutPlayer?.can).toEqual({ review: true, close: true, closeTable: false, ban: true });
+    expect(aboutPlayer?.can).toEqual({
+      review: true,
+      close: true,
+      closeTable: false,
+      removeCrowdfunding: false,
+      ban: true,
+    });
 
     await fileReport(test.db, member(2), table.slug, { ...tableReport, details: '' });
     const [tableReportRow] = await test.db
@@ -280,7 +286,13 @@ describe('the report queue', () => {
       .where(eq(reports.targetType, 'table'));
     const aboutTable = await reportDetail(test.db, admin, tableReportRow.id);
     // Reporting a table bans no one from here: its GM is banned from their own page.
-    expect(aboutTable?.can).toEqual({ review: true, close: true, closeTable: true, ban: false });
+    expect(aboutTable?.can).toEqual({
+      review: true,
+      close: true,
+      closeTable: true,
+      removeCrowdfunding: false,
+      ban: false,
+    });
   });
 });
 

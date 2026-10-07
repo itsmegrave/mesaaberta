@@ -7,10 +7,12 @@ import {
   closeReportSchema,
   closeTableByIdSchema,
   closeTableSchema,
+  removeCrowdfundingSchema,
   reportIdSchema,
 } from '$lib/moderation/reports';
 import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
+import { removeCrowdfunding } from '../crowdfunding/admin';
 import { Invalid } from '../errors';
 import {
   banAccount,
@@ -61,6 +63,14 @@ export const reportActions = {
     (db, actor, { id, note }) => closeReportedTable(db, actor, id, note),
     admin,
   ),
+  // A campaign report: take the campaign down, which accepts this report with the others about it.
+  removeCrowdfunding: moderationAction(
+    removeCrowdfundingSchema,
+    ['id', 'reason', 'note', 'reportId'],
+    (db, actor, { id, reason, note, reportId }) =>
+      removeCrowdfunding(db, actor, id, { reason, note, reportId }),
+    admin,
+  ),
   // A player report: ban the reported profile, for a while or for good.
   ban: moderationAction(
     banFromReportSchema,
@@ -93,6 +103,16 @@ export const accountActions = {
     accountSchema,
     ['profileId'],
     (db, actor, { profileId }) => revokeBan(db, actor, profileId),
+    admin,
+  ),
+};
+
+/** Taking a campaign down from the crowdfunding list, `/admin/crowdfunding`. */
+export const crowdfundingActions = {
+  remove: moderationAction(
+    removeCrowdfundingSchema,
+    ['id', 'reason', 'note'],
+    (db, actor, { id, reason, note }) => removeCrowdfunding(db, actor, id, { reason, note }),
     admin,
   ),
 };

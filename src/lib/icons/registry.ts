@@ -58,6 +58,7 @@ import GlobeIcon from '@iconify-svelte/reicon/globe-filled';
 import GameDiceTwentyFacesTwentyIcon from '@iconify-svelte/game-icons/dice-twenty-faces-twenty';
 
 import GameBlackKnightHelmIcon from '@iconify-svelte/game-icons/black-knight-helm';
+import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
 import PanelLeftOpenIcon from '@iconify-svelte/reicon/sidebar-left-filled';
 import PanelLeftCloseIcon from '@iconify-svelte/reicon/sidebar-left-filled';
 import BoldIcon from '@iconify-svelte/reicon/text-bold-filled';
@@ -151,6 +152,7 @@ export const ICONS = {
   globe: GlobeIcon,
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:black-knight-helm': GameBlackKnightHelmIcon,
+  'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
   'panel-left-open': PanelLeftOpenIcon,
   'panel-left-close': PanelLeftCloseIcon,
   bold: BoldIcon,

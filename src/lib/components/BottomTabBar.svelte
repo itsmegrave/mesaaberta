@@ -11,6 +11,7 @@
   const pathname = $derived(page.url.pathname);
 
   const isTablesActive = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
+  const isCrowdfundingActive = $derived(pathname.startsWith('/crowdfunding'));
   const isNewTableActive = $derived(pathname === '/tables/new');
   // Only the tables' own pages: the profile and the rest of the account are not "Minhas mesas".
   const isMyTablesActive = $derived(pathname.startsWith('/account/tables'));
@@ -36,6 +37,24 @@
       <Icon name="game-icons:tavern-sign" size={22} />
     </span>
     {m.nav_tables()}
+  </a>
+
+  <!-- Financiamentos coletivos: the short label fits the bar, the full name is what is announced -->
+  <a
+    href={localizedHref('/crowdfunding', locale)}
+    aria-label={m.nav_crowdfunding_label()}
+    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isCrowdfundingActive
+      ? 'text-surface-950-50'
+      : 'text-muted hover:text-surface-950-50'}"
+  >
+    <span
+      class="flex h-7 w-14 items-center justify-center rounded-full {isCrowdfundingActive
+        ? 'bg-surface-200-800'
+        : 'bg-transparent'}"
+    >
+      <Icon name="game-icons:open-treasure-chest" size={22} />
+    </span>
+    {m.nav_crowdfunding_short()}
   </a>
 
   <!-- Abrir mesa -->

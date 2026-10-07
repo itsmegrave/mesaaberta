@@ -9,7 +9,7 @@ import {
 import { OPEN_REPORT_STATUSES, type ReportStatus } from '$lib/moderation/reports';
 import { authorize, can, type Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { events, gameTables, profiles, registrations, reports } from '../db/schema';
+import { crowdfundings, events, gameTables, profiles, registrations, reports } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { removeTableMember } from '../messages/service';
@@ -69,13 +69,20 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       table: gameTables.title,
       gm: gm.username,
       player: reported.username,
+      // The campaign a crowdfunding report is about: it has no table.
+      crowdfunding: crowdfundings.name,
       reporter: reporter.username,
     })
     .from(reports)
-    .innerJoin(gameTables, eq(gameTables.id, reports.tableId))
-    .innerJoin(gm, eq(gm.id, gameTables.gmId))
+    // Left joins: a report about a campaign has no table, and must still be in the queue.
+    .leftJoin(gameTables, eq(gameTables.id, reports.tableId))
+    .leftJoin(gm, eq(gm.id, gameTables.gmId))
     .innerJoin(reporter, eq(reporter.id, reports.reporterId))
     .leftJoin(reported, and(eq(reports.targetType, 'player'), eq(reported.id, reports.targetId)))
+    .leftJoin(
+      crowdfundings,
+      and(eq(reports.targetType, 'crowdfunding'), eq(crowdfundings.id, reports.targetId)),
+    )
     .where(where)
     .orderBy(direction(reports.createdAt), direction(reports.id))
     .limit(filters.pageSize)
@@ -117,13 +124,34 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
     })
     .from(reports)
     .innerJoin(reporter, eq(reporter.id, reports.reporterId))
-    .innerJoin(gameTables, eq(gameTables.id, reports.tableId))
-    .innerJoin(gm, eq(gm.id, gameTables.gmId))
+    // Left joins: a report about a campaign has no table (nor a GM) and must still open.
+    .leftJoin(gameTables, eq(gameTables.id, reports.tableId))
+    .leftJoin(gm, eq(gm.id, gameTables.gmId))
     .where(eq(reports.id, id));
   if (!row) return null;
 
+  // The campaign a crowdfunding report is about, with who added it and whether it is still up.
+  const [campaign] =
+    row.report.targetType === 'crowdfunding'
+      ? await db
+          .select({
+            id: crowdfundings.id,
+            name: crowdfundings.name,
+            owner: crowdfundings.owner,
+            url: crowdfundings.url,
+            platform: crowdfundings.platform,
+            startsOn: crowdfundings.startsOn,
+            endsOn: crowdfundings.endsOn,
+            removedAt: crowdfundings.removedAt,
+            submitter: { id: profiles.id, username: profiles.username },
+          })
+          .from(crowdfundings)
+          .innerJoin(profiles, eq(profiles.id, crowdfundings.submitterId))
+          .where(eq(crowdfundings.id, row.report.targetId))
+      : [];
+
   const [player] =
-    row.report.targetType === 'player'
+    row.report.targetType === 'player' && row.table
       ? await db
           .select({
             id: reported.id,
@@ -149,10 +177,12 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
   return {
     ...row,
     player: player ?? null,
+    crowdfunding: campaign ?? null,
     can: {
       review: row.report.status === 'open',
       close: open,
-      closeTable: open && row.report.targetType === 'table' && row.table.status === 'active',
+      closeTable: open && row.report.targetType === 'table' && row.table?.status === 'active',
+      removeCrowdfunding: open && !!campaign && !campaign.removedAt,
       ban:
         open &&
         !!subjectProfile &&
@@ -255,7 +285,7 @@ export async function closeReportedTable(
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     const report = await reportForDecision(t, id);
-    if (report.targetType !== 'table') throw new Invalid('id', 'not_found');
+    if (report.targetType !== 'table' || !report.tableId) throw new Invalid('id', 'not_found');
     const [table] = await t
       .select()
       .from(gameTables)

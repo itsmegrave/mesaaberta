@@ -36,6 +36,11 @@ export function adminGroups(counts: AdminCounts): AdminGroup[] {
         { path: '/admin/tables', label: m.admin_tables(), icon: 'game-icons:tavern-sign' },
         { path: '/admin/users', label: m.admin_profile_list(), icon: 'game-icons:meeple' },
         { path: '/admin/catalog', label: m.admin_nav_catalog(), icon: 'tag' },
+        {
+          path: '/admin/crowdfunding',
+          label: m.admin_nav_crowdfunding(),
+          icon: 'game-icons:open-treasure-chest',
+        },
       ],
     },
     {

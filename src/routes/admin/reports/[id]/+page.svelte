@@ -3,12 +3,15 @@
   import AdminPage from '$lib/components/admin/AdminPage.svelte';
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
+  import { siteName } from '$lib/crowdfunding/labels';
   import { localizedHref } from '$lib/i18n/locales';
   import { reasonLabel } from '$lib/moderation/labels';
   import {
     banFromReportSchema,
     closeReportSchema,
     closeTableSchema,
+    CROWDFUNDING_REPORT_REASONS,
+    removeCrowdfundingSchema,
     reportIdSchema,
     RESOLUTION_NOTE_MAX,
   } from '$lib/moderation/reports';
@@ -27,11 +30,15 @@
     }).format(value);
   const handle = (username: string | null) =>
     username ? atHandle(username) : m.admin_profile_no_username();
-  const isTable = $derived(report.report.targetType === 'table');
+  const kind = $derived(report.report.targetType);
+  const isTable = $derived(kind === 'table');
+  const campaign = $derived(report.crowdfunding);
   const target = $derived(
-    isTable
-      ? m.admin_reports_target_table({ table: report.table.title })
-      : handle(report.player?.username ?? null),
+    kind === 'crowdfunding'
+      ? (campaign?.name ?? m.admin_report_crowdfunding_gone())
+      : isTable
+        ? m.admin_reports_target_table({ table: report.table?.title ?? '' })
+        : handle(report.player?.username ?? null),
   );
   const fields = $derived({ id: report.report.id });
   const note = {
@@ -63,9 +70,11 @@
     <p class="flex flex-wrap items-center gap-3">
       <StatusBadge status={`report:${report.report.status}` as Status} />
       <span class="text-sm text-muted">
-        {isTable ? m.admin_report_kind_table() : m.admin_report_kind_player()} · {reasonLabel(
-          report.report.reason,
-        )}
+        {kind === 'crowdfunding'
+          ? m.admin_report_kind_crowdfunding()
+          : isTable
+            ? m.admin_report_kind_table()
+            : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
       </span>
     </p>
   {/snippet}
@@ -80,7 +89,7 @@
         <dl class="mt-4 divide-y divide-surface-200-800 border-y border-surface-200-800">
           <div class={row}>
             <dt class="text-sm font-semibold text-muted">{m.report_reason()}</dt>
-            <dd>{reasonLabel(report.report.reason)}</dd>
+            <dd>{reasonLabel(report.report.reason, kind)}</dd>
           </div>
           <div class={row}>
             <dt class="text-sm font-semibold text-muted">{m.admin_report_details()}</dt>
@@ -146,41 +155,86 @@
               </dd>
             </div>
           {/if}
-          <div class={row}>
-            <dt class="text-sm font-semibold text-muted">
-              {isTable ? m.admin_report_table() : m.admin_report_where()}
-            </dt>
-            <dd class="flex flex-wrap items-center gap-2">
-              {#if report.table.status === 'disabled'}
-                <span class="font-semibold">{report.table.title}</span>
-              {:else}
+          {#if campaign}
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_report_crowdfunding()}</dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                <!-- The link a member shared: it leaves the site, so it opens apart and says so. -->
                 <a
                   class="anchor font-semibold"
-                  href={localizedHref(`/tables/${report.table.slug}`, locale)}
-                  >{report.table.title}</a
+                  href={campaign.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{campaign.name}<span class="sr-only">
+                    {m.crowdfunding_opens_new_tab({
+                      site: siteName(campaign.platform, campaign.url),
+                    })}</span
+                  ></a
                 >
-              {/if}
-              <StatusBadge status={`table:${report.table.status}` as Status} />
-            </dd>
-          </div>
-          <div class={row}>
-            <dt class="text-sm font-semibold text-muted">{m.admin_report_gm()}</dt>
-            <dd class="flex flex-wrap items-center gap-2">
-              <UserLink
-                username={report.gm.username}
-                label={handle(report.gm.username)}
-                class="font-semibold"
-              />
-              <a
-                class="ml-2 anchor text-sm"
-                href={localizedHref(`/admin/users/${report.gm.id}`, locale)}
-                >{m.admin_user_title()}</a
-              >
-              {#if report.gm.status === 'suspended'}
-                <StatusBadge status="user:banned" />
-              {/if}
-            </dd>
-          </div>
+                {#if campaign.removedAt}
+                  <span class="text-sm text-muted">{m.admin_crowdfunding_removed()}</span>
+                {/if}
+              </dd>
+            </div>
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.crowdfunding_owner_label()}</dt>
+              <dd>{campaign.owner}</dd>
+            </div>
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.crowdfunding_sent_by_label()}</dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                <UserLink
+                  username={campaign.submitter.username}
+                  label={handle(campaign.submitter.username)}
+                  class="font-semibold"
+                />
+                <a
+                  class="ml-2 anchor text-sm"
+                  href={localizedHref(`/admin/users/${campaign.submitter.id}`, locale)}
+                  >{m.admin_user_title()}</a
+                >
+              </dd>
+            </div>
+          {/if}
+          {#if report.table}
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">
+                {isTable ? m.admin_report_table() : m.admin_report_where()}
+              </dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                {#if report.table.status === 'disabled'}
+                  <span class="font-semibold">{report.table.title}</span>
+                {:else}
+                  <a
+                    class="anchor font-semibold"
+                    href={localizedHref(`/tables/${report.table.slug}`, locale)}
+                    >{report.table.title}</a
+                  >
+                {/if}
+                <StatusBadge status={`table:${report.table.status}` as Status} />
+              </dd>
+            </div>
+          {/if}
+          {#if report.gm}
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_report_gm()}</dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                <UserLink
+                  username={report.gm.username}
+                  label={handle(report.gm.username)}
+                  class="font-semibold"
+                />
+                <a
+                  class="ml-2 anchor text-sm"
+                  href={localizedHref(`/admin/users/${report.gm.id}`, locale)}
+                  >{m.admin_user_title()}</a
+                >
+                {#if report.gm.status === 'suspended'}
+                  <StatusBadge status="user:banned" />
+                {/if}
+              </dd>
+            </div>
+          {/if}
         </dl>
         {#if isTable}
           <p class="mt-4 text-sm text-muted">{m.admin_report_table_ban_hint()}</p>
@@ -196,6 +250,26 @@
       {#if !report.can.close}
         <p class="text-muted">{m.admin_report_nothing_left()}</p>
       {/if}
+      {#if report.can.removeCrowdfunding && campaign}
+        <ModerationDialog
+          action="?/removeCrowdfunding"
+          schema={removeCrowdfundingSchema}
+          fields={{ id: campaign.id, reportId: report.report.id }}
+          danger
+          reasons={CROWDFUNDING_REPORT_REASONS}
+          write={{
+            name: 'note',
+            label: m.admin_crowdfunding_remove_note(),
+            hint: m.admin_crowdfunding_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
+          }}
+          label={m.admin_crowdfunding_remove()}
+          title={m.admin_crowdfunding_remove_title({ name: campaign.name })}
+          text={m.admin_crowdfunding_remove_text()}
+          confirm={m.admin_crowdfunding_remove_confirm()}
+          success={m.admin_crowdfunding_remove_done()}
+          triggerClass={danger}
+        />
+      {/if}
       {#if report.can.closeTable}
         <ModerationDialog
           action="?/closeTable"
@@ -209,7 +283,7 @@
             required: true,
           }}
           label={m.admin_report_close_table()}
-          title={m.admin_report_close_table_title({ table: report.table.title })}
+          title={m.admin_report_close_table_title({ table: report.table?.title ?? '' })}
           text={m.admin_report_close_table_text()}
           confirm={m.admin_report_close_table()}
           success={m.admin_report_close_table_done()}

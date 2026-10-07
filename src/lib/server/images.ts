@@ -70,7 +70,10 @@ export async function storeImage(
     upsert: false,
     // Replacements get a new UUID URL, so browsers can reuse these bytes between visits.
     // Keep avatars shorter-lived because people can remove their profile picture.
-    cacheControl: image.path.startsWith('tables/') ? '2592000' : '86400',
+    cacheControl:
+      image.path.startsWith('tables/') || image.path.startsWith('crowdfunding/')
+        ? '2592000'
+        : '86400',
   });
   if (error) {
     log?.warn('image upload refused by Storage', { reason: error.message });

@@ -40,7 +40,8 @@ test.describe('managing tables, anonymous', () => {
   test('the table list offers a way to open one', async ({ page }) => {
     await page.goto('/tables');
 
-    await expect(page.getByRole('link', { name: 'Abrir uma mesa' })).toHaveAttribute(
+    // The page's own button on a desktop, the bottom tab bar's "Abrir mesa" on a phone.
+    await expect(page.getByRole('link', { name: /^Abrir (uma )?mesa$/ })).toHaveAttribute(
       'href',
       '/tables/new',
     );

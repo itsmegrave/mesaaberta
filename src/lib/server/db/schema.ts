@@ -630,13 +630,16 @@ export const messages = pgTable(
 ).enableRLS();
 
 // Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in $lib/moderation/reports.
-export const reportTarget = pgEnum('report_target', ['table', 'player']);
+export const reportTarget = pgEnum('report_target', ['table', 'player', 'crowdfunding']);
 export const reportReason = pgEnum('report_reason', [
   'spam',
   'harassment',
   'inappropriate_content',
   'no_show',
   'other',
+  'broken_link',
+  'scam',
+  'off_topic',
 ]);
 // `open` and `reviewing` wait on an admin; `resolved` and `dismissed` are closed.
 export const reportStatus = pgEnum('report_status', ['open', 'reviewing', 'resolved', 'dismissed']);
@@ -654,9 +657,8 @@ export const reports = pgTable(
     targetType: reportTarget('target_type').notNull(),
     // The table or the player's profile, by `targetType`. Not a foreign key: it points at either.
     targetId: uuid('target_id').notNull(),
-    tableId: uuid('table_id')
-      .notNull()
-      .references(() => gameTables.id),
+    // Where it happened. Null for a report about a crowdfunding campaign, which belongs to no table.
+    tableId: uuid('table_id').references(() => gameTables.id),
     reason: reportReason('reason').notNull(),
     details: text('details').notNull().default(''),
     status: reportStatus('status').notNull().default('open'),
@@ -680,5 +682,65 @@ export const reports = pgTable(
       'reports_table_target',
       sql`${report.targetType} <> 'table' OR ${report.targetId} = ${report.tableId}`,
     ),
+    // A table or player report always says which table. Written without 'crowdfunding': a value
+    // added to the enum cannot be used in the migration that adds it.
+    check(
+      'reports_table_required',
+      sql`${report.targetType} NOT IN ('table', 'player') OR ${report.tableId} IS NOT NULL`,
+    ),
+  ],
+).enableRLS();
+
+// Mirrors CROWDFUNDING_PLATFORMS in $lib/crowdfunding/platforms. Read from the link's host when a
+// campaign is added, and kept so the list can filter on it.
+export const crowdfundingPlatform = pgEnum('crowdfunding_platform', [
+  'catarse',
+  'kickstarter',
+  'benfeitoria',
+  'gamefound',
+  'other',
+]);
+
+// A crowdfunding campaign for an RPG or tabletop game that a member shared. It is public as soon as
+// it is added; members report it and admins remove it (`removedAt`). Where it stands (soon, running,
+// ended) is worked out from the dates and never stored.
+export const crowdfundings = pgTable(
+  'crowdfundings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // The member who added it, credited as "Enviado por".
+    submitterId: uuid('submitter_id')
+      .notNull()
+      .references(() => profiles.id),
+    // The canonical https link (`normalizeCampaignUrl`): the address that was checked is the one that
+    // is stored, shown and opened, and what the unique index compares.
+    url: text('url').notNull(),
+    platform: crowdfundingPlatform('platform').notNull(),
+    name: text('name').notNull(),
+    // Free text: the publisher, studio or person behind the campaign.
+    owner: text('owner').notNull(),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }).notNull(),
+    // A path in the table images bucket, or null: the tile then shows the chest and the host.
+    imagePath: text('image_path'),
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    // The admin who removed it, and why. Not a foreign key, like `reports.resolved_by`.
+    removedBy: uuid('removed_by'),
+    removalReason: reportReason('removal_reason'),
+    removalNote: text('removal_note'),
+    ...timestamps,
+  },
+  (campaign) => [
+    // One campaign per link while it is up: a repeat points at the existing one.
+    uniqueIndex('crowdfundings_url_unique')
+      .on(campaign.url)
+      .where(sql`${campaign.removedAt} IS NULL`),
+    index('crowdfundings_ends_on_idx').on(campaign.endsOn),
+    index('crowdfundings_submitter_idx').on(campaign.submitterId),
+    // Mirror CROWDFUNDING_NAME_MAX, CROWDFUNDING_OWNER_MAX and the note limit in $lib/crowdfunding/schema.
+    check('crowdfundings_name_length', sql`char_length(${campaign.name}) BETWEEN 1 AND 120`),
+    check('crowdfundings_owner_length', sql`char_length(${campaign.owner}) BETWEEN 1 AND 80`),
+    check('crowdfundings_dates_order', sql`${campaign.endsOn} >= ${campaign.startsOn}`),
+    check('crowdfundings_removal_note_length', sql`char_length(${campaign.removalNote}) <= 1000`),
   ],
 ).enableRLS();

@@ -54,6 +54,13 @@ export type DomainEvent =
   | { type: 'ReportReviewing'; payload: ReportClosure }
   | { type: 'ReportResolved'; payload: ReportClosure }
   | { type: 'ReportDismissed'; payload: ReportClosure }
+  // A member added a crowdfunding campaign. It is public at once; nobody is told.
+  | { type: 'CrowdfundingAdded'; payload: CrowdfundingFact }
+  // The server read a campaign link for a member (to fill the name). No handler listens to it: it
+  // only counts against the rate limit, and the address itself is not kept.
+  | { type: 'CrowdfundingLinkRead'; payload: Record<string, never> }
+  // An admin took a campaign down. `submitterId` is who is told, with the reason.
+  | { type: 'CrowdfundingRemoved'; payload: CrowdfundingRemoval }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -91,10 +98,28 @@ export type TableClosure = {
 
 export type ReportFiled = {
   reportId: string;
-  targetType: 'table' | 'player';
+  targetType: 'table' | 'player' | 'crowdfunding';
   targetId: string;
-  tableId: string;
-  reason: 'spam' | 'harassment' | 'inappropriate_content' | 'no_show' | 'other';
+  // Null for a report about a crowdfunding campaign, which belongs to no table.
+  tableId: string | null;
+  reason:
+    | 'spam'
+    | 'harassment'
+    | 'inappropriate_content'
+    | 'no_show'
+    | 'other'
+    | 'broken_link'
+    | 'scam'
+    | 'off_topic';
+};
+
+export type CrowdfundingFact = { crowdfundingId: string; name: string };
+
+// `reportId` is null when an admin removed it from the list, with no report behind it.
+export type CrowdfundingRemoval = CrowdfundingFact & {
+  submitterId: string;
+  reason: ReportFiled['reason'];
+  reportId: string | null;
 };
 
 export type ReportClosure = { reportId: string; reporterId: string };
