@@ -69,6 +69,13 @@
         icon: 'game-icons:tavern-sign' as IconName,
         current: pathname.startsWith('/tables') && pathname !== '/tables/new',
       },
+      {
+        href: '/crowdfunding',
+        // The rail is narrow, so it breaks the word where it can (a soft hyphen in the message).
+        label: expanded ? m.nav_crowdfunding() : m.nav_crowdfunding_rail(),
+        icon: 'game-icons:open-treasure-chest' as IconName,
+        current: pathname.startsWith('/crowdfunding'),
+      },
       account && {
         href: '/tables/new',
         label: expanded ? m.nav_open_table() : m.nav_open_table_short(),

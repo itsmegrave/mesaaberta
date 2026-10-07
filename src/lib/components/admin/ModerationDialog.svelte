@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SearchSelect from '$lib/components/SearchSelect.svelte';
   import TextArea from '$lib/components/TextArea.svelte';
   import UserText from '$lib/components/UserText.svelte';
   // One moderation decision behind a confirmation: accept, dismiss, close a table, ban or revoke a
@@ -6,7 +7,13 @@
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import type { ZodType } from 'zod';
   import { actionForm } from '$lib/forms/action-form.svelte';
-  import { BAN_DURATIONS, RESOLUTION_NOTE_MAX, type BanDuration } from '$lib/moderation/reports';
+  import { reasonLabel } from '$lib/moderation/labels';
+  import {
+    BAN_DURATIONS,
+    RESOLUTION_NOTE_MAX,
+    type BanDuration,
+    type ReportReason,
+  } from '$lib/moderation/reports';
   import Form from '$lib/components/Form.svelte';
   import FormField from '$lib/components/FormField.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
@@ -26,6 +33,7 @@
     danger = false,
     write,
     durations = false,
+    reasons,
     choices = BAN_DURATIONS,
     trigger = true,
     open = $bindable(false),
@@ -49,6 +57,8 @@
     write?: { name: 'note' | 'reason'; label: string; hint: string; required?: boolean };
     /** Asks how long a ban lasts. */
     durations?: boolean;
+    /** Asks for one of these reasons (taking a campaign down), worded for crowdfunding. */
+    reasons?: readonly ReportReason[];
     /** The lengths offered: all of them, or one (permanent, for "Banir"), which is not asked. */
     choices?: readonly BanDuration[];
     /** Draws its own button; off when a menu item opens the dialog through `open`. */
@@ -63,6 +73,7 @@
       ...fields,
       ...(write ? { [write.name]: '' } : {}),
       ...(durations ? { duration: choices.length === 1 ? choices[0] : '' } : {}),
+      ...(reasons ? { reason: '' } : {}),
     },
     schema,
     errorMessage: m.admin_dialog_error,
@@ -90,9 +101,12 @@
   };
   const say = (code?: string) => (code ? (codes[code]?.() ?? m.admin_dialog_error()) : undefined);
   // svelte-ignore state_referenced_locally
-  const own = [write?.name, 'duration'];
+  const own = [write?.name, 'duration', ...(reasons ? ['reason'] : [])];
   const textError = $derived(say(write ? form.errors[write.name]?.[0] : undefined));
   const durationError = $derived(say(form.errors.duration?.[0]));
+  const reasonError = $derived(
+    reasons && form.errors.reason?.[0] ? m.report_err_reason() : undefined,
+  );
   const formError = $derived(
     say(
       form.errors._errors?.[0] ??
@@ -161,6 +175,34 @@
                   </p>
                 {/if}
               </fieldset>
+            {/if}
+            {#if reasons}
+              <div class="min-w-0">
+                <SearchSelect
+                  id="{id}-reason"
+                  name="reason"
+                  label={m.report_reason()}
+                  labelClass="label-text block font-semibold"
+                  class="grid gap-1"
+                  inDialog
+                  required
+                  invalid={!!reasonError}
+                  items={reasons.map((reason) => ({
+                    name: reasonLabel(reason, 'crowdfunding'),
+                    slug: reason,
+                  }))}
+                  value={data.reason ? [data.reason] : []}
+                  placeholder={m.report_reason_pick()}
+                  onchange={(picked) => form.change('reason', picked[0] ?? '')}
+                />
+                {#if reasonError}<p
+                    id="{id}-reason-error"
+                    role="alert"
+                    class="mt-1 text-sm font-semibold text-error-700-300"
+                  >
+                    {reasonError}
+                  </p>{/if}
+              </div>
             {/if}
             {#if write}
               <FormField

@@ -27,7 +27,7 @@ export const PLATFORM_NAMES: Record<Exclude<CrowdfundingPlatform, 'other'>, stri
 export function platformOf(link: string): CrowdfundingPlatform {
   let host: string;
   try {
-    host = new URL(link).hostname.toLowerCase();
+    host = new URL(link).hostname.toLowerCase().replace(/\.+$/, '');
   } catch {
     return 'other';
   }

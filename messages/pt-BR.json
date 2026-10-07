@@ -1529,5 +1529,132 @@
   "admin_events_retry_all_done": "{processed} de {tried} eventos processados.",
   "admin_events_retry_all_left": "Ainda restam {remaining}.",
   "admin_events_retry_all_none": "Nenhum evento falhou.",
-  "audit_event_forced": "Rodou de novo um evento ({type})"
+  "audit_event_forced": "Rodou de novo um evento ({type})",
+  "notification_crowdfunding_removed": "Seu financiamento coletivo “{campaign}” foi removido pela moderação. Motivo: {reason}.",
+  "notification_crowdfunding_removed_note": "Seu financiamento coletivo “{campaign}” foi removido pela moderação. Motivo: {reason}. Recado: {note}",
+  "nav_crowdfunding": "Financiamentos",
+  "nav_crowdfunding_rail": "Financia­mentos",
+  "nav_crowdfunding_short": "FCs",
+  "nav_crowdfunding_label": "Financiamentos coletivos",
+  "crowdfunding_title": "Financiamentos coletivos",
+  "crowdfunding_description": "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais.",
+  "crowdfunding_lede": "Campanhas de RPG e jogos de mesa que a comunidade compartilhou. Dê uma olhada no que está rolando e apoie.",
+  "crowdfunding_add_cta": "Adicionar financiamento",
+  "crowdfunding_section_running": "Em andamento",
+  "crowdfunding_section_upcoming": "Começam em breve",
+  "crowdfunding_section_ended": "Encerrados",
+  "crowdfunding_see_ended": "Ver encerrados ({count})",
+  "crowdfunding_see_running": "Ver em andamento",
+  "crowdfunding_empty": "Ainda não há financiamentos por aqui. Que tal ser a primeira pessoa a compartilhar um?",
+  "crowdfunding_empty_filtered": "Nenhum financiamento com esses filtros.",
+  "crowdfunding_empty_section": "Nada em andamento agora.",
+  "crowdfunding_filter_clear": "Limpar filtros",
+  "crowdfunding_search_label": "Buscar financiamento",
+  "crowdfunding_search_placeholder": "Nome ou quem está financiando",
+  "crowdfunding_filter_platforms": "Plataformas",
+  "crowdfunding_filters_active": "Filtros ativos",
+  "crowdfunding_filter_remove": "Remover filtro {name}",
+  "crowdfunding_sort_label": "Ordenar",
+  "crowdfunding_sort_ending": "Termina primeiro",
+  "crowdfunding_sort_newest": "Adicionados por último",
+  "crowdfunding_sort_name": "Nome (A–Z)",
+  "crowdfunding_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 financiamento",
+        "count=*": "{count} financiamentos"
+      }
+    }
+  ],
+  "crowdfunding_status_upcoming": "Em breve",
+  "crowdfunding_status_running": "Em andamento",
+  "crowdfunding_status_ended": "Encerrado",
+  "crowdfunding_status_removed": "Removido",
+  "crowdfunding_ends_today": "Termina hoje",
+  "crowdfunding_ends_in": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Termina em 1 dia",
+        "count=*": "Termina em {count} dias"
+      }
+    }
+  ],
+  "crowdfunding_last_days": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Último dia",
+        "count=*": "Últimos {count} dias"
+      }
+    }
+  ],
+  "crowdfunding_starts_in": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Começa amanhã",
+        "count=*": "Começa em {count} dias"
+      }
+    }
+  ],
+  "crowdfunding_ended_on": "Encerrou em {date}",
+  "crowdfunding_owner_label": "Quem está financiando",
+  "crowdfunding_sent_by_label": "Enviado por",
+  "crowdfunding_sent_by": "Enviado por {user}",
+  "crowdfunding_opens_new_tab": "(abre {site} em nova aba)",
+  "crowdfunding_platform_other": "Outra",
+  "crowdfunding_report_trigger": "Denunciar {name}",
+  "crowdfunding_report_title": "Denunciar “{name}”",
+  "crowdfunding_report_lede": "Conte o que há de errado. A moderação analisa e você continua anônimo.",
+  "crowdfunding_new_title": "Adicionar financiamento",
+  "crowdfunding_new_lede": "Compartilhe uma campanha de RPG ou jogo de mesa. Ela aparece na lista assim que for publicada, e a comunidade ajuda a manter a lista em ordem.",
+  "crowdfunding_form_url": "Link da campanha",
+  "crowdfunding_form_url_hint": "Só links https. A plataforma é reconhecida pelo endereço.",
+  "crowdfunding_form_name": "Nome da campanha",
+  "crowdfunding_form_name_hint": "Vem do link, e você pode editar. Até {max} caracteres.",
+  "crowdfunding_form_name_read": "Nome preenchido a partir do link.",
+  "crowdfunding_form_reading": "Lendo o link…",
+  "crowdfunding_form_owner": "Quem está financiando",
+  "crowdfunding_form_owner_hint": "Editora, estúdio ou pessoa. Até {max} caracteres.",
+  "crowdfunding_form_starts": "Começa em",
+  "crowdfunding_form_ends": "Termina em",
+  "crowdfunding_form_image": "Imagem",
+  "crowdfunding_form_image_hint": "Se você não enviar, usamos a imagem da própria campanha ou um ícone com o nome do site.",
+  "crowdfunding_form_submit": "Publicar financiamento",
+  "crowdfunding_form_published": "Financiamento publicado.",
+  "crowdfunding_err_invalid_url": "Use um link https completo, como https://www.catarse.me/seu-projeto.",
+  "crowdfunding_err_already_listed": "Esse financiamento já está na lista.",
+  "crowdfunding_err_date": "Escolha uma data válida.",
+  "admin_nav_crowdfunding": "Financiamentos",
+  "admin_crowdfunding_lede": "Campanhas que a comunidade compartilhou. Elas entram no ar na hora; aqui você remove as que não deveriam estar.",
+  "admin_crowdfunding_total": "{count} financiamentos",
+  "admin_crowdfunding_search_label": "Buscar por nome ou por quem financia",
+  "admin_crowdfunding_empty": "Nenhum financiamento por aqui.",
+  "admin_crowdfunding_filter_up": "No ar",
+  "admin_crowdfunding_col_campaign": "Financiamento e quem financia",
+  "admin_crowdfunding_col_status": "Situação e período",
+  "admin_crowdfunding_col_reports": "Denúncias",
+  "admin_crowdfunding_open_link": "Abrir o link",
+  "admin_crowdfunding_see_reports": "Ver denúncias",
+  "admin_crowdfunding_remove_menu": "Remover…",
+  "admin_crowdfunding_action_label": "Mais ações: {name}",
+  "admin_crowdfunding_reports_phone": "{count} denúncias",
+  "admin_crowdfunding_removed": "Removido do ar",
+  "admin_crowdfunding_remove": "Remover o financiamento…",
+  "admin_crowdfunding_remove_title": "Remover “{name}”?",
+  "admin_crowdfunding_remove_text": "O financiamento sai da lista pública na hora, quem o enviou recebe um aviso com o motivo e as denúncias sobre ele são aceitas.",
+  "admin_crowdfunding_remove_confirm": "Remover",
+  "admin_crowdfunding_remove_done": "Financiamento removido.",
+  "admin_crowdfunding_remove_note": "Recado para quem enviou (opcional)",
+  "admin_crowdfunding_remove_note_hint": "Até {max} caracteres. Vai junto com o aviso.",
+  "admin_report_kind_crowdfunding": "Denúncia de financiamento",
+  "admin_report_crowdfunding": "Financiamento",
+  "admin_report_crowdfunding_gone": "Financiamento coletivo",
+  "admin_reports_target_crowdfunding_option": "Financiamentos"
 }

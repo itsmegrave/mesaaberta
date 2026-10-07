@@ -1,5 +1,5 @@
 {
-  "id": "67cac111-4738-448a-93b5-ccb7e7e6c87e",
+  "id": "a0e478ca-f4ba-456c-a672-6ae25880044f",
   "prevId": "de2b75a4-ed76-4900-be98-77aee73f03ea",
   "version": "7",
   "dialect": "postgresql",
@@ -319,12 +319,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "url_key": {
-          "name": "url_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "platform": {
           "name": "platform",
           "type": "crowdfunding_platform",
@@ -403,11 +397,11 @@
         }
       },
       "indexes": {
-        "crowdfundings_url_key_unique": {
-          "name": "crowdfundings_url_key_unique",
+        "crowdfundings_url_unique": {
+          "name": "crowdfundings_url_unique",
           "columns": [
             {
-              "expression": "url_key",
+              "expression": "url",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

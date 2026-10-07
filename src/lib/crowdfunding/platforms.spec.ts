@@ -17,6 +17,10 @@ describe('platformOf', () => {
     expect(platformOf('https://notkickstarter.com/x')).toBe('other');
   });
 
+  it('reads a host with a trailing dot as the same platform', () => {
+    expect(platformOf('https://www.catarse.me./x')).toBe('catarse');
+  });
+
   it('is other for what is not an address', () => {
     expect(platformOf('nonsense')).toBe('other');
   });

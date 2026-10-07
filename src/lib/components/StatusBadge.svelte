@@ -15,6 +15,10 @@
     | 'report:reviewing'
     | 'report:resolved'
     | 'report:dismissed'
+    | 'crowdfunding:upcoming'
+    | 'crowdfunding:running'
+    | 'crowdfunding:ended'
+    | 'crowdfunding:removed'
     | 'catalog:approved'
     | 'catalog:pending'
     | 'catalog:disabled'
@@ -80,6 +84,22 @@
     'report:dismissed': {
       label: () => m.report_status_dismissed(),
       dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    // A campaign's situation is worked out from its dates; an admin's removal is the only one stored.
+    'crowdfunding:upcoming': {
+      label: () => m.crowdfunding_status_upcoming(),
+      dot: 'bg-primary-500',
+    },
+    'crowdfunding:running': { label: () => m.crowdfunding_status_running(), dot: 'bg-success-500' },
+    'crowdfunding:ended': {
+      label: () => m.crowdfunding_status_ended(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+      text: 'muted',
+    },
+    'crowdfunding:removed': {
+      label: () => m.crowdfunding_status_removed(),
+      dot: 'bg-error-500',
+      text: 'danger',
     },
     'catalog:approved': { label: () => m.admin_catalog_status_approved(), dot: 'bg-success-500' },
     'catalog:pending': { label: () => m.admin_catalog_status_pending(), dot: 'bg-warning-500' },

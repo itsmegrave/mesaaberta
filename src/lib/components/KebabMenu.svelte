@@ -10,6 +10,8 @@
     href?: string;
     /** The file at `href` is downloaded rather than navigated to. */
     download?: boolean;
+    /** `href` is another site's address: it opens in a new tab, apart from this one. */
+    external?: boolean;
     onselect?: () => void;
     /** Red, and always last, after a rule. */
     destructive?: boolean;
@@ -51,7 +53,8 @@
     if (!item || item.disabled) return;
     item.onselect?.();
     if (!item.href) return;
-    if (item.download) window.location.assign(item.href);
+    if (item.external) window.open(item.href, '_blank', 'noopener,noreferrer');
+    else if (item.download) window.location.assign(item.href);
     // eslint-disable-next-line svelte/no-navigation-without-resolve -- already resolved by localizedHref
     else void goto(item.href);
   }

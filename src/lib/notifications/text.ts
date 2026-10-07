@@ -1,3 +1,5 @@
+import { reasonLabel } from '$lib/moderation/labels';
+import type { ReportReason } from '$lib/moderation/reports';
 import { m } from '$lib/paraglide/messages';
 import { atHandle } from '$lib/profile/handle';
 import { toPlainText } from '$lib/text/rich';
@@ -70,7 +72,15 @@ export function notificationText(item: Shown): string {
     case 'report_resolved':
       return m.notification_report_resolved();
     case 'moderation_notice':
-      // A table an admin closed names it; the justification is on the GM's dashboard.
+      // A campaign an admin removed says why; a table they closed names it, and the justification
+      // is on the GM's dashboard.
+      if (item.metadata.campaign) {
+        const reason = reasonLabel(item.metadata.reason as ReportReason, 'crowdfunding');
+        const campaign = item.metadata.campaign;
+        return item.metadata.note
+          ? m.notification_crowdfunding_removed_note({ campaign, reason, note: item.metadata.note })
+          : m.notification_crowdfunding_removed({ campaign, reason });
+      }
       return table
         ? m.notification_table_closed_by_moderation({ table })
         : m.notification_moderation_notice();

@@ -22,6 +22,14 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
   });
 
+  it('offers the crowdfunding list with a short label and the full name for a screen reader', async () => {
+    render(BottomTabBar, { isAdmin: false });
+
+    const tab = nav().getByRole('link', { name: 'Financiamentos coletivos' });
+    await expect.element(tab).toHaveAttribute('href', '/crowdfunding');
+    await expect.element(tab).toHaveTextContent('FCs');
+  });
+
   it('renders Admin tab when role is admin', async () => {
     render(BottomTabBar, { isAdmin: true });
 

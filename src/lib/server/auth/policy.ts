@@ -52,6 +52,10 @@ type Resources = {
     reporterSeated: boolean;
     target: { type: 'table' } | { type: 'player'; playerId: string; playerSeated: boolean };
   };
+  /** Adding a crowdfunding campaign: any signed-in member, public at once. */
+  'crowdfunding:add': undefined;
+  /** Reporting a campaign. Not one's own: its submitter would be reporting themselves. */
+  'crowdfunding:report': { submitterId: string };
   /** The report queue, its decisions and the audit log. */
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */
@@ -130,6 +134,9 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     const playerShares = playerId === facts.gmId || playerSeated;
     return playerId !== actor.id && reporterShares && playerShares;
   },
+  'crowdfunding:add': () => true,
+  'crowdfunding:report': (actor, campaign) =>
+    campaign !== undefined && actor.id !== campaign.submitterId,
   'moderation:manage': (actor) => actor.role === 'admin',
   'account:ban': (actor, target) =>
     target !== undefined &&

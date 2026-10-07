@@ -22,6 +22,17 @@ describe('normalizeCampaignUrl', () => {
     );
   });
 
+  it('treats a host with a trailing dot as the same host', () => {
+    expect(normalizeCampaignUrl('https://catarse.me./meu-rpg')).toBe('https://catarse.me/meu-rpg');
+  });
+
+  it('reads a backslash the way a browser does, so the host it checks is the host it opens', () => {
+    expect(normalizeCampaignUrl('https://catarse.me\\@evil.com/x')).toBe(
+      'https://catarse.me/@evil.com/x',
+    );
+    expect(normalizeCampaignUrl('https://catarse.me%2f@evil.com')).toBeNull();
+  });
+
   it('keeps the parameters that pick the campaign, in a fixed order', () => {
     expect(normalizeCampaignUrl('https://example.com/p?b=2&a=1')).toBe(
       'https://example.com/p?a=1&b=2',

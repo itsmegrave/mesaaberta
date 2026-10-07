@@ -70,6 +70,9 @@ export const crowdfundingReportSchema = z.object({
 });
 export type CrowdfundingReportInput = z.output<typeof crowdfundingReportSchema>;
 
+/** The report form of a campaign's card: the campaign it is about, with the reason and details. */
+export const reportCrowdfundingSchema = z.object({ id: uuid, ...crowdfundingReportSchema.shape });
+
 /** An admin closing a report: accepted (`resolved`) or dismissed, with an optional note. */
 export const closeReportSchema = z.object({
   id: uuid,
@@ -116,3 +119,12 @@ export const TABLE_REPORTS_WARNING = 3;
 
 /** Revoking a ban. */
 export const accountSchema = z.object({ profileId: uuid });
+
+/** An admin taking a campaign down: the reason the submitter is told, and an optional note to them. */
+export const removeCrowdfundingSchema = z.object({
+  id: uuid,
+  reason: z.enum(CROWDFUNDING_REPORT_REASONS),
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  // The report the admin decided it from, when they did (it is accepted with the others about it).
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});

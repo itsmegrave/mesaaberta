@@ -7,7 +7,6 @@ CREATE TABLE "crowdfundings" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"submitter_id" uuid NOT NULL,
 	"url" text NOT NULL,
-	"url_key" text NOT NULL,
 	"platform" "crowdfunding_platform" NOT NULL,
 	"name" text NOT NULL,
 	"owner" text NOT NULL,
@@ -29,7 +28,7 @@ CREATE TABLE "crowdfundings" (
 ALTER TABLE "crowdfundings" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "reports" ALTER COLUMN "table_id" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "crowdfundings" ADD CONSTRAINT "crowdfundings_submitter_id_profiles_id_fk" FOREIGN KEY ("submitter_id") REFERENCES "public"."profiles"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "crowdfundings_url_key_unique" ON "crowdfundings" USING btree ("url_key") WHERE "crowdfundings"."removed_at" IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "crowdfundings_url_unique" ON "crowdfundings" USING btree ("url") WHERE "crowdfundings"."removed_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "crowdfundings_ends_on_idx" ON "crowdfundings" USING btree ("ends_on");--> statement-breakpoint
 CREATE INDEX "crowdfundings_submitter_idx" ON "crowdfundings" USING btree ("submitter_id");--> statement-breakpoint
 ALTER TABLE "reports" ADD CONSTRAINT "reports_table_required" CHECK ("reports"."target_type" NOT IN ('table', 'player') OR "reports"."table_id" IS NOT NULL);

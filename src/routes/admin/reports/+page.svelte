@@ -34,12 +34,21 @@
   ];
 
   const isTable = (row: Report) => row.targetType === 'table';
+  const isCampaign = (row: Report) => row.targetType === 'crowdfunding';
+  const iconOf = (row: Report) =>
+    isCampaign(row)
+      ? ('game-icons:open-treasure-chest' as const)
+      : isTable(row)
+        ? ('game-icons:tavern-sign' as const)
+        : ('game-icons:meeple' as const);
   const targetOf = (row: Report) =>
-    isTable(row)
-      ? m.admin_reports_target_table({ table: row.table })
-      : row.player
-        ? atHandle(row.player)
-        : m.admin_profile_no_username();
+    isCampaign(row)
+      ? (row.crowdfunding ?? m.admin_report_crowdfunding())
+      : isTable(row)
+        ? m.admin_reports_target_table({ table: row.table ?? '' })
+        : row.player
+          ? atHandle(row.player)
+          : m.admin_profile_no_username();
   const href = (row: Report) => localizedHref(`/admin/reports/${row.id}`, locale);
   const badge = (row: Report) => `report:${row.status}` as Status;
   const menuOf = (row: Report): KebabItem[] => [
@@ -63,6 +72,7 @@
     { slug: 'all', name: m.admin_reports_target_all() },
     { slug: 'table', name: m.admin_reports_target_table_option() },
     { slug: 'player', name: m.admin_reports_target_player_option() },
+    { slug: 'crowdfunding', name: m.admin_reports_target_crowdfunding_option() },
   ];
 </script>
 
@@ -124,12 +134,15 @@
     {#snippet cell(row: Report, id: string)}
       {#if id === 'target'}
         <div class="flex items-center gap-3">
-          <Media kind="icon" icon={isTable(row) ? 'game-icons:tavern-sign' : 'game-icons:meeple'} />
+          <Media kind="icon" icon={iconOf(row)} />
           <div class="min-w-0">
-            {#if isTable(row)}
+            {#if isCampaign(row)}
+              <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
+              <p class="truncate text-muted">{m.admin_report_kind_crowdfunding()}</p>
+            {:else if isTable(row)}
               <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
               <p class="truncate text-muted">
-                {m.admin_reports_gm_context({ gm: atHandle(row.gm) })}
+                {m.admin_reports_gm_context({ gm: atHandle(row.gm ?? '') })}
               </p>
             {:else}
               <p class="truncate font-semibold">
@@ -145,7 +158,7 @@
           </div>
         </div>
       {:else if id === 'reason'}
-        {reasonLabel(row.reason)}
+        {reasonLabel(row.reason, row.targetType)}
       {:else if id === 'reporter'}
         <UserLink username={row.reporter} />
       {:else if id === 'filed'}
@@ -162,14 +175,13 @@
     {/snippet}
     {#snippet card(row: Report)}
       <ListCard>
-        {#snippet media()}<Media
-            kind="icon"
-            icon={isTable(row) ? 'game-icons:tavern-sign' : 'game-icons:meeple'}
-          />{/snippet}
+        {#snippet media()}<Media kind="icon" icon={iconOf(row)} />{/snippet}
         {#snippet title()}<a class="link-underline" href={href(row)}>{targetOf(row)}</a>{/snippet}
         {#snippet meta()}
           <p class="truncate">
-            {reasonLabel(row.reason)} · {m.admin_reports_by({ reporter: atHandle(row.reporter) })}
+            {reasonLabel(row.reason, row.targetType)} · {m.admin_reports_by({
+              reporter: atHandle(row.reporter),
+            })}
           </p>
           <p>{dayLabel(row.createdAt, locale, zone)} · {timeLabel(row.createdAt, locale, zone)}</p>
         {/snippet}

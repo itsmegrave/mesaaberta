@@ -712,9 +712,9 @@ export const crowdfundings = pgTable(
     submitterId: uuid('submitter_id')
       .notNull()
       .references(() => profiles.id),
-    // The link as the member gave it (https), and its canonical form, which the unique index reads.
+    // The canonical https link (`normalizeCampaignUrl`): the address that was checked is the one that
+    // is stored, shown and opened, and what the unique index compares.
     url: text('url').notNull(),
-    urlKey: text('url_key').notNull(),
     platform: crowdfundingPlatform('platform').notNull(),
     name: text('name').notNull(),
     // Free text: the publisher, studio or person behind the campaign.
@@ -732,8 +732,8 @@ export const crowdfundings = pgTable(
   },
   (campaign) => [
     // One campaign per link while it is up: a repeat points at the existing one.
-    uniqueIndex('crowdfundings_url_key_unique')
-      .on(campaign.urlKey)
+    uniqueIndex('crowdfundings_url_unique')
+      .on(campaign.url)
       .where(sql`${campaign.removedAt} IS NULL`),
     index('crowdfundings_ends_on_idx').on(campaign.endsOn),
     index('crowdfundings_submitter_idx').on(campaign.submitterId),
