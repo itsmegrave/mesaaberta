@@ -98,3 +98,49 @@ describe('daily source isolation and checkpointing', () => {
     ]);
   });
 });
+
+it('advances past deleted campaign links so later campaigns are discovered on each day', async () => {
+  const urls = [
+    'https://catarse.com.br/missing-404',
+    'https://catarse.com.br/missing-410',
+    'https://catarse.com.br/after-missing',
+  ];
+  const detail = vi.fn(async (url: string) => {
+    if (url.endsWith('missing-404')) throw new Error('source_http_404');
+    if (url.endsWith('missing-410')) throw new Error('source_http_410');
+    return { ...candidate, url, externalId: 'after-missing' };
+  });
+  const source: SourceAdapter = {
+    source: 'catarse',
+    list: async () => ({ urls, nextPage: null }),
+    detail,
+  };
+  const options = { log: logger, sources: [source], open, readFor };
+  expect(
+    (await runDailyImports(env, { ...options, scheduledTime: +now + 3 * 86400_000 }))[0],
+  ).toMatchObject({ status: 'complete', imported: 1, skipped: 2 });
+  expect(
+    (await runDailyImports(env, { ...options, scheduledTime: +now + 4 * 86400_000 }))[0],
+  ).toMatchObject({ status: 'complete', existing: 1, skipped: 2 });
+  expect(detail.mock.calls.map((c) => c[0])).toEqual([...urls, ...urls]);
+});
+it('falls back to no image and closes the database when optional storage settings are invalid', async () => {
+  const dbClose = vi.fn(async () => {});
+  const dbOpen = (() => ({ db: test.db, close: dbClose })) as unknown as typeof createDb;
+  const source: SourceAdapter = {
+    source: 'catarse',
+    list: async () => ({ urls: [candidate.url], nextPage: null }),
+    detail: async () => ({
+      ...candidate,
+      url: 'https://catarse.com.br/storage-fallback',
+      externalId: 'storage-fallback',
+      imageUrl: 'https://images.example/cover.jpg',
+    }),
+  };
+  const result = await runDailyImports(
+    { ...env, SUPABASE_URL: 'not-a-url', SUPABASE_SECRET_KEY: 'test-secret' },
+    { scheduledTime: +now + 5 * 86400_000, log: logger, sources: [source], open: dbOpen, readFor },
+  );
+  expect(result[0]).toMatchObject({ status: 'complete', imported: 1 });
+  expect(dbClose).toHaveBeenCalledOnce();
+});

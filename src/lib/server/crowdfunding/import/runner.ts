@@ -4,7 +4,7 @@ import { todayIn } from '../../../crowdfunding/phase';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../../db/client';
 import { crowdfundings, crowdfundingImports } from '../../db/schema';
 import type { Logger } from '../../logger';
-import { IMAGE_BUCKET } from '../../images';
+import { IMAGE_BUCKET, type ImageStorage } from '../../images';
 import { campaignImagePath } from '../image';
 import { sourceReader } from './source-fetch';
 import { sourceAdapters } from './sources';
@@ -73,64 +73,75 @@ export async function runDailyImports(
     return [];
   }
   const { db, close } = open(connection);
-  const now = new Date(scheduledTime),
-    runDate = todayIn(now),
-    summaries: RunSummary[] = [];
-  const key = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
-  const storage =
-    env.SUPABASE_URL && key
-      ? createClient(env.SUPABASE_URL, key, {
+  try {
+    const now = new Date(scheduledTime),
+      runDate = todayIn(now),
+      summaries: RunSummary[] = [];
+    const key = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+    let storage:
+      | (ImageStorage & {
+          remove(paths: string[]): PromiseLike<{ error: { message: string } | null }>;
+        })
+      | undefined;
+    if (env.SUPABASE_URL && key) {
+      try {
+        storage = createClient(env.SUPABASE_URL, key, {
           auth: { persistSession: false, autoRefreshToken: false },
           global: {
             fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(10_000) }),
           },
-        }).storage.from(IMAGE_BUCKET)
-      : undefined;
-  const saveImage =
-    image ??
-    ((c: SourceCandidate) => campaignImagePath(storage, { pageImageUrl: c.imageUrl, log }));
-  const discardImage =
-    removeImage ??
-    (async (path: string) => {
-      if (storage) {
-        const { error } = await storage.remove([path]);
-        if (error) throw new Error('image_cleanup_failed');
+        }).storage.from(IMAGE_BUCKET);
+      } catch {
+        log.warn('crowdfunding image storage unavailable', { code: 'image_storage_invalid' });
       }
-    });
-  const attachImage = async (c: SourceCandidate) => {
-    let path: string | null = null;
-    try {
-      path = await saveImage(c);
-      if (!path) return;
-      const [mapping] = await db
-        .select()
-        .from(crowdfundingImports)
-        .where(
-          and(
-            eq(crowdfundingImports.source, c.source),
-            eq(crowdfundingImports.externalId, c.externalId),
-          ),
-        );
-      const rows = mapping
-        ? await db
-            .update(crowdfundings)
-            .set({ imagePath: path })
-            .where(
-              and(
-                eq(crowdfundings.id, mapping.crowdfundingId),
-                isNull(crowdfundings.removedAt),
-                isNull(crowdfundings.imagePath),
-              ),
-            )
-            .returning({ id: crowdfundings.id })
-        : [];
-      if (!rows.length) await discardImage(path);
-    } catch {
-      if (path) await discardImage(path).catch(() => undefined);
-      log.warn('crowdfunding image unavailable', { provider: c.source, code: 'image_unavailable' });
     }
-  };
-  try {
+    const saveImage =
+      image ??
+      ((c: SourceCandidate) => campaignImagePath(storage, { pageImageUrl: c.imageUrl, log }));
+    const discardImage =
+      removeImage ??
+      (async (path: string) => {
+        if (storage) {
+          const { error } = await storage.remove([path]);
+          if (error) throw new Error('image_cleanup_failed');
+        }
+      });
+    const attachImage = async (c: SourceCandidate) => {
+      let path: string | null = null;
+      try {
+        path = await saveImage(c);
+        if (!path) return;
+        const [mapping] = await db
+          .select()
+          .from(crowdfundingImports)
+          .where(
+            and(
+              eq(crowdfundingImports.source, c.source),
+              eq(crowdfundingImports.externalId, c.externalId),
+            ),
+          );
+        const rows = mapping
+          ? await db
+              .update(crowdfundings)
+              .set({ imagePath: path })
+              .where(
+                and(
+                  eq(crowdfundings.id, mapping.crowdfundingId),
+                  isNull(crowdfundings.removedAt),
+                  isNull(crowdfundings.imagePath),
+                ),
+              )
+              .returning({ id: crowdfundings.id })
+          : [];
+        if (!rows.length) await discardImage(path);
+      } catch {
+        if (path) await discardImage(path).catch(() => undefined);
+        log.warn('crowdfunding image unavailable', {
+          provider: c.source,
+          code: 'image_unavailable',
+        });
+      }
+    };
     for (const adapter of sources) {
       const started = clock();
       const lease = await claimRun(db, adapter.source, runDate, new Date(started));
@@ -175,7 +186,20 @@ export async function runDailyImports(
               summary.status = 'partial';
               break;
             }
-            const c = await adapter.detail(listing.urls[index], now, read);
+            let c: SourceCandidate | null;
+            try {
+              c = await adapter.detail(listing.urls[index], now, read);
+            } catch (error) {
+              // A deleted campaign is an item-level outcome. Keeping its cursor would starve
+              // every later campaign forever; blocked/changed/transient pages still fail the source.
+              if (!(error instanceof Error) || !/^source_http_(404|410)$/.test(error.message))
+                throw error;
+              log.warn('crowdfunding campaign no longer available', {
+                provider: adapter.source,
+                code: error.message,
+              });
+              c = null;
+            }
             details++;
             if (!c) summary.skipped++;
             else {

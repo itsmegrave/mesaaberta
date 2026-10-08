@@ -27,7 +27,7 @@ export function isTabletopRpg(text: string): boolean {
     .toLowerCase();
   // A broad games category or an author's hobby is not evidence about the funded product.
   if (
-    /\b(videogame|video game|jogo para pc|jogo pc|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/.test(
+    /\b(videogame|video game|jogos? eletronicos?|jogos? digitais?|jogo de computador|jogo para (?:pc|windows|linux|android|ios|console)|jogo pc|mmorpg|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/.test(
       s,
     )
   )

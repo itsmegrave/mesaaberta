@@ -113,6 +113,7 @@ it('fails when Meeplestarter changed campaign markup instead of returning an emp
 
 it('rejects non-RPG funded products through the complete Catarse parser', () => {
   for (const description of [
+    'Um jogo eletrônico para Windows com um sistema de RPG de ação em mundo aberto.',
     'Um jogo de cartas inspirado em RPG de mesa.',
     'Livro de receitas. Sou autor de RPG de mesa e agora publico meu primeiro livro de culinária.',
   ]) {
