@@ -17,3 +17,6 @@ bun.lockb
 # Working plans and execution artifacts are not application source.
 /docs/superpowers/plans/
 /.superpowers/
+
+# Captured external response fixtures must retain their original script syntax.
+src/lib/server/crowdfunding/import/fixtures/*.html

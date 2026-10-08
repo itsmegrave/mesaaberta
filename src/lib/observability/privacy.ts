@@ -22,6 +22,11 @@ const COUNTS = new Set([
   'expired',
   'chats',
   'announced',
+  'discovered',
+  'imported',
+  'existing',
+  'suppressed',
+  'skipped',
   'tables',
   'players',
 ]);

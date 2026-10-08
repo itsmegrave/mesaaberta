@@ -4,7 +4,7 @@
   // above that link as a button of its own.
   import Icon from '$lib/components/Icon.svelte';
   import { periodLabel } from '$lib/crowdfunding/format';
-  import { platformLabel, siteName } from '$lib/crowdfunding/labels';
+  import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
   import { hostOf, type CrowdfundingPlatform } from '$lib/crowdfunding/platforms';
   import { situationOf } from '$lib/crowdfunding/situation';
   import { m } from '$lib/paraglide/messages';
@@ -19,7 +19,8 @@
     startsOn: string;
     endsOn: string;
     imageUrl: string | null;
-    submitter: string;
+    submitter: string | null;
+    importSource?: 'catarse' | 'meeplestarter' | null;
   };
 
   let {
@@ -88,7 +89,7 @@
     </p>
     <div class="mt-auto flex items-center justify-between gap-3 pt-2">
       <p class="min-w-0 truncate text-sm text-muted">
-        {m.crowdfunding_sent_by({ user: `@${campaign.submitter}` })}
+        {submissionLabel(campaign.submitter, campaign.importSource)}
       </p>
       {#if onreport}
         <button

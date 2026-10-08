@@ -3,7 +3,7 @@
   import AdminPage from '$lib/components/admin/AdminPage.svelte';
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import { siteName } from '$lib/crowdfunding/labels';
+  import { siteName, submissionLabel } from '$lib/crowdfunding/labels';
   import { localizedHref } from '$lib/i18n/locales';
   import { reasonLabel } from '$lib/moderation/labels';
   import {
@@ -183,16 +183,20 @@
             <div class={row}>
               <dt class="text-sm font-semibold text-muted">{m.crowdfunding_sent_by_label()}</dt>
               <dd class="flex flex-wrap items-center gap-2">
-                <UserLink
-                  username={campaign.submitter.username}
-                  label={handle(campaign.submitter.username)}
-                  class="font-semibold"
-                />
-                <a
-                  class="ml-2 anchor text-sm"
-                  href={localizedHref(`/admin/users/${campaign.submitter.id}`, locale)}
-                  >{m.admin_user_title()}</a
-                >
+                {#if campaign.submitter}
+                  <UserLink
+                    username={campaign.submitter.username}
+                    label={handle(campaign.submitter.username)}
+                    class="font-semibold"
+                  />
+                  <a
+                    class="ml-2 anchor text-sm"
+                    href={localizedHref(`/admin/users/${campaign.submitter.id}`, locale)}
+                    >{m.admin_user_title()}</a
+                  >
+                {:else}
+                  {submissionLabel(null, campaign.importSource)}
+                {/if}
               </dd>
             </div>
           {/if}

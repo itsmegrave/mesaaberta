@@ -695,6 +695,7 @@ export const reports = pgTable(
 // campaign is added, and kept so the list can filter on it.
 export const crowdfundingPlatform = pgEnum('crowdfunding_platform', [
   'catarse',
+  'meeplestarter',
   'kickstarter',
   'benfeitoria',
   'gamefound',
@@ -709,9 +710,11 @@ export const crowdfundings = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     // The member who added it, credited as "Enviado por".
-    submitterId: uuid('submitter_id')
+    submitterId: uuid('submitter_id').references(() => profiles.id),
+    origin: text('origin', { enum: ['member', 'import'] })
       .notNull()
-      .references(() => profiles.id),
+      .default('member'),
+    importSource: text('import_source', { enum: ['catarse', 'meeplestarter'] }),
     // The canonical https link (`normalizeCampaignUrl`): the address that was checked is the one that
     // is stored, shown and opened, and what the unique index compares.
     url: text('url').notNull(),
@@ -735,6 +738,11 @@ export const crowdfundings = pgTable(
     uniqueIndex('crowdfundings_url_unique')
       .on(campaign.url)
       .where(sql`${campaign.removedAt} IS NULL`),
+    index('crowdfundings_url_all_idx').on(campaign.url),
+    check(
+      'crowdfundings_origin',
+      sql`(${campaign.origin} = 'member' AND ${campaign.submitterId} IS NOT NULL AND ${campaign.importSource} IS NULL) OR (${campaign.origin} = 'import' AND ${campaign.submitterId} IS NULL AND ${campaign.importSource} IS NOT NULL AND ${campaign.importSource} IN ('catarse', 'meeplestarter'))`,
+    ),
     index('crowdfundings_ends_on_idx').on(campaign.endsOn),
     index('crowdfundings_submitter_idx').on(campaign.submitterId),
     // Mirror CROWDFUNDING_NAME_MAX, CROWDFUNDING_OWNER_MAX and the note limit in $lib/crowdfunding/schema.
@@ -742,5 +750,48 @@ export const crowdfundings = pgTable(
     check('crowdfundings_owner_length', sql`char_length(${campaign.owner}) BETWEEN 1 AND 80`),
     check('crowdfundings_dates_order', sql`${campaign.endsOn} >= ${campaign.startsOn}`),
     check('crowdfundings_removal_note_length', sql`char_length(${campaign.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
+// Source identities survive moderation; no public Data API policies.
+export const crowdfundingImports = pgTable(
+  'crowdfunding_imports',
+  {
+    source: text('source', { enum: ['catarse', 'meeplestarter'] }).notNull(),
+    externalId: text('external_id').notNull(),
+    crowdfundingId: uuid('crowdfunding_id')
+      .notNull()
+      .references(() => crowdfundings.id),
+    canonicalUrl: text('canonical_url').notNull(),
+    firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.source, t.externalId] }),
+    index('crowdfunding_imports_campaign_idx').on(t.crowdfundingId),
+    check('crowdfunding_imports_source', sql`${t.source} IN ('catarse','meeplestarter')`),
+  ],
+).enableRLS();
+
+export const crowdfundingImportRuns = pgTable(
+  'crowdfunding_import_runs',
+  {
+    source: text('source', { enum: ['catarse', 'meeplestarter'] }).notNull(),
+    runDate: date('run_date', { mode: 'string' }).notNull(),
+    status: text('status', { enum: ['running', 'complete', 'partial', 'failed'] }).notNull(),
+    token: uuid('token').notNull(),
+    leaseUntil: timestamp('lease_until', { withTimezone: true }).notNull(),
+    cursor: text('cursor'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    counters: jsonb('counters').$type<Record<string, number>>().notNull().default({}),
+    errorCode: text('error_code'),
+  },
+  (t) => [
+    primaryKey({ columns: [t.source, t.runDate] }),
+    check('crowdfunding_import_runs_source', sql`${t.source} IN ('catarse','meeplestarter')`),
+    check(
+      'crowdfunding_import_runs_status',
+      sql`${t.status} IN ('running','complete','partial','failed')`,
+    ),
   ],
 ).enableRLS();

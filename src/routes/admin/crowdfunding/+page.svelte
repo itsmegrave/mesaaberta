@@ -9,7 +9,7 @@
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '$lib/crowdfunding/admin-filters';
   import { periodLabel } from '$lib/crowdfunding/format';
-  import { platformLabel, siteName } from '$lib/crowdfunding/labels';
+  import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
   import { phaseOf } from '$lib/crowdfunding/phase';
   import { localizedHref } from '$lib/i18n/locales';
   import {
@@ -147,7 +147,11 @@
           <p class="text-muted">{periodLabel(row.startsOn, row.endsOn, locale)}</p>
         </div>
       {:else if id === 'sender'}
-        <a class="anchor" href={localizedHref(`/u/${row.submitter}`, locale)}>@{row.submitter}</a>
+        {#if row.submitter}
+          <a class="anchor" href={localizedHref(`/u/${row.submitter}`, locale)}>@{row.submitter}</a>
+        {:else}
+          {submissionLabel(null, row.importSource)}
+        {/if}
       {:else if id === 'reports'}
         {row.reports}
       {:else if id === 'actions'}
@@ -175,7 +179,12 @@
         {/snippet}
         {#snippet meta()}
           <p class="truncate">{row.owner} · {platformLabel(row.platform)}</p>
-          <p>{periodLabel(row.startsOn, row.endsOn, locale)} · @{row.submitter}</p>
+          <p>
+            {periodLabel(row.startsOn, row.endsOn, locale)} · {submissionLabel(
+              row.submitter,
+              row.importSource,
+            )}
+          </p>
         {/snippet}
         {#snippet badges()}
           <StatusBadge status={badge(row)} />

@@ -8,6 +8,8 @@
   // Copy to a local configuration. These are self-host examples, never our production values.
   // The active production file is retained until the private deployment pipeline is verified.
   "vars": {
+    // Daily RPG campaign discovery at 01:00 America/Sao_Paulo (04:00 UTC).
+    "CROWDFUNDING_IMPORT_ENABLED": "false",
     "APP_ORIGIN": "http://localhost:5173",
     "CALENDAR_UID_DOMAIN": "localhost",
     "CONTACT_EMAIL": "contact@example.invalid",
@@ -27,7 +29,7 @@
       "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
     },
   ],
-  "triggers": { "crons": ["*/5 * * * *"] },
+  "triggers": { "crons": ["*/5 * * * *", "0 4 * * *"] },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "workers_dev": false,
   "preview_urls": false,

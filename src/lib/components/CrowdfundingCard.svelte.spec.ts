@@ -50,6 +50,12 @@ describe('CrowdfundingCard', () => {
     await expect.element(page.getByText('Enviado por @ana')).toBeVisible();
   });
 
+  it('credits automatic imports without inventing a member', async () => {
+    render(CrowdfundingCard, { campaign: { ...base, submitter: null, importSource: 'catarse' } });
+    await expect.element(page.getByText('Importado automaticamente do Catarse')).toBeVisible();
+    expect(document.body.textContent).not.toContain('@null');
+  });
+
   it('counts the days left, calmly', async () => {
     render(CrowdfundingCard, { campaign: base });
 

@@ -35,7 +35,8 @@
     "resend:templates": "bun --env-file=.dev.vars scripts/create-resend-templates.ts",
     "db:seed": "bun --env-file=.dev.vars scripts/seed.ts",
     "i18n": "bun scripts/i18n.ts",
-    "icons": "bun scripts/icons.ts"
+    "icons": "bun scripts/icons.ts",
+    "crowdfunding:dry-run": "bun scripts/crowdfunding-import-dry-run.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

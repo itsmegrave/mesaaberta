@@ -55,7 +55,7 @@ type Resources = {
   /** Adding a crowdfunding campaign: any signed-in member, public at once. */
   'crowdfunding:add': undefined;
   /** Reporting a campaign. Not one's own: its submitter would be reporting themselves. */
-  'crowdfunding:report': { submitterId: string };
+  'crowdfunding:report': { submitterId: string | null };
   /** The report queue, its decisions and the audit log. */
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */

@@ -5,20 +5,19 @@ import { sentryOptions } from '../../src/lib/observability/privacy.ts';
 // copies this file over `.svelte-kit/cloudflare/_worker.js`, so the paths are relative to there.
 // wrangler bundles the imports, TypeScript included.
 import sveltekit from './_sveltekit.js';
-import { handlersFor } from '../../src/lib/server/events/handlers.ts';
-import { runSweeper } from '../../src/lib/server/events/sweeper.ts';
+import { runScheduled } from '../../src/lib/server/events/scheduled.ts';
 import { logger } from '../../src/lib/server/logger.ts';
 
 const cron = withSentry(() => sentryOptions, {
   // Retries domain events that did not finish. See sweepEvents and the cron in wrangler.jsonc.
-  async scheduled(_controller, env, _ctx) {
+  async scheduled(controller, env, _ctx) {
     const log = logger.child({
       requestId: crypto.randomUUID(),
       environment: 'production',
       release: env.CF_VERSION_METADATA?.id,
     });
-    await runSweeper(env, { handlers: handlersFor(env), log }).catch((error) =>
-      log.error('event sweep failed', { error }),
+    await runScheduled(controller, env, { log }).catch((error) =>
+      log.error('scheduled job failed', { error }),
     );
   },
 });

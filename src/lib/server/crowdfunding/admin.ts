@@ -66,11 +66,14 @@ export async function listAdminCrowdfundings(
       createdAt: crowdfundings.createdAt,
       removedAt: crowdfundings.removedAt,
       removalReason: crowdfundings.removalReason,
-      submitter: publicName(profiles.username),
+      submitter: sql<
+        string | null
+      >`CASE WHEN ${crowdfundings.submitterId} IS NULL THEN NULL ELSE ${publicName(profiles.username)} END`,
+      importSource: crowdfundings.importSource,
       reports: sql<number>`coalesce(${waiting.waiting}, 0)`.mapWith(Number),
     })
     .from(crowdfundings)
-    .innerJoin(profiles, eq(profiles.id, crowdfundings.submitterId))
+    .leftJoin(profiles, eq(profiles.id, crowdfundings.submitterId))
     .leftJoin(waiting, eq(waiting.targetId, crowdfundings.id))
     .where(where)
     .orderBy(desc(crowdfundings.createdAt), desc(crowdfundings.id))

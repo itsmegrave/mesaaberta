@@ -1656,5 +1656,7 @@
   "admin_report_kind_crowdfunding": "Denúncia de financiamento",
   "admin_report_crowdfunding": "Financiamento",
   "admin_report_crowdfunding_gone": "Financiamento coletivo",
-  "admin_reports_target_crowdfunding_option": "Financiamentos"
+  "admin_reports_target_crowdfunding_option": "Financiamentos",
+  "crowdfunding_imported_from": "Importado automaticamente do {platform}",
+  "crowdfunding_imported": "Importado automaticamente"
 }
