@@ -94,3 +94,43 @@ it('uses the campaign narrative when the heading alone is ambiguous', () => {
     parseMeepleCampaign(html, 'https://mail.meeplestarter.com.br/rpg-specters', now),
   ).not.toBeNull();
 });
+
+it('rejects card games and incidental author/hobby references to tabletop RPG', () => {
+  expect(isTabletopRpg('Um jogo de cartas inspirado em RPG de mesa.')).toBe(false);
+  expect(isTabletopRpg('Um livro de culinária. O autor joga RPG de mesa nos fins de semana.')).toBe(
+    false,
+  );
+  expect(isTabletopRpg('Um livro de fantasia inspirado nas aventuras de RPG do autor.')).toBe(
+    false,
+  );
+  expect(isTabletopRpg('O autor gosta de RPG de mesa. Sua autobiografia chega agora.')).toBe(false);
+});
+it('fails when Meeplestarter changed campaign markup instead of returning an empty scan', () => {
+  expect(() =>
+    parseMeepleListing(fixture('meeple-list').replaceAll('projeto-titulo', 'project-title')),
+  ).toThrow('source_schema');
+});
+
+it('rejects non-RPG funded products through the complete Catarse parser', () => {
+  for (const description of [
+    'Um jogo de cartas inspirado em RPG de mesa.',
+    'Livro de receitas. Sou autor de RPG de mesa e agora publico meu primeiro livro de culinária.',
+  ]) {
+    const campaign = {
+      id: 'unrelated-product',
+      slug: 'unrelated',
+      title: 'Outro produto',
+      summary: description,
+      status: 'Launch',
+      fundingType: 'Flex',
+      startDate: '2026-10-01T03:00:00Z',
+      endDate: '2026-11-01T03:00:00Z',
+      user: { publicName: 'Editora' },
+    };
+    const html =
+      '<script>self.__next_f.push(' +
+      JSON.stringify([1, '1:' + JSON.stringify({ campaign }) + '\n']) +
+      ')</script>';
+    expect(parseCatarseCampaign(html, 'https://www.catarse.com.br/unrelated', now)).toBeNull();
+  }
+});

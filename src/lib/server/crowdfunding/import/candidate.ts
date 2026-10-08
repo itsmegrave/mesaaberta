@@ -25,20 +25,27 @@ export function isTabletopRpg(text: string): boolean {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+  // A broad games category or an author's hobby is not evidence about the funded product.
   if (
-    /\b(videogame|video game|jogo para pc|jogo pc|jogo de tabuleiro|board game|card ?game)\b/.test(
+    /\b(videogame|video game|jogo para pc|jogo pc|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/.test(
       s,
     )
   )
     return false;
+  const direct =
+    /\b(?:um|novo|jogo de|sistema de|e um|e)\s+(?:novo\s+)?rpgs? de mesa\b|\b(?:um|e um) jogo de interpretacao de personagens\b|\b(?:sistema|suplemento|aventura|cenario|manual|livro(?: basico| de regras)?)\s+(?:(?:de|do|para)\s+)?rpg\b/g;
+  for (const match of s.matchAll(direct)) {
+    const context = s.slice(Math.max(0, match.index - 50), match.index);
+    if (!/\b(?:inspirad[oa]s?|basead[oa]s?|autor|autora|gosta|joga)\b[^.!?]*$/.test(context))
+      return true;
+  }
+  // TTRPG names are explicit when used as a product title, not in an author/background sentence.
   return (
-    /\b(jogo de interpretacao de personagens|ttrpg|tabletop role.?playing|rpgs? de mesa|role.?playing game de mesa)\b/.test(
-      s,
-    ) ||
-    /\b(livro|sistema|suplemento|aventura|cenario|manual)\b[^.!?]{0,120}\brpg\b/.test(s) ||
-    /\brpg\b[^.!?]{0,80}\b(livro|sistema|suplemento|manual)\b/.test(s)
+    /\bttrpg\b/.test(s.split(/[.!?]/, 1)[0]) &&
+    !/\b(?:autor|autora|gosto|gosta|joga|hobby|inspirad[oa])\b/.test(s.split(/[.!?]/, 1)[0])
   );
 }
+
 const validDate = (value: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) &&
   Number.isFinite(Date.parse(value)) &&

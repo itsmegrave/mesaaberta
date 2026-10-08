@@ -112,6 +112,9 @@ export function parseMeepleListing(html: string): Listing {
     if (!url || !sourceUrlAllowed(url, 'meeplestarter')) throw new Error('source_schema');
     urls.push(url);
   }
+  // This verified category includes archived campaigns; an empty selector result is a schema
+  // failure until a real explicit empty-state contract is observed, never a silent success.
+  if (urls.length === 0) throw new Error('source_schema');
   // Verified listing renders the entire category, with no page links or lazy loading.
   return { urls: [...new Set(urls)], nextPage: null };
 }
