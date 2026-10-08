@@ -10,6 +10,7 @@ import {
   ilike,
   inArray,
   isNull,
+  sql,
   lt,
   lte,
   or,
@@ -24,6 +25,8 @@ import { authorize, type Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
 import { publicName } from '../db/public-name';
 import { crowdfundings, profiles, reports } from '../db/schema';
+import { campaignUrlAliases } from './import/candidate';
+import { lockCampaignUrl } from './import/store';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { CROWDFUNDING_LIMIT, enforceRateLimit, LINK_READ_LIMIT, REPORT_LIMIT } from '../rate-limit';
@@ -66,6 +69,15 @@ export async function addCrowdfunding(
 
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
+    await lockCampaignUrl(t, url);
+    const [existing] = await t
+      .select({ id: crowdfundings.id })
+      .from(crowdfundings)
+      .where(
+        and(inArray(crowdfundings.url, campaignUrlAliases(url)), isNull(crowdfundings.removedAt)),
+      )
+      .limit(1);
+    if (existing) throw new Invalid('url', 'already_listed');
     await enforceRateLimit(t, actor!.id, CROWDFUNDING_LIMIT, now);
     const [row] = await t
       .insert(crowdfundings)
@@ -105,7 +117,9 @@ export async function findListedByUrl(db: AnyDb, url: string) {
   const [row] = await db
     .select({ id: crowdfundings.id, name: crowdfundings.name })
     .from(crowdfundings)
-    .where(and(eq(crowdfundings.url, key), isNull(crowdfundings.removedAt)));
+    .where(
+      and(inArray(crowdfundings.url, campaignUrlAliases(key)), isNull(crowdfundings.removedAt)),
+    );
   return row ?? null;
 }
 
@@ -120,7 +134,10 @@ const cardColumns = {
   endsOn: crowdfundings.endsOn,
   imagePath: crowdfundings.imagePath,
   submitterId: crowdfundings.submitterId,
-  submitter: publicName(profiles.username),
+  submitter: sql<
+    string | null
+  >`CASE WHEN ${crowdfundings.submitterId} IS NULL THEN NULL ELSE ${publicName(profiles.username)} END`,
+  importSource: crowdfundings.importSource,
 };
 
 export type CrowdfundingCard = {
@@ -132,8 +149,9 @@ export type CrowdfundingCard = {
   startsOn: string;
   endsOn: string;
   imagePath: string | null;
-  submitterId: string;
-  submitter: string;
+  submitterId: string | null;
+  submitter: string | null;
+  importSource: 'catarse' | 'meeplestarter' | null;
 };
 
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
@@ -160,7 +178,7 @@ export async function listCrowdfundings(
     db
       .select(cardColumns)
       .from(crowdfundings)
-      .innerJoin(profiles, eq(profiles.id, crowdfundings.submitterId));
+      .leftJoin(profiles, eq(profiles.id, crowdfundings.submitterId));
 
   const [{ ended }] = await db
     .select({ ended: count() })

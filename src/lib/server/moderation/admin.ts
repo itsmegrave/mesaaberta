@@ -144,9 +144,10 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
             endsOn: crowdfundings.endsOn,
             removedAt: crowdfundings.removedAt,
             submitter: { id: profiles.id, username: profiles.username },
+            importSource: crowdfundings.importSource,
           })
           .from(crowdfundings)
-          .innerJoin(profiles, eq(profiles.id, crowdfundings.submitterId))
+          .leftJoin(profiles, eq(profiles.id, crowdfundings.submitterId))
           .where(eq(crowdfundings.id, row.report.targetId))
       : [];
 

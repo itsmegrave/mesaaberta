@@ -18,7 +18,8 @@ type ModerationEvent = Extract<
 >;
 
 async function recipientsOf(db: AnyDb, event: ModerationEvent) {
-  if (event.type === 'CrowdfundingRemoved') return [event.payload.submitterId];
+  if (event.type === 'CrowdfundingRemoved')
+    return event.payload.submitterId ? [event.payload.submitterId] : [];
   if (event.type === 'TableClosedByModeration') {
     const [table] = await db
       .select({ gmId: gameTables.gmId })

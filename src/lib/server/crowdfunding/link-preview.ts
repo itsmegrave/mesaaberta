@@ -121,9 +121,15 @@ async function readCapped(response: Response, limit: number): Promise<Uint8Array
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
+  let timedOut = false;
+  const deadline = setTimeout(() => {
+    timedOut = true;
+    void reader.cancel().catch(() => undefined);
+  }, PREVIEW_LIMITS.timeoutMs);
   try {
     for (;;) {
       const { done, value } = await reader.read();
+      if (timedOut) return null;
       if (done) break;
       total += value.byteLength;
       if (total > limit) {
@@ -134,6 +140,9 @@ async function readCapped(response: Response, limit: number): Promise<Uint8Array
     }
   } catch {
     return null;
+  } finally {
+    clearTimeout(deadline);
+    reader.releaseLock();
   }
   const bytes = new Uint8Array(total);
   let offset = 0;
@@ -153,7 +162,7 @@ const ENTITIES: Record<string, string> = {
   nbsp: ' ',
 };
 
-const decodeEntities = (text: string) =>
+export const decodeEntities = (text: string) =>
   text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, entity: string) => {
     if (entity[0] === '#') {
       const code =
@@ -175,7 +184,7 @@ const isSpace = (char: string) =>
   char === ' ' || char === '\n' || char === '\t' || char === '\r' || char === '\f';
 
 /** The `name="value"` pairs of a tag, read in one left-to-right pass (no pattern, so no backtracking). */
-const attributesOf = (tag: string) => {
+export const attributesOf = (tag: string) => {
   const found = new Map<string, string>();
   let i = 0;
   while (i < tag.length) {

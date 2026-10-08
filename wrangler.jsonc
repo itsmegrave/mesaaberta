@@ -15,6 +15,8 @@
   // replaces any variable that is not in this file. The e2e tests blank the two Supabase ones (see
   // `preview:e2e`) so they keep covering the app before login is configured.
   "vars": {
+    // Daily RPG campaign discovery at 01:00 America/Sao_Paulo (04:00 UTC).
+    "CROWDFUNDING_IMPORT_ENABLED": "true",
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
     "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
     "RESEND_FROM": "ola@mesaaberta.app",
@@ -39,7 +41,7 @@
   ],
   // Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
   // `bun run build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
-  "triggers": { "crons": ["*/5 * * * *"] },
+  "triggers": { "crons": ["*/5 * * * *", "0 4 * * *"] },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "workers_dev": true,
   "preview_urls": true,

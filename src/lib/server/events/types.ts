@@ -56,6 +56,10 @@ export type DomainEvent =
   | { type: 'ReportDismissed'; payload: ReportClosure }
   // A member added a crowdfunding campaign. It is public at once; nobody is told.
   | { type: 'CrowdfundingAdded'; payload: CrowdfundingFact }
+  | {
+      type: 'CrowdfundingImported';
+      payload: CrowdfundingFact & { source: 'catarse' | 'meeplestarter'; externalId: string };
+    }
   // The server read a campaign link for a member (to fill the name). No handler listens to it: it
   // only counts against the rate limit, and the address itself is not kept.
   | { type: 'CrowdfundingLinkRead'; payload: Record<string, never> }
@@ -117,7 +121,7 @@ export type CrowdfundingFact = { crowdfundingId: string; name: string };
 
 // `reportId` is null when an admin removed it from the list, with no report behind it.
 export type CrowdfundingRemoval = CrowdfundingFact & {
-  submitterId: string;
+  submitterId: string | null;
   reason: ReportFiled['reason'];
   reportId: string | null;
 };

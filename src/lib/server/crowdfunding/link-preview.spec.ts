@@ -222,3 +222,18 @@ describe('readMeta attributes', () => {
     expect(meta.title).toBe('Ainda lê');
   });
 });
+
+it('cancels a remote image whose body stalls after the response headers', async () => {
+  const cancel = vi.fn();
+  const bytes = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new Uint8Array([255, 216, 255]));
+    },
+    cancel,
+  });
+  const fetcher = async () => new Response(bytes, { headers: { 'content-type': 'image/jpeg' } });
+  await expect(
+    readRemoteImage('https://images.example/cover.jpg', { fetcher, resolve: publicDns }),
+  ).resolves.toBeNull();
+  expect(cancel).toHaveBeenCalledOnce();
+}, 6000);
