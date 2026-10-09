@@ -13,6 +13,7 @@
     RESOLUTION_NOTE_MAX,
     type BanDuration,
     type ReportReason,
+    type ReportTarget,
   } from '$lib/moderation/reports';
   import Form from '$lib/components/Form.svelte';
   import FormField from '$lib/components/FormField.svelte';
@@ -34,6 +35,7 @@
     write,
     durations = false,
     reasons,
+    reasonTarget = 'crowdfunding',
     choices = BAN_DURATIONS,
     trigger = true,
     open = $bindable(false),
@@ -59,6 +61,8 @@
     durations?: boolean;
     /** Asks for one of these reasons (taking a campaign down), worded for crowdfunding. */
     reasons?: readonly ReportReason[];
+    /** What the reasons are worded for: a campaign (the default) or a partner. */
+    reasonTarget?: ReportTarget;
     /** The lengths offered: all of them, or one (permanent, for "Banir"), which is not asked. */
     choices?: readonly BanDuration[];
     /** Draws its own button; off when a menu item opens the dialog through `open`. */
@@ -95,6 +99,7 @@
     invalid_value: m.moderation_duration_required,
     not_open: m.moderation_err_changed,
     closed: m.moderation_err_changed,
+    already_approved: m.moderation_err_changed,
     not_found: m.moderation_err_changed,
     banned: m.moderation_err_banned,
     forbidden: m.moderation_err_forbidden,
@@ -188,7 +193,7 @@
                   required
                   invalid={!!reasonError}
                   items={reasons.map((reason) => ({
-                    name: reasonLabel(reason, 'crowdfunding'),
+                    name: reasonLabel(reason, reasonTarget),
                     slug: reason,
                   }))}
                   value={data.reason ? [data.reason] : []}

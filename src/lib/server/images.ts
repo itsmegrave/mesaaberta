@@ -71,7 +71,9 @@ export async function storeImage(
     // Replacements get a new UUID URL, so browsers can reuse these bytes between visits.
     // Keep avatars shorter-lived because people can remove their profile picture.
     cacheControl:
-      image.path.startsWith('tables/') || image.path.startsWith('crowdfunding/')
+      image.path.startsWith('tables/') ||
+      image.path.startsWith('crowdfunding/') ||
+      image.path.startsWith('partners/')
         ? '2592000'
         : '86400',
   });
@@ -90,6 +92,10 @@ export const supabaseUrlOf = (env: unknown) =>
 /** The public URL of a stored image, or null when there is none or Supabase is not configured. */
 export const imageUrl = (supabaseUrl: string | undefined, path: string | null) =>
   supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${IMAGE_BUCKET}/${path}` : null;
+
+/** The public URL of a partner's logo, which lives in the avatar bucket under `partners/<id>/`. */
+export const partnerLogoUrl = (supabaseUrl: string | undefined, path: string | null) =>
+  supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${path}` : null;
 
 /** The picture a profile shows: the uploaded one, else the sign-in provider's, else none. */
 export const pictureOf = (

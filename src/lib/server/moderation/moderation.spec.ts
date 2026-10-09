@@ -276,6 +276,7 @@ describe('the report queue', () => {
       close: true,
       closeTable: false,
       removeCrowdfunding: false,
+      removePartner: false,
       ban: true,
     });
 
@@ -291,6 +292,7 @@ describe('the report queue', () => {
       close: true,
       closeTable: true,
       removeCrowdfunding: false,
+      removePartner: false,
       ban: false,
     });
   });

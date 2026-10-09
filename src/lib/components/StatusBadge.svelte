@@ -19,6 +19,10 @@
     | 'crowdfunding:running'
     | 'crowdfunding:ended'
     | 'crowdfunding:removed'
+    | 'partner:pending'
+    | 'partner:up'
+    | 'partner:removed'
+    | 'partner:withdrawn'
     | 'catalog:approved'
     | 'catalog:pending'
     | 'catalog:disabled'
@@ -100,6 +104,19 @@
       label: () => m.crowdfunding_status_removed(),
       dot: 'bg-error-500',
       text: 'danger',
+    },
+    // A partner waits for an admin, is on the page, was taken down, or was taken off by its submitter.
+    'partner:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'partner:up': { label: () => m.partner_status_up(), dot: 'bg-success-500' },
+    'partner:removed': {
+      label: () => m.partner_status_removed(),
+      dot: 'bg-error-500',
+      text: 'danger',
+    },
+    'partner:withdrawn': {
+      label: () => m.partner_status_withdrawn(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+      text: 'muted',
     },
     'catalog:approved': { label: () => m.admin_catalog_status_approved(), dot: 'bg-success-500' },
     'catalog:pending': { label: () => m.admin_catalog_status_pending(), dot: 'bg-warning-500' },

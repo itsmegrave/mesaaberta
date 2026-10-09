@@ -8,7 +8,7 @@ vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 vi.mock('$app/state', () => ({
   page: {
     route: { id: '/admin/users' },
-    data: { adminCounts: { reports: 3, queue: 0, connections: 1, events: 0 } },
+    data: { adminCounts: { reports: 3, queue: 0, connections: 1, events: 0, partners: 0 } },
   },
 }));
 

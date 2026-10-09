@@ -307,6 +307,12 @@
                 >.
                 <!-- eslint-enable svelte/no-navigation-without-resolve -->
               </p>
+              <p>
+                <a
+                  href={localizedHref('/partners', getLocale())}
+                  class="link-underline text-surface-950-50">{m.footer_partners_link()}</a
+                >
+              </p>
             </div>
           </div>
         </footer>

@@ -6,7 +6,7 @@ z.config({ jitless: true });
 // Shared by the report forms and the server. Keep in step with the `report_*` enums and checks in
 // src/lib/server/db/schema.ts.
 
-export const REPORT_TARGETS = ['table', 'player', 'crowdfunding'] as const;
+export const REPORT_TARGETS = ['table', 'player', 'crowdfunding', 'partner'] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
 export const REPORT_REASONS = [
@@ -18,6 +18,7 @@ export const REPORT_REASONS = [
   'broken_link',
   'scam',
   'off_topic',
+  'no_backlink',
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
@@ -35,6 +36,16 @@ export const CROWDFUNDING_REPORT_REASONS = [
   'broken_link',
   'scam',
   'off_topic',
+  'spam',
+  'inappropriate_content',
+  'other',
+] as const satisfies readonly ReportReason[];
+
+/** What a member can give for a partner, and what an admin can reject or remove one for. */
+export const PARTNER_REPORT_REASONS = [
+  'no_backlink',
+  'broken_link',
+  'scam',
   'spam',
   'inappropriate_content',
   'other',
@@ -124,6 +135,29 @@ export const accountSchema = z.object({ profileId: uuid });
 export const removeCrowdfundingSchema = z.object({
   id: uuid,
   reason: z.enum(CROWDFUNDING_REPORT_REASONS),
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  // The report the admin decided it from, when they did (it is accepted with the others about it).
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});
+
+/** What a member sends about a partner, which names no table and no player. */
+export const partnerReportSchema = z.object({
+  reason: z.enum(PARTNER_REPORT_REASONS),
+  details: z.string().trim().max(REPORT_DETAILS_MAX),
+});
+export type PartnerReportInput = z.output<typeof partnerReportSchema>;
+
+/** The report form of a partner's card: the partner it is about, with the reason and details. */
+export const reportPartnerSchema = z.object({ id: uuid, ...partnerReportSchema.shape });
+
+/** An action that names only the partner: an admin approving one, or its submitter withdrawing it. */
+export const partnerIdSchema = z.object({ id: uuid });
+export const approvePartnerSchema = partnerIdSchema;
+
+/** An admin taking a partner down, or rejecting one that waits: the reason and a note the submitter reads. */
+export const removePartnerSchema = z.object({
+  id: uuid,
+  reason: z.enum(PARTNER_REPORT_REASONS),
   note: z.string().trim().max(RESOLUTION_NOTE_MAX),
   // The report the admin decided it from, when they did (it is accepted with the others about it).
   reportId: z.union([z.literal(''), uuid]).default(''),

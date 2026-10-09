@@ -6,13 +6,16 @@ import {
   banSchema,
   closeReportSchema,
   closeTableByIdSchema,
+  approvePartnerSchema,
   closeTableSchema,
   removeCrowdfundingSchema,
+  removePartnerSchema,
   reportIdSchema,
 } from '$lib/moderation/reports';
 import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { removeCrowdfunding } from '../crowdfunding/admin';
+import { approvePartner, removePartner } from '../partners/admin';
 import { Invalid } from '../errors';
 import {
   banAccount,
@@ -71,6 +74,14 @@ export const reportActions = {
       removeCrowdfunding(db, actor, id, { reason, note, reportId }),
     admin,
   ),
+  // A partner report: take the partner down, which accepts this report with the others about it.
+  removePartner: moderationAction(
+    removePartnerSchema,
+    ['id', 'reason', 'note', 'reportId'],
+    (db, actor, { id, reason, note, reportId }) =>
+      removePartner(db, actor, id, { reason, note, reportId }),
+    admin,
+  ),
   // A player report: ban the reported profile, for a while or for good.
   ban: moderationAction(
     banFromReportSchema,
@@ -113,6 +124,22 @@ export const crowdfundingActions = {
     removeCrowdfundingSchema,
     ['id', 'reason', 'note'],
     (db, actor, { id, reason, note }) => removeCrowdfunding(db, actor, id, { reason, note }),
+    admin,
+  ),
+};
+
+/** Approving and rejecting partners from the partners list, `/admin/partners`. */
+export const partnerActions = {
+  approve: moderationAction(
+    approvePartnerSchema,
+    ['id'],
+    (db, actor, { id }) => approvePartner(db, actor, id),
+    admin,
+  ),
+  remove: moderationAction(
+    removePartnerSchema,
+    ['id', 'reason', 'note'],
+    (db, actor, { id, reason, note }) => removePartner(db, actor, id, { reason, note }),
     admin,
   ),
 };

@@ -165,6 +165,8 @@ Profile pictures are shown from Google's and Discord's image hosts, which the Co
 
 **Profile pictures.** A person can upload their own picture on `/account/profile` (same checks as table images: 2 MB, PNG, JPEG or WebP by its first bytes). It goes to the public `profile-avatars` bucket under a folder named after their user id, and it wins over the provider's picture; removing it goes back to the provider's, and a replaced file is deleted. The picture shown is `pictureOf()` in `src/lib/server/images.ts`. Its Storage policy (each person writes only inside their own folder) comes from the same migration, `drizzle/0018_storage_policies.sql`; the local stack also gets it from `seed.sql`.
 
+**Partner logos.** A member sending a partner on `/partners/new` uploads its square logo (same checks as profile pictures). It goes to the same public `profile-avatars` bucket, under `partners/<user id>/`, and a replaced logo is deleted. The Storage policy for that folder comes from `drizzle/0036_partners.sql`; the local stack gets it from `seed.sql`. Every partner waits for an admin before it is public, and editing an approved one sends it back to review.
+
 To offer another provider later (Apple, Facebook, ...), enable it in Supabase, add it to `providers` in `src/lib/auth/providers.ts` and to the buttons on the login page, and allow its picture host in `img-src` if it sends one.
 
 ## Authorization

@@ -26,3 +26,18 @@ begin
       with check (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
   end if;
 end $$;
+
+-- Partner logos (see the README, "Partner logos"): the same bucket as profile pictures, under
+-- `partners/<user id>/`. Each signed-in user writes, replaces and deletes only inside their own folder.
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'users manage their own partner logos'
+  ) then
+    create policy "users manage their own partner logos" on storage.objects
+      for all to authenticated
+      using (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = 'partners' and (storage.foldername(name))[2] = (select auth.uid())::text)
+      with check (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = 'partners' and (storage.foldername(name))[2] = (select auth.uid())::text);
+  end if;
+end $$;

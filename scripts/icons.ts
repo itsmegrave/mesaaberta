@@ -15,6 +15,7 @@ const attributes = new Set([
   'stroke',
   'stroke-linecap',
   'stroke-linejoin',
+  'stroke-miterlimit',
   'stroke-width',
   'd',
   'width',
