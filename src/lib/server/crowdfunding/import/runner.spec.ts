@@ -144,3 +144,35 @@ it('falls back to no image and closes the database when optional storage setting
   expect(result[0]).toMatchObject({ status: 'complete', imported: 1 });
   expect(dbClose).toHaveBeenCalledOnce();
 });
+
+it('restarts discovery when the source feed changes instead of reusing an incompatible cursor', async () => {
+  const { crowdfundingImportRuns } = await import('../../db/schema');
+  await test.db.insert(crowdfundingImportRuns).values({
+    source: 'catarse',
+    runDate: '2026-10-14',
+    status: 'failed',
+    token: crypto.randomUUID(),
+    leaseUntil: now,
+    startedAt: now,
+    cursor: JSON.stringify({ page: 2, offset: 1 }),
+  });
+  const list = vi.fn(async (page: number) => {
+    void page;
+    return { urls: ['https://catarse.com.br/new-feed'], nextPage: null };
+  });
+  const source: SourceAdapter = {
+    source: 'catarse',
+    cursorVersion: 'jogos-v1',
+    list,
+    detail: async (url) => ({ ...candidate, url, externalId: 'new-feed' }),
+  };
+  const result = await runDailyImports(env, {
+    scheduledTime: +now + 7 * 86400_000,
+    log: logger,
+    sources: [source],
+    open,
+    readFor,
+  });
+  expect(list.mock.calls[0][0]).toBe(1);
+  expect(result[0]).toMatchObject({ status: 'complete', imported: 1 });
+});

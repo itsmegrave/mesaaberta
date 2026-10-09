@@ -6,6 +6,9 @@ test.describe('crowdfunding list, anonymous', () => {
     await page.goto('/crowdfunding');
 
     await expect(page).toHaveURL(/\/crowdfunding$/);
+    await expect(page.getByLabel('Plataformas', { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel('Buscar financiamento', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Ordenar', { exact: true })).toBeVisible();
     await expect(
       page.getByRole('heading', { level: 1, name: 'Financiamentos coletivos' }),
     ).toBeVisible();

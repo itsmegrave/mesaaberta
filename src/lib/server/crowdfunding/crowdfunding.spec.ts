@@ -187,10 +187,13 @@ describe('listCrowdfundings', () => {
     expect(await listCrowdfundings(test.db, filters('status=ended&page=2'), { now })).toBeNull();
   });
 
-  it('filters by platform and by a search on the name or who is funding it', async () => {
+  it('ignores removed platform controls and keeps search by campaign name or owner', async () => {
     const byPlatform = await listCrowdfundings(test.db, filters('platform=kickstarter'), { now });
-    expect(byPlatform?.running.map((card) => card.name)).toEqual(['Termina depois']);
-    expect(byPlatform?.upcoming).toEqual([]);
+    expect(byPlatform?.running.map((card) => card.name)).toEqual([
+      'Termina logo',
+      'Termina depois',
+    ]);
+    expect(byPlatform?.upcoming.map((card) => card.name)).toEqual(['Em breve']);
 
     const search = await listCrowdfundings(test.db, filters('q=termina'), { now });
     expect(search?.running).toHaveLength(2);

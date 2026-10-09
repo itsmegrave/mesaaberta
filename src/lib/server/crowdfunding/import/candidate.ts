@@ -19,19 +19,17 @@ export function sourceUrlAllowed(url: string, source: ImportSource): boolean {
     return false;
   }
 }
-/** Conservative: RPG alone also describes videogames; require tabletop wording or an RPG book. */
-export function isTabletopRpg(text: string): boolean {
-  const s = text
+const normalized = (text: string) =>
+  text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
-  // A broad games category or an author's hobby is not evidence about the funded product.
-  if (
-    /\b(videogame|video game|jogos? eletronicos?|jogos? digitais?|jogo de computador|jogo para (?:pc|windows|linux|android|ios|console)|jogo pc|mmorpg|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/.test(
-      s,
-    )
-  )
-    return false;
+const excludedProduct =
+  /\b(videogame|video game|jogos? eletronicos?|jogos? digitais?|jogo de computador|jogo para (?:pc|windows|linux|android|ios|console)|jogo pc|mmorpg|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/;
+/** Conservative: RPG alone also describes videogames; require tabletop wording or an RPG book. */
+export function isTabletopRpg(text: string): boolean {
+  const s = normalized(text);
+  if (excludedProduct.test(s)) return false;
   const direct =
     /\b(?:um|novo|jogo de|sistema de|e um|e)\s+(?:novo\s+)?rpgs? de mesa\b|\b(?:um|e um) jogo de interpretacao de personagens\b|\b(?:sistema|suplemento|aventura|cenario|manual|livro(?: basico| de regras)?)\s+(?:(?:de|do|para)\s+)?rpg\b/g;
   for (const match of s.matchAll(direct)) {
@@ -43,6 +41,40 @@ export function isTabletopRpg(text: string): boolean {
   return (
     /\bttrpg\b/.test(s.split(/[.!?]/, 1)[0]) &&
     !/\b(?:autor|autora|gosto|gosta|joga|hobby|inspirad[oa])\b/.test(s.split(/[.!?]/, 1)[0])
+  );
+}
+
+/** Evidence is scoped to the funded product: never use creator bios or another campaign's rewards. */
+export function isTabletopRpgProduct({
+  title,
+  summary,
+  narrative,
+  rewards,
+}: {
+  title: string;
+  summary: string;
+  narrative: string;
+  rewards: string[];
+}): boolean {
+  const primary = normalized(`${title} ${summary}`);
+  if (excludedProduct.test(primary)) return false;
+  if (isTabletopRpg(`${title} ${summary} ${narrative}`)) return true;
+  const identifiesRpg = /\b(?:rpg|ttrpg)\b/.test(primary);
+  const identifiesSupplement = /\bsuplemento\b/.test(primary);
+  const text = normalized(narrative);
+  // An electronic game can also mention character creation and a virtual narrator.
+  if (/\b(?:e|sera) (?:um )?(?:mmorpg|jogo (?:eletronico|digital|de computador))\b/.test(text))
+    return false;
+  const mechanics = [
+    /\b(?:criacao|ficha|fichas) de personagens?\b/.test(text),
+    /\b(?:narrador|narradora|mestre (?:do|de) jogo|mestre da mesa)\b/.test(text),
+    /\b(?:rolagens? de dados?|roll under|dados? poli[ee]dricos?)\b/.test(text),
+  ].filter(Boolean).length;
+  if (identifiesRpg && mechanics >= 2) return true;
+  const rulebook = normalized(rewards.join(' '));
+  return (
+    (identifiesRpg || identifiesSupplement) &&
+    /\blivro (?:do jogador|de regras|basico|base)\b/.test(rulebook)
   );
 }
 
