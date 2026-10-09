@@ -9,7 +9,16 @@ import {
 import { OPEN_REPORT_STATUSES, type ReportStatus } from '$lib/moderation/reports';
 import { authorize, can, type Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { crowdfundings, events, gameTables, profiles, registrations, reports } from '../db/schema';
+import {
+  crowdfundings,
+  events,
+  gameTables,
+  partnerLinks,
+  partners,
+  profiles,
+  registrations,
+  reports,
+} from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { removeTableMember } from '../messages/service';
@@ -71,6 +80,8 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       player: reported.username,
       // The campaign a crowdfunding report is about: it has no table.
       crowdfunding: crowdfundings.name,
+      // The partner a partner report is about: it has no table either.
+      partner: partners.name,
       reporter: reporter.username,
     })
     .from(reports)
@@ -83,6 +94,7 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       crowdfundings,
       and(eq(reports.targetType, 'crowdfunding'), eq(crowdfundings.id, reports.targetId)),
     )
+    .leftJoin(partners, and(eq(reports.targetType, 'partner'), eq(partners.id, reports.targetId)))
     .where(where)
     .orderBy(direction(reports.createdAt), direction(reports.id))
     .limit(filters.pageSize)
@@ -151,6 +163,33 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
           .where(eq(crowdfundings.id, row.report.targetId))
       : [];
 
+  // The partner a partner report is about: its links, who sent it (admins only) and whether it is up.
+  const [partner] =
+    row.report.targetType === 'partner'
+      ? await db
+          .select({
+            id: partners.id,
+            name: partners.name,
+            description: partners.description,
+            siteUrl: partners.siteUrl,
+            backlinkUrl: partners.backlinkUrl,
+            couponCode: partners.couponCode,
+            approvedAt: partners.approvedAt,
+            removedAt: partners.removedAt,
+            submitter: { id: profiles.id, username: profiles.username },
+          })
+          .from(partners)
+          .leftJoin(profiles, eq(profiles.id, partners.submitterId))
+          .where(eq(partners.id, row.report.targetId))
+      : [];
+  const partnerLinkRows = partner
+    ? await db
+        .select({ network: partnerLinks.network, url: partnerLinks.url })
+        .from(partnerLinks)
+        .where(eq(partnerLinks.partnerId, partner.id))
+        .orderBy(partnerLinks.position)
+    : [];
+
   const [player] =
     row.report.targetType === 'player' && row.table
       ? await db
@@ -179,11 +218,13 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
     ...row,
     player: player ?? null,
     crowdfunding: campaign ?? null,
+    partner: partner ? { ...partner, links: partnerLinkRows } : null,
     can: {
       review: row.report.status === 'open',
       close: open,
       closeTable: open && row.report.targetType === 'table' && row.table?.status === 'active',
       removeCrowdfunding: open && !!campaign && !campaign.removedAt,
+      removePartner: open && !!partner && !partner.removedAt,
       ban:
         open &&
         !!subjectProfile &&

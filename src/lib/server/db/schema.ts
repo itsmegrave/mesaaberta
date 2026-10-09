@@ -630,7 +630,7 @@ export const messages = pgTable(
 ).enableRLS();
 
 // Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in $lib/moderation/reports.
-export const reportTarget = pgEnum('report_target', ['table', 'player', 'crowdfunding']);
+export const reportTarget = pgEnum('report_target', ['table', 'player', 'crowdfunding', 'partner']);
 export const reportReason = pgEnum('report_reason', [
   'spam',
   'harassment',
@@ -640,6 +640,7 @@ export const reportReason = pgEnum('report_reason', [
   'broken_link',
   'scam',
   'off_topic',
+  'no_backlink',
 ]);
 // `open` and `reviewing` wait on an admin; `resolved` and `dismissed` are closed.
 export const reportStatus = pgEnum('report_status', ['open', 'reviewing', 'resolved', 'dismissed']);
@@ -657,7 +658,7 @@ export const reports = pgTable(
     targetType: reportTarget('target_type').notNull(),
     // The table or the player's profile, by `targetType`. Not a foreign key: it points at either.
     targetId: uuid('target_id').notNull(),
-    // Where it happened. Null for a report about a crowdfunding campaign, which belongs to no table.
+    // Where it happened. Null for a report about a crowdfunding campaign or a partner, which belong to no table.
     tableId: uuid('table_id').references(() => gameTables.id),
     reason: reportReason('reason').notNull(),
     details: text('details').notNull().default(''),
@@ -682,7 +683,7 @@ export const reports = pgTable(
       'reports_table_target',
       sql`${report.targetType} <> 'table' OR ${report.targetId} = ${report.tableId}`,
     ),
-    // A table or player report always says which table. Written without 'crowdfunding': a value
+    // A table or player report always says which table. Written without 'crowdfunding' or 'partner': a value
     // added to the enum cannot be used in the migration that adds it.
     check(
       'reports_table_required',
@@ -750,6 +751,80 @@ export const crowdfundings = pgTable(
     check('crowdfundings_owner_length', sql`char_length(${campaign.owner}) BETWEEN 1 AND 80`),
     check('crowdfundings_dates_order', sql`${campaign.endsOn} >= ${campaign.startsOn}`),
     check('crowdfundings_removal_note_length', sql`char_length(${campaign.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
+// A community, shop, podcast or event that links to Mesa Aberta and is listed on /partners in return
+// (a link exchange). A member sends it, an admin approves it (`approvedAt`), members report it and an
+// admin removes it (`removedAt`). The submitter is shown to admins only. Any edit by the submitter
+// clears the approval, so the card leaves the page until an admin approves it again.
+export const partners = pgTable(
+  'partners',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    submitterId: uuid('submitter_id')
+      .notNull()
+      .references(() => profiles.id),
+    name: text('name').notNull(),
+    description: text('description'),
+    // A path in the profile-avatars bucket, under `partners/<submitter id>/`.
+    logoPath: text('logo_path').notNull(),
+    // The partner's own site, if any. The networks are in `partner_links`.
+    siteUrl: text('site_url'),
+    // Where the partner put our link, for the admin to check. Optional.
+    backlinkUrl: text('backlink_url'),
+    // A discount the partner gives Mesa Aberta members, when there is a coupon partnership: the code,
+    // and a line saying what it gives. Both optional; a description needs a code.
+    couponCode: text('coupon_code'),
+    couponDescription: text('coupon_description'),
+    // Null while the partner waits for an admin (or after an edit); the list shows approved ones only.
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    // The admin who approved it. Not a foreign key, like `crowdfundings.removed_by`.
+    approvedBy: uuid('approved_by'),
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    // The admin who removed or rejected it, or the submitter themself (then there is no reason).
+    removedBy: uuid('removed_by'),
+    removalReason: reportReason('removal_reason'),
+    removalNote: text('removal_note'),
+    ...timestamps,
+  },
+  (partner) => [
+    index('partners_submitter_idx').on(partner.submitterId),
+    // The public list and the admin's waiting list.
+    index('partners_approved_idx').on(partner.approvedAt, partner.removedAt),
+    // Mirror PARTNER_LIMITS in $lib/partners/schema.
+    check('partners_name_length', sql`char_length(${partner.name}) BETWEEN 1 AND 60`),
+    check('partners_description_length', sql`char_length(${partner.description}) <= 140`),
+    check('partners_coupon_code_length', sql`char_length(${partner.couponCode}) BETWEEN 1 AND 32`),
+    check(
+      'partners_coupon_description_length',
+      sql`char_length(${partner.couponDescription}) <= 140`,
+    ),
+    check(
+      'partners_coupon_description_needs_code',
+      sql`${partner.couponDescription} IS NULL OR ${partner.couponCode} IS NOT NULL`,
+    ),
+    check('partners_removal_note_length', sql`char_length(${partner.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
+// One link of a partner: a social network, in the order the member put them (at most
+// MAX_PARTNER_LINKS). The site is `partners.site_url`, so `network` is never `website` here.
+export const partnerLinks = pgTable(
+  'partner_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    // One of the networks in `$lib/profile/social-links`, except `website`.
+    network: text('network').notNull(),
+    url: text('url').notNull(),
+    position: integer('position').notNull(),
+  },
+  (link) => [
+    index('partner_links_partner_idx').on(link.partnerId, link.position),
+    check('partner_links_network', sql`${link.network} <> 'website'`),
   ],
 ).enableRLS();
 

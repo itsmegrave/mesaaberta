@@ -4,6 +4,7 @@
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
   import { siteName, submissionLabel } from '$lib/crowdfunding/labels';
+  import Icon from '$lib/components/Icon.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { reasonLabel } from '$lib/moderation/labels';
   import {
@@ -11,11 +12,14 @@
     closeReportSchema,
     closeTableSchema,
     CROWDFUNDING_REPORT_REASONS,
+    PARTNER_REPORT_REASONS,
     removeCrowdfundingSchema,
+    removePartnerSchema,
     reportIdSchema,
     RESOLUTION_NOTE_MAX,
   } from '$lib/moderation/reports';
   import { atHandle } from '$lib/profile/handle';
+  import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
@@ -33,12 +37,15 @@
   const kind = $derived(report.report.targetType);
   const isTable = $derived(kind === 'table');
   const campaign = $derived(report.crowdfunding);
+  const partner = $derived(report.partner);
   const target = $derived(
     kind === 'crowdfunding'
       ? (campaign?.name ?? m.admin_report_crowdfunding_gone())
-      : isTable
-        ? m.admin_reports_target_table({ table: report.table?.title ?? '' })
-        : handle(report.player?.username ?? null),
+      : kind === 'partner'
+        ? (partner?.name ?? m.admin_report_partner_gone())
+        : isTable
+          ? m.admin_reports_target_table({ table: report.table?.title ?? '' })
+          : handle(report.player?.username ?? null),
   );
   const fields = $derived({ id: report.report.id });
   const note = {
@@ -72,9 +79,11 @@
       <span class="text-sm text-muted">
         {kind === 'crowdfunding'
           ? m.admin_report_kind_crowdfunding()
-          : isTable
-            ? m.admin_report_kind_table()
-            : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
+          : kind === 'partner'
+            ? m.admin_report_kind_partner()
+            : isTable
+              ? m.admin_report_kind_table()
+              : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
       </span>
     </p>
   {/snippet}
@@ -151,6 +160,83 @@
                 >
                 {#if report.player.status === 'suspended'}
                   <StatusBadge status="user:banned" />
+                {/if}
+              </dd>
+            </div>
+          {/if}
+          {#if partner}
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_report_partner()}</dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold">{partner.name}</span>
+                {#if partner.removedAt}
+                  <span class="text-sm text-muted">{m.admin_partners_removed()}</span>
+                {:else if !partner.approvedAt}
+                  <span class="text-sm text-muted">{m.partner_status_pending()}</span>
+                {/if}
+              </dd>
+            </div>
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_partners_col_links()}</dt>
+              <dd>
+                <ul class="flex flex-wrap gap-3">
+                  {#each [...(partner.siteUrl ? [{ network: 'website' as const, url: partner.siteUrl }] : []), ...partner.links] as link (link.network + link.url)}
+                    <li>
+                      <!-- eslint-disable svelte/no-navigation-without-resolve -- the partner's own link on another site, not an app route -->
+                      <a
+                        class="inline-flex items-center gap-1 anchor"
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        ><Icon
+                          name={networkIcons[link.network as keyof typeof networkIcons]}
+                          size={18}
+                        />{networkLabels[link.network as keyof typeof networkLabels]()}<span
+                          class="sr-only"
+                        >
+                          {m.partner_opens_new_tab()}</span
+                        ></a
+                      >
+                      <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                    </li>
+                  {/each}
+                </ul>
+              </dd>
+            </div>
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_partners_col_backlink()}</dt>
+              <dd>
+                {#if partner.backlinkUrl}
+                  <!-- eslint-disable svelte/no-navigation-without-resolve -- where the partner put our link, on another site -->
+                  <a
+                    class="anchor"
+                    href={partner.backlinkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >{m.admin_partners_check()}<span class="sr-only">
+                      {m.partner_opens_new_tab()}</span
+                    ></a
+                  >
+                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                {:else}
+                  <span class="text-warning-700-300">{m.admin_partners_not_informed()}</span>
+                {/if}
+              </dd>
+            </div>
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.partner_sent_by_label()}</dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                {#if partner.submitter}
+                  <UserLink
+                    username={partner.submitter.username}
+                    label={handle(partner.submitter.username)}
+                    class="font-semibold"
+                  />
+                  <a
+                    class="ml-2 anchor text-sm"
+                    href={localizedHref(`/admin/users/${partner.submitter.id}`, locale)}
+                    >{m.admin_user_title()}</a
+                  >
                 {/if}
               </dd>
             </div>
@@ -271,6 +357,27 @@
           text={m.admin_crowdfunding_remove_text()}
           confirm={m.admin_crowdfunding_remove_confirm()}
           success={m.admin_crowdfunding_remove_done()}
+          triggerClass={danger}
+        />
+      {/if}
+      {#if report.can.removePartner && partner}
+        <ModerationDialog
+          action="?/removePartner"
+          schema={removePartnerSchema}
+          fields={{ id: partner.id, reportId: report.report.id }}
+          danger
+          reasons={PARTNER_REPORT_REASONS}
+          reasonTarget="partner"
+          write={{
+            name: 'note',
+            label: m.admin_partners_remove_note(),
+            hint: m.admin_partners_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
+          }}
+          label={m.admin_partners_remove()}
+          title={m.admin_partners_remove_title({ name: partner.name })}
+          text={m.admin_partners_remove_text()}
+          confirm={m.admin_partners_remove_confirm()}
+          success={m.admin_partners_remove_done()}
           triggerClass={danger}
         />
       {/if}

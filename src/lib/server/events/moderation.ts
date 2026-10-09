@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { activeAdmins } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { crowdfundings, gameTables, notifications, profiles } from '../db/schema';
+import { crowdfundings, gameTables, notifications, partners, profiles } from '../db/schema';
 import { NOTIFICATION_KINDS, type NotificationType } from '../../notifications/kinds';
 import type { Handler, StoredEvent } from './types';
 
@@ -13,13 +13,17 @@ type ModerationEvent = Extract<
       | 'ReportResolved'
       | 'ReportDismissed'
       | 'TableClosedByModeration'
-      | 'CrowdfundingRemoved';
+      | 'CrowdfundingRemoved'
+      | 'PartnerApproved'
+      | 'PartnerRemoved';
   }
 >;
 
 async function recipientsOf(db: AnyDb, event: ModerationEvent) {
   if (event.type === 'CrowdfundingRemoved')
     return event.payload.submitterId ? [event.payload.submitterId] : [];
+  if (event.type === 'PartnerApproved' || event.type === 'PartnerRemoved')
+    return [event.payload.submitterId];
   if (event.type === 'TableClosedByModeration') {
     const [table] = await db
       .select({ gmId: gameTables.gmId })
@@ -47,13 +51,18 @@ export const moderationHandler: Handler = {
     'ReportDismissed',
     'TableClosedByModeration',
     'CrowdfundingRemoved',
+    'PartnerApproved',
+    'PartnerRemoved',
   ],
   async handle(event, db) {
     const moderation = event as ModerationEvent;
     const type: NotificationType =
       moderation.type === 'ReportFiled'
         ? 'report_filed_admin'
-        : moderation.type === 'TableClosedByModeration' || moderation.type === 'CrowdfundingRemoved'
+        : moderation.type === 'TableClosedByModeration' ||
+            moderation.type === 'CrowdfundingRemoved' ||
+            moderation.type === 'PartnerApproved' ||
+            moderation.type === 'PartnerRemoved'
           ? 'moderation_notice'
           : 'report_resolved';
     const recipients = (await recipientsOf(db, moderation)).filter((id) => id !== event.actorId);
@@ -74,6 +83,25 @@ export const moderationHandler: Handler = {
       };
     }
 
+    // A partner that was approved, or sent back with the reason and the admin's note, if any.
+    if (moderation.type === 'PartnerApproved') {
+      removal = {
+        partnerId: moderation.payload.partnerId,
+        partnerApproved: moderation.payload.name,
+      };
+    } else if (moderation.type === 'PartnerRemoved') {
+      const [partner] = await db
+        .select({ note: partners.removalNote })
+        .from(partners)
+        .where(eq(partners.id, moderation.payload.partnerId));
+      removal = {
+        partnerId: moderation.payload.partnerId,
+        partnerRemoved: moderation.payload.name,
+        ...(moderation.payload.reason ? { reason: moderation.payload.reason } : {}),
+        ...(partner?.note ? { note: partner.note } : {}),
+      };
+    }
+
     const reportId = 'reportId' in moderation.payload ? moderation.payload.reportId : null;
     await db
       .insert(notifications)
@@ -87,7 +115,9 @@ export const moderationHandler: Handler = {
           type,
           link: type === 'report_filed_admin' ? `/admin/reports/${reportId}` : null,
           metadata:
-            moderation.type === 'CrowdfundingRemoved'
+            moderation.type === 'CrowdfundingRemoved' ||
+            moderation.type === 'PartnerApproved' ||
+            moderation.type === 'PartnerRemoved'
               ? removal
               : moderation.type === 'TableClosedByModeration'
                 ? {

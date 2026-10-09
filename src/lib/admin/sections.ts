@@ -1,7 +1,13 @@
 import type { IconName } from '$lib/icons/names';
 import { m } from '$lib/paraglide/messages';
 
-export type AdminCounts = { reports: number; queue: number; connections: number; events: number };
+export type AdminCounts = {
+  reports: number;
+  queue: number;
+  connections: number;
+  events: number;
+  partners: number;
+};
 export type AdminSection = { path: string; label: string; icon: IconName; count?: number };
 export type AdminGroup = { key: string; label: string; sections: AdminSection[] };
 
@@ -40,6 +46,12 @@ export function adminGroups(counts: AdminCounts): AdminGroup[] {
           path: '/admin/crowdfunding',
           label: m.admin_nav_crowdfunding(),
           icon: 'game-icons:open-treasure-chest',
+        },
+        {
+          path: '/admin/partners',
+          label: m.admin_nav_partners(),
+          icon: 'game-icons:trade',
+          count: counts.partners,
         },
       ],
     },

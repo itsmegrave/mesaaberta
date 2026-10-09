@@ -11,6 +11,8 @@ import GameExitDoorIcon from '@iconify-svelte/game-icons/exit-door';
 import GameTavernSignIcon from '@iconify-svelte/game-icons/tavern-sign';
 import GameBarStoolIcon from '@iconify-svelte/game-icons/bar-stool';
 import GameHouseIcon from '@iconify-svelte/game-icons/house';
+import GameTradeIcon from '@iconify-svelte/game-icons/trade';
+import TicketPercentIcon from '@iconify-svelte/reicon/ticket-percent';
 import SquarePenIcon from '@iconify-svelte/reicon/edit';
 import MoonIcon from '@iconify-svelte/reicon/moon';
 import SunIcon from '@iconify-svelte/reicon/sun';
@@ -129,6 +131,7 @@ export const ICONS = {
   'circle-x': CircleXIcon,
   star: StarIcon,
   tag: TagIcon,
+  'ticket-percent': TicketPercentIcon,
   shield: ShieldIcon,
   megaphone: MegaphoneIcon,
   wrench: WrenchIcon,
@@ -153,6 +156,7 @@ export const ICONS = {
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:black-knight-helm': GameBlackKnightHelmIcon,
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
+  'game-icons:trade': GameTradeIcon,
   'panel-left-open': PanelLeftOpenIcon,
   'panel-left-close': PanelLeftCloseIcon,
   bold: BoldIcon,

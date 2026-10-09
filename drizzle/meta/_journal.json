@@ -253,6 +253,13 @@
       "when": 1791459422336,
       "tag": "0035_crowdfunding_imports",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791566104872,
+      "tag": "0036_partners",
+      "breakpoints": true
     }
   ]
 }

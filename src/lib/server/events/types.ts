@@ -65,6 +65,15 @@ export type DomainEvent =
   | { type: 'CrowdfundingLinkRead'; payload: Record<string, never> }
   // An admin took a campaign down. `submitterId` is who is told, with the reason.
   | { type: 'CrowdfundingRemoved'; payload: CrowdfundingRemoval }
+  // A member sent a partner, or edited one (which clears its approval): it waits for an admin.
+  // Nobody is told.
+  | { type: 'PartnerAdded'; payload: PartnerFact }
+  | { type: 'PartnerUpdated'; payload: PartnerFact & { changes: Changes } }
+  // An admin approved a partner: it is on the page. `submitterId` is who is told.
+  | { type: 'PartnerApproved'; payload: PartnerFact & { submitterId: string } }
+  // An admin rejected or took a partner down, or its submitter withdrew it (then `submitterId`
+  // is the actor, so nobody is told).
+  | { type: 'PartnerRemoved'; payload: PartnerRemoval }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -102,9 +111,9 @@ export type TableClosure = {
 
 export type ReportFiled = {
   reportId: string;
-  targetType: 'table' | 'player' | 'crowdfunding';
+  targetType: 'table' | 'player' | 'crowdfunding' | 'partner';
   targetId: string;
-  // Null for a report about a crowdfunding campaign, which belongs to no table.
+  // Null for a report about a crowdfunding campaign or a partner, which belong to no table.
   tableId: string | null;
   reason:
     | 'spam'
@@ -114,7 +123,8 @@ export type ReportFiled = {
     | 'other'
     | 'broken_link'
     | 'scam'
-    | 'off_topic';
+    | 'off_topic'
+    | 'no_backlink';
 };
 
 export type CrowdfundingFact = { crowdfundingId: string; name: string };
@@ -123,6 +133,15 @@ export type CrowdfundingFact = { crowdfundingId: string; name: string };
 export type CrowdfundingRemoval = CrowdfundingFact & {
   submitterId: string | null;
   reason: ReportFiled['reason'];
+  reportId: string | null;
+};
+
+export type PartnerFact = { partnerId: string; name: string };
+
+// `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
+export type PartnerRemoval = PartnerFact & {
+  submitterId: string;
+  reason: ReportFiled['reason'] | null;
   reportId: string | null;
 };
 

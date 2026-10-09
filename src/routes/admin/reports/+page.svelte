@@ -35,20 +35,25 @@
 
   const isTable = (row: Report) => row.targetType === 'table';
   const isCampaign = (row: Report) => row.targetType === 'crowdfunding';
+  const isPartner = (row: Report) => row.targetType === 'partner';
   const iconOf = (row: Report) =>
     isCampaign(row)
       ? ('game-icons:open-treasure-chest' as const)
-      : isTable(row)
-        ? ('game-icons:tavern-sign' as const)
-        : ('game-icons:meeple' as const);
+      : isPartner(row)
+        ? ('game-icons:trade' as const)
+        : isTable(row)
+          ? ('game-icons:tavern-sign' as const)
+          : ('game-icons:meeple' as const);
   const targetOf = (row: Report) =>
     isCampaign(row)
       ? (row.crowdfunding ?? m.admin_report_crowdfunding())
-      : isTable(row)
-        ? m.admin_reports_target_table({ table: row.table ?? '' })
-        : row.player
-          ? atHandle(row.player)
-          : m.admin_profile_no_username();
+      : isPartner(row)
+        ? (row.partner ?? m.admin_report_partner())
+        : isTable(row)
+          ? m.admin_reports_target_table({ table: row.table ?? '' })
+          : row.player
+            ? atHandle(row.player)
+            : m.admin_profile_no_username();
   const href = (row: Report) => localizedHref(`/admin/reports/${row.id}`, locale);
   const badge = (row: Report) => `report:${row.status}` as Status;
   const menuOf = (row: Report): KebabItem[] => [
@@ -73,6 +78,7 @@
     { slug: 'table', name: m.admin_reports_target_table_option() },
     { slug: 'player', name: m.admin_reports_target_player_option() },
     { slug: 'crowdfunding', name: m.admin_reports_target_crowdfunding_option() },
+    { slug: 'partner', name: m.admin_reports_target_partner_option() },
   ];
 </script>
 
@@ -139,6 +145,9 @@
             {#if isCampaign(row)}
               <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
               <p class="truncate text-muted">{m.admin_report_kind_crowdfunding()}</p>
+            {:else if isPartner(row)}
+              <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
+              <p class="truncate text-muted">{m.admin_report_kind_partner()}</p>
             {:else if isTable(row)}
               <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
               <p class="truncate text-muted">

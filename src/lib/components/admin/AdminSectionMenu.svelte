@@ -12,11 +12,11 @@
 
   const locale = getLocale();
   const counts = $derived(
-    page.data.adminCounts ?? { reports: 0, queue: 0, connections: 0, events: 0 },
+    page.data.adminCounts ?? { reports: 0, queue: 0, connections: 0, events: 0, partners: 0 },
   );
   const groups = $derived(adminGroups(counts));
   const current = $derived(sectionOf(groups, page.route.id));
-  const waiting = $derived(counts.reports + counts.queue + counts.connections);
+  const waiting = $derived(counts.reports + counts.queue + counts.connections + counts.partners);
 
   // The menu is built when it opens: a closed one would put an inline `style` on the page, which
   // the CSP refuses.

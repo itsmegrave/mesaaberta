@@ -21,5 +21,9 @@ for (const [name, path] of [
       'href',
       'https://mesaaberta.canny.io/feedback',
     );
+    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveAttribute(
+      'href',
+      '/partners',
+    );
   });
 }

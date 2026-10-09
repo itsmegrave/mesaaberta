@@ -72,6 +72,15 @@ export function notificationText(item: Shown): string {
     case 'report_resolved':
       return m.notification_report_resolved();
     case 'moderation_notice':
+      if (item.metadata.partnerApproved)
+        return m.notification_partner_approved({ partner: item.metadata.partnerApproved });
+      if (item.metadata.partnerRemoved) {
+        const partner = item.metadata.partnerRemoved;
+        const reason = reasonLabel(item.metadata.reason as ReportReason, 'partner');
+        return item.metadata.note
+          ? m.notification_partner_removed_note({ partner, reason, note: item.metadata.note })
+          : m.notification_partner_removed({ partner, reason });
+      }
       // A campaign an admin removed says why; a table they closed names it, and the justification
       // is on the GM's dashboard.
       if (item.metadata.campaign) {
