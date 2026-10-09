@@ -38,6 +38,7 @@
   type Values = {
     name: string;
     description: string;
+    contactEmail: string;
     siteUrl: string;
     backlinkUrl: string;
     couponCode: string;
@@ -80,6 +81,7 @@
     too_small: m.form_error_required,
     too_long: m.form_error_too_big,
     invalid_url: m.partner_err_invalid_url,
+    invalid_email: m.partner_err_invalid_email,
     invalid_format: m.partner_err_invalid_url,
     invalid_link: m.partner_err_invalid_link,
     invalid_network: m.partner_err_invalid_link,
@@ -110,6 +112,7 @@
       [
         ['name', m.partner_form_name()],
         ['description', m.partner_form_description()],
+        ['contactEmail', m.partner_form_contact_email()],
         ['siteUrl', m.partner_form_site()],
         ['backlinkUrl', m.partner_form_backlink()],
         ['couponCode', m.partner_form_coupon_code()],
@@ -253,6 +256,29 @@
               name="description"
               maxlength={PARTNER_LIMITS.description}
               bind:value={$draft.description}
+              class={input}
+              {...aria}
+            />
+          {/snippet}
+        </FormField>
+        <FormField
+          id="contactEmail"
+          label={m.partner_form_contact_email()}
+          optional
+          tip={m.partner_form_contact_email_tip()}
+          error={err('contactEmail')}
+        >
+          {#snippet children(aria)}
+            <TextInput
+              id="contactEmail"
+              name="contactEmail"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              autocapitalize="none"
+              spellcheck="false"
+              maxlength={PARTNER_LIMITS.contactEmail}
+              bind:value={$draft.contactEmail}
               class={input}
               {...aria}
             />

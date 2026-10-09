@@ -27,6 +27,7 @@ function columnsOf(input: PartnerInput) {
   return {
     name: input.name,
     description: textOrNull(input.description),
+    contactEmail: textOrNull(input.contactEmail),
     siteUrl: addressOrNull(input.siteUrl),
     backlinkUrl: addressOrNull(input.backlinkUrl),
     couponCode: textOrNull(input.couponCode),
@@ -122,7 +123,10 @@ export async function updatePartner(
 
     const changes: Changes = {};
     for (const key of Object.keys(next) as (keyof typeof next)[]) {
-      if (next[key] !== current[key]) changes[key] = { from: current[key], to: next[key] };
+      if (next[key] === current[key]) continue;
+      // An address is personal data: the audit event says it changed, never what it was.
+      changes[key] =
+        key === 'contactEmail' ? { redacted: true } : { from: current[key], to: next[key] };
     }
     const links = partnerLinks(input).map((link) => link.url);
     if (links.join('\n') !== oldLinks.map((link) => link.url).join('\n')) {

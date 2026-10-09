@@ -260,6 +260,13 @@
       "when": 1791566104872,
       "tag": "0036_partners",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791571737687,
+      "tag": "0037_partner_contact_email",
+      "breakpoints": true
     }
   ]
 }

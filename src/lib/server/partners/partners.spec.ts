@@ -27,6 +27,7 @@ const bruno = member(2);
 const input = (over: Partial<PartnerInput> = {}): PartnerInput => ({
   name: 'Taverna do Dado',
   description: 'Loja de jogos',
+  contactEmail: '',
   siteUrl: 'https://taverna.example',
   backlinkUrl: '',
   couponCode: '',
@@ -95,6 +96,33 @@ describe('a new partner', () => {
     const [row] = await test.db.select().from(partners).where(eq(partners.id, partnerId));
     expect(row.couponCode).toBeNull();
     expect(row.couponDescription).toBeNull();
+  });
+});
+
+describe('the contact email', () => {
+  it('is kept for admins and never part of the public list', async () => {
+    const { id: partnerId } = await send({ contactEmail: 'dono@privado.example' });
+    await approvePartner(test.db, admin, partnerId);
+    const [card] = (await listPartners(test.db, filters(), { viewerId: id(2) }))!.cards;
+    expect(JSON.stringify(card)).not.toContain('privado.example');
+    const list = await listAdminPartners(test.db, admin, new URLSearchParams('status=all'));
+    expect(list!.rows[0].contactEmail).toBe('dono@privado.example');
+  });
+
+  it('is optional', async () => {
+    const { id: partnerId } = await send();
+    const [row] = await test.db.select().from(partners).where(eq(partners.id, partnerId));
+    expect(row.contactEmail).toBeNull();
+  });
+
+  it('is not written in the audit event when it changes', async () => {
+    const { id: partnerId } = await send({ contactEmail: 'velho@privado.example' });
+    await updatePartner(test.db, ana, partnerId, input({ contactEmail: 'novo@privado.example' }), {
+      now,
+    });
+    const logged = JSON.stringify(await test.db.select().from(events));
+    expect(logged).not.toContain('privado.example');
+    expect(logged).toContain('contactEmail');
   });
 });
 

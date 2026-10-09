@@ -1,0 +1,2 @@
+ALTER TABLE "partners" ADD COLUMN "contact_email" text;--> statement-breakpoint
+ALTER TABLE "partners" ADD CONSTRAINT "partners_contact_email_length" CHECK (char_length("partners"."contact_email") <= 254);

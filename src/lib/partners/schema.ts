@@ -17,6 +17,7 @@ z.config({ jitless: true });
 export const PARTNER_LIMITS = {
   name: 60,
   description: 140,
+  contactEmail: 254,
   couponCode: 32,
   couponDescription: 140,
 } as const;
@@ -61,6 +62,14 @@ const optionalAddress = z
 const fields = {
   name: z.string().trim().min(1, 'required').max(PARTNER_LIMITS.name, 'too_long'),
   description: optionalText(PARTNER_LIMITS.description),
+  // Only admins see it; optional. Lower-cased so the same address is always written the same way.
+  contactEmail: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(PARTNER_LIMITS.contactEmail, 'too_long')
+    .default('')
+    .refine((value) => value === '' || z.email().safeParse(value).success, 'invalid_email'),
   siteUrl: optionalAddress,
   backlinkUrl: optionalAddress,
   couponCode: optionalText(PARTNER_LIMITS.couponCode),
@@ -132,6 +141,7 @@ export type PartnerInput = Omit<EditPartnerInput, 'logo'>;
 export const NEW_PARTNER_VALUES = {
   name: '',
   description: '',
+  contactEmail: '',
   siteUrl: '',
   backlinkUrl: '',
   couponCode: '',
