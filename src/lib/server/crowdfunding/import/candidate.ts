@@ -26,6 +26,27 @@ const normalized = (text: string) =>
     .toLowerCase();
 const excludedProduct =
   /\b(videogame|video game|jogos? eletronicos?|jogos? digitais?|jogo de computador|jogo para (?:pc|windows|linux|android|ios|console)|jogo pc|mmorpg|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/;
+/** Comparisons are not declarations of the funded product's type. */
+function excludedNarrative(text: string): boolean {
+  for (const match of text.matchAll(new RegExp(excludedProduct.source, 'g'))) {
+    // Keep each context scan bounded even when an untrusted narrative repeats many comparisons.
+    const context = text.slice(Math.max(0, match.index - 120), match.index);
+    const sentence = Math.max(
+      context.lastIndexOf('.'),
+      context.lastIndexOf('!'),
+      context.lastIndexOf('?'),
+    );
+    const before = context.slice(sentence + 1);
+    if (
+      /\b(?:diferente de|ao contrario de|em vez de|nao (?:e|sera|se trata de)|inspirad[oa]s? (?:em|por)|basead[oa]s? (?:em|nos)|adaptad[oa]s? (?:de|dos))\s+(?:(?:um|uma|uns|umas|o|os|a|as)\s+)?$/.test(
+        before,
+      )
+    )
+      continue;
+    return true;
+  }
+  return false;
+}
 /** Conservative: RPG alone also describes videogames; require tabletop wording or an RPG book. */
 export function isTabletopRpg(text: string): boolean {
   const s = normalized(text);
@@ -57,14 +78,12 @@ export function isTabletopRpgProduct({
   rewards: string[];
 }): boolean {
   const primary = normalized(`${title} ${summary}`);
-  if (excludedProduct.test(primary)) return false;
-  if (isTabletopRpg(`${title} ${summary} ${narrative}`)) return true;
+  const text = normalized(narrative);
+  if (excludedProduct.test(primary) || excludedNarrative(text)) return false;
+  if (isTabletopRpg(`${title} ${summary}`) || isTabletopRpg(`${title} ${summary} ${narrative}`))
+    return true;
   const identifiesRpg = /\b(?:rpg|ttrpg)\b/.test(primary);
   const identifiesSupplement = /\bsuplemento\b/.test(primary);
-  const text = normalized(narrative);
-  // An electronic game can also mention character creation and a virtual narrator.
-  if (/\b(?:e|sera) (?:um )?(?:mmorpg|jogo (?:eletronico|digital|de computador))\b/.test(text))
-    return false;
   const mechanics = [
     /\b(?:criacao|ficha|fichas) de personagens?\b/.test(text),
     /\b(?:narrador|narradora|mestre (?:do|de) jogo|mestre da mesa)\b/.test(text),
