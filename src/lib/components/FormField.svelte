@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import InfoTip from '$lib/components/InfoTip.svelte';
   import { m } from '$lib/paraglide/messages';
 
   /**
@@ -12,6 +13,7 @@
     id,
     label,
     hint,
+    tip,
     error,
     optional = false,
     counter,
@@ -20,6 +22,8 @@
     id: string;
     label: string;
     hint?: string;
+    /** A sentence behind an "i" button beside the label, for a note the field can do without. */
+    tip?: string;
     error?: string;
     /** Marks the field "(opcional)". */
     optional?: boolean;
@@ -40,10 +44,13 @@
 
 <div class="min-w-0">
   <div class="flex items-baseline justify-between gap-3">
-    <label for={id} id="{id}-label" class="label-text block font-semibold"
-      >{label}{#if optional}<span class="font-normal text-muted">&nbsp;({m.form_optional()})</span
-        >{/if}</label
-    >
+    <div class="flex min-w-0 items-center gap-1">
+      <label for={id} id="{id}-label" class="label-text block font-semibold"
+        >{label}{#if optional}<span class="font-normal text-muted">&nbsp;({m.form_optional()})</span
+          >{/if}</label
+      >
+      {#if tip}<InfoTip text={tip} />{/if}
+    </div>
     {#if counter}
       <span
         aria-hidden="true"

@@ -363,6 +363,7 @@
   "form_view_table": "Ver a página da mesa",
   "form_summary": "Corrija os campos marcados.",
   "form_optional": "opcional",
+  "info_tip_label": "Mais informações",
   "form_summary_title": [
     {
       "declarations": ["input count"],
@@ -1714,6 +1715,10 @@
   "partner_form_name": "Nome",
   "partner_form_description": "Descrição curta",
   "partner_form_description_hint": "Uma linha sobre quem vocês são.",
+  "partner_form_contact_email": "E-mail de contato",
+  "partner_form_contact_email_tip": "Opcional. Só os administradores da Mesa Aberta veem este e-mail, para falar com você sobre a troca de links. Ele nunca aparece na página.",
+  "partner_err_invalid_email": "Informe um e-mail válido.",
+  "admin_partners_contact_email": "E-mail de contato",
   "partner_form_logo": "Logo",
   "partner_form_logo_hint": "Quadrada, em PNG, JPEG ou WebP, de até 2 MB.",
   "partner_form_logo_hint_edit": "Deixe vazio para manter o logo atual. Quadrada, em PNG, JPEG ou WebP, de até 2 MB.",

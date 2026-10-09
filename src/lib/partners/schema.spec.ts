@@ -4,6 +4,7 @@ import { editPartnerSchema, partnerLinks, partnerLinkUrl } from './schema';
 const base = {
   name: 'Taverna do Dado',
   description: '',
+  contactEmail: '',
   siteUrl: 'https://taverna.example',
   backlinkUrl: '',
   couponCode: '',
@@ -62,6 +63,15 @@ describe('partner form', () => {
     expect(codes({ linkNetwork: ['discord'], linkUrl: ['https://evil.example/x'] })).toContain(
       'invalid_link',
     );
+  });
+
+  it('takes an email as optional, lower-cased, and refuses one that is not an address', () => {
+    expect(codes({})).toEqual([]);
+    expect(codes({ contactEmail: 'Dono@Taverna.example' })).toEqual([]);
+    expect(
+      editPartnerSchema.parse({ ...base, contactEmail: ' Dono@Taverna.example ' }),
+    ).toMatchObject({ contactEmail: 'dono@taverna.example' });
+    expect(codes({ contactEmail: 'not-an-email' })).toContain('invalid_email');
   });
 
   it('refuses a site that is not an address', () => {

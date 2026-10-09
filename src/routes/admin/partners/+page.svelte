@@ -242,6 +242,15 @@
         {#if row.submitter}
           <a class="anchor" href={localizedHref(`/u/${row.submitter}`, locale)}>@{row.submitter}</a>
         {/if}
+        {#if row.contactEmail}
+          <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
+          <a
+            class="block truncate anchor text-sm text-muted"
+            href="mailto:{row.contactEmail}"
+            title={m.admin_partners_contact_email()}>{row.contactEmail}</a
+          >
+          <!-- eslint-enable svelte/no-navigation-without-resolve -->
+        {/if}
       {:else if id === 'reports'}
         {row.reports}
       {:else if id === 'actions'}
@@ -255,7 +264,9 @@
         {#snippet meta()}
           {#if row.description}<p class="truncate">{row.description}</p>{/if}
           <p>
-            {row.submitter ? `@${row.submitter}` : ''} · {row.backlinkUrl
+            {row.submitter ? `@${row.submitter}` : ''}{row.contactEmail
+              ? ` · ${row.contactEmail}`
+              : ''} · {row.backlinkUrl
               ? m.admin_partners_backlink_given()
               : m.admin_partners_not_informed()}
           </p>

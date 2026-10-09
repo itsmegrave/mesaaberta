@@ -172,6 +172,7 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
             name: partners.name,
             description: partners.description,
             siteUrl: partners.siteUrl,
+            contactEmail: partners.contactEmail,
             backlinkUrl: partners.backlinkUrl,
             couponCode: partners.couponCode,
             approvedAt: partners.approvedAt,

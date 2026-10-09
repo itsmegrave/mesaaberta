@@ -771,6 +771,8 @@ export const partners = pgTable(
     logoPath: text('logo_path').notNull(),
     // The partner's own site, if any. The networks are in `partner_links`.
     siteUrl: text('site_url'),
+    // How an admin can reach the partner. Optional, and for admins only: no public query selects it.
+    contactEmail: text('contact_email'),
     // Where the partner put our link, for the admin to check. Optional.
     backlinkUrl: text('backlink_url'),
     // A discount the partner gives Mesa Aberta members, when there is a coupon partnership: the code,
@@ -794,6 +796,7 @@ export const partners = pgTable(
     index('partners_approved_idx').on(partner.approvedAt, partner.removedAt),
     // Mirror PARTNER_LIMITS in $lib/partners/schema.
     check('partners_name_length', sql`char_length(${partner.name}) BETWEEN 1 AND 60`),
+    check('partners_contact_email_length', sql`char_length(${partner.contactEmail}) <= 254`),
     check('partners_description_length', sql`char_length(${partner.description}) <= 140`),
     check('partners_coupon_code_length', sql`char_length(${partner.couponCode}) BETWEEN 1 AND 32`),
     check(

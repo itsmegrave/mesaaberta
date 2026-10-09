@@ -240,6 +240,16 @@
                 {/if}
               </dd>
             </div>
+            {#if partner.contactEmail}
+              <div class={row}>
+                <dt class="text-sm font-semibold text-muted">{m.admin_partners_contact_email()}</dt>
+                <dd>
+                  <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
+                  <a class="anchor" href="mailto:{partner.contactEmail}">{partner.contactEmail}</a>
+                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                </dd>
+              </div>
+            {/if}
           {/if}
           {#if campaign}
             <div class={row}>

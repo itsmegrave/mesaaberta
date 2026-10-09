@@ -107,6 +107,7 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       description: partners.description,
       logoPath: partners.logoPath,
       siteUrl: partners.siteUrl,
+      contactEmail: partners.contactEmail,
       backlinkUrl: partners.backlinkUrl,
       couponCode: partners.couponCode,
       couponDescription: partners.couponDescription,
