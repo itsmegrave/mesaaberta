@@ -37,9 +37,11 @@ type Deps = {
   image?: (c: SourceCandidate) => Promise<string | null>;
   removeImage?: (path: string) => Promise<void>;
 };
-const cursorOf = (raw: string | null) => {
-  if (!raw) return { page: 1, offset: 0 };
-  const c = JSON.parse(raw) as { page: number; offset: number };
+const cursorOf = (raw: string | null, version?: string) => {
+  const first = { page: 1, offset: 0, ...(version ? { version } : {}) };
+  if (!raw) return first;
+  const c = JSON.parse(raw) as { page: number; offset: number; version?: string };
+  if (version && c.version !== version) return first;
   if (
     !Number.isSafeInteger(c.page) ||
     c.page < 1 ||
@@ -158,7 +160,7 @@ export async function runDailyImports(
       let cursor = lease.cursor,
         errorCode: string | null = null;
       try {
-        let position = cursorOf(cursor),
+        let position = cursorOf(cursor, adapter.cursorVersion),
           pages = 0,
           details = 0;
         const seenPages = new Set<number>();
@@ -181,7 +183,7 @@ export async function runDailyImports(
           pages++;
           summary.discovered += Math.max(0, listing.urls.length - position.offset);
           for (let index = position.offset; index < listing.urls.length; index++) {
-            cursor = JSON.stringify({ page: position.page, offset: index });
+            cursor = JSON.stringify({ ...position, offset: index });
             if (clock() - started >= 4 * 60_000 || details >= maxDetails) {
               summary.status = 'partial';
               break;
@@ -208,7 +210,7 @@ export async function runDailyImports(
               summary[outcome]++;
               if (outcome === 'imported') await attachImage(c);
             }
-            cursor = JSON.stringify({ page: position.page, offset: index + 1 });
+            cursor = JSON.stringify({ ...position, offset: index + 1 });
             if (!(await checkpointRun(db, lease, cursor, counts(summary))))
               throw new Error('source_lease_lost');
           }
@@ -218,7 +220,7 @@ export async function runDailyImports(
             break;
           }
           if (listing.nextPage <= position.page) throw new Error('source_cursor');
-          position = { page: listing.nextPage, offset: 0 };
+          position = { ...position, page: listing.nextPage, offset: 0 };
         }
       } catch (error) {
         summary.status = 'failed';

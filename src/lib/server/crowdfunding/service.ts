@@ -171,7 +171,6 @@ export async function listCrowdfundings(
   const needle = filters.query ? `%${escapeLike(filters.query)}%` : null;
   const matching = and(
     isNull(crowdfundings.removedAt),
-    filters.platforms.length ? inArray(crowdfundings.platform, filters.platforms) : undefined,
     needle ? or(ilike(crowdfundings.name, needle), ilike(crowdfundings.owner, needle)) : undefined,
   );
   const select = () =>

@@ -1,6 +1,11 @@
 import { todayIn } from '../../../crowdfunding/phase';
 import { readMeta, attributesOf, decodeEntities } from '../link-preview';
-import { isTabletopRpg, sourceUrlAllowed, validateCandidate } from './candidate';
+import {
+  isTabletopRpg,
+  isTabletopRpgProduct,
+  sourceUrlAllowed,
+  validateCandidate,
+} from './candidate';
 import { findObject, object, readFlight } from './flight';
 import type { Listing, SourceAdapter, SourceCandidate } from './types';
 const plain = (html: string) =>
@@ -82,8 +87,38 @@ export function parseCatarseCampaign(html: string, url: string, now: Date): Sour
   const resolve = (v: unknown): unknown =>
     typeof v === 'string' && /^\$[a-f0-9]+$/.test(v) ? flight.get(v.slice(1)) : v;
   const story = resolve(p.story);
-  const evidence = [p.title, p.summary, typeof story === 'string' ? plain(story) : ''].join(' ');
-  if (!isTabletopRpg(evidence)) return null;
+  const own = findObject(
+    flight.values(),
+    (o) =>
+      Array.isArray(resolve(o.rewards)) &&
+      Object.values(o).some((v) => object(resolve(v))?.id === p.id),
+  );
+  const rewardTexts: string[] = [];
+  const rewards = resolve(own?.rewards);
+  if (Array.isArray(rewards)) {
+    for (const value of rewards.slice(0, 150)) {
+      const reward = object(value);
+      if (!reward) continue;
+      for (const field of [reward.name, reward.description])
+        if (typeof field === 'string') rewardTexts.push(plain(field));
+      if (Array.isArray(reward.items))
+        for (const itemValue of reward.items.slice(0, 100)) {
+          const item = object(itemValue);
+          if (!item) continue;
+          for (const field of [item.name, item.description])
+            if (typeof field === 'string') rewardTexts.push(plain(field));
+        }
+    }
+  }
+  if (
+    !isTabletopRpgProduct({
+      title: typeof p.title === 'string' ? p.title : '',
+      summary: typeof p.summary === 'string' ? p.summary : '',
+      narrative: typeof story === 'string' ? plain(story) : '',
+      rewards: rewardTexts,
+    })
+  )
+    return null;
   const start = typeof p.startDate === 'string' ? new Date(p.startDate) : null,
     end = typeof p.endDate === 'string' ? new Date(p.endDate) : null;
   if (!start || !end || !Number.isFinite(+start) || !Number.isFinite(+end) || +end < +now)
@@ -155,9 +190,10 @@ export function parseMeepleCampaign(html: string, url: string, now: Date): Sourc
 export const sourceAdapters: readonly SourceAdapter[] = [
   {
     source: 'catarse',
+    cursorVersion: 'catarse-jogos-popular-v1',
     list: async (page, read) =>
       parseCatarseListing(
-        await read(`https://www.catarse.com.br/discovery?category=2&filterBy=recent&page=${page}`),
+        await read(`https://www.catarse.com.br/discovery?category=2&filterBy=popular&page=${page}`),
         page,
       ),
     detail: async (url, now, read) => parseCatarseCampaign(await read(url), url, now),

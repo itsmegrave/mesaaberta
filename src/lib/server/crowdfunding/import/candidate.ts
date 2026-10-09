@@ -19,19 +19,38 @@ export function sourceUrlAllowed(url: string, source: ImportSource): boolean {
     return false;
   }
 }
-/** Conservative: RPG alone also describes videogames; require tabletop wording or an RPG book. */
-export function isTabletopRpg(text: string): boolean {
-  const s = text
+const normalized = (text: string) =>
+  text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
-  // A broad games category or an author's hobby is not evidence about the funded product.
-  if (
-    /\b(videogame|video game|jogos? eletronicos?|jogos? digitais?|jogo de computador|jogo para (?:pc|windows|linux|android|ios|console)|jogo pc|mmorpg|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/.test(
-      s,
+const excludedProduct =
+  /\b(videogame|video game|jogos? eletronicos?|jogos? digitais?|jogo de computador|jogo para (?:pc|windows|linux|android|ios|console)|jogo pc|mmorpg|jogo de tabuleiro|board game|card ?game|jogo de cartas|baralho|livro de receitas|culinaria|autobiografia)\b/;
+/** Comparisons are not declarations of the funded product's type. */
+function excludedNarrative(text: string): boolean {
+  for (const match of text.matchAll(new RegExp(excludedProduct.source, 'g'))) {
+    // Keep each context scan bounded even when an untrusted narrative repeats many comparisons.
+    const context = text.slice(Math.max(0, match.index - 120), match.index);
+    const sentence = Math.max(
+      context.lastIndexOf('.'),
+      context.lastIndexOf('!'),
+      context.lastIndexOf('?'),
+    );
+    const before = context.slice(sentence + 1);
+    if (
+      /\b(?:diferente de|ao contrario de|em vez de|nao (?:e|sera|se trata de)|inspirad[oa]s? (?:em|por)|basead[oa]s? (?:em|nos)|adaptad[oa]s? (?:de|dos))\s+(?:(?:um|uma|uns|umas|o|os|a|as)\s+)?$/.test(
+        before,
+      )
     )
-  )
-    return false;
+      continue;
+    return true;
+  }
+  return false;
+}
+/** Conservative: RPG alone also describes videogames; require tabletop wording or an RPG book. */
+export function isTabletopRpg(text: string): boolean {
+  const s = normalized(text);
+  if (excludedProduct.test(s)) return false;
   const direct =
     /\b(?:um|novo|jogo de|sistema de|e um|e)\s+(?:novo\s+)?rpgs? de mesa\b|\b(?:um|e um) jogo de interpretacao de personagens\b|\b(?:sistema|suplemento|aventura|cenario|manual|livro(?: basico| de regras)?)\s+(?:(?:de|do|para)\s+)?rpg\b/g;
   for (const match of s.matchAll(direct)) {
@@ -43,6 +62,38 @@ export function isTabletopRpg(text: string): boolean {
   return (
     /\bttrpg\b/.test(s.split(/[.!?]/, 1)[0]) &&
     !/\b(?:autor|autora|gosto|gosta|joga|hobby|inspirad[oa])\b/.test(s.split(/[.!?]/, 1)[0])
+  );
+}
+
+/** Evidence is scoped to the funded product: never use creator bios or another campaign's rewards. */
+export function isTabletopRpgProduct({
+  title,
+  summary,
+  narrative,
+  rewards,
+}: {
+  title: string;
+  summary: string;
+  narrative: string;
+  rewards: string[];
+}): boolean {
+  const primary = normalized(`${title} ${summary}`);
+  const text = normalized(narrative);
+  if (excludedProduct.test(primary) || excludedNarrative(text)) return false;
+  if (isTabletopRpg(`${title} ${summary}`) || isTabletopRpg(`${title} ${summary} ${narrative}`))
+    return true;
+  const identifiesRpg = /\b(?:rpg|ttrpg)\b/.test(primary);
+  const identifiesSupplement = /\bsuplemento\b/.test(primary);
+  const mechanics = [
+    /\b(?:criacao|ficha|fichas) de personagens?\b/.test(text),
+    /\b(?:narrador|narradora|mestre (?:do|de) jogo|mestre da mesa)\b/.test(text),
+    /\b(?:rolagens? de dados?|roll under|dados? poli[ee]dricos?)\b/.test(text),
+  ].filter(Boolean).length;
+  if (identifiesRpg && mechanics >= 2) return true;
+  const rulebook = normalized(rewards.join(' '));
+  return (
+    (identifiesRpg || identifiesSupplement) &&
+    /\blivro (?:do jogador|de regras|basico|base)\b/.test(rulebook)
   );
 }
 

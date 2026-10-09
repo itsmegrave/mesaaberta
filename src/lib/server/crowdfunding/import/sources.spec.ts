@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  sourceAdapters,
   parseCatarseListing,
   parseCatarseCampaign,
   parseMeepleListing,
@@ -134,4 +135,108 @@ it('rejects non-RPG funded products through the complete Catarse parser', () => 
       ')</script>';
     expect(parseCatarseCampaign(html, 'https://www.catarse.com.br/unrelated', now)).toBeNull();
   }
+});
+
+it.each([
+  ['catarse-casosocultosrpg', 'casosocultosrpg', 'Casos Ocultos RPG'],
+  [
+    'catarse-mochiladoaventureiro',
+    'mochiladoaventureiro',
+    'Castles & Crusades: Mochila do Aventureiro',
+  ],
+])('imports the real Jogos tabletop product %s', (captured, slug, name) => {
+  expect(
+    parseCatarseCampaign(fixture(captured), `https://www.catarse.com.br/${slug}`, now),
+  ).toMatchObject({ name, source: 'catarse' });
+});
+it('scans the complete Jogos community rather than the recently launched subset', async () => {
+  const requested: string[] = [];
+  const read = async (url: string) => {
+    requested.push(url);
+    return fixture('catarse-list');
+  };
+  await sourceAdapters[0].list(1, read);
+  expect(new URL(requested[0]).searchParams.get('category')).toBe('2');
+  expect(new URL(requested[0]).searchParams.get('filterBy')).toBe('popular');
+});
+
+it('does not borrow rulebook rewards from another campaign or treat electronic games as tabletop', () => {
+  const base = {
+    id: 'own-campaign',
+    slug: 'own-campaign',
+    title: 'Suplemento artístico',
+    summary: 'Um suplemento para uma coleção',
+    status: 'Launch',
+    fundingType: 'Flex',
+    startDate: '2026-10-01T03:00:00Z',
+    endDate: '2026-11-01T03:00:00Z',
+    user: { publicName: 'Editora' },
+  };
+  const unrelated = {
+    projectWithSocial: { id: 'other-campaign' },
+    rewards: [{ name: 'Livro do Jogador' }],
+  };
+  const html =
+    '<script>self.__next_f.push(' +
+    JSON.stringify([1, '1:' + JSON.stringify({ campaign: base, unrelated }) + '\n']) +
+    ')</script>';
+  expect(parseCatarseCampaign(html, 'https://www.catarse.com.br/own-campaign', now)).toBeNull();
+  const electronic = {
+    ...base,
+    title: 'Novo RPG de ação',
+    summary: 'Explore um mundo novo',
+    story: 'Este é um MMORPG para Windows, com criação de personagens e um narrador virtual.',
+  };
+  const digitalHtml =
+    '<script>self.__next_f.push(' +
+    JSON.stringify([1, '1:' + JSON.stringify({ campaign: electronic }) + '\n']) +
+    ')</script>';
+  expect(
+    parseCatarseCampaign(digitalHtml, 'https://www.catarse.com.br/own-campaign', now),
+  ).toBeNull();
+});
+
+it.each([
+  'Um jogo eletrônico para Windows com criação de personagens e um narrador virtual.',
+  'Um jogo de tabuleiro inspirado em RPG, com fichas de personagens e rolagens de dados.',
+])('does not override an explicitly excluded funded product: %s', (story) => {
+  const campaign = {
+    id: 'excluded-product',
+    slug: 'excluded-product',
+    title: 'Novo RPG de ação',
+    summary: 'Explore um mundo novo',
+    story,
+    status: 'Launch',
+    fundingType: 'Flex',
+    startDate: '2026-10-01T03:00:00Z',
+    endDate: '2026-11-01T03:00:00Z',
+    user: { publicName: 'Editora' },
+  };
+  const html =
+    '<script>self.__next_f.push(' +
+    JSON.stringify([1, '1:' + JSON.stringify({ campaign }) + '\n']) +
+    ')</script>';
+  expect(parseCatarseCampaign(html, 'https://www.catarse.com.br/excluded-product', now)).toBeNull();
+});
+it('keeps tabletop product evidence when a narrative explicitly compares it with other game types', () => {
+  const campaign = {
+    id: 'tabletop-comparison',
+    slug: 'tabletop-comparison',
+    title: 'Novo RPG de mesa',
+    summary: 'Um sistema para histórias em grupo',
+    story:
+      'Este RPG permite criação de personagens e possui regras para o narrador. Diferente de um jogo de tabuleiro, as ações são imaginadas pelo grupo. Não é um jogo eletrônico.',
+    status: 'Launch',
+    fundingType: 'Flex',
+    startDate: '2026-10-01T03:00:00Z',
+    endDate: '2026-11-01T03:00:00Z',
+    user: { publicName: 'Editora' },
+  };
+  const html =
+    '<script>self.__next_f.push(' +
+    JSON.stringify([1, '1:' + JSON.stringify({ campaign }) + '\n']) +
+    ')</script>';
+  expect(
+    parseCatarseCampaign(html, 'https://www.catarse.com.br/tabletop-comparison', now),
+  ).not.toBeNull();
 });

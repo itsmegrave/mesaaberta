@@ -24,12 +24,11 @@
 
   const locale = getLocale();
   const link = (search: string) => localizedHref(`/crowdfunding${search}`, locale);
-  const anyFilter = $derived(data.filters.query !== '' || data.filters.platforms.length > 0);
+  const anyFilter = $derived(data.filters.query !== '');
   // The links between the two views and the pages keep the filters that are on.
   const keep = $derived(
     [
       data.filters.query ? `q=${encodeURIComponent(data.filters.query)}` : '',
-      ...data.filters.platforms.map((platform) => `platform=${platform}`),
       data.filters.sort !== 'ending' ? `sort=${data.filters.sort}` : '',
     ].filter(Boolean),
   );
@@ -97,7 +96,13 @@
         <Pager
           page={data.filters.page}
           pages={data.pages}
-          href={(number) => pageHref('/crowdfunding', page.url.searchParams, number, locale)}
+          href={(number) =>
+            pageHref(
+              '/crowdfunding',
+              new URLSearchParams([...keep, 'status=ended'].join('&')),
+              number,
+              locale,
+            )}
         />
       </div>
     {:else}

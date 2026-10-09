@@ -5,13 +5,16 @@ const read = (query: string) => readCrowdfundingFilters(new URLSearchParams(quer
 
 describe('readCrowdfundingFilters', () => {
   it('defaults to the running list, soonest end first, on the first page', () => {
-    expect(read('')).toEqual({ query: '', platforms: [], sort: 'ending', ended: false, page: 1 });
+    expect(read('')).toEqual({ query: '', sort: 'ending', ended: false, page: 1 });
   });
 
-  it('keeps the platforms it knows, once each, and drops the rest', () => {
-    expect(
-      read('platform=catarse&platform=catarse&platform=evil&platform=gamefound').platforms,
-    ).toEqual(['catarse', 'gamefound']);
+  it('ignores legacy platform parameters so removed controls cannot hide campaigns', () => {
+    expect(read('platform=catarse&platform=meeplestarter&q=rpg')).toEqual({
+      query: 'rpg',
+      sort: 'ending',
+      ended: false,
+      page: 1,
+    });
   });
 
   it('reads a page that is not a positive whole number as the first', () => {
