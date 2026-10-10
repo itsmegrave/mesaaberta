@@ -1,0 +1,17 @@
+{
+  "name": "@mesaaberta/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./client": "./src/client.ts",
+    "./table-status": "./src/table-status.ts",
+    "./profile-status": "./src/profile-status.ts"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "*",
+    "postgres": "*"
+  }
+}
