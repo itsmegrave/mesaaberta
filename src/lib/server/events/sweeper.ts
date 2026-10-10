@@ -38,7 +38,7 @@ export async function runSweeper(
     // Temporary bans whose time is up; their events go out in this run too.
     const lifted = await liftExpiredBans(db, now);
     if (lifted.length > 0) log.info('bans lifted', { lifted: lifted.length });
-    const swept = await sweepEvents(db, handlers, now, 50, log);
+    const swept = await sweepEvents(db, handlers, now, 50, log, { clock: () => new Date() });
     if (swept > 0) log.info('event sweep', { swept });
     await publishInstagramPosts(db, env);
     const pruned = await pruneEvents(db);

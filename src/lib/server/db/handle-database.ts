@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
+import { registerFencing } from '../events/fencing';
 import { connectionStringFrom, createDb, type Db, type DatabaseEnv } from './client';
 
 /**
@@ -17,7 +18,18 @@ export const handleDatabase: Handle = async ({ event, resolve }) => {
   const tasks: ((db: Db) => Promise<unknown>)[] = [];
 
   Object.defineProperty(event.locals, 'db', {
-    get: () => (connectionString ? (connection ??= createDb(connectionString)).db : null),
+    get: () => {
+      if (!connectionString) return null;
+      if (!connection) {
+        connection = createDb(connectionString);
+        // The flag is read when an event is dispatched, not here: `handleFlags` runs later.
+        registerFencing(
+          connection.db,
+          () => event.locals.fencedLeases?.() ?? Promise.resolve(false),
+        );
+      }
+      return connection.db;
+    },
   });
   event.locals.afterResponse = (task) => void tasks.push(task);
 

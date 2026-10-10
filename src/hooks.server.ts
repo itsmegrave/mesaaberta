@@ -6,6 +6,7 @@ import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/fla
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleSuspended } from '$lib/server/auth/suspended';
+import { can } from '$lib/server/auth/policy';
 import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger } from '$lib/server/logger';
 import { handleRequestLog } from '$lib/server/request-log';
@@ -82,6 +83,17 @@ const handleFlags: Handle = ({ event, resolve }) => {
       : async () => null,
     { forceAll, overrides, log: event.locals.log },
   );
+
+  // Targeted at admins first (`isAdmin = true`). Read the first time an event is dispatched.
+  let fenced: Promise<boolean> | undefined;
+  event.locals.fencedLeases = () =>
+    (fenced ??= (async () => {
+      const profile = await event.locals.getProfile().catch(() => null);
+      return event.locals.flags.isEnabled(
+        'api_events_fenced_leases',
+        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+      );
+    })());
 
   return resolve(event);
 };
