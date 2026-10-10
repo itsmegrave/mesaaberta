@@ -7,7 +7,7 @@ describe('BottomTabBar.svelte', () => {
   const nav = () => page.getByRole('navigation', { name: 'Navegação móvel' });
 
   it('renders base tabs for standard member', async () => {
-    render(BottomTabBar, { isAdmin: false });
+    render(BottomTabBar);
 
     await expect.element(nav()).toBeVisible();
     await expect
@@ -23,28 +23,34 @@ describe('BottomTabBar.svelte', () => {
   });
 
   it('offers the crowdfunding list with a short label and the full name for a screen reader', async () => {
-    render(BottomTabBar, { isAdmin: false });
+    render(BottomTabBar);
 
     const tab = nav().getByRole('link', { name: 'Financiamentos coletivos' });
     await expect.element(tab).toHaveAttribute('href', '/crowdfunding');
     await expect.element(tab).toHaveTextContent('FCs');
   });
 
-  it('renders Admin tab when role is admin', async () => {
-    render(BottomTabBar, { isAdmin: true });
+  it('offers the partners list to everyone', async () => {
+    render(BottomTabBar);
 
-    await expect.element(nav()).toBeVisible();
     await expect
-      .element(nav().getByRole('link', { name: 'Admin' }))
-      .toHaveAttribute('href', '/admin');
+      .element(nav().getByRole('link', { name: 'Parceiros' }))
+      .toHaveAttribute('href', '/partners');
+  });
+
+  it('leaves the Admin link to the account menu, so five tabs fit the bar', async () => {
+    render(BottomTabBar);
+
+    await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
+    expect(nav().getByRole('link').elements()).toHaveLength(5);
   });
   it('uses the new game artwork for every mobile tab', async () => {
-    render(BottomTabBar, { isAdmin: true });
+    render(BottomTabBar);
     const expected = {
       '/tables': 'game-icons:tavern-sign',
       '/tables/new': 'game-icons:dice-twenty-faces-twenty',
       '/account/tables': 'game-icons:tabletop-players',
-      '/admin': 'game-icons:black-knight-helm',
+      '/partners': 'game-icons:trade',
     };
     for (const [href, icon] of Object.entries(expected)) {
       const svg = document.querySelector<SVGSVGElement>(`a[href="${href}"] svg`);

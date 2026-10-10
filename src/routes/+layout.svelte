@@ -163,6 +163,8 @@
                 username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
+                isAdmin={data.account.isAdmin}
+                pendingSuggestionsCount={data.account.pendingSuggestionsCount}
               />
             {:else if data.authEnabled}
               <a
@@ -220,7 +222,7 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar isAdmin={data.account?.isAdmin} />
+        <BottomTabBar />
       {/if}
 
       {#if !data.maintenance}

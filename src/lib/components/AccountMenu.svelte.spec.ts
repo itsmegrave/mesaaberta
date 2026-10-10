@@ -84,4 +84,26 @@ describe('AccountMenu.svelte', () => {
       .element(menu().getByRole('link', { name: 'Ver meu perfil' }))
       .not.toBeInTheDocument();
   });
+
+  it('links to the admin area for an admin, with the suggestions waiting', async () => {
+    render(AccountMenu, {
+      name: 'Marina Alves',
+      avatarUrl: null,
+      isAdmin: true,
+      pendingSuggestionsCount: 3,
+    });
+
+    await trigger().click();
+
+    const admin = menu().getByRole('link', { name: 'Admin: 3' });
+    await expect.element(admin).toHaveAttribute('href', '/admin');
+  });
+
+  it('has no admin link for a member', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null });
+
+    await trigger().click();
+
+    await expect.element(menu().getByRole('link', { name: /Admin/ })).not.toBeInTheDocument();
+  });
 });

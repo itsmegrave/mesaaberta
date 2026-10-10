@@ -95,7 +95,7 @@ describe('+layout.svelte', () => {
     const brand = nav.getByRole('link', { name: 'Mesa Aberta' }).element();
 
     expect(collapse.element().parentElement).toBe(brand.parentElement);
-    for (const name of ['Mesas', 'Abrir uma mesa', 'Minhas mesas']) {
+    for (const name of ['Mesas', 'Parceiros', 'Abrir uma mesa', 'Minhas mesas']) {
       await expect.element(nav.getByRole('link', { name })).toBeVisible();
     }
     await expect.element(nav.getByText('Sua conta', { exact: true })).toBeVisible();
@@ -408,7 +408,19 @@ describe('+layout.svelte', () => {
         .toHaveAttribute('href', '/login');
     });
 
-    it('includes Admin tab on bottom tab bar for admins', async () => {
+    it('puts the Parceiros tab on the bar for everyone', async () => {
+      render(Layout, { children, data: { ...signedOut, authEnabled: true } });
+
+      await expect
+        .element(
+          page
+            .getByRole('navigation', { name: 'Navegação móvel' })
+            .getByRole('link', { name: 'Parceiros' }),
+        )
+        .toHaveAttribute('href', '/partners');
+    });
+
+    it('moves the Admin link from the tab bar into the account menu on mobile', async () => {
       render(Layout, {
         children,
         data: {
@@ -418,9 +430,19 @@ describe('+layout.svelte', () => {
         },
       });
 
-      const nav = page.getByRole('navigation', { name: 'Navegação móvel' });
+      const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
+      await expect.element(bar.getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
+
+      await page
+        .getByRole('banner')
+        .getByRole('button', { name: /Mestre Silva/i })
+        .click();
       await expect
-        .element(nav.getByRole('link', { name: 'Admin' }))
+        .element(
+          page
+            .getByRole('navigation', { name: 'Menu da conta' })
+            .getByRole('link', { name: 'Admin: 3' }),
+        )
         .toHaveAttribute('href', '/admin');
     });
   });

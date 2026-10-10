@@ -14,6 +14,8 @@
     username,
     avatarUrl,
     messagesUnread = 0,
+    isAdmin = false,
+    pendingSuggestionsCount = 0,
     placement = 'bottom-end',
     compact = false,
   }: {
@@ -22,6 +24,10 @@
     avatarUrl: string | null;
     /** Conversations with something unread. */
     messagesUnread?: number;
+    /** Adds the admin link: the phone's header has no room for it in the tab bar. */
+    isAdmin?: boolean;
+    /** Suggestions waiting for an admin, shown on the admin link. */
+    pendingSuggestionsCount?: number;
     /** Where the menu opens: under the header's button, beside the side rail's, above the open side nav's. */
     placement?: 'bottom-end' | 'right-end' | 'top-start';
     /** Only the avatar, for the side rail. */
@@ -102,6 +108,27 @@
                 </span>
               {/if}
             </a>
+
+            {#if isAdmin}
+              <a
+                href={localizedHref('/admin', locale)}
+                class={item}
+                aria-label={pendingSuggestionsCount > 0
+                  ? `${m.nav_admin()}: ${pendingSuggestionsCount}`
+                  : undefined}
+              >
+                <Icon name="game-icons:black-knight-helm" size={20} />
+                {m.nav_admin()}
+                {#if pendingSuggestionsCount > 0}
+                  <span
+                    aria-hidden="true"
+                    class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
+                  >
+                    {pendingSuggestionsCount > 9 ? '9+' : pendingSuggestionsCount}
+                  </span>
+                {/if}
+              </a>
+            {/if}
 
             <Form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
               <SubmitButton submitting={signingOut} class={item}>
