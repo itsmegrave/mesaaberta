@@ -10,6 +10,8 @@
   "vars": {
     // Daily RPG campaign discovery at 01:00 America/Sao_Paulo (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
+    // "true": the cron sweeps events through the Postgres poller and the executor (ADR 0003).
+    "EVENT_POLLER": "",
     // Footer links; leave empty to hide them.
     "CANNY_CHANGELOG_URL": "",
     "CANNY_FEEDBACK_URL": "",
