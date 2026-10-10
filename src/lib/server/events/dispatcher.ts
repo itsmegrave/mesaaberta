@@ -38,6 +38,22 @@ export type DispatchOptions = {
 };
 
 /**
+ * What one `dispatchEvent` did, so a queue consumer can acknowledge on an explicit outcome (ADR
+ * 0003). Callers that only want the side effect can ignore it.
+ */
+export type DispatchResult =
+  /** Every handler has succeeded: the event is processed. */
+  | { status: 'done' }
+  /** A handler failed and the event waits for its next attempt. */
+  | { status: 'retry'; attempts: number; retryInSeconds: number; reason: string }
+  /** The attempt cap was reached: the event stays for a person to look at. */
+  | { status: 'failed'; attempts: number; reason: string }
+  /** Not run by this call: already processed, given up on, missing, or held by another dispatcher. */
+  | { status: 'skipped'; reason: 'processed' | 'given_up' | 'missing' | 'busy' }
+  /** The lease was taken over while handlers ran (fenced only): this dispatcher stopped. */
+  | { status: 'lost' };
+
+/**
  * Runs the handlers for one event, if it is due and nobody else is running it. Safe to call from
  * anywhere and any number of times: a processed or given-up event is left alone, and a lease stops
  * two dispatchers from running the same event at once.
@@ -52,7 +68,7 @@ export async function dispatchEvent(
   now = new Date(),
   log: Logger = logger,
   options: DispatchOptions = {},
-): Promise<void> {
+): Promise<DispatchResult> {
   const fenced = options.fenced ?? (await fencedFor(db));
   const tick = () => (fenced && options.clock ? options.clock() : now);
   // Fenced: a token that only this claim holds. Unfenced still clears it, so a dispatcher that
@@ -64,7 +80,17 @@ export async function dispatchEvent(
     .set({ claimedUntil: new Date(claimedAt.getTime() + LEASE_MS), claimToken: token })
     .where(and(eq(events.id, id), due(claimedAt)))
     .returning();
-  if (!row) return; // done, given up on, not due yet, or being run by someone else
+  if (!row) {
+    // Done, given up on, not due yet, or being run by someone else: say which, for the consumer.
+    const [found] = await db
+      .select({ processedAt: events.processedAt, failedAt: events.failedAt })
+      .from(events)
+      .where(eq(events.id, id));
+    if (!found) return { status: 'skipped', reason: 'missing' };
+    if (found.processedAt) return { status: 'skipped', reason: 'processed' };
+    if (found.failedAt) return { status: 'skipped', reason: 'given_up' };
+    return { status: 'skipped', reason: 'busy' };
+  }
 
   // Fenced updates only land while this claim still owns the row.
   const owned = fenced ? and(eq(events.id, id), eq(events.claimToken, token!)) : eq(events.id, id);
@@ -101,7 +127,11 @@ export async function dispatchEvent(
         .set({ handledBy: sql`array_append(${events.handledBy}, ${handler.name})` })
         .where(owned)
         .returning({ id: events.id });
-      if (fenced && marked.length === 0) return lost(); // someone else owns it now: stop, touch nothing
+      if (fenced && marked.length === 0) {
+        // Someone else owns it now: stop, touch nothing.
+        lost();
+        return { status: 'lost' };
+      }
       log.info('event.handler.succeeded', {
         ...context,
         event: 'event.handler.succeeded',
@@ -124,8 +154,11 @@ export async function dispatchEvent(
       .set({ processedAt: tick(), claimedUntil: null, claimToken: null, lastError: null })
       .where(owned)
       .returning({ id: events.id });
-    if (fenced && done.length === 0) lost();
-    return;
+    if (fenced && done.length === 0) {
+      lost();
+      return { status: 'lost' };
+    }
+    return { status: 'done' };
   }
 
   const attempts = row.attempts + 1;
@@ -154,7 +187,14 @@ export async function dispatchEvent(
     })
     .where(owned)
     .returning({ id: events.id });
-  if (fenced && failed.length === 0) lost();
+  if (fenced && failed.length === 0) {
+    lost();
+    return { status: 'lost' };
+  }
+  const reason = describe(failures[0]);
+  return attempts >= MAX_ATTEMPTS
+    ? { status: 'failed', attempts, reason }
+    : { status: 'retry', attempts, retryInSeconds: backoffSeconds(attempts), reason };
 }
 
 /** What `forceEvent` did with an event. */
