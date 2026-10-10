@@ -56,7 +56,7 @@
 >
   {#each options as option (option.value)}
     <label
-      class="flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold whitespace-nowrap hover:bg-surface-wash has-checked:bg-panel has-checked:shadow-sm has-focus-visible:outline-2 has-focus-visible:outline-primary-500"
+      class="flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-1 text-center text-sm leading-tight font-semibold hover:bg-surface-wash has-checked:bg-panel has-checked:shadow-sm has-focus-visible:outline-2 has-focus-visible:outline-primary-500 md:whitespace-nowrap"
     >
       <input
         type="radio"

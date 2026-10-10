@@ -62,7 +62,7 @@
     aria-label={m.admin_events_title()}
     class="mt-6 rounded-lg border border-surface-200-800 bg-panel"
   >
-    <div class="grid gap-3 border-b border-surface-200-800 p-4">
+    <div class="grid grid-cols-1 gap-3 border-b border-surface-200-800 p-4">
       <div class="flex flex-wrap items-center gap-3">
         <FilterSelect
           id="event-type"
@@ -92,7 +92,7 @@
     {:else}
       <ol class="divide-y divide-surface-200-800">
         {#each queue.rows as row (row.id)}
-          <li class="grid gap-2 p-4">
+          <li class="grid grid-cols-1 gap-2 p-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="min-w-0">
                 <p class="font-semibold wrap-break-word">{row.type}</p>
@@ -105,7 +105,7 @@
               </div>
               {#if canForce(queue.status)}<EventForce id={row.id} type={row.type} />{/if}
             </div>
-            <p class="text-sm tabular-nums">
+            <p class="text-sm wrap-break-word tabular-nums">
               {m.admin_events_attempts({ attempts: row.attempts, max: queue.maxAttempts })}
               {#if row.failedAt}
                 · {m.admin_events_failed_at({ date: when(row.failedAt) })}
@@ -121,18 +121,18 @@
                 <span class="font-mono text-xs">{row.lastError}</span>
               </p>
             {/if}
-            <p class="text-sm text-muted">
+            <p class="text-sm wrap-break-word text-muted">
               {m.admin_events_done({ handlers: list(row.handledBy) })}
               {#if !row.processedAt}
                 · {m.admin_events_left({ handlers: list(row.remaining) })}
               {/if}
             </p>
-            <details class="text-sm">
+            <details class="min-w-0 text-sm">
               <summary class="inline-flex min-h-11 cursor-pointer items-center anchor font-semibold"
                 >{m.admin_events_payload()}</summary
               >
               <pre
-                class="mt-1 overflow-x-auto rounded-lg bg-surface-wash p-3 text-xs">{JSON.stringify(
+                class="mt-1 max-w-full overflow-x-auto rounded-lg bg-surface-wash p-3 text-xs">{JSON.stringify(
                   row.payload,
                   null,
                   2,
