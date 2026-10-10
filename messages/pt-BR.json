@@ -1509,7 +1509,7 @@
   "admin_events_empty": "Nenhum evento neste estado.",
   "admin_events_filtered_empty": "Nenhum evento com esses filtros.",
   "admin_events_created": "Criado em {date}",
-  "admin_events_attempts": "Tentativas: {attempts} de {max}",
+  "admin_events_attempts": "Falhas: {attempts} de {max}",
   "admin_events_next": "Próxima tentativa: {date}",
   "admin_events_failed_at": "Desistiu em {date}",
   "admin_events_processed_at": "Processado em {date}",

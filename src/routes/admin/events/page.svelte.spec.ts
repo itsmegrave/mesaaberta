@@ -80,7 +80,7 @@ describe('admin events page', () => {
 
     const text = () => document.body.textContent ?? '';
     await expect.element(page.getByText('TableCreated').first()).toBeVisible();
-    expect(text()).toContain('Tentativas: 8 de 8');
+    expect(text()).toContain('Falhas: 8 de 8');
     expect(text()).toContain('Error: Resend recusou o envio');
     expect(text()).toContain('Já rodaram: invite');
     expect(text()).toContain('Faltam: bell');
