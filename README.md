@@ -218,7 +218,7 @@ A profile has a required, public **username** (`profiles.username`: 3 to 30 lowe
 
 Apply these build settings with the Bun tooling release. Workers Builds can continue deploying throughout the architecture migration; the deployed runtime remains workerd. See [Cloudflare's build version settings](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/).
 
-The connection verifies Supabase's certificate against its root CA, kept at `supabase/prod-ca-2021.crt` (public; valid until 2031, when Supabase rotates it, replace the file). Without the secret the build warns and deploys anyway; then run `DATABASE_URL="<same string>" bun run db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
+The connection verifies Supabase's certificate against its root CA, kept at `supabase/prod-ca-2021.crt` (public; valid until 2031, when Supabase rotates it, replace the file). Without the secret the production build **fails**, so code never ships ahead of its schema. For a deploy that needs no migration, set `ALLOW_BUILD_WITHOUT_MIGRATIONS=true` for that build; otherwise run `DATABASE_URL="<same string>" bun run db:migrate` by hand first. Write migrations so the release before them still works (add, then use; stop using, then drop in a later release), because the old Worker serves traffic while the build runs. `0008` (drops `profiles.display_name`) was the one exception: the release before it errors on the queries that name it until the new one is live.
 
 ## Theme
 

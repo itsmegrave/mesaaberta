@@ -23,10 +23,24 @@ describe('migrationPlan', () => {
     });
   });
 
-  it('skips with a warning on main when the secret is not set yet, so the deploy still goes out', () => {
+  it('fails the build on main when the secret is not set, so code never runs ahead of the schema', () => {
     expect(migrationPlan({ WORKERS_CI: '1', WORKERS_CI_BRANCH: 'main' })).toEqual({
       run: false,
       reason: 'MIGRATE_DATABASE_URL is not set',
+      fail: true,
+    });
+  });
+
+  it('lets a deploy that needs no migration opt out, loudly', () => {
+    expect(
+      migrationPlan({
+        WORKERS_CI: '1',
+        WORKERS_CI_BRANCH: 'main',
+        ALLOW_BUILD_WITHOUT_MIGRATIONS: 'true',
+      }),
+    ).toEqual({
+      run: false,
+      reason: 'MIGRATE_DATABASE_URL is not set (opted out)',
       warn: true,
     });
   });
