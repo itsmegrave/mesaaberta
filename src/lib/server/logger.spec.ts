@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { createLogger } from './logger';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createLogger, setTelemetrySink } from './logger';
 
 const capture = () => {
   const lines: Record<string, unknown>[] = [];
@@ -86,5 +86,40 @@ describe('logger', () => {
     log.warn('c');
     log.error('d');
     expect(levels).toEqual(['debug', 'info', 'warn', 'error']);
+  });
+
+  describe('telemetry sink', () => {
+    afterEach(() => setTelemetrySink(null));
+
+    it('mirrors console lines to the sink and reports handled errors with safe tags', () => {
+      const log = vi.fn();
+      const capture = vi.fn();
+      setTelemetrySink({ log, capture });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('boom');
+      createLogger().error('job failed', { error, attempt: 2, email: 'ana@example.com' });
+      expect(log).toHaveBeenCalledWith(
+        'error',
+        'job failed',
+        expect.not.objectContaining({ email: expect.anything() }),
+      );
+      expect(capture).toHaveBeenCalledTimes(1);
+      expect(capture.mock.calls[0][0]).toBe(error);
+      expect(JSON.stringify(capture.mock.calls[0][1])).not.toContain('ana@example.com');
+    });
+
+    it('does not report request failures that the framework already captures', () => {
+      const capture = vi.fn();
+      setTelemetrySink({ log: vi.fn(), capture });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      createLogger().error('request.failed', { error: new Error('x') });
+      expect(capture).not.toHaveBeenCalled();
+    });
+
+    it('logs to the console and does not throw when no sink is installed', () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      expect(() => createLogger().warn('plain')).not.toThrow();
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
   });
 });
