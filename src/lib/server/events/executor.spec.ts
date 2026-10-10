@@ -10,7 +10,6 @@ import { recordEvent } from './outbox';
 import type { Handler } from './types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
-const t0 = new Date('2026-10-10T12:00:00Z');
 const actor = '00000000-0000-4000-8000-000000000903';
 const payload = { tableId: 'tbl-1', slug: 'mesa', title: 'Mesa' };
 const log = { info() {}, warn() {}, error() {}, debug() {} } as unknown as Logger;
