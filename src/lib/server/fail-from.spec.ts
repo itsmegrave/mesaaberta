@@ -7,8 +7,8 @@ import {
   RateLimited,
   TableFull,
   TooEarly,
-  failFrom,
 } from './errors';
+import { failFrom } from './fail-from';
 
 describe('failFrom', () => {
   it('turns Forbidden into a 403 form failure', () => {

@@ -6,7 +6,8 @@ import type { AnyDb } from '../db/client';
 import { requireUser } from '../auth/guard';
 import type { Actor } from '../auth/policy';
 import { safeNext } from '../auth/safe-next';
-import { RateLimited, failFrom } from '../errors';
+import { RateLimited } from '../errors';
+import { failFrom } from '../fail-from';
 import { dispatchEvent } from '../events/dispatcher';
 import { handlersFor } from '../events/handlers';
 
