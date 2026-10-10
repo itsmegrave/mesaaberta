@@ -1,0 +1,24 @@
+{
+  "name": "@mesaaberta/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "peerDependencies": {
+    "@cf-wasm/resvg": "*",
+    "@growthbook/growthbook": "*",
+    "@sindresorhus/slugify": "*",
+    "@supabase/supabase-js": "*",
+    "drizzle-orm": "*",
+    "ical.js": "*",
+    "jpeg-js": "*",
+    "qrcode": "*",
+    "temporal-polyfill": "*",
+    "timezones-ical-library": "*",
+    "xss": "*",
+    "xstate": "*",
+    "zod": "*"
+  }
+}

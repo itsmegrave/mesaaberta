@@ -7,17 +7,24 @@ import { describe, expect, it } from 'vitest';
  * (Trello #120). It must not depend on SvelteKit, the UI's message catalogue or `$app`/`$env`.
  * Remove an entry from `KNOWN` when the step that removes that edge lands.
  */
-const ROOTS = ['src/lib/server/events/handlers.ts', 'src/lib/server/events/sweeper.ts'];
+const ROOTS = [
+  'packages/core/src/server/events/handlers.ts',
+  'packages/core/src/server/events/sweeper.ts',
+  'packages/core/src/server/events/scheduled.ts',
+];
 const FORBIDDEN = /^(\$app|\$env|@sveltejs\/|\$lib\/paraglide|@sentry\/sveltekit)/;
 /** Edges still to remove, as `file -> specifier`. Empty: the graph is clean. */
 const KNOWN = new Set<string>();
 
 const resolve = (from: string, spec: string) => {
+  // Shims at the old paths re-export from the package, so follow `@mesaaberta/core/...` too.
   const base = spec.startsWith('$lib/')
     ? join('src/lib', spec.slice(5))
-    : spec.startsWith('.')
-      ? normalize(join(dirname(from), spec))
-      : null;
+    : spec.startsWith('@mesaaberta/core/')
+      ? join('packages/core/src', spec.slice('@mesaaberta/core/'.length))
+      : spec.startsWith('.')
+        ? normalize(join(dirname(from), spec))
+        : null;
   if (!base) return null;
   return [base, `${base}.ts`, join(base, 'index.ts')].find(
     (candidate) => candidate.endsWith('.ts') && existsSync(candidate),
@@ -48,6 +55,12 @@ function walk() {
 }
 
 describe('event delivery graph', () => {
+  it('is rooted in packages/core and reaches the whole delivery graph', () => {
+    const { seen } = walk();
+    expect([...seen].every((file) => file.startsWith('packages/core/src/'))).toBe(true);
+    expect(seen.size).toBeGreaterThan(60);
+  });
+
   it('reaches no SvelteKit, $app, $env or message-catalogue import beyond the known ones', () => {
     const { violations } = walk();
     expect([...violations].filter((edge) => !KNOWN.has(edge))).toEqual([]);
