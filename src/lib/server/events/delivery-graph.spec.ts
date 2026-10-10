@@ -9,11 +9,8 @@ import { describe, expect, it } from 'vitest';
  */
 const ROOTS = ['src/lib/server/events/handlers.ts', 'src/lib/server/events/sweeper.ts'];
 const FORBIDDEN = /^(\$app|\$env|@sveltejs\/|\$lib\/paraglide|@sentry\/sveltekit)/;
-/** Step (c): the logger takes an injected reporter, then Sentry leaves this graph. */
-const KNOWN = new Set([
-  'src/lib/server/logger.ts -> @sentry/sveltekit',
-  'src/lib/observability/privacy.ts -> @sentry/sveltekit',
-]);
+/** Edges still to remove, as `file -> specifier`. Empty: the graph is clean. */
+const KNOWN = new Set<string>();
 
 const resolve = (from: string, spec: string) => {
   const base = spec.startsWith('$lib/')
@@ -36,8 +33,12 @@ function walk() {
     if (seen.has(file)) continue;
     seen.add(file);
     const source = readFileSync(file, 'utf8');
-    for (const match of source.matchAll(/(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g)) {
-      const spec = match[1];
+    for (const match of source.matchAll(
+      /(import\s+type\b[^'"]*|(?:from|import)\s*\(?\s*)['"]([^'"]+)['"]/g,
+    )) {
+      // A type-only import is erased at build time, so it adds no runtime dependency.
+      if (match[1].startsWith('import type')) continue;
+      const spec = match[2];
       if (FORBIDDEN.test(spec)) violations.add(`${file} -> ${spec}`);
       const next = resolve(file, spec);
       if (next) stack.push(next);

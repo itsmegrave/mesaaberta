@@ -8,7 +8,8 @@ import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleSuspended } from '$lib/server/auth/suspended';
 import { can } from '$lib/server/auth/policy';
 import { handleDatabase } from '$lib/server/db/handle-database';
-import { logger } from '$lib/server/logger';
+import { logger, setTelemetrySink } from '$lib/server/logger';
+import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
 import { createTracker } from '$lib/server/analytics/track';
 import type { AnalyticsEnv } from '$lib/server/analytics';
@@ -17,6 +18,10 @@ import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+
+// The logger knows no vendor; this deployment mirrors it to Sentry. Set at module load, so every
+// request in the isolate (and the cron that shares it) reports as before.
+setTelemetrySink(sentrySink);
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {

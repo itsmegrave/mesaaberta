@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/sveltekit';
 import { safeFields, scrubString } from '../observability/privacy';
 export { scrubString } from '../observability/privacy';
 
@@ -13,6 +12,24 @@ export type Logger = {
   error(msg: string, fields?: Fields): void;
   /** A logger that stamps safe `bindings` (request id, release, ...) onto every line. */
   child(bindings: Fields): Logger;
+};
+
+/**
+ * Where a deployment sends telemetry besides the console. The logger knows no vendor: the web app
+ * installs one (Sentry) at startup, and a deployment without one still logs to the console.
+ */
+export type TelemetrySink = {
+  /** Mirrors one structured line. `fields` are already safe. */
+  log(level: Level, msg: string, fields: Fields): void;
+  /** Reports a handled operational error as an issue. `tags` are already safe. */
+  capture(error: Error, tags: Fields): void;
+};
+
+let sink: TelemetrySink | null = null;
+
+/** Installs (or, with `null`, removes) the process-wide telemetry sink. */
+export const setTelemetrySink = (next: TelemetrySink | null) => {
+  sink = next;
 };
 
 type Options = {
@@ -34,7 +51,7 @@ const consoleWrite = (level: Level, line: string) => {
   console[level](line);
   try {
     const { msg, ...fields } = JSON.parse(line);
-    Sentry.logger[level](msg, safeFields(fields));
+    sink?.log(level, msg, safeFields(fields));
   } catch {
     // Telemetry must never change the application's outcome or recursively log failures.
   }
@@ -61,7 +78,7 @@ export function createLogger(
 
     try {
       write(level, JSON.stringify(line));
-      // SvelteKit captures unhandled errors already; handled operational errors need an issue too.
+      // The framework reports unhandled errors already; handled operational errors need an issue too.
       if (
         write === consoleWrite &&
         level === 'error' &&
@@ -69,10 +86,10 @@ export function createLogger(
         msg !== 'unhandled error' &&
         msg !== 'request.failed'
       ) {
-        Sentry.withScope((scope) => {
-          scope.setTags(safeFields({ ...fields, ...bindings, ...safeError(fields.error) }));
-          Sentry.captureException(fields.error);
-        });
+        sink?.capture(
+          fields.error,
+          safeFields({ ...fields, ...bindings, ...safeError(fields.error) }),
+        );
       }
     } catch {
       // A failed destination must not fail a request or dispatch.
