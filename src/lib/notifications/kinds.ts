@@ -32,22 +32,23 @@ export type NotificationIcon =
   | 'info'
   | 'message';
 
-/** The icons an admin can pick for an announcement. */
-export const ANNOUNCEMENT_ICONS = [
-  'megaphone',
-  'wrench',
-  'alert-triangle',
-  'sparkles',
-  'gift',
-  'info',
-] as const satisfies readonly NotificationIcon[];
+// The announcement vocabulary is part of the event contracts (`SystemAnnouncementSent`).
+export {
+  ANNOUNCEMENT_AUDIENCES,
+  ANNOUNCEMENT_ICONS,
+  ANNOUNCEMENT_TONES,
+  type AnnouncementAudience,
+  type AnnouncementIcon,
+  type AnnouncementTone,
+} from '@mesaaberta/contracts';
+import {
+  ANNOUNCEMENT_ICONS,
+  type AnnouncementIcon,
+  type AnnouncementTone,
+} from '@mesaaberta/contracts';
 
-export type AnnouncementIcon = (typeof ANNOUNCEMENT_ICONS)[number];
-
-/** How an announcement reads: news, a warning (maintenance) or plain information. */
-export const ANNOUNCEMENT_TONES = ['info', 'warning', 'announcement'] as const;
-
-export type AnnouncementTone = (typeof ANNOUNCEMENT_TONES)[number];
+// An announcement can only use an icon the bell can draw.
+ANNOUNCEMENT_ICONS satisfies readonly NotificationIcon[];
 
 /** The icon an announcement gets when the admin picks none. */
 export const TONE_ICON: Record<AnnouncementTone, AnnouncementIcon> = {
@@ -55,16 +56,6 @@ export const TONE_ICON: Record<AnnouncementTone, AnnouncementIcon> = {
   warning: 'alert-triangle',
   announcement: 'megaphone',
 };
-
-/** Who an announcement goes to. Every audience is limited to active accounts. */
-export const ANNOUNCEMENT_AUDIENCES = [
-  'all_active_users',
-  'game_masters',
-  'active_players',
-  'specific_user',
-] as const;
-
-export type AnnouncementAudience = (typeof ANNOUNCEMENT_AUDIENCES)[number];
 
 /**
  * Every kind of notification, its category and its icon. Only the table, registration and rating
