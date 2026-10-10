@@ -359,6 +359,9 @@ export const events = pgTable(
     failedAt: timestamp('failed_at', { withTimezone: true }),
     // A lease, so two dispatchers never run the same event at once.
     claimedUntil: timestamp('claimed_until', { withTimezone: true }),
+    // Who holds the lease: a fresh token per claim. A dispatcher whose lease expired and was taken
+    // over cannot finish or release the new claim, because its token no longer matches.
+    claimToken: uuid('claim_token'),
     // The shape of `payload` when the event was written. A consumer branches on it when a payload
     // changes, so old rows and in-flight messages stay readable.
     version: integer('version').notNull().default(1),
