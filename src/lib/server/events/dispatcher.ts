@@ -2,6 +2,7 @@ import { and, asc, eq, isNotNull, isNull, lt, lte, ne, or, sql } from 'drizzle-o
 import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
 import { recordEvent } from './outbox';
+import { fencedFor } from './fencing';
 import { logger, scrubString, type Logger } from '../logger';
 import type { DomainEvent, Handler, StoredEvent } from './types';
 
@@ -26,6 +27,16 @@ const describe = (error: unknown) => {
   return scrubString(`${name}: ${message}`).slice(0, 500);
 };
 
+export type DispatchOptions = {
+  /**
+   * Owner-fenced leases (ADR 0003): the claim gets a token and every update to the row is
+   * conditional on it. Defaults to the request's `api_events_fenced_leases` flag.
+   */
+  fenced?: boolean;
+  /** A fresh clock for each claim, so a slow sweep never grants a lease that is already over. */
+  clock?: () => Date;
+};
+
 /**
  * Runs the handlers for one event, if it is due and nobody else is running it. Safe to call from
  * anywhere and any number of times: a processed or given-up event is left alone, and a lease stops
@@ -40,13 +51,25 @@ export async function dispatchEvent(
   id: string,
   now = new Date(),
   log: Logger = logger,
+  options: DispatchOptions = {},
 ): Promise<void> {
+  const fenced = options.fenced ?? (await fencedFor(db));
+  const tick = () => (fenced && options.clock ? options.clock() : now);
+  // Fenced: a token that only this claim holds. Unfenced still clears it, so a dispatcher that
+  // holds a token loses it when an older one claims the row.
+  const token = fenced ? crypto.randomUUID() : null;
+  const claimedAt = tick();
   const [row] = await db
     .update(events)
-    .set({ claimedUntil: new Date(now.getTime() + LEASE_MS) })
-    .where(and(eq(events.id, id), due(now)))
+    .set({ claimedUntil: new Date(claimedAt.getTime() + LEASE_MS), claimToken: token })
+    .where(and(eq(events.id, id), due(claimedAt)))
     .returning();
   if (!row) return; // done, given up on, not due yet, or being run by someone else
+
+  // Fenced updates only land while this claim still owns the row.
+  const owned = fenced ? and(eq(events.id, id), eq(events.claimToken, token!)) : eq(events.id, id);
+  const lost = () =>
+    log.warn('event.lease.lost', { event: 'event.lease.lost', eventId: id, eventType: row.type });
 
   const event = {
     id: row.id,
@@ -73,10 +96,12 @@ export async function dispatchEvent(
     };
     try {
       await handler.handle(event, db);
-      await db
+      const marked = await db
         .update(events)
         .set({ handledBy: sql`array_append(${events.handledBy}, ${handler.name})` })
-        .where(eq(events.id, id));
+        .where(owned)
+        .returning({ id: events.id });
+      if (fenced && marked.length === 0) return lost(); // someone else owns it now: stop, touch nothing
       log.info('event.handler.succeeded', {
         ...context,
         event: 'event.handler.succeeded',
@@ -94,10 +119,12 @@ export async function dispatchEvent(
   }
 
   if (failures.length === 0) {
-    await db
+    const done = await db
       .update(events)
-      .set({ processedAt: now, claimedUntil: null, lastError: null })
-      .where(eq(events.id, id));
+      .set({ processedAt: tick(), claimedUntil: null, claimToken: null, lastError: null })
+      .where(owned)
+      .returning({ id: events.id });
+    if (fenced && done.length === 0) lost();
     return;
   }
 
@@ -113,17 +140,21 @@ export async function dispatchEvent(
       ...(attempts < MAX_ATTEMPTS && { retryInSeconds: backoffSeconds(attempts) }),
     },
   );
-  await db
+  const failedAt = tick();
+  const failed = await db
     .update(events)
     .set({
       attempts,
       claimedUntil: null,
+      claimToken: null,
       lastError: describe(failures[0]),
       ...(attempts >= MAX_ATTEMPTS
-        ? { failedAt: now }
-        : { nextAttemptAt: new Date(now.getTime() + backoffSeconds(attempts) * 1000) }),
+        ? { failedAt }
+        : { nextAttemptAt: new Date(failedAt.getTime() + backoffSeconds(attempts) * 1000) }),
     })
-    .where(eq(events.id, id));
+    .where(owned)
+    .returning({ id: events.id });
+  if (fenced && failed.length === 0) lost();
 }
 
 /** What `forceEvent` did with an event. */
@@ -153,6 +184,7 @@ export async function forceEvent(
   adminId: string,
   now = new Date(),
   log: Logger = logger,
+  options: DispatchOptions = {},
 ): Promise<ForceOutcome> {
   const [row] = await db
     .update(events)
@@ -184,8 +216,8 @@ export async function forceEvent(
     { type: 'EventForced', actorId: adminId, payload: { eventId: id, eventType: row.type } },
     { now },
   );
-  await dispatchEvent(db, handlers, id, now, log);
-  await dispatchEvent(db, handlers, recorded, now, log);
+  await dispatchEvent(db, handlers, id, now, log, options);
+  await dispatchEvent(db, handlers, recorded, now, log, options);
 
   const [after] = await db
     .select({ processedAt: events.processedAt })
@@ -208,6 +240,7 @@ export async function forceFailedEvents(
   adminId: string,
   now = new Date(),
   log: Logger = logger,
+  options: DispatchOptions = {},
 ) {
   const rows = await db
     .select({ id: events.id })
@@ -218,7 +251,8 @@ export async function forceFailedEvents(
 
   let processed = 0;
   for (const { id } of rows) {
-    if ((await forceEvent(db, handlers, id, adminId, now, log)) === 'processed') processed++;
+    if ((await forceEvent(db, handlers, id, adminId, now, log, options)) === 'processed')
+      processed++;
   }
   const [{ remaining }] = await db
     .select({ remaining: sql<number>`count(*)`.mapWith(Number) })
@@ -239,6 +273,7 @@ export async function sweepEvents(
   now = new Date(),
   limit = 50,
   log: Logger = logger,
+  options: DispatchOptions = {},
 ): Promise<number> {
   const rows = await db
     .select({ id: events.id })
@@ -247,7 +282,7 @@ export async function sweepEvents(
     .orderBy(asc(events.createdAt))
     .limit(limit);
 
-  for (const { id } of rows) await dispatchEvent(db, handlers, id, now, log);
+  for (const { id } of rows) await dispatchEvent(db, handlers, id, now, log, options);
 
   return rows.length;
 }

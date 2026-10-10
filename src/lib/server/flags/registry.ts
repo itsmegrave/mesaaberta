@@ -8,6 +8,10 @@ export const flagDefaults = {
   maintenance_mode: false,
   // Off: text and QR artwork. On: include the table photo as its background.
   use_table_image: false,
+  // Off: an event's lease is a time only (today's dispatcher). On: each claim carries a token and
+  // every update is conditional on it, so a dispatcher whose lease expired cannot finish or release
+  // the new claim (ADR 0003). Target admins first: `isAdmin = true`.
+  api_events_fenced_leases: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
