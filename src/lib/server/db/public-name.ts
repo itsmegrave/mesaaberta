@@ -1,8 +1,2 @@
-import { sql, type AnyColumn } from 'drizzle-orm';
-
-import { NAMELESS } from '$lib/profile/handle';
-
-export { NAMELESS };
-
-/** The public name of a profile: its username, or a placeholder while it has none. */
-export const publicName = (username: AnyColumn) => sql<string>`coalesce(${username}, ${NAMELESS})`;
+// Moved to @mesaaberta/core; this path stays so existing imports keep working.
+export * from '@mesaaberta/core/server/db/public-name';

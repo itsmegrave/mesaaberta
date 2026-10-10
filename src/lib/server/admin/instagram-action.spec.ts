@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 import { publishInstagramAction } from './instagram-action';
 import { publishInstagramTable, queueInstagramTable } from '../instagram/publisher';
-vi.mock('../instagram/publisher', () => ({
+vi.mock('@mesaaberta/core/server/instagram/publisher', () => ({
   queueInstagramTable: vi.fn(async () => 'queued'),
   publishInstagramTable: vi.fn(async () => 'published'),
   publishInstagramPosts: vi.fn(async () => 0),

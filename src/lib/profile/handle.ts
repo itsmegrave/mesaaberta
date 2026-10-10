@@ -1,6 +1,2 @@
-/** What is shown for someone who has not picked a username yet (a profile older than the onboarding step). */
-export const NAMELESS = 'sem nome';
-
-/** How a person appears to others: `@username`, or the placeholder while they have none. */
-export const atHandle = (username: string | null | undefined) =>
-  username && username !== NAMELESS ? `@${username}` : NAMELESS;
+// Moved to @mesaaberta/core; this path stays so existing imports keep working.
+export * from '@mesaaberta/core/profile/handle';

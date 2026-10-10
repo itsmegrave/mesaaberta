@@ -1,1 +1,2 @@
-export * from '@mesaaberta/db/table-status';
+// Moved to @mesaaberta/core; this path stays so existing imports keep working.
+export * from '@mesaaberta/core/tables/status-values';

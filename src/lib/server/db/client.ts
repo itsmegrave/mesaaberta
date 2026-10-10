@@ -1,2 +1,2 @@
-// The client lives in @mesaaberta/db; this path stays so existing imports keep working.
-export * from '@mesaaberta/db/client';
+// Moved to @mesaaberta/core; this path stays so existing imports keep working.
+export * from '@mesaaberta/core/server/db/client';
