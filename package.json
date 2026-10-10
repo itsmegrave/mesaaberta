@@ -84,6 +84,7 @@
     "@iconify-svelte/svg-spinners": "^1.0.2",
     "@mesaaberta/contracts": "workspace:*",
     "@mesaaberta/db": "workspace:*",
+    "@mesaaberta/events": "workspace:*",
     "@sentry/cloudflare": "11.1.0",
     "@sentry/sveltekit": "^11.1.0",
     "@sindresorhus/slugify": "^3.0.1",
