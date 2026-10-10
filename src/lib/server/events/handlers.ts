@@ -1,5 +1,5 @@
 import { analyticsHandlers, type AnalyticsEnv } from '../analytics';
-import { instagramQueueHandler } from '../instagram/publisher';
+import { socialFor, type SocialEnv } from '../social';
 import type { Handler } from './types';
 import { inviteHandler, type InviteEnv } from './invites';
 import { notificationHandler } from './notifications';
@@ -14,14 +14,16 @@ import { banMailHandler } from './ban-mail';
  * request or Cron environment rather than imported as a process-global client. The bell needs
  * only the database, so its handlers run whatever the environment has.
  */
-export function handlersFor(env: (InviteEnv & AnalyticsEnv) | undefined): readonly Handler[] {
+export function handlersFor(
+  env: (InviteEnv & AnalyticsEnv & SocialEnv) | undefined,
+): readonly Handler[] {
   const handler = inviteHandler(env);
   const bell = [
     notificationHandler,
     announcementHandler,
     moderationHandler,
     catalogHandler,
-    instagramQueueHandler,
+    ...socialFor(env).handlers,
   ];
   const banMail = banMailHandler(env);
   return [

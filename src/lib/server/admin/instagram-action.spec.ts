@@ -5,6 +5,8 @@ import { publishInstagramTable, queueInstagramTable } from '../instagram/publish
 vi.mock('../instagram/publisher', () => ({
   queueInstagramTable: vi.fn(async () => 'queued'),
   publishInstagramTable: vi.fn(async () => 'published'),
+  publishInstagramPosts: vi.fn(async () => 0),
+  instagramQueueHandler: { name: 'instagram-queue', types: ['TableCreated'], handle: vi.fn() },
 }));
 vi.mock('$lib/server/auth/policy', () => ({ can: () => true }));
 beforeEach(() => vi.clearAllMocks());

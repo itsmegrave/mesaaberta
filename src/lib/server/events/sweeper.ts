@@ -1,4 +1,4 @@
-import { publishInstagramPosts } from '../instagram/publisher';
+import { socialFor, type SocialEnv } from '../social';
 import type { InstagramEnv } from '../instagram/api';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
 import type { Logger } from '../logger';
@@ -16,7 +16,7 @@ import type { Handler } from './types';
  * ADR 0003) instead of calling the dispatcher directly. It claims, runs and records the same way, so
  * the default stays the direct path until the poller has run clean beside it.
  */
-type PollerEnv = { EVENT_POLLER?: string };
+type PollerEnv = { EVENT_POLLER?: string } & SocialEnv;
 
 type Deps = {
   open?: typeof createDb;
@@ -52,7 +52,7 @@ export async function runSweeper(
         ? await sweepThroughPoller(db, handlers, now, log)
         : await sweepEvents(db, handlers, now, 50, log, { clock: () => new Date() });
     if (swept > 0) log.info('event sweep', { swept });
-    await publishInstagramPosts(db, env);
+    await socialFor(env).publishDue(db, env);
     const pruned = await pruneEvents(db);
     if (pruned > 0) log.info('event prune', { pruned });
     const expired = await pruneNotifications(db);
