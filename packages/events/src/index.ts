@@ -1,5 +1,6 @@
 export type { EventOutbox, NewEvent, PublishOptions } from './outbox';
 export { postgresOutbox } from './postgres-outbox';
+export { pollOutbox, type PollSummary } from './postgres-poller';
 export {
   SUPPORTED_EVENT_VERSIONS,
   settle,
