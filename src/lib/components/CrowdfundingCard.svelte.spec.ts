@@ -27,7 +27,12 @@ describe('CrowdfundingCard', () => {
     render(CrowdfundingCard, { campaign: base });
 
     const link = page.getByRole('link', { name: /Tormenta Gamefound/ });
-    await expect.element(link).toHaveAttribute('href', 'https://www.catarse.me/tormenta');
+    await expect
+      .element(link)
+      .toHaveAttribute(
+        'href',
+        'https://www.catarse.me/tormenta?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding',
+      );
     await expect.element(link).toHaveAttribute('target', '_blank');
     await expect.element(link).toHaveAttribute('rel', 'noopener noreferrer');
     await expect.element(link).toHaveAccessibleName(/abre Catarse em nova aba/);

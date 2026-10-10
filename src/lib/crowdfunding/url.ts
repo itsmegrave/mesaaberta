@@ -7,8 +7,8 @@ const TRACKING = /^(utm_|fbclid$|gclid$|mc_|ref$)/i;
  * what the unique index compares: lower-case host without `www.`, no fragment, no credentials, no
  * tracking parameters, the remaining parameters sorted and no trailing slash.
  *
- * This is also the address that is stored, shown and opened: the one that was checked is the one
- * that is used, never the text as typed.
+ * This is the stored campaign identity. Outbound links may add referral parameters at render
+ * time, without changing this identity or using the unchecked text as typed.
  */
 export function normalizeCampaignUrl(raw: string): string | null {
   const text = raw.trim();
