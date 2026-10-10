@@ -1,6 +1,6 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `$lib`.
 import { createMachine, getNextSnapshot } from 'xstate';
-import type { TableStatus } from './status';
+import type { TableStatus } from './status-values';
 
 /** What can happen to a table once its date has come. */
 export type LifecycleEvent = 'SESSION_ENDED' | 'HAPPENED' | 'NOT_HELD' | 'POSTPONE';
