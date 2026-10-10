@@ -2,7 +2,7 @@ import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { requireUser } from '$lib/server/auth/guard';
 import { profiles } from '$lib/server/db/schema';
-import { failFrom } from '$lib/server/errors';
+import { failFrom } from '$lib/server/fail-from';
 import { openDirect } from '$lib/server/messages/service';
 import { normalizeUsername } from '$lib/profile/username';
 import { pageNumber } from '$lib/admin/catalog';
