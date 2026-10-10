@@ -120,8 +120,12 @@ export default defineConfig({
           // Tests that start an in-process Postgres (PGlite) take a moment when the machine is busy.
           testTimeout: 20_000,
           hookTimeout: 20_000,
-          include: ['src/**/*.{test,spec}.{js,ts}'],
-          exclude: ['src/**/*.svelte.{test,spec}.{js,ts}', 'src/**/*.integration.spec.ts'],
+          include: ['src/**/*.{test,spec}.{js,ts}', 'packages/**/*.{test,spec}.{js,ts}'],
+          exclude: [
+            'src/**/*.svelte.{test,spec}.{js,ts}',
+            'src/**/*.integration.spec.ts',
+            '**/node_modules/**',
+          ],
         },
       },
 

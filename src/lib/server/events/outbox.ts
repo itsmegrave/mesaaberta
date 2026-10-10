@@ -1,7 +1,6 @@
 import type { AnyDb } from '../db/client';
-import { events } from '../db/schema';
+import { postgresEventBus, type NewEvent, type PublishOptions } from '@mesaaberta/events';
 import type { Logger } from '../logger';
-import type { DomainEvent } from './types';
 
 /**
  * Writes an event. Call it with the transaction of the change it describes, so the two commit or
@@ -10,20 +9,10 @@ import type { DomainEvent } from './types';
  */
 export async function recordEvent(
   db: AnyDb,
-  event: DomainEvent & { actorId: string | null },
-  { now }: { now?: Date } = {},
+  event: NewEvent,
+  options: PublishOptions = {},
 ): Promise<string> {
-  const [row] = await db
-    .insert(events)
-    .values({
-      type: event.type,
-      actorId: event.actorId,
-      payload: event.payload,
-      ...(now ? { createdAt: now, nextAttemptAt: now } : {}),
-    })
-    .returning({ id: events.id });
-
-  return row.id;
+  return postgresEventBus(db).publish(event, options);
 }
 
 /**
