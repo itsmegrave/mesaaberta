@@ -76,6 +76,12 @@
         icon: 'game-icons:open-treasure-chest' as IconName,
         current: pathname.startsWith('/crowdfunding'),
       },
+      {
+        href: '/partners',
+        label: m.partner_nav_label(),
+        icon: 'game-icons:trade' as IconName,
+        current: pathname.startsWith('/partners'),
+      },
       account && {
         href: '/tables/new',
         label: expanded ? m.nav_open_table() : m.nav_open_table_short(),
