@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { profiles } from '../db/schema';
 import { nextStatus } from '../../tables/lifecycle-machine';
-import type { TableStatus } from '../../tables/status';
+import type { TableStatus } from '../../tables/status-values';
 import { Forbidden } from '../errors';
 
 /**
