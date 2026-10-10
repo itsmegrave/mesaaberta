@@ -1,5 +1,5 @@
 import type { AnyDb } from '../db/client';
-import { postgresEventBus, type NewEvent, type PublishOptions } from '@mesaaberta/events';
+import { postgresOutbox, type NewEvent, type PublishOptions } from '@mesaaberta/events';
 import type { Logger } from '../logger';
 
 /**
@@ -12,7 +12,7 @@ export async function recordEvent(
   event: NewEvent,
   options: PublishOptions = {},
 ): Promise<string> {
-  return postgresEventBus(db).publish(event, options);
+  return postgresOutbox(db).record(event, options);
 }
 
 /**

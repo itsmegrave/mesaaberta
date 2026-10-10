@@ -1,14 +1,14 @@
 import { events, type AnyDb } from '@mesaaberta/db';
-import type { EventBus } from './bus';
+import type { EventOutbox } from './outbox';
 
 /**
  * The outbox adapter: an event is a row in `events`. Create it with the transaction of the change
  * the event describes, so the two commit or roll back together: there is never a change without
  * its record, or a record without its change.
  */
-export function postgresEventBus(db: AnyDb): EventBus {
+export function postgresOutbox(db: AnyDb): EventOutbox {
   return {
-    async publish(event, { now } = {}) {
+    async record(event, { now } = {}) {
       const [row] = await db
         .insert(events)
         .values({
