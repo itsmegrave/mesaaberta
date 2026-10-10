@@ -10,6 +10,9 @@
   "vars": {
     // Daily RPG campaign discovery at 01:00 America/Sao_Paulo (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
+    // Footer links; leave empty to hide them.
+    "CANNY_CHANGELOG_URL": "",
+    "CANNY_FEEDBACK_URL": "",
     "APP_ORIGIN": "http://localhost:5173",
     "CALENDAR_UID_DOMAIN": "localhost",
     "CONTACT_EMAIL": "contact@example.invalid",

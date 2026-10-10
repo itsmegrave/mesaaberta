@@ -1,7 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import './layout.css';
-  import { CANNY_FEEDBACK_URL, CANNY_CHANGELOG_URL } from '$lib/canny/config';
   import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '$lib/contact';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
   import { createQueryClient } from '$lib/query/client';
@@ -285,28 +284,32 @@
                   class="link-underline text-surface-950-50">Lenindragons</a
                 >.
               </p>
-              <p>
-                {m.footer_report_bug()}
-                <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
-                <a
-                  href={CANNY_FEEDBACK_URL}
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
-                >.
-                <!-- eslint-enable svelte/no-navigation-without-resolve -->
-              </p>
-              <p>
-                {m.footer_changelog()}
-                <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
-                <a
-                  href={CANNY_CHANGELOG_URL}
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">{m.footer_changelog_link()}</a
-                >.
-                <!-- eslint-enable svelte/no-navigation-without-resolve -->
-              </p>
+              {#if layoutData.links.feedbackUrl}
+                <p>
+                  {m.footer_report_bug()}
+                  <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
+                  <a
+                    href={layoutData.links.feedbackUrl}
+                    rel="noopener"
+                    target="_blank"
+                    class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
+                  >.
+                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                </p>
+              {/if}
+              {#if layoutData.links.changelogUrl}
+                <p>
+                  {m.footer_changelog()}
+                  <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
+                  <a
+                    href={layoutData.links.changelogUrl}
+                    rel="noopener"
+                    target="_blank"
+                    class="link-underline text-surface-950-50">{m.footer_changelog_link()}</a
+                  >.
+                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                </p>
+              {/if}
               <p>
                 <a
                   href={localizedHref('/partners', getLocale())}

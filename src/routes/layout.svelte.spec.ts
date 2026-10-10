@@ -23,6 +23,10 @@ const shell = {
   maintenance: false,
   maintenanceBypass: false,
   viewer,
+  links: {
+    feedbackUrl: 'https://mesaaberta.canny.io/feedback',
+    changelogUrl: 'https://mesaaberta.canny.io/changelog',
+  },
 };
 const signedOut = { authEnabled: false, ...shell, account: null };
 const memberAccount = {
@@ -155,6 +159,19 @@ describe('+layout.svelte', () => {
         .element(page.getByRole('contentinfo').getByRole('link', { name }))
         .toHaveAttribute('href', href);
     });
+  });
+
+  it('hides the Canny links while the deployment does not set them', async () => {
+    render(Layout, {
+      children,
+      data: { ...signedOut, links: { feedbackUrl: null, changelogUrl: null } },
+    });
+
+    const footer = page.getByRole('contentinfo');
+    await expect
+      .element(footer.getByRole('link', { name: 'Reporte aqui' }))
+      .not.toBeInTheDocument();
+    await expect.element(footer.getByRole('link', { name: 'novidades' })).not.toBeInTheDocument();
   });
 
   describe('tables link', () => {

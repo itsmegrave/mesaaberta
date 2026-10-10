@@ -51,10 +51,6 @@ export const publicConfigSchema = z.object({
     .string()
     .regex(/^[a-zA-Z0-9._]{1,30}$/)
     .optional(),
-  CANNY_APP_ID: z
-    .string()
-    .regex(/^[a-f0-9]{24}$/i)
-    .optional(),
   CANNY_FEEDBACK_URL: optionalUrl,
   CANNY_CHANGELOG_URL: optionalUrl,
 });

@@ -39,13 +39,13 @@ describe('portable deployment configuration', () => {
     expect(config.APP_ORIGIN).toBe('http://localhost:5173');
     expect(config.CALENDAR_UID_DOMAIN).toBe('localhost');
     expect(config.INSTAGRAM_HANDLE).toBeUndefined();
-    expect(config.CANNY_APP_ID).toBeUndefined();
+    expect(config.CANNY_FEEDBACK_URL).toBeUndefined();
   });
 
   it('uses the same defaults for empty Wrangler bindings', () => {
-    expect(readConfig({ APP_ORIGIN: '', CANNY_APP_ID: '  ', CONTACT_EMAIL: undefined })).toEqual(
-      readConfig(),
-    );
+    expect(
+      readConfig({ APP_ORIGIN: '', CANNY_FEEDBACK_URL: '  ', CONTACT_EMAIL: undefined }),
+    ).toEqual(readConfig());
   });
 
   it('normalizes the origin without coupling the stable calendar namespace to it', () => {
@@ -89,7 +89,6 @@ describe('portable deployment configuration', () => {
           PRIVACY_CONTROLLER_NAME: 'Coletivo de jogos',
           PRIVACY_EMAIL: 'privacy@example.org',
           INSTAGRAM_HANDLE: 'our.games',
-          CANNY_APP_ID: '0123456789abcdef01234567',
           CANNY_FEEDBACK_URL: 'https://games.canny.io/feedback',
         }),
       ),
