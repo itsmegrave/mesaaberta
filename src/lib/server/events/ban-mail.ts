@@ -3,13 +3,13 @@ import { createSupabaseAdmin, emailOf, type SupabaseAdmin } from '../auth/admin-
 import { profiles } from '../db/schema';
 import { NAMELESS } from '../db/public-name';
 import type { Mailer } from '../mail/mailer';
-import { mailpitMailer } from '../mail/mailpit';
-import { resendMailer } from '../mail/resend';
+import { mailConfigured, mailerFor } from '../mail';
 import { templateIdFor, templateVariables, type TemplateEnv } from '../mail/templates';
 import type { InviteEnv } from './invites';
 import type { Handler, StoredEvent } from './types';
 
 type BanConfig = TemplateEnv & {
+  MAIL_PROVIDER?: string;
   MAILPIT_URL?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM: string;
@@ -72,9 +72,7 @@ export function createBanMailHandler(
   env: BanConfig,
   request: typeof fetch = fetch,
   admin: SupabaseAdmin = createSupabaseAdmin(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY),
-  mailer: Mailer = env.MAILPIT_URL
-    ? mailpitMailer({ MAILPIT_URL: env.MAILPIT_URL, RESEND_FROM: env.RESEND_FROM }, request)
-    : resendMailer({ RESEND_API_KEY: env.RESEND_API_KEY!, RESEND_FROM: env.RESEND_FROM }, request),
+  mailer: Mailer = mailerFor(env, request),
 ): Handler {
   return {
     name: 'ban-mail-v1',
@@ -126,14 +124,16 @@ export function createBanMailHandler(
 /** Like the invites: without the e-mail and Auth settings there is no handler. */
 export function banMailHandler(env: InviteEnv | undefined): Handler | null {
   const secretKey = env?.SUPABASE_SECRET_KEY || env?.SUPABASE_SERVICE_ROLE_KEY;
-  const from = env?.RESEND_FROM || (env?.MAILPIT_URL ? localFrom : undefined);
+  const from =
+    env?.RESEND_FROM || (env?.MAILPIT_URL || env?.MAIL_PROVIDER === 'none' ? localFrom : undefined);
   if (!env?.SUPABASE_URL || !secretKey || !from) return null;
-  if (!env.MAILPIT_URL && !env.RESEND_API_KEY) return null;
+  if (!mailConfigured(env)) return null;
 
   return createBanMailHandler({
     RESEND_TEMPLATE_ACCOUNT_BANNED: env.RESEND_TEMPLATE_ACCOUNT_BANNED,
     RESEND_API_KEY: env.RESEND_API_KEY,
     RESEND_FROM: from,
+    MAIL_PROVIDER: env.MAIL_PROVIDER,
     MAILPIT_URL: env.MAILPIT_URL,
     SUPABASE_URL: env.SUPABASE_URL,
     SUPABASE_SECRET_KEY: secretKey,
