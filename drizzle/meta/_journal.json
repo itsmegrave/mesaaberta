@@ -267,6 +267,13 @@
       "when": 1791571737687,
       "tag": "0037_partner_contact_email",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791652171251,
+      "tag": "0038_events_envelope",
+      "breakpoints": true
     }
   ]
 }

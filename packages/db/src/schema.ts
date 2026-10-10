@@ -359,6 +359,12 @@ export const events = pgTable(
     failedAt: timestamp('failed_at', { withTimezone: true }),
     // A lease, so two dispatchers never run the same event at once.
     claimedUntil: timestamp('claimed_until', { withTimezone: true }),
+    // The shape of `payload` when the event was written. A consumer branches on it when a payload
+    // changes, so old rows and in-flight messages stay readable.
+    version: integer('version').notNull().default(1),
+    // Set once a bus adapter (Cloudflare Queues) has accepted the event. Null while the event only
+    // lives in the outbox, and for every event written before the bus existed.
+    publishedAt: timestamp('published_at', { withTimezone: true }),
   },
   (event) => [
     // What the sweeper looks for: events not yet done and not given up on.
