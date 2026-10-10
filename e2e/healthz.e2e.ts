@@ -8,7 +8,8 @@ test.describe('/healthz', () => {
 
     expect(response.status()).toBe(200);
     // `ok` with a database, `not_configured` without one, as in CI.
-    expect(await response.json()).toEqual({
+    // `revision` appears only when the deployment pipeline sets DEPLOYMENT_SOURCE_SHA.
+    expect(await response.json()).toMatchObject({
       status: 'ok',
       database: expect.stringMatching(/^(ok|not_configured)$/),
     });
