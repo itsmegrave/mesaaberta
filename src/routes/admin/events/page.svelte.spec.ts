@@ -80,7 +80,7 @@ describe('admin events page', () => {
 
     const text = () => document.body.textContent ?? '';
     await expect.element(page.getByText('TableCreated').first()).toBeVisible();
-    expect(text()).toContain('Tentativas: 8 de 8');
+    expect(text()).toContain('Falhas: 8 de 8');
     expect(text()).toContain('Error: Resend recusou o envio');
     expect(text()).toContain('Já rodaram: invite');
     expect(text()).toContain('Faltam: bell');
@@ -126,5 +126,40 @@ describe('admin events page', () => {
     });
 
     await expect.element(page.getByText('Nenhum evento neste estado.')).toBeVisible();
+  });
+
+  it('stays inside a phone screen with a long payload and long handler names', async () => {
+    await page.viewport(375, 800);
+    show({
+      status: 'processed',
+      counts: { failed: 0, retrying: 0, pending: 0, running: 0, processed: 134 },
+      rows: [
+        row({
+          failedAt: null,
+          processedAt: new Date('2026-10-10T12:47:00Z'),
+          lastError: null,
+          attempts: 0,
+          remaining: [],
+          handledBy: [
+            'calendar-invites-v1',
+            'in-app-notifications-v1',
+            'mixpanel-product-events-v1',
+          ],
+          payload: {
+            slug: 'horizon-projeto-artemis',
+            tableId: '06926763-98db-4774-8deb-edcf5541d3a9-06926763-98db-4774-8deb-edcf5541d3a9',
+          },
+        }),
+      ],
+    });
+    document.querySelector('details')?.setAttribute('open', '');
+
+    const doc = document.documentElement;
+    expect(doc.scrollWidth).toBeLessThanOrEqual(doc.clientWidth);
+    const panel = document.querySelector('section[aria-label="Fila de eventos"]');
+    expect(panel?.getBoundingClientRect().right).toBeLessThanOrEqual(doc.clientWidth);
+    // The long line scrolls inside its own block.
+    const block = document.querySelector('pre');
+    expect(block && block.scrollWidth > block.clientWidth).toBe(true);
   });
 });
