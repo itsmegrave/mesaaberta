@@ -1,5 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
+import type { QueueBinding } from '@mesaaberta/events';
 import { registerFencing } from '../events/fencing';
+import { registerShadowQueue } from '../events/shadow-queue';
 import { connectionStringFrom, createDb, type Db, type DatabaseEnv } from './client';
 
 /**
@@ -27,6 +29,13 @@ export const handleDatabase: Handle = async ({ event, resolve }) => {
           connection.db,
           () => event.locals.fencedLeases?.() ?? Promise.resolve(false),
         );
+        const queue = (env as { DOMAIN_EVENTS?: QueueBinding } | undefined)?.DOMAIN_EVENTS;
+        // No binding, no flag read: a deploy without the queue pays nothing for the canary.
+        if (queue) {
+          registerShadowQueue(connection.db, async () =>
+            (await event.locals.queueShadow?.()) ? queue : null,
+          );
+        }
       }
       return connection.db;
     },

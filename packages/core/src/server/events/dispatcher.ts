@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
 import { recordEvent } from './outbox';
 import { fencedFor } from './fencing';
+import { publishShadow } from './shadow-queue';
 import { logger, scrubString, type Logger } from '../logger';
 import type { DomainEvent, Handler, StoredEvent } from './types';
 
@@ -91,6 +92,9 @@ export async function dispatchEvent(
     if (found.failedAt) return { status: 'skipped', reason: 'given_up' };
     return { status: 'skipped', reason: 'busy' };
   }
+
+  // Shadow Queues canary: a reference only, after the claim, whatever the handlers do next.
+  await publishShadow(db, { eventId: id, type: row.type, version: row.version }, log);
 
   // Fenced updates only land while this claim still owns the row.
   const owned = fenced ? and(eq(events.id, id), eq(events.claimToken, token!)) : eq(events.id, id);

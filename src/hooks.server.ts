@@ -100,6 +100,17 @@ const handleFlags: Handle = ({ event, resolve }) => {
       );
     })());
 
+  // The same targeting, read the first time an event is dispatched and only when a queue is bound.
+  let shadow: Promise<boolean> | undefined;
+  event.locals.queueShadow = () =>
+    (shadow ??= (async () => {
+      const profile = await event.locals.getProfile().catch(() => null);
+      return event.locals.flags.isEnabled(
+        'api_events_queue_shadow',
+        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+      );
+    })());
+
   return resolve(event);
 };
 
