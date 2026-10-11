@@ -6,6 +6,7 @@
   "main": "src/entry.ts",
   "dependencies": {
     "@mesaaberta/core": "workspace:*",
+    "@mesaaberta/events": "workspace:*",
     "@sentry/cloudflare": "*"
   }
 }

@@ -27,4 +27,21 @@ describe('worker', () => {
     expect(response.status).toBe(404);
     expect(await response.text()).toBe('');
   });
+
+  it('acknowledges every queued message in the shadow stage without running handlers', async () => {
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const messages = [
+      { body: { eventId: 'e1', type: 'invite.created', version: 1 }, attempts: 1, ack, retry },
+      { body: { eventId: 'e2', type: 'invite.created', version: 99 }, attempts: 1, ack, retry },
+      { body: 'garbage', attempts: 1, ack, retry },
+    ];
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await createWorker().queue({ messages });
+    expect(ack).toHaveBeenCalledTimes(3);
+    expect(retry).not.toHaveBeenCalled();
+    info.mockRestore();
+    warn.mockRestore();
+  });
 });

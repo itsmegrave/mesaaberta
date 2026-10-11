@@ -14,6 +14,13 @@ crons and `EVENT_POLLER` is off.
 
 Rollback is the reverse: crons back on the web Worker, then delete this Worker.
 
+## Queues consumer (shadow)
+
+`queue()` acknowledges and counts every message and runs no handler (ADR 0003, stage 2). It does
+nothing until a queue consumer is bound to this Worker, which needs the `domain-events-canary` queue
+and its DLQ in Cloudflare and a producer behind a flag. Live delivery swaps the executor for
+`createEventExecutor`, one event class at a time.
+
 ## Error reporting
 
 `src/entry.ts` wraps the handler with `@sentry/cloudflare` and installs the same telemetry sink as the
