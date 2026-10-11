@@ -2,9 +2,11 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 import { publishInstagramAction } from './instagram-action';
 import { publishInstagramTable, queueInstagramTable } from '../instagram/publisher';
-vi.mock('../instagram/publisher', () => ({
+vi.mock('@mesaaberta/core/server/instagram/publisher', () => ({
   queueInstagramTable: vi.fn(async () => 'queued'),
   publishInstagramTable: vi.fn(async () => 'published'),
+  publishInstagramPosts: vi.fn(async () => 0),
+  instagramQueueHandler: { name: 'instagram-queue', types: ['TableCreated'], handle: vi.fn() },
 }));
 vi.mock('$lib/server/auth/policy', () => ({ can: () => true }));
 beforeEach(() => vi.clearAllMocks());

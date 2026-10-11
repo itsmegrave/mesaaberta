@@ -267,6 +267,20 @@
       "when": 1791571737687,
       "tag": "0037_partner_contact_email",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791652171251,
+      "tag": "0038_events_envelope",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791656338312,
+      "tag": "0039_events_claim_token",
+      "breakpoints": true
     }
   ]
 }

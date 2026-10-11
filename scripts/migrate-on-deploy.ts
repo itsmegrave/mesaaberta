@@ -12,6 +12,17 @@ import { migrationPlan } from '../src/lib/server/db/deploy-migrations.ts';
 
 const plan = migrationPlan(process.env);
 
+if (!plan.run && plan.fail) {
+  console.error(`migrations: cannot continue (${plan.reason}).`);
+  console.error(
+    '  Add the MIGRATE_DATABASE_URL build secret (README, "Deploying"), or set ALLOW_BUILD_WITHOUT_MIGRATIONS=true',
+  );
+  console.error(
+    '  for a deploy that needs no migration. The build stops so code never runs ahead of the schema.',
+  );
+  process.exit(1);
+}
+
 if (!plan.run) {
   const line = `migrations: skipped (${plan.reason})`;
   if (plan.warn) console.warn(`⚠️  ${line}. Run \`bun run db:migrate\` against Supabase by hand.`);

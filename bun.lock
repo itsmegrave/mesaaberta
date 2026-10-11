@@ -13,6 +13,7 @@
         "@iconify-svelte/simple-icons": "1.0.44",
         "@iconify-svelte/svg-spinners": "^1.0.2",
         "@mesaaberta/contracts": "workspace:*",
+        "@mesaaberta/core": "workspace:*",
         "@mesaaberta/db": "workspace:*",
         "@mesaaberta/events": "workspace:*",
         "@sentry/cloudflare": "11.1.0",
@@ -90,6 +91,25 @@
     "packages/contracts": {
       "name": "@mesaaberta/contracts",
       "version": "0.0.1",
+    },
+    "packages/core": {
+      "name": "@mesaaberta/core",
+      "version": "0.0.1",
+      "peerDependencies": {
+        "@cf-wasm/resvg": "*",
+        "@growthbook/growthbook": "*",
+        "@sindresorhus/slugify": "*",
+        "@supabase/supabase-js": "*",
+        "drizzle-orm": "*",
+        "ical.js": "*",
+        "jpeg-js": "*",
+        "qrcode": "*",
+        "temporal-polyfill": "*",
+        "timezones-ical-library": "*",
+        "xss": "*",
+        "xstate": "*",
+        "zod": "*",
+      },
     },
     "packages/db": {
       "name": "@mesaaberta/db",
@@ -412,6 +432,8 @@
     "@mesaaberta/config": ["@mesaaberta/config@workspace:packages/config"],
 
     "@mesaaberta/contracts": ["@mesaaberta/contracts@workspace:packages/contracts"],
+
+    "@mesaaberta/core": ["@mesaaberta/core@workspace:packages/core"],
 
     "@mesaaberta/db": ["@mesaaberta/db@workspace:packages/db"],
 

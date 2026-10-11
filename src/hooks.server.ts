@@ -6,8 +6,10 @@ import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/fla
 import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleSuspended } from '$lib/server/auth/suspended';
+import { can } from '$lib/server/auth/policy';
 import { handleDatabase } from '$lib/server/db/handle-database';
-import { logger } from '$lib/server/logger';
+import { logger, setTelemetrySink } from '$lib/server/logger';
+import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
 import { createTracker } from '$lib/server/analytics/track';
 import type { AnalyticsEnv } from '$lib/server/analytics';
@@ -16,6 +18,10 @@ import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+
+// The logger knows no vendor; this deployment mirrors it to Sentry. Set at module load, so every
+// request in the isolate (and the cron that shares it) reports as before.
+setTelemetrySink(sentrySink);
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -82,6 +88,17 @@ const handleFlags: Handle = ({ event, resolve }) => {
       : async () => null,
     { forceAll, overrides, log: event.locals.log },
   );
+
+  // Targeted at admins first (`isAdmin = true`). Read the first time an event is dispatched.
+  let fenced: Promise<boolean> | undefined;
+  event.locals.fencedLeases = () =>
+    (fenced ??= (async () => {
+      const profile = await event.locals.getProfile().catch(() => null);
+      return event.locals.flags.isEnabled(
+        'api_events_fenced_leases',
+        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+      );
+    })());
 
   return resolve(event);
 };

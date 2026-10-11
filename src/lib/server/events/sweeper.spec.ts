@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { createTestDb } from '../db/test-db';
 import { events } from '../db/schema';
 import { runSweeper } from './sweeper';
@@ -46,7 +47,28 @@ describe('runSweeper', () => {
     expect(swept).toBe(1);
     expect(handle).toHaveBeenCalledWith(expect.objectContaining({ id }), test.db);
     expect(close).toHaveBeenCalledOnce();
-    void events;
+  });
+
+  it('sweeps through the poller and the executor when EVENT_POLLER is on, with the same effect', async () => {
+    const id = await recordEvent(test.db, {
+      type: 'TableCreated',
+      actorId: null,
+      payload: { tableId: 't', slug: 's', title: 'x' },
+    });
+    const handle = vi.fn();
+    const handler: Handler = { name: 'h', types: ['TableCreated'], handle };
+    const close = vi.fn();
+
+    const swept = await runSweeper(
+      { DATABASE_URL: 'postgres://x', EVENT_POLLER: 'true' },
+      { open: (() => ({ db: test.db, close })) as never, handlers: [handler], log: log() },
+    );
+
+    expect(swept).toBe(1);
+    expect(handle).toHaveBeenCalledWith(expect.objectContaining({ id }), test.db);
+    const [row] = await test.db.select().from(events).where(eq(events.id, id));
+    expect(row.processedAt).not.toBeNull();
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('closes the connection and reports the error when the sweep itself fails', async () => {

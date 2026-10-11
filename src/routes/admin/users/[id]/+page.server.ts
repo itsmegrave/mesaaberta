@@ -2,7 +2,7 @@ import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { adminActivity, adminProfile } from '$lib/server/admin/profiles';
 import { profileHistory } from '$lib/server/admin/history';
-import { failFrom } from '$lib/server/errors';
+import { failFrom } from '$lib/server/fail-from';
 import { openDirect } from '$lib/server/messages/service';
 import { standingOf } from '$lib/profile/standing';
 import { moderationOf } from '$lib/server/moderation/admin';

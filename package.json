@@ -83,6 +83,7 @@
     "@iconify-svelte/simple-icons": "1.0.44",
     "@iconify-svelte/svg-spinners": "^1.0.2",
     "@mesaaberta/contracts": "workspace:*",
+    "@mesaaberta/core": "workspace:*",
     "@mesaaberta/db": "workspace:*",
     "@mesaaberta/events": "workspace:*",
     "@sentry/cloudflare": "11.1.0",

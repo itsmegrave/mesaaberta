@@ -68,6 +68,8 @@ export default defineConfig(
   {
     // Shared packages must build on workerd as well as the self-host runtime.
     files: ['packages/**/*.{ts,js}'],
+    // Specs run under Vitest on Node and are never bundled for a runtime.
+    ignores: ['packages/**/*.spec.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

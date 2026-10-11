@@ -5,8 +5,6 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 
-  let { isAdmin = false }: { isAdmin?: boolean } = $props();
-
   const locale = getLocale();
   const pathname = $derived(page.url.pathname);
 
@@ -15,7 +13,7 @@
   const isNewTableActive = $derived(pathname === '/tables/new');
   // Only the tables' own pages: the profile and the rest of the account are not "Minhas mesas".
   const isMyTablesActive = $derived(pathname.startsWith('/account/tables'));
-  const isAdminActive = $derived(pathname.startsWith('/admin'));
+  const isPartnersActive = $derived(pathname.startsWith('/partners'));
 </script>
 
 <nav
@@ -25,7 +23,7 @@
   <!-- Mesas -->
   <a
     href={localizedHref('/tables', locale)}
-    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isTablesActive
+    class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isTablesActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
   >
@@ -43,7 +41,7 @@
   <a
     href={localizedHref('/crowdfunding', locale)}
     aria-label={m.nav_crowdfunding_label()}
-    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isCrowdfundingActive
+    class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isCrowdfundingActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
   >
@@ -57,10 +55,27 @@
     {m.nav_crowdfunding_short()}
   </a>
 
+  <!-- Parceiros -->
+  <a
+    href={localizedHref('/partners', locale)}
+    class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isPartnersActive
+      ? 'text-surface-950-50'
+      : 'text-muted hover:text-surface-950-50'}"
+  >
+    <span
+      class="flex h-7 w-14 items-center justify-center rounded-full {isPartnersActive
+        ? 'bg-surface-200-800'
+        : 'bg-transparent'}"
+    >
+      <Icon name="game-icons:trade" size={22} />
+    </span>
+    {m.partner_nav_label()}
+  </a>
+
   <!-- Abrir mesa -->
   <a
     href={localizedHref('/tables/new', locale)}
-    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold text-surface-950-50 no-underline"
+    class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold text-surface-950-50 no-underline"
   >
     <span
       class="flex h-7 w-14 items-center justify-center rounded-full preset-filled-primary-500 {isNewTableActive
@@ -75,7 +90,7 @@
   <!-- Minhas mesas -->
   <a
     href={localizedHref('/account/tables', locale)}
-    class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isMyTablesActive
+    class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isMyTablesActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
   >
@@ -88,23 +103,4 @@
     </span>
     {m.nav_my_tables()}
   </a>
-
-  <!-- Admin (only if admin) -->
-  {#if isAdmin}
-    <a
-      href={localizedHref('/admin', locale)}
-      class="flex h-14 min-w-21 flex-col items-center justify-center gap-1 text-xs font-semibold no-underline {isAdminActive
-        ? 'text-surface-950-50'
-        : 'text-muted hover:text-surface-950-50'}"
-    >
-      <span
-        class="flex h-7 w-14 items-center justify-center rounded-full {isAdminActive
-          ? 'bg-surface-200-800'
-          : 'bg-transparent'}"
-      >
-        <Icon name="game-icons:black-knight-helm" size={22} />
-      </span>
-      {m.nav_admin()}
-    </a>
-  {/if}
 </nav>

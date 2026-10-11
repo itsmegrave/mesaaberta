@@ -4,7 +4,7 @@ import { requireAdmin } from '../admin-access';
 import { listAdminTables } from '../admin/tables';
 import { instagramAccounts } from '../db/schema';
 import { imageUrl, supabaseUrlOf } from '../images';
-import { configured, type InstagramEnv } from '../instagram/api';
+import { socialFor, type SocialEnv } from '../social';
 export async function read({ locals, platform, setHeaders, url }: RequestEvent) {
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
@@ -25,7 +25,9 @@ export async function read({ locals, platform, setHeaders, url }: RequestEvent) 
       })),
     },
     instagramAvailable:
-      configured(platform?.env as InstagramEnv) && !!account && account.expiresAt > new Date(),
+      socialFor(platform?.env as SocialEnv).configured(platform?.env) &&
+      !!account &&
+      account.expiresAt > new Date(),
   };
 }
 

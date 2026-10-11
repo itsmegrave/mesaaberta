@@ -22,15 +22,23 @@ beforeEach(() => {
 describe('BottomTabBar.svelte, the tab that is on', () => {
   it('lights Minhas mesas on its own pages', () => {
     location.pathname = '/account/tables';
-    render(BottomTabBar, { isAdmin: false });
+    render(BottomTabBar);
 
     expect(lit('/account/tables')).toBe(true);
     expect(lit('/tables')).toBe(false);
   });
 
+  it('lights Parceiros on the partners pages', () => {
+    location.pathname = '/partners/new';
+    render(BottomTabBar);
+
+    expect(lit('/partners')).toBe(true);
+    expect(lit('/tables')).toBe(false);
+  });
+
   it('lights nothing for the profile, which is not one of the tables', () => {
     location.pathname = '/account/profile';
-    render(BottomTabBar, { isAdmin: false });
+    render(BottomTabBar);
 
     expect(lit('/account/tables')).toBe(false);
     expect(lit('/tables')).toBe(false);
