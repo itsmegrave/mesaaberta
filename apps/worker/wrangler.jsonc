@@ -7,9 +7,9 @@
   // No public route and no custom domain: this Worker only runs on triggers.
   "workers_dev": false,
   "preview_urls": false,
-  // Empty on purpose. The crons stay on the web Worker (../../wrangler.jsonc) until the cutover in
-  // README.md moves them here in one step; two Workers on the same cron would run every job twice.
-  "triggers": { "crons": [] },
+  // Event sweep every 5 minutes and the daily import at 04:00. They moved here from the web Worker
+  // (../../wrangler.jsonc) in one step; two Workers on the same cron would run every job twice.
+  "triggers": { "crons": ["*/5 * * * *", "0 4 * * *"] },
   // Same public identifiers as the web Worker. Secrets (database, Instagram, Resend) are set on the
   // Worker by the private deployment, never here.
   "vars": {

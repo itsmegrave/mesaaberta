@@ -42,9 +42,11 @@
       "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
     },
   ],
-  // Retries domain events that did not finish (see src/lib/server/events). Without a database it does nothing.
-  // `bun run build` adds the `scheduled` handler the adapter does not export (scripts/wrap-worker.ts).
-  "triggers": { "crons": ["*/5 * * * *", "0 4 * * *"] },
+  // Empty on purpose: the two crons (event sweep every 5 minutes, daily import at 04:00) run on
+  // `mesaaberta-worker` (apps/worker). Two Workers on the same cron would run every job twice.
+  // `bun run build` still adds the `scheduled` handler (scripts/wrap-worker.ts), so a single-Worker
+  // deployment can put the crons back from wrangler.example.jsonc.
+  "triggers": { "crons": [] },
   // Shadow stage of the Queues canary (ADR 0003): the producer binding. Nothing is sent until the
   // GrowthBook flag `api_events_queue_shadow` targets someone, and its consumer is `mesaaberta-worker`.
   "queues": { "producers": [{ "binding": "DOMAIN_EVENTS", "queue": "domain-events-canary" }] },
