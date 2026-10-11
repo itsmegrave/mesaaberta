@@ -30,6 +30,20 @@
       "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
     },
   ],
+  // The shadow consumer acknowledges and counts; it runs no handler (ADR 0003, stage 2). It does
+  // nothing until this Worker is deployed. The consumer settles every message itself and caps
+  // attempts at 8, so the queue's own limit is above that and the DLQ only gets what crashed.
+  "queues": {
+    "consumers": [
+      {
+        "queue": "domain-events-canary",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 10,
+        "dead_letter_queue": "domain-events-canary-dlq",
+      },
+    ],
+  },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "observability": {
     "enabled": true,

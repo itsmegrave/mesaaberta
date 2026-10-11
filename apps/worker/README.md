@@ -16,9 +16,11 @@ Rollback is the reverse: crons back on the web Worker, then delete this Worker.
 
 ## Queues consumer (shadow)
 
-`queue()` acknowledges and counts every message and runs no handler (ADR 0003, stage 2). It does
-nothing until a queue consumer is bound to this Worker, which needs the `domain-events-canary` queue
-and its DLQ in Cloudflare and a producer behind a flag. Live delivery swaps the executor for
+`queue()` acknowledges and counts every message and runs no handler (ADR 0003, stage 2). The queues
+`domain-events-canary` and `domain-events-canary-dlq` exist; this Worker's config declares the
+consumer, which attaches when the Worker is deployed (a queue has one consumer). The web Worker holds
+the producer binding `DOMAIN_EVENTS` and publishes only for people targeted by the flag
+`api_events_queue_shadow`, which has no rules yet. Live delivery swaps the executor for
 `createEventExecutor`, one event class at a time.
 
 ## Error reporting
