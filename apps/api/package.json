@@ -1,0 +1,11 @@
+{
+  "name": "@mesaaberta/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@mesaaberta/core": "workspace:*",
+    "hono": "^4.13.13"
+  }
+}
