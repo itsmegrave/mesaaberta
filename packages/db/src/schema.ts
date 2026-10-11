@@ -882,3 +882,12 @@ export const crowdfundingImportRuns = pgTable(
     ),
   ],
 ).enableRLS();
+
+/**
+ * When a background job last finished a run (`sweeper` today). The web Worker's /healthz reads it,
+ * because the background Worker has no route of its own to probe.
+ */
+export const workerHeartbeats = pgTable('worker_heartbeats', {
+  name: text('name').primaryKey(),
+  lastRunAt: timestamp('last_run_at', { withTimezone: true }).notNull(),
+}).enableRLS();

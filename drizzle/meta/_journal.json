@@ -281,6 +281,13 @@
       "when": 1791656338312,
       "tag": "0039_events_claim_token",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791740998625,
+      "tag": "0040_worker_heartbeats",
+      "breakpoints": true
     }
   ]
 }

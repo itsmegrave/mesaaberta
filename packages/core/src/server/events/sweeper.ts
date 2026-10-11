@@ -8,6 +8,7 @@ import { pruneTableChats } from '../messages/retention';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
 import { createEventExecutor } from './executor';
+import { recordHeartbeat, SWEEPER_HEARTBEAT } from './heartbeat';
 import { liftExpiredBans } from '../moderation/bans';
 import type { Handler } from './types';
 
@@ -59,6 +60,8 @@ export async function runSweeper(
     if (expired > 0) log.info('notification prune', { expired });
     const chats = await pruneTableChats(db);
     if (chats > 0) log.info('table chat prune', { chats });
+    // Last, so a run that threw before this point does not look alive to /healthz.
+    await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log);
     return swept;
   } finally {
     await close();
