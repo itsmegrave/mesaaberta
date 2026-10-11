@@ -14,6 +14,7 @@ const show = (over: Record<string, unknown> = {}) =>
       configured: true,
       connected: false,
       connectionError: false,
+      unreadable: false,
       uncertain: [],
       ...over,
     } as never,
@@ -60,6 +61,13 @@ describe('admin connections (Instagram)', () => {
 
   it('says the connection expired, and offers to reconnect', async () => {
     show({ account: { username: 'mesaaberta.app', expiresAt: past } });
+
+    await expect.element(page.getByText('Conexão expirada')).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Conectar Instagram' })).toBeEnabled();
+  });
+
+  it('offers to reconnect when the stored token can no longer be read', async () => {
+    show({ account: { username: 'mesaaberta.app', expiresAt: future }, unreadable: true });
 
     await expect.element(page.getByText('Conexão expirada')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Conectar Instagram' })).toBeEnabled();
