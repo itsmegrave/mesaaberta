@@ -6,6 +6,7 @@
   import { periodLabel } from '$lib/crowdfunding/format';
   import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
   import { hostOf, type CrowdfundingPlatform } from '$lib/crowdfunding/platforms';
+  import { campaignReferralUrl } from '$lib/crowdfunding/referral';
   import { situationOf } from '$lib/crowdfunding/situation';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -66,7 +67,7 @@
     <h3 class="text-lg leading-snug font-semibold text-balance">
       <!-- eslint-disable svelte/no-navigation-without-resolve -- the campaign's own page on another site, not an app route -->
       <a
-        href={campaign.url}
+        href={campaignReferralUrl(campaign.url)}
         target="_blank"
         rel="noopener noreferrer"
         class="no-underline after:absolute after:inset-0 after:content-['']"
