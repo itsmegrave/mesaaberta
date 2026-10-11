@@ -71,6 +71,7 @@
           action={localizedHref('/admin/instagram/connect', getLocale())}
         >
           <Button
+            type="submit"
             size="custom"
             disabled={!data.configured || connecting}
             aria-busy={connecting}
@@ -108,6 +109,7 @@
                 /></label
               >
               <Button
+                type="submit"
                 size="custom"
                 disabled={pending}
                 aria-busy={pending}

@@ -216,7 +216,7 @@
               <NotificationBell {unread} {latest} placement="right-end" labelled />
               {@render adminLink()}
             {/if}
-            <ThemeToggle variant="switch" />
+            <ThemeToggle />
           {:else}
             <div class="flex w-full flex-col items-center justify-center gap-2">
               <ThemeToggle />

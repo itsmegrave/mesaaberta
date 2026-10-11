@@ -72,4 +72,24 @@ describe('admin connections (Instagram)', () => {
     await expect.element(page.getByText('Conexão expirada')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Conectar Instagram' })).toBeEnabled();
   });
+
+  it('submits the connect form: its button is a submit button, not the default type="button"', async () => {
+    show({ account: { username: 'mesaaberta.app', expiresAt: past } });
+
+    const button = page.getByRole('button', { name: 'Conectar Instagram' }).element();
+    expect((button as HTMLButtonElement).type).toBe('submit');
+    expect(button.closest('form')?.getAttribute('action')).toMatch(/\/admin\/instagram\/connect$/);
+  });
+
+  it('submits the reconcile form with a submit button', async () => {
+    show({
+      account: { username: 'mesaaberta.app', expiresAt: future },
+      uncertain: [
+        { tableId: '00000000-0000-4000-8000-000000000001', containerId: 'c1', createdAt: past },
+      ],
+    });
+
+    const button = page.getByRole('button', { name: 'Registrar publicação' }).element();
+    expect((button as HTMLButtonElement).type).toBe('submit');
+  });
 });

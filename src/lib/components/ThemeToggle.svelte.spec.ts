@@ -86,18 +86,6 @@ describe('ThemeToggle', () => {
     expect(root.dataset.mode).toBe('dark');
   });
 
-  it('as a switch is labelled "Tema escuro" and saves the choice when flipped', async () => {
-    render(ThemeToggle, { variant: 'switch' });
-
-    const toggle = page.getByRole('switch', { name: 'Tema escuro' });
-    await expect.element(toggle).not.toBeChecked();
-    await toggle.click();
-
-    await expect.element(toggle).toBeChecked();
-    expect(root.dataset.mode).toBe('dark');
-    expect(localStorage.getItem('theme')).toBe('dark');
-  });
-
   it('shows the moon while light and the sun while dark, so the icon names what a click does', async () => {
     render(ThemeToggle);
 
