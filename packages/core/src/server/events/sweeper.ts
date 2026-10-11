@@ -53,7 +53,13 @@ export async function runSweeper(
         ? await sweepThroughPoller(db, handlers, now, log)
         : await sweepEvents(db, handlers, now, 50, log, { clock: () => new Date() });
     if (swept > 0) log.info('event sweep', { swept });
-    await socialFor(env).publishDue(db, env);
+    // Isolated: an unreadable Instagram token (a rotated INSTAGRAM_TOKEN_KEY) or a Meta outage must
+    // not stop the retention pruning below or keep the heartbeat from being recorded.
+    try {
+      await socialFor(env).publishDue(db, env);
+    } catch (error) {
+      log.warn('social publish failed', { code: 'social_publish_failed', error });
+    }
     const pruned = await pruneEvents(db);
     if (pruned > 0) log.info('event prune', { pruned });
     const expired = await pruneNotifications(db);
