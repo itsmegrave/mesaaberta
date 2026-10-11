@@ -81,6 +81,13 @@
         "wrangler": "^4.137.0",
       },
     },
+    "apps/worker": {
+      "name": "@mesaaberta/worker",
+      "version": "0.0.1",
+      "dependencies": {
+        "@mesaaberta/core": "workspace:*",
+      },
+    },
     "packages/config": {
       "name": "@mesaaberta/config",
       "version": "0.0.1",
@@ -438,6 +445,8 @@
     "@mesaaberta/db": ["@mesaaberta/db@workspace:packages/db"],
 
     "@mesaaberta/events": ["@mesaaberta/events@workspace:packages/events"],
+
+    "@mesaaberta/worker": ["@mesaaberta/worker@workspace:apps/worker"],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.2.4", "", { "dependencies": { "@tybys/wasm-util": "0.10.4" }, "peerDependencies": { "@emnapi/core": "^1.7.1 || ^2.0.0-alpha.4", "@emnapi/runtime": "^1.7.1 || ^2.0.0-alpha.4" } }, "sha512-AJxoUD2/15ESHbvpcyjU274nsAPLuOtPHCk0vKJM5pj//Fg/B1FXNWjPnXTT9PymCYYiHo4zPj0ZomXBKhoy7g=="],
 

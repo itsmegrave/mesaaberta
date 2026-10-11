@@ -1,0 +1,37 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "mesaaberta-worker",
+  "compatibility_date": "2026-09-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/index.ts",
+  // No public route and no custom domain: this Worker only runs on triggers.
+  "workers_dev": false,
+  "preview_urls": false,
+  // Empty on purpose. The crons stay on the web Worker (../../wrangler.jsonc) until the cutover in
+  // README.md moves them here in one step; two Workers on the same cron would run every job twice.
+  "triggers": { "crons": [] },
+  // Same public identifiers as the web Worker. Secrets (database, Instagram, Resend) are set on the
+  // Worker by the private deployment, never here.
+  "vars": {
+    "CROWDFUNDING_IMPORT_ENABLED": "true",
+    "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
+    "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
+    "RESEND_FROM": "ola@mesaaberta.app",
+    "SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
+    // "true" sweeps through the Postgres poller (ADR 0003). Off until the user says so.
+    "EVENT_POLLER": "",
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "84a4286b818c4f84a360c4728a3ee79c",
+      "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
+    },
+  ],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+  },
+}
