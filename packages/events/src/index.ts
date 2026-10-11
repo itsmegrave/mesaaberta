@@ -11,3 +11,12 @@ export {
   type JobTransport,
 } from './transport';
 export { createMemoryTransport } from './memory-transport';
+export {
+  MAX_DELAY_SECONDS,
+  createQueueConsumer,
+  queueTransport,
+  type ConsumerSummary,
+  type QueueBatch,
+  type QueueBinding,
+  type QueueMessage,
+} from './cloudflare-queues';
