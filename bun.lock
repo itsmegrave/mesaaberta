@@ -81,6 +81,14 @@
         "wrangler": "^4.137.0",
       },
     },
+    "apps/api": {
+      "name": "@mesaaberta/api",
+      "version": "0.0.1",
+      "dependencies": {
+        "@mesaaberta/core": "workspace:*",
+        "hono": "^4.13.13",
+      },
+    },
     "apps/worker": {
       "name": "@mesaaberta/worker",
       "version": "0.0.1",
@@ -438,6 +446,8 @@
     "@lix-js/sdk-linux-x64": ["@lix-js/sdk-linux-x64@0.17.0", "", { "os": "linux", "cpu": "x64" }, "sha512-968kHRX0waV5UoR4i0HZkqNr5KDOWPd4he3miLImCMGsQDWLViYde613Bf4hxas/SouCSfmnvlAnl87oSAZc8w=="],
 
     "@lix-js/sdk-win32-x64": ["@lix-js/sdk-win32-x64@0.17.0", "", { "os": "win32", "cpu": "x64" }, "sha512-/uYvg0c5R9+BtQ1aJqBE9VCwNSYSaZORUjo5u6ukAFkH7XuN1ZnpTzoI9K6HE82/dxlCymMsP3Ga/rQVpQn4hA=="],
+
+    "@mesaaberta/api": ["@mesaaberta/api@workspace:apps/api"],
 
     "@mesaaberta/config": ["@mesaaberta/config@workspace:packages/config"],
 
@@ -1156,6 +1166,8 @@
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "1.15.1" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
+
+    "hono": ["hono@4.13.13", "", {}, "sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA=="],
 
     "hookified": ["hookified@1.15.1", "", {}, "sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg=="],
 
