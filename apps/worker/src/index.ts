@@ -10,6 +10,7 @@ import { logger } from '@mesaaberta/core/server/logger';
 export type WorkerEnv = ImportEnv &
   InstagramEnv & {
     EVENT_POLLER?: string;
+    SENTRY_DSN?: string;
     CF_VERSION_METADATA?: { id?: string };
   };
 

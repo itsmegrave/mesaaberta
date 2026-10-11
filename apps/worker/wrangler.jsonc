@@ -3,7 +3,7 @@
   "name": "mesaaberta-worker",
   "compatibility_date": "2026-09-19",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "src/index.ts",
+  "main": "src/entry.ts",
   // No public route and no custom domain: this Worker only runs on triggers.
   "workers_dev": false,
   "preview_urls": false,
@@ -17,6 +17,8 @@
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
     "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
     "RESEND_FROM": "ola@mesaaberta.app",
+    // Public by design (it only allows sending events). Unset, Sentry stays off, as on a self-host.
+    "SENTRY_DSN": "https://b1de43dab20b6ee298e5b5725ee38262@o4512176851714048.ingest.us.sentry.io/4512176861937664",
     "SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
     // "true" sweeps through the Postgres poller (ADR 0003). Off until the user says so.
     "EVENT_POLLER": "",

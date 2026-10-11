@@ -14,7 +14,8 @@ crons and `EVENT_POLLER` is off.
 
 Rollback is the reverse: crons back on the web Worker, then delete this Worker.
 
-## Before it takes the crons
+## Error reporting
 
-- Error reporting: this Worker logs to the console and Workers observability only. The Sentry
-  telemetry sink needs the Sentry-specific privacy helpers moved out of the web app first.
+`src/entry.ts` wraps the handler with `@sentry/cloudflare` and installs the same telemetry sink as the
+web app. The privacy policy (`privateSentryOptions`) is shared through `@mesaaberta/core`. `SENTRY_DSN`
+is a Worker var; unset, Sentry stays off and logs still reach the console.
