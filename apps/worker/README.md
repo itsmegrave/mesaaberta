@@ -3,16 +3,19 @@
 The background Worker of Trello #120: Cron Triggers today, the Queues consumer later. It runs the
 event-delivery graph from `@mesaaberta/core`, the same code the web Worker's `scheduled` handler runs.
 
-**Status: inert.** It is not deployed, has no crons and no routes. The web Worker still owns both
-crons and `EVENT_POLLER` is off.
+**Status: owns the crons.** It has no routes. The web Worker's `triggers.crons` is empty, this
+Worker runs the event sweep (`*/5 * * * *`) and the daily import (`0 4 * * *`), and `EVENT_POLLER`
+is off.
 
-## Cutover (one step, after the private repo can deploy it)
+## Cutover (done in one release)
 
-1. Deploy this Worker from the private repo with its secrets (database, Instagram, Resend).
-2. In one change, empty `triggers.crons` on the web Worker and set the two crons here.
-3. Watch `event sweep` lines and the Sentry-free logs for one daily import and a day of sweeps.
+1. The private repo deploys this Worker with its secrets (database, Instagram, Resend).
+2. The same release empties `triggers.crons` on the web Worker and sets the two crons here.
+3. Watch one `event sweep` line every five minutes, the daily import, the pending and failed counts
+   on `/admin/events` and Sentry for `scheduled job failed`.
 
-Rollback is the reverse: crons back on the web Worker, then delete this Worker.
+Rollback is the reverse: crons back on the web Worker (pin the previous release), then delete this
+Worker.
 
 ## Queues consumer (shadow)
 

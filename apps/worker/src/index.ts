@@ -6,8 +6,7 @@ import { createQueueConsumer, type QueueBatch } from '@mesaaberta/events';
 
 // The background half of the system (Trello #120): the Cron Triggers and, later, the Queues
 // consumer. It is the same delivery graph the web Worker runs from `scheduled`, packaged on its own
-// so the web Worker can stop carrying it. Until the cutover in README.md, this Worker is not
-// deployed and the web Worker keeps the crons.
+// so the web Worker can stop carrying it. Since the cutover in README.md this Worker owns the crons.
 export type WorkerEnv = ImportEnv &
   InstagramEnv & {
     EVENT_POLLER?: string;
