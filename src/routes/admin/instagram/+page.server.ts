@@ -2,7 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { can } from '$lib/server/auth/policy';
 import { instagramAccounts, instagramPosts } from '$lib/server/db/schema';
-import { configured, type InstagramEnv } from '$lib/server/instagram/api';
+import { configured, decryptToken, type InstagramEnv } from '$lib/server/instagram/api';
 import { publishInstagramAction } from '$lib/server/admin/instagram-action';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -10,9 +10,24 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503);
   const [account] = await locals.db
-    .select({ username: instagramAccounts.username, expiresAt: instagramAccounts.expiresAt })
+    .select({
+      username: instagramAccounts.username,
+      expiresAt: instagramAccounts.expiresAt,
+      token: instagramAccounts.token,
+    })
     .from(instagramAccounts)
     .where(eq(instagramAccounts.id, 'mesaaberta'));
+  const env = platform?.env as InstagramEnv | undefined;
+  // A token stored under another INSTAGRAM_TOKEN_KEY looks connected but can never publish, and
+  // nothing else would offer to reconnect. The token itself never leaves the server.
+  let unreadable = false;
+  if (account && configured(env)) {
+    try {
+      await decryptToken(account.token, env!.INSTAGRAM_TOKEN_KEY!);
+    } catch {
+      unreadable = true;
+    }
+  }
   const uncertain = await locals.db
     .select({
       tableId: instagramPosts.tableId,
@@ -23,8 +38,9 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
     .where(eq(instagramPosts.status, 'uncertain'))
     .limit(50);
   return {
-    account: account ?? null,
-    configured: configured(platform?.env as InstagramEnv),
+    account: account ? { username: account.username, expiresAt: account.expiresAt } : null,
+    unreadable,
+    configured: configured(env),
     connected: url.searchParams.get('connected') === '1',
     connectionError: url.searchParams.has('connection_error'),
     uncertain,

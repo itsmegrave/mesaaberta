@@ -16,7 +16,10 @@
   let { data }: { data: PageData } = $props();
   let connecting = $state(false);
   let connectionFeedbackShown = $state(false);
-  const expired = $derived(Boolean(data.account && new Date(data.account.expiresAt) <= new Date()));
+  // A stored token that can no longer be read needs the same thing an expired one does: reconnecting.
+  const expired = $derived(
+    Boolean(data.account && (data.unreadable || new Date(data.account.expiresAt) <= new Date())),
+  );
   const status = $derived<Status>(
     !data.account
       ? 'instagram:disconnected'
