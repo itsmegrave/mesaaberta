@@ -39,10 +39,20 @@ jobs:
             echo "deps=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          files=$(git diff --name-only "$BASE_SHA" HEAD)
-          echo "$files"
-          if echo "$files" | grep -Ev '^(docs/.*|[^/]+\.md|LICENSE)$' | grep -q .; then code=true; else code=false; fi
-          if echo "$files" | grep -Eq '^(package\.json|bun\.lock|.*/package\.json)$'; then deps=true; else deps=false; fi
+          # NUL-separated and without rename detection: a code file renamed into docs/ must still
+          # show up as a deletion of its old path, and unusual file names must not be re-parsed.
+          code=false
+          deps=false
+          while IFS= read -r -d '' file; do
+            echo "$file"
+            case "$file" in
+              package.json | bun.lock | */package.json) deps=true; code=true ;;
+              docs/*.md | LICENSE) ;;
+              */*) code=true ;;
+              *.md) ;;
+              *) code=true ;;
+            esac
+          done < <(git diff --no-renames --name-only -z "$BASE_SHA" HEAD)
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "deps=$deps" >> "$GITHUB_OUTPUT"
 
