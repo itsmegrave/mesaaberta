@@ -44,7 +44,7 @@ jobs:
           code=false
           deps=false
           while IFS= read -r -d '' file; do
-            echo "$file"
+            printf 'changed: %q\n' "$file"
             case "$file" in
               package.json | bun.lock | */package.json) deps=true; code=true ;;
               docs/*.md | LICENSE) ;;
