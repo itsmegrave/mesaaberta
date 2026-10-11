@@ -105,20 +105,20 @@ describe('+layout.svelte', () => {
       .element(nav.getByRole('button', { name: 'Notificações: 4 sem ler' }))
       .toBeVisible();
     await expect.element(nav.getByRole('link', { name: /Admin/ })).toBeVisible();
-    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    await expect.element(nav.getByRole('button', { name: 'Tema escuro' })).toBeVisible();
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
     expect(nav.element().contains(account)).toBe(true);
-    // The switch comes before the account block, which is last.
-    expect(account.compareDocumentPosition(nav.getByRole('switch').element())).toBe(
-      Node.DOCUMENT_POSITION_PRECEDING,
-    );
+    // The theme button comes before the account block, which is last.
+    expect(
+      account.compareDocumentPosition(nav.getByRole('button', { name: 'Tema escuro' }).element()),
+    ).toBe(Node.DOCUMENT_POSITION_PRECEDING);
   });
 
   it('draws the open side nav without an inline style, which the CSP blocks', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
 
-    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    await expect.element(nav.getByRole('button', { name: 'Tema escuro' })).toBeVisible();
     expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
   });
 
