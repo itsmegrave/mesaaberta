@@ -12,6 +12,10 @@ export const flagDefaults = {
   // every update is conditional on it, so a dispatcher whose lease expired cannot finish or release
   // the new claim (ADR 0003). Target admins first: `isAdmin = true`.
   api_events_fenced_leases: false,
+  // Off: nothing is published. On: after an event commits its reference (id, type, version) is sent
+  // to the `domain-events-canary` queue, whose consumer only counts it (ADR 0003, stage 2). Needs the
+  // DOMAIN_EVENTS queue binding; without it this flag does nothing. Target admins first.
+  api_events_queue_shadow: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

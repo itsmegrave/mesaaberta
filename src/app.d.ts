@@ -38,6 +38,8 @@ declare global {
       >;
       /** Whether `api_events_fenced_leases` is on for this request's person (read once, lazily). */
       fencedLeases?: () => Promise<boolean>;
+      /** Whether `api_events_queue_shadow` is on for this request's person (read once, lazily). */
+      queueShadow?: () => Promise<boolean>;
       /** Set once someone is signed in; it ends up on the request log line. */
       userId?: string;
     }
