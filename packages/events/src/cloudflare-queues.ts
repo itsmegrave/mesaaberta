@@ -27,7 +27,10 @@ export function queueTransport(queue: QueueBinding): JobTransport {
       const delay = Math.min(Math.max(0, Math.ceil(delaySeconds)), MAX_DELAY_SECONDS);
       // Only the reference travels, whatever object the caller passes in.
       const body: JobRef = { eventId: ref.eventId, type: ref.type, version: ref.version };
-      await queue.send(body, delay > 0 ? { contentType: 'json', delaySeconds: delay } : { contentType: 'json' });
+      await queue.send(
+        body,
+        delay > 0 ? { contentType: 'json', delaySeconds: delay } : { contentType: 'json' },
+      );
     },
   };
 }

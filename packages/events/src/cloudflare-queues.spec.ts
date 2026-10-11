@@ -80,7 +80,10 @@ describe('createQueueConsumer', () => {
 
   it('gives up at the attempt cap: acknowledged and reported, not retried forever', async () => {
     const m = message(ref, 8);
-    const { summary, onFailed } = await run(async () => ({ status: 'retry', afterSeconds: 1, reason: 'busy' }), [m]);
+    const { summary, onFailed } = await run(
+      async () => ({ status: 'retry', afterSeconds: 1, reason: 'busy' }),
+      [m],
+    );
     expect(m.ack).toHaveBeenCalledOnce();
     expect(m.retry).not.toHaveBeenCalled();
     expect(onFailed).toHaveBeenCalledWith(ref, expect.stringContaining('gave up after 8 attempts'));
