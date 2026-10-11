@@ -57,6 +57,8 @@ export default defineConfig({
             // SvelteKit emits one form while rendering and another while hydrating.
             'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo=',
             'sha256-/T6DJcdasOV4WsFcyeBnzYHkgGst73FPCnMT1hu8phU=',
+            // The combobox's positioner (zag) writes one inline `style` while it hydrates.
+            'sha256-N+kfEVeVPD+eevnfyUCbAQjL1CLgCj09L7ASUyzYXAM=',
           ],
           // Profile pictures come from the sign-in providers' CDNs.
           'img-src': [
