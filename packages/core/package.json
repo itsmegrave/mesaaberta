@@ -9,6 +9,7 @@
   "peerDependencies": {
     "@cf-wasm/resvg": "*",
     "@growthbook/growthbook": "*",
+    "@sentry/cloudflare": "*",
     "@sindresorhus/slugify": "*",
     "@supabase/supabase-js": "*",
     "drizzle-orm": "*",

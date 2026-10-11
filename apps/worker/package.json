@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "src/index.ts",
+  "main": "src/entry.ts",
   "dependencies": {
-    "@mesaaberta/core": "workspace:*"
+    "@mesaaberta/core": "workspace:*",
+    "@sentry/cloudflare": "*"
   }
 }
