@@ -215,6 +215,7 @@ describe('admin pages on a phone', () => {
           awaiting: 1,
           concluded: 1,
           notHeld: 0,
+          draft: 0,
           online: 6,
           inPerson: 2,
           gms: 3,

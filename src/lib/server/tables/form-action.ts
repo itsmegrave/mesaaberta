@@ -28,10 +28,15 @@ type Event = {
  */
 export async function handleTableForm(
   { request, locals, url, cookies, setHeaders }: Event,
-  save: (input: TableInput, imagePath?: string) => Promise<{ slug: string }>,
-  guard: () => Promise<void> = async () => {},
+  save: (
+    input: TableInput,
+    imagePath: string | undefined,
+    /** The GM pressed "save as draft" instead of the main button. */
+    draft: boolean,
+  ) => Promise<{ slug: string }>,
+  guard: (draft: boolean) => Promise<void> = async () => {},
   /** Where a saved table leads: its page, unless said otherwise (the edit form: its manage page). */
-  destination: (slug: string) => string = (slug) => `/tables/${slug}`,
+  destination: (slug: string, draft: boolean) => string = (slug) => `/tables/${slug}`,
 ) {
   if (!(await locals.getUser())) {
     redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
@@ -52,9 +57,11 @@ export async function handleTableForm(
   );
   if (!form.valid) return fail(400, { form: responseForm(form) });
 
+  // The submit button that was pressed says which: only the draft one carries a value.
+  const draft = data.get('intent') === 'draft';
   let slug: string;
   try {
-    await guard();
+    await guard(draft);
     const image = data.get('image');
     let imagePath: string | undefined;
 
@@ -68,7 +75,7 @@ export async function handleTableForm(
     const input = locals.db
       ? await withLocation(locals.db, toTableInput(form.data))
       : toTableInput(form.data);
-    ({ slug } = await save(input, imagePath));
+    ({ slug } = await save(input, imagePath, draft));
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
     if (error instanceof Forbidden)
@@ -85,5 +92,5 @@ export async function handleTableForm(
     throw error;
   }
 
-  redirect(303, destination(slug));
+  redirect(303, destination(slug, draft));
 }

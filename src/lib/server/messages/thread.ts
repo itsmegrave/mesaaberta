@@ -1,5 +1,5 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { initialForm } from '$lib/forms/contract';
 import { requireUser } from '$lib/server/auth/guard';
 import { gameTables } from '$lib/server/db/schema';
@@ -28,7 +28,8 @@ export const loadChatThread = async (
       ? await locals.db
           .select({ id: gameTables.id, slug: gameTables.slug, title: gameTables.title })
           .from(gameTables)
-          .where(eq(gameTables.slug, about))
+          // A draft is nobody's business but its GM's: its title is not shown here either.
+          .where(and(eq(gameTables.slug, about), ne(gameTables.status, 'draft')))
       : [];
 
     return {

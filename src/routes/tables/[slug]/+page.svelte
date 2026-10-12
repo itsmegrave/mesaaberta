@@ -29,6 +29,7 @@
   import Icon from '$lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import DraftNotice from '$lib/components/DraftNotice.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
 
   let { data: serverData, form } = $props();
@@ -128,7 +129,7 @@
         onselect: () => document.getElementById('talk-to-gm')?.click(),
       });
     }
-    if (data.canEdit && table.status === 'active') {
+    if (data.canEdit && (table.status === 'active' || table.status === 'draft')) {
       items.push({
         id: 'disable',
         label: m.menu_disable_table(),
@@ -188,6 +189,13 @@
         </h1>
         <KebabMenu name={table.title} items={menu} />
       </div>
+
+      {#if data.canEdit && table.status === 'draft'}
+        <DraftNotice
+          action="{localizedHref(`/tables/${table.slug}/manage`, locale)}?/publish"
+          next={localizedHref(`/tables/${table.slug}`, locale)}
+        />
+      {/if}
 
       {#if table.tags.length > 0}
         <ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">

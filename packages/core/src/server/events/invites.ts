@@ -177,6 +177,8 @@ export function createInviteHandler(
       'TableDisabled',
     ],
     async handle(event: InviteEvent, db) {
+      // A draft has no players and no session anyone was invited to: nothing to send or cancel.
+      if ('draft' in event.payload && event.payload.draft) return;
       const table = await tableOf(db, event.payload.tableId);
       const recipients = await recipientsFor(db, event, table);
       const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';

@@ -30,14 +30,23 @@ export type AnnouncementAudience = (typeof ANNOUNCEMENT_AUDIENCES)[number];
  * email address or a token: it is kept forever as the audit log. Later slices add their events here.
  */
 export type DomainEvent =
-  | { type: 'TableCreated'; payload: { tableId: string; slug: string; title: string } }
+  // A table went public: opened directly, or a draft its GM published (`fromDraft`).
+  | {
+      type: 'TableCreated';
+      payload: { tableId: string; slug: string; title: string; fromDraft?: true };
+    }
+  // The GM saved a table as a draft. Nobody else sees it and nobody is told.
+  | { type: 'TableDrafted'; payload: { tableId: string; slug: string; title: string } }
   // The GM edited something players see (the invite and the bell follow it) or moved the session.
   // `changes` says what, for the history an admin reads; rows from before it have none.
   | { type: 'TableUpdated'; payload: TableChange }
   // The GM edited only what players do not see (seats, join mode, welcome message, image, tags).
   // Nobody is told: it is for the history alone, and no handler listens to it.
   | { type: 'TableEdited'; payload: TableChange }
-  | { type: 'TableDisabled'; payload: { tableId: string; slug: string; title: string } }
+  | {
+      type: 'TableDisabled';
+      payload: { tableId: string; slug: string; title: string; draft?: true };
+    }
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
   // The GM confirmed the session happened, or that it did not.
@@ -118,7 +127,14 @@ export type FieldChange =
   | { redacted: true };
 export type Changes = Record<string, FieldChange>;
 
-export type TableChange = { tableId: string; slug: string; title: string; changes?: Changes };
+export type TableChange = {
+  tableId: string;
+  slug: string;
+  title: string;
+  changes?: Changes;
+  /** Set while the table is a draft: there is nobody to invite or to tell. */
+  draft?: true;
+};
 
 // `reportId` is null when an admin closed the table from the tables list, with no report behind it.
 export type TableClosure = {

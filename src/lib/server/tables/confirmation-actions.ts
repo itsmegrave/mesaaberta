@@ -11,6 +11,7 @@ import { failFrom } from '../fail-from';
 import { dispatchEvent } from '../events/dispatcher';
 import { handlersFor } from '../events/handlers';
 import { concludeTable, markTableNotHeld, postponeTable } from './lifecycle';
+import { publishTable } from './write';
 
 /**
  * One answer to "did the session happen?", posted from the GM's manage page. The form is validated
@@ -62,8 +63,11 @@ function confirmationAction<Schema extends ZodType>(
   };
 }
 
-/** The manage page's actions: it happened, it did not, or a new date. */
+/** The manage page's actions: it happened, it did not, a new date, or a draft going public. */
 export const confirmationActions = {
+  publish: confirmationAction(answerSchema, ['next'], (db, actor, slug) =>
+    publishTable(db, actor, slug),
+  ),
   happened: confirmationAction(answerSchema, ['next'], (db, actor, slug) =>
     concludeTable(db, actor, slug),
   ),

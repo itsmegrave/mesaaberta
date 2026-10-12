@@ -45,6 +45,7 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
         awaiting: countWhere(sql`${gameTables.status} = 'awaiting_confirmation'`),
         concluded: countWhere(sql`${gameTables.status} = 'concluded'`),
         notHeld: countWhere(sql`${gameTables.status} = 'not_held'`),
+        draft: countWhere(sql`${gameTables.status} = 'draft'`),
         online: countWhere(sql`${gameTables.modality} = 'online'`),
         inPerson: countWhere(sql`${gameTables.modality} = 'in_person'`),
         gms: sql<number>`count(distinct ${gameTables.gmId})`.mapWith(Number),

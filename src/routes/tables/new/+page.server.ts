@@ -7,7 +7,7 @@ import { handleTableForm } from '$lib/server/tables/form-action';
 import { dispatchEvent } from '$lib/server/events/dispatcher';
 import { handlersFor } from '$lib/server/events/handlers';
 import { createTable } from '$lib/server/tables/write';
-import { TABLE_CREATION_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
+import { TABLE_CREATION_LIMIT, TABLE_DRAFT_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -42,8 +42,11 @@ export const actions: Actions = {
 
     return handleTableForm(
       event,
-      async (input, imagePath) => {
-        const created = await createTable(db, await locals.getProfile(), input, { imagePath });
+      async (input, imagePath, draft) => {
+        const created = await createTable(db, await locals.getProfile(), input, {
+          imagePath,
+          draft,
+        });
         // After the commit and the response, so the visitor never waits for a handler.
         locals.afterResponse((db) =>
           dispatchEvent(db, handlersFor(event.locals.env), created.eventId, new Date(), locals.log),
@@ -51,10 +54,13 @@ export const actions: Actions = {
         return created;
       },
       // A limited person is told before their image is stored. `createTable` checks again, under a lock.
-      async () => {
+      async (draft) => {
         const actor = await locals.getProfile();
-        if (actor) await checkRateLimit(db, actor.id, TABLE_CREATION_LIMIT);
+        if (actor)
+          await checkRateLimit(db, actor.id, draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT);
       },
+      // A draft goes to where its GM manages it, which says it is not public yet.
+      (slug, draft) => (draft ? `/tables/${slug}/manage` : `/tables/${slug}`),
     );
   },
 };

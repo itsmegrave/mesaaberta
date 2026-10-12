@@ -16,12 +16,17 @@
     delayed = false,
     timeout = false,
     class: className = '',
+    name,
+    value,
     children,
   }: {
     submitting?: boolean;
     delayed?: boolean;
     timeout?: boolean;
     class?: string;
+    /** With `value`, tells the action which button sent the form when it has more than one. */
+    name?: string;
+    value?: string;
     children: Snippet;
   } = $props();
 
@@ -33,6 +38,8 @@
 <Button
   size="custom"
   type="submit"
+  {name}
+  {value}
   class="gap-2 {className}"
   aria-busy={submitting || delayed || undefined}
   aria-disabled={submitting || delayed || undefined}

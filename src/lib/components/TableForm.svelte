@@ -33,6 +33,8 @@
     /** The platforms and tags a table can pick: approved, and the GM's own pending ones. */
     catalog: { platforms: CatalogPick[]; tags: CatalogPick[] };
     submitLabel: string;
+    /** A new table: offers a second button that saves it without going public. */
+    draftLabel?: string;
     imageUrl?: string | null;
     action?: string;
     /** Where "Cancelar" goes: the list for a new table, the table itself when editing. */
@@ -52,6 +54,7 @@
     systems,
     catalog,
     submitLabel,
+    draftLabel,
     imageUrl = null,
     action,
     cancelHref = '/tables',
@@ -563,6 +566,15 @@
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
         >{submitLabel}</SubmitButton
       >
+      {#if draftLabel}
+        <SubmitButton
+          name="intent"
+          value="draft"
+          submitting={controller.pending}
+          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold hover:preset-tonal"
+          >{draftLabel}</SubmitButton
+        >
+      {/if}
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
       <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
     </div>

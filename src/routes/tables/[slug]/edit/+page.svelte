@@ -54,7 +54,7 @@
       },
       { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
     ];
-    if (data.status === 'active') {
+    if (data.status === 'active' || data.status === 'draft') {
       items.push({
         id: 'disable',
         label: m.menu_disable_table(),

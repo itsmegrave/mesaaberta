@@ -9,13 +9,20 @@ import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
 export const read = async ({ locals, params }: RequestEvent) => {
-  // Unknown, disabled, or no database at all: the same translated 404.
-  const found = locals.db && (await findTableBySlug(locals.db, params.slug!, new Date()));
+  const signedIn = (await locals.getUser()) !== null;
+  const profile = await locals.getProfile().catch(() => null);
+  // Unknown, disabled, someone else's draft, or no database at all: the same translated 404.
+  const found =
+    locals.db &&
+    (await findTableBySlug(
+      locals.db,
+      params.slug!,
+      new Date(),
+      profile && { id: profile.id, admin: can(profile, 'admin:access') },
+    ));
   if (!found) error(404, 'Not found');
 
   const { gmId, id, imagePath, ...table } = found;
-  const signedIn = (await locals.getUser()) !== null;
-  const profile = await locals.getProfile().catch(() => null);
 
   // The player's own place, and the GM's view of everyone's. Names are not public.
   const myStatus = profile ? await registrationStatus(locals.db!, id, profile.id) : null;

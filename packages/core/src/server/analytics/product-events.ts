@@ -3,6 +3,7 @@ import type { AnalyticsEvent } from './provider';
 
 export const PRODUCT_EVENTS = [
   'TableCreated',
+  'TableDrafted',
   'TableUpdated',
   'TableDisabled',
   'JoinRequested',

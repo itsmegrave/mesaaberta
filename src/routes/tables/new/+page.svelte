@@ -55,6 +55,7 @@
     systems={options.data?.systems ?? data.systems}
     catalog={options.data?.catalog ?? data.catalog}
     submitLabel={m.form_submit_new()}
+    draftLabel={m.form_submit_draft()}
     cancelHref={localizedHref('/tables', getLocale())}
     gmName={data.account?.username ?? undefined}
   />

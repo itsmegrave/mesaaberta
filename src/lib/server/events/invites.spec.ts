@@ -282,6 +282,22 @@ describe('calendar invite handler', () => {
     });
   });
 
+  it('sends nothing for a change to, or the discard of, a draft', async () => {
+    const byId = adminByRecipient({ [gm]: 'mestre@example.com' });
+    const sent = capture();
+    const handler = createInviteHandler(env, sent.request, byId);
+
+    for (const type of ['TableUpdated', 'TableDisabled'] as const) {
+      const event = tableEvent(type);
+      await handler.handle(
+        { ...event, payload: { ...event.payload, draft: true } } as StoredEvent,
+        test.db,
+      );
+    }
+
+    expect(sent.bodies).toEqual([]);
+  });
+
   it('sends an updated invite to the GM and every confirmed player when the table changes', async () => {
     await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
     const byId = adminByRecipient({ [gm]: 'mestre@example.com', [player]: 'ana@example.com' });

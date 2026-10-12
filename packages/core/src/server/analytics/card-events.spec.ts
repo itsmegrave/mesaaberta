@@ -37,6 +37,19 @@ describe('product taxonomy from domain events', () => {
     expect(JSON.stringify(events)).not.toContain('secret');
   });
 
+  it('counts a draft as created when saved and as published when its GM publishes it', async () => {
+    const drafted = await taxonomyEvents(
+      stored('TableDrafted', { tableId: ids.table, slug: 's', title: 't' }),
+      dbWith([{ capacity: 5 }]),
+    );
+    const published = await taxonomyEvents(
+      stored('TableCreated', { tableId: ids.table, slug: 's', title: 't', fromDraft: true }),
+      dbWith([{ capacity: 5 }]),
+    );
+    expect(drafted.map((e) => e.name)).toEqual(['gm_mesa_created']);
+    expect(published.map((e) => e.name)).toEqual(['gm_mesa_published']);
+  });
+
   it('does not claim a mesa was published when its row is gone', async () => {
     const events = await taxonomyEvents(
       stored('TableCreated', { tableId: ids.table, slug: 's', title: 't' }),

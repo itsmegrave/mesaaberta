@@ -24,6 +24,8 @@ export const tableLifecycle = createMachine({
     concluded: {},
     not_held: {},
     disabled: {},
+    // Not public yet. Publishing is the GM's own move (see `publishTable`), not part of this flow.
+    draft: {},
   },
 });
 
