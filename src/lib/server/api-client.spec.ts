@@ -1,0 +1,36 @@
+import { describe, expect, it, vi } from 'vitest';
+import { callApi } from './api-client';
+
+const log = { warn: vi.fn() } as never;
+const platformWith = (fetch: (request: Request) => Promise<Response>) =>
+  ({ env: { API: { fetch } } }) as unknown as App.Platform;
+
+describe('callApi', () => {
+  it('is null without the binding, so the caller keeps the web path', async () => {
+    expect(await callApi(undefined, '/v1/x', 'a', log)).toBeNull();
+    expect(await callApi({ env: {} } as App.Platform, '/v1/x', 'a', log)).toBeNull();
+  });
+
+  it('posts as the actor and returns the JSON body', async () => {
+    const fetch = vi.fn(async (_request: Request) => Response.json({ outcome: 'processed' }));
+    const result = await callApi(platformWith(fetch), '/v1/admin/events/e1/force', 'a', log);
+
+    expect(result).toEqual({ outcome: 'processed' });
+    const request = fetch.mock.calls[0][0];
+    expect(request.method).toBe('POST');
+    expect(request.headers.get('x-actor-id')).toBe('a');
+    expect(new URL(request.url).pathname).toBe('/v1/admin/events/e1/force');
+  });
+
+  it('is null on a refusal or a network error, and never throws', async () => {
+    const refused = platformWith(async () =>
+      Response.json({ error: 'forbidden' }, { status: 403 }),
+    );
+    const broken = platformWith(async () => {
+      throw new Error('boom');
+    });
+
+    expect(await callApi(refused, '/v1/x', 'a', log)).toBeNull();
+    expect(await callApi(broken, '/v1/x', 'a', log)).toBeNull();
+  });
+});
