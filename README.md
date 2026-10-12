@@ -407,10 +407,13 @@ The available periods, durations and the number of rules depend on the plan; che
 ## Logging and observability
 
 Sentry is the only external application-log and exception destination. Workers Logs remains the
-edge-local JSON destination. The Sentry wizard configured `mesa-aberta/mesa-aberta-app`;
-the server hook uses the SDK's Cloudflare request-scoped initialization, and the scheduled handler
-uses `@sentry/cloudflare`. Production telemetry runs on `mesaaberta.app`; local development,
-Vitest and browser E2E do not send it. Tracing and Session Replay are disabled.
+edge-local JSON destination. The server hook uses the SDK's Cloudflare request-scoped
+initialization, and the scheduled handler uses `@sentry/cloudflare`. The web app reports to the
+project in `PUBLIC_SENTRY_DSN` (blank: nothing is sent) and, when `PUBLIC_SENTRY_ORIGIN` is set,
+only from that origin, so preview URLs stay quiet. The build adds `CSP_EXTRA_CONNECT_SRC` (that
+project's ingest origin, `https://oNNN.ingest.us.sentry.io`) to the page's `connect-src`; without
+it the browser blocks its own reports. Local development, Vitest and browser E2E do not send
+telemetry. Tracing and Session Replay are disabled.
 
 Use `locals.log` during a request, and pass it through background dispatches. The Cron creates its
 own correlation ID. Messages must be static descriptions of operations, never user input:
@@ -448,7 +451,7 @@ Worker. The console transport uses the same IDs. Telemetry failure never changes
 result; SDK flushing runs under the Worker's execution context.
 
 Source maps use the wizard's git-ignored `.env.sentry-build-plugin` locally, or `SENTRY_AUTH_TOKEN`
-in the build environment. Never put this auth token in Wrangler vars or browser code. Upload is
+in the build environment, and go to the project named by `SENTRY_ORG` and `SENTRY_PROJECT`. Never put this auth token in Wrangler vars or browser code. Upload is
 skipped when neither source is configured. Sentry's DSN is public and is included in the SDK
 configuration. Source-map debug IDs are preserved after privacy filtering.
 

@@ -23,6 +23,10 @@
     // Blank key: every feature flag returns its default from the registry.
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
     "GROWTHBOOK_CLIENT_KEY": "",
+    // Sentry for the web app (server and browser). Blank DSN: nothing is sent. With an origin set
+    // (`https://example.org`), only that origin reports, so preview URLs stay quiet.
+    "PUBLIC_SENTRY_DSN": "",
+    "PUBLIC_SENTRY_ORIGIN": "",
     "RESEND_FROM": "Mesa Aberta <no-reply@example.invalid>",
     // Ids of the hosted Resend templates (see "Hosted e-mail templates" in the README). A blank one
     // keeps that e-mail on its inline text.

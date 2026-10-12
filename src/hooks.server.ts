@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
-import { sentryOptions } from '$lib/observability/privacy';
+import { env as publicEnv } from '$env/dynamic/public';
+import { sentryOptionsFor } from '$lib/observability/privacy';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/flags/flags';
@@ -115,10 +116,9 @@ const handleFlags: Handle = ({ event, resolve }) => {
 // Security headers go first so they wrap every response, including the ones later hooks produce.
 export const handle: Handle = sequence(
   (args) =>
-    Sentry.initCloudflareSentryHandle({
-      ...sentryOptions,
-      enabled: import.meta.env.PROD && args.event.url.hostname === 'mesaaberta.app',
-    })(args),
+    Sentry.initCloudflareSentryHandle(
+      sentryOptionsFor(publicEnv, args.event.url.origin, import.meta.env.PROD),
+    )(args),
   Sentry.sentryHandle(),
   handleSecurityHeaders,
   // Before anything that reads configuration.
