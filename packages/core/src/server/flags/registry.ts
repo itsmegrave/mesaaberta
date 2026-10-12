@@ -26,6 +26,11 @@ export const flagDefaults = {
   // a notification reaches its reader a few seconds later (the queue's batch wait) instead of right
   // after the response. The consumer must name them in QUEUE_LIVE_HANDLERS too. Target admins first.
   api_events_queue_bell: false,
+  // The same hand-over for the handlers that send e-mail (`MAIL_HANDLER_NAMES`): calendar invites
+  // and the notice of a ban. On, a mail leaves a few seconds later. Resend deduplicates a repeated
+  // send for 24 hours only, so watch retries before widening this. The consumer must name the
+  // handlers in QUEUE_LIVE_HANDLERS and have the mail settings. Target admins first.
+  api_events_queue_mail: false,
   // Off: the admin event actions ("Rodar agora", "Rodar todos os que falharam") run in the web
   // Worker. On: they call the api Worker over the Service Binding and fall back to the web path when
   // the api cannot be reached. Needs the API binding; without it this flag does nothing.

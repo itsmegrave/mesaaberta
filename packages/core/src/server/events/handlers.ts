@@ -21,6 +21,13 @@ export const bellHandlers: readonly Handler[] = [
 ];
 
 /**
+ * The handlers that send e-mail: calendar invites and the notice of a ban. The third class the
+ * queue can deliver (`api_events_queue_mail`, ADR 0003 stage 3). By name, because each handler
+ * exists only where its mail settings are configured.
+ */
+export const MAIL_HANDLER_NAMES = ['calendar-invites-v1', 'ban-mail-v1'] as const;
+
+/**
  * Every handler that reacts to domain events. Each is idempotent (see `Handler`), so the sweeper
  * can retry it safely. Secrets are only available at runtime, so handlers are made from the
  * request or Cron environment rather than imported as a process-global client. The bell needs

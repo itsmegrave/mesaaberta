@@ -15,7 +15,7 @@ import { handleRequestLog } from '$lib/server/request-log';
 import { handleRuntime } from '$lib/server/runtime';
 import { createTracker } from '$lib/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '$lib/server/analytics';
-import { bellHandlers } from '$lib/server/events/handlers';
+import { MAIL_HANDLER_NAMES, bellHandlers } from '$lib/server/events/handlers';
 import { handleMaintenance } from '$lib/server/maintenance';
 import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
@@ -106,14 +106,17 @@ const handleFlags: Handle = ({ event, resolve }) => {
     (live ??= (async () => {
       const profile = await event.locals.getProfile().catch(() => null);
       const target = profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {};
-      const [analytics, bell] = await Promise.all([
+      const [analytics, bell, mail] = await Promise.all([
         event.locals.flags.isEnabled('api_events_queue_analytics', target),
         event.locals.flags.isEnabled('api_events_queue_bell', target),
+        event.locals.flags.isEnabled('api_events_queue_mail', target),
       ]);
       return [
         ...(analytics ? analyticsHandlers(env as AnalyticsEnv | undefined) : []),
         ...(bell ? bellHandlers : []),
-      ].map(({ name }) => name);
+      ]
+        .map(({ name }) => name)
+        .concat(mail ? MAIL_HANDLER_NAMES : []);
     })());
 
   return resolve(event);

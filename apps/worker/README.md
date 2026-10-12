@@ -38,9 +38,11 @@ targeted by the flag `api_events_queue_shadow`.
    | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
    | `api_events_queue_analytics` | `mixpanel-product-events-v1`                                                                                    |
    | `api_events_queue_bell`      | `in-app-notifications-v1`, `system-announcements-v1`, `moderation-notifications-v1`, `catalog-notifications-v1` |
+   | `api_events_queue_mail`      | `calendar-invites-v1`, `ban-mail-v1`                                                                            |
 
-   With the bell on the queue, a notification reaches its reader after the consumer's batch wait
-   (`max_batch_timeout`, 5 s here) instead of right after the response.
+   With the bell or the mail on the queue, a notification or an e-mail leaves after the consumer's
+   batch wait (`max_batch_timeout`, 5 s here) instead of right after the response. Resend
+   deduplicates a repeated send for 24 hours only.
 
 The outbox row stays the truth. With only the flag on, or when a message is lost, the event stays
 due and the sweeper runs what is pending within five minutes. With only the variable on, messages
