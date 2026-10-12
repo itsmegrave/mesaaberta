@@ -1,8 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
-import { sentryOptions } from '$lib/observability/privacy';
+import { env } from '$env/dynamic/public';
+import { sentryOptionsFor } from '$lib/observability/privacy';
 
-Sentry.init({
-  ...sentryOptions,
-  enabled: import.meta.env.PROD && location.hostname === 'mesaaberta.app',
-});
+Sentry.init(sentryOptionsFor(env, location.origin, import.meta.env.PROD));
 export const handleError = Sentry.handleErrorWithSentry();

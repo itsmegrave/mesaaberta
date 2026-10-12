@@ -11,8 +11,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 export default defineConfig({
   plugins: [
     sentrySvelteKit({
-      org: 'mesa-aberta',
-      project: 'mesa-aberta-app',
+      // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
       adapter: 'cloudflare',
       telemetry: false,
       autoInstrument: false,
@@ -78,8 +79,11 @@ export default defineConfig({
           'font-src': ['self'],
           'connect-src': [
             'self',
-            'https://o4512176851714048.ingest.us.sentry.io',
             'https://cloudflareinsights.com',
+            // Where the browser sends telemetry (Sentry's ingest origin), set by the deployment.
+            ...(process.env.CSP_EXTRA_CONNECT_SRC
+              ? [process.env.CSP_EXTRA_CONNECT_SRC as `https://${string}.${string}`]
+              : []),
           ],
           'object-src': ['none'],
           'base-uri': ['self'],
