@@ -269,7 +269,7 @@
                   href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
                   rel="noopener"
                   target="_blank"
-                  aria-label={m.footer_instagram_label()}
+                  aria-label={m.footer_instagram_label({ handle: data.site.INSTAGRAM_HANDLE })}
                   title="@{data.site.INSTAGRAM_HANDLE}"
                   class="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-surface-950-50 hover:preset-tonal"
                 >
