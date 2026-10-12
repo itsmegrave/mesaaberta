@@ -22,6 +22,10 @@ export const flagDefaults = {
   // QUEUE_LIVE_HANDLERS variable names them; until then the sweeper runs them within five minutes.
   // Needs the DOMAIN_EVENTS queue binding. Target admins first.
   api_events_queue_analytics: false,
+  // The same hand-over for the handlers that write the bell's notifications (`bellHandlers`): on,
+  // a notification reaches its reader a few seconds later (the queue's batch wait) instead of right
+  // after the response. The consumer must name them in QUEUE_LIVE_HANDLERS too. Target admins first.
+  api_events_queue_bell: false,
   // Off: the admin event actions ("Rodar agora", "Rodar todos os que falharam") run in the web
   // Worker. On: they call the api Worker over the Service Binding and fall back to the web path when
   // the api cannot be reached. Needs the API binding; without it this flag does nothing.
