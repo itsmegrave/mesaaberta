@@ -28,6 +28,19 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu()).toBeVisible();
   });
 
+  it('puts the name inside the button, not beside it, in the open side navigation', async () => {
+    render(AccountMenu, {
+      name: 'Marina Alves',
+      username: 'marina',
+      avatarUrl: null,
+      placement: 'top-start',
+      wide: true,
+    });
+
+    await expect.element(trigger().getByText('Marina Alves')).toBeVisible();
+    await expect.element(page.getByRole('link', { name: 'Marina Alves' })).not.toBeInTheDocument();
+  });
+
   it('opens the popover on click and shows navigation without repeating user details', async () => {
     render(AccountMenu, { name: 'Marina Alves', avatarUrl: null });
 
