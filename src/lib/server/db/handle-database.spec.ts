@@ -28,8 +28,7 @@ describe('handleDatabase', () => {
   const run = async (env: object | undefined, read: (event: RequestEvent) => void) => {
     const waitUntil = vi.fn();
     const event = {
-      locals: { env },
-      platform: env && { ctx: { waitUntil } },
+      locals: { env, host: env ? { waitUntil } : {} },
     } as unknown as RequestEvent;
 
     await handleDatabase({
@@ -73,8 +72,7 @@ describe('handleDatabase', () => {
       const waiting: Promise<unknown>[] = [];
       const log = { error: vi.fn() };
       const event = {
-        locals: { log, env },
-        platform: { ctx: { waitUntil: (p: Promise<unknown>) => waiting.push(p) } },
+        locals: { log, env, host: { waitUntil: (p: Promise<unknown>) => waiting.push(p) } },
       } as unknown as RequestEvent;
 
       await handleDatabase({

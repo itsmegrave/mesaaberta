@@ -15,11 +15,12 @@ const roleRead = {
   selector: "MemberExpression[property.name='role']",
   message: 'Do not read a role to decide access. Use can() or authorize() from the policy.',
 };
-// `platform.env` is Cloudflare's shape. Reading it outside the runtime module ties that code to one host.
+// `platform` is Cloudflare's shape. Reading it outside the runtime module ties that code to one host.
 const hostEnvRead = {
   selector:
-    "MemberExpression[property.name='env']:matches([object.name='platform'], [object.property.name='platform'])",
-  message: 'Do not read platform.env. Read locals.env, which handleRuntime fills from the host.',
+    "MemberExpression[property.name=/^(env|ctx|caches|cf)$/]:matches([object.name='platform'], [object.property.name='platform'])",
+  message:
+    'Do not read platform.env, .ctx, .caches or .cf. Read locals.env and locals.host, which handleRuntime fills from the host.',
 };
 
 export default defineConfig(
