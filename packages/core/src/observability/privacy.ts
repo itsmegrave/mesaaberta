@@ -41,6 +41,7 @@ const LABELS = new Set([
   'errorType',
   'causeCode',
   'provider',
+  'stage',
 ]);
 const IDS = new Set(['requestId', 'eventId', 'tableId', 'registrationId']);
 

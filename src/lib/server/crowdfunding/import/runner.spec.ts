@@ -176,3 +176,45 @@ it('restarts discovery when the source feed changes instead of reusing an incomp
   expect(list.mock.calls[0][0]).toBe(1);
   expect(result[0]).toMatchObject({ status: 'complete', imported: 1 });
 });
+
+it('reports the failing stage and hands unexpected errors to telemetry, but not known source codes', async () => {
+  const error = vi.fn();
+  const log = { ...logger, error };
+  const boom = new TypeError('fetch failed');
+  const sources: SourceAdapter[] = [
+    {
+      source: 'catarse',
+      list: async () => ({ urls: ['https://catarse.com.br/diagnostics'], nextPage: null }),
+      detail: async () => {
+        throw boom;
+      },
+    },
+    {
+      source: 'meeplestarter',
+      list: async () => {
+        throw new Error('source_http_403');
+      },
+      detail: vi.fn(),
+    },
+  ];
+  const result = await runDailyImports(env, {
+    scheduledTime: +now + 9 * 86400_000,
+    log,
+    sources,
+    open,
+    readFor,
+  });
+  expect(result.map((r) => r.status)).toEqual(['failed', 'failed']);
+  expect(error).toHaveBeenCalledWith(
+    'crowdfunding source import failed',
+    expect.objectContaining({
+      provider: 'catarse',
+      code: 'import_failed',
+      stage: 'detail',
+      error: boom,
+    }),
+  );
+  const known = error.mock.calls.find(([, fields]) => fields.provider === 'meeplestarter')![1];
+  expect(known).toMatchObject({ code: 'source_http_403', stage: 'list' });
+  expect(known).not.toHaveProperty('error');
+});

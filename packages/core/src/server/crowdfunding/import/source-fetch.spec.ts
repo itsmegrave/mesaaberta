@@ -6,12 +6,12 @@ describe('bounded source fetch', () => {
     const fetcher = vi.fn();
     await expect(
       sourceReader('catarse', { fetcher, resolve })('https://catarse.com.br.evil.test/'),
-    ).rejects.toThrow();
+    ).rejects.toThrow('source_url_not_allowed');
     await expect(
       sourceReader('catarse', { fetcher, resolve: async () => ['127.0.0.1'] })(
         'https://www.catarse.com.br/',
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow('source_unsafe_url');
     expect(fetcher).not.toHaveBeenCalled();
   });
   it('validates every redirect and enforces size, status and content type', async () => {
@@ -21,7 +21,7 @@ describe('bounded source fetch', () => {
     );
     await expect(
       sourceReader('catarse', { fetcher, resolve })('https://www.catarse.com.br/'),
-    ).rejects.toThrow();
+    ).rejects.toThrow('source_url_not_allowed');
     expect(fetcher).toHaveBeenCalledOnce();
     for (const response of [
       new Response('big', {

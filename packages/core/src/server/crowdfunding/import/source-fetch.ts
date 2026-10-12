@@ -19,8 +19,10 @@ export function sourceReader(
     const work = async () => {
       let url = new URL(start);
       for (let hop = 0; hop <= 3; hop++) {
-        if (!sourceUrlAllowed(url.href, source) || !(await isSafeTarget(url, resolve)))
-          throw new Error('source_unsafe_url');
+        // Two codes: a host outside the source's allow-list (usually a redirect to a new domain)
+        // needs a code change, while a target that fails the network guard may be a DNS blip.
+        if (!sourceUrlAllowed(url.href, source)) throw new Error('source_url_not_allowed');
+        if (!(await isSafeTarget(url, resolve))) throw new Error('source_unsafe_url');
         const response = await fetcher(url.href, {
           redirect: 'manual',
           headers: {

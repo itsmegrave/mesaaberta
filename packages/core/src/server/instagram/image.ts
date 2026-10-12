@@ -22,6 +22,11 @@ const hashtag = (text: string) =>
     .replace(/[^\p{L}\p{N}_]/gu, '');
 export function shareFacts(table: TableView, origin: string) {
   const url = new URL(`/tables/${table.slug}`, origin).href;
+  // Only the scanned link is tagged: the caption link is typed by hand, so it stays short.
+  const qr = new URL(url);
+  qr.searchParams.set('utm_source', 'instagram');
+  qr.searchParams.set('utm_medium', 'social');
+  qr.searchParams.set('utm_campaign', 'table_share');
   const date = new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'long',
     timeStyle: 'short',
@@ -36,7 +41,7 @@ export function shareFacts(table: TableView, origin: string) {
     .trim()
     .slice(0, 1000);
   const caption = `${table.title}\n${table.system.name} · ${kind} · ${modality}\n${date} (${table.timezone})\n${seats}\n\n${description}\n\nInscreva-se: ${url}\n\n#rpg #mesaaberta #${hashtag(table.system.slug)} #${modality.toLowerCase()} #${table.kind === 'one_shot' ? 'oneshot' : table.kind === 'adventure' ? 'adventure' : 'campaign'}`;
-  return { url, date, modality, kind, seats, caption, description };
+  return { url, qrUrl: qr.href, date, modality, kind, seats, caption, description };
 }
 
 // SVG text is escaped and wrapped by glyph count (conservative for this bundled bold font).
@@ -66,7 +71,7 @@ export async function shareSvg(
   background?: string,
 ): Promise<string> {
   const facts = shareFacts(table, origin);
-  const qr = QRCode.create(facts.url, { errorCorrectionLevel: 'M' });
+  const qr = QRCode.create(facts.qrUrl, { errorCorrectionLevel: 'M' });
   const cells: string[] = [];
   for (let y = 0; y < qr.modules.size; y++)
     for (let x = 0; x < qr.modules.size; x++) {
