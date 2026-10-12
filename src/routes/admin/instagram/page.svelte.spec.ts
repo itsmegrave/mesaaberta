@@ -10,6 +10,7 @@ const past = new Date(Date.now() - 24 * 3600 * 1000);
 const show = (over: Record<string, unknown> = {}) =>
   render(Page, {
     data: {
+      site: { INSTAGRAM_HANDLE: 'mesaaberta.app' },
       account: null,
       configured: true,
       connected: false,

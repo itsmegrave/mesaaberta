@@ -1,4 +1,5 @@
 import { cannyLinks } from '$lib/canny/links';
+import { siteOf } from '$lib/server/site';
 import { loadRead } from '$lib/server/reads/load';
 import { pendingCount } from '$lib/server/admin/catalog';
 import { can } from '$lib/server/auth/policy';
@@ -12,12 +13,14 @@ export const load: LayoutServerLoad = async (event) => {
   const { locals, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
   const links = cannyLinks(locals.env);
+  const site = siteOf(locals.env, locals.log);
 
   // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
   if (route.id === '/maintenance') {
     return {
       authEnabled,
       links,
+      site,
       maintenance: true,
       maintenanceBypass: false,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
@@ -46,6 +49,7 @@ export const load: LayoutServerLoad = async (event) => {
     return {
       authEnabled,
       links,
+      site,
       cacheIdentity,
       accountRead,
       maintenance: false,
@@ -69,6 +73,7 @@ export const load: LayoutServerLoad = async (event) => {
     return {
       authEnabled,
       links,
+      site,
       maintenance: false,
       maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),

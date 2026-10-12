@@ -9,8 +9,8 @@ for (const [name, path, heading] of [
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading);
     await expect(
-      page.getByRole('main').getByRole('link', { name: 'privacidade@mesaaberta.app' }).first(),
-    ).toHaveAttribute('href', 'mailto:privacidade@mesaaberta.app');
+      page.getByRole('main').getByRole('link', { name: 'privacidade@example.test' }).first(),
+    ).toHaveAttribute('href', 'mailto:privacidade@example.test');
   });
 }
 

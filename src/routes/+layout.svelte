@@ -1,7 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import './layout.css';
-  import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '$lib/contact';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
   import { createQueryClient } from '$lib/query/client';
   import { provideQueryClient } from '$lib/query/context';
@@ -259,22 +258,25 @@
               </p>
               <p>
                 {m.footer_help()}
-                <a href="mailto:{CONTACT_EMAIL}" class="link-underline text-surface-950-50"
-                  >{CONTACT_EMAIL}</a
+                <a
+                  href="mailto:{data.site.CONTACT_EMAIL}"
+                  class="link-underline text-surface-950-50">{data.site.CONTACT_EMAIL}</a
                 >.
               </p>
-              <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
-              <a
-                href={INSTAGRAM_URL}
-                rel="noopener"
-                target="_blank"
-                aria-label={m.footer_instagram_label()}
-                title="@{INSTAGRAM_HANDLE}"
-                class="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-surface-950-50 hover:preset-tonal"
-              >
-                <Icon name="instagram" size={22} />
-              </a>
-              <!-- eslint-enable svelte/no-navigation-without-resolve -->
+              {#if data.site.INSTAGRAM_HANDLE}
+                <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
+                <a
+                  href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
+                  rel="noopener"
+                  target="_blank"
+                  aria-label={m.footer_instagram_label()}
+                  title="@{data.site.INSTAGRAM_HANDLE}"
+                  class="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-surface-950-50 hover:preset-tonal"
+                >
+                  <Icon name="instagram" size={22} />
+                </a>
+                <!-- eslint-enable svelte/no-navigation-without-resolve -->
+              {/if}
             </div>
             <div class="flex flex-col gap-3 md:max-w-sm">
               <p>

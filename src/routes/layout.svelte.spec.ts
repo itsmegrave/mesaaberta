@@ -23,6 +23,13 @@ const shell = {
   maintenance: false,
   maintenanceBypass: false,
   viewer,
+  site: {
+    APP_ORIGIN: 'https://mesaaberta.app',
+    CONTACT_EMAIL: 'contato@mesaaberta.app',
+    PRIVACY_CONTROLLER_NAME: 'Pessoa Responsável',
+    PRIVACY_EMAIL: 'privacidade@mesaaberta.app',
+    INSTAGRAM_HANDLE: 'mesaaberta.app',
+  },
   links: {
     feedbackUrl: 'https://mesaaberta.canny.io/feedback',
     changelogUrl: 'https://mesaaberta.canny.io/changelog',
