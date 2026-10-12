@@ -22,6 +22,9 @@
     "SUPABASE_URL": "",
     // "true" sweeps through the Postgres poller (ADR 0003). Off until the user says so.
     "EVENT_POLLER": "",
+    // Handler names the queue consumer runs for real, comma-separated (ADR 0003, stage 3). Blank
+    // keeps it in the shadow stage: every message is acknowledged and nothing runs.
+    "QUEUE_LIVE_HANDLERS": "",
   },
   "hyperdrive": [
     {
