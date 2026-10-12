@@ -6,7 +6,7 @@ import { createTestDb } from '../db/test-db';
 import type { Logger } from '../logger';
 import { dispatchEvent } from './dispatcher';
 import { createEventExecutor } from './executor';
-import { bellHandlers } from './handlers';
+import { MAIL_HANDLER_NAMES, bellHandlers, handlersFor } from './handlers';
 import { recordEvent } from './outbox';
 import type { Handler } from './types';
 
@@ -86,5 +86,29 @@ describe('the bell on the queue', () => {
     const [row] = await test.db.select().from(events).where(eq(events.id, id));
     expect(row.handledBy).toEqual(['mail', 'in-app-notifications-v1']);
     expect(row.processedAt).not.toBeNull();
+  });
+});
+
+describe('the mail on the queue', () => {
+  const env = {
+    RESEND_API_KEY: 're_test',
+    RESEND_FROM: 'Mesa Aberta <no-reply@example.test>',
+    SUPABASE_URL: 'https://project.supabase.example',
+    SUPABASE_SECRET_KEY: 'sb_secret_test',
+    APP_ORIGIN: 'https://jogos.example.org',
+  };
+
+  it('names exactly the handlers that send e-mail where mail is configured', () => {
+    const mail = handlersFor(env)
+      .map(({ name }) => name)
+      .filter((name) => (MAIL_HANDLER_NAMES as readonly string[]).includes(name));
+
+    expect(mail.sort()).toEqual([...MAIL_HANDLER_NAMES].sort());
+  });
+
+  it('shares no handler with the bell', () => {
+    expect(
+      names.filter((name) => (MAIL_HANDLER_NAMES as readonly string[]).includes(name)),
+    ).toEqual([]);
   });
 });
