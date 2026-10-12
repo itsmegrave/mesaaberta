@@ -13,11 +13,15 @@ MAILPIT_URL=http://127.0.0.1:54344
 # never turns the maintenance_mode kill switch on; this does.
 # FEATURE_FLAG_OVERRIDES=maintenance_mode=true
 
-# Supabase Auth. The project URL and publishable key are in wrangler.jsonc (public by design), so
-# login works locally without anything here. Set these only to point at another Supabase project;
-# they override wrangler.jsonc.
-# SUPABASE_URL=https://<project>.supabase.co
+# Supabase Auth. Blank in wrangler.jsonc, so login is off locally until these are set. For the
+# local stack, run `bun run e2e:up` and copy API_URL and PUBLISHABLE_KEY from
+# `bun run supabase status`. Both are public values, not secrets.
+# SUPABASE_URL=http://127.0.0.1:54321
 # SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+
+# Feature flags. Blank in wrangler.jsonc, so every flag returns its registry default. Set a
+# GrowthBook client key (read-only, not a secret) to load live values.
+# GROWTHBOOK_CLIENT_KEY=sdk-...
 
 # Calendar invite e-mail (Trello #13). Keep these secrets out of wrangler.jsonc and set them with
 # `wrangler secret put` in production. The handler is disabled until the first four are present.

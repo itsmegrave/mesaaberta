@@ -19,7 +19,7 @@ for (const [name, path] of [
     ).toHaveAttribute('href', 'https://www.instagram.com/mesaaberta.app/');
     await expect(footer.getByRole('link', { name: 'Reporte aqui' })).toHaveAttribute(
       'href',
-      'https://mesaaberta.canny.io/feedback',
+      'https://feedback.example.test/feedback',
     );
     await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveAttribute(
       'href',

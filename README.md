@@ -18,6 +18,8 @@ bun run playwright install chromium   # component and e2e tests run in a real br
 bun run dev
 ```
 
+`wrangler.jsonc` and `apps/worker/wrangler.jsonc` hold placeholders, not a deployment's values: the site runs, but login, live feature flags and the footer's feedback links stay off until you set them. Put local values in `.dev.vars` (see `.dev.vars.example`); a deployment keeps its own copy of the Wrangler files.
+
 ## Scripts
 
 | Script              | What it does                                                                        |
