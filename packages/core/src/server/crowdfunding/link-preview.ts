@@ -23,7 +23,7 @@ export const PREVIEW_LIMITS = {
   maxImageBytes: 2 * 1024 * 1024,
 } as const;
 
-const USER_AGENT = 'MesaAbertaLinkPreview/1.0 (+https://mesaaberta.app)';
+const USER_AGENT = 'MesaAbertaLinkPreview/1.0 (+https://github.com/itsmegrave/mesaaberta)';
 const LOCAL_SUFFIXES = ['.localhost', '.local', '.internal', '.lan', '.home', '.corp'];
 
 /** The addresses a name resolves to (A and AAAA), through Cloudflare's DNS-over-HTTPS. */

@@ -56,6 +56,7 @@ const env = {
   SUPABASE_URL: 'https://example.supabase.co',
   SUPABASE_SECRET_KEY: 'sb_secret_test',
   APP_ORIGIN: 'https://mesaaberta.app',
+  CALENDAR_UID_DOMAIN: 'mesaaberta.app',
 };
 
 const admin = (email = 'ana@example.com'): SupabaseAdmin => ({
@@ -106,6 +107,7 @@ describe('calendar invite handler', () => {
       SUPABASE_URL: env.SUPABASE_URL,
       SUPABASE_SECRET_KEY: env.SUPABASE_SECRET_KEY,
       APP_ORIGIN: env.APP_ORIGIN,
+      CALENDAR_UID_DOMAIN: env.CALENDAR_UID_DOMAIN,
     };
 
     expect(inviteHandler(local)?.name).toBe('calendar-invites-v1');

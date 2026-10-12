@@ -5,7 +5,7 @@ import { NAMELESS } from '../db/public-name';
 import type { Mailer } from '../mail/mailer';
 import { mailConfigured, mailerFor } from '../mail';
 import { templateIdFor, templateVariables, type TemplateEnv } from '../mail/templates';
-import type { InviteEnv } from './invites';
+import { LOCAL_ORIGIN, type InviteEnv } from './invites';
 import type { Handler, StoredEvent } from './types';
 
 type BanConfig = TemplateEnv & {
@@ -137,6 +137,6 @@ export function banMailHandler(env: InviteEnv | undefined): Handler | null {
     MAILPIT_URL: env.MAILPIT_URL,
     SUPABASE_URL: env.SUPABASE_URL,
     SUPABASE_SECRET_KEY: secretKey,
-    APP_ORIGIN: env.APP_ORIGIN || 'https://mesaaberta.app',
+    APP_ORIGIN: env.APP_ORIGIN || LOCAL_ORIGIN,
   });
 }

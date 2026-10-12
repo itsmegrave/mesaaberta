@@ -1,6 +1,6 @@
 import ICAL from 'ical.js';
 import { describe, expect, it } from 'vitest';
-import { buildCalendar, buildInvite, type CalendarTable } from './ics';
+import { buildCalendar, buildInvite, uidDomainFor, type CalendarTable } from './ics';
 
 const table: CalendarTable = {
   id: '3f1c2d4e-1111-4222-8333-444455556666',
@@ -20,6 +20,7 @@ const table: CalendarTable = {
 const base = {
   organizer: { email: 'no-reply@mesaaberta.app', name: 'Mesa Aberta' },
   baseUrl: 'https://mesaaberta.app',
+  uidDomain: 'mesaaberta.app',
   now: new Date('2026-10-01T12:00:00Z'),
 };
 
@@ -400,15 +401,23 @@ describe('a whole calendar', () => {
     recurrence: 'FREQ=WEEKLY',
     timezone: 'America/Recife',
   };
-  const calendar = buildCalendar({ tables: [table, second], baseUrl: base.baseUrl, now: base.now });
+  const calendar = buildCalendar({
+    tables: [table, second],
+    baseUrl: base.baseUrl,
+    uidDomain: base.uidDomain,
+    now: base.now,
+  });
 
   it('has an event for each table and the rules of each zone once', () => {
     expect(named(calendar, 'BEGIN').filter((l) => l === 'BEGIN:VEVENT')).toHaveLength(2);
     expect(named(calendar, 'TZID').filter((l) => l.startsWith('TZID:'))).toHaveLength(2);
     expect(
-      buildCalendar({ tables: [table, table], baseUrl: base.baseUrl, now: base.now }).match(
-        /BEGIN:VTIMEZONE/g,
-      ),
+      buildCalendar({
+        tables: [table, table],
+        baseUrl: base.baseUrl,
+        uidDomain: base.uidDomain,
+        now: base.now,
+      }).match(/BEGIN:VTIMEZONE/g),
     ).toHaveLength(1);
   });
 
@@ -427,14 +436,58 @@ describe('a whole calendar', () => {
 
   it('refuses a table whose id is not what this system produces', () => {
     expect(() =>
-      buildCalendar({ tables: [{ ...table, id: 'x\r\nBEGIN:VEVENT' }], baseUrl: base.baseUrl }),
+      buildCalendar({
+        tables: [{ ...table, id: 'x\r\nBEGIN:VEVENT' }],
+        baseUrl: base.baseUrl,
+        uidDomain: base.uidDomain,
+      }),
     ).toThrow('Invalid table id');
   });
 
   it('is an empty calendar for a person with no tables', () => {
-    const empty = buildCalendar({ tables: [], baseUrl: base.baseUrl, now: base.now });
+    const empty = buildCalendar({
+      tables: [],
+      baseUrl: base.baseUrl,
+      uidDomain: base.uidDomain,
+      now: base.now,
+    });
 
     expect(empty.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true);
     expect(named(empty, 'BEGIN').filter((l) => l === 'BEGIN:VEVENT')).toHaveLength(0);
+  });
+});
+
+describe('the namespace of the UIDs', () => {
+  it('is the configured domain, whatever the address of the site', () => {
+    expect(
+      uidDomainFor({
+        CALENDAR_UID_DOMAIN: 'jogos.example.org',
+        APP_ORIGIN: 'https://novo.example',
+      }),
+    ).toBe('jogos.example.org');
+  });
+
+  it("falls back to the site's host, then the request's, then localhost", () => {
+    expect(uidDomainFor({ APP_ORIGIN: 'https://jogos.example.org' })).toBe('jogos.example.org');
+    expect(uidDomainFor({ CALENDAR_UID_DOMAIN: '  ' }, 'http://localhost:5173')).toBe('localhost');
+    expect(uidDomainFor(undefined)).toBe('localhost');
+  });
+
+  it('ignores a configured value that is not a hostname', () => {
+    expect(
+      uidDomainFor({
+        CALENDAR_UID_DOMAIN: 'a b\r\nUID:x',
+        APP_ORIGIN: 'https://jogos.example.org',
+      }),
+    ).toBe('jogos.example.org');
+  });
+
+  it('is what the event carries, and a malformed one is refused rather than written', () => {
+    expect(invite({ uidDomain: 'jogos.example.org' })).toContain(
+      `UID:${table.id}@jogos.example.org`,
+    );
+    expect(() => invite({ uidDomain: 'x\r\nATTENDEE:evil' })).toThrow(
+      'Invalid calendar UID domain',
+    );
   });
 });

@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { createSupabaseAdmin, emailOf, type SupabaseAdmin } from '../auth/admin-client';
 import { expandWelcomeMessage } from '../../tables/welcome';
-import { buildInvite, tableUrl, type CalendarTable } from '../calendar/ics';
+import { buildInvite, tableUrl, uidDomainFor, type CalendarTable } from '../calendar/ics';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
 import type { Mailer } from '../mail/mailer';
@@ -34,6 +34,8 @@ export type InviteEnv = TemplateEnv & {
   /** The legacy `service_role` key, still accepted until Supabase retires it (end of 2026). */
   SUPABASE_SERVICE_ROLE_KEY?: string;
   APP_ORIGIN?: string;
+  /** The namespace of calendar UIDs; never change it once invites went out (see `uidDomainFor`). */
+  CALENDAR_UID_DOMAIN?: string;
 };
 
 /** What the handler needs once `inviteHandler` has checked the environment and picked the admin key. */
@@ -45,6 +47,7 @@ type InviteConfig = TemplateEnv & {
   SUPABASE_URL: string;
   SUPABASE_SECRET_KEY: string;
   APP_ORIGIN: string;
+  CALENDAR_UID_DOMAIN: string;
 };
 
 type Recipient = {
@@ -254,6 +257,7 @@ export function createInviteHandler(
           attendee: { email, name: recipient.name || recipient.username || NAMELESS },
           organizer: { email: addressOf(env.RESEND_FROM), name: 'Mesa Aberta' },
           baseUrl: env.APP_ORIGIN,
+          uidDomain: env.CALENDAR_UID_DOMAIN,
         });
         const subject =
           method === 'REQUEST' ? `Convite: ${table.title}` : `Cancelada: ${table.title}`;
@@ -283,6 +287,9 @@ export function createInviteHandler(
   };
 }
 
+/** Where links in a mail point when the deployment set no `APP_ORIGIN`: the local dev server. */
+export const LOCAL_ORIGIN = 'http://localhost:5173';
+
 /** No secrets in local development means no handler; events still complete as audit rows. */
 export function inviteHandler(env: InviteEnv | undefined): Handler | null {
   const secretKey = env?.SUPABASE_SECRET_KEY || env?.SUPABASE_SERVICE_ROLE_KEY;
@@ -303,6 +310,7 @@ export function inviteHandler(env: InviteEnv | undefined): Handler | null {
     MAILPIT_URL: env.MAILPIT_URL,
     SUPABASE_URL: env.SUPABASE_URL,
     SUPABASE_SECRET_KEY: secretKey,
-    APP_ORIGIN: env.APP_ORIGIN || 'https://mesaaberta.app',
+    APP_ORIGIN: env.APP_ORIGIN || LOCAL_ORIGIN,
+    CALENDAR_UID_DOMAIN: uidDomainFor(env),
   });
 }

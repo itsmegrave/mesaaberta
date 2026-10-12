@@ -27,7 +27,8 @@ export function sourceReader(
           redirect: 'manual',
           headers: {
             accept: 'text/html',
-            'user-agent': 'MesaAbertaCampaignImporter/1.0 (+https://mesaaberta.app)',
+            'user-agent':
+              'MesaAbertaCampaignImporter/1.0 (+https://github.com/itsmegrave/mesaaberta)',
           },
           signal: controller.signal,
         });
