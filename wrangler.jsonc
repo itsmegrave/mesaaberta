@@ -22,6 +22,9 @@
     "PRIVACY_CONTROLLER_NAME": "",
     "PRIVACY_EMAIL": "",
     "INSTAGRAM_HANDLE": "",
+    // The namespace of calendar event UIDs. Set it once and never change it after the first invite
+    // went out, or calendar apps show a table twice. Blank: the host of APP_ORIGIN.
+    "CALENDAR_UID_DOMAIN": "",
     // "true" turns on the daily RPG campaign discovery (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
     // Footer links to a feedback board and release notes. Blank hides them.

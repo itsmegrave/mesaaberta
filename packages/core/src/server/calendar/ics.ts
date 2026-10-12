@@ -34,12 +34,33 @@ export type InviteInput = {
   attendee: { email: string; name?: string };
   /** Who the invite is from: a sender address of ours, never a player. */
   organizer: { email: string; name: string };
-  /** The site's origin, for the link to the table (`https://mesaaberta.app`). */
+  /** The site's origin, for the link to the table (`https://example.org`). */
   baseUrl: string;
+  /** The namespace of every event's UID (see `uidDomainFor`). */
+  uidDomain: string;
   now?: Date;
 };
 
-const UID_DOMAIN = 'mesaaberta.app';
+const HOSTNAME =
+  /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+
+/**
+ * The namespace of every calendar event's UID (`<table id>@<domain>`). A calendar app matches an
+ * updated invite to the event it already has by this UID, so it must never change for a deployment
+ * that has sent invites: set `CALENDAR_UID_DOMAIN` once and keep it through a change of address.
+ * Without it, the host of `APP_ORIGIN` (or of `fallbackOrigin`) is used, and `localhost` last.
+ */
+export function uidDomainFor(
+  env: { CALENDAR_UID_DOMAIN?: string; APP_ORIGIN?: string } | undefined,
+  fallbackOrigin?: string,
+): string {
+  const configured = env?.CALENDAR_UID_DOMAIN?.trim();
+  if (configured && HOSTNAME.test(configured)) return configured;
+  for (const origin of [env?.APP_ORIGIN, fallbackOrigin]) {
+    if (origin && URL.canParse(origin)) return new URL(origin).hostname;
+  }
+  return 'localhost';
+}
 const EMAIL = /^[^\s@<>",;:\\]+@[^\s@<>",;:\\]+\.[^\s@<>",;:\\]+$/;
 // Control characters other than the line break.
 // eslint-disable-next-line no-control-regex -- stripping control characters is the point
@@ -89,7 +110,12 @@ function checkTable(table: CalendarTable) {
 /** The event for one table: one event for a one-shot, one recurring event for a campaign. */
 function tableEvent(
   table: CalendarTable,
-  { baseUrl, now, cancelled }: { baseUrl: string; now: Date; cancelled: boolean },
+  {
+    baseUrl,
+    uidDomain,
+    now,
+    cancelled,
+  }: { baseUrl: string; uidDomain: string; now: Date; cancelled: boolean },
 ) {
   const end = new Date(table.startsAt.getTime() + table.durationMinutes * 60_000);
   const url = tableUrl(baseUrl, table.slug);
@@ -99,7 +125,8 @@ function tableEvent(
     .join('\n\n');
 
   const event = new ICAL.Component('vevent');
-  event.updatePropertyWithValue('uid', `${table.id}@${UID_DOMAIN}`);
+  if (!HOSTNAME.test(uidDomain)) throw new Error('Invalid calendar UID domain');
+  event.updatePropertyWithValue('uid', `${table.id}@${uidDomain}`);
   event.updatePropertyWithValue('dtstamp', ICAL.Time.fromJSDate(now, true));
   event.updatePropertyWithValue('sequence', table.icalSequence);
 
@@ -140,6 +167,7 @@ export function buildInvite({
   attendee,
   organizer,
   baseUrl,
+  uidDomain,
   now = new Date(),
 }: InviteInput): string {
   if (!EMAIL.test(attendee.email)) throw new Error('Invalid attendee email address');
@@ -147,7 +175,7 @@ export function buildInvite({
   checkTable(table);
 
   const vtimezone = timezoneComponent(table.timezone);
-  const event = tableEvent(table, { baseUrl, now, cancelled: method === 'CANCEL' });
+  const event = tableEvent(table, { baseUrl, uidDomain, now, cancelled: method === 'CANCEL' });
 
   event
     .addPropertyWithValue('organizer', `mailto:${organizer.email}`)
@@ -177,10 +205,12 @@ export function buildInvite({
 export function buildCalendar({
   tables,
   baseUrl,
+  uidDomain,
   now = new Date(),
 }: {
   tables: CalendarTable[];
   baseUrl: string;
+  uidDomain: string;
   now?: Date;
 }): string {
   const calendar = new ICAL.Component(['vcalendar', [], []]);
@@ -198,7 +228,7 @@ export function buildCalendar({
     }
   }
   for (const table of tables) {
-    calendar.addSubcomponent(tableEvent(table, { baseUrl, now, cancelled: false }));
+    calendar.addSubcomponent(tableEvent(table, { baseUrl, uidDomain, now, cancelled: false }));
   }
 
   return `${calendar.toString()}\r\n`;

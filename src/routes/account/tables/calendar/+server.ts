@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { listCalendarTables } from '$lib/server/calendar/feed';
-import { buildCalendar } from '$lib/server/calendar/ics';
+import { buildCalendar, uidDomainFor } from '$lib/server/calendar/ics';
 import type { RequestHandler } from './$types';
 
 // "Baixar calendário" in Minhas mesas: the tables the person runs or has a seat at, as one `.ics`.
@@ -12,11 +12,20 @@ export const GET: RequestHandler = async ({ locals, url }) => {
   const now = new Date();
   const tables = await listCalendarTables(locals.db, user.id, now);
 
-  return new Response(buildCalendar({ tables, baseUrl: url.origin, now }), {
-    headers: {
-      'content-type': 'text/calendar; charset=utf-8',
-      'content-disposition': 'attachment; filename="mesa-aberta.ics"',
-      'cache-control': 'no-store',
+  return new Response(
+    buildCalendar({
+      tables,
+      baseUrl: url.origin,
+      // The same UIDs as the invites sent by mail, so a calendar app does not show a table twice.
+      uidDomain: uidDomainFor(locals.env, url.origin),
+      now,
+    }),
+    {
+      headers: {
+        'content-type': 'text/calendar; charset=utf-8',
+        'content-disposition': 'attachment; filename="mesa-aberta.ics"',
+        'cache-control': 'no-store',
+      },
     },
-  });
+  );
 };
