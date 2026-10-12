@@ -16,6 +16,10 @@ export const flagDefaults = {
   // to the `domain-events-canary` queue, whose consumer only counts it (ADR 0003, stage 2). Needs the
   // DOMAIN_EVENTS queue binding; without it this flag does nothing. Target admins first.
   api_events_queue_shadow: false,
+  // Off: the admin event actions ("Rodar agora", "Rodar todos os que falharam") run in the web
+  // Worker. On: they call the api Worker over the Service Binding and fall back to the web path when
+  // the api cannot be reached. Needs the API binding; without it this flag does nothing.
+  api_admin_events: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
