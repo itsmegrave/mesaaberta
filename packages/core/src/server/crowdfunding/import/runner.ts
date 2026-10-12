@@ -158,7 +158,10 @@ export async function runDailyImports(
         discovered: 0,
       };
       let cursor = lease.cursor,
-        errorCode: string | null = null;
+        errorCode: string | null = null,
+        // Which step threw: the code alone cannot tell a source outage from a storage failure.
+        stage: 'cursor' | 'list' | 'detail' | 'store' = 'cursor',
+        unexpected: Error | undefined;
       try {
         let position = cursorOf(cursor, adapter.cursorVersion),
           pages = 0,
@@ -179,6 +182,7 @@ export async function runDailyImports(
           }
           if (seenPages.has(position.page)) throw new Error('source_cursor');
           seenPages.add(position.page);
+          stage = 'list';
           const listing = await adapter.list(position.page, read);
           pages++;
           summary.discovered += Math.max(0, listing.urls.length - position.offset);
@@ -189,6 +193,7 @@ export async function runDailyImports(
               break;
             }
             let c: SourceCandidate | null;
+            stage = 'detail';
             try {
               c = await adapter.detail(listing.urls[index], now, read);
             } catch (error) {
@@ -203,6 +208,7 @@ export async function runDailyImports(
               c = null;
             }
             details++;
+            stage = 'store';
             if (!c) summary.skipped++;
             else {
               if (c.source !== adapter.source) throw new Error('source_schema');
@@ -225,6 +231,10 @@ export async function runDailyImports(
       } catch (error) {
         summary.status = 'failed';
         errorCode = safeCode(error);
+        // Known `source_*` outcomes are self-describing. Anything else is a bug or an outage whose
+        // code is deliberately generic, so the error itself goes to the telemetry sink.
+        if (errorCode === 'import_failed')
+          unexpected = error instanceof Error ? error : new Error('import_failed');
       }
       const retained = await finishRun(
         db,
@@ -243,7 +253,12 @@ export async function runDailyImports(
         requestId: lease.token,
         durationMs: clock() - started,
       };
-      if (summary.status === 'failed') log.error('crowdfunding source import failed', fields);
+      if (summary.status === 'failed')
+        log.error('crowdfunding source import failed', {
+          ...fields,
+          stage,
+          ...(unexpected ? { error: unexpected } : {}),
+        });
       else log.info('crowdfunding source import', fields);
       summaries.push(summary);
     }
