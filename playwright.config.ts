@@ -20,6 +20,9 @@ const serverVars = [
   // not change when someone flips a flag in GrowthBook.
   '--var IGNORE_FEATURE_FLAGS_IN_LOCALHOST:false',
   '--var GROWTHBOOK_CLIENT_KEY:',
+  // The footer's feedback links are deployment values (blank in wrangler.jsonc, which hides them).
+  '--var CANNY_FEEDBACK_URL:https://feedback.example.test/feedback',
+  '--var CANNY_CHANGELOG_URL:https://feedback.example.test/changelog',
 ];
 
 export default defineConfig({

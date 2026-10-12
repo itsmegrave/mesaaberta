@@ -5,8 +5,8 @@
   "compatibility_date": "2026-09-19",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "binding": "ASSETS", "directory": ".svelte-kit/cloudflare" },
-  // Copy to a local configuration. These are self-host examples, never our production values.
-  // The active production file is retained until the private deployment pipeline is verified.
+  // A single-Worker self-host example: one Worker serves the site and runs both crons, with no
+  // separate background Worker. `wrangler.jsonc` is the default, which leaves the crons to apps/worker.
   "vars": {
     // Daily RPG campaign discovery at 01:00 America/Sao_Paulo (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",

@@ -9,36 +9,39 @@
     "binding": "ASSETS",
     "directory": ".svelte-kit/cloudflare",
   },
-  // Public by design: the GrowthBook client key only allows reading feature flags, and the Supabase
-  // URL and publishable key only identify the project (every visitor's browser is sent them anyway).
-  // They live here, not only on a `wrangler deploy --var` command, because a Git-triggered deploy
-  // replaces any variable that is not in this file. The e2e tests blank the two Supabase ones (see
-  // `preview:e2e`) so they keep covering the app before login is configured.
+  // Placeholders, never a deployment's values: this file is what `vite dev`, `wrangler dev`, CI and
+  // the e2e tests run on. A deployment keeps its own copy with its own values (ours is private).
+  // Every variable a deployment may set is listed, so the names stay documented in one place. None
+  // of them is a secret: secrets never go in a Wrangler file. Override any of them locally in
+  // `.dev.vars`.
   "vars": {
-    // Daily RPG campaign discovery at 01:00 America/Sao_Paulo (04:00 UTC).
-    "CROWDFUNDING_IMPORT_ENABLED": "true",
-    // Footer links to the public Canny board (feedback and release notes).
-    "CANNY_CHANGELOG_URL": "https://mesaaberta.canny.io/changelog",
-    "CANNY_FEEDBACK_URL": "https://mesaaberta.canny.io/feedback",
+    // "true" turns on the daily RPG campaign discovery (04:00 UTC).
+    "CROWDFUNDING_IMPORT_ENABLED": "false",
+    // Footer links to a feedback board and release notes. Blank hides them.
+    "CANNY_CHANGELOG_URL": "",
+    "CANNY_FEEDBACK_URL": "",
+    // Blank key: every feature flag returns its default from the registry.
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
-    "GROWTHBOOK_CLIENT_KEY": "sdk-aG2334gmGT5wnD4o",
-    "RESEND_FROM": "ola@mesaaberta.app",
-    // Ids of the hosted Resend templates (see "Hosted e-mail templates" in the README). Not secrets.
-    "RESEND_TEMPLATE_ACCOUNT_BANNED": "f627035c-b24d-499c-8ce9-e57f3450b0d9",
-    "RESEND_TEMPLATE_CANCEL": "09588881-360c-44f2-9ae9-652f16929591",
-    "RESEND_TEMPLATE_INVITE": "dc486320-16dd-44a9-99ac-dfe1b25255eb",
-    "RESEND_TEMPLATE_JOIN_DECLINED": "626203c9-3fe5-41fe-9c91-c93b7001a708",
-    "RESEND_TEMPLATE_JOIN_REQUESTED": "952426c5-2b97-4935-b385-e82c4e808dc4",
-    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WxsnOY4I5sgTiJDzrlaJxA_x_co6Xvl",
-    "SUPABASE_URL": "https://tbftukgwngybvugwadyy.supabase.co",
+    "GROWTHBOOK_CLIENT_KEY": "",
+    "RESEND_FROM": "Mesa Aberta <no-reply@example.invalid>",
+    // Ids of the hosted Resend templates (see "Hosted e-mail templates" in the README). A blank one
+    // keeps that e-mail on its inline text.
+    "RESEND_TEMPLATE_ACCOUNT_BANNED": "",
+    "RESEND_TEMPLATE_CANCEL": "",
+    "RESEND_TEMPLATE_INVITE": "",
+    "RESEND_TEMPLATE_JOIN_DECLINED": "",
+    "RESEND_TEMPLATE_JOIN_REQUESTED": "",
+    // Blank: login is off until a Supabase project is configured (see "Sign-in" in the README).
+    "SUPABASE_PUBLISHABLE_KEY": "",
+    "SUPABASE_URL": "",
   },
-  // The database, through Hyperdrive (see "Database" in the README). The id is the Hyperdrive config,
-  // not a secret. `localConnectionString` is what `wrangler dev`, `vite dev` and CI use instead:
-  // the Postgres from docker-compose.yml (`bun run db:up`). It is ignored when deployed.
+  // The database, through Hyperdrive (see "Database" in the README). The id is a placeholder: use
+  // your own Hyperdrive config id when deploying. `localConnectionString` is what `wrangler dev`,
+  // `vite dev` and CI use instead: the Postgres from docker-compose.yml (`bun run db:up`).
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "84a4286b818c4f84a360c4728a3ee79c",
+      "id": "00000000000000000000000000000000",
       "localConnectionString": "postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta",
     },
   ],
@@ -51,8 +54,8 @@
   // GrowthBook flag `api_events_queue_shadow` targets someone, and its consumer is `mesaaberta-worker`.
   "queues": { "producers": [{ "binding": "DOMAIN_EVENTS", "queue": "domain-events-canary" }] },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
-  "workers_dev": true,
-  "preview_urls": true,
+  "workers_dev": false,
+  "preview_urls": false,
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
