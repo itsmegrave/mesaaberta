@@ -138,15 +138,23 @@ async function withExtras<T extends { id: string; gmId: string }>(db: AnyDb, lis
 /**
  * The table at this slug, or null if there is none or it is disabled. A table whose session has
  * begun is still found (its status says where it stands), so an old shared link keeps working.
+ *
+ * A draft is found only for `viewer` when that is its GM or an admin: to everyone else, and to a
+ * caller that names no viewer (the Instagram publisher), it does not exist.
  */
 export async function findTableBySlug(
   db: AnyDb,
   slug: string,
   now: Date,
+  viewer?: { id: string; admin: boolean } | null,
 ): Promise<TableView | null> {
   const [row] = await query(db, and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')));
+  if (!row) return null;
+  const table = shape(row);
+  if (table.status === 'draft' && !(viewer && (viewer.admin || viewer.id === table.gmId)))
+    return null;
 
-  return row ? (await withExtras(db, [shape(row)], now))[0] : null;
+  return (await withExtras(db, [table], now))[0];
 }
 
 /**

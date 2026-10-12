@@ -15,6 +15,7 @@
   import { toast } from '$lib/toaster';
   import SeatDots from '$lib/components/SeatDots.svelte';
   import SessionConfirmation from '$lib/components/SessionConfirmation.svelte';
+  import DraftNotice from '$lib/components/DraftNotice.svelte';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
@@ -57,7 +58,7 @@
       { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
       { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
     ];
-    if (table.status === 'active') {
+    if (table.status === 'active' || table.status === 'draft') {
       items.push({
         id: 'disable',
         label: m.menu_disable_table(),
@@ -139,6 +140,8 @@
     switch (item.type) {
       case 'TableCreated':
         return m.manage_activity_table_created();
+      case 'TableDrafted':
+        return m.manage_activity_table_drafted();
       case 'TableUpdated':
         return m.manage_activity_table_updated();
       case 'JoinRequested':
@@ -198,6 +201,9 @@
 
   {#if table.status === 'awaiting_confirmation'}
     <SessionConfirmation next={here} />
+  {/if}
+  {#if table.status === 'draft'}
+    <DraftNotice action="?/publish" next={here} />
   {/if}
 
   <div

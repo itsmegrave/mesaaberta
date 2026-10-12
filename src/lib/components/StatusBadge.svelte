@@ -8,6 +8,7 @@
     | 'table:awaiting_confirmation'
     | 'table:concluded'
     | 'table:not_held'
+    | 'table:draft'
     | 'table:disabled'
     | 'seat:pending'
     | 'seat:confirmed'
@@ -67,6 +68,12 @@
     // A hollow dot: it did not happen.
     'table:not_held': {
       label: () => m.status_table_not_held(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+      text: 'muted',
+    },
+    // A hollow dot: it is not public yet.
+    'table:draft': {
+      label: () => m.status_table_draft(),
       dot: 'border-2 border-surface-500 bg-transparent',
       text: 'muted',
     },

@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { events, gameTables, profiles, registrations } from '../db/schema';
 import { createTestDb, pgErrorCode } from '../db/test-db';
 import { findTableBySlug, joinDetailsOf, listUpcomingTables } from './queries';
-import { createTable, disableTable, loadTableForEdit, updateTable } from './write';
+import { createTable, disableTable, loadTableForEdit, publishTable, updateTable } from './write';
 import type { TableInput } from '$lib/tables/schema';
 import type { Actor } from '../auth/policy';
 
@@ -831,5 +831,84 @@ describe('events', () => {
     ]);
 
     expect((await test.db.select().from(events)).length - before).toBe(2);
+  });
+});
+
+describe('drafts', () => {
+  const eventsOf = async (type: string) =>
+    (await test.db.select().from(events)).filter((event) => event.type === type);
+
+  it('saves a table nobody but its GM and an admin can open, and lists it nowhere', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Rascunho Um' }), {
+      now,
+      draft: true,
+    });
+
+    expect(await rowOf(slug)).toMatchObject({ gmId: ana.id, status: 'draft' });
+    expect(await findTableBySlug(test.db, slug, now)).toBeNull();
+    expect(await findTableBySlug(test.db, slug, now, { id: bruno.id, admin: false })).toBeNull();
+    expect(await findTableBySlug(test.db, slug, now, { id: ana.id, admin: false })).toMatchObject({
+      status: 'draft',
+    });
+    expect(await findTableBySlug(test.db, slug, now, { id: admin.id, admin: true })).not.toBeNull();
+    expect((await listUpcomingTables(test.db, now)).map((table) => table.slug)).not.toContain(slug);
+  });
+
+  it('records TableDrafted, not TableCreated, so nothing is posted or mailed', async () => {
+    await createTable(test.db, ana, input({ title: 'Rascunho Dois' }), { now, draft: true });
+
+    expect(await eventsOf('TableDrafted')).toHaveLength(1);
+    expect(await eventsOf('TableCreated')).toHaveLength(0);
+  });
+
+  it('marks the events of an edit and of a discard as a draft’s', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Rascunho Três' }), {
+      now,
+      draft: true,
+    });
+
+    await updateTable(test.db, ana, slug, input({ title: 'Rascunho Três', description: 'Outra.' }));
+    await disableTable(test.db, ana, slug);
+
+    expect((await eventsOf('TableUpdated'))[0].payload).toMatchObject({ draft: true });
+    expect((await eventsOf('TableDisabled'))[0].payload).toMatchObject({ draft: true });
+  });
+
+  it('publishes a draft: it goes public and TableCreated says it came from one', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Rascunho Quatro' }), {
+      now,
+      draft: true,
+    });
+
+    await publishTable(test.db, ana, slug, now);
+
+    expect(await rowOf(slug)).toMatchObject({ status: 'active' });
+    expect(await findTableBySlug(test.db, slug, now)).not.toBeNull();
+    expect((await eventsOf('TableCreated'))[0].payload).toMatchObject({ slug, fromDraft: true });
+  });
+
+  it('refuses to publish for someone else, twice, or past the date', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Rascunho Cinco' }), {
+      now,
+      draft: true,
+    });
+
+    await expect(publishTable(test.db, bruno, slug, now)).rejects.toThrow();
+    await expect(
+      publishTable(test.db, ana, slug, new Date('2026-10-11T00:00:00Z')),
+    ).rejects.toMatchObject({ message: 'in_the_past' });
+    await publishTable(test.db, ana, slug, now);
+    await expect(publishTable(test.db, ana, slug, now)).rejects.toMatchObject({
+      message: 'not_a_draft',
+    });
+  });
+
+  it('does not use up the limit on opening tables', async () => {
+    for (let n = 0; n < 6; n++) {
+      await createTable(test.db, ana, input({ title: `Muitos ${n}` }), { now, draft: true });
+    }
+    await expect(
+      createTable(test.db, ana, input({ title: 'Aberta' }), { now }),
+    ).resolves.toMatchObject({ slug: 'aberta' });
   });
 });

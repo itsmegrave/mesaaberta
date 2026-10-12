@@ -29,6 +29,14 @@ export const TABLE_CREATION_LIMIT = {
   windowSeconds: 3600,
 } as const satisfies RateLimit;
 
+// A draft floods nothing (only its GM sees it), so the limit is looser. It still has one: each
+// draft stores a row and maybe an image.
+export const TABLE_DRAFT_LIMIT = {
+  events: ['TableDrafted'],
+  max: 10,
+  windowSeconds: 3600,
+} as const satisfies RateLimit;
+
 // Someone browsing may ask for several tables in one sitting, and a request to an approval table
 // counts as much as a seat. 20 in an hour is far above that and far below a script.
 export const JOIN_LIMIT = {

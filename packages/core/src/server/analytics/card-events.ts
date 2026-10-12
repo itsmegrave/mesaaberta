@@ -9,8 +9,10 @@ import type { AnalyticsEvent } from './provider';
  * one keeps its retries and its `insertId` deduplication. Several can come from one domain event:
  * they share its `id`, and Mixpanel tells them apart by event name.
  *
- * Mesas have no draft step today: creating one publishes it, so `TableCreated` is both
- * `gm_mesa_created` and `gm_mesa_published`.
+ * A mesa opened directly is created and published at once, so `TableCreated` is both
+ * `gm_mesa_created` and `gm_mesa_published`. One saved as a draft first is `gm_mesa_created` when
+ * drafted (`TableDrafted`) and `gm_mesa_published` when its GM publishes it (`TableCreated` with
+ * `fromDraft`).
  */
 export async function taxonomyEvents(event: StoredEvent, db: AnyDb): Promise<AnalyticsEvent[]> {
   const actorId = event.actorId;
@@ -19,18 +21,36 @@ export async function taxonomyEvents(event: StoredEvent, db: AnyDb): Promise<Ana
   const timestamp_utc = event.createdAt.toISOString();
 
   switch (event.type) {
+    case 'TableDrafted':
+      return [
+        {
+          ...base,
+          name: 'gm_mesa_created',
+          properties: {
+            gm_user_id: actorId,
+            mesa_id: event.payload.tableId,
+            mesa_template: 'blank',
+            timestamp_utc,
+          },
+        },
+      ];
     case 'TableCreated': {
       const mesa_id = event.payload.tableId;
+      const created = event.payload.fromDraft
+        ? []
+        : [
+            {
+              ...base,
+              name: 'gm_mesa_created',
+              properties: { gm_user_id: actorId, mesa_id, mesa_template: 'blank', timestamp_utc },
+            },
+          ];
       const [table] = await db
         .select({ capacity: gameTables.capacity })
         .from(gameTables)
         .where(eq(gameTables.id, mesa_id));
       return [
-        {
-          ...base,
-          name: 'gm_mesa_created',
-          properties: { gm_user_id: actorId, mesa_id, mesa_template: 'blank', timestamp_utc },
-        },
+        ...created,
         ...(table
           ? [
               {

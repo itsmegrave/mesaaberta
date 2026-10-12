@@ -4,6 +4,7 @@ import { m } from '$lib/paraglide/messages';
  * Where a table stands. `active` is open; `disabled` is the GM cancelling it before the session.
  * Once the session is over it waits for the GM (`awaiting_confirmation`), who says it happened
  * (`concluded`) or that it did not (`not_held`), or moves it to a new date (back to `active`).
+ * `draft` comes before all of it: saved but not public, until its GM publishes it (`active`).
  */
 export { TABLE_STATUSES, type TableStatus } from './status-values';
 import type { TableStatus } from './status-values';
@@ -21,5 +22,7 @@ export function tableStatusLabel(status: TableStatus): string | null {
       return m.table_status_concluded();
     case 'not_held':
       return m.table_status_not_held();
+    case 'draft':
+      return m.table_status_draft();
   }
 }

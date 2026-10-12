@@ -7,7 +7,7 @@ import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { catalogOf, setTableCatalog } from '../catalog';
 import { diffFields, hasChanges, type Fact } from '../events/changes';
-import { TABLE_CREATION_LIMIT, enforceRateLimit } from '../rate-limit';
+import { TABLE_CREATION_LIMIT, TABLE_DRAFT_LIMIT, enforceRateLimit } from '../rate-limit';
 import { instantToLocal, localToInstant } from './schedule';
 import { slugify, tableSlug } from '$lib/slug';
 import { minutesToHours } from '$lib/tables/format';
@@ -74,12 +74,19 @@ async function columnsOf(db: AnyDb, input: TableInput) {
  * tries the next one, so two simultaneous creates both succeed. Throws `RateLimited` past
  * `TABLE_CREATION_LIMIT`; the check runs after the form is validated, so a rejected form never
  * counts, and in the same transaction as the insert, so a refused request leaves nothing behind.
+ *
+ * With `draft`, the table is saved without going public: it is not listed, nobody but its GM (and
+ * an admin) can open it, and nothing is posted or mailed until `publishTable`.
  */
 export async function createTable(
   db: AnyDb,
   actor: Actor | null,
   input: TableInput,
-  { now = new Date(), imagePath = null }: { now?: Date; imagePath?: string | null } = {},
+  {
+    now = new Date(),
+    imagePath = null,
+    draft = false,
+  }: { now?: Date; imagePath?: string | null; draft?: boolean } = {},
 ): Promise<{ slug: string; eventId: string }> {
   authorize(actor, 'table:create');
 
@@ -100,11 +107,21 @@ export async function createTable(
       // The table and its event commit together, or neither does. A slug conflict rolls both
       // back, and the retry writes a fresh pair.
       const eventId = await db.transaction(async (tx) => {
-        await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
+        await enforceRateLimit(
+          tx as unknown as AnyDb,
+          actor!.id,
+          draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT,
+          now,
+        );
 
         const [created] = await tx
           .insert(gameTables)
-          .values({ ...columns, slug, gmId: actor!.id })
+          .values({
+            ...columns,
+            slug,
+            gmId: actor!.id,
+            ...(draft ? { status: 'draft' as const } : {}),
+          })
           .returning({ id: gameTables.id });
         await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input, actor!.id));
         await addTableMember(tx as unknown as AnyDb, created.id, actor!.id);
@@ -112,7 +129,7 @@ export async function createTable(
         return recordEvent(
           tx as unknown as AnyDb,
           {
-            type: 'TableCreated',
+            type: draft ? 'TableDrafted' : 'TableCreated',
             actorId: actor!.id,
             payload: { tableId: created.id, slug, title: input.title },
           },
@@ -327,8 +344,53 @@ export async function updateTable(
     return recordEvent(tx as unknown as AnyDb, {
       type: changed ? 'TableUpdated' : 'TableEdited',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, title: input.title, changes },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        title: input.title,
+        changes,
+        ...(table.status === 'draft' ? { draft: true as const } : {}),
+      },
     });
+  });
+
+  return { eventId };
+}
+
+/**
+ * Makes a draft public: it is listed, people can join, and the same things follow as for a table
+ * opened directly (the Instagram post, the GM's calendar invite). Counts against the limit on
+ * opening tables. The update takes only a `draft` row, so two requests cannot both publish.
+ */
+export async function publishTable(
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  now: Date = new Date(),
+): Promise<{ eventId: string }> {
+  const table = await findForWrite(db, slug);
+  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
+  if (table.status !== 'draft') throw new Invalid('slug', 'not_a_draft');
+  if (table.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
+
+  const eventId = await db.transaction(async (tx) => {
+    await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
+    const published = await tx
+      .update(gameTables)
+      .set({ status: 'active' })
+      .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'draft')))
+      .returning({ id: gameTables.id });
+    if (!published.length) throw new Invalid('slug', 'not_a_draft');
+
+    return recordEvent(
+      tx as unknown as AnyDb,
+      {
+        type: 'TableCreated',
+        actorId: actor!.id,
+        payload: { tableId: table.id, slug: table.slug, title: table.title, fromDraft: true },
+      },
+      { now },
+    );
   });
 
   return { eventId };
@@ -352,7 +414,12 @@ export async function disableTable(
     return recordEvent(tx as unknown as AnyDb, {
       type: 'TableDisabled',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, title: table.title },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        title: table.title,
+        ...(table.status === 'draft' ? { draft: true as const } : {}),
+      },
     });
   });
 

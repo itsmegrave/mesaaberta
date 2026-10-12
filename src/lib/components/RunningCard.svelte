@@ -45,6 +45,11 @@
   class="scroll-mt-6 rounded-lg border border-surface-200-800 bg-panel p-6"
 >
   <p class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
+    {#if item.tableStatus === 'draft'}
+      <span class="chip h-6 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
+        >{m.table_status_draft()}</span
+      >
+    {/if}
     <span class="ml-auto"
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >

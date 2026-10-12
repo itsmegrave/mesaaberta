@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { publicName } from '../db/public-name';
 import { events, profiles, registrations } from '../db/schema';
-import { authorize, type Actor } from '../auth/policy';
+import { authorize, can, type Actor } from '../auth/policy';
 import { NotFound } from '../errors';
 import { gmRatingOf } from '../ratings/service';
 import { findTableBySlug } from './queries';
@@ -10,6 +10,7 @@ import { findTableBySlug } from './queries';
 /** The events a GM sees in "Atividade recente": what people did at the table, newest first. */
 export const ACTIVITY_TYPES = [
   'TableCreated',
+  'TableDrafted',
   'TableUpdated',
   'JoinRequested',
   'JoinApproved',
@@ -29,7 +30,12 @@ type Person = { username: string; avatarUrl: string | null; avatarPath: string |
  * activity. Throws NotFound for a table that is not there (or is disabled), Forbidden for anyone else.
  */
 export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, now: Date) {
-  const table = await findTableBySlug(db, slug, now);
+  const table = await findTableBySlug(
+    db,
+    slug,
+    now,
+    actor && { id: actor.id, admin: can(actor, 'admin:access') },
+  );
   if (!table) throw new NotFound(`no table with slug "${slug}"`);
   authorize(actor, 'registration:manage', table);
 

@@ -72,6 +72,7 @@
         [m.admin_awaiting_confirmation(), data.tables.awaiting],
         [m.admin_concluded(), data.tables.concluded],
         [m.admin_not_held(), data.tables.notHeld],
+        [m.admin_draft(), data.tables.draft],
         [m.admin_disabled(), data.tables.disabled],
         [m.admin_online(), data.tables.online],
         [m.admin_in_person(), data.tables.inPerson],

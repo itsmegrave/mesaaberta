@@ -288,6 +288,13 @@
       "when": 1791740998625,
       "tag": "0040_worker_heartbeats",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791836277443,
+      "tag": "0041_table_draft_status",
+      "breakpoints": true
     }
   ]
 }

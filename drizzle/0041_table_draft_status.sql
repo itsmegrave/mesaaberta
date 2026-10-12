@@ -1,0 +1,1 @@
+ALTER TYPE "public"."table_status" ADD VALUE 'draft';

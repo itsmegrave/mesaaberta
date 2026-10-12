@@ -80,6 +80,8 @@
     switch (entry.type) {
       case 'TableCreated':
         return m.history_event_TableCreated();
+      case 'TableDrafted':
+        return m.history_event_TableDrafted();
       case 'TableUpdated':
         return m.history_event_TableUpdated();
       case 'TableEdited':
