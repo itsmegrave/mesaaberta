@@ -215,7 +215,7 @@ A profile has a required, public **username** (`profiles.username`: 3 to 30 lowe
 **Deploying.** Migrations run **before** the new code serves traffic, as the first step of `bun run build` on the Cloudflare Workers Build of `main` (`scripts/migrate-on-deploy.ts`). The build applies what is pending, and a failed migration fails the build, so the Worker is never deployed onto an older schema. Local builds, GitHub CI and preview branches skip it and never touch production. One-time setup in the Cloudflare dashboard (Workers & Pages > mesaaberta > Settings > Build):
 
 1. Set build variables `BUN_VERSION=1.4.2` and `SKIP_DEPENDENCY_INSTALL=true`; Cloudflare's default Bun version is older than the project's pin.
-2. Build command: `bun install --frozen-lockfile && bun run build`. Deploy command: `bun run wrangler deploy`. The build keeps the existing migration and scheduled-handler steps.
+2. Build command: `bun install --frozen-lockfile && bun run build`. Deploy command: `bun run wrangler deploy`. The build keeps the existing migration step.
 3. Build variables and secrets: add a **secret** `MIGRATE_DATABASE_URL` with the Supabase **session pooler** connection string (Project Settings > Database > Connection string > Session pooler, port 5432; the build machines have no IPv6, so not the direct one).
 
 Apply these build settings with the Bun tooling release. Workers Builds can continue deploying throughout the architecture migration; the deployed runtime remains workerd. See [Cloudflare's build version settings](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/).
@@ -368,7 +368,7 @@ select id, type, attempts, last_error, created_at from events where failed_at is
 
 To add an event, add it to `DomainEvent` in `src/lib/server/events/types.ts`, record it with `recordEvent(tx, ...)` inside the change's transaction, and dispatch it with `locals.afterResponse((db) => dispatchEvent(db, handlers, eventId))`. Today creating, editing and disabling a table emit `TableCreated`, `TableUpdated` and `TableDisabled`; nothing reacts to them yet (invites are #13).
 
-The adapter only exports `fetch`, so `bun run build` ends with `scripts/wrap-worker.ts`, which wraps SvelteKit's Worker with the `scheduled` handler. If the deploy runs plain `vite build` instead of `bun run build`, the site works but the sweeper does not run. To try the sweeper locally: `bun run build`, then `wrangler dev --test-scheduled` and `curl "http://localhost:8787/cdn-cgi/handler/scheduled"`.
+The web Worker is SvelteKit's own output and only answers requests. The sweeper and the daily import run on the background Worker (`apps/worker`), which has the Cron Triggers; see its README to try them locally.
 
 ## Rate limiting
 
@@ -408,7 +408,7 @@ The available periods, durations and the number of rules depend on the plan; che
 
 Sentry is the only external application-log and exception destination. Workers Logs remains the
 edge-local JSON destination. The server hook uses the SDK's Cloudflare request-scoped
-initialization, and the scheduled handler uses `@sentry/cloudflare`. The web app reports to the
+initialization, and the background Worker uses `@sentry/cloudflare`. The web app reports to the
 project in `PUBLIC_SENTRY_DSN` (blank: nothing is sent) and, when `PUBLIC_SENTRY_ORIGIN` is set,
 only from that origin, so preview URLs stay quiet. The build adds `CSP_EXTRA_CONNECT_SRC` (that
 project's ingest origin, `https://oNNN.ingest.us.sentry.io`) to the page's `connect-src`; without
@@ -675,7 +675,7 @@ Instagram publication status, links and feedback are shown only in the admin tab
 
 ### Daily RPG crowdfunding imports
 
-The Worker discovers new tabletop RPG campaigns from Catarse and Meeplestarter at **01:00 America/Sao_Paulo** (`0 4 * * *`, UTC). `scripts/worker-template.js` dispatches this independently from the existing five-minute event sweeper. The production Wrangler configuration enables it; set `CROWDFUNDING_IMPORT_ENABLED=false` to pause discovery without deleting campaigns or import history. With no database binding or without the flag set to `true`, discovery does nothing.
+The Worker discovers new tabletop RPG campaigns from Catarse and Meeplestarter at **01:00 America/Sao_Paulo** (`0 4 * * *`, UTC). The background Worker (`apps/worker`) dispatches this independently from the existing five-minute event sweeper. The production Wrangler configuration enables it; set `CROWDFUNDING_IMPORT_ENABLED=false` to pause discovery without deleting campaigns or import history. With no database binding or without the flag set to `true`, discovery does nothing.
 
 Adapters read Catarse's full paginated Jogos community discovery (`category=2&filterBy=popular`), rather than the recent-launch subset, its public Next.js campaign records, and Meeplestarter's public RPG listing at `mail.meeplestarter.com.br`. The latter is a published hostname serving the same campaign IDs and dates; imported links open the canonical `meeplestarter.com.br` campaign. They require tabletop RPG product evidence in the campaign (including character-creation/GM/dice mechanics or the campaign’s own player/rulebook rewards), complete published dates and a current campaign. Broad games categories, recurring subscriptions, ended/cancelled campaigns and ambiguous descriptions are skipped. The first run includes currently active campaigns. Upcoming campaigns require both dates. Image-only descriptions can remain unclassified; the existing member submission flow is still available.
 

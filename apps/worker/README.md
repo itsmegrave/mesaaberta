@@ -1,7 +1,7 @@
 # @mesaaberta/worker
 
 The background Worker of Trello #120: Cron Triggers today, the Queues consumer later. It runs the
-event-delivery graph from `@mesaaberta/core`, the same code the web Worker's `scheduled` handler runs.
+event-delivery graph from `@mesaaberta/core`, the same code the web Worker dispatches with after a request.
 
 **Status: owns the crons.** It has no routes. The web Worker's `triggers.crons` is empty, this
 Worker runs the event sweep (`*/5 * * * *`) and the daily import (`0 4 * * *`), and `EVENT_POLLER`

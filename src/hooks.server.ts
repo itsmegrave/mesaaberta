@@ -23,7 +23,7 @@ import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
 // The logger knows no vendor; this deployment mirrors it to Sentry. Set at module load, so every
-// request in the isolate (and the cron that shares it) reports as before.
+// request in the isolate reports as before.
 setTelemetrySink(sentrySink);
 
 const handleParaglide: Handle = ({ event, resolve }) =>
