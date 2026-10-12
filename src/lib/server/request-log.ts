@@ -15,7 +15,7 @@ export const handleRequestLog =
     const log = logger.child({
       requestId,
       environment: import.meta.env.PROD ? 'production' : 'development',
-      release: event.platform?.env.CF_VERSION_METADATA?.id,
+      release: event.locals.env?.CF_VERSION_METADATA?.id,
     });
     const started = Date.now();
     Sentry.setTag('requestId', requestId);

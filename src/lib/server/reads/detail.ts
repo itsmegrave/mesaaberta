@@ -8,7 +8,7 @@ import { listRegistrations, registrationStatus } from '../registrations/service'
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
-export const read = async ({ locals, params, platform }: RequestEvent) => {
+export const read = async ({ locals, params }: RequestEvent) => {
   // Unknown, disabled, or no database at all: the same translated 404.
   const found = locals.db && (await findTableBySlug(locals.db, params.slug!, new Date()));
   if (!found) error(404, 'Not found');
@@ -57,7 +57,7 @@ export const read = async ({ locals, params, platform }: RequestEvent) => {
       gmScore: mine.gmScore,
       comment: mine.comment ?? '',
     },
-    table: { ...table, imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath) },
+    table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     canEdit: can(profile, 'table:edit', { gmId, tableStatus: found.status }),
     signedIn,
     // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.

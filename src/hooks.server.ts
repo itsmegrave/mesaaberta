@@ -11,6 +11,7 @@ import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger, setTelemetrySink } from '$lib/server/logger';
 import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
+import { handleRuntime } from '$lib/server/runtime';
 import { createTracker } from '$lib/server/analytics/track';
 import type { AnalyticsEnv } from '$lib/server/analytics';
 import { handleMaintenance } from '$lib/server/maintenance';
@@ -54,7 +55,7 @@ const workersCache = (cache: WorkersCache): PayloadCache => ({
 // Product events for signed-in people, sent after the response (needs `afterResponse`, so it follows handleDatabase).
 const handleAnalytics: Handle = ({ event, resolve }) => {
   event.locals.track = createTracker({
-    env: event.platform?.env as AnalyticsEnv | undefined,
+    env: event.locals.env as AnalyticsEnv | undefined,
     afterResponse: (task) => event.locals.afterResponse((db) => task(db)),
     log: event.locals.log,
   });
@@ -64,7 +65,8 @@ const handleAnalytics: Handle = ({ event, resolve }) => {
 // Flags load lazily: nothing is fetched unless a route reads one. Without the GrowthBook
 // settings (for example plain `vite dev`), every flag returns its default.
 const handleFlags: Handle = ({ event, resolve }) => {
-  const { env, caches, ctx } = event.platform ?? {};
+  const env = event.locals.env;
+  const { caches, ctx } = event.platform ?? {};
   // Opt-in preview of work that is not released through GrowthBook yet; see `shouldForceAllFlags`.
   const forceAll = shouldForceAllFlags(
     env as { IGNORE_FEATURE_FLAGS_IN_LOCALHOST?: string } | undefined,
@@ -123,6 +125,8 @@ export const handle: Handle = sequence(
     })(args),
   Sentry.sentryHandle(),
   handleSecurityHeaders,
+  // Before anything that reads configuration.
+  handleRuntime,
   handleRequestLog(logger),
   handleDatabase,
   handleAnalytics,

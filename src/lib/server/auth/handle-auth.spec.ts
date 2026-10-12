@@ -9,9 +9,8 @@ const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: '
 const setup = (platformEnv: object | undefined, getUser = vi.fn()) => {
   const createClient = vi.fn(() => ({ auth: { getUser } }));
   const event = {
-    locals: {},
+    locals: { env: platformEnv },
     cookies: { getAll: () => [], set: vi.fn() },
-    platform: platformEnv && { env: platformEnv },
   } as unknown as RequestEvent;
   const run = () =>
     createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });

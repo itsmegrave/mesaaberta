@@ -9,13 +9,13 @@ import { withPicture, withPictures } from '$lib/server/messages/present';
 import { listMessages, loadConversation, markConversationRead } from '$lib/server/messages/service';
 
 export const loadChatThread = async (
-  { locals, url, platform }: Pick<RequestEvent, 'locals' | 'url' | 'platform'>,
+  { locals, url }: Pick<RequestEvent, 'locals' | 'url'>,
   conversationId: string,
 ) => {
   const user = await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
   const actor = await locals.getProfile();
-  const supabaseUrl = supabaseUrlOf(platform?.env);
+  const supabaseUrl = supabaseUrlOf(locals.env);
 
   try {
     const conversation = await loadConversation(locals.db, actor, conversationId);

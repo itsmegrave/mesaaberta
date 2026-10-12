@@ -17,6 +17,11 @@ declare global {
 
     // interface Error {}
     interface Locals {
+      /**
+       * The host's variables and bindings, or undefined when the host provides none. Server code
+       * reads this, never `platform.env`: `handleRuntime` is the one place that knows the host.
+       */
+      env: Platform['env'] | undefined;
       flags: import('$lib/server/flags/flags').Flags;
       /** Set while the `maintenance_mode` flag is on: `bypass` for an admin, `blocked` for anyone else. */
       maintenance?: 'blocked' | 'bypass';

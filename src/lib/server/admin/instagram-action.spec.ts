@@ -17,8 +17,8 @@ it('returns queue feedback before running rendering or publication', async () =>
   const flags = { isEnabled: vi.fn(async () => true) };
   const event = {
     request: new Request('https://test/admin/tables', { method: 'POST', body: form }),
-    platform: { env: {} },
     locals: {
+      env: {},
       db: {},
       getProfile: async () => ({}),
       flags,

@@ -6,7 +6,7 @@ import { configured, decryptToken, type InstagramEnv } from '$lib/server/instagr
 import { publishInstagramAction } from '$lib/server/admin/instagram-action';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, platform, url }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503);
   const [account] = await locals.db
@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
     })
     .from(instagramAccounts)
     .where(eq(instagramAccounts.id, 'mesaaberta'));
-  const env = platform?.env as InstagramEnv | undefined;
+  const env = locals.env as InstagramEnv | undefined;
   // A token stored under another INSTAGRAM_TOKEN_KEY looks connected but can never publish, and
   // nothing else would offer to reconnect. The token itself never leaves the server.
   let unreadable = false;

@@ -15,7 +15,6 @@ type Event = {
   locals: App.Locals;
   url: URL;
   request: Request;
-  platform?: App.Platform;
   setHeaders?: (headers: Record<string, string>) => void;
 };
 
@@ -48,7 +47,7 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
     const { eventIds } = await run(locals.db, await locals.getProfile(), form.data as T);
     for (const id of eventIds)
       locals.afterResponse((db) =>
-        dispatchEvent(db, handlersFor(event.platform?.env), id, new Date(), locals.log),
+        dispatchEvent(db, handlersFor(event.locals.env), id, new Date(), locals.log),
       );
   } catch (e) {
     if (e instanceof RateLimited) {

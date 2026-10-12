@@ -12,14 +12,14 @@ import { supabaseUrlOf } from '$lib/server/images';
 import { publicProfile } from '$lib/server/profile/public';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, params, platform, setHeaders, url }) => {
+export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) => {
   setHeaders({ 'cache-control': 'private, no-store' });
   if (!locals.db) error(503, 'Database not configured');
   const user = await locals.getUser();
   const data = await publicProfile(locals.db, params.username, {
     page: pageNumber(url.searchParams.get('page')),
     viewerId: user?.id,
-    supabaseUrl: supabaseUrlOf(platform?.env),
+    supabaseUrl: supabaseUrlOf(locals.env),
   });
   if (!data || data.page > data.pages) error(404, 'Not found');
   const path = localizedHref(`/u/${data.profile.username}`, getLocale());

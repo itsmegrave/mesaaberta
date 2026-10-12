@@ -25,7 +25,6 @@ type Event = {
   request: Request;
   locals: App.Locals;
   url: URL;
-  platform?: App.Platform;
   setHeaders?: (headers: Record<string, string>) => void;
 };
 
@@ -35,13 +34,7 @@ type Event = {
  * back to the list. Every failure answers with what the person typed. The permission itself is the
  * policy's, inside `addCrowdfunding`.
  */
-export async function handleCrowdfundingForm({
-  request,
-  locals,
-  url,
-  platform,
-  setHeaders,
-}: Event) {
+export async function handleCrowdfundingForm({ request, locals, url, setHeaders }: Event) {
   if (!(await locals.getUser())) {
     redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
   }
@@ -89,7 +82,7 @@ export async function handleCrowdfundingForm({
     const added = await addCrowdfunding(db, actor, input, { imagePath });
     // After the commit and the response, so the visitor never waits for a handler.
     locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(platform?.env), added.eventId, new Date(), locals.log),
+      dispatchEvent(db, handlersFor(locals.env), added.eventId, new Date(), locals.log),
     );
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);

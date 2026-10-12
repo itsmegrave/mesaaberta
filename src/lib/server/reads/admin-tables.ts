@@ -5,7 +5,7 @@ import { listAdminTables } from '../admin/tables';
 import { instagramAccounts } from '../db/schema';
 import { imageUrl, supabaseUrlOf } from '../images';
 import { socialFor, type SocialEnv } from '../social';
-export async function read({ locals, platform, setHeaders, url }: RequestEvent) {
+export async function read({ locals, setHeaders, url }: RequestEvent) {
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
   if (!locals.db) error(503, 'Database not configured');
@@ -14,7 +14,7 @@ export async function read({ locals, platform, setHeaders, url }: RequestEvent) 
     .from(instagramAccounts)
     .where(eq(instagramAccounts.id, 'mesaaberta'));
   const tables = await listAdminTables(locals.db, url.searchParams);
-  const supabase = supabaseUrlOf(platform?.env);
+  const supabase = supabaseUrlOf(locals.env);
   return {
     tables: {
       ...tables,
@@ -25,7 +25,7 @@ export async function read({ locals, platform, setHeaders, url }: RequestEvent) 
       })),
     },
     instagramAvailable:
-      socialFor(platform?.env as SocialEnv).configured(platform?.env) &&
+      socialFor(locals.env as SocialEnv).configured(locals.env) &&
       !!account &&
       account.expiresAt > new Date(),
   };

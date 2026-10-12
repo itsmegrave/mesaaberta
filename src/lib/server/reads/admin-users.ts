@@ -3,12 +3,12 @@ import { requireAdmin } from '../admin-access';
 import { listAdminProfiles } from '../admin/profiles';
 import { pictureOf, supabaseUrlOf } from '../images';
 
-export async function read({ locals, platform, setHeaders, url }: RequestEvent) {
+export async function read({ locals, setHeaders, url }: RequestEvent) {
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
   if (!locals.db) error(503, 'Database not configured');
   const profiles = await listAdminProfiles(locals.db, url.searchParams);
-  const supabase = supabaseUrlOf(platform?.env);
+  const supabase = supabaseUrlOf(locals.env);
   return {
     profiles: {
       ...profiles,

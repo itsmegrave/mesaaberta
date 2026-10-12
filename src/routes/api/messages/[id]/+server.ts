@@ -10,7 +10,7 @@ import type { RequestHandler } from './$types';
  * A conversation's newest messages, for the open thread to poll, or the ones before `before` (an
  * ISO time) for "see older". Reading the latest page counts as reading the conversation.
  */
-export const GET: RequestHandler = async ({ locals, params, url, platform }) => {
+export const GET: RequestHandler = async ({ locals, params, url }) => {
   const user = await locals.getUser();
   if (!user) error(401, 'Sign in required');
   if (!locals.db) error(503, 'Database not configured');
@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({ locals, params, url, platform }) => 
   try {
     const thread = await listMessages(locals.db, actor, params.id, { before });
     if (!before) await markConversationRead(locals.db, actor, params.id);
-    const supabaseUrl = supabaseUrlOf(platform?.env);
+    const supabaseUrl = supabaseUrlOf(locals.env);
     return new Response(
       stringify({ ...thread, messages: withPictures(supabaseUrl, thread.messages) }),
       {

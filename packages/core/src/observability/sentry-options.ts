@@ -1,9 +1,8 @@
-import type { CloudflareOptions, ErrorEvent } from '@sentry/cloudflare';
+import type { ErrorEvent, Log } from '@sentry/core';
 import { safeFields, scrubString } from './privacy';
 
-// Type-only imports: nothing from the Sentry SDK is bundled by this file. Both the SvelteKit and the
-// Cloudflare SDKs take these shapes, so web and worker share one privacy policy.
-type Log = Parameters<NonNullable<CloudflareOptions['beforeSendLog']>>[0];
+// Type-only imports from the SDK's platform-neutral core: nothing is bundled by this file, and every
+// Sentry SDK (SvelteKit, Cloudflare, Node) takes these shapes, so each host shares one privacy policy.
 
 export function privateEvent(event: ErrorEvent): ErrorEvent {
   // Reconstruct rather than redact unknown SDK contexts. Keep code locations for diagnosis,

@@ -7,7 +7,7 @@ import { crowdfundingActions } from '$lib/server/moderation/admin-actions';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.
-export const load: PageServerLoad = async ({ locals, url, setHeaders, platform }) => {
+export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
   await requireUser(locals, url);
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders, platform }
 
   const list = await listAdminCrowdfundings(locals.db, await locals.getProfile(), url.searchParams);
   if (!list) error(404, 'Not found');
-  const supabase = supabaseUrlOf(platform?.env);
+  const supabase = supabaseUrlOf(locals.env);
   return {
     crowdfundings: {
       ...list,

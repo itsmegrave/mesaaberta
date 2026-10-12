@@ -8,7 +8,7 @@ import { moderationAction } from '$lib/server/moderation/form-action';
 import { filePartnerReport, listPartners, withdrawPartner } from '$lib/server/partners/service';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, platform }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   if (!locals.db) error(503, 'Database not configured');
   const filters = readPartnerFilters(url.searchParams);
   const profile = await locals.getProfile();
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
   // A page past the last one does not exist.
   if (!list) error(404, 'Not found');
 
-  const supabase = supabaseUrlOf(platform?.env);
+  const supabase = supabaseUrlOf(locals.env);
   // Who sent a partner is for admins only: the page learns whether the viewer is that person, and
   // the submitter's id stays on the server.
   const cards = list.cards.map(({ logoPath, submitterId, ...card }) => ({

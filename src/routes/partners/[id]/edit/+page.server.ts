@@ -9,14 +9,14 @@ import { handlePartnerForm } from '$lib/server/partners/form-action';
 import { findOwnPartner } from '$lib/server/partners/service';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, params, platform }) => {
+export const load: PageServerLoad = async ({ locals, url, params }) => {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
   try {
     const partner = await findOwnPartner(locals.db, await locals.getProfile(), params.id);
     return {
       id: partner.id,
-      logoUrl: partnerLogoUrl(supabaseUrlOf(platform?.env), partner.logoPath),
+      logoUrl: partnerLogoUrl(supabaseUrlOf(locals.env), partner.logoPath),
       approved: partner.approvedAt !== null,
       form: initialForm({
         name: partner.name,

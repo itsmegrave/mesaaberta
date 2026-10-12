@@ -31,7 +31,7 @@ async function removePicture(locals: App.Locals, path: string | null) {
   if (error) locals.log.warn('profile picture: could not delete the old file', { error });
 }
 
-export const load: PageServerLoad = async ({ locals, url, platform }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
     connections: locals.supabase ? await connections(locals.supabase) : null,
     messagesForm: initialForm({ enabled: profile?.directMessagesEnabled ?? true }),
     email: user.email ?? '',
-    avatarUrl: profile ? pictureOf(supabaseUrlOf(platform?.env), profile) : null,
+    avatarUrl: profile ? pictureOf(supabaseUrlOf(locals.env), profile) : null,
     hasUploadedPhoto: Boolean(profile?.avatarPath),
     username: values.username,
   };
@@ -144,11 +144,11 @@ export const actions: Actions = {
   // Closes the account: the database first (tables disabled, seats and ratings gone), then the
   // calendar cancellations, then the profile is emptied and the Auth user deleted.
   delete: async (event) => {
-    const { request, locals, url, platform } = event;
+    const { request, locals, url } = event;
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
-    const admin = supabaseAdminFrom(platform?.env);
+    const admin = supabaseAdminFrom(locals.env);
     if (!admin) error(503, 'Account deletion is not configured');
 
     const username = (await loadProfileForm(locals.db, user.id))!.username;
@@ -158,7 +158,7 @@ export const actions: Actions = {
 
     const { eventIds } = await closeAccount(locals.db, user.id);
     // Sent now, while the GM's address still exists; a failure is left to the sweeper.
-    const handlers = handlersFor(platform?.env);
+    const handlers = handlersFor(locals.env);
     for (const id of eventIds) {
       await dispatchEvent(locals.db, handlers, id, new Date(), locals.log).catch((e: unknown) =>
         locals.log.error('account deletion: dispatch failed', { error: e, eventId: id }),
