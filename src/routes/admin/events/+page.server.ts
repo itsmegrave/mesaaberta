@@ -10,7 +10,7 @@ import { handlersFor } from '$lib/server/events/handlers';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.
-export const load: PageServerLoad = async ({ locals, url, platform, setHeaders }) => {
+export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
   await requireUser(locals, url);
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals, url, platform, setHeaders }
   const queue = await eventQueue(
     locals.db,
     await locals.getProfile(),
-    handlersFor(platform?.env),
+    handlersFor(locals.env),
     url.searchParams,
   );
   if (!queue) error(404, 'Not found');
@@ -49,7 +49,7 @@ export const actions: Actions = {
 
     const viaApi = (await apiEnabled(event, adminId))
       ? await callApi<{ outcome: ForceOutcome }>(
-          event.platform,
+          event.locals.env,
           `/v1/admin/events/${encodeURIComponent(form.data.id)}/force`,
           adminId,
           event.locals.log,
@@ -59,7 +59,7 @@ export const actions: Actions = {
 
     const outcome = await forceEvent(
       db,
-      handlersFor(event.platform?.env),
+      handlersFor(event.locals.env),
       form.data.id,
       adminId,
       new Date(),
@@ -76,7 +76,7 @@ export const actions: Actions = {
 
     const viaApi = (await apiEnabled(event, adminId))
       ? await callApi<Awaited<ReturnType<typeof forceFailedEvents>>>(
-          event.platform,
+          event.locals.env,
           '/v1/admin/events/retry-failed',
           adminId,
           event.locals.log,
@@ -86,7 +86,7 @@ export const actions: Actions = {
 
     const result = await forceFailedEvents(
       db,
-      handlersFor(event.platform?.env),
+      handlersFor(event.locals.env),
       adminId,
       new Date(),
       event.locals.log,

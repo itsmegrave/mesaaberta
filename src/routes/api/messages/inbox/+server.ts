@@ -5,7 +5,7 @@ import { inboxWithPictures } from '$lib/server/messages/present';
 import { supabaseUrlOf } from '$lib/server/images';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ locals, url, platform }) => {
+export const GET: RequestHandler = async ({ locals, url }) => {
   const user = await locals.getUser();
   if (!user) error(401, 'Sign in required');
   if (!locals.db) error(503, 'Database not configured');
@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ locals, url, platform }) => {
   const kind = kindParam === 'direct' || kindParam === 'table' ? kindParam : undefined;
   const inbox = await listInbox(locals.db, user.id, page, kind);
   return new Response(
-    stringify({ ...inbox, items: inboxWithPictures(supabaseUrlOf(platform?.env), inbox.items) }),
+    stringify({ ...inbox, items: inboxWithPictures(supabaseUrlOf(locals.env), inbox.items) }),
     {
       headers: {
         'content-type': 'application/json',

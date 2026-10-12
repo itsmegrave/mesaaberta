@@ -17,6 +17,7 @@
         "@mesaaberta/db": "workspace:*",
         "@mesaaberta/events": "workspace:*",
         "@sentry/cloudflare": "11.1.0",
+        "@sentry/core": "11.1.0",
         "@sentry/sveltekit": "^11.1.0",
         "@sindresorhus/slugify": "^3.0.1",
         "@skeletonlabs/skeleton": "5.0.1",
@@ -117,7 +118,7 @@
       "peerDependencies": {
         "@cf-wasm/resvg": "*",
         "@growthbook/growthbook": "*",
-        "@sentry/cloudflare": "*",
+        "@sentry/core": "*",
         "@sindresorhus/slugify": "*",
         "@supabase/supabase-js": "*",
         "drizzle-orm": "*",

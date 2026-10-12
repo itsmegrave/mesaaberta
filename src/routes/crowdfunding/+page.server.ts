@@ -7,7 +7,7 @@ import { imageUrl, supabaseUrlOf } from '$lib/server/images';
 import { moderationAction } from '$lib/server/moderation/form-action';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url, platform }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   if (!locals.db) error(503, 'Database not configured');
   const filters = readCrowdfundingFilters(url.searchParams);
   const list = await listCrowdfundings(locals.db, filters);
@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
   if (!list) error(404, 'Not found');
 
   const profile = await locals.getProfile();
-  const supabase = supabaseUrlOf(platform?.env);
+  const supabase = supabaseUrlOf(locals.env);
   // The submitter's id stays on the server: the page needs their handle and whether they may be reported.
   const card = ({ imagePath, submitterId, ...campaign }: (typeof list.running)[number]) => ({
     ...campaign,

@@ -7,13 +7,13 @@ import type { RequestEvent } from '@sveltejs/kit';
 
 // The GM's page for one table: requests, players, recent activity. Approving, declining and removing
 // post to the table page's own actions (see ActionForm), which send the browser back here.
-export const read = async ({ locals, url, params, platform }: RequestEvent) => {
+export const read = async ({ locals, url, params }: RequestEvent) => {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
   try {
     const manage = await loadManage(locals.db, await locals.getProfile(), params.slug!, new Date());
-    const supabaseUrl = supabaseUrlOf(platform?.env);
+    const supabaseUrl = supabaseUrlOf(locals.env);
     const withPicture = <T extends { avatarUrl: string | null; avatarPath: string | null }>({
       avatarUrl,
       avatarPath,

@@ -56,7 +56,7 @@ export function moderationAction<Schema extends ZodType>(
       throw cause;
     }
 
-    const handlers = handlersFor(event.platform?.env);
+    const handlers = handlersFor(event.locals.env);
     locals.afterResponse(async (db) => {
       for (const id of eventIds) await dispatchEvent(db, handlers, id, new Date(), locals.log);
     });

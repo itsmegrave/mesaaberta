@@ -2,18 +2,18 @@ import { describe, expect, it, vi } from 'vitest';
 import { callApi } from './api-client';
 
 const log = { warn: vi.fn() } as never;
-const platformWith = (fetch: (request: Request) => Promise<Response>) =>
-  ({ env: { API: { fetch } } }) as unknown as App.Platform;
+const envWith = (fetch: (request: Request) => Promise<Response>) =>
+  ({ API: { fetch } }) as unknown as App.Locals['env'];
 
 describe('callApi', () => {
   it('is null without the binding, so the caller keeps the web path', async () => {
     expect(await callApi(undefined, '/v1/x', 'a', log)).toBeNull();
-    expect(await callApi({ env: {} } as App.Platform, '/v1/x', 'a', log)).toBeNull();
+    expect(await callApi({} as App.Locals['env'], '/v1/x', 'a', log)).toBeNull();
   });
 
   it('posts as the actor and returns the JSON body', async () => {
     const fetch = vi.fn(async (_request: Request) => Response.json({ outcome: 'processed' }));
-    const result = await callApi(platformWith(fetch), '/v1/admin/events/e1/force', 'a', log);
+    const result = await callApi(envWith(fetch), '/v1/admin/events/e1/force', 'a', log);
 
     expect(result).toEqual({ outcome: 'processed' });
     const request = fetch.mock.calls[0][0];
@@ -23,10 +23,8 @@ describe('callApi', () => {
   });
 
   it('is null on a refusal or a network error, and never throws', async () => {
-    const refused = platformWith(async () =>
-      Response.json({ error: 'forbidden' }, { status: 403 }),
-    );
-    const broken = platformWith(async () => {
+    const refused = envWith(async () => Response.json({ error: 'forbidden' }, { status: 403 }));
+    const broken = envWith(async () => {
       throw new Error('boom');
     });
 

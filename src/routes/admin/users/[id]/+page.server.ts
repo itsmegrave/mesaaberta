@@ -11,7 +11,7 @@ import { pictureOf, supabaseUrlOf } from '$lib/server/images';
 import { profileFilters } from '$lib/admin/profile-filters';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, params, platform, setHeaders, url }) => {
+export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) => {
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id))
@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, setHeader
     standing: standingOf({ status: user.status, bannedAt, bannedUntil }),
     activity: await adminActivity(locals.db, params.id),
     history: await profileHistory(locals.db, await locals.getProfile(), params.id),
-    avatar: pictureOf(supabaseUrlOf(platform?.env), { avatarPath, avatarUrl }),
+    avatar: pictureOf(supabaseUrlOf(locals.env), { avatarPath, avatarUrl }),
     // Ban or revoke (never oneself, another admin, or a closed account), the ban itself, and the
     // reports accepted against the tables they run.
     moderation: (await moderationOf(locals.db, await locals.getProfile(), params.id))!,

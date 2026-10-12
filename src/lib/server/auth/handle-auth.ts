@@ -17,7 +17,7 @@ type AuthEnv = { SUPABASE_URL?: string; SUPABASE_PUBLISHABLE_KEY?: string };
 export const createHandleAuth =
   (createClient: typeof createServerClient = createServerClient): Handle =>
   async ({ event, resolve }) => {
-    const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = (event.platform?.env ?? {}) as AuthEnv;
+    const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = (event.locals.env ?? {}) as AuthEnv;
 
     const supabase =
       SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY

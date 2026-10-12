@@ -14,7 +14,8 @@ import { connectionStringFrom, createDb, type Db, type DatabaseEnv } from './cli
  * connection stays open until every task has finished. A failing task is logged, never thrown.
  */
 export const handleDatabase: Handle = async ({ event, resolve }) => {
-  const { env, ctx } = event.platform ?? {};
+  const env = event.locals.env;
+  const ctx = event.platform?.ctx;
   const connectionString = connectionStringFrom(env as DatabaseEnv | undefined);
   let connection: ReturnType<typeof createDb> | undefined;
   const tasks: ((db: Db) => Promise<unknown>)[] = [];

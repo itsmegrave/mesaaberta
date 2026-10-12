@@ -3,9 +3,9 @@ import { can } from '$lib/server/auth/policy';
 import { callbackUrl, configured, SCOPES, type InstagramEnv } from '$lib/server/instagram/api';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ locals, platform, cookies }) => {
+export const POST: RequestHandler = async ({ locals, cookies }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
-  const env = platform?.env as InstagramEnv | undefined;
+  const env = locals.env as InstagramEnv | undefined;
   if (!configured(env)) error(503, 'Instagram not configured');
   const state = crypto.randomUUID();
   cookies.set('instagram_oauth_state', state, {

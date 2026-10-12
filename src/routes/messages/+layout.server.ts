@@ -12,7 +12,7 @@ const pageOf = (url: URL) => {
   return raw !== null && /^[1-9][0-9]*$/.test(raw) ? Number(raw) : 1;
 };
 
-export const load: LayoutServerLoad = async ({ locals, url, platform, depends }) => {
+export const load: LayoutServerLoad = async ({ locals, url, depends }) => {
   const user = await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
   // The page refreshes the list now and then by invalidating this.
@@ -21,7 +21,7 @@ export const load: LayoutServerLoad = async ({ locals, url, platform, depends })
   try {
     const inbox = await listInbox(locals.db, user.id, pageOf(url));
     return {
-      inbox: { ...inbox, items: inboxWithPictures(supabaseUrlOf(platform?.env), inbox.items) },
+      inbox: { ...inbox, items: inboxWithPictures(supabaseUrlOf(locals.env), inbox.items) },
     };
   } catch (cause) {
     if (cause instanceof NotFound) error(404, 'Not found');

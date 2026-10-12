@@ -9,9 +9,9 @@ import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async (event) => {
-  const { locals, platform, cookies, route } = event;
+  const { locals, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
-  const links = cannyLinks(platform?.env);
+  const links = cannyLinks(locals.env);
 
   // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
   if (route.id === '/maintenance') {
@@ -55,7 +55,7 @@ export const load: LayoutServerLoad = async (event) => {
       account: profile && {
         displayName: profile.name ?? profile.username ?? 'Pessoa sem nome',
         username: profile.username,
-        avatarUrl: pictureOf(supabaseUrlOf(platform?.env), profile),
+        avatarUrl: pictureOf(supabaseUrlOf(locals.env), profile),
         isAdmin: can(profile, 'admin:access'),
         pendingSuggestionsCount:
           locals.db && can(profile, 'admin:access') ? await pendingCount(locals.db) : 0,

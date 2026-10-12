@@ -12,7 +12,6 @@ type Event = {
   request: Request;
   locals: App.Locals;
   url: URL;
-  platform?: App.Platform;
 };
 
 /**
@@ -23,7 +22,7 @@ type Event = {
  * answers with what the person typed.
  */
 export async function handlePartnerForm(
-  { request, locals, url, platform }: Event,
+  { request, locals, url }: Event,
   { id }: { id?: string } = {},
 ) {
   if (!(await locals.getUser())) {
@@ -67,7 +66,7 @@ export async function handlePartnerForm(
     }
     // After the commit and the response, so the visitor never waits for a handler.
     locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(platform?.env), eventId, new Date(), locals.log),
+      dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
     );
   } catch (error) {
     if (error instanceof Invalid) {

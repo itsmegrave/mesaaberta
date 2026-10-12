@@ -8,7 +8,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 // Tags shown as chips before "Mais tags".
 const FEATURED_TAGS = 7;
 
-export const read = async ({ locals, url, platform }: RequestEvent) => {
+export const read = async ({ locals, url }: RequestEvent) => {
   // Every filter comes from the query string of the GET form, validated by its schema. Several of
   // each can be ticked: a table matches if it has any of the systems, platforms and tags ticked.
   const {
@@ -73,7 +73,7 @@ export const read = async ({ locals, url, platform }: RequestEvent) => {
     // gmId stays on the server: the page only needs the GM's name.
     tables: tables.map(({ gmId, imagePath, ...table }) => ({
       ...table,
-      imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
+      imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
     })),
     systems: ranked,
     pickedSystems,

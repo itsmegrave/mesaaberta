@@ -1,4 +1,4 @@
-import type { ErrorEvent } from '@sentry/cloudflare';
+import type { ErrorEvent } from '@sentry/core';
 import { describe, expect, it } from 'vitest';
 import { privateEvent, privateLog, privateSentryOptions } from './sentry-options';
 

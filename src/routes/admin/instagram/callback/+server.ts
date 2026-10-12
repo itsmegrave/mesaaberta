@@ -10,11 +10,11 @@ import {
 } from '$lib/server/instagram/api';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ locals, platform, cookies, url }) => {
+export const GET: RequestHandler = async ({ locals, cookies, url }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   const expected = cookies.get('instagram_oauth_state');
   cookies.delete('instagram_oauth_state', { path: '/admin/instagram' });
-  const env = platform?.env as InstagramEnv | undefined;
+  const env = locals.env as InstagramEnv | undefined;
   if (!configured(env) || !locals.db) error(503);
   if (!expected || url.searchParams.get('state') !== expected) error(400, 'Invalid OAuth state');
   const code = url.searchParams.get('code');

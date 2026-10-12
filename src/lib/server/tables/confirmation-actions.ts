@@ -53,7 +53,7 @@ function confirmationAction<Schema extends ZodType>(
     }
 
     locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
+      dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
     );
     if (!request.headers.has('x-sveltekit-action')) {
       redirect(303, safeNext((form.data as { next: string }).next, url.pathname));

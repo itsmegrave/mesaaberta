@@ -9,8 +9,7 @@ import { checkDatabase } from '$lib/server/db/health';
 import { workerHealth } from '$lib/server/events/heartbeat';
 import { GET } from './+server';
 
-const call = (env?: Record<string, string>) =>
-  GET({ locals: { db: {}, log: {} }, platform: env ? { env } : undefined } as never);
+const call = (env?: Record<string, string>) => GET({ locals: { db: {}, log: {}, env } } as never);
 
 describe('GET /healthz', () => {
   it('reports the deployed source revision when the pipeline sets it', async () => {

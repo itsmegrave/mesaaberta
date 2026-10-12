@@ -10,12 +10,12 @@ export type ApiBinding = { fetch: (request: Request) => Promise<Response> };
  * (Trello #120, strangler). Never throws.
  */
 export async function callApi<T>(
-  platform: App.Platform | undefined,
+  env: App.Locals['env'],
   path: string,
   actorId: string,
   log: Logger = logger,
 ): Promise<T | null> {
-  const binding = (platform?.env as { API?: ApiBinding } | undefined)?.API;
+  const binding = (env as { API?: ApiBinding } | undefined)?.API;
   if (!binding) return null;
   try {
     // The host is never resolved: a Service Binding routes by binding, not by name.

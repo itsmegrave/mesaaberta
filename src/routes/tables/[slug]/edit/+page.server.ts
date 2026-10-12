@@ -13,7 +13,7 @@ import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
-  const { locals, url, params, platform, cookies } = event;
+  const { locals, url, params, cookies } = event;
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
@@ -35,7 +35,7 @@ export const load: PageServerLoad = async (event) => {
       // The saved title, for the breadcrumb: the form's own may be mid-edit.
       title: values.title,
       form: initialForm({ ...NEW_TABLE_VALUES, ...values }),
-      imageUrl: imageUrl(supabaseUrlOf(platform?.env), imagePath),
+      imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
       systems: catalogRead.systems,
       catalog: catalogRead.catalog,
       catalogRead,
@@ -65,7 +65,7 @@ export const actions: Actions = {
         // Nothing players see changed: no invite, no notification.
         if (eventId) {
           locals.afterResponse((db) =>
-            dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
+            dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
           );
         }
         return { slug: params.slug };
@@ -84,7 +84,7 @@ export const actions: Actions = {
     try {
       const { eventId } = await disableTable(locals.db, await locals.getProfile(), params.slug);
       locals.afterResponse((db) =>
-        dispatchEvent(db, handlersFor(event.platform?.env), eventId, new Date(), locals.log),
+        dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
       );
     } catch (e) {
       if (e instanceof Forbidden) error(403, 'Forbidden');

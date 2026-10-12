@@ -11,10 +11,10 @@ type HealthEnv = { DEPLOYMENT_SOURCE_SHA?: string };
 // absent on local and self-hosted runs that do not set it. `worker` is the background Worker's last
 // sweep (it has no route to probe): `stale` after 15 minutes without one. It never changes `status`
 // or the HTTP code, so a worker rollback cannot fail the web health gate.
-export const GET: RequestHandler = async ({ locals, platform }) => {
+export const GET: RequestHandler = async ({ locals }) => {
   const database = await checkDatabase(locals.db, locals.log);
   const healthy = database !== 'down';
-  const revision = (platform?.env as HealthEnv | undefined)?.DEPLOYMENT_SOURCE_SHA?.trim();
+  const revision = (locals.env as HealthEnv | undefined)?.DEPLOYMENT_SOURCE_SHA?.trim();
   const worker = database === 'ok' && locals.db ? await workerHealth(locals.db) : undefined;
 
   return json(

@@ -4,14 +4,14 @@ import { InstagramError, type InstagramEnv } from '$lib/server/instagram/api';
 import { socialFor, type SocialEnv } from '$lib/server/social';
 import type { RequestEvent } from '@sveltejs/kit';
 
-export const publishInstagramAction = async ({ locals, platform, request }: RequestEvent) => {
+export const publishInstagramAction = async ({ locals, request }: RequestEvent) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503);
   const form = await request.formData();
   const tableId = String(form.get('tableId') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(tableId)) return fail(400, { publishError: 'invalid' });
   try {
-    const env = platform?.env as InstagramEnv & SocialEnv;
+    const env = locals.env as InstagramEnv & SocialEnv;
     const social = socialFor(env);
     const result = await social.queueTable(locals.db, env, tableId);
     if (result === 'queued')
