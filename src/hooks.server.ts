@@ -13,7 +13,7 @@ import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
 import { handleRuntime } from '$lib/server/runtime';
 import { createTracker } from '$lib/server/analytics/track';
-import type { AnalyticsEnv } from '$lib/server/analytics';
+import { analyticsHandlers, type AnalyticsEnv } from '$lib/server/analytics';
 import { handleMaintenance } from '$lib/server/maintenance';
 import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';
@@ -111,6 +111,18 @@ const handleFlags: Handle = ({ event, resolve }) => {
         'api_events_queue_shadow',
         profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
       );
+    })());
+
+  // Stage 3: the analytics handlers, for the people the flag targets. Read like the two above.
+  let live: Promise<readonly string[]> | undefined;
+  event.locals.queueLive = () =>
+    (live ??= (async () => {
+      const profile = await event.locals.getProfile().catch(() => null);
+      const on = await event.locals.flags.isEnabled(
+        'api_events_queue_analytics',
+        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+      );
+      return on ? analyticsHandlers(env as AnalyticsEnv | undefined).map(({ name }) => name) : [];
     })());
 
   return resolve(event);

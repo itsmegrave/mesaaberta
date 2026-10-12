@@ -16,6 +16,12 @@ export const flagDefaults = {
   // to the `domain-events-canary` queue, whose consumer only counts it (ADR 0003, stage 2). Needs the
   // DOMAIN_EVENTS queue binding; without it this flag does nothing. Target admins first.
   api_events_queue_shadow: false,
+  // Off: the analytics handlers run with every other handler, right after the event commits. On:
+  // the request leaves them pending and publishes the event's reference, and the queue consumer on
+  // the background Worker runs them (ADR 0003, stage 3). The consumer only does so when its
+  // QUEUE_LIVE_HANDLERS variable names them; until then the sweeper runs them within five minutes.
+  // Needs the DOMAIN_EVENTS queue binding. Target admins first.
+  api_events_queue_analytics: false,
   // Off: the admin event actions ("Rodar agora", "Rodar todos os que falharam") run in the web
   // Worker. On: they call the api Worker over the Service Binding and fall back to the web path when
   // the api cannot be reached. Needs the API binding; without it this flag does nothing.

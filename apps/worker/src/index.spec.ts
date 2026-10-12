@@ -44,4 +44,59 @@ describe('worker', () => {
     info.mockRestore();
     warn.mockRestore();
   });
+
+  it('stays in the shadow stage, without a database, until live handlers are named', async () => {
+    const open = vi.fn();
+    const ack = vi.fn();
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const messages = [
+      { body: { eventId: 'e1', type: 'x', version: 1 }, attempts: 1, ack, retry: vi.fn() },
+    ];
+    await createWorker(undefined, open).queue(
+      { messages },
+      { ...env, DATABASE_URL: 'postgres://x' },
+    );
+    await createWorker(undefined, open).queue(
+      { messages },
+      { ...env, QUEUE_LIVE_HANDLERS: ' , ', DATABASE_URL: 'postgres://x' },
+    );
+    // Named handlers without a database cannot run anything either.
+    await createWorker(undefined, open).queue(
+      { messages },
+      { ...env, QUEUE_LIVE_HANDLERS: 'mixpanel-product-events-v1' },
+    );
+    expect(open).not.toHaveBeenCalled();
+    expect(ack).toHaveBeenCalledTimes(3);
+    info.mockRestore();
+  });
+
+  it('runs the named handlers through the outbox and always closes the database', async () => {
+    // An outbox with no such event: the claim matches nothing and the lookup finds no row.
+    const none = { returning: async () => [], then: (ok: (rows: never[]) => void) => ok([]) };
+    const chain = { set: () => chain, from: () => chain, where: () => none };
+    const db = { update: () => chain, select: () => chain };
+    const close = vi.fn(async () => {});
+    const open = vi.fn(() => ({ db, close })) as never;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await createWorker(undefined, open).queue(
+      {
+        messages: [
+          { body: { eventId: 'e1', type: 'TableCreated', version: 1 }, attempts: 1, ack, retry },
+        ],
+      },
+      { ...env, QUEUE_LIVE_HANDLERS: 'mixpanel-product-events-v1', DATABASE_URL: 'postgres://x' },
+    );
+
+    expect(open).toHaveBeenCalledExactlyOnceWith('postgres://x');
+    // A missing event is a terminal failure: acknowledged, never retried.
+    expect(ack).toHaveBeenCalledOnce();
+    expect(retry).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
+    info.mockRestore();
+    warn.mockRestore();
+  });
 });

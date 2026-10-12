@@ -17,14 +17,26 @@ is off.
 Rollback is the reverse: crons back on the web Worker (pin the previous release), then delete this
 Worker.
 
-## Queues consumer (shadow)
+## Queues consumer
 
-`queue()` acknowledges and counts every message and runs no handler (ADR 0003, stage 2). The queues
-`domain-events-canary` and `domain-events-canary-dlq` exist; this Worker's config declares the
-consumer, which attaches when the Worker is deployed (a queue has one consumer). The web Worker holds
-the producer binding `DOMAIN_EVENTS` and publishes only for people targeted by the flag
-`api_events_queue_shadow`, which has no rules yet. Live delivery swaps the executor for
-`createEventExecutor`, one event class at a time.
+The queues `domain-events-canary` and `domain-events-canary-dlq` exist; this Worker's config declares
+the consumer, which attaches when the Worker is deployed (a queue has one consumer). The web Worker
+holds the producer binding `DOMAIN_EVENTS`.
+
+**Shadow (ADR 0003, stage 2), the default.** `queue()` acknowledges and counts every message, runs
+no handler and does not open the database. The web Worker publishes a reference for the people
+targeted by the flag `api_events_queue_shadow`.
+
+**Live, one event class at a time (stage 3).** Two switches, both needed:
+
+1. `QUEUE_LIVE_HANDLERS` on this Worker names the handlers the consumer runs for real, for example
+   `mixpanel-product-events-v1`. It runs those and only those, with fenced leases.
+2. A flag per class on the web Worker (`api_events_queue_analytics`) makes a request leave those
+   handlers pending and publish the event's reference once its own handlers are done.
+
+The outbox row stays the truth. With only the flag on, or when a message is lost, the event stays
+due and the sweeper runs what is pending within five minutes. With only the variable on, messages
+find nothing left to run. To stop: turn the flag off. Pending rows need no clean-up.
 
 ## Error reporting
 

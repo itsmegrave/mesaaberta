@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
 import { recordEvent } from './outbox';
 import { fencedFor } from './fencing';
+import { liveRoutingFor, publishLive } from './live-queue';
 import { publishShadow } from './shadow-queue';
 import { logger, scrubString, type Logger } from '../logger';
 import type { DomainEvent, Handler, StoredEvent } from './types';
@@ -36,6 +37,16 @@ export type DispatchOptions = {
   fenced?: boolean;
   /** A fresh clock for each claim, so a slow sweep never grants a lease that is already over. */
   clock?: () => Date;
+  /**
+   * The queue consumer's side of a live event class (ADR 0003, stage 3): run only the handlers
+   * with these names and leave the rest to whoever owns them.
+   */
+  only?: readonly string[];
+  /**
+   * Run every pending handler here, whatever the connection's queue routing says. An admin's
+   * "run it now" waits for the outcome, so it never hands a handler to the queue.
+   */
+  inline?: boolean;
 };
 
 /**
@@ -45,6 +56,11 @@ export type DispatchOptions = {
 export type DispatchResult =
   /** Every handler has succeeded: the event is processed. */
   | { status: 'done' }
+  /**
+   * This dispatcher's handlers succeeded and others are still pending for someone else (the queue
+   * consumer, or the dispatcher that committed the event). The event stays due.
+   */
+  | { status: 'deferred' }
   /** A handler failed and the event waits for its next attempt. */
   | { status: 'retry'; attempts: number; retryInSeconds: number; reason: string }
   /** The attempt cap was reached: the event stays for a person to look at. */
@@ -93,9 +109,6 @@ export async function dispatchEvent(
     return { status: 'skipped', reason: 'busy' };
   }
 
-  // Shadow Queues canary: a reference only, after the claim, whatever the handlers do next.
-  await publishShadow(db, { eventId: id, type: row.type, version: row.version }, log);
-
   // Fenced updates only land while this claim still owns the row.
   const owned = fenced ? and(eq(events.id, id), eq(events.claimToken, token!)) : eq(events.id, id);
   const lost = () =>
@@ -109,11 +122,23 @@ export async function dispatchEvent(
     createdAt: row.createdAt,
     attempts: row.attempts,
   } as StoredEvent;
-  const pending = handlers.filter(
+  const unhandled = handlers.filter(
     (handler) =>
       handler.types.includes(event.type as DomainEvent['type']) &&
       !row.handledBy.includes(handler.name),
   );
+  // Which of them this dispatcher runs: a consumer only its own class, a request everything but
+  // the classes its connection hands to the queue, and anyone else everything.
+  const routing = options.only || options.inline ? null : await liveRoutingFor(db, log);
+  const mine = (handler: Handler) =>
+    options.only ? options.only.includes(handler.name) : !routing?.handlers.includes(handler.name);
+  const pending = unhandled.filter(mine);
+  const left = unhandled.length - pending.length;
+  const ref = { eventId: id, type: row.type, version: row.version };
+
+  // Shadow Queues canary: a reference only, after the claim, whatever the handlers do next. An
+  // event that hands handlers to the queue publishes its one reference when its own are done.
+  if (!(routing && left > 0)) await publishShadow(db, ref, log);
 
   const failures: unknown[] = [];
   for (const handler of pending) {
@@ -150,6 +175,21 @@ export async function dispatchEvent(
       });
       failures.push(error);
     }
+  }
+
+  if (failures.length === 0 && left > 0) {
+    // Not processed yet: release the lease so whoever owns the rest can claim the row at once.
+    const released = await db
+      .update(events)
+      .set({ claimedUntil: null, claimToken: null })
+      .where(owned)
+      .returning({ id: events.id });
+    if (fenced && released.length === 0) {
+      lost();
+      return { status: 'lost' };
+    }
+    if (routing) await publishLive(routing, ref, log);
+    return { status: 'deferred' };
   }
 
   if (failures.length === 0) {
@@ -260,8 +300,9 @@ export async function forceEvent(
     { type: 'EventForced', actorId: adminId, payload: { eventId: id, eventType: row.type } },
     { now },
   );
-  await dispatchEvent(db, handlers, id, now, log, options);
-  await dispatchEvent(db, handlers, recorded, now, log, options);
+  // Inline: the answer the admin gets is read from the row right after.
+  await dispatchEvent(db, handlers, id, now, log, { ...options, inline: true });
+  await dispatchEvent(db, handlers, recorded, now, log, { ...options, inline: true });
 
   const [after] = await db
     .select({ processedAt: events.processedAt })

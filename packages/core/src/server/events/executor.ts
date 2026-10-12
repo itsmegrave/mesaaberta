@@ -29,6 +29,9 @@ export function createEventExecutor(
     switch (result.status) {
       case 'done':
         return { status: 'done' };
+      // This delivery's handlers are done; the rest of the event belongs to someone else.
+      case 'deferred':
+        return { status: 'done' };
       case 'retry':
         return { status: 'retry', afterSeconds: result.retryInSeconds, reason: result.reason };
       case 'failed':

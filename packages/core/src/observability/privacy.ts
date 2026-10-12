@@ -27,6 +27,11 @@ const COUNTS = new Set([
   'skipped',
   'tables',
   'players',
+  'received',
+  'acknowledged',
+  'done',
+  'retried',
+  'failed',
 ]);
 const LABELS = new Set([
   'event',

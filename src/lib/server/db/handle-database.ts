@@ -2,6 +2,7 @@ import type { Handle } from '@sveltejs/kit';
 import type { QueueBinding } from '@mesaaberta/events';
 import { registerFencing } from '../events/fencing';
 import { registerShadowQueue } from '../events/shadow-queue';
+import { registerLiveQueue } from '@mesaaberta/core/server/events/live-queue';
 import { connectionStringFrom, createDb, type Db, type DatabaseEnv } from './client';
 
 /**
@@ -36,6 +37,10 @@ export const handleDatabase: Handle = async ({ event, resolve }) => {
           registerShadowQueue(connection.db, async () =>
             (await event.locals.queueShadow?.()) ? queue : null,
           );
+          registerLiveQueue(connection.db, async () => {
+            const handlers = (await event.locals.queueLive?.()) ?? [];
+            return handlers.length > 0 ? { queue, handlers } : null;
+          });
         }
       }
       return connection.db;
