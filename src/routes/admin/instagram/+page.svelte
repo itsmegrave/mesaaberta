@@ -10,7 +10,6 @@
   import AdminActionForm from '$lib/components/admin/AdminActionForm.svelte';
   import { instagramFeedback } from '$lib/admin/instagram-feedback';
   import Icon from '$lib/components/Icon.svelte';
-  import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '$lib/contact';
   import { m } from '$lib/paraglide/messages';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
@@ -47,14 +46,19 @@
       <StatusBadge {status} />
     </div>
     <p>{m.instagram_admin_description()}</p>
-    <p>
-      {m.instagram_profile_label()}:
-      <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
-      <a href={INSTAGRAM_URL} rel="noopener" target="_blank" class="link-underline font-semibold"
-        >@{INSTAGRAM_HANDLE}</a
-      >
-      <!-- eslint-enable svelte/no-navigation-without-resolve -->
-    </p>
+    {#if data.site.INSTAGRAM_HANDLE}
+      <p>
+        {m.instagram_profile_label()}:
+        <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
+        <a
+          href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
+          rel="noopener"
+          target="_blank"
+          class="link-underline font-semibold">@{data.site.INSTAGRAM_HANDLE}</a
+        >
+        <!-- eslint-enable svelte/no-navigation-without-resolve -->
+      </p>
+    {/if}
     {#if !data.configured}<p>{m.instagram_unavailable()}</p>{/if}
     {#if data.account}
       <p>{m.instagram_account({ username: data.account.username })}</p>
@@ -80,15 +84,17 @@
           >
         </Form>
       {/if}
-      <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
-      <a
-        href={INSTAGRAM_URL}
-        rel="noopener"
-        target="_blank"
-        class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-        >{m.instagram_view_profile()}</a
-      >
-      <!-- eslint-enable svelte/no-navigation-without-resolve -->
+      {#if data.site.INSTAGRAM_HANDLE}
+        <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
+        <a
+          href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
+          rel="noopener"
+          target="_blank"
+          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+          >{m.instagram_view_profile()}</a
+        >
+        <!-- eslint-enable svelte/no-navigation-without-resolve -->
+      {/if}
     </div>
     {#if data.uncertain.length}
       <h3 class="mt-2 text-lg font-semibold">{m.instagram_reconcile_title()}</h3>

@@ -23,6 +23,10 @@ const serverVars = [
   // The footer's feedback links are deployment values (blank in wrangler.jsonc, which hides them).
   '--var CANNY_FEEDBACK_URL:https://feedback.example.test/feedback',
   '--var CANNY_CHANGELOG_URL:https://feedback.example.test/changelog',
+  // So are the contact points the footer and the legal pages show.
+  '--var CONTACT_EMAIL:contato@example.test',
+  '--var PRIVACY_EMAIL:privacidade@example.test',
+  '--var INSTAGRAM_HANDLE:mesaaberta.test',
 ];
 
 export default defineConfig({

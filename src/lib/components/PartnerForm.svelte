@@ -21,7 +21,10 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { OUR_LINK } from '$lib/partners/our-link';
+  import { page as appPage } from '$app/state';
+
+  // The address a partner puts on their site, bio or Discord: the "troca de links" (link exchange).
+  const ourLink = $derived(appPage.data.site?.APP_ORIGIN ?? '');
   import {
     editPartnerSchema,
     MAX_PARTNER_LINKS,
@@ -190,7 +193,7 @@
 
   async function copyOurLink() {
     try {
-      await navigator.clipboard.writeText(OUR_LINK);
+      await navigator.clipboard.writeText(ourLink);
       toast.success(m.toast_link_copied());
     } catch {
       // Clipboard access refused: nothing was copied, and nothing is claimed.
@@ -417,7 +420,7 @@
         <div class="grid gap-1">
           <p class="label-text font-semibold">{m.partner_our_link()}</p>
           <div class="flex items-center justify-between gap-2">
-            <code class="min-w-0 truncate font-mono text-sm">{OUR_LINK}</code>
+            <code class="min-w-0 truncate font-mono text-sm">{ourLink}</code>
             <Button
               size="custom"
               type="button"

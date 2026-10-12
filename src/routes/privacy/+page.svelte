@@ -1,7 +1,14 @@
 <script lang="ts">
   import LegalPage from '$lib/components/LegalPage.svelte';
   import { localizedHref } from '$lib/i18n/locales';
-  import { controller, updated } from '$lib/legal';
+  import { page } from '$app/state';
+  import { updated } from '$lib/legal';
+
+  // Who answers for the personal data (LGPD art. 5, VI) and where the data subject writes to.
+  const controller = $derived({
+    name: page.data.site?.PRIVACY_CONTROLLER_NAME ?? '',
+    email: page.data.site?.PRIVACY_EMAIL ?? '',
+  });
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 

@@ -15,6 +15,13 @@
   // of them is a secret: secrets never go in a Wrangler file. Override any of them locally in
   // `.dev.vars`.
   "vars": {
+    // What the pages say about this deployment (see `siteOf`). A blank one takes a placeholder;
+    // a blank Instagram handle hides the link.
+    "APP_ORIGIN": "",
+    "CONTACT_EMAIL": "",
+    "PRIVACY_CONTROLLER_NAME": "",
+    "PRIVACY_EMAIL": "",
+    "INSTAGRAM_HANDLE": "",
     // "true" turns on the daily RPG campaign discovery (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
     // Footer links to a feedback board and release notes. Blank hides them.
