@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "bun run --bun vite dev",
-    "build": "bun scripts/migrate-on-deploy.ts && bun run wrangler types && bun run --bun vite build && bun scripts/wrap-worker.ts",
+    "build": "bun scripts/migrate-on-deploy.ts && bun run wrangler types && bun run --bun vite build",
     "preview": "bun run wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
     "prepare": "bun run --bun svelte-kit sync && bun run i18n && bun run wrangler types || echo ''",
     "check": "bun run wrangler types && bun run i18n && bun run --bun svelte-kit sync && bun run --bun svelte-check --tsgo --tsconfig ./tsconfig.json",

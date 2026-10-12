@@ -60,9 +60,8 @@
     },
   ],
   // Empty on purpose: the two crons (event sweep every 5 minutes, daily import at 04:00) run on
-  // `mesaaberta-worker` (apps/worker). Two Workers on the same cron would run every job twice.
-  // `bun run build` still adds the `scheduled` handler (scripts/wrap-worker.ts), so a single-Worker
-  // deployment can put the crons back from wrangler.example.jsonc.
+  // `mesaaberta-worker` (apps/worker). This Worker is SvelteKit's own output and has no `scheduled`
+  // handler, so a cron added here would fail.
   "triggers": { "crons": [] },
   // Shadow stage of the Queues canary (ADR 0003): the producer binding. Nothing is sent until the
   // GrowthBook flag `api_events_queue_shadow` targets someone, and its consumer is `mesaaberta-worker`.
