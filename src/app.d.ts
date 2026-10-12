@@ -22,6 +22,8 @@ declare global {
        * reads this, never `platform.env`: `handleRuntime` is the one place that knows the host.
        */
       env: Platform['env'] | undefined;
+      /** What the host offers beyond variables (see `handleRuntime`). Read this, never `platform.ctx`. */
+      host: import('$lib/server/runtime').Host;
       flags: import('$lib/server/flags/flags').Flags;
       /** Set while the `maintenance_mode` flag is on: `bypass` for an admin, `blocked` for anyone else. */
       maintenance?: 'blocked' | 'bypass';

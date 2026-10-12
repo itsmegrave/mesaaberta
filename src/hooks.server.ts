@@ -3,7 +3,7 @@ import { sentryOptions } from '$lib/observability/privacy';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/flags/flags';
-import { growthBookPayload, type PayloadCache } from '$lib/server/flags/payload';
+import { growthBookPayload } from '$lib/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleSuspended } from '$lib/server/auth/suspended';
 import { can } from '$lib/server/auth/policy';
@@ -36,22 +36,6 @@ const handleParaglide: Handle = ({ event, resolve }) =>
     });
   });
 
-// Adapts the Workers Cache API to the string store the flags loader expects.
-type WorkersCache = App.Platform['caches']['default'];
-
-const workersCache = (cache: WorkersCache): PayloadCache => ({
-  get: async (url) => (await cache.match(url))?.text(),
-  set: (url, body, ttlSeconds) =>
-    cache.put(
-      url,
-      // The DOM lib and the generated Workers types both declare `Response`. It is the same
-      // class in the Workers runtime; only the two type declarations disagree.
-      new Response(body, {
-        headers: { 'cache-control': `max-age=${ttlSeconds}` },
-      }) as unknown as Parameters<WorkersCache['put']>[1],
-    ),
-});
-
 // Product events for signed-in people, sent after the response (needs `afterResponse`, so it follows handleDatabase).
 const handleAnalytics: Handle = ({ event, resolve }) => {
   event.locals.track = createTracker({
@@ -66,7 +50,7 @@ const handleAnalytics: Handle = ({ event, resolve }) => {
 // settings (for example plain `vite dev`), every flag returns its default.
 const handleFlags: Handle = ({ event, resolve }) => {
   const env = event.locals.env;
-  const { caches, ctx } = event.platform ?? {};
+  const { cache, waitUntil } = event.locals.host;
   // Opt-in preview of work that is not released through GrowthBook yet; see `shouldForceAllFlags`.
   const forceAll = shouldForceAllFlags(
     env as { IGNORE_FEATURE_FLAGS_IN_LOCALHOST?: string } | undefined,
@@ -84,8 +68,8 @@ const handleFlags: Handle = ({ event, resolve }) => {
           clientKey: env.GROWTHBOOK_CLIENT_KEY,
           fetch,
           log: event.locals.log,
-          cache: caches && workersCache(caches.default),
-          waitUntil: (promise) => ctx?.waitUntil(promise),
+          cache,
+          waitUntil: (promise) => waitUntil?.(promise),
         })
       : async () => null,
     { forceAll, overrides, log: event.locals.log },

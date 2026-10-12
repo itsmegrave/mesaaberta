@@ -16,7 +16,7 @@ import { connectionStringFrom, createDb, type Db, type DatabaseEnv } from './cli
  */
 export const handleDatabase: Handle = async ({ event, resolve }) => {
   const env = event.locals.env;
-  const ctx = event.platform?.ctx;
+  const { waitUntil } = event.locals.host;
   const connectionString = connectionStringFrom(env as DatabaseEnv | undefined);
   let connection: ReturnType<typeof createDb> | undefined;
   const tasks: ((db: Db) => Promise<unknown>)[] = [];
@@ -66,7 +66,7 @@ export const handleDatabase: Handle = async ({ event, resolve }) => {
 
   if (connection || (tasks.length > 0 && connectionString)) {
     const finishing = finish();
-    if (ctx) ctx.waitUntil(finishing);
+    if (waitUntil) waitUntil(finishing);
     else await finishing;
   }
 
