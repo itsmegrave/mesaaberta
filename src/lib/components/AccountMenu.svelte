@@ -18,6 +18,7 @@
     pendingSuggestionsCount = 0,
     placement = 'bottom-end',
     compact = false,
+    wide = false,
   }: {
     name: string;
     username?: string | null;
@@ -32,6 +33,8 @@
     placement?: 'bottom-end' | 'right-end' | 'top-start';
     /** Only the avatar, for the side rail. */
     compact?: boolean;
+    /** One full-width button holding the avatar and the name, for the open side nav. */
+    wide?: boolean;
   } = $props();
 
   const locale = getLocale();
@@ -44,8 +47,8 @@
 
 <svelte:window onpageshow={() => (signingOut = false)} />
 
-<div class="flex min-w-0 items-center gap-2">
-  {#if !compact}
+<div class="flex min-w-0 items-center gap-2 {wide ? 'w-full' : ''}">
+  {#if !compact && !wide}
     <UserLink
       {username}
       label={name}
@@ -55,11 +58,17 @@
   <Popover positioning={{ placement, offset: { mainAxis: 8 } }}>
     <Popover.Trigger
       aria-label="{m.nav_account_menu()}: {name}"
-      class="btn flex size-11 items-center justify-center rounded-full border border-surface-200-800 bg-panel p-0 font-semibold hover:preset-tonal {compact
+      class="btn flex items-center border border-surface-200-800 bg-panel font-semibold hover:preset-tonal {wide
+        ? 'h-12 w-full justify-start gap-3 rounded-lg px-2 text-sm'
+        : 'size-11 justify-center rounded-full p-0'} {compact || wide
         ? ''
         : 'md:h-12 md:w-auto md:gap-2 md:rounded-lg md:px-1'}"
     >
       <Avatar src={avatarUrl} {name} size={32} />
+      {#if wide}
+        <!-- The button's accessible name already carries it. -->
+        <span aria-hidden="true" class="min-w-0 flex-1 truncate text-left">{name}</span>
+      {/if}
       <svg
         width="16"
         height="16"
@@ -70,7 +79,7 @@
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
-        class="hidden shrink-0 {compact ? '' : 'md:block'}"
+        class="shrink-0 {wide ? '' : compact ? 'hidden' : 'hidden md:block'}"
       >
         <path d="M6 9l6 6 6-6" />
       </svg>
@@ -117,7 +126,7 @@
                   ? `${m.nav_admin()}: ${pendingSuggestionsCount}`
                   : undefined}
               >
-                <Icon name="game-icons:black-knight-helm" size={20} />
+                <Icon name="shield" size={20} />
                 {m.nav_admin()}
                 {#if pendingSuggestionsCount > 0}
                   <span

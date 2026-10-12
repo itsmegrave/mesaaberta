@@ -121,14 +121,17 @@
       aria-label={expanded ? undefined : m.nav_admin()}
       title={expanded ? undefined : m.nav_admin()}
       aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
-      class="group flex w-full items-center rounded-lg p-1 text-sm font-semibold no-underline {expanded
-        ? 'gap-3 hover:preset-tonal'
-        : 'flex-col justify-center gap-1 text-xs leading-tight'}"
+      class="group flex w-full items-center rounded-lg text-sm font-semibold no-underline {expanded
+        ? 'min-h-11 gap-2 px-3 hover:preset-tonal aria-[current=page]:bg-surface-200-800'
+        : 'flex-col justify-center gap-1 p-1 text-xs leading-tight'}"
     >
+      <!-- Open: a plain row, lined up with "Notificações" above. Rail: a tile, like the links. -->
       <span
-        class="relative {tile} group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800"
+        class="relative {expanded
+          ? 'flex shrink-0 items-center'
+          : `${tile} group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800`}"
       >
-        <Icon name="game-icons:black-knight-helm" size={20} />
+        <Icon name="shield" size={20} />
         {#if !expanded && account.pendingSuggestionsCount > 0}
           <span
             aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
@@ -234,6 +237,7 @@
               {messagesUnread}
               placement={expanded ? 'top-start' : 'right-end'}
               compact={!expanded}
+              wide={expanded}
             />
           {:else if authEnabled}
             <a
