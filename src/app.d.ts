@@ -47,7 +47,7 @@ declare global {
       fencedLeases?: () => Promise<boolean>;
       /** Whether `api_events_queue_shadow` is on for this request's person (read once, lazily). */
       queueShadow?: () => Promise<boolean>;
-      /** The handler names this request hands to the queue (`api_events_queue_analytics`); usually none. */
+      /** The handler names this request hands to the queue (`api_events_queue_analytics`, `api_events_queue_bell`); usually none. */
       queueLive?: () => Promise<readonly string[]>;
       /** Set once someone is signed in; it ends up on the request log line. */
       userId?: string;

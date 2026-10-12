@@ -31,8 +31,16 @@ targeted by the flag `api_events_queue_shadow`.
 
 1. `QUEUE_LIVE_HANDLERS` on this Worker names the handlers the consumer runs for real, for example
    `mixpanel-product-events-v1`. It runs those and only those, with fenced leases.
-2. A flag per class on the web Worker (`api_events_queue_analytics`) makes a request leave those
-   handlers pending and publish the event's reference once its own handlers are done.
+2. A flag per class on the web Worker makes a request leave those handlers pending and publish the
+   event's reference once its own handlers are done:
+
+   | Flag                         | Handlers to name in `QUEUE_LIVE_HANDLERS`                                                                       |
+   | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+   | `api_events_queue_analytics` | `mixpanel-product-events-v1`                                                                                    |
+   | `api_events_queue_bell`      | `in-app-notifications-v1`, `system-announcements-v1`, `moderation-notifications-v1`, `catalog-notifications-v1` |
+
+   With the bell on the queue, a notification reaches its reader after the consumer's batch wait
+   (`max_batch_timeout`, 5 s here) instead of right after the response.
 
 The outbox row stays the truth. With only the flag on, or when a message is lost, the event stays
 due and the sweeper runs what is pending within five minutes. With only the variable on, messages
