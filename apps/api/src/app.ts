@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
+import { moderationRoutes } from './moderation';
 
 /**
  * The api app of Trello #120: the one place writes, policies and the outbox will live once routes
@@ -16,6 +17,8 @@ export function createApi() {
   app.route('/v1/admin/events', eventRoutes());
   // The second: the catalog console's decisions, behind `api_admin_catalog` on web.
   app.route('/v1/admin/catalog', catalogRoutes());
+  // The third: the moderation decisions, behind `api_admin_moderation` on web.
+  app.route('/v1/admin/moderation', moderationRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));

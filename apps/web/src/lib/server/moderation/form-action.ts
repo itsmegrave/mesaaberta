@@ -2,6 +2,7 @@ import { error, fail, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm } from '$lib/forms/contract';
 import { requireAdmin } from '../admin-access';
+import { decideViaApi } from '../api-decide';
 import { requireUser } from '../auth/guard';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
@@ -27,7 +28,18 @@ export function moderationAction<Schema extends ZodType>(
   schema: Schema,
   fields: readonly string[],
   apply: Apply<Schema>,
-  { admin = false }: { admin?: boolean } = {},
+  {
+    admin = false,
+    decision,
+  }: {
+    admin?: boolean;
+    /**
+     * The admin decision's name in `moderationDecisions`. With `api_admin_moderation` on for the
+     * admin the api Worker makes it (`/v1/admin/moderation/<decision>`), and this Worker only
+     * decides when the api cannot be reached or fails.
+     */
+    decision?: string;
+  } = {},
 ) {
   return async (event: RequestEvent) => {
     const { locals, request, url } = event;
@@ -44,10 +56,25 @@ export function moderationAction<Schema extends ZodType>(
       return fail(status, { form });
     };
 
-    let eventIds: string[];
+    const profile = await locals.getProfile();
+    let eventIds: string[] | undefined;
+    if (admin && decision && profile) {
+      const viaApi = await decideViaApi(
+        locals,
+        'api_admin_moderation',
+        `/v1/admin/moderation/${decision}`,
+        profile.id,
+        form.data,
+      );
+      if (viaApi.kind === 'done') eventIds = viaApi.eventIds;
+      else if (viaApi.kind === 'refused') return refuse(viaApi.status, viaApi.field, viaApi.code);
+    }
+
     try {
-      const written = await apply(locals.db, await locals.getProfile(), form.data, event);
-      eventIds = Array.isArray(written) ? written : [written];
+      if (!eventIds) {
+        const written = await apply(locals.db, profile, form.data, event);
+        eventIds = Array.isArray(written) ? written : [written];
+      }
     } catch (cause) {
       if (cause instanceof Invalid) return refuse(400, cause.field, cause.message);
       if (cause instanceof RateLimited) return refuse(429, '', 'rate_limited');
@@ -57,8 +84,9 @@ export function moderationAction<Schema extends ZodType>(
     }
 
     const handlers = handlersFor(event.locals.env);
+    const dispatched = eventIds;
     locals.afterResponse(async (db) => {
-      for (const id of eventIds) await dispatchEvent(db, handlers, id, new Date(), locals.log);
+      for (const id of dispatched) await dispatchEvent(db, handlers, id, new Date(), locals.log);
     });
     return { form };
   };

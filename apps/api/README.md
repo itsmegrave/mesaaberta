@@ -6,10 +6,12 @@ time, behind `api_<area>` GrowthBook flags (strangler; the web app stays the def
 **Status: deployed, reached only through the Service Binding.** It answers `/healthz`, the admin
 event actions (`POST /v1/admin/events/:id/force`, `POST /v1/admin/events/retry-failed`) and the
 admin catalog decisions (`POST /v1/admin/catalog/:decision`, with `approve`, `reject`, `disable`,
-`rename`, `merge` and `create`; the body is the form's own schema). It has no public route and
+`rename`, `merge` and `create`; the body is the form's own schema) and the admin moderation
+decisions (`POST /v1/admin/moderation/:decision`, named as in core's `moderationDecisions`, such as
+`partner.approve`, `report.ban` or `table.close`). It has no public route and
 no cron. The web Worker reaches it through a Service Binding (`API`), sending the signed-in admin's id
 in `x-actor-id`; the api checks that person is an active admin in the database again. On web the
-actions only call it when `api_admin_events` (or `api_admin_catalog` for the catalog) is on for the
+actions only call it when `api_admin_events` (`api_admin_catalog` for the catalog, `api_admin_moderation` for moderation) is on for the
 admin and the binding exists, and fall back to the in-process path when the call fails. A catalog
 decision the api refuses (HTTP 400 `invalid`) is shown on the form and not retried in-process. The api Worker needs the same database binding and
 secrets as the other Workers, set by the private deployment.
