@@ -8,7 +8,7 @@ import {
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { approveEntry, mergeEntry, rejectEntry } from '../admin/catalog';
-import { listSystems } from '../systems';
+import { listSystems } from '@mesaaberta/core/server/systems';
 import { createTestDb, pgErrorCode } from '../db/test-db';
 import {
   findTableBySlug,
@@ -22,8 +22,8 @@ import {
   loadTableForEdit,
   publishTable,
   updateTable,
-} from './write';
-import type { TableInput } from '$lib/tables/schema';
+} from '@mesaaberta/core/server/tables/write';
+import type { TableInput } from '@mesaaberta/core/tables/schema';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

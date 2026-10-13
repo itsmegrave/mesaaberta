@@ -1,11 +1,11 @@
 import { error, fail } from '@sveltejs/kit';
 import { validateStringForm, validateFormData } from '$lib/forms/contract';
 import { formMessage } from '$lib/forms/server';
-import { messageSchema, muteSchema } from '$lib/messages/schema';
+import { messageSchema, muteSchema } from '@mesaaberta/core/messages/schema';
 import { requireUser } from '$lib/server/auth/guard';
 import { RateLimited } from '@mesaaberta/core/server/errors';
 import { failFrom } from '$lib/server/fail-from';
-import { sendMessage, setMuted } from '$lib/server/messages/service';
+import { sendMessage, setMuted } from '@mesaaberta/core/server/messages/service';
 import { loadChatThread } from '$lib/server/messages/thread';
 import type { Actions, PageServerLoad } from './$types';
 

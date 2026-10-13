@@ -1,11 +1,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { listSystems } from '$lib/server/systems';
+import { listSystems } from '@mesaaberta/core/server/systems';
 import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/tables/queries', () => ({ listUpcomingTables: vi.fn() }));
-vi.mock('$lib/server/systems', () => ({ listSystems: vi.fn() }));
+vi.mock('@mesaaberta/core/server/systems', () => ({ listSystems: vi.fn() }));
 vi.mock('@mesaaberta/core/server/catalog', () => ({
   listCatalog: vi.fn(async () => ({
     platforms: [{ name: 'Discord', slug: 'discord' }],

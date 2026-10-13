@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { areaOf, formatCep, normalizeCep } from './cep';
+import { areaOf, formatCep, normalizeCep } from '@mesaaberta/core/location/cep';
 
 describe('normalizeCep', () => {
   it('keeps the 8 digits whatever the punctuation', () => {

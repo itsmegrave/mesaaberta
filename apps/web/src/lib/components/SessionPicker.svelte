@@ -6,7 +6,7 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import { TABLE_LIMITS } from '$lib/tables/schema';
+  import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
 
   let {
     startsAt = $bindable(''),

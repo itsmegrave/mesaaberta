@@ -29,7 +29,12 @@ import { campaignUrlAliases } from '@mesaaberta/core/server/crowdfunding/import/
 import { lockCampaignUrl } from '@mesaaberta/core/server/crowdfunding/import/store';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
-import { CROWDFUNDING_LIMIT, enforceRateLimit, LINK_READ_LIMIT, REPORT_LIMIT } from '../rate-limit';
+import {
+  CROWDFUNDING_LIMIT,
+  enforceRateLimit,
+  LINK_READ_LIMIT,
+  REPORT_LIMIT,
+} from '@mesaaberta/core/server/rate-limit';
 
 export type CrowdfundingInput = Omit<CrowdfundingFormInput, 'image'>;
 

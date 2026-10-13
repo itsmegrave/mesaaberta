@@ -1,7 +1,7 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { failFrom } from '$lib/server/fail-from';
-import { openDirect } from '$lib/server/messages/service';
+import { openDirect } from '@mesaaberta/core/server/messages/service';
 import { loadRead } from '$lib/server/reads/load';
 import { confirmationActions } from '$lib/server/tables/confirmation-actions';
 import type { Actions, PageServerLoad } from './$types';

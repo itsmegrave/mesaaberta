@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_TIMEZONE, isTimeZone, timezoneOptions, viewerTimezone } from './timezone';
+import {
+  DEFAULT_TIMEZONE,
+  isTimeZone,
+  timezoneOptions,
+  viewerTimezone,
+} from '@mesaaberta/core/time/timezone';
 
 describe('isTimeZone', () => {
   it('accepts an IANA zone and refuses anything else', () => {

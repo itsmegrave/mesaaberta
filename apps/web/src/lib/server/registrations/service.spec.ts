@@ -16,7 +16,7 @@ import {
   leaveTable,
   listRegistrations,
   removePlayer,
-} from './service';
+} from '@mesaaberta/core/server/registrations/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000010${String(n).padStart(2, '0')}`;

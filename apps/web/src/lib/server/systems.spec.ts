@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb } from './db/test-db';
-import { findSystemBySlug, listSystems } from './systems';
+import { findSystemBySlug, listSystems } from '@mesaaberta/core/server/systems';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 

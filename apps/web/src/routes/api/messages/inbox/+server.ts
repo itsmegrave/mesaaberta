@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { stringify } from 'devalue';
-import { listInbox } from '$lib/server/messages/service';
+import { listInbox } from '@mesaaberta/core/server/messages/service';
 import { inboxWithPictures } from '$lib/server/messages/present';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { RequestHandler } from './$types';

@@ -1,6 +1,6 @@
 import { requireUser } from '../auth/guard';
 import type { RequestEvent } from '@sveltejs/kit';
-import { listSystems } from '../systems';
+import { listSystems } from '@mesaaberta/core/server/systems';
 import { listCatalog } from '@mesaaberta/core/server/catalog';
 export async function read({ locals, url }: RequestEvent) {
   await requireUser(locals, url);

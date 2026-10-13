@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireUser } from '../auth/guard';
-import { loadTableForEdit } from '../tables/write';
+import { loadTableForEdit } from '@mesaaberta/core/server/tables/write';
 import { timezoneOf } from '../time';
-import { listSystems, systemOfTable } from '../systems';
+import { listSystems, systemOfTable } from '@mesaaberta/core/server/systems';
 import { listCatalog, type CatalogItem } from '@mesaaberta/core/server/catalog';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 export async function read({ locals, url, params, cookies }: RequestEvent) {

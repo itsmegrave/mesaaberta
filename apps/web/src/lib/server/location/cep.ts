@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { postalCodes } from '@mesaaberta/core/server/db/schema';
-import { areaOf, type CepPlace } from '$lib/location/cep';
-import type { TableInput } from '$lib/tables/schema';
+import { areaOf, type CepPlace } from '@mesaaberta/core/location/cep';
+import type { TableInput } from '@mesaaberta/core/tables/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 
 export type CepLookup =

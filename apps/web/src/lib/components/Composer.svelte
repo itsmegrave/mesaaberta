@@ -7,7 +7,11 @@
   import EmojiPicker from '$lib/components/EmojiPicker.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { MESSAGE_MAX_LENGTH, messageSchema, type MessageInput } from '$lib/messages/schema';
+  import {
+    MESSAGE_MAX_LENGTH,
+    messageSchema,
+    type MessageInput,
+  } from '@mesaaberta/core/messages/schema';
   import { m } from '$lib/paraglide/messages';
 
   type Props = {

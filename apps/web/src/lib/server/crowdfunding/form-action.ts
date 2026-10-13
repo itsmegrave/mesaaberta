@@ -7,7 +7,7 @@ import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/serv
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
-import { CROWDFUNDING_LIMIT, checkRateLimit } from '../rate-limit';
+import { CROWDFUNDING_LIMIT, checkRateLimit } from '@mesaaberta/core/server/rate-limit';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
 import { addCrowdfunding, findListedByUrl, takeLinkRead } from './service';

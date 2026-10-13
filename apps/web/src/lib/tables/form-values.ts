@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { FormMessage } from '$lib/forms/message';
 import { m } from '$lib/paraglide/messages';
 import { formatWait } from '@mesaaberta/core/tables/format';
-import type { tableFormSchema } from './schema';
+import type { tableFormSchema } from '@mesaaberta/core/tables/schema';
 import { DEFAULT_WELCOME_MESSAGE } from '@mesaaberta/core/tables/welcome';
 
 /** What the form holds: the schema's values, with the numbers as numbers. */

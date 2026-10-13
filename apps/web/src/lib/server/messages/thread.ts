@@ -6,7 +6,11 @@ import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { withPicture, withPictures } from '$lib/server/messages/present';
-import { listMessages, loadConversation, markConversationRead } from '$lib/server/messages/service';
+import {
+  listMessages,
+  loadConversation,
+  markConversationRead,
+} from '@mesaaberta/core/server/messages/service';
 
 export const loadChatThread = async (
   { locals, url }: Pick<RequestEvent, 'locals' | 'url'>,

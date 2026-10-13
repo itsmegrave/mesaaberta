@@ -1,5 +1,5 @@
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { listSystems } from '$lib/server/systems';
+import { listSystems } from '@mesaaberta/core/server/systems';
 import { listCatalog } from '@mesaaberta/core/server/catalog';
 import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { readTableFilters } from '$lib/tables/filters';

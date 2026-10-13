@@ -4,7 +4,7 @@
   import { createQuery } from '@tanstack/svelte-query';
   import { queryClient } from '$lib/query/context';
   import { cepLookup } from '$lib/query/lookups';
-  import { areaOf, normalizeCep } from '$lib/location/cep';
+  import { areaOf, normalizeCep } from '@mesaaberta/core/location/cep';
   import { m } from '$lib/paraglide/messages';
   let { value, area = $bindable('') }: { value: string; area?: string } = $props();
   const client = queryClient();

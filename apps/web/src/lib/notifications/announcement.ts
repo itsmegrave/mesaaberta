@@ -1,6 +1,6 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
-import { richText } from '$lib/text/rich-schema';
+import { richText } from '@mesaaberta/core/text/rich-schema';
 import {
   ANNOUNCEMENT_AUDIENCES,
   ANNOUNCEMENT_ICONS,

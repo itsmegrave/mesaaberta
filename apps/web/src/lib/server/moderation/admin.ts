@@ -21,7 +21,7 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
-import { removeTableMember } from '../messages/service';
+import { removeTableMember } from '@mesaaberta/core/server/messages/service';
 export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
 import type { EventType } from '@mesaaberta/core/server/events/types';
 

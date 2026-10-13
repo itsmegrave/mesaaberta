@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { postalCodes } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { lookupCep, withLocation } from './cep';
-import type { TableInput } from '$lib/tables/schema';
+import type { TableInput } from '@mesaaberta/core/tables/schema';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => (test = await createTestDb()));

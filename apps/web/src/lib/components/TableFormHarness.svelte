@@ -3,7 +3,7 @@
   import TableForm from './TableForm.svelte';
   import type { FormMessage } from '$lib/forms/message';
   import { NEW_TABLE_VALUES, type TableFormValues } from '$lib/tables/form-values';
-  import { tableFormSchema } from '$lib/tables/schema';
+  import { tableFormSchema } from '@mesaaberta/core/tables/schema';
 
   type Props = {
     systems: { name: string; slug: string }[];

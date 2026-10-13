@@ -8,7 +8,7 @@
   import Icon from '$lib/components/Icon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { localizedHref } from '$lib/i18n/locales';
-  import { muteSchema } from '$lib/messages/schema';
+  import { muteSchema } from '@mesaaberta/core/messages/schema';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { atHandle } from '@mesaaberta/core/profile/handle';

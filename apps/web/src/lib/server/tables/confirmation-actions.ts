@@ -15,7 +15,7 @@ import {
   markTableNotHeld,
   postponeTable,
 } from '@mesaaberta/core/server/tables/lifecycle';
-import { publishTable } from './write';
+import { publishTable } from '@mesaaberta/core/server/tables/write';
 
 /**
  * One answer to "did the session happen?", posted from the GM's manage page. The form is validated

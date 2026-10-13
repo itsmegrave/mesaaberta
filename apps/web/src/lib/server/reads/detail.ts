@@ -4,11 +4,14 @@ import { profiles } from '@mesaaberta/core/server/db/schema';
 import { can, joinBlocker, rateBlocker } from '@mesaaberta/core/server/auth/policy';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { firstSessionEnded, ratingOf } from '@mesaaberta/core/server/ratings/service';
-import { listRegistrations, registrationStatus } from '../registrations/service';
+import {
+  listRegistrations,
+  registrationStatus,
+} from '@mesaaberta/core/server/registrations/service';
 import { findTableBySlug, joinDetailsOf } from '@mesaaberta/core/server/tables/queries';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
-import { systemWaitingOf } from '../systems';
+import { systemWaitingOf } from '@mesaaberta/core/server/systems';
 export const read = async ({ locals, params }: RequestEvent) => {
   const signedIn = (await locals.getUser()) !== null;
   const profile = await locals.getProfile().catch(() => null);

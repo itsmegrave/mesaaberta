@@ -25,7 +25,7 @@
   import FormField from './FormField.svelte';
   import ErrorSummary from './ErrorSummary.svelte';
   import SearchSelect from './SearchSelect.svelte';
-  import { timezoneOptions } from '$lib/time/timezone';
+  import { timezoneOptions } from '@mesaaberta/core/time/timezone';
   import { onMount } from 'svelte';
   import { m } from '$lib/paraglide/messages';
   import { MAX_SOCIAL_LINKS, NETWORKS, takesHandle, type Network } from '$lib/profile/social-links';

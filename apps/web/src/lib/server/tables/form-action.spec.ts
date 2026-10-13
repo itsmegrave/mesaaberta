@@ -3,8 +3,8 @@ import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { Forbidden, Invalid, RateLimited } from '@mesaaberta/core/server/errors';
 import { handleTableForm } from './form-action';
-import { createTable } from './write';
-import type { TableInput } from '$lib/tables/schema';
+import { createTable } from '@mesaaberta/core/server/tables/write';
+import type { TableInput } from '@mesaaberta/core/tables/schema';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = {

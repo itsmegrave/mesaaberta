@@ -3,7 +3,7 @@ import { requireUser } from '$lib/server/auth/guard';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { inboxWithPictures } from '$lib/server/messages/present';
-import { listInbox } from '$lib/server/messages/service';
+import { listInbox } from '@mesaaberta/core/server/messages/service';
 import type { LayoutServerLoad } from './$types';
 
 /** `?page=N`: anything that is not a positive whole number reads as the first page. */

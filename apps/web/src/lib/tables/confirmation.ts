@@ -1,7 +1,7 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
 import { next } from '$lib/forms/next';
-import { isLocalDateTime } from './schema';
+import { isLocalDateTime } from '@mesaaberta/core/tables/schema';
 
 /** "It happened" and "it did not": only where to come back to. */
 export const answerSchema = z.object({ next });

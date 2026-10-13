@@ -18,7 +18,7 @@
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { photoSchema } from '$lib/profile/photo';
   import { Switch } from '@skeletonlabs/skeleton-svelte';
-  import { directMessagesSchema } from '$lib/messages/schema';
+  import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import { deleteAccountSchema } from '$lib/profile/delete';
   import { tick } from 'svelte';

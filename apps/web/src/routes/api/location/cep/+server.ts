@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { normalizeCep } from '$lib/location/cep';
+import { normalizeCep } from '@mesaaberta/core/location/cep';
 import { lookupCep } from '$lib/server/location/cep';
 import { recordAttempt } from '$lib/server/auth/attempt-limit';
 import { RateLimited } from '@mesaaberta/core/server/errors';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tableFormSchema, toTableInput } from './schema';
+import { tableFormSchema, toTableInput } from '@mesaaberta/core/tables/schema';
 
 const parseTableForm = (data: FormData) => {
   const parsed = tableFormSchema.safeParse(Object.fromEntries(data));

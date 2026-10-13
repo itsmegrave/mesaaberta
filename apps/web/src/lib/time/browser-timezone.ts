@@ -1,4 +1,4 @@
-import { TIMEZONE_COOKIE, isTimeZone, type ViewerTimezone } from './timezone';
+import { TIMEZONE_COOKIE, isTimeZone, type ViewerTimezone } from '@mesaaberta/core/time/timezone';
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 

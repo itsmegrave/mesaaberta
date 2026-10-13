@@ -16,8 +16,8 @@ import {
   supabaseUrlOf,
 } from '@mesaaberta/core/server/images';
 import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
-import { directMessagesSchema } from '$lib/messages/schema';
-import { setDirectMessages } from '$lib/server/messages/service';
+import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
+import { setDirectMessages } from '@mesaaberta/core/server/messages/service';
 import { deleteAccountSchema } from '$lib/profile/delete';
 import { disconnectSchema } from '$lib/profile/connections';
 import { photoSchema } from '$lib/profile/photo';

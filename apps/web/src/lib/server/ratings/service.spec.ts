@@ -10,7 +10,7 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import { joinTable, leaveTable, removePlayer } from '../registrations/service';
+import { joinTable, leaveTable, removePlayer } from '@mesaaberta/core/server/registrations/service';
 import { closeAccount } from '../account/service';
 import {
   firstSessionEnded,
