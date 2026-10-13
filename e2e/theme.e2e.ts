@@ -8,6 +8,8 @@ const open = async (browser: Browser, scheme: Scheme, chosen?: Scheme | 'system'
   if (chosen) await context.addInitScript((value) => localStorage.setItem('theme', value), chosen);
   const page = await context.newPage();
   await page.goto('/');
+  // The toggle is a button that only answers once the page has hydrated.
+  await page.waitForLoadState('networkidle');
   return { page, context };
 };
 
