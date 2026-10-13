@@ -1,21 +1,14 @@
-import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { profiles } from '@mesaaberta/db/schema';
-import { can } from '@mesaaberta/core/server/auth/policy';
-import {
-  connectionStringFrom,
-  createDb,
-  type DatabaseEnv,
-} from '@mesaaberta/core/server/db/client';
+import { createDb, type DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { forceEvent, forceFailedEvents } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { logger } from '@mesaaberta/core/server/logger';
+import { adminGuard, type AdminVariables } from './admin-guard';
+
+export { ACTOR_HEADER } from './admin-guard';
 
 /** What the api Worker is given: the database and the same secrets the handlers need. */
 export type ApiEnv = DatabaseEnv & Parameters<typeof handlersFor>[0];
-
-/** The header the web Worker sets, over the Service Binding, with the signed-in admin's id. */
-export const ACTOR_HEADER = 'x-actor-id';
 
 type Open = typeof createDb;
 
@@ -25,31 +18,9 @@ type Open = typeof createDb;
  * against the database: the api never trusts a header to say someone is an admin.
  */
 export function eventRoutes(open: Open = createDb) {
-  const app = new Hono<{
-    Bindings: ApiEnv;
-    Variables: { db: ReturnType<Open>['db']; actorId: string };
-  }>();
+  const app = new Hono<{ Bindings: ApiEnv; Variables: AdminVariables }>();
 
-  app.use('*', async (c, next) => {
-    const actorId = c.req.header(ACTOR_HEADER);
-    const connectionString = connectionStringFrom(c.env);
-    if (!actorId) return c.json({ error: 'unauthorized' }, 401);
-    if (!connectionString) return c.json({ error: 'unavailable' }, 503);
-
-    const { db, close } = open(connectionString);
-    try {
-      const [actor] = await db
-        .select({ id: profiles.id, role: profiles.role, status: profiles.status })
-        .from(profiles)
-        .where(eq(profiles.id, actorId));
-      if (!can(actor ?? null, 'admin:access')) return c.json({ error: 'forbidden' }, 403);
-      c.set('db', db);
-      c.set('actorId', actorId);
-      await next();
-    } finally {
-      await close().catch(() => undefined);
-    }
-  });
+  app.use('*', adminGuard(open));
 
   app.post('/:id/force', async (c) => {
     const db = c.get('db');
