@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, normalize } from 'node:path';
+import { dirname, join, normalize, resolve as resolvePath } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
  * (Trello #120). It must not depend on SvelteKit, the UI's message catalogue or `$app`/`$env`.
  * Remove an entry from `KNOWN` when the step that removes that edge lands.
  */
+// Paths below are relative to the repository root, whatever directory the runner started in.
+const REPO = resolvePath(import.meta.dirname, '../../../../..');
 const ROOTS = [
   'packages/core/src/server/events/handlers.ts',
   'packages/core/src/server/events/sweeper.ts',
@@ -19,7 +21,7 @@ const KNOWN = new Set<string>();
 const resolve = (from: string, spec: string) => {
   // Shims at the old paths re-export from the package, so follow `@mesaaberta/core/...` too.
   const base = spec.startsWith('$lib/')
-    ? join('src/lib', spec.slice(5))
+    ? join('apps/web/src/lib', spec.slice(5))
     : spec.startsWith('@mesaaberta/core/')
       ? join('packages/core/src', spec.slice('@mesaaberta/core/'.length))
       : spec.startsWith('.')
@@ -27,7 +29,7 @@ const resolve = (from: string, spec: string) => {
         : null;
   if (!base) return null;
   return [base, `${base}.ts`, join(base, 'index.ts')].find(
-    (candidate) => candidate.endsWith('.ts') && existsSync(candidate),
+    (candidate) => candidate.endsWith('.ts') && existsSync(join(REPO, candidate)),
   );
 };
 
@@ -39,7 +41,7 @@ function walk() {
     const file = stack.pop()!;
     if (seen.has(file)) continue;
     seen.add(file);
-    const source = readFileSync(file, 'utf8');
+    const source = readFileSync(join(REPO, file), 'utf8');
     for (const match of source.matchAll(
       /(import\s+type\b[^'"]*|(?:from|import)\s*\(?\s*)['"]([^'"]+)['"]/g,
     )) {

@@ -19,4 +19,4 @@ bun.lockb
 /.superpowers/
 
 # Captured external response fixtures must retain their original script syntax.
-apps/web/src/lib/server/crowdfunding/import/fixtures/*.html
+packages/core/src/server/crowdfunding/import/fixtures/*.html
