@@ -23,6 +23,23 @@ const due = (now: Date) =>
     or(isNull(events.claimedUntil), lte(events.claimedUntil, now)),
   );
 
+/**
+ * What `dispatchEvent` may claim when it is handed an id: what is due, and any event on its first
+ * attempt. `next_attempt_at` is the backoff after a failure, but on a first attempt it is the time
+ * the row was written, by the database and to the microsecond, while `now` comes from this runtime,
+ * to the millisecond and frozen between I/O on Workers. A request dispatching the event it just
+ * committed can therefore read a clock a fraction of a millisecond behind the row. Comparing them
+ * made that request skip the event silently and left it to the sweeper, up to five minutes later.
+ * The sweeper still picks its events by `due`.
+ */
+const claimable = (now: Date) =>
+  and(
+    isNull(events.processedAt),
+    isNull(events.failedAt),
+    or(eq(events.attempts, 0), lte(events.nextAttemptAt, now)),
+    or(isNull(events.claimedUntil), lte(events.claimedUntil, now)),
+  );
+
 const describe = (error: unknown) => {
   const { name, message } = error instanceof Error ? error : new Error(String(error));
   // Kept in the audit log, so no email address or token that an error message happened to carry.
@@ -95,7 +112,7 @@ export async function dispatchEvent(
   const [row] = await db
     .update(events)
     .set({ claimedUntil: new Date(claimedAt.getTime() + LEASE_MS), claimToken: token })
-    .where(and(eq(events.id, id), due(claimedAt)))
+    .where(and(eq(events.id, id), claimable(claimedAt)))
     .returning();
   if (!row) {
     // Done, given up on, not due yet, or being run by someone else: say which, for the consumer.
@@ -103,10 +120,21 @@ export async function dispatchEvent(
       .select({ processedAt: events.processedAt, failedAt: events.failedAt })
       .from(events)
       .where(eq(events.id, id));
-    if (!found) return { status: 'skipped', reason: 'missing' };
-    if (found.processedAt) return { status: 'skipped', reason: 'processed' };
-    if (found.failedAt) return { status: 'skipped', reason: 'given_up' };
-    return { status: 'skipped', reason: 'busy' };
+    const reason = !found
+      ? 'missing'
+      : found.processedAt
+        ? 'processed'
+        : found.failedAt
+          ? 'given_up'
+          : 'busy';
+    // Never silent: an event nobody ran shows up here, not five minutes later in the sweep.
+    if (reason !== 'processed')
+      log.info('event.dispatch.skipped', {
+        event: 'event.dispatch.skipped',
+        eventId: id,
+        code: reason,
+      });
+    return { status: 'skipped', reason };
   }
 
   // Fenced updates only land while this claim still owns the row.

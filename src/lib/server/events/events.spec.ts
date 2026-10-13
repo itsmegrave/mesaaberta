@@ -282,6 +282,35 @@ describe('backoffSeconds', () => {
   });
 });
 
+describe('the first dispatch of an event the request just committed', () => {
+  it('runs although this runtime reads a clock behind the row the database stamped', async () => {
+    // No `now`: the database stamps `created_at` and `next_attempt_at`, to the microsecond.
+    const id = await recordEvent(test.db, { type: 'TableCreated', actorId: actor, payload });
+    const stamped = (await row(id)).nextAttemptAt;
+    const h = handler('h');
+
+    // A Worker's clock is frozen between I/O and has no microseconds: a hair behind the row.
+    const result = await dispatchEvent(test.db, [h], id, new Date(stamped.getTime() - 1));
+
+    expect(result).toEqual({ status: 'done' });
+    expect(h.calls.map((e) => e.id)).toEqual([id]);
+  });
+
+  it('still waits out the backoff once an attempt has failed', async () => {
+    const id = await record();
+    const h = handler('h', async () => {
+      throw new Error('down');
+    });
+    await dispatchEvent(test.db, [h], id, t0);
+
+    expect(await dispatchEvent(test.db, [h], id, later(1))).toEqual({
+      status: 'skipped',
+      reason: 'busy',
+    });
+    expect(h.calls).toHaveLength(1);
+  });
+});
+
 describe('sweepEvents', () => {
   it('retries events that are due, oldest first, and leaves the others', async () => {
     const older = await record({ at: t0 });
@@ -294,6 +323,14 @@ describe('sweepEvents', () => {
 
     expect(count).toBe(2);
     expect(order).toEqual([older, newer]);
+    expect((await row(notYet)).processedAt).toBeNull();
+  });
+
+  it('still leaves an event recorded for later to its time', async () => {
+    const notYet = await record({ at: later(10 ** 6) });
+    const h = handler('h');
+
+    expect(await sweepEvents(test.db, [h], later(100))).toBe(0);
     expect((await row(notYet)).processedAt).toBeNull();
   });
 
