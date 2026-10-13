@@ -94,7 +94,7 @@ describe('findSystemBySlug', () => {
 describe('the migrations, applied to a database that already has tables', () => {
   // The Worker may already hold tables with a free-text system when this ships.
   const statements = (file: string) =>
-    readFileSync(`drizzle/${file}`, 'utf8')
+    readFileSync(`../../drizzle/${file}`, 'utf8')
       .split('--> statement-breakpoint')
       .map((sql) => sql.trim())
       .filter(Boolean);

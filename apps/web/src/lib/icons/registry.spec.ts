@@ -5,7 +5,7 @@ import { ICONS } from './registry';
 describe('icon registry', () => {
   it('draws UI glyphs from Reicon, not Lucide, so they sit with the Game Icons', () => {
     const source = readFileSync('src/lib/icons/registry.ts', 'utf8');
-    const packageJson = readFileSync('package.json', 'utf8');
+    const packageJson = readFileSync('../../package.json', 'utf8');
 
     expect(source).not.toContain('@iconify-svelte/lucide');
     expect(packageJson).not.toContain('@iconify-svelte/lucide');

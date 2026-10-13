@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
-import { migrationPlan } from '../src/lib/server/db/deploy-migrations.ts';
+import { migrationPlan } from '../apps/web/src/lib/server/db/deploy-migrations.ts';
 
 const plan = migrationPlan(process.env);
 

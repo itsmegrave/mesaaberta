@@ -22,27 +22,34 @@ bun run dev
 
 ## Scripts
 
-| Script              | What it does                                                                        |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `bun run dev`       | Dev server                                                                          |
-| `bun run build`     | Production build                                                                    |
-| `bun run lint`      | Prettier check and ESLint                                                           |
-| `bun run format`    | Prettier write                                                                      |
-| `bun run i18n`      | Compile `messages/*.json` into `src/lib/paraglide` (run by `prepare` and `check`)   |
-| `bun run check`     | Type-check `.ts` and `.svelte` files                                                |
-| `bun run test:unit` | Vitest: component tests (Chromium) and unit tests (Bun)                             |
-| `bun run e2e:up`    | Local Supabase in Docker (Postgres, Auth, Storage, mail inbox), migrated and seeded |
-| `bun run test:e2e`  | Playwright against a production build and that Supabase, on mobile and desktop      |
-| `bun run e2e:down`  | Stops the local Supabase                                                            |
-| `bun run test`      | Unit tests, then e2e                                                                |
+| Script              | What it does                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `bun run dev`       | Dev server                                                                                          |
+| `bun run build`     | Production build                                                                                    |
+| `bun run lint`      | Prettier check and ESLint                                                                           |
+| `bun run format`    | Prettier write                                                                                      |
+| `bun run i18n`      | Compile `apps/web/messages/*.json` into `apps/web/src/lib/paraglide` (run by `prepare` and `check`) |
+| `bun run check`     | Type-check `.ts` and `.svelte` files                                                                |
+| `bun run test:unit` | Vitest: component tests (Chromium) and unit tests (Bun)                                             |
+| `bun run e2e:up`    | Local Supabase in Docker (Postgres, Auth, Storage, mail inbox), migrated and seeded                 |
+| `bun run test:e2e`  | Playwright against a production build and that Supabase, on mobile and desktop                      |
+| `bun run e2e:down`  | Stops the local Supabase                                                                            |
+| `bun run test`      | Unit tests, then e2e                                                                                |
 
 ## Project layout
 
 ```
-src/routes/   pages and layouts
-src/lib/      shared code, imported through $lib
-e2e/          Playwright tests (*.e2e.ts)
+apps/web/src/routes/   pages and layouts
+apps/web/src/lib/      shared code, imported through $lib
+apps/web/e2e/          Playwright tests (*.e2e.ts)
+apps/web/messages/     translations
+apps/api, apps/worker  the API and background Workers
+packages/              code shared by the three apps
 ```
+
+The web app lives in `apps/web`: every `src/...`, `e2e/...` or `messages/...` path in this README
+and in CONTRIBUTING.md is relative to it. Its dependencies and scripts stay in the root
+`package.json`, and `wrangler.jsonc` stays at the root, where a deployment's pipeline finds it.
 
 Component tests sit next to the code as `*.svelte.spec.ts`; plain unit tests as `*.spec.ts`.
 

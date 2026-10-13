@@ -3,7 +3,7 @@
 // Needs DATABASE_URL, see .dev.vars.example; point it at the database you want to change.
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { promoteToAdmin } from '../src/lib/server/auth/admin.ts';
+import { promoteToAdmin } from '../apps/web/src/lib/server/auth/admin.ts';
 
 const url = process.env.DATABASE_URL;
 const userId = process.argv[2];

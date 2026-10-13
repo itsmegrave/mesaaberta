@@ -5,7 +5,12 @@ import adapter from '@sveltejs/adapter-cloudflare';
  * A deployment on another host replaces this file (and `runtime.ts`); `vite.config.ts` does not
  * change.
  */
-export const hostAdapter = () => adapter();
+export const hostAdapter = () =>
+  adapter({
+    // The Wrangler config stays at the repository root, where a deployment's pipeline finds it.
+    config: '../../wrangler.jsonc',
+    platformProxy: { configPath: '../../wrangler.jsonc' },
+  });
 
 /** What `sentrySvelteKit` needs to know about the adapter's output. */
 export const hostSentry = {

@@ -1,6 +1,6 @@
 // Read-only: same production parsers and guarded fetches; no database, events or image uploads.
-import { sourceAdapters } from '../src/lib/server/crowdfunding/import/sources.ts';
-import { sourceReader } from '../src/lib/server/crowdfunding/import/source-fetch.ts';
+import { sourceAdapters } from '../apps/web/src/lib/server/crowdfunding/import/sources.ts';
+import { sourceReader } from '../apps/web/src/lib/server/crowdfunding/import/source-fetch.ts';
 const requested = process.argv[2] ?? 'all';
 if (!['all', 'catarse', 'meeplestarter'].includes(requested))
   throw new Error('Use: bun run crowdfunding:dry-run [all|catarse|meeplestarter]');

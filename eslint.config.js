@@ -65,7 +65,7 @@ export default defineConfig(
     settings: {
       tailwindcss: {
         attributes: ['class'],
-        cssConfigPath: './src/routes/layout.css',
+        cssConfigPath: path.resolve(import.meta.dirname, 'apps/web/src/routes/layout.css'),
       },
     },
     rules: {
@@ -120,12 +120,12 @@ export default defineConfig(
   },
   // Access decisions live in one module, which is where a role is read.
   {
-    files: ['src/lib/server/auth/policy.ts'],
+    files: ['apps/web/src/lib/server/auth/policy.ts'],
     rules: { 'no-restricted-syntax': ['error', hostEnvRead, hostSdkCall] },
   },
   // The host's variables and bindings are read in one module, which fills `locals.env`.
   {
-    files: ['src/lib/server/runtime.ts'],
+    files: ['apps/web/src/lib/server/runtime.ts'],
     rules: { 'no-restricted-syntax': ['error', roleRead] },
   },
 );

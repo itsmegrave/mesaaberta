@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { publicConfig, readConfig } from '../../packages/config/src/index';
+import { publicConfig, readConfig } from '../../../../packages/config/src/index';
 
 describe('portable deployment configuration', () => {
   const productionEnv = {
