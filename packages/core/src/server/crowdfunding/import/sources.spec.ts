@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
@@ -9,7 +10,7 @@ import {
 } from './sources';
 import { isTabletopRpg, validateCandidate } from './candidate';
 const fixture = (name: string) =>
-  readFileSync(`src/lib/server/crowdfunding/import/fixtures/${name}.html`, 'utf8');
+  readFileSync(join(import.meta.dirname, 'fixtures', `${name}.html`), 'utf8');
 const now = new Date('2026-10-08T04:00:00Z');
 describe('source campaign contracts', () => {
   it('reads Catarse pagination and stable campaign IDs, dates and owner', () => {

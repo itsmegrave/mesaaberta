@@ -124,13 +124,18 @@ export default defineConfig({
           hookTimeout: 20_000,
           include: [
             'src/**/*.{test,spec}.{js,ts}',
-            'packages/**/*.{test,spec}.{js,ts}',
-            'apps/**/*.{test,spec}.{js,ts}',
+            // Beside the web app: the shared packages and the other two apps (this config's
+            // root is apps/web, so they sit one level up).
+            '../../packages/**/*.{test,spec}.{js,ts}',
+            '../api/**/*.{test,spec}.{js,ts}',
+            '../worker/**/*.{test,spec}.{js,ts}',
           ],
           exclude: [
             'src/**/*.svelte.{test,spec}.{js,ts}',
             'src/**/*.integration.spec.ts',
             '**/node_modules/**',
+            '../../**/node_modules/**',
+            '../**/node_modules/**',
           ],
         },
       },
