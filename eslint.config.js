@@ -22,6 +22,12 @@ const hostEnvRead = {
   message:
     'Do not read platform.env, .ctx, .caches or .cf. Read locals.env and locals.host, which handleRuntime fills from the host.',
 };
+// The same for the host's own SDK set-up: one module knows it.
+const hostSdkCall = {
+  selector: "MemberExpression[property.name='initCloudflareSentryHandle']",
+  message:
+    'Host-specific Sentry set-up belongs in src/lib/server/runtime.ts (handleHostTelemetry).',
+};
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
@@ -110,12 +116,12 @@ export default defineConfig(
     // Two rules share `no-restricted-syntax`, so each block below lists the ones that apply to it.
     files: ['src/**/*.{ts,svelte}'],
     ignores: ['src/**/*.spec.ts'],
-    rules: { 'no-restricted-syntax': ['error', roleRead, hostEnvRead] },
+    rules: { 'no-restricted-syntax': ['error', roleRead, hostEnvRead, hostSdkCall] },
   },
   // Access decisions live in one module, which is where a role is read.
   {
     files: ['src/lib/server/auth/policy.ts'],
-    rules: { 'no-restricted-syntax': ['error', hostEnvRead] },
+    rules: { 'no-restricted-syntax': ['error', hostEnvRead, hostSdkCall] },
   },
   // The host's variables and bindings are read in one module, which fills `locals.env`.
   {

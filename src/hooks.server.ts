@@ -1,6 +1,4 @@
 import * as Sentry from '@sentry/sveltekit';
-import { env as publicEnv } from '$env/dynamic/public';
-import { sentryOptionsFor } from '$lib/observability/privacy';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/flags/flags';
@@ -12,7 +10,7 @@ import { handleDatabase } from '$lib/server/db/handle-database';
 import { logger, setTelemetrySink } from '$lib/server/logger';
 import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
-import { handleRuntime } from '$lib/server/runtime';
+import { handleHostTelemetry, handleRuntime } from '$lib/server/runtime';
 import { createTracker } from '$lib/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '$lib/server/analytics';
 import { MAIL_HANDLER_NAMES, bellHandlers } from '$lib/server/events/handlers';
@@ -124,10 +122,8 @@ const handleFlags: Handle = ({ event, resolve }) => {
 
 // Security headers go first so they wrap every response, including the ones later hooks produce.
 export const handle: Handle = sequence(
-  (args) =>
-    Sentry.initCloudflareSentryHandle(
-      sentryOptionsFor(publicEnv, args.event.url.origin, import.meta.env.PROD),
-    )(args),
+  // The host's own set-up of error reporting, around everything else.
+  handleHostTelemetry,
   Sentry.sentryHandle(),
   handleSecurityHeaders,
   // Before anything that reads configuration.

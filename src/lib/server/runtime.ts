@@ -1,4 +1,7 @@
+import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
+import { env as publicEnv } from '$env/dynamic/public';
+import { sentryOptionsFor } from '$lib/observability/privacy';
 import type { PayloadCache } from '$lib/server/flags/payload';
 
 /** What the host offers beyond variables. Every member is optional: plain `vite dev` has none. */
@@ -40,3 +43,13 @@ export const handleRuntime: Handle = ({ event, resolve }) => {
   };
   return resolve(event);
 };
+
+/**
+ * Starts error reporting for the request the way this host needs it. On Workers the SDK must be
+ * set up per request, around everything else, so this goes first in the hooks. Another host swaps
+ * this one function; `Sentry.sentryHandle()` and the rest of the hooks stay as they are.
+ */
+export const handleHostTelemetry: Handle = (input) =>
+  Sentry.initCloudflareSentryHandle(
+    sentryOptionsFor(publicEnv, input.event.url.origin, import.meta.env.PROD),
+  )(input);
