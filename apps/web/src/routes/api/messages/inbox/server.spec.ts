@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse } from 'devalue';
-import { listInbox } from '$lib/server/messages/service';
+import { listInbox } from '@mesaaberta/core/server/messages/service';
 import { GET } from './+server';
-vi.mock('$lib/server/messages/service', () => ({ listInbox: vi.fn() }));
+vi.mock('@mesaaberta/core/server/messages/service', () => ({ listInbox: vi.fn() }));
 vi.mock('$lib/server/messages/present', () => ({
   inboxWithPictures: (_url: unknown, items: unknown) => items,
 }));

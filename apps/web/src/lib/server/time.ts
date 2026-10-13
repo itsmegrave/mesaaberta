@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit';
-import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
+import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
 
 /**
  * The zone this person works in: their profile's, else their browser's, else the default. A GM

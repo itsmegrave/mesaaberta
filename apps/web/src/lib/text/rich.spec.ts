@@ -5,7 +5,7 @@ import {
   richTextLength,
   toPlainText,
 } from '@mesaaberta/core/text/rich';
-import { richText } from './rich-schema';
+import { richText } from '@mesaaberta/core/text/rich-schema';
 
 describe('cleanRichHtml', () => {
   it('keeps the formatting the editor can make', () => {

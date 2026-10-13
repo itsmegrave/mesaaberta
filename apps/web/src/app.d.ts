@@ -59,7 +59,7 @@ declare global {
       /** What the pages say about this deployment, from the root layout (see `siteOf`). */
       site?: import('@mesaaberta/config').PublicConfig;
       /** The zone every time is shown in, from the root layout (see `viewerTimezone`). */
-      viewer?: import('$lib/time/timezone').ViewerTimezone;
+      viewer?: import('@mesaaberta/core/time/timezone').ViewerTimezone;
     }
     // interface PageState {}
   }

@@ -9,7 +9,7 @@ import {
   takesHandle,
   type Network,
 } from './social-links';
-import { isTimeZone } from '$lib/time/timezone';
+import { isTimeZone } from '@mesaaberta/core/time/timezone';
 
 // Zod compiles a faster parser with `new Function` when it can. In the browser our Content-Security-Policy
 // forbids `eval`, so Zod would try it and be reported as a violation on every page that loads it. The

@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { unreadConversations } from '$lib/server/messages/service';
+import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import { unreadCount } from '@mesaaberta/core/server/notifications/service';
 import type { RequestHandler } from './$types';
 

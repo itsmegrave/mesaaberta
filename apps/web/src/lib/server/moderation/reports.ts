@@ -5,7 +5,7 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations, reports } from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
-import { enforceRateLimit, REPORT_LIMIT } from '../rate-limit';
+import { enforceRateLimit, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 
 async function seated(db: AnyDb, tableId: string, playerId: string) {
   const [row] = await db

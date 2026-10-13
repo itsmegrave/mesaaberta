@@ -11,8 +11,8 @@ import { TABLE_CREATION_LIMIT, TABLE_DRAFT_LIMIT, enforceRateLimit } from '../ra
 import { instantToLocal, localToInstant } from '@mesaaberta/core/server/tables/schedule';
 import { slugify, tableSlug } from '@mesaaberta/core/slug';
 import { minutesToHours } from '@mesaaberta/core/tables/format';
-import type { TableInput } from '$lib/tables/schema';
-import { formatCep } from '$lib/location/cep';
+import type { TableInput } from '../../tables/schema';
+import { formatCep } from '../../location/cep';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 const MAX_SLUG_ATTEMPTS = 5;

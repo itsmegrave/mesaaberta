@@ -11,7 +11,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { tableFormSchema } from '$lib/tables/schema';
+  import { tableFormSchema } from '@mesaaberta/core/tables/schema';
   import { toast } from '$lib/toaster';
 
   let { data, form = null } = $props();

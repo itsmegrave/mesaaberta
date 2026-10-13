@@ -17,7 +17,12 @@ import {
   NotFound,
   RateLimited,
 } from '@mesaaberta/core/server/errors';
-import { approveRegistration, joinTable, leaveTable, removePlayer } from '../registrations/service';
+import {
+  approveRegistration,
+  joinTable,
+  leaveTable,
+  removePlayer,
+} from '@mesaaberta/core/server/registrations/service';
 import {
   MESSAGE_LIMIT,
   addTableMember,
@@ -32,7 +37,7 @@ import {
   setDirectMessages,
   setMuted,
   unreadConversations,
-} from './service';
+} from '@mesaaberta/core/server/messages/service';
 import { pruneTableChats } from '@mesaaberta/core/server/messages/retention';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

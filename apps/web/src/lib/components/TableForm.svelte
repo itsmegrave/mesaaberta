@@ -22,7 +22,7 @@
   import { getLocale } from '$lib/paraglide/runtime';
   import { localizedHref } from '$lib/i18n/locales';
   import { formatHours, zonedToDate } from '@mesaaberta/core/tables/format';
-  import { TABLE_LIMITS } from '$lib/tables/schema';
+  import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
   import { pickName } from '@mesaaberta/core/tables/catalog';
 
   type CatalogPick = { name: string; slug: string; pending?: true };

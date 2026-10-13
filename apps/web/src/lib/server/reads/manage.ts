@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { loadManage } from '$lib/server/tables/manage';
+import { loadManage } from '@mesaaberta/core/server/tables/manage';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // The GM's page for one table: requests, players, recent activity. Approving, declining and removing

@@ -8,7 +8,7 @@ import {
   checkRateLimit,
   enforceRateLimit,
   type RateLimit,
-} from './rate-limit';
+} from '@mesaaberta/core/server/rate-limit';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = '00000000-0000-4000-8000-000000000a01';

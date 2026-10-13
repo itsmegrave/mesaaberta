@@ -7,8 +7,8 @@ import {
   declineRegistration,
   joinTable,
   removePlayer,
-} from '../registrations/service';
-import { loadManage } from './manage';
+} from '@mesaaberta/core/server/registrations/service';
+import { loadManage } from '@mesaaberta/core/server/tables/manage';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000020${String(n).padStart(2, '0')}`;

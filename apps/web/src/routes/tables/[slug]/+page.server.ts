@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { requireUser } from '$lib/server/auth/guard';
 import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '$lib/server/fail-from';
-import { openDirect } from '$lib/server/messages/service';
+import { openDirect } from '@mesaaberta/core/server/messages/service';
 import { loadRead } from '$lib/server/reads/load';
 
 import { submitRating } from '@mesaaberta/core/server/ratings/service';
@@ -16,7 +16,7 @@ import {
   joinTable,
   leaveTable,
   removePlayer,
-} from '$lib/server/registrations/service';
+} from '@mesaaberta/core/server/registrations/service';
 import { reportSchema } from '$lib/moderation/reports';
 import { moderationAction } from '$lib/server/moderation/form-action';
 import { fileReport } from '$lib/server/moderation/reports';

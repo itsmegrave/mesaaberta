@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { stringify } from 'devalue';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { NotFound } from '@mesaaberta/core/server/errors';
-import { listMessages, markConversationRead } from '$lib/server/messages/service';
+import { listMessages, markConversationRead } from '@mesaaberta/core/server/messages/service';
 import { withPictures } from '$lib/server/messages/present';
 import type { RequestHandler } from './$types';
 

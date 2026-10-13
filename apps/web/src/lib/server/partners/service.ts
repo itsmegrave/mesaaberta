@@ -13,7 +13,7 @@ import {
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { Changes } from '@mesaaberta/core/server/events/types';
-import { enforceRateLimit, REPORT_LIMIT } from '../rate-limit';
+import { enforceRateLimit, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 import { resolveOpenPartnerReports } from './admin';
 
 // The member side of the partners (link exchange) page. A partner is sent by a member, waits for an

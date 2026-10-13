@@ -10,7 +10,11 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { openIntegrationDb } from '../db/integration-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import { approveRegistration, joinTable, leaveTable } from './service';
+import {
+  approveRegistration,
+  joinTable,
+  leaveTable,
+} from '@mesaaberta/core/server/registrations/service';
 
 // Real Postgres, real concurrency: the capacity rules must hold when transactions overlap.
 

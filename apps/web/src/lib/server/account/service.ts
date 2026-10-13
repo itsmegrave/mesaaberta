@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { eraseMessagesOf } from '../messages/service';
+import { eraseMessagesOf } from '@mesaaberta/core/server/messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversations,

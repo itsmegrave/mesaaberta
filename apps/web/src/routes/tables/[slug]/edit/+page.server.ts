@@ -9,7 +9,7 @@ import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { handleTableForm } from '$lib/server/tables/form-action';
-import { disableTable, loadTableForEdit, updateTable } from '$lib/server/tables/write';
+import { disableTable, loadTableForEdit, updateTable } from '@mesaaberta/core/server/tables/write';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {

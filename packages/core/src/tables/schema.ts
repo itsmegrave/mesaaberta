@@ -2,9 +2,9 @@ import { z } from 'zod';
 import '@mesaaberta/core/forms/zod-codes';
 import { imageFile } from '@mesaaberta/core/forms/files';
 import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from '@mesaaberta/core/tables/welcome';
-import { richText } from '$lib/text/rich-schema';
-import { normalizeCep } from '$lib/location/cep';
-import { isTimeZone } from '$lib/time/timezone';
+import { richText } from '../text/rich-schema';
+import { normalizeCep } from '../location/cep';
+import { isTimeZone } from '../time/timezone';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).

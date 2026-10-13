@@ -6,8 +6,12 @@ import { timezoneOf } from '$lib/server/time';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
-import { createTable } from '$lib/server/tables/write';
-import { TABLE_CREATION_LIMIT, TABLE_DRAFT_LIMIT, checkRateLimit } from '$lib/server/rate-limit';
+import { createTable } from '@mesaaberta/core/server/tables/write';
+import {
+  TABLE_CREATION_LIMIT,
+  TABLE_DRAFT_LIMIT,
+  checkRateLimit,
+} from '@mesaaberta/core/server/rate-limit';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import type { Actions, PageServerLoad } from './$types';
 

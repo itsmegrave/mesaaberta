@@ -8,7 +8,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
   import { m } from '$lib/paraglide/messages';
-  import { tableFormSchema } from '$lib/tables/schema';
+  import { tableFormSchema } from '@mesaaberta/core/tables/schema';
 
   let { data, form = null } = $props();
   const options = pageQuery(

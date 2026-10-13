@@ -2,7 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { initialForm } from '$lib/forms/contract';
-import { MESSAGE_MAX_LENGTH } from '$lib/messages/schema';
+import { MESSAGE_MAX_LENGTH } from '@mesaaberta/core/messages/schema';
 import Composer from './Composer.svelte';
 
 // There is no SvelteKit app around a component test, so handing a result to the router has nothing

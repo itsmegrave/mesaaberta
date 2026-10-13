@@ -4,13 +4,13 @@ import { loadRead } from '$lib/server/reads/load';
 import { pendingCount } from '$lib/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { unreadConversations } from '$lib/server/messages/service';
+import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import {
   BELL_LIMIT,
   listNotifications,
   unreadCount,
 } from '@mesaaberta/core/server/notifications/service';
-import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
+import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async (event) => {
