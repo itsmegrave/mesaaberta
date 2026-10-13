@@ -5,7 +5,7 @@ import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
-import adapter from '@sveltejs/adapter-cloudflare';
+import { hostAdapter, hostSentry } from './host.config.ts';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
@@ -14,17 +14,13 @@ export default defineConfig({
       // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,
-      adapter: 'cloudflare',
+      adapter: hostSentry.adapter,
       telemetry: false,
       autoInstrument: false,
       autoUploadSourceMaps:
         !!process.env.SENTRY_AUTH_TOKEN || existsSync('.env.sentry-build-plugin'),
       sourcemaps: {
-        // adapter-cloudflare only writes the client assets to `.svelte-kit/cloudflare`: the server
-        // code stays in `.svelte-kit/output/server` until Wrangler bundles it on deploy. Sentry's
-        // default (the adapter directory) would upload the client maps only, leaving server stack
-        // traces unmapped.
-        assets: ['.svelte-kit/cloudflare/**', '.svelte-kit/output/server/**'],
+        assets: hostSentry.sourcemapAssets,
       },
     }),
     tailwindcss(),
@@ -34,7 +30,7 @@ export default defineConfig({
         runes: ({ filename }) =>
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
       },
-      adapter: adapter(),
+      adapter: hostAdapter(),
       experimental: {
         instrumentation: { server: true },
       },
