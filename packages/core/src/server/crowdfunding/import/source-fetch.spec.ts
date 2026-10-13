@@ -14,6 +14,27 @@ describe('bounded source fetch', () => {
     ).rejects.toThrow('source_unsafe_url');
     expect(fetcher).not.toHaveBeenCalled();
   });
+  it('retries a name that did not resolve and reports it apart from a private answer', async () => {
+    const fetcher = vi.fn(
+      async () => new Response('<html></html>', { headers: { 'content-type': 'text/html' } }),
+    );
+    const answers = [[], ['93.184.216.34']];
+    const flaky = async () => answers.shift() ?? ['93.184.216.34'];
+    expect(
+      await sourceReader('catarse', { fetcher, resolve: flaky })('https://www.catarse.com.br/'),
+    ).toBe('<html></html>');
+    await expect(
+      sourceReader('catarse', { fetcher, resolve: async () => [] })('https://www.catarse.com.br/'),
+    ).rejects.toThrow('source_dns_failed');
+    await expect(
+      sourceReader('catarse', {
+        fetcher,
+        resolve: async () => {
+          throw new Error('dns down');
+        },
+      })('https://www.catarse.com.br/'),
+    ).rejects.toThrow('source_dns_failed');
+  });
   it('validates every redirect and enforces size, status and content type', async () => {
     const fetcher = vi.fn(
       async () =>
