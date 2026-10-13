@@ -11,8 +11,12 @@
 
   const locale = getLocale();
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const kindLabel = (kind: 'platform' | 'tag') =>
-    kind === 'platform' ? m.admin_kind_platform() : m.admin_kind_tag();
+  const kindLabel = (kind: 'platform' | 'tag' | 'system') =>
+    kind === 'platform'
+      ? m.admin_kind_platform()
+      : kind === 'tag'
+        ? m.admin_kind_tag()
+        : m.admin_kind_system();
   const decisionText = (decision: (typeof data.decisions)[number]) => {
     const kind = kindLabel(decision.kind).toLowerCase();
     const { name, from, into } = decision;

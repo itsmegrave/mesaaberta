@@ -6,6 +6,7 @@ import { authorize, can, type Actor } from '../auth/policy';
 import { NotFound } from '../errors';
 import { gmRatingOf } from '../ratings/service';
 import { findTableBySlug } from './queries';
+import { systemWaitingOf } from '../systems';
 
 /** The events a GM sees in "Atividade recente": what people did at the table, newest first. */
 export const ACTIVITY_TYPES = [
@@ -96,6 +97,8 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
 
   return {
     table,
+    // A draft whose system is a suggestion says so instead of offering to publish.
+    systemWaiting: table.status === 'draft' ? await systemWaitingOf(db, table.system.slug) : null,
     gm: gm as Person,
     gmRating: rating,
     requests: rows.filter((row) => row.status === 'pending'),

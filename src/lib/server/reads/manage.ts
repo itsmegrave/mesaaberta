@@ -24,6 +24,7 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     const { gmId, id, imagePath, ...table } = manage.table;
     return {
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
+      systemWaiting: manage.systemWaiting,
       gm: withPicture(manage.gm),
       gmRating: manage.gmRating,
       requests: manage.requests.map(withPicture),

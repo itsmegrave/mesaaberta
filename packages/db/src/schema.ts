@@ -162,7 +162,17 @@ export const systems = pgTable(
     name: text('name').notNull(),
     slug: text('slug').notNull(),
     // Position in the source list: the most played systems first, then A to Z. Pickers sort by it.
-    position: integer('position').notNull(),
+    // A suggestion goes after the seeded ones.
+    position: integer('position').notNull().default(1000),
+    // Like a platform or a tag: only an approved system is public. A GM may suggest one while
+    // opening a table, which then stays a draft until an admin approves it.
+    status: catalogStatus('status').notNull().default('approved'),
+    suggestedBy: uuid('suggested_by').references(() => profiles.id, { onDelete: 'set null' }),
+    reviewedBy: uuid('reviewed_by').references(() => profiles.id, { onDelete: 'set null' }),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    // A duplicate merged into another system points at it.
+    mergedInto: uuid('merged_into'),
+    ...timestamps,
   },
   (system) => [
     uniqueIndex('systems_slug_unique').on(system.slug),

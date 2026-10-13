@@ -5,7 +5,7 @@
   // A dropdown with a search box over a long list (the ~700 RPG systems), one or several picks.
   // Skeleton's Combobox; the picks are submitted as hidden inputs, one per value. Until the page is
   // interactive an inert box of the same size stands in.
-  // With `suggestLabel` (several picks only), a name the list lacks can be picked as it was typed:
+  // With `suggestLabel`, a name the list lacks can be picked as it was typed:
   // it is submitted as `new:<name>` (see $lib/tables/catalog) for the server to take as a suggestion.
   import { Combobox, Portal, useListCollection } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
@@ -102,7 +102,7 @@
   // What was typed, tidied, when it can be suggested: long enough and not a name the list has.
   const suggestion = $derived.by((): Item | null => {
     const name = (typed ?? '').trim().replace(/\s+/g, ' ');
-    if (!suggestLabel || !multiple) return null;
+    if (!suggestLabel) return null;
     if (name.length < SUGGESTION_NAME.min || name.length > SUGGESTION_NAME.max) return null;
     if (items.some((item) => foldForSearch(item.name) === foldForSearch(name))) return null;
     return { name: suggestLabel(name), slug: `${NEW_CATALOG_PREFIX}${name}` };

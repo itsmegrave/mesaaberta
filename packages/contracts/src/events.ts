@@ -182,7 +182,11 @@ export type PartnerRemoval = PartnerFact & {
 
 export type ReportClosure = { reportId: string; reporterId: string };
 
-export type CatalogDecision = { kind: 'platform' | 'tag'; entryId: string; name: string };
+export type CatalogDecision = {
+  kind: 'platform' | 'tag' | 'system';
+  entryId: string;
+  name: string;
+};
 
 type Registration = { tableId: string; slug: string; playerId: string };
 

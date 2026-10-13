@@ -7,8 +7,8 @@ export async function read({ locals, url }: RequestEvent) {
   const profile = await locals.getProfile();
   if (!locals.db) return { systems: [], catalog: { platforms: [], tags: [] } };
   const [systems, catalog] = await Promise.all([
-    listSystems(locals.db),
+    listSystems(locals.db, { suggestedBy: profile?.id }),
     listCatalog(locals.db, { suggestedBy: profile?.id }),
   ]);
-  return { systems: systems.map(({ name, slug }) => ({ name, slug })), catalog };
+  return { systems, catalog };
 }

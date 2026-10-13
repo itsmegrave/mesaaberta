@@ -5,7 +5,7 @@ import { SUGGESTION_NAME } from '$lib/tables/catalog';
 // Shared by the admin forms (which show the limits) and their actions (which decide).
 z.config({ jitless: true });
 
-export const CATALOG_KINDS = ['platform', 'tag'] as const;
+export const CATALOG_KINDS = ['platform', 'tag', 'system'] as const;
 export type CatalogKind = (typeof CATALOG_KINDS)[number];
 
 const kind = z.enum(CATALOG_KINDS);

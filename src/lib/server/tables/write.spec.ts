@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, gameTables, profiles, registrations } from '../db/schema';
+import { events, gameTables, profiles, registrations, systems } from '../db/schema';
+import { approveEntry, mergeEntry, rejectEntry } from '../admin/catalog';
+import { listSystems } from '../systems';
 import { createTestDb, pgErrorCode } from '../db/test-db';
 import { findTableBySlug, joinDetailsOf, listUpcomingTables } from './queries';
 import { createTable, disableTable, loadTableForEdit, publishTable, updateTable } from './write';
@@ -59,6 +61,8 @@ beforeEach(() => test.db.delete(events));
 
 const rowOf = async (slug: string) =>
   (await test.db.select().from(gameTables).where(eq(gameTables.slug, slug)))[0];
+const rowOfTitle = async (title: string) =>
+  (await test.db.select().from(gameTables).where(eq(gameTables.title, title)))[0];
 
 describe('createTable', () => {
   it('creates a table the creator is the GM of, live at a slug made from its title', async () => {
@@ -910,5 +914,131 @@ describe('drafts', () => {
     await expect(
       createTable(test.db, ana, input({ title: 'Aberta' }), { now }),
     ).resolves.toMatchObject({ slug: 'aberta' });
+  });
+});
+
+describe('suggesting a system', () => {
+  const systemOf = async (slug: string) =>
+    (await test.db.select().from(systems).where(eq(systems.slug, slug)))[0];
+  const typesOf = async () => (await test.db.select().from(events)).map((event) => event.type);
+
+  it('saves the table as a draft, whatever button was pressed, with the system waiting', async () => {
+    const created = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Sistema Novo', systemSlug: 'new:Meu Sistema Caseiro' }),
+      { now },
+    );
+
+    expect(created.draft).toBe(true);
+    expect(await rowOf(created.slug)).toMatchObject({ status: 'draft' });
+    expect(await systemOf('meu-sistema-caseiro')).toMatchObject({
+      name: 'Meu Sistema Caseiro',
+      status: 'pending',
+      suggestedBy: ana.id,
+    });
+    expect(await typesOf()).toEqual(['TableDrafted']);
+    expect(await findTableBySlug(test.db, created.slug, now)).toBeNull();
+  });
+
+  it('offers the suggestion to its GM alone, and to nobody as a public system', async () => {
+    const slugs = async (suggestedBy?: string) =>
+      (await listSystems(test.db, { suggestedBy })).map((system) => system.slug);
+
+    expect(await slugs()).not.toContain('meu-sistema-caseiro');
+    expect(await slugs(bruno.id)).not.toContain('meu-sistema-caseiro');
+    expect(await listSystems(test.db, { suggestedBy: ana.id })).toContainEqual({
+      name: 'Meu Sistema Caseiro',
+      slug: 'meu-sistema-caseiro',
+      pending: true,
+    });
+  });
+
+  it('cannot be published until an admin approves the system', async () => {
+    const { slug } = await rowOfTitle('Sistema Novo');
+
+    await expect(publishTable(test.db, ana, slug, now)).rejects.toMatchObject({
+      message: 'system_pending',
+    });
+
+    const system = await systemOf('meu-sistema-caseiro');
+    await approveEntry(test.db, admin, 'system', system.id);
+    await publishTable(test.db, ana, slug, now);
+
+    expect(await rowOf(slug)).toMatchObject({ status: 'active' });
+    expect(await findTableBySlug(test.db, slug, now)).toMatchObject({
+      system: { name: 'Meu Sistema Caseiro' },
+    });
+  });
+
+  it('takes a typed name the catalog already has as that system, without waiting', async () => {
+    const created = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Nome Repetido', systemSlug: 'new:daggerheart' }),
+      { now },
+    );
+
+    expect(created.draft).toBe(false);
+    expect(await rowOf(created.slug)).toMatchObject({ status: 'active' });
+  });
+
+  it('a turned-down system keeps its table a draft until the GM picks another', async () => {
+    const { slug } = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Recusado', systemSlug: 'new:Sistema Recusado' }),
+      { now },
+    );
+    const system = await systemOf('sistema-recusado');
+    await rejectEntry(test.db, admin, 'system', system.id);
+
+    expect(await rowOf(slug)).toMatchObject({ status: 'draft', systemId: system.id });
+    await expect(publishTable(test.db, ana, slug, now)).rejects.toMatchObject({
+      message: 'system_rejected',
+    });
+    await expect(
+      createTable(test.db, bruno, input({ title: 'De Novo', systemSlug: 'new:Sistema Recusado' }), {
+        now,
+      }),
+    ).rejects.toMatchObject({ message: 'suggestion_unavailable' });
+
+    await updateTable(test.db, ana, slug, input({ title: 'Recusado' }));
+    await publishTable(test.db, ana, slug, now);
+    expect(await rowOf(slug)).toMatchObject({ status: 'active' });
+  });
+
+  it('a merge moves the waiting tables to the system that already existed', async () => {
+    const { slug } = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Duplicado', systemSlug: 'new:Dagger Heart 2' }),
+      { now },
+    );
+    const from = await systemOf('dagger-heart-2');
+    const into = await systemOf('daggerheart');
+
+    await mergeEntry(test.db, admin, 'system', from.id, into.id);
+
+    expect(await rowOf(slug)).toMatchObject({ status: 'draft', systemId: into.id });
+    await publishTable(test.db, ana, slug, now);
+    expect(await rowOf(slug)).toMatchObject({ status: 'active' });
+  });
+
+  it('refuses to move a public table to a system nobody approved', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Pública' }), { now });
+
+    await expect(
+      updateTable(test.db, ana, slug, input({ title: 'Pública', systemSlug: 'new:Outro Caseiro' })),
+    ).rejects.toMatchObject({ message: 'suggestion_needs_draft' });
+  });
+
+  it('refuses a name too short and a slug that is not offered', async () => {
+    await expect(
+      createTable(test.db, ana, input({ title: 'Curto', systemSlug: 'new:a' }), { now }),
+    ).rejects.toMatchObject({ message: 'suggestion_invalid' });
+    await expect(
+      createTable(test.db, ana, input({ title: 'Nada', systemSlug: 'nao-existe' }), { now }),
+    ).rejects.toMatchObject({ message: 'invalid' });
   });
 });

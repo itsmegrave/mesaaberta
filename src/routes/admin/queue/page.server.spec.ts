@@ -71,7 +71,7 @@ describe('the queue actions', () => {
 
   it('refuse an id that is not an id, and a kind that is not a catalog', async () => {
     expect((await run('approve', event({ kind: 'tag', id: 'x' }).event)).status).toBe(400);
-    expect((await run('approve', event({ kind: 'system', id: entry }).event)).status).toBe(400);
+    expect((await run('approve', event({ kind: 'partner', id: entry }).event)).status).toBe(400);
     expect(approveEntry).not.toHaveBeenCalled();
   });
 

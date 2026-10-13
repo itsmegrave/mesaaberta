@@ -5,6 +5,7 @@
   import CepLookup from './CepLookup.svelte';
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import { NEW_CATALOG_PREFIX } from '$lib/tables/catalog';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import Form from './Form.svelte';
   import { NAMELESS } from '$lib/profile/handle';
@@ -29,12 +30,14 @@
 
   type Props = {
     controller: ReturnType<typeof actionForm<TableFormValues>>;
-    systems: { name: string; slug: string }[];
+    systems: { name: string; slug: string; pending?: true }[];
     /** The platforms and tags a table can pick: approved, and the GM's own pending ones. */
     catalog: { platforms: CatalogPick[]; tags: CatalogPick[] };
     submitLabel: string;
     /** A new table: offers a second button that saves it without going public. */
     draftLabel?: string;
+    /** A new table or a draft: a system the list lacks can be suggested. */
+    suggestSystem?: boolean;
     imageUrl?: string | null;
     action?: string;
     /** Where "Cancelar" goes: the list for a new table, the table itself when editing. */
@@ -55,6 +58,7 @@
     catalog,
     submitLabel,
     draftLabel,
+    suggestSystem = false,
     imageUrl = null,
     action,
     cancelHref = '/tables',
@@ -65,6 +69,11 @@
   }: Props = $props();
   // svelte-ignore state_referenced_locally
   const { draft } = controller;
+  // A suggested system: one typed just now, or one of the GM's that no admin approved yet.
+  const systemWaits = $derived(
+    $draft.systemSlug.startsWith(NEW_CATALOG_PREFIX) ||
+      systems.some((system) => system.slug === $draft.systemSlug && system.pending),
+  );
   // "GMT-3": the zone's offset at the first session, or now until one is typed.
   const zoneOffset = $derived(
     new Intl.DateTimeFormat('pt-BR', { timeZone: $draft.timezone, timeZoneName: 'shortOffset' })
@@ -182,7 +191,12 @@
             required
             invalid={!!invalid('systemSlug')}
             onchange={(picked) => ($draft.systemSlug = picked[0] ?? '')}
+            suggestLabel={suggestSystem ? (name) => m.form_catalog_suggest({ name }) : undefined}
+            pendingLabel={m.form_catalog_pending()}
           />
+          {#if systemWaits}
+            <p class="mt-1 text-sm text-muted">{m.form_system_waiting_hint()}</p>
+          {/if}
           {#if err('systemSlug')}<p
               id="systemSlug-error"
               role="alert"

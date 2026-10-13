@@ -8,6 +8,7 @@ import { listRegistrations, registrationStatus } from '../registrations/service'
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
+import { systemWaitingOf } from '../systems';
 export const read = async ({ locals, params }: RequestEvent) => {
   const signedIn = (await locals.getUser()) !== null;
   const profile = await locals.getProfile().catch(() => null);
@@ -66,6 +67,8 @@ export const read = async ({ locals, params }: RequestEvent) => {
     },
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     canEdit: can(profile, 'table:edit', { gmId, tableStatus: found.status }),
+    systemWaiting:
+      found.status === 'draft' ? await systemWaitingOf(locals.db!, found.system.slug) : null,
     signedIn,
     // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.
     gmAcceptsDirect: gm?.enabled ?? false,

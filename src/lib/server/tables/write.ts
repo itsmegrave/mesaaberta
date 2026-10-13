@@ -1,4 +1,4 @@
-import { and, count, eq, like } from 'drizzle-orm';
+import { and, count, eq, like, or, sql } from 'drizzle-orm';
 import { addTableMember } from '../messages/service';
 import type { AnyDb } from '../db/client';
 import { gameTables, registrations, systems } from '../db/schema';
@@ -13,7 +13,7 @@ import { slugify, tableSlug } from '$lib/slug';
 import { minutesToHours } from '$lib/tables/format';
 import type { TableInput } from '$lib/tables/schema';
 import { formatCep } from '$lib/location/cep';
-import { NEW_CATALOG_PREFIX } from '$lib/tables/catalog';
+import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '$lib/tables/catalog';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
@@ -25,11 +25,51 @@ function isSlugConflict(error: unknown): boolean {
   return code === '23505' && `${constraint_name ?? constraint ?? message}`.includes('slug');
 }
 
-async function systemIdOf(db: AnyDb, slug: string) {
-  const [system] = await db.select({ id: systems.id }).from(systems).where(eq(systems.slug, slug));
-  if (!system) throw new Invalid('systemSlug', 'invalid');
+/**
+ * The system a table's form picked. A pick is an approved system's slug, a pending one the GM
+ * suggested, the system the table already has (`held`), or a new name (`new:<name>`, see
+ * `NEW_CATALOG_PREFIX`), saved as the GM's suggestion. `waiting` says no admin has let it in yet:
+ * a table with such a system stays a draft. Anything else throws `Invalid` on the field.
+ */
+async function systemFor(db: AnyDb, pick: string, gmId: string, held?: string) {
+  const waits = (status: string) => status === 'pending' || status === 'rejected';
 
-  return system.id;
+  if (pick.startsWith(NEW_CATALOG_PREFIX)) {
+    const name = pick.slice(NEW_CATALOG_PREFIX.length).trim().replace(/\s+/g, ' ');
+    const slug = slugify(name, { fallback: '' });
+    if (name.length < SUGGESTION_NAME.min || name.length > SUGGESTION_NAME.max || !slug) {
+      throw new Invalid('systemSlug', 'suggestion_invalid');
+    }
+    const [existing] = await db
+      .select({ id: systems.id, status: systems.status })
+      .from(systems)
+      .where(or(eq(systems.slug, slug), eq(sql`lower(${systems.name})`, name.toLowerCase())));
+    if (existing) {
+      // Turned down or retired by the moderation: it cannot come back this way.
+      if (existing.status !== 'approved' && existing.status !== 'pending') {
+        throw new Invalid('systemSlug', 'suggestion_unavailable');
+      }
+      return { id: existing.id, waiting: waits(existing.status) };
+    }
+    const [created] = await db
+      .insert(systems)
+      .values({ name, slug, status: 'pending', suggestedBy: gmId })
+      .returning({ id: systems.id });
+    return { id: created.id, waiting: true };
+  }
+
+  const [system] = await db
+    .select({ id: systems.id, status: systems.status, suggestedBy: systems.suggestedBy })
+    .from(systems)
+    .where(eq(systems.slug, pick));
+  const allowed =
+    system &&
+    (system.status === 'approved' ||
+      system.id === held ||
+      (system.status === 'pending' && system.suggestedBy === gmId));
+  if (!allowed) throw new Invalid('systemSlug', 'invalid');
+
+  return { id: system.id, waiting: waits(system.status) };
 }
 
 /** The columns a form controls. Never the slug, the GM, the status or the calendar sequence. */
@@ -39,9 +79,8 @@ const catalogPicks = (input: TableInput, gmId: string) => ({
   tagSlugs: input.tags,
 });
 
-async function columnsOf(db: AnyDb, input: TableInput) {
+function columnsOf(input: TableInput) {
   return {
-    systemId: await systemIdOf(db, input.systemSlug),
     title: input.title,
     description: input.description,
     extraInfo: input.extraInfo,
@@ -76,7 +115,9 @@ async function columnsOf(db: AnyDb, input: TableInput) {
  * counts, and in the same transaction as the insert, so a refused request leaves nothing behind.
  *
  * With `draft`, the table is saved without going public: it is not listed, nobody but its GM (and
- * an admin) can open it, and nothing is posted or mailed until `publishTable`.
+ * an admin) can open it, and nothing is posted or mailed until `publishTable`. A table whose
+ * system is a suggestion no admin has approved yet is saved as a draft whatever was asked; the
+ * result says so.
  */
 export async function createTable(
   db: AnyDb,
@@ -87,10 +128,10 @@ export async function createTable(
     imagePath = null,
     draft = false,
   }: { now?: Date; imagePath?: string | null; draft?: boolean } = {},
-): Promise<{ slug: string; eventId: string }> {
+): Promise<{ slug: string; eventId: string; draft: boolean }> {
   authorize(actor, 'table:create');
 
-  const columns = { ...(await columnsOf(db, input)), imagePath };
+  const columns = { ...columnsOf(input), imagePath };
   if (columns.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
 
   const base = slugify(input.title, { fallback: 'mesa' });
@@ -106,11 +147,14 @@ export async function createTable(
     try {
       // The table and its event commit together, or neither does. A slug conflict rolls both
       // back, and the retry writes a fresh pair.
-      const eventId = await db.transaction(async (tx) => {
+      const saved = await db.transaction(async (tx) => {
+        // Inside the transaction: a refused request leaves no suggestion behind either.
+        const system = await systemFor(tx as unknown as AnyDb, input.systemSlug, actor!.id);
+        const asDraft = draft || system.waiting;
         await enforceRateLimit(
           tx as unknown as AnyDb,
           actor!.id,
-          draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT,
+          asDraft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT,
           now,
         );
 
@@ -120,23 +164,25 @@ export async function createTable(
             ...columns,
             slug,
             gmId: actor!.id,
-            ...(draft ? { status: 'draft' as const } : {}),
+            systemId: system.id,
+            ...(asDraft ? { status: 'draft' as const } : {}),
           })
           .returning({ id: gameTables.id });
         await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input, actor!.id));
         await addTableMember(tx as unknown as AnyDb, created.id, actor!.id);
 
-        return recordEvent(
+        const eventId = await recordEvent(
           tx as unknown as AnyDb,
           {
-            type: draft ? 'TableDrafted' : 'TableCreated',
+            type: asDraft ? 'TableDrafted' : 'TableCreated',
             actorId: actor!.id,
             payload: { tableId: created.id, slug, title: input.title },
           },
           { now },
         );
+        return { eventId, draft: asDraft };
       });
-      return { slug, eventId };
+      return { slug, ...saved };
     } catch (error) {
       if (!isSlugConflict(error) || attempt === MAX_SLUG_ATTEMPTS) throw error;
     }
@@ -295,7 +341,13 @@ export async function updateTable(
   const table = await findForWrite(db, slug);
   authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
 
-  const columns = await columnsOf(db, input);
+  // A suggestion is the table's GM's, also when an admin is the one editing.
+  const system = await systemFor(db, input.systemSlug, table.gmId, table.systemId);
+  // A public table cannot move to a system nobody approved: it would have to hide again.
+  if (system.waiting && system.id !== table.systemId && table.status !== 'draft') {
+    throw new Invalid('systemSlug', 'suggestion_needs_draft');
+  }
+  const columns = { ...columnsOf(input), systemId: system.id };
   // Invites and notifications go out only for a change players would see.
   const changed = PLAYER_FACING.some((field) => !sameValue(table[field], columns[field]));
   const [current] = await db
@@ -372,6 +424,13 @@ export async function publishTable(
   authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
   if (table.status !== 'draft') throw new Invalid('slug', 'not_a_draft');
   if (table.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
+  const [system] = await db
+    .select({ status: systems.status })
+    .from(systems)
+    .where(eq(systems.id, table.systemId));
+  // Its system is still a suggestion (or was turned down): the table waits, or takes another one.
+  if (system.status === 'pending') throw new Invalid('systemSlug', 'system_pending');
+  if (system.status === 'rejected') throw new Invalid('systemSlug', 'system_rejected');
 
   const eventId = await db.transaction(async (tx) => {
     await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
