@@ -11,7 +11,7 @@
   import { onMount } from 'svelte';
   import { m } from '$lib/paraglide/messages';
   import { foldForSearch, matchesSearch } from '$lib/search';
-  import { NEW_CATALOG_PREFIX, SUGGESTION_NAME, pickName } from '$lib/tables/catalog';
+  import { NEW_CATALOG_PREFIX, SUGGESTION_NAME, pickName } from '@mesaaberta/core/tables/catalog';
 
   /** `pending`: an entry not approved yet, marked with `pendingLabel`. */
   type Item = { name: string; slug: string; pending?: true };

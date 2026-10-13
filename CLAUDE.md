@@ -30,7 +30,7 @@ The system is live at mesaaberta.app. The split into web / api / worker and the 
 - `packages/db` (`@mesaaberta/db`): Drizzle schema and the postgres.js client. Migrations stay in `drizzle/`.
 - `packages/contracts`: `DomainEvent` types and shared vocabulary.
 - `packages/events`: the `EventBus` port, the Postgres outbox and poller, the transport contract (`JobTransport`/`JobExecutor`, ADR 0003).
-- `packages/core` (`@mesaaberta/core`): the event-delivery graph (handlers, sweeper, scheduled, connectors, logger, privacy and Sentry options). Old paths under `src/lib` are re-export shims, so importers did not change.
+- `packages/core` (`@mesaaberta/core`): the event-delivery graph (handlers, sweeper, scheduled, connectors, logger, privacy and Sentry options). The web app imports it directly (`@mesaaberta/core/...`); the old `src/lib` re-export shims are gone.
 - `apps/worker` (`@mesaaberta/worker`): the background Worker (cron today, Queues consumer later). **Not deployed and has no crons or routes**; the web Worker still owns both crons. Its README has the cutover and rollback.
 - `apps/api` (`@mesaaberta/api`): a Hono app that will own writes, policies and the outbox one route at a time, behind `api_<area>` flags. **Inert scaffold: only `/healthz`, not deployed, no route, and the web app does not call it.** Its README has the rule for moving a route.
 - Ports (adapters with a no-op default): social (`SocialPublisher`), mail (`mailerFor`, `MAIL_PROVIDER=none`), analytics, flags (`createFlags` seam), telemetry (`TelemetrySink`; Sentry is the web and worker adapter).

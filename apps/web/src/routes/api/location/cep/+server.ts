@@ -2,7 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import { normalizeCep } from '$lib/location/cep';
 import { lookupCep } from '$lib/server/location/cep';
 import { recordAttempt } from '$lib/server/auth/attempt-limit';
-import { RateLimited } from '$lib/server/errors';
+import { RateLimited } from '@mesaaberta/core/server/errors';
 import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals, url, setHeaders }) => {
   const user = await locals.getUser();

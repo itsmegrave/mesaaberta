@@ -3,11 +3,11 @@ import type { z, ZodType } from 'zod';
 import { validateStringForm } from '$lib/forms/contract';
 import { requireAdmin } from '../admin-access';
 import { requireUser } from '../auth/guard';
-import type { Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
-import { dispatchEvent } from '../events/dispatcher';
-import { handlersFor } from '../events/handlers';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
 type Apply<Schema extends ZodType> = (
   db: AnyDb,

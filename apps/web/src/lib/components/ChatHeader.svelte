@@ -11,7 +11,7 @@
   import { muteSchema } from '$lib/messages/schema';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
 
   let {
     conversation,

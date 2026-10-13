@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { listCalendarTables } from '$lib/server/calendar/feed';
-import { buildCalendar, uidDomainFor } from '$lib/server/calendar/ics';
+import { buildCalendar, uidDomainFor } from '@mesaaberta/core/server/calendar/ics';
 import type { RequestHandler } from './$types';
 
 // "Baixar calendário" in Minhas mesas: the tables the person runs or has a seat at, as one `.ics`.

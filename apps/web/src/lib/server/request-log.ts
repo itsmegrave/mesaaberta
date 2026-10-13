@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
 import { isHttpError, isRedirect } from '@sveltejs/kit';
-import type { Logger } from './logger';
+import type { Logger } from '@mesaaberta/core/server/logger';
 
 /**
  * Gives each request a logger bound to its request id and writes one summary line when it ends.

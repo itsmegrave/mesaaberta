@@ -1,16 +1,20 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createTestDb, pgErrorCode } from '../../db/test-db';
-import { crowdfundings, events, profiles, notifications } from '../../db/schema';
-import { importCandidate, claimRun, finishRun } from './store';
+import { crowdfundings, events, profiles, notifications } from '@mesaaberta/core/server/db/schema';
+import {
+  importCandidate,
+  claimRun,
+  finishRun,
+} from '@mesaaberta/core/server/crowdfunding/import/store';
 import { addCrowdfunding, fileCrowdfundingReport, listCrowdfundings } from '../service';
 import { listAdminCrowdfundings, removeCrowdfunding } from '../admin';
 import { readCrowdfundingFilters } from '../../../crowdfunding/filters';
-import { moderationHandler } from '../../events/moderation';
+import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
 import { reportDetail } from '../../moderation/admin';
-import type { SourceCandidate } from './types';
-import type { Actor } from '../../auth/policy';
-import type { StoredEvent } from '../../events/types';
+import type { SourceCandidate } from '@mesaaberta/core/server/crowdfunding/import/types';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-08T04:00:00Z');
 const member: Actor = { id: crypto.randomUUID(), role: 'member', status: 'active' },

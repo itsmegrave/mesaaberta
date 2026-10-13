@@ -1,13 +1,13 @@
 import { error, redirect } from '@sveltejs/kit';
-import { can } from '$lib/server/auth/policy';
-import { instagramAccounts } from '$lib/server/db/schema';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { instagramAccounts } from '@mesaaberta/core/server/db/schema';
 import {
   configured,
   encryptToken,
   exchangeCode,
   graph,
   type InstagramEnv,
-} from '$lib/server/instagram/api';
+} from '@mesaaberta/core/server/instagram/api';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, cookies, url }) => {

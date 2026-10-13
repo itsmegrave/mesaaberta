@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createTestDb } from '../db/test-db';
-import { events } from '../db/schema';
-import { runSweeper } from './sweeper';
-import { recordEvent } from './outbox';
-import type { Handler } from './types';
+import { events } from '@mesaaberta/core/server/db/schema';
+import { runSweeper } from '@mesaaberta/core/server/events/sweeper';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Handler } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => (test = await createTestDb()));

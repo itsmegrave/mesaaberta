@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, profiles, ratings, registrations, systems } from '../db/schema';
+import {
+  gameTables,
+  profiles,
+  ratings,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { listPlaying, listRunning } from './queries';
 

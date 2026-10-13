@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema';
+import * as schema from '@mesaaberta/core/server/db/schema';
 
 /**
  * A pooled connection to the real Postgres in `DATABASE_URL`, for the integration tests. Several

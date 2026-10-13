@@ -2,9 +2,9 @@ import { error, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '../admin-access';
 import { listAdminTables } from '../admin/tables';
-import { instagramAccounts } from '../db/schema';
-import { imageUrl, supabaseUrlOf } from '../images';
-import { socialFor, type SocialEnv } from '../social';
+import { instagramAccounts } from '@mesaaberta/core/server/db/schema';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 export async function read({ locals, setHeaders, url }: RequestEvent) {
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });

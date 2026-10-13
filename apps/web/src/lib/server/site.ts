@@ -1,5 +1,5 @@
 import { publicConfig, readConfig, type PublicConfig } from '@mesaaberta/config';
-import type { Logger } from './logger';
+import type { Logger } from '@mesaaberta/core/server/logger';
 
 export type Site = PublicConfig;
 

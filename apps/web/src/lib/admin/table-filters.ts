@@ -1,4 +1,4 @@
-import { TABLE_STATUSES, type TableStatus } from '$lib/tables/status-values';
+import { TABLE_STATUSES, type TableStatus } from '@mesaaberta/core/tables/status-values';
 import { pageSizeOf, sortOf } from './list';
 
 export const TABLE_SORTS = ['created', 'title', 'next'] as const;

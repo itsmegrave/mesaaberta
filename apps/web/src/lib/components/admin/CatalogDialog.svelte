@@ -15,8 +15,8 @@
   import TextInput from '$lib/components/TextInput.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import { m } from '$lib/paraglide/messages';
-  import { slugify } from '$lib/slug';
-  import { SUGGESTION_NAME } from '$lib/tables/catalog';
+  import { slugify } from '@mesaaberta/core/slug';
+  import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
   import { toast } from '$lib/toaster';
 
   type Mode = 'merge' | 'reject' | 'rename' | 'disable' | 'create';

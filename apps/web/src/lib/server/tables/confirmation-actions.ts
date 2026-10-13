@@ -4,13 +4,17 @@ import { validateStringForm } from '$lib/forms/contract';
 import { answerSchema, postponeSchema } from '$lib/tables/confirmation';
 import { requireUser } from '../auth/guard';
 import { safeNext } from '../auth/safe-next';
-import type { Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { Invalid } from '../errors';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { Invalid } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
-import { dispatchEvent } from '../events/dispatcher';
-import { handlersFor } from '../events/handlers';
-import { concludeTable, markTableNotHeld, postponeTable } from './lifecycle';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import {
+  concludeTable,
+  markTableNotHeld,
+  postponeTable,
+} from '@mesaaberta/core/server/tables/lifecycle';
 import { publishTable } from './write';
 
 /**

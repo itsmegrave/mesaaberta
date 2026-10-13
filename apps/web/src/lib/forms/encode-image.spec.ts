@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { encodeImage } from './encode-image';
-import { MAX_IMAGE_BYTES } from './files';
+import { MAX_IMAGE_BYTES } from '@mesaaberta/core/forms/files';
 
 const blob = (size: number, type: string) => new Blob([new Uint8Array(size)], { type });
 const canvas = (encode: (type: string, quality: number) => Blob | null) => ({

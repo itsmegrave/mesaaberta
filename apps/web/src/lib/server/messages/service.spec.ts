@@ -8,10 +8,15 @@ import {
   notifications,
   profiles,
   systems,
-} from '../db/schema';
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Actor } from '../auth/policy';
-import { DirectMessagesOff, Forbidden, NotFound, RateLimited } from '../errors';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import {
+  DirectMessagesOff,
+  Forbidden,
+  NotFound,
+  RateLimited,
+} from '@mesaaberta/core/server/errors';
 import { approveRegistration, joinTable, leaveTable, removePlayer } from '../registrations/service';
 import {
   MESSAGE_LIMIT,
@@ -28,7 +33,7 @@ import {
   setMuted,
   unreadConversations,
 } from './service';
-import { pruneTableChats } from './retention';
+import { pruneTableChats } from '@mesaaberta/core/server/messages/retention';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000020${String(n).padStart(2, '0')}`;

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, profiles, systems } from '../db/schema';
+import { gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Actor } from '../auth/policy';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
   approveRegistration,
   declineRegistration,

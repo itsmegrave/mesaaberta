@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { requireUser } from '$lib/server/auth/guard';
-import { gameTables, registrations } from '$lib/server/db/schema';
+import { gameTables, registrations } from '@mesaaberta/core/server/db/schema';
 import { addTableMember, ensureTableConversation } from '$lib/server/messages/service';
 import type { RequestHandler } from './$types';
 

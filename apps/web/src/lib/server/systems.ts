@@ -1,6 +1,6 @@
 import { and, asc, eq, or } from 'drizzle-orm';
-import type { AnyDb } from './db/client';
-import { systems } from './db/schema';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { systems } from '@mesaaberta/core/server/db/schema';
 
 /**
  * The approved RPG systems, most played first and then A to Z (the seeded order). Use it wherever

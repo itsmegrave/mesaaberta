@@ -1,17 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
-import { events, gameTables, profiles, systems } from '../db/schema';
+import { events, gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Actor } from '../auth/policy';
-import { findTableBySlug, listUpcomingTables } from './queries';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import { findTableBySlug, listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import {
   closeElapsedTables,
   concludeTable,
   markTableNotHeld,
   postponeTable,
   sessionEndedBy,
-} from './lifecycle';
+} from '@mesaaberta/core/server/tables/lifecycle';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000030${String(n).padStart(2, '0')}`;

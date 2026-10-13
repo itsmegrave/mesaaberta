@@ -1,12 +1,18 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { readCrowdfundingFilters } from '$lib/crowdfunding/filters';
-import type { Actor } from '../auth/policy';
-import { crowdfundings, events, notifications, profiles, reports } from '../db/schema';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import {
+  crowdfundings,
+  events,
+  notifications,
+  profiles,
+  reports,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb, pgErrorCode } from '../db/test-db';
-import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
-import { moderationHandler } from '../events/moderation';
-import type { StoredEvent } from '../events/types';
+import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
+import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 import { listReports, reportDetail } from '../moderation/admin';
 import { listAdminCrowdfundings, removeCrowdfunding } from './admin';
 import {

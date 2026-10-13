@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { postalCodes } from '../db/schema';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { postalCodes } from '@mesaaberta/core/server/db/schema';
 import { areaOf, type CepPlace } from '$lib/location/cep';
 import type { TableInput } from '$lib/tables/schema';
-import { Invalid } from '../errors';
+import { Invalid } from '@mesaaberta/core/server/errors';
 
 export type CepLookup =
   { status: 'found'; place: CepPlace } | { status: 'not_found' } | { status: 'unavailable' };

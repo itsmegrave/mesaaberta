@@ -1,9 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { openIntegrationDb } from '../db/integration-db';
-import { gameTables, instagramAccounts, instagramPosts, profiles, systems } from '../db/schema';
-import { encryptToken, type InstagramEnv, type graph } from './api';
-import { publishInstagramPosts, publishInstagramTable } from './publisher';
+import {
+  gameTables,
+  instagramAccounts,
+  instagramPosts,
+  profiles,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
+import { encryptToken, type InstagramEnv, type graph } from '@mesaaberta/core/server/instagram/api';
+import {
+  publishInstagramPosts,
+  publishInstagramTable,
+} from '@mesaaberta/core/server/instagram/publisher';
 
 const { db, close } = openIntegrationDb();
 const gmId = crypto.randomUUID();

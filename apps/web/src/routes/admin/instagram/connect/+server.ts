@@ -1,6 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
-import { can } from '$lib/server/auth/policy';
-import { callbackUrl, configured, SCOPES, type InstagramEnv } from '$lib/server/instagram/api';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import {
+  callbackUrl,
+  configured,
+  SCOPES,
+  type InstagramEnv,
+} from '@mesaaberta/core/server/instagram/api';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals, cookies }) => {

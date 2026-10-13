@@ -1,4 +1,4 @@
-import { slugify } from '$lib/slug';
+import { slugify } from '@mesaaberta/core/slug';
 
 // The username is the person's public identifier and slug: lowercase letters, digits and single
 // hyphens. One module for the browser and the server, so the form and the action cannot disagree.

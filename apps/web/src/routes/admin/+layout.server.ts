@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { can } from '$lib/server/auth/policy';
+import { can } from '@mesaaberta/core/server/auth/policy';
 import { failedEventCount } from '$lib/server/admin/event-queue';
 import { pendingCount } from '$lib/server/admin/catalog';
-import { instagramPosts } from '$lib/server/db/schema';
+import { instagramPosts } from '@mesaaberta/core/server/db/schema';
 import { pendingPartnerCount } from '$lib/server/partners/admin';
 import { waitingReports } from '$lib/server/moderation/admin';
 import { count, eq } from 'drizzle-orm';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AnyDb } from '../db/client';
-import { socialFor } from './index';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { socialFor } from '@mesaaberta/core/server/social/index';
 
 // A database that fails on any use, so a test can show an adapter never touches it.
 const untouched = new Proxy(

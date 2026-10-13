@@ -2,14 +2,14 @@ import { error, redirect } from '@sveltejs/kit';
 import { validateStringForm } from '$lib/forms/contract';
 import { formMessage } from '$lib/forms/server';
 import type { z } from 'zod';
-import type { AnyDb } from '../db/client';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { requireUser } from '../auth/guard';
-import type { Actor } from '../auth/policy';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { safeNext } from '../auth/safe-next';
-import { RateLimited } from '../errors';
+import { RateLimited } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
-import { dispatchEvent } from '../events/dispatcher';
-import { handlersFor } from '../events/handlers';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
 type Event = {
   locals: App.Locals;

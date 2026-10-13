@@ -1,11 +1,17 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { gameTables, profiles, ratings, registrations, systems } from '../db/schema';
-import { publicName } from '../db/public-name';
-import { rateBlocker } from '../auth/policy';
-import { firstSessionEnded } from '../ratings/service';
-import { hasStarted } from '../tables/schedule';
-import { seatsLeft } from '../tables/queries';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import {
+  gameTables,
+  profiles,
+  ratings,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { rateBlocker } from '@mesaaberta/core/server/auth/policy';
+import { firstSessionEnded } from '@mesaaberta/core/server/ratings/service';
+import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
+import { seatsLeft } from '@mesaaberta/core/server/tables/queries';
 
 // The "My tables" page: what I play in, and what I run. Sessions coming up come first, soonest
 // first; the ones that have started go last, the most recent first.

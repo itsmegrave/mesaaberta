@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
 import { env as publicEnv } from '$env/dynamic/public';
 import { sentryOptionsFor } from '$lib/observability/privacy';
-import type { PayloadCache } from '$lib/server/flags/payload';
+import type { PayloadCache } from '@mesaaberta/core/server/flags/payload';
 
 /** What the host offers beyond variables. Every member is optional: plain `vite dev` has none. */
 export type Host = {

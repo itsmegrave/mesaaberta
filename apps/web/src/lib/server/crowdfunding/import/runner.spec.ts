@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createTestDb } from '../../db/test-db';
-import { runDailyImports } from './runner';
-import type { SourceAdapter } from './types';
-import type { createDb } from '../../db/client';
-import { logger } from '../../logger';
+import { runDailyImports } from '@mesaaberta/core/server/crowdfunding/import/runner';
+import type { SourceAdapter } from '@mesaaberta/core/server/crowdfunding/import/types';
+import type { createDb } from '@mesaaberta/core/server/db/client';
+import { logger } from '@mesaaberta/core/server/logger';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => {
   test = await createTestDb();
@@ -146,7 +146,7 @@ it('falls back to no image and closes the database when optional storage setting
 });
 
 it('restarts discovery when the source feed changes instead of reusing an incompatible cursor', async () => {
-  const { crowdfundingImportRuns } = await import('../../db/schema');
+  const { crowdfundingImportRuns } = await import('@mesaaberta/core/server/db/schema');
   await test.db.insert(crowdfundingImportRuns).values({
     source: 'catarse',
     runDate: '2026-10-14',

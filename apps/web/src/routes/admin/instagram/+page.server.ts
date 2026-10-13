@@ -1,8 +1,8 @@
 import { error, fail } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
-import { can } from '$lib/server/auth/policy';
-import { instagramAccounts, instagramPosts } from '$lib/server/db/schema';
-import { configured, decryptToken, type InstagramEnv } from '$lib/server/instagram/api';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { instagramAccounts, instagramPosts } from '@mesaaberta/core/server/db/schema';
+import { configured, decryptToken, type InstagramEnv } from '@mesaaberta/core/server/instagram/api';
 import { publishInstagramAction } from '$lib/server/admin/instagram-action';
 import type { Actions, PageServerLoad } from './$types';
 

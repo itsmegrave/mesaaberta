@@ -2,9 +2,9 @@ import { error, type RequestEvent } from '@sveltejs/kit';
 import { and, eq, ne } from 'drizzle-orm';
 import { initialForm } from '$lib/forms/contract';
 import { requireUser } from '$lib/server/auth/guard';
-import { gameTables } from '$lib/server/db/schema';
-import { NotFound } from '$lib/server/errors';
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { gameTables } from '@mesaaberta/core/server/db/schema';
+import { NotFound } from '@mesaaberta/core/server/errors';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { withPicture, withPictures } from '$lib/server/messages/present';
 import { listMessages, loadConversation, markConversationRead } from '$lib/server/messages/service';
 

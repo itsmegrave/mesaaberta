@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, gameTables, profiles, systems } from '../db/schema';
+import { events, gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { recordEvent } from './outbox';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import {
   dispatchEvent,
   MAX_ATTEMPTS,
@@ -11,9 +11,9 @@ import {
   pruneEvents,
   RETENTION_DAYS,
   sweepEvents,
-} from './dispatcher';
-import { createLogger } from '../logger';
-import type { Handler, StoredEvent } from './types';
+} from '@mesaaberta/core/server/events/dispatcher';
+import { createLogger } from '@mesaaberta/core/server/logger';
+import type { Handler, StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const t0 = new Date('2026-10-01T12:00:00Z');

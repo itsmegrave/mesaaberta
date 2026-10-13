@@ -2,19 +2,19 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { initialForm, validateFormData, validateStringForm } from '$lib/forms/contract';
 import { refuse, responseForm } from '$lib/forms/server';
 import { anonymiseProfile, closeAccount, setAvatarPath } from '$lib/server/account/service';
-import { deleteAuthUser, supabaseAdminFrom } from '$lib/server/auth/admin-client';
+import { deleteAuthUser, supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
 import { requireUser } from '$lib/server/auth/guard';
 import { connections, unlink } from '$lib/server/auth/identities';
-import { dispatchEvent } from '$lib/server/events/dispatcher';
-import { handlersFor } from '$lib/server/events/handlers';
-import { Forbidden, Invalid, NotFound } from '$lib/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import {
   AVATAR_BUCKET,
   pictureOf,
   prepareImage,
   storeImage,
   supabaseUrlOf,
-} from '$lib/server/images';
+} from '@mesaaberta/core/server/images';
 import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
 import { directMessagesSchema } from '$lib/messages/schema';
 import { setDirectMessages } from '$lib/server/messages/service';

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Logger } from '../logger';
+import type { Logger } from '@mesaaberta/core/server/logger';
 
 // Password reset through Supabase Auth's recovery flow: it emails a link, the link signs the person
 // in through our callback, and `updateUser` sets the new password. The email address and the

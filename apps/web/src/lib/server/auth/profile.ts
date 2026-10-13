@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { profiles } from '../db/schema';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { PROFILE_LIMITS } from '$lib/profile/schema';
 
 /** The part of a Supabase user this needs. Provider details arrive in `user_metadata`. */

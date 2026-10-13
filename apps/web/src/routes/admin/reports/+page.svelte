@@ -12,7 +12,7 @@
   import { REPORT_FILTERS, type ReportFilter } from '$lib/admin/report-filters';
   import { localizedHref } from '$lib/i18n/locales';
   import { reasonLabel } from '$lib/moderation/labels';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AdminReports } from '$lib/server/moderation/admin';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { m } from '$lib/paraglide/messages';

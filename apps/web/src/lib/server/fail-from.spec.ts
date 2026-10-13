@@ -7,7 +7,7 @@ import {
   RateLimited,
   TableFull,
   TooEarly,
-} from './errors';
+} from '@mesaaberta/core/server/errors';
 import { failFrom } from './fail-from';
 
 describe('failFrom', () => {

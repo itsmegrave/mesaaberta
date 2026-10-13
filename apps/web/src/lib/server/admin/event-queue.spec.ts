@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, profiles } from '../db/schema';
+import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { MAX_ATTEMPTS } from '../events/dispatcher';
-import { recordEvent } from '../events/outbox';
-import type { Handler } from '../events/types';
-import type { Actor } from '../auth/policy';
+import { MAX_ATTEMPTS } from '@mesaaberta/core/server/events/dispatcher';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Handler } from '@mesaaberta/core/server/events/types';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { eventQueue, failedEventCount } from './event-queue';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

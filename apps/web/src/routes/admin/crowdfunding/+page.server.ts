@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
 import { listAdminCrowdfundings } from '$lib/server/crowdfunding/admin';
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { crowdfundingActions } from '$lib/server/moderation/admin-actions';
 import type { Actions, PageServerLoad } from './$types';
 

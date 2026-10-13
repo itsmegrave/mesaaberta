@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Invalid } from '$lib/server/errors';
-import { dispatchEvent } from '$lib/server/events/dispatcher';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { sendAnnouncement } from '$lib/server/notifications/announcements';
 import { actions } from './+page.server';
 
@@ -10,7 +10,7 @@ vi.mock('$lib/server/notifications/announcements', () => ({
   audienceSizes: vi.fn(async () => ({ all_active_users: 0, game_masters: 0, active_players: 0 })),
   listAnnouncements: vi.fn(async () => []),
 }));
-vi.mock('$lib/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
+vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 
 const admin = { id: 'admin', role: 'admin', status: 'active' };
 const valid = {

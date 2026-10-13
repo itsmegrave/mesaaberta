@@ -1,7 +1,7 @@
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { listSystems } from '$lib/server/systems';
-import { listCatalog } from '$lib/server/catalog';
-import { listUpcomingTables } from '$lib/server/tables/queries';
+import { listCatalog } from '@mesaaberta/core/server/catalog';
+import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { readTableFilters } from '$lib/tables/filters';
 import type { RequestEvent } from '@sveltejs/kit';
 

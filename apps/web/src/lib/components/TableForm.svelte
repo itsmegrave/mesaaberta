@@ -5,10 +5,10 @@
   import CepLookup from './CepLookup.svelte';
   import FormBanner from '$lib/components/FormBanner.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { NEW_CATALOG_PREFIX } from '$lib/tables/catalog';
+  import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import Form from './Form.svelte';
-  import { NAMELESS } from '$lib/profile/handle';
+  import { NAMELESS } from '@mesaaberta/core/profile/handle';
   import FormField from './FormField.svelte';
   import ErrorSummary from './ErrorSummary.svelte';
   import RichTextField from './RichTextField.svelte';
@@ -21,9 +21,9 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { localizedHref } from '$lib/i18n/locales';
-  import { formatHours, zonedToDate } from '$lib/tables/format';
+  import { formatHours, zonedToDate } from '@mesaaberta/core/tables/format';
   import { TABLE_LIMITS } from '$lib/tables/schema';
-  import { pickName } from '$lib/tables/catalog';
+  import { pickName } from '@mesaaberta/core/tables/catalog';
 
   type CatalogPick = { name: string; slug: string; pending?: true };
   import TableCard from './TableCard.svelte';

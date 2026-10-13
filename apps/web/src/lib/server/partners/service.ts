@@ -3,12 +3,16 @@ import { PARTNER_PAGE_SIZE, type PartnerFilters } from '$lib/partners/filters';
 import { partnerLinks, type PartnerInput } from '$lib/partners/schema';
 import type { PartnerReportInput } from '$lib/moderation/reports';
 import { parseSocialUrl, type Network } from '$lib/profile/social-links';
-import { authorize, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { partnerLinks as partnerLinksTable, partners, reports } from '../db/schema';
-import { Invalid, NotFound } from '../errors';
-import { recordEvent } from '../events/outbox';
-import type { Changes } from '../events/types';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import {
+  partnerLinks as partnerLinksTable,
+  partners,
+  reports,
+} from '@mesaaberta/core/server/db/schema';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Changes } from '@mesaaberta/core/server/events/types';
 import { enforceRateLimit, REPORT_LIMIT } from '../rate-limit';
 import { resolveOpenPartnerReports } from './admin';
 

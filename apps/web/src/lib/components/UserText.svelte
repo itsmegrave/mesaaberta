@@ -1,6 +1,6 @@
 <script lang="ts">
   import UserLink from './UserLink.svelte';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
 
   // Keep translated sentence order while making only its interpolated identity a link.
   let {

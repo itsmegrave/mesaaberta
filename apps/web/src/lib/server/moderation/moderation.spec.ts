@@ -8,12 +8,12 @@ import {
   registrations,
   reports,
   systems,
-} from '../db/schema';
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Actor } from '../auth/policy';
-import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
-import { moderationHandler } from '../events/moderation';
-import type { StoredEvent } from '../events/types';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
+import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 import { fileReport, reportTargetsOf } from './reports';
 import {
   auditLog,
@@ -27,7 +27,7 @@ import {
   revokeBan,
   startReview,
 } from './admin';
-import { liftExpiredBans, stillBanned } from './bans';
+import { liftExpiredBans, stillBanned } from '@mesaaberta/core/server/moderation/bans';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000020${String(n).padStart(2, '0')}`;

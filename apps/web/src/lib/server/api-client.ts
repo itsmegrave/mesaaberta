@@ -1,4 +1,4 @@
-import { logger, type Logger } from '$lib/server/logger';
+import { logger, type Logger } from '@mesaaberta/core/server/logger';
 
 /** The Service Binding to the api Worker (`env.API`); absent until the api is deployed and bound. */
 export type ApiBinding = { fetch: (request: Request) => Promise<Response> };

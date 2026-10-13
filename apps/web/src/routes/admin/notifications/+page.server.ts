@@ -5,9 +5,9 @@ import { announcementSchema, ANNOUNCEMENT_DEFAULTS } from '$lib/notifications/an
 import type { AnnouncementMessage } from '$lib/notifications/announcement-message';
 import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
-import { Invalid } from '$lib/server/errors';
-import { dispatchEvent } from '$lib/server/events/dispatcher';
-import { handlersFor } from '$lib/server/events/handlers';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import {
   audienceSizes,
   listAnnouncements,

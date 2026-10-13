@@ -1,7 +1,7 @@
 import { and, asc, count, eq, gt, lt, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { authAttempts } from '../db/schema';
-import { RateLimited } from '../errors';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { authAttempts } from '@mesaaberta/core/server/db/schema';
+import { RateLimited } from '@mesaaberta/core/server/errors';
 
 /**
  * Limits on the forms anyone can use without an account (sign in, sign up, password reset), per

@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
-import { createLogger } from './logger';
+import { createLogger } from '@mesaaberta/core/server/logger';
 import { handleRequestLog } from './request-log';
 import { error, redirect } from '@sveltejs/kit';
 

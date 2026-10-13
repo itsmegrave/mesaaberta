@@ -1,7 +1,7 @@
 import { eventQueue as readEventQueue } from '@mesaaberta/core/server/admin/event-queue';
-import type { Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import type { Handler } from '../events/types';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import type { Handler } from '@mesaaberta/core/server/events/types';
 import { eventFilters } from '$lib/admin/event-filters';
 
 // The queue itself moved to @mesaaberta/core; this wrapper reads the filters off the query string.

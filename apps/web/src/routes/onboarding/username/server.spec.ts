@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { profiles } from '$lib/server/db/schema';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '$lib/server/db/test-db';
 import { GET } from './+server';
 

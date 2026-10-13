@@ -1,8 +1,8 @@
-import type { AnyDb } from '../db/client';
-import type { Logger } from '../logger';
-import type { AnalyticsEnv } from './index';
-import { analyticsProviders } from './index';
-import type { AnalyticsProviderFactory } from './provider';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import type { Logger } from '@mesaaberta/core/server/logger';
+import type { AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
+import { analyticsProviders } from '@mesaaberta/core/server/analytics/index';
+import type { AnalyticsProviderFactory } from '@mesaaberta/core/server/analytics/provider';
 
 /** Events about what someone did during a request, which no domain event records. */
 export type RequestEventName =

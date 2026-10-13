@@ -19,8 +19,8 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { atHandle } from '$lib/profile/handle';
-  import { formatHours, formatSession } from '$lib/tables/format';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
+  import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { onMount } from 'svelte';
 

@@ -1,15 +1,15 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { crowdfundingFormSchema } from '$lib/crowdfunding/schema';
-import { normalizeCampaignUrl } from '$lib/crowdfunding/url';
+import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { validateFormData } from '$lib/forms/contract';
 import { formMessage, refuse, responseForm } from '$lib/forms/server';
-import { Forbidden, Invalid, NotFound, RateLimited } from '../errors';
-import { dispatchEvent } from '../events/dispatcher';
-import { handlersFor } from '../events/handlers';
-import { IMAGE_BUCKET } from '../images';
+import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
 import { CROWDFUNDING_LIMIT, checkRateLimit } from '../rate-limit';
-import { campaignImagePath } from './image';
-import { readLinkPreview } from './link-preview';
+import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
+import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
 import { addCrowdfunding, findListedByUrl, takeLinkRead } from './service';
 
 export const NEW_CROWDFUNDING_VALUES = {

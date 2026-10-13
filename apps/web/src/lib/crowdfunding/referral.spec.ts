@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { campaignReferralUrl } from './referral';
-import { normalizeCampaignUrl } from './url';
+import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 
 describe('campaignReferralUrl', () => {
   it.each(['catarse.me', 'www.catarse.com.br'])(

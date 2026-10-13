@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 // The `.ts` extension lets `scripts/make-admin.ts` run this file in plain Node.
-import { profiles } from '../db/schema.ts';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

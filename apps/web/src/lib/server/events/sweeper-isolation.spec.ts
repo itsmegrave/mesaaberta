@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { encryptToken } from '../instagram/api';
-import { events, instagramAccounts, workerHeartbeats } from '../db/schema';
+import { encryptToken } from '@mesaaberta/core/server/instagram/api';
+import { events, instagramAccounts, workerHeartbeats } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { SWEEPER_HEARTBEAT } from './heartbeat';
-import { runSweeper } from './sweeper';
+import { SWEEPER_HEARTBEAT } from '@mesaaberta/core/server/events/heartbeat';
+import { runSweeper } from '@mesaaberta/core/server/events/sweeper';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => (test = await createTestDb()));

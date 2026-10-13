@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import type { ReportInput } from '$lib/moderation/reports';
-import { authorize, can, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { gameTables, profiles, registrations, reports } from '../db/schema';
-import { Invalid, NotFound } from '../errors';
-import { recordEvent } from '../events/outbox';
+import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { gameTables, profiles, registrations, reports } from '@mesaaberta/core/server/db/schema';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { enforceRateLimit, REPORT_LIMIT } from '../rate-limit';
 
 async function seated(db: AnyDb, tableId: string, playerId: string) {

@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createTestDb } from '../db/test-db';
-import { gameTables, profiles, ratings, registrations, systems } from '../db/schema';
+import {
+  gameTables,
+  profiles,
+  ratings,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { adminActivity, adminProfile, listAdminProfiles } from './profiles';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

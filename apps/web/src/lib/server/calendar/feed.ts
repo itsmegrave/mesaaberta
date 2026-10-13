@@ -1,7 +1,7 @@
 import { and, eq, gt, inArray, or } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { gameTables, registrations } from '../db/schema';
-import type { CalendarTable } from './ics';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { gameTables, registrations } from '@mesaaberta/core/server/db/schema';
+import type { CalendarTable } from '@mesaaberta/core/server/calendar/ics';
 
 /**
  * The tables in a person's calendar: the active ones they run, and the active ones where they have

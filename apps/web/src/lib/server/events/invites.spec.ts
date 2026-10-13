@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { gameTables, profiles, registrations, systems } from '../db/schema';
+import { gameTables, profiles, registrations, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { formatSession } from '../../tables/format';
-import { TEMPLATE_VARIABLES } from '../mail/templates';
-import { TITLE_TOKEN } from '$lib/tables/welcome';
-import { createInviteHandler, inviteHandler } from './invites';
-import type { SupabaseAdmin } from '../auth/admin-client';
-import type { StoredEvent } from './types';
+import { formatSession } from '@mesaaberta/core/tables/format';
+import { TEMPLATE_VARIABLES } from '@mesaaberta/core/server/mail/templates';
+import { TITLE_TOKEN } from '@mesaaberta/core/tables/welcome';
+import { createInviteHandler, inviteHandler } from '@mesaaberta/core/server/events/invites';
+import type { SupabaseAdmin } from '@mesaaberta/core/server/auth/admin-client';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gm = '00000000-0000-4000-8000-000000000811';

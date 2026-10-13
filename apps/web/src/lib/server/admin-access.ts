@@ -1,5 +1,5 @@
 import { error, type Handle, type RequestEvent } from '@sveltejs/kit';
-import { can } from '$lib/server/auth/policy';
+import { can } from '@mesaaberta/core/server/auth/policy';
 
 export const isAdminPath = (pathname: string) =>
   pathname === '/admin' || pathname.startsWith('/admin/');

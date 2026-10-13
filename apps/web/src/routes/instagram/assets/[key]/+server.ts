@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { and, eq, gt, isNotNull } from 'drizzle-orm';
-import { instagramPosts } from '$lib/server/db/schema';
+import { instagramPosts } from '@mesaaberta/core/server/db/schema';
 import type { RequestHandler } from './$types';
 
 // Meta fetches this without cookies. The random capability expires; no table/player metadata.

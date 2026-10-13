@@ -1,9 +1,14 @@
 import type { Handle } from '@sveltejs/kit';
 import type { QueueBinding } from '@mesaaberta/events';
-import { registerFencing } from '../events/fencing';
-import { registerShadowQueue } from '../events/shadow-queue';
+import { registerFencing } from '@mesaaberta/core/server/events/fencing';
+import { registerShadowQueue } from '@mesaaberta/core/server/events/shadow-queue';
 import { registerLiveQueue } from '@mesaaberta/core/server/events/live-queue';
-import { connectionStringFrom, createDb, type Db, type DatabaseEnv } from './client';
+import {
+  connectionStringFrom,
+  createDb,
+  type Db,
+  type DatabaseEnv,
+} from '@mesaaberta/core/server/db/client';
 
 /**
  * Exposes `locals.db`: the database, or `null` when none is configured (plain `vite dev` without

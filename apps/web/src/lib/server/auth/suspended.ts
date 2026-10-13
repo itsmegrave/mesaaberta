@@ -1,5 +1,5 @@
 import { redirect, type Handle } from '@sveltejs/kit';
-import { stillBanned } from '../moderation/bans';
+import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 
 /** Where a suspended account lands: the login page, with the message that says why. */
 export const SUSPENDED_LOGIN = '/login?error=suspended';

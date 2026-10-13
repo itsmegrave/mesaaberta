@@ -1,8 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { gameTables, profiles, systems, tags } from './db/schema';
+import { gameTables, profiles, systems, tags } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from './db/test-db';
-import { CATALOG_SUGGESTION_LIMIT, catalogOf, listCatalog, setTableCatalog } from './catalog';
+import {
+  CATALOG_SUGGESTION_LIMIT,
+  catalogOf,
+  listCatalog,
+  setTableCatalog,
+} from '@mesaaberta/core/server/catalog';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gm = '00000000-0000-4000-8000-000000000801';

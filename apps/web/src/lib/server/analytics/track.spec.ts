@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createTracker, sourceChannel } from './track';
-import type { AnalyticsProvider, AnalyticsProviderFactory } from './provider';
-import type { AnalyticsEnv } from './index';
+import type {
+  AnalyticsProvider,
+  AnalyticsProviderFactory,
+} from '@mesaaberta/core/server/analytics/provider';
+import type { AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 
 const user = '22222222-2222-4222-8222-222222222222';
 const setup = (send = vi.fn(async () => {}), configured = true) => {

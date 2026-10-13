@@ -5,8 +5,12 @@ import { requireAdmin } from '$lib/server/admin-access';
 import { eventQueue } from '$lib/server/admin/event-queue';
 import { callApi } from '$lib/server/api-client';
 import { requireUser } from '$lib/server/auth/guard';
-import { forceEvent, forceFailedEvents, type ForceOutcome } from '$lib/server/events/dispatcher';
-import { handlersFor } from '$lib/server/events/handlers';
+import {
+  forceEvent,
+  forceFailedEvents,
+  type ForceOutcome,
+} from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.

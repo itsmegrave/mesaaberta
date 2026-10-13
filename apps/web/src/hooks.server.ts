@@ -1,19 +1,23 @@
 import * as Sentry from '@sentry/sveltekit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { createFlags, flagOverrides, shouldForceAllFlags } from '$lib/server/flags/flags';
-import { growthBookPayload } from '$lib/server/flags/payload';
+import {
+  createFlags,
+  flagOverrides,
+  shouldForceAllFlags,
+} from '@mesaaberta/core/server/flags/flags';
+import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
 import { handleAuth } from '$lib/server/auth/handle-auth';
 import { handleSuspended } from '$lib/server/auth/suspended';
-import { can } from '$lib/server/auth/policy';
+import { can } from '@mesaaberta/core/server/auth/policy';
 import { handleDatabase } from '$lib/server/db/handle-database';
-import { logger, setTelemetrySink } from '$lib/server/logger';
+import { logger, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
 import { handleHostTelemetry, handleRuntime } from '$lib/server/runtime';
 import { createTracker } from '$lib/server/analytics/track';
-import { analyticsHandlers, type AnalyticsEnv } from '$lib/server/analytics';
-import { MAIL_HANDLER_NAMES, bellHandlers } from '$lib/server/events/handlers';
+import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
+import { MAIL_HANDLER_NAMES, bellHandlers } from '@mesaaberta/core/server/events/handlers';
 import { handleMaintenance } from '$lib/server/maintenance';
 import { handleAdminAccess } from '$lib/server/admin-access';
 import { handleSecurityHeaders } from '$lib/server/security-headers';

@@ -1,12 +1,12 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { crowdfundingAdminFilters } from '$lib/crowdfunding/admin-filters';
 import { OPEN_REPORT_STATUSES, type ReportReason } from '$lib/moderation/reports';
-import { authorize, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { publicName } from '../db/public-name';
-import { crowdfundings, profiles, reports } from '../db/schema';
-import { Invalid } from '../errors';
-import { recordEvent } from '../events/outbox';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { crowdfundings, profiles, reports } from '@mesaaberta/core/server/db/schema';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 // The admin side of the crowdfunding list: what is up and what was taken down, and taking one down.
 // Every function authorizes the actor itself; the routes check again before calling.

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { isRedirect } from '@sveltejs/kit';
 import { handleSuspended } from './suspended';
-import { stillBanned } from '../moderation/bans';
+import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 
 // The real lookup talks to the database; here only its answer matters (moderation.spec covers it).
-vi.mock('../moderation/bans', () => ({
+vi.mock('@mesaaberta/core/server/moderation/bans', () => ({
   stillBanned: vi.fn(async (_db: unknown, profile: { status: string }) => ({
     banned: profile.status === 'suspended',
     eventIds: [],

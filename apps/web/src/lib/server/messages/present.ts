@@ -1,4 +1,4 @@
-import { imageUrl, pictureOf } from '../images';
+import { imageUrl, pictureOf } from '@mesaaberta/core/server/images';
 
 type Pictured = { avatarUrl: string | null; avatarPath: string | null };
 

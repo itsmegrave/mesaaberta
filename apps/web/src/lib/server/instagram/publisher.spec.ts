@@ -8,15 +8,20 @@ import {
   instagramPosts,
   profiles,
   systems,
-} from '../db/schema';
-import { encryptToken, InstagramError, type InstagramEnv, graph } from './api';
+} from '@mesaaberta/core/server/db/schema';
+import {
+  encryptToken,
+  InstagramError,
+  type InstagramEnv,
+  graph,
+} from '@mesaaberta/core/server/instagram/api';
 import {
   instagramQueueHandler,
   publishInstagramPosts,
   publishInstagramTable,
   queueInstagramTable,
-} from './publisher';
-import type { StoredEvent } from '../events/types';
+} from '@mesaaberta/core/server/instagram/publisher';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gmId = '00000000-0000-4000-8000-000000001101';

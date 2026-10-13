@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gt, inArray, isNull, lte, lt, ne, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversationMembers,
   conversations,
@@ -7,10 +7,15 @@ import {
   messages,
   notifications,
   profiles,
-} from '../db/schema';
-import { publicName } from '../db/public-name';
-import type { Actor } from '../auth/policy';
-import { DirectMessagesOff, Forbidden, NotFound, RateLimited } from '../errors';
+} from '@mesaaberta/core/server/db/schema';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import {
+  DirectMessagesOff,
+  Forbidden,
+  NotFound,
+  RateLimited,
+} from '@mesaaberta/core/server/errors';
 import { INBOX_PAGE_SIZE, THREAD_PAGE_SIZE, pairKey } from '../../messages/schema';
 import { canRead, canSend, directBlocker, isMember } from './access';
 

@@ -1,10 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { AnyDb } from '../db/client';
-import type { Logger } from '../logger';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import type { Logger } from '@mesaaberta/core/server/logger';
 import type { Provider } from '$lib/auth/providers';
-import { recordConnection } from '../events/outbox';
+import { recordConnection } from '@mesaaberta/core/server/events/outbox';
 import { ensureProfile } from './profile';
-import { stillBanned } from '../moderation/bans';
+import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 import { needsOnboarding, onboardingUrl } from './onboarding';
 import { safeNext } from './safe-next';
 

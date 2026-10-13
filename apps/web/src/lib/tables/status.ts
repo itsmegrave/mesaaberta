@@ -6,8 +6,8 @@ import { m } from '$lib/paraglide/messages';
  * (`concluded`) or that it did not (`not_held`), or moves it to a new date (back to `active`).
  * `draft` comes before all of it: saved but not public, until its GM publishes it (`active`).
  */
-export { TABLE_STATUSES, type TableStatus } from './status-values';
-import type { TableStatus } from './status-values';
+export { TABLE_STATUSES, type TableStatus } from '@mesaaberta/core/tables/status-values';
+import type { TableStatus } from '@mesaaberta/core/tables/status-values';
 
 /** The tag a table carries once it is not open, or null while it is `active`. */
 export function tableStatusLabel(status: TableStatus): string | null {

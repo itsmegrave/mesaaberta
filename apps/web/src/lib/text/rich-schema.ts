@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import '$lib/forms/zod-codes';
-import { cleanRichHtml, richTextLength } from './rich';
+import '@mesaaberta/core/forms/zod-codes';
+import { cleanRichHtml, richTextLength } from '@mesaaberta/core/text/rich';
 
 /** The stored HTML may be this many times the visible limit, so formatting never eats the text. */
 export const RICH_HTML_FACTOR = 6;

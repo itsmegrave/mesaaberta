@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
-import { Forbidden, NotFound } from '$lib/server/errors';
-import { imageUrl, pictureOf, supabaseUrlOf } from '$lib/server/images';
+import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
+import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { loadManage } from '$lib/server/tables/manage';
 import type { RequestEvent } from '@sveltejs/kit';
 

@@ -1,4 +1,4 @@
-import '$lib/forms/zod-codes';
+import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
 
 export const MIN_PASSWORD_LENGTH = 8;

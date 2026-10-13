@@ -4,7 +4,7 @@ import { refuse } from '$lib/forms/server';
 import { requireUser } from '$lib/server/auth/guard';
 import { ensureProfile } from '$lib/server/auth/profile';
 import { safeNext } from '$lib/server/auth/safe-next';
-import { Invalid } from '$lib/server/errors';
+import { Invalid } from '@mesaaberta/core/server/errors';
 import { isUsernameAvailable, loadProfileForm, saveProfile } from '$lib/server/profile/service';
 import { profileSchema, PROFILE_DEFAULTS } from '$lib/profile/schema';
 import { suggestUsername } from '$lib/profile/username';

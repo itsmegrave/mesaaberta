@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import type { SupabaseAdmin } from '../auth/admin-client';
-import { profiles } from '../db/schema';
+import type { SupabaseAdmin } from '@mesaaberta/core/server/auth/admin-client';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Mail } from '../mail/mailer';
-import { banMail, createBanMailHandler } from './ban-mail';
-import type { StoredEvent } from './types';
+import type { Mail } from '@mesaaberta/core/server/mail/mailer';
+import { banMail, createBanMailHandler } from '@mesaaberta/core/server/events/ban-mail';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const userId = '00000000-0000-4000-8000-000000003001';

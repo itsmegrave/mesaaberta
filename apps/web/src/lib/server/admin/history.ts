@@ -1,10 +1,10 @@
 import { and, desc, eq, inArray, notInArray, or, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { authorize, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { events, gameTables, profiles } from '../db/schema';
-import { RETENTION_DAYS } from '../events/dispatcher';
-import type { Changes, EventType } from '../events/types';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { events, gameTables, profiles } from '@mesaaberta/core/server/db/schema';
+import { RETENTION_DAYS } from '@mesaaberta/core/server/events/dispatcher';
+import type { Changes, EventType } from '@mesaaberta/core/server/events/types';
 
 /** How many entries a history shows: the newest, with a note when there are more. */
 export const HISTORY_SHOWN = 50;

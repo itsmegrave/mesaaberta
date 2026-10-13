@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { events, gameTables, profiles, systems } from '../db/schema';
+import { events, gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { recordEvent } from '../events/outbox';
-import type { Actor } from '../auth/policy';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { HISTORY_SHOWN, profileHistory, tableHistory } from './history';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
