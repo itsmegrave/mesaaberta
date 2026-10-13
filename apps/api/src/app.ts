@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 
 /**
@@ -13,6 +14,8 @@ export function createApi() {
   app.get('/healthz', (c) => c.json({ status: 'ok', service: 'api' }));
   // The first moved route (Trello #120): the admin event actions, behind `api_admin_events` on web.
   app.route('/v1/admin/events', eventRoutes());
+  // The second: the catalog console's decisions, behind `api_admin_catalog` on web.
+  app.route('/v1/admin/catalog', catalogRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));

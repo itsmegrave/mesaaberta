@@ -3,12 +3,15 @@
 The api app of Trello #120: a Hono app that will own writes, policies and the outbox, one route at a
 time, behind `api_<area>` GrowthBook flags (strangler; the web app stays the default path).
 
-**Status: first route written, not deployed.** It answers `/healthz` and the admin event actions
-(`POST /v1/admin/events/:id/force`, `POST /v1/admin/events/retry-failed`). It has no public route and
+**Status: deployed, reached only through the Service Binding.** It answers `/healthz`, the admin
+event actions (`POST /v1/admin/events/:id/force`, `POST /v1/admin/events/retry-failed`) and the
+admin catalog decisions (`POST /v1/admin/catalog/:decision`, with `approve`, `reject`, `disable`,
+`rename`, `merge` and `create`; the body is the form's own schema). It has no public route and
 no cron. The web Worker reaches it through a Service Binding (`API`), sending the signed-in admin's id
 in `x-actor-id`; the api checks that person is an active admin in the database again. On web the
-actions only call it when `api_admin_events` is on for the admin and the binding exists, and fall back
-to the in-process path when the call fails. The api Worker needs the same database binding and
+actions only call it when `api_admin_events` (or `api_admin_catalog` for the catalog) is on for the
+admin and the binding exists, and fall back to the in-process path when the call fails. A catalog
+decision the api refuses (HTTP 400 `invalid`) is shown on the form and not retried in-process. The api Worker needs the same database binding and
 secrets as the other Workers, set by the private deployment.
 
 ## Moving a route (the rule)

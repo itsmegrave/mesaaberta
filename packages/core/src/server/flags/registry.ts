@@ -35,6 +35,11 @@ export const flagDefaults = {
   // Worker. On: they call the api Worker over the Service Binding and fall back to the web path when
   // the api cannot be reached. Needs the API binding; without it this flag does nothing.
   api_admin_events: false,
+  // Off: the catalog console's decisions (approve, reject, disable, rename, merge, create) run in
+  // the web Worker. On: the api Worker makes them over the Service Binding, and the web Worker
+  // dispatches the event as before; a call that cannot be made falls back to the web path. Needs
+  // the API binding. Target admins first.
+  api_admin_catalog: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

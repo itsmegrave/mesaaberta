@@ -27,6 +27,8 @@ function event(form: Record<string, string>, profile: object = admin) {
         db: {},
         getUser: async () => ({ id: 'admin' }),
         getProfile: async () => profile,
+        // api_admin_catalog off: these specs cover the in-process path.
+        flags: { isEnabled: async () => false },
         afterResponse: (task: (db: unknown) => Promise<unknown>) => void after.push(task),
       },
       url: new URL('https://x.test/admin/queue'),

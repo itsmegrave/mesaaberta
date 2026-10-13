@@ -7,6 +7,7 @@ import {
   mergeSchema,
   renameSchema,
 } from '@mesaaberta/core/admin/catalog';
+import { callApiRaw } from '../api-client';
 import { requireAdmin } from '../admin-access';
 import { requireUser } from '../auth/guard';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
@@ -27,8 +28,14 @@ import {
  * One form action of the catalog console: only an admin gets in (the hook 404s everyone else, and
  * this checks again), the form is validated by its schema, and the service authorizes the actor a
  * third time. What the service refuses goes back on the field it names, or on the form.
+ *
+ * With `api_admin_catalog` on for the admin the decision is made by the api Worker instead
+ * (`/v1/admin/catalog/<name>`, same schema, same service). A refusal from the api is shown like one
+ * from here; a call that cannot be made, or an api that answers with a failure, falls back to this
+ * Worker, which is why the flag is a kill switch and not a dependency.
  */
 function catalogAction<Schema extends ZodType>(
+  name: string,
   schema: Schema,
   apply: (db: AnyDb, actor: Actor | null, data: z.infer<Schema>) => Promise<string>,
 ): Action {
@@ -46,23 +53,53 @@ function catalogAction<Schema extends ZodType>(
     ]);
     if (!form.valid) return fail(400, { form });
 
-    let eventId: string;
-    try {
-      eventId = await apply(locals.db, await locals.getProfile(), form.data as z.infer<Schema>);
-    } catch (e) {
-      if (e instanceof Invalid) {
-        // A field the form does not show (the id) is an error of the form itself.
-        const field = e.field in (form.data as object) ? e.field : '';
-        form.valid = false;
-        form.errors[field || '_errors'] = [e.message];
-        return fail(400, { form });
+    const refuse = (field: string, message: string) => {
+      // A field the form does not show (the id) is an error of the form itself.
+      const name = field in (form.data as object) ? field : '';
+      form.valid = false;
+      form.errors[name || '_errors'] = [message];
+      return fail(400, { form });
+    };
+
+    const profile = await locals.getProfile();
+    let eventId: string | undefined;
+    if (
+      profile &&
+      (await locals.flags.isEnabled('api_admin_catalog', { id: profile.id, isAdmin: true }))
+    ) {
+      const answer = await callApiRaw(
+        locals.env,
+        `/v1/admin/catalog/${name}`,
+        profile.id,
+        locals.log,
+        form.data,
+      );
+      const body = answer?.body as
+        { eventId?: string; error?: string; field?: string; message?: string } | undefined;
+      if (answer?.ok && typeof body?.eventId === 'string') eventId = body.eventId;
+      else if (answer?.status === 400 && body?.error === 'invalid' && body.message)
+        return refuse(body.field ?? '', body.message);
+      else if (answer)
+        locals.log.warn('api catalog decision refused', {
+          code: 'api_call_refused',
+          name,
+          status: answer.status,
+        });
+    }
+
+    if (eventId === undefined) {
+      try {
+        eventId = await apply(locals.db, profile, form.data as z.infer<Schema>);
+      } catch (e) {
+        if (e instanceof Invalid) return refuse(e.field, e.message);
+        throw e;
       }
-      throw e;
     }
 
     // The record is written with the change; the dispatch (no handler yet, it marks it done) comes after.
+    const dispatched = eventId;
     locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
+      dispatchEvent(db, handlersFor(event.locals.env), dispatched, new Date(), locals.log),
     );
     return { form };
   };
@@ -70,20 +107,22 @@ function catalogAction<Schema extends ZodType>(
 
 /** The console's actions, for the queue and the catalog pages to share. */
 export const catalogActions = {
-  approve: catalogAction(entrySchema, (db, actor, { kind, id }) =>
+  approve: catalogAction('approve', entrySchema, (db, actor, { kind, id }) =>
     approveEntry(db, actor, kind, id),
   ),
-  reject: catalogAction(entrySchema, (db, actor, { kind, id }) => rejectEntry(db, actor, kind, id)),
-  disable: catalogAction(entrySchema, (db, actor, { kind, id }) =>
+  reject: catalogAction('reject', entrySchema, (db, actor, { kind, id }) =>
+    rejectEntry(db, actor, kind, id),
+  ),
+  disable: catalogAction('disable', entrySchema, (db, actor, { kind, id }) =>
     disableEntry(db, actor, kind, id),
   ),
-  rename: catalogAction(renameSchema, (db, actor, { kind, id, name }) =>
+  rename: catalogAction('rename', renameSchema, (db, actor, { kind, id, name }) =>
     renameEntry(db, actor, kind, id, name),
   ),
-  merge: catalogAction(mergeSchema, (db, actor, { kind, id, into }) =>
+  merge: catalogAction('merge', mergeSchema, (db, actor, { kind, id, into }) =>
     mergeEntry(db, actor, kind, id, into),
   ),
-  create: catalogAction(createSchema, (db, actor, { kind, name }) =>
+  create: catalogAction('create', createSchema, (db, actor, { kind, name }) =>
     createEntry(db, actor, kind, name),
   ),
 };

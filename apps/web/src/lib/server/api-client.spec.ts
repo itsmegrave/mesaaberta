@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { callApi } from './api-client';
+import { callApi, callApiRaw } from './api-client';
 
 const log = { warn: vi.fn() } as never;
 const envWith = (fetch: (request: Request) => Promise<Response>) =>
@@ -30,5 +30,29 @@ describe('callApi', () => {
 
     expect(await callApi(refused, '/v1/x', 'a', log)).toBeNull();
     expect(await callApi(broken, '/v1/x', 'a', log)).toBeNull();
+  });
+
+  it('callApiRaw sends a JSON body and returns a refusal instead of hiding it', async () => {
+    const fetch = vi.fn(async (_request: Request) =>
+      Response.json({ error: 'invalid', field: 'name' }, { status: 400 }),
+    );
+    const answer = await callApiRaw(envWith(fetch), '/v1/admin/catalog/create', 'a', log, {
+      kind: 'platform',
+      name: 'X',
+    });
+
+    expect(answer).toEqual({ ok: false, status: 400, body: { error: 'invalid', field: 'name' } });
+    const request = fetch.mock.calls[0][0];
+    expect(request.headers.get('content-type')).toBe('application/json');
+    expect(await request.json()).toEqual({ kind: 'platform', name: 'X' });
+  });
+
+  it('callApiRaw is null when nothing answered, so the caller keeps its own path', async () => {
+    const broken = envWith(async () => {
+      throw new Error('boom');
+    });
+
+    expect(await callApiRaw(undefined, '/v1/x', 'a', log)).toBeNull();
+    expect(await callApiRaw(broken, '/v1/x', 'a', log)).toBeNull();
   });
 });
