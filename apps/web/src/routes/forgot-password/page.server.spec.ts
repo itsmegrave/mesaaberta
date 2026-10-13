@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { actions, load } from './+page.server';
-import { PASSWORD_RESET_LIMIT } from '$lib/server/auth/attempt-limit';
+import { PASSWORD_RESET_LIMIT } from '@mesaaberta/core/server/auth/attempt-limit';
 import { createTestDb } from '$lib/server/db/test-db';
 
 const setup = (answer: object = { data: {}, error: null }, supabase = true, db: unknown = null) => {

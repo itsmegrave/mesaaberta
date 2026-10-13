@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { failedEventCount } from '$lib/server/admin/event-queue';
-import { pendingCount } from '$lib/server/admin/catalog';
+import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { instagramPosts } from '@mesaaberta/core/server/db/schema';
-import { pendingPartnerCount } from '$lib/server/partners/admin';
-import { waitingReports } from '$lib/server/moderation/admin';
+import { pendingPartnerCount } from '@mesaaberta/core/server/partners/admin';
+import { waitingReports } from '@mesaaberta/core/server/moderation/admin';
 import { count, eq } from 'drizzle-orm';
 import type { LayoutServerLoad } from './$types';
 

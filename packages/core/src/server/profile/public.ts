@@ -9,8 +9,8 @@ import {
 import { pictureOf, imageUrl } from '@mesaaberta/core/server/images';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
-import { isNetwork, socialTarget } from '$lib/profile/social-links';
-import { normalizeUsername, usernameProblem } from '$lib/profile/username';
+import { isNetwork, socialTarget } from '../../profile/social-links';
+import { normalizeUsername, usernameProblem } from '../../profile/username';
 
 export const PUBLIC_PROFILE_PAGE_SIZE = 12;
 

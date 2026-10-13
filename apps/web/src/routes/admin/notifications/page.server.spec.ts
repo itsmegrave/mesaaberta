@@ -2,10 +2,10 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { sendAnnouncement } from '$lib/server/notifications/announcements';
+import { sendAnnouncement } from '@mesaaberta/core/server/notifications/announcements';
 import { actions } from './+page.server';
 
-vi.mock('$lib/server/notifications/announcements', () => ({
+vi.mock('@mesaaberta/core/server/notifications/announcements', () => ({
   sendAnnouncement: vi.fn(),
   audienceSizes: vi.fn(async () => ({ all_active_users: 0, game_masters: 0, active_players: 0 })),
   listAnnouncements: vi.fn(async () => []),

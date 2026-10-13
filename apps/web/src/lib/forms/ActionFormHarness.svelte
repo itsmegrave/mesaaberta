@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createSchema } from '$lib/admin/catalog';
+  import { createSchema } from '@mesaaberta/core/admin/catalog';
   import { actionForm } from './action-form.svelte';
   let { onSuccess }: { onSuccess: () => void } = $props();
   const form = actionForm({

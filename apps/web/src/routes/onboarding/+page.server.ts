@@ -2,12 +2,16 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { initialForm, validateFormData } from '$lib/forms/contract';
 import { refuse } from '$lib/forms/server';
 import { requireUser } from '$lib/server/auth/guard';
-import { ensureProfile } from '$lib/server/auth/profile';
-import { safeNext } from '$lib/server/auth/safe-next';
+import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import { isUsernameAvailable, loadProfileForm, saveProfile } from '$lib/server/profile/service';
-import { profileSchema, PROFILE_DEFAULTS } from '$lib/profile/schema';
-import { suggestUsername } from '$lib/profile/username';
+import {
+  isUsernameAvailable,
+  loadProfileForm,
+  saveProfile,
+} from '@mesaaberta/core/server/profile/service';
+import { profileSchema, PROFILE_DEFAULTS } from '@mesaaberta/core/profile/schema';
+import { suggestUsername } from '@mesaaberta/core/profile/username';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

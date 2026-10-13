@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
-import { pageNumber } from '$lib/admin/catalog';
+import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import { requireUser } from '$lib/server/auth/guard';
-import { listPlaying, listRunning } from '$lib/server/dashboard/queries';
+import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
 import type { RequestEvent } from '@sveltejs/kit';
 
 /** How many tables each list shows per page. */

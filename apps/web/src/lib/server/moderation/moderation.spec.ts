@@ -14,7 +14,7 @@ import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
 import type { StoredEvent } from '@mesaaberta/core/server/events/types';
-import { fileReport, reportTargetsOf } from './reports';
+import { fileReport, reportTargetsOf } from '@mesaaberta/core/server/moderation/reports';
 import {
   auditLog,
   closeReport,
@@ -26,7 +26,7 @@ import {
   reportDetail,
   revokeBan,
   startReview,
-} from './admin';
+} from '@mesaaberta/core/server/moderation/admin';
 import { liftExpiredBans, stillBanned } from '@mesaaberta/core/server/moderation/bans';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

@@ -4,12 +4,12 @@ import { requireUser } from '$lib/server/auth/guard';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '$lib/server/fail-from';
 import { openDirect } from '@mesaaberta/core/server/messages/service';
-import { normalizeUsername } from '$lib/profile/username';
-import { pageNumber } from '$lib/admin/catalog';
+import { normalizeUsername } from '@mesaaberta/core/profile/username';
+import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import { localizedHref } from '$lib/i18n/locales';
 import { getLocale } from '$lib/paraglide/runtime';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { publicProfile } from '$lib/server/profile/public';
+import { publicProfile } from '@mesaaberta/core/server/profile/public';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) => {

@@ -1,4 +1,4 @@
-import { pageNumber } from '$lib/admin/catalog';
+import { pageNumber } from '../admin/catalog';
 
 /** How the public list is ordered: what was added last, or by name. */
 export const PARTNER_SORTS = ['newest', 'name'] as const;

@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { CATALOG_KINDS, pageNumber, type CatalogKind } from '$lib/admin/catalog';
-import { pageSizeOf, sortOf, type Sort } from '$lib/admin/list';
+import { CATALOG_KINDS, pageNumber, type CatalogKind } from '@mesaaberta/core/admin/catalog';
+import { pageSizeOf, sortOf, type Sort } from '@mesaaberta/core/admin/list';
 import { requireAdmin } from '$lib/server/admin-access';
 import { catalogActions } from '$lib/server/admin/catalog-actions';
 import {
@@ -9,7 +9,7 @@ import {
   CATALOG_STATUS_FILTERS,
   listApproved,
   listCatalogAdmin,
-} from '$lib/server/admin/catalog';
+} from '@mesaaberta/core/server/admin/catalog';
 import { requireUser } from '$lib/server/auth/guard';
 import type { Actions, PageServerLoad } from './$types';
 

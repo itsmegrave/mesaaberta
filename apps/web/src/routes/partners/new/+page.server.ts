@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { initialForm } from '$lib/forms/contract';
-import { NEW_PARTNER_VALUES } from '$lib/partners/schema';
+import { NEW_PARTNER_VALUES } from '@mesaaberta/core/partners/schema';
 import { requireUser } from '$lib/server/auth/guard';
 import { handlePartnerForm } from '$lib/server/partners/form-action';
 import type { Actions, PageServerLoad } from './$types';

@@ -9,7 +9,10 @@
   import ImageUpload from '$lib/components/ImageUpload.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
-  import { CROWDFUNDING_LIMITS, crowdfundingFormSchema } from '$lib/crowdfunding/schema';
+  import {
+    CROWDFUNDING_LIMITS,
+    crowdfundingFormSchema,
+  } from '@mesaaberta/core/crowdfunding/schema';
   import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
   import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
   import { actionForm } from '$lib/forms/action-form.svelte';

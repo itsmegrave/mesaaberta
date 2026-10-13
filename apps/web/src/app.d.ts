@@ -36,7 +36,7 @@ declare global {
         task: (db: import('@mesaaberta/core/server/db/client').Db) => Promise<unknown>,
       ) => void;
       /** Queues a product event for the signed-in person, sent after the response. See `createTracker`. */
-      track: import('$lib/server/analytics/track').Track;
+      track: import('@mesaaberta/core/server/analytics/track').Track;
       /** Supabase Auth with cookie sessions, or null while it is not configured. */
       supabase: import('@supabase/supabase-js').SupabaseClient | null;
       /** The signed-in user, verified with Supabase (never read from the cookie). Null if anonymous. */

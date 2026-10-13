@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import type { Logger } from '@mesaaberta/core/server/logger';
-import type { Provider } from '$lib/auth/providers';
+import type { Provider } from '../../auth/providers';
 import { recordConnection } from '@mesaaberta/core/server/events/outbox';
 import { ensureProfile } from './profile';
 import { stillBanned } from '@mesaaberta/core/server/moderation/bans';

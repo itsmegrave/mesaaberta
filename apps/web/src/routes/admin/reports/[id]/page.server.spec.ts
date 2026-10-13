@@ -2,11 +2,11 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { closeReport, startReview } from '$lib/server/moderation/admin';
+import { closeReport, startReview } from '@mesaaberta/core/server/moderation/admin';
 import { actions } from './+page.server';
 
-vi.mock('$lib/server/moderation/admin', async (original) => ({
-  ...(await original<typeof import('$lib/server/moderation/admin')>()),
+vi.mock('@mesaaberta/core/server/moderation/admin', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/moderation/admin')>()),
   startReview: vi.fn(async () => 'event-1'),
   closeReport: vi.fn(async () => 'event-2'),
 }));

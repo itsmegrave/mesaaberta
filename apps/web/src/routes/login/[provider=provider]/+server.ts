@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { startLogin } from '$lib/server/auth/login';
+import { startLogin } from '@mesaaberta/core/server/auth/login';
 import type { RequestHandler } from './$types';
 
 // A plain GET (a link, not a form) so the Content-Security-Policy `form-action` rule does not

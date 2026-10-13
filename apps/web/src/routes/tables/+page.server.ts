@@ -1,5 +1,5 @@
 import { loadRead } from '$lib/server/reads/load';
-import { sourceChannel } from '$lib/server/analytics/track';
+import { sourceChannel } from '@mesaaberta/core/server/analytics/track';
 import type { PageServerLoad } from './$types';
 
 const FILTERS = ['system', 'platform', 'tag', 'modality'];

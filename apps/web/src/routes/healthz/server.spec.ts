@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/server/db/health', () => ({ checkDatabase: vi.fn(async () => 'ok') }));
+vi.mock('@mesaaberta/core/server/db/health', () => ({ checkDatabase: vi.fn(async () => 'ok') }));
 vi.mock('@mesaaberta/core/server/events/heartbeat', () => ({
   workerHealth: vi.fn(async () => ({ status: 'ok', lastRunAt: '2026-10-11T17:55:00.000Z' })),
 }));
 
-import { checkDatabase } from '$lib/server/db/health';
+import { checkDatabase } from '@mesaaberta/core/server/db/health';
 import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
 import { GET } from './+server';
 

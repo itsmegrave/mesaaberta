@@ -1,10 +1,14 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { initialForm, validateFormData, validateStringForm } from '$lib/forms/contract';
 import { refuse, responseForm } from '$lib/forms/server';
-import { anonymiseProfile, closeAccount, setAvatarPath } from '$lib/server/account/service';
+import {
+  anonymiseProfile,
+  closeAccount,
+  setAvatarPath,
+} from '@mesaaberta/core/server/account/service';
 import { deleteAuthUser, supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
 import { requireUser } from '$lib/server/auth/guard';
-import { connections, unlink } from '$lib/server/auth/identities';
+import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
@@ -15,13 +19,13 @@ import {
   storeImage,
   supabaseUrlOf,
 } from '@mesaaberta/core/server/images';
-import { loadProfileForm, saveProfile } from '$lib/server/profile/service';
+import { loadProfileForm, saveProfile } from '@mesaaberta/core/server/profile/service';
 import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
 import { setDirectMessages } from '@mesaaberta/core/server/messages/service';
 import { deleteAccountSchema } from '$lib/profile/delete';
 import { disconnectSchema } from '$lib/profile/connections';
 import { photoSchema } from '$lib/profile/photo';
-import { profileSchema, PROFILE_DEFAULTS } from '$lib/profile/schema';
+import { profileSchema, PROFILE_DEFAULTS } from '@mesaaberta/core/profile/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Deletes a replaced picture. Best effort: a leftover file is harmless, a failed save is not. */

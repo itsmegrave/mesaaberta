@@ -1,9 +1,9 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { listCrowdfundings } from '$lib/server/crowdfunding/service';
+import { listCrowdfundings } from '@mesaaberta/core/server/crowdfunding/service';
 import { load } from './+page.server';
 
-vi.mock('$lib/server/crowdfunding/service', () => ({
+vi.mock('@mesaaberta/core/server/crowdfunding/service', () => ({
   listCrowdfundings: vi.fn(),
   fileCrowdfundingReport: vi.fn(),
 }));

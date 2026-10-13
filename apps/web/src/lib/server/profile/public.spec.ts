@@ -9,7 +9,7 @@ import {
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { publicProfile } from './public';
+import { publicProfile } from '@mesaaberta/core/server/profile/public';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;

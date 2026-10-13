@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
-import { safeNext } from '$lib/server/auth/safe-next';
-import { finishLogin } from '$lib/server/auth/login';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { finishLogin } from '@mesaaberta/core/server/auth/login';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => {

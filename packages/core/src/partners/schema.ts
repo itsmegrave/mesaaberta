@@ -8,7 +8,7 @@ import {
   parseHandle,
   parseSocialUrl,
   type Network,
-} from '$lib/profile/social-links';
+} from '../profile/social-links';
 
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
 z.config({ jitless: true });

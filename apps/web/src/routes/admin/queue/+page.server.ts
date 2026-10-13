@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { catalogActions } from '$lib/server/admin/catalog-actions';
-import { listApproved, listQueue, recentDecisions } from '$lib/server/admin/catalog';
+import { listApproved, listQueue, recentDecisions } from '@mesaaberta/core/server/admin/catalog';
 import { requireUser } from '$lib/server/auth/guard';
 import type { Actions, PageServerLoad } from './$types';
 

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { checkDatabase } from './health';
+import { checkDatabase } from '@mesaaberta/core/server/db/health';
 import { createTestDb } from './test-db';
 
 describe('checkDatabase', () => {

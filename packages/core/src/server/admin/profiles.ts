@@ -2,8 +2,8 @@ import { and, asc, desc, eq, ilike, isNotNull, isNull, sql, type SQL } from 'dri
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
-import { standingOf } from '$lib/profile/standing';
-import { profileFilters } from '$lib/admin/profile-filters';
+import { standingOf } from '../../profile/standing';
+import { profileFilters } from '../../admin/profile-filters';
 
 export async function listAdminProfiles(db: AnyDb, params: URLSearchParams) {
   const filters = profileFilters(params);

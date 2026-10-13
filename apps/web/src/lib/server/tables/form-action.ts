@@ -5,7 +5,7 @@ import { formMessage, refuse, responseForm } from '$lib/forms/server';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
-import { withLocation } from '../location/cep';
+import { withLocation } from '@mesaaberta/core/server/location/cep';
 import { timezoneOf } from '../time';
 import { tableFormSchema, toTableInput, type TableInput } from '@mesaaberta/core/tables/schema';
 

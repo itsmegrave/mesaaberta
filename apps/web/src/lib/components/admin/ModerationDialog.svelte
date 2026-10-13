@@ -14,7 +14,7 @@
     type BanDuration,
     type ReportReason,
     type ReportTarget,
-  } from '$lib/moderation/reports';
+  } from '@mesaaberta/core/moderation/reports';
   import Form from '$lib/components/Form.svelte';
   import FormField from '$lib/components/FormField.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';

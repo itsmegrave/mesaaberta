@@ -1,4 +1,4 @@
-import { pageNumber } from '$lib/admin/catalog';
+import { pageNumber } from '../admin/catalog';
 import { PARTNER_SEARCH_MAX } from './filters';
 
 /** Where a partner stands for the admin: waiting, up, with open reports, or taken down. */

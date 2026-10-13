@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Provider } from '$lib/auth/providers';
+  import type { Provider } from '@mesaaberta/core/auth/providers';
 
   let { provider }: { provider: Provider } = $props();
 </script>

@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { User } from '@supabase/supabase-js';
-import { needsOnboarding, onboardingUrl } from './onboarding';
+import { needsOnboarding, onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 
 /**
  * Call at the top of a `load` or action that needs a signed-in user. Anonymous visitors are sent

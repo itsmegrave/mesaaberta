@@ -5,7 +5,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import Icon from '$lib/components/Icon.svelte';
-  import { listPath, listQuery } from '$lib/admin/list';
+  import { listPath, listQuery } from '@mesaaberta/core/admin/list';
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
 

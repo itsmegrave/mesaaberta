@@ -1,11 +1,15 @@
 import { error } from '@sveltejs/kit';
-import { partnerIdSchema, reportPartnerSchema } from '$lib/moderation/reports';
-import { readPartnerFilters } from '$lib/partners/filters';
+import { partnerIdSchema, reportPartnerSchema } from '@mesaaberta/core/moderation/reports';
+import { readPartnerFilters } from '@mesaaberta/core/partners/filters';
 import { can } from '@mesaaberta/core/server/auth/policy';
 
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '$lib/server/moderation/form-action';
-import { filePartnerReport, listPartners, withdrawPartner } from '$lib/server/partners/service';
+import {
+  filePartnerReport,
+  listPartners,
+  withdrawPartner,
+} from '@mesaaberta/core/server/partners/service';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

@@ -1,14 +1,14 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
-import { adminActivity, adminProfile } from '$lib/server/admin/profiles';
-import { profileHistory } from '$lib/server/admin/history';
+import { adminActivity, adminProfile } from '@mesaaberta/core/server/admin/profiles';
+import { profileHistory } from '@mesaaberta/core/server/admin/history';
 import { failFrom } from '$lib/server/fail-from';
 import { openDirect } from '@mesaaberta/core/server/messages/service';
-import { standingOf } from '$lib/profile/standing';
-import { moderationOf } from '$lib/server/moderation/admin';
+import { standingOf } from '@mesaaberta/core/profile/standing';
+import { moderationOf } from '@mesaaberta/core/server/moderation/admin';
 import { accountActions } from '$lib/server/moderation/admin-actions';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { profileFilters } from '$lib/admin/profile-filters';
+import { profileFilters } from '@mesaaberta/core/admin/profile-filters';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) => {

@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import type { ReportInput } from '$lib/moderation/reports';
+import type { ReportInput } from '../../moderation/reports';
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations, reports } from '@mesaaberta/core/server/db/schema';

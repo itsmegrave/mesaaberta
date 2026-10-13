@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { load } from './+page.server';
-import { publicProfile } from '$lib/server/profile/public';
+import { publicProfile } from '@mesaaberta/core/server/profile/public';
 
-vi.mock('$lib/server/profile/public', () => ({ publicProfile: vi.fn() }));
+vi.mock('@mesaaberta/core/server/profile/public', () => ({ publicProfile: vi.fn() }));
 vi.mock('$lib/paraglide/runtime', async (importOriginal) => ({
   ...(await importOriginal<typeof import('$lib/paraglide/runtime')>()),
   getLocale: () => 'pt-BR',

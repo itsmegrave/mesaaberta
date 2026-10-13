@@ -21,7 +21,7 @@ import {
   searchRecipients,
   sendAnnouncement,
   type AnnouncementDraft,
-} from './announcements';
+} from '@mesaaberta/core/server/notifications/announcements';
 import { listNotifications } from '@mesaaberta/core/server/notifications/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { siteOf } from './site';
+import { siteOf } from '@mesaaberta/core/server/site';
 
 describe('siteOf', () => {
   it("reads the deployment's public facts and nothing else", () => {

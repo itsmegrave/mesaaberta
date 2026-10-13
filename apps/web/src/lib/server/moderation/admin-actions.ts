@@ -11,11 +11,11 @@ import {
   removeCrowdfundingSchema,
   removePartnerSchema,
   reportIdSchema,
-} from '$lib/moderation/reports';
+} from '@mesaaberta/core/moderation/reports';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { reports } from '@mesaaberta/core/server/db/schema';
-import { removeCrowdfunding } from '../crowdfunding/admin';
-import { approvePartner, removePartner } from '../partners/admin';
+import { removeCrowdfunding } from '@mesaaberta/core/server/crowdfunding/admin';
+import { approvePartner, removePartner } from '@mesaaberta/core/server/partners/admin';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import {
   banAccount,
@@ -24,7 +24,7 @@ import {
   closeTableByAdmin,
   revokeBan,
   startReview,
-} from './admin';
+} from '@mesaaberta/core/server/moderation/admin';
 import { moderationAction } from './form-action';
 
 const admin = { admin: true };

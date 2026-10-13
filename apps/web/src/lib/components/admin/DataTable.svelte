@@ -40,7 +40,7 @@
     pageRange,
     showMore,
     type Sort,
-  } from '$lib/admin/list';
+  } from '@mesaaberta/core/admin/list';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

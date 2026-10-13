@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { afterSignIn, needsOnboarding, onboardingUrl } from './onboarding';
+import {
+  afterSignIn,
+  needsOnboarding,
+  onboardingUrl,
+} from '@mesaaberta/core/server/auth/onboarding';
 
 const locals = (profile: { username: string | null } | null) =>
   ({ getProfile: async () => profile }) as App.Locals;

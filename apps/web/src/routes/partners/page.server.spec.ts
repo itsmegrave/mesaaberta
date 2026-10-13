@@ -1,9 +1,9 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { listPartners } from '$lib/server/partners/service';
+import { listPartners } from '@mesaaberta/core/server/partners/service';
 import { load } from './+page.server';
 
-vi.mock('$lib/server/partners/service', () => ({
+vi.mock('@mesaaberta/core/server/partners/service', () => ({
   listPartners: vi.fn(),
   filePartnerReport: vi.fn(),
   withdrawPartner: vi.fn(),

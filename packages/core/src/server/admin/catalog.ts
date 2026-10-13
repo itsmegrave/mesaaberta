@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, ilike, inArray, ne, sql } from 'drizzle-orm';
-import type { Sort } from '$lib/admin/list';
+import type { Sort } from '../../admin/list';
 import { slugify } from '@mesaaberta/core/slug';
 import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';

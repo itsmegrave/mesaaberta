@@ -3,7 +3,7 @@ import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import AuditTimeline from './AuditTimeline.svelte';
-import type { History, HistoryEntry } from '$lib/server/admin/history';
+import type { History, HistoryEntry } from '@mesaaberta/core/server/admin/history';
 
 const entry = (over: Partial<HistoryEntry> = {}): HistoryEntry => ({
   id: crypto.randomUUID(),

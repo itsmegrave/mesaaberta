@@ -2,11 +2,11 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { approveEntry, mergeEntry, renameEntry } from '$lib/server/admin/catalog';
+import { approveEntry, mergeEntry, renameEntry } from '@mesaaberta/core/server/admin/catalog';
 import { actions } from './+page.server';
 
-vi.mock('$lib/server/admin/catalog', async (original) => ({
-  ...(await original<typeof import('$lib/server/admin/catalog')>()),
+vi.mock('@mesaaberta/core/server/admin/catalog', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/admin/catalog')>()),
   approveEntry: vi.fn(async () => 'event-1'),
   rejectEntry: vi.fn(async () => 'event-2'),
   renameEntry: vi.fn(async () => 'event-3'),

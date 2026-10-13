@@ -14,13 +14,16 @@
     PARTNER_REPORT_REASONS,
     removePartnerSchema,
     RESOLUTION_NOTE_MAX,
-  } from '$lib/moderation/reports';
+  } from '@mesaaberta/core/moderation/reports';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { PARTNER_ADMIN_STATUSES, PARTNER_BACKLINK_FILTERS } from '$lib/partners/admin-filters';
+  import {
+    PARTNER_ADMIN_STATUSES,
+    PARTNER_BACKLINK_FILTERS,
+  } from '@mesaaberta/core/partners/admin-filters';
   import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
   import { toast } from '$lib/toaster';
-  import type { AdminPartners } from '$lib/server/partners/admin';
+  import type { AdminPartners } from '@mesaaberta/core/server/partners/admin';
 
   type Row = AdminPartners['rows'][number] & { logo: string | null };
   let { data }: { data: { partners: AdminPartners & { rows: Row[] } } } = $props();

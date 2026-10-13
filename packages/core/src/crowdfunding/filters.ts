@@ -1,4 +1,4 @@
-import { pageNumber } from '$lib/admin/catalog';
+import { pageNumber } from '../admin/catalog';
 
 /** How the public list is ordered: what ends (or opens) first, what was added last, or by name. */
 export const CROWDFUNDING_SORTS = ['ending', 'newest', 'name'] as const;

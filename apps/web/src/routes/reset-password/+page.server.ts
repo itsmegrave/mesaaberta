@@ -4,7 +4,7 @@ import { initialForm, validateStringForm } from '$lib/forms/contract';
 import { formMessage } from '$lib/forms/server';
 import { newPasswordSchema } from '$lib/auth/credentials';
 import { withoutSecrets } from '$lib/forms/server';
-import { changePassword, type ChangePasswordResult } from '$lib/server/auth/password';
+import { changePassword, type ChangePasswordResult } from '@mesaaberta/core/server/auth/password';
 import type { Actions, PageServerLoad } from './$types';
 
 // This page is only for someone the recovery link just signed in. Without a session (an expired or

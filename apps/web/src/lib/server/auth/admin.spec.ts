@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { promoteToAdmin } from './admin';
+import { promoteToAdmin } from '@mesaaberta/core/server/auth/admin';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = '00000000-0000-4000-8000-000000000401';

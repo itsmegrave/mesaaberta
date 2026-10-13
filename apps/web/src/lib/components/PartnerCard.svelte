@@ -7,7 +7,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import type { Network } from '$lib/profile/social-links';
+  import type { Network } from '@mesaaberta/core/profile/social-links';
   import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
   import { toast } from '$lib/toaster';
 

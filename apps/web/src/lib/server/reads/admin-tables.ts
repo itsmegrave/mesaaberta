@@ -1,7 +1,7 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '../admin-access';
-import { listAdminTables } from '../admin/tables';
+import { listAdminTables } from '@mesaaberta/core/server/admin/tables';
 import { instagramAccounts } from '@mesaaberta/core/server/db/schema';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';

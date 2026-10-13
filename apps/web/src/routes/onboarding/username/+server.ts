@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
-import { isUsernameAvailable } from '$lib/server/profile/service';
-import { normalizeUsername, usernameProblem } from '$lib/profile/username';
+import { isUsernameAvailable } from '@mesaaberta/core/server/profile/service';
+import { normalizeUsername, usernameProblem } from '@mesaaberta/core/profile/username';
 import type { RequestHandler } from './$types';
 
 /**

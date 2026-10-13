@@ -1,7 +1,7 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
-import { pageNumber } from './catalog';
-import { pageSizeOf } from './list';
+import { pageNumber } from '@mesaaberta/core/admin/catalog';
+import { pageSizeOf } from '@mesaaberta/core/admin/list';
 import { EVENT_STATUSES, type EventStatus } from '@mesaaberta/core/admin/event-status';
 
 export { EVENT_STATUSES, type EventStatus };

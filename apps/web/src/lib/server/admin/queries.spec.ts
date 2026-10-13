@@ -9,7 +9,7 @@ import {
   systems,
   tags,
 } from '@mesaaberta/core/server/db/schema';
-import { adminOverview } from './queries';
+import { adminOverview } from '@mesaaberta/core/server/admin/queries';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-09-30T12:00:00Z');

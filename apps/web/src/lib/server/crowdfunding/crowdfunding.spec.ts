@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { readCrowdfundingFilters } from '$lib/crowdfunding/filters';
+import { readCrowdfundingFilters } from '@mesaaberta/core/crowdfunding/filters';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
   crowdfundings,
@@ -13,15 +13,18 @@ import { createTestDb, pgErrorCode } from '../db/test-db';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
 import type { StoredEvent } from '@mesaaberta/core/server/events/types';
-import { listReports, reportDetail } from '../moderation/admin';
-import { listAdminCrowdfundings, removeCrowdfunding } from './admin';
+import { listReports, reportDetail } from '@mesaaberta/core/server/moderation/admin';
+import {
+  listAdminCrowdfundings,
+  removeCrowdfunding,
+} from '@mesaaberta/core/server/crowdfunding/admin';
 import {
   addCrowdfunding,
   fileCrowdfundingReport,
   findListedByUrl,
   listCrowdfundings,
   takeLinkRead,
-} from './service';
+} from '@mesaaberta/core/server/crowdfunding/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-10T15:00:00Z');

@@ -6,7 +6,10 @@
   import Icon from '$lib/components/Icon.svelte';
   import SearchSelect from '$lib/components/SearchSelect.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
-  import { CROWDFUNDING_SORTS, type CrowdfundingFilters } from '$lib/crowdfunding/filters';
+  import {
+    CROWDFUNDING_SORTS,
+    type CrowdfundingFilters,
+  } from '@mesaaberta/core/crowdfunding/filters';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

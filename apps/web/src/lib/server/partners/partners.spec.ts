@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import type { PartnerInput } from '$lib/partners/schema';
-import { readPartnerFilters } from '$lib/partners/filters';
+import type { PartnerInput } from '@mesaaberta/core/partners/schema';
+import { readPartnerFilters } from '@mesaaberta/core/partners/filters';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
   events,
@@ -12,7 +12,11 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
-import { approvePartner, listAdminPartners, removePartner } from './admin';
+import {
+  approvePartner,
+  listAdminPartners,
+  removePartner,
+} from '@mesaaberta/core/server/partners/admin';
 import {
   addPartner,
   filePartnerReport,
@@ -20,7 +24,7 @@ import {
   listPartners,
   updatePartner,
   withdrawPartner,
-} from './service';
+} from '@mesaaberta/core/server/partners/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-10T15:00:00Z');

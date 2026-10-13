@@ -5,8 +5,8 @@ import {
   reportFilters,
   type AuditKind,
   type ReportFilter,
-} from '$lib/admin/report-filters';
-import { OPEN_REPORT_STATUSES, type ReportStatus } from '$lib/moderation/reports';
+} from '../../admin/report-filters';
+import { OPEN_REPORT_STATUSES, type ReportStatus } from '../../moderation/reports';
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {

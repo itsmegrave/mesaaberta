@@ -1,12 +1,16 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { validateFormData } from '$lib/forms/contract';
 import { formMessage, refuse, responseForm } from '$lib/forms/server';
-import { editPartnerSchema, NEW_PARTNER_VALUES, newPartnerSchema } from '$lib/partners/schema';
+import {
+  editPartnerSchema,
+  NEW_PARTNER_VALUES,
+  newPartnerSchema,
+} from '@mesaaberta/core/partners/schema';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
-import { addPartner, updatePartner } from './service';
+import { addPartner, updatePartner } from '@mesaaberta/core/server/partners/service';
 
 type Event = {
   request: Request;

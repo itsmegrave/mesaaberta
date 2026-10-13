@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
-import { reportDetail } from '$lib/server/moderation/admin';
+import { reportDetail } from '@mesaaberta/core/server/moderation/admin';
 import { reportActions } from '$lib/server/moderation/admin-actions';
 import type { Actions, PageServerLoad } from './$types';
 

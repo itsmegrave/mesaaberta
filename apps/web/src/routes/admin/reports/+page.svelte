@@ -9,11 +9,11 @@
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
   import UserLink from '$lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '$lib/admin/format';
-  import { REPORT_FILTERS, type ReportFilter } from '$lib/admin/report-filters';
+  import { REPORT_FILTERS, type ReportFilter } from '@mesaaberta/core/admin/report-filters';
   import { localizedHref } from '$lib/i18n/locales';
   import { reasonLabel } from '$lib/moderation/labels';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import type { AdminReports } from '$lib/server/moderation/admin';
+  import type { AdminReports } from '@mesaaberta/core/server/moderation/admin';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

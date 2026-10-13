@@ -1,6 +1,6 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
-import { crowdfundingAdminFilters } from '$lib/crowdfunding/admin-filters';
-import { OPEN_REPORT_STATUSES, type ReportReason } from '$lib/moderation/reports';
+import { crowdfundingAdminFilters } from '../../crowdfunding/admin-filters';
+import { OPEN_REPORT_STATUSES, type ReportReason } from '../../moderation/reports';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { publicName } from '@mesaaberta/core/server/db/public-name';

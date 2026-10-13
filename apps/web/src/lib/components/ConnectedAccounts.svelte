@@ -7,7 +7,7 @@
   import DisconnectProvider from '$lib/components/DisconnectProvider.svelte';
   import ProviderLogo from '$lib/components/ProviderLogo.svelte';
   import { m } from '$lib/paraglide/messages';
-  import type { Provider } from '$lib/auth/providers';
+  import type { Provider } from '@mesaaberta/core/auth/providers';
 
   type Props = {
     connections: {

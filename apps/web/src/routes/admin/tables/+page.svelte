@@ -17,12 +17,12 @@
   import { dayLabel, timeLabel } from '$lib/admin/format';
   import { instagramStatus } from '$lib/admin/instagram-status';
   import { publishTable } from '$lib/admin/publish-table';
-  import { INSTAGRAM_FILTERS } from '$lib/admin/table-filters';
+  import { INSTAGRAM_FILTERS } from '@mesaaberta/core/admin/table-filters';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { pageQuery } from '$lib/query/page.svelte';
-  import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '$lib/moderation/reports';
+  import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '@mesaaberta/core/moderation/reports';
   import { toast } from '$lib/toaster';
   import { TABLE_STATUSES } from '@mesaaberta/core/tables/status-values';
   import type { AdminTablesView } from '$lib/server/reads/admin-tables';

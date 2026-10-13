@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
-import { searchRecipients } from '$lib/server/notifications/announcements';
+import { searchRecipients } from '@mesaaberta/core/server/notifications/announcements';
 import type { RequestHandler } from './$types';
 
 /** Usernames for the recipient field's suggestions. Admins only, like everything under /admin. */

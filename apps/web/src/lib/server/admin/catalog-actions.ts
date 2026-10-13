@@ -1,7 +1,12 @@
 import { error, fail, type Action, type RequestEvent } from '@sveltejs/kit';
 import { validateStringForm } from '$lib/forms/contract';
 import type { z, ZodType } from 'zod';
-import { createSchema, entrySchema, mergeSchema, renameSchema } from '$lib/admin/catalog';
+import {
+  createSchema,
+  entrySchema,
+  mergeSchema,
+  renameSchema,
+} from '@mesaaberta/core/admin/catalog';
 import { requireAdmin } from '../admin-access';
 import { requireUser } from '../auth/guard';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
@@ -16,7 +21,7 @@ import {
   mergeEntry,
   rejectEntry,
   renameEntry,
-} from './catalog';
+} from '@mesaaberta/core/server/admin/catalog';
 
 /**
  * One form action of the catalog console: only an admin gets in (the hook 404s everyone else, and

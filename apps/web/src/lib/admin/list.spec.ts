@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { listQuery, nextSort, pageRange, pageSizeOf, pageWindow, showMore, sortOf } from './list';
+import {
+  listQuery,
+  nextSort,
+  pageRange,
+  pageSizeOf,
+  pageWindow,
+  showMore,
+  sortOf,
+} from '@mesaaberta/core/admin/list';
 
 const params = (query: string) => new URLSearchParams(query);
 

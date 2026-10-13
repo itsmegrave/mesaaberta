@@ -8,7 +8,7 @@ import {
   events,
   profiles,
 } from '@mesaaberta/core/server/db/schema';
-import { addCrowdfunding } from '../service';
+import { addCrowdfunding } from '@mesaaberta/core/server/crowdfunding/service';
 import {
   claimRun,
   finishRun,

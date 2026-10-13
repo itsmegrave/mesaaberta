@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createTracker, sourceChannel } from './track';
+import { createTracker, sourceChannel } from '@mesaaberta/core/server/analytics/track';
 import type {
   AnalyticsProvider,
   AnalyticsProviderFactory,

@@ -2,7 +2,7 @@
   // The page numbers under a list: previous, the first, the last and the ones around the current
   // (with "…" where numbers are left out), next. Plain links, so every page has an address.
   import Icon from '$lib/components/Icon.svelte';
-  import { pageWindow } from '$lib/admin/list';
+  import { pageWindow } from '@mesaaberta/core/admin/list';
   import { m } from '$lib/paraglide/messages';
 
   let {

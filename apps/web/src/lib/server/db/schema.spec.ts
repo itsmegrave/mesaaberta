@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb, pgErrorCode } from './test-db';
 import { eq, sql } from 'drizzle-orm';
 import { gameTables, genderIdentity, profiles, systems } from '@mesaaberta/core/server/db/schema';
-import { GENDER_OPTIONS } from '$lib/profile/schema';
+import { GENDER_OPTIONS } from '@mesaaberta/core/profile/schema';
 
 const UNIQUE_VIOLATION = '23505';
 const FOREIGN_KEY_VIOLATION = '23503';

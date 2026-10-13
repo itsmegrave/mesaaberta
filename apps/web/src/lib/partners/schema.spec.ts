@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { editPartnerSchema, partnerLinks, partnerLinkUrl } from './schema';
+import { editPartnerSchema, partnerLinks, partnerLinkUrl } from '@mesaaberta/core/partners/schema';
 
 const base = {
   name: 'Taverna do Dado',

@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { crowdfundingFormSchema } from '$lib/crowdfunding/schema';
+import { crowdfundingFormSchema } from '@mesaaberta/core/crowdfunding/schema';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { validateFormData } from '$lib/forms/contract';
 import { formMessage, refuse, responseForm } from '$lib/forms/server';
@@ -10,7 +10,11 @@ import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
 import { CROWDFUNDING_LIMIT, checkRateLimit } from '@mesaaberta/core/server/rate-limit';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
-import { addCrowdfunding, findListedByUrl, takeLinkRead } from './service';
+import {
+  addCrowdfunding,
+  findListedByUrl,
+  takeLinkRead,
+} from '@mesaaberta/core/server/crowdfunding/service';
 
 export const NEW_CROWDFUNDING_VALUES = {
   url: '',

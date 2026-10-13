@@ -3,7 +3,7 @@ import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
-import { takeLinkRead } from '$lib/server/crowdfunding/service';
+import { takeLinkRead } from '@mesaaberta/core/server/crowdfunding/service';
 import { RateLimited } from '@mesaaberta/core/server/errors';
 import type { RequestHandler } from './$types';
 

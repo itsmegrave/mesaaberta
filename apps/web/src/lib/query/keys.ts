@@ -1,5 +1,5 @@
-import { tableFilters } from '$lib/admin/table-filters';
-import { profileFilters } from '$lib/admin/profile-filters';
+import { tableFilters } from '@mesaaberta/core/admin/table-filters';
+import { profileFilters } from '@mesaaberta/core/admin/profile-filters';
 
 export const resources = [
   'preview',
