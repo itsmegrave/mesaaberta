@@ -25,11 +25,17 @@ function isSlugConflict(error: unknown): boolean {
   return code === '23505' && `${constraint_name ?? constraint ?? message}`.includes('slug');
 }
 
+/** How many of one person's suggested systems may wait for an admin at the same time. */
+export const SYSTEM_SUGGESTION_LIMIT = 5;
+
 /**
  * The system a table's form picked. A pick is an approved system's slug, a pending one the GM
  * suggested, the system the table already has (`held`), or a new name (`new:<name>`, see
  * `NEW_CATALOG_PREFIX`), saved as the GM's suggestion. `waiting` says no admin has let it in yet:
  * a table with such a system stays a draft. Anything else throws `Invalid` on the field.
+ *
+ * Call it inside the transaction that saves the table: a new suggestion takes a lock that lasts to
+ * the commit, and a save that fails must leave no suggestion behind.
  */
 async function systemFor(db: AnyDb, pick: string, gmId: string, held?: string) {
   const waits = (status: string) => status === 'pending' || status === 'rejected';
@@ -51,6 +57,14 @@ async function systemFor(db: AnyDb, pick: string, gmId: string, held?: string) {
       }
       return { id: existing.id, waiting: waits(existing.status) };
     }
+    // Each suggestion is an admin's work to review: one person holds only a few at a time. The
+    // lock makes two requests at once count each other.
+    await db.execute(sql`select pg_advisory_xact_lock(hashtext(${`system-suggestion:${gmId}`}))`);
+    const [{ waiting }] = await db
+      .select({ waiting: count() })
+      .from(systems)
+      .where(and(eq(systems.suggestedBy, gmId), eq(systems.status, 'pending')));
+    if (waiting >= SYSTEM_SUGGESTION_LIMIT) throw new Invalid('systemSlug', 'suggestion_limit');
     const [created] = await db
       .insert(systems)
       .values({ name, slug, status: 'pending', suggestedBy: gmId })
@@ -341,13 +355,7 @@ export async function updateTable(
   const table = await findForWrite(db, slug);
   authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
 
-  // A suggestion is the table's GM's, also when an admin is the one editing.
-  const system = await systemFor(db, input.systemSlug, table.gmId, table.systemId);
-  // A public table cannot move to a system nobody approved: it would have to hide again.
-  if (system.waiting && system.id !== table.systemId && table.status !== 'draft') {
-    throw new Invalid('systemSlug', 'suggestion_needs_draft');
-  }
-  const columns = { ...columnsOf(input), systemId: system.id };
+  const columns = columnsOf(input);
   // Invites and notifications go out only for a change players would see.
   const changed = PLAYER_FACING.some((field) => !sameValue(table[field], columns[field]));
   const [current] = await db
@@ -362,11 +370,30 @@ export async function updateTable(
   // A new image replaces the current one; without one, the GM may take the current one off.
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
+    // The row is locked first, so the status read here is the one this save and a publish at the
+    // same moment both see: a draft cannot go public between the check below and the update.
+    const [locked] = await tx
+      .select({ status: gameTables.status, systemId: gameTables.systemId })
+      .from(gameTables)
+      .where(eq(gameTables.id, table.id))
+      .for('update');
+    // A suggestion is the table's GM's, also when an admin is the one editing.
+    const system = await systemFor(
+      tx as unknown as AnyDb,
+      input.systemSlug,
+      table.gmId,
+      locked.systemId,
+    );
+    // A public table cannot move to a system nobody approved: it would have to hide again.
+    if (system.waiting && system.id !== locked.systemId && locked.status !== 'draft') {
+      throw new Invalid('systemSlug', 'suggestion_needs_draft');
+    }
     await tx
       .update(gameTables)
       // No new image leaves the current one as it is.
       .set({
         ...columns,
+        systemId: system.id,
         ...image,
         ...(changed ? { icalSequence: table.icalSequence + 1 } : {}),
       })
@@ -424,15 +451,23 @@ export async function publishTable(
   authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
   if (table.status !== 'draft') throw new Invalid('slug', 'not_a_draft');
   if (table.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
-  const [system] = await db
-    .select({ status: systems.status })
-    .from(systems)
-    .where(eq(systems.id, table.systemId));
-  // Its system is still a suggestion (or was turned down): the table waits, or takes another one.
-  if (system.status === 'pending') throw new Invalid('systemSlug', 'system_pending');
-  if (system.status === 'rejected') throw new Invalid('systemSlug', 'system_rejected');
 
   const eventId = await db.transaction(async (tx) => {
+    // Locked and read again inside the transaction: an edit or an admin's decision at the same
+    // moment cannot slip a system nobody approved under a table that is going public.
+    const [locked] = await tx
+      .select({ systemId: gameTables.systemId })
+      .from(gameTables)
+      .where(eq(gameTables.id, table.id))
+      .for('update');
+    const [system] = await tx
+      .select({ status: systems.status })
+      .from(systems)
+      .where(eq(systems.id, locked.systemId))
+      .for('share');
+    // Its system is still a suggestion (or was turned down): the table waits, or takes another.
+    if (system.status === 'pending') throw new Invalid('systemSlug', 'system_pending');
+    if (system.status === 'rejected') throw new Invalid('systemSlug', 'system_rejected');
     await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
     const published = await tx
       .update(gameTables)

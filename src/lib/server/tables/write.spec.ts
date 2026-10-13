@@ -5,7 +5,14 @@ import { approveEntry, mergeEntry, rejectEntry } from '../admin/catalog';
 import { listSystems } from '../systems';
 import { createTestDb, pgErrorCode } from '../db/test-db';
 import { findTableBySlug, joinDetailsOf, listUpcomingTables } from './queries';
-import { createTable, disableTable, loadTableForEdit, publishTable, updateTable } from './write';
+import {
+  SYSTEM_SUGGESTION_LIMIT,
+  createTable,
+  disableTable,
+  loadTableForEdit,
+  publishTable,
+  updateTable,
+} from './write';
 import type { TableInput } from '$lib/tables/schema';
 import type { Actor } from '../auth/policy';
 
@@ -1031,6 +1038,37 @@ describe('suggesting a system', () => {
     await expect(
       updateTable(test.db, ana, slug, input({ title: 'Pública', systemSlug: 'new:Outro Caseiro' })),
     ).rejects.toMatchObject({ message: 'suggestion_needs_draft' });
+  });
+
+  it('lets one person hold only a few suggestions waiting at a time', async () => {
+    for (let n = 1; n <= SYSTEM_SUGGESTION_LIMIT; n++) {
+      await createTable(
+        test.db,
+        bruno,
+        input({ title: `Fila ${n}`, systemSlug: `new:Sistema da Fila ${n}` }),
+        { now },
+      );
+    }
+
+    await expect(
+      createTable(test.db, bruno, input({ title: 'Fila a mais', systemSlug: 'new:Mais Um' }), {
+        now,
+      }),
+    ).rejects.toMatchObject({ message: 'suggestion_limit' });
+    // The refused save left nothing behind: no table, no suggestion.
+    expect(await rowOfTitle('Fila a mais')).toBeUndefined();
+    expect(await systemOf('mais-um')).toBeUndefined();
+    // Picking one of the suggestions already waiting is not a new one.
+    await expect(
+      createTable(
+        test.db,
+        bruno,
+        input({ title: 'Fila de novo', systemSlug: 'sistema-da-fila-1' }),
+        {
+          now,
+        },
+      ),
+    ).resolves.toMatchObject({ draft: true });
   });
 
   it('refuses a name too short and a slug that is not offered', async () => {
