@@ -7,7 +7,7 @@ import {
   mergeSchema,
   renameSchema,
 } from '@mesaaberta/core/admin/catalog';
-import { callApiRaw } from '../api-client';
+import { decideViaApi } from '../api-decide';
 import { requireAdmin } from '../admin-access';
 import { requireUser } from '../auth/guard';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
@@ -63,28 +63,16 @@ function catalogAction<Schema extends ZodType>(
 
     const profile = await locals.getProfile();
     let eventId: string | undefined;
-    if (
-      profile &&
-      (await locals.flags.isEnabled('api_admin_catalog', { id: profile.id, isAdmin: true }))
-    ) {
-      const answer = await callApiRaw(
-        locals.env,
+    if (profile) {
+      const viaApi = await decideViaApi(
+        locals,
+        'api_admin_catalog',
         `/v1/admin/catalog/${name}`,
         profile.id,
-        locals.log,
         form.data,
       );
-      const body = answer?.body as
-        { eventId?: string; error?: string; field?: string; message?: string } | undefined;
-      if (answer?.ok && typeof body?.eventId === 'string') eventId = body.eventId;
-      else if (answer?.status === 400 && body?.error === 'invalid' && body.message)
-        return refuse(body.field ?? '', body.message);
-      else if (answer)
-        locals.log.warn('api catalog decision refused', {
-          code: 'api_call_refused',
-          name,
-          status: answer.status,
-        });
+      if (viaApi.kind === 'done') eventId = viaApi.eventIds[0];
+      else if (viaApi.kind === 'refused') return refuse(viaApi.field, viaApi.code);
     }
 
     if (eventId === undefined) {

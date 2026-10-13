@@ -1,155 +1,50 @@
-import { eq } from 'drizzle-orm';
 import {
-  accountSchema,
-  banEnd,
-  banFromReportSchema,
-  banSchema,
-  closeReportSchema,
-  closeTableByIdSchema,
-  approvePartnerSchema,
-  closeTableSchema,
-  removeCrowdfundingSchema,
-  removePartnerSchema,
-  reportIdSchema,
-} from '@mesaaberta/core/moderation/reports';
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { reports } from '@mesaaberta/core/server/db/schema';
-import { removeCrowdfunding } from '@mesaaberta/core/server/crowdfunding/admin';
-import { approvePartner, removePartner } from '@mesaaberta/core/server/partners/admin';
-import { Invalid } from '@mesaaberta/core/server/errors';
-import {
-  banAccount,
-  closeReport,
-  closeReportedTable,
-  closeTableByAdmin,
-  revokeBan,
-  startReview,
-} from '@mesaaberta/core/server/moderation/admin';
+  moderationDecisions,
+  type ModerationDecisionName,
+} from '@mesaaberta/core/server/moderation/decisions';
 import { moderationAction } from './form-action';
 
-const admin = { admin: true };
-
-/** The player a report is about: the only profile a ban from that report can hit. */
-async function reportedPlayer(db: AnyDb, id: string) {
-  const [row] = await db
-    .select({ targetType: reports.targetType, targetId: reports.targetId })
-    .from(reports)
-    .where(eq(reports.id, id));
-  if (!row || row.targetType !== 'player') throw new Invalid('id', 'not_found');
-  return row.targetId;
+/**
+ * One admin console action: the decision's schema and service come from core (the api route runs
+ * the same ones), `fields` are the text fields the form posts. Only admins get in.
+ */
+function decide(name: ModerationDecisionName, fields: readonly string[]) {
+  const { schema, apply } = moderationDecisions[name];
+  return moderationAction(schema, fields, (db, actor, data) => apply(db, actor, data as never), {
+    admin: true,
+    decision: name,
+  });
 }
 
 /** The decisions on one report, for `/admin/reports/[id]`. */
 export const reportActions = {
-  review: moderationAction(
-    reportIdSchema,
-    ['id'],
-    (db, actor, { id }) => startReview(db, actor, id),
-    admin,
-  ),
-  accept: moderationAction(
-    closeReportSchema,
-    ['id', 'note'],
-    (db, actor, { id, note }) => closeReport(db, actor, id, 'resolved', note),
-    admin,
-  ),
-  dismiss: moderationAction(
-    closeReportSchema,
-    ['id', 'note'],
-    (db, actor, { id, note }) => closeReport(db, actor, id, 'dismissed', note),
-    admin,
-  ),
-  // A table report: close the table, with the justification its GM reads.
-  closeTable: moderationAction(
-    closeTableSchema,
-    ['id', 'note'],
-    (db, actor, { id, note }) => closeReportedTable(db, actor, id, note),
-    admin,
-  ),
-  // A campaign report: take the campaign down, which accepts this report with the others about it.
-  removeCrowdfunding: moderationAction(
-    removeCrowdfundingSchema,
-    ['id', 'reason', 'note', 'reportId'],
-    (db, actor, { id, reason, note, reportId }) =>
-      removeCrowdfunding(db, actor, id, { reason, note, reportId }),
-    admin,
-  ),
-  // A partner report: take the partner down, which accepts this report with the others about it.
-  removePartner: moderationAction(
-    removePartnerSchema,
-    ['id', 'reason', 'note', 'reportId'],
-    (db, actor, { id, reason, note, reportId }) =>
-      removePartner(db, actor, id, { reason, note, reportId }),
-    admin,
-  ),
-  // A player report: ban the reported profile, for a while or for good.
-  ban: moderationAction(
-    banFromReportSchema,
-    ['id', 'duration', 'reason'],
-    async (db, actor, { id, duration, reason }) => {
-      const now = new Date();
-      return banAccount(db, actor, await reportedPlayer(db, id), {
-        until: banEnd(duration, now),
-        reason,
-        reportId: id,
-        now,
-      });
-    },
-    admin,
-  ),
+  review: decide('report.review', ['id']),
+  accept: decide('report.accept', ['id', 'note']),
+  dismiss: decide('report.dismiss', ['id', 'note']),
+  closeTable: decide('report.closeTable', ['id', 'note']),
+  removeCrowdfunding: decide('report.removeCrowdfunding', ['id', 'reason', 'note', 'reportId']),
+  removePartner: decide('report.removePartner', ['id', 'reason', 'note', 'reportId']),
+  ban: decide('report.ban', ['id', 'duration', 'reason']),
 };
 
 /** Banning and revoking from the user's page, `/admin/users/[id]`. */
 export const accountActions = {
-  ban: moderationAction(
-    banSchema,
-    ['profileId', 'duration', 'reason'],
-    (db, actor, { profileId, duration, reason }) => {
-      const now = new Date();
-      return banAccount(db, actor, profileId, { until: banEnd(duration, now), reason, now });
-    },
-    admin,
-  ),
-  revoke: moderationAction(
-    accountSchema,
-    ['profileId'],
-    (db, actor, { profileId }) => revokeBan(db, actor, profileId),
-    admin,
-  ),
+  ban: decide('account.ban', ['profileId', 'duration', 'reason']),
+  revoke: decide('account.revoke', ['profileId']),
 };
 
 /** Taking a campaign down from the crowdfunding list, `/admin/crowdfunding`. */
 export const crowdfundingActions = {
-  remove: moderationAction(
-    removeCrowdfundingSchema,
-    ['id', 'reason', 'note'],
-    (db, actor, { id, reason, note }) => removeCrowdfunding(db, actor, id, { reason, note }),
-    admin,
-  ),
+  remove: decide('crowdfunding.remove', ['id', 'reason', 'note']),
 };
 
 /** Approving and rejecting partners from the partners list, `/admin/partners`. */
 export const partnerActions = {
-  approve: moderationAction(
-    approvePartnerSchema,
-    ['id'],
-    (db, actor, { id }) => approvePartner(db, actor, id),
-    admin,
-  ),
-  remove: moderationAction(
-    removePartnerSchema,
-    ['id', 'reason', 'note'],
-    (db, actor, { id, reason, note }) => removePartner(db, actor, id, { reason, note }),
-    admin,
-  ),
+  approve: decide('partner.approve', ['id']),
+  remove: decide('partner.remove', ['id', 'reason', 'note']),
 };
 
 /** Closing a table from the tables list, `/admin/tables`. */
 export const tableActions = {
-  close: moderationAction(
-    closeTableByIdSchema,
-    ['tableId', 'note'],
-    (db, actor, { tableId, note }) => closeTableByAdmin(db, actor, tableId, note),
-    admin,
-  ),
+  close: decide('table.close', ['tableId', 'note']),
 };

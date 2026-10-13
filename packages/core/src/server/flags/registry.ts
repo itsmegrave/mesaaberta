@@ -40,6 +40,12 @@ export const flagDefaults = {
   // dispatches the event as before; a call that cannot be made falls back to the web path. Needs
   // the API binding. Target admins first.
   api_admin_catalog: false,
+  // Off: the admin moderation decisions (review, accept or dismiss a report, close a table, take a
+  // campaign or partner down, ban or revoke a ban, approve a partner) run in the web Worker. On:
+  // the api Worker makes them over the Service Binding, from the same decision registry, and the
+  // web Worker dispatches the events it returns; a call that cannot be made falls back to the web
+  // path. Needs the API binding. Target admins first.
+  api_admin_moderation: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
