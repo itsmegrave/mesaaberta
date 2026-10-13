@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
-import { adminTable } from '$lib/server/admin/tables';
-import { tableHistory } from '$lib/server/admin/history';
+import { adminTable } from '@mesaaberta/core/server/admin/tables';
+import { tableHistory } from '@mesaaberta/core/server/admin/history';
 import type { PageServerLoad } from './$types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

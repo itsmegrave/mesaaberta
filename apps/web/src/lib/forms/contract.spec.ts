@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSchema, mergeSchema } from '$lib/admin/catalog';
+import { createSchema, mergeSchema } from '@mesaaberta/core/admin/catalog';
 import { z } from 'zod';
 import { validateFormData, validateStringForm } from './contract';
 

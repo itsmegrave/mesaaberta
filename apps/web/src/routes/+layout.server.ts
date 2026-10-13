@@ -1,7 +1,7 @@
 import { cannyLinks } from '$lib/canny/links';
-import { siteOf } from '$lib/server/site';
+import { siteOf } from '@mesaaberta/core/server/site';
 import { loadRead } from '$lib/server/reads/load';
-import { pendingCount } from '$lib/server/admin/catalog';
+import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';

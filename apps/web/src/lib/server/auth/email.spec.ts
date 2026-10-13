@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { signInWithEmail, signUpWithEmail } from './email';
+import { signInWithEmail, signUpWithEmail } from '@mesaaberta/core/server/auth/email';
 
 const user = { id: '00000000-0000-4000-8000-000000000701', user_metadata: {} };
 const origin = 'https://mesaaberta.app';

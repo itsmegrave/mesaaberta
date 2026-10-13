@@ -10,7 +10,7 @@
   import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
   import { pageHref } from '$lib/admin/page-href';
   import { localizedHref } from '$lib/i18n/locales';
-  import { partnerIdSchema } from '$lib/moderation/reports';
+  import { partnerIdSchema } from '@mesaaberta/core/moderation/reports';
   import { Slow } from '$lib/navigation/slow.svelte';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

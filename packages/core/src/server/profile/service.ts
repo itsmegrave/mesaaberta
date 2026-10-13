@@ -4,9 +4,9 @@ import { profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema'
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { diffFields, hasChanges } from '@mesaaberta/core/server/events/changes';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
-import { normalizeUsername } from '$lib/profile/username';
-import { profileLinks, type ProfileInput } from '$lib/profile/schema';
-import { isNetwork, typedValue } from '$lib/profile/social-links';
+import { normalizeUsername } from '../../profile/username';
+import { profileLinks, type ProfileInput } from '../../profile/schema';
+import { isNetwork, typedValue } from '../../profile/social-links';
 
 /** A Postgres unique violation on the username index (drizzle wraps the driver's error as `cause`). */
 function isUsernameConflict(error: unknown): boolean {

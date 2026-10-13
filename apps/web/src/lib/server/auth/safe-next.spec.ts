@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { safeNext } from './safe-next';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 
 describe('safeNext', () => {
   it.each(['/', '/tables', '/tables/mesa-do-dragao', '/tables?page=2', '/tables#top'])(

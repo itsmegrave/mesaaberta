@@ -7,7 +7,7 @@
   import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
   import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import { CROWDFUNDING_ADMIN_STATUSES } from '$lib/crowdfunding/admin-filters';
+  import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
   import { periodLabel } from '$lib/crowdfunding/format';
   import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
   import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
@@ -16,11 +16,11 @@
     CROWDFUNDING_REPORT_REASONS,
     removeCrowdfundingSchema,
     RESOLUTION_NOTE_MAX,
-  } from '$lib/moderation/reports';
+  } from '@mesaaberta/core/moderation/reports';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { toast } from '$lib/toaster';
-  import type { AdminCrowdfundings } from '$lib/server/crowdfunding/admin';
+  import type { AdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
 
   type Row = AdminCrowdfundings['rows'][number] & { cover: string | null };
   let { data }: { data: { crowdfundings: AdminCrowdfundings & { rows: Row[] } } } = $props();

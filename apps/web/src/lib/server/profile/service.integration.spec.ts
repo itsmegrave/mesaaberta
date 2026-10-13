@@ -2,8 +2,8 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { inArray } from 'drizzle-orm';
 import { openIntegrationDb } from '../db/integration-db';
 import { profiles } from '@mesaaberta/core/server/db/schema';
-import { saveProfile } from './service';
-import type { ProfileInput } from '$lib/profile/schema';
+import { saveProfile } from '@mesaaberta/core/server/profile/service';
+import type { ProfileInput } from '@mesaaberta/core/profile/schema';
 
 // Real Postgres, real concurrency: the unique index must decide when two people take a username at
 // the same moment. PGlite is one connection and cannot make two transactions overlap.

@@ -3,7 +3,7 @@
   // Native radios keep arrow-key behaviour; picking one applies at once and keeps the other filters.
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { listPath, listQuery } from '$lib/admin/list';
+  import { listPath, listQuery } from '@mesaaberta/core/admin/list';
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
 

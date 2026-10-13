@@ -1,6 +1,6 @@
 import type { SupabaseClient, UserIdentity } from '@supabase/supabase-js';
-import type { Provider } from '$lib/auth/providers';
-import { providers } from '$lib/auth/providers';
+import type { Provider } from '../../auth/providers';
+import { providers } from '../../auth/providers';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { safeNext } from './safe-next';
 

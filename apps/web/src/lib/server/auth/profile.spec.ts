@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { ensureProfile } from './profile';
+import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 

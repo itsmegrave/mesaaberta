@@ -9,7 +9,7 @@
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { PARTNER_SORTS, type PartnerFilters } from '$lib/partners/filters';
+  import { PARTNER_SORTS, type PartnerFilters } from '@mesaaberta/core/partners/filters';
 
   let { picked }: { picked: Pick<PartnerFilters, 'query' | 'sort'> } = $props();
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_SOCIAL_LINKS } from './social-links';
-import { GENDER_OPTIONS, profileLinks, profileSchema } from './schema';
+import { MAX_SOCIAL_LINKS } from '@mesaaberta/core/profile/social-links';
+import { GENDER_OPTIONS, profileLinks, profileSchema } from '@mesaaberta/core/profile/schema';
 
 const base = {
   username: 'ana',

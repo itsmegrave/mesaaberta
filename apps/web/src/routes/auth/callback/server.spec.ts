@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GET } from './+server';
 
-vi.mock('$lib/server/auth/login', () => ({ finishLogin: vi.fn().mockResolvedValue('/') }));
+vi.mock('@mesaaberta/core/server/auth/login', () => ({
+  finishLogin: vi.fn().mockResolvedValue('/'),
+}));
 
 const call = async (query: string) => {
   const event = {

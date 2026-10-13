@@ -11,9 +11,9 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
-import { partnerAdminFilters } from '$lib/partners/admin-filters';
-import { OPEN_REPORT_STATUSES, type ReportReason } from '$lib/moderation/reports';
-import type { Network } from '$lib/profile/social-links';
+import { partnerAdminFilters } from '../../partners/admin-filters';
+import { OPEN_REPORT_STATUSES, type ReportReason } from '../../moderation/reports';
+import type { Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { publicName } from '@mesaaberta/core/server/db/public-name';

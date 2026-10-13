@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { finishLogin, startLogin } from './login';
+import { finishLogin, startLogin } from '@mesaaberta/core/server/auth/login';
 
 const origin = 'https://mesaaberta.test';
 

@@ -1,6 +1,6 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { requireAdmin } from '../admin-access';
-import { listAdminProfiles } from '../admin/profiles';
+import { listAdminProfiles } from '@mesaaberta/core/server/admin/profiles';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 
 export async function read({ locals, setHeaders, url }: RequestEvent) {

@@ -2,7 +2,7 @@
   import UserLink from '$lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '$lib/admin/format';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import type { History, HistoryEntry } from '$lib/server/admin/history';
+  import type { History, HistoryEntry } from '@mesaaberta/core/server/admin/history';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 

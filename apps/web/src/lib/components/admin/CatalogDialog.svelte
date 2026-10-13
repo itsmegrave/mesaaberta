@@ -9,7 +9,7 @@
     mergeSchema,
     renameSchema,
     type CatalogKind,
-  } from '$lib/admin/catalog';
+  } from '@mesaaberta/core/admin/catalog';
   import FormField from '$lib/components/FormField.svelte';
   import Form from '$lib/components/Form.svelte';
   import TextInput from '$lib/components/TextInput.svelte';

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { inboxWithPictures } from '$lib/server/messages/present';
+import { inboxWithPictures } from '@mesaaberta/core/server/messages/present';
 import { listInbox } from '@mesaaberta/core/server/messages/service';
 import type { LayoutServerLoad } from './$types';
 

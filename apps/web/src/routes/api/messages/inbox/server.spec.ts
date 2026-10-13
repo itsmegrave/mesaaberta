@@ -3,7 +3,7 @@ import { parse } from 'devalue';
 import { listInbox } from '@mesaaberta/core/server/messages/service';
 import { GET } from './+server';
 vi.mock('@mesaaberta/core/server/messages/service', () => ({ listInbox: vi.fn() }));
-vi.mock('$lib/server/messages/present', () => ({
+vi.mock('@mesaaberta/core/server/messages/present', () => ({
   inboxWithPictures: (_url: unknown, items: unknown) => items,
 }));
 const run = (page = '1', user: { id: string } | null = { id: 'viewer' }, kind?: string) =>

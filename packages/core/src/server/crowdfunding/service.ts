@@ -15,12 +15,12 @@ import {
   lte,
   or,
 } from 'drizzle-orm';
-import { CROWDFUNDING_PAGE_SIZE, type CrowdfundingFilters } from '$lib/crowdfunding/filters';
+import { CROWDFUNDING_PAGE_SIZE, type CrowdfundingFilters } from '../../crowdfunding/filters';
 import { todayIn } from '@mesaaberta/core/crowdfunding/phase';
 import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
-import type { CrowdfundingFormInput } from '$lib/crowdfunding/schema';
+import type { CrowdfundingFormInput } from '../../crowdfunding/schema';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
-import type { CrowdfundingReportInput } from '$lib/moderation/reports';
+import type { CrowdfundingReportInput } from '../../moderation/reports';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { publicName } from '@mesaaberta/core/server/db/public-name';

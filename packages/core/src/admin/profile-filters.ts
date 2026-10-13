@@ -1,4 +1,4 @@
-import { PROFILE_STANDINGS, type ProfileStanding } from '$lib/profile/standing';
+import { PROFILE_STANDINGS, type ProfileStanding } from '../profile/standing';
 import { pageSizeOf, sortOf } from './list';
 
 export const PROFILE_SORTS = ['user', 'joined'] as const;

@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { exportAccount } from '$lib/server/account/service';
+import { exportAccount } from '@mesaaberta/core/server/account/service';
 import { requireUser } from '$lib/server/auth/guard';
 import type { RequestHandler } from './$types';
 

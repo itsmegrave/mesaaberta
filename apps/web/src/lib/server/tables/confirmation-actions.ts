@@ -3,7 +3,7 @@ import type { z, ZodType } from 'zod';
 import { validateStringForm } from '$lib/forms/contract';
 import { answerSchema, postponeSchema } from '$lib/tables/confirmation';
 import { requireUser } from '../auth/guard';
-import { safeNext } from '../auth/safe-next';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { Invalid } from '@mesaaberta/core/server/errors';

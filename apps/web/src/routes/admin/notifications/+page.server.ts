@@ -12,7 +12,7 @@ import {
   audienceSizes,
   listAnnouncements,
   sendAnnouncement,
-} from '$lib/server/notifications/announcements';
+} from '@mesaaberta/core/server/notifications/announcements';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, each load and action

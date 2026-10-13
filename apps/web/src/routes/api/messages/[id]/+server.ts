@@ -3,7 +3,7 @@ import { stringify } from 'devalue';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { listMessages, markConversationRead } from '@mesaaberta/core/server/messages/service';
-import { withPictures } from '$lib/server/messages/present';
+import { withPictures } from '@mesaaberta/core/server/messages/present';
 import type { RequestHandler } from './$types';
 
 /**

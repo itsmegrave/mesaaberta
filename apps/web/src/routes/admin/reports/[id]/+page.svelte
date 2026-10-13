@@ -17,7 +17,7 @@
     removePartnerSchema,
     reportIdSchema,
     RESOLUTION_NOTE_MAX,
-  } from '$lib/moderation/reports';
+  } from '@mesaaberta/core/moderation/reports';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
   import { m } from '$lib/paraglide/messages';

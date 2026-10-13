@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { initialForm, issueErrors } from '$lib/forms/contract';
 import ProfileForm from './ProfileForm.svelte';
-import { profileSchema, type ProfileInput } from '$lib/profile/schema';
+import { profileSchema, type ProfileInput } from '@mesaaberta/core/profile/schema';
 
 // There is no SvelteKit app around a component test, so the step that hands a result to the router
 // has nothing to talk to. What the form shows is the same either way.

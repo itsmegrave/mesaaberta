@@ -1,7 +1,7 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { requireAdmin } from '../admin-access';
-import { adminOverview } from '../admin/queries';
+import { adminOverview } from '@mesaaberta/core/server/admin/queries';
 
 export async function read({ locals, setHeaders }: RequestEvent) {
   await requireAdmin(locals);

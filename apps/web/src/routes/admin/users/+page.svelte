@@ -14,7 +14,7 @@
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
   import { pageQuery } from '$lib/query/page.svelte';
-  import { PROFILE_STANDINGS } from '$lib/profile/standing';
+  import { PROFILE_STANDINGS } from '@mesaaberta/core/profile/standing';
   import { toast } from '$lib/toaster';
   import type { AdminProfilesView } from '$lib/server/reads/admin-users';
 

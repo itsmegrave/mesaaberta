@@ -18,7 +18,7 @@
     type AgeRange,
     type Gender,
     type ProfileInput,
-  } from '$lib/profile/schema';
+  } from '@mesaaberta/core/profile/schema';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import type { FormResult } from '$lib/forms/contract';
   import Form from './Form.svelte';
@@ -28,8 +28,17 @@
   import { timezoneOptions } from '@mesaaberta/core/time/timezone';
   import { onMount } from 'svelte';
   import { m } from '$lib/paraglide/messages';
-  import { MAX_SOCIAL_LINKS, NETWORKS, takesHandle, type Network } from '$lib/profile/social-links';
-  import { MAX_USERNAME_LENGTH, normalizeUsername, usernameProblem } from '$lib/profile/username';
+  import {
+    MAX_SOCIAL_LINKS,
+    NETWORKS,
+    takesHandle,
+    type Network,
+  } from '@mesaaberta/core/profile/social-links';
+  import {
+    MAX_USERNAME_LENGTH,
+    normalizeUsername,
+    usernameProblem,
+  } from '@mesaaberta/core/profile/username';
 
   /** What the server says about a username: free, taken, or not acceptable at all. */
   export type Availability = 'free' | 'taken' | 'invalid';

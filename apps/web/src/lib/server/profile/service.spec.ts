@@ -3,8 +3,12 @@ import { eq } from 'drizzle-orm';
 import { events, profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
-import { isUsernameAvailable, loadProfileForm, saveProfile } from './service';
-import type { ProfileInput } from '$lib/profile/schema';
+import {
+  isUsernameAvailable,
+  loadProfileForm,
+  saveProfile,
+} from '@mesaaberta/core/server/profile/service';
+import type { ProfileInput } from '@mesaaberta/core/profile/schema';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000004${String(n).padStart(2, '0')}`;

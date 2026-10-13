@@ -15,7 +15,7 @@ import { logger, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '$lib/server/sentry-sink';
 import { handleRequestLog } from '$lib/server/request-log';
 import { handleHostTelemetry, handleRuntime } from '$lib/server/runtime';
-import { createTracker } from '$lib/server/analytics/track';
+import { createTracker } from '@mesaaberta/core/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { MAIL_HANDLER_NAMES, bellHandlers } from '@mesaaberta/core/server/events/handlers';
 import { handleMaintenance } from '$lib/server/maintenance';

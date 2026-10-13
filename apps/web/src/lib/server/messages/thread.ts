@@ -5,7 +5,7 @@ import { requireUser } from '$lib/server/auth/guard';
 import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { withPicture, withPictures } from '$lib/server/messages/present';
+import { withPicture, withPictures } from '@mesaaberta/core/server/messages/present';
 import {
   listMessages,
   loadConversation,

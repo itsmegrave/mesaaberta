@@ -1,5 +1,5 @@
 import { reasonLabel } from '$lib/moderation/labels';
-import type { ReportReason } from '$lib/moderation/reports';
+import type { ReportReason } from '@mesaaberta/core/moderation/reports';
 import { m } from '$lib/paraglide/messages';
 import { atHandle } from '@mesaaberta/core/profile/handle';
 import { toPlainText } from '@mesaaberta/core/text/rich';

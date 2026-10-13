@@ -5,7 +5,7 @@ import type { z } from 'zod';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { requireUser } from '../auth/guard';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import { safeNext } from '../auth/safe-next';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { RateLimited } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';

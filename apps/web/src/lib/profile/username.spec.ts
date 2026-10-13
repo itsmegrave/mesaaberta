@@ -6,7 +6,7 @@ import {
   normalizeUsername,
   suggestUsername,
   usernameProblem,
-} from './username';
+} from '@mesaaberta/core/profile/username';
 
 describe('normalizeUsername', () => {
   it('trims and lowercases, so `Ana ` and `ana` are the same username', () => {

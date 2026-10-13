@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
-import { startLink } from '$lib/server/auth/identities';
+import { startLink } from '@mesaaberta/core/server/auth/identities';
 import type { RequestHandler } from './$types';
 
 // A plain GET, like the login: the redirect chain through Supabase and the provider is not a form

@@ -13,7 +13,12 @@ import {
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { anonymiseProfile, closeAccount, exportAccount, setAvatarPath } from './service';
+import {
+  anonymiseProfile,
+  closeAccount,
+  exportAccount,
+  setAvatarPath,
+} from '@mesaaberta/core/server/account/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000007${String(n).padStart(2, '0')}`;

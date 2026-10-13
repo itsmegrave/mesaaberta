@@ -6,7 +6,7 @@
   import { disconnectSchema } from '$lib/profile/connections';
   import { toast } from '$lib/toaster';
   import { m } from '$lib/paraglide/messages';
-  import type { Provider } from '$lib/auth/providers';
+  import type { Provider } from '@mesaaberta/core/auth/providers';
 
   let { provider, label }: { provider: Provider; label: string } = $props();
 

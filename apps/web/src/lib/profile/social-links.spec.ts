@@ -7,7 +7,7 @@ import {
   parseSocialUrl,
   socialTarget,
   typedValue,
-} from './social-links';
+} from '@mesaaberta/core/profile/social-links';
 
 describe('parseSocialUrl', () => {
   it.each([

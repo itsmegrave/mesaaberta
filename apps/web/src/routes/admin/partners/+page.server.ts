@@ -3,7 +3,7 @@ import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { partnerActions } from '$lib/server/moderation/admin-actions';
-import { listAdminPartners } from '$lib/server/partners/admin';
+import { listAdminPartners } from '@mesaaberta/core/server/partners/admin';
 
 import type { Actions, PageServerLoad } from './$types';
 

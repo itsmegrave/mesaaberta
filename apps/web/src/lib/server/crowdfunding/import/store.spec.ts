@@ -7,11 +7,18 @@ import {
   claimRun,
   finishRun,
 } from '@mesaaberta/core/server/crowdfunding/import/store';
-import { addCrowdfunding, fileCrowdfundingReport, listCrowdfundings } from '../service';
-import { listAdminCrowdfundings, removeCrowdfunding } from '../admin';
-import { readCrowdfundingFilters } from '../../../crowdfunding/filters';
+import {
+  addCrowdfunding,
+  fileCrowdfundingReport,
+  listCrowdfundings,
+} from '@mesaaberta/core/server/crowdfunding/service';
+import {
+  listAdminCrowdfundings,
+  removeCrowdfunding,
+} from '@mesaaberta/core/server/crowdfunding/admin';
+import { readCrowdfundingFilters } from '@mesaaberta/core/crowdfunding/filters';
 import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
-import { reportDetail } from '../../moderation/admin';
+import { reportDetail } from '@mesaaberta/core/server/moderation/admin';
 import type { SourceCandidate } from '@mesaaberta/core/server/crowdfunding/import/types';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { StoredEvent } from '@mesaaberta/core/server/events/types';

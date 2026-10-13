@@ -4,10 +4,10 @@ import { initialForm, validateStringForm } from '$lib/forms/contract';
 import { formMessage } from '$lib/forms/server';
 import { credentialsSchema } from '$lib/auth/credentials';
 import { withoutSecrets } from '$lib/forms/server';
-import { SIGN_IN_LIMIT, attemptWait } from '$lib/server/auth/attempt-limit';
-import { signInWithEmail, type SignInResult } from '$lib/server/auth/email';
-import { afterSignIn } from '$lib/server/auth/onboarding';
-import { safeNext } from '$lib/server/auth/safe-next';
+import { SIGN_IN_LIMIT, attemptWait } from '@mesaaberta/core/server/auth/attempt-limit';
+import { signInWithEmail, type SignInResult } from '@mesaaberta/core/server/auth/email';
+import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

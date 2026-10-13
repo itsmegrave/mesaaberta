@@ -3,7 +3,7 @@ import { events, gameTables, profiles, systems } from '@mesaaberta/core/server/d
 import { createTestDb } from '../db/test-db';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import { HISTORY_SHOWN, profileHistory, tableHistory } from './history';
+import { HISTORY_SHOWN, profileHistory, tableHistory } from '@mesaaberta/core/server/admin/history';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000008${String(n).padStart(2, '0')}`;

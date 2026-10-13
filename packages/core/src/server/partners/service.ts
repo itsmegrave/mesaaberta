@@ -1,8 +1,8 @@
 import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
-import { PARTNER_PAGE_SIZE, type PartnerFilters } from '$lib/partners/filters';
-import { partnerLinks, type PartnerInput } from '$lib/partners/schema';
-import type { PartnerReportInput } from '$lib/moderation/reports';
-import { parseSocialUrl, type Network } from '$lib/profile/social-links';
+import { PARTNER_PAGE_SIZE, type PartnerFilters } from '../../partners/filters';
+import { partnerLinks, type PartnerInput } from '../../partners/schema';
+import type { PartnerReportInput } from '../../moderation/reports';
+import { parseSocialUrl, type Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {

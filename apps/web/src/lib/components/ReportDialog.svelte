@@ -5,7 +5,11 @@
   // be reported; this only offers what the read said is allowed.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { actionForm } from '$lib/forms/action-form.svelte';
-  import { REPORT_DETAILS_MAX, REPORT_REASONS, reportSchema } from '$lib/moderation/reports';
+  import {
+    REPORT_DETAILS_MAX,
+    REPORT_REASONS,
+    reportSchema,
+  } from '@mesaaberta/core/moderation/reports';
   import { reasonLabel } from '$lib/moderation/labels';
   import UserLink from '$lib/components/UserLink.svelte';
   import Form from '$lib/components/Form.svelte';

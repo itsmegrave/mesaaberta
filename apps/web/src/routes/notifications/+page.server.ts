@@ -6,7 +6,7 @@ import {
   type NotificationCategory,
 } from '@mesaaberta/core/notifications/kinds';
 import { requireUser } from '$lib/server/auth/guard';
-import { safeNext } from '$lib/server/auth/safe-next';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import {
   listNotifications,
   markAllRead,

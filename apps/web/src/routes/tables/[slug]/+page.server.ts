@@ -17,9 +17,9 @@ import {
   leaveTable,
   removePlayer,
 } from '@mesaaberta/core/server/registrations/service';
-import { reportSchema } from '$lib/moderation/reports';
+import { reportSchema } from '@mesaaberta/core/moderation/reports';
 import { moderationAction } from '$lib/server/moderation/form-action';
-import { fileReport } from '$lib/server/moderation/reports';
+import { fileReport } from '@mesaaberta/core/server/moderation/reports';
 import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
   const data = await loadRead(event, 'detail');

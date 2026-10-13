@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { changePassword, requestPasswordReset } from './password';
+import { changePassword, requestPasswordReset } from '@mesaaberta/core/server/auth/password';
 
 const origin = 'https://mesaaberta.app';
 const log = () => ({

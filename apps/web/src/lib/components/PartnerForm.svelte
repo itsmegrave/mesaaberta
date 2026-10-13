@@ -32,8 +32,8 @@
     PARTNER_LIMITS,
     PARTNER_NETWORKS,
     partnerLinkUrl,
-  } from '$lib/partners/schema';
-  import type { Network } from '$lib/profile/social-links';
+  } from '@mesaaberta/core/partners/schema';
+  import type { Network } from '@mesaaberta/core/profile/social-links';
   import { networkLabels } from '$lib/profile/social-presentation';
   import { errorText, formProblem } from '$lib/tables/form-values';
   import { toast } from '$lib/toaster';

@@ -1,8 +1,11 @@
 import { error } from '@sveltejs/kit';
-import { readCrowdfundingFilters } from '$lib/crowdfunding/filters';
-import { reportCrowdfundingSchema } from '$lib/moderation/reports';
+import { readCrowdfundingFilters } from '@mesaaberta/core/crowdfunding/filters';
+import { reportCrowdfundingSchema } from '@mesaaberta/core/moderation/reports';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { fileCrowdfundingReport, listCrowdfundings } from '$lib/server/crowdfunding/service';
+import {
+  fileCrowdfundingReport,
+  listCrowdfundings,
+} from '@mesaaberta/core/server/crowdfunding/service';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '$lib/server/moderation/form-action';
 import type { Actions, PageServerLoad } from './$types';

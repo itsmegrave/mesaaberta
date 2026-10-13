@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { listApproved, listCatalogAdmin } from '$lib/server/admin/catalog';
+import { listApproved, listCatalogAdmin } from '@mesaaberta/core/server/admin/catalog';
 import { load } from './+page.server';
 
-vi.mock('$lib/server/admin/catalog', async (original) => ({
-  ...(await original<typeof import('$lib/server/admin/catalog')>()),
+vi.mock('@mesaaberta/core/server/admin/catalog', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/admin/catalog')>()),
   listCatalogAdmin: vi.fn(async (_db, kind, { page, pageSize }) => ({
     rows: [],
     total: 41,

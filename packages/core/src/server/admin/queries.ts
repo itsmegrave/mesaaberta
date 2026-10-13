@@ -1,5 +1,5 @@
 import { asc, desc, eq, inArray, sql, type SQL } from 'drizzle-orm';
-import { OPEN_REPORT_STATUSES } from '$lib/moderation/reports';
+import { OPEN_REPORT_STATUSES } from '../../moderation/reports';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   events,

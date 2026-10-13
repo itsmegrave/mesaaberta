@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readCrowdfundingFilters } from './filters';
+import { readCrowdfundingFilters } from '@mesaaberta/core/crowdfunding/filters';
 
 const read = (query: string) => readCrowdfundingFilters(new URLSearchParams(query));
 

@@ -13,7 +13,7 @@
     CROWDFUNDING_REPORT_REASONS,
     REPORT_DETAILS_MAX,
     reportCrowdfundingSchema,
-  } from '$lib/moderation/reports';
+  } from '@mesaaberta/core/moderation/reports';
   import { m } from '$lib/paraglide/messages';
   import { toast } from '$lib/toaster';
 

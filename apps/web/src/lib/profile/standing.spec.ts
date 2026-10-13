@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { standingOf } from './standing';
+import { standingOf } from '@mesaaberta/core/profile/standing';
 
 const at = new Date('2026-10-01T12:00:00Z');
 

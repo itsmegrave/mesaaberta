@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
-import { listReports } from '$lib/server/moderation/admin';
+import { listReports } from '@mesaaberta/core/server/moderation/admin';
 import type { PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.

@@ -1,12 +1,12 @@
 import { error } from '@sveltejs/kit';
 import { initialForm } from '$lib/forms/contract';
-import { MAX_PARTNER_LINKS } from '$lib/partners/schema';
+import { MAX_PARTNER_LINKS } from '@mesaaberta/core/partners/schema';
 import { requireUser } from '$lib/server/auth/guard';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { handlePartnerForm } from '$lib/server/partners/form-action';
 
-import { findOwnPartner } from '$lib/server/partners/service';
+import { findOwnPartner } from '@mesaaberta/core/server/partners/service';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url, params }) => {

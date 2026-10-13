@@ -7,7 +7,7 @@ import {
   registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
-import { approveEntry, mergeEntry, rejectEntry } from '../admin/catalog';
+import { approveEntry, mergeEntry, rejectEntry } from '@mesaaberta/core/server/admin/catalog';
 import { listSystems } from '@mesaaberta/core/server/systems';
 import { createTestDb, pgErrorCode } from '../db/test-db';
 import {

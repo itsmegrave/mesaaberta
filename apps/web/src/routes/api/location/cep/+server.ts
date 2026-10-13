@@ -1,7 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import { normalizeCep } from '@mesaaberta/core/location/cep';
-import { lookupCep } from '$lib/server/location/cep';
-import { recordAttempt } from '$lib/server/auth/attempt-limit';
+import { lookupCep } from '@mesaaberta/core/server/location/cep';
+import { recordAttempt } from '@mesaaberta/core/server/auth/attempt-limit';
 import { RateLimited } from '@mesaaberta/core/server/errors';
 import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals, url, setHeaders }) => {

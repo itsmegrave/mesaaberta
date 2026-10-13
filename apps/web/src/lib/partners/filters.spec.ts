@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readPartnerFilters } from './filters';
-import { partnerAdminFilters } from './admin-filters';
+import { readPartnerFilters } from '@mesaaberta/core/partners/filters';
+import { partnerAdminFilters } from '@mesaaberta/core/partners/admin-filters';
 
 describe('readPartnerFilters', () => {
   it('opens on the newest, first page', () => {

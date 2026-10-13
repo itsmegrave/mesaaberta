@@ -1,4 +1,4 @@
-import { pageNumber } from '$lib/admin/catalog';
+import { pageNumber } from '../admin/catalog';
 import { SEARCH_MAX } from './filters';
 
 /** The admin list's filter: what is up, what an admin took down, or both. */

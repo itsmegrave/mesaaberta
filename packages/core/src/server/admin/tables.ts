@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, systems, instagramPosts, profiles } from '@mesaaberta/core/server/db/schema';
-import { tableFilters, type InstagramFilter } from '$lib/admin/table-filters';
+import { tableFilters, type InstagramFilter } from '../../admin/table-filters';
 import { TABLE_STATUSES, type TableStatus } from '@mesaaberta/core/tables/status-values';
 
 /** The posts the filter names; `none` is a table that never had one, or one that was skipped. */

@@ -8,7 +8,7 @@
   import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
   import { dayLabel, timeLabel } from '$lib/admin/format';
   import { EVENT_STATUSES, type EventStatus } from '$lib/admin/event-filters';
-  import { listPath, listQuery, pageRange } from '$lib/admin/list';
+  import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
   import { localizedHref } from '$lib/i18n/locales';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '$lib/paraglide/messages';

@@ -15,7 +15,7 @@
     banSchema,
     RESOLUTION_NOTE_MAX,
     TABLE_REPORTS_WARNING,
-  } from '$lib/moderation/reports';
+  } from '@mesaaberta/core/moderation/reports';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { toast } from '$lib/toaster';
   import { getLocale } from '$lib/paraglide/runtime';

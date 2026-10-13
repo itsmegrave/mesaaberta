@@ -10,7 +10,7 @@ import {
 } from '@mesaaberta/core/server/registrations/service';
 import { findTableBySlug, joinDetailsOf } from '@mesaaberta/core/server/tables/queries';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
-import { reportTargetsOf } from '../moderation/reports';
+import { reportTargetsOf } from '@mesaaberta/core/server/moderation/reports';
 import { systemWaitingOf } from '@mesaaberta/core/server/systems';
 export const read = async ({ locals, params }: RequestEvent) => {
   const signedIn = (await locals.getUser()) !== null;

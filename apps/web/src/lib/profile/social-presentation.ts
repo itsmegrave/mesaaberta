@@ -1,6 +1,6 @@
 import type { IconName } from '$lib/icons/names';
 import { m } from '$lib/paraglide/messages';
-import type { Network } from './social-links';
+import type { Network } from '@mesaaberta/core/profile/social-links';
 
 export const networkLabels: Record<Network, () => string> = {
   instagram: m.network_instagram,

@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { authAttempts } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { SIGN_IN_LIMIT, attemptKey, attemptWait, isLoopback, recordAttempt } from './attempt-limit';
+import {
+  SIGN_IN_LIMIT,
+  attemptKey,
+  attemptWait,
+  isLoopback,
+  recordAttempt,
+} from '@mesaaberta/core/server/auth/attempt-limit';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => {
