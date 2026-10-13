@@ -56,6 +56,7 @@
     catalog={options.data?.catalog ?? data.catalog}
     submitLabel={m.form_submit_new()}
     draftLabel={m.form_submit_draft()}
+    suggestSystem
     cancelHref={localizedHref('/tables', getLocale())}
     gmName={data.account?.username ?? undefined}
   />

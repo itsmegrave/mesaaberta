@@ -77,6 +77,10 @@ export function errorText(code: string, field = ''): string {
       return m.form_error_min_players_above();
     case 'suggestion_unavailable':
       return m.form_error_suggestion_unavailable();
+    case 'suggestion_needs_draft':
+      return m.form_error_suggestion_needs_draft();
+    case 'suggestion_limit':
+      return m.form_error_suggestion_limit();
     default:
       return m.form_error_invalid();
   }

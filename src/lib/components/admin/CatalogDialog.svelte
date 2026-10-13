@@ -121,7 +121,9 @@
     create: () =>
       kind === 'platform'
         ? m.admin_dialog_create_title_platform()
-        : m.admin_dialog_create_title_tag(),
+        : kind === 'tag'
+          ? m.admin_dialog_create_title_tag()
+          : m.admin_dialog_create_title_system(),
   }[mode]();
   // svelte-ignore state_referenced_locally
   const text = {

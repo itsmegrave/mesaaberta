@@ -3,7 +3,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { requireUser } from '../auth/guard';
 import { loadTableForEdit } from '../tables/write';
 import { timezoneOf } from '../time';
-import { listSystems } from '../systems';
+import { listSystems, systemOfTable } from '../systems';
 import { listCatalog, type CatalogItem } from '../catalog';
 import { Forbidden, NotFound } from '../errors';
 export async function read({ locals, url, params, cookies }: RequestEvent) {
@@ -11,22 +11,35 @@ export async function read({ locals, url, params, cookies }: RequestEvent) {
   if (!locals.db) error(503, 'Database unavailable');
   try {
     const profile = await locals.getProfile();
-    const { catalog: picked } = await loadTableForEdit(
+    const { catalog: picked, systemSlug } = await loadTableForEdit(
       locals.db,
       profile,
       params.slug!,
       await timezoneOf(locals, cookies),
     );
     const [systems, offered] = await Promise.all([
-      listSystems(locals.db),
+      listSystems(locals.db, { suggestedBy: profile?.id }),
       listCatalog(locals.db, { suggestedBy: profile?.id }),
     ]);
+    // The table's own system is always offered: a suggestion still waiting, or one since retired.
+    const held = systems.some((system) => system.slug === systemSlug)
+      ? null
+      : await systemOfTable(locals.db, systemSlug);
     const merge = (items: CatalogItem[], picks: CatalogItem[]) => [
       ...items,
       ...picks.filter((p) => !items.some((i) => i.slug === p.slug)),
     ];
     return {
-      systems: systems.map(({ name, slug }) => ({ name, slug })),
+      systems: held
+        ? [
+            ...systems,
+            {
+              name: held.name,
+              slug: systemSlug,
+              ...(held.status === 'pending' ? { pending: true as const } : {}),
+            },
+          ]
+        : systems,
       catalog: {
         platforms: merge(offered.platforms, picked.platforms),
         tags: merge(offered.tags, picked.tags),

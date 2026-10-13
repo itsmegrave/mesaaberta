@@ -104,6 +104,7 @@
     minCapacity={Math.max(1, data.seatsTaken)}
     manageHref={localizedHref(`/tables/${data.slug}/manage`, locale)}
     calendarNote
+    suggestSystem={data.status === 'draft'}
   />
 
   <ConfirmDialog

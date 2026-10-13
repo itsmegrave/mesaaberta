@@ -59,6 +59,9 @@ export function notificationText(item: Shown): string {
     case 'rating_prompt':
       return m.notification_rating_prompt({ table });
     case 'catalog_suggestion_approved':
+      // A table that waited for its system can be published now.
+      if (item.metadata.kind === 'system')
+        return m.notification_system_suggestion_approved({ name: item.metadata.name ?? '' });
       return m.notification_catalog_suggestion_approved({ name: item.metadata.name ?? '' });
     case 'catalog_suggestion_merged':
       return m.notification_catalog_suggestion_merged({
@@ -66,6 +69,8 @@ export function notificationText(item: Shown): string {
         into: item.metadata.into ?? '',
       });
     case 'catalog_suggestion_rejected':
+      if (item.metadata.kind === 'system')
+        return m.notification_system_suggestion_rejected({ name: item.metadata.name ?? '' });
       return m.notification_catalog_suggestion_rejected({ name: item.metadata.name ?? '' });
     case 'report_filed_admin':
       return m.notification_report_filed_admin();

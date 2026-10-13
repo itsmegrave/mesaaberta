@@ -194,6 +194,7 @@
         <DraftNotice
           action="{localizedHref(`/tables/${table.slug}/manage`, locale)}?/publish"
           next={localizedHref(`/tables/${table.slug}`, locale)}
+          waiting={data.systemWaiting}
         />
       {/if}
 

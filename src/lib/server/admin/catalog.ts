@@ -10,6 +10,7 @@ import {
   gameTables,
   platforms,
   profiles,
+  systems,
   tags,
 } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
@@ -17,13 +18,29 @@ import { Invalid } from '../errors';
 import { recordEvent } from '../events/outbox';
 import type { CatalogDecision } from '../events/types';
 
-export type CatalogKind = 'platform' | 'tag';
-export const CATALOG_KINDS: readonly CatalogKind[] = ['platform', 'tag'];
+export type CatalogKind = 'platform' | 'tag' | 'system';
+export const CATALOG_KINDS: readonly CatalogKind[] = ['platform', 'tag', 'system'];
 export const CATALOG_PAGE_SIZE = 20;
 
-const tableOf = (kind: CatalogKind) => (kind === 'platform' ? platforms : tags);
-const linkOf = (kind: CatalogKind) => (kind === 'platform' ? gameTablePlatforms : gameTableTags);
-const linkColumn = (kind: CatalogKind) =>
+const tableOf = (kind: CatalogKind) =>
+  kind === 'platform' ? platforms : kind === 'tag' ? tags : systems;
+/**
+ * Where tables say they use an entry. A platform or a tag is linked through its own table, many to
+ * a table; a system is the table's own column, exactly one, so a table can never be left without.
+ */
+const usageOf = (kind: CatalogKind) =>
+  kind === 'platform'
+    ? {
+        from: gameTablePlatforms,
+        entryId: gameTablePlatforms.platformId,
+        tableId: gameTablePlatforms.tableId,
+      }
+    : kind === 'tag'
+      ? { from: gameTableTags, entryId: gameTableTags.tagId, tableId: gameTableTags.tableId }
+      : { from: gameTables, entryId: gameTables.systemId, tableId: gameTables.id };
+type LinkedKind = Exclude<CatalogKind, 'system'>;
+const linkOf = (kind: LinkedKind) => (kind === 'platform' ? gameTablePlatforms : gameTableTags);
+const linkColumn = (kind: LinkedKind) =>
   kind === 'platform' ? gameTablePlatforms.platformId : gameTableTags.tagId;
 
 const EVENTS = [
@@ -96,7 +113,7 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
   const entries: QueueEntry[] = [];
   for (const kind of CATALOG_KINDS) {
     const table = tableOf(kind);
-    const link = linkOf(kind);
+    const usage = usageOf(kind);
     const [pending, approved] = await Promise.all([
       db
         .select({
@@ -115,13 +132,27 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
     const used =
       pending.length === 0
         ? []
-        : await db
-            .select({ entryId: linkColumn(kind), title: gameTables.title, slug: gameTables.slug })
-            .from(link)
-            .innerJoin(gameTables, eq(gameTables.id, link.tableId))
+        : await (
+            kind === 'system'
+              ? db
+                  .select({
+                    entryId: gameTables.systemId,
+                    title: gameTables.title,
+                    slug: gameTables.slug,
+                  })
+                  .from(gameTables)
+              : db
+                  .select({
+                    entryId: usage.entryId,
+                    title: gameTables.title,
+                    slug: gameTables.slug,
+                  })
+                  .from(usage.from)
+                  .innerJoin(gameTables, eq(gameTables.id, usage.tableId))
+          )
             .where(
               inArray(
-                linkColumn(kind),
+                usage.entryId,
                 pending.map((entry) => entry.id),
               ),
             )
@@ -140,7 +171,7 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
   return entries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 }
 
-/** The approved entries of both kinds, for a merge to offer as its target. */
+/** The approved entries of each kind, for a merge to offer as its target. */
 export async function listApproved(db: AnyDb) {
   const list = (kind: CatalogKind) => {
     const table = tableOf(kind);
@@ -150,8 +181,12 @@ export async function listApproved(db: AnyDb) {
       .where(eq(table.status, 'approved'))
       .orderBy(asc(table.position), asc(table.name));
   };
-  const [platform, tag] = await Promise.all([list('platform'), list('tag')]);
-  return { platform, tag };
+  const [platform, tag, system] = await Promise.all([
+    list('platform'),
+    list('tag'),
+    list('system'),
+  ]);
+  return { platform, tag, system };
 }
 
 export type Decision = {
@@ -238,7 +273,7 @@ export async function listCatalogAdmin(
   counts: Record<CatalogStatusFilter, number>;
 }> {
   const table = tableOf(kind);
-  const link = linkOf(kind);
+  const usage = usageOf(kind);
   const search = query.trim().replace(/[\\%_]/g, '\\$&');
   const matching = and(
     ne(table.status, 'rejected'),
@@ -264,9 +299,9 @@ export async function listCatalogAdmin(
   const total = counts[status];
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const uses = db
-    .select({ id: linkColumn(kind), uses: count().as('uses') })
-    .from(link)
-    .groupBy(linkColumn(kind))
+    .select({ id: usage.entryId, uses: count().as('uses') })
+    .from(usage.from)
+    .groupBy(usage.entryId)
     .as('uses');
   const direction = sort?.dir === 'desc' ? desc : asc;
   const usesOf = sql`coalesce(${uses.uses}, 0)`;
@@ -349,15 +384,18 @@ export async function approveEntry(db: AnyDb, actor: Actor | null, kind: Catalog
   });
 }
 
-/** Turns a suggestion down: the tables that had it lose it, and the GM cannot suggest it again. */
+/**
+ * Turns a suggestion down: the tables that had it lose it, and the GM cannot suggest it again. A
+ * table cannot lose its system, so the drafts of a rejected system keep it and stay drafts until
+ * their GM picks another one.
+ */
 export async function rejectEntry(db: AnyDb, actor: Actor | null, kind: CatalogKind, id: string) {
   authorize(actor, 'admin:access');
   const table = tableOf(kind);
-  const link = linkOf(kind);
   return db.transaction(async (tx) => {
     const current = await entry(tx, kind, id);
     if (current.status !== 'pending') throw new Invalid('id', 'not_pending');
-    await tx.delete(link).where(eq(linkColumn(kind), id));
+    if (kind !== 'system') await tx.delete(linkOf(kind)).where(eq(linkColumn(kind), id));
     await tx
       .update(table)
       .set({ status: 'rejected', reviewedBy: actor!.id, reviewedAt: new Date() })
@@ -411,35 +449,40 @@ export async function mergeEntry(
   authorize(actor, 'admin:access');
   if (fromId === toId) throw new Invalid('into', 'same');
   const table = tableOf(kind);
-  const link = linkOf(kind);
-  const column = linkColumn(kind);
   return db.transaction(async (tx) => {
     const from = await entry(tx, kind, fromId);
     const to = await entry(tx, kind, toId);
     if (to.status !== 'approved') throw new Invalid('into', 'not_approved');
     if (from.status === 'rejected') throw new Invalid('id', 'gone');
 
-    const moving = await tx
-      .select({ tableId: link.tableId, position: link.position })
-      .from(link)
-      .where(eq(column, fromId));
-    const already = new Set(
-      (await tx.select({ tableId: link.tableId }).from(link).where(eq(column, toId))).map(
-        (row) => row.tableId,
-      ),
-    );
-    await tx.delete(link).where(eq(column, fromId));
-    const carried = moving.filter((row) => !already.has(row.tableId));
-    if (carried.length > 0) {
-      await tx
-        .insert(link)
-        .values(
-          carried.map((row) =>
-            kind === 'platform'
-              ? { tableId: row.tableId, platformId: toId, position: row.position }
-              : { tableId: row.tableId, tagId: toId, position: row.position },
-          ),
-        );
+    if (kind === 'system') {
+      // Each table has exactly one system: its tables simply take the target.
+      await tx.update(gameTables).set({ systemId: toId }).where(eq(gameTables.systemId, fromId));
+    } else {
+      const link = linkOf(kind);
+      const column = linkColumn(kind);
+      const moving = await tx
+        .select({ tableId: link.tableId, position: link.position })
+        .from(link)
+        .where(eq(column, fromId));
+      const already = new Set(
+        (await tx.select({ tableId: link.tableId }).from(link).where(eq(column, toId))).map(
+          (row) => row.tableId,
+        ),
+      );
+      await tx.delete(link).where(eq(column, fromId));
+      const carried = moving.filter((row) => !already.has(row.tableId));
+      if (carried.length > 0) {
+        await tx
+          .insert(link)
+          .values(
+            carried.map((row) =>
+              kind === 'platform'
+                ? { tableId: row.tableId, platformId: toId, position: row.position }
+                : { tableId: row.tableId, tagId: toId, position: row.position },
+            ),
+          );
+      }
     }
     await tx
       .update(table)
@@ -487,5 +530,5 @@ export async function pendingCount(db: AnyDb) {
       return total;
     }),
   );
-  return counts[0] + counts[1];
+  return counts.reduce((sum, total) => sum + total, 0);
 }

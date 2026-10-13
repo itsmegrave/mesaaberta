@@ -295,6 +295,13 @@
       "when": 1791836277443,
       "tag": "0041_table_draft_status",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791851439414,
+      "tag": "0042_system_suggestions",
+      "breakpoints": true
     }
   ]
 }

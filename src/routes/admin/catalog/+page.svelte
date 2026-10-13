@@ -78,7 +78,9 @@
         kind={data.kind}
         label={data.kind === 'platform'
           ? m.admin_catalog_new_platform()
-          : m.admin_catalog_new_tag()}
+          : data.kind === 'tag'
+            ? m.admin_catalog_new_tag()
+            : m.admin_catalog_new_system()}
         triggerClass="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
       />
     {/key}
@@ -86,7 +88,7 @@
 
   <nav aria-label={m.admin_catalog_title()} class="mt-6 border-b border-surface-200-800">
     <ul class="flex gap-1">
-      {#each [['platform', m.admin_catalog_tab_platforms()], ['tag', m.admin_catalog_tab_tags()]] as const as [kind, label] (kind)}
+      {#each [['platform', m.admin_catalog_tab_platforms()], ['tag', m.admin_catalog_tab_tags()], ['system', m.admin_catalog_tab_systems()]] as const as [kind, label] (kind)}
         <li>
           <a
             href={localizedHref(`/admin/catalog?kind=${kind}`, locale)}

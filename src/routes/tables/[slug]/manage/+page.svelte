@@ -203,7 +203,7 @@
     <SessionConfirmation next={here} />
   {/if}
   {#if table.status === 'draft'}
-    <DraftNotice action="?/publish" next={here} />
+    <DraftNotice action="?/publish" next={here} waiting={data.systemWaiting} />
   {/if}
 
   <div
