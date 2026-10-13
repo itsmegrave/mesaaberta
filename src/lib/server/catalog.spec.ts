@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { gameTables, profiles, systems, tags } from './db/schema';
 import { createTestDb } from './db/test-db';
-import { catalogOf, listCatalog, setTableCatalog } from './catalog';
+import { CATALOG_SUGGESTION_LIMIT, catalogOf, listCatalog, setTableCatalog } from './catalog';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gm = '00000000-0000-4000-8000-000000000801';
@@ -190,5 +190,41 @@ describe('suggestions', () => {
         }),
       ).rejects.toMatchObject({ field: 'platforms', message: 'suggestion_invalid' });
     }
+  });
+
+  it('lets one person hold only so many suggestions of a kind waiting at a time', async () => {
+    const waiting = async () =>
+      (await test.db.select().from(tags).where(eq(tags.suggestedBy, otherGm))).filter(
+        (tag) => tag.status === 'pending',
+      ).length;
+    const suggest = (names: string[]) =>
+      test.db.transaction((tx) =>
+        setTableCatalog(tx as unknown as typeof test.db, tableId, {
+          gmId: otherGm,
+          platformSlugs: [],
+          tagSlugs: names.map((name) => `new:${name}`),
+        }),
+      );
+    const have = await waiting();
+    const room = CATALOG_SUGGESTION_LIMIT - have;
+
+    await suggest(Array.from({ length: room }, (_, n) => `Fila de Tag ${n}`));
+    expect(await waiting()).toBe(CATALOG_SUGGESTION_LIMIT);
+
+    await expect(suggest(['Uma Tag a Mais'])).rejects.toMatchObject({
+      field: 'tags',
+      message: 'suggestion_limit',
+    });
+    expect(await waiting()).toBe(CATALOG_SUGGESTION_LIMIT);
+    // The other kind has its own room.
+    await expect(
+      test.db.transaction((tx) =>
+        setTableCatalog(tx as unknown as typeof test.db, tableId, {
+          gmId: otherGm,
+          platformSlugs: ['new:Plataforma Nova'],
+          tagSlugs: [],
+        }),
+      ),
+    ).resolves.toBeUndefined();
   });
 });

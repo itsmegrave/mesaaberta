@@ -464,7 +464,7 @@
   "form_error_suggestion_invalid": "Um nome novo precisa ter de 2 a 40 caracteres.",
   "form_error_suggestion_unavailable": "Esse nome não pode ser usado. Escolha outro da lista.",
   "form_error_suggestion_needs_draft": "Uma mesa já publicada não pode mudar para um sistema que ainda espera aprovação. Escolha um sistema da lista.",
-  "form_error_suggestion_limit": "Você já tem sistemas sugeridos esperando aprovação. Aguarde a resposta antes de sugerir outro, ou escolha um da lista.",
+  "form_error_suggestion_limit": "Você já tem muitas sugestões esperando aprovação. Aguarde a resposta antes de sugerir outra, ou escolha uma opção da lista.",
   "form_catalog_suggest": "Sugerir “{name}”",
   "form_catalog_pending": "em análise",
   "form_catalog_search": "Buscar ou escrever",

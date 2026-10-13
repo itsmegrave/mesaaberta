@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, or, sql } from 'drizzle-orm';
 import { slugify } from '../slug';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '../tables/catalog';
 import type { AnyDb } from './db/client';
@@ -12,6 +12,9 @@ import { Invalid } from './errors';
 export type CatalogItem = { name: string; slug: string; pending?: true };
 
 type CatalogTable = typeof platforms | typeof tags;
+
+/** How many of one person's suggested platforms, or tags, may wait for an admin at the same time. */
+export const CATALOG_SUGGESTION_LIMIT = 10;
 
 const asItem = ({ name, slug, status }: { name: string; slug: string; status: string }) =>
   status === 'pending' ? { name, slug, pending: true as const } : { name, slug };
@@ -69,6 +72,16 @@ async function suggestionId(
     if (existing.status === 'approved' || existing.status === 'pending') return existing.id;
     throw new Invalid(field, 'suggestion_unavailable');
   }
+
+  // Each suggestion is an admin's work to review, and a table can be edited any number of times:
+  // one person holds only so many waiting, per kind. The lock (held to the commit) makes two saves
+  // at once count each other.
+  await db.execute(sql`select pg_advisory_xact_lock(hashtext(${`catalog-suggestion:${gmId}`}))`);
+  const [{ waiting }] = await db
+    .select({ waiting: count() })
+    .from(table)
+    .where(and(eq(table.suggestedBy, gmId), eq(table.status, 'pending')));
+  if (waiting >= CATALOG_SUGGESTION_LIMIT) throw new Invalid(field, 'suggestion_limit');
 
   const [created] = await db
     .insert(table)
