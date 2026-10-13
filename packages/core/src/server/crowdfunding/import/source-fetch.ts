@@ -19,10 +19,23 @@ export function sourceReader(
     const work = async () => {
       let url = new URL(start);
       for (let hop = 0; hop <= 3; hop++) {
-        // Two codes: a host outside the source's allow-list (usually a redirect to a new domain)
-        // needs a code change, while a target that fails the network guard may be a DNS blip.
+        // Three codes: a host outside the source's allow-list (usually a redirect to a new domain)
+        // needs a code change, a name that did not resolve is a DNS blip and is retried, and only
+        // an answer that points somewhere non-public is `source_unsafe_url`.
         if (!sourceUrlAllowed(url.href, source)) throw new Error('source_url_not_allowed');
-        if (!(await isSafeTarget(url, resolve))) throw new Error('source_unsafe_url');
+        let lookupFailed = false;
+        const lookup: Resolver = async (host) => {
+          try {
+            const addresses = await resolve(host);
+            if (!addresses.length) lookupFailed = true;
+            return addresses;
+          } catch (error) {
+            lookupFailed = true;
+            throw error;
+          }
+        };
+        if (!(await isSafeTarget(url, lookup)))
+          throw new Error(lookupFailed ? 'source_dns_failed' : 'source_unsafe_url');
         const response = await fetcher(url.href, {
           redirect: 'manual',
           headers: {
@@ -107,7 +120,8 @@ export function sourceReader(
             attempt >= 2 ||
             !(
               error instanceof TypeError ||
-              (error instanceof Error && /^source_http_(429|5\d\d)$/.test(error.message))
+              (error instanceof Error &&
+                /^source_(http_(429|5\d\d)|dns_failed)$/.test(error.message))
             )
           )
             throw error;
