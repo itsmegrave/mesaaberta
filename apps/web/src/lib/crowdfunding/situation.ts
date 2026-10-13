@@ -1,6 +1,12 @@
 import { m } from '$lib/paraglide/messages';
 import { longDay } from './format';
-import { daysLeft, daysToStart, isLastDays, phaseOf, type Campaign } from './phase';
+import {
+  daysLeft,
+  daysToStart,
+  isLastDays,
+  phaseOf,
+  type Campaign,
+} from '@mesaaberta/core/crowdfunding/phase';
 
 /**
  * What a card says about where a campaign stands, from its dates alone: how long is left (in

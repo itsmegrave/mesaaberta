@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { cleanRichHtml, plainToHtml, richTextLength, toPlainText } from './rich';
+import {
+  cleanRichHtml,
+  plainToHtml,
+  richTextLength,
+  toPlainText,
+} from '@mesaaberta/core/text/rich';
 import { richText } from './rich-schema';
 
 describe('cleanRichHtml', () => {

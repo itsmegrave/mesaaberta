@@ -1,5 +1,5 @@
 import { sql, type SQL } from 'drizzle-orm';
-import type { Logger } from '../logger';
+import type { Logger } from '@mesaaberta/core/server/logger';
 
 /** All the health check needs from a database, so any Drizzle driver fits. */
 type Queryable = { execute: (query: SQL) => PromiseLike<unknown> };

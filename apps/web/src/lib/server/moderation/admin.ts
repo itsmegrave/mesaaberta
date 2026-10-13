@@ -7,8 +7,8 @@ import {
   type ReportFilter,
 } from '$lib/admin/report-filters';
 import { OPEN_REPORT_STATUSES, type ReportStatus } from '$lib/moderation/reports';
-import { authorize, can, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
+import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   crowdfundings,
   events,
@@ -18,12 +18,12 @@ import {
   profiles,
   registrations,
   reports,
-} from '../db/schema';
-import { Invalid, NotFound } from '../errors';
-import { recordEvent } from '../events/outbox';
+} from '@mesaaberta/core/server/db/schema';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { removeTableMember } from '../messages/service';
-export { liftExpiredBans } from './bans';
-import type { EventType } from '../events/types';
+export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
+import type { EventType } from '@mesaaberta/core/server/events/types';
 
 // The admin side of moderation: the report queue and its decisions, suspending accounts, and the
 // audit log. Every function authorizes the actor itself; the routes check again before calling.

@@ -14,12 +14,12 @@ import {
 import { partnerAdminFilters } from '$lib/partners/admin-filters';
 import { OPEN_REPORT_STATUSES, type ReportReason } from '$lib/moderation/reports';
 import type { Network } from '$lib/profile/social-links';
-import { authorize, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { publicName } from '../db/public-name';
-import { partnerLinks, partners, profiles, reports } from '../db/schema';
-import { Invalid } from '../errors';
-import { recordEvent } from '../events/outbox';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { partnerLinks, partners, profiles, reports } from '@mesaaberta/core/server/db/schema';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 // The admin side of the partners: what waits for review, what is up and what was taken down, and
 // approving, rejecting and removing. Every function authorizes the actor itself; the routes check

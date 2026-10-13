@@ -1,9 +1,9 @@
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { profileSocialLinks, profiles } from '../db/schema';
-import { Invalid, NotFound } from '../errors';
-import { diffFields, hasChanges } from '../events/changes';
-import { recordEvent } from '../events/outbox';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { diffFields, hasChanges } from '@mesaaberta/core/server/events/changes';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { normalizeUsername } from '$lib/profile/username';
 import { profileLinks, type ProfileInput } from '$lib/profile/schema';
 import { isNetwork, typedValue } from '$lib/profile/social-links';

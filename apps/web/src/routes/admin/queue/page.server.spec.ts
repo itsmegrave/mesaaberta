@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Invalid } from '$lib/server/errors';
-import { dispatchEvent } from '$lib/server/events/dispatcher';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { approveEntry, mergeEntry, renameEntry } from '$lib/server/admin/catalog';
 import { actions } from './+page.server';
 
@@ -12,7 +12,7 @@ vi.mock('$lib/server/admin/catalog', async (original) => ({
   renameEntry: vi.fn(async () => 'event-3'),
   mergeEntry: vi.fn(async () => 'event-4'),
 }));
-vi.mock('$lib/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
+vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 
 const admin = { id: 'admin', role: 'admin', status: 'active', username: 'ana' };
 const entry = '00000000-0000-4000-8000-000000000001';

@@ -1,9 +1,9 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
-import type { AnyDb } from '../db/client';
-import type { Logger } from '../logger';
-import { recordConnection } from '../events/outbox';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import type { Logger } from '@mesaaberta/core/server/logger';
+import { recordConnection } from '@mesaaberta/core/server/events/outbox';
 import { ensureProfile } from './profile';
-import { stillBanned } from '../moderation/bans';
+import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 import { safeNext } from './safe-next';
 
 // Email and password sign-up and sign-in. Supabase Auth does all of it: it stores the (hashed)

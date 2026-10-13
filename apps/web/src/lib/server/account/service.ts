@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { eraseMessagesOf } from '../messages/service';
-import type { AnyDb } from '../db/client';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversations,
   gameTables,
@@ -12,8 +12,8 @@ import {
   ratings,
   registrations,
   systems,
-} from '../db/schema';
-import { recordEvent } from '../events/outbox';
+} from '@mesaaberta/core/server/db/schema';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 /**
  * Everything the account holds, for the data portability right (LGPD art. 18, V). Only this

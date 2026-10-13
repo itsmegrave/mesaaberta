@@ -9,7 +9,7 @@
   import { listPath, listQuery, pageRange } from '$lib/admin/list';
   import { AUDIT_KINDS, type AuditKind } from '$lib/admin/report-filters';
   import { localizedHref } from '$lib/i18n/locales';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AuditLog } from '$lib/server/moderation/admin';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

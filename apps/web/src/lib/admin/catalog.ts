@@ -1,6 +1,6 @@
-import '$lib/forms/zod-codes';
+import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
-import { SUGGESTION_NAME } from '$lib/tables/catalog';
+import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 // Shared by the admin forms (which show the limits) and their actions (which decide).
 z.config({ jitless: true });

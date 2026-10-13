@@ -1,10 +1,10 @@
 import { error, json } from '@sveltejs/kit';
-import { platformOf } from '$lib/crowdfunding/platforms';
-import { normalizeCampaignUrl } from '$lib/crowdfunding/url';
-import { can } from '$lib/server/auth/policy';
-import { readLinkPreview } from '$lib/server/crowdfunding/link-preview';
+import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
+import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
 import { takeLinkRead } from '$lib/server/crowdfunding/service';
-import { RateLimited } from '$lib/server/errors';
+import { RateLimited } from '@mesaaberta/core/server/errors';
 import type { RequestHandler } from './$types';
 
 /**

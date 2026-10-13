@@ -16,19 +16,19 @@ import {
   or,
 } from 'drizzle-orm';
 import { CROWDFUNDING_PAGE_SIZE, type CrowdfundingFilters } from '$lib/crowdfunding/filters';
-import { todayIn } from '$lib/crowdfunding/phase';
-import { platformOf } from '$lib/crowdfunding/platforms';
+import { todayIn } from '@mesaaberta/core/crowdfunding/phase';
+import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
 import type { CrowdfundingFormInput } from '$lib/crowdfunding/schema';
-import { normalizeCampaignUrl } from '$lib/crowdfunding/url';
+import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import type { CrowdfundingReportInput } from '$lib/moderation/reports';
-import { authorize, type Actor } from '../auth/policy';
-import type { AnyDb } from '../db/client';
-import { publicName } from '../db/public-name';
-import { crowdfundings, profiles, reports } from '../db/schema';
-import { campaignUrlAliases } from './import/candidate';
-import { lockCampaignUrl } from './import/store';
-import { Invalid, NotFound } from '../errors';
-import { recordEvent } from '../events/outbox';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { crowdfundings, profiles, reports } from '@mesaaberta/core/server/db/schema';
+import { campaignUrlAliases } from '@mesaaberta/core/server/crowdfunding/import/candidate';
+import { lockCampaignUrl } from '@mesaaberta/core/server/crowdfunding/import/store';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { CROWDFUNDING_LIMIT, enforceRateLimit, LINK_READ_LIMIT, REPORT_LIMIT } from '../rate-limit';
 
 export type CrowdfundingInput = Omit<CrowdfundingFormInput, 'image'>;

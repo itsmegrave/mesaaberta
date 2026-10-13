@@ -8,7 +8,7 @@ import {
   registrations,
   systems,
   tags,
-} from '../db/schema';
+} from '@mesaaberta/core/server/db/schema';
 import { adminOverview } from './queries';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

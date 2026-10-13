@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cleanRichHtml } from '$lib/text/rich';
+  import { cleanRichHtml } from '@mesaaberta/core/text/rich';
   import './rich-text.css';
 
   /** Rich text as the HTML subset of `$lib/text/rich`: a GM's description, a welcome message. */

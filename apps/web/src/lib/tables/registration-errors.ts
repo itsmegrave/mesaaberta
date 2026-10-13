@@ -1,5 +1,5 @@
 import { m } from '$lib/paraglide/messages';
-import { formatWait } from './format';
+import { formatWait } from '@mesaaberta/core/tables/format';
 
 /** What went wrong with a seat action, as a sentence. The code is the one the server put in the form message. */
 export function registrationError(code: string, retryAfter?: number): string {

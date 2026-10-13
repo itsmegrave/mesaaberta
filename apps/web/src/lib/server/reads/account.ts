@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { can } from '../auth/policy';
-import { pictureOf, supabaseUrlOf } from '../images';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 export async function read({ locals }: RequestEvent) {
   const profile = await locals.getProfile();
   return {

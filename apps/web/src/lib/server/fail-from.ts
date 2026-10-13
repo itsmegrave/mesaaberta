@@ -9,7 +9,7 @@ import {
   RateLimited,
   TableFull,
   TooEarly,
-} from './errors';
+} from '@mesaaberta/core/server/errors';
 
 /**
  * The one place a domain error becomes a form failure. Use it in a form action's `catch`:

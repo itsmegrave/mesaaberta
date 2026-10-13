@@ -7,7 +7,7 @@ import {
   ratings,
   registrations,
   systems,
-} from '../db/schema';
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { publicProfile } from './public';
 

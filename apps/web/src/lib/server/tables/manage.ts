@@ -1,11 +1,11 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { publicName } from '../db/public-name';
-import { events, profiles, registrations } from '../db/schema';
-import { authorize, can, type Actor } from '../auth/policy';
-import { NotFound } from '../errors';
-import { gmRatingOf } from '../ratings/service';
-import { findTableBySlug } from './queries';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { events, profiles, registrations } from '@mesaaberta/core/server/db/schema';
+import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { NotFound } from '@mesaaberta/core/server/errors';
+import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { findTableBySlug } from '@mesaaberta/core/server/tables/queries';
 import { systemWaitingOf } from '../systems';
 
 /** The events a GM sees in "Atividade recente": what people did at the table, newest first. */

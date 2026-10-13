@@ -1,13 +1,13 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { requireUser } from '$lib/server/auth/guard';
-import { gameTables } from '$lib/server/db/schema';
+import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '$lib/server/fail-from';
 import { openDirect } from '$lib/server/messages/service';
 import { loadRead } from '$lib/server/reads/load';
 
-import { submitRating } from '$lib/server/ratings/service';
-import { ratingSchema } from '$lib/tables/rating';
+import { submitRating } from '@mesaaberta/core/server/ratings/service';
+import { ratingSchema } from '@mesaaberta/core/tables/rating';
 import { joinSchema, playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from '$lib/server/registrations/form-action';
 import {

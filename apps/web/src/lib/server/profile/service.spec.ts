@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, profileSocialLinks, profiles } from '../db/schema';
+import { events, profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { Invalid, NotFound } from '../errors';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { isUsernameAvailable, loadProfileForm, saveProfile } from './service';
 import type { ProfileInput } from '$lib/profile/schema';
 

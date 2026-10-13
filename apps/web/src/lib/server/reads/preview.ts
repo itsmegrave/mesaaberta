@@ -1,5 +1,5 @@
-import { imageUrl, supabaseUrlOf } from '$lib/server/images';
-import { listUpcomingTables } from '$lib/server/tables/queries';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // The home page previews the next few tables; the full list lives at /tables.

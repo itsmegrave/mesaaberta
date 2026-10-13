@@ -2,7 +2,7 @@
 // Apple Calendar (double-click, or attach them to an email to yourself). Usage: bun run calendar:sample
 // [your@email]. Nothing is sent anywhere.
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { buildInvite, type CalendarTable } from '../apps/web/src/lib/server/calendar/ics.ts';
+import { buildInvite, type CalendarTable } from '@mesaaberta/core/server/calendar/ics';
 
 const email = process.argv[2] ?? 'voce@example.com';
 const organizer = { email: 'no-reply@mesaaberta.app', name: 'Mesa Aberta' };

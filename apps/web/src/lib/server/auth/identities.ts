@@ -1,7 +1,7 @@
 import type { SupabaseClient, UserIdentity } from '@supabase/supabase-js';
 import type { Provider } from '$lib/auth/providers';
 import { providers } from '$lib/auth/providers';
-import { Forbidden, Invalid, NotFound } from '../errors';
+import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { safeNext } from './safe-next';
 
 // The ways a person can sign in to their account: the OAuth providers linked to the same Auth user

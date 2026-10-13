@@ -6,7 +6,7 @@
   import NotificationAction from '$lib/components/NotificationAction.svelte';
   import NotificationIcon from '$lib/components/NotificationIcon.svelte';
   import { localizedHref } from '$lib/i18n/locales';
-  import type { NotificationCategory } from '$lib/notifications/kinds';
+  import type { NotificationCategory } from '@mesaaberta/core/notifications/kinds';
   import { notificationIcon, notificationText } from '$lib/notifications/text';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

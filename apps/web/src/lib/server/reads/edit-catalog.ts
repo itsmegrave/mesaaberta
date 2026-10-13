@@ -4,8 +4,8 @@ import { requireUser } from '../auth/guard';
 import { loadTableForEdit } from '../tables/write';
 import { timezoneOf } from '../time';
 import { listSystems, systemOfTable } from '../systems';
-import { listCatalog, type CatalogItem } from '../catalog';
-import { Forbidden, NotFound } from '../errors';
+import { listCatalog, type CatalogItem } from '@mesaaberta/core/server/catalog';
+import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 export async function read({ locals, url, params, cookies }: RequestEvent) {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database unavailable');

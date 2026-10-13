@@ -26,7 +26,7 @@
     type AnnouncementAudience,
     type AnnouncementIcon,
     type AnnouncementTone,
-  } from '$lib/notifications/kinds';
+  } from '@mesaaberta/core/notifications/kinds';
   import { notificationText } from '$lib/notifications/text';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

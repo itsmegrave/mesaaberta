@@ -1,5 +1,5 @@
-import { platformOf } from './platforms';
-import { normalizeCampaignUrl } from './url';
+import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
+import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 
 /** Click-time attribution only; stored campaign URLs remain canonical for deduplication. */
 export function campaignReferralUrl(raw: string): string | undefined {

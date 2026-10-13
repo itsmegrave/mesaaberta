@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin-access';
 import { requireUser } from '$lib/server/auth/guard';
-import { partnerLogoUrl, supabaseUrlOf } from '$lib/server/images';
+import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { partnerActions } from '$lib/server/moderation/admin-actions';
 import { listAdminPartners } from '$lib/server/partners/admin';
 

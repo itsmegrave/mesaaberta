@@ -10,8 +10,8 @@
   import SubmitButton from '$lib/components/SubmitButton.svelte';
   import TextInput from '$lib/components/TextInput.svelte';
   import { CROWDFUNDING_LIMITS, crowdfundingFormSchema } from '$lib/crowdfunding/schema';
-  import { platformOf } from '$lib/crowdfunding/platforms';
-  import { normalizeCampaignUrl } from '$lib/crowdfunding/url';
+  import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
+  import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
   import { actionForm } from '$lib/forms/action-form.svelte';
   import { guardDraft } from '$lib/forms/guard.svelte';
   import { localizedHref } from '$lib/i18n/locales';

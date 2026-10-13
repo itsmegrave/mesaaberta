@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createMemoryTransport } from '@mesaaberta/events';
-import { events, profiles } from '../db/schema';
+import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Logger } from '../logger';
-import { MAX_ATTEMPTS } from './dispatcher';
-import { createEventExecutor } from './executor';
-import { recordEvent } from './outbox';
-import type { Handler } from './types';
+import type { Logger } from '@mesaaberta/core/server/logger';
+import { MAX_ATTEMPTS } from '@mesaaberta/core/server/events/dispatcher';
+import { createEventExecutor } from '@mesaaberta/core/server/events/executor';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Handler } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const actor = '00000000-0000-4000-8000-000000000903';

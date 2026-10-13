@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { notifications, profiles } from '../db/schema';
+import { notifications, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import {
   listNotifications,
@@ -8,7 +8,7 @@ import {
   NOTIFICATION_RETENTION_DAYS,
   pruneNotifications,
   unreadCount,
-} from './service';
+} from '@mesaaberta/core/server/notifications/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = '00000000-0000-4000-8000-000000000b01';

@@ -2,10 +2,14 @@ import { cannyLinks } from '$lib/canny/links';
 import { siteOf } from '$lib/server/site';
 import { loadRead } from '$lib/server/reads/load';
 import { pendingCount } from '$lib/server/admin/catalog';
-import { can } from '$lib/server/auth/policy';
-import { pictureOf, supabaseUrlOf } from '$lib/server/images';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { unreadConversations } from '$lib/server/messages/service';
-import { BELL_LIMIT, listNotifications, unreadCount } from '$lib/server/notifications/service';
+import {
+  BELL_LIMIT,
+  listNotifications,
+  unreadCount,
+} from '@mesaaberta/core/server/notifications/service';
 import { TIMEZONE_COOKIE, viewerTimezone } from '$lib/time/timezone';
 import type { LayoutServerLoad } from './$types';
 

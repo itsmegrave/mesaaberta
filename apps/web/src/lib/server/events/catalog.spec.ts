@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { notifications, platforms, profiles, tags } from '../db/schema';
+import { notifications, platforms, profiles, tags } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { catalogHandler } from './catalog';
-import type { DomainEvent, StoredEvent } from './types';
+import { catalogHandler } from '@mesaaberta/core/server/events/catalog';
+import type { DomainEvent, StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gm = '00000000-0000-4000-8000-000000000b01';

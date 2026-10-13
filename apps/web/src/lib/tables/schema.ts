@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import '$lib/forms/zod-codes';
-import { imageFile } from '$lib/forms/files';
-import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from './welcome';
+import '@mesaaberta/core/forms/zod-codes';
+import { imageFile } from '@mesaaberta/core/forms/files';
+import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from '@mesaaberta/core/tables/welcome';
 import { richText } from '$lib/text/rich-schema';
 import { normalizeCep } from '$lib/location/cep';
 import { isTimeZone } from '$lib/time/timezone';

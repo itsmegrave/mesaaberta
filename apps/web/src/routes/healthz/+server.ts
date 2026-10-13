@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { checkDatabase } from '$lib/server/db/health';
-import { workerHealth } from '$lib/server/events/heartbeat';
+import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
 import type { RequestHandler } from './$types';
 
 type HealthEnv = { DEPLOYMENT_SOURCE_SHA?: string };

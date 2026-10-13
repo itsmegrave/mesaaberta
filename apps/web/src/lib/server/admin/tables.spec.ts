@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createTestDb } from '../db/test-db';
-import { gameTables, instagramPosts, profiles, systems } from '../db/schema';
-import { TABLE_STATUSES } from '$lib/tables/status-values';
+import { gameTables, instagramPosts, profiles, systems } from '@mesaaberta/core/server/db/schema';
+import { TABLE_STATUSES } from '@mesaaberta/core/tables/status-values';
 import { adminTable, listAdminTables } from './tables';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T00:00:00Z');

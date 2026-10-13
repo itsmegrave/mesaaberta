@@ -24,15 +24,17 @@ declare global {
       env: Platform['env'] | undefined;
       /** What the host offers beyond variables (see `handleRuntime`). Read this, never `platform.ctx`. */
       host: import('$lib/server/runtime').Host;
-      flags: import('$lib/server/flags/flags').Flags;
+      flags: import('@mesaaberta/core/server/flags/flags').Flags;
       /** Set while the `maintenance_mode` flag is on: `bypass` for an admin, `blocked` for anyone else. */
       maintenance?: 'blocked' | 'bypass';
       /** Logs with this request's id already attached. */
-      log: import('$lib/server/logger').Logger;
+      log: import('@mesaaberta/core/server/logger').Logger;
       /** The database, or null while none is configured (see `handleDatabase`). */
-      db: import('$lib/server/db/client').Db | null;
+      db: import('@mesaaberta/core/server/db/client').Db | null;
       /** Runs `task` after the response, with the request's database, before the connection closes. */
-      afterResponse: (task: (db: import('$lib/server/db/client').Db) => Promise<unknown>) => void;
+      afterResponse: (
+        task: (db: import('@mesaaberta/core/server/db/client').Db) => Promise<unknown>,
+      ) => void;
       /** Queues a product event for the signed-in person, sent after the response. See `createTracker`. */
       track: import('$lib/server/analytics/track').Track;
       /** Supabase Auth with cookie sessions, or null while it is not configured. */
@@ -41,7 +43,7 @@ declare global {
       getUser: () => Promise<import('@supabase/supabase-js').User | null>;
       /** The signed-in user's profile, which is the actor for `can()`. Null if anonymous or without one. */
       getProfile: () => Promise<
-        typeof import('$lib/server/db/schema').profiles.$inferSelect | null
+        typeof import('@mesaaberta/core/server/db/schema').profiles.$inferSelect | null
       >;
       /** Whether `api_events_fenced_leases` is on for this request's person (read once, lazily). */
       fencedLeases?: () => Promise<boolean>;

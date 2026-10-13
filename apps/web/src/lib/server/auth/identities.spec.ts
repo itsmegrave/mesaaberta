@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Forbidden, Invalid, NotFound } from '../errors';
+import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { connections, startLink, unlink } from './identities';
 
 const origin = 'https://mesaaberta.test';

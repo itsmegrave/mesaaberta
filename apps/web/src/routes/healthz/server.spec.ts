@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/server/db/health', () => ({ checkDatabase: vi.fn(async () => 'ok') }));
-vi.mock('$lib/server/events/heartbeat', () => ({
+vi.mock('@mesaaberta/core/server/events/heartbeat', () => ({
   workerHealth: vi.fn(async () => ({ status: 'ok', lastRunAt: '2026-10-11T17:55:00.000Z' })),
 }));
 
 import { checkDatabase } from '$lib/server/db/health';
-import { workerHealth } from '$lib/server/events/heartbeat';
+import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
 import { GET } from './+server';
 
 const call = (env?: Record<string, string>) => GET({ locals: { db: {}, log: {}, env } } as never);

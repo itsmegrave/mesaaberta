@@ -10,7 +10,7 @@
   import { CROWDFUNDING_ADMIN_STATUSES } from '$lib/crowdfunding/admin-filters';
   import { periodLabel } from '$lib/crowdfunding/format';
   import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
-  import { phaseOf } from '$lib/crowdfunding/phase';
+  import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
   import { localizedHref } from '$lib/i18n/locales';
   import {
     CROWDFUNDING_REPORT_REASONS,

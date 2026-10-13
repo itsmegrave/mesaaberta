@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/sveltekit';
-import type { TelemetrySink } from './logger';
+import type { TelemetrySink } from '@mesaaberta/core/server/logger';
 
 /** The web app's telemetry sink: structured lines become Sentry logs, handled errors issues. */
 export const sentrySink: TelemetrySink = {

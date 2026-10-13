@@ -1,6 +1,6 @@
 <script lang="ts">
   import UserLink from '$lib/components/UserLink.svelte';
-  import { formatSession } from '$lib/tables/format';
+  import { formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';

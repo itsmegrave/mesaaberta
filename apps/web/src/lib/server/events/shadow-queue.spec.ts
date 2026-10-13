@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { events, profiles } from '../db/schema';
+import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Logger } from '../logger';
-import { dispatchEvent } from './dispatcher';
-import { recordEvent } from './outbox';
-import { registerShadowQueue } from './shadow-queue';
-import type { Handler } from './types';
+import type { Logger } from '@mesaaberta/core/server/logger';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { registerShadowQueue } from '@mesaaberta/core/server/events/shadow-queue';
+import type { Handler } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const t0 = new Date('2026-10-10T12:00:00Z');

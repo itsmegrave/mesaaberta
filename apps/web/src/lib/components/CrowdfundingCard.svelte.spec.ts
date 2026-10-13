@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { todayIn } from '$lib/crowdfunding/phase';
+import { todayIn } from '@mesaaberta/core/crowdfunding/phase';
 import CrowdfundingCard from './CrowdfundingCard.svelte';
 
 /** A `YYYY-MM-DD` date `days` from today in São Paulo, so the card's situation does not age. */

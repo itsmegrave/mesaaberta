@@ -1,14 +1,14 @@
 import { reasonLabel } from '$lib/moderation/labels';
 import type { ReportReason } from '$lib/moderation/reports';
 import { m } from '$lib/paraglide/messages';
-import { atHandle } from '$lib/profile/handle';
-import { toPlainText } from '$lib/text/rich';
+import { atHandle } from '@mesaaberta/core/profile/handle';
+import { toPlainText } from '@mesaaberta/core/text/rich';
 import {
   ANNOUNCEMENT_ICONS,
   isNotificationType,
   NOTIFICATION_KINDS,
   type NotificationIcon,
-} from './kinds';
+} from '@mesaaberta/core/notifications/kinds';
 
 /** What the bell and the feed need of a notification to word it. */
 export type Shown = {

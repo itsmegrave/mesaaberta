@@ -1,8 +1,8 @@
 import { and, asc, count, desc, eq, ilike, inArray, ne, sql } from 'drizzle-orm';
 import type { Sort } from '$lib/admin/list';
-import { slugify } from '$lib/slug';
-import { SUGGESTION_NAME } from '$lib/tables/catalog';
-import type { AnyDb } from '../db/client';
+import { slugify } from '@mesaaberta/core/slug';
+import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   events,
   gameTablePlatforms,
@@ -12,11 +12,11 @@ import {
   profiles,
   systems,
   tags,
-} from '../db/schema';
-import { authorize, type Actor } from '../auth/policy';
-import { Invalid } from '../errors';
-import { recordEvent } from '../events/outbox';
-import type { CatalogDecision } from '../events/types';
+} from '@mesaaberta/core/server/db/schema';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { CatalogDecision } from '@mesaaberta/core/server/events/types';
 
 export type CatalogKind = 'platform' | 'tag' | 'system';
 export const CATALOG_KINDS: readonly CatalogKind[] = ['platform', 'tag', 'system'];

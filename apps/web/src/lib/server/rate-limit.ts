@@ -1,8 +1,8 @@
 import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm';
-import type { AnyDb } from './db/client';
-import { events } from './db/schema';
-import { RateLimited } from './errors';
-import type { EventType } from './events/types';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { events } from '@mesaaberta/core/server/db/schema';
+import { RateLimited } from '@mesaaberta/core/server/errors';
+import type { EventType } from '@mesaaberta/core/server/events/types';
 
 /**
  * Per-person limits on what a signed-in user can do, so an open door (any member may open a table)

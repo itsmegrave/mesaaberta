@@ -2,7 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { lookupCep } from '$lib/server/location/cep';
 import { recordAttempt } from '$lib/server/auth/attempt-limit';
-import { RateLimited } from '$lib/server/errors';
+import { RateLimited } from '@mesaaberta/core/server/errors';
 import { GET } from './+server';
 vi.mock('$lib/server/location/cep', () => ({ lookupCep: vi.fn() }));
 vi.mock('$lib/server/auth/attempt-limit', () => ({ recordAttempt: vi.fn() }));

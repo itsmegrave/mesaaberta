@@ -1,8 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { gameTables, profiles, registrations, systems } from '../db/schema';
+import { gameTables, profiles, registrations, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { findTableBySlug, listUpcomingTables, seatsLeft } from './queries';
+import {
+  findTableBySlug,
+  listUpcomingTables,
+  seatsLeft,
+} from '@mesaaberta/core/server/tables/queries';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T12:00:00Z');

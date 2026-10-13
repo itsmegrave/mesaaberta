@@ -2,7 +2,7 @@
   import UserLink from '$lib/components/UserLink.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { modalityIcon } from '$lib/tables/modality-icon';
-  import { formatCardDate, formatSession } from '$lib/tables/format';
+  import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '$lib/time/shown-timezone';
   import { localizedHref } from '$lib/i18n/locales';
   import { m } from '$lib/paraglide/messages';

@@ -7,7 +7,7 @@
   import { onMount } from 'svelte';
   import ImageCropper from '$lib/components/ImageCropper.svelte';
   import { isDecodable } from '$lib/forms/decodable';
-  import { IMAGE_TYPES } from '$lib/forms/files';
+  import { IMAGE_TYPES } from '@mesaaberta/core/forms/files';
   import { m } from '$lib/paraglide/messages';
 
   let {

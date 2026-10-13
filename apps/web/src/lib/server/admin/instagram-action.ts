@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
-import { can } from '$lib/server/auth/policy';
-import { InstagramError, type InstagramEnv } from '$lib/server/instagram/api';
-import { socialFor, type SocialEnv } from '$lib/server/social';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { InstagramError, type InstagramEnv } from '@mesaaberta/core/server/instagram/api';
+import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 import type { RequestEvent } from '@sveltejs/kit';
 
 export const publishInstagramAction = async ({ locals, request }: RequestEvent) => {

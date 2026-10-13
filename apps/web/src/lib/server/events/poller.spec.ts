@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { pollOutbox, type JobExecutor } from '@mesaaberta/events';
-import { events, profiles } from '../db/schema';
+import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Logger } from '../logger';
-import { createEventExecutor } from './executor';
-import { recordEvent } from './outbox';
-import type { Handler } from './types';
+import type { Logger } from '@mesaaberta/core/server/logger';
+import { createEventExecutor } from '@mesaaberta/core/server/events/executor';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Handler } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const t0 = new Date('2026-10-10T12:00:00Z');

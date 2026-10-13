@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { initialForm } from '$lib/forms/contract';
 import { ANNOUNCEMENT_DEFAULTS } from '$lib/notifications/announcement';
-import { ANNOUNCEMENT_ICONS, TONE_ICON } from '$lib/notifications/kinds';
+import { ANNOUNCEMENT_ICONS, TONE_ICON } from '@mesaaberta/core/notifications/kinds';
 import Icon from '$lib/components/Icon.svelte';
 import type { IconName } from '$lib/icons/names';
 import Page from './+page.svelte';

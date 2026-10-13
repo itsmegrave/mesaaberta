@@ -1,13 +1,13 @@
 import { and, eq } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversationMembers,
   conversations,
   gameTables,
   profiles,
   registrations,
-} from '../db/schema';
-import { can, type Actor } from '../auth/policy';
+} from '@mesaaberta/core/server/db/schema';
+import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 
 type Conversation = typeof conversations.$inferSelect;
 

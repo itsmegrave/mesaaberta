@@ -12,11 +12,11 @@ import {
   removePartnerSchema,
   reportIdSchema,
 } from '$lib/moderation/reports';
-import type { AnyDb } from '../db/client';
-import { reports } from '../db/schema';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { reports } from '@mesaaberta/core/server/db/schema';
 import { removeCrowdfunding } from '../crowdfunding/admin';
 import { approvePartner, removePartner } from '../partners/admin';
-import { Invalid } from '../errors';
+import { Invalid } from '@mesaaberta/core/server/errors';
 import {
   banAccount,
   closeReport,

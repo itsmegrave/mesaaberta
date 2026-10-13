@@ -8,7 +8,7 @@
   import { groupMessages, type ThreadItem } from '$lib/messages/group';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import { shownTimezone } from '$lib/time/shown-timezone';
 
   let {

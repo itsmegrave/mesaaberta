@@ -1,4 +1,4 @@
-import { MAX_IMAGE_BYTES } from './files';
+import { MAX_IMAGE_BYTES } from '@mesaaberta/core/forms/files';
 
 /** Prefer a small WebP; browsers without a WebP encoder get JPEG instead of a large PNG. */
 export async function encodeImage(canvas: Pick<HTMLCanvasElement, 'toBlob'>): Promise<Blob | null> {

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { profiles } from '../db/schema';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { Forbidden, Invalid, RateLimited } from '../errors';
+import { Forbidden, Invalid, RateLimited } from '@mesaaberta/core/server/errors';
 import { handleTableForm } from './form-action';
 import { createTable } from './write';
 import type { TableInput } from '$lib/tables/schema';

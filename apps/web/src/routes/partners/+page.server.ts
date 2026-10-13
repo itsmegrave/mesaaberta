@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
 import { partnerIdSchema, reportPartnerSchema } from '$lib/moderation/reports';
 import { readPartnerFilters } from '$lib/partners/filters';
-import { can } from '$lib/server/auth/policy';
+import { can } from '@mesaaberta/core/server/auth/policy';
 
-import { partnerLogoUrl, supabaseUrlOf } from '$lib/server/images';
+import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '$lib/server/moderation/form-action';
 import { filePartnerReport, listPartners, withdrawPartner } from '$lib/server/partners/service';
 import type { Actions, PageServerLoad } from './$types';

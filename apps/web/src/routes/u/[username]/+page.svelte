@@ -11,7 +11,7 @@
   import { toast } from '$lib/toaster';
   import { pageHref } from '$lib/admin/page-href';
   import { localizedHref } from '$lib/i18n/locales';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';

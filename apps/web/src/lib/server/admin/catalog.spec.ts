@@ -10,8 +10,8 @@ import {
   profiles,
   systems,
   tags,
-} from '../db/schema';
-import { Forbidden, Invalid } from '../errors';
+} from '@mesaaberta/core/server/db/schema';
+import { Forbidden, Invalid } from '@mesaaberta/core/server/errors';
 import {
   approveEntry,
   createEntry,

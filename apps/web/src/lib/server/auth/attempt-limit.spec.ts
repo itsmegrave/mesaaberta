@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { authAttempts } from '../db/schema';
+import { authAttempts } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { SIGN_IN_LIMIT, attemptKey, attemptWait, isLoopback, recordAttempt } from './attempt-limit';
 

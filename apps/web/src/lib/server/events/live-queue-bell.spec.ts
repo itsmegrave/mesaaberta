@@ -1,14 +1,24 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { registerLiveQueue } from '@mesaaberta/core/server/events/live-queue';
-import { events, gameTables, notifications, profiles, systems } from '../db/schema';
+import {
+  events,
+  gameTables,
+  notifications,
+  profiles,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Logger } from '../logger';
-import { dispatchEvent } from './dispatcher';
-import { createEventExecutor } from './executor';
-import { MAIL_HANDLER_NAMES, bellHandlers, handlersFor } from './handlers';
-import { recordEvent } from './outbox';
-import type { Handler } from './types';
+import type { Logger } from '@mesaaberta/core/server/logger';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { createEventExecutor } from '@mesaaberta/core/server/events/executor';
+import {
+  MAIL_HANDLER_NAMES,
+  bellHandlers,
+  handlersFor,
+} from '@mesaaberta/core/server/events/handlers';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { Handler } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const t0 = new Date('2026-10-12T12:00:00Z');

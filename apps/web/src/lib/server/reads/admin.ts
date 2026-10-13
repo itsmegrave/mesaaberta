@@ -1,5 +1,5 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
-import { imageUrl, supabaseUrlOf } from '../images';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { requireAdmin } from '../admin-access';
 import { adminOverview } from '../admin/queries';
 

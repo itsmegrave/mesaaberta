@@ -1,17 +1,17 @@
 import { and, count, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { events, notifications, profiles } from '../db/schema';
-import { authorize, type Actor } from '../auth/policy';
-import { Invalid } from '../errors';
-import { recordEvent } from '../events/outbox';
-import type { SystemAnnouncement } from '../events/types';
-import { countAudience } from './audience';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { events, notifications, profiles } from '@mesaaberta/core/server/db/schema';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { SystemAnnouncement } from '@mesaaberta/core/server/events/types';
+import { countAudience } from '@mesaaberta/core/server/notifications/audience';
 import {
   TONE_ICON,
   type AnnouncementAudience,
   type AnnouncementIcon,
   type AnnouncementTone,
-} from '../../notifications/kinds';
+} from '@mesaaberta/core/notifications/kinds';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

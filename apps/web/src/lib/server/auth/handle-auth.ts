@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
 import type { User } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
-import { profiles } from '../db/schema';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 
 /** Supabase settings on the Worker. Both are public by design: they only identify the project. */
 type AuthEnv = { SUPABASE_URL?: string; SUPABASE_PUBLISHABLE_KEY?: string };

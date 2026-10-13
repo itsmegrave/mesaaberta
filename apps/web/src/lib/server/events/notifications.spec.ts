@@ -1,8 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { gameTables, notifications, profiles, registrations, systems } from '../db/schema';
+import {
+  gameTables,
+  notifications,
+  profiles,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { notificationHandler } from './notifications';
-import type { DomainEvent, StoredEvent } from './types';
+import { notificationHandler } from '@mesaaberta/core/server/events/notifications';
+import type { DomainEvent, StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gm = '00000000-0000-4000-8000-000000000a01';

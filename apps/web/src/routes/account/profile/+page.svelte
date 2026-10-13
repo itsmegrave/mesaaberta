@@ -5,7 +5,7 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import Avatar from '$lib/components/Avatar.svelte';
   import ConnectedAccounts from '$lib/components/ConnectedAccounts.svelte';
   import ImageUpload from '$lib/components/ImageUpload.svelte';

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { localizedHref } from '$lib/i18n/locales';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { atHandle, NAMELESS } from '$lib/profile/handle';
+  import { atHandle, NAMELESS } from '@mesaaberta/core/profile/handle';
 
   let {
     username,

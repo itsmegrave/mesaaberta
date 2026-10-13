@@ -2,8 +2,8 @@ import { error } from '@sveltejs/kit';
 import { initialForm } from '$lib/forms/contract';
 import { MAX_PARTNER_LINKS } from '$lib/partners/schema';
 import { requireUser } from '$lib/server/auth/guard';
-import { Forbidden, NotFound } from '$lib/server/errors';
-import { partnerLogoUrl, supabaseUrlOf } from '$lib/server/images';
+import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
+import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { handlePartnerForm } from '$lib/server/partners/form-action';
 
 import { findOwnPartner } from '$lib/server/partners/service';

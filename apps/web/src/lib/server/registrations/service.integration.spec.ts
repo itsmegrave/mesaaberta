@@ -1,8 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { conversations, events, gameTables, profiles, registrations, systems } from '../db/schema';
+import {
+  conversations,
+  events,
+  gameTables,
+  profiles,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { openIntegrationDb } from '../db/integration-db';
-import type { Actor } from '../auth/policy';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { approveRegistration, joinTable, leaveTable } from './service';
 
 // Real Postgres, real concurrency: the capacity rules must hold when transactions overlap.

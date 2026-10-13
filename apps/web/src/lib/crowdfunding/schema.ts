@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import '$lib/forms/zod-codes';
-import { imageFile } from '$lib/forms/files';
-import { normalizeCampaignUrl } from './url';
+import '@mesaaberta/core/forms/zod-codes';
+import { imageFile } from '@mesaaberta/core/forms/files';
+import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
 z.config({ jitless: true });

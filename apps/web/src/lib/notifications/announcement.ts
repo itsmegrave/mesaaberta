@@ -1,7 +1,11 @@
-import '$lib/forms/zod-codes';
+import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
 import { richText } from '$lib/text/rich-schema';
-import { ANNOUNCEMENT_AUDIENCES, ANNOUNCEMENT_ICONS, ANNOUNCEMENT_TONES } from './kinds';
+import {
+  ANNOUNCEMENT_AUDIENCES,
+  ANNOUNCEMENT_ICONS,
+  ANNOUNCEMENT_TONES,
+} from '@mesaaberta/core/notifications/kinds';
 
 // Shared by the admin console's form (which shows the limits) and its action (which decides).
 z.config({ jitless: true });

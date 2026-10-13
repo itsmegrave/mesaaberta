@@ -1,10 +1,17 @@
 import { error, redirect } from '@sveltejs/kit';
 import { validateStringForm } from '$lib/forms/contract';
 import { notificationActionSchema } from '$lib/notifications/actions';
-import { NOTIFICATION_CATEGORIES, type NotificationCategory } from '$lib/notifications/kinds';
+import {
+  NOTIFICATION_CATEGORIES,
+  type NotificationCategory,
+} from '@mesaaberta/core/notifications/kinds';
 import { requireUser } from '$lib/server/auth/guard';
 import { safeNext } from '$lib/server/auth/safe-next';
-import { listNotifications, markAllRead, markRead } from '$lib/server/notifications/service';
+import {
+  listNotifications,
+  markAllRead,
+  markRead,
+} from '@mesaaberta/core/server/notifications/service';
 import type { Actions, PageServerLoad } from './$types';
 
 const categoryOf = (value: string | null): NotificationCategory | undefined =>

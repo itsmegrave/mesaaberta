@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AlreadyRegistered, Forbidden, NotFound, RateLimited, TableFull } from '../errors';
+import {
+  AlreadyRegistered,
+  Forbidden,
+  NotFound,
+  RateLimited,
+  TableFull,
+} from '@mesaaberta/core/server/errors';
 import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from './form-action';
 

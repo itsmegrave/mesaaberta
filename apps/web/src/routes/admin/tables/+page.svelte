@@ -24,7 +24,7 @@
   import { pageQuery } from '$lib/query/page.svelte';
   import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '$lib/moderation/reports';
   import { toast } from '$lib/toaster';
-  import { TABLE_STATUSES } from '$lib/tables/status-values';
+  import { TABLE_STATUSES } from '@mesaaberta/core/tables/status-values';
   import type { AdminTablesView } from '$lib/server/reads/admin-tables';
 
   let { data: serverData } = $props();

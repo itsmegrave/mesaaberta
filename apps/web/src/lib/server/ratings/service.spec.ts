@@ -1,11 +1,24 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq, inArray } from 'drizzle-orm';
-import { events, gameTables, gmScores, profiles, ratings, systems } from '../db/schema';
+import {
+  events,
+  gameTables,
+  gmScores,
+  profiles,
+  ratings,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Actor } from '../auth/policy';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { joinTable, leaveTable, removePlayer } from '../registrations/service';
 import { closeAccount } from '../account/service';
-import { firstSessionEnded, gmRatingOf, gmRatings, ratingOf, submitRating } from './service';
+import {
+  firstSessionEnded,
+  gmRatingOf,
+  gmRatings,
+  ratingOf,
+  submitRating,
+} from '@mesaaberta/core/server/ratings/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000020${String(n).padStart(2, '0')}`;

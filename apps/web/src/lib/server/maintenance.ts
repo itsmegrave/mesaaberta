@@ -1,5 +1,5 @@
 import type { Handle, RequestEvent } from '@sveltejs/kit';
-import { can } from '$lib/server/auth/policy';
+import { can } from '@mesaaberta/core/server/auth/policy';
 import { m } from '$lib/paraglide/messages';
 
 /** Where the maintenance screen lives. Visitors never go there: it is served at the address they asked for. */

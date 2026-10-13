@@ -1,9 +1,14 @@
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { gameTables, profiles, profileSocialLinks, registrations } from '../db/schema';
-import { pictureOf, imageUrl } from '../images';
-import { gmRatingOf } from '../ratings/service';
-import { listUpcomingTablesByGm } from '../tables/queries';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import {
+  gameTables,
+  profiles,
+  profileSocialLinks,
+  registrations,
+} from '@mesaaberta/core/server/db/schema';
+import { pictureOf, imageUrl } from '@mesaaberta/core/server/images';
+import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '$lib/profile/social-links';
 import { normalizeUsername, usernameProblem } from '$lib/profile/username';
 

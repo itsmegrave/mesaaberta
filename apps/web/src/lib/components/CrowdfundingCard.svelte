@@ -5,7 +5,7 @@
   import Icon from '$lib/components/Icon.svelte';
   import { periodLabel } from '$lib/crowdfunding/format';
   import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
-  import { hostOf, type CrowdfundingPlatform } from '$lib/crowdfunding/platforms';
+  import { hostOf, type CrowdfundingPlatform } from '@mesaaberta/core/crowdfunding/platforms';
   import { campaignReferralUrl } from '$lib/crowdfunding/referral';
   import { situationOf } from '$lib/crowdfunding/situation';
   import { m } from '$lib/paraglide/messages';

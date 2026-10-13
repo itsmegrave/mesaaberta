@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
-import * as schema from './schema';
+import * as schema from '@mesaaberta/core/server/db/schema';
 
 /**
  * A throwaway in-process Postgres with the real migrations applied, so tests run the same SQL

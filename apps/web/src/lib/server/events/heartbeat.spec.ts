@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { workerHeartbeats } from '../db/schema';
+import { workerHeartbeats } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import {
   HEARTBEAT_STALE_AFTER_MS,
   SWEEPER_HEARTBEAT,
   recordHeartbeat,
   workerHealth,
-} from './heartbeat';
-import { runSweeper } from './sweeper';
+} from '@mesaaberta/core/server/events/heartbeat';
+import { runSweeper } from '@mesaaberta/core/server/events/sweeper';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const t0 = new Date('2026-10-11T12:00:00Z');

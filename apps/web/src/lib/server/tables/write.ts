@@ -1,19 +1,19 @@
 import { and, count, eq, like, or, sql } from 'drizzle-orm';
 import { addTableMember } from '../messages/service';
-import type { AnyDb } from '../db/client';
-import { gameTables, registrations, systems } from '../db/schema';
-import { authorize, type Actor } from '../auth/policy';
-import { Invalid, NotFound } from '../errors';
-import { recordEvent } from '../events/outbox';
-import { catalogOf, setTableCatalog } from '../catalog';
-import { diffFields, hasChanges, type Fact } from '../events/changes';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { gameTables, registrations, systems } from '@mesaaberta/core/server/db/schema';
+import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { catalogOf, setTableCatalog } from '@mesaaberta/core/server/catalog';
+import { diffFields, hasChanges, type Fact } from '@mesaaberta/core/server/events/changes';
 import { TABLE_CREATION_LIMIT, TABLE_DRAFT_LIMIT, enforceRateLimit } from '../rate-limit';
-import { instantToLocal, localToInstant } from './schedule';
-import { slugify, tableSlug } from '$lib/slug';
-import { minutesToHours } from '$lib/tables/format';
+import { instantToLocal, localToInstant } from '@mesaaberta/core/server/tables/schedule';
+import { slugify, tableSlug } from '@mesaaberta/core/slug';
+import { minutesToHours } from '@mesaaberta/core/tables/format';
 import type { TableInput } from '$lib/tables/schema';
 import { formatCep } from '$lib/location/cep';
-import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '$lib/tables/catalog';
+import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 const MAX_SLUG_ATTEMPTS = 5;
 

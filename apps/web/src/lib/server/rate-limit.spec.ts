@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { events, profiles } from './db/schema';
+import { events, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from './db/test-db';
-import { RateLimited } from './errors';
+import { RateLimited } from '@mesaaberta/core/server/errors';
 import {
   JOIN_LIMIT,
   TABLE_CREATION_LIMIT,

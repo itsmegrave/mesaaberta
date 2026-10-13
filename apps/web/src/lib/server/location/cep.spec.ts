@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { postalCodes } from '../db/schema';
+import { postalCodes } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { lookupCep, withLocation } from './cep';
 import type { TableInput } from '$lib/tables/schema';

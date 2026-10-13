@@ -12,7 +12,7 @@ import {
   profiles,
   registrations,
   systems,
-} from '../apps/web/src/lib/server/db/schema.ts';
+} from '@mesaaberta/core/server/db/schema';
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL is not set. Copy .dev.vars.example to .dev.vars.');

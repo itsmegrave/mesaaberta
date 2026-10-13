@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { connectionStringFrom } from './client';
+import { connectionStringFrom } from '@mesaaberta/core/server/db/client';
 import { handleDatabase } from './handle-database';
 
 const local = 'postgres://user:pass@localhost:5432/mesaaberta';

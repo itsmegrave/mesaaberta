@@ -7,10 +7,14 @@ import {
   crowdfundings,
   events,
   profiles,
-} from '../../db/schema';
+} from '@mesaaberta/core/server/db/schema';
 import { addCrowdfunding } from '../service';
-import { claimRun, finishRun, importCandidate } from './store';
-import type { SourceCandidate } from './types';
+import {
+  claimRun,
+  finishRun,
+  importCandidate,
+} from '@mesaaberta/core/server/crowdfunding/import/store';
+import type { SourceCandidate } from '@mesaaberta/core/server/crowdfunding/import/types';
 const { db, close } = openIntegrationDb();
 const actor = { id: crypto.randomUUID(), role: 'member' as const, status: 'active' as const };
 const now = new Date('2026-10-08T04:00:00Z');

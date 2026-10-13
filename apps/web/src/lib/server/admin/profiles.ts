@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, ilike, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { profiles } from '../db/schema';
-import { gmRatingOf } from '../ratings/service';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { profiles } from '@mesaaberta/core/server/db/schema';
+import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
 import { standingOf } from '$lib/profile/standing';
 import { profileFilters } from '$lib/admin/profile-filters';
 

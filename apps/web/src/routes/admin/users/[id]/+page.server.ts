@@ -7,7 +7,7 @@ import { openDirect } from '$lib/server/messages/service';
 import { standingOf } from '$lib/profile/standing';
 import { moderationOf } from '$lib/server/moderation/admin';
 import { accountActions } from '$lib/server/moderation/admin-actions';
-import { pictureOf, supabaseUrlOf } from '$lib/server/images';
+import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { profileFilters } from '$lib/admin/profile-filters';
 import type { Actions, PageServerLoad } from './$types';
 

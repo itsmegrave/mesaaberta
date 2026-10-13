@@ -1,5 +1,9 @@
 import { m } from '$lib/paraglide/messages';
-import { hostOf, PLATFORM_NAMES, type CrowdfundingPlatform } from './platforms';
+import {
+  hostOf,
+  PLATFORM_NAMES,
+  type CrowdfundingPlatform,
+} from '@mesaaberta/core/crowdfunding/platforms';
 
 /** The platform's name. The known ones are proper nouns; the rest is "Outra". */
 export const platformLabel = (platform: CrowdfundingPlatform) =>

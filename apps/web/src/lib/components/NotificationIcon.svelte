@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { IconName } from '$lib/icons/names';
-  import type { NotificationIcon } from '$lib/notifications/kinds';
+  import type { NotificationIcon } from '@mesaaberta/core/notifications/kinds';
   import Icon from './Icon.svelte';
 
   let {

@@ -1,9 +1,9 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { listUpcomingTables } from '$lib/server/tables/queries';
+import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { load } from './+page.server';
 
-vi.mock('$lib/server/tables/queries', () => ({ listUpcomingTables: vi.fn() }));
+vi.mock('@mesaaberta/core/server/tables/queries', () => ({ listUpcomingTables: vi.fn() }));
 
 const listed = vi.mocked(listUpcomingTables);
 

@@ -1,9 +1,13 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { listNotifications, markAllRead, markRead } from '$lib/server/notifications/service';
+import {
+  listNotifications,
+  markAllRead,
+  markRead,
+} from '@mesaaberta/core/server/notifications/service';
 import { actions, load } from './+page.server';
 
-vi.mock('$lib/server/notifications/service', () => ({
+vi.mock('@mesaaberta/core/server/notifications/service', () => ({
   listNotifications: vi.fn(async () => []),
   markRead: vi.fn(),
   markAllRead: vi.fn(),

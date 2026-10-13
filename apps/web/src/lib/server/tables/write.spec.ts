@@ -1,10 +1,20 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, gameTables, profiles, registrations, systems } from '../db/schema';
+import {
+  events,
+  gameTables,
+  profiles,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { approveEntry, mergeEntry, rejectEntry } from '../admin/catalog';
 import { listSystems } from '../systems';
 import { createTestDb, pgErrorCode } from '../db/test-db';
-import { findTableBySlug, joinDetailsOf, listUpcomingTables } from './queries';
+import {
+  findTableBySlug,
+  joinDetailsOf,
+  listUpcomingTables,
+} from '@mesaaberta/core/server/tables/queries';
 import {
   SYSTEM_SUGGESTION_LIMIT,
   createTable,
@@ -14,7 +24,7 @@ import {
   updateTable,
 } from './write';
 import type { TableInput } from '$lib/tables/schema';
-import type { Actor } from '../auth/policy';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T12:00:00Z');

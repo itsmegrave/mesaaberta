@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb, pgErrorCode } from './test-db';
 import { eq, sql } from 'drizzle-orm';
-import { gameTables, genderIdentity, profiles, systems } from './schema';
+import { gameTables, genderIdentity, profiles, systems } from '@mesaaberta/core/server/db/schema';
 import { GENDER_OPTIONS } from '$lib/profile/schema';
 
 const UNIQUE_VIOLATION = '23505';

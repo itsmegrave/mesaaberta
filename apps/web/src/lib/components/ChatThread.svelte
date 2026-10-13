@@ -10,7 +10,7 @@
   import { mergeMessages, type ThreadItem } from '$lib/messages/group';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import { BADGES_KEY } from '$lib/query/badges';
   import { queryClient } from '$lib/query/context';
   import type { ChatThreadData } from '$lib/server/messages/thread';

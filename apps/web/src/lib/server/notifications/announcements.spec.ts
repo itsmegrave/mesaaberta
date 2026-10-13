@@ -1,12 +1,19 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { events, gameTables, notifications, profiles, registrations, systems } from '../db/schema';
+import {
+  events,
+  gameTables,
+  notifications,
+  profiles,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { Forbidden, Invalid } from '../errors';
-import { dispatchEvent } from '../events/dispatcher';
-import { handlersFor } from '../events/handlers';
-import type { Actor } from '../auth/policy';
-import type { StoredEvent } from '../events/types';
+import { Forbidden, Invalid } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 import {
   audienceSizes,
   findRecipient,
@@ -15,7 +22,7 @@ import {
   sendAnnouncement,
   type AnnouncementDraft,
 } from './announcements';
-import { listNotifications } from './service';
+import { listNotifications } from '@mesaaberta/core/server/notifications/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const admin = '00000000-0000-4000-8000-000000000d01';

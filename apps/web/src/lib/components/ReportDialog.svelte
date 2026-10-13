@@ -12,7 +12,7 @@
   import FormField from '$lib/components/FormField.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '$lib/paraglide/messages';
   import { toast } from '$lib/toaster';
 

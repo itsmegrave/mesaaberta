@@ -1,14 +1,14 @@
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { gameTables, profiles, registrations } from '../db/schema';
-import { publicName } from '../db/public-name';
-import { authorize, joinBlocker, type Actor } from '../auth/policy';
-import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '../errors';
-import { recordEvent } from '../events/outbox';
-import type { DomainEvent } from '../events/types';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/schema';
+import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { authorize, joinBlocker, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '@mesaaberta/core/server/errors';
+import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import type { DomainEvent } from '@mesaaberta/core/server/events/types';
 import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
 import { addTableMember, removeTableMember } from '../messages/service';
-import { hasStarted } from '../tables/schedule';
+import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the

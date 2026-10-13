@@ -7,7 +7,7 @@
   import Icon from './Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import { m } from '$lib/paraglide/messages';
-  import { cleanRichHtml, richTextLength, toPlainText } from '$lib/text/rich';
+  import { cleanRichHtml, richTextLength, toPlainText } from '@mesaaberta/core/text/rich';
   import './rich-text.css';
 
   // A WYSIWYG multiline field. `value` is the HTML subset of `$lib/text/rich`. Until the editor has

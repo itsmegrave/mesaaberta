@@ -10,7 +10,7 @@
   import { EVENT_STATUSES, type EventStatus } from '$lib/admin/event-filters';
   import { listPath, listQuery, pageRange } from '$lib/admin/list';
   import { localizedHref } from '$lib/i18n/locales';
-  import { atHandle } from '$lib/profile/handle';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '$lib/paraglide/messages';
   import { getLocale } from '$lib/paraglide/runtime';
 

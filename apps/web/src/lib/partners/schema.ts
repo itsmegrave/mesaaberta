@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import '$lib/forms/zod-codes';
-import { imageFile, requiredImageFile } from '$lib/forms/files';
+import '@mesaaberta/core/forms/zod-codes';
+import { imageFile, requiredImageFile } from '@mesaaberta/core/forms/files';
 import {
   handleUrl,
   isNetwork,

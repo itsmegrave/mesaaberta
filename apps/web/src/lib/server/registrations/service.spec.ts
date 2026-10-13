@@ -1,8 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
-import { events, gameTables, profiles, registrations, systems } from '../db/schema';
+import {
+  events,
+  gameTables,
+  profiles,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import type { Actor } from '../auth/policy';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
   approveRegistration,
   declineRegistration,

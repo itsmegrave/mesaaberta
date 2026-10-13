@@ -1,6 +1,6 @@
 import { asc, desc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { OPEN_REPORT_STATUSES } from '$lib/moderation/reports';
-import type { AnyDb } from '../db/client';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   events,
   gameTables,
@@ -11,7 +11,7 @@ import {
   reports,
   systems,
   tags,
-} from '../db/schema';
+} from '@mesaaberta/core/server/db/schema';
 import { listQueue } from './catalog';
 
 const countWhere = (condition: SQL) =>

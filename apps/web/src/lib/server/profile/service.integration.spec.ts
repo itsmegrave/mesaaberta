@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { inArray } from 'drizzle-orm';
 import { openIntegrationDb } from '../db/integration-db';
-import { profiles } from '../db/schema';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { saveProfile } from './service';
 import type { ProfileInput } from '$lib/profile/schema';
 

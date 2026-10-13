@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { initialForm, issueErrors } from './contract';
 import { z } from 'zod';
-import '$lib/forms/zod-codes';
+import '@mesaaberta/core/forms/zod-codes';
 import { refuse, responseForm, withoutSecrets } from './server';
 
 const schema = z.object({ email: z.string().min(3), password: z.string().min(8) });

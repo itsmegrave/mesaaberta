@@ -1,4 +1,4 @@
-import '$lib/forms/zod-codes';
+import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
 
 /** Closing the account: the person types their @username to confirm. The server compares it. */
