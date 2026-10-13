@@ -19,7 +19,7 @@
     "lint:fix": "bun run --bun prettier --write . && bun run --bun eslint . --fix",
     "format": "bun run --bun prettier --write .",
     "test:unit": "cd apps/web && bun run --bun vitest run --project client --project server",
-    "test:integration": "bun --env-file=.dev.vars ./node_modules/vitest/vitest.mjs run --project integration --root apps/web",
+    "test:integration": "cd apps/web && bun --env-file=../../.dev.vars ../../node_modules/vitest/vitest.mjs run --project integration",
     "test": "bun run test:unit && bun run test:e2e",
     "test:unit:watch": "cd apps/web && bun run --bun vitest",
     "test:e2e": "bun run playwright test -c apps/web/playwright.config.ts",

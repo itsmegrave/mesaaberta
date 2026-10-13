@@ -114,8 +114,8 @@ export default defineConfig(
   },
   {
     // Two rules share `no-restricted-syntax`, so each block below lists the ones that apply to it.
-    files: ['src/**/*.{ts,svelte}'],
-    ignores: ['src/**/*.spec.ts'],
+    files: ['apps/web/src/**/*.{ts,svelte}'],
+    ignores: ['apps/web/src/**/*.spec.ts'],
     rules: { 'no-restricted-syntax': ['error', roleRead, hostEnvRead, hostSdkCall] },
   },
   // Access decisions live in one module, which is where a role is read.
