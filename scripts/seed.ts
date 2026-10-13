@@ -12,7 +12,7 @@ import {
   profiles,
   registrations,
   systems,
-} from '../src/lib/server/db/schema.ts';
+} from '../apps/web/src/lib/server/db/schema.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL is not set. Copy .dev.vars.example to .dev.vars.');

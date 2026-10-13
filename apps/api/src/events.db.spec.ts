@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { events, profiles } from '@mesaaberta/db/schema';
 import { MAX_ATTEMPTS } from '@mesaaberta/core/server/events/dispatcher';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
-import { createTestDb } from '../../../src/lib/server/db/test-db';
+import { createTestDb } from '../../web/src/lib/server/db/test-db';
 
 // No handler is listening, so a forced event is simply done: what is under test is the route over a
 // real database (the admin check, the conditional update and the audit entry), not the handlers.

@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 // The schema is built up to the migration before, the rows are inserted the way the old code wrote
 // them, and only then does the migration under test run.
 
-const folder = join(process.cwd(), 'drizzle');
+const folder = join(process.cwd(), '../../drizzle');
 const journal: { entries: { tag: string }[] } = JSON.parse(
   readFileSync(join(folder, 'meta', '_journal.json'), 'utf8'),
 );

@@ -26,6 +26,7 @@ The system is live at mesaaberta.app. The split into web / api / worker and the 
 
 ### Where things live
 
+- `apps/web`: the SvelteKit app (`src`, `e2e`, `messages`, `static`, `vite.config.ts`, `host.config.ts`). Paths such as `src/lib/...` in these docs are relative to it. Root `package.json` scripts `cd` into it; `wrangler.jsonc`, `drizzle/` and `scripts/` stay at the root.
 - `packages/db` (`@mesaaberta/db`): Drizzle schema and the postgres.js client. Migrations stay in `drizzle/`.
 - `packages/contracts`: `DomainEvent` types and shared vocabulary.
 - `packages/events`: the `EventBus` port, the Postgres outbox and poller, the transport contract (`JobTransport`/`JobExecutor`, ADR 0003).
