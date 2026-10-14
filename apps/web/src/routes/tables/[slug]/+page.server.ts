@@ -82,21 +82,33 @@ export const actions: Actions = {
         ? { mesa_id: table.id, player_user_id: playerId, seat_claim_method: 'button_click' }
         : null;
     });
-    return runRegistrationAction(event, joinSchema, (db, actor, { message }) =>
-      joinTable(db, actor, event.params.slug, { message }),
+    return runRegistrationAction(
+      event,
+      joinSchema,
+      (db, actor, { message }) => joinTable(db, actor, event.params.slug, { message }),
+      (data) => ({ action: 'join', slug: event.params.slug, body: { message: data.message } }),
     );
   },
   leave: (event) =>
-    runRegistrationAction(event, tableActionSchema, (db, actor) =>
-      leaveTable(db, actor, event.params.slug),
+    runRegistrationAction(
+      event,
+      tableActionSchema,
+      (db, actor) => leaveTable(db, actor, event.params.slug),
+      () => ({ action: 'leave', slug: event.params.slug, body: {} }),
     ),
   approve: (event) =>
-    runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
-      approveRegistration(db, actor, event.params.slug, playerId),
+    runRegistrationAction(
+      event,
+      playerActionSchema,
+      (db, actor, { playerId }) => approveRegistration(db, actor, event.params.slug, playerId),
+      ({ playerId }) => ({ action: 'approve', slug: event.params.slug, body: { playerId } }),
     ),
   decline: (event) =>
-    runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
-      declineRegistration(db, actor, event.params.slug, playerId),
+    runRegistrationAction(
+      event,
+      playerActionSchema,
+      (db, actor, { playerId }) => declineRegistration(db, actor, event.params.slug, playerId),
+      ({ playerId }) => ({ action: 'decline', slug: event.params.slug, body: { playerId } }),
     ),
   rate: (event) =>
     runRegistrationAction(event, ratingSchema, (db, actor, data) =>
@@ -113,7 +125,10 @@ export const actions: Actions = {
       (await fileReport(db, actor, event.params.slug!, data)).eventId,
   ),
   remove: (event) =>
-    runRegistrationAction(event, playerActionSchema, (db, actor, { playerId }) =>
-      removePlayer(db, actor, event.params.slug, playerId),
+    runRegistrationAction(
+      event,
+      playerActionSchema,
+      (db, actor, { playerId }) => removePlayer(db, actor, event.params.slug, playerId),
+      ({ playerId }) => ({ action: 'remove', slug: event.params.slug, body: { playerId } }),
     ),
 };

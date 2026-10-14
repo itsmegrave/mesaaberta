@@ -46,6 +46,12 @@ export const flagDefaults = {
   // web Worker dispatches the events it returns; a call that cannot be made falls back to the web
   // path. Needs the API binding. Target admins first.
   api_admin_moderation: false,
+  // Off: joining, leaving and the GM's approve, decline and remove run in the web Worker. On: the
+  // api Worker makes them over the Service Binding, from the same action registry, answering the
+  // events the web Worker dispatches; the refusals (full table, rate limit...) come back as the
+  // codes the form already shows, and a call that cannot be made falls back to the web path. Needs
+  // the API binding. The first player-facing flag: target a few ids before everyone.
+  api_registrations: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
