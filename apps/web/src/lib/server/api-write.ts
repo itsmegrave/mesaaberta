@@ -6,6 +6,7 @@ import {
   RateLimited,
   TableFull,
 } from '@mesaaberta/core/server/errors';
+import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 import { callApiRaw } from './api-client';
 
@@ -35,11 +36,13 @@ function refusalOf(status: number, body: Record<string, unknown>): Error | null 
 export async function writeViaApi(
   locals: App.Locals,
   flag: FlagName,
-  player: { id: string; role?: string },
+  player: Actor,
   path: string,
   body: Record<string, unknown>,
 ): Promise<{ eventIds: string[] } | null> {
-  if (!(await locals.flags.isEnabled(flag, { id: player.id, isAdmin: player.role === 'admin' })))
+  if (
+    !(await locals.flags.isEnabled(flag, { id: player.id, isAdmin: can(player, 'admin:access') }))
+  )
     return null;
   const answer = await callApiRaw(locals.env, path, player.id, locals.log, body);
   if (!answer) return null;
