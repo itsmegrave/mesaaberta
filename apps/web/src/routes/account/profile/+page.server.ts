@@ -1,16 +1,12 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { initialForm, validateFormData, validateStringForm } from '$lib/forms/contract';
 import { refuse, responseForm, withoutSecrets } from '$lib/forms/server';
-import {
-  anonymiseProfile,
-  closeAccount,
-  setAvatarPath,
-} from '@mesaaberta/core/server/account/service';
-import { deleteAuthUser, supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
+import { setAvatarPath } from '@mesaaberta/core/server/account/service';
+import { deleteAccount } from '@mesaaberta/core/server/account/delete';
+import { supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
 import { requireUser } from '$lib/server/auth/guard';
 import { writeViaApi } from '$lib/server/api-write';
 import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { can } from '@mesaaberta/core/server/auth/policy';
@@ -180,7 +176,7 @@ export const actions: Actions = {
       const storage = locals.supabase?.storage.from(AVATAR_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
       const path = await storeImage(storage, prepared, locals.log);
-      await removePicture(locals, await setAvatarPath(locals.db, user.id, path));
+      await removePicture(locals, await setAvatar(locals, user.id, path));
     } catch (e) {
       if (e instanceof Invalid) return refuse(photoForm, 400, e.message, 'photo');
       throw e;
@@ -193,7 +189,7 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
-    await removePicture(locals, await setAvatarPath(locals.db, user.id, null));
+    await removePicture(locals, await setAvatar(locals, user.id, null));
     redirect(303, `${url.pathname}?foto=removida`);
   },
 
@@ -212,20 +208,27 @@ export const actions: Actions = {
     if (!form.valid || form.data.confirm !== username)
       return refuse(form, 400, 'confirm', 'confirm');
 
-    const { eventIds } = await closeAccount(locals.db, user.id);
-    // Sent now, while the GM's address still exists; a failure is left to the sweeper.
-    const handlers = handlersFor(locals.env);
-    for (const id of eventIds) {
-      await dispatchEvent(locals.db, handlers, id, new Date(), locals.log).catch((e: unknown) =>
-        locals.log.error('account deletion: dispatch failed', { error: e, eventId: id }),
-      );
+    // The picture goes first, with the person's own session: after the Auth user is gone it cannot.
+    await removePicture(locals, (await locals.getProfile())?.avatarPath ?? null);
+    const profile = await locals.getProfile();
+    // Through the api Worker when `api_account` is on for this person; here otherwise.
+    try {
+      const remote = profile
+        ? await writeViaApi(locals, 'api_account', profile, '/v1/account/delete', {
+            confirm: form.data.confirm,
+          })
+        : null;
+      if (!remote)
+        await deleteAccount(
+          { db: locals.db, admin, handlers: handlersFor(locals.env), log: locals.log },
+          user.id,
+          form.data.confirm,
+        );
+    } catch (e) {
+      if (e instanceof Invalid) return refuse(form, 400, 'confirm', 'confirm');
+      throw e;
     }
-    const picture = (await locals.getProfile())?.avatarPath ?? null;
-    await removePicture(locals, picture);
-    await anonymiseProfile(locals.db, user.id);
-    await deleteAuthUser(admin, user.id);
     await locals.supabase?.auth.signOut();
-    locals.log.info('account deleted', { tables: eventIds.length });
 
     redirect(303, '/');
   },
@@ -259,4 +262,17 @@ async function viaPasswordApi<T extends Record<string, unknown>>(
     if (e instanceof Forbidden) return refuse(form, 403, 'no_session');
     throw e;
   }
+}
+
+/**
+ * Points the profile at a stored picture (or at none) and answers the file it replaced, for the
+ * caller to delete with the person's session. Through the api Worker when `api_account` is on.
+ */
+async function setAvatar(locals: App.Locals, userId: string, path: string | null) {
+  const profile = await locals.getProfile();
+  const remote = profile
+    ? await writeViaApi(locals, 'api_account', profile, '/v1/account/avatar', { path })
+    : null;
+  if (remote) return typeof remote.body.replaced === 'string' ? remote.body.replaced : null;
+  return setAvatarPath(locals.db!, userId, path);
 }

@@ -15,7 +15,8 @@ core's `registrationActions`; any signed-in player, authorized by the service, n
 `table_full`, `already_registered`, `rate_limited`...), and the GM's manage-page answers
 (`POST /v1/manage/:slug/:action` with `publish`, `happened`, `notHeld` and `postpone`, behind
 `api_table_lifecycle`), and the person's own profile (`POST /v1/account/:action` with `save` and
-`messages`, behind `api_account`; the subject is always the actor). The GM's table record
+`messages`, `avatar` (a picture the web Worker stored; answers the file it replaced) and `delete`
+(closes the account), behind `api_account`; the subject is always the actor). The GM's table record
 (`POST /v1/table-writes` to create, `/:slug/update`, `/:slug/disable`, behind `api_table_write`; web
 still validates the form, stores the image and resolves the CEP, and sends the result). The inbox (`POST /v1/inbox/:action` with
 `send`, `mute`, `open`, `read` and `readAll`, behind `api_inbox`). What a member submits
