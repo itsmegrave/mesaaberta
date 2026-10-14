@@ -2,15 +2,8 @@ import { Hono } from 'hono';
 import type { ZodType } from 'zod';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
-import {
-  AlreadyRegistered,
-  Forbidden,
-  Invalid,
-  NotFound,
-  RateLimited,
-  TableFull,
-} from '@mesaaberta/core/server/errors';
 import { registrationActions } from '@mesaaberta/core/server/registrations/decisions';
+import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
 type Open = typeof createDb;
@@ -42,7 +35,7 @@ export function registrationRoutes(open: Open = openDb) {
     };
 
     const parsed = action.schema.safeParse(await c.req.json().catch(() => ({})));
-    if (!parsed.success) return c.json({ error: 'invalid', field: '' }, 400);
+    if (!parsed.success) return c.json({ error: 'invalid', field: '', message: 'invalid' }, 400);
 
     try {
       const { eventIds } = await action.apply(
@@ -53,13 +46,8 @@ export function registrationRoutes(open: Open = openDb) {
       );
       return c.json({ eventIds });
     } catch (error) {
-      if (error instanceof Invalid) return c.json({ error: 'invalid', field: error.field }, 400);
-      if (error instanceof RateLimited)
-        return c.json({ error: 'rate_limited', retryAfter: error.retryAfterSeconds }, 429);
-      if (error instanceof Forbidden) return c.json({ error: 'forbidden' }, 403);
-      if (error instanceof NotFound) return c.json({ error: 'not_found' }, 404);
-      if (error instanceof TableFull) return c.json({ error: 'table_full' }, 409);
-      if (error instanceof AlreadyRegistered) return c.json({ error: 'already_registered' }, 409);
+      const refused = refusal(c, error);
+      if (refused) return refused;
       throw error;
     }
   });

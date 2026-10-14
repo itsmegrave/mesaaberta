@@ -11,14 +11,7 @@ import { failFrom } from '../fail-from';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { RegistrationActionName } from '@mesaaberta/core/server/registrations/decisions';
-import {
-  Forbidden,
-  Invalid,
-  NotFound,
-  TableFull,
-  AlreadyRegistered,
-} from '@mesaaberta/core/server/errors';
-import { callApiRaw } from '../api-client';
+import { writeViaApi } from '../api-write';
 
 type Event = {
   locals: App.Locals;
@@ -26,51 +19,6 @@ type Event = {
   request: Request;
   setHeaders?: (headers: Record<string, string>) => void;
 };
-
-/** The refusal an api answer stands for, as the domain error `failFrom` already knows. */
-function refusalOf(status: number, body: Record<string, unknown>): Error | null {
-  if (status === 400 && body.error === 'invalid')
-    return new Invalid(typeof body.field === 'string' ? body.field : '');
-  if (status === 403 && body.error === 'forbidden') return new Forbidden();
-  if (status === 404 && body.error === 'not_found') return new NotFound();
-  if (status === 409 && body.error === 'table_full') return new TableFull();
-  if (status === 409 && body.error === 'already_registered') return new AlreadyRegistered();
-  if (status === 429 && body.error === 'rate_limited')
-    return new RateLimited(typeof body.retryAfter === 'number' ? body.retryAfter : 60);
-  return null;
-}
-
-/**
- * Makes the registration action in the api Worker when `api_registrations` is on for this player.
- * Resolves to its events, throws the refusal it made (so the form shows it as it always did), and
- * resolves to null when the flag is off or the call cannot be used: the caller then runs the
- * service in this Worker, so the flag is a kill switch and not a dependency.
- */
-async function viaApi(
-  locals: App.Locals,
-  playerId: string,
-  call: { action: RegistrationActionName; slug: string; body: Record<string, unknown> },
-): Promise<{ eventIds: string[] } | null> {
-  if (!(await locals.flags.isEnabled('api_registrations', { id: playerId }))) return null;
-  const path = `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`;
-  const answer = await callApiRaw(locals.env, path, playerId, locals.log, call.body);
-  if (!answer) return null;
-  const body = (answer.body ?? {}) as Record<string, unknown>;
-  if (
-    answer.ok &&
-    Array.isArray(body.eventIds) &&
-    body.eventIds.every((i) => typeof i === 'string')
-  )
-    return { eventIds: body.eventIds as string[] };
-  const refusal = refusalOf(answer.status, body);
-  if (refusal) throw refusal;
-  locals.log.warn('api registration not used', {
-    code: 'api_call_refused',
-    path,
-    status: answer.status,
-  });
-  return null;
-}
 
 /**
  * What every join, leave, approve, decline and remove action shares: an anonymous visitor goes to
@@ -106,9 +54,17 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
   try {
     const profile = await locals.getProfile();
     const data = form.data as T;
+    const call = api?.(data);
     const { eventIds } =
-      (api && profile ? await viaApi(locals, profile.id, api(data)) : null) ??
-      (await run(locals.db, profile, data));
+      (call && profile
+        ? await writeViaApi(
+            locals,
+            'api_registrations',
+            profile.id,
+            `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
+            call.body,
+          )
+        : null) ?? (await run(locals.db, profile, data));
     for (const id of eventIds)
       locals.afterResponse((db) =>
         dispatchEvent(db, handlersFor(event.locals.env), id, new Date(), locals.log),
