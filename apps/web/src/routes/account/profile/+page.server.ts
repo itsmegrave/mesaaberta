@@ -8,6 +8,7 @@ import {
 } from '@mesaaberta/core/server/account/service';
 import { deleteAuthUser, supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
 import { requireUser } from '$lib/server/auth/guard';
+import { writeViaApi } from '$lib/server/api-write';
 import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
@@ -70,7 +71,12 @@ export const actions: Actions = {
     });
     if (!form.valid) return fail(400, { form });
 
-    await saveProfile(locals.db, user.id, form.data);
+    // Through the api Worker when `api_account` is on for this person; here otherwise.
+    const profile = await locals.getProfile();
+    const remote = profile
+      ? await writeViaApi(locals, 'api_account', profile, '/v1/account/save', form.data)
+      : null;
+    if (!remote) await saveProfile(locals.db, user.id, form.data);
     return { form };
   },
 
@@ -87,7 +93,11 @@ export const actions: Actions = {
     );
     if (!messagesForm.valid) return fail(400, { form: messagesForm });
 
-    await setDirectMessages(locals.db, user.id, messagesForm.data.enabled);
+    const profile = await locals.getProfile();
+    const remote = profile
+      ? await writeViaApi(locals, 'api_account', profile, '/v1/account/messages', messagesForm.data)
+      : null;
+    if (!remote) await setDirectMessages(locals.db, user.id, messagesForm.data.enabled);
     return { form: messagesForm };
   },
 

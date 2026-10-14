@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { accountRoutes } from './account';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 import { manageRoutes } from './manage';
@@ -25,6 +26,8 @@ export function createApi() {
   app.route('/v1/tables', registrationRoutes());
   // The GM's manage page (publish, happened, not held, postpone), behind `api_table_lifecycle`.
   app.route('/v1/manage', manageRoutes());
+  // The person's own profile (the form and the direct-messages switch), behind `api_account`.
+  app.route('/v1/account', accountRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));

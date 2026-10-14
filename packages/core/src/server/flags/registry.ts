@@ -57,6 +57,11 @@ export const flagDefaults = {
   // action registry; refusals come back as the codes the form shows and a call that cannot be made
   // falls back to the web path. Needs the API binding. Target a few ids first.
   api_table_lifecycle: false,
+  // Off: saving the profile form and the direct-messages switch run in the web Worker. On: the api
+  // Worker makes them over the Service Binding, from the same action registry, as the signed-in
+  // person; refusals (a taken username) come back as the codes the form shows and a call that
+  // cannot be made falls back to the web path. Needs the API binding. Admins first.
+  api_account: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
