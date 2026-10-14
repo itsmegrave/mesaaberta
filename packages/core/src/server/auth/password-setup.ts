@@ -82,6 +82,15 @@ function assertCanAdd(user: AuthUser) {
   if (!user.email) throw new Invalid('password', 'no_email');
 }
 
+/**
+ * The guesses a new code inherits: the old count, or none once the lockout has passed since the last
+ * code. The instant is an ISO string with a cast, not a `Date`: in a hand-written `sql` the driver
+ * (postgres.js) cannot serialize one (`ERR_INVALID_ARG_TYPE`), which an in-memory test database does
+ * not catch.
+ */
+export const carriedAttempts = (now: Date) =>
+  sql`case when ${passwordSetupCodes.sentAt} < ${new Date(now.getTime() - LOCKOUT_MS).toISOString()}::timestamptz then 0 else ${passwordSetupCodes.attempts} end`;
+
 const hex = (bytes: ArrayBuffer) =>
   [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 
@@ -150,7 +159,7 @@ export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
       set: {
         codeHash,
         // The guesses carry over to the new code until an hour has passed since the last one.
-        attempts: sql`case when ${passwordSetupCodes.sentAt} < ${new Date(now.getTime() - LOCKOUT_MS)} then 0 else ${passwordSetupCodes.attempts} end`,
+        attempts: carriedAttempts(now),
         sentAt: now,
         expiresAt: new Date(now.getTime() + CODE_TTL_MS),
       },
