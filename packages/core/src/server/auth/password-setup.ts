@@ -1,4 +1,4 @@
-import { and, eq, gt, lt, sql } from 'drizzle-orm';
+import { and, eq, gt, lt, or, sql } from 'drizzle-orm';
 import { passwordSetupCodes } from '../db/schema';
 import type { AnyDb } from '../db/client';
 import { Forbidden, Invalid, RateLimited } from '../errors';
@@ -15,6 +15,9 @@ import { PASSWORD_CODE_LENGTH } from '../../auth/password-setup';
 const CODE_TTL_MS = 10 * 60_000;
 const RESEND_AFTER_MS = 60_000;
 const MAX_ATTEMPTS = 5;
+// A new code does not clear the guesses already spent: after `MAX_ATTEMPTS` the person waits this
+// long (from the last code) before another is sent, so asking again is not a way to keep guessing.
+const LOCKOUT_MS = 60 * 60_000;
 
 /** The Supabase Auth project and the signed-in person's own access token. */
 export type SupabaseAuth = { url: string; key: string; request?: typeof fetch };
@@ -82,9 +85,14 @@ async function hashOf(profileId: string, code: string) {
   );
 }
 
+/** Six uniformly random digits: values above the last whole multiple are drawn again, not folded. */
 function newCode() {
-  const [random] = crypto.getRandomValues(new Uint32Array(1));
-  return String(random % 10 ** PASSWORD_CODE_LENGTH).padStart(PASSWORD_CODE_LENGTH, '0');
+  const range = 10 ** PASSWORD_CODE_LENGTH;
+  const limit = Math.floor(2 ** 32 / range) * range;
+  const draw = new Uint32Array(1);
+  do crypto.getRandomValues(draw);
+  while (draw[0] >= limit);
+  return String(draw[0] % range).padStart(PASSWORD_CODE_LENGTH, '0');
 }
 
 function sameHash(a: string, b: string) {
@@ -134,22 +142,35 @@ export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
       target: passwordSetupCodes.profileId,
       set: {
         codeHash,
-        attempts: 0,
+        // The guesses carry over to the new code until an hour has passed since the last one.
+        attempts: sql`case when ${passwordSetupCodes.sentAt} < ${new Date(now.getTime() - LOCKOUT_MS)} then 0 else ${passwordSetupCodes.attempts} end`,
         sentAt: now,
         expiresAt: new Date(now.getTime() + CODE_TTL_MS),
       },
-      // Only a code at least a minute old is replaced.
-      setWhere: lt(passwordSetupCodes.sentAt, new Date(now.getTime() - RESEND_AFTER_MS)),
+      // Only a code at least a minute old is replaced, and not one whose guesses ran out less than
+      // an hour ago.
+      setWhere: and(
+        lt(passwordSetupCodes.sentAt, new Date(now.getTime() - RESEND_AFTER_MS)),
+        or(
+          lt(passwordSetupCodes.attempts, MAX_ATTEMPTS),
+          lt(passwordSetupCodes.sentAt, new Date(now.getTime() - LOCKOUT_MS)),
+        ),
+      ),
     })
     .returning({ profileId: passwordSetupCodes.profileId });
 
   if (!stored) {
     const [current] = await db
-      .select({ sentAt: passwordSetupCodes.sentAt })
+      .select({ sentAt: passwordSetupCodes.sentAt, attempts: passwordSetupCodes.attempts })
       .from(passwordSetupCodes)
       .where(eq(passwordSetupCodes.profileId, who.profileId));
     const wait = current
-      ? Math.ceil((current.sentAt.getTime() + RESEND_AFTER_MS - now.getTime()) / 1000)
+      ? Math.ceil(
+          (current.sentAt.getTime() +
+            (current.attempts >= MAX_ATTEMPTS ? LOCKOUT_MS : RESEND_AFTER_MS) -
+            now.getTime()) /
+            1000,
+        )
       : 60;
     throw new RateLimited(Math.max(1, wait));
   }

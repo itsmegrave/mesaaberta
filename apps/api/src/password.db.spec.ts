@@ -122,6 +122,23 @@ describe('api password routes over a database', () => {
     expect(sent).toHaveLength(1);
   });
 
+  it('does not hand out a fresh code to someone who spent every guess', async () => {
+    await post('/code', {}, ana_);
+    const wrong = codeOf() === '000000' ? '111111' : '000000';
+    for (let i = 0; i < 5; i++) await post('/', { password: 'a long password', code: wrong }, ana_);
+    // A minute on, as if the person waited before asking again.
+    await test.db
+      .update(passwordSetupCodes)
+      .set({ sentAt: new Date(Date.now() - 2 * 60_000) })
+      .where(eq(passwordSetupCodes.profileId, ana));
+
+    const again = await post('/code', {}, ana_);
+
+    expect(again.status).toBe(429);
+    expect(((await again.json()) as { retryAfter: number }).retryAfter).toBeGreaterThan(3000);
+    expect(sent).toHaveLength(1);
+  });
+
   it('keeps the guess when the password was too weak', async () => {
     await post('/code', {}, ana_);
     weak = true;
