@@ -19,7 +19,20 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-const app = () => accountRoutes((() => ({ db: test.db, close: async () => {} })) as never);
+let deleted: string[] = [];
+const admin = {
+  auth: {
+    admin: {
+      getUserById: async () => ({ data: { user: null }, error: null }),
+      deleteUser: async (id: string) => {
+        deleted.push(id);
+        return { error: null };
+      },
+    },
+  },
+};
+const app = () =>
+  accountRoutes((() => ({ db: test.db, close: async () => {} })) as never, { admin });
 const post = (action: string, body: unknown, actor?: string) =>
   app().request(
     `/${action}`,
@@ -64,8 +77,41 @@ describe('api account routes over a database', () => {
   });
 
   it('answers 404 for an unknown action, 400 for a non-object, 401 without an actor', async () => {
-    expect((await post('delete', {}, ana)).status).toBe(404);
+    expect((await post('explode', {}, ana)).status).toBe(404);
     expect((await post('messages', [], ana)).status).toBe(400);
     expect((await post('messages', { enabled: true })).status).toBe(401);
+  });
+
+  it('points the profile at a stored picture and answers the one it replaced', async () => {
+    const first = await post('avatar', { path: `${ana}/a.png` }, ana);
+    expect(await first.json()).toEqual({ eventIds: [], replaced: null });
+
+    const second = await post('avatar', { path: `${ana}/b.png` }, ana);
+    expect(await second.json()).toEqual({ eventIds: [], replaced: `${ana}/a.png` });
+
+    const removed = await post('avatar', { path: null }, ana);
+    expect(await removed.json()).toEqual({ eventIds: [], replaced: `${ana}/b.png` });
+    expect((await row(ana)).avatarPath).toBeNull();
+  });
+
+  it('refuses a picture outside the person’s own folder', async () => {
+    const response = await post('avatar', { path: `${bia}/x.png` }, ana);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ field: 'photo' });
+  });
+
+  it('closes the account only when the username is typed, and deletes the Auth user', async () => {
+    deleted = [];
+    const wrong = await post('delete', { confirm: 'outra' }, bia);
+    expect(wrong.status).toBe(400);
+    expect(await wrong.json()).toMatchObject({ field: 'confirm' });
+    expect(deleted).toEqual([]);
+
+    const response = await post('delete', { confirm: 'bia' }, bia);
+
+    expect(response.status).toBe(200);
+    expect(deleted).toEqual([bia]);
+    expect((await row(bia)).username).toBeNull();
   });
 });
