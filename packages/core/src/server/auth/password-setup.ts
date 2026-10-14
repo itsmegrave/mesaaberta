@@ -50,10 +50,17 @@ const authCall = (
   });
 
 /** Whoever the token belongs to, checked by Supabase. Anyone else than `profileId` is `Forbidden`. */
-async function userOf(auth: SupabaseAuth, { profileId, token }: Who): Promise<AuthUser> {
+async function userOf(
+  auth: SupabaseAuth,
+  { profileId, token }: Who,
+  log: Logger,
+): Promise<AuthUser> {
   const response = await authCall(auth, token, '/user');
   if (response.status === 401 || response.status === 403) throw new Forbidden('no session');
-  if (!response.ok) throw new Error(`auth: could not read the user (${response.status})`);
+  if (!response.ok) {
+    log.warn('password setup: could not read the user', { status: response.status });
+    throw new Error(`auth: could not read the user (${response.status})`);
+  }
 
   const user = (await response.json()) as {
     id?: string;
@@ -125,7 +132,7 @@ export function passwordCodeMail(code: string) {
 export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
   const { db, auth, mailer } = deps;
   const now = (deps.now ?? (() => new Date()))();
-  const user = await userOf(auth, who);
+  const user = await userOf(auth, who, deps.log);
   assertCanAdd(user);
 
   const code = newCode();
@@ -182,6 +189,7 @@ export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
       idempotencyKey: `password-code:${who.profileId}:${codeHash.slice(0, 16)}`,
     });
   } catch (error) {
+    deps.log.warn('password setup: the code was not sent', { error });
     // No code the person never received is left to be guessed.
     await db.delete(passwordSetupCodes).where(eq(passwordSetupCodes.profileId, who.profileId));
     throw error;
@@ -200,7 +208,7 @@ export async function addPassword(
 ): Promise<void> {
   const { db, auth, log } = deps;
   const now = (deps.now ?? (() => new Date()))();
-  const user = await userOf(auth, who);
+  const user = await userOf(auth, who, log);
   assertCanAdd(user);
 
   // Counted before it is compared, so a guess is spent whether or not it was right.

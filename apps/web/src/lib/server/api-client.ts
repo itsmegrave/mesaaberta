@@ -3,6 +3,25 @@ import { logger, type Logger } from '@mesaaberta/core/server/logger';
 /** The Service Binding to the api Worker (`env.API`); absent until the api is deployed and bound. */
 export type ApiBinding = { fetch: (request: Request) => Promise<Response> };
 
+/**
+ * The api path as a template, for logs: a table's slug and any id become `:param`, so telemetry
+ * carries which route failed and never which table, partner or person it was about.
+ */
+export function routeTemplate(path: string): string {
+  const segments = path.split('?')[0].split('/');
+  return segments
+    .map((segment, i) => {
+      const before = segments[i - 1];
+      const dynamic =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) ||
+        before === 'tables' ||
+        before === 'manage' ||
+        (before === 'table-writes' && i < segments.length - 1);
+      return dynamic ? ':param' : segment;
+    })
+    .join('/');
+}
+
 /** What the api answered, whatever the status; null from `callApiRaw` means nothing was answered. */
 export type ApiAnswer = { ok: boolean; status: number; body: unknown };
 
@@ -38,7 +57,7 @@ export async function callApiRaw(
     );
     return { ok: response.ok, status: response.status, body: await response.json() };
   } catch (error) {
-    log.warn('api call failed', { code: 'api_call_failed', path, error });
+    log.warn('api call failed', { code: 'api_call_failed', route: routeTemplate(path), error });
     return null;
   }
 }
@@ -57,7 +76,12 @@ export async function callApi<T>(
   const answer = await callApiRaw(env, path, actorId, log);
   if (!answer) return null;
   if (!answer.ok) {
-    log.warn('api call refused', { code: 'api_call_refused', path, status: answer.status });
+    log.warn('api call refused', {
+      code: 'api_call_refused',
+      route: routeTemplate(path),
+      status: answer.status,
+      reason: (answer.body as { error?: unknown } | null)?.error as string | undefined,
+    });
     return null;
   }
   return answer.body as T;
