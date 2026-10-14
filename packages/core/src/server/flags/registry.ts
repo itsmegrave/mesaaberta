@@ -62,6 +62,11 @@ export const flagDefaults = {
   // person; refusals (a taken username) come back as the codes the form shows and a call that
   // cannot be made falls back to the web path. Needs the API binding. Admins first.
   api_account: false,
+  // Off: creating, editing and disabling a table run in the web Worker. On: the web Worker still
+  // validates the form, stores the image and resolves the CEP, then the api Worker writes the table
+  // over the Service Binding from the same services; refusals come back as the codes the form shows
+  // and a call that cannot be made falls back to the web path. Needs the API binding. Admins first.
+  api_table_write: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

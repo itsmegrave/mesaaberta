@@ -3,6 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { initialForm } from '$lib/forms/contract';
 import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
 import { requireUser } from '$lib/server/auth/guard';
+import { writeViaApi } from '$lib/server/api-write';
 import { timezoneOf } from '$lib/server/time';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
@@ -59,11 +60,21 @@ export const actions: Actions = {
     return handleTableForm(
       event,
       async (input, imagePath) => {
-        const { eventId } = await updateTable(db, await locals.getProfile(), params.slug, input, {
-          imagePath,
-        });
+        const profile = await locals.getProfile();
+        const path = `/v1/table-writes/${encodeURIComponent(params.slug)}/update`;
+        const remote = profile
+          ? await writeViaApi(locals, 'api_table_write', profile, path, {
+              input,
+              imagePath: imagePath ?? null,
+            })
+          : null;
+        const eventIds = remote
+          ? remote.eventIds
+          : [(await updateTable(db, profile, params.slug, input, { imagePath })).eventId].filter(
+              (id): id is string => id !== null,
+            );
         // Nothing players see changed: no invite, no notification.
-        if (eventId) {
+        for (const eventId of eventIds) {
           locals.afterResponse((db) =>
             dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
           );
@@ -82,10 +93,23 @@ export const actions: Actions = {
     if (!locals.db) error(503, 'Database not configured');
 
     try {
-      const { eventId } = await disableTable(locals.db, await locals.getProfile(), params.slug);
-      locals.afterResponse((db) =>
-        dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
-      );
+      const profile = await locals.getProfile();
+      const remote = profile
+        ? await writeViaApi(
+            locals,
+            'api_table_write',
+            profile,
+            `/v1/table-writes/${encodeURIComponent(params.slug)}/disable`,
+            {},
+          )
+        : null;
+      const eventIds = remote
+        ? remote.eventIds
+        : [(await disableTable(locals.db, profile, params.slug)).eventId];
+      for (const eventId of eventIds)
+        locals.afterResponse((db) =>
+          dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
+        );
     } catch (e) {
       if (e instanceof Forbidden) error(403, 'Forbidden');
       if (e instanceof NotFound) error(404, 'Not found');

@@ -2,6 +2,7 @@ import { loadRead } from '$lib/server/reads/load';
 import { error } from '@sveltejs/kit';
 import { initialForm } from '$lib/forms/contract';
 import { requireUser } from '$lib/server/auth/guard';
+import { writeViaApi } from '$lib/server/api-write';
 import { timezoneOf } from '$lib/server/time';
 import { handleTableForm } from '$lib/server/tables/form-action';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
@@ -47,10 +48,22 @@ export const actions: Actions = {
     return handleTableForm(
       event,
       async (input, imagePath, draft) => {
-        const created = await createTable(db, await locals.getProfile(), input, {
-          imagePath,
-          draft,
-        });
+        const profile = await locals.getProfile();
+        // Through the api Worker when `api_table_write` is on for this person; here otherwise.
+        const remote = profile
+          ? await writeViaApi(locals, 'api_table_write', profile, '/v1/table-writes', {
+              input,
+              imagePath: imagePath ?? null,
+              draft,
+            })
+          : null;
+        const created = remote
+          ? {
+              slug: String(remote.body.slug),
+              draft: remote.body.draft === true,
+              eventId: remote.eventIds[0],
+            }
+          : await createTable(db, profile, input, { imagePath, draft });
         // After the commit and the response, so the visitor never waits for a handler.
         locals.afterResponse((db) =>
           dispatchEvent(db, handlersFor(event.locals.env), created.eventId, new Date(), locals.log),

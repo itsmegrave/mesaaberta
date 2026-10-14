@@ -183,3 +183,41 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     untilLocalDate: campaign && until ? until : null,
   };
 }
+
+const nullable = (max: number) => z.string().max(max).nullable();
+
+/**
+ * A `TableInput` as the api Worker receives it: what the web form action already validated with
+ * `tableFormSchema` and resolved (`toTableInput`, `withLocation`), checked again for shape and
+ * limits so the api never trusts the sender's validation.
+ */
+export const tableInputSchema = z.object({
+  systemSlug: z.string().min(1).max(200),
+  title: z.string().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
+  description: z.string().max(20_000),
+  extraInfo: nullable(20_000),
+  welcomeMessage: nullable(20_000),
+  kind: z.enum(['campaign', 'one_shot', 'adventure']),
+  capacity: z.number().int().min(TABLE_LIMITS.capacity.min).max(TABLE_LIMITS.capacity.max),
+  minPlayers: z.number().int().min(1).max(TABLE_LIMITS.capacity.max).nullable(),
+  startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
+  timezone: z.string().refine(isTimeZone, 'invalid'),
+  durationMinutes: z
+    .number()
+    .int()
+    .min(TABLE_LIMITS.durationHours.min * 60)
+    .max(TABLE_LIMITS.durationHours.max * 60),
+  recurrence: z.enum([RULES.weekly, RULES.biweekly]).nullable(),
+  untilLocalDate: z.string().refine(isLocalDate, 'invalid').nullable(),
+  joinMode: z.enum(['auto', 'approval']),
+  modality: z.enum(['online', 'in_person']),
+  locationArea: nullable(TABLE_LIMITS.locationArea),
+  joinDetails: nullable(20_000),
+  platforms: z.array(z.string().min(1).max(200)).max(TABLE_LIMITS.catalogPicks),
+  tags: z.array(z.string().min(1).max(200)).max(TABLE_LIMITS.catalogPicks),
+  postalCode: nullable(8),
+  locationNeighbourhood: nullable(200),
+  locationCity: nullable(200),
+  locationState: nullable(100),
+  removeImage: z.boolean(),
+}) satisfies z.ZodType<TableInput>;
