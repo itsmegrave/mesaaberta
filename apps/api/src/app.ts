@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
@@ -47,7 +48,12 @@ export function createApi() {
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
-  app.onError((_error, c) => c.json({ error: 'internal_error' }, 500));
+  // The caller never sees the cause. The logger forwards the error's type, code and stack location to
+  // Sentry, never its message, and the route is the template (`/v1/account/password/code`).
+  app.onError((error, c) => {
+    logger.error('api request failed', { route: c.req.routePath, method: c.req.method, error });
+    return c.json({ error: 'internal_error' }, 500);
+  });
 
   return app;
 }

@@ -58,6 +58,11 @@ export async function writeViaApi(
     return { eventIds: json.eventIds as string[], body: json };
   const refusal = refusalOf(answer.status, json);
   if (refusal) throw refusal;
-  locals.log.warn('api write not used', { code: 'api_call_refused', path, status: answer.status });
+  locals.log.warn('api write not used', {
+    code: 'api_call_refused',
+    route: path,
+    status: answer.status,
+    reason: typeof json.error === 'string' ? json.error : undefined,
+  });
   return null;
 }

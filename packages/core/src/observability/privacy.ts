@@ -47,6 +47,7 @@ const LABELS = new Set([
   'causeCode',
   'provider',
   'stage',
+  'reason',
 ]);
 const IDS = new Set(['requestId', 'eventId', 'tableId', 'registrationId']);
 

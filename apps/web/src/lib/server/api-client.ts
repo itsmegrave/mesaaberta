@@ -38,7 +38,7 @@ export async function callApiRaw(
     );
     return { ok: response.ok, status: response.status, body: await response.json() };
   } catch (error) {
-    log.warn('api call failed', { code: 'api_call_failed', path, error });
+    log.warn('api call failed', { code: 'api_call_failed', route: path, error });
     return null;
   }
 }
@@ -57,7 +57,12 @@ export async function callApi<T>(
   const answer = await callApiRaw(env, path, actorId, log);
   if (!answer) return null;
   if (!answer.ok) {
-    log.warn('api call refused', { code: 'api_call_refused', path, status: answer.status });
+    log.warn('api call refused', {
+      code: 'api_call_refused',
+      route: path,
+      status: answer.status,
+      reason: (answer.body as { error?: unknown } | null)?.error as string | undefined,
+    });
     return null;
   }
   return answer.body as T;

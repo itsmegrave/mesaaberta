@@ -66,8 +66,9 @@ export async function decideViaApi(
   }
   locals.log.warn('api decision not used', {
     code: 'api_call_refused',
-    path,
+    route: path,
     status: answer.status,
+    reason: typeof body.error === 'string' ? body.error : undefined,
   });
   return { kind: 'fallback' };
 }
