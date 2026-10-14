@@ -77,6 +77,13 @@ export const flagDefaults = {
   // over the Service Binding from the same services; refusals come back as the codes the form
   // shows and a call that cannot be made falls back to the web path. Needs the API binding.
   api_submissions: false,
+  // Off: the profile page does not offer a password to an account that signed in with a provider.
+  // On: it does, and the api Worker does the work over the Service Binding (an e-mailed code, then
+  // the password, set with the person's own access token). Unlike the other api flags there is no
+  // web path to fall back to: the web Worker sends no mail, so a call that cannot be made shows the
+  // form's "try again" message. Needs the API binding and, on the api Worker, the Supabase and mail
+  // settings. Target admins first.
+  api_password: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

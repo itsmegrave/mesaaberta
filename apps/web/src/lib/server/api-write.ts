@@ -41,12 +41,13 @@ export async function writeViaApi(
   player: Actor,
   path: string,
   body: Record<string, unknown>,
+  headers?: Record<string, string>,
 ): Promise<{ eventIds: string[]; body: Record<string, unknown> } | null> {
   if (
     !(await locals.flags.isEnabled(flag, { id: player.id, isAdmin: can(player, 'admin:access') }))
   )
     return null;
-  const answer = await callApiRaw(locals.env, path, player.id, locals.log, body);
+  const answer = await callApiRaw(locals.env, path, player.id, locals.log, body, headers);
   if (!answer) return null;
   const json = (answer.body ?? {}) as Record<string, unknown>;
   if (
