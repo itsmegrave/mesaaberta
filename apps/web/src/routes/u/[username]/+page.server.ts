@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { requireUser } from '$lib/server/auth/guard';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '$lib/server/fail-from';
-import { openDirect } from '@mesaaberta/core/server/messages/service';
+import { openDirectConversation } from '$lib/server/messages/open-direct';
 import { normalizeUsername } from '@mesaaberta/core/profile/username';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import { localizedHref } from '$lib/i18n/locales';
@@ -45,8 +45,12 @@ export const actions: Actions = {
       .where(eq(profiles.username, normalizeUsername(params.username)));
     if (!target) error(404, 'Not found');
     try {
-      const conversation = await openDirect(locals.db, await locals.getProfile(), target.id);
-      redirect(303, `/messages/${conversation.id}`);
+      const conversationId = await openDirectConversation(
+        locals,
+        await locals.getProfile(),
+        target.id,
+      );
+      redirect(303, `/messages/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;
       return failFrom(cause);

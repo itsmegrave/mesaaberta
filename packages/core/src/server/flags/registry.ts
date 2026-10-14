@@ -90,6 +90,11 @@ export const flagDefaults = {
   // the dialog shows and a call that cannot be made falls back to the web path. Needs the API
   // binding. Admins first.
   api_reports: false,
+  // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
+  // the api Worker does it over the Service Binding and the web Worker dispatches the event it
+  // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
+  // admin may have it: the flag is a kill switch.
+  api_admin_announcements: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

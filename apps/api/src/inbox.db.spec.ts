@@ -107,6 +107,15 @@ describe('api inbox routes over a database', () => {
     expect(row.readAt).not.toBeNull();
   });
 
+  it('opens the direct conversation with someone, and refuses oneself', async () => {
+    const opened = await post('direct', { recipientId: bia }, ana);
+
+    expect(opened.status).toBe(200);
+    expect(await opened.json()).toMatchObject({ conversationId });
+    expect((await post('direct', { recipientId: ana }, ana)).status).toBe(403);
+    expect((await post('direct', { recipientId: 'nope' }, ana)).status).toBe(400);
+  });
+
   it('answers 404 for an unknown action and 401 without an actor', async () => {
     expect((await post('explode', {}, ana)).status).toBe(404);
     expect((await post('readAll', {})).status).toBe(401);

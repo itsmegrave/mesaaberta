@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { requireUser } from '$lib/server/auth/guard';
 import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '$lib/server/fail-from';
-import { openDirect } from '@mesaaberta/core/server/messages/service';
+import { openDirectConversation } from '$lib/server/messages/open-direct';
 import { loadRead } from '$lib/server/reads/load';
 
 import { submitRating } from '@mesaaberta/core/server/ratings/service';
@@ -57,8 +57,12 @@ export const actions: Actions = {
     if (!table || table.status !== 'active') error(404, 'Not found');
 
     try {
-      const conversation = await openDirect(locals.db, await locals.getProfile(), table.gmId);
-      redirect(303, `/messages/${conversation.id}?mesa=${encodeURIComponent(table.slug)}`);
+      const conversationId = await openDirectConversation(
+        locals,
+        await locals.getProfile(),
+        table.gmId,
+      );
+      redirect(303, `/messages/${conversationId}?mesa=${encodeURIComponent(table.slug)}`);
     } catch (cause) {
       if (cause instanceof Error && cause.name === 'DirectMessagesOff') {
         return failFrom(cause);
