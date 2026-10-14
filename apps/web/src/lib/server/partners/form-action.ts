@@ -11,6 +11,7 @@ import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { addPartner, updatePartner } from '@mesaaberta/core/server/partners/service';
+import { writeViaApi } from '../api-write';
 
 type Event = {
   request: Request;
@@ -61,12 +62,25 @@ export async function handlePartnerForm(
       logoPath = await storeImage(storage, prepared, locals.log);
     }
 
+    if (!id && !logoPath) throw new Invalid('logo', 'required');
+    // Through the api Worker when `api_submissions` is on for this person; here otherwise.
+    const remote = actor
+      ? await writeViaApi(
+          locals,
+          'api_submissions',
+          actor,
+          id ? `/v1/submissions/partners/${encodeURIComponent(id)}` : '/v1/submissions/partners',
+          { input, logoPath },
+        )
+      : null;
     let eventId: string;
-    if (id) {
+    if (remote) {
+      eventId = remote.eventIds[0];
+      if (typeof remote.body.replacedLogo === 'string') replacedLogo = remote.body.replacedLogo;
+    } else if (id) {
       ({ eventId, replacedLogo } = await updatePartner(db, actor, id, input, { logoPath }));
     } else {
-      if (!logoPath) throw new Invalid('logo', 'required');
-      ({ eventId } = await addPartner(db, actor, input, { logoPath }));
+      ({ eventId } = await addPartner(db, actor, input, { logoPath: logoPath! }));
     }
     // After the commit and the response, so the visitor never waits for a handler.
     locals.afterResponse((db) =>

@@ -15,6 +15,7 @@ import {
   findListedByUrl,
   takeLinkRead,
 } from '@mesaaberta/core/server/crowdfunding/service';
+import { writeViaApi } from '../api-write';
 
 export const NEW_CROWDFUNDING_VALUES = {
   url: '',
@@ -83,10 +84,19 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     });
 
     const { image: _image, ...input } = form.data;
-    const added = await addCrowdfunding(db, actor, input, { imagePath });
+    // Through the api Worker when `api_submissions` is on for this person; here otherwise.
+    const remote = actor
+      ? await writeViaApi(locals, 'api_submissions', actor, '/v1/submissions/crowdfundings', {
+          input,
+          imagePath,
+        })
+      : null;
+    const eventId = remote
+      ? remote.eventIds[0]
+      : (await addCrowdfunding(db, actor, input, { imagePath })).eventId;
     // After the commit and the response, so the visitor never waits for a handler.
     locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(locals.env), added.eventId, new Date(), locals.log),
+      dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
     );
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);

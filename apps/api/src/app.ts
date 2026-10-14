@@ -6,6 +6,7 @@ import { inboxRoutes } from './inbox';
 import { manageRoutes } from './manage';
 import { moderationRoutes } from './moderation';
 import { registrationRoutes } from './registrations';
+import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
 
 /**
@@ -32,6 +33,8 @@ export function createApi() {
   app.route('/v1/table-writes', tableWriteRoutes());
   // Conversations and the notification feed (send, mute, open, read), behind `api_inbox`.
   app.route('/v1/inbox', inboxRoutes());
+  // What a member submits (partners, crowdfunding campaigns), behind `api_submissions`.
+  app.route('/v1/submissions', submissionRoutes());
   // The person's own profile (the form and the direct-messages switch), behind `api_account`.
   app.route('/v1/account', accountRoutes());
 
