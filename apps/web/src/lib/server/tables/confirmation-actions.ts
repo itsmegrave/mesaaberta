@@ -8,6 +8,7 @@ import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
+import { writeViaApi } from '../api-write';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import {
@@ -16,6 +17,7 @@ import {
   postponeTable,
 } from '@mesaaberta/core/server/tables/lifecycle';
 import { publishTable } from '@mesaaberta/core/server/tables/write';
+import type { TableLifecycleActionName } from '@mesaaberta/core/server/tables/lifecycle-actions';
 
 /**
  * One answer to "did the session happen?", posted from the GM's manage page. The form is validated
@@ -31,6 +33,11 @@ function confirmationAction<Schema extends ZodType>(
     slug: string,
     data: z.infer<Schema>,
   ) => Promise<{ eventId: string }>,
+  /** The same answer for the api Worker, behind `api_table_lifecycle`; `apply` stays the fallback. */
+  api?: {
+    action: TableLifecycleActionName;
+    body?: (data: z.infer<Schema>) => Record<string, unknown>;
+  },
 ): Action {
   return async (event: RequestEvent) => {
     const { locals, request, url, params } = event;
@@ -42,12 +49,20 @@ function confirmationAction<Schema extends ZodType>(
 
     let eventId: string;
     try {
-      ({ eventId } = await apply(
-        locals.db,
-        await locals.getProfile(),
-        params.slug!,
-        form.data as z.infer<Schema>,
-      ));
+      const profile = await locals.getProfile();
+      const data = form.data as z.infer<Schema>;
+      const remote =
+        api && profile
+          ? await writeViaApi(
+              locals,
+              'api_table_lifecycle',
+              profile.id,
+              `/v1/manage/${encodeURIComponent(params.slug!)}/${api.action}`,
+              api.body?.(data) ?? {},
+            )
+          : null;
+      eventId =
+        remote?.eventIds[0] ?? (await apply(locals.db, profile, params.slug!, data)).eventId;
     } catch (e) {
       if (e instanceof Invalid) {
         form.valid = false;
@@ -69,18 +84,28 @@ function confirmationAction<Schema extends ZodType>(
 
 /** The manage page's actions: it happened, it did not, a new date, or a draft going public. */
 export const confirmationActions = {
-  publish: confirmationAction(answerSchema, ['next'], (db, actor, slug) =>
-    publishTable(db, actor, slug),
+  publish: confirmationAction(
+    answerSchema,
+    ['next'],
+    (db, actor, slug) => publishTable(db, actor, slug),
+    { action: 'publish' },
   ),
-  happened: confirmationAction(answerSchema, ['next'], (db, actor, slug) =>
-    concludeTable(db, actor, slug),
+  happened: confirmationAction(
+    answerSchema,
+    ['next'],
+    (db, actor, slug) => concludeTable(db, actor, slug),
+    { action: 'happened' },
   ),
-  notHeld: confirmationAction(answerSchema, ['next'], (db, actor, slug) =>
-    markTableNotHeld(db, actor, slug),
+  notHeld: confirmationAction(
+    answerSchema,
+    ['next'],
+    (db, actor, slug) => markTableNotHeld(db, actor, slug),
+    { action: 'notHeld' },
   ),
   postpone: confirmationAction(
     postponeSchema,
     ['startsAtLocal', 'next'],
     (db, actor, slug, { startsAtLocal }) => postponeTable(db, actor, slug, startsAtLocal),
+    { action: 'postpone', body: ({ startsAtLocal }) => ({ startsAtLocal }) },
   ),
 };

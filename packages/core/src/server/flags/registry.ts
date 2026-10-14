@@ -52,6 +52,11 @@ export const flagDefaults = {
   // codes the form already shows, and a call that cannot be made falls back to the web path. Needs
   // the API binding. The first player-facing flag: target a few ids before everyone.
   api_registrations: false,
+  // Off: the GM's manage-page answers (publish a draft, the session happened or did not, postpone)
+  // run in the web Worker. On: the api Worker makes them over the Service Binding, from the same
+  // action registry; refusals come back as the codes the form shows and a call that cannot be made
+  // falls back to the web path. Needs the API binding. Target a few ids first.
+  api_table_lifecycle: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
