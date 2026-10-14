@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import {
   AlreadyRegistered,
+  DirectMessagesOff,
   Forbidden,
   Invalid,
   NotFound,
@@ -21,5 +22,6 @@ export function refusal(c: Context, error: unknown) {
   if (error instanceof NotFound) return c.json({ error: 'not_found' }, 404);
   if (error instanceof TableFull) return c.json({ error: 'table_full' }, 409);
   if (error instanceof AlreadyRegistered) return c.json({ error: 'already_registered' }, 409);
+  if (error instanceof DirectMessagesOff) return c.json({ error: 'direct_messages_off' }, 409);
   return null;
 }

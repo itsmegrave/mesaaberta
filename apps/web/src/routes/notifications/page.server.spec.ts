@@ -19,6 +19,7 @@ const locals = (signedIn = true) => ({
   db: {},
   getUser: async () => (signedIn ? user : null),
   getProfile: async () => ({ id: 'me', username: 'ana' }),
+  flags: { isEnabled: async () => false },
 });
 
 const event = (search = '', form: Record<string, string> = {}, signedIn = true) =>
