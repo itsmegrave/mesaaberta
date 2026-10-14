@@ -4,6 +4,7 @@ import { validateStringForm } from '$lib/forms/contract';
 import { requireAdmin } from '../admin-access';
 import { decideViaApi } from '../api-decide';
 import { requireUser } from '../auth/guard';
+import { writeViaApi } from '../api-write';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
@@ -31,6 +32,7 @@ export function moderationAction<Schema extends ZodType>(
   {
     admin = false,
     decision,
+    player,
   }: {
     admin?: boolean;
     /**
@@ -39,6 +41,12 @@ export function moderationAction<Schema extends ZodType>(
      * decides when the api cannot be reached or fails.
      */
     decision?: string;
+    /**
+     * For a member's own action (a report, a withdrawal): the api route that makes it when
+     * `api_reports` is on for them. `body` is what the route's schema wants, from the checked form
+     * and the request. Falls back to `apply` when the api cannot be reached.
+     */
+    player?: { path: string; body?: (data: z.output<Schema>, event: RequestEvent) => object };
   } = {},
 ) {
   return async (event: RequestEvent) => {
@@ -71,6 +79,12 @@ export function moderationAction<Schema extends ZodType>(
     }
 
     try {
+      if (!eventIds && player && profile) {
+        const remote = await writeViaApi(locals, 'api_reports', profile, player.path, {
+          ...(player.body ? player.body(form.data, event) : (form.data as object)),
+        });
+        if (remote) eventIds = remote.eventIds;
+      }
       if (!eventIds) {
         const written = await apply(locals.db, profile, form.data, event);
         eventIds = Array.isArray(written) ? written : [written];

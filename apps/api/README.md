@@ -20,7 +20,9 @@ core's `registrationActions`; any signed-in player, authorized by the service, n
 still validates the form, stores the image and resolves the CEP, and sends the result). The inbox (`POST /v1/inbox/:action` with
 `send`, `mute`, `open`, `read` and `readAll`, behind `api_inbox`). What a member submits
 (`POST /v1/submissions/partners`, `/partners/:id` and `/crowdfundings`, behind `api_submissions`; web
-still validates the form and stores the picture). Adding a password to an account that signed in
+still validates the form and stores the picture). Reporting a table, a partner or a campaign and withdrawing
+one's own partner (`POST /v1/reports/:action` with `table`, `partner`, `crowdfunding` and
+`withdrawPartner`, behind `api_reports`). Adding a password to an account that signed in
 with a provider (`POST /v1/account/password/code` e-mails a six-digit code, `POST
 /v1/account/password` checks it and sets the password), behind `api_password`; the web Worker
 forwards the person's own access token in `Authorization`, so the password is set as them and no

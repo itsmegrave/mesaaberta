@@ -84,6 +84,12 @@ export const flagDefaults = {
   // form's "try again" message. Needs the API binding and, on the api Worker, the Supabase and mail
   // settings. Target admins first.
   api_password: false,
+  // Off: reporting a table, a partner or a campaign and withdrawing one's own partner run in the
+  // web Worker. On: the api Worker does them over the Service Binding, from the same action
+  // registry; the web Worker still dispatches the events it returns, refusals come back as the codes
+  // the dialog shows and a call that cannot be made falls back to the web path. Needs the API
+  // binding. Admins first.
+  api_reports: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

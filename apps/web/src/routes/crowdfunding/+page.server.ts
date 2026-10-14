@@ -44,5 +44,6 @@ export const actions: Actions = {
     ['id', 'reason', 'details'],
     async (db, actor, { id, reason, details }) =>
       (await fileCrowdfundingReport(db, actor, id, { reason, details })).eventId,
+    { player: { path: '/v1/reports/crowdfunding' } },
   ),
 };

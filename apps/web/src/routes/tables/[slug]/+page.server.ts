@@ -123,6 +123,12 @@ export const actions: Actions = {
     ['targetType', 'playerId', 'reason', 'details'],
     async (db, actor, data, event) =>
       (await fileReport(db, actor, event.params.slug!, data)).eventId,
+    {
+      player: {
+        path: '/v1/reports/table',
+        body: (data, event) => ({ ...data, slug: event.params.slug }),
+      },
+    },
   ),
   remove: (event) =>
     runRegistrationAction(
