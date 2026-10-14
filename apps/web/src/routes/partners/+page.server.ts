@@ -47,9 +47,13 @@ export const actions: Actions = {
     ['id', 'reason', 'details'],
     async (db, actor, { id, reason, details }) =>
       (await filePartnerReport(db, actor, id, { reason, details })).eventId,
+    { player: { path: '/v1/reports/partner' } },
   ),
   // "Remover…" in the card's menu: only its submitter, and the service checks that again.
-  withdraw: moderationAction(partnerIdSchema, ['id'], (db, actor, { id }) =>
-    withdrawPartner(db, actor, id),
+  withdraw: moderationAction(
+    partnerIdSchema,
+    ['id'],
+    (db, actor, { id }) => withdrawPartner(db, actor, id),
+    { player: { path: '/v1/reports/withdrawPartner' } },
   ),
 };
