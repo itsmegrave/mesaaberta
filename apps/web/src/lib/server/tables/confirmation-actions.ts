@@ -56,7 +56,7 @@ function confirmationAction<Schema extends ZodType>(
           ? await writeViaApi(
               locals,
               'api_table_lifecycle',
-              profile.id,
+              profile,
               `/v1/manage/${encodeURIComponent(params.slug!)}/${api.action}`,
               api.body?.(data) ?? {},
             )

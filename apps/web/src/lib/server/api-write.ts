@@ -26,7 +26,8 @@ function refusalOf(status: number, body: Record<string, unknown>): Error | null 
 }
 
 /**
- * Makes a signed-in player's write in the api Worker when `flag` is on for them. Resolves to the
+ * Makes a signed-in player's write in the api Worker when `flag` is on for them (targeted by id and
+ * by `isAdmin`, so a rollout can start with admins). Resolves to the
  * events to dispatch, throws the refusal the api made (so the form shows it as it always did), and
  * resolves to null when the flag is off or the call cannot be used: the caller then runs the
  * service in this Worker, so the flag is a kill switch and not a dependency.
@@ -34,12 +35,13 @@ function refusalOf(status: number, body: Record<string, unknown>): Error | null 
 export async function writeViaApi(
   locals: App.Locals,
   flag: FlagName,
-  playerId: string,
+  player: { id: string; role?: string },
   path: string,
   body: Record<string, unknown>,
 ): Promise<{ eventIds: string[] } | null> {
-  if (!(await locals.flags.isEnabled(flag, { id: playerId }))) return null;
-  const answer = await callApiRaw(locals.env, path, playerId, locals.log, body);
+  if (!(await locals.flags.isEnabled(flag, { id: player.id, isAdmin: player.role === 'admin' })))
+    return null;
+  const answer = await callApiRaw(locals.env, path, player.id, locals.log, body);
   if (!answer) return null;
   const json = (answer.body ?? {}) as Record<string, unknown>;
   if (
