@@ -39,7 +39,7 @@ export async function writeViaApi(
   player: Actor,
   path: string,
   body: Record<string, unknown>,
-): Promise<{ eventIds: string[] } | null> {
+): Promise<{ eventIds: string[]; body: Record<string, unknown> } | null> {
   if (
     !(await locals.flags.isEnabled(flag, { id: player.id, isAdmin: can(player, 'admin:access') }))
   )
@@ -52,7 +52,7 @@ export async function writeViaApi(
     Array.isArray(json.eventIds) &&
     json.eventIds.every((id) => typeof id === 'string')
   )
-    return { eventIds: json.eventIds as string[] };
+    return { eventIds: json.eventIds as string[], body: json };
   const refusal = refusalOf(answer.status, json);
   if (refusal) throw refusal;
   locals.log.warn('api write not used', { code: 'api_call_refused', path, status: answer.status });
