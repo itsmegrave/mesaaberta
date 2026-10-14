@@ -1,5 +1,5 @@
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
-import { callApiRaw } from './api-client';
+import { callApiRaw, routeTemplate } from './api-client';
 
 /** How a decision handed to the api Worker came out. */
 export type Decided =
@@ -66,7 +66,7 @@ export async function decideViaApi(
   }
   locals.log.warn('api decision not used', {
     code: 'api_call_refused',
-    route: path,
+    route: routeTemplate(path),
     status: answer.status,
     reason: typeof body.error === 'string' ? body.error : undefined,
   });

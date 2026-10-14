@@ -9,7 +9,7 @@ import {
 } from '@mesaaberta/core/server/errors';
 import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
-import { callApiRaw } from './api-client';
+import { callApiRaw, routeTemplate } from './api-client';
 
 /** The refusal an api answer stands for, as the domain error `failFrom` already knows. */
 function refusalOf(status: number, body: Record<string, unknown>): Error | null {
@@ -60,7 +60,7 @@ export async function writeViaApi(
   if (refusal) throw refusal;
   locals.log.warn('api write not used', {
     code: 'api_call_refused',
-    route: path,
+    route: routeTemplate(path),
     status: answer.status,
     reason: typeof json.error === 'string' ? json.error : undefined,
   });
