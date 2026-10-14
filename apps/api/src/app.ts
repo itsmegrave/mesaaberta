@@ -5,6 +5,7 @@ import { eventRoutes } from './events';
 import { inboxRoutes } from './inbox';
 import { manageRoutes } from './manage';
 import { moderationRoutes } from './moderation';
+import { passwordRoutes } from './password';
 import { registrationRoutes } from './registrations';
 import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
@@ -35,6 +36,9 @@ export function createApi() {
   app.route('/v1/inbox', inboxRoutes());
   // What a member submits (partners, crowdfunding campaigns), behind `api_submissions`.
   app.route('/v1/submissions', submissionRoutes());
+  // Adding a password to a provider-only account (a code by e-mail, then the password), behind
+  // `api_password`. Before `/v1/account`, whose `/:action` would otherwise catch it.
+  app.route('/v1/account/password', passwordRoutes());
   // The person's own profile (the form and the direct-messages switch), behind `api_account`.
   app.route('/v1/account', accountRoutes());
 

@@ -18,6 +18,7 @@ export async function callApiRaw(
   actorId: string,
   log: Logger = logger,
   json?: unknown,
+  headers: Record<string, string> = {},
 ): Promise<ApiAnswer | null> {
   const binding = (env as { API?: ApiBinding } | undefined)?.API;
   if (!binding) return null;
@@ -27,6 +28,7 @@ export async function callApiRaw(
       new Request(`https://api.internal${path}`, {
         method: 'POST',
         headers: {
+          ...headers,
           'x-actor-id': actorId,
           ...(json === undefined ? {} : { 'content-type': 'application/json' }),
         },

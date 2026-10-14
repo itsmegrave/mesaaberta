@@ -515,6 +515,21 @@ export const authAttempts = pgTable(
   ],
 ).enableRLS();
 
+// The e-mailed code that lets someone who signed in with a provider add a password (the api's
+// `POST /v1/account/password`). One live code per person: asking again replaces it. `code_hash` is a
+// hash keyed by the person, never the code; a code dies on use, after `attempts` wrong guesses or
+// when it expires. Supabase's own reauthentication nonce cannot stand in for this: it is only
+// checked when the session is older than a day.
+export const passwordSetupCodes = pgTable('password_setup_codes', {
+  profileId: uuid('profile_id')
+    .primaryKey()
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  codeHash: text('code_hash').notNull(),
+  attempts: integer('attempts').notNull().default(0),
+  sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+}).enableRLS();
+
 // What an in-app notification is about; the feed filters on it. Only `table`, `registration` and
 // `rating` have events today; the rest are for the catalog, moderation and announcement slices.
 export const notificationCategory = pgEnum('notification_category', [

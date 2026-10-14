@@ -7,6 +7,7 @@
   import { page } from '$app/state';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import Avatar from '$lib/components/Avatar.svelte';
+  import AddPassword from '$lib/components/AddPassword.svelte';
   import ConnectedAccounts from '$lib/components/ConnectedAccounts.svelte';
   import ImageUpload from '$lib/components/ImageUpload.svelte';
   import ProfileForm from '$lib/components/ProfileForm.svelte';
@@ -210,6 +211,10 @@
 
       {#if data.connections}
         <ConnectedAccounts connections={data.connections} class={card} />
+      {/if}
+
+      {#if data.canAddPassword}
+        <AddPassword class={card} />
       {/if}
 
       <section aria-labelledby="direct-messages" class={card}>
