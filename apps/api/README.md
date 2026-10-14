@@ -18,8 +18,9 @@ core's `registrationActions`; any signed-in player, authorized by the service, n
 `messages`, behind `api_account`; the subject is always the actor). The GM's table record
 (`POST /v1/table-writes` to create, `/:slug/update`, `/:slug/disable`, behind `api_table_write`; web
 still validates the form, stores the image and resolves the CEP, and sends the result). The inbox (`POST /v1/inbox/:action` with
-`send`, `mute`, `open`, `read` and `readAll`, behind `api_inbox`). It has no public route and no
-cron. The web Worker reaches it through a Service Binding (`API`), sending the signed-in admin's id
+`send`, `mute`, `open`, `read` and `readAll`, behind `api_inbox`). What a member submits
+(`POST /v1/submissions/partners`, `/partners/:id` and `/crowdfundings`, behind `api_submissions`; web
+still validates the form and stores the picture). It has no public route and no cron. The web Worker reaches it through a Service Binding (`API`), sending the signed-in admin's id
 in `x-actor-id`; the api checks that person is an active admin in the database again. On web the
 actions only call it when `api_admin_events` (`api_admin_catalog` for the catalog, `api_admin_moderation` for moderation) is on for the
 admin and the binding exists, and fall back to the in-process path when the call fails. A catalog
