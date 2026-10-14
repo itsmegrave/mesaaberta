@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 import { moderationRoutes } from './moderation';
+import { registrationRoutes } from './registrations';
 
 /**
  * The api app of Trello #120: the one place writes, policies and the outbox will live once routes
@@ -19,6 +20,8 @@ export function createApi() {
   app.route('/v1/admin/catalog', catalogRoutes());
   // The third: the moderation decisions, behind `api_admin_moderation` on web.
   app.route('/v1/admin/moderation', moderationRoutes());
+  // The first player-facing one: join, leave and the GM's decisions, behind `api_registrations`.
+  app.route('/v1/tables', registrationRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));

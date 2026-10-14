@@ -8,8 +8,11 @@ event actions (`POST /v1/admin/events/:id/force`, `POST /v1/admin/events/retry-f
 admin catalog decisions (`POST /v1/admin/catalog/:decision`, with `approve`, `reject`, `disable`,
 `rename`, `merge` and `create`; the body is the form's own schema) and the admin moderation
 decisions (`POST /v1/admin/moderation/:decision`, named as in core's `moderationDecisions`, such as
-`partner.approve`, `report.ban` or `table.close`). It has no public route and
-no cron. The web Worker reaches it through a Service Binding (`API`), sending the signed-in admin's id
+`partner.approve`, `report.ban` or `table.close`), and the first player-facing writes
+(`POST /v1/tables/:slug/:action` with `join`, `leave`, `approve`, `decline` and `remove`, named as in
+core's `registrationActions`; any signed-in player, authorized by the service, not only admins, so
+`api_registrations` is evaluated with the player's id and refusals come back as the form's codes:
+`table_full`, `already_registered`, `rate_limited`...). It has no public route and no cron. The web Worker reaches it through a Service Binding (`API`), sending the signed-in admin's id
 in `x-actor-id`; the api checks that person is an active admin in the database again. On web the
 actions only call it when `api_admin_events` (`api_admin_catalog` for the catalog, `api_admin_moderation` for moderation) is on for the
 admin and the binding exists, and fall back to the in-process path when the call fails. A catalog

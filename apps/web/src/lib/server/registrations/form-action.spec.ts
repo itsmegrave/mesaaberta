@@ -9,6 +9,8 @@ import {
 import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
 import { runRegistrationAction } from './form-action';
 
+const call = () => ({ action: 'leave' as const, slug: 'mesa', body: {} });
+
 const setup = (over: { user?: boolean; db?: boolean; username?: string | null } = {}) => {
   const queued: ((db: unknown) => Promise<unknown>)[] = [];
   const profile = {
@@ -183,5 +185,68 @@ describe('runRegistrationAction', () => {
     await runRegistrationAction(event({ playerId }), playerActionSchema, run).catch(() => {});
 
     expect(run).toHaveBeenCalledWith({ fake: 'db' }, expect.anything(), { playerId, next: '' });
+  });
+
+  describe('through the api', () => {
+    const withApi = (enabled: boolean, answer: () => Promise<Response> | Response) => {
+      const harness = setup();
+      const fetch = vi.fn(async () => answer());
+      Object.assign(harness.event().locals, {});
+      const locals = harness.event().locals as unknown as Record<string, unknown>;
+      locals.flags = { isEnabled: async () => enabled };
+      locals.env = { API: { fetch } };
+      locals.log = { warn: vi.fn(), info: vi.fn(), error: vi.fn() };
+      return { ...harness, fetch, locals };
+    };
+    const json = (status: number, body: unknown) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/json' },
+      });
+    // `setup().event` builds a new request each time but shares `locals`.
+    const run = (
+      h: ReturnType<typeof withApi>,
+      run = vi.fn().mockResolvedValue({ eventIds: [] }),
+    ) =>
+      Object.assign(
+        runRegistrationAction(h.event(), tableActionSchema, run, call).catch((e) => e),
+        { run },
+      );
+
+    it('stays in this Worker while the flag is off', async () => {
+      const h = withApi(false, () => json(200, { eventIds: [] }));
+      const p = run(h);
+      await p;
+
+      expect(h.fetch).not.toHaveBeenCalled();
+      expect(p.run).toHaveBeenCalled();
+    });
+
+    it('lets the api decide and dispatches the events it answers', async () => {
+      const h = withApi(true, () => json(200, { eventIds: ['e9'] }));
+      const p = run(h);
+      await p;
+
+      expect(p.run).not.toHaveBeenCalled();
+      expect(h.fetch).toHaveBeenCalledOnce();
+      expect(h.queued).toHaveLength(1);
+    });
+
+    it('shows the api refusal as the form failure, without repeating it here', async () => {
+      const h = withApi(true, () => json(409, { error: 'table_full' }));
+      const p = run(h);
+      const result = (await p) as { status: number; data: { error?: string } };
+
+      expect(p.run).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ status: 409 });
+    });
+
+    it('falls back to this Worker when the api fails', async () => {
+      const h = withApi(true, () => json(500, { error: 'internal_error' }));
+      const p = run(h);
+      await p;
+
+      expect(p.run).toHaveBeenCalled();
+    });
   });
 });
