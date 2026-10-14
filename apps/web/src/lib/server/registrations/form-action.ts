@@ -60,7 +60,7 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
         ? await writeViaApi(
             locals,
             'api_registrations',
-            profile.id,
+            profile,
             `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
             call.body,
           )
