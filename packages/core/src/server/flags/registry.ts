@@ -67,6 +67,11 @@ export const flagDefaults = {
   // over the Service Binding from the same services; refusals come back as the codes the form shows
   // and a call that cannot be made falls back to the web path. Needs the API binding. Admins first.
   api_table_write: false,
+  // Off: sending and muting in a conversation, and opening and reading notifications, run in the
+  // web Worker. On: the api Worker makes them over the Service Binding from the same action
+  // registry; refusals (rate limit, direct messages off) come back as the codes the form shows and a
+  // call that cannot be made falls back to the web path. Needs the API binding. Admins first.
+  api_inbox: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

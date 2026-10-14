@@ -1,5 +1,6 @@
 import {
   AlreadyRegistered,
+  DirectMessagesOff,
   Forbidden,
   Invalid,
   NotFound,
@@ -21,6 +22,7 @@ function refusalOf(status: number, body: Record<string, unknown>): Error | null 
   if (status === 404 && body.error === 'not_found') return new NotFound();
   if (status === 409 && body.error === 'table_full') return new TableFull();
   if (status === 409 && body.error === 'already_registered') return new AlreadyRegistered();
+  if (status === 409 && body.error === 'direct_messages_off') return new DirectMessagesOff();
   if (status === 429 && body.error === 'rate_limited')
     return new RateLimited(typeof body.retryAfter === 'number' ? body.retryAfter : 60);
   return null;

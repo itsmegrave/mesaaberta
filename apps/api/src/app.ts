@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { accountRoutes } from './account';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
+import { inboxRoutes } from './inbox';
 import { manageRoutes } from './manage';
 import { moderationRoutes } from './moderation';
 import { registrationRoutes } from './registrations';
@@ -29,6 +30,8 @@ export function createApi() {
   app.route('/v1/manage', manageRoutes());
   // The GM's table record (create, edit, disable), behind `api_table_write`.
   app.route('/v1/table-writes', tableWriteRoutes());
+  // Conversations and the notification feed (send, mute, open, read), behind `api_inbox`.
+  app.route('/v1/inbox', inboxRoutes());
   // The person's own profile (the form and the direct-messages switch), behind `api_account`.
   app.route('/v1/account', accountRoutes());
 
