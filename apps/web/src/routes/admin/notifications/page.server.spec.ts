@@ -20,13 +20,19 @@ const valid = {
   audience: 'all_active_users',
 };
 
-function event(form: Record<string, string>) {
+function event(
+  form: Record<string, string>,
+  { api, flagOn = false }: { api?: (request: Request) => Promise<Response>; flagOn?: boolean } = {},
+) {
   const after: ((db: unknown) => Promise<unknown>)[] = [];
   return {
     after,
     event: {
       locals: {
         db: {},
+        env: api ? { API: { fetch: api } } : {},
+        flags: { isEnabled: async () => flagOn },
+        log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() },
         getUser: async () => ({ id: 'admin' }),
         getProfile: async () => ({ ...admin, username: 'admin' }),
         afterResponse: (task: (db: unknown) => Promise<unknown>) => void after.push(task),
@@ -139,5 +145,46 @@ describe('the send action', () => {
     vi.mocked(sendAnnouncement).mockRejectedValueOnce(new Invalid('audience', 'empty'));
     const empty = await answer(event(valid).event);
     expect(empty.result.data.form.message).toEqual({ code: 'empty' });
+  });
+
+  it('asks the api Worker when api_admin_announcements is on, and does not repeat what it answered', async () => {
+    const api = vi.fn(async () =>
+      Response.json({ step: 'confirm', count: 3, recipient: { username: 'ana' } }),
+    );
+    const { event: e } = event(valid, { api, flagOn: true });
+
+    const { result } = await answer(e);
+
+    expect(result.form.message).toEqual({ code: 'confirm', count: 3, recipient: 'ana' });
+    expect(api).toHaveBeenCalledOnce();
+    expect(sendAnnouncement).not.toHaveBeenCalled();
+  });
+
+  it('shows the api refusal on its field, and falls back when the api cannot answer', async () => {
+    const refused = event(
+      { ...valid, audience: 'specific_user', recipient: 'x' },
+      {
+        api: async () =>
+          Response.json(
+            { error: 'invalid', field: 'recipient', message: 'not_found' },
+            { status: 400 },
+          ),
+        flagOn: true,
+      },
+    );
+    const { result } = await answer(refused.event);
+    expect(result.data.form.errors.recipient).toEqual(['not_found']);
+    expect(sendAnnouncement).not.toHaveBeenCalled();
+
+    vi.mocked(sendAnnouncement).mockResolvedValueOnce({
+      step: 'confirm',
+      count: 7,
+      recipient: null,
+    });
+    const down = event(valid, {
+      api: async () => new Response('x', { status: 500 }),
+      flagOn: true,
+    });
+    expect((await answer(down.event)).result.form.message).toMatchObject({ count: 7 });
   });
 });

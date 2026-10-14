@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
+import { announcementRoutes } from './announcements';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 import { inboxRoutes } from './inbox';
@@ -28,6 +29,8 @@ export function createApi() {
   app.route('/v1/admin/catalog', catalogRoutes());
   // The third: the moderation decisions, behind `api_admin_moderation` on web.
   app.route('/v1/admin/moderation', moderationRoutes());
+  // The announcements console (confirm, then send), behind `api_admin_announcements`.
+  app.route('/v1/admin/announcements', announcementRoutes());
   // The first player-facing one: join, leave and the GM's decisions, behind `api_registrations`.
   app.route('/v1/tables', registrationRoutes());
   // The GM's manage page (publish, happened, not held, postpone), behind `api_table_lifecycle`.

@@ -1,7 +1,7 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireUser } from '$lib/server/auth/guard';
 import { failFrom } from '$lib/server/fail-from';
-import { openDirect } from '@mesaaberta/core/server/messages/service';
+import { openDirectConversation } from '$lib/server/messages/open-direct';
 import { loadRead } from '$lib/server/reads/load';
 import { confirmationActions } from '$lib/server/tables/confirmation-actions';
 import type { Actions, PageServerLoad } from './$types';
@@ -20,8 +20,8 @@ export const actions: Actions = {
     const profile = await locals.getProfile();
     const playerId = String((await request.formData()).get('playerId') ?? '');
     try {
-      const conversation = await openDirect(locals.db, profile, playerId);
-      redirect(303, `/messages/${conversation.id}`);
+      const conversationId = await openDirectConversation(locals, profile, playerId);
+      redirect(303, `/messages/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;
       return failFrom(cause);

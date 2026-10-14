@@ -3,7 +3,7 @@ import { requireAdmin } from '$lib/server/admin-access';
 import { adminActivity, adminProfile } from '@mesaaberta/core/server/admin/profiles';
 import { profileHistory } from '@mesaaberta/core/server/admin/history';
 import { failFrom } from '$lib/server/fail-from';
-import { openDirect } from '@mesaaberta/core/server/messages/service';
+import { openDirectConversation } from '$lib/server/messages/open-direct';
 import { standingOf } from '@mesaaberta/core/profile/standing';
 import { moderationOf } from '@mesaaberta/core/server/moderation/admin';
 import { accountActions } from '$lib/server/moderation/admin-actions';
@@ -49,8 +49,12 @@ export const actions: Actions = {
     await requireAdmin(locals);
     if (!locals.db) error(503, 'Database not configured');
     try {
-      const conversation = await openDirect(locals.db, await locals.getProfile(), params.id);
-      redirect(303, `/messages/${conversation.id}`);
+      const conversationId = await openDirectConversation(
+        locals,
+        await locals.getProfile(),
+        params.id,
+      );
+      redirect(303, `/messages/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;
       return failFrom(cause);
