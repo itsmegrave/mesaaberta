@@ -13,6 +13,16 @@ import {
 import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
 import type { LayoutServerLoad } from './$types';
 
+/**
+ * postgres.js raises CONNECTION_ENDED only for a query submitted after this request's own `end()`
+ * (see handleDatabase): the page's load already decided the response (a redirect, a 404) and this
+ * layout load was still going. Nobody sees the account menu then, and the database is fine.
+ */
+const requestAlreadyEnded = (error: unknown) =>
+  [error, (error as { cause?: unknown } | null)?.cause].some(
+    (candidate) => (candidate as { code?: unknown } | null)?.code === 'CONNECTION_ENDED',
+  );
+
 export const load: LayoutServerLoad = async (event) => {
   const { locals, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
@@ -73,7 +83,9 @@ export const load: LayoutServerLoad = async (event) => {
     };
   } catch (error) {
     // The page is still worth showing without the account menu.
-    locals.log.error('layout: could not load the profile', { error });
+    if (requestAlreadyEnded(error))
+      locals.log.info('layout: the request ended before the account menu loaded');
+    else locals.log.error('layout: could not load the profile', { error });
     return {
       authEnabled,
       links,
