@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApi } from './app';
 
 describe('api app', () => {
@@ -27,5 +27,20 @@ describe('api app', () => {
 
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'internal_error' });
+  });
+
+  it('logs one line per request with the route template, never the path', async () => {
+    const lines: string[] = [];
+    const spy = vi
+      .spyOn(console, 'info')
+      .mockImplementation((line: string) => void lines.push(line));
+    const app = createApi();
+
+    await app.request('/v1/nothing/ana@example.com');
+    spy.mockRestore();
+
+    const entry = lines.map((line) => JSON.parse(line)).find((l) => l.msg === 'api request');
+    expect(entry).toMatchObject({ method: 'GET', status: 404 });
+    expect(JSON.stringify(entry)).not.toContain('ana@example.com');
   });
 });
