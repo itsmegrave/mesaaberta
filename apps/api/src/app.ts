@@ -23,6 +23,19 @@ export function createApi() {
   const app = new Hono();
 
   app.get('/healthz', (c) => c.json({ status: 'ok', service: 'api' }));
+
+  // One line per request, so a rollout can be read in Sentry: which route, what answer, how long.
+  // Only the route template, the method, the status and the duration: never a path, a body or an id.
+  app.use('/v1/*', async (c, next) => {
+    const started = Date.now();
+    await next();
+    logger.info('api request', {
+      route: c.req.routePath,
+      method: c.req.method,
+      status: c.res.status,
+      durationMs: Date.now() - started,
+    });
+  });
   // The first moved route (Trello #120): the admin event actions, behind `api_admin_events` on web.
   app.route('/v1/admin/events', eventRoutes());
   // The second: the catalog console's decisions, behind `api_admin_catalog` on web.
