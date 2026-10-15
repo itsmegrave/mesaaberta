@@ -47,3 +47,12 @@ secrets as the other Workers, set by the private deployment.
 4. Roll back by turning the flag off.
 
 Run `bun run --bun vitest run --project server apps/api`.
+
+## Self-hosting (Bun / Docker)
+
+`src/entry/bun.ts` serves the same app with `Bun.serve`, and `Dockerfile` builds it from the
+repository root: `docker build -f apps/api/Dockerfile -t mesaaberta-api .`. Over HTTP the
+`x-actor-id` header is only a claim, so every `/v1` request must carry the shared secret in
+`x-internal-token` and the process refuses to start without `API_INTERNAL_TOKEN`. Keep the port on a
+private network behind the web app (the web app calls it with `API_URL` + `API_INTERNAL_TOKEN`);
+never publish it. It needs `DATABASE_URL` and the same Auth and mail settings as the Worker.

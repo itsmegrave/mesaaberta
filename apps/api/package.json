@@ -5,10 +5,24 @@
   "type": "module",
   "main": "src/index.ts",
   "dependencies": {
+    "@cf-wasm/resvg": "*",
+    "@growthbook/growthbook": "*",
     "@mesaaberta/core": "workspace:*",
     "@mesaaberta/db": "workspace:*",
     "@sentry/cloudflare": "*",
+    "@sentry/core": "*",
+    "@sindresorhus/slugify": "*",
+    "@supabase/supabase-js": "*",
     "drizzle-orm": "^0.45.3",
-    "hono": "^4.13.13"
+    "hono": "^4.13.13",
+    "ical.js": "*",
+    "jpeg-js": "*",
+    "postgres": "*",
+    "qrcode": "*",
+    "temporal-polyfill": "*",
+    "timezones-ical-library": "*",
+    "xss": "*",
+    "xstate": "*",
+    "zod": "*"
   }
 }

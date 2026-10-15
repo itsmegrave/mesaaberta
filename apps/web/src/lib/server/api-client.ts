@@ -39,15 +39,22 @@ export async function callApiRaw(
   json?: unknown,
   headers: Record<string, string> = {},
 ): Promise<ApiAnswer | null> {
-  const binding = (env as { API?: ApiBinding } | undefined)?.API;
-  if (!binding) return null;
+  const settings = env as
+    { API?: ApiBinding; API_URL?: string; API_INTERNAL_TOKEN?: string } | undefined;
+  // On Cloudflare the Service Binding; self-hosted, the api's private address and its shared secret.
+  const binding = settings?.API;
+  const remote = !binding && settings?.API_URL && settings.API_INTERNAL_TOKEN ? settings : null;
+  if (!binding && !remote) return null;
   try {
-    // The host is never resolved: a Service Binding routes by binding, not by name.
-    const response = await binding.fetch(
-      new Request(`https://api.internal${path}`, {
+    // With a Service Binding the host is never resolved: it routes by binding, not by name.
+    const send = binding ? binding.fetch.bind(binding) : (request: Request) => fetch(request);
+    const origin = binding ? 'https://api.internal' : remote!.API_URL!.replace(/\/$/, '');
+    const response = await send(
+      new Request(`${origin}${path}`, {
         method: 'POST',
         headers: {
           ...headers,
+          ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
           'x-actor-id': actorId,
           ...(json === undefined ? {} : { 'content-type': 'application/json' }),
         },

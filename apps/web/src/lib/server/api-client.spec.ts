@@ -56,3 +56,52 @@ describe('callApi', () => {
     expect(await callApiRaw(broken, '/v1/x', 'a', log)).toBeNull();
   });
 });
+
+describe('callApiRaw over HTTP (self-hosted)', () => {
+  const env = {
+    API_URL: 'http://api:8788/',
+    API_INTERNAL_TOKEN: 's3cret',
+  } as unknown as App.Locals['env'];
+
+  it('posts to the api address with the shared secret and the actor', async () => {
+    const fetch = vi.fn(async (_request: Request) => Response.json({ eventIds: [] }));
+    vi.stubGlobal('fetch', fetch);
+
+    const answer = await callApiRaw(env, '/v1/account/messages', 'a', log, { enabled: false });
+    vi.unstubAllGlobals();
+
+    expect(answer).toMatchObject({ ok: true });
+    const request = fetch.mock.calls[0][0];
+    expect(request.url).toBe('http://api:8788/v1/account/messages');
+    expect(request.headers.get('x-internal-token')).toBe('s3cret');
+    expect(request.headers.get('x-actor-id')).toBe('a');
+  });
+
+  it('is null without the secret, so an unconfigured api is never called', async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+
+    const answer = await callApiRaw(
+      { API_URL: 'http://api:8788' } as unknown as App.Locals['env'],
+      '/v1/x',
+      'a',
+      log,
+    );
+    vi.unstubAllGlobals();
+
+    expect(answer).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('never sends the secret over a Service Binding', async () => {
+    const fetch = vi.fn(async (_request: Request) => Response.json({}));
+    await callApiRaw(
+      { API: { fetch }, API_INTERNAL_TOKEN: 's3cret' } as unknown as App.Locals['env'],
+      '/v1/x',
+      'a',
+      log,
+    );
+
+    expect(fetch.mock.calls[0][0].headers.get('x-internal-token')).toBeNull();
+  });
+});
