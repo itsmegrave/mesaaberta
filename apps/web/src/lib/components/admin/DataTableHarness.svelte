@@ -51,7 +51,7 @@
     />
   {/snippet}
   {#snippet cell(row: Row, id: string)}
-    {#if id === 'name'}{row.name}{/if}
+    {#if id === 'name'}<p class="truncate">{row.name}</p>{/if}
   {/snippet}
   {#snippet card(row: Row)}
     <ListCard>

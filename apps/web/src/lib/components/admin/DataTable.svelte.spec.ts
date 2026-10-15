@@ -38,6 +38,16 @@ describe('admin DataTable', () => {
     await expect.element(page.getByText('1–20 de 45 itens')).toBeVisible();
   });
 
+  it('truncates a long name instead of widening the table and scrolling the card sideways', async () => {
+    render(Harness, { rows: [{ id: '1', name: 'Descrição muito longa '.repeat(30) }] });
+
+    const table = page.getByRole('table', { name: 'Itens' }).element();
+    const card = table.parentElement as HTMLElement;
+
+    expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth);
+    await expect.element(page.getByRole('columnheader', { name: 'Ações' })).toBeInTheDocument();
+  });
+
   it('marks the sorted column and turns the order when its header is pressed', async () => {
     location.search = '?sort=name&dir=asc';
     render(Harness, { rows, sort: { id: 'name', dir: 'asc' } });
