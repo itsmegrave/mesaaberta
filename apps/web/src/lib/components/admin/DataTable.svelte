@@ -168,8 +168,13 @@
       </div>
     {/if}
 
+    <!-- `table-fixed`: every list has one column without a width (the name) and it takes what the
+         others leave, so its `truncate` works. In the automatic layout a long description made
+         the column as wide as the text, the table wider than the card, and the card scrolled
+         sideways with the other columns out of sight. A narrow desktop scrolls on purpose, at
+         `min-w-3xl`, rather than squeezing the name to nothing. -->
     <div class="relative overflow-x-auto">
-      <table class="w-full text-left text-sm">
+      <table class="w-full min-w-3xl table-fixed text-left text-sm">
         <caption class="sr-only">{caption}</caption>
         <thead class="bg-surface-wash text-muted">
           {#each table.getHeaderGroups() as group (group.id)}
