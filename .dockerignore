@@ -1,3 +1,5 @@
+# Nothing here may reach an image layer: a build copies whole directories (`COPY packages`,
+# `COPY apps/api`), so a developer's local secrets are excluded by pattern, wherever they sit.
 .git
 **/node_modules
 **/.svelte-kit
@@ -6,3 +8,14 @@
 apps/web
 drizzle
 .github
+
+# Local settings and secrets
+**/.dev.vars
+**/.dev.vars.*
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/.infisical*
+**/.mcp.json
