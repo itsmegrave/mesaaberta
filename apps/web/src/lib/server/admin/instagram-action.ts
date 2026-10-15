@@ -3,6 +3,7 @@ import { can } from '@mesaaberta/core/server/auth/policy';
 import { InstagramError, type InstagramEnv } from '@mesaaberta/core/server/instagram/api';
 import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 import type { RequestEvent } from '@sveltejs/kit';
+import { instagramViaApi } from './instagram-api';
 
 export const publishInstagramAction = async ({ locals, request }: RequestEvent) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
@@ -13,7 +14,15 @@ export const publishInstagramAction = async ({ locals, request }: RequestEvent) 
   try {
     const env = locals.env as InstagramEnv & SocialEnv;
     const social = socialFor(env);
-    const result = await social.queueTable(locals.db, env, tableId);
+    // Queued by the api Worker when `api_admin_instagram` is on; here otherwise. Either way the
+    // render and the publish run in the background after this response.
+    const profile = await locals.getProfile();
+    const remote = profile ? await instagramViaApi(locals, profile.id, 'queue', { tableId }) : null;
+    if (remote && 'invalid' in remote) return fail(400, { publishError: 'invalid' });
+    const result =
+      typeof remote?.result === 'string'
+        ? (remote.result as Awaited<ReturnType<typeof social.queueTable>>)
+        : await social.queueTable(locals.db, env, tableId);
     if (result === 'queued')
       locals.afterResponse(async (db) => {
         const useTableImage = await locals.flags.isEnabled('use_table_image');

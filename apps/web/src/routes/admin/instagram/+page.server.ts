@@ -1,9 +1,11 @@
 import { error, fail } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { instagramAccounts, instagramPosts } from '@mesaaberta/core/server/db/schema';
 import { configured, decryptToken, type InstagramEnv } from '@mesaaberta/core/server/instagram/api';
+import { instagramAdminActions } from '@mesaaberta/core/server/instagram/admin-actions';
 import { publishInstagramAction } from '$lib/server/admin/instagram-action';
+import { instagramViaApi } from '$lib/server/admin/instagram-api';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -61,10 +63,13 @@ export const actions: Actions = {
       !/^https:\/\/www\.instagram\.com\/p\/[A-Za-z0-9_-]+\/$/.test(permalink)
     )
       return fail(400, { invalid: true });
-    await locals.db
-      .update(instagramPosts)
-      .set({ status: 'published', permalink, image: null, lastError: null })
-      .where(and(eq(instagramPosts.tableId, tableId), eq(instagramPosts.status, 'uncertain')));
+    const profile = await locals.getProfile();
+    const remote = profile
+      ? await instagramViaApi(locals, profile.id, 'reconcile', { tableId, permalink })
+      : null;
+    if (remote && 'invalid' in remote) return fail(400, { invalid: true });
+    if (!remote)
+      await instagramAdminActions.reconcile.apply(locals.db, locals.env, { tableId, permalink });
     return { reconciled: true };
   },
 };

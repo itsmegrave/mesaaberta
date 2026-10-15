@@ -95,6 +95,11 @@ export const flagDefaults = {
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
   // admin may have it: the flag is a kill switch.
   api_admin_announcements: false,
+  // Off: the admin's hand actions on Instagram posts (queue a table, reconcile an uncertain post) run
+  // in the web Worker. On: the api Worker does them over the Service Binding; the render and the
+  // publish stay in the background after the web response. A call that cannot be made falls back to
+  // the web path. Needs the API binding. Every admin may have it: the flag is a kill switch.
+  api_admin_instagram: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
