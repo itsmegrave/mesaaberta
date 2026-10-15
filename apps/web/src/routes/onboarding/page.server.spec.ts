@@ -27,6 +27,9 @@ const event = (
   return {
     locals: {
       db: test.db,
+      env: {},
+      flags: { isEnabled: async () => false },
+      log: { warn: () => undefined },
       track: tracked,
       getUser: async () => (n === null ? null : { id: id(n), user_metadata: metadata }),
     },

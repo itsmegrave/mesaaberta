@@ -94,6 +94,37 @@ describe('api account routes over a database', () => {
     expect((await row(ana)).avatarPath).toBeNull();
   });
 
+  it('finishes the profile with the username picked here, then keeps it', async () => {
+    const [{ id }] = await test.db
+      .insert(profiles)
+      .values({ id: '00000000-0000-4000-8000-000000000ba9', role: 'member' })
+      .returning({ id: profiles.id });
+    const body = { name: 'Nova Pessoa', city: 'Recife', linkNetwork: [], linkUrl: [] };
+
+    const first = await post('onboard', { ...body, username: 'novapessoa' }, id);
+    expect(first.status).toBe(200);
+    expect((await row(id)).username).toBe('novapessoa');
+
+    await post('onboard', { ...body, username: 'outro' }, id);
+    expect((await row(id)).username).toBe('novapessoa');
+  });
+
+  it('refuses a username somebody already has', async () => {
+    const [{ id }] = await test.db
+      .insert(profiles)
+      .values({ id: '00000000-0000-4000-8000-000000000baa', role: 'member' })
+      .returning({ id: profiles.id });
+
+    const response = await post(
+      'onboard',
+      { username: 'ana', name: 'Outra', linkNetwork: [], linkUrl: [] },
+      id,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ field: 'username', message: 'taken' });
+  });
+
   it('refuses a picture outside the person’s own folder', async () => {
     const response = await post('avatar', { path: `${bia}/x.png` }, ana);
 

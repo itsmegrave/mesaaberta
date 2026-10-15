@@ -26,6 +26,18 @@ export const accountActions = {
       await saveProfile(db, actor.id, data);
     },
   },
+  // Finishing the profile after sign-up: like `save`, but the username is the one the person picks
+  // here while they have none. Once there is one it is never replaced (the stored one wins).
+  onboard: {
+    schema: profileSchema,
+    prepare: async (db: AnyDb, actor: Actor, body: Record<string, unknown>) => ({
+      ...body,
+      username: (await loadProfileForm(db, actor.id))?.username || body.username || '',
+    }),
+    apply: async (db: AnyDb, actor: Actor, data: Parameters<typeof saveProfile>[2]) => {
+      await saveProfile(db, actor.id, data);
+    },
+  },
   messages: {
     schema: directMessagesSchema,
     prepare: async (_db: AnyDb, _actor: Actor, body: Record<string, unknown>) => body,
