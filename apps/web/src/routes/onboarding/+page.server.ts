@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { initialForm, validateFormData } from '$lib/forms/contract';
 import { refuse } from '$lib/forms/server';
 import { requireUser } from '$lib/server/auth/guard';
+import { writeViaApi } from '$lib/server/api-write';
 import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';
@@ -49,8 +50,17 @@ export const actions: Actions = {
     if (!form.valid) return fail(400, { form });
 
     try {
-      await ensureProfile(locals.db, user);
-      await saveProfile(locals.db, user.id, form.data);
+      // The row is made here (it needs the Auth user's metadata), so the api can see the person.
+      const profile = await ensureProfile(locals.db, user);
+      // Through the api Worker when `api_account` is on for this person; here otherwise.
+      const remote = await writeViaApi(
+        locals,
+        'api_account',
+        profile,
+        '/v1/account/onboard',
+        form.data,
+      );
+      if (!remote) await saveProfile(locals.db, user.id, form.data);
     } catch (e) {
       // The unique index decided: somebody took the name after the availability check.
       if (e instanceof Invalid && e.field === 'username') {
