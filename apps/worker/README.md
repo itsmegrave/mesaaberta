@@ -53,3 +53,13 @@ find nothing left to run. To stop: turn the flag off. Pending rows need no clean
 `src/entry.ts` wraps the handler with `@sentry/cloudflare` and installs the same telemetry sink as the
 web app. The privacy policy (`privateSentryOptions`) is shared through `@mesaaberta/core`. `SENTRY_DSN`
 is a Worker var; unset, Sentry stays off and logs still reach the console.
+
+## Self-hosting (Bun / Docker)
+
+`src/entry/bun.ts` runs the same handler with an in-process scheduler (`src/scheduler.ts`) instead of
+Cron Triggers: the sweeper every `SWEEP_INTERVAL_SECONDS` (default 300, minimum 30) and the daily
+crowdfunding import once per UTC day from 04:00 (it also holds its own per-source, per-date lease, so
+a restart or a second process cannot run it twice). Build from the repository root:
+`docker build -f apps/worker/Dockerfile -t mesaaberta-worker .`. It has no port and no queue; it needs
+`DATABASE_URL` and the settings the handlers use (mail, Auth, Instagram). `EVENT_POLLER=true` sweeps
+through the Postgres poller contract (ADR 0003).
