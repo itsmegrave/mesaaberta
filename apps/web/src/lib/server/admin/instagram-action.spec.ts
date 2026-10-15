@@ -32,7 +32,8 @@ it('returns queue feedback before running rendering or publication', async () =>
   expect(await publishInstagramAction(event)).toEqual({ publishResult: 'queued' });
   expect(queueInstagramTable).toHaveBeenCalledOnce();
   expect(publishInstagramTable).not.toHaveBeenCalled();
-  expect(flags.isEnabled).not.toHaveBeenCalled();
+  // The image flag is read in the background task; only the api kill switch is read before.
+  expect(flags.isEnabled).not.toHaveBeenCalledWith('use_table_image');
   expect(tasks).toHaveLength(1);
   await tasks[0]({});
   expect(flags.isEnabled).toHaveBeenCalledWith('use_table_image');

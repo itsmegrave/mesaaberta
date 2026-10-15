@@ -5,6 +5,7 @@ import { announcementRoutes } from './announcements';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 import { inboxRoutes } from './inbox';
+import { instagramRoutes } from './instagram';
 import { manageRoutes } from './manage';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
@@ -44,6 +45,8 @@ export function createApi() {
   app.route('/v1/admin/moderation', moderationRoutes());
   // The announcements console (confirm, then send), behind `api_admin_announcements`.
   app.route('/v1/admin/announcements', announcementRoutes());
+  // The admin's hand actions on Instagram posts (queue, reconcile), behind `api_admin_instagram`.
+  app.route('/v1/admin/instagram', instagramRoutes());
   // The first player-facing one: join, leave and the GM's decisions, behind `api_registrations`.
   app.route('/v1/tables', registrationRoutes());
   // The GM's manage page (publish, happened, not held, postpone), behind `api_table_lifecycle`.
