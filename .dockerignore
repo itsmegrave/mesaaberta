@@ -1,0 +1,8 @@
+.git
+**/node_modules
+**/.svelte-kit
+**/.wrangler
+**/test-results
+apps/web
+drizzle
+.github
