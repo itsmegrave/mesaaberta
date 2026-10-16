@@ -7,7 +7,12 @@ import { refreshAll } from '$app/navigation';
 import Harness from './ActionFormHarness.svelte';
 import { postAction } from './action';
 
-vi.mock('$app/navigation', () => ({ refreshAll: vi.fn(async () => {}) }));
+// `$app/forms` (loaded for real below) imports more of `$app/navigation` than the one function the
+// spec watches, so the rest stays real.
+vi.mock('$app/navigation', async (original) => ({
+  ...(await original<typeof import('$app/navigation')>()),
+  refreshAll: vi.fn(async () => {}),
+}));
 vi.mock('$app/forms', async (original) => ({
   ...(await original<typeof import('$app/forms')>()),
   // Component tests have no initialized SvelteKit app/transport decoders.

@@ -13,7 +13,8 @@
     "moduleResolution": "bundler",
     "types": ["$app/types"],
     "paths": {
-      "#host": ["./src/lib/server/host/cloudflare.ts"]
+      "#host": ["./src/lib/server/host/cloudflare.ts"],
+      "#lib/*": ["./src/lib/*"]
     }
   },
   "include": ["src", "e2e", "*"],
