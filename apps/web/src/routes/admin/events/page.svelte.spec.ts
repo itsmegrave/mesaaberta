@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
 
-vi.mock('$app/navigation', () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
+vi.mock('$app/navigation', async () =>
+  (await import('#lib/test/navigation-mock.js')).navigationMock({
+    goto: vi.fn(),
+    refreshAll: vi.fn(),
+  }),
+);
 vi.mock('$app/state', () => ({
   navigating: { to: null },
   page: {

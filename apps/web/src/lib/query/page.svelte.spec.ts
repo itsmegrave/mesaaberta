@@ -5,7 +5,11 @@ import { focusManager, onlineManager } from '@tanstack/svelte-query';
 import { createQueryClient } from './client';
 import { readKey, type ReadSeed } from './keys';
 import { refreshAll } from '$app/navigation';
-vi.mock('$app/navigation', () => ({ refreshAll: vi.fn(async () => {}) }));
+vi.mock('$app/navigation', async () =>
+  (await import('#lib/test/navigation-mock.js')).navigationMock({
+    refreshAll: vi.fn(async () => {}),
+  }),
+);
 import Harness from './QueryHarness.svelte';
 const seed = (): ReadSeed => ({
   resource: 'preview',

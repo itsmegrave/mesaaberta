@@ -9,7 +9,12 @@ import Catalog from './catalog/+page.svelte';
 import Overview from './+page.svelte';
 
 const location = vi.hoisted(() => ({ path: '/admin' }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
+vi.mock('$app/navigation', async () =>
+  (await import('#lib/test/navigation-mock.js')).navigationMock({
+    goto: vi.fn(),
+    refreshAll: vi.fn(),
+  }),
+);
 vi.mock('$app/state', () => ({
   navigating: { to: null },
   page: {

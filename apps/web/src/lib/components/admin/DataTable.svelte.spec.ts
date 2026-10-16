@@ -15,7 +15,9 @@ vi.mock('$app/state', () => ({
   },
 }));
 const goto = vi.hoisted(() => vi.fn());
-vi.mock('$app/navigation', () => ({ goto }));
+vi.mock('$app/navigation', async () =>
+  (await import('#lib/test/navigation-mock.js')).navigationMock({ goto }),
+);
 
 const rows = [
   { id: '1', name: 'Primeiro' },
