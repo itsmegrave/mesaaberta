@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { startLogin } from '@mesaaberta/core/server/auth/login';
+import { supabaseOnly } from '#lib/server/auth/external-redirect.js';
 import type { RequestHandler } from './$types';
 
 // A plain GET (a link, not a form) so the Content-Security-Policy `form-action` rule does not
@@ -18,5 +19,6 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
     redirect(303, '/login?error=start_failed');
   }
 
-  redirect(303, target);
+  // Out to Supabase Auth (and on to the provider): SvelteKit 3 wants external redirects allowed by origin.
+  redirect(303, target, supabaseOnly(locals.env));
 };

@@ -30,5 +30,6 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
     enable_fb_login: '0',
     force_authentication: '1',
   }).toString();
-  redirect(303, url.href);
+  // To Instagram's own OAuth page: SvelteKit 3 wants external redirects allowed by origin.
+  redirect(303, url.href, { external: ['https://www.instagram.com'] });
 };
