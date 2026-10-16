@@ -1,9 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import Icon from '$lib/components/Icon.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
 
   type Crumb = { label: string; href?: string };
@@ -23,9 +23,7 @@
   const current = $derived(trail[trail.length - 1]);
 
   // A menu item's value is the crumb's link, already localized.
-  const open = (href: string) =>
-    // eslint-disable-next-line svelte/no-navigation-without-resolve -- already resolved by localizedHref
-    goto(href);
+  const open = (href: string) => goto(href);
 </script>
 
 {#snippet separator()}

@@ -4,14 +4,14 @@
   // password go back together. Nothing typed is handed back by the server, not even the length.
   import { z } from 'zod';
   import { addPasswordFormSchema } from '@mesaaberta/core/auth/password-setup';
-  import FormBanner from '$lib/components/FormBanner.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { toast } from '$lib/toaster';
-  import { m } from '$lib/paraglide/messages';
+  import FormBanner from '#lib/components/FormBanner.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { toast } from '#lib/toaster.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { class: className = '' }: { class?: string } = $props();
 

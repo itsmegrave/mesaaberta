@@ -14,14 +14,14 @@ const ROOTS = [
   'packages/core/src/server/events/sweeper.ts',
   'packages/core/src/server/events/scheduled.ts',
 ];
-const FORBIDDEN = /^(\$app|\$env|@sveltejs\/|\$lib\/paraglide|@sentry\/sveltekit)/;
+const FORBIDDEN = /^(\$app|\$env|@sveltejs\/|#lib\/paraglide|@sentry\/sveltekit)/;
 /** Edges still to remove, as `file -> specifier`. Empty: the graph is clean. */
 const KNOWN = new Set<string>();
 
 const resolve = (from: string, spec: string) => {
   // Shims at the old paths re-export from the package, so follow `@mesaaberta/core/...` too.
-  const base = spec.startsWith('$lib/')
-    ? join('apps/web/src/lib', spec.slice(5))
+  const base = spec.startsWith('#lib/')
+    ? join('apps/web/src/lib', spec.slice('#lib/'.length))
     : spec.startsWith('@mesaaberta/core/')
       ? join('packages/core/src', spec.slice('@mesaaberta/core/'.length))
       : spec.startsWith('.')

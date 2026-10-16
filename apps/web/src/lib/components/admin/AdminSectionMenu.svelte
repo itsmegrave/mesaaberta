@@ -4,11 +4,11 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { adminGroups, sectionOf } from '$lib/admin/sections';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import { adminGroups, sectionOf } from '#lib/admin/sections.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   const locale = getLocale();
   const counts = $derived(

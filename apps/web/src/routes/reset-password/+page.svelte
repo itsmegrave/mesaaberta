@@ -1,16 +1,16 @@
 <script lang="ts">
-  import FormBanner from '$lib/components/FormBanner.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import AuthShell from '$lib/components/AuthShell.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
+  import FormBanner from '#lib/components/FormBanner.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import AuthShell from '#lib/components/AuthShell.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
   import { resolve } from '$app/paths';
-  import { newPasswordSchema } from '$lib/auth/credentials';
-  import FormField from '$lib/components/FormField.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { newPasswordSchema } from '#lib/auth/credentials.js';
+  import FormField from '#lib/components/FormField.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
@@ -116,7 +116,7 @@
 
     <p class="mt-8">
       {m.forgot_remembered()}
-      <a href={resolve('/login')} class="anchor">{m.login_title()}</a>
+      <a href={resolve('login')} class="anchor">{m.login_title()}</a>
     </p>
   {/if}
 </AuthShell>

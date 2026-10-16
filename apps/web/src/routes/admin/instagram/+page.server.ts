@@ -4,8 +4,8 @@ import { can } from '@mesaaberta/core/server/auth/policy';
 import { instagramAccounts, instagramPosts } from '@mesaaberta/core/server/db/schema';
 import { configured, decryptToken, type InstagramEnv } from '@mesaaberta/core/server/instagram/api';
 import { instagramAdminActions } from '@mesaaberta/core/server/instagram/admin-actions';
-import { publishInstagramAction } from '$lib/server/admin/instagram-action';
-import { instagramViaApi } from '$lib/server/admin/instagram-api';
+import { publishInstagramAction } from '#lib/server/admin/instagram-action.js';
+import { instagramViaApi } from '#lib/server/admin/instagram-api.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

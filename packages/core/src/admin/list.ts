@@ -1,3 +1,4 @@
+import type { SearchParamsLike } from '../search-params';
 // What every admin list shares: the sizes a page can have, a column's sort order and the address of
 // a list with one thing changed. The query string is the contract (`?q=&status=&sort=&dir=&page=&size=`),
 // so a link to a filtered, sorted list keeps working and the first page has no `page`.
@@ -5,7 +6,7 @@
 export const PAGE_SIZES = [20, 50, 100] as const;
 
 /** `?size=`: one of the sizes a page can have, `fallback` for anything else. */
-export function pageSizeOf(params: URLSearchParams, fallback: number = PAGE_SIZES[0]) {
+export function pageSizeOf(params: SearchParamsLike, fallback: number = PAGE_SIZES[0]) {
   const size = Number(params.get('size'));
   return (PAGE_SIZES as readonly number[]).includes(size) ? size : fallback;
 }
@@ -18,7 +19,7 @@ export type Sort<Id extends string = string> = { id: Id; dir: SortDirection };
  * is the list's own order. `dir` falls back to the one `fallback` gives that column.
  */
 export function sortOf<Id extends string>(
-  params: URLSearchParams,
+  params: SearchParamsLike,
   allowed: readonly Id[],
   fallback: Sort<Id>,
 ): Sort<Id> {
@@ -41,10 +42,10 @@ export function nextSort(current: Sort, id: string): Sort {
  * removes the key; everything but a new page starts over on the first one.
  */
 export function listQuery(
-  current: URLSearchParams,
+  current: SearchParamsLike,
   changes: Record<string, string | number | null | undefined>,
 ) {
-  const params = new URLSearchParams(current);
+  const params = new URLSearchParams(current.toString());
   for (const [key, value] of Object.entries(changes)) {
     if (value === null || value === undefined || value === '') params.delete(key);
     else params.set(key, String(value));

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { IconName } from '$lib/icons/names';
+  import type { IconName } from '#lib/icons/names.js';
 
   export type KebabItem = {
     id: string;
@@ -21,8 +21,8 @@
 
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
 
   /**
@@ -55,7 +55,6 @@
     if (!item.href) return;
     if (item.external) window.open(item.href, '_blank', 'noopener,noreferrer');
     else if (item.download) window.location.assign(item.href);
-    // eslint-disable-next-line svelte/no-navigation-without-resolve -- already resolved by localizedHref
     else void goto(item.href);
   }
 

@@ -1,5 +1,5 @@
 import { error, fail, type Action, type RequestEvent } from '@sveltejs/kit';
-import { validateStringForm } from '$lib/forms/contract';
+import { validateStringForm } from '#lib/forms/contract.js';
 import type { z, ZodType } from 'zod';
 import {
   createSchema,

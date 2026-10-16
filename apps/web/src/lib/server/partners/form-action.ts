@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { validateFormData } from '$lib/forms/contract';
-import { formMessage, refuse, responseForm } from '$lib/forms/server';
+import { validateFormData } from '#lib/forms/contract.js';
+import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
 import {
   editPartnerSchema,
   NEW_PARTNER_VALUES,

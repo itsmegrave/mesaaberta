@@ -1,7 +1,7 @@
 <script lang="ts">
   // A seat or table action with its own button (Remover, Recusar): the button opens a
   // `ConfirmDialog`, and only its confirm button posts.
-  import type { FormMessage } from '$lib/forms/message';
+  import type { FormMessage } from '#lib/forms/message.js';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import Button from './Button.svelte';
 

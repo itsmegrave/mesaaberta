@@ -1,4 +1,4 @@
-import { loadRead } from '$lib/server/reads/load';
+import { loadRead } from '#lib/server/reads/load.js';
 import { sourceChannel } from '@mesaaberta/core/server/analytics/track';
 import type { PageServerLoad } from './$types';
 

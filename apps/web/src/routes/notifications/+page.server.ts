@@ -1,12 +1,12 @@
 import { error, redirect } from '@sveltejs/kit';
-import { validateStringForm } from '$lib/forms/contract';
-import { notificationActionSchema } from '$lib/notifications/actions';
+import { validateStringForm } from '#lib/forms/contract.js';
+import { notificationActionSchema } from '#lib/notifications/actions.js';
 import {
   NOTIFICATION_CATEGORIES,
   type NotificationCategory,
 } from '@mesaaberta/core/notifications/kinds';
-import { requireUser } from '$lib/server/auth/guard';
-import { writeViaApi } from '$lib/server/api-write';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import {
   listNotifications,

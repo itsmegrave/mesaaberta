@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/svelte-query';
-import { ApiError } from '$lib/api/http';
+import { ApiError } from '#lib/api/http.js';
 export const retryRead = (count: number, error: Error) =>
   count < 2 && (!(error instanceof ApiError) || error.status >= 500);
 /** Called per SSR request/component tree, never a process-global authenticated cache. */

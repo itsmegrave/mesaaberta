@@ -5,7 +5,8 @@
 **/.svelte-kit
 **/.wrangler
 **/test-results
-apps/web
+apps/web/*
+!apps/web/package.json
 drizzle
 .github
 

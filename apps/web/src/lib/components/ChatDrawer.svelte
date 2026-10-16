@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   import { onMount, tick } from 'svelte';
   import { Dialog, Portal, Tabs } from '@skeletonlabs/skeleton-svelte';
   import { createQuery } from '@tanstack/svelte-query';
   import ChatThread from './ChatThread.svelte';
   import InboxList, { type InboxItem } from './InboxList.svelte';
   import Icon from './Icon.svelte';
-  import { apiRead } from '$lib/api/http';
-  import { queryClient } from '$lib/query/context';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { m } from '$lib/paraglide/messages';
-  import type { ChatThreadData } from '$lib/server/messages/thread';
+  import { apiRead } from '#lib/api/http.js';
+  import { queryClient } from '#lib/query/context.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import type { ChatThreadData } from '#lib/server/messages/thread.js';
   let { viewerId, unread = 0 }: { viewerId: string; unread?: number } = $props();
   let open = $state(false);
   // Drawn only in the browser. On the server the dialog's closed positioner is a full-screen layer

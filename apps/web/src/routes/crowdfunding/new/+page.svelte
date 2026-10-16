@@ -1,27 +1,27 @@
 <script lang="ts">
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import CrowdfundingCard from '$lib/components/CrowdfundingCard.svelte';
-  import DateTimeField from '$lib/components/DateTimeField.svelte';
-  import ErrorSummary from '$lib/components/ErrorSummary.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import FormBanner from '$lib/components/FormBanner.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import ImageUpload from '$lib/components/ImageUpload.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
+  import DateTimeField from '#lib/components/DateTimeField.svelte';
+  import ErrorSummary from '#lib/components/ErrorSummary.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import FormBanner from '#lib/components/FormBanner.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import ImageUpload from '#lib/components/ImageUpload.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
   import {
     CROWDFUNDING_LIMITS,
     crowdfundingFormSchema,
   } from '@mesaaberta/core/crowdfunding/schema';
   import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
   import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { guardDraft } from '$lib/forms/guard.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { errorText, formProblem } from '$lib/tables/form-values';
-  import { toast } from '$lib/toaster';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { guardDraft } from '#lib/forms/guard.svelte.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { errorText, formProblem } from '#lib/tables/form-values.js';
+  import { toast } from '#lib/toaster.js';
 
   let { data, form = null } = $props();
 

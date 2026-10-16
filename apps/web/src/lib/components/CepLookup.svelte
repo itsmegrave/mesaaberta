@@ -1,11 +1,11 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { browser } from '$app/environment';
+  import { browser } from '$app/env';
   import { createQuery } from '@tanstack/svelte-query';
-  import { queryClient } from '$lib/query/context';
-  import { cepLookup } from '$lib/query/lookups';
+  import { queryClient } from '#lib/query/context.js';
+  import { cepLookup } from '#lib/query/lookups.js';
   import { areaOf, normalizeCep } from '@mesaaberta/core/location/cep';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
   let { value, area = $bindable('') }: { value: string; area?: string } = $props();
   const client = queryClient();
   let debounced = $state<string | null>(null);

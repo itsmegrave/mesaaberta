@@ -1,18 +1,18 @@
 <script lang="ts">
   import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { flushSync, onMount } from 'svelte';
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import PlayingCard from '$lib/components/PlayingCard.svelte';
-  import RunningCard from '$lib/components/RunningCard.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import PlayingCard from '#lib/components/PlayingCard.svelte';
+  import RunningCard from '#lib/components/RunningCard.svelte';
   import { page } from '$app/state';
-  import { pageHref } from '$lib/admin/page-href';
-  import Icon from '$lib/components/Icon.svelte';
-  import KebabMenu from '$lib/components/KebabMenu.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { pageHref } from '#lib/admin/page-href.js';
+  import Icon from '#lib/components/Icon.svelte';
+  import KebabMenu from '#lib/components/KebabMenu.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);

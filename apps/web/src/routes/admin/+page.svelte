@@ -1,17 +1,17 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import Media from '$lib/components/admin/Media.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import Spinner from '$lib/components/Spinner.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import { dayLabel, shortDate, timeLabel } from '$lib/admin/format';
-  import type { IconName } from '$lib/icons/names';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { pageQuery } from '$lib/query/page.svelte';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import Media from '#lib/components/admin/Media.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import Spinner from '#lib/components/Spinner.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import { dayLabel, shortDate, timeLabel } from '#lib/admin/format.js';
+  import type { IconName } from '#lib/icons/names.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { pageQuery } from '#lib/query/page.svelte.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);

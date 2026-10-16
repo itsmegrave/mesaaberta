@@ -14,16 +14,16 @@
 </script>
 
 <script lang="ts">
-  import UserText from '$lib/components/UserText.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { shortTime } from '$lib/messages/format';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import UserText from '#lib/components/UserText.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { shortTime } from '#lib/messages/format.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { shownTimezone } from '$lib/time/shown-timezone';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
 
   let {
     items,

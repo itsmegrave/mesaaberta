@@ -1,10 +1,10 @@
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
-import { forceSchema, retryAllSchema } from '$lib/admin/event-filters';
-import { validateStringForm } from '$lib/forms/contract';
-import { requireAdmin } from '$lib/server/admin-access';
-import { eventQueue } from '$lib/server/admin/event-queue';
-import { callApi } from '$lib/server/api-client';
-import { requireUser } from '$lib/server/auth/guard';
+import { forceSchema, retryAllSchema } from '#lib/admin/event-filters.js';
+import { validateStringForm } from '#lib/forms/contract.js';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { eventQueue } from '#lib/server/admin/event-queue.js';
+import { callApi } from '#lib/server/api-client.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import {
   forceEvent,
   forceFailedEvents,

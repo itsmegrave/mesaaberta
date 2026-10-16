@@ -1,22 +1,22 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '$lib/components/admin/DataTable.svelte';
-  import FilterSelect from '$lib/components/admin/FilterSelect.svelte';
-  import ListCard from '$lib/components/admin/ListCard.svelte';
-  import Media from '$lib/components/admin/Media.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import { dayLabel, timeLabel } from '$lib/admin/format';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
+  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import Media from '#lib/components/admin/Media.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { REPORT_FILTERS, type ReportFilter } from '@mesaaberta/core/admin/report-filters';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { reasonLabel } from '$lib/moderation/labels';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { reasonLabel } from '#lib/moderation/labels.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AdminReports } from '@mesaaberta/core/server/moderation/admin';
-  import { shownTimezone } from '$lib/time/shown-timezone';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data }: { data: { reports: AdminReports } } = $props();
   const reports = $derived(data.reports);

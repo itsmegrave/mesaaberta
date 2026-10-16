@@ -1,7 +1,7 @@
 import { error, isRedirect } from '@sveltejs/kit';
 import { stringify } from 'devalue';
-import { resources, type Resource } from '$lib/query/keys';
-import { readers } from '$lib/server/reads/load';
+import { resources, type Resource } from '#lib/query/keys.js';
+import { readers } from '#lib/server/reads/load.js';
 import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async (event) => {
   if (!resources.includes(event.params.resource as Resource)) error(404, 'Not found');

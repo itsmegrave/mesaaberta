@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Icon from '$lib/components/Icon.svelte';
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import TableCard from '$lib/components/TableCard.svelte';
-  import TableIllustration from '$lib/components/TableIllustration.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import TableCard from '#lib/components/TableCard.svelte';
+  import TableIllustration from '#lib/components/TableIllustration.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);

@@ -1,4 +1,5 @@
 import { pageNumber } from '../admin/catalog';
+import type { SearchParamsLike } from '../search-params';
 
 /** How the public list is ordered: what was added last, or by name. */
 export const PARTNER_SORTS = ['newest', 'name'] as const;
@@ -13,7 +14,7 @@ export type PartnerFilters = { query: string; sort: PartnerSort; page: number };
  * The filters in a `/parceiros` address. A link can say anything, so what is not a filter the page
  * knows is dropped rather than refused: the list still shows, just without it.
  */
-export function readPartnerFilters(params: URLSearchParams): PartnerFilters {
+export function readPartnerFilters(params: SearchParamsLike): PartnerFilters {
   const sort = params.get('sort') ?? '';
   return {
     query: (params.get('q') ?? '').trim().slice(0, PARTNER_SEARCH_MAX),

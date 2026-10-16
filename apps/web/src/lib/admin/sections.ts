@@ -1,5 +1,5 @@
-import type { IconName } from '$lib/icons/names';
-import { m } from '$lib/paraglide/messages';
+import type { IconName } from '#lib/icons/names.js';
+import { m } from '#lib/paraglide/messages.js';
 
 export type AdminCounts = {
   reports: number;

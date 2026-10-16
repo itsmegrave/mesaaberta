@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { auditLog } from '@mesaaberta/core/server/moderation/admin';
 import type { PageServerLoad } from './$types';
 

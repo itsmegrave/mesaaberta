@@ -1,15 +1,15 @@
 <script lang="ts">
   // "Como funciona": the three steps of the link exchange, our link to copy and the button to send a
   // partner. The partner is listed after an admin approves it, and the note says what can take it off.
-  import Icon from '$lib/components/Icon.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { page as appPage } from '$app/state';
 
   // The address a partner puts on their site, bio or Discord: the "troca de links" (link exchange).
   const ourLink = $derived(appPage.data.site?.APP_ORIGIN ?? '');
-  import { toast } from '$lib/toaster';
+  import { toast } from '#lib/toaster.js';
 
   const locale = getLocale();
   const steps = $derived([

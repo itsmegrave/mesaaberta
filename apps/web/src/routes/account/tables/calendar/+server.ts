@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
 import { buildCalendar, uidDomainFor } from '@mesaaberta/core/server/calendar/ics';
 import type { RequestHandler } from './$types';

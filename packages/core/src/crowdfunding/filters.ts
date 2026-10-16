@@ -1,4 +1,5 @@
 import { pageNumber } from '../admin/catalog';
+import type { SearchParamsLike } from '../search-params';
 
 /** How the public list is ordered: what ends (or opens) first, what was added last, or by name. */
 export const CROWDFUNDING_SORTS = ['ending', 'newest', 'name'] as const;
@@ -19,7 +20,7 @@ export type CrowdfundingFilters = {
  * The filters in a `/crowdfunding` address. A link can say anything, so what is not a filter the
  * page knows is dropped rather than refused: the list still shows, just without it.
  */
-export function readCrowdfundingFilters(params: URLSearchParams): CrowdfundingFilters {
+export function readCrowdfundingFilters(params: SearchParamsLike): CrowdfundingFilters {
   const sort = params.get('sort') ?? '';
   return {
     query: (params.get('q') ?? '').trim().slice(0, SEARCH_MAX),

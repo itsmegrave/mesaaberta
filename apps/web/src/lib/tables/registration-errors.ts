@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 import { formatWait } from '@mesaaberta/core/tables/format';
 
 /** What went wrong with a seat action, as a sentence. The code is the one the server put in the form message. */

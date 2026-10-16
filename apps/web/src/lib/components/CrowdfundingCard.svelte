@@ -2,14 +2,14 @@
   // One campaign of the list. The card opens the campaign's own page on another site, so it is one
   // link that says it leaves (a new tab, with the site named for a screen reader); "Denunciar" sits
   // above that link as a button of its own.
-  import Icon from '$lib/components/Icon.svelte';
-  import { periodLabel } from '$lib/crowdfunding/format';
-  import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
+  import Icon from '#lib/components/Icon.svelte';
+  import { periodLabel } from '#lib/crowdfunding/format.js';
+  import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import { hostOf, type CrowdfundingPlatform } from '@mesaaberta/core/crowdfunding/platforms';
-  import { campaignReferralUrl } from '$lib/crowdfunding/referral';
-  import { situationOf } from '$lib/crowdfunding/situation';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { campaignReferralUrl } from '#lib/crowdfunding/referral.js';
+  import { situationOf } from '#lib/crowdfunding/situation.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Campaign = {
     id: string;

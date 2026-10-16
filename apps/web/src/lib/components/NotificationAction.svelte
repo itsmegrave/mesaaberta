@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { notificationActionSchema } from '$lib/notifications/actions';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { m } from '$lib/paraglide/messages';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { notificationActionSchema } from '#lib/notifications/actions.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   type Props = {
     action: 'open' | 'read' | 'readAll';

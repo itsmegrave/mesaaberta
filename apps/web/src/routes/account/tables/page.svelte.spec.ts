@@ -2,7 +2,7 @@ import '../../layout.css';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { TableStatus } from '$lib/tables/status';
+import type { TableStatus } from '#lib/tables/status.js';
 import Page from './+page.svelte';
 
 const person = (n: number, name: string) => ({

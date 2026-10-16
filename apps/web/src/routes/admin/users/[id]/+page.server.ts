@@ -1,12 +1,12 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
+import { requireAdmin } from '#lib/server/admin-access.js';
 import { adminActivity, adminProfile } from '@mesaaberta/core/server/admin/profiles';
 import { profileHistory } from '@mesaaberta/core/server/admin/history';
-import { failFrom } from '$lib/server/fail-from';
-import { openDirectConversation } from '$lib/server/messages/open-direct';
+import { failFrom } from '#lib/server/fail-from.js';
+import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { standingOf } from '@mesaaberta/core/profile/standing';
 import { moderationOf } from '@mesaaberta/core/server/moderation/admin';
-import { accountActions } from '$lib/server/moderation/admin-actions';
+import { accountActions } from '#lib/server/moderation/admin-actions.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { profileFilters } from '@mesaaberta/core/admin/profile-filters';
 import type { Actions, PageServerLoad } from './$types';

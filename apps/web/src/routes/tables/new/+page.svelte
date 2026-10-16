@@ -1,13 +1,13 @@
 <script lang="ts">
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { guardDraft } from '$lib/forms/guard.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import TableForm from '$lib/components/TableForm.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { m } from '$lib/paraglide/messages';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import { guardDraft } from '#lib/forms/guard.svelte.js';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import TableForm from '#lib/components/TableForm.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { m } from '#lib/paraglide/messages.js';
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';
 
   let { data, form = null } = $props();

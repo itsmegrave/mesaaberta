@@ -26,7 +26,7 @@ const hostEnvRead = {
 const hostSdkCall = {
   selector: "MemberExpression[property.name='initCloudflareSentryHandle']",
   message:
-    'Host-specific Sentry set-up belongs in src/lib/server/runtime.ts (handleHostTelemetry).',
+    'Host-specific Sentry set-up belongs in src/lib/server/host (the telemetry of a #host module).',
 };
 
 export default defineConfig(
@@ -123,9 +123,10 @@ export default defineConfig(
     files: ['apps/web/src/lib/server/auth/policy.ts'],
     rules: { 'no-restricted-syntax': ['error', hostEnvRead, hostSdkCall] },
   },
-  // The host's variables and bindings are read in one module, which fills `locals.env`.
+  // The host's variables and bindings are read in one module, which fills `locals.env`, from the
+  // host modules `#host` chooses between (Cloudflare's SDK set-up lives in the latter).
   {
-    files: ['apps/web/src/lib/server/runtime.ts'],
+    files: ['apps/web/src/lib/server/runtime.ts', 'apps/web/src/lib/server/host/*.ts'],
     rules: { 'no-restricted-syntax': ['error', roleRead] },
   },
 );

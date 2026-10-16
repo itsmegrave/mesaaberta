@@ -2,10 +2,10 @@
   // The frame of an admin page: the breadcrumbs (Início / Admin / section) and the head. Every page
   // of the admin opens with it, so they share one rhythm.
   import type { Snippet } from 'svelte';
-  import AdminPageHead from '$lib/components/AdminPageHead.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import type { KebabItem } from '$lib/components/KebabMenu.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import AdminPageHead from '#lib/components/AdminPageHead.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     title,

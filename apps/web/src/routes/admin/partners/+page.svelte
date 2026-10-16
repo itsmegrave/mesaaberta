@@ -1,28 +1,28 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '$lib/components/admin/DataTable.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import ListCard from '$lib/components/admin/ListCard.svelte';
-  import Media from '$lib/components/admin/Media.svelte';
-  import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import Media from '#lib/components/admin/Media.svelte';
+  import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import {
     approvePartnerSchema,
     PARTNER_REPORT_REASONS,
     removePartnerSchema,
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import {
     PARTNER_ADMIN_STATUSES,
     PARTNER_BACKLINK_FILTERS,
   } from '@mesaaberta/core/partners/admin-filters';
-  import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
-  import { toast } from '$lib/toaster';
+  import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
+  import { toast } from '#lib/toaster.js';
   import type { AdminPartners } from '@mesaaberta/core/server/partners/admin';
 
   type Row = AdminPartners['rows'][number] & { logo: string | null };

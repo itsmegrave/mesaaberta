@@ -1,24 +1,24 @@
 <script lang="ts">
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import TextArea from '$lib/components/TextArea.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
   // "Denunciar": a table, or someone the reporter shares it with. The server decides again who may
   // be reported; this only offers what the read said is allowed.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import {
     REPORT_DETAILS_MAX,
     REPORT_REASONS,
     reportSchema,
   } from '@mesaaberta/core/moderation/reports';
-  import { reasonLabel } from '$lib/moderation/labels';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import { reasonLabel } from '#lib/moderation/labels.js';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   let {
     targets,

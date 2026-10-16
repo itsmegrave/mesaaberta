@@ -1,11 +1,11 @@
 <script lang="ts">
   // Shown to the GM (or an admin) while a table is a draft: says nobody else sees it, and publishes it.
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { answerSchema } from '$lib/tables/confirmation';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { answerSchema } from '#lib/tables/confirmation.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   let {
     action,

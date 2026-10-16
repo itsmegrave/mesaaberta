@@ -3,7 +3,7 @@
   import type Picker from 'emoji-picker-element/picker';
   import ptBR from 'emoji-picker-element/i18n/pt_BR';
   import dataSource from 'emoji-picker-element-data/pt/cldr/data.json?url';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     onselect,

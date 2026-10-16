@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import type { IconName } from '$lib/icons/names';
+  import Button from '#lib/components/Button.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import type { IconName } from '#lib/icons/names.js';
   // A dropdown with a search box over a long list (the ~700 RPG systems), one or several picks.
   // Skeleton's Combobox; the picks are submitted as hidden inputs, one per value. Until the page is
   // interactive an inert box of the same size stands in.
@@ -9,8 +9,8 @@
   // it is submitted as `new:<name>` (see $lib/tables/catalog) for the server to take as a suggestion.
   import { Combobox, Portal, useListCollection } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { foldForSearch, matchesSearch } from '$lib/search';
+  import { m } from '#lib/paraglide/messages.js';
+  import { foldForSearch, matchesSearch } from '#lib/search.js';
   import { NEW_CATALOG_PREFIX, SUGGESTION_NAME, pickName } from '@mesaaberta/core/tables/catalog';
 
   /** `pending`: an entry not approved yet, marked with `pendingLabel`. */

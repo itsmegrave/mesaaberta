@@ -1,4 +1,4 @@
-// Relative imports only: the Cron Trigger's Worker runs this without SvelteKit's `$lib` alias.
+// Relative imports only: the Cron Trigger's Worker runs this without SvelteKit's `#lib` alias.
 import { and, eq, isNotNull, lte } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { profiles } from '../db/schema';

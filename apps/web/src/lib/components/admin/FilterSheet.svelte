@@ -3,8 +3,8 @@
   // shows in a row. A pick applies at once (the list behind it reloads); "Ver N resultados" closes.
   import type { Snippet } from 'svelte';
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     active = 0,

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   // The table's image: Skeleton's File Upload, a zone to drop a file on or a button to pick one.
   // Until JavaScript runs it is a plain file field, so the form works without it. The type and the
   // size are checked by the form's schema, not here, so every problem reads the same way.
   import { FileUpload } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
-  import ImageCropper from '$lib/components/ImageCropper.svelte';
-  import { isDecodable } from '$lib/forms/decodable';
+  import ImageCropper from '#lib/components/ImageCropper.svelte';
+  import { isDecodable } from '#lib/forms/decodable.js';
   import { IMAGE_TYPES } from '@mesaaberta/core/forms/files';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     id,

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Form from '$lib/components/Form.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     name,

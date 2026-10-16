@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { forceSchema } from '$lib/admin/event-filters';
-  import Form from '$lib/components/Form.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { forceSchema } from '#lib/admin/event-filters.js';
+  import Form from '#lib/components/Form.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   /** "Rodar agora" for one event: runs it at once and says how it went. */
   let { id, type }: { id: string; type: string } = $props();

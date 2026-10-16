@@ -1,4 +1,4 @@
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import { unreadCount } from '@mesaaberta/core/server/notifications/service';
 import type { RequestHandler } from './$types';
@@ -16,5 +16,5 @@ export const GET: RequestHandler = async ({ locals }) => {
     unreadCount(locals.db, user.id),
     unreadConversations(locals.db, user.id),
   ]);
-  return json({ unread, messages }, { headers: { 'cache-control': 'private, no-store' } });
+  return Response.json({ unread, messages }, { headers: { 'cache-control': 'private, no-store' } });
 };

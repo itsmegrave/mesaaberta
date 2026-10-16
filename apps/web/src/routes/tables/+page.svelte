@@ -1,16 +1,16 @@
 <script lang="ts">
-  import Icon from '$lib/components/Icon.svelte';
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { navigating, page } from '$app/state';
-  import ListSkeleton from '$lib/components/ListSkeleton.svelte';
-  import { Slow } from '$lib/navigation/slow.svelte';
-  import TablesFilters from '$lib/components/TablesFilters.svelte';
-  import TableCard from '$lib/components/TableCard.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
+  import { Slow } from '#lib/navigation/slow.svelte.js';
+  import TablesFilters from '#lib/components/TablesFilters.svelte';
+  import TableCard from '#lib/components/TableCard.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);

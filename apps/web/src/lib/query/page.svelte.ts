@@ -1,7 +1,7 @@
-import { invalidateAll } from '$app/navigation';
-import { browser } from '$app/environment';
+import { refreshAll } from '$app/navigation';
+import { browser } from '$app/env';
 import { createQuery, type QueryClient } from '@tanstack/svelte-query';
-import { apiRead, ApiError } from '$lib/api/http';
+import { apiRead, ApiError } from '#lib/api/http.js';
 import { queryClient } from './context';
 import { readKey, staleTime, type ReadSeed } from './keys';
 
@@ -30,7 +30,7 @@ export function pageQuery<T extends object>(
           } catch (cause) {
             if (cause instanceof ApiError && [401, 403, 404].includes(cause.status)) {
               client.removeQueries({ queryKey: readKey(readSeed!), exact: true });
-              void invalidateAll();
+              void refreshAll();
             }
             throw cause;
           }

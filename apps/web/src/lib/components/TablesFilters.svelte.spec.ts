@@ -4,7 +4,9 @@ import { render } from 'vitest-browser-svelte';
 import { goto } from '$app/navigation';
 import TablesFilters from './TablesFilters.svelte';
 
-vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+vi.mock('$app/navigation', async () =>
+  (await import('#lib/test/navigation-mock.js')).navigationMock({ goto: vi.fn() }),
+);
 
 const catalog = {
   platforms: [

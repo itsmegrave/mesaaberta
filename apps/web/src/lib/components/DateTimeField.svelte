@@ -4,7 +4,7 @@
   // the hour. Until JavaScript runs it is the native field, so the form works without it.
   import { DatePicker, Portal, parseDate } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     id,

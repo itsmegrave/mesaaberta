@@ -1,6 +1,6 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
-import { next } from '$lib/forms/next';
+import { next } from '#lib/forms/next.js';
 
 /** Every button-only action: which player it is about (when it is about one), and where to come back to. */
 export const actionSchema = z.object({ playerId: z.guid().optional(), next });

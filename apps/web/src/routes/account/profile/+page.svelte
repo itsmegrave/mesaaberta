@@ -1,29 +1,29 @@
 <script lang="ts">
-  import TextInput from '$lib/components/TextInput.svelte';
-  import { queryClient } from '$lib/query/context';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import { queryClient } from '#lib/query/context.js';
   const client = queryClient();
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import AddPassword from '$lib/components/AddPassword.svelte';
-  import ConnectedAccounts from '$lib/components/ConnectedAccounts.svelte';
-  import ImageUpload from '$lib/components/ImageUpload.svelte';
-  import ProfileForm from '$lib/components/ProfileForm.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { toast } from '$lib/toaster';
-  import ActionForm from '$lib/components/ActionForm.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { photoSchema } from '$lib/profile/photo';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import AddPassword from '#lib/components/AddPassword.svelte';
+  import ConnectedAccounts from '#lib/components/ConnectedAccounts.svelte';
+  import ImageUpload from '#lib/components/ImageUpload.svelte';
+  import ProfileForm from '#lib/components/ProfileForm.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { toast } from '#lib/toaster.js';
+  import ActionForm from '#lib/components/ActionForm.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { photoSchema } from '#lib/profile/photo.js';
   import { Switch } from '@skeletonlabs/skeleton-svelte';
   import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { deleteAccountSchema } from '$lib/profile/delete';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { deleteAccountSchema } from '#lib/profile/delete.js';
   import { tick } from 'svelte';
-  import Form from '$lib/components/Form.svelte';
+  import Form from '#lib/components/Form.svelte';
 
   let { data, form: result = null } = $props();
 

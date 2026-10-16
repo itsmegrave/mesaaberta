@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
-import { createTestDb } from '$lib/server/db/test-db';
+import { createTestDb } from '#lib/server/db/test-db.js';
 import { GET } from './+server';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

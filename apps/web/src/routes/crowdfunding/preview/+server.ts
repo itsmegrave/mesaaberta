@@ -1,4 +1,4 @@
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { can } from '@mesaaberta/core/server/auth/policy';
@@ -18,18 +18,18 @@ export const GET: RequestHandler = async ({ locals, url, setHeaders }) => {
   if (!actor || !can(actor, 'crowdfunding:add')) error(401, 'Sign in first');
   if (!locals.db) error(503, 'Database not configured');
   const link = normalizeCampaignUrl(url.searchParams.get('url') ?? '');
-  if (!link) return json({ url: null, title: null, platform: 'other' }, { status: 400 });
+  if (!link) return Response.json({ url: null, title: null, platform: 'other' }, { status: 400 });
 
   try {
     await takeLinkRead(locals.db, actor.id);
   } catch (cause) {
     if (!(cause instanceof RateLimited)) throw cause;
     setHeaders({ 'Retry-After': String(cause.retryAfterSeconds) });
-    return json({ url: link, title: null, platform: platformOf(link) }, { status: 429 });
+    return Response.json({ url: link, title: null, platform: platformOf(link) }, { status: 429 });
   }
 
   const { title } = await readLinkPreview(link);
-  return json(
+  return Response.json(
     { url: link, title, platform: platformOf(link) },
     { headers: { 'cache-control': 'private, no-store' } },
   );

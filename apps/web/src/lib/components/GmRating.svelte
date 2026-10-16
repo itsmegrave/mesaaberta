@@ -2,9 +2,9 @@
   // A GM's score as it is shown everywhere (table card, table page, /manage, profile): the
   // weighted score and how many ratings stand behind it, or "Novo mestre" while there are too few.
   // Nobody sees the plain average, the GM included.
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Rating = { score: number | null; count: number; isNew: boolean };
 

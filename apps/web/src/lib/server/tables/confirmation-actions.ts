@@ -1,7 +1,7 @@
 import { error, fail, redirect, type Action, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
-import { validateStringForm } from '$lib/forms/contract';
-import { answerSchema, postponeSchema } from '$lib/tables/confirmation';
+import { validateStringForm } from '#lib/forms/contract.js';
+import { answerSchema, postponeSchema } from '#lib/tables/confirmation.js';
 import { requireUser } from '../auth/guard';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';

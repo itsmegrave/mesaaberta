@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
-import { validateStringForm } from '$lib/forms/contract';
-import { formMessage } from '$lib/forms/server';
+import { validateStringForm } from '#lib/forms/contract.js';
+import { formMessage } from '#lib/forms/server.js';
 import type { z } from 'zod';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { requireUser } from '../auth/guard';

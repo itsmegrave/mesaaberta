@@ -1,7 +1,7 @@
 import { deserialize } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import { toast } from '$lib/toaster';
-import { m } from '$lib/paraglide/messages';
+import { refreshAll } from '$app/navigation';
+import { toast } from '#lib/toaster.js';
+import { m } from '#lib/paraglide/messages.js';
 import { instagramFeedback } from './instagram-feedback';
 
 /**
@@ -18,7 +18,7 @@ export async function publishTable(tableId: string) {
       headers: { 'x-sveltekit-action': 'true', accept: 'application/json' },
     });
     instagramFeedback(deserialize(await response.text()));
-    await invalidateAll();
+    await refreshAll();
   } catch {
     toast.error(m.admin_dialog_error());
   }

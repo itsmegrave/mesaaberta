@@ -1,6 +1,6 @@
-import type { ActionResult } from '@sveltejs/kit';
-import { toast } from '$lib/toaster';
-import { m } from '$lib/paraglide/messages';
+import type { ActionResult } from '$app/forms';
+import { toast } from '#lib/toaster.js';
+import { m } from '#lib/paraglide/messages.js';
 export function instagramFeedback(result: ActionResult) {
   const data = result.type === 'success' || result.type === 'failure' ? result.data : undefined;
   if (data?.invalid) return toast.error(m.instagram_reconcile_invalid());

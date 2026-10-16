@@ -1,10 +1,10 @@
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { apiRead } from '$lib/api/http';
+import { apiRead } from '#lib/api/http.js';
 import ChatDrawer from './ChatDrawer.svelte';
-vi.mock('$lib/api/http', async (original) => ({
-  ...(await original<typeof import('$lib/api/http')>()),
+vi.mock('#lib/api/http.js', async (original) => ({
+  ...(await original<typeof import('#lib/api/http.js')>()),
   apiRead: vi.fn(),
 }));
 beforeEach(() => {

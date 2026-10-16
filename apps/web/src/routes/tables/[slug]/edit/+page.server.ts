@@ -1,15 +1,15 @@
-import { loadRead } from '$lib/server/reads/load';
+import { loadRead } from '#lib/server/reads/load.js';
 import { error, redirect } from '@sveltejs/kit';
-import { initialForm } from '$lib/forms/contract';
-import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
-import { requireUser } from '$lib/server/auth/guard';
-import { writeViaApi } from '$lib/server/api-write';
-import { timezoneOf } from '$lib/server/time';
+import { initialForm } from '#lib/forms/contract.js';
+import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
+import { timezoneOf } from '#lib/server/time.js';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
-import { handleTableForm } from '$lib/server/tables/form-action';
+import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { disableTable, loadTableForEdit, updateTable } from '@mesaaberta/core/server/tables/write';
 import type { Actions, PageServerLoad } from './$types';
 

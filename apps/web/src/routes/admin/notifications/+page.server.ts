@@ -1,14 +1,14 @@
 import { error, redirect } from '@sveltejs/kit';
-import { initialForm, validateFormData } from '$lib/forms/contract';
-import { formMessage, refuse } from '$lib/forms/server';
-import { announcementSchema, ANNOUNCEMENT_DEFAULTS } from '$lib/notifications/announcement';
-import type { AnnouncementMessage } from '$lib/notifications/announcement-message';
-import { requireAdmin } from '$lib/server/admin-access';
-import { requireUser } from '$lib/server/auth/guard';
+import { initialForm, validateFormData } from '#lib/forms/contract.js';
+import { formMessage, refuse } from '#lib/forms/server.js';
+import { announcementSchema, ANNOUNCEMENT_DEFAULTS } from '#lib/notifications/announcement.js';
+import type { AnnouncementMessage } from '#lib/notifications/announcement-message.js';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
-import { callApiRaw } from '$lib/server/api-client';
+import { callApiRaw } from '#lib/server/api-client.js';
 import {
   audienceSizes,
   listAnnouncements,

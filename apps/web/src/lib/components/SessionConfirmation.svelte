@@ -1,12 +1,12 @@
 <script lang="ts">
   // The GM's answer to "did the session happen?", once its date has passed: it happened (players are
   // asked to rate), it did not, or a new date (the table opens again until then).
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { answerSchema, postponeSchema } from '$lib/tables/confirmation';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { answerSchema, postponeSchema } from '#lib/tables/confirmation.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   let { next }: { next: string } = $props();
 

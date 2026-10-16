@@ -1,12 +1,12 @@
 <script lang="ts">
-  import UserLink from '$lib/components/UserLink.svelte';
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import { siteName, submissionLabel } from '$lib/crowdfunding/labels';
-  import Icon from '$lib/components/Icon.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { reasonLabel } from '$lib/moderation/labels';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
+  import { siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
+  import Icon from '#lib/components/Icon.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { reasonLabel } from '#lib/moderation/labels.js';
   import {
     banFromReportSchema,
     closeReportSchema,
@@ -19,9 +19,9 @@
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
   const locale = getLocale();

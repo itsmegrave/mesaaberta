@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { stringify } from 'devalue';
-import { loadChatThread } from '$lib/server/messages/thread';
+import { loadChatThread } from '#lib/server/messages/thread.js';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {

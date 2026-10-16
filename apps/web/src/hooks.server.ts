@@ -1,28 +1,27 @@
 import * as Sentry from '@sentry/sveltekit';
-import type { Handle, HandleServerError } from '@sveltejs/kit';
-import { sequence } from '@sveltejs/kit/hooks';
+import { sequence, type Handle, type HandleServerError } from '@sveltejs/kit/hooks';
 import {
   createFlags,
   flagOverrides,
   shouldForceAllFlags,
 } from '@mesaaberta/core/server/flags/flags';
 import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
-import { handleAuth } from '$lib/server/auth/handle-auth';
-import { handleSuspended } from '$lib/server/auth/suspended';
+import { handleAuth } from '#lib/server/auth/handle-auth.js';
+import { handleSuspended } from '#lib/server/auth/suspended.js';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { handleDatabase } from '$lib/server/db/handle-database';
+import { handleDatabase } from '#lib/server/db/handle-database.js';
 import { logger, setTelemetrySink } from '@mesaaberta/core/server/logger';
-import { sentrySink } from '$lib/server/sentry-sink';
-import { handleRequestLog } from '$lib/server/request-log';
-import { handleHostTelemetry, handleRuntime } from '$lib/server/runtime';
+import { sentrySink } from '#lib/server/sentry-sink.js';
+import { handleRequestLog } from '#lib/server/request-log.js';
+import { handleHostTelemetry, handleRuntime } from '#lib/server/runtime.js';
 import { createTracker } from '@mesaaberta/core/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { MAIL_HANDLER_NAMES, bellHandlers } from '@mesaaberta/core/server/events/handlers';
-import { handleMaintenance } from '$lib/server/maintenance';
-import { handleAdminAccess } from '$lib/server/admin-access';
-import { handleSecurityHeaders } from '$lib/server/security-headers';
-import { getTextDirection } from '$lib/paraglide/runtime';
-import { paraglideMiddleware } from '$lib/paraglide/server';
+import { handleMaintenance } from '#lib/server/maintenance.js';
+import { handleAdminAccess } from '#lib/server/admin-access.js';
+import { handleSecurityHeaders } from '#lib/server/security-headers.js';
+import { getTextDirection } from '#lib/paraglide/runtime.js';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
 
 // The logger knows no vendor; this deployment mirrors it to Sentry. Set at module load, so every
 // request in the isolate reports as before.
@@ -30,7 +29,9 @@ setTelemetrySink(sentrySink);
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {
-    event.request = request;
+    // `request` is read-only in SvelteKit 3's types; the localized request must still replace it so
+    // the rest of the chain reads the same URL the router matched.
+    (event as { request: Request }).request = request;
 
     return resolve(event, {
       transformPageChunk: ({ html }) =>
@@ -60,6 +61,7 @@ const handleFlags: Handle = ({ event, resolve }) => {
     env as { IGNORE_FEATURE_FLAGS_IN_LOCALHOST?: string } | undefined,
     event.url.hostname,
   );
+
   const overrides = flagOverrides(
     env as { FEATURE_FLAG_OVERRIDES?: string } | undefined,
     event.url.hostname,
@@ -81,9 +83,11 @@ const handleFlags: Handle = ({ event, resolve }) => {
 
   // Targeted at admins first (`isAdmin = true`). Read the first time an event is dispatched.
   let fenced: Promise<boolean> | undefined;
+
   event.locals.fencedLeases = () =>
     (fenced ??= (async () => {
       const profile = await event.locals.getProfile().catch(() => null);
+
       return event.locals.flags.isEnabled(
         'api_events_fenced_leases',
         profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
@@ -92,9 +96,11 @@ const handleFlags: Handle = ({ event, resolve }) => {
 
   // The same targeting, read the first time an event is dispatched and only when a queue is bound.
   let shadow: Promise<boolean> | undefined;
+
   event.locals.queueShadow = () =>
     (shadow ??= (async () => {
       const profile = await event.locals.getProfile().catch(() => null);
+
       return event.locals.flags.isEnabled(
         'api_events_queue_shadow',
         profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
@@ -104,6 +110,7 @@ const handleFlags: Handle = ({ event, resolve }) => {
   // Stage 3: the handler classes this request hands to the queue, one flag per class, for the
   // people each flag targets. Read like the two above.
   let live: Promise<readonly string[]> | undefined;
+
   event.locals.queueLive = () =>
     (live ??= (async () => {
       const profile = await event.locals.getProfile().catch(() => null);
@@ -146,8 +153,10 @@ export const handle: Handle = sequence(
 
 // Replaces SvelteKit's default console output so an unexpected error carries the request id.
 // A 404 is a visitor's typo, not a fault, and the request line already records it.
-export const handleError: HandleServerError = Sentry.handleErrorWithSentry(
-  ({ error, event, status }) => {
-    if (status !== 404) (event.locals.log ?? logger).error('unhandled error', { error, status });
-  },
-);
+export const handleError: HandleServerError = Sentry.handleErrorWithSentry((input) => {
+  // SvelteKit 3 calls this for every error, the ones thrown with `error()` and the 404s it makes
+  // itself included: only what nobody meant to happen (an unknown error, or a 5xx) is a fault.
+  const status = input.kind === 'unknown' ? 500 : input.error.status;
+  if (input.kind === 'unknown' || status >= 500)
+    (input.event.locals.log ?? logger).error('unhandled error', { error: input.error, status });
+});

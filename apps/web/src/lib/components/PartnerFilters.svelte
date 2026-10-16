@@ -3,12 +3,12 @@
   // at once. The query string is the contract, so a link to a filtered list keeps working. The page
   // number is not kept: a new filter starts over on the first page.
   import { goto } from '$app/navigation';
-  import Icon from '$lib/components/Icon.svelte';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { PARTNER_SORTS, type PartnerFilters } from '@mesaaberta/core/partners/filters';
 
   let { picked }: { picked: Pick<PartnerFilters, 'query' | 'sort'> } = $props();
@@ -23,8 +23,7 @@
   };
   const apply = (change: Partial<typeof picked>) =>
     goto(localizedHref(`/partners${query({ ...picked, ...change })}`, locale), {
-      keepFocus: true,
-      noScroll: true,
+      reset: false,
     });
 
   const sorts = $derived(

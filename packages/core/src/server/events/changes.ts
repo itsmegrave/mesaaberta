@@ -1,4 +1,4 @@
-// Relative imports only: the Cron Trigger's Worker entry bundles this file without `$lib`.
+// Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import type { Changes, FieldChange } from './types';
 
 /** What an edit can carry per field: a plain value, a date, or a list of names. */

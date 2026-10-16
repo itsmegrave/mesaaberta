@@ -2,8 +2,8 @@
   // A small "i" button beside a label that explains something in a sentence. It opens on hover and
   // focus, and a tap toggles it, since touch screens have no hover. Esc closes it.
   import { Portal, Tooltip } from '@skeletonlabs/skeleton-svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { text, label = m.info_tip_label() }: { text: string; label?: string } = $props();
 

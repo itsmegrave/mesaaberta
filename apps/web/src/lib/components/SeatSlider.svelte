@@ -3,7 +3,7 @@
   // on the card. Until JavaScript runs it is a number field, so the form works without it.
   import { Slider } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
   import SeatDots from './SeatDots.svelte';
 
   let {

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { inboxWithPictures } from '@mesaaberta/core/server/messages/present';

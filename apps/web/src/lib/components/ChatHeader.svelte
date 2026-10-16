@@ -1,16 +1,16 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import { muteSchema } from '@mesaaberta/core/messages/schema';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
 
   let {

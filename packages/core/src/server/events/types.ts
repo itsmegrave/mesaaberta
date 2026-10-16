@@ -1,6 +1,6 @@
 // The event contracts live in `@mesaaberta/contracts`; only what needs the database stays here.
 // Relative imports only across `src/lib/server/events`: the Cron Trigger's Worker entry bundles
-// these files without SvelteKit's `$lib` alias.
+// these files without SvelteKit's `#lib` alias.
 import type { EventType, StoredEvent } from '@mesaaberta/contracts';
 
 export type * from '@mesaaberta/contracts';

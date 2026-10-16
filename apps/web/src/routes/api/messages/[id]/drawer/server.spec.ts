@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadChatThread } from '$lib/server/messages/thread';
+import { loadChatThread } from '#lib/server/messages/thread.js';
 import { GET } from './+server';
-vi.mock('$lib/server/messages/thread', () => ({ loadChatThread: vi.fn() }));
+vi.mock('#lib/server/messages/thread.js', () => ({ loadChatThread: vi.fn() }));
 beforeEach(() => vi.resetAllMocks());
 describe('drawer thread', () => {
   it('rejects anonymous requests before loading or marking a conversation read', async () => {

@@ -1,6 +1,6 @@
-import { reasonLabel } from '$lib/moderation/labels';
+import { reasonLabel } from '#lib/moderation/labels.js';
 import type { ReportReason } from '@mesaaberta/core/moderation/reports';
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 import { atHandle } from '@mesaaberta/core/profile/handle';
 import { toPlainText } from '@mesaaberta/core/text/rich';
 import {

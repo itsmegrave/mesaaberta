@@ -1,8 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { crowdfundingFormSchema } from '@mesaaberta/core/crowdfunding/schema';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
-import { validateFormData } from '$lib/forms/contract';
-import { formMessage, refuse, responseForm } from '$lib/forms/server';
+import { validateFormData } from '#lib/forms/contract.js';
+import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';

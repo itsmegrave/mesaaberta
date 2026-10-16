@@ -4,7 +4,7 @@ import { readPartnerFilters } from '@mesaaberta/core/partners/filters';
 import { can } from '@mesaaberta/core/server/auth/policy';
 
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { moderationAction } from '$lib/server/moderation/form-action';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
 import {
   filePartnerReport,
   listPartners,

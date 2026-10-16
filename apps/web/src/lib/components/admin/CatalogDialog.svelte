@@ -1,8 +1,8 @@
 <script lang="ts">
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
   // Mounted for one entry/mode; server loads never overwrite edited values.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import {
     createSchema,
     entrySchema,
@@ -10,14 +10,14 @@
     renameSchema,
     type CatalogKind,
   } from '@mesaaberta/core/admin/catalog';
-  import FormField from '$lib/components/FormField.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import FormField from '#lib/components/FormField.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { m } from '#lib/paraglide/messages.js';
   import { slugify } from '@mesaaberta/core/slug';
   import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
-  import { toast } from '$lib/toaster';
+  import { toast } from '#lib/toaster.js';
 
   type Mode = 'merge' | 'reject' | 'rename' | 'disable' | 'create';
   let {

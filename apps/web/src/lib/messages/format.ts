@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 import { dayKey } from './group';
 
 const DAY_MS = 24 * 60 * 60 * 1000;

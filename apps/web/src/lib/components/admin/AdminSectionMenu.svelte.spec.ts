@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import AdminSectionMenu from './AdminSectionMenu.svelte';
 
-vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+vi.mock('$app/navigation', async () =>
+  (await import('#lib/test/navigation-mock.js')).navigationMock({ goto: vi.fn() }),
+);
 vi.mock('$app/state', () => ({
   page: {
     route: { id: '/admin/users' },

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import FormBanner from '$lib/components/FormBanner.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import FormBanner from '#lib/components/FormBanner.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
   import TextInput from './TextInput.svelte';
   import FormField from './FormField.svelte';
-  import type { CredentialsData } from '$lib/auth/credentials';
-  import { m } from '$lib/paraglide/messages';
+  import type { CredentialsData } from '#lib/auth/credentials.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   type Props = {
     mode: 'login' | 'signup';

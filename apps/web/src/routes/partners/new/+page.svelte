@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import PartnerForm from '$lib/components/PartnerForm.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import PartnerForm from '#lib/components/PartnerForm.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { data, form = null } = $props();
   // svelte-ignore state_referenced_locally

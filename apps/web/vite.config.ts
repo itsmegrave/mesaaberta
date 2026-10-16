@@ -5,10 +5,20 @@ import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
-import { hostAdapter, hostSentry } from './host.config.ts';
+import { hostAdapter, hostBindingsPath, hostSentry } from './host.config.ts';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+  // `#host` is the one place the web app names its host (see host.config.ts).
+  resolve: { alias: { '#host': hostBindingsPath } },
+  // The Svelte libraries ship `.svelte` files, which only Vite can compile: they must go through it
+  // and into the server bundle. (A Worker has no node_modules at run time, and Wrangler cannot load a
+  // `.svelte` file.) SvelteKit 3 no longer bundles dependencies for SSR on its own. Not everything:
+  // `noExternal: true` pulls CommonJS dependencies in too, and the bundle then needs
+  // `createRequire(import.meta.url)`, which Workers do not have. adapter-bun sets its own.
+  ssr: {
+    noExternal: [/^@iconify-svelte\//, /^@skeletonlabs\//, /^@tanstack\/svelte-/, /^@zag-js\//],
+  },
   plugins: [
     sentrySvelteKit({
       // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
@@ -31,9 +41,6 @@ export default defineConfig({
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
       },
       adapter: hostAdapter(),
-      experimental: {
-        instrumentation: { server: true },
-      },
       // Checks for a new deploy every minute; the root layout offers a refresh without interrupting
       // the visitor's navigation or form entry.
       version: { pollInterval: 60_000 },
@@ -119,6 +126,8 @@ export default defineConfig({
         test: {
           name: 'server',
           environment: 'node',
+          // Svelte libraries ship `.svelte` files, which Node cannot load: Vite must transform them.
+          server: { deps: { inline: [/svelte/] } },
           // Tests that start an in-process Postgres (PGlite) take a moment when the machine is busy.
           testTimeout: 20_000,
           hookTimeout: 20_000,

@@ -1,5 +1,5 @@
 import { resolve } from '$app/paths';
-import { localizeHref, type Locale } from '$lib/paraglide/runtime';
+import { localizeHref, type Locale } from '#lib/paraglide/runtime.js';
 
 /**
  * Internal link to `pathname` in `locale`. `pathname` may already carry a locale prefix.

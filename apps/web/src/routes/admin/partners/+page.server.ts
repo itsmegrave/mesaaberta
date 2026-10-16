@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { partnerActions } from '$lib/server/moderation/admin-actions';
+import { partnerActions } from '#lib/server/moderation/admin-actions.js';
 import { listAdminPartners } from '@mesaaberta/core/server/partners/admin';
 
 import type { Actions, PageServerLoad } from './$types';

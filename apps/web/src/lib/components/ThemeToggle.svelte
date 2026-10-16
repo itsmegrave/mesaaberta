@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   import { onMount } from 'svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { applyChoice, readChoice, type ThemeChoice } from '$lib/theme/theme';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { applyChoice, readChoice, type ThemeChoice } from '#lib/theme/theme.js';
 
   let isDark = $state(false);
   let activeChoice = $state<ThemeChoice>('system');

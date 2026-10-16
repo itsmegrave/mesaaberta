@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   /**
    * Stands in for a slow list: table cards (/tables), the dashboard's two columns (/account/tables),

@@ -2,8 +2,8 @@
   // A table's Instagram post, as the second state of a Mesas row: a small icon and a word under the
   // StatusBadge, not a second badge (the design system's DataTable). Muted unless it needs action:
   // amber when it has to be checked, red when it failed.
-  import Icon from '$lib/components/Icon.svelte';
-  import { instagramStatus } from '$lib/admin/instagram-status';
+  import Icon from '#lib/components/Icon.svelte';
+  import { instagramStatus } from '#lib/admin/instagram-status.js';
 
   let { status, class: className = '' }: { status: string | null; class?: string } = $props();
 

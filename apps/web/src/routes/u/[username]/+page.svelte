@@ -1,20 +1,20 @@
 <script lang="ts">
-  import UserLink from '$lib/components/UserLink.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
   import { page } from '$app/state';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import GmRating from '$lib/components/GmRating.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import ActionForm from '$lib/components/ActionForm.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import TableCard from '$lib/components/TableCard.svelte';
-  import { toast } from '$lib/toaster';
-  import { pageHref } from '$lib/admin/page-href';
-  import { localizedHref } from '$lib/i18n/locales';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import GmRating from '#lib/components/GmRating.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import ActionForm from '#lib/components/ActionForm.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import TableCard from '#lib/components/TableCard.svelte';
+  import { toast } from '#lib/toaster.js';
+  import { pageHref } from '#lib/admin/page-href.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
   const locale = getLocale();

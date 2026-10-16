@@ -1,15 +1,15 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import CatalogDialog from '$lib/components/admin/CatalogDialog.svelte';
-  import DataTable, { type DataColumn } from '$lib/components/admin/DataTable.svelte';
-  import ListCard from '$lib/components/admin/ListCard.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import UserText from '$lib/components/UserText.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import CatalogDialog from '#lib/components/admin/CatalogDialog.svelte';
+  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import UserText from '#lib/components/UserText.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
 

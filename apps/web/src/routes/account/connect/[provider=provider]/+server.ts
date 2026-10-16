@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { startLink } from '@mesaaberta/core/server/auth/identities';
+import { supabaseOnly } from '#lib/server/auth/external-redirect.js';
 import type { RequestHandler } from './$types';
 
 // A plain GET, like the login: the redirect chain through Supabase and the provider is not a form
@@ -19,5 +20,5 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
     redirect(303, '/account/profile?conta=falhou');
   }
 
-  redirect(303, target);
+  redirect(303, target, supabaseOnly(locals.env));
 };

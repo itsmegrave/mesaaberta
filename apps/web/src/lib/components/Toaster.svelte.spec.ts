@@ -2,7 +2,7 @@ import { page } from 'vitest/browser';
 import { afterEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Toaster from './Toaster.svelte';
-import { toast, toaster } from '$lib/toaster';
+import { toast, toaster } from '#lib/toaster.js';
 
 afterEach(() => toast.clear());
 

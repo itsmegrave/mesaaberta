@@ -1,14 +1,14 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
   import Icon from './Icon.svelte';
-  import type { IconName } from '$lib/icons/names';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import type { FormMessage } from '$lib/forms/message';
-  import { actionSchema } from '$lib/tables/registration';
-  import { registrationError } from '$lib/tables/registration-errors';
-  import { toast } from '$lib/toaster';
+  import type { IconName } from '#lib/icons/names.js';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import type { FormMessage } from '#lib/forms/message.js';
+  import { actionSchema } from '#lib/tables/registration.js';
+  import { registrationError } from '#lib/tables/registration-errors.js';
+  import { toast } from '#lib/toaster.js';
 
   type Props = {
     /** Where to post: `?/leave` on the table's own page, or the table's address plus `?/leave` from elsewhere. */

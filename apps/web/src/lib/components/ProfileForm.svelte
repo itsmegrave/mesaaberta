@@ -1,14 +1,14 @@
 <script lang="ts">
-  import TextInput from '$lib/components/TextInput.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import { browser } from '$app/environment';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import { browser } from '$app/env';
   import { page } from '$app/state';
   import { createQuery } from '@tanstack/svelte-query';
-  import { queryClient } from '$lib/query/context';
-  import { usernameAvailability } from '$lib/query/lookups';
+  import { queryClient } from '#lib/query/context.js';
+  import { usernameAvailability } from '#lib/query/lookups.js';
   const client = queryClient();
-  import { guardDraft } from '$lib/forms/guard.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import { guardDraft } from '#lib/forms/guard.svelte.js';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { tick } from 'svelte';
   import {
     AGE_RANGES,
@@ -19,15 +19,15 @@
     type Gender,
     type ProfileInput,
   } from '@mesaaberta/core/profile/schema';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import type { FormResult } from '$lib/forms/contract';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import type { FormResult } from '#lib/forms/contract.js';
   import Form from './Form.svelte';
   import FormField from './FormField.svelte';
   import ErrorSummary from './ErrorSummary.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import { timezoneOptions } from '@mesaaberta/core/time/timezone';
   import { onMount } from 'svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
   import {
     MAX_SOCIAL_LINKS,
     NETWORKS,
@@ -203,6 +203,7 @@
     errorText(controller.errors.username?.[0]) ??
       (availability === 'taken' ? m.profile_error_taken() : undefined),
   );
+
   const usernameDescription = $derived(
     ['username-hint', usernameError ? 'username-error' : 'username-status'].join(' '),
   );
@@ -213,21 +214,25 @@
       [
         ['username', m.profile_username(), usernameLocked ? undefined : usernameError],
         ['name', m.profile_name(), errorText(controller.errors.name?.[0])],
+
         ['age-range', m.profile_age_range(), errorText(controller.errors.ageRange?.[0])],
+
         ['gender', m.profile_gender(), errorText(controller.errors.gender?.[0])],
+
         [
           'gender-other',
           m.profile_gender_other_label(),
           errorText(controller.errors.genderOther?.[0]),
         ],
+
         ['city', m.profile_city(), errorText(controller.errors.city?.[0])],
+
         ['timezone', m.profile_timezone(), errorText(controller.errors.timezone?.[0])],
       ] as const
     ).flatMap(([id, label, message]) => (message ? [{ id, label, message }] : [])),
   );
 
   // --- the links: a list to add to, remove from and reorder -------------------------------------
-
   // Each row keeps an id of its own, so a row that moves keeps what was typed in it and its focus.
   let nextId = 0;
   let ids = $state($draft.linkNetwork.map(() => nextId++));

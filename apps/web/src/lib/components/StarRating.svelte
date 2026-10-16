@@ -2,7 +2,7 @@
   // Five stars to score something, on Skeleton's Rating Group: arrows move the score, a click sets
   // it, and the form gets the number under `name`. Whole stars only.
   import { RatingGroup } from '@skeletonlabs/skeleton-svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     name,

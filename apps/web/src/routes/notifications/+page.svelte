@@ -1,16 +1,16 @@
 <script lang="ts">
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { navigating, page } from '$app/state';
-  import ListSkeleton from '$lib/components/ListSkeleton.svelte';
-  import { Slow } from '$lib/navigation/slow.svelte';
-  import NotificationAction from '$lib/components/NotificationAction.svelte';
-  import NotificationIcon from '$lib/components/NotificationIcon.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
+  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
+  import { Slow } from '#lib/navigation/slow.svelte.js';
+  import NotificationAction from '#lib/components/NotificationAction.svelte';
+  import NotificationIcon from '#lib/components/NotificationIcon.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import type { NotificationCategory } from '@mesaaberta/core/notifications/kinds';
-  import { notificationIcon, notificationText } from '$lib/notifications/text';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { shownTimezone } from '$lib/time/shown-timezone';
+  import { notificationIcon, notificationText } from '#lib/notifications/text.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
 
   let { data } = $props();
 

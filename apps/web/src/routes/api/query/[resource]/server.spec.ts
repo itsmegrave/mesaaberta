@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse } from 'devalue';
-import { readers, loadRead } from '$lib/server/reads/load';
+import { readers, loadRead } from '#lib/server/reads/load.js';
 import { GET } from './+server';
 const event = (resource: string, viewer: string | null = 'ana', query = '') =>
   ({

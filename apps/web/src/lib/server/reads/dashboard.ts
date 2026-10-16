@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
 import type { RequestEvent } from '@sveltejs/kit';
 

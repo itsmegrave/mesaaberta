@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 </script>
 
 <svelte:head>

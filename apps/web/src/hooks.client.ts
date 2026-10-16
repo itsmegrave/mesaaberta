@@ -1,6 +1,12 @@
 import * as Sentry from '@sentry/sveltekit';
-import { env } from '$env/dynamic/public';
-import { sentryOptionsFor } from '$lib/observability/privacy';
+import { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN } from '$app/env/public';
+import { sentryOptionsFor } from '#lib/observability/privacy.js';
 
-Sentry.init(sentryOptionsFor(env, location.origin, import.meta.env.PROD));
+Sentry.init(
+  sentryOptionsFor(
+    { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN },
+    location.origin,
+    import.meta.env.PROD,
+  ),
+);
 export const handleError = Sentry.handleErrorWithSentry();

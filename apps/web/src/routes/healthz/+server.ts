@@ -1,4 +1,3 @@
-import { json } from '@sveltejs/kit';
 import { checkDatabase } from '@mesaaberta/core/server/db/health';
 import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
 import type { RequestHandler } from './$types';
@@ -17,7 +16,7 @@ export const GET: RequestHandler = async ({ locals }) => {
   const revision = (locals.env as HealthEnv | undefined)?.DEPLOYMENT_SOURCE_SHA?.trim();
   const worker = database === 'ok' && locals.db ? await workerHealth(locals.db) : undefined;
 
-  return json(
+  return Response.json(
     {
       status: healthy ? 'ok' : 'error',
       database,

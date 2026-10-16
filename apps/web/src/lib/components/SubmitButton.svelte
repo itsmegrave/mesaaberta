@@ -1,8 +1,8 @@
 <script lang="ts">
   import Spinner from './Spinner.svelte';
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   import type { Snippet } from 'svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   /**
    * A form's submit button. Pass the controller’s `pending`, `delayed` (500 ms) and `timeout` (8 s).

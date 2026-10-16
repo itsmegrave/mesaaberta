@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/http';
+import { ApiError } from '#lib/api/http.js';
 import { createQueryClient, retryRead } from './client';
 import { readKey, readParams } from './keys';
 import { afterWrite } from './invalidate';

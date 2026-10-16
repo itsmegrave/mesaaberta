@@ -1,12 +1,12 @@
 <script lang="ts">
-  import UserText from '$lib/components/UserText.svelte';
+  import UserText from '#lib/components/UserText.svelte';
   // A destructive action that asks first (Remover da mesa…, Desativar mesa…, Suspender…): the dialog
   // says what will happen, focus starts on "Cancelar", Escape closes, and only the confirm button
   // acts. A bottom sheet on a phone. It opens from anywhere (a menu item, a button): the caller
   // owns `open`.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import type { FormMessage } from '$lib/forms/message';
-  import { m } from '$lib/paraglide/messages';
+  import type { FormMessage } from '#lib/forms/message.js';
+  import { m } from '#lib/paraglide/messages.js';
   import ActionForm from './ActionForm.svelte';
 
   type Props = {

@@ -1,22 +1,22 @@
 <script lang="ts">
   import { navigating, page as current } from '$app/state';
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '$lib/components/admin/DataTable.svelte';
-  import ListCard from '$lib/components/admin/ListCard.svelte';
-  import Media from '$lib/components/admin/Media.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import { shortDate } from '$lib/admin/format';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { pageQuery } from '$lib/query/page.svelte';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import Media from '#lib/components/admin/Media.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import { shortDate } from '#lib/admin/format.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { pageQuery } from '#lib/query/page.svelte.js';
   import { PROFILE_STANDINGS } from '@mesaaberta/core/profile/standing';
-  import { toast } from '$lib/toaster';
-  import type { AdminProfilesView } from '$lib/server/reads/admin-users';
+  import { toast } from '#lib/toaster.js';
+  import type { AdminProfilesView } from '#lib/server/reads/admin-users.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);

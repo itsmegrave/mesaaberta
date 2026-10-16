@@ -1,12 +1,12 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import AuditTimeline from '$lib/components/admin/AuditTimeline.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import { dayLabel, timeLabel } from '$lib/admin/format';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import { dayLabel, timeLabel } from '#lib/admin/format.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
   const locale = getLocale();

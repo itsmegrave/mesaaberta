@@ -2,11 +2,11 @@ import '../../layout.css';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { initialForm } from '$lib/forms/contract';
-import { ANNOUNCEMENT_DEFAULTS } from '$lib/notifications/announcement';
+import { initialForm } from '#lib/forms/contract.js';
+import { ANNOUNCEMENT_DEFAULTS } from '#lib/notifications/announcement.js';
 import { ANNOUNCEMENT_ICONS, TONE_ICON } from '@mesaaberta/core/notifications/kinds';
-import Icon from '$lib/components/Icon.svelte';
-import type { IconName } from '$lib/icons/names';
+import Icon from '#lib/components/Icon.svelte';
+import type { IconName } from '#lib/icons/names.js';
 import Page from './+page.svelte';
 
 const sizes = { all_active_users: 120, game_masters: 14, active_players: 1 };

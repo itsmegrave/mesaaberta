@@ -54,7 +54,7 @@ export const tableFormSchema = z
     // Checked here so the form refuses it before uploading; the server still reads its bytes.
     image: imageFile,
     title: z.string().trim().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
-    // Rich text: stored as the small HTML subset of `$lib/text/rich`, limited by what a reader sees.
+    // Rich text: stored as the small HTML subset of `#lib/text/rich`, limited by what a reader sees.
     description: richText(TABLE_LIMITS.description).default(''),
     extraInfo: richText(TABLE_LIMITS.extraInfo).default(''),
     welcomeMessage: z

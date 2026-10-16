@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { apiRead, ApiError } from '$lib/api/http';
+import { apiRead, ApiError } from '#lib/api/http.js';
 export const availabilitySchema = z.object({ status: z.enum(['free', 'taken', 'invalid']) });
 export async function usernameAvailability(username: string, signal: AbortSignal) {
   const result = availabilitySchema.safeParse(
