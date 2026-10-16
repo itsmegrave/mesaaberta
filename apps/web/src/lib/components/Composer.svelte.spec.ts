@@ -6,7 +6,14 @@ import { MESSAGE_MAX_LENGTH } from '@mesaaberta/core/messages/schema';
 import Composer from './Composer.svelte';
 
 // There is no SvelteKit app around a component test, so handing a result to the router has nothing
-// to talk to (the failed request below has nowhere to go).
+// to talk to, and no server either: sending goes through a transport that fails, as it always did
+// (a real POST reached the test dev server, which answered with a page nobody read, and under Bun it
+// loaded the whole app's server graph to do so, and crashed on a Svelte library's `.svelte` file).
+vi.mock('#lib/forms/action.js', () => ({
+  postAction: vi.fn(async () => {
+    throw new Error('There is no server around a component test.');
+  }),
+}));
 vi.mock('$app/forms', async (original) => ({
   ...(await original<typeof import('$app/forms')>()),
   applyAction: vi.fn(),

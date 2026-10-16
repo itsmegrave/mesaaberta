@@ -11,12 +11,6 @@ import { sveltekit } from '@sveltejs/kit/vite';
 export default defineConfig({
   // `#host` is the one place the web app names its host (see host.config.ts).
   resolve: { alias: { '#host': hostBindingsPath } },
-  // The browser test project's dev server also answers a request a spec does not mock (the Composer's
-  // form POST): loading the app's server graph there fails under Bun on a Svelte library's `.svelte`
-  // file ("Unexpected }" in HydrationBoundary.svelte; plain `vite dev` does not). Nothing depends on
-  // that answer, but Vite's error overlay would cover the page and block the clicks of whichever spec
-  // is running, so a failing request must not draw it.
-  server: { hmr: { overlay: false } },
   // The Svelte libraries ship `.svelte` files, which only Vite can compile: they must go through it
   // and into the server bundle. (A Worker has no node_modules at run time, and Wrangler cannot load a
   // `.svelte` file.) SvelteKit 3 no longer bundles dependencies for SSR on its own. Not everything:
