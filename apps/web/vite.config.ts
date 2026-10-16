@@ -111,6 +111,11 @@ export default defineConfig({
         },
         test: {
           name: 'client',
+          // The dev server answers requests too (a form action, the page's server load), and Svelte
+          // libraries ship `.svelte` files that only Vite can compile: the runtime (Bun) must not load
+          // them itself ("Unexpected }" in HydrationBoundary.svelte, which put up the error overlay and
+          // blocked every click of whichever spec was running).
+          server: { deps: { inline: [/svelte/] } },
           browser: {
             enabled: true,
             provider: playwright(),

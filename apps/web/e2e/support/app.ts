@@ -155,6 +155,9 @@ export async function pickImage(
   page: Page,
   file: { name: string; mimeType: string; buffer: Buffer },
 ) {
+  // The form first draws a plain file input and swaps it for the uploader once it has hydrated: a file
+  // set before the swap is dropped with the input. Wait for the uploader, then pick.
+  await page.locator('[data-scope="file-upload"][data-part="root"]').waitFor();
   await page.locator('input#image').setInputFiles(file);
   const crop = page.getByRole('button', { name: 'Usar este recorte' });
   const chip = page.getByRole('button', { name: /^Tirar / });
