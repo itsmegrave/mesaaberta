@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import TableForm from './TableForm.svelte';
-  import type { FormMessage } from '$lib/forms/message';
-  import { NEW_TABLE_VALUES, type TableFormValues } from '$lib/tables/form-values';
+  import type { FormMessage } from '#lib/forms/message.js';
+  import { NEW_TABLE_VALUES, type TableFormValues } from '#lib/tables/form-values.js';
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';
 
   type Props = {

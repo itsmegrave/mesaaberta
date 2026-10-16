@@ -6,12 +6,12 @@
   // per pick, a key repeated per value, so a link to a filtered list keeps working.
   import { goto } from '$app/navigation';
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import { modalityIcon } from '$lib/tables/modality-icon';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import { modalityIcon } from '#lib/tables/modality-icon.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Item = { name: string; slug: string };
   type Picks = {
@@ -47,8 +47,7 @@
   };
   const apply = (change: Partial<Picks>) =>
     goto(localizedHref(`/tables${query({ ...picked, ...change })}`, locale), {
-      keepFocus: true,
-      noScroll: true,
+      reset: false,
     });
 
   const modalities = [

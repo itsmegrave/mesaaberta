@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 import { CATALOG_KINDS, pageNumber, type CatalogKind } from '@mesaaberta/core/admin/catalog';
 import { pageSizeOf, sortOf, type Sort } from '@mesaaberta/core/admin/list';
-import { requireAdmin } from '$lib/server/admin-access';
-import { catalogActions } from '$lib/server/admin/catalog-actions';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { catalogActions } from '#lib/server/admin/catalog-actions.js';
 import {
   CATALOG_PAGE_SIZE,
   CATALOG_SORTS,
@@ -10,7 +10,7 @@ import {
   listApproved,
   listCatalogAdmin,
 } from '@mesaaberta/core/server/admin/catalog';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

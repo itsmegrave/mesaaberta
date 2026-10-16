@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { confirmLeave } from '$lib/forms/leave-guard.svelte';
+import { confirmLeave } from '#lib/forms/leave-guard.svelte.js';
 import UnsavedChangesDialog from './UnsavedChangesDialog.svelte';
 
 describe('UnsavedChangesDialog', () => {

@@ -9,7 +9,7 @@ type SentryEnv = { PUBLIC_SENTRY_DSN?: string; PUBLIC_SENTRY_ORIGIN?: string };
 
 /**
  * Sentry's settings for the web app, server and browser alike. The DSN is public by design (the
- * browser SDK ships it), so it comes from `$env/dynamic/public`. Nothing is sent without a DSN,
+ * browser SDK ships it), so it comes from `$app/env/public` (declared in `src/env.ts`). Nothing is sent without a DSN,
  * outside a production build, or from an origin other than `PUBLIC_SENTRY_ORIGIN` when that is set
  * (preview URLs and local builds stay quiet).
  */

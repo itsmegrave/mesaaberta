@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import ProviderLogo from './ProviderLogo.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { next }: { next: string } = $props();
 

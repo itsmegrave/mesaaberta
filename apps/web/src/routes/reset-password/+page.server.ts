@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-import { initialForm, validateStringForm } from '$lib/forms/contract';
-import { formMessage } from '$lib/forms/server';
-import { newPasswordSchema } from '$lib/auth/credentials';
-import { withoutSecrets } from '$lib/forms/server';
+import { initialForm, validateStringForm } from '#lib/forms/contract.js';
+import { formMessage } from '#lib/forms/server.js';
+import { newPasswordSchema } from '#lib/auth/credentials.js';
+import { withoutSecrets } from '#lib/forms/server.js';
 import { changePassword, type ChangePasswordResult } from '@mesaaberta/core/server/auth/password';
 import type { Actions, PageServerLoad } from './$types';
 

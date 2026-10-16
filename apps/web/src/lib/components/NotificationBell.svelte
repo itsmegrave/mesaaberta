@@ -1,14 +1,14 @@
 <script lang="ts">
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
-  import Icon from '$lib/components/Icon.svelte';
-  import NotificationAction from '$lib/components/NotificationAction.svelte';
-  import NotificationIcon from '$lib/components/NotificationIcon.svelte';
-  import { notificationIcon, notificationText, type Shown } from '$lib/notifications/text';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { shownTimezone } from '$lib/time/shown-timezone';
+  import Icon from '#lib/components/Icon.svelte';
+  import NotificationAction from '#lib/components/NotificationAction.svelte';
+  import NotificationIcon from '#lib/components/NotificationIcon.svelte';
+  import { notificationIcon, notificationText, type Shown } from '#lib/notifications/text.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
 
   type Item = Shown & { id: string; read: boolean; createdAt: Date };
 

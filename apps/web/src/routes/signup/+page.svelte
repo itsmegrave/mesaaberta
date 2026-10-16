@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { resolve } from '$app/paths';
-  import AuthShell from '$lib/components/AuthShell.svelte';
-  import CredentialsForm from '$lib/components/CredentialsForm.svelte';
-  import LegalConsent from '$lib/components/LegalConsent.svelte';
-  import ProviderButtons from '$lib/components/ProviderButtons.svelte';
-  import { credentialsSchema } from '$lib/auth/credentials';
-  import { m } from '$lib/paraglide/messages';
+  import AuthShell from '#lib/components/AuthShell.svelte';
+  import CredentialsForm from '#lib/components/CredentialsForm.svelte';
+  import LegalConsent from '#lib/components/LegalConsent.svelte';
+  import ProviderButtons from '#lib/components/ProviderButtons.svelte';
+  import { credentialsSchema } from '#lib/auth/credentials.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
@@ -39,7 +39,7 @@
       <h2 class="text-2xl font-semibold">{m.signup_check_email_title()}</h2>
       <p class="mt-3 text-lg">{m.signup_check_email_text()}</p>
       <a
-        href="{resolve('/login')}?next={encodeURIComponent(data.next)}"
+        href="{resolve('login')}?next={encodeURIComponent(data.next)}"
         class="mt-4 inline-block link-underline font-semibold text-link"
       >
         {m.signup_sign_in()}
@@ -62,7 +62,7 @@
       <p>
         {m.signup_have_account()}
         <a
-          href="{resolve('/login')}?next={encodeURIComponent(data.next)}"
+          href="{resolve('login')}?next={encodeURIComponent(data.next)}"
           class="link-underline font-semibold text-link"
         >
           {m.signup_sign_in()}

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import ListSearch from '$lib/components/admin/ListSearch.svelte';
-  import Pager from '$lib/components/admin/Pager.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import UserText from '$lib/components/UserText.svelte';
-  import { dayLabel, timeLabel } from '$lib/admin/format';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import ListSearch from '#lib/components/admin/ListSearch.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import UserText from '#lib/components/UserText.svelte';
+  import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
   import { AUDIT_KINDS, type AuditKind } from '@mesaaberta/core/admin/report-filters';
-  import { localizedHref } from '$lib/i18n/locales';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AuditLog } from '@mesaaberta/core/server/moderation/admin';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
   const locale = getLocale();

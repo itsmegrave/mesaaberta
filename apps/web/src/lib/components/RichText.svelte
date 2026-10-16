@@ -2,7 +2,7 @@
   import { cleanRichHtml } from '@mesaaberta/core/text/rich';
   import './rich-text.css';
 
-  /** Rich text as the HTML subset of `$lib/text/rich`: a GM's description, a welcome message. */
+  /** Rich text as the HTML subset of `#lib/text/rich`: a GM's description, a welcome message. */
   let { html, class: className = '' }: { html: string; class?: string } = $props();
 
   // Cleaned again here, whatever the database holds, so nothing that reaches the page can run code.

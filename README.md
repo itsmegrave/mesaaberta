@@ -40,7 +40,7 @@ bun run dev
 
 ```
 apps/web/src/routes/   pages and layouts
-apps/web/src/lib/      shared code, imported through $lib
+apps/web/src/lib/      shared code, imported through #lib/...
 apps/web/e2e/          Playwright tests (*.e2e.ts)
 apps/web/messages/     translations
 apps/api, apps/worker  the API and background Workers
@@ -104,7 +104,7 @@ bun run dev
 
 `bun run db:down` stops it. After changing the schema, run `bun run db:generate`, read the SQL it wrote, and commit it. Tests run the real migrations on an in-process Postgres (PGlite), so `bun run test` needs no Docker.
 
-**RPG systems.** The systems tables are are rows in `systems`, seeded by a migration so every environment has them after `bun run db:migrate`. Each keeps its name exactly as written and has a unique slug for its URL, made by `slugify()` in `src/lib/slug.ts`; `position` keeps the source order (most played first, then A to Z). `game_tables.system_id` points at a system. Read them with `listSystems(db)` and `findSystemBySlug(db, slug)` from `$lib/server/systems`, and never keep a second list of systems. Slugs never change once shipped, because URLs and invites use them. To add a system, write a new migration with an `INSERT ... ON CONFLICT ("slug") DO NOTHING`.
+**RPG systems.** The systems tables are are rows in `systems`, seeded by a migration so every environment has them after `bun run db:migrate`. Each keeps its name exactly as written and has a unique slug for its URL, made by `slugify()` in `src/lib/slug.ts`; `position` keeps the source order (most played first, then A to Z). `game_tables.system_id` points at a system. Read them with `listSystems(db)` and `findSystemBySlug(db, slug)` from `#lib/server/systems`, and never keep a second list of systems. Slugs never change once shipped, because URLs and invites use them. To add a system, write a new migration with an `INSERT ... ON CONFLICT ("slug") DO NOTHING`.
 
 **Browsing tables.** `/tables` lists active tables that still have a session ahead (soonest first, filterable by system) and `/tables/<slug>` shows one; an unknown or disabled slug is the translated 404. A table past its session (awaiting the GM's confirmation, concluded or not held) is out of the list but still found at its slug, so old links work, with its status shown. The queries are in `src/lib/server/tables/queries.ts` and the next-session logic in `schedule.ts`: a weekly campaign keeps its wall-clock time in its own timezone across daylight-saving changes, and only `FREQ=WEEKLY` (with `INTERVAL`) is understood. The navigation always links to "Mesas"; sign-in is available whenever authentication is configured. Seats left are every seat until registrations exist (#11). The end-to-end tests for these pages need the seeded database and skip locally when there is none (CI always has one).
 
@@ -143,7 +143,7 @@ Sign-in goes through Supabase Auth (Google and Discord) with cookie sessions fro
 In server code, ask who is signed in through `locals.getUser()`. It asks Supabase to verify the session token, and never trusts the cookie on its own. To protect a page or an action:
 
 ```ts
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.ts';
 
 export const load = async ({ locals, url }) => {
   const user = await requireUser(locals, url); // anonymous visitors go to /login and come back
@@ -183,8 +183,8 @@ To offer another provider later (Apple, Facebook, ...), enable it in Supabase, a
 Every access decision lives in `src/lib/server/auth/policy.ts`: a pure `can(actor, action, resource)`, deny by default. Anonymous visitors, suspended accounts, unknown actions and a missing resource are all refused. The actor is the signed-in user's profile, from `await locals.getProfile()`.
 
 ```ts
-import { authorize } from '$lib/server/auth/policy';
-import { failFrom } from '$lib/server/errors';
+import { authorize } from '#lib/server/auth/policy';
+import { failFrom } from '#lib/server/errors';
 
 export const actions = {
   edit: async ({ locals }) => {

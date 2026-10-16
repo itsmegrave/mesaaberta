@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Toast } from '@skeletonlabs/skeleton-svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { toaster } from '$lib/toaster';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toaster } from '#lib/toaster.js';
 </script>
 
 <Toast.Group {toaster}>

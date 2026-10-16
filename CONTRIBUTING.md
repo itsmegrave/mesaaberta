@@ -43,13 +43,13 @@ Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui
 
 `validateStringForm` handles only allowlisted scalar text fields. Arrays, numbers, booleans and files need explicit domain decoders before using it in other flows. Never allowlist passwords or files for echoing in action responses. Use `validateFormData` with explicit defaults and array/boolean/file fields for compound forms. Strip files with `responseForm` and passwords with `withoutSecrets` before returning any action response.
 
-Multiline text a person writes for others to read (a table's description, the welcome message, an announcement) uses `RichTextField` and is shown with `RichText`. It is stored as the small HTML subset of `src/lib/text/rich.ts` (paragraphs, headings, bold, italic, underline, strikethrough, lists, quotes, code, dividers and http/https/mailto links; no images, colours or alignment, because the CSP blocks inline `style`). Validate it with `richText(max)` from `$lib/text/rich-schema`, whose limit counts what a reader sees, and show it only through `RichText`, the one place `{@html}` is allowed. Calendar, Instagram and the plain-text e-mail copy use `toPlainText`. Chat messages and rating comments use the plain-text `TextArea` wrapper.
+Multiline text a person writes for others to read (a table's description, the welcome message, an announcement) uses `RichTextField` and is shown with `RichText`. It is stored as the small HTML subset of `src/lib/text/rich.ts` (paragraphs, headings, bold, italic, underline, strikethrough, lists, quotes, code, dividers and http/https/mailto links; no images, colours or alignment, because the CSP blocks inline `style`). Validate it with `richText(max)` from `#lib/text/rich-schema`, whose limit counts what a reader sees, and show it only through `RichText`, the one place `{@html}` is allowed. Calendar, Instagram and the plain-text e-mail copy use `toPlainText`. Chat messages and rating comments use the plain-text `TextArea` wrapper.
 
 Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
 
 ## Icons
 
-Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`$lib/components/Icon.svelte`).
+Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`#lib/components/Icon.svelte`).
 
 To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Reicon](https://icon-sets.iconify.design/reicon/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). UI glyphs use Reicon's default line weight (the plain names, never the `-filled` ones); the solid Game Icons are for navigation, roles and messaging. Game Icons names carry the `game-icons:` prefix, and navigation, roles and messaging use them: `tavern-sign` (Mesas), `dice-twenty-faces-twenty` (Abrir mesa), `tabletop-players` (Minhas mesas), `black-knight-helm` (Admin), `meeple` (people), `dungeon-gate` (Entrar only), `bar-stool` (Pedir vaga), `exit-door` (Sair), `scroll-quill` (every messaging icon, no speech bubbles) and `house` (Início in breadcrumbs). Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `bun run icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
 
@@ -70,4 +70,4 @@ A new language is served under its own prefix (`/en`), and pt-BR stays at `/`. P
 
 ## Internal links
 
-Link to pages with `localizedHref(path, getLocale())` from `$lib/i18n/locales`, so a reader in English stays in English.
+Link to pages with `localizedHref(path, getLocale())` from `#lib/i18n/locales.ts`, so a reader in English stays in English.

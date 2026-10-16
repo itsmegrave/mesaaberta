@@ -1,11 +1,11 @@
 <script lang="ts">
   // The admin's sections as a column beside the content, in groups, with what waits on an admin
   // counted beside them. Phones have no column: the page head holds the "Seção: …" menu instead.
-  import Icon from '$lib/components/Icon.svelte';
-  import { adminGroups, sectionOf, type AdminCounts } from '$lib/admin/sections';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import { adminGroups, sectionOf, type AdminCounts } from '#lib/admin/sections.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     route,

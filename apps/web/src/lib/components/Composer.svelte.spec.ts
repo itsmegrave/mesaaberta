@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { initialForm } from '$lib/forms/contract';
+import { initialForm } from '#lib/forms/contract.js';
 import { MESSAGE_MAX_LENGTH } from '@mesaaberta/core/messages/schema';
 import Composer from './Composer.svelte';
 

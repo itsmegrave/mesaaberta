@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   /**
    * At the top of a form after a failed submit: how many fields need attention, each with a link

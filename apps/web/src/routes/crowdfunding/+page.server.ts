@@ -7,7 +7,7 @@ import {
   listCrowdfundings,
 } from '@mesaaberta/core/server/crowdfunding/service';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { moderationAction } from '$lib/server/moderation/form-action';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

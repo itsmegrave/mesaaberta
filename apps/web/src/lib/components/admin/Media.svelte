@@ -1,9 +1,9 @@
 <script lang="ts">
   // What sits before the title of a list row: a table's cover (56×36), a person's picture, or an icon
   // in a tile (a report, a notification, a decision). Decorative: the title beside it names the row.
-  import Avatar from '$lib/components/Avatar.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import type { IconName } from '$lib/icons/names';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import type { IconName } from '#lib/icons/names.js';
 
   let {
     kind,

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import CredentialsForm from './CredentialsForm.svelte';
-  import { credentialsSchema } from '$lib/auth/credentials';
-  import type { FormMessage } from '$lib/forms/message';
+  import { credentialsSchema } from '#lib/auth/credentials.js';
+  import type { FormMessage } from '#lib/forms/message.js';
 
   type Props = {
     mode: 'login' | 'signup';

@@ -3,10 +3,10 @@ import { page } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import NotificationAction from './NotificationAction.svelte';
-import { postAction } from '$lib/forms/action';
+import { postAction } from '#lib/forms/action.js';
 import { applyAction } from '$app/forms';
 
-vi.mock('$lib/forms/action', () => ({ postAction: vi.fn() }));
+vi.mock('#lib/forms/action.js', () => ({ postAction: vi.fn() }));
 vi.mock('$app/forms', () => ({ applyAction: vi.fn(async () => {}) }));
 afterEach(() => vi.resetAllMocks());
 

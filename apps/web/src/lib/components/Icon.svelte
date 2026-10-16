@@ -1,8 +1,8 @@
 <script lang="ts">
-  // The app's icons by name, from the per-icon components in `$lib/icons/registry`.
-  import { DRAWINGS } from '$lib/icons/drawings.generated';
-  import { ICONS } from '$lib/icons/registry';
-  import type { IconName } from '$lib/icons/names';
+  // The app's icons by name, from the per-icon components in `#lib/icons/registry.js`.
+  import { DRAWINGS } from '#lib/icons/drawings.generated.js';
+  import { ICONS } from '#lib/icons/registry.js';
+  import type { IconName } from '#lib/icons/names.js';
 
   let {
     name,

@@ -1,7 +1,7 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { and, eq, ne } from 'drizzle-orm';
-import { initialForm } from '$lib/forms/contract';
-import { requireUser } from '$lib/server/auth/guard';
+import { initialForm } from '#lib/forms/contract.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';

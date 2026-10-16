@@ -4,8 +4,8 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Option = { value: string; label: string; count?: number };
 
@@ -41,7 +41,7 @@
         ),
         locale,
       ),
-      { keepFocus: true, noScroll: true },
+      { reset: false },
     );
   // The radio name must not clash with another group on the page, nor with the same filter drawn
   // for the other screen size.

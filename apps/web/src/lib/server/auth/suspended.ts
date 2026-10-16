@@ -1,4 +1,5 @@
-import { redirect, type Handle } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 
 /** Where a suspended account lands: the login page, with the message that says why. */

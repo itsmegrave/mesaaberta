@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   // Frames a picked image before it is sent: drag to move, zoom with the buttons, the mouse wheel
   // or a pinch, or nudge with the arrow keys and +/- once the frame has focus. Cropper.js does the
   // drawing (its styles go through the CSSOM, which the CSP allows); what leaves is one new file,
@@ -10,9 +10,9 @@
   import type Cropper from 'cropperjs';
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { onDestroy, onMount } from 'svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { encodeImage } from '$lib/forms/encode-image';
-  import { m } from '$lib/paraglide/messages';
+  import Icon from '#lib/components/Icon.svelte';
+  import { encodeImage } from '#lib/forms/encode-image.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     file,

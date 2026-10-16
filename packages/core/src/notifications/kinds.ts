@@ -1,5 +1,5 @@
 // Relative imports only: the events handler that writes notifications is bundled into the Cron
-// Trigger's Worker without SvelteKit's `$lib` alias.
+// Trigger's Worker without SvelteKit's `#lib` alias.
 
 export const NOTIFICATION_CATEGORIES = [
   'table',

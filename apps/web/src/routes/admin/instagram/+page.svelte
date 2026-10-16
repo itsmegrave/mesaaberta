@@ -1,16 +1,16 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { toast } from '$lib/toaster';
-  import AdminActionForm from '$lib/components/admin/AdminActionForm.svelte';
-  import { instagramFeedback } from '$lib/admin/instagram-feedback';
-  import Icon from '$lib/components/Icon.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { toast } from '#lib/toaster.js';
+  import AdminActionForm from '#lib/components/admin/AdminActionForm.svelte';
+  import { instagramFeedback } from '#lib/admin/instagram-feedback.js';
+  import Icon from '#lib/components/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   let connecting = $state(false);

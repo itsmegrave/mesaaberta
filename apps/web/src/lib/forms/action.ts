@@ -1,5 +1,4 @@
-import { deserialize } from '$app/forms';
-import type { ActionResult } from '@sveltejs/kit';
+import { deserialize, type ActionResult } from '$app/forms';
 
 /** Same-origin SvelteKit action transport; the caller decides how to display/apply its result. */
 export async function postAction(action: string, data: FormData): Promise<ActionResult> {

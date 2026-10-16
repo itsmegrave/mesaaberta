@@ -1,6 +1,6 @@
 import type { z } from 'zod';
-import type { FormMessage } from '$lib/forms/message';
-import { m } from '$lib/paraglide/messages';
+import type { FormMessage } from '#lib/forms/message.js';
+import { m } from '#lib/paraglide/messages.js';
 import { formatWait } from '@mesaaberta/core/tables/format';
 import type { tableFormSchema } from '@mesaaberta/core/tables/schema';
 import { DEFAULT_WELCOME_MESSAGE } from '@mesaaberta/core/tables/welcome';

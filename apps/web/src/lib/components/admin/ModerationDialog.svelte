@@ -1,13 +1,13 @@
 <script lang="ts">
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import TextArea from '$lib/components/TextArea.svelte';
-  import UserText from '$lib/components/UserText.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
+  import UserText from '#lib/components/UserText.svelte';
   // One moderation decision behind a confirmation: accept, dismiss, close a table, ban or revoke a
   // ban. Mounted per action; the server authorizes it again.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import type { ZodType } from 'zod';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { reasonLabel } from '$lib/moderation/labels';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { reasonLabel } from '#lib/moderation/labels.js';
   import {
     BAN_DURATIONS,
     RESOLUTION_NOTE_MAX,
@@ -15,11 +15,11 @@
     type ReportReason,
     type ReportTarget,
   } from '@mesaaberta/core/moderation/reports';
-  import Form from '$lib/components/Form.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   let {
     action,

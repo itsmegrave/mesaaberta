@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   // Mounted once, in the root layout. It opens when a form with unsaved changes calls
   // `confirmLeave` (the shared draft guard) and answers it.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import { leaveGuard } from '$lib/forms/leave-guard.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import { leaveGuard } from '#lib/forms/leave-guard.svelte.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   const answer = (leave: boolean) => leaveGuard.pending?.(leave);
 </script>

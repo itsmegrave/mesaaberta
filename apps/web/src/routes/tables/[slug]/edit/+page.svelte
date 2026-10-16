@@ -1,18 +1,18 @@
 <script lang="ts">
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { guardDraft } from '$lib/forms/guard.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import { guardDraft } from '#lib/forms/guard.svelte.js';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import { page } from '$app/state';
-  import TableForm from '$lib/components/TableForm.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import TableForm from '#lib/components/TableForm.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';
-  import { toast } from '$lib/toaster';
+  import { toast } from '#lib/toaster.js';
 
   let { data, form = null } = $props();
   const options = pageQuery(

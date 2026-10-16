@@ -1,9 +1,9 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
-import { requireUser } from '$lib/server/auth/guard';
-import { failFrom } from '$lib/server/fail-from';
-import { openDirectConversation } from '$lib/server/messages/open-direct';
-import { loadRead } from '$lib/server/reads/load';
-import { confirmationActions } from '$lib/server/tables/confirmation-actions';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { failFrom } from '#lib/server/fail-from.js';
+import { openDirectConversation } from '#lib/server/messages/open-direct.js';
+import { loadRead } from '#lib/server/reads/load.js';
+import { confirmationActions } from '#lib/server/tables/confirmation-actions.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = (event) => loadRead(event, 'manage');

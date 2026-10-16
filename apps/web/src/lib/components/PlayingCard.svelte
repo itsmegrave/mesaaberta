@@ -1,10 +1,10 @@
 <script lang="ts">
-  import UserLink from '$lib/components/UserLink.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
   import { formatSession } from '@mesaaberta/core/tables/format';
-  import { shownTimezone } from '$lib/time/shown-timezone';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import ActionForm from './ActionForm.svelte';
 
   type Item = {

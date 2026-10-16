@@ -4,8 +4,8 @@ import { page } from 'vitest/browser';
 import { focusManager, onlineManager } from '@tanstack/svelte-query';
 import { createQueryClient } from './client';
 import { readKey, type ReadSeed } from './keys';
-import { invalidateAll } from '$app/navigation';
-vi.mock('$app/navigation', () => ({ invalidateAll: vi.fn(async () => {}) }));
+import { refreshAll } from '$app/navigation';
+vi.mock('$app/navigation', () => ({ refreshAll: vi.fn(async () => {}) }));
 import Harness from './QueryHarness.svelte';
 const seed = (): ReadSeed => ({
   resource: 'preview',
@@ -80,7 +80,7 @@ describe('server seeded page queries', () => {
     const readSeed = { ...seed(), resource: 'detail' as const, viewer: 'ana', params: 'slug=mesa' };
     await render(Harness, { client, data: { value: 'private', readSeed } });
     await page.getByRole('button', { name: 'Refresh' }).click();
-    await expect.poll(() => vi.mocked(invalidateAll).mock.calls.length).toBe(1);
+    await expect.poll(() => vi.mocked(refreshAll).mock.calls.length).toBe(1);
     expect(client.getQueryData(readKey(readSeed))).toBeUndefined();
     expect(request).toHaveBeenCalledTimes(1);
   });

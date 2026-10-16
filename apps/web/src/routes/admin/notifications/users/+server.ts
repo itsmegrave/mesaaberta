@@ -1,5 +1,5 @@
-import { error, json } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
+import { error } from '@sveltejs/kit';
+import { requireAdmin } from '#lib/server/admin-access.js';
 import { searchRecipients } from '@mesaaberta/core/server/notifications/announcements';
 import type { RequestHandler } from './$types';
 
@@ -9,5 +9,5 @@ export const GET: RequestHandler = async ({ locals, url }) => {
   if (!locals.db) error(503, 'Database not configured');
 
   const people = await searchRecipients(locals.db, url.searchParams.get('q') ?? '');
-  return json(people.map((person) => person.username));
+  return Response.json(people.map((person) => person.username));
 };

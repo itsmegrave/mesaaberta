@@ -1,15 +1,15 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { gameTables } from '@mesaaberta/core/server/db/schema';
-import { failFrom } from '$lib/server/fail-from';
-import { openDirectConversation } from '$lib/server/messages/open-direct';
-import { loadRead } from '$lib/server/reads/load';
+import { failFrom } from '#lib/server/fail-from.js';
+import { openDirectConversation } from '#lib/server/messages/open-direct.js';
+import { loadRead } from '#lib/server/reads/load.js';
 
 import { submitRating } from '@mesaaberta/core/server/ratings/service';
 import { ratingSchema } from '@mesaaberta/core/tables/rating';
-import { joinSchema, playerActionSchema, tableActionSchema } from '$lib/tables/registration';
-import { runRegistrationAction } from '$lib/server/registrations/form-action';
+import { joinSchema, playerActionSchema, tableActionSchema } from '#lib/tables/registration.js';
+import { runRegistrationAction } from '#lib/server/registrations/form-action.js';
 import {
   approveRegistration,
   declineRegistration,
@@ -18,7 +18,7 @@ import {
   removePlayer,
 } from '@mesaaberta/core/server/registrations/service';
 import { reportSchema } from '@mesaaberta/core/moderation/reports';
-import { moderationAction } from '$lib/server/moderation/form-action';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
 import { fileReport } from '@mesaaberta/core/server/moderation/reports';
 import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {

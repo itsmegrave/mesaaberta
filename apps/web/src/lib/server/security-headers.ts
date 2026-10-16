@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 
 // The Content-Security-Policy is set by SvelteKit itself (`kit.csp` in vite.config.ts), because
 // the per-request nonce has to be stamped on the inline scripts it renders.

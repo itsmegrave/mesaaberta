@@ -1,4 +1,4 @@
-import type { IconName } from '$lib/icons/names';
+import type { IconName } from '#lib/icons/names.js';
 
 /** The icon that stands for how a table meets: a globe online, a map pin in person. */
 export const modalityIcon = (modality: 'online' | 'in_person'): IconName =>

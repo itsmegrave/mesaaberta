@@ -111,7 +111,7 @@ describe('actions', () => {
     body.append('id', n1);
     body.append('id', n1);
     body.set('next', '/tables');
-    e.request = new Request(e.url, { method: 'POST', body });
+    (e as { request: Request }).request = new Request(e.url, { method: 'POST', body });
     expect(await location(act('read', e))).toBe('/tables');
     expect(markRead).not.toHaveBeenCalled();
   });

@@ -1,6 +1,6 @@
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
-import { validateStringForm } from '$lib/forms/contract';
+import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '../admin-access';
 import { decideViaApi } from '../api-decide';
 import { requireUser } from '../auth/guard';

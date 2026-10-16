@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   // On the blue panel of the sign-in pages the tabletop is a shade instead of blue, and the lamp
   // colours are the light ones.

@@ -34,7 +34,7 @@ export function supabaseAdminFrom(env: AdminEnv | undefined): SupabaseAdmin | nu
 /**
  * A server-only Supabase client for Auth Admin operations. `secretKey` is a Supabase secret key
  * (`sb_secret_...`; the legacy `service_role` key also works). It bypasses RLS, so this module must
- * only be imported from `$lib/server` code and the client deliberately exposes no general database
+ * only be imported from `#lib/server` code and the client deliberately exposes no general database
  * or storage API.
  */
 export function createSupabaseAdmin(url: string, secretKey: string): SupabaseAdmin {

@@ -1,13 +1,12 @@
 <script lang="ts">
-  import Form from '$lib/components/Form.svelte';
+  import Form from '#lib/components/Form.svelte';
   import type { Snippet } from 'svelte';
-  import { deserialize, applyAction } from '$app/forms';
-  import { invalidateAll } from '$app/navigation';
+  import { deserialize, applyAction, type ActionResult } from '$app/forms';
+  import { refreshAll } from '$app/navigation';
   import { createMutation } from '@tanstack/svelte-query';
-  import type { ActionResult } from '@sveltejs/kit';
-  import { queryClient } from '$lib/query/context';
-  import { toast } from '$lib/toaster';
-  import { m } from '$lib/paraglide/messages';
+  import { queryClient } from '#lib/query/context.js';
+  import { toast } from '#lib/toaster.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     action,
@@ -35,7 +34,7 @@
         if (result.type === 'redirect') await applyAction(result);
         else {
           onresult(result);
-          await invalidateAll();
+          await refreshAll();
         }
       },
       onError: () => toast.error(m.admin_dialog_error()),

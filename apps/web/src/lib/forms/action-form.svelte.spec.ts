@@ -3,11 +3,11 @@ import { page, userEvent } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { applyAction } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
+import { refreshAll } from '$app/navigation';
 import Harness from './ActionFormHarness.svelte';
 import { postAction } from './action';
 
-vi.mock('$app/navigation', () => ({ invalidateAll: vi.fn(async () => {}) }));
+vi.mock('$app/navigation', () => ({ refreshAll: vi.fn(async () => {}) }));
 vi.mock('$app/forms', async (original) => ({
   ...(await original<typeof import('$app/forms')>()),
   // Component tests have no initialized SvelteKit app/transport decoders.
@@ -95,7 +95,7 @@ describe('action form submission', () => {
     await expect.element(page.getByRole('alert')).toHaveTextContent('taken');
     await expect.element(input).toHaveValue('Horror');
     expect(success).not.toHaveBeenCalled();
-    expect(invalidateAll).not.toHaveBeenCalled();
+    expect(refreshAll).not.toHaveBeenCalled();
   });
   it('refreshes after confirmed success without resetting the draft', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(response('success'));
@@ -104,7 +104,7 @@ describe('action form submission', () => {
     await page.getByRole('textbox').fill('Terror');
     await page.getByRole('button', { name: 'Save' }).click();
     await vi.waitFor(() => expect(success).toHaveBeenCalledTimes(1));
-    expect(invalidateAll).toHaveBeenCalledTimes(1);
+    expect(refreshAll).toHaveBeenCalledTimes(1);
     await expect.element(page.getByRole('textbox')).toHaveValue('Terror');
   });
   it('does not retry a failed transport or discard typed text', async () => {

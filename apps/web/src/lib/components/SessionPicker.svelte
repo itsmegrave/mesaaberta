@@ -3,9 +3,9 @@
   // selects, the length as 2 h / 3 h / 4 h / Outra, and one sentence saying it back, with the zone.
   // The form gets `startsAtLocal` as `YYYY-MM-DDTHH:mm` and `durationHours` as a number.
   import { DatePicker, parseDate } from '@skeletonlabs/skeleton-svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
   import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
 
   let {

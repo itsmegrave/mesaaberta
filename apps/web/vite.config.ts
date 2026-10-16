@@ -5,10 +5,12 @@ import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
-import { hostAdapter, hostSentry } from './host.config.ts';
+import { hostAdapter, hostBindingsPath, hostSentry } from './host.config.ts';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+  // `#host` is the one place the web app names its host (see host.config.ts).
+  resolve: { alias: { '#host': hostBindingsPath } },
   plugins: [
     sentrySvelteKit({
       // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
@@ -31,9 +33,6 @@ export default defineConfig({
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
       },
       adapter: hostAdapter(),
-      experimental: {
-        instrumentation: { server: true },
-      },
       // Checks for a new deploy every minute; the root layout offers a refresh without interrupting
       // the visitor's navigation or form entry.
       version: { pollInterval: 60_000 },
@@ -119,6 +118,8 @@ export default defineConfig({
         test: {
           name: 'server',
           environment: 'node',
+          // Svelte libraries ship `.svelte` files, which Node cannot load: Vite must transform them.
+          server: { deps: { inline: [/svelte/] } },
           // Tests that start an in-process Postgres (PGlite) take a moment when the machine is busy.
           testTimeout: 20_000,
           hookTimeout: 20_000,

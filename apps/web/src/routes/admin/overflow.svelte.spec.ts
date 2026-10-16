@@ -9,7 +9,7 @@ import Catalog from './catalog/+page.svelte';
 import Overview from './+page.svelte';
 
 const location = vi.hoisted(() => ({ path: '/admin' }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
 vi.mock('$app/state', () => ({
   navigating: { to: null },
   page: {
@@ -23,7 +23,7 @@ vi.mock('$app/state', () => ({
     },
   },
 }));
-vi.mock('$lib/query/page.svelte', () => ({
+vi.mock('#lib/query/page.svelte.js', () => ({
   pageQuery: (read: () => unknown) => ({
     get data() {
       return read();

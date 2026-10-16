@@ -44,7 +44,7 @@
 </script>
 
 <script lang="ts">
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   /**
    * A status as a dot and a word in a pill (the design system's StatusBadge: 28px, a hairline border

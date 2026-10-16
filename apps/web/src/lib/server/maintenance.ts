@@ -1,6 +1,7 @@
-import type { Handle, RequestEvent } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
+import type { RequestEvent } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 
 /** Where the maintenance screen lives. Visitors never go there: it is served at the address they asked for. */
 export const MAINTENANCE_PATH = '/maintenance';
@@ -18,6 +19,7 @@ const exactExempt = new Set([
   '/favicon.ico',
   '/site.webmanifest',
 ]);
+
 const prefixExempt = ['/login/', '/_app/', '/favicon-', '/android-chrome-', '/apple-touch-icon'];
 
 export const isExempt = (pathname: string) =>

@@ -1,6 +1,6 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
-import { next } from '$lib/forms/next';
+import { next } from '#lib/forms/next.js';
 import { isLocalDateTime } from '@mesaaberta/core/tables/schema';
 
 /** "It happened" and "it did not": only where to come back to. */

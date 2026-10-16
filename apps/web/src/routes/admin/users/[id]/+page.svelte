@@ -1,15 +1,15 @@
 <script lang="ts">
-  import GmRating from '$lib/components/GmRating.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import AuditTimeline from '$lib/components/admin/AuditTimeline.svelte';
-  import ActionForm from '$lib/components/ActionForm.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import StatusBadge from '$lib/components/StatusBadge.svelte';
-  import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
+  import GmRating from '#lib/components/GmRating.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import ActionForm from '#lib/components/ActionForm.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import StatusBadge from '#lib/components/StatusBadge.svelte';
+  import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import {
     accountSchema,
     banSchema,
@@ -17,9 +17,9 @@
     TABLE_REPORTS_WARNING,
   } from '@mesaaberta/core/moderation/reports';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { toast } from '$lib/toaster';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { m } from '$lib/paraglide/messages';
+  import { toast } from '#lib/toaster.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { data } = $props();
   const locale = getLocale();

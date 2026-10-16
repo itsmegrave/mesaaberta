@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { listAdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { crowdfundingActions } from '$lib/server/moderation/admin-actions';
+import { crowdfundingActions } from '#lib/server/moderation/admin-actions.js';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.

@@ -1,45 +1,42 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   import './layout.css';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
-  import { createQueryClient } from '$lib/query/client';
-  import { provideQueryClient } from '$lib/query/context';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import { apiRead } from '$lib/api/http';
-  import { BADGES_KEY, type Badges } from '$lib/query/badges';
-  import { browser } from '$app/environment';
+  import { createQueryClient } from '#lib/query/client.js';
+  import { provideQueryClient } from '#lib/query/context.js';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import { apiRead } from '#lib/api/http.js';
+  import { BADGES_KEY, type Badges } from '#lib/query/badges.js';
+  import { browser } from '$app/env';
   const client = createQueryClient();
   provideQueryClient(client);
   import { asset, resolve } from '$app/paths';
-  import { invalidateAll } from '$app/navigation';
+  import { refreshAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
-  import ChatDrawer from '$lib/components/ChatDrawer.svelte';
-  import AccountMenu from '$lib/components/AccountMenu.svelte';
-  import BottomTabBar from '$lib/components/BottomTabBar.svelte';
-  import ListSkeleton, { type SkeletonKind } from '$lib/components/ListSkeleton.svelte';
-  import NotificationBell from '$lib/components/NotificationBell.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SideNav from '$lib/components/SideNav.svelte';
-  import TableLogo from '$lib/components/TableLogo.svelte';
-  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-  import Toaster from '$lib/components/Toaster.svelte';
-  import UnsavedChangesDialog from '$lib/components/UnsavedChangesDialog.svelte';
+  import ChatDrawer from '#lib/components/ChatDrawer.svelte';
+  import AccountMenu from '#lib/components/AccountMenu.svelte';
+  import BottomTabBar from '#lib/components/BottomTabBar.svelte';
+  import ListSkeleton, { type SkeletonKind } from '#lib/components/ListSkeleton.svelte';
+  import NotificationBell from '#lib/components/NotificationBell.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SideNav from '#lib/components/SideNav.svelte';
+  import TableLogo from '#lib/components/TableLogo.svelte';
+  import ThemeToggle from '#lib/components/ThemeToggle.svelte';
+  import Toaster from '#lib/components/Toaster.svelte';
+  import UnsavedChangesDialog from '#lib/components/UnsavedChangesDialog.svelte';
   import { Progress } from '@skeletonlabs/skeleton-svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { Slow } from '$lib/navigation/slow.svelte';
-  import { syncBrowserTimezone } from '$lib/time/browser-timezone';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
   import { onMount } from 'svelte';
 
   let { children, data: layoutData } = $props();
   const accountQuery = pageQuery(() => layoutData.accountRead ?? { summary: null }, client);
   const data = $derived({
     ...layoutData,
-    account: layoutData.account && {
-      ...layoutData.account,
-      ...(accountQuery.data?.summary ?? {}),
-    },
+    account: layoutData.account && { ...layoutData.account, ...(accountQuery.data?.summary ?? {}) },
   });
   // The bell and the messages link count what is unread. The count is read again every 30 seconds
   // while the tab is visible and when it comes back into focus (a background tab does not poll).
@@ -75,7 +72,7 @@
   // Times follow the visitor's timezone. Without one on the profile, the browser's is sent in a
   // cookie; the first page, rendered in the default zone, then loads again in the right one.
   onMount(() => {
-    if (syncBrowserTimezone(data.viewer)) invalidateAll();
+    if (syncBrowserTimezone(data.viewer)) refreshAll();
   });
 
   const locale = getLocale();
@@ -97,10 +94,14 @@
 </script>
 
 <svelte:head>
-  <link rel="apple-touch-icon" sizes="180x180" href={asset('/apple-touch-icon.png')} />
-  <link rel="icon" type="image/png" sizes="32x32" href={asset('/favicon-32x32.png')} />
-  <link rel="icon" type="image/png" sizes="16x16" href={asset('/favicon-16x16.png')} />
-  <link rel="manifest" href={asset('/site.webmanifest')} />
+  <link rel="apple-touch-icon" sizes="180x180" href={asset('apple-touch-icon.png')} />
+
+  <link rel="icon" type="image/png" sizes="32x32" href={asset('favicon-32x32.png')} />
+
+  <link rel="icon" type="image/png" sizes="16x16" href={asset('favicon-16x16.png')} />
+
+  <link rel="manifest" href={asset('site.webmanifest')} />
+
   {#if data.maintenance}
     <meta name="robots" content="noindex" />
   {/if}
@@ -167,7 +168,7 @@
               />
             {:else if data.authEnabled}
               <a
-                href={resolve('/login')}
+                href={resolve('login')}
                 class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
               >
                 <Icon name="game-icons:dungeon-gate" size={20} />
@@ -246,7 +247,7 @@
                 >
                   <path
                     d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
-                  />
+                  ></path>
                 </svg>
                 {m.footer_made_by()}
                 <a

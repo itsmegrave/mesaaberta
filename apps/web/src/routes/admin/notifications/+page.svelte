@@ -1,23 +1,23 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import UserText from '$lib/components/UserText.svelte';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import UserText from '#lib/components/UserText.svelte';
   import { createQuery } from '@tanstack/svelte-query';
-  import { queryClient } from '$lib/query/context';
-  import { apiRead } from '$lib/api/http';
+  import { queryClient } from '#lib/query/context.js';
+  import { apiRead } from '#lib/api/http.js';
   import { onMount } from 'svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import NotificationIcon from '$lib/components/NotificationIcon.svelte';
-  import RichText from '$lib/components/RichText.svelte';
-  import RichTextField from '$lib/components/RichTextField.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { ANNOUNCEMENT_LIMITS, announcementSchema } from '$lib/notifications/announcement';
-  import type { AnnouncementMessage } from '$lib/notifications/announcement-message';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import NotificationIcon from '#lib/components/NotificationIcon.svelte';
+  import RichText from '#lib/components/RichText.svelte';
+  import RichTextField from '#lib/components/RichTextField.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { ANNOUNCEMENT_LIMITS, announcementSchema } from '#lib/notifications/announcement.js';
+  import type { AnnouncementMessage } from '#lib/notifications/announcement-message.js';
   import {
     ANNOUNCEMENT_AUDIENCES,
     ANNOUNCEMENT_ICONS,
@@ -27,11 +27,11 @@
     type AnnouncementIcon,
     type AnnouncementTone,
   } from '@mesaaberta/core/notifications/kinds';
-  import { notificationText } from '$lib/notifications/text';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { shownTimezone } from '$lib/time/shown-timezone';
-  import { toast } from '$lib/toaster';
+  import { notificationText } from '#lib/notifications/text.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import { toast } from '#lib/toaster.js';
 
   let { data, form: result = null } = $props();
 

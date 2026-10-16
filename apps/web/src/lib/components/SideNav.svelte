@@ -1,18 +1,18 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '#lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { Navigation } from '@skeletonlabs/skeleton-svelte';
-  import AccountMenu from '$lib/components/AccountMenu.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import NotificationBell from '$lib/components/NotificationBell.svelte';
-  import TableLogo from '$lib/components/TableLogo.svelte';
-  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import type { IconName } from '$lib/icons/names';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import AccountMenu from '#lib/components/AccountMenu.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import NotificationBell from '#lib/components/NotificationBell.svelte';
+  import TableLogo from '#lib/components/TableLogo.svelte';
+  import ThemeToggle from '#lib/components/ThemeToggle.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import type { IconName } from '#lib/icons/names.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Account = {
     displayName: string;
@@ -216,7 +216,9 @@
                 class="px-3 text-xs font-semibold tracking-wide text-muted uppercase"
                 >{m.nav_account_group()}</Navigation.Label
               >
+
               <NotificationBell {unread} {latest} placement="right-end" labelled />
+
               {@render adminLink()}
             {/if}
             <ThemeToggle />
@@ -241,7 +243,7 @@
             />
           {:else if authEnabled}
             <a
-              href={resolve('/login')}
+              href={resolve('login')}
               class="btn flex w-full items-center rounded-lg p-2 text-sm font-semibold whitespace-normal hover:preset-tonal {expanded
                 ? 'justify-start gap-3'
                 : 'flex-col gap-1'}"

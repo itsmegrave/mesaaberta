@@ -1,25 +1,25 @@
 <script lang="ts">
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '$lib/components/admin/DataTable.svelte';
-  import ListCard from '$lib/components/admin/ListCard.svelte';
-  import Media from '$lib/components/admin/Media.svelte';
-  import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '$lib/components/StatusBadge.svelte';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import Media from '#lib/components/admin/Media.svelte';
+  import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
-  import { periodLabel } from '$lib/crowdfunding/format';
-  import { platformLabel, siteName, submissionLabel } from '$lib/crowdfunding/labels';
+  import { periodLabel } from '#lib/crowdfunding/format.js';
+  import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
-  import { localizedHref } from '$lib/i18n/locales';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import {
     CROWDFUNDING_REPORT_REASONS,
     removeCrowdfundingSchema,
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { toast } from '$lib/toaster';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { toast } from '#lib/toaster.js';
   import type { AdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
 
   type Row = AdminCrowdfundings['rows'][number] & { cover: string | null };

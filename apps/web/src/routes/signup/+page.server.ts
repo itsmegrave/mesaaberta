@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-import { initialForm, validateStringForm } from '$lib/forms/contract';
-import { formMessage } from '$lib/forms/server';
-import { credentialsSchema } from '$lib/auth/credentials';
-import { withoutSecrets } from '$lib/forms/server';
+import { initialForm, validateStringForm } from '#lib/forms/contract.js';
+import { formMessage } from '#lib/forms/server.js';
+import { credentialsSchema } from '#lib/auth/credentials.js';
+import { withoutSecrets } from '#lib/forms/server.js';
 import { SIGN_UP_LIMIT, attemptWait } from '@mesaaberta/core/server/auth/attempt-limit';
 import { signUpWithEmail, type SignUpResult } from '@mesaaberta/core/server/auth/email';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';

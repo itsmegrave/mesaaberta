@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { resolve } from '$app/paths';
-  import CredentialsForm from '$lib/components/CredentialsForm.svelte';
-  import LegalConsent from '$lib/components/LegalConsent.svelte';
-  import ProviderButtons from '$lib/components/ProviderButtons.svelte';
-  import AuthShell from '$lib/components/AuthShell.svelte';
-  import { credentialsSchema } from '$lib/auth/credentials';
-  import { m } from '$lib/paraglide/messages';
+  import CredentialsForm from '#lib/components/CredentialsForm.svelte';
+  import LegalConsent from '#lib/components/LegalConsent.svelte';
+  import ProviderButtons from '#lib/components/ProviderButtons.svelte';
+  import AuthShell from '#lib/components/AuthShell.svelte';
+  import { credentialsSchema } from '#lib/auth/credentials.js';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
@@ -45,7 +45,7 @@
       <CredentialsForm mode="login" {controller} action="?/email" />
 
       <p>
-        <a href={resolve('/forgot-password')} class="link-underline font-semibold text-link"
+        <a href={resolve('forgot-password')} class="link-underline font-semibold text-link"
           >{m.login_forgot()}</a
         >
       </p>
@@ -63,7 +63,7 @@
       <p>
         {m.login_no_account()}
         <a
-          href="{resolve('/signup')}?next={encodeURIComponent(data.next)}"
+          href="{resolve('signup')}?next={encodeURIComponent(data.next)}"
           class="link-underline font-semibold text-link"
         >
           {m.login_create_account()}

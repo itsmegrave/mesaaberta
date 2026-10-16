@@ -1,16 +1,16 @@
 <script lang="ts">
-  import TextInput from '$lib/components/TextInput.svelte';
-  import TextArea from '$lib/components/TextArea.svelte';
-  import Button from '$lib/components/Button.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
+  import Button from '#lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import type { Editor } from '@tiptap/core';
   import Icon from './Icon.svelte';
-  import type { IconName } from '$lib/icons/names';
-  import { m } from '$lib/paraglide/messages';
+  import type { IconName } from '#lib/icons/names.js';
+  import { m } from '#lib/paraglide/messages.js';
   import { cleanRichHtml, richTextLength, toPlainText } from '@mesaaberta/core/text/rich';
   import './rich-text.css';
 
-  // A WYSIWYG multiline field. `value` is the HTML subset of `$lib/text/rich`. Until the editor has
+  // A WYSIWYG multiline field. `value` is the HTML subset of `#lib/text/rich`. Until the editor has
   // loaded (or without JavaScript) a plain <textarea> with the same `name` stands in for it: the
   // server turns plain text into paragraphs, so a native POST still saves.
   let {

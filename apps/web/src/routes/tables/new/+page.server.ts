@@ -1,10 +1,10 @@
-import { loadRead } from '$lib/server/reads/load';
+import { loadRead } from '#lib/server/reads/load.js';
 import { error } from '@sveltejs/kit';
-import { initialForm } from '$lib/forms/contract';
-import { requireUser } from '$lib/server/auth/guard';
-import { writeViaApi } from '$lib/server/api-write';
-import { timezoneOf } from '$lib/server/time';
-import { handleTableForm } from '$lib/server/tables/form-action';
+import { initialForm } from '#lib/forms/contract.js';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
+import { timezoneOf } from '#lib/server/time.js';
+import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { createTable } from '@mesaaberta/core/server/tables/write';
@@ -13,7 +13,7 @@ import {
   TABLE_DRAFT_LIMIT,
   checkRateLimit,
 } from '@mesaaberta/core/server/rate-limit';
-import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
+import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {

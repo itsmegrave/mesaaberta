@@ -2,14 +2,14 @@
   // One partner of the "Parceiros" page: the logo, the name, an optional line about them, the coupon
   // they give Mesa Aberta members (if any) and one icon per link. Every icon is a link of its own
   // that opens in a new tab and says so. The card does not say who sent it: only admins see that.
-  import Icon from '$lib/components/Icon.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Icon from '#lib/components/Icon.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import type { Network } from '@mesaaberta/core/profile/social-links';
-  import { networkIcons, networkLabels } from '$lib/profile/social-presentation';
-  import { toast } from '$lib/toaster';
+  import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
+  import { toast } from '#lib/toaster.js';
 
   type Partner = {
     id: string;

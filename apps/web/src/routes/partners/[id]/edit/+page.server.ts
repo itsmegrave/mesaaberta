@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit';
-import { initialForm } from '$lib/forms/contract';
+import { initialForm } from '#lib/forms/contract.js';
 import { MAX_PARTNER_LINKS } from '@mesaaberta/core/partners/schema';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { handlePartnerForm } from '$lib/server/partners/form-action';
+import { handlePartnerForm } from '#lib/server/partners/form-action.js';
 
 import { findOwnPartner } from '@mesaaberta/core/server/partners/service';
 import type { Actions, PageServerLoad } from './$types';

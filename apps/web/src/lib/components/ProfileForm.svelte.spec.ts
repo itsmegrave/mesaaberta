@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { initialForm, issueErrors } from '$lib/forms/contract';
+import { initialForm, issueErrors } from '#lib/forms/contract.js';
 import ProfileForm from './ProfileForm.svelte';
 import { profileSchema, type ProfileInput } from '@mesaaberta/core/profile/schema';
 

@@ -4,9 +4,9 @@
   // the KebabMenu where the page has secondary actions. On a phone the "Seção: …" menu comes under
   // the lede.
   import type { Snippet } from 'svelte';
-  import AdminSectionMenu from '$lib/components/admin/AdminSectionMenu.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import AdminSectionMenu from '#lib/components/admin/AdminSectionMenu.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   let {
     title,

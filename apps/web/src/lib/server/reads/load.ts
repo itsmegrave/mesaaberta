@@ -1,12 +1,12 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { createQueryClient } from '$lib/query/client';
+import { createQueryClient } from '#lib/query/client.js';
 import {
   readKey,
   readParams,
   privateResources,
   type Resource,
   type ReadSeed,
-} from '$lib/query/keys';
+} from '#lib/query/keys.js';
 import { read as preview } from './preview';
 import { read as tables } from './tables';
 import { read as detail } from './detail';

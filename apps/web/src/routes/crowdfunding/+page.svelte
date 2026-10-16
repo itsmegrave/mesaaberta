@@ -1,17 +1,17 @@
 <script lang="ts">
   import { navigating, page } from '$app/state';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import CrowdfundingCard from '$lib/components/CrowdfundingCard.svelte';
-  import CrowdfundingFilters from '$lib/components/CrowdfundingFilters.svelte';
-  import CrowdfundingReportDialog from '$lib/components/CrowdfundingReportDialog.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import ListSkeleton from '$lib/components/ListSkeleton.svelte';
-  import Pager from '$lib/components/admin/Pager.svelte';
-  import { pageHref } from '$lib/admin/page-href';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { Slow } from '$lib/navigation/slow.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
+  import CrowdfundingFilters from '#lib/components/CrowdfundingFilters.svelte';
+  import CrowdfundingReportDialog from '#lib/components/CrowdfundingReportDialog.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
+  import { pageHref } from '#lib/admin/page-href.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
 

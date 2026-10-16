@@ -1,18 +1,18 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import AdminPage from '$lib/components/admin/AdminPage.svelte';
-  import EventForce from '$lib/components/admin/EventForce.svelte';
-  import EventRetryAll from '$lib/components/admin/EventRetryAll.svelte';
-  import FilterSelect from '$lib/components/admin/FilterSelect.svelte';
-  import Pager from '$lib/components/admin/Pager.svelte';
-  import SegmentedFilter from '$lib/components/admin/SegmentedFilter.svelte';
-  import { dayLabel, timeLabel } from '$lib/admin/format';
-  import { EVENT_STATUSES, type EventStatus } from '$lib/admin/event-filters';
+  import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import EventForce from '#lib/components/admin/EventForce.svelte';
+  import EventRetryAll from '#lib/components/admin/EventRetryAll.svelte';
+  import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
+  import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
+  import { dayLabel, timeLabel } from '#lib/admin/format.js';
+  import { EVENT_STATUSES, type EventStatus } from '#lib/admin/event-filters.js';
   import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '$lib/i18n/locales';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
   const locale = getLocale();

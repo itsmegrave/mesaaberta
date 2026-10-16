@@ -1,36 +1,36 @@
 <script lang="ts">
-  import TextArea from '$lib/components/TextArea.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
-  import QueryStatus from '$lib/components/QueryStatus.svelte';
-  import RichText from '$lib/components/RichText.svelte';
-  import { pageQuery } from '$lib/query/page.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { shownTimezone } from '$lib/time/shown-timezone';
+  import TextArea from '#lib/components/TextArea.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import RichText from '#lib/components/RichText.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import Form from '$lib/components/Form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
   import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
-  import { tableStatusLabel } from '$lib/tables/status';
-  import type { FormMessage } from '$lib/forms/message';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { tableStatusLabel } from '#lib/tables/status.js';
+  import type { FormMessage } from '#lib/forms/message.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { ratingSchema } from '@mesaaberta/core/tables/rating';
-  import { registrationError } from '$lib/tables/registration-errors';
-  import ReportDialog from '$lib/components/ReportDialog.svelte';
-  import { toast } from '$lib/toaster';
-  import ActionForm from '$lib/components/ActionForm.svelte';
-  import JoinRequestDialog from '$lib/components/JoinRequestDialog.svelte';
-  import GmRating from '$lib/components/GmRating.svelte';
-  import StarRating from '$lib/components/StarRating.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import KebabMenu, { type KebabItem } from '$lib/components/KebabMenu.svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import DraftNotice from '$lib/components/DraftNotice.svelte';
-  import { modalityIcon } from '$lib/tables/modality-icon';
+  import { registrationError } from '#lib/tables/registration-errors.js';
+  import ReportDialog from '#lib/components/ReportDialog.svelte';
+  import { toast } from '#lib/toaster.js';
+  import ActionForm from '#lib/components/ActionForm.svelte';
+  import JoinRequestDialog from '#lib/components/JoinRequestDialog.svelte';
+  import GmRating from '#lib/components/GmRating.svelte';
+  import StarRating from '#lib/components/StarRating.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import DraftNotice from '#lib/components/DraftNotice.svelte';
+  import { modalityIcon } from '#lib/tables/modality-icon.js';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -366,7 +366,7 @@
           <p class="font-semibold">{m.table_you_are_gm()}</p>
         {:else if !data.signedIn}
           <a
-            href="{resolve('/login')}?next={encodeURIComponent(
+            href="{resolve('login')}?next={encodeURIComponent(
               localizedHref(`/tables/${table.slug}`, locale),
             )}"
             class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
@@ -493,7 +493,7 @@
             maxlength={1000}
             bind:value={() => rating.values.comment, (value) => rating.change('comment', value)}
             class="mt-1 textarea"
-          ></TextArea>
+          />
         </div>
 
         <div>

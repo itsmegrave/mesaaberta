@@ -1,7 +1,7 @@
 <script lang="ts">
-  import AuthShell from '$lib/components/AuthShell.svelte';
-  import ProfileForm from '$lib/components/ProfileForm.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import AuthShell from '#lib/components/AuthShell.svelte';
+  import ProfileForm from '#lib/components/ProfileForm.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   let { data, form = null } = $props();
 </script>

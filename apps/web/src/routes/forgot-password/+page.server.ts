@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-import { initialForm, validateStringForm } from '$lib/forms/contract';
-import { formMessage } from '$lib/forms/server';
-import { emailSchema } from '$lib/auth/credentials';
+import { initialForm, validateStringForm } from '#lib/forms/contract.js';
+import { formMessage } from '#lib/forms/server.js';
+import { emailSchema } from '#lib/auth/credentials.js';
 import { PASSWORD_RESET_LIMIT, attemptWait } from '@mesaaberta/core/server/auth/attempt-limit';
 import { requestPasswordReset } from '@mesaaberta/core/server/auth/password';
 import type { Actions, PageServerLoad } from './$types';

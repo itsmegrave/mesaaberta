@@ -1,4 +1,4 @@
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { normalizeCep } from '@mesaaberta/core/location/cep';
 import { lookupCep } from '@mesaaberta/core/server/location/cep';
 import { recordAttempt } from '@mesaaberta/core/server/auth/attempt-limit';
@@ -20,5 +20,5 @@ export const GET: RequestHandler = async ({ locals, url, setHeaders }) => {
   }
   const result = await lookupCep(locals.db, value);
   if (result.status === 'unavailable') error(503, 'Address lookup unavailable');
-  return json(result);
+  return Response.json(result);
 };

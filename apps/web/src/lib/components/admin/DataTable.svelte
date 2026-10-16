@@ -27,11 +27,11 @@
     type ColumnDef,
     type RowData,
   } from '@tanstack/svelte-table';
-  import Icon from '$lib/components/Icon.svelte';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import FilterSheet from '$lib/components/admin/FilterSheet.svelte';
-  import ListSearch from '$lib/components/admin/ListSearch.svelte';
-  import Pager from '$lib/components/admin/Pager.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import FilterSheet from '#lib/components/admin/FilterSheet.svelte';
+  import ListSearch from '#lib/components/admin/ListSearch.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
   import {
     nextSort,
     PAGE_SIZES,
@@ -41,9 +41,9 @@
     showMore,
     type Sort,
   } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     rows,
@@ -135,7 +135,7 @@
       locale,
     );
   const go = (changes: Record<string, string | number | null>) =>
-    goto(href(changes), { keepFocus: true, noScroll: true });
+    goto(href(changes), { reset: false });
   const clearHref = $derived(href(Object.fromEntries(filterKeys.map((key) => [key, null]))));
   const more = $derived(showMore(pageSize, rows.length, total));
   // A phone has no pages to turn: "Mostrar mais" asks for the next size, then for the next page.

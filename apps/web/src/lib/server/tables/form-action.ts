@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-import { validateFormData } from '$lib/forms/contract';
-import { formMessage, refuse, responseForm } from '$lib/forms/server';
-import { NEW_TABLE_VALUES } from '$lib/tables/form-values';
+import { validateFormData } from '#lib/forms/contract.js';
+import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
+import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { withLocation } from '@mesaaberta/core/server/location/cep';

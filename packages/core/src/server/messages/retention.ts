@@ -1,5 +1,5 @@
 // Relative imports only: `pruneTableChats` runs in the Cron Trigger's Worker, which is bundled
-// without SvelteKit's `$lib` alias.
+// without SvelteKit's `#lib` alias.
 import { and, eq, inArray, lt } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { conversations, gameTables } from '../db/schema';

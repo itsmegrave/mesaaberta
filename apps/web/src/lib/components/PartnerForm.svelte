@@ -4,23 +4,23 @@
   // optional coupon. A preview card sits beside it (below it on a phone). An admin approves what is
   // sent, and an edit takes an approved partner off the page until it is approved again.
   import { tick } from 'svelte';
-  import Button from '$lib/components/Button.svelte';
-  import ErrorSummary from '$lib/components/ErrorSummary.svelte';
-  import Form from '$lib/components/Form.svelte';
-  import FormBanner from '$lib/components/FormBanner.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import ImageUpload from '$lib/components/ImageUpload.svelte';
-  import PartnerCard from '$lib/components/PartnerCard.svelte';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import type { FormResult } from '$lib/forms/contract';
-  import { guardDraft } from '$lib/forms/guard.svelte';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Button from '#lib/components/Button.svelte';
+  import ErrorSummary from '#lib/components/ErrorSummary.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import FormBanner from '#lib/components/FormBanner.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import ImageUpload from '#lib/components/ImageUpload.svelte';
+  import PartnerCard from '#lib/components/PartnerCard.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import type { FormResult } from '#lib/forms/contract.js';
+  import { guardDraft } from '#lib/forms/guard.svelte.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { page as appPage } from '$app/state';
 
   // The address a partner puts on their site, bio or Discord: the "troca de links" (link exchange).
@@ -34,9 +34,9 @@
     partnerLinkUrl,
   } from '@mesaaberta/core/partners/schema';
   import type { Network } from '@mesaaberta/core/profile/social-links';
-  import { networkLabels } from '$lib/profile/social-presentation';
-  import { errorText, formProblem } from '$lib/tables/form-values';
-  import { toast } from '$lib/toaster';
+  import { networkLabels } from '#lib/profile/social-presentation.js';
+  import { errorText, formProblem } from '#lib/tables/form-values.js';
+  import { toast } from '#lib/toaster.js';
 
   type Values = {
     name: string;

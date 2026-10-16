@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
+import { requireAdmin } from '#lib/server/admin-access.js';
 import { adminTable } from '@mesaaberta/core/server/admin/tables';
 import { tableHistory } from '@mesaaberta/core/server/admin/history';
 import type { PageServerLoad } from './$types';

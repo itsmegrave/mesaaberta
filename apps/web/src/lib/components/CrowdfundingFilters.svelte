@@ -3,16 +3,16 @@
   // string is the contract, so a link to a filtered list keeps working. The page number is not kept:
   // a new filter starts over on the first page.
   import { goto } from '$app/navigation';
-  import Icon from '$lib/components/Icon.svelte';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import TextInput from '$lib/components/TextInput.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
   import {
     CROWDFUNDING_SORTS,
     type CrowdfundingFilters,
   } from '@mesaaberta/core/crowdfunding/filters';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { picked }: { picked: Pick<CrowdfundingFilters, 'query' | 'sort' | 'ended'> } = $props();
 
@@ -27,8 +27,7 @@
   };
   const apply = (change: Partial<typeof picked>) =>
     goto(localizedHref(`/crowdfunding${query({ ...picked, ...change })}`, locale), {
-      keepFocus: true,
-      noScroll: true,
+      reset: false,
     });
 
   const sorts = $derived(

@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { failedEventCount } from '$lib/server/admin/event-queue';
+import { failedEventCount } from '#lib/server/admin/event-queue.js';
 import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { instagramPosts } from '@mesaaberta/core/server/db/schema';
 import { pendingPartnerCount } from '@mesaaberta/core/server/partners/admin';

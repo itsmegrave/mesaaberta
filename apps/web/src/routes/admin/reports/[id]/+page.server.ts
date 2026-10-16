@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { reportDetail } from '@mesaaberta/core/server/moderation/admin';
-import { reportActions } from '$lib/server/moderation/admin-actions';
+import { reportActions } from '#lib/server/moderation/admin-actions.js';
 import type { Actions, PageServerLoad } from './$types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

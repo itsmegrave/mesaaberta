@@ -116,7 +116,7 @@ export const profiles = pgTable(
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
-    // Mirrors RESOLUTION_NOTE_MAX in $lib/moderation/reports.
+    // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
     // Expired temporary bans, for the sweep that lifts them.
     index('profiles_banned_until_idx')
@@ -133,7 +133,7 @@ export const profileSocialLinks = pgTable(
     profileId: uuid('profile_id')
       .notNull()
       .references(() => profiles.id, { onDelete: 'cascade' }),
-    // One of the networks in `$lib/profile/social-links`, or `website`.
+    // One of the networks in `#lib/profile/social-links`, or `website`.
     network: text('network').notNull(),
     // What the person typed for a network (`mesaaberta`, no `@`). Null for `website`, and for links
     // saved before handles, which only have an address.
@@ -296,12 +296,12 @@ export const gameTables = pgTable(
       'game_tables_in_person_has_area',
       sql`${table.modality} = 'online' OR ${table.locationArea} IS NOT NULL`,
     ),
-    // Mirror TABLE_LIMITS in $lib/tables/schema.
+    // Mirror TABLE_LIMITS in apps/web/src/lib/tables/schema.
     check('game_tables_location_area_length', sql`char_length(${table.locationArea}) <= 120`),
-    // Both are rich-text HTML: the visible limit (1000) times RICH_HTML_FACTOR in $lib/text/rich-schema.
+    // Both are rich-text HTML: the visible limit (1000) times RICH_HTML_FACTOR in apps/web/src/lib/text/rich-schema.
     check('game_tables_join_details_length', sql`char_length(${table.joinDetails}) <= 6000`),
     check('game_tables_welcome_message_length', sql`char_length(${table.welcomeMessage}) <= 6000`),
-    // Mirrors RESOLUTION_NOTE_MAX in $lib/moderation/reports.
+    // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('game_tables_moderation_note_length', sql`char_length(${table.moderationNote}) <= 1000`),
   ],
 ).enableRLS();
@@ -454,7 +454,7 @@ export const registrations = pgTable(
   (registration) => [
     primaryKey({ columns: [registration.tableId, registration.playerId] }),
     index('registrations_player_idx').on(registration.playerId),
-    // Mirror JOIN_MESSAGE_MAX in $lib/tables/registration.
+    // Mirror JOIN_MESSAGE_MAX in apps/web/src/lib/tables/registration.
     check('registrations_message_length', sql`char_length(${registration.message}) <= 500`),
   ],
 ).enableRLS();
@@ -658,12 +658,12 @@ export const messages = pgTable(
   (message) => [
     index('messages_conversation_created_idx').on(message.conversationId, message.createdAt.desc()),
     index('messages_sender_idx').on(message.senderId),
-    // Mirrors MESSAGE_MAX_LENGTH in $lib/messages/schema.
+    // Mirrors MESSAGE_MAX_LENGTH in apps/web/src/lib/messages/schema.
     check('messages_body_length', sql`char_length(${message.body}) BETWEEN 1 AND 2000`),
   ],
 ).enableRLS();
 
-// Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in $lib/moderation/reports.
+// Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in apps/web/src/lib/moderation/reports.
 export const reportTarget = pgEnum('report_target', ['table', 'player', 'crowdfunding', 'partner']);
 export const reportReason = pgEnum('report_reason', [
   'spam',
@@ -710,7 +710,7 @@ export const reports = pgTable(
       .where(sql`${report.status} IN ('open', 'reviewing')`),
     // The admin queue, filtered by status, newest first.
     index('reports_status_created_idx').on(report.status, report.createdAt),
-    // Mirror REPORT_DETAILS_MAX and RESOLUTION_NOTE_MAX in $lib/moderation/reports.
+    // Mirror REPORT_DETAILS_MAX and RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('reports_details_length', sql`char_length(${report.details}) <= 1000`),
     check('reports_resolution_note_length', sql`char_length(${report.resolutionNote}) <= 1000`),
     check(
@@ -726,7 +726,7 @@ export const reports = pgTable(
   ],
 ).enableRLS();
 
-// Mirrors CROWDFUNDING_PLATFORMS in $lib/crowdfunding/platforms. Read from the link's host when a
+// Mirrors CROWDFUNDING_PLATFORMS in apps/web/src/lib/crowdfunding/platforms. Read from the link's host when a
 // campaign is added, and kept so the list can filter on it.
 export const crowdfundingPlatform = pgEnum('crowdfunding_platform', [
   'catarse',
@@ -780,7 +780,7 @@ export const crowdfundings = pgTable(
     ),
     index('crowdfundings_ends_on_idx').on(campaign.endsOn),
     index('crowdfundings_submitter_idx').on(campaign.submitterId),
-    // Mirror CROWDFUNDING_NAME_MAX, CROWDFUNDING_OWNER_MAX and the note limit in $lib/crowdfunding/schema.
+    // Mirror CROWDFUNDING_NAME_MAX, CROWDFUNDING_OWNER_MAX and the note limit in apps/web/src/lib/crowdfunding/schema.
     check('crowdfundings_name_length', sql`char_length(${campaign.name}) BETWEEN 1 AND 120`),
     check('crowdfundings_owner_length', sql`char_length(${campaign.owner}) BETWEEN 1 AND 80`),
     check('crowdfundings_dates_order', sql`${campaign.endsOn} >= ${campaign.startsOn}`),
@@ -828,7 +828,7 @@ export const partners = pgTable(
     index('partners_submitter_idx').on(partner.submitterId),
     // The public list and the admin's waiting list.
     index('partners_approved_idx').on(partner.approvedAt, partner.removedAt),
-    // Mirror PARTNER_LIMITS in $lib/partners/schema.
+    // Mirror PARTNER_LIMITS in apps/web/src/lib/partners/schema.
     check('partners_name_length', sql`char_length(${partner.name}) BETWEEN 1 AND 60`),
     check('partners_contact_email_length', sql`char_length(${partner.contactEmail}) <= 254`),
     check('partners_description_length', sql`char_length(${partner.description}) <= 140`),
@@ -854,7 +854,7 @@ export const partnerLinks = pgTable(
     partnerId: uuid('partner_id')
       .notNull()
       .references(() => partners.id, { onDelete: 'cascade' }),
-    // One of the networks in `$lib/profile/social-links`, except `website`.
+    // One of the networks in `#lib/profile/social-links`, except `website`.
     network: text('network').notNull(),
     url: text('url').notNull(),
     position: integer('position').notNull(),

@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 
 /**
  * Where a table stands. `active` is open; `disabled` is the GM cancelling it before the session.

@@ -1,11 +1,11 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { initialForm, validateFormData, validateStringForm } from '$lib/forms/contract';
-import { refuse, responseForm, withoutSecrets } from '$lib/forms/server';
+import { initialForm, validateFormData, validateStringForm } from '#lib/forms/contract.js';
+import { refuse, responseForm, withoutSecrets } from '#lib/forms/server.js';
 import { setAvatarPath } from '@mesaaberta/core/server/account/service';
 import { deleteAccount } from '@mesaaberta/core/server/account/delete';
 import { supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
-import { requireUser } from '$lib/server/auth/guard';
-import { writeViaApi } from '$lib/server/api-write';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
 import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
@@ -21,9 +21,9 @@ import {
 import { loadProfileForm, saveProfile } from '@mesaaberta/core/server/profile/service';
 import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
 import { setDirectMessages } from '@mesaaberta/core/server/messages/service';
-import { deleteAccountSchema } from '$lib/profile/delete';
-import { disconnectSchema } from '$lib/profile/connections';
-import { photoSchema } from '$lib/profile/photo';
+import { deleteAccountSchema } from '#lib/profile/delete.js';
+import { disconnectSchema } from '#lib/profile/connections.js';
+import { photoSchema } from '#lib/profile/photo.js';
 import { profileSchema, PROFILE_DEFAULTS } from '@mesaaberta/core/profile/schema';
 import type { Actions, PageServerLoad } from './$types';
 

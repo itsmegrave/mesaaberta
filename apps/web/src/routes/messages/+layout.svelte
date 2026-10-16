@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
   import { page } from '$app/state';
-  import InboxList from '$lib/components/InboxList.svelte';
+  import InboxList from '#lib/components/InboxList.svelte';
 
   let { data, children } = $props();
 

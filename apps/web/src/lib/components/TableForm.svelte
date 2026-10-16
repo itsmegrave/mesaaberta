@@ -1,12 +1,12 @@
 <script lang="ts">
-  import TextInput from '$lib/components/TextInput.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { modalityIcon } from '$lib/tables/modality-icon';
+  import TextInput from '#lib/components/TextInput.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import { modalityIcon } from '#lib/tables/modality-icon.js';
   import CepLookup from './CepLookup.svelte';
-  import FormBanner from '$lib/components/FormBanner.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import FormBanner from '#lib/components/FormBanner.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
-  import { actionForm } from '$lib/forms/action-form.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
   import { NAMELESS } from '@mesaaberta/core/profile/handle';
   import FormField from './FormField.svelte';
@@ -17,10 +17,10 @@
   import DateTimeField from './DateTimeField.svelte';
   import SessionPicker from './SessionPicker.svelte';
   import ImageUpload from './ImageUpload.svelte';
-  import { errorText, formProblem, type TableFormValues } from '$lib/tables/form-values';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
-  import { localizedHref } from '$lib/i18n/locales';
+  import { errorText, formProblem, type TableFormValues } from '#lib/tables/form-values.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import { formatHours, zonedToDate } from '@mesaaberta/core/tables/format';
   import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
   import { pickName } from '@mesaaberta/core/tables/catalog';

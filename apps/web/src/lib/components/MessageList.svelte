@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
-  import UserLink from '$lib/components/UserLink.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
   import { tick } from 'svelte';
-  import Avatar from '$lib/components/Avatar.svelte';
-  import MessageBubble from '$lib/components/MessageBubble.svelte';
-  import { clock, dayLabel } from '$lib/messages/format';
-  import { groupMessages, type ThreadItem } from '$lib/messages/group';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import MessageBubble from '#lib/components/MessageBubble.svelte';
+  import { clock, dayLabel } from '#lib/messages/format.js';
+  import { groupMessages, type ThreadItem } from '#lib/messages/group.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { shownTimezone } from '$lib/time/shown-timezone';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
 
   let {
     items,

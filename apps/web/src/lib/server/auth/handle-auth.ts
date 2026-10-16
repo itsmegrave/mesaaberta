@@ -1,5 +1,5 @@
+import type { Handle } from '@sveltejs/kit/hooks';
 import { createServerClient } from '@supabase/ssr';
-import type { Handle } from '@sveltejs/kit';
 import type { User } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
 import { profiles } from '@mesaaberta/core/server/db/schema';
@@ -35,6 +35,7 @@ export const createHandleAuth =
     event.locals.supabase = supabase;
 
     let verified: Promise<User | null> | undefined;
+
     event.locals.getUser = () =>
       (verified ??= (async () => {
         if (!supabase) return null;
@@ -49,6 +50,7 @@ export const createHandleAuth =
     // The signed-in user's profile: the actor the authorization policy decides about. Null when
     // anonymous, without a profile, or while there is no database.
     let profile: Promise<typeof profiles.$inferSelect | null> | undefined;
+
     event.locals.getProfile = () =>
       (profile ??= (async () => {
         const user = await event.locals.getUser();

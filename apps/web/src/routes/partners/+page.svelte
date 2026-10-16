@@ -1,19 +1,19 @@
 <script lang="ts">
   import { navigating, page } from '$app/state';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import ListSkeleton from '$lib/components/ListSkeleton.svelte';
-  import PartnerCard from '$lib/components/PartnerCard.svelte';
-  import PartnerFilters from '$lib/components/PartnerFilters.svelte';
-  import PartnerHowItWorks from '$lib/components/PartnerHowItWorks.svelte';
-  import PartnerReportDialog from '$lib/components/PartnerReportDialog.svelte';
-  import Pager from '$lib/components/admin/Pager.svelte';
-  import ModerationDialog from '$lib/components/admin/ModerationDialog.svelte';
-  import { pageHref } from '$lib/admin/page-href';
-  import { localizedHref } from '$lib/i18n/locales';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
+  import PartnerCard from '#lib/components/PartnerCard.svelte';
+  import PartnerFilters from '#lib/components/PartnerFilters.svelte';
+  import PartnerHowItWorks from '#lib/components/PartnerHowItWorks.svelte';
+  import PartnerReportDialog from '#lib/components/PartnerReportDialog.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
+  import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
+  import { pageHref } from '#lib/admin/page-href.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
   import { partnerIdSchema } from '@mesaaberta/core/moderation/reports';
-  import { Slow } from '$lib/navigation/slow.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
 

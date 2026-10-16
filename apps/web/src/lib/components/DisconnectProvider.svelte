@@ -1,11 +1,11 @@
 <script lang="ts">
   // The button that disconnects one provider from the account, and why the server refused if it did.
-  import Form from '$lib/components/Form.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { disconnectSchema } from '$lib/profile/connections';
-  import { toast } from '$lib/toaster';
-  import { m } from '$lib/paraglide/messages';
+  import Form from '#lib/components/Form.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { disconnectSchema } from '#lib/profile/connections.js';
+  import { toast } from '#lib/toaster.js';
+  import { m } from '#lib/paraglide/messages.js';
   import type { Provider } from '@mesaaberta/core/auth/providers';
 
   let { provider, label }: { provider: Provider; label: string } = $props();

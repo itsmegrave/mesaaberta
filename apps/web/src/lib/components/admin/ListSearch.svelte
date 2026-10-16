@@ -4,10 +4,10 @@
   // is a plain GET that carries them along as hidden fields.
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import Icon from '$lib/components/Icon.svelte';
+  import Icon from '#lib/components/Icon.svelte';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     value,
@@ -42,7 +42,7 @@
         listPath(page.url.pathname, listQuery(page.url.searchParams, { q: typed || null }), hash),
         locale,
       ),
-      { keepFocus: true, noScroll: true },
+      { reset: false },
     );
   };
   const kept = $derived(

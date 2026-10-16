@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { startLink } from '@mesaaberta/core/server/auth/identities';
 import type { RequestHandler } from './$types';
 

@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 import type { ReportReason, ReportStatus, ReportTarget } from '@mesaaberta/core/moderation/reports';
 
 /** A campaign's spam is the repeated kind: it is the same link posted again and again. */

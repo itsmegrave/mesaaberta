@@ -1,6 +1,6 @@
-import * as Sentry from '@sentry/sveltekit';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 import { isHttpError, isRedirect } from '@sveltejs/kit';
+import * as Sentry from '@sentry/sveltekit';
 import type { Logger } from '@mesaaberta/core/server/logger';
 
 /**

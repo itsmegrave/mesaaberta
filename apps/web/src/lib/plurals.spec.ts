@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 
 // The label for a count has its own form for none and for one, never "0 mesas" or "1 mesas".
 describe('labels with a count', () => {

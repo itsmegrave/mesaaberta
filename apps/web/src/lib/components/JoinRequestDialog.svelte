@@ -2,17 +2,17 @@
   // "Pedir vaga" on a table that approves each player: a modal with an optional note, so the player
   // can introduce themselves to the GM. The server checks everything again.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { JOIN_MESSAGE_MAX, joinSchema } from '$lib/tables/registration';
-  import { registrationError } from '$lib/tables/registration-errors';
-  import type { FormMessage } from '$lib/forms/message';
-  import Form from '$lib/components/Form.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import TextArea from '$lib/components/TextArea.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { JOIN_MESSAGE_MAX, joinSchema } from '#lib/tables/registration.js';
+  import { registrationError } from '#lib/tables/registration-errors.js';
+  import type { FormMessage } from '#lib/forms/message.js';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   let {
     action = '?/join',

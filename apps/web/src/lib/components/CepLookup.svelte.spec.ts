@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
-import Harness from '$lib/query/CepHarness.svelte';
+import Harness from '#lib/query/CepHarness.svelte';
 import CepLookup from './CepLookup.svelte';
 const found = (city: string) =>
   Response.json({ status: 'found', place: { neighbourhood: null, city, state: 'SP' } });

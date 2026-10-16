@@ -1,4 +1,4 @@
-// Relative imports only: the Cron Trigger's Worker entry bundles this file without `$lib`.
+// Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import { and, eq, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables } from '../db/schema';

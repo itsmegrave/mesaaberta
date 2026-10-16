@@ -1,13 +1,13 @@
 import { error, fail } from '@sveltejs/kit';
-import { validateStringForm, validateFormData } from '$lib/forms/contract';
-import { formMessage } from '$lib/forms/server';
+import { validateStringForm, validateFormData } from '#lib/forms/contract.js';
+import { formMessage } from '#lib/forms/server.js';
 import { messageSchema, muteSchema } from '@mesaaberta/core/messages/schema';
-import { requireUser } from '$lib/server/auth/guard';
-import { writeViaApi } from '$lib/server/api-write';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
 import { RateLimited } from '@mesaaberta/core/server/errors';
-import { failFrom } from '$lib/server/fail-from';
+import { failFrom } from '#lib/server/fail-from.js';
 import { sendMessage, setMuted } from '@mesaaberta/core/server/messages/service';
-import { loadChatThread } from '$lib/server/messages/thread';
+import { loadChatThread } from '#lib/server/messages/thread.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = (event) => loadChatThread(event, event.params.id);

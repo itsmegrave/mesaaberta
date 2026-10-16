@@ -1,5 +1,5 @@
-import type { IconName } from '$lib/icons/names';
-import { m } from '$lib/paraglide/messages';
+import type { IconName } from '#lib/icons/names.js';
+import { m } from '#lib/paraglide/messages.js';
 import type { Network } from '@mesaaberta/core/profile/social-links';
 
 export const networkLabels: Record<Network, () => string> = {

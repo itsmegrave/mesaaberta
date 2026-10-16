@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { retryAllSchema } from '$lib/admin/event-filters';
-  import Form from '$lib/components/Form.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { retryAllSchema } from '#lib/admin/event-filters.js';
+  import Form from '#lib/components/Form.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   /** "Rodar todos os que falharam": a bounded batch, oldest first. */
   let { max }: { max: number } = $props();

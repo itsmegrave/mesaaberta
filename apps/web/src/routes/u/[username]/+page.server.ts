@@ -1,13 +1,13 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import { profiles } from '@mesaaberta/core/server/db/schema';
-import { failFrom } from '$lib/server/fail-from';
-import { openDirectConversation } from '$lib/server/messages/open-direct';
+import { failFrom } from '#lib/server/fail-from.js';
+import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { normalizeUsername } from '@mesaaberta/core/profile/username';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
-import { localizedHref } from '$lib/i18n/locales';
-import { getLocale } from '$lib/paraglide/runtime';
+import { localizedHref } from '#lib/i18n/locales.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicProfile } from '@mesaaberta/core/server/profile/public';
 import type { Actions, PageServerLoad } from './$types';

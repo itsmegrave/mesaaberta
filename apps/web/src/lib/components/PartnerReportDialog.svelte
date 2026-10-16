@@ -2,20 +2,20 @@
   // "Denunciar" a partner. The reporter stays anonymous; the server decides again
   // whether this member may report it and whether they already did.
   import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Form from '$lib/components/Form.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import TextArea from '$lib/components/TextArea.svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import { reasonLabel } from '$lib/moderation/labels';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { reasonLabel } from '#lib/moderation/labels.js';
   import {
     PARTNER_REPORT_REASONS,
     REPORT_DETAILS_MAX,
     reportPartnerSchema,
   } from '@mesaaberta/core/moderation/reports';
-  import { m } from '$lib/paraglide/messages';
-  import { toast } from '$lib/toaster';
+  import { m } from '#lib/paraglide/messages.js';
+  import { toast } from '#lib/toaster.js';
 
   let {
     partner,

@@ -1,8 +1,8 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { initialForm, validateFormData } from '$lib/forms/contract';
-import { refuse } from '$lib/forms/server';
-import { requireUser } from '$lib/server/auth/guard';
-import { writeViaApi } from '$lib/server/api-write';
+import { initialForm, validateFormData } from '#lib/forms/contract.js';
+import { refuse } from '#lib/forms/server.js';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
 import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';

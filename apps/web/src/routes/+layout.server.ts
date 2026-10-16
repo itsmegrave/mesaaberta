@@ -1,6 +1,6 @@
-import { cannyLinks } from '$lib/canny/links';
+import { cannyLinks } from '#lib/canny/links.js';
 import { siteOf } from '@mesaaberta/core/server/site';
-import { loadRead } from '$lib/server/reads/load';
+import { loadRead } from '#lib/server/reads/load.js';
 import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';

@@ -1,5 +1,5 @@
 // Relative imports only: `pruneNotifications` runs in the Cron Trigger's Worker, which is bundled
-// without SvelteKit's `$lib` alias.
+// without SvelteKit's `#lib` alias.
 import { and, count, desc, eq, isNull, lt, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { notifications, profiles } from '../db/schema';

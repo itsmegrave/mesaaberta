@@ -1,14 +1,13 @@
-import { applyAction } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
+import { applyAction, type ActionResult } from '$app/forms';
+import { refreshAll } from '$app/navigation';
 import { createForm, type DeepKeys, type DeepValue } from '@tanstack/svelte-form';
 import { createMutation } from '@tanstack/svelte-query';
 import type { FormMessage } from './message';
-import type { ActionResult } from '@sveltejs/kit';
 import type { ZodType } from 'zod';
 import { tick } from 'svelte';
 import { toStore } from 'svelte/store';
-import { queryClient } from '$lib/query/context';
-import { afterWrite } from '$lib/query/invalidate';
+import { queryClient } from '#lib/query/context.js';
+import { afterWrite } from '#lib/query/invalidate.js';
 import { postAction } from './action';
 import { issueErrors, type FormErrors, type FormResult } from './contract';
 
@@ -58,6 +57,7 @@ export function actionForm<T extends Record<string, unknown>>(options: {
     onSubmit: async () => {
       options.onSending?.(submission!.data);
       const result = await mutation.mutateAsync(submission!);
+
       const payload =
         result.type === 'success' || result.type === 'failure'
           ? (result.data as { form?: FormResult<T> } | undefined)
@@ -75,7 +75,7 @@ export function actionForm<T extends Record<string, unknown>>(options: {
         // The write is already confirmed. A read refresh must never cause a write retry.
         await Promise.allSettled([
           ...(options.domain ? [afterWrite(client, options.domain)] : []),
-          ...(options.refresh === false ? [] : [invalidateAll()]),
+          ...(options.refresh === false ? [] : [refreshAll()]),
         ]);
         return;
       }

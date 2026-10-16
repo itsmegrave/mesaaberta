@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/admin-access';
-import { catalogActions } from '$lib/server/admin/catalog-actions';
+import { requireAdmin } from '#lib/server/admin-access.js';
+import { catalogActions } from '#lib/server/admin/catalog-actions.js';
 import { listApproved, listQueue, recentDecisions } from '@mesaaberta/core/server/admin/catalog';
-import { requireUser } from '$lib/server/auth/guard';
+import { requireUser } from '#lib/server/auth/guard.js';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and each load and

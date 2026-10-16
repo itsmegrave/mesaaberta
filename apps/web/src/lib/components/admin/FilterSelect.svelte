@@ -3,10 +3,10 @@
   // and keeping the other filters. The option the list opens on has no parameter.
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import SearchSelect from '$lib/components/SearchSelect.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     id,
@@ -45,7 +45,7 @@
         ),
         locale,
       ),
-      { keepFocus: true, noScroll: true },
+      { reset: false },
     );
   };
 </script>

@@ -3,8 +3,8 @@ import { load } from './+page.server';
 import { publicProfile } from '@mesaaberta/core/server/profile/public';
 
 vi.mock('@mesaaberta/core/server/profile/public', () => ({ publicProfile: vi.fn() }));
-vi.mock('$lib/paraglide/runtime', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('$lib/paraglide/runtime')>()),
+vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('#lib/paraglide/runtime.js')>()),
   getLocale: () => 'pt-BR',
 }));
 

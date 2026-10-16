@@ -2,7 +2,7 @@ import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { listSystems } from '@mesaaberta/core/server/systems';
 import { listCatalog } from '@mesaaberta/core/server/catalog';
 import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
-import { readTableFilters } from '$lib/tables/filters';
+import { readTableFilters } from '#lib/tables/filters.js';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // Tags shown as chips before "Mais tags".

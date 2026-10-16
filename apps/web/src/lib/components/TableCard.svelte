@@ -1,12 +1,12 @@
 <script lang="ts">
-  import UserLink from '$lib/components/UserLink.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import { modalityIcon } from '$lib/tables/modality-icon';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
-  import { shownTimezone } from '$lib/time/shown-timezone';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import GmRating from './GmRating.svelte';
   import SeatRing from './SeatRing.svelte';
 

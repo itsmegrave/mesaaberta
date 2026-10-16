@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages';
+import { m } from '#lib/paraglide/messages.js';
 export function instagramStatus(status: string | null) {
   switch (status) {
     case 'queued':

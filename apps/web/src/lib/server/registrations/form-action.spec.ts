@@ -6,7 +6,7 @@ import {
   RateLimited,
   TableFull,
 } from '@mesaaberta/core/server/errors';
-import { playerActionSchema, tableActionSchema } from '$lib/tables/registration';
+import { playerActionSchema, tableActionSchema } from '#lib/tables/registration.js';
 import { runRegistrationAction } from './form-action';
 
 const call = () => ({ action: 'leave' as const, slug: 'mesa', body: {} });

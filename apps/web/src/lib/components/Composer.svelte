@@ -1,18 +1,18 @@
 <script lang="ts">
-  import TextArea from '$lib/components/TextArea.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
   import { tick } from 'svelte';
-  import { actionForm } from '$lib/forms/action-form.svelte';
-  import type { FormResult } from '$lib/forms/contract';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import type { FormResult } from '#lib/forms/contract.js';
   import Form from './Form.svelte';
-  import EmojiPicker from '$lib/components/EmojiPicker.svelte';
-  import Icon from '$lib/components/Icon.svelte';
-  import SubmitButton from '$lib/components/SubmitButton.svelte';
+  import EmojiPicker from '#lib/components/EmojiPicker.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import {
     MESSAGE_MAX_LENGTH,
     messageSchema,
     type MessageInput,
   } from '@mesaaberta/core/messages/schema';
-  import { m } from '$lib/paraglide/messages';
+  import { m } from '#lib/paraglide/messages.js';
 
   type Props = {
     form: FormResult<MessageInput>;

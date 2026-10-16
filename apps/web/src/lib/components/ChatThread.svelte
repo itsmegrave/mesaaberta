@@ -1,19 +1,19 @@
 <script lang="ts">
-  import UserText from '$lib/components/UserText.svelte';
+  import UserText from '#lib/components/UserText.svelte';
   import { createQuery } from '@tanstack/svelte-query';
   import { invalidate } from '$app/navigation';
-  import ChatHeader from '$lib/components/ChatHeader.svelte';
-  import Composer from '$lib/components/Composer.svelte';
-  import MessageList from '$lib/components/MessageList.svelte';
-  import { apiRead } from '$lib/api/http';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { mergeMessages, type ThreadItem } from '$lib/messages/group';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import ChatHeader from '#lib/components/ChatHeader.svelte';
+  import Composer from '#lib/components/Composer.svelte';
+  import MessageList from '#lib/components/MessageList.svelte';
+  import { apiRead } from '#lib/api/http.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { mergeMessages, type ThreadItem } from '#lib/messages/group.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { BADGES_KEY } from '$lib/query/badges';
-  import { queryClient } from '$lib/query/context';
-  import type { ChatThreadData } from '$lib/server/messages/thread';
+  import { BADGES_KEY } from '#lib/query/badges.js';
+  import { queryClient } from '#lib/query/context.js';
+  import type { ChatThreadData } from '#lib/server/messages/thread.js';
 
   let {
     data,

@@ -6,7 +6,7 @@ import { ANNOUNCEMENT_AUDIENCES, ANNOUNCEMENT_ICONS, ANNOUNCEMENT_TONES } from '
 // Shared by the admin console's form (which shows the limits) and its action (which decides).
 z.config({ jitless: true });
 
-// `body` is the visible length of the rich-text message; it is stored as HTML (see `$lib/text/rich`).
+// `body` is the visible length of the rich-text message; it is stored as HTML (see `#lib/text/rich`).
 export const ANNOUNCEMENT_LIMITS = { title: 100, body: 500, link: 300, recipient: 80 } as const;
 
 /**

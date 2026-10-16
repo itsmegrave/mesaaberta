@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
-  import { linkifyBody } from '$lib/messages/linkify';
-  import type { ThreadItem } from '$lib/messages/group';
-  import { localizedHref } from '$lib/i18n/locales';
-  import { m } from '$lib/paraglide/messages';
-  import { getLocale } from '$lib/paraglide/runtime';
+  import Button from '#lib/components/Button.svelte';
+  import { linkifyBody } from '#lib/messages/linkify.js';
+  import type { ThreadItem } from '#lib/messages/group.js';
+  import { localizedHref } from '#lib/i18n/locales.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     message,

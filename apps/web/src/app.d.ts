@@ -2,28 +2,21 @@
 // global declaration script, not a module, so `import` does not apply. Loaded here instead of
 // through tsconfig `types`, whose file-path form TypeScript 7 rejects.
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference -- a global declaration script cannot import
-/// <reference path="../worker-configuration.d.ts" />
+/// <reference path="../../../worker-configuration.d.ts" />
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
   namespace App {
-    interface Platform {
-      env: Env;
-      ctx: ExecutionContext;
-      caches: CacheStorage;
-      cf?: IncomingRequestCfProperties;
-    }
-
     // interface Error {}
     interface Locals {
       /**
        * The host's variables and bindings, or undefined when the host provides none. Server code
-       * reads this, never `platform.env`: `handleRuntime` is the one place that knows the host.
+       * reads this: `handleRuntime` is the one place that knows the host.
        */
-      env: Platform['env'] | undefined;
-      /** What the host offers beyond variables (see `handleRuntime`). Read this, never `platform.ctx`. */
-      host: import('$lib/server/runtime').Host;
+      env: Env | undefined;
+      /** What the host offers beyond variables (see `handleRuntime`). Read this, never the host's own context. */
+      host: import('#lib/server/runtime.js').Host;
       flags: import('@mesaaberta/core/server/flags/flags').Flags;
       /** Set while the `maintenance_mode` flag is on: `bypass` for an admin, `blocked` for anyone else. */
       maintenance?: 'blocked' | 'bypass';

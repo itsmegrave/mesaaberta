@@ -1,4 +1,5 @@
-import { error, type Handle, type RequestEvent } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 import { can } from '@mesaaberta/core/server/auth/policy';
 
 export const isAdminPath = (pathname: string) =>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import InfoTip from '$lib/components/InfoTip.svelte';
-  import { m } from '$lib/paraglide/messages';
+  import InfoTip from '#lib/components/InfoTip.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   /**
    * A field's frame: the label, "(opcional)" when it may be left empty, and a counter ("23 / 80") on
