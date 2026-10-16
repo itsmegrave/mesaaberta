@@ -9,6 +9,7 @@ WORKDIR /app
 # The workspace manifests first, so the dependency layer is reused when only code changes.
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
 COPY apps/worker/package.json apps/worker/package.json
 COPY packages packages
 RUN bun install --frozen-lockfile --production
