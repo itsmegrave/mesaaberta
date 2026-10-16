@@ -37,9 +37,6 @@ export const hostBindingsPath = fileURLToPath(
   ),
 );
 
-/** Cloudflare's server output is bundled whole by Wrangler; adapter-bun decides its own externals. */
-export const hostBundlesDependencies = !bun;
-
 /** What `sentrySvelteKit` needs to know about the adapter's output. */
 export const hostSentry = bun
   ? { adapter: 'node' as const, sourcemapAssets: undefined }

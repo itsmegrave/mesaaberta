@@ -5,21 +5,20 @@ import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
-import {
-  hostAdapter,
-  hostBindingsPath,
-  hostBundlesDependencies,
-  hostSentry,
-} from './host.config.ts';
+import { hostAdapter, hostBindingsPath, hostSentry } from './host.config.ts';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
   // `#host` is the one place the web app names its host (see host.config.ts).
   resolve: { alias: { '#host': hostBindingsPath } },
-  // A Worker has no node_modules at run time: Wrangler bundles the server output, and cannot load the
-  // `.svelte` files of Svelte libraries (Skeleton, TanStack) that Vite left as imports. SvelteKit 3
-  // no longer bundles dependencies for SSR on its own, so say so. (adapter-bun sets its own.)
-  ssr: hostBundlesDependencies ? { noExternal: true } : undefined,
+  // The Svelte libraries ship `.svelte` files, which only Vite can compile: they must go through it
+  // and into the server bundle. (A Worker has no node_modules at run time, and Wrangler cannot load a
+  // `.svelte` file.) SvelteKit 3 no longer bundles dependencies for SSR on its own. Not everything:
+  // `noExternal: true` pulls CommonJS dependencies in too, and the bundle then needs
+  // `createRequire(import.meta.url)`, which Workers do not have. adapter-bun sets its own.
+  ssr: {
+    noExternal: [/^@iconify-svelte\//, /^@skeletonlabs\//, /^@tanstack\/svelte-/, /^@zag-js\//],
+  },
   plugins: [
     sentrySvelteKit({
       // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
