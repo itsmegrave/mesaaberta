@@ -104,6 +104,12 @@ export default defineConfig({
     projects: [
       {
         extends: './vite.config.ts',
+        // The browser project's dev server answers requests too (a form action, the page's server
+        // load), through Vite's SSR loader: anything it leaves external is loaded by the runtime
+        // itself, and Bun cannot load a `.svelte` file ("Unexpected }" in HydrationBoundary.svelte,
+        // which put up Vite's error overlay and blocked every click of whichever spec was running).
+        // Tests only: the Worker bundle keeps its narrow list above.
+        ssr: { noExternal: true },
         optimizeDeps: {
           // Imported on demand (the emoji picker, the editor), so the scan meets them late and
           // reloads the page mid-run, which fails whichever spec is loading at that moment.
@@ -111,11 +117,6 @@ export default defineConfig({
         },
         test: {
           name: 'client',
-          // The dev server answers requests too (a form action, the page's server load), and Svelte
-          // libraries ship `.svelte` files that only Vite can compile: the runtime (Bun) must not load
-          // them itself ("Unexpected }" in HydrationBoundary.svelte, which put up the error overlay and
-          // blocked every click of whichever spec was running).
-          server: { deps: { inline: [/svelte/] } },
           browser: {
             enabled: true,
             provider: playwright(),
