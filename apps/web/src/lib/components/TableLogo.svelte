@@ -25,4 +25,17 @@
     stroke-width="1.6"
     stroke-dasharray="2.6 2.6"
   />
+  <!-- "Lula 13" overlay: a red band across the foot of the logo. -->
+  <rect x="0.5" y="23.5" width="33" height="10" rx="3" fill="#d4112b" stroke="white" />
+  <text
+    x="17"
+    y="31.2"
+    text-anchor="middle"
+    font-family="system-ui, sans-serif"
+    font-size="7.4"
+    font-weight="800"
+    fill="white"
+  >
+    LULA 13
+  </text>
 </svg>
