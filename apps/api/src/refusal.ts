@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import {
+  AlreadyRated,
   AlreadyRegistered,
   DirectMessagesOff,
   Forbidden,
@@ -7,6 +8,7 @@ import {
   NotFound,
   RateLimited,
   TableFull,
+  TooEarly,
 } from '@mesaaberta/core/server/errors';
 
 /**
@@ -22,6 +24,8 @@ export function refusal(c: Context, error: unknown) {
   if (error instanceof NotFound) return c.json({ error: 'not_found' }, 404);
   if (error instanceof TableFull) return c.json({ error: 'table_full' }, 409);
   if (error instanceof AlreadyRegistered) return c.json({ error: 'already_registered' }, 409);
+  if (error instanceof TooEarly) return c.json({ error: 'too_early' }, 409);
+  if (error instanceof AlreadyRated) return c.json({ error: 'already_rated' }, 409);
   if (error instanceof DirectMessagesOff) return c.json({ error: 'direct_messages_off' }, 409);
   return null;
 }

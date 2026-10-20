@@ -9,6 +9,8 @@ import {
   leaveTable,
   removePlayer,
 } from './service';
+import { ratingSchema } from '../../tables/rating';
+import { submitRating } from '../ratings/service';
 
 /** Mirrors the `registrations_message_length` check. */
 export const JOIN_MESSAGE_MAX = 500;
@@ -16,7 +18,7 @@ export const JOIN_MESSAGE_MAX = 500;
 const player = z.object({ playerId: z.guid() });
 
 /**
- * What a player or a GM does to a table's registrations, by name: the data each needs (without the
+ * What a player or a GM does to a table's registrations and ratings, by name: the data each needs (without the
  * form's `next`, which is a browser concern) and the service call. The web form actions and the api
  * route (`POST /v1/tables/:slug/registrations/:action`) both run these. The service authorizes the
  * actor; what it refuses is thrown (`Forbidden`, `NotFound`, `TableFull`, `AlreadyRegistered`,
@@ -46,6 +48,16 @@ export const registrationActions = {
     schema: player,
     apply: (db: AnyDb, actor: Actor | null, slug: string, { playerId }: { playerId: string }) =>
       removePlayer(db, actor, slug, playerId),
+  },
+  // A player rating the GM after the first session: final, one per player and table.
+  rate: {
+    schema: ratingSchema,
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      { gmScore, comment }: { gmScore: number; comment: string },
+    ) => submitRating(db, actor, slug, { gmScore, comment: comment || null }),
   },
 };
 

@@ -90,6 +90,12 @@ export const flagDefaults = {
   // the dialog shows and a call that cannot be made falls back to the web path. Needs the API
   // binding. Admins first.
   api_reports: false,
+  // Off: rating a table's GM after the first session runs in the web Worker. On: the api Worker does
+  // it over the Service Binding, from the same action registry as the registrations; the web Worker
+  // still dispatches the event it returns, refusals (`too_early`, `already_rated`, `forbidden`) come
+  // back as the codes the form shows and a call that cannot be made falls back to the web path.
+  // Needs the API binding. Admins first.
+  api_ratings: false,
   // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
   // the api Worker does it over the Service Binding and the web Worker dispatches the event it
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every

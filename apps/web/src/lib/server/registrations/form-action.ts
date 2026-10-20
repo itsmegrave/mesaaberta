@@ -11,6 +11,7 @@ import { failFrom } from '../fail-from';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { RegistrationActionName } from '@mesaaberta/core/server/registrations/decisions';
+import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 import { writeViaApi } from '../api-write';
 
 type Event = {
@@ -30,11 +31,15 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
   event: Event,
   schema: z.ZodType<T>,
   run: (db: AnyDb, actor: Actor | null, data: T) => Promise<{ eventIds: string[] }>,
-  /** The same operation for the api Worker, behind `api_registrations`; `run` stays the fallback. */
+  /**
+   * The same operation for the api Worker, behind `api_registrations` (or the `flag` it names, as
+   * `api_ratings` for a rating); `run` stays the fallback.
+   */
   api?: (data: T) => {
     action: RegistrationActionName;
     slug: string;
     body: Record<string, unknown>;
+    flag?: FlagName;
   },
 ) {
   const { locals, url, request } = event;
@@ -59,7 +64,7 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
       (call && profile
         ? await writeViaApi(
             locals,
-            'api_registrations',
+            call.flag ?? 'api_registrations',
             profile,
             `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
             call.body,
