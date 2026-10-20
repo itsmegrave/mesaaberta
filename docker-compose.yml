@@ -1,9 +1,11 @@
-# Local Postgres for development. Supabase runs Postgres too, so this matches production closely.
+# Local Postgres for development (`docker compose up -d db`), or the whole app for self-hosting
+# (`docker compose up`): Postgres, the migrations, the web app on :3000 and the background worker.
+# Supabase runs Postgres too, so this matches production closely.
 services:
   db:
     image: postgres:17-alpine
     ports:
-      - '5432:5432'
+      - '${DB_PORT:-5432}:5432'
     environment:
       POSTGRES_USER: mesaaberta
       POSTGRES_PASSWORD: mesaaberta
@@ -15,6 +17,27 @@ services:
       interval: 2s
       timeout: 3s
       retries: 20
+
+  migrate:
+    build: { context: ., dockerfile: apps/web/Dockerfile, target: migrate }
+    environment: &app-env
+      DATABASE_URL: postgres://mesaaberta:mesaaberta@db:5432/mesaaberta
+    depends_on:
+      db: { condition: service_healthy }
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    build: { context: ., dockerfile: apps/worker/Dockerfile }
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
 
 volumes:
   db-data:

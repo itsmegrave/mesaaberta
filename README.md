@@ -20,6 +20,14 @@ bun run dev
 
 `wrangler.jsonc` and `apps/worker/wrangler.jsonc` hold placeholders, not a deployment's values: the site runs, but login, live feature flags and the footer's feedback links stay off until you set them. Put local values in `.dev.vars` (see `.dev.vars.example`); a deployment keeps its own copy of the Wrangler files.
 
+### Self-hosting with Docker
+
+```sh
+docker compose up --build
+```
+
+This starts Postgres, applies the migrations, then runs the web app on <http://localhost:3000> and the background worker. Set `WEB_PORT` or `DB_PORT` if those host ports are taken. Sign-in, mail and the other integrations stay off until you pass their settings to the `web` and `worker` services (see `.dev.vars.example` for the names). The web image is `apps/web/Dockerfile`; `docker compose up -d db` still starts only Postgres for local development.
+
 ## Scripts
 
 | Script              | What it does                                                                                        |
