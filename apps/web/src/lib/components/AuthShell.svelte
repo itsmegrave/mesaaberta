@@ -23,9 +23,11 @@
 <Breadcrumbs items={[...parents, { label: title }]} class="pt-2 md:pt-6" />
 <section class="grid items-center gap-10 py-6 md:pt-8 lg:grid-cols-2 lg:gap-24">
   <div
-    class="relative hidden h-160 flex-col items-center justify-center gap-7 overflow-hidden rounded-lg bg-primary-500 p-10 text-white lg:flex"
+    class="relative hidden h-160 flex-col items-center justify-center gap-7 overflow-hidden rounded-lg preset-filled-primary-500 p-10 lg:flex"
   >
-    <span aria-hidden="true" class="absolute -top-28 -right-28 size-80 rounded-full bg-white/5"
+    <span
+      aria-hidden="true"
+      class="absolute -top-28 -right-28 size-80 rounded-full bg-primary-contrast-500/5"
     ></span>
     <div class="relative w-80"><TableIllustration onBrand /></div>
     <p

@@ -300,15 +300,15 @@
 
   <section
     aria-labelledby="for-game-masters"
-    class="relative isolate flex flex-col overflow-hidden rounded-lg bg-primary-500 px-6 py-8 text-white md:min-h-192 md:flex-1 md:p-11"
+    class="relative isolate flex flex-col overflow-hidden rounded-lg preset-filled-primary-500 px-6 py-8 md:min-h-192 md:flex-1 md:p-11"
   >
     <span
       aria-hidden="true"
-      class="absolute -top-36 -right-40 -z-10 size-96 rounded-full bg-white/5"
+      class="absolute -top-36 -right-40 -z-10 size-96 rounded-full bg-primary-contrast-500/5"
     ></span>
     <span
       aria-hidden="true"
-      class="absolute -bottom-48 -left-30 -z-10 size-96 rounded-full bg-white/5"
+      class="absolute -bottom-48 -left-30 -z-10 size-96 rounded-full bg-primary-contrast-500/5"
     ></span>
     <h2
       id="for-game-masters"
@@ -320,7 +320,7 @@
     <div class="mt-6 md:mt-7">
       <a
         href={localizedHref('/tables/new', locale)}
-        class="btn h-12 w-full gap-2 rounded-lg bg-white px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
+        class="btn h-12 w-full gap-2 rounded-lg bg-primary-contrast-500 px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.hero_open_cta()}
