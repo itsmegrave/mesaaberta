@@ -57,6 +57,8 @@ import BellIcon from '@iconify-svelte/reicon/bell';
 import ArrowLeftIcon from '@iconify-svelte/reicon/arrow-left';
 import PlusIcon from '@iconify-svelte/reicon/add';
 import GlobeIcon from '@iconify-svelte/reicon/globe';
+import ImportIcon from '@iconify-svelte/reicon/cloud-download';
+import MailIcon from '@iconify-svelte/reicon/sms';
 import GameDiceTwentyFacesTwentyIcon from '@iconify-svelte/game-icons/dice-twenty-faces-twenty';
 
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
@@ -152,6 +154,8 @@ export const ICONS = {
   'arrow-left': ArrowLeftIcon,
   plus: PlusIcon,
   globe: GlobeIcon,
+  import: ImportIcon,
+  mail: MailIcon,
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
   'game-icons:trade': GameTradeIcon,

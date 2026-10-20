@@ -8,6 +8,7 @@
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
+  import Icon from '#lib/components/Icon.svelte';
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
@@ -150,7 +151,10 @@
         {#if row.submitter}
           <a class="anchor" href={localizedHref(`/u/${row.submitter}`, locale)}>@{row.submitter}</a>
         {:else}
-          {submissionLabel(null, row.importSource)}
+          <span class="inline-flex items-center gap-1.5 text-muted">
+            <Icon name="import" size={18} class="shrink-0" />
+            {submissionLabel(null, row.importSource)}
+          </span>
         {/if}
       {:else if id === 'reports'}
         {row.reports}

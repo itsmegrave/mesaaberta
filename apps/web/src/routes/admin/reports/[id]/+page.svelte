@@ -3,7 +3,8 @@
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
-  import { siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
+  import { periodLabel } from '#lib/crowdfunding/format.js';
+  import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import Icon from '#lib/components/Icon.svelte';
   import { localizedHref } from '#lib/i18n/locales.js';
   import { reasonLabel } from '#lib/moderation/labels.js';
@@ -245,7 +246,11 @@
                 <dt class="text-sm font-semibold text-muted">{m.admin_partners_contact_email()}</dt>
                 <dd>
                   <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
-                  <a class="anchor" href="mailto:{partner.contactEmail}">{partner.contactEmail}</a>
+                  <a
+                    class="inline-flex items-center gap-1.5 anchor"
+                    href="mailto:{partner.contactEmail}"
+                    ><Icon name="mail" size={18} class="shrink-0" />{partner.contactEmail}</a
+                  >
                   <!-- eslint-enable svelte/no-navigation-without-resolve -->
                 </dd>
               </div>
@@ -277,6 +282,14 @@
               <dd>{campaign.owner}</dd>
             </div>
             <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_report_platform()}</dt>
+              <dd>{platformLabel(campaign.platform)}</dd>
+            </div>
+            <div class={row}>
+              <dt class="text-sm font-semibold text-muted">{m.admin_report_period()}</dt>
+              <dd>{periodLabel(campaign.startsOn, campaign.endsOn, locale)}</dd>
+            </div>
+            <div class={row}>
               <dt class="text-sm font-semibold text-muted">{m.crowdfunding_sent_by_label()}</dt>
               <dd class="flex flex-wrap items-center gap-2">
                 {#if campaign.submitter}
@@ -291,7 +304,10 @@
                     >{m.admin_user_title()}</a
                   >
                 {:else}
-                  {submissionLabel(null, campaign.importSource)}
+                  <span class="inline-flex items-center gap-1.5">
+                    <Icon name="import" size={18} class="shrink-0 text-muted" />
+                    {submissionLabel(null, campaign.importSource)}
+                  </span>
                 {/if}
               </dd>
             </div>
@@ -347,6 +363,7 @@
       class="grid h-fit content-start gap-3 rounded-lg border border-surface-200-800 bg-panel p-5 xl:sticky xl:top-6"
     >
       <h2 id="report-actions" class="text-lg font-semibold">{m.admin_report_decision()}</h2>
+      <p class="text-sm text-muted">{m.admin_report_decision_note()}</p>
       {#if !report.can.close}
         <p class="text-muted">{m.admin_report_nothing_left()}</p>
       {/if}
