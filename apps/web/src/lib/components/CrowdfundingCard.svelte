@@ -89,8 +89,11 @@
       {situation.text}
     </p>
     <div class="mt-auto flex items-center justify-between gap-3 pt-2">
-      <p class="min-w-0 truncate text-sm text-muted">
-        {submissionLabel(campaign.submitter, campaign.importSource)}
+      <p class="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+        {#if !campaign.submitter}
+          <Icon name="import" size={16} class="shrink-0" />
+        {/if}
+        <span class="truncate">{submissionLabel(campaign.submitter, campaign.importSource)}</span>
       </p>
       {#if onreport}
         <button

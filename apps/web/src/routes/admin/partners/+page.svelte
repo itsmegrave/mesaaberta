@@ -248,9 +248,12 @@
         {#if row.contactEmail}
           <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
           <a
-            class="block truncate anchor text-sm text-muted"
+            class="flex min-w-0 items-center gap-1 anchor text-sm text-muted"
             href="mailto:{row.contactEmail}"
-            title={m.admin_partners_contact_email()}>{row.contactEmail}</a
+            title={m.admin_partners_contact_email()}
+            ><Icon name="mail" size={16} class="shrink-0" /><span class="truncate"
+              >{row.contactEmail}</span
+            ></a
           >
           <!-- eslint-enable svelte/no-navigation-without-resolve -->
         {/if}
