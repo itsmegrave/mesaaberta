@@ -111,6 +111,19 @@ describe('api registration routes over a database', () => {
     expect(missing.status).toBe(404);
   });
 
+  it('refuses a rating from someone without a confirmed seat', async () => {
+    const response = await post('rate', { gmScore: 5, comment: 'ótimo' }, ana);
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'forbidden' });
+  });
+
+  it('refuses a rating without a score', async () => {
+    const response = await post('rate', { gmScore: 9 }, ana);
+
+    expect(response.status).toBe(400);
+  });
+
   it('refuses a malformed player id and an unknown action', async () => {
     expect((await post('remove', { playerId: 'x' }, gm)).status).toBe(400);
     expect((await post('explode', {}, gm)).status).toBe(404);

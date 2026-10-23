@@ -115,10 +115,19 @@ export const actions: Actions = {
       ({ playerId }) => ({ action: 'decline', slug: event.params.slug, body: { playerId } }),
     ),
   rate: (event) =>
-    runRegistrationAction(event, ratingSchema, (db, actor, data) =>
-      submitRating(db, actor, event.params.slug, {
-        gmScore: data.gmScore,
-        comment: data.comment || null,
+    runRegistrationAction(
+      event,
+      ratingSchema,
+      (db, actor, data) =>
+        submitRating(db, actor, event.params.slug, {
+          gmScore: data.gmScore,
+          comment: data.comment || null,
+        }),
+      (data) => ({
+        action: 'rate',
+        slug: event.params.slug,
+        body: { gmScore: data.gmScore, comment: data.comment },
+        flag: 'api_ratings',
       }),
     ),
   // "Denunciar": the table, or someone the reporter shares it with. Admins see it in the queue.

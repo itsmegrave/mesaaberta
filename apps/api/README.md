@@ -27,7 +27,7 @@ announcements console (`POST /v1/admin/announcements`: count the audience, then 
 behind `api_admin_announcements`) and the direct conversation with someone (`POST /v1/inbox/direct`,
 behind `api_inbox`). Reporting a table, a partner or a campaign and withdrawing
 one's own partner (`POST /v1/reports/:action` with `table`, `partner`, `crowdfunding` and
-`withdrawPartner`, behind `api_reports`). The anonymous auth forms, one at a time (`POST /v1/auth/password-reset` e-mails the reset link, with the same per-network limit; the web Worker sends the visitor's address in `x-client-ip` and no `x-actor-id`; behind `api_auth`, all or nothing since nobody is signed in). Sign-in, sign-up and choosing a new password stay on web until a session hand-off exists. Adding a password to an account that signed in
+`withdrawPartner`, behind `api_reports`). The anonymous auth forms, one at a time (`POST /v1/auth/password-reset` e-mails the reset link, with the same per-network limit; the web Worker sends the visitor's address in `x-client-ip` and no `x-actor-id`; behind `api_auth`, all or nothing since nobody is signed in). Sign-in, sign-up and choosing a new password stay on web until a session hand-off exists. Rating a table's GM after the first session (`POST /v1/tables/:slug/rate`, in the registrations route, behind `api_ratings`; refusals `too_early`, `already_rated`, `forbidden`). Adding a password to an account that signed in
 with a provider (`POST /v1/account/password/code` e-mails a six-digit code, `POST
 /v1/account/password` checks it and sets the password), behind `api_password`; the web Worker
 forwards the person's own access token in `Authorization`, so the password is set as them and no
