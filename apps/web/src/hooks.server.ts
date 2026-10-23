@@ -12,7 +12,7 @@ import { can } from '@mesaaberta/core/server/auth/policy';
 import { handleDatabase } from '#lib/server/db/handle-database.js';
 import { logger, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '#lib/server/sentry-sink.js';
-import { handleRequestLog } from '#lib/server/request-log.js';
+import { handleRequestLog, handleUserTag } from '#lib/server/request-log.js';
 import { handleHostTelemetry, handleRuntime } from '#lib/server/runtime.js';
 import { createTracker } from '@mesaaberta/core/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
@@ -143,6 +143,7 @@ export const handle: Handle = sequence(
   handleDatabase,
   handleAnalytics,
   handleAuth,
+  handleUserTag,
   handleSuspended,
   handleAdminAccess,
   handleParaglide,

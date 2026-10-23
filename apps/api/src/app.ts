@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
+import { ACTOR_HEADER } from './admin-guard';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
 import { catalogRoutes } from './catalog';
@@ -27,13 +28,15 @@ export function createApi() {
   app.get('/healthz', (c) => c.json({ status: 'ok', service: 'api' }));
 
   // One line per request, so a rollout can be read in Sentry: which route, what answer, how long.
-  // Only the route template, the method, the status and the duration: never a path, a body or an id.
+  // The route template, the method, the status, the duration and who asked (the actor the web
+  // Worker names): never a path or a body.
   app.use('/v1/*', async (c, next) => {
     const started = Date.now();
     await next();
     logger.info('api request', {
       route: c.req.routePath,
       method: c.req.method,
+      userId: c.req.header(ACTOR_HEADER),
       status: c.res.status,
       durationMs: Date.now() - started,
     });
@@ -73,7 +76,12 @@ export function createApi() {
   // The caller never sees the cause. The logger forwards the error's type, code and stack location to
   // Sentry, never its message, and the route is the template (`/v1/account/password/code`).
   app.onError((error, c) => {
-    logger.error('api request failed', { route: c.req.routePath, method: c.req.method, error });
+    logger.error('api request failed', {
+      route: c.req.routePath,
+      method: c.req.method,
+      userId: c.req.header(ACTOR_HEADER),
+      error,
+    });
     return c.json({ error: 'internal_error' }, 500);
   });
 

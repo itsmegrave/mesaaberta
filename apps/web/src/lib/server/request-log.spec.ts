@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
 import { createLogger } from '@mesaaberta/core/server/logger';
-import { handleRequestLog } from './request-log';
+import { handleRequestLog, resourceOf } from './request-log';
 import { error, redirect } from '@sveltejs/kit';
 
 const setup = () => {
@@ -95,8 +95,9 @@ describe('handleRequestLog', () => {
     });
   });
 
-  it('keeps user identity out of telemetry after a later hook signs someone in', async () => {
+  it('names the user a later hook signs in, on route lines and on the request line', async () => {
     const { lines, handle } = setup();
+    const userId = '8d52d7db-4e3e-4e7e-ba2c-bf99e71ed6dd';
     const event = {
       request: new Request('https://mesaaberta.test/'),
       url: new URL('https://mesaaberta.test/'),
@@ -106,12 +107,36 @@ describe('handleRequestLog', () => {
     await handle({
       event,
       resolve: async () => {
-        event.locals.userId = 'user-1';
+        event.locals.userId = userId;
+        event.locals.log.info('from a route');
         return new Response();
       },
     });
 
-    expect(lines[0]).not.toHaveProperty('userId');
+    expect(lines).toEqual([
+      expect.objectContaining({ msg: 'from a route', userId }),
+      expect.objectContaining({ msg: 'request', userId }),
+    ]);
+  });
+
+  it('names the record the route acts on', async () => {
+    const { lines, handle } = setup();
+    const event = {
+      request: new Request('https://mesaaberta.test/tables/mesa-de-sexta/edit'),
+      url: new URL('https://mesaaberta.test/tables/mesa-de-sexta/edit'),
+      route: { id: '/tables/[slug]/edit' },
+      params: { slug: 'mesa-de-sexta' },
+      locals: {},
+    } as unknown as RequestEvent;
+
+    await handle({ event, resolve: async () => new Response(null, { status: 403 }) });
+
+    expect(lines[0]).toMatchObject({
+      route: '/tables/[slug]/edit',
+      resourceType: 'table',
+      resourceId: 'mesa-de-sexta',
+      status: 403,
+    });
   });
 
   it('never logs the query string, which can carry tokens', async () => {
@@ -121,5 +146,19 @@ describe('handleRequestLog', () => {
 
     expect(JSON.stringify(lines)).not.toMatch(/s3cret|ana@example/);
     expect(lines[0].route).toBe('/login');
+  });
+});
+
+describe('resourceOf', () => {
+  it.each([
+    ['/tables/[slug]', { slug: 'mesa' }, { resourceType: 'table', resourceId: 'mesa' }],
+    ['/admin/users/[id]', { id: 'u1' }, { resourceType: 'user', resourceId: 'u1' }],
+    ['/u/[username]', { username: 'ana' }, { resourceType: 'user', resourceId: 'ana' }],
+    ['/messages/[id]', { id: 'c1' }, { resourceType: 'conversation', resourceId: 'c1' }],
+    ['/api/query/[resource]', { resource: 'tables' }, {}],
+    ['/login/[provider=provider]', { provider: 'google' }, {}],
+    ['/', {}, {}],
+  ])('%s', (routeId, params, expected) => {
+    expect(resourceOf(routeId, params)).toEqual(expected);
   });
 });

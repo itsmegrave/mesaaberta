@@ -53,6 +53,15 @@ describe('logger', () => {
     });
     expect(JSON.stringify(lines)).not.toMatch(/secret|Ana|ana@example|user-1/);
   });
+  it('keeps who acted and on what, as ids, and drops a resource id that is free text', () => {
+    const { lines, log } = capture();
+    const userId = '8d52d7db-4e3e-4e7e-ba2c-bf99e71ed6dd';
+    log.warn('request', { userId, resourceType: 'table', resourceId: 'mesa-de-sexta' });
+    log.warn('request', { resourceId: 'ana@example.com', resourceType: 'a table' });
+    expect(lines[0]).toMatchObject({ userId, resourceType: 'table', resourceId: 'mesa-de-sexta' });
+    expect(lines[1]).not.toHaveProperty('resourceId');
+    expect(lines[1]).not.toHaveProperty('resourceType');
+  });
   it('keeps error types and SQLSTATE without messages, stacks or causes containing values', () => {
     const { lines, log } = capture();
     log.error('query.failed', {

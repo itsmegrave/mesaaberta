@@ -8,7 +8,9 @@ export const scrubString = (text: string) =>
     )
     .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[redacted]');
 
-// No free text, request payloads or user identity are forwarded. Add fields deliberately here.
+// No free text or request payloads are forwarded. Who acted and on what is, as opaque ids only
+// (`userId`, `resourceType`, `resourceId`), so a line can be traced to a person and a record.
+// Add fields deliberately here.
 const COUNTS = new Set([
   'schemaVersion',
   'status',
@@ -48,8 +50,11 @@ const LABELS = new Set([
   'provider',
   'stage',
   'reason',
+  'resourceType',
 ]);
-const IDS = new Set(['requestId', 'eventId', 'tableId', 'registrationId']);
+const IDS = new Set(['requestId', 'eventId', 'tableId', 'registrationId', 'userId']);
+// A resource is named by its uuid or by its public handle (a table's slug, a profile's @username).
+const RESOURCE_ID = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$/;
 
 export function safeFields(
   fields: Record<string, unknown> = {},
@@ -64,6 +69,8 @@ export function safeFields(
       typeof value === 'string' &&
       /^(?:[a-f0-9]{8}-[a-f0-9-]{27}|[a-f0-9]{16,32}(?:-[A-Z]{3})?)$/i.test(value)
     )
+      safe[key] = value;
+    if (key === 'resourceId' && typeof value === 'string' && RESOURCE_ID.test(value))
       safe[key] = value;
     // SvelteKit route IDs are templates, not the requested pathname with user-controlled slugs.
     if (key === 'route' && typeof value === 'string' && /^\/[a-zA-Z0-9/_[\]()=.-]*$/.test(value))
