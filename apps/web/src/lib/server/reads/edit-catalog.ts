@@ -5,7 +5,7 @@ import { loadTableForEdit } from '@mesaaberta/core/server/tables/write';
 import { timezoneOf } from '../time';
 import { listSystems, systemOfTable } from '@mesaaberta/core/server/systems';
 import { listCatalog, type CatalogItem } from '@mesaaberta/core/server/catalog';
-import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
+import { Forbidden, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
 export async function read({ locals, url, params, cookies }: RequestEvent) {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database unavailable');
@@ -46,6 +46,8 @@ export async function read({ locals, url, params, cookies }: RequestEvent) {
       },
     };
   } catch (cause) {
+    if (cause instanceof TableConcluded)
+      error(403, { message: 'Forbidden', code: 'table_concluded' });
     if (cause instanceof Forbidden) error(403, 'Forbidden');
     if (cause instanceof NotFound) error(404, 'Not found');
     throw cause;

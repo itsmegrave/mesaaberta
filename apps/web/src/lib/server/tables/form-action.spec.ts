@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { Forbidden, Invalid, RateLimited } from '@mesaaberta/core/server/errors';
+import { Forbidden, Invalid, RateLimited, TableConcluded } from '@mesaaberta/core/server/errors';
 import { handleTableForm } from './form-action';
 import { createTable } from '@mesaaberta/core/server/tables/write';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
@@ -225,6 +225,18 @@ describe('handleTableForm', () => {
     expect(result).toMatchObject({
       status: 403,
       data: { form: { message: { code: 'forbidden' }, data: { title: 'Mesa Nova' } } },
+    });
+  });
+
+  it('says a concluded table is frozen with its own code, for the form to word', async () => {
+    const s = setup();
+    s.save.mockRejectedValueOnce(new TableConcluded());
+
+    const result = await run(request(), s);
+
+    expect(result).toMatchObject({
+      status: 403,
+      data: { form: { message: { code: 'table_concluded' } } },
     });
   });
 

@@ -36,6 +36,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
 export function formProblem(message: FormMessage | undefined): string | null {
   if (!message || message.field) return null;
   if (message.code === 'forbidden') return m.form_error_forbidden();
+  if (message.code === 'table_concluded') return m.form_error_table_concluded();
   if (message.code === 'rate_limited') {
     return m.error_rate_limited({ wait: formatWait(message.retryAfter ?? 60) });
   }

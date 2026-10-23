@@ -506,6 +506,23 @@ describe('loadTableForEdit', () => {
       name: 'NotFound',
     });
   });
+
+  it('tells the GM a concluded table is frozen, and still only that it is Forbidden to anyone else', async () => {
+    const { slug } = await createTable(test.db, ana, input({ title: 'Já Jogada' }), { now });
+    await test.db.update(gameTables).set({ status: 'concluded' }).where(eq(gameTables.slug, slug));
+
+    for (const gm of [ana, admin]) {
+      await expect(loadTableForEdit(test.db, gm, slug, SP)).rejects.toMatchObject({
+        name: 'TableConcluded',
+      });
+      await expect(updateTable(test.db, gm, slug, input())).rejects.toMatchObject({
+        name: 'TableConcluded',
+      });
+    }
+    await expect(loadTableForEdit(test.db, bruno, slug, SP)).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
+  });
 });
 
 describe('updateTable', () => {

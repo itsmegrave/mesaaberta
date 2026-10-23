@@ -8,6 +8,18 @@ export class Forbidden extends Error {
   }
 }
 
+/**
+ * The table's GM (or an admin) asked to change a table they own, but it is concluded: the GM
+ * confirmed the session happened, so it is frozen and its ratings describe it as it was. A
+ * `Forbidden`, so any caller that only knows that still refuses; the web app shows why.
+ */
+export class TableConcluded extends Forbidden {
+  constructor() {
+    super('table concluded');
+    this.name = 'TableConcluded';
+  }
+}
+
 export class NotFound extends Error {
   constructor(message = 'not found') {
     super(message);
