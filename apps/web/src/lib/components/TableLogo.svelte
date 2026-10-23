@@ -6,7 +6,7 @@
   <circle cx="17" cy="17" r="10.5" class="fill-primary-500" />
   <!-- The battle map on the tabletop, as in the big illustration: a small gridded square. -->
   <g transform="rotate(-12 17 17)">
-    <rect x="11" y="12" width="12" height="10" rx="1.2" class="fill-white" />
+    <rect x="11" y="12" width="12" height="10" rx="1.2" class="fill-primary-contrast-500" />
     <path
       d="M15 12v10M19 12v10M11 15.3h12M11 18.7h12"
       class="stroke-primary-500/55"

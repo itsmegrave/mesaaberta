@@ -51,11 +51,11 @@
     cx={centre}
     cy={centre}
     r="104"
-    class={onBrand ? 'fill-black/25' : 'table-top fill-primary-500'}
+    class={onBrand ? 'fill-surface-950/25' : 'table-top fill-primary-500'}
   />
   <!-- A battle map on the table: a square grid, two miniatures on it, and a d20 beside it. -->
   <g transform="rotate(-12 {centre} {centre})">
-    <rect x="140" y="150" width="120" height="100" rx="6" class="fill-white" />
+    <rect x="140" y="150" width="120" height="100" rx="6" class="fill-primary-contrast-500" />
     <path d={gridLines} class="stroke-primary-500/35" stroke-width="1.5" />
     <!-- A wall across the map, so it reads as a dungeon, not a spreadsheet. -->
     <path d="M160 170h40v20" class="fill-none stroke-surface-950/55" stroke-width="4" />

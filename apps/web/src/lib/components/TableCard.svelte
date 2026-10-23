@@ -104,7 +104,9 @@
       class="flex h-36 shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-5 py-4"
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
-        <span class="chip h-6 gap-1 border border-white/15 bg-white/15 px-3 text-xs font-semibold">
+        <span
+          class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-primary-contrast-500/15 px-3 text-xs font-semibold"
+        >
           {table.kind === 'campaign'
             ? m.table_kind_campaign()
             : table.kind === 'adventure'

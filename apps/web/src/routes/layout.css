@@ -37,6 +37,11 @@ body {
   --color-discord: #5865f2;
 }
 
+/* Cerberus pairs primary-500 with primary-50 (about 3.6:1); white keeps text on the brand tiles readable. Other themes set their own. */
+[data-theme='cerberus'] {
+  --color-primary-contrast-500: oklch(1 0 0);
+}
+
 /* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
 @utility bg-panel {
   background-color: light-dark(var(--color-surface-50), var(--color-surface-900));
