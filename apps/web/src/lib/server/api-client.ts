@@ -34,7 +34,7 @@ export type ApiAnswer = { ok: boolean; status: number; body: unknown };
 export async function callApiRaw(
   env: App.Locals['env'],
   path: string,
-  actorId: string,
+  actorId: string | null,
   log: Logger = logger,
   json?: unknown,
   headers: Record<string, string> = {},
@@ -55,7 +55,7 @@ export async function callApiRaw(
         headers: {
           ...headers,
           ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
-          'x-actor-id': actorId,
+          ...(actorId ? { 'x-actor-id': actorId } : {}),
           ...(json === undefined ? {} : { 'content-type': 'application/json' }),
         },
         ...(json === undefined ? {} : { body: JSON.stringify(json) }),

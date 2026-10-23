@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
 import { announcementRoutes } from './announcements';
+import { authRoutes } from './auth';
 import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 import { inboxRoutes } from './inbox';
@@ -62,6 +63,8 @@ export function createApi() {
   // Adding a password to a provider-only account (a code by e-mail, then the password), behind
   // `api_password`. Before `/v1/account`, whose `/:action` would otherwise catch it.
   app.route('/v1/account/password', passwordRoutes());
+  // The anonymous auth forms (the password-reset e-mail first), behind `api_auth`.
+  app.route('/v1/auth', authRoutes());
   // The person's own profile (the form and the direct-messages switch), behind `api_account`.
   app.route('/v1/account', accountRoutes());
 
