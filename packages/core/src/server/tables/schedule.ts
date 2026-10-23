@@ -47,3 +47,14 @@ export function localToInstant(local: string, timeZone: string): Date {
 export function instantToLocal(instant: Date, timeZone: string): string {
   return zoned(instant, timeZone).toPlainDateTime().toString({ smallestUnit: 'minute' });
 }
+
+/** Half-open session intervals: exactly adjacent sessions do not overlap. */
+export function intervalsOverlap(
+  a: { startsAt: Date; durationMinutes: number },
+  b: { startsAt: Date; durationMinutes: number },
+): boolean {
+  return (
+    a.startsAt.getTime() < b.startsAt.getTime() + b.durationMinutes * 60_000 &&
+    b.startsAt.getTime() < a.startsAt.getTime() + a.durationMinutes * 60_000
+  );
+}

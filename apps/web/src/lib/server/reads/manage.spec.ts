@@ -19,6 +19,7 @@ const event = {
 const manageOf = (status: string) =>
   ({
     table: { id: 't', gmId: 'gm', imagePath: null, slug: 'mesa', status },
+    canDuplicate: true,
     systemWaiting: false,
     gm: { avatarUrl: null, avatarPath: null },
     gmRating: null,
@@ -37,4 +38,9 @@ describe('the manage read', () => {
     vi.mocked(loadManage).mockResolvedValue(manageOf('concluded'));
     expect((await read(event)).canEdit).toBe(false);
   });
+});
+
+it('offers duplication for an owned concluded source without allowing editing', async () => {
+  vi.mocked(loadManage).mockResolvedValue(manageOf('concluded'));
+  expect((await read(event)).canDuplicate).toBe(true);
 });

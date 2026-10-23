@@ -9,6 +9,7 @@ import { diffFields } from '../events/changes';
 import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { localToInstant } from './schedule';
+import { lockTableSchedule, guardTableSchedule } from './schedule-guard';
 
 /**
  * Whether a table's session is over at `now`. `now` goes in as an ISO string: a `sql` template
@@ -77,6 +78,14 @@ async function answer(
   const table = await findAwaiting(db, actor, slug);
 
   const eventId = await db.transaction(async (tx) => {
+    if (move === 'POSTPONE') {
+      await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
+      const [current] = await tx.select().from(gameTables).where(eq(gameTables.id, table.id));
+      await guardTableSchedule(tx as unknown as AnyDb, table.id, {
+        ...current,
+        ...change(current),
+      });
+    }
     const [updated] = await tx
       .update(gameTables)
       .set({ ...change(table), status: nextStatus('awaiting_confirmation', move)! })

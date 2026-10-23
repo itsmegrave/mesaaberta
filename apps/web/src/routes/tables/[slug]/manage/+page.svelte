@@ -232,6 +232,13 @@
           >{m.table_edit()}</a
         >
       {/if}
+      {#if data.canDuplicate}
+        <a
+          href={localizedHref(`/tables/new?duplicate=${encodeURIComponent(table.slug)}`, locale)}
+          class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
+          >{m.table_duplicate()}</a
+        >
+      {/if}
     </nav>
     <a href={tablePage} class="hidden link-underline font-semibold sm:inline"
       >{m.manage_view_page()}</a

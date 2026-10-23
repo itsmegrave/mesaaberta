@@ -40,6 +40,7 @@
     suggestSystem?: boolean;
     imageUrl?: string | null;
     action?: string;
+    duplicationRequestKey?: string;
     /** Where "Cancelar" goes: the list for a new table, the table itself when editing. */
     cancelHref?: string;
     /** Shown as the GM on the preview card. */
@@ -61,6 +62,7 @@
     suggestSystem = false,
     imageUrl = null,
     action,
+    duplicationRequestKey,
     cancelHref = '/tables',
     gmName = NAMELESS,
     minCapacity = TABLE_LIMITS.capacity.min,
@@ -162,6 +164,11 @@
   onfocusout={controller.blur}
   class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
 >
+  {#if duplicationRequestKey}<input
+      type="hidden"
+      name="duplicationRequestKey"
+      value={duplicationRequestKey}
+    />{/if}
   <div class="grid gap-8 lg:col-span-2">
     <ErrorSummary errors={problems} />
     <FormBanner text={problem} />

@@ -52,6 +52,7 @@ export function createApi() {
   // The admin's hand actions on Instagram posts (queue, reconcile), behind `api_admin_instagram`.
   app.route('/v1/admin/instagram', instagramRoutes());
   // The first player-facing one: join, leave and the GM's decisions, behind `api_registrations`.
+  app.route('/v1/tables', tableWriteRoutes(undefined, true));
   app.route('/v1/tables', registrationRoutes());
   // The GM's manage page (publish, happened, not held, postpone), behind `api_table_lifecycle`.
   app.route('/v1/manage', manageRoutes());

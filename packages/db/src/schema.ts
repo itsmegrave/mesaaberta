@@ -3,6 +3,7 @@ import { PROFILE_STATUSES } from './profile-status';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  type AnyPgColumn,
   boolean,
   check,
   date,
@@ -235,6 +236,14 @@ export const gameTables = pgTable(
       .references(() => systems.id),
     title: text('title').notNull(),
     imagePath: text('image_path'),
+    // Only the immediate source constrains this session; deleting it keeps the independent copy.
+    duplicatedFromTableId: uuid('duplicated_from_table_id').references(
+      (): AnyPgColumn => gameTables.id,
+      { onDelete: 'set null' },
+    ),
+    duplicationRequestKey: uuid('duplication_request_key'),
+    // Not an event FK: outbox retention must not erase submission idempotency.
+    duplicationEventId: uuid('duplication_event_id'),
     description: text('description').notNull().default(''),
     extraInfo: text('extra_info'),
     // The GM's message to each player who gets a seat. Private: only ever sent by e-mail, never selected by the public queries.
@@ -279,6 +288,11 @@ export const gameTables = pgTable(
   (table) => [
     uniqueIndex('game_tables_slug_unique').on(table.slug),
     index('game_tables_gm_id_idx').on(table.gmId),
+    index('game_tables_duplicated_from_idx').on(table.duplicatedFromTableId),
+    uniqueIndex('game_tables_duplication_request_unique').on(
+      table.gmId,
+      table.duplicationRequestKey,
+    ),
     index('game_tables_system_id_idx').on(table.systemId),
     index('game_tables_location_idx').on(table.locationState, table.locationCity),
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),

@@ -15,7 +15,7 @@ import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 import { callApiRaw, routeTemplate } from './api-client';
 
 /** The refusal an api answer stands for, as the domain error `failFrom` already knows. */
-function refusalOf(status: number, body: Record<string, unknown>): Error | null {
+export function refusalOf(status: number, body: Record<string, unknown>): Error | null {
   if (status === 400 && body.error === 'invalid')
     return new Invalid(
       typeof body.field === 'string' ? body.field : '',

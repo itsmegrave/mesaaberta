@@ -38,6 +38,7 @@ export async function callApiRaw(
   log: Logger = logger,
   json?: unknown,
   headers: Record<string, string> = {},
+  method: 'GET' | 'POST' = 'POST',
 ): Promise<ApiAnswer | null> {
   const settings = env as
     { API?: ApiBinding; API_URL?: string; API_INTERNAL_TOKEN?: string } | undefined;
@@ -51,7 +52,7 @@ export async function callApiRaw(
     const origin = binding ? 'https://api.internal' : remote!.API_URL!.replace(/\/$/, '');
     const response = await send(
       new Request(`${origin}${path}`, {
-        method: 'POST',
+        method,
         headers: {
           ...headers,
           ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),

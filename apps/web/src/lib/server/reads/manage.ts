@@ -27,6 +27,7 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     return {
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
       // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
+      canDuplicate: manage.canDuplicate,
       canEdit: can(profile, 'table:edit', { gmId, tableStatus: manage.table.status }),
       systemWaiting: manage.systemWaiting,
       gm: withPicture(manage.gm),

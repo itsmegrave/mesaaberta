@@ -20,6 +20,8 @@ type Event = {
   locals: App.Locals;
   url: URL;
   cookies: Pick<import('@sveltejs/kit').Cookies, 'get'>;
+  /** Trusted server-selected zone when copying an existing table. */
+  formTimezone?: string;
   setHeaders?: (headers: Record<string, string>) => void;
 };
 
@@ -33,7 +35,7 @@ type Event = {
  * itself is checked by `save` (through the policy), not here.
  */
 export async function handleTableForm(
-  { request, locals, url, cookies, setHeaders }: Event,
+  { request, locals, url, cookies, setHeaders, formTimezone }: Event,
   save: (
     input: TableInput,
     imagePath: string | undefined,
@@ -53,7 +55,7 @@ export async function handleTableForm(
 
   const data = await request.formData();
   // The GM types the time in their own zone; whatever zone was sent, that is the one used.
-  data.set('timezone', await timezoneOf(locals, cookies));
+  data.set('timezone', formTimezone ?? (await timezoneOf(locals, cookies)));
   // Files are allowed so the schema can check the image; every failure below strips them.
   const form = validateFormData(
     data,

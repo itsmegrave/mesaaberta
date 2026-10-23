@@ -56,3 +56,12 @@ repository root: `docker build -f apps/api/Dockerfile -t mesaaberta-api .`. Over
 `x-internal-token` and the process refuses to start without `API_INTERNAL_TOKEN`. Keep the port on a
 private network behind the web app (the web app calls it with `API_URL` + `API_INTERNAL_TOKEN`);
 never publish it. It needs `DATABASE_URL` and the same Auth and mail settings as the Worker.
+
+## Table duplication
+
+New table-duplication endpoints are API-owned and do not use the legacy migration flags:
+
+- `GET /v1/tables/:slug/duplication`: private defaults from a table owned by the actor, with an empty required game date.
+- `POST /v1/tables/:slug/duplicate`: create a separate empty table at a non-overlapping time, with an optional submission UUID for idempotency.
+
+The web app requires its API Service Binding, or the existing private `API_URL` / `API_INTERNAL_TOKEN` transport. It returns a service error when that transport is unavailable; it does not duplicate records locally. The Playwright setup starts a private local API alongside the web app. `E2E_DB_URL` can point both services at an isolated migrated test database.
