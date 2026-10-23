@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
+import { can } from '@mesaaberta/core/server/auth/policy';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { loadManage } from '@mesaaberta/core/server/tables/manage';
@@ -12,7 +13,8 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
   if (!locals.db) error(503, 'Database not configured');
 
   try {
-    const manage = await loadManage(locals.db, await locals.getProfile(), params.slug!, new Date());
+    const profile = await locals.getProfile();
+    const manage = await loadManage(locals.db, profile, params.slug!, new Date());
     const supabaseUrl = supabaseUrlOf(locals.env);
     const withPicture = <T extends { avatarUrl: string | null; avatarPath: string | null }>({
       avatarUrl,
@@ -24,6 +26,8 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     const { gmId, id, imagePath, ...table } = manage.table;
     return {
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
+      // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
+      canEdit: can(profile, 'table:edit', { gmId, tableStatus: manage.table.status }),
       systemWaiting: manage.systemWaiting,
       gm: withPicture(manage.gm),
       gmRating: manage.gmRating,
