@@ -1,5 +1,7 @@
 # Local Postgres for development (`docker compose up -d db`), or the whole app for self-hosting
-# (`docker compose up`): Postgres, the migrations, the web app on :3000 and the background worker.
+# (`docker compose up`): Postgres, the migrations, the web app, the api, the background worker, a
+# mail inbox (Mailpit, http://localhost:8025) and Caddy for TLS (https://localhost). Copy
+# .env.example to .env to change the address or the shared secret.
 # Supabase runs Postgres too, so this matches production closely.
 services:
   db:
@@ -22,16 +24,36 @@ services:
     build: { context: ., dockerfile: apps/web/Dockerfile, target: migrate }
     environment: &app-env
       DATABASE_URL: postgres://mesaaberta:mesaaberta@db:5432/mesaaberta
+      APP_ORIGIN: ${APP_ORIGIN:-https://localhost}
+      # Mail goes to Mailpit, not out. RESEND_FROM is the sender it shows.
+      MAILPIT_URL: http://mailpit:8025
+      RESEND_FROM: Mesa Aberta <no-reply@mesaaberta.local>
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:-change-me}
     depends_on:
       db: { condition: service_healthy }
 
-  web:
-    build: { context: ., dockerfile: apps/web/Dockerfile }
+  mailpit:
+    image: axllent/mailpit:v1.27
     ports:
-      - '${WEB_PORT:-3000}:3000'
+      - '127.0.0.1:${MAILPIT_PORT:-8025}:8025'
+
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
     environment: *app-env
     depends_on:
       migrate: { condition: service_completed_successfully }
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    environment:
+      <<: *app-env
+      API_URL: http://api:8788
+      # Behind Caddy: trust its forwarded scheme and host so SvelteKit's origin check passes.
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      api: { condition: service_healthy }
 
   worker:
     build: { context: ., dockerfile: apps/worker/Dockerfile }
@@ -39,5 +61,19 @@ services:
     depends_on:
       migrate: { condition: service_completed_successfully }
 
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - web
+
 volumes:
   db-data:
+  caddy-data:

@@ -26,7 +26,7 @@ bun run dev
 docker compose up --build
 ```
 
-This starts Postgres, applies the migrations, then runs the web app on <http://localhost:3000> and the background worker. Set `WEB_PORT` or `DB_PORT` if those host ports are taken. Postgres is published on 127.0.0.1 only and uses the default `mesaaberta` password, so change `POSTGRES_PASSWORD` and `DATABASE_URL` before exposing the stack. Sign-in, mail and the other integrations stay off until you pass their settings to the `web` and `worker` services (see `.dev.vars.example` for the names). The web image is `apps/web/Dockerfile`; `docker compose up -d db` still starts only Postgres for local development.
+This starts Postgres, applies the migrations, then runs the web app, the api (on the private network only), the background worker, Mailpit and Caddy. Open <https://localhost> (Caddy issues the certificate from its own local CA, so the browser warns once) and read the e-mails the app sends at <http://localhost:8025>. Copy `.env.example` to `.env` to change `SITE_ADDRESS` (a real domain gets a public certificate), `APP_ORIGIN`, `API_INTERNAL_TOKEN` (the secret the web app sends to the api: change it) or the host ports. Postgres is published on 127.0.0.1 only and uses the default `mesaaberta` password, so change `POSTGRES_PASSWORD` and `DATABASE_URL` before exposing the stack. Sign-in and the other integrations stay off until you pass their settings to the `web` and `worker` services (see `.dev.vars.example` for the names). The images are `apps/web/Dockerfile`, `apps/api/Dockerfile` and `apps/worker/Dockerfile`; `docker compose up -d db` still starts only Postgres for local development.
 
 ## Scripts
 
