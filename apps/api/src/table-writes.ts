@@ -28,7 +28,10 @@ type Action = {
 export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
   const app = new Hono<{ Bindings: DatabaseEnv; Variables: UserVariables }>();
 
-  app.use('*', userGuard(open));
+  if (duplicationOnly) {
+    app.use('/:slug/duplicate', userGuard(open));
+    app.use('/:slug/duplication', userGuard(open));
+  } else app.use('*', userGuard(open));
 
   const run = async (
     c: Context<{ Bindings: DatabaseEnv; Variables: UserVariables }>,
