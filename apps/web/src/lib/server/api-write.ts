@@ -1,4 +1,5 @@
 import {
+  AlreadyRated,
   AlreadyRegistered,
   DirectMessagesOff,
   Forbidden,
@@ -6,6 +7,7 @@ import {
   NotFound,
   RateLimited,
   TableFull,
+  TooEarly,
 } from '@mesaaberta/core/server/errors';
 import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
@@ -22,6 +24,8 @@ function refusalOf(status: number, body: Record<string, unknown>): Error | null 
   if (status === 404 && body.error === 'not_found') return new NotFound();
   if (status === 409 && body.error === 'table_full') return new TableFull();
   if (status === 409 && body.error === 'already_registered') return new AlreadyRegistered();
+  if (status === 409 && body.error === 'too_early') return new TooEarly();
+  if (status === 409 && body.error === 'already_rated') return new AlreadyRated();
   if (status === 409 && body.error === 'direct_messages_off') return new DirectMessagesOff();
   if (status === 429 && body.error === 'rate_limited')
     return new RateLimited(typeof body.retryAfter === 'number' ? body.retryAfter : 60);
