@@ -105,6 +105,15 @@ describe('api table write routes over a database', () => {
     expect(row.title).toBe('Novo nome');
   });
 
+  it('answers table_concluded, a code the web form words, for a concluded table', async () => {
+    await test.db.update(gameTables).set({ status: 'concluded' }).where(eq(gameTables.slug, slug));
+    const response = await post(`/${slug}/update`, { input }, gm);
+    await test.db.update(gameTables).set({ status: 'active' }).where(eq(gameTables.slug, slug));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'table_concluded' });
+  });
+
   it('disables the table for its GM and refuses everyone else', async () => {
     expect((await post(`/${slug}/disable`, {}, other)).status).toBe(403);
     const response = await post(`/${slug}/disable`, {}, gm);

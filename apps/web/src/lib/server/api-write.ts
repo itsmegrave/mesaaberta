@@ -6,6 +6,7 @@ import {
   Invalid,
   NotFound,
   RateLimited,
+  TableConcluded,
   TableFull,
   TooEarly,
 } from '@mesaaberta/core/server/errors';
@@ -20,6 +21,7 @@ function refusalOf(status: number, body: Record<string, unknown>): Error | null 
       typeof body.field === 'string' ? body.field : '',
       typeof body.message === 'string' ? body.message : 'invalid',
     );
+  if (status === 403 && body.error === 'table_concluded') return new TableConcluded();
   if (status === 403 && body.error === 'forbidden') return new Forbidden();
   if (status === 404 && body.error === 'not_found') return new NotFound();
   if (status === 409 && body.error === 'table_full') return new TableFull();

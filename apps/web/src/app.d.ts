@@ -8,7 +8,11 @@
 // for information about these interfaces
 declare global {
   namespace App {
-    // interface Error {}
+    interface Error {
+      message: string;
+      /** What went wrong, for the error page to say in the visitor's language. Never text. */
+      code?: string;
+    }
     interface Locals {
       /**
        * The host's variables and bindings, or undefined when the host provides none. Server code

@@ -2,8 +2,8 @@ import { and, count, eq, like, or, sql } from 'drizzle-orm';
 import { addTableMember } from '../messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, registrations, systems } from '@mesaaberta/core/server/db/schema';
-import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
-import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
+import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { Invalid, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { catalogOf, setTableCatalog } from '@mesaaberta/core/server/catalog';
 import { diffFields, hasChanges, type Fact } from '@mesaaberta/core/server/events/changes';
@@ -12,6 +12,7 @@ import { instantToLocal, localToInstant } from '@mesaaberta/core/server/tables/s
 import { slugify, tableSlug } from '@mesaaberta/core/slug';
 import { minutesToHours } from '@mesaaberta/core/tables/format';
 import type { TableInput } from '../../tables/schema';
+import type { TableStatus } from '../../tables/status-values';
 import { formatCep } from '../../location/cep';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
@@ -212,6 +213,19 @@ async function seatsTakenAt(db: AnyDb, tableId: string) {
   return row.taken;
 }
 
+/**
+ * `table:edit` for this table, refused with `TableConcluded` when the only reason is that the
+ * session was confirmed, so the GM is told why rather than that they may not.
+ */
+function authorizeEdit(actor: Actor | null, table: { gmId: string; status: TableStatus }) {
+  if (
+    table.status === 'concluded' &&
+    can(actor, 'table:edit', { gmId: table.gmId, tableStatus: 'active' })
+  )
+    throw new TableConcluded();
+  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
+}
+
 async function findForWrite(db: AnyDb, slug: string) {
   const [table] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
   if (!table) throw new NotFound(`no table with slug "${slug}"`);
@@ -228,7 +242,7 @@ export async function loadTableForEdit(
   timezone: string,
 ) {
   const table = await findForWrite(db, slug);
-  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
+  authorizeEdit(actor, table);
 
   const [system] = await db
     .select({ slug: systems.slug })
@@ -353,7 +367,7 @@ export async function updateTable(
   { imagePath }: { imagePath?: string } = {},
 ): Promise<{ eventId: string | null }> {
   const table = await findForWrite(db, slug);
-  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
+  authorizeEdit(actor, table);
 
   const columns = columnsOf(input);
   // Invites and notifications go out only for a change players would see.
@@ -448,7 +462,7 @@ export async function publishTable(
   now: Date = new Date(),
 ): Promise<{ eventId: string }> {
   const table = await findForWrite(db, slug);
-  authorize(actor, 'table:edit', { gmId: table.gmId, tableStatus: table.status });
+  authorizeEdit(actor, table);
   if (table.status !== 'draft') throw new Invalid('slug', 'not_a_draft');
   if (table.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
 

@@ -3,7 +3,13 @@ import { fail } from '@sveltejs/kit';
 import { validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
 import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
-import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
+import {
+  Forbidden,
+  Invalid,
+  NotFound,
+  RateLimited,
+  TableConcluded,
+} from '@mesaaberta/core/server/errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { withLocation } from '@mesaaberta/core/server/location/cep';
 import { timezoneOf } from '../time';
@@ -82,6 +88,8 @@ export async function handleTableForm(
     asDraft = saved.draft ?? draft;
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
+    if (error instanceof TableConcluded)
+      return formMessage(form, { code: 'table_concluded' }, { status: 403 });
     if (error instanceof Forbidden)
       return formMessage(form, { code: 'forbidden' }, { status: 403 });
     if (error instanceof NotFound) return formMessage(form, { code: 'not_found' }, { status: 404 });

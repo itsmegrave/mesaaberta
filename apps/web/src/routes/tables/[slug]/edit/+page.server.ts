@@ -5,7 +5,7 @@ import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { timezoneOf } from '#lib/server/time.js';
-import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
+import { Forbidden, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
@@ -43,7 +43,8 @@ export const load: PageServerLoad = async (event) => {
       seatsTaken,
     };
   } catch (e) {
-    // Someone else's table is a 403; one that is not there is a 404.
+    // Someone else's table is a 403; one that is not there is a 404. A concluded one says why.
+    if (e instanceof TableConcluded) error(403, { message: 'Forbidden', code: 'table_concluded' });
     if (e instanceof Forbidden) error(403, 'Forbidden');
     if (e instanceof NotFound) error(404, 'Not found');
     throw e;
