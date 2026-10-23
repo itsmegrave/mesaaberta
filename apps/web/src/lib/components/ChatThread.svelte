@@ -11,6 +11,7 @@
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
+  import { TABLE_CHAT_DAYS_AFTER_END } from '@mesaaberta/core/messages/schema';
   import { BADGES_KEY } from '#lib/query/badges.js';
   import { queryClient } from '#lib/query/context.js';
   import type { ChatThreadData } from '#lib/server/messages/thread.js';
@@ -168,6 +169,8 @@
           text={m.messages_dm_off_notice({ name: otherName })}
           username={data.conversation.other?.username}
         />
+      {:else if data.conversation.tableChat === 'ended'}
+        {m.messages_read_only_table_ended({ days: TABLE_CHAT_DAYS_AFTER_END })}
       {:else}
         {m.messages_read_only_table()}
       {/if}

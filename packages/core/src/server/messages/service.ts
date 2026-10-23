@@ -17,7 +17,7 @@ import {
   RateLimited,
 } from '@mesaaberta/core/server/errors';
 import { INBOX_PAGE_SIZE, THREAD_PAGE_SIZE, pairKey } from '../../messages/schema';
-import { canRead, canSend, directBlocker, isMember } from './access';
+import { canRead, canSend, directBlocker, isMember, tableChatState } from './access';
 
 type Tx = Parameters<Parameters<AnyDb['transaction']>[0]>[0];
 const asDb = (tx: Tx) => tx as unknown as AnyDb;
@@ -153,7 +153,7 @@ export async function sendMessage(
     if (!conversation || !actor || !(await isMember(t, conversation, actor.id))) {
       throw new NotFound('no such conversation');
     }
-    if (!(await canSend(t, actor, conversation))) {
+    if (!(await canSend(t, actor, conversation, now))) {
       const other =
         conversation.kind === 'direct' && actor.status === 'active'
           ? await otherMember(t, conversation.id, actor.id)
@@ -385,8 +385,16 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1, kind?: '
   return { items, page, pages, total, unreadByKind };
 }
 
-/** A conversation with what the header needs, for a member. Throws `NotFound` for anyone else. */
-export async function loadConversation(db: AnyDb, actor: Actor | null, conversationId: string) {
+/**
+ * A conversation with what the header needs, for a member. Throws `NotFound` for anyone else.
+ * `tableChat` says whether a table's chat still takes messages, and why not (`tableChatState`).
+ */
+export async function loadConversation(
+  db: AnyDb,
+  actor: Actor | null,
+  conversationId: string,
+  now = new Date(),
+) {
   const [conversation] = await db
     .select()
     .from(conversations)
@@ -412,6 +420,8 @@ export async function loadConversation(db: AnyDb, actor: Actor | null, conversat
           title: gameTables.title,
           imagePath: gameTables.imagePath,
           status: gameTables.status,
+          startsAt: gameTables.startsAt,
+          durationMinutes: gameTables.durationMinutes,
         })
         .from(gameTables)
         .where(eq(gameTables.id, conversation.tableId))
@@ -441,10 +451,13 @@ export async function loadConversation(db: AnyDb, actor: Actor | null, conversat
   return {
     id: conversation.id,
     kind: conversation.kind,
-    table: table ?? null,
+    table: table
+      ? { slug: table.slug, title: table.title, imagePath: table.imagePath, status: table.status }
+      : null,
     other: other ?? null,
     muted: (membership?.mutedAt ?? null) !== null,
-    canSend: await canSend(db, actor, conversation),
+    tableChat: table ? tableChatState(table, now) : null,
+    canSend: await canSend(db, actor, conversation, now),
   };
 }
 
