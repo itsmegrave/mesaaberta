@@ -1,0 +1,74 @@
+name: Release images
+
+# A tag vX.Y.Z publishes the self-host images to GitHub Container Registry for amd64 and arm64
+# (Oracle's free tier is arm64). Production on Cloudflare deploys from the private repo's pinned tag
+# and does not use these images. Tagging is still done by hand, as today.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: ${{ matrix.image }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: [amd64, arm64]
+        image: [web, api, worker, migrate]
+        include:
+          - { arch: amd64, runner: ubuntu-latest }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+          - { image: web, dockerfile: apps/web/Dockerfile, target: '' }
+          - { image: api, dockerfile: apps/api/Dockerfile, target: '' }
+          - { image: worker, dockerfile: apps/worker/Dockerfile, target: '' }
+          # The migration runner is a stage of the web Dockerfile.
+          - { image: migrate, dockerfile: apps/web/Dockerfile, target: migrate }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Log in to GHCR
+        run: echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push the ${{ matrix.arch }} image
+        run: |
+          set -e
+          repo="${GITHUB_REPOSITORY,,}"
+          ref="$REGISTRY/$repo-${{ matrix.image }}:${GITHUB_REF_NAME}-${{ matrix.arch }}"
+          target='${{ matrix.target }}'
+          docker build -f '${{ matrix.dockerfile }}' ${target:+--target "$target"} -t "$ref" .
+          docker push "$ref"
+
+  manifest:
+    name: Publish ${{ matrix.image }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        image: [web, api, worker, migrate]
+    steps:
+      - name: Log in to GHCR
+        run: echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # One multi-arch tag per version, plus latest and the bare version (v0.24.0 -> 0.24.0).
+      - name: Join the architectures
+        run: |
+          set -e
+          base="$REGISTRY/${GITHUB_REPOSITORY,,}-${{ matrix.image }}"
+          version="${GITHUB_REF_NAME#v}"
+          docker buildx imagetools create \
+            -t "$base:$GITHUB_REF_NAME" -t "$base:$version" -t "$base:latest" \
+            "$base:$GITHUB_REF_NAME-amd64" "$base:$GITHUB_REF_NAME-arm64"
