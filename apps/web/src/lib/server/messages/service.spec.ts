@@ -39,6 +39,7 @@ import {
   unreadConversations,
 } from '@mesaaberta/core/server/messages/service';
 import { pruneTableChats } from '@mesaaberta/core/server/messages/retention';
+import { TABLE_CHAT_DAYS_AFTER_END } from '@mesaaberta/core/messages/schema';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000020${String(n).padStart(2, '0')}`;
@@ -48,6 +49,7 @@ const ana = person(2);
 const bia = person(3);
 const cris = person(4);
 let counter = 0;
+const DAY = 24 * 3600 * 1000;
 
 beforeAll(async () => {
   test = await createTestDb();
@@ -173,6 +175,35 @@ describe('table chat', () => {
 
     await expect(sendMessage(test.db, gm, conversation.id, 'depois')).rejects.toThrow(Forbidden);
     expect((await listMessages(test.db, gm, conversation.id)).messages).toHaveLength(1);
+    expect(await loadConversation(test.db, gm, conversation.id)).toMatchObject({
+      canSend: false,
+      tableChat: 'disabled',
+    });
+  });
+
+  it('keeps taking messages for 30 days after the session ends, then turns read-only', async () => {
+    const ended = new Date('2026-01-01T21:00:00Z'); // startsAt plus the 60 minutes
+    const lastMinute = new Date(ended.getTime() + TABLE_CHAT_DAYS_AFTER_END * DAY - 60_000);
+    const closed = new Date(ended.getTime() + TABLE_CHAT_DAYS_AFTER_END * DAY);
+    for (const status of ['awaiting_confirmation', 'concluded', 'not_held'] as const) {
+      const table = await makeTable({ startsAt: new Date('2026-01-01T20:00:00Z'), status });
+      const conversation = await ensureTableConversation(test.db, table.id);
+
+      await sendMessage(test.db, gm, conversation.id, 'valeu', { now: lastMinute });
+      expect(await loadConversation(test.db, gm, conversation.id, lastMinute)).toMatchObject({
+        canSend: true,
+        tableChat: 'open',
+      });
+
+      await expect(
+        sendMessage(test.db, gm, conversation.id, 'tarde demais', { now: closed }),
+      ).rejects.toThrow(Forbidden);
+      expect(await loadConversation(test.db, gm, conversation.id, closed)).toMatchObject({
+        canSend: false,
+        tableChat: 'ended',
+      });
+      expect((await listMessages(test.db, gm, conversation.id)).messages).toHaveLength(1);
+    }
   });
 
   it('is refused to a suspended member', async () => {

@@ -9,6 +9,9 @@ export const MESSAGE_MAX_LENGTH = 2000;
 export const THREAD_PAGE_SIZE = 50;
 export const INBOX_PAGE_SIZE = 20;
 
+/** Days a table's chat still takes new messages after the session ends (`startsAt` plus its duration). */
+export const TABLE_CHAT_DAYS_AFTER_END = 30;
+
 /** The message form. The message is a short code, translated where the form shows it. */
 export const messageSchema = z.object({
   body: z.string().trim().min(1, 'required').max(MESSAGE_MAX_LENGTH, 'too_long'),

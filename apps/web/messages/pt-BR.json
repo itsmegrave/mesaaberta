@@ -27,6 +27,7 @@
   "messages_error_rate_limited": "Você enviou muitas mensagens em pouco tempo. Tente de novo em instantes.",
   "messages_dm_off_notice": "{name} não recebe mais mensagens diretas. Você ainda pode reler a conversa.",
   "messages_read_only_table": "Esta mesa foi desativada, então o chat ficou só para leitura.",
+  "messages_read_only_table_ended": "Esta mesa terminou há mais de {days} dias, então o chat ficou só para leitura.",
   "messages_today": "Hoje",
   "messages_yesterday": "Ontem",
   "messages_talk_to_gm": "Falar com o mestre",
