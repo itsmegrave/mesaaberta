@@ -1,21 +1,53 @@
 name: Release images
 
-# A tag vX.Y.Z publishes the self-host images to GitHub Container Registry for amd64 and arm64
-# (Oracle's free tier is arm64). Production on Cloudflare deploys from the private repo's pinned tag
-# and does not use these images. Tagging is still done by hand, as today.
+# Publishes the self-host images to GitHub Container Registry for amd64 and arm64 (Oracle's free tier
+# is arm64). Production on Cloudflare deploys from the private repo's pinned tag and does not use
+# these images.
+#
+# Tags on ghcr.io/<owner>/<repo>-<image> (web, api, worker, migrate):
+#   every merge to main  sha-<7 chars> (immutable, pin a deployment to it) and main (moves)
+#   a tag vX.Y.Z         vX.Y.Z, X.Y.Z and latest (latest is only ever a release)
+# Staging follows main or a sha; production pins a release tag or a sha.
 on:
   push:
+    branches: [main]
+    # A change that only touches documentation builds nothing, as in ci.yml.
+    paths-ignore: ['*.md', 'docs/**', 'LICENSE']
     tags: ['v*.*.*']
 
 permissions:
   contents: read
 
+# One publish at a time per ref, so the moving main tag always ends on the newest run. A run queued
+# behind another is replaced by a newer one; its sha tag is skipped, main still moves forward.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
 
 jobs:
+  version:
+    name: Tag for this run
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - id: tag
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # One job per architecture builds the four images in turn: migrate is a stage of the web
+  # Dockerfile, and the api and worker images start from the same dependency layer, so the layers
+  # are reused on the runner instead of rebuilt.
   build:
-    name: ${{ matrix.image }} (${{ matrix.arch }})
+    name: Build ${{ matrix.arch }}
+    needs: version
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -23,34 +55,35 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        arch: [amd64, arm64]
-        image: [web, api, worker, migrate]
         include:
           - { arch: amd64, runner: ubuntu-latest }
           - { arch: arm64, runner: ubuntu-24.04-arm }
-          - { image: web, dockerfile: apps/web/Dockerfile, target: '' }
-          - { image: api, dockerfile: apps/api/Dockerfile, target: '' }
-          - { image: worker, dockerfile: apps/worker/Dockerfile, target: '' }
-          # The migration runner is a stage of the web Dockerfile.
-          - { image: migrate, dockerfile: apps/web/Dockerfile, target: migrate }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Log in to GHCR
         run: echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push the ${{ matrix.arch }} image
+      - name: Build and push the ${{ matrix.arch }} images
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
         run: |
           set -e
           repo="${GITHUB_REPOSITORY,,}"
-          ref="$REGISTRY/$repo-${{ matrix.image }}:${GITHUB_REF_NAME}-${{ matrix.arch }}"
-          target='${{ matrix.target }}'
-          docker build -f '${{ matrix.dockerfile }}' ${target:+--target "$target"} -t "$ref" .
-          docker push "$ref"
+          build() { # image dockerfile [target]
+            ref="$REGISTRY/$repo-$1:$TAG-${{ matrix.arch }}"
+            docker build -f "$2" ${3:+--target "$3"} -t "$ref" .
+            docker push "$ref"
+          }
+          build web apps/web/Dockerfile
+          # The migration runner is a stage of the web Dockerfile.
+          build migrate apps/web/Dockerfile migrate
+          build api apps/api/Dockerfile
+          build worker apps/worker/Dockerfile
 
   manifest:
     name: Publish ${{ matrix.image }}
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,12 +96,16 @@ jobs:
         run: echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # One multi-arch tag per version, plus latest and the bare version (v0.24.0 -> 0.24.0).
       - name: Join the architectures
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
         run: |
           set -e
           base="$REGISTRY/${GITHUB_REPOSITORY,,}-${{ matrix.image }}"
-          version="${GITHUB_REF_NAME#v}"
-          docker buildx imagetools create \
-            -t "$base:$GITHUB_REF_NAME" -t "$base:$version" -t "$base:latest" \
-            "$base:$GITHUB_REF_NAME-amd64" "$base:$GITHUB_REF_NAME-arm64"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            # v0.24.0 -> v0.24.0, 0.24.0 and latest
+            tags="-t $base:$TAG -t $base:${TAG#v} -t $base:latest"
+          else
+            tags="-t $base:$TAG -t $base:main"
+          fi
+          docker buildx imagetools create $tags "$base:$TAG-amd64" "$base:$TAG-arm64"
