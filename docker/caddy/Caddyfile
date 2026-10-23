@@ -1,0 +1,6 @@
+# TLS in front of the web app. SITE_ADDRESS is localhost by default (Caddy issues a certificate from
+# its own local CA); set it to your domain and Caddy gets a public certificate. Only the web app is
+# proxied: the api stays on the private network.
+{$SITE_ADDRESS:localhost} {
+	reverse_proxy web:3000
+}
