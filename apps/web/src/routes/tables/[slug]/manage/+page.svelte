@@ -54,7 +54,9 @@
   }
   const tableMenu = $derived.by(() => {
     const items: KebabItem[] = [
-      { id: 'edit', label: m.table_edit(), icon: 'square-pen', href: editPage },
+      ...(data.canEdit
+        ? [{ id: 'edit', label: m.table_edit(), icon: 'square-pen' as const, href: editPage }]
+        : []),
       { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
       { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
     ];
@@ -223,11 +225,13 @@
           >
         {/if}
       </a>
-      <a
-        href={editPage}
-        class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
-        >{m.table_edit()}</a
-      >
+      {#if data.canEdit}
+        <a
+          href={editPage}
+          class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
+          >{m.table_edit()}</a
+        >
+      {/if}
     </nav>
     <a href={tablePage} class="hidden link-underline font-semibold sm:inline"
       >{m.manage_view_page()}</a
@@ -509,11 +513,13 @@
         </div>
 
         <div class="mt-6 grid gap-2">
-          <a
-            href={editPage}
-            class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
-            >{m.table_edit()}</a
-          >
+          {#if data.canEdit}
+            <a
+              href={editPage}
+              class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+              >{m.table_edit()}</a
+            >
+          {/if}
           <a href={tablePage} class="{secondary} h-12 w-full">{m.manage_view_page()}</a>
           <a
             href={localizedHref(`/tables/${table.slug}/chat`, locale)}
