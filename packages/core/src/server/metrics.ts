@@ -87,14 +87,21 @@ export function createHttpMetrics(service: string): HttpMetrics {
 export type JobMetrics = {
   /** Records one run of a background job; `ok` is false when it threw. */
   observe: (run: { job: string; ok: boolean; seconds: number; at: Date }) => void;
+  /** The outbox as the worker last read it; rendered as gauges until the next reading. */
+  setOutbox: (depth: { pending: number; failed: number; oldestPendingSeconds: number }) => void;
   render: () => string;
 };
 
 /** What the worker is watched by: how often each job ran, how long it took, and when it last did. */
 export function createJobMetrics(service: string): JobMetrics {
   const runs = new Map<string, { ok: number; failed: number; sum: number; last: number }>();
+  let outbox: { pending: number; failed: number; oldestPendingSeconds: number } | undefined;
 
   return {
+    setOutbox(depth) {
+      outbox = depth;
+    },
+
     observe({ job, ok, seconds, at }) {
       const entry = runs.get(job) ?? { ok: 0, failed: 0, sum: 0, last: 0 };
       entry[ok ? 'ok' : 'failed']++;
@@ -128,6 +135,17 @@ export function createJobMetrics(service: string): JobMetrics {
         lines.push(
           `mesaaberta_job_last_run_timestamp_seconds{${labels({ service, job })}} ${e.last}`,
         );
+      if (outbox) {
+        lines.push(
+          '# HELP mesaaberta_outbox_events Events in the outbox, by state, as of the last sweep.',
+          '# TYPE mesaaberta_outbox_events gauge',
+          `mesaaberta_outbox_events{${labels({ service, state: 'pending' })}} ${outbox.pending}`,
+          `mesaaberta_outbox_events{${labels({ service, state: 'failed' })}} ${outbox.failed}`,
+          '# HELP mesaaberta_outbox_oldest_pending_seconds How long the oldest pending event has been due.',
+          '# TYPE mesaaberta_outbox_oldest_pending_seconds gauge',
+          `mesaaberta_outbox_oldest_pending_seconds{${labels({ service })}} ${outbox.oldestPendingSeconds}`,
+        );
+      }
       return lines.join('\n') + '\n';
     },
   };

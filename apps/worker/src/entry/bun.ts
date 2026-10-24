@@ -1,4 +1,7 @@
 import { createWorker, type WorkerEnv } from '../index';
+import { connectionStringFrom, createDb } from '@mesaaberta/core/server/db/client';
+import { outboxDepth } from '@mesaaberta/core/server/events/outbox-depth';
+import { SWEEPER_CRON } from '@mesaaberta/core/server/events/scheduled';
 import { createJobMetrics } from '@mesaaberta/core/server/metrics';
 import { createScheduler } from '../scheduler';
 
@@ -11,6 +14,21 @@ const worker = createWorker();
 const sweepEverySeconds = Math.max(30, Number(process.env.SWEEP_INTERVAL_SECONDS ?? 300));
 
 const metrics = createJobMetrics('worker');
+
+// The outbox is read once per sweep, not per scrape: a count over `events` is cheap, but a
+// scraper's interval is not ours to decide. A failed read keeps the last numbers.
+const connectionString = connectionStringFrom(env);
+const readOutbox = async () => {
+  if (!connectionString) return;
+  const { db, close } = createDb(connectionString);
+  try {
+    metrics.setOutbox(await outboxDepth(db));
+  } catch (error) {
+    console.error('outbox read failed', error);
+  } finally {
+    await close().catch(() => undefined);
+  }
+};
 const scheduler = createScheduler(
   async (cron, scheduledTime) => {
     const started = performance.now();
@@ -21,6 +39,7 @@ const scheduler = createScheduler(
       ok = false;
       throw error;
     } finally {
+      if (cron === SWEEPER_CRON) await readOutbox();
       metrics.observe({
         job: cron,
         ok,

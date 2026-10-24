@@ -57,4 +57,15 @@ describe('createJobMetrics', () => {
       'mesaaberta_job_last_run_timestamp_seconds{service="worker",job="*/5 * * * *"} 2000',
     );
   });
+
+  it('shows the outbox gauges only once a reading is set', () => {
+    const metrics = createJobMetrics('worker');
+    expect(metrics.render()).not.toContain('mesaaberta_outbox_events');
+
+    metrics.setOutbox({ pending: 3, failed: 1, oldestPendingSeconds: 42 });
+    const text = metrics.render();
+    expect(text).toContain('mesaaberta_outbox_events{service="worker",state="pending"} 3');
+    expect(text).toContain('state="failed"} 1');
+    expect(text).toContain('mesaaberta_outbox_oldest_pending_seconds{service="worker"} 42');
+  });
 });
