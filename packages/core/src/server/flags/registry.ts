@@ -81,6 +81,11 @@ export const flagDefaults = {
   // Worker answers it over the Service Binding from the same reader, as the signed-in person; a
   // refusal or a call that cannot be made falls back to the web path, which raises the page's error.
   api_reads_edit_catalog: false,
+  // Off: the home page's preview of the next tables is read in the web Worker. On: for a signed-in
+  // person the api Worker answers it over the Service Binding from the same reader (the picture
+  // path becomes a URL in web, which owns the Supabase setting); visitors always read here, and a
+  // call that cannot be made falls back to the web path. Needs the API binding. Admins first.
+  api_reads_preview: false,
   // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
   // the web Worker still validates the form and stores the picture, then the api Worker saves it
   // over the Service Binding from the same services; refusals come back as the codes the form

@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { gameTables, platforms, profiles, systems, tags } from '@mesaaberta/db/schema';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
+import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
 import { readRoutes } from './reads';
@@ -117,5 +118,34 @@ describe('GET /v1/reads/edit-catalog/:slug', () => {
     expect(await (await getEdit('mesa-ana', bia)).json()).toEqual({ error: 'forbidden' });
     expect((await getEdit('nao-existe', ana)).status).toBe(404);
     expect((await getEdit('mesa-ana')).status).toBe(401);
+  });
+});
+
+describe('GET /v1/reads/preview', () => {
+  it('answers exactly what the in-process reader builds, without the GM id', async () => {
+    const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+    await test.db.insert(gameTables).values({
+      slug: 'mesa-publica',
+      title: 'Mesa pública',
+      kind: 'one_shot',
+      capacity: 4,
+      status: 'active',
+      startsAt: new Date('2099-02-01T20:00:00Z'),
+      durationMinutes: 60,
+      timezone: 'UTC',
+      gmId: ana,
+      systemId: system.id,
+    });
+    const answer = await app.request('/preview', { headers: { [ACTOR_HEADER]: ana } }, env);
+
+    expect(answer.status).toBe(200);
+    const body = (await answer.json()) as { tables: { slug: string }[] };
+    expect(body.tables.map((t) => t.slug)).toContain('mesa-publica');
+    expect(JSON.stringify(body)).not.toContain('gmId');
+    expect(body).toEqual(JSON.parse(JSON.stringify(await readPreview(test.db, new Date()))));
+  });
+
+  it('needs a known actor', async () => {
+    expect((await app.request('/preview', {}, env)).status).toBe(401);
   });
 });
