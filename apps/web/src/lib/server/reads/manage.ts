@@ -1,21 +1,45 @@
 import { error } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { can } from '@mesaaberta/core/server/auth/policy';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { listTableInvitations } from '#lib/server/invitations/api.js';
-import { loadManage } from '@mesaaberta/core/server/tables/manage';
+import { readManage } from '@mesaaberta/core/server/reads/manage';
 import type { RequestEvent } from '@sveltejs/kit';
+import { readViaApi } from '../api-read';
 
 // The GM's page for one table: requests, players, recent activity. Approving, declining and removing
-// post to the table page's own actions (see ActionForm), which send the browser back here.
+// post to the table page's own actions (see ActionForm), which send the browser back here. Through
+// the api Worker when `api_reads_manage` is on for the signed-in person; here otherwise, which is
+// also where a refusal ends in the page's own 403 or 404.
 export const read = async ({ locals, url, params }: RequestEvent) => {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
   try {
     const profile = await locals.getProfile();
-    const manage = await loadManage(locals.db, profile, params.slug!, new Date());
+    const remote = profile
+      ? await readViaApi<Awaited<ReturnType<typeof readManage>>>(
+          locals,
+          'api_reads_manage',
+          profile,
+          `/v1/reads/manage/${encodeURIComponent(params.slug!)}`,
+        )
+      : null;
+    // JSON turned the dates into strings; the page gets them as dates either way.
+    const manage = remote
+      ? {
+          ...remote,
+          table: {
+            ...remote.table,
+            startsAt: new Date(remote.table.startsAt),
+            until: remote.table.until ? new Date(remote.table.until) : null,
+          },
+          requests: remote.requests.map((row) => ({ ...row, since: new Date(row.since) })),
+          players: remote.players.map((row) => ({ ...row, since: new Date(row.since) })),
+          activity: remote.activity.map((item) => ({ ...item, at: new Date(item.at) })),
+        }
+      : await readManage(locals.db, profile, params.slug!, new Date());
+
     const supabaseUrl = supabaseUrlOf(locals.env);
     const withPicture = <T extends { avatarUrl: string | null; avatarPath: string | null }>({
       avatarUrl,
@@ -23,23 +47,16 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
       ...rest
     }: T) => ({ ...rest, avatarUrl: pictureOf(supabaseUrl, { avatarUrl, avatarPath }) });
 
-    // The GM's id stays on the server; the page only needs names and pictures.
-    const { gmId, id, imagePath, ...table } = manage.table;
+    const { imagePath, ...table } = manage.table;
     return {
+      ...manage,
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
-      // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
-      canDuplicate: manage.canDuplicate,
-      canEnd: can(profile, 'table:end', { gmId }),
-      canEdit: can(profile, 'table:edit', { gmId, tableStatus: manage.table.status }),
-      invitations:
-        profile?.id === gmId ? await listTableInvitations(locals, profile, params.slug!) : [],
-      canInvite: profile?.id === gmId,
-      systemWaiting: manage.systemWaiting,
+      invitations: manage.canInvite
+        ? await listTableInvitations(locals, profile, params.slug!)
+        : [],
       gm: withPicture(manage.gm),
-      gmRating: manage.gmRating,
       requests: manage.requests.map(withPicture),
       players: manage.players.map(withPicture),
-      activity: manage.activity,
     };
   } catch (e) {
     if (e instanceof Forbidden) error(403, 'Forbidden');

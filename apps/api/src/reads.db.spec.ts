@@ -12,6 +12,7 @@ import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readDashboard } from '@mesaaberta/core/server/reads/dashboard';
+import { readManage } from '@mesaaberta/core/server/reads/manage';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
@@ -278,5 +279,38 @@ describe('GET /v1/reads/dashboard', () => {
 
   it('needs a known actor', async () => {
     expect((await getDashboard('', null)).status).toBe(401);
+  });
+});
+
+describe('GET /v1/reads/manage/:slug', () => {
+  const getManage = (slug: string, actor: string | null = ana) =>
+    app.request(`/manage/${slug}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+  const actorOf = async (id: string) =>
+    (
+      await test.db
+        .select({ id: profiles.id, role: profiles.role, status: profiles.status })
+        .from(profiles)
+        .where(eq(profiles.id, id))
+    )[0];
+
+  it('answers exactly what the in-process reader builds for the GM, without the GM id', async () => {
+    const answer = await getManage('mesa-detalhe');
+    expect(answer.status).toBe(200);
+    const body = await answer.json();
+    expect(JSON.stringify(body)).not.toContain('gmId');
+    expect(body).toEqual(
+      JSON.parse(
+        JSON.stringify(await readManage(test.db, await actorOf(ana), 'mesa-detalhe', new Date())),
+      ),
+    );
+  });
+
+  it('refuses everyone but the GM, and unknown tables', async () => {
+    expect((await getManage('mesa-detalhe', bia)).status).toBe(403);
+    expect((await getManage('no-such-table')).status).toBe(404);
+  });
+
+  it('needs a known actor', async () => {
+    expect((await getManage('mesa-detalhe', null)).status).toBe(401);
   });
 });
