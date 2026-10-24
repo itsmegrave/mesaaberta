@@ -86,6 +86,11 @@ export const flagDefaults = {
   // path becomes a URL in web, which owns the Supabase setting); visitors always read here, and a
   // call that cannot be made falls back to the web path. Needs the API binding. Admins first.
   api_reads_preview: false,
+  // Off: the /tables list and its filters are read in the web Worker. On: for a signed-in person
+  // the api Worker answers it over the Service Binding from the same reader, given the validated
+  // filters; visitors always read here, and a call that cannot be made falls back to the web
+  // path. Needs the API binding. Admins first.
+  api_reads_tables: false,
   // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
   // the web Worker still validates the form and stores the picture, then the api Worker saves it
   // over the Service Binding from the same services; refusals come back as the codes the form

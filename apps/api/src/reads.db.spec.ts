@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { gameTables, platforms, profiles, systems, tags } from '@mesaaberta/db/schema';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
+import { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
@@ -147,5 +148,31 @@ describe('GET /v1/reads/preview', () => {
 
   it('needs a known actor', async () => {
     expect((await app.request('/preview', {}, env)).status).toBe(401);
+  });
+});
+
+describe('GET /v1/reads/tables', () => {
+  const getTables = (query = '', actor: string | null = ana) =>
+    app.request(`/tables${query}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+
+  it('answers what the in-process reader builds for the same filters, and drops junk', async () => {
+    const filters = { systems: [], modality: null, platforms: [], tags: [] };
+
+    const all = await getTables('?bogus=1&system=NOT%20A%20SLUG');
+    expect(all.status).toBe(200);
+    expect(await all.json()).toEqual(
+      JSON.parse(JSON.stringify(await readTables(test.db, filters, new Date()))),
+    );
+
+    const none = (await (await getTables('?system=no-such-system')).json()) as {
+      tables: unknown[];
+      pickedSystems: string[];
+    };
+    expect(none.tables).toEqual([]);
+    expect(none.pickedSystems).toEqual(['no-such-system']);
+  });
+
+  it('needs a known actor', async () => {
+    expect((await getTables('', null)).status).toBe(401);
   });
 });

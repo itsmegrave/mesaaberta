@@ -35,7 +35,12 @@ const viewer = '00000000-0000-4000-8000-000000000001';
 const event = (search = '', referer = '') =>
   ({
     params: {},
-    locals: { db: {}, track: tracked, getUser: async () => ({ id: viewer }) },
+    locals: {
+      db: {},
+      track: tracked,
+      getUser: async () => ({ id: viewer }),
+      getProfile: async () => null,
+    },
     request: new Request('https://x.test/tables', { headers: referer ? { referer } : {} }),
     url: new URL(`https://x.test/tables${search}`),
     platform: undefined,
