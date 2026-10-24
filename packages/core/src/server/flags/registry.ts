@@ -160,6 +160,12 @@ export const flagDefaults = {
   // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
   // the Supabase and mail settings.
   api_auth_sign_up: false,
+  // Off: choosing a new password after the e-mailed link (/reset) runs in the web Worker. On: the api
+  // Worker sets it over the Service Binding with the person's own access token (Supabase checks it)
+  // and signs their other sessions out; refusals come back as the codes the form shows and a call
+  // that cannot be made falls back to the web path. Targeted by user id like the other signed-in
+  // flags. Needs the API binding and, on the api Worker, the Supabase settings.
+  api_auth_new_password: false,
   // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
   // the api Worker does it over the Service Binding and the web Worker dispatches the event it
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every

@@ -57,3 +57,60 @@ export async function changePassword(
 
   return 'ok';
 }
+
+/**
+ * Sets a new password for the person an access token belongs to, through Supabase Auth's REST API
+ * with that token, so another Worker (the api) can do it without the session cookie. The token
+ * alone says whose password changes. Same results as `changePassword`; never logs the token or the
+ * password.
+ */
+export async function changePasswordWithToken(
+  {
+    url,
+    key,
+    request = fetch,
+    log,
+  }: { url: string; key: string; request?: typeof fetch; log: Logger },
+  { token, password }: { token: string; password: string },
+): Promise<ChangePasswordResult> {
+  const call = (path: string, init: RequestInit) =>
+    request(`${url.replace(/\/$/, '')}/auth/v1${path}`, {
+      ...init,
+      headers: {
+        apikey: key,
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+  let response: Response;
+  try {
+    response = await call('/user', { method: 'PUT', body: JSON.stringify({ password }) });
+  } catch (error) {
+    log.warn('password reset: change failed', { error });
+    return 'failed';
+  }
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return 'no_session';
+    const body = (await response.json().catch(() => ({}))) as {
+      error_code?: string;
+      code?: string;
+    };
+    const code = body.error_code ?? body.code;
+    if (code === 'weak_password') return 'weak_password';
+    if (code === 'same_password') return 'same_password';
+    if (response.status === 429 || (code && RATE_LIMITED.has(code))) return 'rate_limited';
+    log.warn('password reset: change refused', { code, status: response.status });
+    return 'failed';
+  }
+
+  // Whoever else was signed in with the old password (a stolen session, a forgotten device) is out.
+  try {
+    await call('/logout?scope=others', { method: 'POST' });
+  } catch (error) {
+    log.warn('password reset: could not sign the other sessions out', { error });
+  }
+  return 'ok';
+}

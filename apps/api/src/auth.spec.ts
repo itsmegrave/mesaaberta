@@ -147,3 +147,67 @@ describe('api sign-up', () => {
     expect(await response.json()).toEqual({ result });
   });
 });
+
+describe('api new password', () => {
+  const fake = (answers: Array<{ status: number; body?: object } | 'down'>) => {
+    const request = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => {
+      const next = answers.shift() ?? { status: 200 };
+      if (next === 'down') throw new Error('down');
+      return new Response(JSON.stringify(next.body ?? {}), { status: next.status });
+    });
+    return request as unknown as typeof fetch & typeof request;
+  };
+  const send = (
+    request: typeof fetch,
+    body: unknown = { password: 'correct horse', passwordConfirm: 'correct horse' },
+    headers: Record<string, string> = { authorization: 'Bearer jwt-a' },
+    environment: object = env,
+  ) =>
+    authRoutes(open, undefined, { request }).request(
+      '/new-password',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...headers },
+        body: JSON.stringify(body),
+      },
+      environment,
+    );
+
+  it('sets the password with the person’s own token and signs the other sessions out', async () => {
+    const request = fake([{ status: 200 }, { status: 204 }]);
+
+    const response = await send(request);
+
+    expect(await response.json()).toEqual({ result: 'ok' });
+    const [put, logout] = request.mock.calls;
+    expect(String(put[0])).toBe('https://supabase.test/auth/v1/user');
+    expect(put[1]?.method).toBe('PUT');
+    expect((put[1]?.headers as Record<string, string>).authorization).toBe('Bearer jwt-a');
+    expect(JSON.parse(String(put[1]?.body))).toEqual({ password: 'correct horse' });
+    expect(String(logout[0])).toBe('https://supabase.test/auth/v1/logout?scope=others');
+  });
+
+  it('refuses without a token, with different passwords, or without the Supabase settings', async () => {
+    const request = fake([]);
+    expect((await send(request, undefined, {})).status).toBe(401);
+    expect(
+      (await send(request, { password: 'correct horse', passwordConfirm: 'other horse' })).status,
+    ).toBe(400);
+    expect((await send(request, undefined, undefined, {})).status).toBe(503);
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [{ status: 422, body: { error_code: 'weak_password' } }, 'weak_password', 400],
+    [{ status: 422, body: { error_code: 'same_password' } }, 'same_password', 400],
+    [{ status: 401 }, 'no_session', 401],
+    [{ status: 429 }, 'rate_limited', 429],
+    [{ status: 500 }, 'failed', 500],
+    ['down' as const, 'failed', 500],
+  ])('answers %j as %s', async (answer, result, status) => {
+    const response = await send(fake([answer]));
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual({ result });
+  });
+});

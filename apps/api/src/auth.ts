@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
-import { credentialsSchema, emailSchema } from '@mesaaberta/core/auth/credentials';
+import {
+  credentialsSchema,
+  emailSchema,
+  newPasswordSchema,
+} from '@mesaaberta/core/auth/credentials';
 import { createDb as openDb, connectionStringFrom } from '@mesaaberta/core/server/db/client';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import {
@@ -14,7 +18,11 @@ import {
   type SignInResult,
   type SignUpResult,
 } from '@mesaaberta/core/server/auth/email';
-import { requestPasswordReset } from '@mesaaberta/core/server/auth/password';
+import {
+  changePasswordWithToken,
+  requestPasswordReset,
+  type ChangePasswordResult,
+} from '@mesaaberta/core/server/auth/password';
 import { logger } from '@mesaaberta/core/server/logger';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -45,6 +53,11 @@ export const CLIENT_IP_HEADER = 'x-client-ip';
  * needed, `check_email` (also for an address that already has an account) without one; refusals are
  * `weak_password` (400), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
+ * `POST /new-password` (behind `api_auth_new_password`) sets `{ password, passwordConfirm }` for the
+ * person whose own access token comes in `Authorization: Bearer`, and signs their other sessions out.
+ * The token alone says whose password changes; Supabase checks it. Answers `{ result }`: `ok`, or
+ * `weak_password` / `same_password` (400), `no_session` (401), `rate_limited` (429), `failed` (500).
+ *
  * `POST /password-reset` e-mails a reset link. Answers `{ result }`: `sent` (whether or not the
  * address has an account), `rate_limited` (429, with `retryAfter` when it is our limit) or `failed`.
  */
@@ -60,6 +73,15 @@ const SIGN_IN_STATUS = {
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignInResult, 'ok'>, number>;
 
+/** The status the new-password form shows for each refusal; the same as the web action's. */
+const NEW_PASSWORD_STATUS = {
+  weak_password: 400,
+  same_password: 400,
+  no_session: 401,
+  rate_limited: 429,
+  failed: 500,
+} as const satisfies Record<Exclude<ChangePasswordResult, 'ok'>, number>;
+
 /** The status the sign-up form shows for each refusal; the same as the web action's. */
 const SIGN_UP_STATUS = {
   weak_password: 400,
@@ -67,7 +89,11 @@ const SIGN_UP_STATUS = {
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
 
-export function authRoutes(open: Open = openDb, makeSupabase: MakeSupabase = statelessClient) {
+export function authRoutes(
+  open: Open = openDb,
+  makeSupabase: MakeSupabase = statelessClient,
+  deps: { request?: typeof fetch } = {},
+) {
   const app = new Hono<{ Bindings: Env }>();
 
   app.post('/password-reset', async (c) => {
@@ -168,6 +194,30 @@ export function authRoutes(open: Open = openDb, makeSupabase: MakeSupabase = sta
     } finally {
       await close();
     }
+  });
+
+  app.post('/new-password', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    if (!url || !key) return c.json({ error: 'unavailable' }, 503);
+
+    const token = /^Bearer (.+)$/.exec(c.req.header('authorization') ?? '')?.[1];
+    if (!token) return c.json({ result: 'no_session' }, 401);
+    const body = (await c.req.json().catch(() => null)) as {
+      password?: unknown;
+      passwordConfirm?: unknown;
+    } | null;
+    const parsed = newPasswordSchema.safeParse({
+      password: body?.password,
+      passwordConfirm: body?.passwordConfirm,
+    });
+    if (!parsed.success) return c.json({ error: 'invalid', message: 'invalid' }, 400);
+
+    const result = await changePasswordWithToken(
+      { url, key, request: deps.request, log: logger },
+      { token, password: parsed.data.password },
+    );
+    if (result === 'ok') return c.json({ result });
+    return c.json({ result }, NEW_PASSWORD_STATUS[result]);
   });
 
   return app;
