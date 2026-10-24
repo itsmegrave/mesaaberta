@@ -5,26 +5,23 @@ name: Release images
 # these images.
 #
 # Tags on ghcr.io/<owner>/<repo>-<image> (web, api, worker, migrate):
-#   a merge to main that changes app code  sha-<7 chars> (immutable, pin a deployment to it) and
-#                        main (moves); other merges publish nothing, see the paths below
-#   a tag vX.Y.Z         vX.Y.Z, X.Y.Z and latest (latest is only ever a release)
+#   every build            sha-<7 chars> (immutable, pin a deployment to it)
+#   a release              vX.Y.Z, X.Y.Z and latest (latest is only ever a release)
+#   a release from main    also main (moves)
 # Staging follows main or a sha; production pins a release tag or a sha.
+#
+# A release is made by `tag.yml` on every merge to main that changes app code: it picks the next
+# semver version, creates the tag and the GitHub release, and calls this workflow with that tag
+# (a tag made with GITHUB_TOKEN does not start other workflows, so the call is explicit). Pushing a
+# vX.Y.Z tag by hand still publishes it here.
 on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag (vX.Y.Z) that `tag.yml` just created
+        required: true
+        type: string
   push:
-    branches: [main]
-    # Only a change to what ends up in the images builds them: the apps, the packages, the
-    # migrations and the dependencies. A chore (docs, CI, lint config, tests) builds nothing. Path
-    # filters do not apply to tags, so a release tag always publishes.
-    paths:
-      - 'apps/**'
-      - 'packages/**'
-      - 'drizzle/**'
-      - 'drizzle.config.ts'
-      - 'package.json'
-      - 'bun.lock'
-      - 'bunfig.toml'
-      - '!**/*.spec.ts'
-      - '!apps/web/e2e/**'
     tags: ['v*.*.*']
 
 permissions:
@@ -45,13 +42,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      release: ${{ steps.tag.outputs.release }}
+      moving: ${{ steps.tag.outputs.moving }}
     steps:
       - id: tag
+        env:
+          CALLED_TAG: ${{ inputs.tag }}
         run: |
-          if [ "$GITHUB_REF_TYPE" = tag ]; then
-            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          # Images are built once per commit under the sha tag; the release tags are joined to it.
+          echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          if [ -n "$CALLED_TAG" ]; then
+            echo "release=$CALLED_TAG" >> "$GITHUB_OUTPUT"
+            echo "moving=main" >> "$GITHUB_OUTPUT"
+          elif [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "release=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
           fi
 
   # One job per architecture builds the four images in turn: migrate is a stage of the web
@@ -72,6 +76,8 @@ jobs:
           - { arch: arm64, runner: ubuntu-24.04-arm }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
       - name: Log in to GHCR
         run: echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin
         env:
@@ -111,13 +117,13 @@ jobs:
       - name: Join the architectures
         env:
           TAG: ${{ needs.version.outputs.tag }}
+          RELEASE: ${{ needs.version.outputs.release }}
+          MOVING: ${{ needs.version.outputs.moving }}
         run: |
           set -e
           base="$REGISTRY/${GITHUB_REPOSITORY,,}-${{ matrix.image }}"
-          if [ "$GITHUB_REF_TYPE" = tag ]; then
-            # v0.24.0 -> v0.24.0, 0.24.0 and latest
-            tags="-t $base:$TAG -t $base:${TAG#v} -t $base:latest"
-          else
-            tags="-t $base:$TAG -t $base:main"
-          fi
+          tags="-t $base:$TAG"
+          # v0.24.0 -> v0.24.0, 0.24.0 and latest
+          if [ -n "$RELEASE" ]; then tags="$tags -t $base:$RELEASE -t $base:${RELEASE#v} -t $base:latest"; fi
+          if [ -n "$MOVING" ]; then tags="$tags -t $base:$MOVING"; fi
           docker buildx imagetools create $tags "$base:$TAG-amd64" "$base:$TAG-arm64"
