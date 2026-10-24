@@ -1863,5 +1863,7 @@
   "table_close_text": "A mesa deixará de receber jogadores. Solicitações e convites pendentes serão cancelados, e os participantes receberão o cancelamento no calendário. O histórico será preservado.",
   "toast_table_deleted": "Rascunho excluído.",
   "toast_table_closed": "Mesa encerrada.",
-  "history_event_TableDraftDeleted": "excluiu um rascunho permanentemente"
+  "history_event_TableDraftDeleted": "excluiu um rascunho permanentemente",
+  "menu_delete_draft": "Excluir rascunho…",
+  "menu_close_table": "Encerrar mesa…"
 }

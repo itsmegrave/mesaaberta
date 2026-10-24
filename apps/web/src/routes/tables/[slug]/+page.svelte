@@ -132,7 +132,7 @@
     if (data.isGm && ['active', 'draft', 'awaiting_confirmation'].includes(table.status)) {
       items.push({
         id: 'disable',
-        label: table.status === 'draft' ? m.table_delete_draft() : m.table_close(),
+        label: table.status === 'draft' ? m.menu_delete_draft() : m.menu_close_table(),
         icon: 'trash',
         destructive: true,
         onselect: () => (disableOpen = true),

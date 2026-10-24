@@ -362,7 +362,7 @@ test.describe('editing and disabling', () => {
     const slug = await createTable(page, { title });
 
     await page.goto(`/tables/${slug}/manage`);
-    await chooseFromMenu(page, 'Encerrar mesa');
+    await chooseFromMenu(page, 'Encerrar mesa…');
     const dialog = page.getByRole('alertdialog', { name: 'Encerrar esta mesa?' });
     await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Encerrar mesa', exact: true }).click();

@@ -36,7 +36,12 @@ describe('the manage read', () => {
       ...event,
       locals: {
         ...event.locals,
-        getProfile: async () => ({ id: 'another', role: 'admin', status: 'active' }),
+        getProfile: async () => ({
+          id: 'another',
+          username: 'admin',
+          role: 'admin',
+          status: 'active',
+        }),
       },
     } as unknown as RequestEvent;
     expect((await read(admin)).canEnd).toBe(false);
