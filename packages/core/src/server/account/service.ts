@@ -20,7 +20,7 @@ import {
   lockInvitationProfiles,
   lockInvitationTablesForProfile,
 } from '../invitations/service';
-import { lockTableRows } from '../tables/schedule-guard';
+import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 /**
@@ -193,6 +193,8 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
   const eventIds = await db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     await lockInvitationProfiles(t, [userId]);
+    // Stabilize the owned family before discovering and locking the bulk table set.
+    await lockTableSchedule(t, userId);
     await lockInvitationTablesForProfile(t, userId);
     const cancelled = await cancelPendingInvitations(
       t,

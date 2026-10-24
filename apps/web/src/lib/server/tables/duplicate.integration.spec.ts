@@ -9,6 +9,10 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { duplicateTable } from '@mesaaberta/core/server/tables/duplicate';
 import { createTable, publishTable, updateTable } from '@mesaaberta/core/server/tables/write';
+import { closeAccount } from '@mesaaberta/core/server/account/service';
+import { banAccount } from '@mesaaberta/core/server/moderation/admin';
+import { lockTableSchedule } from '@mesaaberta/core/server/tables/schedule-guard';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { intervalsOverlap } from '@mesaaberta/core/server/tables/schedule';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
@@ -250,3 +254,65 @@ it('does not deadlock family edits against bulk account closure after a shared b
   expect((await row(source.slug)).status).toBe('disabled');
   expect((await row(copy.slug)).status).toBe('disabled');
 });
+
+it.each(['ban', 'close'] as const)(
+  'includes a concurrent copy when %s discovers the owner table set',
+  async (operation) => {
+    const { actor, input, source } = await setup();
+    const adminId = crypto.randomUUID();
+    owners.push(adminId);
+    await db
+      .insert(profiles)
+      .values({ id: adminId, username: `admin${adminId.slice(0, 8)}`, role: 'admin' });
+    const admin: Actor = { id: adminId, status: 'active', role: 'admin' };
+    let bulk!: Promise<unknown>;
+    let observedBlocking = false;
+    let copySlug = '';
+    await db.transaction(async (tx) => {
+      const t = tx as unknown as AnyDb;
+      const [holding] = await tx.execute(sql`select pg_backend_pid() as pid`);
+      await lockTableSchedule(t, actor.id);
+      let started!: (pid: number) => void;
+      const backend = new Promise<number>((resolve) => {
+        started = resolve;
+      });
+      let completed = false;
+      bulk = db
+        .transaction(async (other) => {
+          const [running] = await other.execute(sql`select pg_backend_pid() as pid`);
+          started(Number(running.pid));
+          return operation === 'ban'
+            ? banAccount(other as unknown as AnyDb, admin, actor.id, {
+                until: null,
+                reason: 'Concurrency regression',
+              })
+            : closeAccount(other as unknown as AnyDb, actor.id);
+        })
+        .finally(() => {
+          completed = true;
+        });
+      const pid = await backend;
+      // On the old implementation the bulk completes without waiting for this owner lock.
+      // The corrected implementation must wait before taking its table-set snapshot.
+      for (let attempt = 0; attempt < 200 && !completed; attempt++) {
+        const [waiting] = await db.execute(
+          sql`select ${Number(holding.pid)} = any(pg_blocking_pids(${pid})) as blocked`,
+        );
+        if (waiting.blocked) {
+          observedBlocking = true;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      const copied = await duplicateTable(t, actor, source.slug, {
+        ...input,
+        startsAtLocal: '2099-01-02T18:00',
+      });
+      copySlug = copied.slug;
+    });
+    await bulk;
+    expect((await row(source.slug)).status).toBe('disabled');
+    expect((await row(copySlug)).status).toBe('disabled');
+    expect(observedBlocking).toBe(true);
+  },
+);

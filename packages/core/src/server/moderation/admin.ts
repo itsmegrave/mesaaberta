@@ -21,7 +21,7 @@ import {
   registrations,
   reports,
 } from '@mesaaberta/core/server/db/schema';
-import { lockTableRows } from '../tables/schedule-guard';
+import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
@@ -452,6 +452,8 @@ export async function banAccount(
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
     if (target.status === 'suspended') throw new Invalid('profileId', 'banned');
+    // Stabilize the owned family before discovering and locking the bulk table set.
+    await lockTableSchedule(t, profileId);
     await lockInvitationTablesForProfile(t, profileId);
 
     await t
