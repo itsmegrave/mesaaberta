@@ -39,7 +39,12 @@
       action.includes('invitations') || action.includes('invitationBlock') ? 'account' : 'table',
     errorMessage: m.invitation_unavailable,
     onSuccess: () => toast.success(m.invitation_saved()),
-    onFailure: (updated) => toast.error(updated?.message?.code === 'rate_limited' ? registrationError('rate_limited',updated.message.retryAfter) : m.invitation_unavailable()),
+    onFailure: (updated) =>
+      toast.error(
+        updated?.message?.code === 'rate_limited'
+          ? registrationError('rate_limited', updated.message.retryAfter)
+          : m.invitation_unavailable(),
+      ),
   });
   const { draft } = form;
 </script>

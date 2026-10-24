@@ -70,12 +70,8 @@
   "admin_profile_empty": "Nenhum perfil encontrado.",
   "admin_profile_total": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhum usuário",
         "count=1": "1 usuário",
@@ -85,12 +81,8 @@
   ],
   "admin_tables_total": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma mesa",
         "count=1": "1 mesa",
@@ -142,12 +134,8 @@
   "admin_profiles": "Perfis cadastrados",
   "admin_new_profiles": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhum novo nos últimos 30 dias",
         "count=1": "1 novo nos últimos 30 dias",
@@ -158,12 +146,8 @@
   "admin_tables": "Mesas",
   "admin_active_tables": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma ativa",
         "count=1": "1 ativa",
@@ -177,12 +161,8 @@
   "admin_confirmed": "Vagas confirmadas",
   "admin_pending_seats": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhum pedido esperando o mestre",
         "count=1": "1 pedido esperando o mestre",
@@ -339,12 +319,8 @@
   "table_join_details_private": "Só você e quem tem vaga confirmada veem isto.",
   "tables_count": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma mesa com sessão marcada",
         "count=1": "1 mesa com sessão marcada",
@@ -357,12 +333,8 @@
   "table_kind_adventure": "Aventura",
   "table_seats_left": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma vaga restante",
         "count=1": "1 vaga restante",
@@ -401,12 +373,8 @@
   "info_tip_label": "Mais informações",
   "form_summary_title": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "Corrija 1 campo para continuar",
         "count=*": "Corrija {count} campos para continuar"
@@ -441,12 +409,8 @@
   "date_picker_calendar": "Calendário",
   "form_capacity_taken": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Ninguém está na mesa ainda, então não há mínimo.",
         "count=1": "1 pessoa já está na mesa, então este é o mínimo.",
@@ -457,12 +421,8 @@
   "form_capacity_remove_players": "Remover pessoas da mesa",
   "form_capacity_seats": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma vaga",
         "count=1": "1 vaga",
@@ -604,12 +564,8 @@
   "gm_rating_new": "Novo mestre",
   "rating_count": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Sem avaliações",
         "count=1": "1 avaliação",
@@ -656,12 +612,8 @@
   "dash_manage": "Gerenciar mesa",
   "dash_count": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "nenhuma mesa",
         "count=1": "1 mesa",
@@ -671,12 +623,8 @@
   ],
   "dash_banner": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "1 pedido de vaga esperando você em {title}",
         "count=*": "{count} pedidos de vaga esperando você em {title}"
@@ -943,12 +891,8 @@
   "admin_announce_audience_specific_user": "Uma pessoa",
   "admin_announce_audience_size": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma conta",
         "count=1": "1 conta",
@@ -968,12 +912,8 @@
   "admin_announce_confirm_person": "Esta notificação vai para @{username}.",
   "admin_announce_confirm": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Esta notificação não vai para nenhuma conta.",
         "count=1": "Esta notificação vai para 1 conta.",
@@ -994,12 +934,8 @@
   "admin_history_to_person": "Para {username}",
   "admin_history_notified": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Não chegou a nenhuma conta",
         "count=1": "Chegou a 1 conta",
@@ -1390,12 +1326,8 @@
   "form_error_min_players_invalid": "Use um número inteiro, de 1 até 30, ou deixe em branco.",
   "table_min_players": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "Mínimo: 1 jogador",
         "count=*": "Mínimo: {count} jogadores"
@@ -1404,12 +1336,8 @@
   ],
   "table_min_players_missing": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "Falta 1 para o mínimo",
         "count=*": "Faltam {count} para o mínimo"
@@ -1439,12 +1367,8 @@
   "session_summary_empty": "Escolha o dia da primeira sessão.",
   "tables_filter_show": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma mesa",
         "count=1": "Mostrar 1 mesa",
@@ -1460,12 +1384,8 @@
   "tables_filters_title": "Filtros",
   "tables_found": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=0": "Nenhuma mesa encontrada",
         "count=1": "1 mesa encontrada",
@@ -1688,12 +1608,8 @@
   "crowdfunding_sort_name": "Nome (A–Z)",
   "crowdfunding_found": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "1 financiamento",
         "count=*": "{count} financiamentos"
@@ -1707,12 +1623,8 @@
   "crowdfunding_ends_today": "Termina hoje",
   "crowdfunding_ends_in": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "Termina em 1 dia",
         "count=*": "Termina em {count} dias"
@@ -1721,12 +1633,8 @@
   ],
   "crowdfunding_last_days": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "Último dia",
         "count=*": "Últimos {count} dias"
@@ -1735,12 +1643,8 @@
   ],
   "crowdfunding_starts_in": [
     {
-      "declarations": [
-        "input count"
-      ],
-      "selectors": [
-        "count"
-      ],
+      "declarations": ["input count"],
+      "selectors": ["count"],
       "match": {
         "count=1": "Começa amanhã",
         "count=*": "Começa em {count} dias"
