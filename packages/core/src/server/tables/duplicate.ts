@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, systems } from '../db/schema';
+import { gameTables, profiles, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { catalogOf, type CatalogItem } from '../catalog';
@@ -12,7 +12,10 @@ import { createTable } from './write';
 async function sourceFor(db: AnyDb, actor: Actor | null, slug: string) {
   const [source] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
   if (!source) throw new NotFound('table');
-  authorize(actor, 'table:duplicate', { gmId: source.gmId, moderatedAt: source.moderatedAt });
+  authorize(actor, 'table:duplicate', {
+    gmId: source.gmId,
+    moderatedAt: source.moderatedAt,
+  });
   return source;
 }
 
@@ -108,6 +111,12 @@ export async function duplicateTable(
   return db.transaction(async (transaction) => {
     const tx = transaction as unknown as AnyDb;
     await lockTableSchedule(tx, actor!.id);
+    // A ban can commit while this request waits. Bulk account changes share this advisory lock.
+    const [currentActor] = await tx
+      .select({ id: profiles.id, role: profiles.role, status: profiles.status })
+      .from(profiles)
+      .where(eq(profiles.id, actor!.id));
+    authorize(currentActor ?? null, 'table:create');
     // A replay answers with the copy that exists, even when its source was deleted or moderated since.
     if (requestKey) {
       const [existing] = await tx
@@ -133,14 +142,17 @@ export async function duplicateTable(
         };
       }
     }
-    const initial = await sourceFor(tx, actor, sourceSlug);
+    const initial = await sourceFor(tx, currentActor, sourceSlug);
     const { table: source, linked } = await lockTableFamily(tx, initial.id, { newCopy: true });
-    authorize(actor, 'table:duplicate', { gmId: source.gmId, moderatedAt: source.moderatedAt });
+    authorize(currentActor, 'table:duplicate', {
+      gmId: source.gmId,
+      moderatedAt: source.moderatedAt,
+    });
     assertTableSchedule(linked, {
       startsAt: localToInstant(input.startsAtLocal, input.timezone),
       durationMinutes: input.durationMinutes,
     });
-    return createTable(tx, actor, input, {
+    return createTable(tx, currentActor, input, {
       now,
       draft,
       imagePath:

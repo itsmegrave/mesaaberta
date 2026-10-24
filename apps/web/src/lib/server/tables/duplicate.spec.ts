@@ -74,6 +74,24 @@ const source = () =>
   createTable(test.db, actor, input(), { now, imagePath: 'tables/original.png' });
 
 describe('table duplication', () => {
+  it('refuses a stale active actor when the GM was suspended before acquiring the schedule lock', async () => {
+    const original = await source();
+    await test.db.update(profiles).set({ status: 'suspended' }).where(eq(profiles.id, actor.id));
+    try {
+      await expect(
+        duplicateTable(
+          test.db,
+          actor,
+          original.slug,
+          input({ startsAtLocal: '2026-10-11T19:00' }),
+          { now },
+        ),
+      ).rejects.toMatchObject({ name: 'Forbidden' });
+    } finally {
+      await test.db.update(profiles).set({ status: 'active' }).where(eq(profiles.id, actor.id));
+    }
+  });
+
   it('copies an owned concluded source with a blank required date and an explicit content whitelist', async () => {
     const original = await source();
     await test.db
