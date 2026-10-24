@@ -1,6 +1,8 @@
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { platforms, profiles, systems, tags } from '@mesaaberta/db/schema';
+import { gameTables, platforms, profiles, systems, tags } from '@mesaaberta/db/schema';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
+import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
 import { readRoutes } from './reads';
@@ -21,6 +23,22 @@ beforeAll(async () => {
     { name: 'Ana Pending', slug: 'ana-pending', status: 'pending', suggestedBy: ana },
     { name: 'Bia Pending', slug: 'bia-pending', status: 'pending', suggestedBy: bia },
   ] as never);
+  const [pendingSystem] = await test.db
+    .select({ id: systems.id })
+    .from(systems)
+    .where(eq(systems.slug, 'ana-pending'));
+  await test.db.insert(gameTables).values({
+    slug: 'mesa-ana',
+    title: 'Mesa da Ana',
+    kind: 'one_shot',
+    capacity: 4,
+    status: 'draft',
+    startsAt: new Date('2099-01-01T20:00:00Z'),
+    durationMinutes: 60,
+    timezone: 'UTC',
+    gmId: ana,
+    systemId: pendingSystem.id,
+  });
   await test.db
     .insert(platforms)
     .values([
@@ -63,5 +81,41 @@ describe('GET /v1/reads/catalog', () => {
   it('needs a known actor', async () => {
     expect((await get()).status).toBe(401);
     expect((await get('00000000-0000-4000-8000-0000000fffff')).status).toBe(403);
+  });
+});
+
+const getEdit = (slug: string, actor?: string, tz = 'America/Sao_Paulo') =>
+  app.request(
+    `/edit-catalog/${slug}?tz=${tz}`,
+    { headers: actor ? { [ACTOR_HEADER]: actor } : {} },
+    env,
+  );
+
+describe('GET /v1/reads/edit-catalog/:slug', () => {
+  it("answers exactly what the in-process reader builds, with the table's own pending system", async () => {
+    const answer = await getEdit('mesa-ana', ana);
+
+    expect(answer.status).toBe(200);
+    const body = (await answer.json()) as { systems: { slug: string }[] };
+    expect(body.systems.map((s) => s.slug)).toContain('ana-pending');
+    expect(body).toEqual(
+      JSON.parse(
+        JSON.stringify(
+          await readEditCatalog(
+            test.db,
+            { id: ana, role: 'member', status: 'active' },
+            'mesa-ana',
+            'America/Sao_Paulo',
+          ),
+        ),
+      ),
+    );
+  });
+
+  it('refuses someone who is not the GM, and an unknown table, with the codes web turns back', async () => {
+    expect((await getEdit('mesa-ana', bia)).status).toBe(403);
+    expect(await (await getEdit('mesa-ana', bia)).json()).toEqual({ error: 'forbidden' });
+    expect((await getEdit('nao-existe', ana)).status).toBe(404);
+    expect((await getEdit('mesa-ana')).status).toBe(401);
   });
 });
