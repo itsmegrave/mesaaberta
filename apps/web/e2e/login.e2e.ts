@@ -15,7 +15,7 @@ test.describe('the login page', () => {
     await expect(page.getByRole('link', { name: 'Continuar com Discord' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Esqueci minha senha' })).toHaveAttribute(
       'href',
-      /forgot-password$/,
+      /forgot$/,
     );
     await expect(page.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', /signup/);
   });
@@ -34,7 +34,7 @@ test.describe('the login page', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Criar conta');
     await expect(page.getByRole('button', { name: 'Criar conta' })).toBeVisible();
 
-    await page.goto('/forgot-password');
+    await page.goto('/forgot');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Esqueci minha senha');
     await expect(page.getByRole('button', { name: 'Enviar link' })).toBeVisible();
   });
@@ -50,7 +50,7 @@ test.describe('the login page', () => {
         .getByRole('navigation')
         .getByRole('link', { name: 'Mesas', exact: true })
         .filter({ visible: true }),
-    ).toHaveAttribute('href', '/tables');
+    ).toHaveAttribute('href', '/t');
   });
 
   for (const [provider, host, clientId] of [
@@ -60,16 +60,14 @@ test.describe('the login page', () => {
     test(`${provider}: our app hands off to Auth, and Auth to the provider, coming back to our callback`, async ({
       request,
     }) => {
-      const ours = await request.get(`/login/${provider}?next=%2Ftables%2Fnew`, {
+      const ours = await request.get(`/login/${provider}?next=%2Ft%2Fnew`, {
         maxRedirects: 0,
       });
       expect(ours.status()).toBe(303);
       const auth = new URL(ours.headers()['location']);
       expect(auth.pathname).toBe('/auth/v1/authorize');
       expect(auth.searchParams.get('provider')).toBe(provider);
-      expect(auth.searchParams.get('redirect_to')).toMatch(
-        /\/auth\/callback\?next=%2Ftables%2Fnew$/,
-      );
+      expect(auth.searchParams.get('redirect_to')).toMatch(/\/auth\/callback\?next=%2Ft%2Fnew$/);
       expect(auth.searchParams.get('code_challenge')).toBeTruthy(); // PKCE
 
       const hop = await request.get(auth.toString(), { maxRedirects: 0 });
@@ -121,8 +119,8 @@ test.describe('the login page', () => {
     request,
     baseURL,
   }) => {
-    const page = await request.get('/reset-password', { maxRedirects: 0 });
-    const post = await request.post('/reset-password', {
+    const page = await request.get('/reset', { maxRedirects: 0 });
+    const post = await request.post('/reset', {
       headers: { origin: baseURL!, accept: 'text/html' },
       form: { password: 'a brand new password', passwordConfirm: 'a brand new password' },
       maxRedirects: 0,
@@ -130,11 +128,11 @@ test.describe('the login page', () => {
 
     for (const response of [page, post]) {
       expect(response.status()).toBe(303);
-      expect(response.headers()['location']).toBe('/forgot-password?error=link');
+      expect(response.headers()['location']).toBe('/forgot?error=link');
     }
   });
 
-  for (const path of ['/login', '/signup', '/forgot-password']) {
+  for (const path of ['/login', '/signup', '/forgot']) {
     test(`${path} renders without CSP violations`, async ({ page }) => {
       const violations: string[] = [];
       page.on('console', (message) => {

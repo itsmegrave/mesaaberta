@@ -1,19 +1,18 @@
 <script lang="ts">
   import Icon from '#lib/components/Icon.svelte';
   import { page } from '$app/state';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
-  const locale = getLocale();
   const pathname = $derived(page.url.pathname);
 
-  const isTablesActive = $derived(pathname.startsWith('/tables') && pathname !== '/tables/new');
-  const isCrowdfundingActive = $derived(pathname.startsWith('/crowdfunding'));
-  const isNewTableActive = $derived(pathname === '/tables/new');
+  const isTablesActive = $derived(
+    (pathname === '/t' || pathname.startsWith('/t/')) && pathname !== '/t/new',
+  );
+  const isCrowdfundingActive = $derived(pathname === '/cf' || pathname.startsWith('/cf/'));
+  const isNewTableActive = $derived(pathname === '/t/new');
   // Only the tables' own pages: the profile and the rest of the account are not "Minhas mesas".
-  const isMyTablesActive = $derived(pathname.startsWith('/account/tables'));
-  const isPartnersActive = $derived(pathname.startsWith('/partners'));
+  const isMyTablesActive = $derived(pathname === '/u/tables' || pathname.startsWith('/u/tables/'));
+  const isPartnersActive = $derived(pathname === '/p' || pathname.startsWith('/p/'));
 </script>
 
 <nav
@@ -22,7 +21,7 @@
 >
   <!-- Mesas -->
   <a
-    href={localizedHref('/tables', locale)}
+    href="/t"
     class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isTablesActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
@@ -39,7 +38,7 @@
 
   <!-- Financiamentos coletivos: the short label fits the bar, the full name is what is announced -->
   <a
-    href={localizedHref('/crowdfunding', locale)}
+    href="/cf"
     aria-label={m.nav_crowdfunding_label()}
     class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isCrowdfundingActive
       ? 'text-surface-950-50'
@@ -57,7 +56,7 @@
 
   <!-- Parceiros -->
   <a
-    href={localizedHref('/partners', locale)}
+    href="/p"
     class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isPartnersActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"
@@ -74,7 +73,7 @@
 
   <!-- Abrir mesa -->
   <a
-    href={localizedHref('/tables/new', locale)}
+    href="/t/new"
     class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold text-surface-950-50 no-underline"
   >
     <span
@@ -89,7 +88,7 @@
 
   <!-- Minhas mesas -->
   <a
-    href={localizedHref('/account/tables', locale)}
+    href="/u/tables"
     class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isMyTablesActive
       ? 'text-surface-950-50'
       : 'text-muted hover:text-surface-950-50'}"

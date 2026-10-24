@@ -209,7 +209,7 @@ describe('owner table end API', () => {
     );
     const { slug } = (await created.json()) as { slug: string };
     const request = (actor?: string) =>
-      app().request(
+      duplicationApp().request(
         `/${slug}/draft`,
         { method: 'DELETE', headers: actor ? { [ACTOR_HEADER]: actor } : {} },
         env,
@@ -228,18 +228,21 @@ describe('owner table end API', () => {
     const { slug } = (await created.json()) as { slug: string };
     expect(
       (
-        await app().request(
+        await duplicationApp().request(
           `/${slug}/draft`,
           { method: 'DELETE', headers: { [ACTOR_HEADER]: gm } },
           env,
         )
       ).status,
     ).toBe(400);
-    expect((await post(`/${slug}/close`, {}, other)).status).toBe(403);
-    const closed = await post(`/${slug}/close`, {}, gm);
+    expect((await duplicate(`/${slug}/close`, {}, other)).status).toBe(403);
+    const closed = await duplicate(`/${slug}/close`, {}, gm);
     expect(closed.status).toBe(200);
     expect(await closed.json()).toMatchObject({ eventIds: [expect.any(String)] });
-    expect(await (await post(`/${slug}/close`, {}, gm)).json()).toEqual({ slug, eventIds: [] });
+    expect(await (await duplicate(`/${slug}/close`, {}, gm)).json()).toEqual({
+      slug,
+      eventIds: [],
+    });
     const [table] = await test.db.select().from(gameTables).where(eq(gameTables.slug, slug));
     expect(table).toMatchObject({ status: 'disabled', icalSequence: 1 });
   });

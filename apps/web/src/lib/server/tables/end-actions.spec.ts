@@ -12,9 +12,9 @@ const event = (fetch?: (request: Request) => Promise<Response>) =>
       flags: { isEnabled: vi.fn(() => false) },
       afterResponse: vi.fn(),
     },
-    url: new URL('https://x.test/tables/draft/manage'),
+    url: new URL('https://x.test/t/draft/manage'),
     params: { slug: 'private draft' },
-    request: new Request('https://x.test/tables/draft/manage?/deleteDraft', { method: 'POST' }),
+    request: new Request('https://x.test/t/draft/manage?/deleteDraft', { method: 'POST' }),
   }) as unknown as RequestEvent;
 
 describe('table end form adapters', () => {
@@ -34,7 +34,7 @@ describe('table end form adapters', () => {
       const request = event(send);
       await expect(endActions[action](request)).rejects.toMatchObject({
         status: 303,
-        location: '/account/tables',
+        location: '/u/tables',
       });
       expect(send).toHaveBeenCalledTimes(1);
       expect(send.mock.calls[0][0].method).toBe(method);

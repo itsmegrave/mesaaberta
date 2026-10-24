@@ -6,7 +6,6 @@
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import Icon from '#lib/components/Icon.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { reasonLabel } from '#lib/moderation/labels.js';
   import {
     banFromReportSchema,
@@ -116,9 +115,7 @@
                 label={handle(report.reporter.username)}
                 class="font-semibold"
               />
-              <a
-                class="ml-2 anchor text-sm"
-                href={localizedHref(`/admin/users/${report.reporter.id}`, locale)}
+              <a class="ml-2 anchor text-sm" href={`/admin/users/${report.reporter.id}`}
                 >{m.admin_user_title()}</a
               >
             </dd>
@@ -154,9 +151,7 @@
                   label={handle(report.player.username)}
                   class="font-semibold"
                 />
-                <a
-                  class="ml-2 anchor text-sm"
-                  href={localizedHref(`/admin/users/${report.player.id}`, locale)}
+                <a class="ml-2 anchor text-sm" href={`/admin/users/${report.player.id}`}
                   >{m.admin_user_title()}</a
                 >
                 {#if report.player.status === 'suspended'}
@@ -233,9 +228,7 @@
                     label={handle(partner.submitter.username)}
                     class="font-semibold"
                   />
-                  <a
-                    class="ml-2 anchor text-sm"
-                    href={localizedHref(`/admin/users/${partner.submitter.id}`, locale)}
+                  <a class="ml-2 anchor text-sm" href={`/admin/users/${partner.submitter.id}`}
                     >{m.admin_user_title()}</a
                   >
                 {/if}
@@ -298,9 +291,7 @@
                     label={handle(campaign.submitter.username)}
                     class="font-semibold"
                   />
-                  <a
-                    class="ml-2 anchor text-sm"
-                    href={localizedHref(`/admin/users/${campaign.submitter.id}`, locale)}
+                  <a class="ml-2 anchor text-sm" href={`/admin/users/${campaign.submitter.id}`}
                     >{m.admin_user_title()}</a
                   >
                 {:else}
@@ -321,9 +312,7 @@
                 {#if report.table.status === 'disabled'}
                   <span class="font-semibold">{report.table.title}</span>
                 {:else}
-                  <a
-                    class="anchor font-semibold"
-                    href={localizedHref(`/tables/${report.table.slug}`, locale)}
+                  <a class="anchor font-semibold" href={`/t/${report.table.slug}`}
                     >{report.table.title}</a
                   >
                 {/if}
@@ -340,9 +329,7 @@
                   label={handle(report.gm.username)}
                   class="font-semibold"
                 />
-                <a
-                  class="ml-2 anchor text-sm"
-                  href={localizedHref(`/admin/users/${report.gm.id}`, locale)}
+                <a class="ml-2 anchor text-sm" href={`/admin/users/${report.gm.id}`}
                   >{m.admin_user_title()}</a
                 >
                 {#if report.gm.status === 'suspended'}

@@ -8,10 +8,12 @@ import {
   conversations,
   conversationMembers,
   messages,
+  playerInvitations,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { createTable, publishTable } from '@mesaaberta/core/server/tables/write';
 import { deleteDraftTable, closeTable } from '@mesaaberta/core/server/tables/end';
+import { invitePlayer } from '@mesaaberta/core/server/invitations/service';
 import { duplicateTable } from '@mesaaberta/core/server/tables/duplicate';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
@@ -170,6 +172,29 @@ describe('ending an owned table', () => {
     expect(event).toMatchObject({
       type: 'TableDisabled',
       payload: { cancelledRequestPlayerIds: [other.id] },
+    });
+  });
+  it('cancels pending invitations and returns their events for immediate notification dispatch', async () => {
+    const original = await source();
+    await publishTable(test.db, actor, original.slug);
+    const invitation = await invitePlayer(test.db, actor, original.slug, other.id);
+    const closed = await closeTable(test.db, actor, original.slug);
+    expect(closed.eventIds).toHaveLength(2);
+    const [saved] = await test.db
+      .select()
+      .from(playerInvitations)
+      .where(eq(playerInvitations.id, invitation.invitationId));
+    expect(saved).toMatchObject({ status: 'cancelled', cancellationReason: 'table_disabled' });
+    const emitted = await test.db.select().from(events);
+    expect(
+      emitted
+        .filter((entry) => closed.eventIds.includes(entry.id))
+        .map((entry) => entry.type)
+        .sort(),
+    ).toEqual(['InvitationCancelled', 'TableDisabled']);
+    expect(await closeTable(test.db, actor, original.slug)).toEqual({
+      slug: original.slug,
+      eventIds: [],
     });
   });
   it.each(['draft', 'concluded', 'not_held'] as const)(

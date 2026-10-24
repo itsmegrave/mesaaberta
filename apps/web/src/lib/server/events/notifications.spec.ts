@@ -98,7 +98,7 @@ describe('notificationHandler', () => {
   });
 
   it.each([
-    ['TableUpdated', 'table_updated', 'table', '/tables/mesa'],
+    ['TableUpdated', 'table_updated', 'table', '/t/mesa'],
     ['TableDisabled', 'table_cancelled', 'table', null],
   ] as const)(
     '%s tells the confirmed players, not the GM or a pending request',
@@ -116,10 +116,10 @@ describe('notificationHandler', () => {
   );
 
   it.each([
-    ['JoinRequested', caio, gm, 'join_requested', '/tables/mesa/manage'],
-    ['PlayerJoined', ana, gm, 'player_joined', '/tables/mesa/manage'],
-    ['JoinApproved', gm, caio, 'join_approved', '/tables/mesa'],
-    ['JoinDeclined', gm, caio, 'join_declined', '/tables'],
+    ['JoinRequested', caio, gm, 'join_requested', '/t/mesa/manage'],
+    ['PlayerJoined', ana, gm, 'player_joined', '/t/mesa/manage'],
+    ['JoinApproved', gm, caio, 'join_approved', '/t/mesa'],
+    ['JoinDeclined', gm, caio, 'join_declined', '/t'],
   ] as const)('%s by %s tells %s', async (type, actor, recipient, kind, link) => {
     const player = actor === gm ? recipient : actor;
     await handle(stored({ type, payload: { ...seat, playerId: player } }, actor));
@@ -139,8 +139,8 @@ describe('notificationHandler', () => {
 
     expect(await written()).toEqual(
       expect.arrayContaining([
-        { to: gm, type: 'player_left', category: 'registration', link: '/tables/mesa/manage' },
-        { to: bia, type: 'player_removed', category: 'registration', link: '/tables' },
+        { to: gm, type: 'player_left', category: 'registration', link: '/t/mesa/manage' },
+        { to: bia, type: 'player_removed', category: 'registration', link: '/t' },
       ]),
     );
   });
@@ -149,7 +149,7 @@ describe('notificationHandler', () => {
     await handle(stored({ type: 'RatingSubmitted', payload: { ...seat, playerId: ana } }, ana));
 
     expect(await written()).toEqual([
-      { to: gm, type: 'rating_received', category: 'rating', link: '/tables/mesa' },
+      { to: gm, type: 'rating_received', category: 'rating', link: '/t/mesa' },
     ]);
   });
 
@@ -187,7 +187,7 @@ describe('notificationHandler', () => {
       expect.objectContaining({
         to: gm,
         type: 'session_confirmation',
-        link: '/tables/mesa/manage',
+        link: '/t/mesa/manage',
       }),
     ]);
   });
@@ -197,8 +197,6 @@ describe('notificationHandler', () => {
 
     const rows = await written();
     expect(rows.map((row) => row.to).sort()).toEqual([ana, bia].sort());
-    expect(rows.every((row) => row.type === 'rating_prompt' && row.link === '/tables/mesa')).toBe(
-      true,
-    );
+    expect(rows.every((row) => row.type === 'rating_prompt' && row.link === '/t/mesa')).toBe(true);
   });
 });

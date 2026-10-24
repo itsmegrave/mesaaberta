@@ -41,9 +41,7 @@
     showMore,
     type Sort,
   } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     rows,
@@ -107,7 +105,6 @@
     hash?: string;
   } = $props();
 
-  const locale = getLocale();
   const features = tableFeatures({});
   const defs = $derived(
     columns.map((column): ColumnDef<typeof features, T> => ({
@@ -130,10 +127,7 @@
   const pages = $derived(Math.max(1, Math.ceil(total / pageSize)));
   const range = $derived(pageRange(page, pageSize, total));
   const href = (changes: Record<string, string | number | null>, withHash = hash) =>
-    localizedHref(
-      listPath(current.url.pathname, listQuery(current.url.searchParams, changes), withHash),
-      locale,
-    );
+    listPath(current.url.pathname, listQuery(current.url.searchParams, changes), withHash);
   const go = (changes: Record<string, string | number | null>) =>
     goto(href(changes), { reset: false });
   const clearHref = $derived(href(Object.fromEntries(filterKeys.map((key) => [key, null]))));

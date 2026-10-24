@@ -5,8 +5,8 @@ export const paraglideOptions = {
   project: path.join(import.meta.dirname, 'project.inlang'),
   outdir: path.join(import.meta.dirname, 'src/lib/paraglide'),
   emitTsDeclarations: true,
-  // Locale comes from the URL only: pt-BR at `/`, English under `/en`. No locale cookie.
-  strategy: ['url', 'baseLocale'],
-  // Matches SvelteKit's default, so `/en` is canonical and `/en/` is not linked.
+  // Language preferences never change a resource's URL. Only pt-BR is served today.
+  strategy: ['cookie', 'baseLocale'],
+  // Matches SvelteKit's default for canonical links.
   trailingSlash: 'never',
 } as const;

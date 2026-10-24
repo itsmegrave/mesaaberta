@@ -11,6 +11,7 @@ import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { rateBlocker } from '@mesaaberta/core/server/auth/policy';
 import { firstSessionEnded } from '@mesaaberta/core/server/ratings/service';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
+import { reservedSeatsSql } from '../invitations/seats';
 import { seatsLeft } from '@mesaaberta/core/server/tables/queries';
 
 // The "My tables" page: what I play in, and what I run. Sessions coming up come first, soonest
@@ -80,11 +81,12 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
 
 /** The tables this person is the GM of, with who has a seat and who is waiting. */
 export async function listRunning(db: AnyDb, gmId: string, now: Date) {
-  const tables = await db
-    .select()
+  const rows = await db
+    .select({ table: gameTables, reserved: reservedSeatsSql(gameTables.id, now) })
     .from(gameTables)
     .where(eq(gameTables.gmId, gmId))
     .orderBy(asc(gameTables.startsAt));
+  const tables = rows.map(({ table, reserved }) => ({ ...table, reserved }));
   if (tables.length === 0) return [];
 
   const people = await db
@@ -120,7 +122,8 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
         tableStatus: table.status,
         joinMode: table.joinMode,
         capacity: table.capacity,
-        seatsLeft: seatsLeft(table.capacity, players.length),
+        reserved: table.reserved,
+        seatsLeft: seatsLeft(table.capacity, players.length + table.reserved),
         timezone: table.timezone,
         startsAt: table.startsAt,
         players,

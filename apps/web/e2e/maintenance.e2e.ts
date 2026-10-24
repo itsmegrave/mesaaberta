@@ -10,7 +10,7 @@ test.describe('maintenance mode', () => {
   test('every page shows the maintenance screen with a 503, and nothing of the product', async ({
     page,
   }) => {
-    for (const path of ['/', '/tables', '/signup', '/account/tables']) {
+    for (const path of ['/', '/t', '/signup', '/u/tables']) {
       const response = await page.goto(path);
 
       expect(response?.status(), path).toBe(503);
@@ -24,7 +24,7 @@ test.describe('maintenance mode', () => {
 
   test('a form post is refused without running', async ({ request, baseURL }) => {
     // Same-origin, as a browser sends it; otherwise SvelteKit's CSRF check answers first.
-    const response = await request.post('/tables/new', {
+    const response = await request.post('/t/new', {
       form: { title: 'x' },
       headers: { origin: baseURL! },
     });
@@ -52,7 +52,7 @@ test.describe('maintenance mode', () => {
     page,
   }) => {
     const admin = await createUser('Admin Manutenção', { role: 'admin' });
-    await signIn(page, admin, '/tables');
+    await signIn(page, admin, '/t');
 
     await expect(
       page.getByText('Modo de manutenção ativo: só a administração vê o site.'),

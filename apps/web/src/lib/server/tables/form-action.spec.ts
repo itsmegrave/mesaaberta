@@ -37,7 +37,7 @@ const fields = (over: Record<string, string | File> = {}) => ({
 const request = (over: Record<string, string | File> = {}) => {
   const body = new FormData();
   for (const [key, value] of Object.entries(fields(over))) body.set(key, value);
-  return new Request('https://x.test/tables/new', { method: 'POST', body });
+  return new Request('https://x.test/t/new', { method: 'POST', body });
 };
 
 const setup = (options: { user?: boolean; upload?: ReturnType<typeof vi.fn> } = {}) => {
@@ -89,7 +89,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/tables/mesa-nova',
+      location: '/t/mesa-nova',
     });
     expect(s.save).toHaveBeenCalledOnce();
   });
@@ -99,7 +99,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/login?next=%2Ftables%2Fnew',
+      location: '/login?next=%2Ft%2Fnew',
     });
     expect(s.save).not.toHaveBeenCalled();
   });
@@ -110,7 +110,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/onboarding?next=%2Ftables%2Fnew',
+      location: '/u/profile/setup?next=%2Ft%2Fnew',
     });
     expect(s.save).not.toHaveBeenCalled();
   });

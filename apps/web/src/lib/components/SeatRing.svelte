@@ -3,10 +3,11 @@
     capacity: number;
     seatsLeft: number;
     size?: number;
+    label?: string;
     class?: string;
   }
 
-  let { capacity = 5, seatsLeft = 0, size = 64, class: className = '' }: Props = $props();
+  let { capacity = 5, seatsLeft = 0, size = 64, label, class: className = '' }: Props = $props();
 
   const SEAT_COLORS = [
     'var(--color-success-500)',
@@ -40,7 +41,7 @@
   height={size}
   viewBox="0 0 100 100"
   role="img"
-  aria-label="{occupied} de {total} vagas ocupadas"
+  aria-label={label ?? `${occupied} de ${total} vagas ocupadas`}
   class="shrink-0 {className}"
 >
   <!-- Central table surface -->

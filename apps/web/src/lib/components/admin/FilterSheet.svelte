@@ -53,7 +53,7 @@
           </div>
           <footer class="flex items-center gap-3 border-t border-surface-200-800 p-4">
             {#if clearHref && active > 0}
-              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- already localized -->
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- already canonical -->
               <a class="btn h-12 px-3 anchor font-semibold" href={clearHref}
                 >{m.admin_list_clear()}</a
               >

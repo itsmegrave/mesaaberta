@@ -8,7 +8,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   browser,
 }) => {
   const { page, context } = await asUser(browser, await createUser('Mestra Ana'));
-  await page.goto('/tables/new');
+  await page.goto('/t/new');
   await page.getByLabel('Título').fill('Uma mesa pela metade');
 
   await homeLink(page).click();
@@ -17,7 +17,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Continuar editando' }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page).toHaveURL(/\/tables\/new$/);
+  await expect(page).toHaveURL(/\/t\/new$/);
   await expect(page.getByLabel('Título')).toHaveValue('Uma mesa pela metade');
 
   await homeLink(page).click();
@@ -30,7 +30,7 @@ test('a table form refuses an image that is too big before sending anything', as
   browser,
 }) => {
   const { page, context } = await asUser(browser, await createUser('Mestra Bia'));
-  await page.goto('/tables/new');
+  await page.goto('/t/new');
   let posted = false;
   page.on('request', (request) => {
     if (request.method() === 'POST') posted = true;
@@ -53,7 +53,7 @@ test('a profile that was only opened is left without asking, even when the form 
 }) => {
   // A new person has no timezone: the form offers the browser's, which is not an edit of theirs.
   const { page, context } = await asUser(browser, await createUser('Pessoa Nova'));
-  await page.goto('/account/profile');
+  await page.goto('/u/profile/edit');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
   await homeLink(page).click();
@@ -76,7 +76,7 @@ test('the table form drags the seats, takes an image and a suggestion without a 
       );
     }),
   );
-  await page.goto('/tables/new');
+  await page.goto('/t/new');
 
   // The thumb is drawn where it can be grabbed, and the arrow keys move it a seat at a time.
   const seats = page.getByRole('slider', { name: 'Vagas' });

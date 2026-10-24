@@ -184,3 +184,69 @@ describe('duplicate schedule concurrency', () => {
     expect(await db.select().from(gameTables).where(eq(gameTables.gmId, actor.id))).toHaveLength(1);
   });
 });
+
+it('does not deadlock family edits against bulk account closure after a shared blocker releases', async () => {
+  const { closeAccount } = await import('@mesaaberta/core/server/account/service');
+  const { actor, input, source } = await setup();
+  const copy = await duplicateTable(db, actor, source.slug, {
+    ...input,
+    startsAtLocal: '2099-01-02T18:00',
+  });
+  const sourceRow = await row(source.slug);
+  const suffix = actor.id.slice(0, 8);
+  const closingName = `dup-close-${suffix}`;
+  const editingName = `dup-edit-${suffix}`;
+  let release!: () => void;
+  let acquired!: () => void;
+  const locked = new Promise<void>((resolve) => {
+    acquired = resolve;
+  });
+  const hold = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const blocker = db.transaction(async (tx) => {
+    await tx.select().from(gameTables).where(eq(gameTables.id, sourceRow.id)).for('update');
+    acquired();
+    await hold;
+  });
+  await locked;
+  const waitForLock = async (applicationName: string) => {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const waiting = await db.execute(
+        sql`select pid from pg_stat_activity where application_name = ${applicationName} and wait_event_type = 'Lock'`,
+      );
+      if (waiting.length) return;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    throw new Error(`Transaction did not reach its lock: ${applicationName}`);
+  };
+  const closing = db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('application_name', ${closingName}, true)`);
+    return closeAccount(
+      tx as unknown as import('@mesaaberta/core/server/db/client').AnyDb,
+      actor.id,
+    );
+  });
+  let editing: Promise<unknown> | undefined;
+  try {
+    // Queue closure first. The old edit then locked the copy before waiting for its source,
+    // making closure wait for the copy while the edit waited for closure's source lock.
+    await waitForLock(closingName);
+    editing = db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('application_name', ${editingName}, true)`);
+      return updateTable(
+        tx as unknown as import('@mesaaberta/core/server/db/client').AnyDb,
+        actor,
+        copy.slug,
+        { ...input, title: 'Edited after closure', startsAtLocal: '2099-01-02T18:00' },
+      );
+    });
+    await waitForLock(editingName);
+  } finally {
+    release();
+  }
+  await blocker;
+  await expect(Promise.all([closing, editing])).resolves.toHaveLength(2);
+  expect((await row(source.slug)).status).toBe('disabled');
+  expect((await row(copy.slug)).status).toBe('disabled');
+});

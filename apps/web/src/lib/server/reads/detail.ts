@@ -9,6 +9,7 @@ import {
   registrationStatus,
 } from '@mesaaberta/core/server/registrations/service';
 import { findTableBySlug, joinDetailsOf } from '@mesaaberta/core/server/tables/queries';
+import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 import { reportTargetsOf } from '@mesaaberta/core/server/moderation/reports';
 import { systemWaitingOf } from '@mesaaberta/core/server/systems';
@@ -77,6 +78,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     gmAcceptsDirect: gm?.enabled ?? false,
     isGm: profile?.id === gmId,
     myStatus,
+    invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     canJoin,
     registrations: manage ? await listRegistrations(locals.db!, profile, params.slug!) : null,
     // What "Denunciar" offers this visitor: the table, and the people they share it with.

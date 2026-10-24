@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import {
   conversations,
   events,
@@ -7,10 +7,14 @@ import {
   profiles,
   systems,
   registrations,
+  playerInvitations,
 } from '@mesaaberta/core/server/db/schema';
 import { createTable, disableTable, publishTable } from '@mesaaberta/core/server/tables/write';
 import { closeTable, deleteDraftTable } from '@mesaaberta/core/server/tables/end';
 import { concludeTable, markTableNotHeld } from '@mesaaberta/core/server/tables/lifecycle';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { lockTableRows } from '@mesaaberta/core/server/tables/schedule-guard';
+import { invitePlayer, acceptInvitation } from '@mesaaberta/core/server/invitations/service';
 import { joinTable } from '@mesaaberta/core/server/registrations/service';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
@@ -138,6 +142,74 @@ describe('table end concurrency on PostgreSQL', () => {
       ).toHaveLength(1);
     },
   );
+  it('cancels a reservation under the same lock as an invitation acceptance', async () => {
+    const { actor, source } = await setup();
+    const { actor: player } = await setup();
+    await publishTable(db, actor, source.slug);
+    const invitation = await invitePlayer(db, actor, source.slug, player.id);
+    const outcomes = await Promise.allSettled([
+      acceptInvitation(db, player, invitation.invitationId),
+      closeTable(db, actor, source.slug),
+    ]);
+    expect(outcomes[1].status).toBe('fulfilled');
+    expect(await row(source.slug)).toMatchObject({ status: 'disabled' });
+    const [saved] = await db
+      .select()
+      .from(playerInvitations)
+      .where(eq(playerInvitations.id, invitation.invitationId));
+    const seated = await db
+      .select()
+      .from(registrations)
+      .where(eq(registrations.tableId, saved.tableId));
+    expect(saved.status).toBe(outcomes[0].status === 'fulfilled' ? 'accepted' : 'cancelled');
+    expect(seated).toHaveLength(outcomes[0].status === 'fulfilled' ? 1 : 0);
+    const audit = await db.select().from(events).where(eq(events.actorId, actor.id));
+    expect(audit.filter((entry) => entry.type === 'TableDisabled')).toHaveLength(1);
+  });
+  it('locks copied tables before the source deletion FK update in the same order as bulk writers', async () => {
+    const { actor, source } = await setup();
+    const original = await row(source.slug);
+    const suffix = crypto.randomUUID().slice(8);
+    const sourceId = `ffffffff${suffix}`;
+    const childId = `00000000${suffix}`;
+    const sourceSlug = `family-source-${sourceId}`;
+    await db.insert(gameTables).values([
+      { ...original, id: sourceId, slug: sourceSlug },
+      {
+        ...original,
+        id: childId,
+        slug: `family-copy-${childId}`,
+        duplicatedFromTableId: sourceId,
+        startsAt: new Date(original.startsAt.getTime() + 86400000),
+      },
+    ]);
+    let deletion: Promise<{ error: unknown }> | undefined;
+    await db.transaction(async (tx) => {
+      const transaction = tx as unknown as AnyDb;
+      await tx.execute(sql`set local deadlock_timeout = '100ms'`);
+      // Pause a bulk writer after its lowest UUID, before it reaches the source. The deletion
+      // must wait here too, rather than lock the source and then wait on the child's FK update.
+      await lockTableRows(transaction, [childId]);
+      deletion = deleteDraftTable(db, actor, sourceSlug).then(
+        () => ({ error: null }),
+        (error) => ({ error }),
+      );
+      const deadline = Date.now() + 5000;
+      while (true) {
+        const [blocked] = await db.execute(
+          sql`select count(*)::int as waiting from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`,
+        );
+        if (Number(blocked.waiting) > 0) break;
+        if (Date.now() > deadline) throw new Error('deletion never waited for the bulk table lock');
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+      await lockTableRows(transaction, [sourceId]);
+    });
+    expect(await deletion).toEqual({ error: null });
+    expect(await row(sourceSlug)).toBeUndefined();
+    const [child] = await db.select().from(gameTables).where(eq(gameTables.id, childId));
+    expect(child.duplicatedFromTableId).toBeNull();
+  });
   it('closes concurrently once and prevents any new joins afterward', async () => {
     const { actor, source } = await setup();
     const { actor: player } = await setup();

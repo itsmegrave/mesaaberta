@@ -18,7 +18,6 @@
   import { instagramStatus } from '#lib/admin/instagram-status.js';
   import { publishTable } from '#lib/admin/publish-table.js';
   import { INSTAGRAM_FILTERS } from '@mesaaberta/core/admin/table-filters';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
@@ -47,7 +46,7 @@
   let publishing = $state<string | null>(null);
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
   let closing = $state<Row | null>(null);
-  const href = (row: Row) => localizedHref(`/tables/${row.slug}`, locale);
+  const href = (row: Row) => `/t/${row.slug}`;
   async function copyLink(row: Row) {
     try {
       await navigator.clipboard.writeText(new URL(href(row), current.url.origin).href);
@@ -69,7 +68,7 @@
       id: 'history',
       label: m.history_title(),
       icon: 'clock',
-      href: localizedHref(`/admin/tables/${row.id}`, locale),
+      href: `/admin/tables/${row.id}`,
     },
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
     {
@@ -193,9 +192,7 @@
             <a class="block truncate link-underline" href={href(row)}>{row.title}</a>
             <p class="truncate text-muted">
               {row.system} ·
-              <a class="anchor" href={localizedHref(`/admin/users/${row.gmId}`, locale)}
-                >@{row.gm}</a
-              >
+              <a class="anchor" href={`/admin/users/${row.gmId}`}>@{row.gm}</a>
             </p>
           </div>
         </div>

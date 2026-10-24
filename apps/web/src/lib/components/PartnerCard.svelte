@@ -4,9 +4,8 @@
   // that opens in a new tab and says so. The card does not say who sent it: only admins see that.
   import Icon from '#lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import type { Network } from '@mesaaberta/core/profile/social-links';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
   import { toast } from '#lib/toaster.js';
@@ -37,8 +36,6 @@
     onreport?: (partner: Partner) => void;
     onwithdraw?: (partner: Partner) => void;
   } = $props();
-
-  const locale = getLocale();
 
   // The site comes first, with the globe; the networks follow in the order they were sent.
   const icons = $derived([
@@ -82,7 +79,7 @@
             id: 'edit',
             label: m.partner_menu_edit(),
             icon: 'square-pen' as const,
-            href: localizedHref(`/partners/${partner.id}/edit`, locale),
+            href: `/p/${partner.id}/edit`,
           },
           {
             id: 'withdraw',

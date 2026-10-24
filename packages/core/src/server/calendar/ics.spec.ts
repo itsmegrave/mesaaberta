@@ -82,7 +82,7 @@ describe('a REQUEST for a one-shot', () => {
   });
 
   it('links to the table page', () => {
-    expect(named(ics, 'URL')).toEqual(['URL:https://mesaaberta.app/tables/mesa-do-dragao']);
+    expect(named(ics, 'URL')).toEqual(['URL:https://mesaaberta.app/t/mesa-do-dragao']);
   });
 
   it('describes the timezone, so a client that does not know the name still gets the offset', () => {

@@ -30,6 +30,12 @@ export type AnnouncementAudience = (typeof ANNOUNCEMENT_AUDIENCES)[number];
  * email address or a token: it is kept forever as the audit log. Later slices add their events here.
  */
 export type DomainEvent =
+  | { type: 'PlayerInvited'; payload: PlayerInvitationFact }
+  | { type: 'InvitationAccepted'; payload: PlayerInvitationFact }
+  | { type: 'InvitationDeclined'; payload: PlayerInvitationFact }
+  | { type: 'InvitationExpired'; payload: PlayerInvitationFact }
+  | { type: 'InvitationCancelled'; payload: PlayerInvitationFact }
+
   // A table went public: opened directly, or a draft its GM published (`fromDraft`).
   | {
       type: 'TableCreated';
@@ -218,4 +224,12 @@ export type StoredEvent = DomainEvent & {
   actorId: string | null;
   createdAt: Date;
   attempts: number;
+};
+
+export type PlayerInvitationFact = {
+  tableId: string;
+  slug: string;
+  gmId: string;
+  playerId: string;
+  invitationId: string;
 };

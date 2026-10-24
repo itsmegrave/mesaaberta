@@ -54,7 +54,7 @@ export const actions: Actions = {
         await locals.getProfile(),
         params.id,
       );
-      redirect(303, `/messages/${conversationId}`);
+      redirect(303, `/m/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;
       return failFrom(cause);

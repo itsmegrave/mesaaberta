@@ -63,7 +63,7 @@ describe('AccountMenu.svelte', () => {
     await trigger().click();
 
     const link = menu().getByRole('link', { name: 'Mensagens, 3 não lidas' });
-    await expect.element(link).toHaveAttribute('href', '/messages');
+    await expect.element(link).toHaveAttribute('href', '/m');
     await expect.element(page.getByTestId('messages-count')).toHaveTextContent('3');
   });
 

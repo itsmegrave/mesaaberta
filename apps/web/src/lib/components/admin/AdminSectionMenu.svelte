@@ -6,11 +6,8 @@
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { adminGroups, sectionOf } from '#lib/admin/sections.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
-  const locale = getLocale();
   const counts = $derived(
     page.data.adminCounts ?? { reports: 0, queue: 0, connections: 0, events: 0, partners: 0 },
   );
@@ -37,7 +34,7 @@
     {open}
     onOpenChange={(details) => (open = details.open)}
     positioning={{ placement: 'bottom-start', sameWidth: true, offset: { mainAxis: 4 } }}
-    onSelect={({ value }) => void goto(localizedHref(value, locale))}
+    onSelect={({ value }) => void goto(value)}
   >
     <Menu.Trigger
       class="btn flex h-12 w-full items-center justify-between gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold"

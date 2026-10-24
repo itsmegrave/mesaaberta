@@ -4,7 +4,6 @@
   import type { TableStatus } from '#lib/tables/status.js';
   import { formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import ActionForm from './ActionForm.svelte';
@@ -19,6 +18,8 @@
     title: string;
     tableStatus: TableStatus;
     capacity: number;
+    reserved?: number;
+    seatsLeft?: number;
     timezone: string;
     startsAt: Date;
     players: Person[];
@@ -39,8 +40,8 @@
   let endOpen = $state(false);
 
   const locale = getLocale();
-  const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
-  const manage = $derived(localizedHref(`/tables/${item.slug}/manage`, locale));
+  const page = $derived(`/t/${item.slug}`);
+  const manage = $derived(`/t/${item.slug}/manage`);
 </script>
 
 <article
@@ -57,6 +58,16 @@
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >
   </p>
+  {#if item.reserved}
+    <p class="mt-2 text-sm text-muted">
+      {m.invitation_seats({
+        confirmed: item.players.length,
+        reserved: item.reserved,
+        available:
+          item.seatsLeft ?? Math.max(0, item.capacity - item.players.length - item.reserved),
+      })}
+    </p>
+  {/if}
 
   <!-- The date has passed: the GM says whether it happened. Table statuses are only for admin. -->
   {#if item.tableStatus === 'awaiting_confirmation'}
@@ -115,15 +126,15 @@
 
   <p class="mt-4 flex flex-wrap gap-3">
     <a
-      href={localizedHref(`/tables/${item.slug}/manage`, locale)}
+      href={`/t/${item.slug}/manage`}
       class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
     >
     <a
-      href={localizedHref(`/tables/${item.slug}/edit`, locale)}
+      href={`/t/${item.slug}/edit`}
       class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
     >
     <a
-      href={localizedHref(`/tables/new?duplicate=${encodeURIComponent(item.slug)}`, locale)}
+      href={`/t/new?duplicate=${encodeURIComponent(item.slug)}`}
       class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold"
       >{m.table_duplicate()}</a
     >

@@ -4,15 +4,11 @@
   import { pageQuery } from '#lib/query/page.svelte.js';
   import TableCard from '#lib/components/TableCard.svelte';
   import TableIllustration from '#lib/components/TableIllustration.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
   const data = $derived({ ...serverData, ...remote.data });
-
-  const locale = getLocale();
 
   const steps = [
     { title: m.how_step_1_title, text: m.how_step_1_text, colour: 'bg-success-500' },
@@ -99,14 +95,14 @@
     </p>
     <div class="mt-6 flex w-full flex-col gap-2 md:mt-9 md:w-auto md:flex-row md:gap-3">
       <a
-        href={localizedHref('/tables', locale)}
+        href="/t"
         class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
         {@render arrow()}
       </a>
       <a
-        href={localizedHref('/tables/new', locale)}
+        href="/t/new"
         class="btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
         ><Icon name="game-icons:dice-twenty-faces-twenty" size={20} />{m.hero_open_cta()}</a
       >
@@ -127,7 +123,7 @@
     </h2>
     {#if data.tables.length > 0}
       <a
-        href={localizedHref('/tables', locale)}
+        href="/t"
         class="btn hidden h-12 gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold md:inline-flex"
       >
         {m.home_open_tables_all()}
@@ -144,7 +140,7 @@
       {/each}
     </ul>
     <a
-      href={localizedHref('/tables', locale)}
+      href="/t"
       class="mt-4 btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold md:hidden"
     >
       {m.home_open_tables_all()}
@@ -159,7 +155,7 @@
         <p class="mt-2 max-w-xs text-muted">{m.home_open_tables_empty_text()}</p>
       </div>
       <a
-        href={localizedHref('/tables', locale)}
+        href="/t"
         class="mt-5 btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:mt-0"
       >
         {m.home_open_tables_all()}
@@ -227,7 +223,7 @@
     <p class="mt-3 text-base md:mt-4 md:text-lg">{m.players_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
-        href={localizedHref('/tables', locale)}
+        href="/t"
         class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
@@ -319,7 +315,7 @@
     <p class="mt-3 text-base md:mt-4 md:text-lg">{m.gm_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
-        href={localizedHref('/tables/new', locale)}
+        href="/t/new"
         class="btn h-12 w-full gap-2 rounded-lg bg-primary-contrast-500 px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />

@@ -10,15 +10,13 @@ describe('BottomTabBar.svelte', () => {
     render(BottomTabBar);
 
     await expect.element(nav()).toBeVisible();
-    await expect
-      .element(nav().getByRole('link', { name: 'Mesas' }))
-      .toHaveAttribute('href', '/tables');
+    await expect.element(nav().getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
     await expect
       .element(nav().getByRole('link', { name: 'Abrir mesa' }))
-      .toHaveAttribute('href', '/tables/new');
+      .toHaveAttribute('href', '/t/new');
     await expect
       .element(nav().getByRole('link', { name: 'Minhas mesas' }))
-      .toHaveAttribute('href', '/account/tables');
+      .toHaveAttribute('href', '/u/tables');
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
   });
 
@@ -26,7 +24,7 @@ describe('BottomTabBar.svelte', () => {
     render(BottomTabBar);
 
     const tab = nav().getByRole('link', { name: 'Financiamentos coletivos' });
-    await expect.element(tab).toHaveAttribute('href', '/crowdfunding');
+    await expect.element(tab).toHaveAttribute('href', '/cf');
     await expect.element(tab).toHaveTextContent('FCs');
   });
 
@@ -35,7 +33,7 @@ describe('BottomTabBar.svelte', () => {
 
     await expect
       .element(nav().getByRole('link', { name: 'Parceiros' }))
-      .toHaveAttribute('href', '/partners');
+      .toHaveAttribute('href', '/p');
   });
 
   it('leaves the Admin link to the account menu, so five tabs fit the bar', async () => {
@@ -47,10 +45,10 @@ describe('BottomTabBar.svelte', () => {
   it('uses the new game artwork for every mobile tab', async () => {
     render(BottomTabBar);
     const expected = {
-      '/tables': 'game-icons:tavern-sign',
-      '/tables/new': 'game-icons:dice-twenty-faces-twenty',
-      '/account/tables': 'game-icons:tabletop-players',
-      '/partners': 'game-icons:trade',
+      '/t': 'game-icons:tavern-sign',
+      '/t/new': 'game-icons:dice-twenty-faces-twenty',
+      '/u/tables': 'game-icons:tabletop-players',
+      '/p': 'game-icons:trade',
     };
     for (const [href, icon] of Object.entries(expected)) {
       const svg = document.querySelector<SVGSVGElement>(`a[href="${href}"] svg`);

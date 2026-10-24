@@ -37,7 +37,7 @@ const add = async (
     .values({
       category: 'table',
       type: 'table_updated',
-      link: '/tables/mesa',
+      link: '/t/mesa',
       metadata,
       createdAt: t0,
       ...over,
@@ -61,7 +61,7 @@ describe('listNotifications', () => {
     const feed = await listNotifications(test.db, ana);
 
     expect(feed.map((item) => item.type)).toEqual(['join_requested', 'table_updated']);
-    expect(feed[0]).toMatchObject({ actor: 'bia', metadata, link: '/tables/mesa', read: false });
+    expect(feed[0]).toMatchObject({ actor: 'bia', metadata, link: '/t/mesa', read: false });
     expect(feed[1].actor).toBeNull();
   });
 
@@ -87,7 +87,7 @@ describe('reading', () => {
     const theirs = await add({ recipientId: bia });
 
     expect(await unreadCount(test.db, ana)).toBe(2);
-    expect(await markRead(test.db, ana, mine, t0)).toMatchObject({ link: '/tables/mesa' });
+    expect(await markRead(test.db, ana, mine, t0)).toMatchObject({ link: '/t/mesa' });
     expect(await markRead(test.db, ana, theirs, t0)).toBeNull();
 
     expect(await unreadCount(test.db, ana)).toBe(1);

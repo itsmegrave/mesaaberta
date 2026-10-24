@@ -6,8 +6,6 @@
   import { page } from '$app/state';
   import Icon from '#lib/components/Icon.svelte';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '#lib/i18n/locales.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     value,
@@ -28,7 +26,6 @@
     class?: string;
   } = $props();
 
-  const locale = getLocale();
   // What is typed; it follows the address when that changes (back, a cleared filter).
   let text = $derived(value);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -38,10 +35,7 @@
     const typed = next.trim();
     if (typed === value) return;
     void goto(
-      localizedHref(
-        listPath(page.url.pathname, listQuery(page.url.searchParams, { q: typed || null }), hash),
-        locale,
-      ),
+      listPath(page.url.pathname, listQuery(page.url.searchParams, { q: typed || null }), hash),
       { reset: false },
     );
   };

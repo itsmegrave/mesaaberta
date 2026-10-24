@@ -26,10 +26,10 @@ type Action = {
  * and resolved the postal code; this takes the result and runs the same services, from core's
  * `tableWriteActions`. Answers `{ eventIds, slug, draft? }`, or the refusal the service made.
  */
-export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
+export function tableWriteRoutes(open: Open = openDb, tableActionsOnly = false) {
   const app = new Hono<{ Bindings: DatabaseEnv; Variables: UserVariables }>();
 
-  if (duplicationOnly) {
+  if (tableActionsOnly) {
     app.use('/:slug/duplicate', userGuard(open));
     app.use('/:slug/duplication', userGuard(open));
     app.use('/:slug/draft', userGuard(open));
@@ -53,22 +53,21 @@ export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
     }
   };
 
-  for (const [method, path, apply] of [
-    ['delete', '/:slug/draft', deleteDraftTable],
-    ['post', '/:slug/close', closeTable],
-  ] as const) {
-    app[method](path, async (c) => {
-      try {
-        return c.json(await apply(c.get('db'), c.get('actor'), c.req.param('slug')));
-      } catch (cause) {
-        const refused = refusal(c, cause);
-        if (refused) return refused;
-        throw cause;
-      }
-    });
-  }
-
-  if (duplicationOnly) {
+  if (tableActionsOnly) {
+    for (const [method, path, apply] of [
+      ['delete', '/:slug/draft', deleteDraftTable],
+      ['post', '/:slug/close', closeTable],
+    ] as const) {
+      app[method](path, async (c) => {
+        try {
+          return c.json(await apply(c.get('db'), c.get('actor'), c.req.param('slug')));
+        } catch (cause) {
+          const refused = refusal(c, cause);
+          if (refused) return refused;
+          throw cause;
+        }
+      });
+    }
     app.get('/:slug/duplication', async (c) => {
       try {
         return c.json(

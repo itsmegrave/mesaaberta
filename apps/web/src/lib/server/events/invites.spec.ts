@@ -369,7 +369,7 @@ describe('calendar invite handler', () => {
         variables: {
           RECIPIENT_NAME: 'Ana',
           TABLE_TITLE: 'Mesa do Dragão',
-          TABLE_URL: 'https://mesaaberta.app/tables/mesa',
+          TABLE_URL: 'https://mesaaberta.app/t/mesa',
           CONTEXT: 'REQUEST',
           STARTS_AT: startsAt,
           FALLBACK_TEXT: expect.stringContaining('vaga confirmada'),

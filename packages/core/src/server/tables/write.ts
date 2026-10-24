@@ -1,7 +1,7 @@
 import { and, count, eq, like, or, sql } from 'drizzle-orm';
 import { addTableMember } from '../messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { gameTables, registrations, systems } from '@mesaaberta/core/server/db/schema';
+import { gameTables, playerInvitations, systems } from '@mesaaberta/core/server/db/schema';
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { Invalid, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
@@ -14,6 +14,8 @@ import { minutesToHours } from '@mesaaberta/core/tables/format';
 import type { TableInput } from '../../tables/schema';
 import type { TableStatus } from '../../tables/status-values';
 import { formatCep } from '../../location/cep';
+import { seatAvailability } from '../invitations/seats';
+import { cancelPendingInvitations } from '../invitations/service';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
@@ -174,7 +176,19 @@ export async function createTable(
       // back, and the retry writes a fresh pair.
       const saved = await db.transaction(async (tx) => {
         // Inside the transaction: a refused request leaves no suggestion behind either.
-        const system = await systemFor(tx as unknown as AnyDb, input.systemSlug, actor!.id);
+        const [source] = duplicatedFromTableId
+          ? await tx
+              .select({ systemId: gameTables.systemId, systemStatus: systems.status })
+              .from(gameTables)
+              .innerJoin(systems, eq(systems.id, gameTables.systemId))
+              .where(eq(gameTables.id, duplicatedFromTableId))
+          : [];
+        const system = await systemFor(
+          tx as unknown as AnyDb,
+          input.systemSlug,
+          actor!.id,
+          source?.systemStatus === 'pending' ? source.systemId : undefined,
+        );
         const asDraft = draft || system.waiting;
         await enforceRateLimit(
           tx as unknown as AnyDb,
@@ -195,7 +209,10 @@ export async function createTable(
             ...(asDraft ? { status: 'draft' as const } : {}),
           })
           .returning({ id: gameTables.id });
-        await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input, actor!.id));
+        await setTableCatalog(tx as unknown as AnyDb, created.id, {
+          ...catalogPicks(input, actor!.id),
+          inheritedFromTableId: duplicatedFromTableId,
+        });
         await addTableMember(tx as unknown as AnyDb, created.id, actor!.id);
 
         const eventId = await recordEvent(
@@ -224,11 +241,8 @@ export async function createTable(
 
 /** How many players hold a seat: a pending request takes none. */
 async function seatsTakenAt(db: AnyDb, tableId: string) {
-  const [row] = await db
-    .select({ taken: count() })
-    .from(registrations)
-    .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
-  return row.taken;
+  const seats = await seatAvailability(db, tableId, new Date());
+  return seats.confirmed + seats.reserved;
 }
 
 /**
@@ -396,21 +410,33 @@ export async function updateTable(
     .where(eq(systems.id, table.systemId));
   const linked = (await catalogOf(db, [table.id], { withPending: true })).get(table.id)!;
   // Fewer seats than players would leave someone at the table without one: remove players first.
-  if (input.capacity < (await seatsTakenAt(db, table.id))) {
-    throw new Invalid('capacity', 'below_taken');
-  }
+
   // A new image replaces the current one; without one, the GM may take the current one off.
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
-    // The row is locked first, so the status read here is the one this save and a publish at the
-    // same moment both see: a draft cannot go public between the check below and the update.
-    const [locked] = await tx
-      .select({ status: gameTables.status, systemId: gameTables.systemId })
-      .from(gameTables)
-      .where(eq(gameTables.id, table.id))
-      .for('update');
-    await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
+    const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
+    authorizeEdit(actor, locked);
+    if (input.capacity < (await seatsTakenAt(tx as unknown as AnyDb, table.id)))
+      throw new Invalid('capacity', 'below_taken');
+    const consentFields = [
+      'startsAt',
+      'durationMinutes',
+      'timezone',
+      'modality',
+      'locationArea',
+      'joinDetails',
+      'postalCode',
+      'locationNeighbourhood',
+      'locationCity',
+      'locationState',
+    ] as const;
+    if (consentFields.some((field) => !sameValue(locked[field], columns[field])))
+      await cancelPendingInvitations(
+        tx as unknown as AnyDb,
+        eq(playerInvitations.tableId, table.id),
+        'table_changed',
+      );
     // A suggestion is the table's GM's, also when an admin is the one editing.
     const system = await systemFor(
       tx as unknown as AnyDb,
@@ -488,14 +514,10 @@ export async function publishTable(
 
   const eventId = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
-    await guardTableSchedule(tx as unknown as AnyDb, table.id);
-    // Locked and read again inside the transaction: an edit or an admin's decision at the same
-    // moment cannot slip a system nobody approved under a table that is going public.
-    const [locked] = await tx
-      .select({ systemId: gameTables.systemId })
-      .from(gameTables)
-      .where(eq(gameTables.id, table.id))
-      .for('update');
+    const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, undefined, {
+      activating: true,
+    });
+    authorizeEdit(actor, locked);
     const [system] = await tx
       .select({ status: systems.status })
       .from(systems)
@@ -551,6 +573,11 @@ export async function disableTable(
       .set({ status: 'disabled', icalSequence: locked.icalSequence + 1 })
       .where(eq(gameTables.id, table.id));
 
+    await cancelPendingInvitations(
+      tx as unknown as AnyDb,
+      eq(playerInvitations.tableId, table.id),
+      'table_disabled',
+    );
     return recordEvent(tx as unknown as AnyDb, {
       type: 'TableDisabled',
       actorId: actor!.id,

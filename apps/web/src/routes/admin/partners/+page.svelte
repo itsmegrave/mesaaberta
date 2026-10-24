@@ -8,7 +8,6 @@
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import {
     approvePartnerSchema,
     PARTNER_REPORT_REASONS,
@@ -16,7 +15,7 @@
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import {
     PARTNER_ADMIN_STATUSES,
     PARTNER_BACKLINK_FILTERS,
@@ -29,7 +28,6 @@
   let { data }: { data: { partners: AdminPartners & { rows: Row[] } } } = $props();
   const list = $derived(data.partners);
 
-  const locale = getLocale();
   const columns: DataColumn[] = [
     { id: 'partner', header: m.admin_partners_col_partner() },
     { id: 'links', header: m.admin_partners_col_links(), width: 'w-40' },
@@ -101,7 +99,7 @@
       id: 'reports',
       label: m.admin_partners_see_reports(),
       icon: 'flag',
-      href: localizedHref('/admin/reports?target=partner', locale),
+      href: '/admin/reports?target=partner',
     },
     { id: 'copy', label: m.admin_menu_copy_id(), icon: 'copy', onselect: () => void copyId(row) },
     ...(row.removedAt
@@ -243,7 +241,7 @@
         {/if}
       {:else if id === 'sender'}
         {#if row.submitter}
-          <a class="anchor" href={localizedHref(`/u/${row.submitter}`, locale)}>@{row.submitter}</a>
+          <a class="anchor" href={`/u/${row.submitter}`}>@{row.submitter}</a>
         {/if}
         {#if row.contactEmail}
           <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->

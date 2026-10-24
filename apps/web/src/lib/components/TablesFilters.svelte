@@ -9,9 +9,7 @@
   import Icon from '#lib/components/Icon.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Item = { name: string; slug: string };
   type Picks = {
@@ -34,8 +32,6 @@
     count: number;
   } = $props();
 
-  const locale = getLocale();
-
   const query = (next: Picks) => {
     const parts = [
       ...next.systems.map((slug) => `system=${encodeURIComponent(slug)}`),
@@ -46,7 +42,7 @@
     return parts.length > 0 ? `?${parts.join('&')}` : '';
   };
   const apply = (change: Partial<Picks>) =>
-    goto(localizedHref(`/tables${query({ ...picked, ...change })}`, locale), {
+    goto(`/t${query({ ...picked, ...change })}`, {
       reset: false,
     });
 

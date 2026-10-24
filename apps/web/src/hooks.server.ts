@@ -6,6 +6,7 @@ import {
   shouldForceAllFlags,
 } from '@mesaaberta/core/server/flags/flags';
 import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
+import { handleCanonicalRoutes } from '#lib/server/canonical-routes.js';
 import { handleAuth } from '#lib/server/auth/handle-auth.js';
 import { handleSuspended } from '#lib/server/auth/suspended.js';
 import { can } from '@mesaaberta/core/server/auth/policy';
@@ -30,8 +31,7 @@ setTelemetrySink(sentrySink);
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {
-    // `request` is read-only in SvelteKit 3's types; the localized request must still replace it so
-    // the rest of the chain reads the same URL the router matched.
+    // SvelteKit exposes `request` as read-only; retain Paraglide's request context for translations.
     (event as { request: Request }).request = request;
 
     return resolve(event, {
@@ -150,6 +150,7 @@ export const handle: Handle = sequence(
   handleUserTag,
   handleSuspended,
   handleAdminAccess,
+  handleCanonicalRoutes,
   handleParaglide,
   handleFlags,
   // Needs the flags and the signed-in profile, so it comes after both.

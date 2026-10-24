@@ -101,6 +101,8 @@ export async function publicProfile(
       system: table.system,
       gmName: table.gmName,
       seatsLeft: table.seatsLeft,
+      taken: table.taken,
+      reserved: table.reserved,
       capacity: table.capacity,
       timezone: table.timezone,
       startsAt: table.startsAt,

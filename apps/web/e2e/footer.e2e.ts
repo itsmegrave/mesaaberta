@@ -21,9 +21,6 @@ for (const [name, path] of [
       'href',
       'https://feedback.example.test/feedback',
     );
-    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveAttribute(
-      'href',
-      '/partners',
-    );
+    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveAttribute('href', '/p');
   });
 }

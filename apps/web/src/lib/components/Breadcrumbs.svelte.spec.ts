@@ -20,23 +20,23 @@ describe('Breadcrumbs', () => {
   it('links every level above, by its readable name', async () => {
     render(Breadcrumbs, {
       items: [
-        { label: 'Minhas mesas', href: '/account/tables' },
-        { label: 'A Torre das Marés Mortas', href: '/tables/a-torre' },
+        { label: 'Minhas mesas', href: '/u/tables' },
+        { label: 'A Torre das Marés Mortas', href: '/t/a-torre' },
         { label: 'Editar mesa' },
       ],
     });
 
     await expect
       .element(trail().getByRole('link', { name: 'Minhas mesas' }))
-      .toHaveAttribute('href', '/account/tables');
+      .toHaveAttribute('href', '/u/tables');
     await expect
       .element(trail().getByRole('link', { name: 'A Torre das Marés Mortas' }))
-      .toHaveAttribute('href', '/tables/a-torre');
+      .toHaveAttribute('href', '/t/a-torre');
   });
 
   it('marks the current page, which is text and not a link', async () => {
     render(Breadcrumbs, {
-      items: [{ label: 'Minhas mesas', href: '/account/tables' }, { label: 'Abrir mesa' }],
+      items: [{ label: 'Minhas mesas', href: '/u/tables' }, { label: 'Abrir mesa' }],
     });
 
     const current = trail().getByText('Abrir mesa');
@@ -61,7 +61,7 @@ describe('Breadcrumbs', () => {
 
   it('keeps a short trail whole, with no "…" menu', async () => {
     render(Breadcrumbs, {
-      items: [{ label: 'Minhas mesas', href: '/account/tables' }, { label: 'Abrir mesa' }],
+      items: [{ label: 'Minhas mesas', href: '/u/tables' }, { label: 'Abrir mesa' }],
     });
 
     expect(trail().getByRole('button').elements()).toHaveLength(0);
@@ -70,8 +70,8 @@ describe('Breadcrumbs', () => {
   it('folds the middle of a trail over three levels into a menu for phones', async () => {
     render(Breadcrumbs, {
       items: [
-        { label: 'Minhas mesas', href: '/account/tables' },
-        { label: 'A Torre das Marés Mortas', href: '/tables/a-torre' },
+        { label: 'Minhas mesas', href: '/u/tables' },
+        { label: 'A Torre das Marés Mortas', href: '/t/a-torre' },
         { label: 'Editar mesa' },
       ],
     });
@@ -84,8 +84,8 @@ describe('Breadcrumbs', () => {
   it('lists each level once, folded or not, so assistive technology and tests see one trail', async () => {
     render(Breadcrumbs, {
       items: [
-        { label: 'Minhas mesas', href: '/account/tables' },
-        { label: 'A Torre das Marés Mortas', href: '/tables/a-torre' },
+        { label: 'Minhas mesas', href: '/u/tables' },
+        { label: 'A Torre das Marés Mortas', href: '/t/a-torre' },
         { label: 'Editar mesa' },
       ],
     });

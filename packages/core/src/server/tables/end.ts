@@ -1,22 +1,26 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { authorize, type Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { conversations, events, gameTables, registrations } from '../db/schema';
+import { conversations, events, gameTables, registrations, playerInvitations } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
-import { lockTableSchedule } from './schedule-guard';
+import { cancelPendingInvitations } from '../invitations/service';
+import { lockTableFamily, lockTableSchedule } from './schedule-guard';
 
 /** Owner actions: acquire the schedule lock before the table lock, like publish and duplicate. */
-async function lockedOwnedTable(db: AnyDb, actor: Actor | null, slug: string) {
+async function lockedOwnedTable(
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  { family = false }: { family?: boolean } = {},
+) {
   const [found] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
   if (!found) throw new NotFound();
   authorize(actor, 'table:end', found);
   await lockTableSchedule(db, found.gmId);
-  const [table] = await db
-    .select()
-    .from(gameTables)
-    .where(eq(gameTables.id, found.id))
-    .for('update');
+  const table = family
+    ? (await lockTableFamily(db, found.id)).table
+    : (await db.select().from(gameTables).where(eq(gameTables.id, found.id)).for('update'))[0];
   if (!table) throw new NotFound();
   authorize(actor, 'table:end', table);
   return table;
@@ -26,7 +30,7 @@ async function lockedOwnedTable(db: AnyDb, actor: Actor | null, slug: string) {
 export async function deleteDraftTable(db: AnyDb, actor: Actor | null, slug: string) {
   return db.transaction(async (tx) => {
     const transaction = tx as unknown as AnyDb;
-    const table = await lockedOwnedTable(transaction, actor, slug);
+    const table = await lockedOwnedTable(transaction, actor, slug, { family: true });
     if (table.status !== 'draft') throw new Invalid('slug', 'not_a_draft');
     await tx.delete(registrations).where(eq(registrations.tableId, table.id));
     await tx.delete(conversations).where(eq(conversations.tableId, table.id));
@@ -58,7 +62,7 @@ export async function deleteDraftTable(db: AnyDb, actor: Actor | null, slug: str
  * End future participation without deleting session history. TableDisabled is the single outbox
  * cancellation contract: calendar and membership notices are idempotent per event. Keep confirmed
  * registrations as the recipient/history snapshot; pending requests no longer reserve participation.
- * Invitation integration must cancel pending invitations under this same row lock before commit.
+ * Pending invitations are cancelled under the same row lock and their notices dispatch together.
  */
 export async function closeTable(db: AnyDb, actor: Actor | null, slug: string) {
   return db.transaction(async (tx) => {
@@ -76,6 +80,13 @@ export async function closeTable(db: AnyDb, actor: Actor | null, slug: string) {
       .delete(registrations)
       .where(and(eq(registrations.tableId, table.id), eq(registrations.status, 'pending')))
       .returning({ playerId: registrations.playerId });
+    const cancelledEventIds = await cancelPendingInvitations(
+      transaction,
+      eq(playerInvitations.tableId, table.id),
+      'table_disabled',
+      new Date(),
+      actor!.id,
+    );
     const eventId = await recordEvent(transaction, {
       type: 'TableDisabled',
       actorId: actor!.id,
@@ -86,6 +97,6 @@ export async function closeTable(db: AnyDb, actor: Actor | null, slug: string) {
         cancelledRequestPlayerIds: cancelledRequests.map((request) => request.playerId),
       },
     });
-    return { eventIds: [eventId], slug };
+    return { eventIds: [...cancelledEventIds, eventId], slug };
   });
 }

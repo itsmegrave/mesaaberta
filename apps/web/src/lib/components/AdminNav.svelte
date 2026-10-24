@@ -3,9 +3,7 @@
   // counted beside them. Phones have no column: the page head holds the "Seção: …" menu instead.
   import Icon from '#lib/components/Icon.svelte';
   import { adminGroups, sectionOf, type AdminCounts } from '#lib/admin/sections.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     route,
@@ -16,7 +14,6 @@
     counts: AdminCounts;
   } = $props();
 
-  const locale = getLocale();
   const groups = $derived(adminGroups(counts));
   const current = $derived(sectionOf(groups, route));
 </script>
@@ -34,7 +31,7 @@
           {@const here = current?.path === section.path}
           <li class="relative">
             <a
-              href={localizedHref(section.path, locale)}
+              href={section.path}
               aria-current={here ? 'page' : undefined}
               class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold no-underline hover:bg-surface-wash aria-[current=page]:bg-surface-wash"
             >

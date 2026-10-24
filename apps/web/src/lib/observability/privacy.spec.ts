@@ -14,7 +14,7 @@ describe('telemetry privacy boundary', () => {
         email: 'ana@example.com',
         password: '123',
         nested: { authorization: 'Bearer xyz', cookie: 'sid=abc', session_id: 'secret' },
-        route: '/tables/[slug]',
+        route: '/t/[slug]',
         tableId: 'not-an-id',
         code: 'secret with spaces',
       }),
@@ -23,7 +23,7 @@ describe('telemetry privacy boundary', () => {
       status: 503,
       durationMs: 10,
       errorType: 'TypeError',
-      route: '/tables/[slug]',
+      route: '/t/[slug]',
     });
   });
   it('removes request context and exception content while preserving code locations', () => {

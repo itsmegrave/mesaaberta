@@ -17,7 +17,7 @@ async function signInIncomplete(page: Page, user: { email: string }, next = '/')
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Senha').fill(PASSWORD);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page).toHaveURL(/\/onboarding/);
+  await expect(page).toHaveURL(/\/u\/profile\/setup/);
 }
 
 test.describe('an incomplete profile', () => {
@@ -25,8 +25,8 @@ test.describe('an incomplete profile', () => {
     page,
   }) => {
     const user = await createUser('Legado Antigo', { incomplete: true });
-    await signInIncomplete(page, user, '/tables/new');
-    await expect(page).toHaveURL(/\/onboarding\?next=%2Ftables%2Fnew$/);
+    await signInIncomplete(page, user, '/t/new');
+    await expect(page).toHaveURL(/\/u\/profile\/setup\?next=%2Ft%2Fnew$/);
     await expect(page.getByRole('heading', { name: 'Complete seu perfil' })).toBeVisible();
 
     // The name from the account is already there; only the username is missing.
@@ -34,7 +34,7 @@ test.describe('an incomplete profile', () => {
     await page.getByLabel('Nome de usuário').fill(`legado-${unique()}`);
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
-    await expect(page).toHaveURL(/\/tables\/new$/);
+    await expect(page).toHaveURL(/\/t\/new$/);
     await expect(page.getByRole('heading', { name: 'Abrir uma mesa' })).toBeVisible();
   });
 
@@ -42,12 +42,14 @@ test.describe('an incomplete profile', () => {
     const user = await createUser('Sem Nome', { incomplete: true });
     await signInIncomplete(page, user);
 
-    for (const path of ['/tables/new', '/account/tables']) {
+    for (const path of ['/t/new', '/u/tables']) {
       await page.goto(path);
-      await expect(page).toHaveURL(new RegExp(`/onboarding\\?next=${encodeURIComponent(path)}$`));
+      await expect(page).toHaveURL(
+        new RegExp(`/u/profile/setup\\?next=${encodeURIComponent(path)}$`),
+      );
     }
-    await page.goto('/tables');
-    await expect(page).toHaveURL(/\/tables$/);
+    await page.goto('/t');
+    await expect(page).toHaveURL(/\/t$/);
     await page.goto('/');
     await expect(page).toHaveURL(/localhost:\d+\/$/);
   });
@@ -59,7 +61,7 @@ test.describe('an incomplete profile', () => {
     await signOut(page, 'Sem nome');
 
     // Signed out: an authenticated page asks to log in again.
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
     await expect(page).toHaveURL(/\/login/);
   });
 });
@@ -130,7 +132,7 @@ test.describe('the onboarding form', () => {
     // The check is only advice: saving still goes to the server, which decides.
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
     await expect(page.locator('#username-error')).toBeVisible();
-    await expect(page).toHaveURL(/\/onboarding/);
+    await expect(page).toHaveURL(/\/u\/profile\/setup/);
   });
 
   test('explains what is wrong, next to the field, and keeps what was typed', async ({ page }) => {
@@ -152,13 +154,13 @@ test.describe('the onboarding form', () => {
     const done = await createUser('Ja Completo');
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto(`/login?next=${encodeURIComponent('/tables')}`);
+    await page.goto(`/login?next=${encodeURIComponent('/t')}`);
     await page.getByLabel('Email').fill(done.email);
     await page.getByLabel('Senha').fill(PASSWORD);
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-    await expect(page).toHaveURL(/\/tables$/);
-    await page.goto('/onboarding?next=/tables');
-    await expect(page).toHaveURL(/\/tables$/);
+    await expect(page).toHaveURL(/\/t$/);
+    await page.goto('/u/profile/setup?next=/t');
+    await expect(page).toHaveURL(/\/t$/);
     await context.close();
 
     // Without JavaScript the form is a plain POST, so nobody is locked out by the gate.
@@ -168,7 +170,7 @@ test.describe('the onboarding form', () => {
     await plain.getByLabel('Email').fill(legacy.email);
     await plain.getByLabel('Senha').fill(PASSWORD);
     await plain.getByRole('button', { name: 'Entrar', exact: true }).click();
-    await expect(plain).toHaveURL(/\/onboarding/);
+    await expect(plain).toHaveURL(/\/u\/profile\/setup/);
     await plain.getByLabel('Nome de usuário').fill(`semscript-${unique()}`);
     await plain.getByRole('button', { name: 'Salvar e continuar' }).click();
     await expect(plain).toHaveURL(/localhost:\d+\/$/);

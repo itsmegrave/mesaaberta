@@ -12,7 +12,6 @@
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import {
     CROWDFUNDING_REPORT_REASONS,
     removeCrowdfundingSchema,
@@ -60,7 +59,7 @@
       id: 'reports',
       label: m.admin_crowdfunding_see_reports(),
       icon: 'flag',
-      href: localizedHref('/admin/reports', locale),
+      href: '/admin/reports',
     },
     { id: 'copy', label: m.admin_menu_copy_id(), icon: 'copy', onselect: () => void copyId(row) },
     ...(row.removedAt
@@ -149,7 +148,7 @@
         </div>
       {:else if id === 'sender'}
         {#if row.submitter}
-          <a class="anchor" href={localizedHref(`/u/${row.submitter}`, locale)}>@{row.submitter}</a>
+          <a class="anchor" href={`/u/${row.submitter}`}>@{row.submitter}</a>
         {:else}
           <span class="inline-flex items-center gap-1.5 text-muted">
             <Icon name="import" size={18} class="shrink-0" />

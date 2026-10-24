@@ -1,3 +1,5 @@
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
@@ -31,10 +33,10 @@ export async function handlePartnerForm(
   { id }: { id?: string } = {},
 ) {
   if (!(await locals.getUser())) {
-    redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+    redirect(303, `/login?next=${encodeURIComponent(safeNext(url.pathname + url.search))}`);
   }
   if (!(await locals.getProfile())?.username) {
-    redirect(303, `/onboarding?next=${encodeURIComponent(url.pathname + url.search)}`);
+    redirect(303, onboardingUrl(url.pathname + url.search));
   }
 
   const data = await request.formData();
@@ -104,5 +106,5 @@ export async function handlePartnerForm(
     if (error) locals.log.warn('partner logo: could not delete the old file', { error });
   }
 
-  redirect(303, '/partners?enviado=1');
+  redirect(303, '/p?enviado=1');
 }

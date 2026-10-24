@@ -6,14 +6,12 @@
   import Icon from '#lib/components/Icon.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { PARTNER_SORTS, type PartnerFilters } from '@mesaaberta/core/partners/filters';
 
   let { picked }: { picked: Pick<PartnerFilters, 'query' | 'sort'> } = $props();
 
-  const locale = getLocale();
   const query = (next: typeof picked) => {
     const parts = [
       next.query ? `q=${encodeURIComponent(next.query)}` : '',
@@ -22,7 +20,7 @@
     return parts.length > 0 ? `?${parts.join('&')}` : '';
   };
   const apply = (change: Partial<typeof picked>) =>
-    goto(localizedHref(`/partners${query({ ...picked, ...change })}`, locale), {
+    goto(`/p${query({ ...picked, ...change })}`, {
       reset: false,
     });
 

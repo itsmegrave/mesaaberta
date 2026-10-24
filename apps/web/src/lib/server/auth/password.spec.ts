@@ -25,7 +25,7 @@ describe('requestPasswordReset', () => {
     await requestPasswordReset(deps, input);
 
     expect(resetPasswordForEmail).toHaveBeenCalledWith('ana@example.com', {
-      redirectTo: `${origin}/auth/callback?next=%2Freset-password`,
+      redirectTo: `${origin}/auth/callback?next=%2Freset`,
     });
   });
 
