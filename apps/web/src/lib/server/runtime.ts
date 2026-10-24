@@ -30,8 +30,11 @@ export const createHandleRuntime =
 
 export const handleRuntime = createHandleRuntime(hostBindings);
 
+/** Which host this build runs on. */
+export const backend = hostBindings.name;
+
 /** `x-backend` and `Server-Timing` for this host, around everything else. */
-export const handleServerTiming = createHandleServerTiming(hostBindings.name);
+export const handleServerTiming = createHandleServerTiming(backend);
 
 /**
  * Starts error reporting for the request the way this host needs it. On Workers the SDK must be
