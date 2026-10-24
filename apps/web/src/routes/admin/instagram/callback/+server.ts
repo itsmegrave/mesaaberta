@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { instagramAccounts } from '@mesaaberta/core/server/db/schema';
+import { instagramViaApi } from '#lib/server/admin/instagram-api.js';
 import {
   configured,
   encryptToken,
@@ -11,7 +12,8 @@ import {
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, cookies, url }) => {
-  if (!can(await locals.getProfile(), 'admin:access')) error(404);
+  const admin = await locals.getProfile();
+  if (!can(admin, 'admin:access')) error(404);
   const expected = cookies.get('instagram_oauth_state');
   cookies.delete('instagram_oauth_state', { path: '/admin/instagram' });
   const env = locals.env as InstagramEnv | undefined;
@@ -36,10 +38,20 @@ export const GET: RequestHandler = async ({ locals, cookies, url }) => {
       token: await encryptToken(token.access_token, env!.INSTAGRAM_TOKEN_KEY!),
       expiresAt: new Date(Date.now() + token.expires_in * 1000),
     };
-    await locals.db
-      .insert(instagramAccounts)
-      .values(values)
-      .onConflictDoUpdate({ target: instagramAccounts.id, set: values });
+    // Behind `api_admin_instagram` the api Worker saves the account (only the encrypted token goes
+    // over); a call that cannot be made saves it here.
+    const remote = await instagramViaApi(locals, admin!.id, 'connect', {
+      userId: values.userId,
+      username: values.username,
+      token: values.token,
+      expiresAt: values.expiresAt.toISOString(),
+    });
+    if (remote && 'invalid' in remote) throw new Error('Invalid Instagram account');
+    if (!remote)
+      await locals.db
+        .insert(instagramAccounts)
+        .values(values)
+        .onConflictDoUpdate({ target: instagramAccounts.id, set: values });
   } catch {
     // Never log an OAuth error: it may contain the authorization code or exchanged token.
     redirect(303, '/admin/instagram?connection_error=1');
