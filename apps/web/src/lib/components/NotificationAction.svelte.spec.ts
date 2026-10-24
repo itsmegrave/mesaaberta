@@ -17,22 +17,22 @@ const field = (name: string) => formOf().querySelector<HTMLInputElement>(`input[
 
 describe('NotificationAction', () => {
   it('is a plain POST to the feed’s action, so the bell works without JavaScript', async () => {
-    render(NotificationAction, { action: 'read', next: '/tables', children });
+    render(NotificationAction, { action: 'read', next: '/t', children });
 
     expect(formOf().method).toBe('post');
-    expect(formOf().getAttribute('action')).toBe('/notifications?/read');
+    expect(formOf().getAttribute('action')).toBe('/n?/read');
   });
 
   it('carries the notification and where to come back to', async () => {
     const id = '0f8fad5b-d9cb-469f-a165-70867728950e';
-    render(NotificationAction, { action: 'open', id, next: '/tables?page=2', children });
+    render(NotificationAction, { action: 'open', id, next: '/t?page=2', children });
 
     expect(field('id')?.value).toBe(id);
-    expect(field('next')?.value).toBe('/tables?page=2');
+    expect(field('next')?.value).toBe('/t?page=2');
   });
 
   it('sends no id for read all', async () => {
-    render(NotificationAction, { action: 'readAll', next: '/tables', children });
+    render(NotificationAction, { action: 'readAll', next: '/t', children });
 
     expect(field('id')).toBeNull();
   });
@@ -53,27 +53,27 @@ describe('NotificationAction', () => {
           finish = resolve;
         }),
     );
-    render(NotificationAction, { action: 'readAll', next: '/tables', children });
+    render(NotificationAction, { action: 'readAll', next: '/t', children });
     await submit().click();
     await expect.element(submit()).toBeDisabled();
     formOf().requestSubmit();
     expect(postAction).toHaveBeenCalledTimes(1);
     const body = vi.mocked(postAction).mock.calls[0][1];
-    expect(body.get('next')).toBe('/tables');
+    expect(body.get('next')).toBe('/t');
     expect(body.has('id')).toBe(false);
-    finish({ type: 'redirect', status: 303, location: '/tables' });
+    finish({ type: 'redirect', status: 303, location: '/t' });
     await vi.waitFor(() =>
       expect(applyAction).toHaveBeenCalledWith({
         type: 'redirect',
         status: 303,
-        location: '/tables',
+        location: '/t',
       }),
     );
   });
 
   it('shows a transport error without retrying and allows an explicit retry', async () => {
     vi.mocked(postAction).mockRejectedValueOnce(new TypeError('offline'));
-    render(NotificationAction, { action: 'read', next: '/tables', children });
+    render(NotificationAction, { action: 'read', next: '/t', children });
     await submit().click();
     await expect.element(page.getByRole('alert')).toBeVisible();
     await expect.element(submit()).not.toBeDisabled();
@@ -81,7 +81,7 @@ describe('NotificationAction', () => {
     vi.mocked(postAction).mockResolvedValueOnce({
       type: 'redirect',
       status: 303,
-      location: '/tables',
+      location: '/t',
     });
     await submit().click();
     await vi.waitFor(() => expect(applyAction).toHaveBeenCalledTimes(1));

@@ -42,6 +42,16 @@ export function notificationText(item: Shown): string {
       return m.notification_session_reminder({ table });
     case 'session_confirmation':
       return m.notification_session_confirmation({ table });
+    case 'player_invited':
+      return m.notification_player_invited({ player, table });
+    case 'invitation_accepted':
+      return m.notification_invitation_accepted({ player, table });
+    case 'invitation_declined':
+      return m.notification_invitation_declined({ player, table });
+    case 'invitation_expired':
+      return m.notification_invitation_expired({ table });
+    case 'invitation_cancelled':
+      return m.notification_invitation_cancelled({ table });
     case 'join_requested':
       return m.notification_join_requested({ player, table });
     case 'join_approved':

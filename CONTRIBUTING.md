@@ -65,8 +65,10 @@ The site is written in Brazilian Portuguese (`pt-BR`, the base language), and on
 3. Run `bun run test`. A test fails if your file is missing a key or changes a placeholder.
 4. There is no language switch yet, because only one language is served. It ships with the second language (see #31).
 
-A new language is served under its own prefix (`/en`), and pt-BR stays at `/`. Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are.
+Languages share the same stable URLs. Paraglide selects translated text from the language preference cookie and base locale; never add locale prefixes to resource paths. Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are.
 
 ## Internal links
 
-Link to pages with `localizedHref(path, getLocale())` from `#lib/i18n/locales.ts`, so a reader in English stays in English.
+Use plain canonical paths for internal links: `/t` (tables), `/p` (partners), `/cf` (crowdfunding), `/m` (messages), `/n` (notifications), `/u/tables` (dashboard), and `/u/profile/edit` (account settings). Public profiles remain `/u/:username`. Private export and provider linking use `/u/profile/export` and `/u/profile/connect/:provider`, within the already reserved `profile` namespace. Account onboarding is `/u/profile/setup`; password recovery uses `/forgot` and `/reset`.
+
+`@mesaaberta/core/routes` centralizes legacy aliases and shared outbound URL builders (e-mail, calendar and notifications). Ordinary links do not need a locale or routing wrapper. Legacy GET/HEAD URLs redirect permanently with their search parameters; legacy mutations reroute to the same canonical action, preserving the method and body. Keep API, admin, authentication callback and internal probe paths compatible. Reserve new static `/u` namespaces in `profile/username.ts` before adding them, and put authentication checks on private leaves rather than on all `/u` routes.

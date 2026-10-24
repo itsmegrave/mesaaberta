@@ -10,7 +10,6 @@
   import UserLink from '#lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { REPORT_FILTERS, type ReportFilter } from '@mesaaberta/core/admin/report-filters';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { reasonLabel } from '#lib/moderation/labels.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AdminReports } from '@mesaaberta/core/server/moderation/admin';
@@ -54,7 +53,7 @@
           : row.player
             ? atHandle(row.player)
             : m.admin_profile_no_username();
-  const href = (row: Report) => localizedHref(`/admin/reports/${row.id}`, locale);
+  const href = (row: Report) => `/admin/reports/${row.id}`;
   const badge = (row: Report) => `report:${row.status}` as Status;
   const menuOf = (row: Report): KebabItem[] => [
     { id: 'open', label: m.admin_reports_open(), icon: 'eye', href: href(row) },

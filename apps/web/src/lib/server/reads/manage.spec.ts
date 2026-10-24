@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { loadManage } from '@mesaaberta/core/server/tables/manage';
 import { read } from './manage';
 
+vi.mock('#lib/server/invitations/api.js', () => ({
+  listTableInvitations: vi.fn(async () => []),
+}));
 vi.mock('@mesaaberta/core/server/tables/manage', () => ({ loadManage: vi.fn() }));
 
 const event = {
@@ -13,7 +16,7 @@ const event = {
     getUser: async () => ({ id: 'gm' }),
     getProfile: async () => ({ id: 'gm', username: 'gm', role: 'user', status: 'active' }),
   },
-  url: new URL('https://x.test/tables/mesa/manage'),
+  url: new URL('https://x.test/t/mesa/manage'),
   params: { slug: 'mesa' },
 } as unknown as RequestEvent;
 
@@ -30,6 +33,29 @@ const manageOf = (status: string) =>
   }) as never;
 
 describe('the manage read', () => {
+  it('offers ending only to the owner, including when another administrator can manage seats', async () => {
+    vi.mocked(loadManage).mockResolvedValue(manageOf('active'));
+    const owner = await read(event);
+    expect(owner.canEnd).toBe(true);
+    expect(owner.canInvite).toBe(true);
+    const admin = {
+      ...event,
+      locals: {
+        ...event.locals,
+        getProfile: async () => ({
+          id: 'another',
+          username: 'admin',
+          role: 'admin',
+          status: 'active',
+        }),
+      },
+    } as unknown as RequestEvent;
+    const managedByAdmin = await read(admin);
+    expect(managedByAdmin.canEnd).toBe(false);
+    expect(managedByAdmin.canInvite).toBe(false);
+    expect(managedByAdmin.invitations).toEqual([]);
+  });
+
   it('offers the edit form while the table can still change', async () => {
     vi.mocked(loadManage).mockResolvedValue(manageOf('active'));
     expect((await read(event)).canEdit).toBe(true);

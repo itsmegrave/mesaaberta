@@ -138,7 +138,7 @@ describe('table chat', () => {
     await sendMessage(test.db, gm, conversation.id, 'sábado às 20h');
 
     const [item] = await bell(ana, conversation.id);
-    expect(item.link).toBe(`/messages/${conversation.id}`);
+    expect(item.link).toBe(`/m/${conversation.id}`);
     expect((item.metadata as { count: number }).count).toBe(2);
     expect(await bell(gm, conversation.id)).toHaveLength(0); // never for the sender
   });

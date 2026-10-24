@@ -1,3 +1,5 @@
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 import { fail, redirect } from '@sveltejs/kit';
 import { crowdfundingFormSchema } from '@mesaaberta/core/crowdfunding/schema';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
@@ -41,10 +43,10 @@ type Event = {
  */
 export async function handleCrowdfundingForm({ request, locals, url, setHeaders }: Event) {
   if (!(await locals.getUser())) {
-    redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+    redirect(303, `/login?next=${encodeURIComponent(safeNext(url.pathname + url.search))}`);
   }
   if (!(await locals.getProfile())?.username) {
-    redirect(303, `/onboarding?next=${encodeURIComponent(url.pathname + url.search)}`);
+    redirect(303, onboardingUrl(url.pathname + url.search));
   }
 
   const data = await request.formData();
@@ -114,5 +116,5 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     throw error;
   }
 
-  redirect(303, '/crowdfunding');
+  redirect(303, '/cf');
 }

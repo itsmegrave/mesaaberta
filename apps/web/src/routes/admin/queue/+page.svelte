@@ -3,7 +3,6 @@
   import UserText from '#lib/components/UserText.svelte';
   import CatalogApprove from '#lib/components/admin/CatalogApprove.svelte';
   import CatalogDialog from '#lib/components/admin/CatalogDialog.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -76,9 +75,10 @@
                 {#if entry.tables.length > 0}
                   <span class="font-semibold">{m.admin_queue_used_in()}:</span>
                   {#each entry.tables as table, index (table.slug)}
-                    <a href={localizedHref(`/tables/${table.slug}`, locale)} class="link-underline"
-                      >{table.title}</a
-                    >{index < entry.tables.length - 1 ? ', ' : ''}
+                    <a href={`/t/${table.slug}`} class="link-underline">{table.title}</a>{index <
+                    entry.tables.length - 1
+                      ? ', '
+                      : ''}
                   {/each}
                 {:else}
                   <span class="text-muted">{m.admin_queue_unused()}</span>
@@ -152,8 +152,7 @@
         <h2 id="decisions-title" class="text-lg font-semibold">{m.admin_queue_decisions()}</h2>
         <a
           class="inline-flex min-h-11 items-center anchor text-sm font-semibold"
-          href={localizedHref('/admin/audit?kind=catalog', locale)}
-          >{m.admin_queue_decisions_all()}</a
+          href="/admin/audit?kind=catalog">{m.admin_queue_decisions_all()}</a
         >
       </div>
       {#if data.decisions.length === 0}

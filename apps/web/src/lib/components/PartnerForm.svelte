@@ -18,9 +18,8 @@
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { page as appPage } from '$app/state';
 
   // The address a partner puts on their site, bio or Discord: the "troca de links" (link exchange).
@@ -62,7 +61,6 @@
     logoUrl?: string | null;
   } = $props();
 
-  const locale = getLocale();
   const editing = $derived(mode === 'edit');
 
   // svelte-ignore state_referenced_locally
@@ -521,9 +519,7 @@
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
         >{editing ? m.partner_form_submit_edit() : m.partner_form_submit()}</SubmitButton
       >
-      <a href={localizedHref('/partners', locale)} class="link-underline font-semibold text-link"
-        >{m.form_cancel()}</a
-      >
+      <a href="/p" class="link-underline font-semibold text-link">{m.form_cancel()}</a>
     </div>
     <p class="text-sm text-muted">{m.partner_form_review_note()}</p>
   </div>

@@ -1,4 +1,5 @@
 import type { Reroute } from '@sveltejs/kit/hooks';
-import { deLocalizeUrl } from '#lib/paraglide/runtime.js';
+import { canonicalPath } from '@mesaaberta/core/routes';
 
-export const reroute: Reroute = (request) => deLocalizeUrl(request.url).pathname;
+// A legacy POST reaches the canonical action directly, with its original body and method.
+export const reroute: Reroute = ({ url }) => canonicalPath(url.pathname);

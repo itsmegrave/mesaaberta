@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { User } from '@supabase/supabase-js';
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { needsOnboarding, onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 
 /**
@@ -14,7 +15,7 @@ export async function requireUser(
   url: URL,
   { allowIncomplete = false }: { allowIncomplete?: boolean } = {},
 ): Promise<User> {
-  const here = url.pathname + url.search;
+  const here = safeNext(url.pathname + url.search);
 
   const user = await locals.getUser();
   if (!user) redirect(303, `/login?next=${encodeURIComponent(here)}`);

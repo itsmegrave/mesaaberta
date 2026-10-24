@@ -65,3 +65,15 @@ New table-duplication endpoints are API-owned and do not use the legacy migratio
 - `POST /v1/tables/:slug/duplicate`: create a separate empty table at a non-overlapping time, with an optional submission UUID for idempotency.
 
 The web app requires its API Service Binding, or the existing private `API_URL` / `API_INTERNAL_TOKEN` transport. It returns a service error when that transport is unavailable; it does not duplicate records locally. The Playwright setup starts a private local API alongside the web app. `E2E_DB_URL` can point both services at an isolated migrated test database.
+
+## Player invitations
+
+New invitation routes are API-owned, without a migration flag or web database fallback:
+
+- `GET /v1/account/invitations`, `GET /v1/invitations/:id`: the actor's private received invitations and consent page data.
+- `GET /v1/tables/:slug/invitations`: a GM's sent invitations; `GET /v1/tables/:slug/my-invitation`: the actor's own pending invitation.
+- `POST /v1/tables/:slug/invitations`: reserve a seat and invite an existing player.
+- `POST /v1/invitations/:id/accept`, `/decline`, `/cancel`: authenticated explicit decisions; GET never changes membership.
+- `GET|POST /v1/account/invitation-preferences`, `POST /v1/account/invitation-blocks`: receiving preferences and GM-specific blocking.
+
+New calls require the API Service Binding or private `API_URL` / `API_INTERNAL_TOKEN` transport. Pending reservations expire after 48 hours or at the session start, whichever occurs first. The worker materializes expirations; capacity queries honor the deadline without waiting for it. The new optional hosted e-mail template is `RESEND_TEMPLATE_PLAYER_INVITATION`; its plain-text fallback is available without template configuration. The existing template script provisions it when explicitly run for a deployment.

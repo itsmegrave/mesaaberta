@@ -12,7 +12,7 @@
   }: {
     page: number;
     pages: number;
-    /** The address of a page, already localized, keeping the list's filters. */
+    /** The address of a page, already canonical, keeping the list's filters. */
     href: (page: number) => string;
   } = $props();
 
@@ -21,7 +21,7 @@
     'inline-flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums no-underline';
 </script>
 
-<!-- eslint-disable svelte/no-navigation-without-resolve -- the hrefs arrive already localized -->
+<!-- eslint-disable svelte/no-navigation-without-resolve -- the hrefs arrive already canonical -->
 {#if pages > 1}
   <nav aria-label={m.admin_pagination()} class="flex flex-wrap items-center gap-1">
     {#if page > 1}

@@ -1,6 +1,5 @@
 <script lang="ts">
   import LegalPage from '#lib/components/LegalPage.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { page } from '$app/state';
   import { updated } from '#lib/legal.js';
 
@@ -10,9 +9,6 @@
     email: page.data.site?.PRIVACY_EMAIL ?? '',
   });
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
-
-  const locale = getLocale();
 </script>
 
 <svelte:head>
@@ -24,7 +20,7 @@
   <p>
     Estes termos valem para quem usa a Mesa Aberta, a plataforma em que mestres abrem mesas de RPG e
     jogadores pegam as vagas. Ao criar uma conta ou entrar nela, você concorda com eles e com a
-    <a href={localizedHref('/privacy', locale)}>Política de privacidade</a>.
+    <a href="/privacy">Política de privacidade</a>.
   </p>
 
   <h2>O serviço</h2>
@@ -92,8 +88,8 @@
   <h2>Encerrar a conta</h2>
   <p>
     Você pode apagar a sua conta a qualquer momento, na
-    <a href={localizedHref('/account/profile', locale)}>página do seu perfil</a>. O que acontece com
-    os seus dados está na <a href={localizedHref('/privacy', locale)}>Política de privacidade</a>.
+    <a href="/u/profile/edit">página do seu perfil</a>. O que acontece com os seus dados está na
+    <a href="/privacy">Política de privacidade</a>.
   </p>
 
   <h2>Responsabilidade</h2>

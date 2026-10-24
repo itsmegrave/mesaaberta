@@ -18,14 +18,14 @@ describe('ProviderButtons', () => {
   });
 
   it("starts the login at the provider's own route, carrying where to go afterwards", async () => {
-    render(ProviderButtons, { next: '/tables/new' });
+    render(ProviderButtons, { next: '/t/new' });
 
     await expect
       .element(page.getByRole('link', { name: 'Continuar com Google' }))
-      .toHaveAttribute('href', '/login/google?next=%2Ftables%2Fnew');
+      .toHaveAttribute('href', '/login/google?next=%2Ft%2Fnew');
     await expect
       .element(page.getByRole('link', { name: 'Continuar com Discord' }))
-      .toHaveAttribute('href', '/login/discord?next=%2Ftables%2Fnew');
+      .toHaveAttribute('href', '/login/discord?next=%2Ft%2Fnew');
   });
 
   it("shows each provider's mark, hidden from screen readers since the button already says the name", async () => {

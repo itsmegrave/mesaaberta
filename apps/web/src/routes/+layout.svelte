@@ -25,9 +25,8 @@
   import Toaster from '#lib/components/Toaster.svelte';
   import UnsavedChangesDialog from '#lib/components/UnsavedChangesDialog.svelte';
   import { Progress } from '@skeletonlabs/skeleton-svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
   import { onMount } from 'svelte';
@@ -75,14 +74,12 @@
     if (syncBrowserTimezone(data.viewer)) refreshAll();
   });
 
-  const locale = getLocale();
-
   // Loading shows only after 150 ms, so a quick navigation does not flash the bar or a skeleton.
   const loading = new Slow(() => navigating.to, 150);
   const SKELETONS: Record<string, SkeletonKind> = {
-    '/tables': 'cards',
-    '/account/tables': 'columns',
-    '/notifications': 'rows',
+    '/t': 'cards',
+    '/u/tables': 'columns',
+    '/n': 'rows',
   };
   // A list page on its way from another page: its skeleton stands in for the page being left. Within
   // the same page (a filter), the page draws its own skeleton under the filters.
@@ -142,7 +139,7 @@
           ? 'md:h-20 md:px-8'
           : 'md:hidden'}"
       >
-        <a href={localizedHref('/', locale)} class="flex items-center gap-2 no-underline md:gap-3">
+        <a href="/" class="flex items-center gap-2 no-underline md:gap-3">
           <TableLogo size={34} class="size-7 md:size-8" />
           <span class="font-brand text-lg font-semibold tracking-wider md:text-2xl">
             Mesa Aberta
@@ -206,7 +203,7 @@
 
       <Toaster />
       <UnsavedChangesDialog />
-      {#if data.account && !data.maintenance && !page.url.pathname.startsWith('/messages')}
+      {#if data.account && !data.maintenance && !(page.url.pathname === '/m' || page.url.pathname.startsWith('/m/'))}
         {#key data.cacheIdentity}<ChatDrawer
             viewerId={data.cacheIdentity ?? 'anonymous'}
             unread={badges.data?.messages ?? data.account.messagesUnread}
@@ -290,9 +287,8 @@
                 >.
               </p>
               <p>
-                <a
-                  href={localizedHref('/partners', getLocale())}
-                  class="link-underline text-surface-950-50">{m.footer_partners_link()}</a
+                <a href="/p" class="link-underline text-surface-950-50"
+                  >{m.footer_partners_link()}</a
                 >
               </p>
             </div>

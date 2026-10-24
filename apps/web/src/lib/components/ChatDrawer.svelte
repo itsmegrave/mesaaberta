@@ -8,8 +8,7 @@
   import Icon from './Icon.svelte';
   import { apiRead } from '#lib/api/http.js';
   import { queryClient } from '#lib/query/context.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { m } from '#lib/paraglide/messages.js';
   import type { ChatThreadData } from '#lib/server/messages/thread.js';
   let { viewerId, unread = 0 }: { viewerId: string; unread?: number } = $props();
@@ -28,7 +27,6 @@
   let tab = $state<Kind>('direct');
   let unreadByKind = $state<{ direct: number; table: number } | null>(null);
   const client = queryClient();
-  const locale = getLocale();
   const inbox = createQuery(
     () => ({
       queryKey: ['messages-inbox', viewerId, tab, inboxPage],
@@ -116,7 +114,7 @@
                 >{m.messages_title()}</Dialog.Title
               >
               <a
-                href={localizedHref(selected ? `/messages/${selected}` : '/messages', locale)}
+                href={selected ? `/m/${selected}` : '/m'}
                 class="btn h-12 shrink-0 rounded-lg px-3 text-sm hover:preset-tonal"
                 aria-label={m.messages_full_page()}
                 ><Icon name="external-link" size={20} /><span class="sr-only"

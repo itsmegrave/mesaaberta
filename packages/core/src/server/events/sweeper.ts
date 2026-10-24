@@ -1,3 +1,4 @@
+import { expireInvitations } from '../invitations/service';
 import { socialFor, type SocialEnv } from '../social';
 import type { InstagramEnv } from '../instagram/api';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
@@ -43,6 +44,7 @@ export async function runSweeper(
   try {
     const now = new Date();
     // First, so the GM's question goes out in this very run: its events are due at once.
+    await expireInvitations(db, { now });
     const closed = await closeElapsedTables(db, now);
     if (closed.length > 0) log.info('tables awaiting confirmation', { closed: closed.length });
     // Temporary bans whose time is up; their events go out in this run too.

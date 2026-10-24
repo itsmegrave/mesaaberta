@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { listTableInvitations } from '#lib/server/invitations/api.js';
 import { readManage } from '@mesaaberta/core/server/reads/manage';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readViaApi } from '../api-read';
@@ -50,6 +51,9 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     return {
       ...manage,
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },
+      invitations: manage.canInvite
+        ? await listTableInvitations(locals, profile, params.slug!)
+        : [],
       gm: withPicture(manage.gm),
       requests: manage.requests.map(withPicture),
       players: manage.players.map(withPicture),

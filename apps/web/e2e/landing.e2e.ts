@@ -25,13 +25,10 @@ test('offers paths to browse or open a table before showing open tables', async 
   await page.goto('/');
 
   const hero = page.getByRole('heading', { level: 1 }).locator('..').locator('..');
-  await expect(hero.getByRole('link', { name: 'Ver mesas abertas' })).toHaveAttribute(
-    'href',
-    '/tables',
-  );
+  await expect(hero.getByRole('link', { name: 'Ver mesas abertas' })).toHaveAttribute('href', '/t');
   await expect(hero.getByRole('link', { name: 'Abrir uma mesa' })).toHaveAttribute(
     'href',
-    '/tables/new',
+    '/t/new',
   );
 
   await expect(page.locator('section[aria-labelledby="open-tables"]')).toBeVisible();

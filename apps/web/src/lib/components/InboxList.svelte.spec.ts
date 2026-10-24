@@ -44,6 +44,6 @@ describe('inbox profile links', () => {
       .toHaveAttribute('href', '/u/ana');
     await expect
       .element(page.getByRole('link', { name: 'Aventura @ana: Olá!', exact: true }))
-      .toHaveAttribute('href', '/messages/chat-ana');
+      .toHaveAttribute('href', '/m/chat-ana');
   });
 });

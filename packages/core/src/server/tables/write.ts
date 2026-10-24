@@ -1,7 +1,7 @@
 import { and, count, eq, like, or, sql } from 'drizzle-orm';
 import { addTableMember } from '../messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { gameTables, registrations, systems } from '@mesaaberta/core/server/db/schema';
+import { gameTables, playerInvitations, systems } from '@mesaaberta/core/server/db/schema';
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { Invalid, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
@@ -14,6 +14,8 @@ import { minutesToHours } from '@mesaaberta/core/tables/format';
 import type { TableInput } from '../../tables/schema';
 import type { TableStatus } from '../../tables/status-values';
 import { formatCep } from '../../location/cep';
+import { seatAvailability } from '../invitations/seats';
+import { cancelPendingInvitations } from '../invitations/service';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
@@ -239,11 +241,8 @@ export async function createTable(
 
 /** How many players hold a seat: a pending request takes none. */
 async function seatsTakenAt(db: AnyDb, tableId: string) {
-  const [row] = await db
-    .select({ taken: count() })
-    .from(registrations)
-    .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
-  return row.taken;
+  const seats = await seatAvailability(db, tableId, new Date());
+  return seats.confirmed + seats.reserved;
 }
 
 /**
@@ -411,15 +410,33 @@ export async function updateTable(
     .where(eq(systems.id, table.systemId));
   const linked = (await catalogOf(db, [table.id], { withPending: true })).get(table.id)!;
   // Fewer seats than players would leave someone at the table without one: remove players first.
-  if (input.capacity < (await seatsTakenAt(db, table.id))) {
-    throw new Invalid('capacity', 'below_taken');
-  }
+
   // A new image replaces the current one; without one, the GM may take the current one off.
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
     const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     authorizeEdit(actor, locked);
+    if (input.capacity < (await seatsTakenAt(tx as unknown as AnyDb, table.id)))
+      throw new Invalid('capacity', 'below_taken');
+    const consentFields = [
+      'startsAt',
+      'durationMinutes',
+      'timezone',
+      'modality',
+      'locationArea',
+      'joinDetails',
+      'postalCode',
+      'locationNeighbourhood',
+      'locationCity',
+      'locationState',
+    ] as const;
+    if (consentFields.some((field) => !sameValue(locked[field], columns[field])))
+      await cancelPendingInvitations(
+        tx as unknown as AnyDb,
+        eq(playerInvitations.tableId, table.id),
+        'table_changed',
+      );
     // A suggestion is the table's GM's, also when an admin is the one editing.
     const system = await systemFor(
       tx as unknown as AnyDb,
@@ -541,19 +558,34 @@ export async function disableTable(
   authorize(actor, 'table:disable', { gmId: table.gmId, tableStatus: table.status });
 
   const eventId = await db.transaction(async (tx) => {
+    // A request from an older web client may still use this adapter. Serialize with permanent
+    // draft deletion too, so it cannot recreate a title-bearing audit after the draft was erased.
+    await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
+    const [locked] = await tx
+      .select()
+      .from(gameTables)
+      .where(eq(gameTables.id, table.id))
+      .for('update');
+    if (!locked) throw new NotFound();
+    authorize(actor, 'table:disable', { gmId: locked.gmId, tableStatus: locked.status });
     await tx
       .update(gameTables)
-      .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
+      .set({ status: 'disabled', icalSequence: locked.icalSequence + 1 })
       .where(eq(gameTables.id, table.id));
 
+    await cancelPendingInvitations(
+      tx as unknown as AnyDb,
+      eq(playerInvitations.tableId, table.id),
+      'table_disabled',
+    );
     return recordEvent(tx as unknown as AnyDb, {
       type: 'TableDisabled',
       actorId: actor!.id,
       payload: {
         tableId: table.id,
         slug: table.slug,
-        title: table.title,
-        ...(table.status === 'draft' ? { draft: true as const } : {}),
+        title: locked.title,
+        ...(locked.status === 'draft' ? { draft: true as const } : {}),
       },
     });
   });

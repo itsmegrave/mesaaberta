@@ -70,7 +70,7 @@ describe('request event tracking', () => {
 });
 
 describe('sourceChannel', () => {
-  const url = new URL('https://mesaaberta.app/tables');
+  const url = new URL('https://mesaaberta.app/t');
   it('tells direct, internal and external arrivals apart from the Referer alone', () => {
     expect(sourceChannel(null, url)).toBe('direct');
     expect(sourceChannel('https://mesaaberta.app/', url)).toBe('internal_link');

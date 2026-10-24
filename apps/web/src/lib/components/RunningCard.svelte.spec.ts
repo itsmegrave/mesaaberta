@@ -18,7 +18,7 @@ const base = {
   players: [person(1, 'Ana'), person(2, 'Bruno')],
   requests: [person(3, 'Caio')],
 };
-const props = (over = {}) => ({ item: { ...base, ...over }, next: '/account/tables' });
+const props = (over = {}) => ({ item: { ...base, ...over }, next: '/u/tables' });
 
 describe('RunningCard', () => {
   beforeEach(async () => {
@@ -32,7 +32,7 @@ describe('RunningCard', () => {
     await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Editar mesa' }))
-      .toHaveAttribute('href', '/tables/cronicas/edit');
+      .toHaveAttribute('href', '/t/cronicas/edit');
   });
 
   it('lists the players, each with a remove button that posts to the table and returns here', async () => {
@@ -41,11 +41,11 @@ describe('RunningCard', () => {
     await expect.element(page.getByText('@Ana')).toBeVisible();
     const form = page.getByRole('button', { name: 'Remover' }).first().element().closest('form')!;
 
-    expect(form.getAttribute('action')).toBe('/tables/cronicas?/remove');
+    expect(form.getAttribute('action')).toBe('/t/cronicas?/remove');
     expect(form.querySelector<HTMLInputElement>('input[name=playerId]')?.value).toBe(
       base.players[0].playerId,
     );
-    expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/account/tables');
+    expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/u/tables');
   });
 
   it('shows the queue of pending requests, with approve and decline for each', async () => {
@@ -56,8 +56,8 @@ describe('RunningCard', () => {
     const approve = page.getByRole('button', { name: 'Aprovar' }).element().closest('form')!;
     const decline = page.getByRole('button', { name: 'Recusar' }).element().closest('form')!;
 
-    expect(approve.getAttribute('action')).toBe('/tables/cronicas?/approve');
-    expect(decline.getAttribute('action')).toBe('/tables/cronicas?/decline');
+    expect(approve.getAttribute('action')).toBe('/t/cronicas?/approve');
+    expect(decline.getAttribute('action')).toBe('/t/cronicas?/decline');
     expect(approve.querySelector<HTMLInputElement>('input[name=playerId]')?.value).toBe(
       base.requests[0].playerId,
     );

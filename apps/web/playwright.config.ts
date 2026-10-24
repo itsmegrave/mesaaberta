@@ -58,7 +58,10 @@ export default defineConfig({
     {
       // The built app on the Workers runtime, pointed at the local Supabase instead of production.
       command: [
-        `CSP_EXTRA_IMG_SRC=${supabase.API_URL} bun run build &&`,
+        // Only local validation may reuse an explicitly prepared build; CI always builds here.
+        ...(process.env.E2E_PREBUILT === 'true'
+          ? []
+          : [`CSP_EXTRA_IMG_SRC=${supabase.API_URL} bun run build &&`]),
         `bun run wrangler dev apps/web/.svelte-kit/cloudflare/_worker.js --port ${port}`,
         ...serverVars,
       ].join(' '),

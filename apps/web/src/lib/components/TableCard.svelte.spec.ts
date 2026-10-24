@@ -21,7 +21,7 @@ describe('TableCard', () => {
 
     await expect
       .element(page.getByRole('link', { name: 'Mesa do Dragão' }))
-      .toHaveAttribute('href', '/tables/mesa-do-dragao');
+      .toHaveAttribute('href', '/t/mesa-do-dragao');
   });
 
   it("shows the system, the kind, the GM and the next session in the table's timezone", async () => {
@@ -120,4 +120,14 @@ describe('TableCard', () => {
       .toBeVisible();
     expect(document.querySelectorAll('img')).toHaveLength(0);
   });
+});
+
+it('distinguishes confirmed players from reserved invitations in the public seat count', async () => {
+  render(TableCard, { table: { ...base, seatsLeft: 0, taken: 2, reserved: 3 } });
+  await expect
+    .element(page.getByText('2 confirmados · 3 reservadas · 0 disponíveis'))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole('img', { name: '2 confirmados · 3 reservadas · 0 disponíveis' }))
+    .toBeVisible();
 });

@@ -1,3 +1,4 @@
+import { routes } from '../../routes';
 import { and, eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, notifications, registrations } from '../db/schema';
@@ -38,7 +39,7 @@ async function confirmedPlayers(db: AnyDb, tableId: string): Promise<string[]> {
 
 /** Who hears about an event, and what they are told. Links are unlocalized paths. */
 async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promise<Notice> {
-  const page = `/tables/${event.payload.slug}`;
+  const page = routes.table(event.payload.slug);
   const manage = `${page}/manage`;
   switch (event.type) {
     case 'TableUpdated':
@@ -50,7 +51,12 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
     case 'TableDisabled':
       // The table is off the public pages, so there is nothing to link to.
       return {
-        to: await confirmedPlayers(db, event.payload.tableId),
+        to: [
+          ...new Set([
+            ...(await confirmedPlayers(db, event.payload.tableId)),
+            ...(event.payload.cancelledRequestPlayerIds ?? []),
+          ]),
+        ],
         type: 'table_cancelled',
         link: null,
       };
@@ -69,10 +75,10 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
     case 'JoinApproved':
       return { to: [event.payload.playerId], type: 'join_approved', link: page };
     case 'JoinDeclined':
-      return { to: [event.payload.playerId], type: 'join_declined', link: '/tables' };
+      return { to: [event.payload.playerId], type: 'join_declined', link: routes.tables };
     case 'PlayerLeft':
       return event.payload.reason === 'removed'
-        ? { to: [event.payload.playerId], type: 'player_removed', link: '/tables' }
+        ? { to: [event.payload.playerId], type: 'player_removed', link: routes.tables }
         : { to: [gmId], type: 'player_left', link: manage };
     case 'RatingSubmitted':
       return { to: [gmId], type: 'rating_received', link: page };
@@ -101,10 +107,28 @@ export const notificationHandler: Handler = {
   async handle(event, db) {
     const notifying = event as NotifyingEvent;
     const [table] = await db
-      .select({ gmId: gameTables.gmId, slug: gameTables.slug, title: gameTables.title })
+      .select({
+        gmId: gameTables.gmId,
+        slug: gameTables.slug,
+        title: gameTables.title,
+        status: gameTables.status,
+      })
       .from(gameTables)
       .where(eq(gameTables.id, notifying.payload.tableId));
     if (!table) return; // nothing left to tell anyone about
+    // A queued request/update can arrive after closure. Its cancellation already tells people
+    // what remains true; never send a stale approval or session prompt after that.
+    if (
+      table.status === 'disabled' &&
+      [
+        'TableUpdated',
+        'TableAwaitingConfirmation',
+        'JoinRequested',
+        'JoinApproved',
+        'PlayerJoined',
+      ].includes(notifying.type)
+    )
+      return;
 
     const notice = await noticeFor(db, notifying, table.gmId);
     const recipients = notice.to.filter((id) => id !== event.actorId);

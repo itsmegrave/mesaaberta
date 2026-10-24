@@ -4,10 +4,10 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '#lib/server/fail-from.js';
 import { openDirectConversation } from '#lib/server/messages/open-direct.js';
+import { routes } from '@mesaaberta/core/routes';
 import { normalizeUsername } from '@mesaaberta/core/profile/username';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
-import { localizedHref } from '#lib/i18n/locales.js';
-import { getLocale } from '#lib/paraglide/runtime.js';
+
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicProfile } from '@mesaaberta/core/server/profile/public';
 import type { Actions, PageServerLoad } from './$types';
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     supabaseUrl: supabaseUrlOf(locals.env),
   });
   if (!data || data.page > data.pages) error(404, 'Not found');
-  const path = localizedHref(`/u/${data.profile.username}`, getLocale());
+  const path = routes.profile(data.profile.username);
   if (params.username !== data.profile.username) redirect(308, `${path}${url.search}`);
   // "Ver como visitante": the owner sees the page as anyone else does.
   const previewing = data.isOwner && url.searchParams.get('as') === 'visitor';
@@ -50,7 +50,7 @@ export const actions: Actions = {
         await locals.getProfile(),
         target.id,
       );
-      redirect(303, `/messages/${conversationId}`);
+      redirect(303, `/m/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;
       return failFrom(cause);

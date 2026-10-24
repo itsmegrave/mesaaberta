@@ -8,7 +8,7 @@ const env = { RESEND_API_KEY: 're_test', RESEND_FROM: 'Mesa Aberta <convites@mes
 const variables: TemplateVariables = {
   RECIPIENT_NAME: 'Ana',
   TABLE_TITLE: 'Mesa do Dragão',
-  TABLE_URL: 'https://mesaaberta.app/tables/mesa',
+  TABLE_URL: 'https://mesaaberta.app/t/mesa',
   CONTEXT: 'REQUEST',
   STARTS_AT: 'sábado, 10 de outubro, 19:00 GMT-3',
   FALLBACK_TEXT: 'Você tem uma vaga confirmada.',

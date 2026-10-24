@@ -5,7 +5,8 @@ import { cleanRichHtml, plainToHtml, toPlainText } from '../../text/rich';
  * the app only says which template to use and fills in variables. See "Hosted e-mail templates" in
  * the README for what each template must contain.
  */
-export type TemplateKey = 'invite' | 'cancel' | 'joinRequested' | 'joinDeclined' | 'accountBanned';
+export type TemplateKey =
+  'invite' | 'cancel' | 'joinRequested' | 'joinDeclined' | 'accountBanned' | 'playerInvitation';
 
 /** One optional Worker variable per template. Ids are not secrets, but they may not be set yet. */
 export type TemplateEnv = {
@@ -14,6 +15,7 @@ export type TemplateEnv = {
   RESEND_TEMPLATE_JOIN_REQUESTED?: string;
   RESEND_TEMPLATE_JOIN_DECLINED?: string;
   RESEND_TEMPLATE_ACCOUNT_BANNED?: string;
+  RESEND_TEMPLATE_PLAYER_INVITATION?: string;
 };
 
 const envNames: Record<TemplateKey, keyof TemplateEnv> = {
@@ -22,6 +24,7 @@ const envNames: Record<TemplateKey, keyof TemplateEnv> = {
   joinRequested: 'RESEND_TEMPLATE_JOIN_REQUESTED',
   joinDeclined: 'RESEND_TEMPLATE_JOIN_DECLINED',
   accountBanned: 'RESEND_TEMPLATE_ACCOUNT_BANNED',
+  playerInvitation: 'RESEND_TEMPLATE_PLAYER_INVITATION',
 };
 
 /** A missing or blank variable means "not configured yet": the caller sends its inline copy. */
@@ -53,6 +56,9 @@ export const TEMPLATE_VARIABLES = [
   'PLAYER_MESSAGE',
 ] as const;
 
+/** Consent invitations deliberately carry no welcome message or private access details. */
+export const PLAYER_INVITATION_TEMPLATE_VARIABLES = ['GM_NAME', 'EXPIRES_AT'] as const;
+
 /** The variables of the account-banned template, which has no table (see `BanVariables`). */
 export const BAN_TEMPLATE_VARIABLES = [
   'RECIPIENT_NAME',
@@ -66,7 +72,7 @@ export type TemplateVariables = {
   TABLE_TITLE: string;
   TABLE_URL: string;
   /** Which message this is; it is also the template's purpose. */
-  CONTEXT: 'REQUEST' | 'CANCEL' | 'JOIN_REQUESTED' | 'JOIN_DECLINED';
+  CONTEXT: 'REQUEST' | 'CANCEL' | 'JOIN_REQUESTED' | 'JOIN_DECLINED' | 'PLAYER_INVITATION';
   /** The session start as people say it, in the table's own time zone. */
   STARTS_AT: string;
   /** The plain-text copy. Resend refuses `text` next to a template, so it travels as a variable. */
@@ -75,6 +81,8 @@ export type TemplateVariables = {
   WELCOME_MESSAGE?: string;
   /** The player's introduction as HTML with its heading (see `playerMessageHtml`); only on a join request that has one. */
   PLAYER_MESSAGE?: string;
+  GM_NAME?: string;
+  EXPIRES_AT?: string;
 };
 
 /** What `mesaaberta-account-banned` receives: the sentence that says until when, and the admin's reason. */
@@ -120,7 +128,11 @@ const SECTION_VARIABLES = new Set(['WELCOME_MESSAGE', 'PLAYER_MESSAGE']);
 /** Picks the allowlisted variables and cleans them; anything else is dropped. */
 export function templateVariables<T extends TemplateVariables | BanVariables>(input: T): T {
   const picked: Record<string, string> = {};
-  for (const name of new Set([...TEMPLATE_VARIABLES, ...BAN_TEMPLATE_VARIABLES])) {
+  for (const name of new Set([
+    ...TEMPLATE_VARIABLES,
+    ...BAN_TEMPLATE_VARIABLES,
+    ...PLAYER_INVITATION_TEMPLATE_VARIABLES,
+  ])) {
     const value = (input as Record<string, string | undefined>)[name];
     if (value === undefined) continue;
     picked[name] = SECTION_VARIABLES.has(name) ? sectionVariable(value) : clean(value);

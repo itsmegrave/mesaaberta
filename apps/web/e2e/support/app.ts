@@ -82,38 +82,46 @@ export function soonSession(now = new Date()) {
   return `${first.toISOString().slice(0, 10)}T19:00`;
 }
 
-/**
- * Picks the first session of a table form (`2026-12-01T19:00`) as a person would with the keyboard:
- * any day on the inline calendar, then page keys to the month and year, arrows to the day, Enter;
- * then the hour and the minutes on their selects.
- */
+/** Pick the exact calendar day, waiting for each displayed month before selecting it. */
 export async function setFirstSession(page: Page, iso: string) {
   const [day, time] = iso.split('T');
   const [hour, minute] = time.split(':');
   const hidden = page.locator('input[name="startsAtLocal"]');
-  await page
-    .getByRole('button', { name: /^Escolher / })
-    .first()
-    .click();
-  const picked = (await hidden.inputValue()).slice(0, 10);
-  const from = new Date(`${picked}T12:00:00Z`);
-  const to = new Date(`${day}T12:00:00Z`);
-  const years = to.getUTCFullYear() - from.getUTCFullYear();
-  const months = to.getUTCMonth() - from.getUTCMonth();
-  for (let step = 0; step < Math.abs(years); step++) {
-    await page.keyboard.press(years > 0 ? 'Shift+PageDown' : 'Shift+PageUp');
+  const calendar = page.getByRole('application', { name: 'Calendário', exact: true });
+  const range = calendar.getByText(/^\S+ de \d{4}$/, { exact: true });
+  const monthFormat = new Intl.DateTimeFormat('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  const monthNames = Array.from({ length: 12 }, (_, month) =>
+    new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'UTC' }).format(
+      new Date(Date.UTC(2000, month, 1)),
+    ),
+  );
+  const shown = (await range.innerText()).trim().toLocaleLowerCase('pt-BR');
+  const [monthName, year] = shown.split(' de ');
+  const month = monthNames.indexOf(monthName.toLowerCase());
+  if (month < 0 || !/^\d{4}$/.test(year)) throw new Error(`Unknown calendar month: ${shown}`);
+  const target = new Date(`${day}T12:00:00Z`);
+  const delta = (target.getUTCFullYear() - Number(year)) * 12 + target.getUTCMonth() - month;
+  const direction = Math.sign(delta);
+  for (let step = 1; step <= Math.abs(delta); step++) {
+    await calendar
+      .getByRole('button', { name: direction > 0 ? 'Próximo mês' : 'Mês anterior', exact: true })
+      .click();
+    await expect(range).toHaveText(
+      monthFormat.format(new Date(Date.UTC(Number(year), month + direction * step, 1))),
+    );
   }
-  for (let step = 0; step < Math.abs(months); step++) {
-    await page.keyboard.press(months > 0 ? 'PageDown' : 'PageUp');
-  }
-  const days = to.getUTCDate() - from.getUTCDate();
-  for (let step = 0; step < Math.abs(days); step++) {
-    await page.keyboard.press(days > 0 ? 'ArrowRight' : 'ArrowLeft');
-  }
-  await page.keyboard.press('Enter');
+  const label = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full', timeZone: 'UTC' }).format(
+    target,
+  );
+  await calendar.getByRole('button', { name: `Escolher ${label}`, exact: true }).click();
   await expect(hidden).toHaveValue(new RegExp(`^${day}T`));
   await pickFromSearch(page, 'Hora', hour);
   await pickFromSearch(page, 'Minutos', minute);
+  await expect(hidden).toHaveValue(iso);
 }
 
 /** A title no other test uses, so tests that share a database do not collide. */
@@ -122,7 +130,7 @@ export const uniqueTitle = (prefix: string) =>
 
 /** Fills and submits the create form as the signed-in user. Returns the slug from the URL it lands on. */
 export async function createTable(page: Page, table: NewTable) {
-  await page.goto('/tables/new');
+  await page.goto('/t/new');
   await pickFromSearch(page, 'Sistema de RPG', table.system ?? 'Daggerheart');
   await page.getByLabel('Título').fill(table.title);
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
@@ -141,9 +149,16 @@ export async function createTable(page: Page, table: NewTable) {
     await page.getByLabel(/Como entrar \(link/).fill(table.joinDetails);
   }
   if (table.image) await pickImage(page, table.image);
+  // Observe the actual mutation before asserting its redirect; a cold local Worker may need
+  // more than the short UI assertion budget to establish its first database connection.
+  const submitted = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/t/new',
+  );
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
+  expect((await submitted).status()).toBeLessThan(400);
 
-  await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
+  await expect(page).toHaveURL(/\/t\/(?!new$)[^/]+$/);
   return new URL(page.url()).pathname.split('/').at(-1)!;
 }
 

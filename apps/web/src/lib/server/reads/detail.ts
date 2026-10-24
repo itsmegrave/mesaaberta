@@ -1,5 +1,6 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readViaApi } from '../api-read';
 
@@ -38,5 +39,6 @@ export const read = async ({ locals, params }: RequestEvent) => {
     ...detail,
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     signedIn,
+    invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
   };
 };

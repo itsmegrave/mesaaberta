@@ -21,7 +21,11 @@ export const hostAdapter = () =>
     : adapter({
         // The Wrangler config stays at the repository root, where a deployment's pipeline finds it.
         config: '../../wrangler.jsonc',
-        platformProxy: { configPath: '../../wrangler.jsonc' },
+        // Tests use isolated ephemeral state; sharing Wrangler's SQLite with E2E causes SQLITE_BUSY.
+        platformProxy: {
+          configPath: '../../wrangler.jsonc',
+          ...(process.env.VITEST ? { persist: false } : {}),
+        },
       });
 
 /**

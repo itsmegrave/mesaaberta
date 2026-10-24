@@ -23,7 +23,7 @@ async function followsTheRules(page: Page, path: string, { home = false } = {}) 
 
 test('the public pages follow the rules', async ({ page }) => {
   await followsTheRules(page, '/', { home: true });
-  for (const path of ['/tables', '/tables/os-sinos-de-sablewood', '/login']) {
+  for (const path of ['/t', '/t/os-sinos-de-sablewood', '/login']) {
     await followsTheRules(page, path);
   }
 });
@@ -32,12 +32,12 @@ test('the signed-in pages follow the rules', async ({ page }) => {
   const user = await createUser('Regras Gerais');
   await signIn(page, user);
   for (const path of [
-    '/account/tables',
-    '/account/profile',
+    '/u/tables',
+    '/u/profile/edit',
     `/u/${user.username}`,
-    '/messages',
-    '/notifications',
-    '/tables/new',
+    '/m',
+    '/n',
+    '/t/new',
   ]) {
     await followsTheRules(page, path);
   }

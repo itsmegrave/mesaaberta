@@ -17,7 +17,7 @@ test('the account menu leads to the profile, where the details are saved and the
     .getByRole('link', { name: 'Ver meu perfil' })
     .click();
   await page.getByRole('link', { name: 'Editar perfil' }).click();
-  await expect(page).toHaveURL(/\/account\/profile$/);
+  await expect(page).toHaveURL(/\/u\/profile\/edit$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Editar perfil');
 
   await expect(page.getByLabel('Email')).toHaveValue(user.email);
@@ -28,14 +28,14 @@ test('the account menu leads to the profile, where the details are saved and the
   // Saved: back on the public page.
   await expect(page).toHaveURL(new RegExp(`/u/${user.username}$`));
 
-  await page.goto('/account/profile');
+  await page.goto('/u/profile/edit');
   await expect(page.getByLabel('Cidade')).toHaveValue('Recife');
   await expect(page.getByLabel('Nome de usuário')).toHaveValue(user.username);
 });
 
 test("the timezone on the profile wins over the browser's, on every page", async ({ page }) => {
   const user = await createUser('Fuso Horario');
-  await signIn(page, user, '/account/profile');
+  await signIn(page, user, '/u/profile/edit');
 
   // Not picked yet: the field offers the browser's zone.
   const field = page.getByRole('combobox', { name: 'Fuso horário' });
@@ -45,11 +45,11 @@ test("the timezone on the profile wins over the browser's, on every page", async
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
   await expect(page.getByText('Perfil salvo.')).toBeVisible();
 
-  await page.goto('/tables/os-sinos-de-sablewood');
+  await page.goto('/t/os-sinos-de-sablewood');
   await expect(page.getByRole('main')).toContainText('GMT+9');
 
   // A table they open is typed in that zone too: 19:00 in Tokyo, shown back as 19:00 GMT+9.
-  await page.goto('/tables/new');
+  await page.goto('/t/new');
   await expect(page.getByText(/No seu fuso, Asia\/Tokyo \(GMT\+9\)/)).toBeVisible();
   await createTable(page, { title: uniqueTitle('Mesa em Tóquio') });
   await expect(page.getByRole('main')).toContainText(/19:00 GMT\+9/);
@@ -57,7 +57,7 @@ test("the timezone on the profile wins over the browser's, on every page", async
 
 test('downloads a copy of the account data as JSON', async ({ page }) => {
   const user = await createUser('Dados Exportados');
-  await signIn(page, user, '/account/profile');
+  await signIn(page, user, '/u/profile/edit');
 
   const download = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Baixar meus dados' }).click();
@@ -75,7 +75,7 @@ test('closing the account asks for the username, then removes the person and sig
   page,
 }) => {
   const user = await createUser('Conta Apagada');
-  await signIn(page, user, '/account/profile');
+  await signIn(page, user, '/u/profile/edit');
 
   await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
@@ -101,9 +101,11 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
   page,
 }) => {
   const user = await createUser('Foto Enviada');
-  await signIn(page, user, '/account/profile');
+  await signIn(page, user, '/u/profile/edit');
   await expect(page.getByRole('button', { name: 'Remover foto enviada' })).toHaveCount(0);
 
+  // Auto-upload starts after the native file field becomes the hydrated picker.
+  await expect(page.getByRole('button', { name: 'Escolher imagem', exact: true })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',
@@ -138,8 +140,10 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
 
 test('refuses a file that is not a picture', async ({ page }) => {
   const user = await createUser('Foto Falsa');
-  await signIn(page, user, '/account/profile');
+  await signIn(page, user, '/u/profile/edit');
 
+  // Auto-upload starts after the native file field becomes the hydrated picker.
+  await expect(page.getByRole('button', { name: 'Escolher imagem', exact: true })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',
@@ -152,13 +156,13 @@ test('a slow submit locks its button: it says it is busy, and a second click sen
   page,
 }) => {
   const user = await createUser('Envio Lento');
-  await signIn(page, user, '/account/profile');
+  await signIn(page, user, '/u/profile/edit');
 
   // Hold the answer, so the submit stays in flight while the test looks at the button.
   let posts = 0;
   let release = () => {};
   const held = new Promise<void>((resolve) => (release = resolve));
-  await page.route('**/account/profile?/delete', async (route) => {
+  await page.route('**/u/profile/edit?/delete', async (route) => {
     posts++;
     await held;
     await route.continue();

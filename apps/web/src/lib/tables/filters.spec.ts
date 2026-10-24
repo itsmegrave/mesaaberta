@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readTableFilters } from './filters';
 
-const read = (search: string) => readTableFilters(new URL(`https://x.test/tables${search}`));
+const read = (search: string) => readTableFilters(new URL(`https://x.test/t${search}`));
 
 describe('readTableFilters', () => {
   it('reads nothing ticked as no filter', async () => {

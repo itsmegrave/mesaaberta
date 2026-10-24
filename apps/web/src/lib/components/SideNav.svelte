@@ -9,10 +9,8 @@
   import NotificationBell from '#lib/components/NotificationBell.svelte';
   import TableLogo from '#lib/components/TableLogo.svelte';
   import ThemeToggle from '#lib/components/ThemeToggle.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import type { IconName } from '#lib/icons/names.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Account = {
     displayName: string;
@@ -36,7 +34,6 @@
     messagesUnread: number;
   } = $props();
 
-  const locale = getLocale();
   const STORAGE_KEY = 'nav-expanded';
 
   // The desktop navigation opens as a sidebar by default. Keep the user's explicit choice
@@ -64,35 +61,35 @@
   const links = $derived(
     [
       {
-        href: '/tables',
+        href: '/t',
         label: m.nav_tables(),
         icon: 'game-icons:tavern-sign' as IconName,
-        current: pathname.startsWith('/tables') && pathname !== '/tables/new',
+        current: (pathname === '/t' || pathname.startsWith('/t/')) && pathname !== '/t/new',
       },
       {
-        href: '/crowdfunding',
+        href: '/cf',
         // The rail is narrow, so it breaks the word where it can (a soft hyphen in the message).
         label: expanded ? m.nav_crowdfunding() : m.nav_crowdfunding_rail(),
         icon: 'game-icons:open-treasure-chest' as IconName,
-        current: pathname.startsWith('/crowdfunding'),
+        current: pathname === '/cf' || pathname.startsWith('/cf/'),
       },
       {
-        href: '/partners',
+        href: '/p',
         label: m.partner_nav_label(),
         icon: 'game-icons:trade' as IconName,
-        current: pathname.startsWith('/partners'),
+        current: pathname === '/p' || pathname.startsWith('/p/'),
       },
       account && {
-        href: '/tables/new',
+        href: '/t/new',
         label: expanded ? m.nav_open_table() : m.nav_open_table_short(),
         icon: 'game-icons:dice-twenty-faces-twenty' as IconName,
-        current: pathname === '/tables/new',
+        current: pathname === '/t/new',
       },
       account && {
-        href: '/account/tables',
+        href: '/u/tables',
         label: m.nav_my_tables(),
         icon: 'game-icons:tabletop-players' as IconName,
-        current: pathname.startsWith('/account/tables'),
+        current: pathname === '/u/tables' || pathname.startsWith('/u/tables/'),
       },
     ].filter((link) => !!link),
   );
@@ -117,7 +114,7 @@
 {#snippet adminLink()}
   {#if account?.isAdmin}
     <a
-      href={localizedHref('/admin', locale)}
+      href="/admin"
       aria-label={expanded ? undefined : m.nav_admin()}
       title={expanded ? undefined : m.nav_admin()}
       aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
@@ -169,7 +166,7 @@
           : 'flex-col items-center'}"
       >
         <a
-          href={localizedHref('/', locale)}
+          href="/"
           aria-label="Mesa Aberta"
           class="flex min-w-0 items-center gap-3 no-underline {expanded ? 'px-1' : ''}"
         >
@@ -186,7 +183,7 @@
           <Navigation.Menu class="flex flex-col gap-2">
             {#each links as link (link.href)}
               <Navigation.TriggerAnchor
-                href={localizedHref(link.href, locale)}
+                href={link.href}
                 aria-current={link.current ? 'page' : undefined}
                 aria-label={expanded ? undefined : link.label}
                 class="group flex! w-full! items-center rounded-lg! bg-transparent! p-1! text-sm font-semibold no-underline focus-visible:outline-2 focus-visible:outline-primary-500 aria-[current=page]:text-surface-950-50 {expanded
@@ -194,7 +191,7 @@
                   : 'min-h-20 flex-col! justify-center! gap-1! text-center text-xs! leading-tight!'}"
               >
                 <span
-                  class="{tile} {link.href === '/tables/new'
+                  class="{tile} {link.href === '/t/new'
                     ? 'preset-filled-primary-500'
                     : 'group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800'}"
                 >

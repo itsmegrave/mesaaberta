@@ -152,11 +152,13 @@ describe('public profiles', () => {
       'locationArea',
       'modality',
       'platforms',
+      'reserved',
       'seatsLeft',
       'slug',
       'startsAt',
       'system',
       'tags',
+      'taken',
       'timezone',
       'title',
     ]);

@@ -122,9 +122,9 @@ describe('handleRequestLog', () => {
   it('names the record the route acts on', async () => {
     const { lines, handle } = setup();
     const event = {
-      request: new Request('https://mesaaberta.test/tables/mesa-de-sexta/edit'),
-      url: new URL('https://mesaaberta.test/tables/mesa-de-sexta/edit'),
-      route: { id: '/tables/[slug]/edit' },
+      request: new Request('https://mesaaberta.test/t/mesa-de-sexta/edit'),
+      url: new URL('https://mesaaberta.test/t/mesa-de-sexta/edit'),
+      route: { id: '/t/[slug]/edit' },
       params: { slug: 'mesa-de-sexta' },
       locals: {},
     } as unknown as RequestEvent;
@@ -132,7 +132,7 @@ describe('handleRequestLog', () => {
     await handle({ event, resolve: async () => new Response(null, { status: 403 }) });
 
     expect(lines[0]).toMatchObject({
-      route: '/tables/[slug]/edit',
+      route: '/t/[slug]/edit',
       resourceType: 'table',
       resourceId: 'mesa-de-sexta',
       status: 403,
@@ -151,10 +151,17 @@ describe('handleRequestLog', () => {
 
 describe('resourceOf', () => {
   it.each([
-    ['/tables/[slug]', { slug: 'mesa' }, { resourceType: 'table', resourceId: 'mesa' }],
+    ['/t/[slug]', { slug: 'mesa' }, { resourceType: 'table', resourceId: 'mesa' }],
     ['/admin/users/[id]', { id: 'u1' }, { resourceType: 'user', resourceId: 'u1' }],
     ['/u/[username]', { username: 'ana' }, { resourceType: 'user', resourceId: 'ana' }],
-    ['/messages/[id]', { id: 'c1' }, { resourceType: 'conversation', resourceId: 'c1' }],
+    ['/m/[id]', { id: 'c1' }, { resourceType: 'conversation', resourceId: 'c1' }],
+    ['/p/[id]/edit', { id: 'p1' }, { resourceType: 'partner', resourceId: 'p1' }],
+    ['/cf/[id]', { id: 'cf1' }, { resourceType: 'crowdfunding', resourceId: 'cf1' }],
+    ['/admin/tables/[id]', { id: 't1' }, { resourceType: 'table', resourceId: 't1' }],
+    ['/api/messages/[id]', { id: 'c1' }, { resourceType: 'conversation', resourceId: 'c1' }],
+    ['/api/partners/[id]', { id: 'p1' }, { resourceType: 'partner', resourceId: 'p1' }],
+    ['/u/profile/edit', { username: 'profile' }, {}],
+    ['/u/profile/connect/[provider=provider]', { provider: 'google' }, {}],
     ['/api/query/[resource]', { resource: 'tables' }, {}],
     ['/login/[provider=provider]', { provider: 'google' }, {}],
     ['/', {}, {}],

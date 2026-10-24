@@ -4,6 +4,7 @@ import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { loadTableForDuplication } from '@mesaaberta/core/server/tables/duplicate';
 import { tableWriteActions } from '@mesaaberta/core/server/tables/write-actions';
+import { closeTable, deleteDraftTable } from '@mesaaberta/core/server/tables/end';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
@@ -25,12 +26,14 @@ type Action = {
  * and resolved the postal code; this takes the result and runs the same services, from core's
  * `tableWriteActions`. Answers `{ eventIds, slug, draft? }`, or the refusal the service made.
  */
-export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
+export function tableWriteRoutes(open: Open = openDb, tableActionsOnly = false) {
   const app = new Hono<{ Bindings: DatabaseEnv; Variables: UserVariables }>();
 
-  if (duplicationOnly) {
+  if (tableActionsOnly) {
     app.use('/:slug/duplicate', userGuard(open));
     app.use('/:slug/duplication', userGuard(open));
+    app.use('/:slug/draft', userGuard(open));
+    app.use('/:slug/close', userGuard(open));
   } else app.use('*', userGuard(open));
 
   const run = async (
@@ -50,7 +53,21 @@ export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
     }
   };
 
-  if (duplicationOnly) {
+  if (tableActionsOnly) {
+    for (const [method, path, apply] of [
+      ['delete', '/:slug/draft', deleteDraftTable],
+      ['post', '/:slug/close', closeTable],
+    ] as const) {
+      app[method](path, async (c) => {
+        try {
+          return c.json(await apply(c.get('db'), c.get('actor'), c.req.param('slug')));
+        } catch (cause) {
+          const refused = refusal(c, cause);
+          if (refused) return refused;
+          throw cause;
+        }
+      });
+    }
     app.get('/:slug/duplication', async (c) => {
       try {
         return c.json(

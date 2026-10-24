@@ -7,7 +7,6 @@
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import UserText from '#lib/components/UserText.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -91,7 +90,7 @@
       {#each [['platform', m.admin_catalog_tab_platforms()], ['tag', m.admin_catalog_tab_tags()], ['system', m.admin_catalog_tab_systems()]] as const as [kind, label] (kind)}
         <li>
           <a
-            href={localizedHref(`/admin/catalog?kind=${kind}`, locale)}
+            href={`/admin/catalog?kind=${kind}`}
             aria-current={data.kind === kind ? 'page' : undefined}
             class="{tab} {data.kind === kind
               ? 'border-primary-500'

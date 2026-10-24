@@ -172,7 +172,7 @@ describe('+layout.svelte', () => {
             .getByRole('navigation', { name: 'Navegação principal' })
             .getByRole('link', { name: 'Mesas' }),
         )
-        .toHaveAttribute('href', '/tables');
+        .toHaveAttribute('href', '/t');
     });
   });
 
@@ -297,7 +297,7 @@ describe('+layout.svelte', () => {
 
       await expect
         .element(navigation().getByRole('link', { name: 'Abrir uma mesa' }))
-        .toHaveAttribute('href', '/tables/new');
+        .toHaveAttribute('href', '/t/new');
     });
 
     it('shows the unread count on the bell, and the latest notifications when it opens', async () => {
@@ -318,7 +318,7 @@ describe('+layout.svelte', () => {
                   icon: null,
                   title: null,
                   body: null,
-                  link: '/tables/mesa/manage',
+                  link: '/t/mesa/manage',
                   metadata: { tableId: 't', slug: 'mesa', title: 'Mesa do Dragão' },
                   readAt: null,
                   read: false,
@@ -340,10 +340,10 @@ describe('+layout.svelte', () => {
       const item = page.getByRole('button', { name: /@bia pediu uma vaga em Mesa do Dragão/ });
       await expect.element(item).toBeVisible();
       const form = item.element().closest('form');
-      expect(form?.getAttribute('action')).toBe('/notifications?/open');
+      expect(form?.getAttribute('action')).toBe('/n?/open');
       await expect
         .element(page.getByRole('link', { name: 'Ver todas' }))
-        .toHaveAttribute('href', '/notifications');
+        .toHaveAttribute('href', '/n');
     });
 
     it('shows no bell to a visitor who is signed out', async () => {
@@ -372,15 +372,13 @@ describe('+layout.svelte', () => {
 
       const nav = page.getByRole('navigation', { name: 'Navegação móvel' });
       await expect.element(nav).toBeVisible();
-      await expect
-        .element(nav.getByRole('link', { name: 'Mesas' }))
-        .toHaveAttribute('href', '/tables');
+      await expect.element(nav.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
       await expect
         .element(nav.getByRole('link', { name: 'Abrir mesa' }))
-        .toHaveAttribute('href', '/tables/new');
+        .toHaveAttribute('href', '/t/new');
       await expect
         .element(nav.getByRole('link', { name: 'Minhas mesas' }))
-        .toHaveAttribute('href', '/account/tables');
+        .toHaveAttribute('href', '/u/tables');
     });
 
     it('offers navigation and sign-in to anonymous visitors on mobile', async () => {
@@ -388,9 +386,7 @@ describe('+layout.svelte', () => {
 
       const nav = page.getByRole('navigation', { name: 'Navegação móvel' });
       await expect.element(nav).toBeVisible();
-      await expect
-        .element(nav.getByRole('link', { name: 'Mesas' }))
-        .toHaveAttribute('href', '/tables');
+      await expect.element(nav.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
       await expect
         .element(page.getByRole('banner').getByRole('link', { name: 'Entrar' }))
         .toHaveAttribute('href', '/login');
@@ -405,7 +401,7 @@ describe('+layout.svelte', () => {
             .getByRole('navigation', { name: 'Navegação móvel' })
             .getByRole('link', { name: 'Parceiros' }),
         )
-        .toHaveAttribute('href', '/partners');
+        .toHaveAttribute('href', '/p');
     });
 
     it('moves the Admin link from the tab bar into the account menu on mobile', async () => {

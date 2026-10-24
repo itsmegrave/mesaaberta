@@ -1,3 +1,4 @@
+import { routes } from '../../routes';
 import { Resvg } from '@cf-wasm/resvg';
 import jpeg from 'jpeg-js';
 import QRCode from 'qrcode';
@@ -21,7 +22,7 @@ const hashtag = (text: string) =>
     .replace(/\p{M}/gu, '')
     .replace(/[^\p{L}\p{N}_]/gu, '');
 export function shareFacts(table: TableView, origin: string) {
-  const url = new URL(`/tables/${table.slug}`, origin).href;
+  const url = new URL(routes.table(table.slug), origin).href;
   // Only the scanned link is tagged: the caption link is typed by hand, so it stays short.
   const qr = new URL(url);
   qr.searchParams.set('utm_source', 'instagram');

@@ -11,7 +11,7 @@ const SCREEN = '<h1>Voltamos em breve</h1>';
 
 function setup({
   on = true,
-  path = '/tables',
+  path = '/t',
   method = 'GET',
   accept = 'text/html,application/xhtml+xml',
   profile = null as Profile | null | Error,
@@ -125,10 +125,10 @@ describe('isExempt', () => {
 
   it.each([
     '/',
-    '/tables',
+    '/t',
     '/signup',
-    '/onboarding',
-    '/account/export',
+    '/u/profile/setup',
+    '/u/profile/export',
     '/loginx',
     '/maintenance/x',
   ])('blocks %s', (path) => expect(isExempt(path)).toBe(false));

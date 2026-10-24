@@ -5,8 +5,6 @@
   import { page } from '$app/state';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '#lib/i18n/locales.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     id,
@@ -31,19 +29,15 @@
     inDialog?: boolean;
   } = $props();
 
-  const locale = getLocale();
   const pick = (picked: string[]) => {
     const next = picked[0] ?? fallback;
     // The list also reports the pick it already has; only a new one reloads.
     if (next === value) return;
     void goto(
-      localizedHref(
-        listPath(
-          page.url.pathname,
-          listQuery(page.url.searchParams, { [name]: next === fallback ? null : next }),
-          hash,
-        ),
-        locale,
+      listPath(
+        page.url.pathname,
+        listQuery(page.url.searchParams, { [name]: next === fallback ? null : next }),
+        hash,
       ),
       { reset: false },
     );

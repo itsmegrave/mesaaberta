@@ -16,6 +16,8 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
     table,
     // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
     canDuplicate: manage.canDuplicate,
+    canEnd: can(actor, 'table:end', { gmId }),
+    canInvite: actor?.id === gmId,
     canEdit: can(actor, 'table:edit', { gmId, tableStatus: manage.table.status }),
     systemWaiting: manage.systemWaiting,
     gm: manage.gm,

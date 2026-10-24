@@ -34,6 +34,16 @@ type TemplateSpec = { alias: string; subject: string; html: string; variables: V
 
 const TEMPLATES: TemplateSpec[] = [
   {
+    alias: 'mesaaberta-player-invitation',
+    subject: 'Convite para jogar: {{{TABLE_TITLE}}}',
+    variables: [
+      ...COMMON_VARIABLES,
+      { key: 'GM_NAME', type: 'string', fallbackValue: 'mestre' },
+      { key: 'EXPIRES_AT', type: 'string', fallbackValue: 'o prazo informado' },
+    ],
+    html: `<p>Olá, {{{RECIPIENT_NAME}}}.</p><p>@{{{GM_NAME}}} convidou você para jogar na mesa <strong>{{{TABLE_TITLE}}}</strong>. A sessão começa {{{STARTS_AT}}}.</p><p>Sua vaga fica reservada até {{{EXPIRES_AT}}}. A participação só é confirmada depois do seu aceite.</p><p><a href="{{{TABLE_URL}}}">Revisar e responder ao convite</a></p><p>Você pode recusar, desativar convites ou bloquear convites deste mestre no seu perfil.</p>`,
+  },
+  {
     alias: 'mesaaberta-invite',
     subject: 'Convite: {{{TABLE_TITLE}}}',
     variables: [...COMMON_VARIABLES, WELCOME_MESSAGE_VARIABLE],
@@ -97,6 +107,7 @@ async function resend(path: string, init: RequestInit) {
 
 const envNameFor: Record<string, string> = {
   'mesaaberta-invite': 'RESEND_TEMPLATE_INVITE',
+  'mesaaberta-player-invitation': 'RESEND_TEMPLATE_PLAYER_INVITATION',
   'mesaaberta-cancel': 'RESEND_TEMPLATE_CANCEL',
   'mesaaberta-join-requested': 'RESEND_TEMPLATE_JOIN_REQUESTED',
   'mesaaberta-join-declined': 'RESEND_TEMPLATE_JOIN_DECLINED',

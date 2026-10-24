@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { listReceivedInvitations } from '#lib/server/invitations/api.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { readDashboard } from '@mesaaberta/core/server/reads/dashboard';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -34,5 +35,5 @@ export const read = async ({ locals, url }: RequestEvent) => {
     ? { ...remote, playing: revive(remote.playing), running: revive(remote.running) }
     : await readDashboard(locals.db, user.id, page, new Date());
   if (!dashboard) error(404, 'Not found');
-  return dashboard;
+  return { ...dashboard, invitations: await listReceivedInvitations(locals, profile) };
 };

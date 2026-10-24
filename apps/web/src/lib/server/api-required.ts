@@ -8,7 +8,7 @@ export async function requireApi<T = Record<string, unknown>>(
   locals: App.Locals,
   actor: Actor,
   path: string,
-  options: { method?: 'GET' | 'POST'; body?: Record<string, unknown> } = {},
+  options: { method?: 'GET' | 'POST' | 'DELETE'; body?: Record<string, unknown> } = {},
 ): Promise<T> {
   const answer = await callApiRaw(
     locals.env,
@@ -38,8 +38,9 @@ export async function requireApiWrite(
   actor: Actor,
   path: string,
   body: Record<string, unknown>,
+  method: 'POST' | 'DELETE' = 'POST',
 ): Promise<{ eventIds: string[]; body: Record<string, unknown> }> {
-  const result = await requireApi(locals, actor, path, { method: 'POST', body });
+  const result = await requireApi(locals, actor, path, { method, body });
   if (
     !result ||
     typeof result !== 'object' ||

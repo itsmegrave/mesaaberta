@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { localizedHref } from '#lib/i18n/locales.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle, NAMELESS } from '@mesaaberta/core/profile/handle';
 
   let {
@@ -12,12 +10,11 @@
     label?: string;
     class?: string;
   } = $props();
-  const locale = getLocale();
 </script>
 
 {#if username && username !== NAMELESS}
   <a
-    href={localizedHref(`/u/${encodeURIComponent(username)}`, locale)}
+    href={`/u/${encodeURIComponent(username)}`}
     class="relative z-10 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {className}"
     >{label ?? atHandle(username)}</a
   >

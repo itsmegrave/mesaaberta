@@ -4,8 +4,6 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '#lib/i18n/locales.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   type Option = { value: string; label: string; count?: number };
 
@@ -30,16 +28,12 @@
     class?: string;
   } = $props();
 
-  const locale = getLocale();
   const pick = (next: string) =>
     goto(
-      localizedHref(
-        listPath(
-          page.url.pathname,
-          listQuery(page.url.searchParams, { [name]: next === fallback ? null : next }),
-          hash,
-        ),
-        locale,
+      listPath(
+        page.url.pathname,
+        listQuery(page.url.searchParams, { [name]: next === fallback ? null : next }),
+        hash,
       ),
       { reset: false },
     );

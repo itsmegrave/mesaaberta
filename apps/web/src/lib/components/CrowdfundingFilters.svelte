@@ -10,13 +10,10 @@
     CROWDFUNDING_SORTS,
     type CrowdfundingFilters,
   } from '@mesaaberta/core/crowdfunding/filters';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { picked }: { picked: Pick<CrowdfundingFilters, 'query' | 'sort' | 'ended'> } = $props();
 
-  const locale = getLocale();
   const query = (next: typeof picked) => {
     const parts = [
       next.query ? `q=${encodeURIComponent(next.query)}` : '',
@@ -26,7 +23,7 @@
     return parts.length > 0 ? `?${parts.join('&')}` : '';
   };
   const apply = (change: Partial<typeof picked>) =>
-    goto(localizedHref(`/crowdfunding${query({ ...picked, ...change })}`, locale), {
+    goto(`/cf${query({ ...picked, ...change })}`, {
       reset: false,
     });
 

@@ -16,7 +16,7 @@ const base = {
   rating: null,
 };
 
-const props = (over = {}) => ({ item: { ...base, ...over }, next: '/account/tables' });
+const props = (over = {}) => ({ item: { ...base, ...over }, next: '/u/tables' });
 
 describe('PlayingCard', () => {
   it("shows the table, its GM and the next session in the table's timezone, linked to the table", async () => {
@@ -24,7 +24,7 @@ describe('PlayingCard', () => {
 
     await expect
       .element(page.getByRole('link', { name: 'Mesa do Dragão' }))
-      .toHaveAttribute('href', '/tables/mesa-do-dragao');
+      .toHaveAttribute('href', '/t/mesa-do-dragao');
     await expect.element(page.getByText('Mestre: @Mestra Ana')).toBeVisible();
     await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
     await expect.element(page.getByText('Você tem uma vaga')).toBeVisible();
@@ -36,8 +36,8 @@ describe('PlayingCard', () => {
     const form = page.getByRole('button', { name: 'Sair da mesa' }).element().closest('form')!;
 
     expect(form.method).toBe('post');
-    expect(form.getAttribute('action')).toBe('/tables/mesa-do-dragao?/leave');
-    expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/account/tables');
+    expect(form.getAttribute('action')).toBe('/t/mesa-do-dragao?/leave');
+    expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/u/tables');
   });
 
   it('shows a pending request as waiting for the GM, with a cancel action', async () => {
@@ -54,7 +54,7 @@ describe('PlayingCard', () => {
     await expect.element(page.getByText(/Como foi o jogo\? Avalie/)).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Avaliar' }))
-      .toHaveAttribute('href', '/tables/mesa-do-dragao#avaliar');
+      .toHaveAttribute('href', '/t/mesa-do-dragao#avaliar');
   });
 
   it('shows the rating already given, and offers to change it', async () => {

@@ -199,3 +199,51 @@ it('loads duplication defaults only for its owner through the API', async () => 
     input: { title: 'Fonte API de cópia', startsAtLocal: '' },
   });
 });
+
+describe('owner table end API', () => {
+  it('permanently deletes only an owned draft over DELETE', async () => {
+    const created = await post(
+      '/',
+      { input: { ...input, title: 'Draft deletion API' }, draft: true },
+      gm,
+    );
+    const { slug } = (await created.json()) as { slug: string };
+    const request = (actor?: string) =>
+      duplicationApp().request(
+        `/${slug}/draft`,
+        { method: 'DELETE', headers: actor ? { [ACTOR_HEADER]: actor } : {} },
+        env,
+      );
+    expect((await request()).status).toBe(401);
+    expect((await request(other)).status).toBe(403);
+    const response = await request(gm);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ slug, eventIds: [expect.any(String)] });
+    expect(await test.db.select().from(gameTables).where(eq(gameTables.slug, slug))).toHaveLength(
+      0,
+    );
+  });
+  it('closes an owned public table idempotently and refuses hard deletion', async () => {
+    const created = await post('/', { input: { ...input, title: 'Closure API' } }, gm);
+    const { slug } = (await created.json()) as { slug: string };
+    expect(
+      (
+        await duplicationApp().request(
+          `/${slug}/draft`,
+          { method: 'DELETE', headers: { [ACTOR_HEADER]: gm } },
+          env,
+        )
+      ).status,
+    ).toBe(400);
+    expect((await duplicate(`/${slug}/close`, {}, other)).status).toBe(403);
+    const closed = await duplicate(`/${slug}/close`, {}, gm);
+    expect(closed.status).toBe(200);
+    expect(await closed.json()).toMatchObject({ eventIds: [expect.any(String)] });
+    expect(await (await duplicate(`/${slug}/close`, {}, gm)).json()).toEqual({
+      slug,
+      eventIds: [],
+    });
+    const [table] = await test.db.select().from(gameTables).where(eq(gameTables.slug, slug));
+    expect(table).toMatchObject({ status: 'disabled', icalSequence: 1 });
+  });
+});
