@@ -77,6 +77,10 @@ export const flagDefaults = {
   // signed-in person (their own pending suggestions included); a call that cannot be made falls
   // back to the web path. Needs the API binding. Admins first.
   api_reads_catalog: false,
+  // Off: a table's edit form reads its systems, platforms and tags in the web Worker. On: the api
+  // Worker answers it over the Service Binding from the same reader, as the signed-in person; a
+  // refusal or a call that cannot be made falls back to the web path, which raises the page's error.
+  api_reads_edit_catalog: false,
   // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
   // the web Worker still validates the form and stores the picture, then the api Worker saves it
   // over the Service Binding from the same services; refusals come back as the codes the form
