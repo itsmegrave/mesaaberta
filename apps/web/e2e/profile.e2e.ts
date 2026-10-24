@@ -104,6 +104,8 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
   await signIn(page, user, '/u/profile/edit');
   await expect(page.getByRole('button', { name: 'Remover foto enviada' })).toHaveCount(0);
 
+  // Auto-upload starts after the native file field becomes the hydrated picker.
+  await expect(page.getByRole('button', { name: 'Escolher imagem', exact: true })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',
@@ -140,6 +142,8 @@ test('refuses a file that is not a picture', async ({ page }) => {
   const user = await createUser('Foto Falsa');
   await signIn(page, user, '/u/profile/edit');
 
+  // Auto-upload starts after the native file field becomes the hydrated picker.
+  await expect(page.getByRole('button', { name: 'Escolher imagem', exact: true })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',

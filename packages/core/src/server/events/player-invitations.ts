@@ -119,7 +119,11 @@ export function createPlayerInvitationMailHandler(
     types: ['PlayerInvited'],
     async handle(event, db) {
       const invited = event as InvitationEvent;
-      const current = await currentInvitation(db, invited.payload.invitationId);
+      let current = await currentInvitation(db, invited.payload.invitationId);
+      if (!current) return;
+      const to = await emailOf(admin, current.invitation.playerId);
+      // Auth is a network lookup: consent may change while it is in flight.
+      current = await currentInvitation(db, invited.payload.invitationId);
       if (!current) return;
       const { invitation, table, player, gm } = current;
       const url = new URL(`/u/profile/invitations/${invitation.id}`, env.APP_ORIGIN).href;
@@ -134,7 +138,7 @@ export function createPlayerInvitationMailHandler(
       });
       const templateId = templateIdFor(env, 'playerInvitation');
       await mailer.send({
-        to: await emailOf(admin, invitation.playerId),
+        to,
         ...mail,
         ...(templateId
           ? {
