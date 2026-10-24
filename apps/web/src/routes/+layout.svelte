@@ -289,32 +289,6 @@
                   class="link-underline text-surface-950-50">Lenindragons</a
                 >.
               </p>
-              {#if layoutData.links.feedbackUrl}
-                <p>
-                  {m.footer_report_bug()}
-                  <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
-                  <a
-                    href={layoutData.links.feedbackUrl}
-                    rel="noopener"
-                    target="_blank"
-                    class="link-underline text-surface-950-50">{m.footer_report_bug_link()}</a
-                  >.
-                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
-                </p>
-              {/if}
-              {#if layoutData.links.changelogUrl}
-                <p>
-                  {m.footer_changelog()}
-                  <!-- eslint-disable svelte/no-navigation-without-resolve -- Canny is an external website, not an app route -->
-                  <a
-                    href={layoutData.links.changelogUrl}
-                    rel="noopener"
-                    target="_blank"
-                    class="link-underline text-surface-950-50">{m.footer_changelog_link()}</a
-                  >.
-                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
-                </p>
-              {/if}
               <p>
                 <a
                   href={localizedHref('/partners', getLocale())}

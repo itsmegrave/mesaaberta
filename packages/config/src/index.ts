@@ -21,17 +21,6 @@ const origin = z
   }, 'Expected an HTTP(S) origin without credentials, a path, query or fragment')
   .transform((value) => new URL(value).origin);
 
-const optionalUrl = z
-  .string()
-  .trim()
-  .url()
-  .refine((value) => {
-    if (!URL.canParse(value)) return false;
-    const url = new URL(value);
-    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
-  }, 'Expected an HTTP(S) URL without credentials')
-  .optional();
-
 const hostname = z
   .string()
   .max(253)
@@ -51,8 +40,6 @@ export const publicConfigSchema = z.object({
     .string()
     .regex(/^[a-zA-Z0-9._]{1,30}$/)
     .optional(),
-  CANNY_FEEDBACK_URL: optionalUrl,
-  CANNY_CHANGELOG_URL: optionalUrl,
 });
 
 const configSchema = publicConfigSchema.extend({
