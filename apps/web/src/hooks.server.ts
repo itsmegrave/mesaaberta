@@ -13,7 +13,7 @@ import { handleDatabase } from '#lib/server/db/handle-database.js';
 import { logger, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '#lib/server/sentry-sink.js';
 import { handleRequestLog, handleUserTag } from '#lib/server/request-log.js';
-import { handleHostTelemetry, handleRuntime } from '#lib/server/runtime.js';
+import { handleHostTelemetry, handleRuntime, handleServerTiming } from '#lib/server/runtime.js';
 import { createTracker } from '@mesaaberta/core/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { MAIL_HANDLER_NAMES, bellHandlers } from '@mesaaberta/core/server/events/handlers';
@@ -133,6 +133,8 @@ const handleFlags: Handle = ({ event, resolve }) => {
 
 // Security headers go first so they wrap every response, including the ones later hooks produce.
 export const handle: Handle = sequence(
+  // First, so the total covers every other hook.
+  handleServerTiming,
   // The host's own set-up of error reporting, around everything else.
   handleHostTelemetry,
   Sentry.sentryHandle(),
