@@ -83,3 +83,52 @@ export function createHttpMetrics(service: string): HttpMetrics {
     },
   };
 }
+
+export type JobMetrics = {
+  /** Records one run of a background job; `ok` is false when it threw. */
+  observe: (run: { job: string; ok: boolean; seconds: number; at: Date }) => void;
+  render: () => string;
+};
+
+/** What the worker is watched by: how often each job ran, how long it took, and when it last did. */
+export function createJobMetrics(service: string): JobMetrics {
+  const runs = new Map<string, { ok: number; failed: number; sum: number; last: number }>();
+
+  return {
+    observe({ job, ok, seconds, at }) {
+      const entry = runs.get(job) ?? { ok: 0, failed: 0, sum: 0, last: 0 };
+      entry[ok ? 'ok' : 'failed']++;
+      entry.sum += seconds;
+      entry.last = at.getTime() / 1000;
+      runs.set(job, entry);
+    },
+
+    render() {
+      const lines = [
+        '# HELP mesaaberta_job_runs_total Background job runs, by job and outcome.',
+        '# TYPE mesaaberta_job_runs_total counter',
+      ];
+      for (const [job, e] of runs) {
+        lines.push(
+          `mesaaberta_job_runs_total{${labels({ service, job, outcome: 'ok' })}} ${e.ok}`,
+          `mesaaberta_job_runs_total{${labels({ service, job, outcome: 'failed' })}} ${e.failed}`,
+        );
+      }
+      lines.push(
+        '# HELP mesaaberta_job_run_seconds_sum Seconds spent running a job, in total.',
+        '# TYPE mesaaberta_job_run_seconds_sum counter',
+      );
+      for (const [job, e] of runs)
+        lines.push(`mesaaberta_job_run_seconds_sum{${labels({ service, job })}} ${e.sum}`);
+      lines.push(
+        '# HELP mesaaberta_job_last_run_timestamp_seconds When a job last finished, in Unix time.',
+        '# TYPE mesaaberta_job_last_run_timestamp_seconds gauge',
+      );
+      for (const [job, e] of runs)
+        lines.push(
+          `mesaaberta_job_last_run_timestamp_seconds{${labels({ service, job })}} ${e.last}`,
+        );
+      return lines.join('\n') + '\n';
+    },
+  };
+}

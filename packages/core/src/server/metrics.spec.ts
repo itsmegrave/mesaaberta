@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createHttpMetrics } from './metrics';
+import { createHttpMetrics, createJobMetrics } from './metrics';
 
 describe('createHttpMetrics', () => {
   it('counts requests by route template, method and status class', () => {
@@ -37,6 +37,24 @@ describe('createHttpMetrics', () => {
   it('renders valid, empty output before any request', () => {
     expect(createHttpMetrics('web').render()).toContain(
       '# TYPE mesaaberta_http_requests_total counter',
+    );
+  });
+});
+
+describe('createJobMetrics', () => {
+  it('counts runs by outcome, adds up their time and remembers the last one', () => {
+    const metrics = createJobMetrics('worker');
+    metrics.observe({ job: '*/5 * * * *', ok: true, seconds: 1.5, at: new Date(1_000_000) });
+    metrics.observe({ job: '*/5 * * * *', ok: false, seconds: 0.5, at: new Date(2_000_000) });
+
+    const text = metrics.render();
+    expect(text).toContain(
+      'mesaaberta_job_runs_total{service="worker",job="*/5 * * * *",outcome="ok"} 1',
+    );
+    expect(text).toContain('outcome="failed"} 1');
+    expect(text).toContain('mesaaberta_job_run_seconds_sum{service="worker",job="*/5 * * * *"} 2');
+    expect(text).toContain(
+      'mesaaberta_job_last_run_timestamp_seconds{service="worker",job="*/5 * * * *"} 2000',
     );
   });
 });
