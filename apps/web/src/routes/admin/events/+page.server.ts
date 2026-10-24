@@ -3,6 +3,7 @@ import { forceSchema, retryAllSchema } from '#lib/admin/event-filters.js';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { eventQueue } from '#lib/server/admin/event-queue.js';
+import { queueBacklog, type QueueBinding } from '@mesaaberta/events';
 import { callApi } from '#lib/server/api-client.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import {
@@ -27,7 +28,11 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
     url.searchParams,
   );
   if (!queue) error(404, 'Not found');
-  return { queue };
+  // The web Worker holds the producer binding; a deploy without it, or one that cannot report, shows no panel.
+  const backlog = await queueBacklog(
+    (locals.env as { DOMAIN_EVENTS?: QueueBinding } | undefined)?.DOMAIN_EVENTS,
+  );
+  return { queue, backlog };
 };
 
 /** The guard every action shares: signed in, an admin, with a database. Returns who is acting. */
