@@ -1,5 +1,5 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, playerInvitations } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
@@ -10,7 +10,12 @@ import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { localToInstant } from './schedule';
-import { lockTableSchedule, guardTableSchedule } from './schedule-guard';
+import {
+  lockTableSchedule,
+  lockTableFamily,
+  assertTableSchedule,
+  lockTableRows,
+} from './schedule-guard';
 
 /**
  * Whether a table's session is over at `now`. `now` goes in as an ISO string: a `sql` template
@@ -29,10 +34,27 @@ export const sessionEndedBy = (now: Date) =>
  */
 export async function closeElapsedTables(db: AnyDb, now: Date): Promise<string[]> {
   return db.transaction(async (tx) => {
+    const due = await tx
+      .select({ id: gameTables.id })
+      .from(gameTables)
+      .where(and(eq(gameTables.status, 'active'), sessionEndedBy(now)));
+    await lockTableRows(
+      tx as unknown as AnyDb,
+      due.map(({ id }) => id),
+    );
     const closed = await tx
       .update(gameTables)
       .set({ status: nextStatus('active', 'SESSION_ENDED')! })
-      .where(and(eq(gameTables.status, 'active'), sessionEndedBy(now)))
+      .where(
+        and(
+          inArray(
+            gameTables.id,
+            due.map(({ id }) => id),
+          ),
+          eq(gameTables.status, 'active'),
+          sessionEndedBy(now),
+        ),
+      )
       .returning({ id: gameTables.id, slug: gameTables.slug, title: gameTables.title });
 
     const eventIds: string[] = [];
@@ -82,14 +104,10 @@ async function answer(
     let values = change(table);
     if (move === 'POSTPONE') {
       await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
-      // The row as it is now, locked: what the guard checks is exactly what the update writes.
-      const [current] = await tx
-        .select()
-        .from(gameTables)
-        .where(eq(gameTables.id, table.id))
-        .for('update');
+      const { table: current, linked } = await lockTableFamily(tx as unknown as AnyDb, table.id);
+      authorize(actor, 'table:confirm', { gmId: current.gmId, tableStatus: current.status });
       values = change(current);
-      await guardTableSchedule(tx as unknown as AnyDb, table.id, { ...current, ...values });
+      assertTableSchedule(linked, { ...current, ...values }, current.id);
     }
     const [updated] = await tx
       .update(gameTables)

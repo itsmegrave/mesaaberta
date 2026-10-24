@@ -176,7 +176,19 @@ export async function createTable(
       // back, and the retry writes a fresh pair.
       const saved = await db.transaction(async (tx) => {
         // Inside the transaction: a refused request leaves no suggestion behind either.
-        const system = await systemFor(tx as unknown as AnyDb, input.systemSlug, actor!.id);
+        const [source] = duplicatedFromTableId
+          ? await tx
+              .select({ systemId: gameTables.systemId, systemStatus: systems.status })
+              .from(gameTables)
+              .innerJoin(systems, eq(systems.id, gameTables.systemId))
+              .where(eq(gameTables.id, duplicatedFromTableId))
+          : [];
+        const system = await systemFor(
+          tx as unknown as AnyDb,
+          input.systemSlug,
+          actor!.id,
+          source?.systemStatus === 'pending' ? source.systemId : undefined,
+        );
         const asDraft = draft || system.waiting;
         await enforceRateLimit(
           tx as unknown as AnyDb,
@@ -197,7 +209,10 @@ export async function createTable(
             ...(asDraft ? { status: 'draft' as const } : {}),
           })
           .returning({ id: gameTables.id });
-        await setTableCatalog(tx as unknown as AnyDb, created.id, catalogPicks(input, actor!.id));
+        await setTableCatalog(tx as unknown as AnyDb, created.id, {
+          ...catalogPicks(input, actor!.id),
+          inheritedFromTableId: duplicatedFromTableId,
+        });
         await addTableMember(tx as unknown as AnyDb, created.id, actor!.id);
 
         const eventId = await recordEvent(
@@ -400,15 +415,7 @@ export async function updateTable(
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
-    // The row is locked first, so the status read here is the one this save and a publish at the
-    // same moment both see: a draft cannot go public between the check below and the update.
-    const [locked] = await tx
-      .select()
-      .from(gameTables)
-      .where(eq(gameTables.id, table.id))
-      .for('update');
-    await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
-
+    const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     authorizeEdit(actor, locked);
     if (input.capacity < (await seatsTakenAt(tx as unknown as AnyDb, table.id)))
       throw new Invalid('capacity', 'below_taken');
@@ -507,14 +514,10 @@ export async function publishTable(
 
   const eventId = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
-    await guardTableSchedule(tx as unknown as AnyDb, table.id);
-    // Locked and read again inside the transaction: an edit or an admin's decision at the same
-    // moment cannot slip a system nobody approved under a table that is going public.
-    const [locked] = await tx
-      .select({ systemId: gameTables.systemId })
-      .from(gameTables)
-      .where(eq(gameTables.id, table.id))
-      .for('update');
+    const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, undefined, {
+      activating: true,
+    });
+    authorizeEdit(actor, locked);
     const [system] = await tx
       .select({ status: systems.status })
       .from(systems)

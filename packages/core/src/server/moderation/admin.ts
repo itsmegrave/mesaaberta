@@ -21,6 +21,7 @@ import {
   registrations,
   reports,
 } from '@mesaaberta/core/server/db/schema';
+import { lockTableRows } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
@@ -447,7 +448,7 @@ export async function banAccount(
       .select()
       .from(profiles)
       .where(eq(profiles.id, profileId))
-      .for('update');
+      .for('no key update');
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
     if (target.status === 'suspended') throw new Invalid('profileId', 'banned');
@@ -465,7 +466,7 @@ export async function banAccount(
       actor!.id,
     );
 
-    const open = await t
+    const candidates = await t
       .select({
         id: gameTables.id,
         slug: gameTables.slug,
@@ -474,6 +475,12 @@ export async function banAccount(
       })
       .from(gameTables)
       .where(and(eq(gameTables.gmId, profileId), eq(gameTables.status, 'active')));
+    const open = (
+      await lockTableRows(
+        t,
+        candidates.map(({ id }) => id),
+      )
+    ).filter(({ status }) => status === 'active');
     for (const table of open) {
       await t
         .update(gameTables)

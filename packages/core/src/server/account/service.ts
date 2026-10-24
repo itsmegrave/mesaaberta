@@ -20,6 +20,7 @@ import {
   lockInvitationProfiles,
   lockInvitationTablesForProfile,
 } from '../invitations/service';
+import { lockTableRows } from '../tables/schedule-guard';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 /**
@@ -198,7 +199,7 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
       or(eq(playerInvitations.playerId, userId), eq(playerInvitations.gmId, userId))!,
       'account_closed',
     );
-    const active = await t
+    const candidates = await t
       .select({
         id: gameTables.id,
         slug: gameTables.slug,
@@ -208,6 +209,12 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
       .from(gameTables)
       .where(and(eq(gameTables.gmId, userId), eq(gameTables.status, 'active')));
 
+    const active = (
+      await lockTableRows(
+        t,
+        candidates.map(({ id }) => id),
+      )
+    ).filter(({ status }) => status === 'active');
     const ids: string[] = [...cancelled];
     for (const table of active) {
       await t

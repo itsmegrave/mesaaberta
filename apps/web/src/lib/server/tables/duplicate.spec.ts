@@ -10,6 +10,8 @@ import {
   messages,
   ratings,
   systems,
+  platforms,
+  tags,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { createTable, updateTable, publishTable } from '@mesaaberta/core/server/tables/write';
@@ -361,4 +363,56 @@ it('keeps pending systems as drafts and refuses catalog entries made unavailable
       { now },
     ),
   ).rejects.toMatchObject({ field: 'systemSlug' });
+});
+
+it('allows editing inactive sources after a copy takes their released slot', async () => {
+  for (const status of ['disabled', 'not_held'] as const) {
+    const original = await source();
+    await test.db.update(gameTables).set({ status }).where(eq(gameTables.slug, original.slug));
+    await duplicateTable(test.db, actor, original.slug, input(), { now });
+    await expect(
+      updateTable(test.db, actor, original.slug, input({ title: 'Fonte corrigida' })),
+    ).resolves.toEqual({ eventId: expect.any(String) });
+    expect((await row(original.slug)).status).toBe(status);
+  }
+});
+
+it('copies pending systems and terms already held by the source even when suggested by another GM', async () => {
+  const name = 'Sugestão compartilhada';
+  const slug = 'sugestao-compartilhada';
+  await test.db.insert(systems).values({ name, slug, status: 'pending', suggestedBy: other.id });
+  await test.db.insert(platforms).values({ name, slug, status: 'pending', suggestedBy: other.id });
+  await test.db.insert(tags).values({ name, slug, status: 'pending', suggestedBy: other.id });
+  const original = await createTable(
+    test.db,
+    actor,
+    input({ systemSlug: `new:${name}`, platforms: [`new:${name}`], tags: [`new:${name}`] }),
+    { now },
+  );
+  const loaded = await loadTableForDuplication(test.db, actor, original.slug);
+  expect(loaded.heldCatalog).toMatchObject({
+    systems: [{ name, slug, pending: true }],
+    platforms: [{ name, slug, pending: true }],
+    tags: [{ name, slug, pending: true }],
+  });
+  const copied = await duplicateTable(
+    test.db,
+    actor,
+    original.slug,
+    { ...loaded.input, startsAtLocal: '2026-10-11T19:00' },
+    { now },
+  );
+  expect(copied.draft).toBe(true);
+  const result = await loadTableForDuplication(test.db, actor, copied.slug);
+  expect(result.input).toMatchObject({ systemSlug: slug, platforms: [slug], tags: [slug] });
+  await test.db.update(tags).set({ status: 'rejected' }).where(eq(tags.slug, slug));
+  await expect(
+    duplicateTable(
+      test.db,
+      actor,
+      original.slug,
+      { ...loaded.input, startsAtLocal: '2026-10-12T19:00' },
+      { now },
+    ),
+  ).rejects.toMatchObject({ field: 'tags' });
 });

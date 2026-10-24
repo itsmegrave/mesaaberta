@@ -14,6 +14,12 @@
     () => data.catalogRead ?? { systems: data.systems, catalog: data.catalog },
   );
 
+  const held = $derived(data.duplication?.heldCatalog);
+  const withHeld = <T extends { slug: string }>(available: T[], inherited: T[] = []) => [
+    ...available,
+    ...inherited.filter((item) => !available.some(({ slug }) => slug === item.slug)),
+  ];
+
   // svelte-ignore state_referenced_locally
   const initial = form?.form ?? data.form;
   const controller = actionForm({
@@ -60,8 +66,11 @@
 
   <TableForm
     {controller}
-    systems={options.data?.systems ?? data.systems}
-    catalog={options.data?.catalog ?? data.catalog}
+    systems={withHeld(options.data?.systems ?? data.systems, held?.systems)}
+    catalog={{
+      platforms: withHeld((options.data?.catalog ?? data.catalog).platforms, held?.platforms),
+      tags: withHeld((options.data?.catalog ?? data.catalog).tags, held?.tags),
+    }}
     submitLabel={m.form_submit_new()}
     draftLabel={m.form_submit_draft()}
     suggestSystem
