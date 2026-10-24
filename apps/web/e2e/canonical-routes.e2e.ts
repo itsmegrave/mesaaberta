@@ -80,7 +80,7 @@ test.describe('canonical resource URLs', () => {
 
     const profile = await page.request.post('/account/profile?/save', {
       headers,
-      form: { name: user.name, username: `${user.username}!`, city: 'City from an old form' },
+      form: { name: user.name, ageRange: 'invalid', city: 'City from an old form' },
       maxRedirects: 0,
     });
     expect(profile.status()).toBe(400);
