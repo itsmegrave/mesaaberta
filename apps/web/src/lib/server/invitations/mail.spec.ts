@@ -159,6 +159,23 @@ describe('invitation outbox delivery', () => {
     expect(await deliver(second.event)).toEqual([]);
     await setGmInviteBlock(test.db, player, gm.id, false);
   });
+  it.each(['opt_out', 'block', 'accept'] as const)(
+    'suppresses a stale email when %s completes during the Auth address lookup',
+    async (change) => {
+      const { event, result } = await setup();
+      vi.mocked(admin.auth.admin.getUserById).mockImplementationOnce(async () => {
+        if (change === 'opt_out') await setInvitationsEnabled(test.db, player, false);
+        else if (change === 'block') await setGmInviteBlock(test.db, player, gm.id, true);
+        else await respondToInvitation(test.db, player, result.invitationId, 'accept');
+        return { data: { user: { email: 'player@example.test' } }, error: null };
+      });
+      try {
+        expect(await deliver(event)).toEqual([]);
+      } finally {
+        if (change === 'block') await setGmInviteBlock(test.db, player, gm.id, false);
+      }
+    },
+  );
   it('records the recipient bell once and the accepted GM bell once across all handlers and retries', async () => {
     const { event, result } = await setup();
     await playerInvitationNotificationHandler.handle(event, test.db);
