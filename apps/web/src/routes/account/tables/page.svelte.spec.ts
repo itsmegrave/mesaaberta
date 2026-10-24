@@ -33,13 +33,27 @@ const running = {
 };
 
 type Running = typeof running;
-type Data = { playing: (typeof playing)[]; running: Running[]; page?: number; pages?: number };
+type Invitation = {
+  id: string;
+  status: 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
+  expiresAt: Date;
+  gmUsername: string;
+  table: { slug: string; title: string };
+};
+type Data = {
+  playing: (typeof playing)[];
+  running: Running[];
+  invitations?: Invitation[];
+  page?: number;
+  pages?: number;
+};
 /** The page's own data, worked out as the server read does; the layout's is not used here. */
-const show = ({ page = 1, pages = 1, ...data }: Data) => {
+const show = ({ page = 1, pages = 1, invitations = [], ...data }: Data) => {
   const waiting = data.running.filter((table) => table.requests.length > 0);
   return render(Page, {
     data: {
       ...data,
+      invitations,
       page,
       pages,
       totals: { playing: data.playing.length, running: data.running.length },
@@ -58,6 +72,40 @@ const show = ({ page = 1, pages = 1, ...data }: Data) => {
 const panel = (name: string) => page.getByText(name, { exact: true });
 
 describe('Minhas mesas', () => {
+  it('links only pending, unexpired invitations for the player to review', async () => {
+    const pending: Invitation = {
+      id: '00000000-0000-4000-8000-000000000001',
+      status: 'pending',
+      expiresAt: new Date(Date.now() + 3600000),
+      gmUsername: 'ana',
+      table: { slug: 'convite-atual', title: 'Convite atual' },
+    };
+    show({
+      playing: [],
+      running: [],
+      invitations: [
+        pending,
+        {
+          ...pending,
+          id: 'expired',
+          expiresAt: new Date(0),
+          table: { slug: 'expired', title: 'Expirado' },
+        },
+        {
+          ...pending,
+          id: 'accepted',
+          status: 'accepted',
+          table: { slug: 'accepted', title: 'Aceito' },
+        },
+      ],
+    });
+    await expect
+      .element(page.getByRole('link', { name: 'Convite atual' }))
+      .toHaveAttribute('href', '/account/invitations/00000000-0000-4000-8000-000000000001');
+    await expect.element(page.getByRole('link', { name: 'Expirado' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('link', { name: 'Aceito' })).not.toBeInTheDocument();
+  });
+
   // The banner's link leaves `#mesa-...` in the address, and that hash opens the GM's tab: clear it
   // so a test does not start where the one before it ended.
   beforeEach(() => {
