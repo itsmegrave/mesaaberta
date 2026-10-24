@@ -14,7 +14,7 @@ import { closeTable, deleteDraftTable } from '@mesaaberta/core/server/tables/end
 import { concludeTable, markTableNotHeld } from '@mesaaberta/core/server/tables/lifecycle';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { lockTableRows } from '@mesaaberta/core/server/tables/schedule-guard';
-import { invitePlayer, acceptInvitation } from '@mesaaberta/core/server/invitations/service';
+import { invitePlayer, respondToInvitation } from '@mesaaberta/core/server/invitations/service';
 import { joinTable } from '@mesaaberta/core/server/registrations/service';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
@@ -148,7 +148,7 @@ describe('table end concurrency on PostgreSQL', () => {
     await publishTable(db, actor, source.slug);
     const invitation = await invitePlayer(db, actor, source.slug, player.id);
     const outcomes = await Promise.allSettled([
-      acceptInvitation(db, player, invitation.invitationId),
+      respondToInvitation(db, player, invitation.invitationId, 'accept'),
       closeTable(db, actor, source.slug),
     ]);
     expect(outcomes[1].status).toBe('fulfilled');
@@ -161,8 +161,10 @@ describe('table end concurrency on PostgreSQL', () => {
       .select()
       .from(registrations)
       .where(eq(registrations.tableId, saved.tableId));
-    expect(saved.status).toBe(outcomes[0].status === 'fulfilled' ? 'accepted' : 'cancelled');
-    expect(seated).toHaveLength(outcomes[0].status === 'fulfilled' ? 1 : 0);
+    expect(outcomes[0].status).toBe('fulfilled');
+    if (outcomes[0].status !== 'fulfilled') throw outcomes[0].reason;
+    expect(saved.status).toBe(outcomes[0].value.status);
+    expect(seated).toHaveLength(outcomes[0].value.status === 'accepted' ? 1 : 0);
     const audit = await db.select().from(events).where(eq(events.actorId, actor.id));
     expect(audit.filter((entry) => entry.type === 'TableDisabled')).toHaveLength(1);
   });
