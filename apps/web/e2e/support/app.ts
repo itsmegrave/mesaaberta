@@ -145,7 +145,7 @@ export async function createTable(page: Page, table: NewTable) {
   // more than the short UI assertion budget to establish its first database connection.
   const submitted = page.waitForResponse(
     (response) =>
-      response.request().method() === 'POST' && new URL(response.url()).pathname === '/tables/new',
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/t/new',
   );
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
   expect((await submitted).status()).toBeLessThan(400);
