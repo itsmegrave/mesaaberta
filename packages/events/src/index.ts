@@ -13,6 +13,7 @@ export {
 export { createMemoryTransport } from './memory-transport';
 export {
   MAX_DELAY_SECONDS,
+  createDeadLetterConsumer,
   createQueueConsumer,
   queueBacklog,
   queueTransport,

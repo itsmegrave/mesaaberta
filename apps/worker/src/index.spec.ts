@@ -99,4 +99,25 @@ describe('worker', () => {
     info.mockRestore();
     warn.mockRestore();
   });
+
+  it('reports a dead letter with ids only and acknowledges it, without opening the database', async () => {
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const open = vi.fn();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await createWorker(undefined, open).queue(
+      {
+        queue: 'domain-events-canary-dlq',
+        messages: [
+          { body: { eventId: 'e1', type: 'invite.created', version: 1 }, attempts: 11, ack, retry },
+        ],
+      },
+      { ...env, QUEUE_LIVE_HANDLERS: 'mixpanel-product-events-v1' },
+    );
+    expect(ack).toHaveBeenCalledOnce();
+    expect(retry).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
+    expect(JSON.stringify(error.mock.calls)).toContain('queue dead letter');
+    error.mockRestore();
+  });
 });
