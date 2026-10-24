@@ -5,6 +5,7 @@ import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readTableFilters } from '@mesaaberta/core/tables/filters';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
+import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { viewerTimezone } from '@mesaaberta/core/time/timezone';
 import { refusal } from './refusal';
@@ -16,7 +17,7 @@ type Open = typeof createDb;
  * The read side of Trello #120, one resource at a time: `GET /v1/reads/:resource` answers the JSON
  * the web app's reader of the same name builds in-process today, so a page can switch between the
  * two with a flag. The subject is always the actor the web Worker names, never a query parameter.
- * Today: `catalog`, `edit-catalog/:slug`, `preview` and `tables`, each behind its `api_reads_*` flag.
+ * Today: `catalog`, `detail/:slug`, `edit-catalog/:slug`, `preview` and `tables`, each behind its `api_reads_*` flag.
  */
 export function readRoutes(open: Open = openDb) {
   const app = new Hono<{ Bindings: DatabaseEnv; Variables: UserVariables }>();
@@ -46,6 +47,12 @@ export function readRoutes(open: Open = openDb) {
       if (refused) return refused;
       throw error;
     }
+  });
+
+  app.get('/detail/:slug', async (c) => {
+    // An unknown, disabled or someone else's draft table is a 404: web then answers its own.
+    const detail = await readDetail(c.get('db'), c.get('actor'), c.req.param('slug'), new Date());
+    return detail ? c.json(detail) : c.json({ error: 'not_found' }, 404);
   });
 
   return app;

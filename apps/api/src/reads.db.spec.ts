@@ -1,9 +1,17 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, platforms, profiles, systems, tags } from '@mesaaberta/db/schema';
+import {
+  gameTables,
+  platforms,
+  profiles,
+  registrations,
+  systems,
+  tags,
+} from '@mesaaberta/db/schema';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
+import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
@@ -174,5 +182,71 @@ describe('GET /v1/reads/tables', () => {
 
   it('needs a known actor', async () => {
     expect((await getTables('', null)).status).toBe(401);
+  });
+});
+
+describe('GET /v1/reads/detail/:slug', () => {
+  const getDetail = (slug: string, actor: string | null = ana) =>
+    app.request(`/detail/${slug}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+  const actorOf = async (id: string) =>
+    (
+      await test.db
+        .select({ id: profiles.id, role: profiles.role, status: profiles.status })
+        .from(profiles)
+        .where(eq(profiles.id, id))
+    )[0];
+
+  it('answers exactly what the in-process reader builds, per viewer', async () => {
+    const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+    const [table] = await test.db
+      .insert(gameTables)
+      .values({
+        slug: 'mesa-detalhe',
+        title: 'Mesa de detalhe',
+        kind: 'one_shot',
+        capacity: 4,
+        status: 'active',
+        startsAt: new Date('2099-03-01T20:00:00Z'),
+        durationMinutes: 60,
+        timezone: 'UTC',
+        gmId: ana,
+        systemId: system.id,
+        joinDetails: 'https://example.test/sala',
+      } as never)
+      .returning({ id: gameTables.id });
+    await test.db
+      .insert(registrations)
+      .values({ tableId: table.id, playerId: bia, status: 'confirmed' } as never);
+
+    for (const who of [ana, bia]) {
+      const answer = await getDetail('mesa-detalhe', who);
+      expect(answer.status).toBe(200);
+      const body = await answer.json();
+      expect(JSON.stringify(body)).not.toContain('gmId');
+      expect(body).toEqual(
+        JSON.parse(
+          JSON.stringify(await readDetail(test.db, await actorOf(who), 'mesa-detalhe', new Date())),
+        ),
+      );
+    }
+    // The GM sees the private parts; a confirmed player the join details only.
+    expect(
+      ((await (await getDetail('mesa-detalhe', ana)).json()) as { registrations: unknown })
+        .registrations,
+    ).not.toBeNull();
+    expect(
+      ((await (await getDetail('mesa-detalhe', bia)).json()) as { registrations: unknown })
+        .registrations,
+    ).toBeNull();
+  });
+
+  it('keeps someone else’s draft and unknown tables a 404', async () => {
+    expect((await getDetail('mesa-ana', bia)).status).toBe(404);
+    expect((await getDetail('mesa-ana', ana)).status).toBe(200);
+    expect((await getDetail('no-such-table')).status).toBe(404);
+  });
+
+  it('needs a known actor', async () => {
+    expect((await getDetail('mesa-detalhe', null)).status).toBe(401);
   });
 });
