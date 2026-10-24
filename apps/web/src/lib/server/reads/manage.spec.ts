@@ -9,6 +9,7 @@ const event = {
   locals: {
     db: {},
     env: {},
+    flags: { isEnabled: async () => false },
     getUser: async () => ({ id: 'gm' }),
     getProfile: async () => ({ id: 'gm', username: 'gm', role: 'user', status: 'active' }),
   },
