@@ -44,7 +44,7 @@ The system is live at mesaaberta.app. The split into web / api / worker and the 
 - Schema: expand, then migrate, then contract. Only additive migrations while old and new code run together. Never rename a handler (`handledBy` stores names) and never truncate or move `events` (audit and Marco Civil log).
 - Anything under `/admin` may be on for all admins from the start; the flag is only a kill switch. Percentage ramps are for member-facing traffic. Pure UI fixes ship unflagged.
 - There is no staging environment: canaries run on production (ADR 0003 addendum). Tell the user before creating or toggling a production flag, and before creating any Cloudflare resource (queues, Workers, KV). Do not flip the release flag `is_platform_released`.
-- `EVENT_POLLER` stays off and `api_events_fenced_leases` stays at admins + 10% until the user says otherwise. `QUEUES_164_VERIFIED` is set only after evidence.
+- `EVENT_POLLER` stays off. Every refactor flag with a rollout starts at admins + 30% (30% is the floor, including `api_events_fenced_leases`). `QUEUES_164_VERIFIED` is set only after evidence.
 - Production deploys come from the private repo's pinned tagged release. Workers Builds stays connected until two verified pipeline deploys; do not run both at once (they would race on migrations).
 
 ### Tooling
