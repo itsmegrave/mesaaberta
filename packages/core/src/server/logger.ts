@@ -1,5 +1,5 @@
-import { safeFields, scrubString } from '../observability/privacy';
-export { scrubString } from '../observability/privacy';
+import { safeFields, scrubString, type AppName } from '../observability/privacy';
+export { scrubString, type AppName } from '../observability/privacy';
 
 export type Level = 'debug' | 'info' | 'warn' | 'error';
 
@@ -26,10 +26,16 @@ export type TelemetrySink = {
 };
 
 let sink: TelemetrySink | null = null;
+let app: AppName | null = null;
 
 /** Installs (or, with `null`, removes) the process-wide telemetry sink. */
 export const setTelemetrySink = (next: TelemetrySink | null) => {
   sink = next;
+};
+
+/** Names the app this process runs (web, api or worker); every line and issue carries it as `app`. */
+export const setAppName = (next: AppName | null) => {
+  app = next;
 };
 
 type Options = {
@@ -69,6 +75,7 @@ export function createLogger(
     const line = {
       ...safeFields({ ...fields, ...bindings }),
       ...safeError(fields.error),
+      ...(app && { app }),
       service: 'mesaaberta',
       schemaVersion: 1,
       time: now().toISOString(),
@@ -88,7 +95,7 @@ export function createLogger(
       ) {
         sink?.capture(
           fields.error,
-          safeFields({ ...fields, ...bindings, ...safeError(fields.error) }),
+          safeFields({ ...fields, ...bindings, ...safeError(fields.error), app }),
         );
       }
     } catch {

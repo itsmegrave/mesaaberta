@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
-import { privateSentryOptions } from '@mesaaberta/core/observability/sentry-options';
-import { setTelemetrySink } from '@mesaaberta/core/server/logger';
+import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createApi } from './app';
 import { sentrySink } from './sentry-sink';
 
@@ -8,12 +8,13 @@ import { sentrySink } from './sentry-sink';
 // the background worker. Without `SENTRY_DSN` the SDK stays off and the logger still writes to the
 // console (Workers Logs). Handled errors reach Sentry through the logger (see `onError` in app.ts).
 setTelemetrySink(sentrySink);
+setAppName('api');
 
 const api = createApi();
 
 export default Sentry.withSentry(
   (env: { SENTRY_DSN?: string; CF_VERSION_METADATA?: { id?: string } }) => ({
-    ...privateSentryOptions,
+    ...sentryOptionsForApp('api'),
     dsn: env.SENTRY_DSN,
     environment: 'production',
     release: env.CF_VERSION_METADATA?.id,

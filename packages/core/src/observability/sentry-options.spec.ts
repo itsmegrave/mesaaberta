@@ -1,6 +1,11 @@
 import type { ErrorEvent } from '@sentry/core';
 import { describe, expect, it } from 'vitest';
-import { privateEvent, privateLog, privateSentryOptions } from './sentry-options';
+import {
+  privateEvent,
+  privateLog,
+  privateSentryOptions,
+  sentryOptionsForApp,
+} from './sentry-options';
 
 describe('sentry options', () => {
   it('withholds exception messages and request data', () => {
@@ -39,5 +44,16 @@ describe('sentry options', () => {
     expect(privateSentryOptions.beforeSendTransaction()).toBeNull();
     expect(privateSentryOptions.beforeSendMetric()).toBeNull();
     expect(privateSentryOptions.beforeBreadcrumb()).toBeNull();
+  });
+
+  it('tags every event with the app that raised it', () => {
+    const options = sentryOptionsForApp('api');
+    expect(options.initialScope.tags.app).toBe('api');
+    const event = { event_id: 'e1', tags: { app: 'web', route: '/x' } } as unknown as ErrorEvent;
+    expect(options.beforeSend(event).tags).toEqual({ app: 'api', route: '/x' });
+    expect(
+      privateLog({ level: 'info', message: 'x', attributes: { service: 'mesaaberta', app: 'api' } })
+        ?.attributes,
+    ).toEqual({ service: 'mesaaberta', app: 'api' });
   });
 });

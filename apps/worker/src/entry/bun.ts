@@ -2,6 +2,7 @@ import { createWorker, type WorkerEnv } from '../index';
 import { connectionStringFrom, createDb } from '@mesaaberta/core/server/db/client';
 import { outboxDepth } from '@mesaaberta/core/server/events/outbox-depth';
 import { SWEEPER_CRON } from '@mesaaberta/core/server/events/scheduled';
+import { setAppName } from '@mesaaberta/core/server/logger';
 import { createJobMetrics } from '@mesaaberta/core/server/metrics';
 import { createScheduler } from '../scheduler';
 
@@ -9,6 +10,7 @@ import { createScheduler } from '../scheduler';
 // Worker runs from its Cron Triggers, called by a small in-process scheduler (see scheduler.ts). It
 // has no public surface and no queue: events are swept from the Postgres outbox, set
 // `EVENT_POLLER=true` to sweep through the poller contract (ADR 0003).
+setAppName('worker');
 const env = process.env as unknown as WorkerEnv;
 const worker = createWorker();
 const sweepEverySeconds = Math.max(30, Number(process.env.SWEEP_INTERVAL_SECONDS ?? 300));

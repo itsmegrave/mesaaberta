@@ -1,5 +1,5 @@
 import type { ErrorEvent, Log } from '@sentry/core';
-import { safeFields, scrubString } from './privacy';
+import { safeFields, scrubString, type AppName } from './privacy';
 
 // Type-only imports from the SDK's platform-neutral core: nothing is bundled by this file, and every
 // Sentry SDK (SvelteKit, Cloudflare, Node) takes these shapes, so each host shares one privacy policy.
@@ -84,3 +84,13 @@ export const privateSentryOptions = {
   beforeSendMetric: () => null,
   beforeBreadcrumb: () => null,
 };
+
+/**
+ * `privateSentryOptions` for one app: every event is tagged `app` (web, api or worker), whatever
+ * scope raised it, so issues from the three deployables can be told apart and filtered.
+ */
+export const sentryOptionsForApp = (app: AppName) => ({
+  ...privateSentryOptions,
+  initialScope: { tags: { app } },
+  beforeSend: (event: ErrorEvent) => privateEvent({ ...event, tags: { ...event.tags, app } }),
+});

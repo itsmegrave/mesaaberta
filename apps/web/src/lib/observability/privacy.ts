@@ -1,4 +1,4 @@
-import { privateSentryOptions } from '@mesaaberta/core/observability/sentry-options';
+import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
 
 // The vendor-neutral helpers and the privacy policy live in @mesaaberta/core; this file adds what
 // this deployment configured and keeps the old import path working.
@@ -16,7 +16,7 @@ type SentryEnv = { PUBLIC_SENTRY_DSN?: string; PUBLIC_SENTRY_ORIGIN?: string };
 export const sentryOptionsFor = (env: SentryEnv, origin: string, production: boolean) => ({
   dsn: env.PUBLIC_SENTRY_DSN || undefined,
   environment: 'production',
-  ...privateSentryOptions,
+  ...sentryOptionsForApp('web'),
   enabled:
     production &&
     !!env.PUBLIC_SENTRY_DSN &&

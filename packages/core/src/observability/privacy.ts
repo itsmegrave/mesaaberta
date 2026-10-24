@@ -8,6 +8,9 @@ export const scrubString = (text: string) =>
     )
     .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[redacted]');
 
+/** Which deployable wrote a log line or raised an error, so web, api and worker can be told apart. */
+export type AppName = 'web' | 'api' | 'worker';
+
 // No free text or request payloads are forwarded. Who acted and on what is, as opaque ids only
 // (`userId`, `resourceType`, `resourceId`), so a line can be traced to a person and a record.
 // Add fields deliberately here.
@@ -42,6 +45,7 @@ const LABELS = new Set([
   'outcome',
   'method',
   'service',
+  'app',
   'environment',
   'release',
   'code',
