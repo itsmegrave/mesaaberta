@@ -58,6 +58,36 @@ const show = ({ page = 1, pages = 1, ...data }: Data) => {
 const panel = (name: string) => page.getByText(name, { exact: true });
 
 describe('Minhas mesas', () => {
+  it('offers permanent deletion for a draft and explains the irreversible action before posting', async () => {
+    show({ playing: [], running: [{ ...running, tableStatus: 'draft' }] });
+    await page.getByRole('button', { name: 'Excluir rascunho', exact: true }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect.element(dialog.getByText(/não pode ser desfeita/)).toBeVisible();
+    await expect.element(dialog.getByRole('button', { name: 'Cancelar' })).toHaveFocus();
+    expect(
+      dialog
+        .getByRole('button', { name: 'Excluir rascunho', exact: true })
+        .element()
+        .closest('form')
+        ?.getAttribute('action'),
+    ).toBe('/tables/cronicas/manage?/deleteDraft');
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await expect.element(dialog).not.toBeInTheDocument();
+  });
+  it('offers closing a published table while explaining that its history is preserved', async () => {
+    show({ playing: [], running: [running] });
+    await page.getByRole('button', { name: 'Encerrar mesa', exact: true }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect.element(dialog.getByText(/histórico será preservado/)).toBeVisible();
+    expect(
+      dialog
+        .getByRole('button', { name: 'Encerrar mesa', exact: true })
+        .element()
+        .closest('form')
+        ?.getAttribute('action'),
+    ).toBe('/tables/cronicas/manage?/close');
+  });
+
   // The banner's link leaves `#mesa-...` in the address, and that hash opens the GM's tab: clear it
   // so a test does not start where the one before it ended.
   beforeEach(() => {

@@ -9,6 +9,8 @@
   import { getLocale } from '#lib/paraglide/runtime.js';
   import ActionForm from './ActionForm.svelte';
   import Icon from './Icon.svelte';
+  import Button from './Button.svelte';
+  import ConfirmDialog from './ConfirmDialog.svelte';
   import SeatDots from './SeatDots.svelte';
 
   type Person = { playerId: string; username: string };
@@ -34,6 +36,7 @@
 
   // svelte-ignore state_referenced_locally
   let playersOpen = $state(openPlayers);
+  let endOpen = $state(false);
 
   const locale = getLocale();
   const page = $derived(localizedHref(`/tables/${item.slug}`, locale));
@@ -124,7 +127,21 @@
       class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold"
       >{m.table_duplicate()}</a
     >
+    {#if ['draft', 'active', 'awaiting_confirmation'].includes(item.tableStatus)}
+      <Button variant="secondary" class="text-error-alert" onclick={() => (endOpen = true)}>
+        {item.tableStatus === 'draft' ? m.table_delete_draft() : m.table_close()}
+      </Button>
+    {/if}
   </p>
+
+  <ConfirmDialog
+    bind:open={endOpen}
+    action="{manage}?/{item.tableStatus === 'draft' ? 'deleteDraft' : 'close'}"
+    label={item.tableStatus === 'draft' ? m.table_delete_draft() : m.table_close()}
+    title={item.tableStatus === 'draft' ? m.table_delete_draft_title() : m.table_close_title()}
+    text={item.tableStatus === 'draft' ? m.table_delete_draft_text() : m.table_close_text()}
+    success={item.tableStatus === 'draft' ? m.toast_table_deleted() : m.toast_table_closed()}
+  />
 
   {#if item.requests.length > 0}
     <div class="mt-5 rounded-lg bg-lamp-wash p-4">

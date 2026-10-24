@@ -67,6 +67,7 @@ const recipientColumns = {
 
 const calendarColumns = {
   id: gameTables.id,
+  status: gameTables.status,
   slug: gameTables.slug,
   title: gameTables.title,
   description: gameTables.description,
@@ -87,7 +88,11 @@ const addressOf = (from: string) => from.match(/<([^<>]+)>\s*$/)?.[1] ?? from;
 
 const localFrom = 'Mesa Aberta <no-reply@mesaaberta.local>';
 
-type InviteTable = CalendarTable & { gmId: string; welcomeMessage: string | null };
+type InviteTable = CalendarTable & {
+  gmId: string;
+  welcomeMessage: string | null;
+  status: typeof gameTables.$inferSelect.status;
+};
 
 async function tableOf(db: AnyDb, tableId: string) {
   const [table] = await db
@@ -183,10 +188,13 @@ export function createInviteHandler(
       // A draft has no players and no session anyone was invited to: nothing to send or cancel.
       if ('draft' in event.payload && event.payload.draft) return;
       const table = await tableOf(db, event.payload.tableId);
-      const recipients = await recipientsFor(db, event, table);
-      const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
       const method =
         event.type === 'PlayerLeft' || event.type === 'TableDisabled' ? 'CANCEL' : 'REQUEST';
+      // Queue order is not guaranteed. A delayed create/join/edit must not recreate a calendar
+      // entry after the table's cancellation, including an edit made through the legacy form.
+      if (table.status === 'disabled' && method === 'REQUEST') return;
+      const recipients = await recipientsFor(db, event, table);
+      const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
       const url = tableUrl(env.APP_ORIGIN, table.slug);
       // Written in each person's own timezone, like the site shows it to them.
       const startsAtFor = (recipient: Recipient) =>

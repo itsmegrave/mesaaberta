@@ -38,7 +38,7 @@ export async function callApiRaw(
   log: Logger = logger,
   json?: unknown,
   headers: Record<string, string> = {},
-  method: 'GET' | 'POST' = 'POST',
+  method: 'GET' | 'POST' | 'DELETE' = 'POST',
 ): Promise<ApiAnswer | null> {
   const settings = env as
     { API?: ApiBinding; API_URL?: string; API_INTERNAL_TOKEN?: string } | undefined;

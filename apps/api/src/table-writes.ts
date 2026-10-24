@@ -4,6 +4,7 @@ import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { loadTableForDuplication } from '@mesaaberta/core/server/tables/duplicate';
 import { tableWriteActions } from '@mesaaberta/core/server/tables/write-actions';
+import { closeTable, deleteDraftTable } from '@mesaaberta/core/server/tables/end';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
@@ -31,6 +32,8 @@ export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
   if (duplicationOnly) {
     app.use('/:slug/duplicate', userGuard(open));
     app.use('/:slug/duplication', userGuard(open));
+    app.use('/:slug/draft', userGuard(open));
+    app.use('/:slug/close', userGuard(open));
   } else app.use('*', userGuard(open));
 
   const run = async (
@@ -49,6 +52,21 @@ export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
       throw error;
     }
   };
+
+  for (const [method, path, apply] of [
+    ['delete', '/:slug/draft', deleteDraftTable],
+    ['post', '/:slug/close', closeTable],
+  ] as const) {
+    app[method](path, async (c) => {
+      try {
+        return c.json(await apply(c.get('db'), c.get('actor'), c.req.param('slug')));
+      } catch (cause) {
+        const refused = refusal(c, cause);
+        if (refused) return refused;
+        throw cause;
+      }
+    });
+  }
 
   if (duplicationOnly) {
     app.get('/:slug/duplication', async (c) => {

@@ -4,7 +4,6 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import { page } from '$app/state';
   import TableForm from '#lib/components/TableForm.svelte';
@@ -34,7 +33,6 @@
 
   const locale = getLocale();
   const tablePage = $derived(localizedHref(`/tables/${data.slug}`, locale));
-  let disableOpen = $state(false);
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(new URL(tablePage, page.url.origin).href);
@@ -54,15 +52,6 @@
       },
       { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
     ];
-    if (data.status === 'active' || data.status === 'draft') {
-      items.push({
-        id: 'disable',
-        label: m.menu_disable_table(),
-        icon: 'trash',
-        destructive: true,
-        onselect: () => (disableOpen = true),
-      });
-    }
     return items;
   });
 </script>
@@ -105,14 +94,5 @@
     manageHref={localizedHref(`/tables/${data.slug}/manage`, locale)}
     calendarNote
     suggestSystem={data.status === 'draft'}
-  />
-
-  <ConfirmDialog
-    bind:open={disableOpen}
-    action="?/disable"
-    label={m.form_disable()}
-    title={m.form_disable_confirm_title()}
-    text={m.form_disable_confirm_text()}
-    success={m.toast_table_disabled()}
   />
 </section>

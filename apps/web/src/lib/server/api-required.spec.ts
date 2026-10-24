@@ -14,6 +14,14 @@ const localsWith = (fetch?: (request: Request) => Promise<Response>) =>
   }) as unknown as App.Locals;
 
 describe('required API for new features', () => {
+  it('sends a draft deletion with DELETE through the required transport', async () => {
+    const fetch = vi.fn(async (_request: Request) => Response.json({ eventIds: ['deleted'] }));
+    const locals = localsWith(fetch);
+    await requireApiWrite(locals, actor, '/v1/tables/draft/draft', {}, 'DELETE');
+    expect(fetch.mock.calls[0][0].method).toBe('DELETE');
+    expect(locals.flags.isEnabled).not.toHaveBeenCalled();
+  });
+
   it('reads through API even when migration flags are off', async () => {
     const fetch = vi.fn(async (_request: Request) => Response.json({ enabled: true }));
     const locals = localsWith(fetch);

@@ -50,7 +50,12 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
     case 'TableDisabled':
       // The table is off the public pages, so there is nothing to link to.
       return {
-        to: await confirmedPlayers(db, event.payload.tableId),
+        to: [
+          ...new Set([
+            ...(await confirmedPlayers(db, event.payload.tableId)),
+            ...(event.payload.cancelledRequestPlayerIds ?? []),
+          ]),
+        ],
         type: 'table_cancelled',
         link: null,
       };
@@ -101,10 +106,28 @@ export const notificationHandler: Handler = {
   async handle(event, db) {
     const notifying = event as NotifyingEvent;
     const [table] = await db
-      .select({ gmId: gameTables.gmId, slug: gameTables.slug, title: gameTables.title })
+      .select({
+        gmId: gameTables.gmId,
+        slug: gameTables.slug,
+        title: gameTables.title,
+        status: gameTables.status,
+      })
       .from(gameTables)
       .where(eq(gameTables.id, notifying.payload.tableId));
     if (!table) return; // nothing left to tell anyone about
+    // A queued request/update can arrive after closure. Its cancellation already tells people
+    // what remains true; never send a stale approval or session prompt after that.
+    if (
+      table.status === 'disabled' &&
+      [
+        'TableUpdated',
+        'TableAwaitingConfirmation',
+        'JoinRequested',
+        'JoinApproved',
+        'PlayerJoined',
+      ].includes(notifying.type)
+    )
+      return;
 
     const notice = await noticeFor(db, notifying, table.gmId);
     const recipients = notice.to.filter((id) => id !== event.actorId);

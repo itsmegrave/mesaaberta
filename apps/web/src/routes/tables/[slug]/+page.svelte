@@ -129,10 +129,10 @@
         onselect: () => document.getElementById('talk-to-gm')?.click(),
       });
     }
-    if (data.canEdit && (table.status === 'active' || table.status === 'draft')) {
+    if (data.isGm && ['active', 'draft', 'awaiting_confirmation'].includes(table.status)) {
       items.push({
         id: 'disable',
-        label: m.menu_disable_table(),
+        label: table.status === 'draft' ? m.table_delete_draft() : m.table_close(),
         icon: 'trash',
         destructive: true,
         onselect: () => (disableOpen = true),
@@ -431,14 +431,16 @@
   </div>
 
   <ReportDialog targets={data.reportTargets} trigger={false} bind:open={reportOpen} />
-  {#if data.canEdit}
+  {#if data.isGm}
     <ConfirmDialog
       bind:open={disableOpen}
-      action="{localizedHref(`/tables/${table.slug}/edit`, locale)}?/disable"
-      label={m.form_disable()}
-      title={m.form_disable_confirm_title()}
-      text={m.form_disable_confirm_text()}
-      success={m.toast_table_disabled()}
+      action="{localizedHref(`/tables/${table.slug}/manage`, locale)}?/{table.status === 'draft'
+        ? 'deleteDraft'
+        : 'close'}"
+      label={table.status === 'draft' ? m.table_delete_draft() : m.table_close()}
+      title={table.status === 'draft' ? m.table_delete_draft_title() : m.table_close_title()}
+      text={table.status === 'draft' ? m.table_delete_draft_text() : m.table_close_text()}
+      success={table.status === 'draft' ? m.toast_table_deleted() : m.toast_table_closed()}
       onfail={(message) => (failed = message)}
     />
   {/if}

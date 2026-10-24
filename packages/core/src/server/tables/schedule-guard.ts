@@ -1,7 +1,7 @@
 import { asc, eq, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables } from '../db/schema';
-import { Invalid } from '../errors';
+import { Invalid, NotFound } from '../errors';
 import { intervalsOverlap } from './schedule';
 
 type Session = { startsAt: Date; durationMinutes: number };
@@ -21,6 +21,7 @@ const holdsSlot = (table: { status: string }) =>
  */
 export async function guardTableSchedule(db: AnyDb, tableId: string, proposed?: Session) {
   const [table] = await db.select().from(gameTables).where(eq(gameTables.id, tableId));
+  if (!table) throw new NotFound();
   const parentId = table.duplicatedFromTableId;
   const linked = await db
     .select()

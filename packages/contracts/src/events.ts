@@ -37,6 +37,8 @@ export type DomainEvent =
     }
   // The GM saved a table as a draft. Nobody else sees it and nobody is told.
   | { type: 'TableDrafted'; payload: { tableId: string; slug: string; title: string } }
+  // Minimal audit, under the ordinary event retention. No draft content survives deletion.
+  | { type: 'TableDraftDeleted'; payload: { tableId: string } }
   // The GM edited something players see (the invite and the bell follow it) or moved the session.
   // `changes` says what, for the history an admin reads; rows from before it have none.
   | { type: 'TableUpdated'; payload: TableChange }
@@ -45,7 +47,13 @@ export type DomainEvent =
   | { type: 'TableEdited'; payload: TableChange }
   | {
       type: 'TableDisabled';
-      payload: { tableId: string; slug: string; title: string; draft?: true };
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        draft?: true;
+        cancelledRequestPlayerIds?: string[];
+      };
     }
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }

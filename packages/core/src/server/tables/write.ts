@@ -536,9 +536,19 @@ export async function disableTable(
   authorize(actor, 'table:disable', { gmId: table.gmId, tableStatus: table.status });
 
   const eventId = await db.transaction(async (tx) => {
+    // A request from an older web client may still use this adapter. Serialize with permanent
+    // draft deletion too, so it cannot recreate a title-bearing audit after the draft was erased.
+    await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
+    const [locked] = await tx
+      .select()
+      .from(gameTables)
+      .where(eq(gameTables.id, table.id))
+      .for('update');
+    if (!locked) throw new NotFound();
+    authorize(actor, 'table:disable', { gmId: locked.gmId, tableStatus: locked.status });
     await tx
       .update(gameTables)
-      .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
+      .set({ status: 'disabled', icalSequence: locked.icalSequence + 1 })
       .where(eq(gameTables.id, table.id));
 
     return recordEvent(tx as unknown as AnyDb, {
@@ -547,8 +557,8 @@ export async function disableTable(
       payload: {
         tableId: table.id,
         slug: table.slug,
-        title: table.title,
-        ...(table.status === 'draft' ? { draft: true as const } : {}),
+        title: locked.title,
+        ...(locked.status === 'draft' ? { draft: true as const } : {}),
       },
     });
   });

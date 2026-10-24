@@ -60,10 +60,15 @@
       { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
       { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
     ];
-    if (table.status === 'active' || table.status === 'draft') {
+    if (
+      data.canEnd &&
+      (table.status === 'active' ||
+        table.status === 'draft' ||
+        table.status === 'awaiting_confirmation')
+    ) {
       items.push({
         id: 'disable',
-        label: m.menu_disable_table(),
+        label: table.status === 'draft' ? m.table_delete_draft() : m.table_close(),
         icon: 'trash',
         destructive: true,
         onselect: () => (disableOpen = true),
@@ -539,11 +544,11 @@
 
   <ConfirmDialog
     bind:open={disableOpen}
-    action="{editPage}?/disable"
-    label={m.form_disable()}
-    title={m.form_disable_confirm_title()}
-    text={m.form_disable_confirm_text()}
-    success={m.toast_table_disabled()}
+    action="{here}?/{table.status === 'draft' ? 'deleteDraft' : 'close'}"
+    label={table.status === 'draft' ? m.table_delete_draft() : m.table_close()}
+    title={table.status === 'draft' ? m.table_delete_draft_title() : m.table_close_title()}
+    text={table.status === 'draft' ? m.table_delete_draft_text() : m.table_close_text()}
+    success={table.status === 'draft' ? m.toast_table_deleted() : m.toast_table_closed()}
   />
   {#if removing}
     <ConfirmDialog

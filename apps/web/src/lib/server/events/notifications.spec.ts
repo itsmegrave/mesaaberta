@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   gameTables,
@@ -52,6 +53,7 @@ beforeAll(async () => {
 afterAll(() => test.close());
 beforeEach(async () => {
   await test.db.delete(notifications);
+  await test.db.update(gameTables).set({ status: 'active' }).where(eq(gameTables.id, tableId));
 });
 
 const stored = (event: DomainEvent, actorId: string): StoredEvent => ({
@@ -73,6 +75,28 @@ const written = async () =>
   }));
 
 describe('notificationHandler', () => {
+  it('suppresses stale update, join and session notices after closure', async () => {
+    await test.db.update(gameTables).set({ status: 'disabled' }).where(eq(gameTables.id, tableId));
+    for (const type of ['TableUpdated', 'TableAwaitingConfirmation'] as const)
+      await handle(stored({ type, payload: table }, gm));
+    for (const type of ['JoinRequested', 'JoinApproved', 'PlayerJoined'] as const)
+      await handle(stored({ type, payload: { ...seat, playerId: caio } }, gm));
+    expect(await written()).toEqual([]);
+  });
+
+  it('notifies cancelled requesters exactly once without giving them a seat', async () => {
+    const event = stored(
+      { type: 'TableDisabled', payload: { ...table, cancelledRequestPlayerIds: [caio, caio] } },
+      gm,
+    );
+    await handle(event);
+    await handle(event);
+    expect((await written()).filter((notice) => notice.to === caio)).toEqual([
+      { to: caio, type: 'table_cancelled', category: 'table', link: null },
+    ]);
+    expect(await written()).toHaveLength(3);
+  });
+
   it.each([
     ['TableUpdated', 'table_updated', 'table', '/tables/mesa'],
     ['TableDisabled', 'table_cancelled', 'table', null],

@@ -355,23 +355,18 @@ test.describe('editing and disabling', () => {
     await context.close();
   });
 
-  test('disabling takes a table off the public pages, and its address answers 404', async ({
-    page,
-    browser,
-  }) => {
+  test('closing preserves the table and removes public access', async ({ page, browser }) => {
     const gm = await createUser('Mestre Marcos');
     const title = uniqueTitle('Vai sumir');
     await signIn(page, gm);
     const slug = await createTable(page, { title });
 
-    await page.goto(`/tables/${slug}/edit`);
-    // It asks first; only the dialog's button disables.
-    await chooseFromMenu(page, 'Desativar mesa…');
-    const dialog = page.getByRole('alertdialog', { name: 'Desativar esta mesa?' });
+    await page.goto(`/tables/${slug}/manage`);
+    await chooseFromMenu(page, 'Encerrar mesa');
+    const dialog = page.getByRole('alertdialog', { name: 'Encerrar esta mesa?' });
     await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
-    await dialog.getByRole('button', { name: 'Desativar mesa' }).click();
-    await expect(page).toHaveURL(/\/tables$/);
-    await expect(page.getByRole('link', { name: title })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Encerrar mesa', exact: true }).click();
+    await expect(page).toHaveURL(/\/account\/tables$/);
 
     const visitor = await browser.newContext();
     const anon = await visitor.newPage();

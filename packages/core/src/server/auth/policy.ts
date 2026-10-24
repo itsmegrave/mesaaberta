@@ -22,6 +22,7 @@ type Resources = {
   /** A concluded table is frozen: its ratings describe it as it was. */
   'table:edit': { gmId: string; tableStatus: TableStatus };
   'table:disable': { gmId: string; tableStatus: TableStatus };
+  'table:end': { gmId: string };
   /** After the session: say it happened, that it did not, or move it to a new date. */
   'table:confirm': { gmId: string; tableStatus: TableStatus };
   /** The facts a join depends on, read inside the capacity transaction. */
@@ -126,6 +127,7 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     Boolean(table && table.gmId === actor.id && !table.moderatedAt),
   'table:edit': changeable,
   'table:disable': changeable,
+  'table:end': (actor, table) => Boolean(table && actor.id === table.gmId),
   'table:confirm': (actor, table) =>
     table !== undefined &&
     nextStatus(table.tableStatus, 'HAPPENED') !== null &&

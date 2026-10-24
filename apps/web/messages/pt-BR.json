@@ -1854,5 +1854,14 @@
   "admin_reports_target_partner_option": "Parceiros",
   "table_duplicate": "Duplicar mesa",
   "table_duplicate_lede": "Reaproveite as informações de “{title}” e escolha uma nova data. A cópia começa sem jogadores.",
-  "form_error_schedule_conflict": "Esta sessão se sobrepõe à mesa de origem ou a uma cópia. Escolha outro horário ou ajuste a duração."
+  "form_error_schedule_conflict": "Esta sessão se sobrepõe à mesa de origem ou a uma cópia. Escolha outro horário ou ajuste a duração.",
+  "table_delete_draft": "Excluir rascunho",
+  "table_delete_draft_title": "Excluir este rascunho permanentemente?",
+  "table_delete_draft_text": "O rascunho, suas configurações e sua conversa serão apagados permanentemente. Esta ação não pode ser desfeita.",
+  "table_close": "Encerrar mesa",
+  "table_close_title": "Encerrar esta mesa?",
+  "table_close_text": "A mesa deixará de receber jogadores. Solicitações e convites pendentes serão cancelados, e os participantes receberão o cancelamento no calendário. O histórico será preservado.",
+  "toast_table_deleted": "Rascunho excluído.",
+  "toast_table_closed": "Mesa encerrada.",
+  "history_event_TableDraftDeleted": "excluiu um rascunho permanentemente"
 }

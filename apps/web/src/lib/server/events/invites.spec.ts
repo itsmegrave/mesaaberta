@@ -48,6 +48,7 @@ beforeAll(async () => {
 afterAll(() => test.close());
 beforeEach(async () => {
   await test.db.delete(registrations);
+  await test.db.update(gameTables).set({ status: 'active' }).where(eq(gameTables.id, tableId));
 });
 
 const env = {
@@ -298,6 +299,21 @@ describe('calendar invite handler', () => {
     }
 
     expect(sent.bodies).toEqual([]);
+  });
+
+  it('never resurrects a cancelled calendar entry with an older pending request or edit event', async () => {
+    await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
+    await test.db.update(gameTables).set({ status: 'disabled' }).where(eq(gameTables.id, tableId));
+    const sent = capture();
+    const handler = createInviteHandler(env, sent.request, admin());
+    for (const type of ['TableCreated', 'TableUpdated'] as const)
+      await handler.handle(tableEvent(type), test.db);
+    for (const type of ['PlayerJoined', 'JoinApproved', 'JoinRequested'] as const)
+      await handler.handle(event(type), test.db);
+    expect(sent.bodies).toEqual([]);
+    await handler.handle(tableEvent('TableDisabled'), test.db);
+    expect(sent.bodies).toHaveLength(2);
+    expect(sent.bodies.every((body) => body.subject === 'Cancelada: Mesa do Dragão')).toBe(true);
   });
 
   it('sends an updated invite to the GM and every confirmed player when the table changes', async () => {
