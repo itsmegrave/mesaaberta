@@ -96,6 +96,11 @@ export const flagDefaults = {
   // a call that cannot be made, or a refusal, falls back to the web path. Needs the API binding.
   // Admins first.
   api_reads_detail: false,
+  // Off: Minhas mesas (/account/tables) is read in the web Worker. On: for the signed-in person the
+  // api Worker answers it over the Service Binding from the same reader, given the page number; a
+  // call that cannot be made, or a refusal, falls back to the web path. Needs the API binding.
+  // Admins first.
+  api_reads_dashboard: false,
   // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
   // the web Worker still validates the form and stores the picture, then the api Worker saves it
   // over the Service Binding from the same services; refusals come back as the codes the form

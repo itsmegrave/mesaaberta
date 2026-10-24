@@ -1,57 +1,38 @@
 import { error } from '@sveltejs/kit';
-import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
+import { readDashboard } from '@mesaaberta/core/server/reads/dashboard';
 import type { RequestEvent } from '@sveltejs/kit';
+import { readViaApi } from '../api-read';
 
-/** How many tables each list shows per page. */
-export const DASHBOARD_PAGE_SIZE = 10;
+export { DASHBOARD_PAGE_SIZE } from '@mesaaberta/core/server/reads/dashboard';
+
+type Dashboard = NonNullable<Awaited<ReturnType<typeof readDashboard>>>;
 
 /**
- * Every table I play in and every table I run, whatever its status, a page at a time. Both lists
- * share `?page=N`: page N is the Nth slice of each, and the page past the longer list's last is a
- * 404. The banner about requests counts them across all of my tables.
+ * Every table I play in and every table I run, whatever its status, a page at a time (see the
+ * shared reader). Through the api Worker when `api_reads_dashboard` is on for me; here otherwise,
+ * which is also where a page past the last ends in the page's own 404.
  */
 export const read = async ({ locals, url }: RequestEvent) => {
   const user = await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
-  const now = new Date();
-  const [playing, running] = await Promise.all([
-    listPlaying(locals.db, user.id, now),
-    listRunning(locals.db, user.id, now),
-  ]);
-
-  const page = pageNumber(url.searchParams.get('page'));
-  const pages = Math.max(
-    1,
-    Math.ceil(playing.length / DASHBOARD_PAGE_SIZE),
-    Math.ceil(running.length / DASHBOARD_PAGE_SIZE),
-  );
-  if (page > pages) error(404, 'Not found');
-  const slice = <T>(items: T[]) =>
-    items.slice((page - 1) * DASHBOARD_PAGE_SIZE, page * DASHBOARD_PAGE_SIZE);
-
-  const waitingIndex = running.findIndex((table) => table.requests.length > 0);
-  const waitingTables = running.filter((table) => table.requests.length > 0);
-  return {
-    playing: slice(playing),
-    running: slice(running),
-    totals: { playing: playing.length, running: running.length },
-    page,
-    pages,
-    waiting:
-      waitingIndex === -1
-        ? null
-        : {
-            requests: waitingTables.reduce((sum, table) => sum + table.requests.length, 0),
-            tables: waitingTables.length,
-            // The first table with requests, and the page it is on, for the banner's link.
-            first: {
-              slug: running[waitingIndex].slug,
-              title: running[waitingIndex].title,
-              page: Math.floor(waitingIndex / DASHBOARD_PAGE_SIZE) + 1,
-            },
-          },
-  };
+  const profile = await locals.getProfile().catch(() => null);
+  const page = url.searchParams.get('page');
+  const remote = profile
+    ? await readViaApi<Dashboard>(
+        locals,
+        'api_reads_dashboard',
+        profile,
+        `/v1/reads/dashboard${page === null ? '' : `?page=${encodeURIComponent(page)}`}`,
+      )
+    : null;
+  // JSON turned the start dates into strings; the page gets them as dates either way.
+  const revive = <T extends { startsAt: Date }>(items: T[]) =>
+    items.map((item) => ({ ...item, startsAt: new Date(item.startsAt) }));
+  const dashboard = remote
+    ? { ...remote, playing: revive(remote.playing), running: revive(remote.running) }
+    : await readDashboard(locals.db, user.id, page, new Date());
+  if (!dashboard) error(404, 'Not found');
+  return dashboard;
 };
