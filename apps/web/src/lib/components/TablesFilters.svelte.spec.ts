@@ -33,7 +33,7 @@ describe('TablesFilters.svelte', () => {
 
     await page.getByRole('button', { name: 'Online' }).click();
 
-    expect(lastUrl()).toBe('/tables?modality=online&platform=discord');
+    expect(lastUrl()).toBe('/t?modality=online&platform=discord');
   });
 
   it('marks the modality in use', async () => {
@@ -55,10 +55,10 @@ describe('TablesFilters.svelte', () => {
 
     await expect.element(page.getByRole('button', { name: 'Tirar o filtro Gore' })).toBeVisible();
     await page.getByRole('button', { name: 'Tirar o filtro Discord' }).click();
-    expect(lastUrl()).toBe('/tables?platform=roll20&tag=gore');
+    expect(lastUrl()).toBe('/t?platform=roll20&tag=gore');
 
     await page.getByRole('button', { name: 'Limpar filtros' }).click();
-    expect(lastUrl()).toBe('/tables');
+    expect(lastUrl()).toBe('/t');
   });
 
   it('draws no chips without picks', async () => {
@@ -79,7 +79,7 @@ describe('TablesFilters.svelte', () => {
     await expect.element(page.getByRole('option', { name: 'Roll20' })).toBeInTheDocument();
     press(page.getByRole('option', { name: 'Roll20' }));
 
-    await expect.poll(lastUrl).toBe('/tables?platform=roll20');
+    await expect.poll(lastUrl).toBe('/t?platform=roll20');
   });
 
   it('shows the first pick and how many more, closed', async () => {
@@ -110,6 +110,6 @@ describe('TablesFilters.svelte', () => {
     await expect.element(page.getByRole('dialog', { name: 'Filtros' })).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Mostrar 12 mesas' })).toBeVisible();
     await page.getByRole('button', { name: 'Limpar tudo' }).click();
-    expect(lastUrl()).toBe('/tables');
+    expect(lastUrl()).toBe('/t');
   });
 });

@@ -2,16 +2,14 @@
   // "Como funciona": the three steps of the link exchange, our link to copy and the button to send a
   // partner. The partner is listed after an admin approves it, and the note says what can take it off.
   import Icon from '#lib/components/Icon.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { page as appPage } from '$app/state';
 
   // The address a partner puts on their site, bio or Discord: the "troca de links" (link exchange).
   const ourLink = $derived(appPage.data.site?.APP_ORIGIN ?? '');
   import { toast } from '#lib/toaster.js';
 
-  const locale = getLocale();
   const steps = $derived([
     { title: m.partner_step1_title(), text: m.partner_step1_text() },
     { title: m.partner_step2_title(), text: m.partner_step2_text() },
@@ -68,10 +66,7 @@
         </button>
       </div>
     </div>
-    <a
-      href={localizedHref('/partners/new', locale)}
-      class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
-    >
+    <a href="/p/new" class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold">
       <Icon name="plus" size={20} />
       {m.partner_add_cta()}
     </a>

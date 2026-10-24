@@ -1,6 +1,6 @@
 <script lang="ts">
   // "Contas conectadas": the ways to sign in to this account, on the edit profile page only. Connect
-  // starts the provider's own flow (a link, see /account/connect); disconnect is a form that never
+  // starts the provider's own flow (a link, see /u/profile/connect); disconnect is a form that never
   // takes the last way in. Nothing here is public: no provider shows on the profile.
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
@@ -61,7 +61,7 @@
           {/if}
         {:else}
           <a
-            href={resolve('/account/connect/[provider=provider]', { provider })}
+            href={resolve('/u/profile/connect/[provider=provider]', { provider })}
             data-sveltekit-reload
             class="btn h-12 rounded-lg border-2 border-primary-500 px-5 font-semibold"
           >

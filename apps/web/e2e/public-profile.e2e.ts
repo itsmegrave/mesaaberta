@@ -84,7 +84,7 @@ test('capitalization redirects to the canonical username and static routes remai
   const response = await request.get(`/u/${gm.username.toUpperCase()}`, { maxRedirects: 0 });
   expect(response.status()).toBe(308);
   expect(new URL(response.headers().location, response.url()).pathname).toBe(`/u/${gm.username}`);
-  for (const path of ['/tables', '/privacy', '/terms', '/favicon.ico'])
+  for (const path of ['/t', '/privacy', '/terms', '/favicon.ico'])
     expect((await request.get(path)).status()).toBe(200);
   expect((await request.get(`/u/${gm.username}?page=99`)).status()).toBe(404);
   expect((await request.get('/u/no-such-public-profile')).status()).toBe(404);
@@ -94,7 +94,7 @@ test('the table links to its GM, and the public page offers its owner an edit ac
   page,
   isMobile,
 }) => {
-  await page.goto(`/tables/${slugs[0]}`);
+  await page.goto(`/t/${slugs[0]}`);
   await page.getByRole('link', { name: `@${gm.username}`, exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`@${gm.username}`);
   if (isMobile) return;
@@ -109,7 +109,7 @@ test('the table links to its GM, and the public page offers its owner an edit ac
   await expect(page.getByRole('button', { name: /^Mandar mensagem para @/ })).toBeVisible();
   await page.getByRole('link', { name: 'Voltar ao meu perfil' }).click();
   await page.getByRole('link', { name: 'Editar perfil' }).click();
-  await expect(page).toHaveURL(/\/account\/profile$/);
+  await expect(page).toHaveURL(/\/u\/profile\/edit$/);
 });
 
 test('profiles without tables render, and suspension and rename invalidate direct entry', async ({

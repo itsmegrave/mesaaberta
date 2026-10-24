@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import ConnectedAccounts from './ConnectedAccounts.svelte';
 
-vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/account/profile') } }));
+vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/u/profile/edit') } }));
 
 const show = (over = {}) =>
   render(ConnectedAccounts, {
@@ -27,7 +27,7 @@ describe('ConnectedAccounts.svelte', () => {
     await expect.element(page.getByText('Não conectado')).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Conectar Discord' }))
-      .toHaveAttribute('href', '/account/connect/discord');
+      .toHaveAttribute('href', '/u/profile/connect/discord');
   });
 
   it('offers no way to disconnect the only way to sign in, and says why', async () => {

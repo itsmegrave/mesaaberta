@@ -6,10 +6,9 @@
   import Composer from '#lib/components/Composer.svelte';
   import MessageList from '#lib/components/MessageList.svelte';
   import { apiRead } from '#lib/api/http.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { mergeMessages, type ThreadItem } from '#lib/messages/group.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { TABLE_CHAT_DAYS_AFTER_END } from '@mesaaberta/core/messages/schema';
   import { BADGES_KEY } from '#lib/query/badges.js';
@@ -23,7 +22,6 @@
   }: { data: ChatThreadData; drawer?: boolean; onback?: () => void } = $props();
 
   const client = queryClient();
-  const locale = getLocale();
   // The thread is rebuilt (this component is keyed) when another conversation opens.
   // svelte-ignore state_referenced_locally
   const conversationId = data.conversation.id;
@@ -131,7 +129,7 @@
   <ChatHeader
     conversation={data.conversation}
     {onback}
-    action={drawer ? `/messages/${conversationId}?/mute` : '?/mute'}
+    action={drawer ? `/m/${conversationId}?/mute` : '?/mute'}
   />
 
   <MessageList
@@ -147,7 +145,7 @@
     {#if data.context}
       <p class="pb-2 text-sm">
         <a
-          href={localizedHref(`/tables/${data.context.slug}`, locale)}
+          href={`/t/${data.context.slug}`}
           class="chip h-8 rounded-lg bg-surface-wash px-3 font-semibold"
         >
           {m.messages_about_table({ table: data.context.title })}
@@ -157,7 +155,7 @@
     <Composer
       bind:this={composer}
       form={data.form}
-      action={drawer ? `/messages/${conversationId}?/send` : '?/send'}
+      action={drawer ? `/m/${conversationId}?/send` : '?/send'}
       {onpending}
       {onsent}
       {onfailed}

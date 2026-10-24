@@ -21,26 +21,38 @@ beforeEach(() => {
 
 describe('BottomTabBar.svelte, the tab that is on', () => {
   it('lights Minhas mesas on its own pages', () => {
-    location.pathname = '/account/tables';
+    location.pathname = '/u/tables';
     render(BottomTabBar);
 
-    expect(lit('/account/tables')).toBe(true);
-    expect(lit('/tables')).toBe(false);
+    expect(lit('/u/tables')).toBe(true);
+    expect(lit('/t')).toBe(false);
   });
 
   it('lights Parceiros on the partners pages', () => {
-    location.pathname = '/partners/new';
+    location.pathname = '/p/new';
     render(BottomTabBar);
 
-    expect(lit('/partners')).toBe(true);
-    expect(lit('/tables')).toBe(false);
+    expect(lit('/p')).toBe(true);
+    expect(lit('/t')).toBe(false);
   });
 
+  it.each(['/terms', '/privacy', '/password', '/maintenance', '/u/tablespoon'])(
+    'does not select a resource tab for the unrelated route %s',
+    (pathname) => {
+      location.pathname = pathname;
+      render(BottomTabBar);
+      expect(lit('/t')).toBe(false);
+      expect(lit('/p')).toBe(false);
+      expect(lit('/cf')).toBe(false);
+      expect(lit('/u/tables')).toBe(false);
+    },
+  );
+
   it('lights nothing for the profile, which is not one of the tables', () => {
-    location.pathname = '/account/profile';
+    location.pathname = '/u/profile/edit';
     render(BottomTabBar);
 
-    expect(lit('/account/tables')).toBe(false);
-    expect(lit('/tables')).toBe(false);
+    expect(lit('/u/tables')).toBe(false);
+    expect(lit('/t')).toBe(false);
   });
 });

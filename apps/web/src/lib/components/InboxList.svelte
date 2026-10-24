@@ -18,7 +18,6 @@
   import UserLink from '#lib/components/UserLink.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { shortTime } from '#lib/messages/format.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -53,8 +52,7 @@
       ? m.messages_preview_other({ sender: atHandle(item.preview.sender), body })
       : body;
   };
-  const pageHref = (target: number) =>
-    localizedHref(target === 1 ? '/messages' : `/messages?page=${target}`, locale);
+  const pageHref = (target: number) => (target === 1 ? '/m' : `/m?page=${target}`);
   const pageLink =
     'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal';
 </script>
@@ -71,7 +69,7 @@
           : ''}"
       >
         <a
-          href={localizedHref(`/messages/${item.id}`, locale)}
+          href={`/m/${item.id}`}
           onclick={(event) => {
             if (onselect && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
               event.preventDefault();

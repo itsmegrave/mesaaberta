@@ -6,7 +6,7 @@
   import { m } from '#lib/paraglide/messages.js';
 
   /**
-   * Stands in for a slow list: table cards (/tables), the dashboard's two columns (/account/tables),
+   * Stands in for a slow list: table cards (/t), the dashboard's two columns (/u/tables),
    * or notification rows. With `heading`, also the page title, when the whole page is on its way.
    */
   let { kind, heading = false }: { kind: SkeletonKind; heading?: boolean } = $props();

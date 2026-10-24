@@ -21,16 +21,16 @@ const call = async (query: string) => {
 
 describe('the auth callback', () => {
   it('takes someone who was connecting an account back to their profile, saying why it failed', async () => {
-    const next = encodeURIComponent('/account/profile?conta=conectada');
+    const next = encodeURIComponent('/u/profile/edit?conta=conectada');
 
     expect(
       await call(`error=server_error&error_code=identity_already_exists&next=${next}`),
     ).toMatchObject({
       status: 303,
-      location: '/account/profile?conta=de_outra_pessoa',
+      location: '/u/profile/edit?conta=de_outra_pessoa',
     });
     expect(await call(`error=access_denied&next=${next}`)).toMatchObject({
-      location: '/account/profile?conta=falhou',
+      location: '/u/profile/edit?conta=falhou',
     });
   });
 

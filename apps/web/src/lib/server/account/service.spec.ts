@@ -74,7 +74,7 @@ describe('exportAccount', () => {
       recipientId: me,
       category: 'registration',
       type: 'join_approved',
-      link: `/tables/${theirs.slug}`,
+      link: `/t/${theirs.slug}`,
       metadata: { tableId: theirs.id, slug: theirs.slug, title: 'Mesa do Bruno' },
     });
 

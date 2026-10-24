@@ -21,11 +21,11 @@ async function setup(browser: Parameters<typeof asUser>[0]) {
   } finally {
     await fixtureDb.end();
   }
-  await host.page.goto(`/tables/${slug}/manage`);
+  await host.page.goto(`/t/${slug}/manage`);
   await host.page.getByLabel('@username do jogador').fill(`@${player.username}`);
   await host.page.getByRole('button', { name: 'Enviar convite', exact: true }).click();
   await expect(host.page.getByText('0 confirmados · 1 reservadas · 0 disponíveis')).toBeVisible();
-  await guest.page.goto(`/tables/${slug}`);
+  await guest.page.goto(`/t/${slug}`);
   const review = guest.page.getByRole('link', { name: 'Revisar meu convite' });
   await expect(review).toBeVisible();
   const href = (await review.getAttribute('href'))!;
@@ -52,7 +52,7 @@ test('email link requests consent and the reserved last seat becomes confirmed o
   }
   await guest.page.getByRole('button', { name: 'Aceitar convite' }).click();
   await expect(guest.page.getByText('Convite aceito', { exact: true })).toBeVisible();
-  await guest.page.goto(`/tables/${slug}`);
+  await guest.page.goto(`/t/${slug}`);
   await expect(guest.page.getByText('https://private.example.test/only-confirmed')).toBeVisible();
   await host.page.reload();
   await expect(host.page.getByText('1 confirmados · 0 reservadas · 0 disponíveis')).toBeVisible();
@@ -70,7 +70,7 @@ test('decline prevents another invitation while allowing a voluntary request', a
   await host.page.getByLabel('@username do jogador').fill(`@${player.username}`);
   await host.page.getByRole('button', { name: 'Enviar convite', exact: true }).click();
   await expect(host.page.getByText(/Não foi possível atualizar o convite/).first()).toBeVisible();
-  await guest.page.goto(`/tables/${slug}`);
+  await guest.page.goto(`/t/${slug}`);
   await guest.page.getByRole('button', { name: /Pedir vaga/ }).click();
   await guest.page.getByRole('button', { name: 'Enviar pedido' }).click();
   await expect(
@@ -83,13 +83,13 @@ test('profile opt-out and a GM block cancel pending reservations without revivin
   browser,
 }) => {
   const { host, guest, href } = await setup(browser);
-  await guest.page.goto('/account/profile');
+  await guest.page.goto('/u/profile/edit');
   await guest.page.getByRole('button', { name: 'Desativar convites', exact: true }).click();
   await expect(guest.page.getByText('Convites desativados', { exact: true })).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByText('Convite cancelado', { exact: true })).toBeVisible();
   await guest.page.getByRole('button', { name: 'Bloquear convites deste mestre' }).click();
-  await guest.page.goto('/account/profile');
+  await guest.page.goto('/u/profile/edit');
   await guest.page.getByRole('button', { name: 'Permitir convites', exact: true }).click();
   await expect(guest.page.getByRole('button', { name: 'Desbloquear convites' })).toBeVisible();
   await guest.page.getByRole('button', { name: 'Desbloquear convites' }).click();

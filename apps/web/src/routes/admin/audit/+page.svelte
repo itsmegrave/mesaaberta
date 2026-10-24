@@ -8,7 +8,6 @@
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
   import { AUDIT_KINDS, type AuditKind } from '@mesaaberta/core/admin/report-filters';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AuditLog } from '@mesaaberta/core/server/moderation/admin';
   import { m } from '#lib/paraglide/messages.js';
@@ -40,10 +39,7 @@
   });
   const range = $derived(pageRange(data.log.page, data.log.pageSize, data.log.total));
   const pageLink = (next: number) =>
-    localizedHref(
-      listPath(page.url.pathname, listQuery(page.url.searchParams, { page: next })),
-      locale,
-    );
+    listPath(page.url.pathname, listQuery(page.url.searchParams, { page: next }));
   const filtered = $derived(data.log.kind !== 'all' || !!data.log.query);
   const handle = (username: string | null) =>
     username ? atHandle(username) : m.admin_profile_no_username();
@@ -122,9 +118,8 @@
       </p>
       {#if filtered}
         <p class="pb-6 text-center">
-          <a
-            class="inline-flex min-h-11 items-center anchor font-semibold"
-            href={localizedHref(page.url.pathname, locale)}>{m.admin_list_clear()}</a
+          <a class="inline-flex min-h-11 items-center anchor font-semibold" href={page.url.pathname}
+            >{m.admin_list_clear()}</a
           >
         </p>
       {/if}
@@ -145,8 +140,7 @@
                   {#if entry.reportId}
                     <a
                       class="ml-1 anchor text-sm font-normal"
-                      href={localizedHref(`/admin/reports/${entry.reportId}`, locale)}
-                      >{m.admin_audit_see_report()}</a
+                      href={`/admin/reports/${entry.reportId}`}>{m.admin_audit_see_report()}</a
                     >
                   {/if}
                 </p>

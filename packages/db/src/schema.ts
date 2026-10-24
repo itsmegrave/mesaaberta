@@ -229,7 +229,7 @@ export const gameTables = pgTable(
   'game_tables',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    // Generated from the title; it is the table's public URL (`/tables/<slug>`).
+    // Generated from the title; it is the table's public URL (`/t/<slug>`).
     slug: text('slug').notNull(),
     joinMode: joinMode('join_mode').notNull().default('auto'),
     systemId: uuid('system_id')

@@ -4,8 +4,7 @@
   import TextInput from '#lib/components/TextInput.svelte';
   import Form from '#lib/components/Form.svelte';
   import Button from '#lib/components/Button.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { toast } from '#lib/toaster.js';
   import AdminActionForm from '#lib/components/admin/AdminActionForm.svelte';
   import { instagramFeedback } from '#lib/admin/instagram-feedback.js';
@@ -72,7 +71,7 @@
             else connecting = true;
           }}
           method="POST"
-          action={localizedHref('/admin/instagram/connect', getLocale())}
+          action="/admin/instagram/connect"
         >
           <Button
             type="submit"

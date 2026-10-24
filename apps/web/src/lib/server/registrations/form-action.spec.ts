@@ -25,7 +25,7 @@ const setup = (over: { user?: boolean; db?: boolean; username?: string | null } 
     db: over.db === false ? null : { fake: 'db' },
     afterResponse: (task: (db: unknown) => Promise<unknown>) => queued.push(task),
   } as unknown as App.Locals;
-  const url = new URL('https://x.test/tables/mesa');
+  const url = new URL('https://x.test/t/mesa');
   const setHeaders = vi.fn();
   const event = (fields: Record<string, string> = {}) => {
     const body = new FormData();
@@ -43,7 +43,7 @@ describe('runRegistrationAction', () => {
 
     await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
       status: 303,
-      location: '/tables/mesa',
+      location: '/t/mesa',
     });
     expect(run).toHaveBeenCalledWith({ fake: 'db' }, profile, { next: '' });
   });
@@ -52,10 +52,10 @@ describe('runRegistrationAction', () => {
     const { event } = setup();
 
     await expect(
-      runRegistrationAction(event({ next: '/account/tables' }), tableActionSchema, async () => ({
+      runRegistrationAction(event({ next: '/u/tables' }), tableActionSchema, async () => ({
         eventIds: [],
       })),
-    ).rejects.toMatchObject({ status: 303, location: '/account/tables' });
+    ).rejects.toMatchObject({ status: 303, location: '/u/tables' });
   });
 
   it.each(['https://evil.example/', '//evil.example', '/\\evil.example'])(
@@ -65,7 +65,7 @@ describe('runRegistrationAction', () => {
 
       await expect(
         runRegistrationAction(event({ next }), tableActionSchema, async () => ({ eventIds: [] })),
-      ).rejects.toMatchObject({ status: 303, location: '/tables/mesa' });
+      ).rejects.toMatchObject({ status: 303, location: '/t/mesa' });
     },
   );
 
@@ -85,7 +85,7 @@ describe('runRegistrationAction', () => {
 
     await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
       status: 303,
-      location: '/login?next=%2Ftables%2Fmesa',
+      location: '/login?next=%2Ft%2Fmesa',
     });
     expect(run).not.toHaveBeenCalled();
   });
@@ -96,7 +96,7 @@ describe('runRegistrationAction', () => {
 
     await expect(runRegistrationAction(event(), tableActionSchema, run)).rejects.toMatchObject({
       status: 303,
-      location: '/onboarding?next=%2Ftables%2Fmesa',
+      location: '/u/profile/setup?next=%2Ft%2Fmesa',
     });
     expect(run).not.toHaveBeenCalled();
   });
@@ -104,10 +104,10 @@ describe('runRegistrationAction', () => {
   it('returns to the page, not to the action address, after logging in', async () => {
     const { event } = setup({ user: false });
     const e = event();
-    e.url = new URL('https://x.test/tables/mesa?/join');
+    e.url = new URL('https://x.test/t/mesa?/join');
 
     await expect(runRegistrationAction(e, tableActionSchema, vi.fn())).rejects.toMatchObject({
-      location: '/login?next=%2Ftables%2Fmesa',
+      location: '/login?next=%2Ft%2Fmesa',
     });
   });
 

@@ -3,7 +3,10 @@ import { apiRead, ApiError } from '#lib/api/http.js';
 export const availabilitySchema = z.object({ status: z.enum(['free', 'taken', 'invalid']) });
 export async function usernameAvailability(username: string, signal: AbortSignal) {
   const result = availabilitySchema.safeParse(
-    await apiRead<unknown>(`/onboarding/username?value=${encodeURIComponent(username)}`, signal),
+    await apiRead<unknown>(
+      `/u/profile/setup/username?value=${encodeURIComponent(username)}`,
+      signal,
+    ),
   );
   if (!result.success) throw new ApiError(502, 'Invalid availability response');
   return result.data.status;

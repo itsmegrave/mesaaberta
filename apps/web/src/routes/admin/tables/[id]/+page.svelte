@@ -4,7 +4,6 @@
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -31,7 +30,7 @@
       id: 'public',
       label: m.admin_table_open_public(),
       icon: 'eye',
-      href: localizedHref(`/tables/${table.slug}`, locale),
+      href: `/t/${table.slug}`,
     },
   ]}
 >

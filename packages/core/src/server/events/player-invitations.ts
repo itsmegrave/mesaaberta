@@ -122,7 +122,7 @@ export function createPlayerInvitationMailHandler(
       const current = await currentInvitation(db, invited.payload.invitationId);
       if (!current) return;
       const { invitation, table, player, gm } = current;
-      const url = new URL(`/account/invitations/${invitation.id}`, env.APP_ORIGIN).href;
+      const url = new URL(`/u/profile/invitations/${invitation.id}`, env.APP_ORIGIN).href;
       const mail = playerInvitationMail({
         name: player.username!,
         gm: gm.username!,
@@ -210,8 +210,8 @@ export const playerInvitationNotificationHandler: Handler = {
         category: 'registration',
         type: types[item.type],
         link: received
-          ? `/account/invitations/${item.payload.invitationId}`
-          : `/tables/${table.slug}/manage`,
+          ? `/u/profile/invitations/${item.payload.invitationId}`
+          : `/t/${table.slug}/manage`,
         metadata: { tableId: item.payload.tableId, slug: table.slug, title: table.title },
         createdAt: event.createdAt,
       })

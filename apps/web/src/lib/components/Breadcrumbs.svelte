@@ -1,9 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import Icon from '#lib/components/Icon.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
 
   type Crumb = { label: string; href?: string };
@@ -16,13 +15,12 @@
    */
   let { items, class: className = '' }: { items: Crumb[]; class?: string } = $props();
 
-  const locale = getLocale();
   const trail = $derived([{ label: m.breadcrumbs_home(), href: '/' }, ...items]);
   const folds = $derived(trail.length > 3);
   const hidden = $derived(trail.slice(1, -1));
   const current = $derived(trail[trail.length - 1]);
 
-  // A menu item's value is the crumb's link, already localized.
+  // A menu item's value is the crumb's link, already canonical.
   const open = (href: string) => goto(href);
 </script>
 
@@ -31,10 +29,7 @@
 {/snippet}
 
 {#snippet home()}
-  <a
-    href={localizedHref('/', locale)}
-    class="inline-flex min-h-11 items-center gap-1 link-underline md:min-h-0"
-  >
+  <a href="/" class="inline-flex min-h-11 items-center gap-1 link-underline md:min-h-0">
     <Icon name="game-icons:house" size={16} />{trail[0].label}
   </a>
 {/snippet}
@@ -57,10 +52,7 @@
         {:else if index === trail.length - 1}
           {@render here()}
         {:else if crumb.href}
-          <a
-            href={localizedHref(crumb.href, locale)}
-            class="block max-w-37.5 truncate link-underline">{crumb.label}</a
-          >
+          <a href={crumb.href} class="block max-w-37.5 truncate link-underline">{crumb.label}</a>
         {:else}
           <span class="block max-w-37.5 truncate">{crumb.label}</span>
         {/if}
@@ -86,7 +78,7 @@
                   {#each hidden as crumb (crumb.label)}
                     {#if crumb.href}
                       <Menu.Item
-                        value={localizedHref(crumb.href, locale)}
+                        value={crumb.href}
                         class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
                       >
                         <span class="truncate">{crumb.label}</span>

@@ -52,7 +52,7 @@ test.describe('sign up', () => {
     await page.goto(link!);
 
     // Back on our site, signed in, and asked to finish the profile first (nothing is made up from the address).
-    await expect(page).toHaveURL(/\/onboarding\?next=%2F$/);
+    await expect(page).toHaveURL(/\/u\/profile\/setup\?next=%2F$/);
     await expect(page.getByRole('heading', { name: 'Complete seu perfil' })).toBeVisible();
 
     const username = `novata-${Date.now().toString(36)}`;
@@ -121,8 +121,8 @@ test.describe('sign in and out', () => {
   }) => {
     const user = await createUser('Ana Souza');
 
-    await signIn(page, user, '/tables');
-    await expect(page).toHaveURL(/\/tables$/);
+    await signIn(page, user, '/t');
+    await expect(page).toHaveURL(/\/t$/);
 
     await signOut(page, user.username);
     await expect(page.getByRole('banner').getByText(user.username)).toHaveCount(0);
@@ -152,9 +152,9 @@ test.describe('sign in and out', () => {
     const user = await createUser('Caio Reis');
     await signIn(page, user);
 
-    await page.goto('/login?next=%2Ftables');
+    await page.goto('/login?next=%2Ft');
 
-    await expect(page).toHaveURL(/\/tables$/);
+    await expect(page).toHaveURL(/\/t$/);
   });
 
   test('a protected page sends an anonymous visitor to log in and back afterwards', async ({
@@ -162,13 +162,13 @@ test.describe('sign in and out', () => {
   }) => {
     const user = await createUser('Dani Alves');
 
-    await page.goto('/account/tables');
-    await expect(page).toHaveURL(/login\?next=%2Faccount%2Ftables/);
+    await page.goto('/u/tables');
+    await expect(page).toHaveURL(/login\?next=%2Fu%2Ftables/);
     await page.getByLabel('Email').fill(user.email);
     await page.getByLabel('Senha').fill(user.password);
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 
-    await expect(page).toHaveURL(/\/account\/tables$/);
+    await expect(page).toHaveURL(/\/u\/tables$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Minhas mesas' })).toBeVisible();
   });
 
@@ -191,7 +191,7 @@ test.describe('password reset', () => {
   }) => {
     const user = await createUser('Fabi Costa');
 
-    await page.goto('/forgot-password');
+    await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
     await expect(page.getByRole('heading', { name: 'Confira seu email' })).toBeVisible();
@@ -202,7 +202,7 @@ test.describe('password reset', () => {
     await page.goto(link!);
 
     // The link signed them in and brought them to the new-password page.
-    await expect(page).toHaveURL(/\/reset-password$/);
+    await expect(page).toHaveURL(/\/reset$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Nova senha' })).toBeVisible();
 
     await page.getByLabel('Nova senha', { exact: true }).fill('a completely new secret');
@@ -226,7 +226,7 @@ test.describe('password reset', () => {
 
   test('two different passwords are refused, and nothing is changed', async ({ page }) => {
     const user = await createUser('Gabi Nunes');
-    await page.goto('/forgot-password');
+    await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
     const [message] = await inbox(user.email, { waitFor: /reset|recover|password/i });
@@ -245,7 +245,7 @@ test.describe('password reset', () => {
   }) => {
     const nobody = uniqueEmail('nobody');
 
-    await page.goto('/forgot-password');
+    await page.goto('/forgot');
     await page.getByLabel('Email').fill(nobody);
     await page.getByRole('button', { name: 'Enviar link' }).click();
 
@@ -256,20 +256,20 @@ test.describe('password reset', () => {
 
   test('a link that is opened a second time no longer works', async ({ page, browser }) => {
     const user = await createUser('Hugo Prado');
-    await page.goto('/forgot-password');
+    await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
     const [message] = await inbox(user.email, { waitFor: /reset|recover|password/i });
     const link = linkIn(message)!;
     await page.goto(link);
-    await expect(page).toHaveURL(/\/reset-password$/);
+    await expect(page).toHaveURL(/\/reset$/);
 
     // Another browser, with the used link: no session comes out of it.
     const other = await browser.newContext();
     const otherPage = await other.newPage();
     await otherPage.goto(link);
 
-    await expect(otherPage).not.toHaveURL(/\/reset-password$/);
+    await expect(otherPage).not.toHaveURL(/\/reset$/);
     await other.close();
   });
 });

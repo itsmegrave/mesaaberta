@@ -1,3 +1,5 @@
+import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 import { redirect } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
 import { validateFormData } from '#lib/forms/contract.js';
@@ -44,13 +46,13 @@ export async function handleTableForm(
   ) => Promise<{ slug: string; draft?: boolean }>,
   guard: (draft: boolean, data: FormData) => Promise<void> = async () => {},
   /** Where a saved table leads: its page, unless said otherwise (the edit form: its manage page). */
-  destination: (slug: string, draft: boolean) => string = (slug) => `/tables/${slug}`,
+  destination: (slug: string, draft: boolean) => string = (slug) => `/t/${slug}`,
 ) {
   if (!(await locals.getUser())) {
-    redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+    redirect(303, `/login?next=${encodeURIComponent(safeNext(url.pathname + url.search))}`);
   }
   if (!(await locals.getProfile())?.username) {
-    redirect(303, `/onboarding?next=${encodeURIComponent(url.pathname + url.search)}`);
+    redirect(303, onboardingUrl(url.pathname + url.search));
   }
 
   const data = await request.formData();

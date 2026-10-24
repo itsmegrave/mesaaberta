@@ -4,7 +4,7 @@ import { z } from 'zod';
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
- * The filters of `/tables`, all in the query string of a plain GET form, a key repeated for each
+ * The filters of `/t`, all in the query string of a plain GET form, a key repeated for each
  * value ticked. GET filters are read directly from the URL; no client form state is needed.
  */
 export const tableFilterSchema = z.object({
@@ -24,7 +24,7 @@ export type TableFilters = {
 const slugsOf = (list: string[]) => list.filter((value) => SLUG.test(value));
 
 /**
- * The filters in a `/tables` address. A link can say anything, so what is not a filter the page
+ * The filters in a `/t` address. A link can say anything, so what is not a filter the page
  * knows (a blank or malformed slug, an unknown modality) is dropped rather than refused: the list
  * still shows, just without that filter.
  */

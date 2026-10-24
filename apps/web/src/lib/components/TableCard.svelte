@@ -4,7 +4,6 @@
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import GmRating from './GmRating.svelte';
@@ -168,7 +167,7 @@
 
     <h3 class="mt-1 text-2xl leading-tight font-semibold tracking-tight">
       <a
-        href={localizedHref(`/tables/${table.slug}`, locale)}
+        href={`/t/${table.slug}`}
         class="after:absolute after:inset-0 after:content-[''] hover:underline"
       >
         {table.title}

@@ -10,7 +10,6 @@
   import TableCard from '#lib/components/TableCard.svelte';
   import { toast } from '#lib/toaster.js';
   import { pageHref } from '#lib/admin/page-href.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -43,7 +42,7 @@
         id: 'visitor',
         label: m.menu_view_as_visitor(),
         icon: 'eye',
-        href: localizedHref(`${path}?as=visitor`, locale),
+        href: `${path}?as=visitor`,
       });
     }
     return items;
@@ -73,7 +72,7 @@
   {#if data.previewing}
     <p role="status" class="mb-4 flex flex-wrap items-center gap-3 font-semibold">
       {m.public_profile_previewing()}
-      <a href={localizedHref(path, locale)} class="anchor">{m.public_profile_stop_previewing()}</a>
+      <a href={path} class="anchor">{m.public_profile_stop_previewing()}</a>
     </p>
   {/if}
 
@@ -135,7 +134,7 @@
       <div class="flex shrink-0 flex-wrap items-center gap-3">
         {#if data.isOwner}
           <a
-            href={localizedHref('/account/profile', locale)}
+            href="/u/profile/edit"
             class="btn h-12 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
             >{m.public_profile_edit()}</a
           >
@@ -188,7 +187,7 @@
         {#if data.page > 1}
           <a
             class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50"
-            href={pageHref(path, page.url.searchParams, data.page - 1, locale)}
+            href={pageHref(path, page.url.searchParams, data.page - 1)}
             aria-label={m.admin_profile_previous()}><Icon name="chevron-left" /></a
           >
         {/if}
@@ -198,7 +197,7 @@
         {#if data.page < data.pages}
           <a
             class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50"
-            href={pageHref(path, page.url.searchParams, data.page + 1, locale)}
+            href={pageHref(path, page.url.searchParams, data.page + 1)}
             aria-label={m.admin_profile_next()}><Icon name="chevron-right" /></a
           >
         {/if}

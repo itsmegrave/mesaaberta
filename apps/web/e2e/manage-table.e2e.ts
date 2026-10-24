@@ -15,25 +15,25 @@ test('the GM approves a request and removes a player from the manage page, after
 
   const bruno = await createUser('Bruno Pedido');
   const { page, context } = await asUser(browser, bruno);
-  await page.goto(`/tables/${slug}`);
+  await page.goto(`/t/${slug}`);
   await page.getByRole('button', { name: 'Pedir vaga' }).click();
   await page.getByLabel(/Mensagem para o mestre/).fill('Sou o Bruno, nunca joguei Tormenta.');
   await page.getByRole('button', { name: 'Enviar pedido' }).click();
   await expect(page.getByText(/pedido/i).first()).toBeVisible();
 
   // From Minhas mesas, "Gerenciar mesa" opens the manage page.
-  await gmPage.goto('/account/tables');
+  await gmPage.goto('/u/tables');
   await gmPage
     .getByRole('article')
     .filter({ hasText: title })
     .getByRole('link', { name: 'Gerenciar mesa' })
     .click();
-  await expect(gmPage).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+  await expect(gmPage).toHaveURL(new RegExp(`/t/${slug}/manage$`));
   await expect(gmPage.getByRole('heading', { level: 1 })).toHaveText(title);
   // The trail names the table (not its slug) and links back to it.
   const trail = gmPage.getByRole('navigation', { name: 'Trilha de navegação' });
   await expect(trail.getByRole('link', { name: 'Minhas mesas' })).toBeVisible();
-  await expect(trail.getByRole('link', { name: title })).toHaveAttribute('href', `/tables/${slug}`);
+  await expect(trail.getByRole('link', { name: title })).toHaveAttribute('href', `/t/${slug}`);
   await expect(trail.getByText('Jogadores e pedidos')).toHaveAttribute('aria-current', 'page');
 
   const requests = gmPage.getByRole('region', { name: 'Pedidos de vaga' });
@@ -67,7 +67,7 @@ test('the GM approves a request and removes a player from the manage page, after
   );
 
   // Only the GM gets in.
-  const other = await page.goto(`/tables/${slug}/manage`);
+  const other = await page.goto(`/t/${slug}/manage`);
   expect(other?.status()).toBe(403);
 
   await context.close();

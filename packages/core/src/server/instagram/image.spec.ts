@@ -25,10 +25,10 @@ describe('Instagram share image', () => {
     expect(facts.caption).toContain('19:00');
     expect(facts.caption).toContain('3 vagas / 5 lugares');
     expect(facts.caption).toContain('#rpg #mesaaberta #dnd5e #online #oneshot');
-    expect(facts.caption).toContain('https://mesaaberta.app/tables/a-ventura');
+    expect(facts.caption).toContain('https://mesaaberta.app/t/a-ventura');
     expect(facts.caption).not.toContain('utm_');
     expect(facts.qrUrl).toBe(
-      'https://mesaaberta.app/tables/a-ventura?utm_source=instagram&utm_medium=social&utm_campaign=table_share',
+      'https://mesaaberta.app/t/a-ventura?utm_source=instagram&utm_medium=social&utm_campaign=table_share',
     );
     expect(facts.caption).not.toContain('private');
   });

@@ -10,13 +10,13 @@ describe('requireUser', () => {
   it('returns the signed-in user', async () => {
     const user = { id: 'u1' } as User;
 
-    expect(await requireUser(locals(user), new URL('https://x.test/tables/new'))).toBe(user);
+    expect(await requireUser(locals(user), new URL('https://x.test/t/new'))).toBe(user);
   });
 
   it('sends an anonymous visitor to log in, and back afterwards', async () => {
     await expect(
-      requireUser(locals(null), new URL('https://x.test/tables/new?draft=1')),
-    ).rejects.toMatchObject({ status: 303, location: '/login?next=%2Ftables%2Fnew%3Fdraft%3D1' });
+      requireUser(locals(null), new URL('https://x.test/t/new?draft=1')),
+    ).rejects.toMatchObject({ status: 303, location: '/login?next=%2Ft%2Fnew%3Fdraft%3D1' });
   });
 
   it.each([
@@ -24,10 +24,10 @@ describe('requireUser', () => {
     ['no profile at all', null],
   ])('sends %s to finish the profile, and back afterwards', async (_what, profile) => {
     await expect(
-      requireUser(locals({ id: 'u1' }, profile), new URL('https://x.test/tables/new?draft=1')),
+      requireUser(locals({ id: 'u1' }, profile), new URL('https://x.test/t/new?draft=1')),
     ).rejects.toMatchObject({
       status: 303,
-      location: '/onboarding?next=%2Ftables%2Fnew%3Fdraft%3D1',
+      location: '/u/profile/setup?next=%2Ft%2Fnew%3Fdraft%3D1',
     });
   });
 
@@ -35,15 +35,21 @@ describe('requireUser', () => {
     const user = { id: 'u1' } as User;
 
     expect(
-      await requireUser(locals(user, { username: null }), new URL('https://x.test/onboarding'), {
-        allowIncomplete: true,
-      }),
+      await requireUser(
+        locals(user, { username: null }),
+        new URL('https://x.test/u/profile/setup'),
+        {
+          allowIncomplete: true,
+        },
+      ),
     ).toBe(user);
   });
 
   it('still sends an anonymous visitor to log in from the onboarding', async () => {
     await expect(
-      requireUser(locals(null), new URL('https://x.test/onboarding'), { allowIncomplete: true }),
+      requireUser(locals(null), new URL('https://x.test/u/profile/setup'), {
+        allowIncomplete: true,
+      }),
     ).rejects.toMatchObject({ status: 303 });
   });
 });

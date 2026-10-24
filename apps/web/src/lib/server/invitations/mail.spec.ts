@@ -8,10 +8,10 @@ it('asks for consent with the GM, deadline and decision link without a calendar 
     startsAt: new Date('2099-01-01T20:00:00Z'),
     expiresAt: new Date('2098-12-31T20:00:00Z'),
     timezone: 'UTC',
-    url: 'https://mesa.test/account/invitations/id',
+    url: 'https://mesa.test/u/profile/invitations/id',
   });
   expect(mail.text).toContain('@mestre');
-  expect(mail.text).toContain('https://mesa.test/account/invitations/id');
+  expect(mail.text).toContain('https://mesa.test/u/profile/invitations/id');
   expect(mail.text).toContain('reservada');
   expect(mail).not.toHaveProperty('attachments');
 });

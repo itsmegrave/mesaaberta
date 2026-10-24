@@ -24,7 +24,7 @@ const event = (search = '') =>
       getUser: async () => ({ id: 'gm' }),
       getProfile: async () => ({ id: 'gm', username: 'gm' }),
     },
-    url: new URL(`https://x.test/account/tables${search}`),
+    url: new URL(`https://x.test/u/tables${search}`),
   }) as unknown as RequestEvent;
 
 beforeEach(() => {

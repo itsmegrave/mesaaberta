@@ -8,7 +8,6 @@
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import { dayLabel, shortDate, timeLabel } from '#lib/admin/format.js';
   import type { IconName } from '#lib/icons/names.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
@@ -157,7 +156,7 @@
       });
     return found;
   });
-  const href = (path: string) => localizedHref(path, locale);
+  const href = (path: string) => path;
 </script>
 
 <svelte:head><title>{m.admin_nav_overview()} | Mesa Aberta</title></svelte:head>
@@ -273,7 +272,7 @@
   <li class="flex min-h-17 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
     <Media kind="cover" src={row.cover} />
     <div class="min-w-0 flex-1 basis-48">
-      <a class="block truncate link-underline" href={href(`/tables/${row.slug}`)}>{row.title}</a>
+      <a class="block truncate link-underline" href={href(`/t/${row.slug}`)}>{row.title}</a>
       <p class="truncate text-sm text-muted">
         {m.admin_tables_gm_of({ system: row.system, gm: `@${row.gm}` })}
       </p>

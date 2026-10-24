@@ -55,7 +55,7 @@ describe('handleAdminAccess', () => {
   });
 
   it('does not block non-admin paths', async () => {
-    const { run, resolve } = setup({ path: '/tables', profile: member });
+    const { run, resolve } = setup({ path: '/t', profile: member });
 
     expect(await (await run()).text()).toBe('admin content');
     expect(resolve).toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('isAdminPath', () => {
     (path) => expect(isAdminPath(path)).toBe(true),
   );
 
-  it.each(['/administrator', '/tables/admin', '/administer'])('does not recognize %s', (path) =>
+  it.each(['/administrator', '/t/admin', '/administer'])('does not recognize %s', (path) =>
     expect(isAdminPath(path)).toBe(false),
   );
 

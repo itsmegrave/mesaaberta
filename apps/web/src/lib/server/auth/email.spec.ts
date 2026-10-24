@@ -44,7 +44,7 @@ describe('signUpWithEmail', () => {
     email: 'ana@example.com',
     password: 'correct horse',
     origin,
-    next: '/tables/new',
+    next: '/t/new',
   };
 
   it('asks Supabase to create the account and to send the confirmation link back to our callback', async () => {
@@ -55,7 +55,7 @@ describe('signUpWithEmail', () => {
     expect(call).toHaveBeenCalledWith({
       email: 'ana@example.com',
       password: 'correct horse',
-      options: { emailRedirectTo: `${origin}/auth/callback?next=%2Ftables%2Fnew` },
+      options: { emailRedirectTo: `${origin}/auth/callback?next=%2Ft%2Fnew` },
     });
   });
 

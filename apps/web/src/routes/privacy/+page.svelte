@@ -1,6 +1,5 @@
 <script lang="ts">
   import LegalPage from '#lib/components/LegalPage.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { page } from '$app/state';
   import { updated } from '#lib/legal.js';
 
@@ -10,9 +9,6 @@
     email: page.data.site?.PRIVACY_EMAIL ?? '',
   });
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
-
-  const locale = getLocale();
 </script>
 
 <svelte:head>
@@ -221,9 +217,8 @@
     <li>reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</li>
   </ul>
   <p>
-    Na <a href={localizedHref('/account/profile', locale)}>página do seu perfil</a> você corrige os
-    seus dados, baixa uma cópia de tudo em JSON e apaga a conta. Para os outros pedidos, escreva
-    para
+    Na <a href="/u/profile/edit">página do seu perfil</a> você corrige os seus dados, baixa uma
+    cópia de tudo em JSON e apaga a conta. Para os outros pedidos, escreva para
     <a href="mailto:{controller.email}">{controller.email}</a> a partir do e-mail da sua conta. Respondemos
     em até 15 dias.
   </p>
@@ -245,6 +240,6 @@
   <p>
     Se mudarmos esta política, a data no topo desta página muda. Mudanças importantes serão avisadas
     no site ou por e-mail antes de valer. Veja também os
-    <a href={localizedHref('/terms', locale)}>Termos de uso</a>.
+    <a href="/terms">Termos de uso</a>.
   </p>
 </LegalPage>
