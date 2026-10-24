@@ -4,10 +4,15 @@ import { stack } from './e2e/support/stack';
 const port = 4173;
 // A second server on the same build with the site in maintenance (see e2e/maintenance.e2e.ts).
 const maintenancePort = 4183;
+const apiPort = 4185;
+// Local test-only secret for the HTTP adapter; new features never fall back to web DB writes.
+const apiToken = 'mesaaberta-e2e-only';
 // The local Supabase (`bun run e2e:up`): its Postgres is the app's database and its Auth is the app's login.
 const supabase = stack();
 
 const serverVars = [
+  `--var API_URL:http://127.0.0.1:${apiPort}`,
+  `--var API_INTERNAL_TOKEN:${apiToken}`,
   `--var SUPABASE_URL:${supabase.API_URL}`,
   `--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`,
   // The local stack's secret key: account deletion removes the Auth user through the Admin API.
@@ -45,6 +50,14 @@ export default defineConfig({
     timezoneId: 'America/Sao_Paulo',
   },
   webServer: [
+    {
+      command: 'bun apps/api/src/entry/bun.ts',
+      cwd: '../..',
+      env: { DATABASE_URL: supabase.DB_URL, API_INTERNAL_TOKEN: apiToken, PORT: String(apiPort) },
+      url: `http://127.0.0.1:${apiPort}/healthz`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+    },
     {
       // The built app on the Workers runtime, pointed at the local Supabase instead of production.
       command: [

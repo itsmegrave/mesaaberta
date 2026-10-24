@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { hasStarted, instantToLocal, localToInstant, weeklyInterval } from './schedule';
+import {
+  hasStarted,
+  instantToLocal,
+  localToInstant,
+  weeklyInterval,
+  intervalsOverlap,
+} from './schedule';
 
 const at = (iso: string) => new Date(iso);
 
@@ -60,5 +66,36 @@ describe('localToInstant and instantToLocal', () => {
     expect(localToInstant('2026-11-01T01:30', 'America/New_York')).toEqual(
       at('2026-11-01T05:30:00Z'),
     );
+  });
+});
+
+describe('intervalsOverlap', () => {
+  const session = (local: string, durationMinutes = 240, timezone = 'America/Sao_Paulo') => ({
+    startsAt: localToInstant(local, timezone),
+    durationMinutes,
+  });
+  it('rejects equality, containment, either crossing and midnight overlap in both directions', () => {
+    const original = session('2026-10-10T22:00');
+    for (const candidate of [
+      session('2026-10-10T22:00'),
+      session('2026-10-10T23:00', 60),
+      session('2026-10-10T21:00', 360),
+      session('2026-10-10T21:00'),
+      session('2026-10-11T01:00'),
+    ]) {
+      expect(intervalsOverlap(original, candidate)).toBe(true);
+      expect(intervalsOverlap(candidate, original)).toBe(true);
+    }
+  });
+  it('allows exact adjacency before or after and compares instants across DST zones', () => {
+    const original = session('2026-10-10T22:00');
+    expect(intervalsOverlap(original, session('2026-10-10T18:00'))).toBe(false);
+    expect(intervalsOverlap(original, session('2026-10-11T02:00'))).toBe(false);
+    expect(
+      intervalsOverlap(
+        session('2026-03-08T02:30', 60, 'America/New_York'),
+        session('2026-03-08T07:30', 60, 'UTC'),
+      ),
+    ).toBe(true);
   });
 });

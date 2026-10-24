@@ -3,6 +3,7 @@ import '../../forms/zod-codes';
 import { tableInputSchema, type TableInput } from '../../tables/schema';
 import type { Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
+import { duplicateTable } from './duplicate';
 import { createTable, disableTable, updateTable } from './write';
 
 /** The image the web Worker already stored, as a path in the bucket (never a URL, never a file). */
@@ -34,6 +35,38 @@ export const tableWriteActions = {
     ) => {
       const created = await createTable(db, actor, input, { imagePath, draft });
       return { eventIds: [created.eventId], slug: created.slug, draft: created.draft };
+    },
+  },
+  duplicate: {
+    // This API is reachable only through the trusted internal Worker binding. Replacements were
+    // validated and stored there; the browser never controls a reusable source image path.
+    schema: z.object({
+      input: tableInputSchema,
+      imagePath,
+      draft: z.boolean().default(false),
+      requestKey: z.uuid().optional(),
+    }),
+    apply: async (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      {
+        input,
+        imagePath,
+        draft,
+        requestKey,
+      }: { input: TableInput; imagePath: string | null; draft: boolean; requestKey?: string },
+    ) => {
+      const copied = await duplicateTable(db, actor, slug, input, {
+        draft,
+        requestKey,
+        image: imagePath
+          ? { kind: 'replace', validatedImagePath: imagePath }
+          : input.removeImage
+            ? { kind: 'remove' }
+            : { kind: 'inherit' },
+      });
+      return { eventIds: [copied.eventId], slug: copied.slug, draft: copied.draft };
     },
   },
   update: {

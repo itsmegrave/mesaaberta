@@ -27,6 +27,16 @@
     errorMessage: m.form_error_unavailable,
   });
   guardDraft(controller);
+
+  // `load` makes a new key whenever it runs again. The first one for each source is kept, so a
+  // retry after a timeout replays the same copy instead of making another.
+  const keys: Record<string, string> = {};
+  const requestKey = $derived.by(() => {
+    const duplication = data.duplication;
+    if (!duplication) return undefined;
+    keys[duplication.sourceSlug] ??= duplication.requestKey;
+    return keys[duplication.sourceSlug];
+  });
 </script>
 
 <svelte:head>
@@ -44,10 +54,12 @@
     ]}
   />
   <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-    {m.form_new_title()}
+    {data.duplication ? m.table_duplicate() : m.form_new_title()}
   </h1>
   <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
-    {m.form_new_lede()}
+    {data.duplication
+      ? m.table_duplicate_lede({ title: data.duplication.title })
+      : m.form_new_lede()}
   </p>
 
   <TableForm
@@ -57,7 +69,12 @@
     submitLabel={m.form_submit_new()}
     draftLabel={m.form_submit_draft()}
     suggestSystem
-    cancelHref={localizedHref('/tables', getLocale())}
+    imageUrl={data.duplication?.imageUrl}
+    duplicationRequestKey={requestKey}
+    cancelHref={localizedHref(
+      data.duplication ? `/tables/${data.duplication.sourceSlug}/manage` : '/tables',
+      getLocale(),
+    )}
     gmName={data.account?.username ?? undefined}
   />
 </section>

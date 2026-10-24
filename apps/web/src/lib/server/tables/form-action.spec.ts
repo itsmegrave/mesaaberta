@@ -290,3 +290,18 @@ describe('handleTableForm', () => {
     });
   });
 });
+
+it('retains edited values and reports an overlapping duplicate on the date field', async () => {
+  const s = setup();
+  s.save.mockRejectedValue(new Invalid('startsAtLocal', 'schedule_conflict'));
+  const result = await run(request({ title: 'Minha cópia editada' }), s);
+  expect(result).toMatchObject({
+    status: 400,
+    data: {
+      form: {
+        data: { title: 'Minha cópia editada' },
+        errors: { startsAtLocal: ['schedule_conflict'] },
+      },
+    },
+  });
+});

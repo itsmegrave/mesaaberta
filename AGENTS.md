@@ -14,3 +14,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the project workflow, code style, tr
 - Use Tailwind's 4px spacing grid and existing theme tokens for spacing, sizing, radius, borders and color. Avoid arbitrary values and one-off values; add a named token only when the design needs a value the existing scale cannot express.
 - Calculated layout values and precise illustration geometry may use arbitrary values when needed; leave a short code comment explaining non-obvious cases.
 - When changing a screen or component, review its mobile and desktop padding, gaps, border weight and color, radius, and focus treatment for consistency with nearby UI.
+
+## API ownership
+
+- Implement every new endpoint for domain reads or writes in `apps/api`, backed by shared services in `packages/core`.
+- Web form actions and loaders consume the authenticated API contract. New features must use the required API transport, without a migration flag or a local database fallback; unavailable API calls fail as service errors.
+- Existing endpoints keep their current migration behavior until explicitly migrated. Tests for new flows run the API alongside the web app.

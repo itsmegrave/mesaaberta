@@ -9,6 +9,7 @@ import { diffFields } from '../events/changes';
 import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { localToInstant } from './schedule';
+import { lockTableSchedule, guardTableSchedule } from './schedule-guard';
 
 /**
  * Whether a table's session is over at `now`. `now` goes in as an ISO string: a `sql` template
@@ -77,9 +78,21 @@ async function answer(
   const table = await findAwaiting(db, actor, slug);
 
   const eventId = await db.transaction(async (tx) => {
+    let values = change(table);
+    if (move === 'POSTPONE') {
+      await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
+      // The row as it is now, locked: what the guard checks is exactly what the update writes.
+      const [current] = await tx
+        .select()
+        .from(gameTables)
+        .where(eq(gameTables.id, table.id))
+        .for('update');
+      values = change(current);
+      await guardTableSchedule(tx as unknown as AnyDb, table.id, { ...current, ...values });
+    }
     const [updated] = await tx
       .update(gameTables)
-      .set({ ...change(table), status: nextStatus('awaiting_confirmation', move)! })
+      .set({ ...values, status: nextStatus('awaiting_confirmation', move)! })
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
       .returning({ id: gameTables.id });
     if (!updated) throw new Forbidden('table:confirm');

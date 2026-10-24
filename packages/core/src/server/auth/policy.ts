@@ -18,6 +18,7 @@ export type Actor = Pick<typeof profiles.$inferSelect, 'id' | 'role' | 'status'>
 type Resources = {
   'admin:access': undefined;
   'table:create': undefined;
+  'table:duplicate': { gmId: string; moderatedAt: Date | null };
   /** A concluded table is frozen: its ratings describe it as it was. */
   'table:edit': { gmId: string; tableStatus: TableStatus };
   'table:disable': { gmId: string; tableStatus: TableStatus };
@@ -121,6 +122,8 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'admin:access': (actor) => actor.role === 'admin',
   // Any signed-in user can open a table and becomes its GM.
   'table:create': () => true,
+  'table:duplicate': (actor, table) =>
+    Boolean(table && table.gmId === actor.id && !table.moderatedAt),
   'table:edit': changeable,
   'table:disable': changeable,
   'table:confirm': (actor, table) =>

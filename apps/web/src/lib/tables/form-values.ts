@@ -63,6 +63,8 @@ export function errorText(code: string, field = ''): string {
       return m.form_error_too_big();
     case 'before_start':
       return m.form_error_before_start();
+    case 'schedule_conflict':
+      return m.form_error_schedule_conflict();
     case 'in_the_past':
       return m.form_error_in_the_past();
     case 'not_an_image':

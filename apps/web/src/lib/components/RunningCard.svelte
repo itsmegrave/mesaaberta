@@ -119,6 +119,11 @@
       href={localizedHref(`/tables/${item.slug}/edit`, locale)}
       class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
     >
+    <a
+      href={localizedHref(`/tables/new?duplicate=${encodeURIComponent(item.slug)}`, locale)}
+      class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold"
+      >{m.table_duplicate()}</a
+    >
   </p>
 
   {#if item.requests.length > 0}

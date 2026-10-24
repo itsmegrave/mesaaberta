@@ -1,8 +1,14 @@
 import { loadRead } from '#lib/server/reads/load.js';
-import { error } from '@sveltejs/kit';
+import { z } from 'zod';
+import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
+import type { loadTableForDuplication } from '@mesaaberta/core/server/tables/duplicate';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { minutesToHours } from '@mesaaberta/core/tables/format';
+import { error, isHttpError } from '@sveltejs/kit';
 import { initialForm } from '#lib/forms/contract.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
+import { requireApi, requireApiWrite } from '#lib/server/api-required.js';
 import { timezoneOf } from '#lib/server/time.js';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
@@ -29,13 +35,61 @@ export const load: PageServerLoad = async (event) => {
   // The GM's own pending suggestions are offered too.
   const catalogRead = await loadRead(event, 'catalog');
 
+  const sourceSlug = url.searchParams.get('duplicate');
+  const source = sourceSlug ? await duplicationSource(locals, sourceSlug) : null;
+  const input = source?.input;
   return {
-    form: initialForm({ ...NEW_TABLE_VALUES, timezone: await timezoneOf(locals, cookies) }),
+    duplication: source
+      ? {
+          sourceSlug: source.sourceSlug,
+          title: input!.title,
+          requestKey: crypto.randomUUID(),
+          imageUrl: imageUrl(supabaseUrlOf(locals.env), source.imagePath),
+        }
+      : null,
+    form: initialForm(
+      input
+        ? {
+            ...NEW_TABLE_VALUES,
+            ...input,
+            extraInfo: input.extraInfo ?? '',
+            welcomeMessage: input.welcomeMessage ?? '',
+            minPlayers: input.minPlayers === null ? '' : String(input.minPlayers),
+            durationHours: minutesToHours(input.durationMinutes),
+            repeat:
+              input.recurrence === 'FREQ=WEEKLY;INTERVAL=2'
+                ? 'biweekly'
+                : input.recurrence
+                  ? 'weekly'
+                  : '',
+            until: input.untilLocalDate ?? '',
+            locationArea: input.locationArea ?? '',
+            joinDetails: input.joinDetails ?? '',
+            postalCode: input.postalCode ?? '',
+          }
+        : { ...NEW_TABLE_VALUES, timezone: await timezoneOf(locals, cookies) },
+    ),
     systems: catalogRead.systems,
     catalog: catalogRead.catalog,
     catalogRead,
   };
 };
+
+async function duplicationSource(locals: App.Locals, slug: string) {
+  try {
+    const actor = await locals.getProfile();
+    if (!actor) error(403, 'Forbidden');
+    return await requireApi<Awaited<ReturnType<typeof loadTableForDuplication>>>(
+      locals,
+      actor,
+      `/v1/tables/${encodeURIComponent(slug)}/duplication`,
+    );
+  } catch (cause) {
+    if (cause instanceof Forbidden) error(403, 'Forbidden');
+    if (cause instanceof NotFound) error(404, 'Not found');
+    throw cause;
+  }
+}
 
 export const actions: Actions = {
   default: async (event) => {
@@ -44,19 +98,37 @@ export const actions: Actions = {
     await requireUser(locals, event.url);
     if (!locals.db) error(503, 'Database not configured');
     const db = locals.db;
+    const sourceSlug = event.url.searchParams.get('duplicate');
+    // Only the zone comes from the source. A retry can find it deleted or moderated: the api still
+    // answers that replay with the copy that exists, and refuses anything else.
+    const source = sourceSlug
+      ? await duplicationSource(locals, sourceSlug).catch((cause) => {
+          if (isHttpError(cause) && (cause.status === 403 || cause.status === 404)) return null;
+          throw cause;
+        })
+      : null;
+    let requestKey: string | undefined;
 
     return handleTableForm(
-      event,
+      { ...event, formTimezone: source?.input.timezone },
       async (input, imagePath, draft) => {
         const profile = await locals.getProfile();
         // Through the api Worker when `api_table_write` is on for this person; here otherwise.
-        const remote = profile
-          ? await writeViaApi(locals, 'api_table_write', profile, '/v1/table-writes', {
-              input,
-              imagePath: imagePath ?? null,
-              draft,
-            })
-          : null;
+        if (sourceSlug && !profile) error(403, 'Forbidden');
+        const remote = sourceSlug
+          ? await requireApiWrite(
+              locals,
+              profile!,
+              `/v1/tables/${encodeURIComponent(sourceSlug)}/duplicate`,
+              { input, imagePath: imagePath ?? null, draft, requestKey },
+            )
+          : profile
+            ? await writeViaApi(locals, 'api_table_write', profile, '/v1/table-writes', {
+                input,
+                imagePath: imagePath ?? null,
+                draft,
+              })
+            : null;
         const created = remote
           ? {
               slug: String(remote.body.slug),
@@ -71,7 +143,12 @@ export const actions: Actions = {
         return created;
       },
       // A limited person is told before their image is stored. `createTable` checks again, under a lock.
-      async (draft) => {
+      async (draft, data) => {
+        if (sourceSlug) {
+          const key = z.uuid().safeParse(data.get('duplicationRequestKey'));
+          if (!key.success) error(400, 'Invalid duplication request');
+          requestKey = key.data;
+        }
         const actor = await locals.getProfile();
         if (actor)
           await checkRateLimit(db, actor.id, draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT);

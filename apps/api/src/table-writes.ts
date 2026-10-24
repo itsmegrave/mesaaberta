@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono';
 import type { ZodType } from 'zod';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
+import { loadTableForDuplication } from '@mesaaberta/core/server/tables/duplicate';
 import { tableWriteActions } from '@mesaaberta/core/server/tables/write-actions';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
@@ -24,10 +25,13 @@ type Action = {
  * and resolved the postal code; this takes the result and runs the same services, from core's
  * `tableWriteActions`. Answers `{ eventIds, slug, draft? }`, or the refusal the service made.
  */
-export function tableWriteRoutes(open: Open = openDb) {
+export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
   const app = new Hono<{ Bindings: DatabaseEnv; Variables: UserVariables }>();
 
-  app.use('*', userGuard(open));
+  if (duplicationOnly) {
+    app.use('/:slug/duplicate', userGuard(open));
+    app.use('/:slug/duplication', userGuard(open));
+  } else app.use('*', userGuard(open));
 
   const run = async (
     c: Context<{ Bindings: DatabaseEnv; Variables: UserVariables }>,
@@ -46,10 +50,26 @@ export function tableWriteRoutes(open: Open = openDb) {
     }
   };
 
+  if (duplicationOnly) {
+    app.get('/:slug/duplication', async (c) => {
+      try {
+        return c.json(
+          await loadTableForDuplication(c.get('db'), c.get('actor'), c.req.param('slug')),
+        );
+      } catch (cause) {
+        const refused = refusal(c, cause);
+        if (refused) return refused;
+        throw cause;
+      }
+    });
+    app.post('/:slug/duplicate', (c) => run(c, 'duplicate', c.req.param('slug')));
+    return app;
+  }
   app.post('/', (c) => run(c, 'create', ''));
   app.post('/:slug/:action', (c) => {
     const name = c.req.param('action');
-    if (name === 'create' || !Object.hasOwn(tableWriteActions, name))
+    // `duplicate` is served only by its own `/v1/tables` mount, never by this legacy one.
+    if (name === 'create' || name === 'duplicate' || !Object.hasOwn(tableWriteActions, name))
       return c.json({ error: 'not_found' }, 404);
     return run(c, name, c.req.param('slug'));
   });

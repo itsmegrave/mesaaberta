@@ -16,6 +16,8 @@ import type { TableStatus } from '../../tables/status-values';
 import { formatCep } from '../../location/cep';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
+import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
+
 const MAX_SLUG_ATTEMPTS = 5;
 
 /** A Postgres unique violation on the slug index (drizzle wraps the driver's error as `cause`). */
@@ -142,7 +144,15 @@ export async function createTable(
     now = new Date(),
     imagePath = null,
     draft = false,
-  }: { now?: Date; imagePath?: string | null; draft?: boolean } = {},
+    duplicatedFromTableId,
+    duplicationRequestKey,
+  }: {
+    now?: Date;
+    imagePath?: string | null;
+    draft?: boolean;
+    duplicatedFromTableId?: string;
+    duplicationRequestKey?: string;
+  } = {},
 ): Promise<{ slug: string; eventId: string; draft: boolean }> {
   authorize(actor, 'table:create');
 
@@ -177,6 +187,8 @@ export async function createTable(
           .insert(gameTables)
           .values({
             ...columns,
+            duplicatedFromTableId,
+            duplicationRequestKey,
             slug,
             gmId: actor!.id,
             systemId: system.id,
@@ -195,6 +207,12 @@ export async function createTable(
           },
           { now },
         );
+        if (duplicatedFromTableId) {
+          await tx
+            .update(gameTables)
+            .set({ duplicationEventId: eventId })
+            .where(eq(gameTables.id, created.id));
+        }
         return { eventId, draft: asDraft };
       });
       return { slug, ...saved };
@@ -384,6 +402,7 @@ export async function updateTable(
   // A new image replaces the current one; without one, the GM may take the current one off.
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
+    await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
     // The row is locked first, so the status read here is the one this save and a publish at the
     // same moment both see: a draft cannot go public between the check below and the update.
     const [locked] = await tx
@@ -391,6 +410,7 @@ export async function updateTable(
       .from(gameTables)
       .where(eq(gameTables.id, table.id))
       .for('update');
+    await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     // A suggestion is the table's GM's, also when an admin is the one editing.
     const system = await systemFor(
       tx as unknown as AnyDb,
@@ -467,6 +487,8 @@ export async function publishTable(
   if (table.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
 
   const eventId = await db.transaction(async (tx) => {
+    await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
+    await guardTableSchedule(tx as unknown as AnyDb, table.id);
     // Locked and read again inside the transaction: an edit or an admin's decision at the same
     // moment cannot slip a system nobody approved under a table that is going public.
     const [locked] = await tx

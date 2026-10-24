@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
-import { events, profiles, registrations } from '@mesaaberta/core/server/db/schema';
+import { events, profiles, registrations, gameTables } from '@mesaaberta/core/server/db/schema';
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
@@ -46,7 +46,11 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
     avatarPath: profiles.avatarPath,
   };
 
-  const [rows, [gm], rating, recent] = await Promise.all([
+  const [[source], rows, [gm], rating, recent] = await Promise.all([
+    db
+      .select({ moderatedAt: gameTables.moderatedAt })
+      .from(gameTables)
+      .where(eq(gameTables.id, table.id)),
     db
       .select({
         playerId: registrations.playerId,
@@ -97,6 +101,10 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
 
   return {
     table,
+    canDuplicate: can(actor, 'table:duplicate', {
+      gmId: table.gmId,
+      moderatedAt: source.moderatedAt,
+    }),
     // A draft whose system is a suggestion says so instead of offering to publish.
     systemWaiting: table.status === 'draft' ? await systemWaitingOf(db, table.system.slug) : null,
     gm: gm as Person,

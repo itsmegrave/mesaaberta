@@ -52,9 +52,12 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-const app = () => tableWriteRoutes((() => ({ db: test.db, close: async () => {} })) as never);
-const post = (path: string, body: unknown, actor?: string) =>
-  app().request(
+const open = (() => ({ db: test.db, close: async () => {} })) as never;
+const app = () => tableWriteRoutes(open);
+// Duplication has its own mount (`/v1/tables`), not the legacy `/v1/table-writes` one.
+const duplicationApp = () => tableWriteRoutes(open, true);
+const send = (mount: typeof app, path: string, body: unknown, actor?: string) =>
+  mount().request(
     path,
     {
       method: 'POST',
@@ -63,6 +66,9 @@ const post = (path: string, body: unknown, actor?: string) =>
     },
     env,
   );
+const post = (path: string, body: unknown, actor?: string) => send(app, path, body, actor);
+const duplicate = (path: string, body: unknown, actor?: string) =>
+  send(duplicationApp, path, body, actor);
 let slug: string;
 
 describe('api table write routes over a database', () => {
@@ -127,5 +133,69 @@ describe('api table write routes over a database', () => {
     expect((await post('/nope/disable', {}, gm)).status).toBe(404);
     expect((await post(`/${slug}/explode`, {}, gm)).status).toBe(404);
     expect((await post('/', { input }, undefined)).status).toBe(401);
+  });
+});
+
+describe('duplication api', () => {
+  it('rejects another owner and missing new dates while reporting schedule conflicts as a date field', async () => {
+    const original = await post('/', { input: { ...input, title: 'Fonte para duplicar' } }, gm);
+    const source = (await original.json()) as { slug: string };
+    expect(
+      (
+        await duplicate(
+          `/${source.slug}/duplicate`,
+          { input: { ...input, startsAtLocal: '2099-01-02T20:00' } },
+          other,
+        )
+      ).status,
+    ).toBe(403);
+    expect(
+      (await duplicate(`/${source.slug}/duplicate`, { input: { ...input, startsAtLocal: '' } }, gm))
+        .status,
+    ).toBe(400);
+    const conflict = await duplicate(`/${source.slug}/duplicate`, { input }, gm);
+    expect(conflict.status).toBe(400);
+    expect(await conflict.json()).toMatchObject({
+      field: 'startsAtLocal',
+      message: 'schedule_conflict',
+    });
+  });
+  it('duplicates through the shared action with a persistent request key and never publishes a draft', async () => {
+    const original = await post('/', { input: { ...input, title: 'Fonte idempotente' } }, gm);
+    const source = (await original.json()) as { slug: string };
+    const payload = {
+      input: { ...input, startsAtLocal: '2099-01-02T20:00' },
+      requestKey: crypto.randomUUID(),
+      draft: true,
+    };
+    const first = await duplicate(`/${source.slug}/duplicate`, payload, gm);
+    expect(first.status).toBe(200);
+    const copied = (await first.json()) as { slug: string; eventIds: string[]; draft: boolean };
+    expect(await (await duplicate(`/${source.slug}/duplicate`, payload, gm)).json()).toEqual(
+      copied,
+    );
+    expect(copied.draft).toBe(true);
+    // The legacy mount never serves duplication, so there is one way in.
+    expect((await post(`/${source.slug}/duplicate`, payload, gm)).status).toBe(404);
+    const [event] = await test.db.select().from(events).where(eq(events.id, copied.eventIds[0]));
+    expect(event.type).toBe('TableDrafted');
+  });
+});
+
+it('loads duplication defaults only for its owner through the API', async () => {
+  const created = await post(
+    '/',
+    { input: { ...input, title: 'Fonte API de cópia' }, imagePath: null },
+    gm,
+  );
+  const { slug: source } = (await created.json()) as { slug: string };
+  const read = (actor: string) =>
+    duplicationApp().request(`/${source}/duplication`, { headers: { [ACTOR_HEADER]: actor } }, env);
+  expect((await read(other)).status).toBe(403);
+  const response = await read(gm);
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    sourceSlug: source,
+    input: { title: 'Fonte API de cópia', startsAtLocal: '' },
   });
 });
