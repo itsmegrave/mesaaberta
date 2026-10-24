@@ -12,6 +12,7 @@ import { manageRoutes } from './manage';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
 import { registrationRoutes } from './registrations';
+import { readRoutes } from './reads';
 import { reportRoutes } from './reports';
 import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
@@ -71,6 +72,9 @@ export function createApi() {
   app.route('/v1/auth', authRoutes());
   // The person's own profile (the form and the direct-messages switch), behind `api_account`.
   app.route('/v1/account', accountRoutes());
+
+  // The read side, one resource at a time (the catalog first), behind `api_reads_<resource>`.
+  app.route('/v1/reads', readRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
