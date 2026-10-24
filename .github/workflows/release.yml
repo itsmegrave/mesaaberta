@@ -5,14 +5,26 @@ name: Release images
 # these images.
 #
 # Tags on ghcr.io/<owner>/<repo>-<image> (web, api, worker, migrate):
-#   every merge to main  sha-<7 chars> (immutable, pin a deployment to it) and main (moves)
+#   a merge to main that changes app code  sha-<7 chars> (immutable, pin a deployment to it) and
+#                        main (moves); other merges publish nothing, see the paths below
 #   a tag vX.Y.Z         vX.Y.Z, X.Y.Z and latest (latest is only ever a release)
 # Staging follows main or a sha; production pins a release tag or a sha.
 on:
   push:
     branches: [main]
-    # A change that only touches documentation builds nothing, as in ci.yml.
-    paths-ignore: ['*.md', 'docs/**', 'LICENSE']
+    # Only a change to what ends up in the images builds them: the apps, the packages, the
+    # migrations and the dependencies. A chore (docs, CI, lint config, tests) builds nothing. Path
+    # filters do not apply to tags, so a release tag always publishes.
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'drizzle/**'
+      - 'drizzle.config.ts'
+      - 'package.json'
+      - 'bun.lock'
+      - 'bunfig.toml'
+      - '!**/*.spec.ts'
+      - '!apps/web/e2e/**'
     tags: ['v*.*.*']
 
 permissions:
