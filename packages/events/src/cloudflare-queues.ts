@@ -44,7 +44,11 @@ export type QueueMessage = {
   retry(options?: { delaySeconds?: number }): void;
 };
 
-export type QueueBatch = { messages: readonly QueueMessage[] };
+export type QueueBatch = {
+  /** The queue the batch was read from (`MessageBatch.queue`). */
+  queue?: string;
+  messages: readonly QueueMessage[];
+};
 
 const isRef = (body: unknown): body is JobRef => {
   if (!body || typeof body !== 'object') return false;
@@ -108,5 +112,25 @@ export function createQueueConsumer({
       else summary.failed += 1;
     }
     return summary;
+  };
+}
+
+/**
+ * The consumer of the dead-letter queue. A message lands there only after the main consumer crashed
+ * on it for good (a database outage, say): the outbox row is still due and the sweeper runs it, so
+ * all this does is make the loss of a delivery visible. It reports each reference and acknowledges
+ * it; the queue would otherwise drop it after its retention without anyone seeing.
+ */
+export function createDeadLetterConsumer({
+  onDead,
+}: {
+  onDead: (ref: JobRef | null, attempts: number) => void;
+}) {
+  return async (batch: QueueBatch): Promise<number> => {
+    for (const message of batch.messages) {
+      onDead(isRef(message.body) ? message.body : null, message.attempts);
+      message.ack();
+    }
+    return batch.messages.length;
   };
 }

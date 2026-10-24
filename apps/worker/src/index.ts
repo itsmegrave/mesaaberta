@@ -5,7 +5,7 @@ import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { runScheduled } from '@mesaaberta/core/server/events/scheduled';
 import type { InstagramEnv } from '@mesaaberta/core/server/instagram/api';
 import { logger } from '@mesaaberta/core/server/logger';
-import { createQueueConsumer, type QueueBatch } from '@mesaaberta/events';
+import { createDeadLetterConsumer, createQueueConsumer, type QueueBatch } from '@mesaaberta/events';
 
 // The background half of the system (Trello #120): the Cron Triggers and, later, the Queues
 // consumer. It is the same delivery graph the web Worker runs from `scheduled`, packaged on its own
@@ -23,6 +23,9 @@ export type WorkerEnv = ImportEnv &
   };
 
 type Controller = { cron: string; scheduledTime: number };
+
+/** The dead-letter queue of `domain-events-canary` (see wrangler.jsonc). */
+const DEAD_LETTER_QUEUE = 'domain-events-canary-dlq';
 
 const liveHandlers = (env: WorkerEnv | undefined) =>
   (env?.QUEUE_LIVE_HANDLERS ?? '')
@@ -57,6 +60,23 @@ export const createWorker = (
       environment: 'production',
       release: env?.CF_VERSION_METADATA?.id,
     });
+    if (batch.queue === DEAD_LETTER_QUEUE) {
+      // Only a reference travels, so ids are all there is to log. The outbox row is still due and
+      // the sweeper runs it; this makes sure someone sees that the queue gave up.
+      const dead = createDeadLetterConsumer({
+        onDead: (ref, attempts) =>
+          log.error('queue dead letter', {
+            event: 'queue.dead_letter',
+            eventId: ref?.eventId,
+            resourceType: 'event',
+            resourceId: ref?.eventId,
+            type: ref?.type,
+            attempts,
+          }),
+      });
+      await dead(batch);
+      return;
+    }
     const only = liveHandlers(env);
     const connectionString = only.length > 0 ? connectionStringFrom(env) : undefined;
     const onFailed = (_ref: unknown, reason: string) =>

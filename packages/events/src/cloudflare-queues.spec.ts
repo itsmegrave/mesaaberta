@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   MAX_DELAY_SECONDS,
+  createDeadLetterConsumer,
   createQueueConsumer,
   queueTransport,
   type QueueMessage,
@@ -125,5 +126,20 @@ describe('createQueueConsumer', () => {
       message({ ...ref, eventId: 'ok' }),
     ]);
     expect(summary).toEqual({ done: 1, retried: 0, failed: 1 });
+  });
+});
+
+describe('createDeadLetterConsumer', () => {
+  it('reports every dead letter and acknowledges it, malformed ones included', async () => {
+    const onDead = vi.fn();
+    const good = message(ref, 11);
+    const bad = message('garbage', 11);
+    const count = await createDeadLetterConsumer({ onDead })({ messages: [good, bad] });
+    expect(count).toBe(2);
+    expect(onDead).toHaveBeenNthCalledWith(1, ref, 11);
+    expect(onDead).toHaveBeenNthCalledWith(2, null, 11);
+    expect(good.ack).toHaveBeenCalledOnce();
+    expect(bad.ack).toHaveBeenCalledOnce();
+    expect(good.retry).not.toHaveBeenCalled();
   });
 });
