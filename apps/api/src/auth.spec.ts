@@ -1,4 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+const { signInForSession } = vi.hoisted(() => ({ signInForSession: vi.fn() }));
+vi.mock('@mesaaberta/core/server/auth/email', () => ({ signInForSession }));
+
 import { authRoutes } from './auth';
 
 const env = {
@@ -33,5 +38,57 @@ describe('api auth routes', () => {
     );
 
     expect(response.status).toBe(503);
+  });
+});
+
+describe('api sign-in', () => {
+  const signIn = (body: unknown, environment: object = env) =>
+    authRoutes(open, () => ({}) as SupabaseClient).request(
+      '/sign-in',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-client-ip': '127.0.0.1' },
+        body: JSON.stringify(body),
+      },
+      environment,
+    );
+  const credentials = { email: 'ana@example.com', password: 'correct horse' };
+
+  beforeEach(() => signInForSession.mockReset());
+
+  it('refuses a bad address or an empty password without asking Supabase', async () => {
+    expect((await signIn({ email: 'nope', password: 'x' })).status).toBe(400);
+    expect((await signIn({ email: 'a@b.co', password: '' })).status).toBe(400);
+    expect(signInForSession).not.toHaveBeenCalled();
+  });
+
+  it('answers unavailable without the Supabase settings', async () => {
+    expect((await signIn(credentials, { DATABASE_URL: 'postgres://test' })).status).toBe(503);
+  });
+
+  it('hands back the session Supabase issued, and only then', async () => {
+    const session = { accessToken: 'jwt-a', refreshToken: 'jwt-r' };
+    signInForSession.mockResolvedValue({ result: 'ok', session });
+
+    const response = await signIn(credentials);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ result: 'ok', session });
+    expect(signInForSession.mock.calls[0][1]).toMatchObject(credentials);
+  });
+
+  it.each([
+    ['invalid', 400],
+    ['unconfirmed', 400],
+    ['suspended', 403],
+    ['rate_limited', 429],
+    ['failed', 500],
+  ])('answers %s with %i and no session', async (result, status) => {
+    signInForSession.mockResolvedValue({ result, session: null });
+
+    const response = await signIn(credentials);
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual({ result });
   });
 });
