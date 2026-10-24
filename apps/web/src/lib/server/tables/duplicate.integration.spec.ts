@@ -127,10 +127,16 @@ describe('duplicate schedule concurrency', () => {
     ]);
     expect(copies[0]).toEqual(copies[1]);
     const distinct = await Promise.all([
-      duplicateTable(db, actor, source.slug, { ...input, startsAtLocal: '2099-01-02T18:00' }),
-      duplicateTable(db, actor, source.slug, { ...input, startsAtLocal: '2099-01-02T18:00' }),
+      duplicateTable(db, actor, source.slug, { ...input, startsAtLocal: '2099-01-03T18:00' }),
+      duplicateTable(db, actor, source.slug, { ...input, startsAtLocal: '2099-01-04T18:00' }),
     ]);
     expect(new Set(distinct.map((c) => c.slug)).size).toBe(2);
+    // Copies of one source also hold their slots against each other, even when made at once.
+    const clash = await Promise.allSettled([
+      duplicateTable(db, actor, source.slug, { ...input, startsAtLocal: '2099-01-05T18:00' }),
+      duplicateTable(db, actor, source.slug, { ...input, startsAtLocal: '2099-01-05T18:00' }),
+    ]);
+    expect(clash.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
   });
   it('rechecks moderation after waiting for a locked source', async () => {
     const { actor, input, source } = await setup();
