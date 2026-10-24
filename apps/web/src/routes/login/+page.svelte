@@ -45,9 +45,7 @@
       <CredentialsForm mode="login" {controller} action="?/email" />
 
       <p>
-        <a href={resolve('forgot-password')} class="link-underline font-semibold text-link"
-          >{m.login_forgot()}</a
-        >
+        <a href="/forgot" class="link-underline font-semibold text-link">{m.login_forgot()}</a>
       </p>
 
       <p class="flex items-center gap-3" aria-hidden="true">

@@ -25,30 +25,30 @@ test('the GM hears about a new player on the bell, opens it, and it is read', as
 
   const player = await createUser('Bruno');
   const playerSession = await asUser(browser, player);
-  await playerSession.page.goto(`/tables/${slug}`);
+  await playerSession.page.goto(`/t/${slug}`);
   await playerSession.page.getByRole('button', { name: 'Pegar vaga' }).click();
   await expect(playerSession.page.getByText('Você está nesta mesa.')).toBeVisible();
 
   const gmPage = gmSession.page;
-  await gmPage.goto('/account/tables');
+  await gmPage.goto('/u/tables');
   const bell = await bellSays(gmPage, 'Notificações: 1 sem ler');
   await bell.click();
   await gmPage
     .getByRole('button', { name: new RegExp(`${player.username} entrou em ${title}`) })
     .click();
 
-  await expect(gmPage).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+  await expect(gmPage).toHaveURL(new RegExp(`/t/${slug}/manage$`));
   await expect(gmPage.getByRole('button', { name: 'Notificações', exact: true })).toBeVisible();
 
   // The GM removes the player, who finds it in the feed.
-  await gmPage.goto(`/tables/${slug}`);
+  await gmPage.goto(`/t/${slug}`);
   await gmPage.getByRole('button', { name: 'Remover' }).click();
   await expect(gmPage.getByText('Ninguém entrou ainda.')).toBeVisible();
 
   const page = playerSession.page;
-  await page.goto('/account/tables');
+  await page.goto('/u/tables');
   await bellSays(page, 'Notificações: 1 sem ler');
-  await page.goto('/notifications?category=registration');
+  await page.goto('/n?category=registration');
   await expect(
     page.getByRole('main').getByText(`Sua vaga em ${title} foi encerrada pela mestria da mesa.`),
   ).toBeVisible();

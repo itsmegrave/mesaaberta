@@ -557,7 +557,7 @@
       {submitLabel ?? m.profile_submit()}
     </SubmitButton>
     {#if cancelHref}
-      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
       <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
     {/if}
   </div>

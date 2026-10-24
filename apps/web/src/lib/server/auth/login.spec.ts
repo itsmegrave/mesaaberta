@@ -17,14 +17,14 @@ describe('startLogin', () => {
     const url = await startLogin(client as never, {
       provider: 'google',
       origin,
-      next: '/tables/new',
+      next: '/t/new',
     });
 
     expect(url).toBe('https://accounts.google.com/x');
     expect(client.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo: `${origin}/auth/callback?next=%2Ftables%2Fnew`,
+        redirectTo: `${origin}/auth/callback?next=%2Ft%2Fnew`,
         skipBrowserRedirect: true,
       },
     });
@@ -79,7 +79,7 @@ describe('finishLogin', () => {
   it('exchanges the code, creates the profile, and sends the new person to finish it, then on to next', async () => {
     const { run, test } = await setup({ data: { user }, error: null });
 
-    expect(await run('abc', '/tables/new')).toBe('/onboarding?next=%2Ftables%2Fnew');
+    expect(await run('abc', '/t/new')).toBe('/u/profile/setup?next=%2Ft%2Fnew');
     expect(await test.db.query.profiles.findFirst()).toMatchObject({
       id: user.id,
       name: 'Ana',
@@ -91,7 +91,7 @@ describe('finishLogin', () => {
   it('records the connection with the visitor IP, for the Marco Civil retention', async () => {
     const { run, test } = await setup({ data: { user }, error: null });
 
-    await run('abc', '/tables/new');
+    await run('abc', '/t/new');
 
     const [event] = await test.db.select().from(events).where(eq(events.actorId, user.id));
     expect(event).toMatchObject({ type: 'UserSignedIn', payload: { ip: '203.0.113.1' } });
@@ -101,14 +101,14 @@ describe('finishLogin', () => {
     const { run, test } = await setup({ data: { user }, error: null });
     await test.db.insert(profiles).values({ id: user.id, username: 'ana' });
 
-    expect(await run('abc', '/tables/new')).toBe('/tables/new');
+    expect(await run('abc', '/t/new')).toBe('/t/new');
   });
 
   it('sends a profile from before usernames to finish it too', async () => {
     const { run, test } = await setup({ data: { user }, error: null });
     await test.db.insert(profiles).values({ id: user.id });
 
-    expect(await run('abc', '/account/tables')).toBe('/onboarding?next=%2Faccount%2Ftables');
+    expect(await run('abc', '/u/tables')).toBe('/u/profile/setup?next=%2Fu%2Ftables');
   });
 
   it('goes home when next is unsafe', async () => {
@@ -136,7 +136,7 @@ describe('finishLogin', () => {
     const { run, signOut, test } = await setup({ data: { user }, error: null });
     await test.db.insert(profiles).values({ id: user.id, username: 'ana', status: 'suspended' });
 
-    expect(await run('abc', '/tables')).toBe('/login?error=suspended');
+    expect(await run('abc', '/t')).toBe('/login?error=suspended');
     expect(signOut).toHaveBeenCalled();
   });
 

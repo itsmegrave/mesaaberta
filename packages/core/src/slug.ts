@@ -46,7 +46,7 @@ export function nextFreeSlug(base: string, isTaken: (slug: string) => boolean): 
 
 /**
  * Slugs a table may not have, because a static route sits at the same place and would shadow it:
- * `/tables/new` is the create form and `/tables/<slug>/edit` the edit form.
+ * `/t/new` is the create form and `/t/<slug>/edit` the edit form.
  */
 export const RESERVED_TABLE_SLUGS: ReadonlySet<string> = new Set(['new', 'edit']);
 

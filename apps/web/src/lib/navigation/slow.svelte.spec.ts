@@ -28,26 +28,26 @@ describe('Slow', () => {
 
   it('shows nothing while the value is new, so a quick navigation does not flash', () => {
     const { slow, set } = watch(150);
-    set('/tables');
+    set('/t');
     vi.advanceTimersByTime(149);
     expect(slow.current).toBeNull();
   });
 
   it('shows the value once it has lasted past the delay', () => {
     const { slow, set } = watch(150);
-    set('/tables');
+    set('/t');
     vi.advanceTimersByTime(150);
-    expect(slow.current).toBe('/tables');
+    expect(slow.current).toBe('/t');
   });
 
   it('clears as soon as the value goes away, and starts over for the next one', () => {
     const { slow, set } = watch(150);
-    set('/tables');
+    set('/t');
     vi.advanceTimersByTime(150);
     set(null);
     expect(slow.current).toBeNull();
 
-    set('/notifications');
+    set('/n');
     vi.advanceTimersByTime(100);
     expect(slow.current).toBeNull();
   });

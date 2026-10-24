@@ -28,7 +28,7 @@ test.describe('joining a table that takes players at once', () => {
     const [bruno] = players;
     const { page, context } = await asUser(browser, bruno);
 
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await expect(page.getByText(seats(5)).first()).toBeVisible();
     await page.getByRole('button', { name: 'Pegar vaga' }).click();
 
@@ -36,7 +36,7 @@ test.describe('joining a table that takes players at once', () => {
     await expect(page.getByText(seats(4)).first()).toBeVisible();
 
     // The GM sees who sat down (names are only shown to the GM).
-    await gmPage.goto(`/tables/${slug}`);
+    await gmPage.goto(`/t/${slug}`);
     await expect(gmPage.getByRole('heading', { name: 'Participantes' })).toBeVisible();
     await expect(gmPage.getByRole('main').getByText(players[0].username)).toBeVisible();
 
@@ -50,7 +50,7 @@ test.describe('joining a table that takes players at once', () => {
   test('the GM cannot take a seat at their own table', async ({ browser }) => {
     const { gmPage, gmContext, slug } = await setup(browser);
 
-    await gmPage.goto(`/tables/${slug}`);
+    await gmPage.goto(`/t/${slug}`);
 
     await expect(gmPage.getByRole('button', { name: /Pegar vaga|Pedir vaga/ })).toHaveCount(0);
     await gmContext.close();
@@ -59,11 +59,11 @@ test.describe('joining a table that takes players at once', () => {
   test('the GM removes a player, who can then ask again', async ({ browser }) => {
     const { gmPage, gmContext, slug, players } = await setup(browser);
     const { page, context } = await asUser(browser, players[0]);
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pegar vaga' }).click();
     await expect(page.getByText('Você está nesta mesa.')).toBeVisible();
 
-    await gmPage.goto(`/tables/${slug}`);
+    await gmPage.goto(`/t/${slug}`);
     await gmPage.getByRole('button', { name: 'Remover' }).click();
     await expect(gmPage.getByText('Ninguém entrou ainda.')).toBeVisible();
 
@@ -76,12 +76,12 @@ test.describe('joining a table that takes players at once', () => {
   test('a full table says so and offers no seat', async ({ browser }) => {
     const { gmContext, slug, players } = await setup(browser, { capacity: 1 });
     const first = await asUser(browser, players[0]);
-    await first.page.goto(`/tables/${slug}`);
+    await first.page.goto(`/t/${slug}`);
     await first.page.getByRole('button', { name: 'Pegar vaga' }).click();
     await expect(first.page.getByText('Você está nesta mesa.')).toBeVisible();
 
     const second = await asUser(browser, players[1]);
-    await second.page.goto(`/tables/${slug}`);
+    await second.page.goto(`/t/${slug}`);
 
     await expect(second.page.getByText('Mesa cheia').first()).toBeVisible();
     await expect(second.page.getByRole('button', { name: /Pegar vaga|Pedir vaga/ })).toHaveCount(0);
@@ -96,7 +96,7 @@ test.describe('joining a table that takes players at once', () => {
     const { gmContext, slug, players } = await setup(browser, { capacity: 1 });
     const a = await asUser(browser, players[0]);
     const b = await asUser(browser, players[1]);
-    await Promise.all([a.page.goto(`/tables/${slug}`), b.page.goto(`/tables/${slug}`)]);
+    await Promise.all([a.page.goto(`/t/${slug}`), b.page.goto(`/t/${slug}`)]);
 
     await Promise.all([
       a.page.getByRole('button', { name: 'Pegar vaga' }).click(),
@@ -134,7 +134,7 @@ test.describe('a table where the GM approves each player', () => {
     const { gmPage, gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
 
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
     await page.getByLabel(/Mensagem para o mestre/).fill('Oi! Jogo há dois anos.');
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
@@ -143,14 +143,14 @@ test.describe('a table where the GM approves each player', () => {
     ).toBeVisible();
     await expect(page.getByText(seats(5)).first()).toBeVisible(); // a request takes no seat
 
-    await gmPage.goto(`/tables/${slug}`);
+    await gmPage.goto(`/t/${slug}`);
     await expect(gmPage.getByText('Oi! Jogo há dois anos.')).toBeVisible();
-    await gmPage.goto('/account/tables');
+    await gmPage.goto('/u/tables');
     await expect(gmPage.getByRole('heading', { name: 'Pedidos de vaga (1)' })).toBeVisible();
     await expect(gmPage.getByText(players[0].username)).toBeVisible();
     await gmPage.getByRole('button', { name: 'Aprovar' }).click();
 
-    await expect(gmPage).toHaveURL(/\/account\/tables$/); // the action came back to the dashboard
+    await expect(gmPage).toHaveURL(/\/u\/tables$/); // the action came back to the dashboard
     await expect(
       gmPage.getByText('2 de 5 vagas ocupadas').or(gmPage.getByText('1 de 5 vagas ocupadas')),
     ).toBeVisible();
@@ -165,7 +165,7 @@ test.describe('a table where the GM approves each player', () => {
   test('a declined request disappears and the player can ask again', async ({ browser }) => {
     const { gmPage, gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     // The request has to be recorded before the GM's dashboard can list it.
@@ -173,7 +173,7 @@ test.describe('a table where the GM approves each player', () => {
       page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
     ).toBeVisible();
 
-    await gmPage.goto('/account/tables');
+    await gmPage.goto('/u/tables');
     await gmPage.getByRole('button', { name: 'Recusar' }).click();
     await expect(gmPage.getByText('Pedidos de vaga')).toHaveCount(0);
 
@@ -193,7 +193,7 @@ test.describe('a table where the GM approves each player', () => {
     const first = await asUser(browser, players[0]);
     const second = await asUser(browser, players[1]);
     for (const { page } of [first, second]) {
-      await page.goto(`/tables/${slug}`);
+      await page.goto(`/t/${slug}`);
       await page.getByRole('button', { name: 'Pedir vaga' }).click();
       await page.getByRole('button', { name: 'Enviar pedido' }).click();
       await expect(
@@ -201,7 +201,7 @@ test.describe('a table where the GM approves each player', () => {
       ).toBeVisible();
     }
 
-    await gmPage.goto(`/tables/${slug}`);
+    await gmPage.goto(`/t/${slug}`);
     await gmPage.getByRole('button', { name: 'Aprovar' }).first().click();
     await expect(gmPage.getByRole('button', { name: 'Aprovar' })).toHaveCount(1);
     await gmPage.getByRole('button', { name: 'Aprovar' }).click();
@@ -227,7 +227,7 @@ test.describe('ratings', () => {
   }) => {
     const { gmPage, gmContext, slug, players } = await setup(browser, { capacity: 3 });
     const { page, context } = await asUser(browser, players[0]);
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pegar vaga' }).click();
     await expect(page.getByText('Você está nesta mesa.')).toBeVisible();
 
@@ -261,14 +261,14 @@ test.describe('ratings', () => {
       await expect(page.getByText('Novo mestre · 1 avaliação').first()).toBeVisible();
 
       // The dashboard shows what was given, and the GM cannot rate their own table.
-      await page.goto('/account/tables');
+      await page.goto('/u/tables');
       await expect(page.getByText('Sua nota para a mestragem: 4')).toBeVisible();
-      await gmPage.goto(`/tables/${slug}`);
+      await gmPage.goto(`/t/${slug}`);
       await expect(gmPage.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
       await expect(gmPage.getByText('Noite ótima.')).toHaveCount(0);
 
       // The rating outlives the seat: removing the player does not take it away.
-      await gmPage.goto(`/tables/${slug}`);
+      await gmPage.goto(`/t/${slug}`);
       await gmPage.getByRole('button', { name: 'Remover' }).click();
       await expect(gmPage.getByText('Ninguém entrou ainda.')).toBeVisible();
       const rows =
@@ -284,7 +284,7 @@ test.describe('ratings', () => {
   test('someone with no seat, or only a pending request, cannot rate', async ({ browser }) => {
     const { gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
 
@@ -306,22 +306,22 @@ test.describe('the dashboard', () => {
   test('shows what I play and what I run, and leaving comes back to it', async ({ browser }) => {
     const { gmPage, gmContext, title, slug, players } = await setup(browser);
     const { page, context } = await asUser(browser, players[0]);
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pegar vaga' }).click();
     await expect(page.getByText('Você está nesta mesa.')).toBeVisible();
 
-    await page.goto('/account/tables');
+    await page.goto('/u/tables');
     await expect(page.getByRole('heading', { name: 'Jogando' })).toBeVisible();
     await expect(page.getByRole('link', { name: title })).toBeVisible();
     await expect(page.getByText('Você tem uma vaga')).toBeVisible();
 
-    await gmPage.goto('/account/tables');
+    await gmPage.goto('/u/tables');
     await expect(gmPage.getByRole('heading', { name: 'Mestrando' })).toBeVisible();
     await expect(gmPage.getByText('1 de 5 vagas ocupadas')).toBeVisible();
     await expect(gmPage.getByText(players[0].username)).toBeVisible();
 
     await page.getByRole('button', { name: 'Sair da mesa' }).click();
-    await expect(page).toHaveURL(/\/account\/tables$/);
+    await expect(page).toHaveURL(/\/u\/tables$/);
     await expect(page.getByText('Você ainda não está em nenhuma mesa.')).toBeVisible();
     await context.close();
     await gmContext.close();

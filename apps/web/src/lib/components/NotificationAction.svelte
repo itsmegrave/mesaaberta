@@ -3,9 +3,8 @@
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { notificationActionSchema } from '#lib/notifications/actions.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { m } from '#lib/paraglide/messages.js';
 
   type Props = {
@@ -32,11 +31,7 @@
   });
 </script>
 
-<Form
-  action="{localizedHref('/notifications', getLocale())}?/{action}"
-  onsubmit={form.submit}
-  class={className}
->
+<Form action="/n?/{action}" onsubmit={form.submit} class={className}>
   {#if id}<input type="hidden" name="id" value={id} />{/if}
   <input type="hidden" name="next" value={next} />
   <SubmitButton

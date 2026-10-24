@@ -7,10 +7,9 @@
   import Avatar from '#lib/components/Avatar.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { muteSchema } from '@mesaaberta/core/messages/schema';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
+
   import { atHandle } from '@mesaaberta/core/profile/handle';
 
   let {
@@ -28,7 +27,6 @@
     };
   } = $props();
 
-  const locale = getLocale();
   const title = $derived(
     conversation.kind === 'table'
       ? (conversation.table?.title ?? '')
@@ -66,7 +64,7 @@
   {#snippet current()}
     {#if conversation.kind === 'table' && conversation.table}
       <a
-        href={localizedHref(`/tables/${conversation.table.slug}`, locale)}
+        href={`/t/${conversation.table.slug}`}
         title={m.messages_open_table()}
         aria-current="page"
         class="flex min-w-0 items-center gap-2 no-underline"
@@ -75,7 +73,7 @@
       </a>
     {:else if conversation.other?.username}
       <a
-        href={localizedHref(`/u/${encodeURIComponent(conversation.other.username)}`, locale)}
+        href={`/u/${encodeURIComponent(conversation.other.username)}`}
         aria-current="page"
         class="flex min-w-0 items-center gap-2 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-primary-500"
       >
@@ -107,7 +105,7 @@
   {:else}
     <Breadcrumbs
       class="min-w-0 flex-1"
-      items={[{ label: m.messages_title(), href: '/messages' }, { label: title }]}
+      items={[{ label: m.messages_title(), href: '/m' }, { label: title }]}
     />
   {/if}
 

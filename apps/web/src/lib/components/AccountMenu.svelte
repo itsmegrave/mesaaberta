@@ -5,9 +5,7 @@
   import Avatar from '#lib/components/Avatar.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     name,
@@ -37,7 +35,6 @@
     wide?: boolean;
   } = $props();
 
-  const locale = getLocale();
   // Signing out is a plain POST to an endpoint (not a form action), so the page itself goes away;
   // until it does, a second click is ignored. Coming back through the history resets it.
   let signingOut = $state(false);
@@ -92,14 +89,14 @@
         >
           <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
             {#if username}
-              <a href={localizedHref(`/u/${username}`, locale)} class={item}>
+              <a href={`/u/${username}`} class={item}>
                 <Icon name="game-icons:meeple" size={20} />
                 {m.nav_view_profile()}
               </a>
             {/if}
 
             <a
-              href={localizedHref('/messages', locale)}
+              href="/m"
               class={item}
               aria-label={messagesUnread > 0
                 ? m.messages_menu_unread({ count: messagesUnread })
@@ -120,7 +117,7 @@
 
             {#if isAdmin}
               <a
-                href={localizedHref('/admin', locale)}
+                href="/admin"
                 class={item}
                 aria-label={pendingSuggestionsCount > 0
                   ? `${m.nav_admin()}: ${pendingSuggestionsCount}`

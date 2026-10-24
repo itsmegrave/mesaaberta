@@ -9,10 +9,10 @@ export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => 
   // The provider or Supabase refused (the account is already connected to someone else, say) and
   // sent no code. Someone who was connecting goes back to their profile to read why, not to the login.
   const refused = url.searchParams.get('error_code') ?? url.searchParams.get('error');
-  if (refused && safeNext(url.searchParams.get('next')).startsWith('/account/profile')) {
+  if (refused && safeNext(url.searchParams.get('next')).startsWith('/u/profile/edit')) {
     redirect(
       303,
-      `/account/profile?conta=${refused === 'identity_already_exists' ? 'de_outra_pessoa' : 'falhou'}`,
+      `/u/profile/edit?conta=${refused === 'identity_already_exists' ? 'de_outra_pessoa' : 'falhou'}`,
     );
   }
 

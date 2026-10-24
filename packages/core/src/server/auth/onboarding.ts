@@ -1,7 +1,9 @@
+import { routes } from '../../routes';
 import { safeNext } from './safe-next';
 
 /** Where a signed-in person without a username is sent to finish their profile, and back afterwards. */
-export const onboardingUrl = (next: string) => `/onboarding?next=${encodeURIComponent(next)}`;
+export const onboardingUrl = (next: string) =>
+  `${routes.setup}?next=${encodeURIComponent(safeNext(next))}`;
 
 /**
  * True while a signed-in person has not picked their username: right after sign-up, and for every

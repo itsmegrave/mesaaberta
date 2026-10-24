@@ -12,7 +12,7 @@ const event = {
     getUser: async () => ({ id: 'gm' }),
     getProfile: async () => ({ id: 'gm', username: 'gm', role: 'user', status: 'active' }),
   },
-  url: new URL('https://x.test/tables/mesa/manage'),
+  url: new URL('https://x.test/t/mesa/manage'),
   params: { slug: 'mesa' },
 } as unknown as RequestEvent;
 

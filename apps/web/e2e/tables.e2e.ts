@@ -13,19 +13,19 @@ test.beforeEach(async ({ request }) => {
 
 test.describe('table list', () => {
   test('shows a seeded table, and opens its own page', async ({ page }) => {
-    await page.goto('/tables');
+    await page.goto('/t');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Mesas abertas' })).toBeVisible();
     await page.getByRole('link', { name: 'Os Sinos de Sablewood' }).click();
 
-    await expect(page).toHaveURL(/\/tables\/os-sinos-de-sablewood$/);
+    await expect(page).toHaveURL(/\/t\/os-sinos-de-sablewood$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Os Sinos de Sablewood');
   });
 
   test("shows what a card needs: system, kind, seats and the session in the visitor's timezone", async ({
     page,
   }) => {
-    await page.goto('/tables');
+    await page.goto('/t');
     const card = page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' });
 
     await expect(card).toContainText('Daggerheart');
@@ -37,7 +37,7 @@ test.describe('table list', () => {
   test('shows where an in-person table plays, and the Old Dragon one is listed too', async ({
     page,
   }) => {
-    await page.goto('/tables');
+    await page.goto('/t');
 
     await expect(page.getByRole('article').filter({ hasText: 'Noites de Neon' })).toContainText(
       'Presencial · Boa Viagem, Recife - PE',
@@ -48,7 +48,7 @@ test.describe('table list', () => {
   });
 
   test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
-    await page.goto('/tables');
+    await page.goto('/t');
     const cards = page.getByRole('article');
     const titles = await cards.evaluateAll((elements) =>
       elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim()),
@@ -64,16 +64,16 @@ test.describe('table list', () => {
   });
 
   test('never shows a disabled table, in the list or by its address', async ({ page }) => {
-    await page.goto('/tables');
+    await page.goto('/t');
     await expect(page.getByText('A Última Estrada')).toHaveCount(0);
 
-    const response = await page.goto('/tables/a-ultima-estrada');
+    const response = await page.goto('/t/a-ultima-estrada');
     expect(response?.status()).toBe(404);
   });
 
   test('filters by system, and says so when nothing matches', async ({ page, isMobile }) => {
     test.skip(isMobile, 'on a phone the system is picked in the filter sheet (see TablesFilters)');
-    await page.goto('/tables');
+    await page.goto('/t');
     const filter = page.getByRole('combobox', { name: 'Sistema' });
     await expect(filter).toBeVisible();
 
@@ -102,16 +102,16 @@ test.describe('table list', () => {
     await expect(page).toHaveURL(/\?system=daggerheart$/);
     await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toHaveCount(0);
 
-    await page.goto('/tables?system=gurps');
+    await page.goto('/t?system=gurps');
     await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta com esses filtros');
     await expect(page.getByRole('link', { name: 'Ver todas as mesas' })).toHaveAttribute(
       'href',
-      '/tables',
+      '/t',
     );
   });
 
   test('does not scroll sideways on a phone', async ({ page }) => {
-    await page.goto('/tables');
+    await page.goto('/t');
 
     expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
   });
@@ -119,7 +119,7 @@ test.describe('table list', () => {
 
 test.describe("times in the visitor's timezone", () => {
   test('a visitor in Brazil sees the session in their zone', async ({ page }) => {
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t/os-sinos-de-sablewood');
     await expect(page.getByRole('main')).toContainText('GMT-3');
   });
 
@@ -127,7 +127,7 @@ test.describe("times in the visitor's timezone", () => {
     test.use({ timezoneId: 'Asia/Tokyo' });
 
     test('sees the same session in Tokyo time, from the browser', async ({ page }) => {
-      await page.goto('/tables/os-sinos-de-sablewood');
+      await page.goto('/t/os-sinos-de-sablewood');
       await expect(page.getByRole('main')).toContainText('GMT+9');
       await expect(page.getByRole('main')).not.toContainText('GMT-3');
     });
@@ -136,25 +136,25 @@ test.describe("times in the visitor's timezone", () => {
 
 test.describe('table page', () => {
   test('shows where it sits: a trail with the table’s name, and no back link', async ({ page }) => {
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t/os-sinos-de-sablewood');
     const trail = page.getByRole('navigation', { name: 'Trilha de navegação' });
 
     await expect(page.getByRole('link', { name: /^Voltar/ })).toHaveCount(0);
     await expect(trail.getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
-    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/tables');
+    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
     await expect(trail.getByText('Os Sinos de Sablewood')).toHaveAttribute('aria-current', 'page');
   });
 
   test('shows the description, the GM, the system, the schedule and the extra info', async ({
     page,
   }) => {
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t/os-sinos-de-sablewood');
 
     await expect(page.getByText('Uma aventura de uma noite')).toBeVisible();
     await expect(page.getByText('@mestre-de-testes')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Daggerheart' })).toHaveAttribute(
       'href',
-      /\/tables\?system=daggerheart$/,
+      /\/t\?system=daggerheart$/,
     );
     await expect(page.getByText('Sessão única')).toBeVisible();
     await expect(page.getByText('4 horas')).toBeVisible();
@@ -162,7 +162,7 @@ test.describe('table page', () => {
   });
 
   test('describes a weekly campaign', async ({ page }) => {
-    await page.goto('/tables/cronicas-de-roshar');
+    await page.goto('/t/cronicas-de-roshar');
 
     await expect(page.getByText('Toda semana')).toBeVisible();
     await expect(page.getByText('Cada entrada passa por aprovação.')).toBeVisible();
@@ -171,7 +171,7 @@ test.describe('table page', () => {
   test('shows rich text with its formatting and never runs what is stored with it', async ({
     page,
   }) => {
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t/os-sinos-de-sablewood');
 
     await expect(page.getByText('Traga dados e lápis.')).toBeVisible();
     await expect(page.locator('.rich-text strong', { hasText: 'lápis' })).toBeVisible();
@@ -180,7 +180,7 @@ test.describe('table page', () => {
   });
 
   test('offers no edit item to a visitor who is not the GM or an admin', async ({ page }) => {
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t/os-sinos-de-sablewood');
     // The menu answers once the page has hydrated.
     await page.waitForLoadState('networkidle');
 
@@ -193,11 +193,11 @@ test.describe('table page', () => {
   test('asks an anonymous visitor to sign in to take a seat, and never shows the players', async ({
     page,
   }) => {
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t/os-sinos-de-sablewood');
 
     await expect(page.getByRole('link', { name: 'Entre para pegar uma vaga' })).toHaveAttribute(
       'href',
-      /^\/login\?next=%2Ftables%2Fos-sinos-de-sablewood$/,
+      /^\/login\?next=%2Ft%2Fos-sinos-de-sablewood$/,
     );
     await expect(page.getByRole('button', { name: /pegar vaga|pedir vaga/i })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Participantes' })).toHaveCount(0);
@@ -208,18 +208,18 @@ test.describe('table page', () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post('/tables/os-sinos-de-sablewood?/join', {
+    const response = await request.post('/t/os-sinos-de-sablewood?/join', {
       headers: { origin: baseURL!, accept: 'text/html' },
       form: {},
       maxRedirects: 0,
     });
 
     expect(response.status()).toBe(303);
-    expect(response.headers()['location']).toBe('/login?next=%2Ftables%2Fos-sinos-de-sablewood');
+    expect(response.headers()['location']).toBe('/login?next=%2Ft%2Fos-sinos-de-sablewood');
   });
 
   test('an unknown slug is the translated 404, with a way back', async ({ page }) => {
-    const response = await page.goto('/tables/nao-existe');
+    const response = await page.goto('/t/nao-existe');
 
     expect(response?.status()).toBe(404);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/não encontrada/i);
@@ -232,8 +232,8 @@ test.describe('table page', () => {
       if (/content security policy/i.test(message.text())) violations.push(message.text());
     });
 
-    await page.goto('/tables');
-    await page.goto('/tables/os-sinos-de-sablewood');
+    await page.goto('/t');
+    await page.goto('/t/os-sinos-de-sablewood');
     await page.waitForLoadState('networkidle');
 
     await expect(page).toHaveTitle('Os Sinos de Sablewood');

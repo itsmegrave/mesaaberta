@@ -9,7 +9,6 @@
   import { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge from '#lib/components/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import {
     accountSchema,
     banSchema,
@@ -72,7 +71,7 @@
         id: 'public',
         label: m.admin_menu_public_profile(),
         icon: 'game-icons:meeple',
-        href: localizedHref(`/u/${encodeURIComponent(data.user.username)}`, locale),
+        href: `/u/${encodeURIComponent(data.user.username)}`,
       });
     }
     items.push({ id: 'copy', label: m.admin_menu_copy_id(), icon: 'copy', onselect: copyId });

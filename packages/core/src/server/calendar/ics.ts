@@ -1,3 +1,4 @@
+import { routes } from '../../routes';
 // A table goes in, an iCalendar (RFC 5545) string comes out. The serializing is done by ical.js
 // (Mozilla's iCalendar library: escaping, line folding at 75 octets, parameter quoting, value
 // types) and the time zone rules by timezones-ical-library, which embeds them (it needs no
@@ -97,7 +98,7 @@ function timezoneComponent(tzid: string): InstanceType<typeof ICAL.Component> {
 
 /** The public page of a table, which the invite and its e-mail both link to. */
 export const tableUrl = (baseUrl: string, slug: string) =>
-  `${baseUrl.replace(/\/$/, '')}/tables/${encodeURIComponent(slug)}`;
+  `${baseUrl.replace(/\/$/, '')}${routes.table(slug)}`;
 
 /** Refuses an id or a recurrence that is not what this system produces. */
 function checkTable(table: CalendarTable) {

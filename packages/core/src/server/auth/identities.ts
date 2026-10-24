@@ -10,7 +10,7 @@ import { safeNext } from './safe-next';
 // name leaves this module: no email, `provider_id`, `identity_id` or any other Auth metadata.
 
 /** Where the person lands after connecting, with the sentence that says it worked. */
-const CONNECTED = '/account/profile?conta=conectada';
+const CONNECTED = '/u/profile/edit?conta=conectada';
 
 export type Connection = { provider: Provider; connected: boolean };
 

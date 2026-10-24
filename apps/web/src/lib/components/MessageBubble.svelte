@@ -2,9 +2,7 @@
   import Button from '#lib/components/Button.svelte';
   import { linkifyBody } from '#lib/messages/linkify.js';
   import type { ThreadItem } from '#lib/messages/group.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let {
     message,
@@ -26,10 +24,7 @@
     : ''}"
 >
   {#if message.tableTitle && message.tableSlug}
-    <a
-      href={localizedHref(`/tables/${message.tableSlug}`, getLocale())}
-      class="mb-1 block text-xs font-semibold underline"
-    >
+    <a href={`/t/${message.tableSlug}`} class="mb-1 block text-xs font-semibold underline">
       {m.messages_about_table({ table: message.tableTitle })}
     </a>
   {/if}

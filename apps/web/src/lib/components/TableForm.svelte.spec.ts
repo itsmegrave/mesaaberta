@@ -32,7 +32,7 @@ describe('TableForm', () => {
     await expect.element(page.getByText(/No seu fuso, America\/Sao Paulo \(GMT-3\)/)).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Mudar no perfil' }))
-      .toHaveAttribute('href', '/account/profile');
+      .toHaveAttribute('href', '/u/profile/edit');
     await expect.element(page.getByLabelText('Fuso horário')).not.toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('TableForm', () => {
       ...props,
       values: { capacity: 4 },
       minCapacity: 3,
-      manageHref: '/tables/mesa/manage',
+      manageHref: '/t/mesa/manage',
     });
 
     await expect
@@ -109,7 +109,7 @@ describe('TableForm', () => {
       .toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Remover pessoas da mesa' }))
-      .toHaveAttribute('href', '/tables/mesa/manage');
+      .toHaveAttribute('href', '/t/mesa/manage');
   });
 
   it('asks for a minimum of players as an optional field, blank by default', async () => {

@@ -21,7 +21,7 @@ describe('TableCard', () => {
 
     await expect
       .element(page.getByRole('link', { name: 'Mesa do Dragão' }))
-      .toHaveAttribute('href', '/tables/mesa-do-dragao');
+      .toHaveAttribute('href', '/t/mesa-do-dragao');
   });
 
   it("shows the system, the kind, the GM and the next session in the table's timezone", async () => {

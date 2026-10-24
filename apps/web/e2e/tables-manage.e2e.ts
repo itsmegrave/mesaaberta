@@ -33,7 +33,7 @@ test.describe('rich text', () => {
       page.evaluate(() => (window as Window & { __violations?: string[] }).__violations ?? []);
     const gm = await createUser('Mestra Rich');
     await signIn(page, gm);
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Com formatação'));
     await setFirstSession(page, soonSession());
@@ -50,7 +50,7 @@ test.describe('rich text', () => {
     // Before the submit: the next page is a new document, with its own report.
     expect((await violations()).slice(before.length)).toEqual([]);
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
-    await expect(page).toHaveURL(/\/tables\/[^/]+$/);
+    await expect(page).toHaveURL(/\/t\/[^/]+$/);
 
     await expect(page.locator('.rich-text strong', { hasText: 'Regras da casa' })).toBeVisible();
     await expect(page.locator('.rich-text li', { hasText: 'sem reviver' })).toBeVisible();
@@ -78,9 +78,9 @@ test.describe('creating a table', () => {
     // An anonymous visitor sees the same table, at the same address, in the list too.
     const visitor = await browser.newContext();
     const anon = await visitor.newPage();
-    await anon.goto(`/tables/${slug}`);
+    await anon.goto(`/t/${slug}`);
     await expect(anon.getByRole('heading', { level: 1 })).toHaveText(title);
-    await anon.goto('/tables');
+    await anon.goto('/t');
     await expect(anon.getByRole('link', { name: title })).toBeVisible();
     await visitor.close();
   });
@@ -102,7 +102,7 @@ test.describe('creating a table', () => {
     const gm = await createUser('Mestra Cris');
     await signIn(page, gm);
 
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill('ab');
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
@@ -115,14 +115,14 @@ test.describe('creating a table', () => {
     await expect(page.getByLabel('Título')).toHaveValue('ab');
     // A rich-text editor, not an input: its text, not a value.
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
-    await expect(page).toHaveURL(/tables\/new$/);
+    await expect(page).toHaveURL(/t\/new$/);
   });
 
   test('a first session in the past cannot be picked', async ({ page }) => {
     const gm = await createUser('Mestre Davi');
     await signIn(page, gm);
 
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Passada'));
     // The calendar starts at today: a day before it cannot be picked. (The server refuses one too:
@@ -138,7 +138,7 @@ test.describe('creating a table', () => {
   test('a campaign asks how often it repeats', async ({ page }) => {
     const gm = await createUser('Mestra Eva');
     await signIn(page, gm);
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
 
     await expect(page.getByRole('combobox', { name: 'Repete' })).toHaveCount(0);
     await page.getByLabel('Campanha (várias sessões)').check();
@@ -162,7 +162,7 @@ test.describe('the welcome message', () => {
   test('every new table starts with the friendly default, token and all', async ({ page }) => {
     const gm = await createUser('Mestra Lara');
     await signIn(page, gm);
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
 
     const field = page.getByLabel('Mensagem de boas-vindas');
     await expect(field).toHaveText(
@@ -182,36 +182,36 @@ test.describe('the welcome message', () => {
     await expect(field).toHaveText(/WhatsApp/);
     await field.fill('Bem-vinda! Me chama no (11) 90000-0000.');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+    await expect(page).toHaveURL(new RegExp(`/t/${slug}/manage$`));
     expect(await welcomeOf(slug)).toBe('<p>Bem-vinda! Me chama no (11) 90000-0000.</p>');
 
     // Saving other changes keeps it.
-    await page.goto(`/tables/${slug}/edit`);
+    await page.goto(`/t/${slug}/edit`);
     await page.getByLabel('Título').fill('Renomeada');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+    await expect(page).toHaveURL(new RegExp(`/t/${slug}/manage$`));
     expect(await welcomeOf(slug)).toBe('<p>Bem-vinda! Me chama no (11) 90000-0000.</p>');
 
     // Emptying it means no message, not the default again.
-    await page.goto(`/tables/${slug}/edit`);
+    await page.goto(`/t/${slug}/edit`);
     await page.getByLabel('Mensagem de boas-vindas').fill('');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+    await expect(page).toHaveURL(new RegExp(`/t/${slug}/manage$`));
     expect(await welcomeOf(slug)).toBeNull();
-    await page.goto(`/tables/${slug}/edit`);
+    await page.goto(`/t/${slug}/edit`);
     await expect(page.getByLabel('Mensagem de boas-vindas')).toHaveText('');
   });
 
   test('is never shown on the public table page', async ({ page, browser }) => {
     const gm = await createUser('Mestra Nina');
     await signIn(page, gm);
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Privada'));
     await setFirstSession(page, soonSession());
     await page.getByLabel('Mensagem de boas-vindas').fill('Segredo só para quem entrar.');
     await page.getByRole('button', { name: 'Abrir mesa' }).click();
-    await expect(page).toHaveURL(/\/tables\/[^/]+$/);
+    await expect(page).toHaveURL(/\/t\/[^/]+$/);
 
     const visitor = await browser.newContext();
     const anon = await visitor.newPage();
@@ -223,7 +223,7 @@ test.describe('the welcome message', () => {
   test('a message over the limit is refused, and what was typed stays', async ({ page }) => {
     const gm = await createUser('Mestre Otto');
     await signIn(page, gm);
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
 
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Longa'));
@@ -235,7 +235,7 @@ test.describe('the welcome message', () => {
 
     await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(field).toHaveText('x'.repeat(1001));
-    await expect(page).toHaveURL(/tables\/new$/);
+    await expect(page).toHaveURL(/t\/new$/);
   });
 });
 
@@ -275,7 +275,7 @@ test.describe('images', () => {
     const title = uniqueTitle('Falsa imagem');
     await signIn(page, gm);
 
-    await page.goto('/tables/new');
+    await page.goto('/t/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
     await setFirstSession(page, soonSession());
@@ -303,7 +303,7 @@ test.describe('editing and disabling', () => {
     const slug = await createTable(page, { title: uniqueTitle('Nome antigo') });
 
     await chooseFromMenu(page, 'Editar');
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/edit$`));
+    await expect(page).toHaveURL(new RegExp(`/t/${slug}/edit$`));
     await expect(
       page.getByText(/quem já está na mesa recebe o convite do calendário/),
     ).toBeVisible();
@@ -311,9 +311,9 @@ test.describe('editing and disabling', () => {
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
 
     // Saving goes back to the manage page, which says so.
-    await expect(page).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
+    await expect(page).toHaveURL(new RegExp(`/t/${slug}/manage$`));
     await expect(page.getByText('Mesa salva.')).toBeVisible();
-    await page.goto(`/tables/${slug}`);
+    await page.goto(`/t/${slug}`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nome novo');
   });
 
@@ -326,11 +326,11 @@ test.describe('editing and disabling', () => {
     const context = await browser.newContext();
     const otherPage = await context.newPage();
     await signIn(otherPage, other);
-    await otherPage.goto(`/tables/${slug}`);
+    await otherPage.goto(`/t/${slug}`);
     await pageMenu(otherPage).click();
     await expect(otherPage.getByRole('menuitem', { name: 'Editar' })).toHaveCount(0);
 
-    const response = await otherPage.goto(`/tables/${slug}/edit`);
+    const response = await otherPage.goto(`/t/${slug}/edit`);
     expect(response?.status()).toBe(403);
     await context.close();
   });
@@ -344,13 +344,13 @@ test.describe('editing and disabling', () => {
     const context = await browser.newContext();
     const adminPage = await context.newPage();
     await signIn(adminPage, admin);
-    await adminPage.goto(`/tables/${slug}`);
+    await adminPage.goto(`/t/${slug}`);
     await chooseFromMenu(adminPage, 'Editar');
     await adminPage.getByLabel('Título').fill('Editada pelo admin');
     await adminPage.getByRole('button', { name: 'Salvar alterações' }).click();
 
-    await expect(adminPage).toHaveURL(new RegExp(`/tables/${slug}/manage$`));
-    await adminPage.goto(`/tables/${slug}`);
+    await expect(adminPage).toHaveURL(new RegExp(`/t/${slug}/manage$`));
+    await adminPage.goto(`/t/${slug}`);
     await expect(adminPage.getByRole('heading', { level: 1 })).toHaveText('Editada pelo admin');
     await context.close();
   });
@@ -364,23 +364,23 @@ test.describe('editing and disabling', () => {
     await signIn(page, gm);
     const slug = await createTable(page, { title });
 
-    await page.goto(`/tables/${slug}/edit`);
+    await page.goto(`/t/${slug}/edit`);
     // It asks first; only the dialog's button disables.
     await chooseFromMenu(page, 'Desativar mesa…');
     const dialog = page.getByRole('alertdialog', { name: 'Desativar esta mesa?' });
     await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Desativar mesa' }).click();
-    await expect(page).toHaveURL(/\/tables$/);
+    await expect(page).toHaveURL(/\/t$/);
     await expect(page.getByRole('link', { name: title })).toHaveCount(0);
 
     const visitor = await browser.newContext();
     const anon = await visitor.newPage();
-    const response = await anon.goto(`/tables/${slug}`);
+    const response = await anon.goto(`/t/${slug}`);
     expect(response?.status()).toBe(404);
     await visitor.close();
 
     // The GM still finds it on their dashboard, with no table status: those are for admin.
-    await page.goto('/account/tables');
+    await page.goto('/u/tables');
     await expect(page.getByText(title)).toBeVisible();
     await expect(page.getByText('Mesa desativada')).toHaveCount(0);
   });

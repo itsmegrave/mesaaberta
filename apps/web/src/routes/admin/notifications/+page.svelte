@@ -15,7 +15,6 @@
   import RichTextField from '#lib/components/RichTextField.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { ANNOUNCEMENT_LIMITS, announcementSchema } from '#lib/notifications/announcement.js';
   import type { AnnouncementMessage } from '#lib/notifications/announcement-message.js';
   import {
@@ -148,7 +147,7 @@
       enabled: recipientQuery.length >= 2 && $draft.audience === 'specific_user',
       queryFn: ({ signal }) =>
         apiRead<string[]>(
-          `${localizedHref('/admin/notifications/users', locale)}?q=${encodeURIComponent(recipientQuery)}`,
+          `${'/admin/notifications/users'}?q=${encodeURIComponent(recipientQuery)}`,
           signal,
         ),
       staleTime: 30_000,
@@ -316,7 +315,7 @@
           id="link"
           name="link"
           maxlength={ANNOUNCEMENT_LIMITS.link}
-          placeholder="/tables"
+          placeholder="/t"
           bind:value={$draft.link}
           aria-invalid={controller.errors.link ? 'true' : undefined}
           aria-describedby="link-hint{controller.errors.link ? ' link-error' : ''}"

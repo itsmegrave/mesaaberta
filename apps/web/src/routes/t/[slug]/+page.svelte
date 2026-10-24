@@ -1,0 +1,573 @@
+<script lang="ts">
+  import TextArea from '#lib/components/TextArea.svelte';
+  import UserLink from '#lib/components/UserLink.svelte';
+  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import RichText from '#lib/components/RichText.svelte';
+  import { pageQuery } from '#lib/query/page.svelte.js';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import { atHandle } from '@mesaaberta/core/profile/handle';
+  import { resolve } from '$app/paths';
+  import { page } from '$app/state';
+  import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import Form from '#lib/components/Form.svelte';
+  import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
+  import { tableStatusLabel } from '#lib/tables/status.js';
+  import type { FormMessage } from '#lib/forms/message.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
+  import { ratingSchema } from '@mesaaberta/core/tables/rating';
+  import { registrationError } from '#lib/tables/registration-errors.js';
+  import ReportDialog from '#lib/components/ReportDialog.svelte';
+  import { toast } from '#lib/toaster.js';
+  import ActionForm from '#lib/components/ActionForm.svelte';
+  import JoinRequestDialog from '#lib/components/JoinRequestDialog.svelte';
+  import GmRating from '#lib/components/GmRating.svelte';
+  import StarRating from '#lib/components/StarRating.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import DraftNotice from '#lib/components/DraftNotice.svelte';
+  import { modalityIcon } from '#lib/tables/modality-icon.js';
+
+  let { data: serverData, form } = $props();
+  const remote = pageQuery(() => serverData);
+  const data = $derived({ ...serverData, ...remote.data });
+
+  // What the last seat action answered: from a submit with JavaScript (`onfail`), or from the page the server sent back without it.
+  let failed = $state<FormMessage | null>(null);
+  // The report dialog shows its own errors; only the seat actions answer with a `message`.
+  const problem = $derived(
+    failed ?? (form?.form && 'message' in form.form ? form.form.message : null) ?? null,
+  );
+
+  const table = $derived(data.table);
+  const locale = getLocale();
+
+  const recurrence = $derived(
+    table.kind !== 'campaign'
+      ? table.kind === 'adventure'
+        ? m.table_adventure_schedule()
+        : m.table_recurrence_once()
+      : table.everyWeeks === 1
+        ? m.table_recurrence_weekly()
+        : table.everyWeeks
+          ? m.table_recurrence_weeks({ weeks: table.everyWeeks })
+          : null,
+  );
+  // svelte-ignore state_referenced_locally
+  const rating = actionForm({
+    initial: data.ratingForm.data,
+    schema: ratingSchema,
+    domain: 'table',
+    errorMessage: () => registrationError('invalid'),
+    onSuccess: () => toast.success(m.toast_rating_saved()),
+    onFailure(updated) {
+      if (!updated?.message) return;
+      toast.error(registrationError(updated.message.code, updated.message.retryAfter));
+      failed = updated.message;
+    },
+  });
+  const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
+  const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
+
+  // The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
+  const dateBox = $derived.by(() => {
+    const part = (options: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat(locale, { timeZone: shownTimezone(table.timezone), ...options })
+        .format(table.startsAt)
+        .replace('.', '');
+    return {
+      weekday: part({ weekday: 'short' }),
+      day: part({ day: 'numeric' }),
+      month: part({ month: 'short' }),
+    };
+  });
+  // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
+  const stateLabel = $derived(tableStatusLabel(table.status));
+
+  // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
+  let disableOpen = $state(false);
+  let reportOpen = $state(false);
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(new URL(`/t/${table.slug}`, page.url.origin).href);
+      toast.success(m.toast_link_copied());
+    } catch {
+      // Clipboard access refused: nothing was copied, and nothing is claimed.
+    }
+  }
+  const menu = $derived.by(() => {
+    const items: KebabItem[] = [];
+    if (data.canEdit) {
+      items.push({
+        id: 'edit',
+        label: m.menu_edit(),
+        icon: 'square-pen',
+        href: `/t/${table.slug}/edit`,
+      });
+    }
+    // The players stay reachable once the table is frozen: that is where the GM sees the rating.
+    if (data.registrations) {
+      items.push({
+        id: 'players',
+        label: m.menu_players(),
+        icon: 'game-icons:meeple',
+        href: `/t/${table.slug}/manage`,
+      });
+    }
+    items.push({ id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink });
+    if (data.signedIn && !data.isGm && data.gmAcceptsDirect) {
+      items.push({
+        id: 'talk',
+        label: m.menu_message_gm(),
+        icon: 'game-icons:scroll-quill',
+        onselect: () => document.getElementById('talk-to-gm')?.click(),
+      });
+    }
+    if (data.canEdit && (table.status === 'active' || table.status === 'draft')) {
+      items.push({
+        id: 'disable',
+        label: m.menu_disable_table(),
+        icon: 'trash',
+        destructive: true,
+        onselect: () => (disableOpen = true),
+      });
+    }
+    if (data.reportTargets.table || data.reportTargets.people.length > 0) {
+      items.push({
+        id: 'report',
+        label: m.menu_report(),
+        icon: 'flag',
+        destructive: true,
+        onselect: () => (reportOpen = true),
+      });
+    }
+    return items;
+  });
+
+  const taken = $derived(table.capacity - table.seatsLeft);
+  const seats = $derived(
+    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
+  );
+</script>
+
+<svelte:head>
+  <title>{table.title}</title>
+  <meta name="description" content="{table.system.name}. {seats}." />
+</svelte:head>
+<QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+
+<article class="pt-2 pb-8 md:pt-6">
+  <Breadcrumbs items={[{ label: m.nav_tables(), href: '/t' }, { label: table.title }]} />
+
+  <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-3 lg:gap-16">
+    <div class="min-w-0 lg:col-span-2">
+      <p class="flex flex-wrap items-center gap-3">
+        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
+          {table.kind === 'campaign'
+            ? m.table_kind_campaign()
+            : table.kind === 'adventure'
+              ? m.table_kind_adventure()
+              : m.table_kind_one_shot()}
+        </span>
+        <a
+          href="/t?system={encodeURIComponent(table.system.slug)}"
+          class="font-semibold text-link underline decoration-2 underline-offset-4"
+        >
+          {table.system.name}
+        </a>
+      </p>
+
+      <div class="mt-3 flex items-start justify-between gap-3">
+        <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+          {table.title}
+        </h1>
+        <KebabMenu name={table.title} items={menu} />
+      </div>
+
+      {#if data.canEdit && table.status === 'draft'}
+        <DraftNotice
+          action="{`/t/${table.slug}/manage`}?/publish"
+          next={`/t/${table.slug}`}
+          waiting={data.systemWaiting}
+        />
+      {/if}
+
+      {#if table.tags.length > 0}
+        <ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">
+          {#each table.tags as tag (tag.slug)}
+            <li>
+              <a
+                href="/t?tag={encodeURIComponent(tag.slug)}"
+                class="chip h-8 rounded-lg bg-surface-wash px-3 text-sm font-semibold hover:preset-tonal"
+                >{tag.name}</a
+              >
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <div class="mt-5 flex flex-wrap items-center gap-4">
+        <p>
+          <span class="block text-sm font-semibold text-muted">{m.table_gm()}</span>
+          {#if data.gmUsername}
+            <a href={`/u/${encodeURIComponent(data.gmUsername)}`} class="text-lg link-underline"
+              >{atHandle(table.gmName)}</a
+            >
+          {:else}
+            <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
+          {/if}
+        </p>
+        <GmRating
+          rating={table.gmRating}
+          class="h-12 rounded-lg border border-surface-200-800 px-3 text-lg"
+        />
+      </div>
+
+      {#if table.imageUrl}
+        <img
+          src={table.imageUrl}
+          alt=""
+          width="1200"
+          height="480"
+          decoding="async"
+          referrerpolicy="no-referrer"
+          class="mt-8 aspect-5/2 w-full rounded-lg object-cover"
+        />
+      {/if}
+
+      <!-- Rich text: RichText cleans it to a small set of tags before showing it. -->
+      {#if table.description}
+        <RichText html={table.description} class="mt-8 max-w-prose text-lg" />
+      {/if}
+
+      {#if table.extraInfo}
+        <h2 class="mt-10 text-3xl font-semibold tracking-tight">{m.table_extra_info()}</h2>
+        <RichText html={table.extraInfo} class="mt-2 max-w-prose" />
+      {/if}
+
+      {#if data.joinDetails}
+        <section
+          aria-labelledby="join-details"
+          class="mt-8 max-w-prose rounded-lg border border-surface-200-800 bg-panel p-5"
+        >
+          <h2 id="join-details" class="text-xl font-semibold">{m.table_join_details()}</h2>
+          <RichText html={data.joinDetails} class="mt-2" />
+          <p class="mt-3 text-sm text-muted">{m.table_join_details_private()}</p>
+        </section>
+      {/if}
+    </div>
+
+    <aside
+      aria-label={m.table_next_session()}
+      class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
+    >
+      <div class="flex items-start gap-4">
+        <div
+          aria-hidden="true"
+          class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
+        >
+          <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
+          <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
+          <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
+          <p class="mt-1 text-xl leading-snug font-semibold">
+            {formatSession(table.startsAt, shownTimezone(table.timezone), locale)}
+          </p>
+          {#if stateLabel}
+            <p class="mt-1 text-sm font-semibold text-muted">{stateLabel}</p>
+          {/if}
+        </div>
+      </div>
+
+      <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
+        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
+          {m.table_modality()}
+        </dt>
+        <dd class="col-span-2 flex items-center gap-2 border-b border-surface-200-800 py-3">
+          <Icon name={modalityIcon(table.modality)} size={18} />
+          {table.modality === 'in_person'
+            ? `${m.table_modality_in_person()} · ${table.locationArea}`
+            : m.table_modality_online()}
+        </dd>
+        {#if table.platforms.length > 0}
+          <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
+            {m.form_platforms()}
+          </dt>
+          <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
+            {#each table.platforms as platform (platform.slug)}
+              <span
+                class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+                >{platform.name}</span
+              >
+            {/each}
+          </dd>
+        {/if}
+        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
+          {m.table_schedule()}
+        </dt>
+        <dd class="col-span-2 border-b border-surface-200-800 py-3">{recurrence}</dd>
+        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
+          {m.table_duration()}
+        </dt>
+        <dd class="col-span-2 border-b border-surface-200-800 py-3">
+          {formatHours(table.durationMinutes, locale)}
+        </dd>
+      </dl>
+
+      <div class="mt-5 flex items-baseline justify-between gap-3">
+        <p class="text-xl font-semibold {table.seatsLeft === 0 ? 'text-muted' : 'text-lamp'}">
+          {seats}
+        </p>
+        <p class="text-sm font-semibold text-muted">
+          {m.table_seats_taken({ taken: table.capacity - table.seatsLeft, total: table.capacity })}
+        </p>
+      </div>
+      <p aria-hidden="true" class="mt-3 flex flex-wrap gap-2">
+        {#each { length: table.capacity }, i (i)}
+          {#if i < table.capacity - table.seatsLeft}
+            <span
+              class="flex size-8 items-center justify-center rounded-full {seatColours[
+                i % seatColours.length
+              ]}"><span class="size-3 rounded-full bg-surface-950/30"></span></span
+            >
+          {:else}
+            <span class="block size-8 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
+            ></span>
+          {/if}
+        {/each}
+      </p>
+      {#if table.minPlayers}
+        <p class="mt-3 text-sm text-muted">
+          {m.table_min_players({ count: table.minPlayers })} ·
+          {taken >= table.minPlayers
+            ? m.table_min_players_met()
+            : m.table_min_players_missing({ count: table.minPlayers - taken })}
+        </p>
+      {/if}
+
+      {#if problem}
+        <p role="alert" class="mt-5 font-semibold text-error-700-300">
+          {registrationError(problem.code, problem.retryAfter)}
+        </p>
+      {/if}
+
+      <!-- What this visitor can do about a seat. The server checks it again on every action. -->
+      <div class="mt-5">
+        {#if data.isGm}
+          <p class="font-semibold">{m.table_you_are_gm()}</p>
+        {:else if !data.signedIn}
+          <a
+            href="{resolve('login')}?next={encodeURIComponent(`/t/${table.slug}`)}"
+            class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+          >
+            {m.table_sign_in_to_join()}
+          </a>
+        {:else if data.myStatus === 'confirmed'}
+          <p class="font-semibold">{m.table_you_are_in()}</p>
+          <ActionForm
+            action="?/leave"
+            class="mt-3"
+            label={m.table_leave()}
+            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            success={m.toast_left()}
+            onfail={(message) => (failed = message)}
+          />
+        {:else if data.myStatus === 'pending'}
+          <p class="font-semibold">{m.table_request_pending()}</p>
+          <ActionForm
+            action="?/leave"
+            class="mt-3"
+            label={m.table_cancel_request()}
+            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            success={m.toast_request_withdrawn()}
+            onfail={(message) => (failed = message)}
+          />
+        {:else if data.canJoin && table.joinMode === 'approval'}
+          <JoinRequestDialog
+            onfail={(message) => (failed = message)}
+            triggerClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+          />
+        {:else if data.canJoin}
+          <ActionForm
+            action="?/join"
+            onfail={(message) => (failed = message)}
+            onsuccess={() => toast.success(m.toast_confirmed())}
+            label={m.table_join_now()}
+            icon="game-icons:bar-stool"
+            buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+          />
+        {/if}
+      </div>
+      {#if data.isGm || data.myStatus === 'confirmed'}
+        <a
+          href={`/t/${table.slug}/chat`}
+          class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+        >
+          <Icon name="game-icons:scroll-quill" size={18} />
+          {m.messages_table_chat()}
+        </a>
+      {/if}
+      {#if data.signedIn && !data.isGm && data.gmAcceptsDirect}
+        <!-- Opened from the title menu ("Mandar mensagem ao mestre"). -->
+        <ActionForm action="?/talk" class="hidden">
+          <button id="talk-to-gm" type="submit" tabindex="-1" aria-hidden="true"></button>
+        </ActionForm>
+      {/if}
+      <p class="mt-3 text-sm text-muted">
+        {table.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}
+      </p>
+    </aside>
+  </div>
+
+  <ReportDialog targets={data.reportTargets} trigger={false} bind:open={reportOpen} />
+  {#if data.canEdit}
+    <ConfirmDialog
+      bind:open={disableOpen}
+      action="{`/t/${table.slug}/edit`}?/disable"
+      label={m.form_disable()}
+      title={m.form_disable_confirm_title()}
+      text={m.form_disable_confirm_text()}
+      success={m.toast_table_disabled()}
+      onfail={(message) => (failed = message)}
+    />
+  {/if}
+
+  <!-- Their rating, once given: final, so it is only shown. -->
+  {#if data.myRating}
+    <section id="avaliar" class="mt-12 max-w-2xl">
+      <h2 class="text-2xl font-semibold">{m.rating_given_title()}</h2>
+      <p class="mt-2 flex items-center gap-2">
+        <Icon name="star" size={24} class="text-lamp" />
+        <strong class="text-2xl tabular-nums"
+          >{m.rating_score_label({ score: data.myRating.gmScore })}</strong
+        >
+      </p>
+      {#if data.myRating.comment}
+        <p class="mt-2 max-w-prose whitespace-pre-line">{data.myRating.comment}</p>
+      {/if}
+      <p class="mt-3 text-sm text-muted">{m.rating_final()}</p>
+    </section>
+  {/if}
+
+  <!-- Only someone who played (a confirmed seat, and the GM confirmed the session) can rate, once. -->
+  {#if data.canRate}
+    <section id="avaliar" class="mt-12 max-w-2xl">
+      <h2 class="text-2xl font-semibold">{m.rating_title()}</h2>
+      <p class="mt-2 max-w-prose">{m.rating_lede()}</p>
+
+      <Form action="?/rate" onsubmit={rating.submit} class="mt-4 grid gap-6">
+        {#each scoreFields as { name, label } (name)}
+          <div>
+            <StarRating
+              {name}
+              {label}
+              value={rating.values[name]}
+              invalid={!!rating.errors[name]}
+              onchange={(score) => rating.change(name, score)}
+            />
+            {#if rating.errors[name]}
+              <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
+                {m.table_error_invalid()}
+              </p>
+            {/if}
+          </div>
+        {/each}
+
+        <div>
+          <label for="comment" class="label-text block font-semibold">{m.rating_comment()}</label>
+          <TextArea
+            id="comment"
+            name="comment"
+            rows={3}
+            maxlength={1000}
+            bind:value={() => rating.values.comment, (value) => rating.change('comment', value)}
+            class="mt-1 textarea"
+          />
+        </div>
+
+        <div>
+          <SubmitButton
+            submitting={rating.pending}
+            delayed={rating.delayed}
+            timeout={rating.timeout}
+            class="btn preset-filled-primary-500"
+          >
+            {m.rating_submit()}
+          </SubmitButton>
+        </div>
+      </Form>
+    </section>
+  {/if}
+
+  <!-- The GM's (and admins') view: who has a seat and who is asking. Names are not public. -->
+  {#if data.registrations}
+    {@const players = data.registrations.filter((r) => r.status === 'confirmed')}
+    {@const requests = data.registrations.filter((r) => r.status === 'pending')}
+
+    <section class="mt-12 max-w-2xl">
+      <h2 class="text-2xl font-semibold">{m.table_players()}</h2>
+      {#if players.length === 0}
+        <p class="mt-2">{m.table_no_players()}</p>
+      {:else}
+        <ul class="mt-3 grid gap-2">
+          {#each players as player (player.playerId)}
+            <li
+              class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
+            >
+              <span><UserLink username={player.username} /></span>
+              <ActionForm
+                action="?/remove"
+                playerId={player.playerId}
+                label={m.table_remove()}
+                buttonClass="btn preset-tonal-error btn-sm"
+                success={m.toast_removed()}
+                onfail={(message) => (failed = message)}
+              />
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if requests.length > 0}
+        <h2 class="mt-8 text-2xl font-semibold">{m.table_requests()}</h2>
+        <ul class="mt-3 grid gap-2">
+          {#each requests as request (request.playerId)}
+            <li
+              class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-surface-200-800 bg-panel p-3"
+            >
+              <span><UserLink username={request.username} /></span>
+              <div class="flex gap-4">
+                <ActionForm
+                  action="?/approve"
+                  playerId={request.playerId}
+                  label={m.table_approve()}
+                  buttonClass="btn preset-tonal-primary btn-sm"
+                  success={m.toast_approved()}
+                  onfail={(message) => (failed = message)}
+                />
+                <ActionForm
+                  action="?/decline"
+                  playerId={request.playerId}
+                  label={m.table_decline()}
+                  buttonClass="btn preset-tonal-error btn-sm"
+                  success={m.toast_declined()}
+                  onfail={(message) => (failed = message)}
+                />
+              </div>
+              {#if request.message}
+                <p class="basis-full text-sm whitespace-pre-line text-surface-700-300">
+                  {request.message}
+                </p>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+  {/if}
+</article>

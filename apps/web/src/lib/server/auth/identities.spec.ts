@@ -58,7 +58,7 @@ describe('startLink', () => {
     expect(supabase.auth.linkIdentity).toHaveBeenCalledWith({
       provider: 'discord',
       options: {
-        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/account/profile?conta=conectada')}`,
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/u/profile/edit?conta=conectada')}`,
         skipBrowserRedirect: true,
       },
     });
@@ -74,7 +74,7 @@ describe('startLink', () => {
     });
 
     const { options } = supabase.auth.linkIdentity.mock.calls[0][0];
-    expect(options.redirectTo).toContain(encodeURIComponent('/account/profile'));
+    expect(options.redirectTo).toContain(encodeURIComponent('/u/profile/edit'));
     expect(options.redirectTo).not.toContain('evil');
   });
 

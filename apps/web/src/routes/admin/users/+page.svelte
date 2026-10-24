@@ -10,7 +10,6 @@
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { shortDate } from '#lib/admin/format.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
@@ -42,8 +41,7 @@
   const badge = (row: Profile) => `user:${row.standing}` as Status;
   const nameOf = (row: Profile) =>
     row.username ? `@${row.username}` : m.admin_profile_no_username();
-  const detailsHref = (id: string) =>
-    localizedHref(`/admin/users/${id}?${current.url.searchParams}`, locale);
+  const detailsHref = (id: string) => `/admin/users/${id}?${current.url.searchParams}`;
   async function copyId(id: string) {
     try {
       await navigator.clipboard.writeText(id);
@@ -60,7 +58,7 @@
             id: 'public',
             label: m.admin_menu_public_profile(),
             icon: 'game-icons:meeple' as const,
-            href: localizedHref(`/u/${encodeURIComponent(row.username)}`, locale),
+            href: `/u/${encodeURIComponent(row.username)}`,
           },
         ]
       : []),

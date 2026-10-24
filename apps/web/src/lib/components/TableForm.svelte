@@ -20,7 +20,6 @@
   import { errorText, formProblem, type TableFormValues } from '#lib/tables/form-values.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { formatHours, zonedToDate } from '@mesaaberta/core/tables/format';
   import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
   import { pickName } from '@mesaaberta/core/tables/catalog';
@@ -63,7 +62,7 @@
     imageUrl = null,
     action,
     duplicationRequestKey,
-    cancelHref = '/tables',
+    cancelHref = '/t',
     gmName = NAMELESS,
     minCapacity = TABLE_LIMITS.capacity.min,
     manageHref,
@@ -359,9 +358,7 @@
               zone: $draft.timezone.replaceAll('_', ' '),
               offset: zoneOffset,
             })}
-            <a href={localizedHref('/account/profile', getLocale())} class="anchor"
-              >{m.form_timezone_change()}</a
-            >
+            <a href="/u/profile/edit" class="anchor">{m.form_timezone_change()}</a>
           </p>
           {#if calendarNote}<p class="mt-2 text-sm text-surface-700-300">
               {m.form_edit_calendar_note()}
@@ -510,7 +507,7 @@
         {#if minCapacity > 1}<p id="capacity-taken" class="mt-1 text-sm text-surface-700-300">
             {m.form_capacity_taken({ count: minCapacity })}
             {#if manageHref}
-              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
               <a href={manageHref} class="anchor">{m.form_capacity_remove_players()}</a>
             {/if}
           </p>{/if}
@@ -596,7 +593,7 @@
           >{draftLabel}</SubmitButton
         >
       {/if}
-      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a resolved href -->
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
       <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
     </div>
   </div>

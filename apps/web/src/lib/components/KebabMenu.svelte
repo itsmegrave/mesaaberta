@@ -6,7 +6,7 @@
     /** The words; a destructive item ends in "…" because it asks before doing it. */
     label: string;
     icon?: IconName;
-    /** An address of the app (already localized) to go to. */
+    /** An address of the app (already canonical) to go to. */
     href?: string;
     /** The file at `href` is downloaded rather than navigated to. */
     download?: boolean;

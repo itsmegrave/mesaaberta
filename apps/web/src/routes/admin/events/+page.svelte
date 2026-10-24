@@ -9,7 +9,6 @@
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { EVENT_STATUSES, type EventStatus } from '#lib/admin/event-filters.js';
   import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -42,10 +41,7 @@
     `${dayLabel(value, locale, zone)}, ${timeLabel(value, locale, zone)}`;
   const range = $derived(pageRange(queue.page, queue.pageSize, queue.total));
   const pageLink = (next: number) =>
-    localizedHref(
-      listPath(page.url.pathname, listQuery(page.url.searchParams, { page: next })),
-      locale,
-    );
+    listPath(page.url.pathname, listQuery(page.url.searchParams, { page: next }));
   const list = (handlers: string[]) =>
     handlers.length ? handlers.join(', ') : m.admin_events_no_handlers();
   const canForce = (status: EventStatus) => status !== 'processed' && status !== 'running';

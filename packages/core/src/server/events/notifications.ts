@@ -1,3 +1,4 @@
+import { routes } from '../../routes';
 import { and, eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, notifications, registrations } from '../db/schema';
@@ -38,7 +39,7 @@ async function confirmedPlayers(db: AnyDb, tableId: string): Promise<string[]> {
 
 /** Who hears about an event, and what they are told. Links are unlocalized paths. */
 async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promise<Notice> {
-  const page = `/tables/${event.payload.slug}`;
+  const page = routes.table(event.payload.slug);
   const manage = `${page}/manage`;
   switch (event.type) {
     case 'TableUpdated':
@@ -69,10 +70,10 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
     case 'JoinApproved':
       return { to: [event.payload.playerId], type: 'join_approved', link: page };
     case 'JoinDeclined':
-      return { to: [event.payload.playerId], type: 'join_declined', link: '/tables' };
+      return { to: [event.payload.playerId], type: 'join_declined', link: routes.tables };
     case 'PlayerLeft':
       return event.payload.reason === 'removed'
-        ? { to: [event.payload.playerId], type: 'player_removed', link: '/tables' }
+        ? { to: [event.payload.playerId], type: 'player_removed', link: routes.tables }
         : { to: [gmId], type: 'player_left', link: manage };
     case 'RatingSubmitted':
       return { to: [gmId], type: 'rating_received', link: page };

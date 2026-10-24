@@ -20,7 +20,7 @@ export async function requestPasswordReset(
 ): Promise<ResetRequestResult> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     // The link comes back to the callback, which trades its code for a session and moves on.
-    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/reset-password')}`,
+    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/reset')}`,
   });
 
   if (!error) return 'sent';

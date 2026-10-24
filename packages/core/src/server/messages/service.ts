@@ -1,3 +1,4 @@
+import { routes } from '../../routes';
 import { and, count, desc, eq, gt, inArray, isNull, lte, lt, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
@@ -233,7 +234,7 @@ export async function sendMessage(
       await t.execute(sql`
         insert into notifications (recipient_id, actor_id, category, type, link, metadata, created_at)
         values (${profileId}, ${actor.id}, 'messages', 'message_received',
-          ${'/messages/' + conversationId}, ${metadata}::jsonb,
+          ${routes.conversation(conversationId)}, ${metadata}::jsonb,
           ${now.toISOString()}::timestamptz)
         on conflict (recipient_id, (metadata->>'conversationId'))
           where type = 'message_received' and read_at is null

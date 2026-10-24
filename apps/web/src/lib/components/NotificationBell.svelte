@@ -5,7 +5,6 @@
   import NotificationAction from '#lib/components/NotificationAction.svelte';
   import NotificationIcon from '#lib/components/NotificationIcon.svelte';
   import { notificationIcon, notificationText, type Shown } from '#lib/notifications/text.js';
-  import { localizedHref } from '#lib/i18n/locales.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
@@ -31,7 +30,7 @@
   let open = $state(false);
 
   const locale = getLocale();
-  const feed = localizedHref('/notifications', locale);
+  const feed = '/n';
   // Every form comes back to the page it was sent from.
   const here = $derived(page.url.pathname + page.url.search);
   const when = (date: Date) =>
