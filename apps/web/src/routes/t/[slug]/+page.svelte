@@ -389,7 +389,7 @@
           />
         {:else if data.invitation}
           <a
-            href={localizedHref(`/account/invitations/${data.invitation.id}`, locale)}
+            href={`/u/profile/invitations/${data.invitation.id}`}
             class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold"
             >{m.invitation_review()}</a
           >

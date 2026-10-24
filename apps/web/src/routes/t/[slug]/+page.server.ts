@@ -80,7 +80,7 @@ export const actions: Actions = {
     if (user) {
       const actor = await locals.getProfile();
       const invitation = actor && (await pendingInvitationFor(locals, actor, params.slug!));
-      if (invitation) redirect(303, `/account/invitations/${invitation.id}`);
+      if (invitation) redirect(303, `/u/profile/invitations/${invitation.id}`);
     }
     // The attempt, before it succeeds or fails: `player_seat_claimed` comes from the outbox.
     const playerId = (await locals.getUser())?.id;
