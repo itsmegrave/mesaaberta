@@ -39,10 +39,11 @@ const row = (over = {}) => ({
   remaining: ['bell'],
   ...over,
 });
-const show = (queue = {}) =>
+const show = (queue = {}, backlog: unknown = null) =>
   render(Page, {
     data: {
       viewer: { timezone: 'America/Sao_Paulo' },
+      backlog,
       queue: {
         status: 'failed',
         type: '',
@@ -60,6 +61,19 @@ const show = (queue = {}) =>
   });
 
 describe('admin events page', () => {
+  it('shows the Cloudflare queue backlog only when it is known', async () => {
+    show({}, { count: 3, bytes: 420, oldest: new Date('2026-10-01T12:00:00Z') });
+    await expect.element(page.getByText('Fila do Cloudflare:')).toBeVisible();
+    expect(document.body.textContent).toContain('Mensagens esperando: 3');
+    expect(document.body.textContent).toContain('a mais antiga chegou em');
+  });
+
+  it('shows no backlog panel without queue metrics', async () => {
+    show();
+    await expect.element(page.getByRole('heading', { name: 'Fila de eventos' })).toBeVisible();
+    expect(document.body.textContent).not.toContain('Fila do Cloudflare');
+  });
+
   it('shows each state with its count, opening on the ones that failed', async () => {
     show();
 

@@ -3,6 +3,7 @@ import {
   MAX_DELAY_SECONDS,
   createDeadLetterConsumer,
   createQueueConsumer,
+  queueBacklog,
   queueTransport,
   type QueueMessage,
 } from './cloudflare-queues';
@@ -141,5 +142,35 @@ describe('createDeadLetterConsumer', () => {
     expect(good.ack).toHaveBeenCalledOnce();
     expect(bad.ack).toHaveBeenCalledOnce();
     expect(good.retry).not.toHaveBeenCalled();
+  });
+});
+
+describe('queueBacklog', () => {
+  const send = vi.fn();
+
+  it('reads the backlog and the age of the oldest message', async () => {
+    const metrics = vi
+      .fn()
+      .mockResolvedValue({ backlogCount: 3, backlogBytes: 420, oldestMessageTimestamp: 1_000 });
+    expect(await queueBacklog({ send, metrics })).toEqual({
+      count: 3,
+      bytes: 420,
+      oldest: new Date(1_000),
+    });
+  });
+
+  it('has no oldest message when the queue is empty', async () => {
+    const metrics = vi
+      .fn()
+      .mockResolvedValue({ backlogCount: 0, backlogBytes: 0, oldestMessageTimestamp: 0 });
+    expect(await queueBacklog({ send, metrics })).toEqual({ count: 0, bytes: 0, oldest: null });
+  });
+
+  it('is null without a binding, without metrics, or when metrics fail', async () => {
+    expect(await queueBacklog(undefined)).toBeNull();
+    expect(await queueBacklog({ send })).toBeNull();
+    expect(
+      await queueBacklog({ send, metrics: vi.fn().mockRejectedValue(new Error('x')) }),
+    ).toBeNull();
   });
 });

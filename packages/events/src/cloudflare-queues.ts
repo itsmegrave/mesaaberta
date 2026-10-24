@@ -13,10 +13,40 @@ import {
  * carries a `JobRef` and nothing else: the outbox row stays the truth.
  */
 
+/** What `Queue.metrics()` reports (Cloudflare, April 2026): the backlog right now. */
+export type QueueMetrics = {
+  backlogCount: number;
+  backlogBytes: number;
+  /** Milliseconds since the epoch; empty or zero when the queue holds nothing. */
+  oldestMessageTimestamp: number;
+};
+
 /** The producer binding (`env.DOMAIN_EVENTS`). */
 export type QueueBinding = {
   send(message: JobRef, options?: { contentType?: 'json'; delaySeconds?: number }): Promise<void>;
+  /** Absent on older runtimes and on the local simulator. */
+  metrics?(): Promise<QueueMetrics>;
 };
+
+export type QueueBacklog = { count: number; bytes: number; oldest: Date | null };
+
+/** The queue's backlog, or `null` when the binding cannot say. It never throws: it feeds a panel. */
+export async function queueBacklog(queue: QueueBinding | undefined): Promise<QueueBacklog | null> {
+  if (!queue?.metrics) return null;
+  try {
+    const metrics = await queue.metrics();
+    return {
+      count: metrics.backlogCount,
+      bytes: metrics.backlogBytes,
+      oldest:
+        metrics.backlogCount > 0 && metrics.oldestMessageTimestamp > 0
+          ? new Date(metrics.oldestMessageTimestamp)
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 /** Cloudflare caps a message delay at 12 hours. */
 export const MAX_DELAY_SECONDS = 12 * 60 * 60;
