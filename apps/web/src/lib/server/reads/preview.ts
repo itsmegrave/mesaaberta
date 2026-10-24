@@ -1,20 +1,37 @@
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
+import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import type { RequestEvent } from '@sveltejs/kit';
-
-// The home page previews the next few tables; the full list lives at /tables.
-const PREVIEW_COUNT = 3;
+import { readViaApi } from '../api-read';
 
 export const read = async ({ locals }: RequestEvent) => {
   // No database yet (see the README): the page still renders, with nothing to list.
   if (!locals.db) return { tables: [] };
 
   try {
-    const tables = await listUpcomingTables(locals.db, new Date());
+    // Through the api Worker when `api_reads_preview` is on for the signed-in person (visitors
+    // stay here: a flag needs someone to target); here otherwise.
+    const profile = await locals.getProfile();
+    const remote = profile
+      ? await readViaApi<Awaited<ReturnType<typeof readPreview>>>(
+          locals,
+          'api_reads_preview',
+          profile,
+          '/v1/reads/preview',
+        )
+      : null;
+    // JSON turned the two dates into strings; the page gets them as dates either way.
+    const { tables } = remote
+      ? {
+          tables: remote.tables.map((table) => ({
+            ...table,
+            startsAt: new Date(table.startsAt),
+            until: table.until ? new Date(table.until) : null,
+          })),
+        }
+      : await readPreview(locals.db, new Date());
 
     return {
-      // gmId stays on the server: the page only needs the GM's name.
-      tables: tables.slice(0, PREVIEW_COUNT).map(({ gmId, imagePath, ...table }) => ({
+      tables: tables.map(({ imagePath, ...table }) => ({
         ...table,
         imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
       })),
