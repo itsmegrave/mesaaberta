@@ -8,7 +8,7 @@ import { callApiRaw } from '../api-client';
 export async function instagramViaApi(
   locals: App.Locals,
   adminId: string,
-  action: 'queue' | 'reconcile',
+  action: 'queue' | 'reconcile' | 'connect',
   data: Record<string, string>,
 ): Promise<{ invalid: true } | Record<string, unknown> | null> {
   if (!(await locals.flags.isEnabled('api_admin_instagram', { id: adminId, isAdmin: true })))

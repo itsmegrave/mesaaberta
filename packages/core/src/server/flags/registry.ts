@@ -166,12 +166,19 @@ export const flagDefaults = {
   // that cannot be made falls back to the web path. Targeted by user id like the other signed-in
   // flags. Needs the API binding and, on the api Worker, the Supabase settings.
   api_auth_new_password: false,
+  // Off: the database half of a provider sign-in (the OAuth callback: profile, ban check, connection
+  // log) runs in the web Worker. On: the api Worker does it over the Service Binding with the new
+  // access token, which Supabase vouches for; the web Worker still trades the code for the session
+  // and signs the person out on a refusal. A call that cannot be made falls back to the web path.
+  // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
+  // the Supabase settings.
+  api_auth_finish_login: false,
   // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
   // the api Worker does it over the Service Binding and the web Worker dispatches the event it
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
   // admin may have it: the flag is a kill switch.
   api_admin_announcements: false,
-  // Off: the admin's hand actions on Instagram posts (queue a table, reconcile an uncertain post) run
+  // Off: the admin's hand actions on Instagram posts (queue a table, reconcile an uncertain post, save the account the OAuth callback connected) run
   // in the web Worker. On: the api Worker does them over the Service Binding; the render and the
   // publish stay in the background after the web response. A call that cannot be made falls back to
   // the web path. Needs the API binding. Every admin may have it: the flag is a kill switch.

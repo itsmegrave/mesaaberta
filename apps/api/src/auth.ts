@@ -12,6 +12,7 @@ import {
   SIGN_UP_LIMIT,
   attemptWait,
 } from '@mesaaberta/core/server/auth/attempt-limit';
+import { completeLogin } from '@mesaaberta/core/server/auth/login';
 import {
   signInForSession,
   signUpForSession,
@@ -57,6 +58,13 @@ export const CLIENT_IP_HEADER = 'x-client-ip';
  * person whose own access token comes in `Authorization: Bearer`, and signs their other sessions out.
  * The token alone says whose password changes; Supabase checks it. Answers `{ result }`: `ok`, or
  * `weak_password` / `same_password` (400), `no_session` (401), `rate_limited` (429), `failed` (500).
+ *
+ * `POST /finish-login` (behind `api_auth_finish_login`) is the database half of a provider sign-in:
+ * the web Worker has traded the code for a session and forwards the new access token in
+ * `Authorization`; Supabase vouches for it, then the api ensures the profile, refuses a banned
+ * account, records the connection (the visitor's address in `x-client-ip`) and answers
+ * `{ result: 'ok', target }` or `{ result: 'profile_failed' | 'suspended' }` (the web Worker signs the
+ * person out on those). Body: `{ next }`.
  *
  * `POST /password-reset` e-mails a reset link. Answers `{ result }`: `sent` (whether or not the
  * address has an account), `rate_limited` (429, with `retryAfter` when it is our limit) or `failed`.
@@ -218,6 +226,46 @@ export function authRoutes(
     );
     if (result === 'ok') return c.json({ result });
     return c.json({ result }, NEW_PASSWORD_STATUS[result]);
+  });
+
+  app.post('/finish-login', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    const connectionString = connectionStringFrom(c.env);
+    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const token = /^Bearer (.+)$/.exec(c.req.header('authorization') ?? '')?.[1];
+    if (!token) return c.json({ result: 'no_session' }, 401);
+    const body = (await c.req.json().catch(() => null)) as { next?: unknown } | null;
+    const next = typeof body?.next === 'string' ? body.next : null;
+
+    // Whoever the token belongs to, checked by Supabase: it says whose profile this is.
+    let user: { id?: string; user_metadata?: Record<string, unknown> } | null;
+    try {
+      const response = await (deps.request ?? fetch)(`${url.replace(/\/$/, '')}/auth/v1/user`, {
+        headers: { apikey: key, authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (response.status === 401 || response.status === 403)
+        return c.json({ result: 'no_session' }, 401);
+      if (!response.ok) return c.json({ result: 'failed' }, 502);
+      user = await response.json();
+    } catch {
+      return c.json({ result: 'failed' }, 502);
+    }
+    if (!user?.id) return c.json({ result: 'failed' }, 502);
+
+    const ip = c.req.header(CLIENT_IP_HEADER) ?? '';
+    const { db, close } = open(connectionString);
+    try {
+      const done = await completeLogin(
+        { db, log: logger, ip: ip || null },
+        { id: user.id, user_metadata: user.user_metadata },
+        next,
+      );
+      return c.json(done, done.result === 'ok' ? 200 : done.result === 'suspended' ? 403 : 500);
+    } finally {
+      await close();
+    }
   });
 
   return app;

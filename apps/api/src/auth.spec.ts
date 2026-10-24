@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-const { signInForSession, signUpForSession } = vi.hoisted(() => ({
+const { signInForSession, signUpForSession, completeLogin } = vi.hoisted(() => ({
   signInForSession: vi.fn(),
   signUpForSession: vi.fn(),
+  completeLogin: vi.fn(),
 }));
 vi.mock('@mesaaberta/core/server/auth/email', () => ({ signInForSession, signUpForSession }));
+vi.mock('@mesaaberta/core/server/auth/login', () => ({ completeLogin }));
 
 import { authRoutes } from './auth';
 
@@ -209,5 +211,67 @@ describe('api new password', () => {
 
     expect(response.status).toBe(status);
     expect(await response.json()).toEqual({ result });
+  });
+});
+
+describe('api finish-login', () => {
+  const fake = (answer: { status: number; body?: object } | 'down') =>
+    vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => {
+      if (answer === 'down') throw new Error('down');
+      return new Response(JSON.stringify(answer.body ?? {}), { status: answer.status });
+    }) as unknown as typeof fetch & ReturnType<typeof vi.fn>;
+  const send = (
+    request: typeof fetch,
+    headers: Record<string, string> = { authorization: 'Bearer jwt-a' },
+    environment: object = env,
+  ) =>
+    authRoutes(open, undefined, { request }).request(
+      '/finish-login',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-client-ip': '203.0.113.9', ...headers },
+        body: JSON.stringify({ next: '/t/new' }),
+      },
+      environment,
+    );
+  const user = { status: 200, body: { id: 'user-1', user_metadata: { name: 'Ana' } } };
+
+  beforeEach(() => completeLogin.mockReset());
+
+  it('finishes the sign-in for whoever Supabase says the token belongs to', async () => {
+    completeLogin.mockResolvedValue({ result: 'ok', target: '/t/new' });
+    const request = fake(user);
+
+    const response = await send(request);
+
+    expect(await response.json()).toEqual({ result: 'ok', target: '/t/new' });
+    expect(String(request.mock.calls[0][0])).toBe('https://supabase.test/auth/v1/user');
+    const [deps, who, next] = completeLogin.mock.calls[0];
+    expect(deps.ip).toBe('203.0.113.9');
+    expect(who).toEqual({ id: 'user-1', user_metadata: { name: 'Ana' } });
+    expect(next).toBe('/t/new');
+  });
+
+  it.each([
+    [{ result: 'suspended' }, 403],
+    [{ result: 'profile_failed' }, 500],
+  ])('answers %j with %i', async (done, status) => {
+    completeLogin.mockResolvedValue(done);
+
+    const response = await send(fake(user));
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual(done);
+  });
+
+  it('does nothing without a token, with a token Supabase rejects, or when Supabase is down', async () => {
+    expect((await send(fake(user), {})).status).toBe(401);
+    expect((await send(fake({ status: 401 }))).status).toBe(401);
+    expect((await send(fake('down'))).status).toBe(502);
+    expect((await send(fake({ status: 500 }))).status).toBe(502);
+    expect((await send(fake(user), undefined, { DATABASE_URL: 'postgres://test' })).status).toBe(
+      503,
+    );
+    expect(completeLogin).not.toHaveBeenCalled();
   });
 });

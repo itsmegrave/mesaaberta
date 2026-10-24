@@ -155,4 +155,51 @@ describe('finishLogin', () => {
     expect(await run('abc')).toBe('/login?error=unavailable');
     expect(signOut).toHaveBeenCalled();
   });
+
+  describe('with the database half handed to the api', () => {
+    const session = { access_token: 'jwt-a' };
+
+    it('uses what the api answered, and leaves the database alone', async () => {
+      const { test, supabase } = await setup({ data: { user, session }, error: null });
+      const remote = vi.fn().mockResolvedValue({ result: 'ok', target: '/t/new' });
+      const log = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() };
+
+      const target = await finishLogin(
+        { supabase: supabase as never, db: test.db, log, ip: '203.0.113.1', remote },
+        { code: 'abc', next: '/t/new' },
+      );
+
+      expect(target).toBe('/t/new');
+      expect(remote).toHaveBeenCalledWith('jwt-a', '/t/new');
+      expect(await test.db.query.profiles.findFirst()).toBeUndefined();
+    });
+
+    it('signs the person out again when the api refuses', async () => {
+      const { test, supabase, signOut } = await setup({ data: { user, session }, error: null });
+      const remote = vi.fn().mockResolvedValue({ result: 'suspended' });
+      const log = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() };
+
+      expect(
+        await finishLogin(
+          { supabase: supabase as never, db: test.db, log, ip: null, remote },
+          { code: 'abc', next: null },
+        ),
+      ).toBe('/login?error=suspended');
+      expect(signOut).toHaveBeenCalledOnce();
+    });
+
+    it('finishes here when the api could not be used', async () => {
+      const { test, supabase } = await setup({ data: { user, session }, error: null });
+      const remote = vi.fn().mockResolvedValue(null);
+      const log = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() };
+
+      expect(
+        await finishLogin(
+          { supabase: supabase as never, db: test.db, log, ip: null, remote },
+          { code: 'abc', next: null },
+        ),
+      ).toBe('/u/profile/setup?next=%2F');
+      expect(await test.db.query.profiles.findFirst()).toMatchObject({ id: user.id });
+    });
+  });
 });

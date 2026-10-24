@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { gameTables, instagramPosts, profiles, systems } from '@mesaaberta/db/schema';
+import {
+  gameTables,
+  instagramAccounts,
+  instagramPosts,
+  profiles,
+  systems,
+} from '@mesaaberta/db/schema';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
 import { instagramRoutes } from './instagram';
@@ -96,5 +102,29 @@ describe('api instagram routes over a database', () => {
     ).toBe(400);
     expect((await post('explode', {}, admin)).status).toBe(404);
     expect((await post('queue', { tableId })).status).toBe(401);
+  });
+
+  it('saves the connected account with its encrypted token, and connecting again replaces it', async () => {
+    const account = {
+      userId: '1784',
+      username: 'mesaaberta',
+      token: 'enc:abc',
+      expiresAt: '2099-01-01T00:00:00.000Z',
+    };
+
+    const first = await post('connect', account, admin);
+    await post('connect', { ...account, username: 'mesa', token: 'enc:def' }, admin);
+
+    expect(await first.json()).toEqual({ eventIds: [], connected: true });
+    const rows = await test.db.select().from(instagramAccounts);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ username: 'mesa', token: 'enc:def' });
+    expect(rows[0].expiresAt).toEqual(new Date(account.expiresAt));
+  });
+
+  it('refuses a member and a connection without a token', async () => {
+    const account = { userId: '1', username: 'x', token: 't', expiresAt: '2099-01-01T00:00:00Z' };
+    expect((await post('connect', account, member)).status).toBe(403);
+    expect((await post('connect', { ...account, token: '' }, admin)).status).toBe(400);
   });
 });
