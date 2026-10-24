@@ -30,10 +30,6 @@ const shell = {
     PRIVACY_EMAIL: 'privacidade@mesaaberta.app',
     INSTAGRAM_HANDLE: 'mesaaberta.app',
   },
-  links: {
-    feedbackUrl: 'https://mesaaberta.canny.io/feedback',
-    changelogUrl: 'https://mesaaberta.canny.io/changelog',
-  },
 };
 const signedOut = { authEnabled: false, ...shell, account: null };
 const memberAccount = {
@@ -155,10 +151,8 @@ describe('+layout.svelte', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
       ['Lenindragons', 'https://linktr.ee/lenindragonsrpg'],
-      ['Reporte aqui', 'https://mesaaberta.canny.io/feedback'],
       ['contato@mesaaberta.app', 'mailto:contato@mesaaberta.app'],
       ['Instagram da Mesa Aberta, @mesaaberta.app', 'https://www.instagram.com/mesaaberta.app/'],
-      ['novidades', 'https://mesaaberta.canny.io/changelog'],
     ])('links %s to %s', async (name, href) => {
       render(Layout, { children, data: signedOut });
 
@@ -166,19 +160,6 @@ describe('+layout.svelte', () => {
         .element(page.getByRole('contentinfo').getByRole('link', { name }))
         .toHaveAttribute('href', href);
     });
-  });
-
-  it('hides the Canny links while the deployment does not set them', async () => {
-    render(Layout, {
-      children,
-      data: { ...signedOut, links: { feedbackUrl: null, changelogUrl: null } },
-    });
-
-    const footer = page.getByRole('contentinfo');
-    await expect
-      .element(footer.getByRole('link', { name: 'Reporte aqui' }))
-      .not.toBeInTheDocument();
-    await expect.element(footer.getByRole('link', { name: 'novidades' })).not.toBeInTheDocument();
   });
 
   describe('tables link', () => {
