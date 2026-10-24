@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import { callApiRaw } from './api-client';
+import { callApiRaw, routeTemplate } from './api-client';
 import { refusalOf } from './api-write';
 
 /** New features are API-owned. An unavailable API is a service failure, never a local write. */
@@ -23,6 +23,13 @@ export async function requireApi<T = Record<string, unknown>>(
   if (answer.ok) return answer.body as T;
   const refusal = refusalOf(answer.status, (answer.body ?? {}) as Record<string, unknown>);
   if (refusal) throw refusal;
+  const reason = (answer.body as { error?: unknown } | null)?.error;
+  locals.log.warn('api answered with a failure', {
+    code: 'api_call_failed',
+    route: routeTemplate(path),
+    status: answer.status,
+    reason: typeof reason === 'string' ? reason : undefined,
+  });
   error(503, 'API unavailable');
 }
 

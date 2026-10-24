@@ -4,7 +4,7 @@ import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import type { loadTableForDuplication } from '@mesaaberta/core/server/tables/duplicate';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { minutesToHours } from '@mesaaberta/core/tables/format';
-import { error } from '@sveltejs/kit';
+import { error, isHttpError } from '@sveltejs/kit';
 import { initialForm } from '#lib/forms/contract.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
@@ -99,25 +99,27 @@ export const actions: Actions = {
     if (!locals.db) error(503, 'Database not configured');
     const db = locals.db;
     const sourceSlug = event.url.searchParams.get('duplicate');
-    const source = sourceSlug ? await duplicationSource(locals, sourceSlug) : null;
-    const submittedKey = source
-      ? (await event.request.clone().formData()).get('duplicationRequestKey')
+    // Only the zone comes from the source. A retry can find it deleted or moderated: the api still
+    // answers that replay with the copy that exists, and refuses anything else.
+    const source = sourceSlug
+      ? await duplicationSource(locals, sourceSlug).catch((cause) => {
+          if (isHttpError(cause) && (cause.status === 403 || cause.status === 404)) return null;
+          throw cause;
+        })
       : null;
-    const parsedKey = z.uuid().safeParse(submittedKey);
-    if (source && !parsedKey.success) error(400, 'Invalid duplication request');
-    const requestKey = parsedKey.success ? parsedKey.data : undefined;
+    let requestKey: string | undefined;
 
     return handleTableForm(
       { ...event, formTimezone: source?.input.timezone },
       async (input, imagePath, draft) => {
         const profile = await locals.getProfile();
         // Through the api Worker when `api_table_write` is on for this person; here otherwise.
-        if (source && !profile) error(403, 'Forbidden');
-        const remote = source
+        if (sourceSlug && !profile) error(403, 'Forbidden');
+        const remote = sourceSlug
           ? await requireApiWrite(
               locals,
               profile!,
-              `/v1/tables/${encodeURIComponent(source.sourceSlug)}/duplicate`,
+              `/v1/tables/${encodeURIComponent(sourceSlug)}/duplicate`,
               { input, imagePath: imagePath ?? null, draft, requestKey },
             )
           : profile
@@ -141,7 +143,12 @@ export const actions: Actions = {
         return created;
       },
       // A limited person is told before their image is stored. `createTable` checks again, under a lock.
-      async (draft) => {
+      async (draft, data) => {
+        if (sourceSlug) {
+          const key = z.uuid().safeParse(data.get('duplicationRequestKey'));
+          if (!key.success) error(400, 'Invalid duplication request');
+          requestKey = key.data;
+        }
         const actor = await locals.getProfile();
         if (actor)
           await checkRateLimit(db, actor.id, draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT);

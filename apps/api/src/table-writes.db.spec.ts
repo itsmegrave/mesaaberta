@@ -52,9 +52,12 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-const app = () => tableWriteRoutes((() => ({ db: test.db, close: async () => {} })) as never);
-const post = (path: string, body: unknown, actor?: string) =>
-  app().request(
+const open = (() => ({ db: test.db, close: async () => {} })) as never;
+const app = () => tableWriteRoutes(open);
+// Duplication has its own mount (`/v1/tables`), not the legacy `/v1/table-writes` one.
+const duplicationApp = () => tableWriteRoutes(open, true);
+const send = (mount: typeof app, path: string, body: unknown, actor?: string) =>
+  mount().request(
     path,
     {
       method: 'POST',
@@ -63,6 +66,9 @@ const post = (path: string, body: unknown, actor?: string) =>
     },
     env,
   );
+const post = (path: string, body: unknown, actor?: string) => send(app, path, body, actor);
+const duplicate = (path: string, body: unknown, actor?: string) =>
+  send(duplicationApp, path, body, actor);
 let slug: string;
 
 describe('api table write routes over a database', () => {
@@ -136,7 +142,7 @@ describe('duplication api', () => {
     const source = (await original.json()) as { slug: string };
     expect(
       (
-        await post(
+        await duplicate(
           `/${source.slug}/duplicate`,
           { input: { ...input, startsAtLocal: '2099-01-02T20:00' } },
           other,
@@ -144,10 +150,10 @@ describe('duplication api', () => {
       ).status,
     ).toBe(403);
     expect(
-      (await post(`/${source.slug}/duplicate`, { input: { ...input, startsAtLocal: '' } }, gm))
+      (await duplicate(`/${source.slug}/duplicate`, { input: { ...input, startsAtLocal: '' } }, gm))
         .status,
     ).toBe(400);
-    const conflict = await post(`/${source.slug}/duplicate`, { input }, gm);
+    const conflict = await duplicate(`/${source.slug}/duplicate`, { input }, gm);
     expect(conflict.status).toBe(400);
     expect(await conflict.json()).toMatchObject({
       field: 'startsAtLocal',
@@ -162,11 +168,15 @@ describe('duplication api', () => {
       requestKey: crypto.randomUUID(),
       draft: true,
     };
-    const first = await post(`/${source.slug}/duplicate`, payload, gm);
+    const first = await duplicate(`/${source.slug}/duplicate`, payload, gm);
     expect(first.status).toBe(200);
     const copied = (await first.json()) as { slug: string; eventIds: string[]; draft: boolean };
-    expect(await (await post(`/${source.slug}/duplicate`, payload, gm)).json()).toEqual(copied);
+    expect(await (await duplicate(`/${source.slug}/duplicate`, payload, gm)).json()).toEqual(
+      copied,
+    );
     expect(copied.draft).toBe(true);
+    // The legacy mount never serves duplication, so there is one way in.
+    expect((await post(`/${source.slug}/duplicate`, payload, gm)).status).toBe(404);
     const [event] = await test.db.select().from(events).where(eq(events.id, copied.eventIds[0]));
     expect(event.type).toBe('TableDrafted');
   });
@@ -180,7 +190,7 @@ it('loads duplication defaults only for its owner through the API', async () => 
   );
   const { slug: source } = (await created.json()) as { slug: string };
   const read = (actor: string) =>
-    app().request(`/${source}/duplication`, { headers: { [ACTOR_HEADER]: actor } }, env);
+    duplicationApp().request(`/${source}/duplication`, { headers: { [ACTOR_HEADER]: actor } }, env);
   expect((await read(other)).status).toBe(403);
   const response = await read(gm);
   expect(response.status).toBe(200);

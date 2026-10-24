@@ -27,6 +27,16 @@
     errorMessage: m.form_error_unavailable,
   });
   guardDraft(controller);
+
+  // `load` makes a new key whenever it runs again. The first one for each source is kept, so a
+  // retry after a timeout replays the same copy instead of making another.
+  const keys: Record<string, string> = {};
+  const requestKey = $derived.by(() => {
+    const duplication = data.duplication;
+    if (!duplication) return undefined;
+    keys[duplication.sourceSlug] ??= duplication.requestKey;
+    return keys[duplication.sourceSlug];
+  });
 </script>
 
 <svelte:head>
@@ -60,7 +70,7 @@
     draftLabel={m.form_submit_draft()}
     suggestSystem
     imageUrl={data.duplication?.imageUrl}
-    duplicationRequestKey={data.duplication?.requestKey}
+    duplicationRequestKey={requestKey}
     cancelHref={localizedHref(
       data.duplication ? `/tables/${data.duplication.sourceSlug}/manage` : '/tables',
       getLocale(),

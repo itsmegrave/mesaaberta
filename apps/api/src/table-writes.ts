@@ -50,26 +50,26 @@ export function tableWriteRoutes(open: Open = openDb, duplicationOnly = false) {
     }
   };
 
-  app.get('/:slug/duplication', async (c) => {
-    try {
-      return c.json(
-        await loadTableForDuplication(c.get('db'), c.get('actor'), c.req.param('slug')),
-      );
-    } catch (cause) {
-      const refused = refusal(c, cause);
-      if (refused) return refused;
-      throw cause;
-    }
-  });
-
   if (duplicationOnly) {
+    app.get('/:slug/duplication', async (c) => {
+      try {
+        return c.json(
+          await loadTableForDuplication(c.get('db'), c.get('actor'), c.req.param('slug')),
+        );
+      } catch (cause) {
+        const refused = refusal(c, cause);
+        if (refused) return refused;
+        throw cause;
+      }
+    });
     app.post('/:slug/duplicate', (c) => run(c, 'duplicate', c.req.param('slug')));
     return app;
   }
   app.post('/', (c) => run(c, 'create', ''));
   app.post('/:slug/:action', (c) => {
     const name = c.req.param('action');
-    if (name === 'create' || !Object.hasOwn(tableWriteActions, name))
+    // `duplicate` is served only by its own `/v1/tables` mount, never by this legacy one.
+    if (name === 'create' || name === 'duplicate' || !Object.hasOwn(tableWriteActions, name))
       return c.json({ error: 'not_found' }, 404);
     return run(c, name, c.req.param('slug'));
   });

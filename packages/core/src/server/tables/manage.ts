@@ -40,18 +40,17 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
   if (!table) throw new NotFound(`no table with slug "${slug}"`);
   authorize(actor, 'registration:manage', table);
 
-  const [source] = await db
-    .select({ moderatedAt: gameTables.moderatedAt })
-    .from(gameTables)
-    .where(eq(gameTables.id, table.id));
-
   const person = {
     username: publicName(profiles.username),
     avatarUrl: profiles.avatarUrl,
     avatarPath: profiles.avatarPath,
   };
 
-  const [rows, [gm], rating, recent] = await Promise.all([
+  const [[source], rows, [gm], rating, recent] = await Promise.all([
+    db
+      .select({ moderatedAt: gameTables.moderatedAt })
+      .from(gameTables)
+      .where(eq(gameTables.id, table.id)),
     db
       .select({
         playerId: registrations.playerId,

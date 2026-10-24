@@ -215,6 +215,49 @@ describe('table duplication', () => {
     await updateTable(test.db, actor, original.slug, input({ removeImage: true }));
     expect((await row(first.slug)).imagePath).toBe('tables/original.png');
   });
+  it('keeps two copies of one source from overlapping each other', async () => {
+    const original = await source();
+    await duplicateTable(
+      test.db,
+      actor,
+      original.slug,
+      input({ startsAtLocal: '2026-10-11T19:00' }),
+      { now },
+    );
+    await expect(
+      duplicateTable(test.db, actor, original.slug, input({ startsAtLocal: '2026-10-11T20:00' }), {
+        now,
+      }),
+    ).rejects.toMatchObject({ field: 'startsAtLocal', message: 'schedule_conflict' });
+  });
+  it('lets a copy take the slot of a source that was not held', async () => {
+    const original = await source();
+    await test.db
+      .update(gameTables)
+      .set({ status: 'not_held' })
+      .where(eq(gameTables.slug, original.slug));
+    await expect(
+      duplicateTable(test.db, actor, original.slug, input({ startsAtLocal: '2026-10-10T19:00' }), {
+        now,
+      }),
+    ).resolves.toBeDefined();
+  });
+  it('answers a replay with the existing copy after its source was moderated or unlinked', async () => {
+    const original = await source();
+    const options = { now, requestKey: crypto.randomUUID() };
+    const date = input({ startsAtLocal: '2026-10-12T19:00' });
+    const first = await duplicateTable(test.db, actor, original.slug, date, options);
+    await test.db
+      .update(gameTables)
+      .set({ moderatedAt: now })
+      .where(eq(gameTables.slug, original.slug));
+    expect(await duplicateTable(test.db, actor, original.slug, date, options)).toEqual(first);
+    await test.db
+      .update(gameTables)
+      .set({ duplicatedFromTableId: null })
+      .where(eq(gameTables.slug, first.slug));
+    expect(await duplicateTable(test.db, actor, original.slug, date, options)).toEqual(first);
+  });
   it('rejects blank dates and recurrence ending before the new date even for direct service calls', async () => {
     const original = await source();
     await expect(

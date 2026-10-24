@@ -403,7 +403,6 @@ export async function updateTable(
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
   const eventId = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
-    await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     // The row is locked first, so the status read here is the one this save and a publish at the
     // same moment both see: a draft cannot go public between the check below and the update.
     const [locked] = await tx
@@ -411,6 +410,7 @@ export async function updateTable(
       .from(gameTables)
       .where(eq(gameTables.id, table.id))
       .for('update');
+    await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     // A suggestion is the table's GM's, also when an admin is the one editing.
     const system = await systemFor(
       tx as unknown as AnyDb,

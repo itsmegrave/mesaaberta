@@ -5,8 +5,8 @@ import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { catalogOf } from '../catalog';
 import { isLocalDateTime, tableInputSchema, type TableInput } from '../../tables/schema';
-import { instantToLocal, localToInstant, intervalsOverlap } from './schedule';
-import { lockTableSchedule } from './schedule-guard';
+import { instantToLocal, localToInstant } from './schedule';
+import { guardNewCopy, lockTableSchedule } from './schedule-guard';
 import { createTable } from './write';
 
 async function sourceFor(db: AnyDb, actor: Actor | null, slug: string, lock = false) {
@@ -100,7 +100,7 @@ export async function duplicateTable(
   return db.transaction(async (transaction) => {
     const tx = transaction as unknown as AnyDb;
     await lockTableSchedule(tx, actor!.id);
-    const source = await sourceFor(tx, actor, sourceSlug, true);
+    // A replay answers with the copy that exists, even when its source was deleted or moderated since.
     if (requestKey) {
       const [existing] = await tx
         .select()
@@ -109,8 +109,15 @@ export async function duplicateTable(
           and(eq(gameTables.gmId, actor!.id), eq(gameTables.duplicationRequestKey, requestKey)),
         );
       if (existing) {
-        if (existing.duplicatedFromTableId !== source.id)
-          throw new Invalid('requestKey', 'invalid');
+        // The link is cleared with a deleted source; while it is there, the key is for that source only.
+        if (existing.duplicatedFromTableId) {
+          const [named] = await tx
+            .select({ id: gameTables.id })
+            .from(gameTables)
+            .where(eq(gameTables.slug, sourceSlug));
+          if (named?.id !== existing.duplicatedFromTableId)
+            throw new Invalid('requestKey', 'invalid');
+        }
         return {
           slug: existing.slug,
           eventId: existing.duplicationEventId!,
@@ -118,13 +125,11 @@ export async function duplicateTable(
         };
       }
     }
-    if (
-      intervalsOverlap(source, {
-        startsAt: localToInstant(input.startsAtLocal, input.timezone),
-        durationMinutes: input.durationMinutes,
-      })
-    )
-      throw new Invalid('startsAtLocal', 'schedule_conflict');
+    const source = await sourceFor(tx, actor, sourceSlug, true);
+    await guardNewCopy(tx, source.id, {
+      startsAt: localToInstant(input.startsAtLocal, input.timezone),
+      durationMinutes: input.durationMinutes,
+    });
     return createTable(tx, actor, input, {
       now,
       draft,

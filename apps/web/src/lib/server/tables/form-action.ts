@@ -42,7 +42,7 @@ export async function handleTableForm(
     /** The GM pressed "save as draft" instead of the main button. */
     draft: boolean,
   ) => Promise<{ slug: string; draft?: boolean }>,
-  guard: (draft: boolean) => Promise<void> = async () => {},
+  guard: (draft: boolean, data: FormData) => Promise<void> = async () => {},
   /** Where a saved table leads: its page, unless said otherwise (the edit form: its manage page). */
   destination: (slug: string, draft: boolean) => string = (slug) => `/tables/${slug}`,
 ) {
@@ -70,7 +70,7 @@ export async function handleTableForm(
   let slug: string;
   let asDraft: boolean;
   try {
-    await guard(draft);
+    await guard(draft, data);
     const image = data.get('image');
     let imagePath: string | undefined;
 
