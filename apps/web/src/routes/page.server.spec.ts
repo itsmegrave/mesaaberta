@@ -20,7 +20,7 @@ const event = (db: unknown = {}) =>
   ({
     params: {},
     url: new URL('https://x.test/'),
-    locals: { db, log: { error } },
+    locals: { db, log: { error }, getProfile: async () => null },
     platform: undefined,
   }) as unknown as RequestEvent;
 

@@ -39,12 +39,11 @@ describe('portable deployment configuration', () => {
     expect(config.APP_ORIGIN).toBe('http://localhost:5173');
     expect(config.CALENDAR_UID_DOMAIN).toBe('localhost');
     expect(config.INSTAGRAM_HANDLE).toBeUndefined();
-    expect(config.CANNY_FEEDBACK_URL).toBeUndefined();
   });
 
   it('uses the same defaults for empty Wrangler bindings', () => {
     expect(
-      readConfig({ APP_ORIGIN: '', CANNY_FEEDBACK_URL: '  ', CONTACT_EMAIL: undefined }),
+      readConfig({ APP_ORIGIN: '', INSTAGRAM_HANDLE: '  ', CONTACT_EMAIL: undefined }),
     ).toEqual(readConfig());
   });
 
@@ -89,7 +88,6 @@ describe('portable deployment configuration', () => {
           PRIVACY_CONTROLLER_NAME: 'Coletivo de jogos',
           PRIVACY_EMAIL: 'privacy@example.org',
           INSTAGRAM_HANDLE: 'our.games',
-          CANNY_FEEDBACK_URL: 'https://games.canny.io/feedback',
         }),
       ),
     ).toMatchObject({ CONTACT_EMAIL: 'hello@example.org', INSTAGRAM_HANDLE: 'our.games' });
@@ -113,7 +111,6 @@ describe('portable deployment configuration', () => {
     { CALENDAR_UID_DOMAIN: 'example.org\r\nATTENDEE:intruder' },
     { CALENDAR_UID_DOMAIN: 'example..org' },
     { INSTAGRAM_HANDLE: '../someone' },
-    { CANNY_FEEDBACK_URL: 'javascript:alert(1)' },
     { PRIVACY_EMAIL: 'invalid' },
   ])('rejects malformed public settings and calendar identifiers: %j', (env) => {
     expect(() => readConfig(env)).toThrow('Invalid deployment configuration:');

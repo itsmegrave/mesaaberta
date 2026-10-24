@@ -6,7 +6,6 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 - One issue, one small pull request that closes it.
 - Conventional commits, one concern per commit.
-- Publish user-facing release notes in the [Canny changelog](https://mesaaberta.canny.io/changelog).
 - The PR should build green (`bun run lint`, `bun run check`, `bun run test`; and `bun run test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
 - Tests describe behavior, not wording. Each test should name the break it catches.
 

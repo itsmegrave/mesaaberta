@@ -1,0 +1,92 @@
+name: Release
+
+# Every merge to main that changes app code becomes a release: the next semver version is picked,
+# the tag and a GitHub release (with generated notes) are created, and the images are published for
+# that tag by `release.yml`. A chore (docs, CI, tests) releases nothing.
+#
+# Run it by hand (Actions > Release > Run workflow) to release what is on main now, for example the
+# first time, or after a merge whose release failed. It does nothing if main's commit is already
+# tagged.
+#
+# Version, from the commits since the latest vX.Y.Z tag:
+#   major  a subject like `feat!: ...` / `fix(api)!: ...` or a BREAKING CHANGE line
+#   minor  a `feat` subject (the PR title of a squash merge)
+#   patch  anything else
+on:
+  push:
+    branches: [main]
+    # Same filter as the images: only what ends up in them.
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'drizzle/**'
+      - 'drizzle.config.ts'
+      - 'package.json'
+      - 'bun.lock'
+      - 'bunfig.toml'
+      - '!**/*.spec.ts'
+      - '!apps/web/e2e/**'
+  workflow_dispatch:
+
+# One release at a time, in the order of the merges, so versions never collide. A tag made here
+# starts no other workflow (GITHUB_TOKEN), so there is no loop; `release.yml` is called below.
+concurrency:
+  group: tag-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    name: Tag and release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.next.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The commit this run is for, not whatever main has become; all tags and history.
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - id: next
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -n "$(git tag --points-at "$GITHUB_SHA" -l 'v*.*.*')" ]; then
+            echo "This commit is already tagged, nothing to release."
+            exit 0
+          fi
+          last="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)"
+          if [ -z "$last" ]; then echo "No vX.Y.Z tag to count from." >&2; exit 1; fi
+          IFS=. read -r major minor patch <<< "${last#v}"
+
+          subjects="$(git log --format=%s "$last..$GITHUB_SHA")"
+          bodies="$(git log --format=%b "$last..$GITHUB_SHA")"
+          if grep -Eq '^[^:]*!:' <<< "$subjects" || grep -q '^BREAKING CHANGE' <<< "$bodies"; then
+            bump=major; major=$((major + 1)); minor=0; patch=0
+          elif grep -Eqi '(^|[^a-z])feat(\([^)]*\))?:' <<< "$subjects"; then
+            bump=minor; minor=$((minor + 1)); patch=0
+          else
+            bump=patch; patch=$((patch + 1))
+          fi
+          tag="v$major.$minor.$patch"
+          echo "$last -> $tag ($bump)"
+
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" \
+            --generate-notes --notes-start-tag "$last"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: Images
+    needs: tag
+    if: needs.tag.outputs.tag != ''
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}

@@ -27,9 +27,6 @@
     "CALENDAR_UID_DOMAIN": "",
     // "true" turns on the daily RPG campaign discovery (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
-    // Footer links to a feedback board and release notes. Blank hides them.
-    "CANNY_CHANGELOG_URL": "",
-    "CANNY_FEEDBACK_URL": "",
     // Blank key: every feature flag returns its default from the registry.
     "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
     "GROWTHBOOK_CLIENT_KEY": "",
