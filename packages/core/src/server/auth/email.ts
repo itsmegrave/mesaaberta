@@ -50,7 +50,15 @@ async function keepProfile(
 const signedIn = async ({ db, ip, log }: Deps, user: User) =>
   recordConnection(db as AnyDb, { actorId: user.id, ip, log });
 
-export async function signUpWithEmail(
+/** The JWT pair Supabase issued; the caller sets it as the person's session. Never log it. */
+export type SessionTokens = { accessToken: string; refreshToken: string };
+
+/**
+ * Signs up and, when the person is signed in at once (no confirmation e-mail needed), hands back the
+ * session's tokens so another Worker (the api) can pass it to the one that sets the cookie.
+ * `signUpWithEmail` is this without them.
+ */
+export async function signUpForSession(
   deps: Deps,
   {
     email,
@@ -58,7 +66,7 @@ export async function signUpWithEmail(
     origin,
     next,
   }: { email: string; password: string; origin: string; next: string | null },
-): Promise<SignUpResult> {
+): Promise<{ result: SignUpResult; session: SessionTokens | null }> {
   const { data, error } = await deps.supabase.auth.signUp({
     email,
     password,
@@ -69,29 +77,40 @@ export async function signUpWithEmail(
   });
 
   if (error) {
-    if (error.code === 'weak_password') return 'weak_password';
+    if (error.code === 'weak_password') return { result: 'weak_password', session: null };
     // Auth answers a sign-up for an address that already has a confirmed account with a 422, not
     // with a look-alike success (found by the e2e tests against a real Auth). Saying so would tell
     // anyone who is registered, so it gets the same answer as a first sign-up.
-    if (error.code === 'user_already_exists') return 'check_email';
-    if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
+    if (error.code === 'user_already_exists') return { result: 'check_email', session: null };
+    if (error.code && RATE_LIMITED.has(error.code))
+      return { result: 'rate_limited', session: null };
     // The code and status only: the message can quote the address.
     deps.log.warn('email auth: sign-up refused', { code: error.code, status: error.status });
-    return 'failed';
+    return { result: 'failed', session: null };
   }
 
   // No session yet: the person has to confirm the address first. Supabase answers a repeat sign-up
   // the same way, so this never says whether the address was already registered.
-  if (!data.session || !data.user) return 'check_email';
+  if (!data.session || !data.user) return { result: 'check_email', session: null };
 
   // A brand-new account is never suspended; anything but `kept` is a failure here.
-  if ((await keepProfile(deps, data.user)) !== 'kept') return 'failed';
+  if ((await keepProfile(deps, data.user)) !== 'kept') return { result: 'failed', session: null };
   await signedIn(deps, data.user);
-  return 'signed_in';
+  return {
+    result: 'signed_in',
+    session: {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    },
+  };
 }
 
-/** The JWT pair Supabase issued; the caller sets it as the person's session. Never log it. */
-export type SessionTokens = { accessToken: string; refreshToken: string };
+export async function signUpWithEmail(
+  deps: Deps,
+  details: { email: string; password: string; origin: string; next: string | null },
+): Promise<SignUpResult> {
+  return (await signUpForSession(deps, details)).result;
+}
 
 /**
  * Signs in and, when the person keeps the session, hands back its tokens so another Worker (the

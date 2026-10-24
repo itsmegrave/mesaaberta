@@ -5,9 +5,15 @@ import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import {
   PASSWORD_RESET_LIMIT,
   SIGN_IN_LIMIT,
+  SIGN_UP_LIMIT,
   attemptWait,
 } from '@mesaaberta/core/server/auth/attempt-limit';
-import { signInForSession, type SignInResult } from '@mesaaberta/core/server/auth/email';
+import {
+  signInForSession,
+  signUpForSession,
+  type SignInResult,
+  type SignUpResult,
+} from '@mesaaberta/core/server/auth/email';
 import { requestPasswordReset } from '@mesaaberta/core/server/auth/password';
 import { logger } from '@mesaaberta/core/server/logger';
 import { createClient } from '@supabase/supabase-js';
@@ -34,6 +40,11 @@ export const CLIENT_IP_HEADER = 'x-client-ip';
  * (or the shared secret) can reach this route. Refusals are `invalid` and `unconfirmed` (400),
  * `suspended` (403), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
+ * `POST /sign-up` (behind `api_auth_sign_up`) creates the account from `{ email, password, origin,
+ * next }` and answers `{ result, session }`: `signed_in` with the JWT pair when no confirmation is
+ * needed, `check_email` (also for an address that already has an account) without one; refusals are
+ * `weak_password` (400), `rate_limited` (429, with `retryAfter`) and `failed` (500).
+ *
  * `POST /password-reset` e-mails a reset link. Answers `{ result }`: `sent` (whether or not the
  * address has an account), `rate_limited` (429, with `retryAfter` when it is our limit) or `failed`.
  */
@@ -48,6 +59,13 @@ const SIGN_IN_STATUS = {
   failed: 500,
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignInResult, 'ok'>, number>;
+
+/** The status the sign-up form shows for each refusal; the same as the web action's. */
+const SIGN_UP_STATUS = {
+  weak_password: 400,
+  failed: 500,
+  rate_limited: 429,
+} as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
 
 export function authRoutes(open: Open = openDb, makeSupabase: MakeSupabase = statelessClient) {
   const app = new Hono<{ Bindings: Env }>();
@@ -112,6 +130,41 @@ export function authRoutes(open: Open = openDb, makeSupabase: MakeSupabase = sta
       );
       if (result !== 'ok') return c.json({ result }, SIGN_IN_STATUS[result]);
       return c.json({ result, session });
+    } finally {
+      await close();
+    }
+  });
+
+  app.post('/sign-up', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    const connectionString = connectionStringFrom(c.env);
+    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const body = (await c.req.json().catch(() => null)) as {
+      email?: unknown;
+      password?: unknown;
+      origin?: unknown;
+      next?: unknown;
+    } | null;
+    const parsed = credentialsSchema.safeParse({ email: body?.email, password: body?.password });
+    const origin = typeof body?.origin === 'string' ? body.origin : '';
+    if (!parsed.success || !/^https?:\/\/[^/]+$/.test(origin))
+      return c.json({ error: 'invalid', message: 'invalid' }, 400);
+    const next = typeof body?.next === 'string' ? body.next : null;
+
+    const ip = c.req.header(CLIENT_IP_HEADER) ?? '';
+    const { db, close } = open(connectionString);
+    try {
+      const wait = await attemptWait(db, SIGN_UP_LIMIT, ip);
+      if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
+
+      const { result, session } = await signUpForSession(
+        { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
+        { email: parsed.data.email, password: parsed.data.password, origin, next },
+      );
+      if (result === 'signed_in') return c.json({ result, session });
+      if (result === 'check_email') return c.json({ result });
+      return c.json({ result }, SIGN_UP_STATUS[result]);
     } finally {
       await close();
     }

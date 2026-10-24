@@ -152,6 +152,14 @@ export const flagDefaults = {
   // of their network, so a rollout is a share of networks. Needs the API binding and, on the api
   // Worker, the Supabase settings.
   api_auth_sign_in: false,
+  // Off: creating an account with e-mail and password (/signup) runs in the web Worker. On: the api
+  // Worker does it over the Service Binding (limit, Supabase, profile) and, when no confirmation
+  // e-mail is needed, answers the JWT pair for the web Worker to set as the cookie session; the form
+  // shows the same codes as before and a call that cannot be made falls back to the web path. A
+  // session that the web Worker cannot set sends the person to /login, since the account exists.
+  // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
+  // the Supabase and mail settings.
+  api_auth_sign_up: false,
   // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
   // the api Worker does it over the Service Binding and the web Worker dispatches the event it
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every

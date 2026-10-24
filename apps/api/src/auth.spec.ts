@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-const { signInForSession } = vi.hoisted(() => ({ signInForSession: vi.fn() }));
-vi.mock('@mesaaberta/core/server/auth/email', () => ({ signInForSession }));
+const { signInForSession, signUpForSession } = vi.hoisted(() => ({
+  signInForSession: vi.fn(),
+  signUpForSession: vi.fn(),
+}));
+vi.mock('@mesaaberta/core/server/auth/email', () => ({ signInForSession, signUpForSession }));
 
 import { authRoutes } from './auth';
 
@@ -87,6 +90,58 @@ describe('api sign-in', () => {
     signInForSession.mockResolvedValue({ result, session: null });
 
     const response = await signIn(credentials);
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual({ result });
+  });
+});
+
+describe('api sign-up', () => {
+  const signUp = (body: unknown, environment: object = env) =>
+    authRoutes(open, () => ({}) as SupabaseClient).request(
+      '/sign-up',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-client-ip': '127.0.0.1' },
+        body: JSON.stringify(body),
+      },
+      environment,
+    );
+  const details = {
+    email: 'ana@example.com',
+    password: 'correct horse',
+    origin: 'https://mesaaberta.app',
+  };
+
+  beforeEach(() => signUpForSession.mockReset());
+
+  it('refuses a bad address or an origin that is not an origin', async () => {
+    expect((await signUp({ ...details, email: 'nope' })).status).toBe(400);
+    expect((await signUp({ ...details, origin: 'javascript:alert(1)' })).status).toBe(400);
+    expect(signUpForSession).not.toHaveBeenCalled();
+  });
+
+  it('answers unavailable without the Supabase settings', async () => {
+    expect((await signUp(details, { DATABASE_URL: 'postgres://test' })).status).toBe(503);
+  });
+
+  it('hands back the session only when the person is signed in at once', async () => {
+    const session = { accessToken: 'jwt-a', refreshToken: 'jwt-r' };
+    signUpForSession.mockResolvedValue({ result: 'signed_in', session });
+    expect(await (await signUp(details)).json()).toEqual({ result: 'signed_in', session });
+
+    signUpForSession.mockResolvedValue({ result: 'check_email', session: null });
+    expect(await (await signUp(details)).json()).toEqual({ result: 'check_email' });
+  });
+
+  it.each([
+    ['weak_password', 400],
+    ['rate_limited', 429],
+    ['failed', 500],
+  ])('answers %s with %i', async (result, status) => {
+    signUpForSession.mockResolvedValue({ result, session: null });
+
+    const response = await signUp(details);
 
     expect(response.status).toBe(status);
     expect(await response.json()).toEqual({ result });
