@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
 import { ACTOR_HEADER } from './admin-guard';
+import { adminReadRoutes } from './admin-reads';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
 import { catalogRoutes } from './catalog';
@@ -75,6 +76,8 @@ export function createApi() {
 
   // The read side, one resource at a time (the catalog first), behind `api_reads_<resource>`.
   app.route('/v1/reads', readRoutes());
+  // The admin pages' data (overview, users, tables), behind `api_reads_admin*`.
+  app.route('/v1/admin-reads', adminReadRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.
   app.notFound((c) => c.json({ error: 'not_found' }, 404));

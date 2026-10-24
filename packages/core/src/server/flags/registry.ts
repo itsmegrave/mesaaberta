@@ -106,6 +106,16 @@ export const flagDefaults = {
   // call that cannot be made falls back to the web path, which answers the page's own 403/404.
   // Needs the API binding. Admins first.
   api_reads_manage: false,
+  // Off: the /admin overview is read in the web Worker. On: for an admin the api Worker answers it
+  // over the Service Binding from the same query; a refusal or a call that cannot be made falls
+  // back to the web path. Needs the API binding. Admins only.
+  api_reads_admin: false,
+  // Off: the /admin/users list is read in the web Worker. On: for an admin the api Worker answers
+  // it from the same query, given the list filters; same fallback. Needs the API binding.
+  api_reads_admin_users: false,
+  // Off: the /admin/tables list is read in the web Worker. On: for an admin the api Worker answers
+  // it from the same query, given the list filters; same fallback. Needs the API binding.
+  api_reads_admin_tables: false,
   // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
   // the web Worker still validates the form and stores the picture, then the api Worker saves it
   // over the Service Binding from the same services; refusals come back as the codes the form
