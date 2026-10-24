@@ -4,6 +4,8 @@ import { canonicalPath, legacyRedirect, routes } from './routes';
 
 describe('language-independent routes', () => {
   it.each([
+    ['/en', '/'],
+    ['/pt-BR', '/'],
     ['/tables/dragao/manage', '/t/dragao/manage'],
     ['/partners/42/edit', '/p/42/edit'],
     ['/crowdfunding/new', '/cf/new'],

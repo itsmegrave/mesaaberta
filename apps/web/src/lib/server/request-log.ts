@@ -1,3 +1,4 @@
+import { routes } from '@mesaaberta/core/routes';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { isHttpError, isRedirect } from '@sveltejs/kit';
 import * as Sentry from '@sentry/sveltekit';
@@ -5,12 +6,18 @@ import type { Fields, Logger } from '@mesaaberta/core/server/logger';
 
 /** The record a route parameter names, by the path segment before it (`/t/[slug]`). */
 const RESOURCE_TYPES: Record<string, string> = {
+  [routes.tables.slice(1)]: 'table',
+  [routes.messages.slice(1)]: 'conversation',
+  [routes.partners.slice(1)]: 'partner',
+  [routes.crowdfunding.slice(1)]: 'crowdfunding',
+  // Admin and API route templates retain their existing collection names.
   tables: 'table',
   users: 'user',
   u: 'user',
   reports: 'report',
   messages: 'conversation',
   partners: 'partner',
+  crowdfunding: 'crowdfunding',
 };
 
 /**
