@@ -102,6 +102,7 @@ export const profiles = pgTable(
     // Off: nobody can start a direct message with this person, and existing ones stop taking new
     // messages. Table chats are not affected.
     directMessagesEnabled: boolean('direct_messages_enabled').notNull().default(true),
+    invitationsEnabled: boolean('invitations_enabled').notNull().default(true),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -930,3 +931,60 @@ export const workerHeartbeats = pgTable('worker_heartbeats', {
   name: text('name').primaryKey(),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }).notNull(),
 }).enableRLS();
+
+// Consent-based invitations are not registrations; pending rows reserve seats without membership.
+export const invitationStatus = pgEnum('invitation_status', [
+  'pending',
+  'accepted',
+  'declined',
+  'expired',
+  'cancelled',
+]);
+export const playerInvitations = pgTable(
+  'player_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    gmId: uuid('gm_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: invitationStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+    cancellationReason: text('cancellation_reason'),
+  },
+  (t) => [
+    uniqueIndex('player_invitations_pending_unique')
+      .on(t.tableId, t.playerId)
+      .where(sql`${t.status} = 'pending'`),
+    index('player_invitations_table_status_idx').on(t.tableId, t.status, t.expiresAt),
+    index('player_invitations_player_idx').on(t.playerId, t.status),
+    index('player_invitations_gm_created_idx').on(t.gmId, t.createdAt),
+    check('player_invitations_not_self', sql`${t.gmId} <> ${t.playerId}`),
+    check('player_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
+  ],
+).enableRLS();
+
+// Declined invitations stay in player_invitations even when the outbox is pruned.
+export const gmInviteBlocks = pgTable(
+  'gm_invite_blocks',
+  {
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    gmId: uuid('gm_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.playerId, t.gmId] }),
+    check('gm_invite_blocks_not_self', sql`${t.playerId} <> ${t.gmId}`),
+  ],
+).enableRLS();

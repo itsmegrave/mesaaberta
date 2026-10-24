@@ -22,6 +22,8 @@
     /** The GM's score. Absent where there is nothing to show yet, such as the form's preview. */
     gmRating?: { score: number | null; count: number; isNew: boolean };
     seatsLeft: number;
+    taken?: number;
+    reserved?: number;
     capacity?: number;
     timezone: string;
     /** The session date. Null only in the form's preview, before a date is typed. */
@@ -38,6 +40,17 @@
   const locale = getLocale();
   const seats = $derived(
     table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
+  );
+
+  const seatSummary = $derived(
+    table.reserved
+      ? m.invitation_seats({
+          confirmed:
+            table.taken ?? Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
+          reserved: table.reserved,
+          available: table.seatsLeft,
+        })
+      : undefined,
   );
 
   const cardDate = $derived(
@@ -96,7 +109,12 @@
       {/if}
       <!-- Seat ring chip -->
       <div class="absolute right-3 bottom-3 rounded-lg preset-filled-primary-500 p-1 shadow-sm">
-        <SeatRing capacity={table.capacity ?? 5} seatsLeft={table.seatsLeft} size={64} />
+        <SeatRing
+          capacity={table.capacity ?? 5}
+          seatsLeft={table.seatsLeft}
+          size={64}
+          label={seatSummary}
+        />
       </div>
     </div>
   {:else}
@@ -125,7 +143,12 @@
         {/if}
       </div>
       <div class="flex items-center">
-        <SeatRing capacity={table.capacity ?? 5} seatsLeft={table.seatsLeft} size={112} />
+        <SeatRing
+          capacity={table.capacity ?? 5}
+          seatsLeft={table.seatsLeft}
+          size={112}
+          label={seatSummary}
+        />
       </div>
     </div>
   {/if}
@@ -214,6 +237,17 @@
     >
       <span class="text-base font-semibold {table.seatsLeft === 0 ? 'text-muted' : 'text-lamp'}">
         {seats}
+        {#if table.reserved}
+          <span class="mt-1 block text-xs font-normal text-muted"
+            >{m.invitation_seats({
+              confirmed:
+                table.taken ??
+                Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
+              reserved: table.reserved,
+              available: table.seatsLeft,
+            })}</span
+          >
+        {/if}
       </span>
       <span
         aria-hidden="true"

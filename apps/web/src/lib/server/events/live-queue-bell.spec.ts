@@ -51,12 +51,13 @@ beforeAll(async () => {
 afterAll(() => test.close());
 
 describe('the bell on the queue', () => {
-  it('names the four handlers that write notifications', () => {
+  it('names the handlers that write notifications', () => {
     expect(names).toEqual([
       'in-app-notifications-v1',
       'system-announcements-v1',
       'moderation-notifications-v1',
       'catalog-notifications-v1',
+      'player-invitation-notifications-v1',
     ]);
   });
 

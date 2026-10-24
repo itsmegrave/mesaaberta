@@ -43,6 +43,7 @@
     "RESEND_TEMPLATE_ACCOUNT_BANNED": "",
     "RESEND_TEMPLATE_CANCEL": "",
     "RESEND_TEMPLATE_INVITE": "",
+    "RESEND_TEMPLATE_PLAYER_INVITATION": "",
     "RESEND_TEMPLATE_JOIN_DECLINED": "",
     "RESEND_TEMPLATE_JOIN_REQUESTED": "",
     // Blank: login is off until a Supabase project is configured (see "Sign-in" in the README).

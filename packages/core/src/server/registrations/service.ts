@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/schema';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
@@ -8,6 +8,9 @@ import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { DomainEvent } from '@mesaaberta/core/server/events/types';
 import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
 import { addTableMember, removeTableMember } from '../messages/service';
+import { seatAvailability } from '../invitations/seats';
+import { pendingInvitationFor } from '../invitations/service';
+import { Invalid } from '../errors';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
@@ -16,7 +19,10 @@ import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 // transaction; the caller dispatches them after the commit (see `locals.afterResponse`).
 
 type Tx = Parameters<Parameters<AnyDb['transaction']>[0]>[0];
-type RegistrationEvent = Extract<DomainEvent, { payload: { playerId: string } }>;
+type RegistrationEvent = Extract<
+  DomainEvent,
+  { type: 'PlayerJoined' | 'PlayerLeft' | 'JoinRequested' | 'JoinApproved' | 'JoinDeclined' }
+>;
 
 /** The table row, locked until the transaction ends. */
 async function lockTable(tx: Tx, slug: string) {
@@ -24,15 +30,6 @@ async function lockTable(tx: Tx, slug: string) {
   if (!table) throw new NotFound(`no table with slug "${slug}"`);
 
   return table;
-}
-
-async function confirmedSeats(tx: Tx, tableId: string) {
-  const [{ count }] = await tx
-    .select({ count: sql<number>`count(*)::int` })
-    .from(registrations)
-    .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
-
-  return count;
 }
 
 async function registrationOf(tx: Tx, tableId: string, playerId: string) {
@@ -79,9 +76,11 @@ export async function joinTable(
 ) {
   return db.transaction(async (tx) => {
     const table = await lockTable(tx, slug);
-    const seatsLeft = table.capacity - (await confirmedSeats(tx, table.id));
+    const seatsLeft = (await seatAvailability(asDb(tx), table.id, now)).available;
     const existing = actor ? await registrationOf(tx, table.id, actor.id) : undefined;
 
+    if (actor && (await pendingInvitationFor(asDb(tx), table.id, actor.id, { now })))
+      throw new Invalid('invitation', 'decision_required');
     const blocker = joinBlocker(actor, {
       gmId: table.gmId,
       tableStatus: table.status,
@@ -155,10 +154,12 @@ export async function approveRegistration(
   return db.transaction(async (tx) => {
     const table = await lockTable(tx, slug);
     authorize(actor, 'registration:manage', table);
+    if (table.status !== 'active') throw new NotFound('the table is not active');
 
     const registration = await registrationOf(tx, table.id, playerId);
     if (registration?.status !== 'pending') throw new NotFound('no pending request');
-    if ((await confirmedSeats(tx, table.id)) >= table.capacity) throw new TableFull();
+    if ((await seatAvailability(asDb(tx), table.id, new Date())).available < 1)
+      throw new TableFull();
 
     await tx
       .update(registrations)

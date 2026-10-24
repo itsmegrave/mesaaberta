@@ -4,6 +4,8 @@ import { refuse, responseForm, withoutSecrets } from '#lib/forms/server.js';
 import { setAvatarPath } from '@mesaaberta/core/server/account/service';
 import { deleteAccount } from '@mesaaberta/core/server/account/delete';
 import { supabaseAdminFrom } from '@mesaaberta/core/server/auth/admin-client';
+import { invitationPreferences } from '#lib/server/invitations/api.js';
+import { invitationAction } from '#lib/server/invitations/actions.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
@@ -66,6 +68,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       connected && !connected.email && (await passwordOffered(locals, profile)),
     ),
     passwordForm: initialForm({ code: '', password: '', passwordConfirm: '' }),
+    invitationPreferences: await invitationPreferences(locals, profile),
     messagesForm: initialForm({ enabled: profile?.directMessagesEnabled ?? true }),
     email: user.email ?? '',
     avatarUrl: profile ? pictureOf(supabaseUrlOf(locals.env), profile) : null,
@@ -75,6 +78,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
+  invitations: invitationAction('preference'),
+  invitationBlock: invitationAction('block'),
   save: async ({ request, locals, url }) => {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');

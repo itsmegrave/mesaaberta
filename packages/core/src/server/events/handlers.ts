@@ -7,6 +7,10 @@ import { announcementHandler } from './announcements';
 import { moderationHandler } from './moderation';
 import { catalogHandler } from './catalog';
 import { banMailHandler } from './ban-mail';
+import {
+  playerInvitationMailHandler,
+  playerInvitationNotificationHandler,
+} from './player-invitations';
 
 /**
  * The handlers that write the bell's notifications from table, announcement, moderation and
@@ -18,6 +22,7 @@ export const bellHandlers: readonly Handler[] = [
   announcementHandler,
   moderationHandler,
   catalogHandler,
+  playerInvitationNotificationHandler,
 ];
 
 /**
@@ -25,7 +30,11 @@ export const bellHandlers: readonly Handler[] = [
  * queue can deliver (`api_events_queue_mail`, ADR 0003 stage 3). By name, because each handler
  * exists only where its mail settings are configured.
  */
-export const MAIL_HANDLER_NAMES = ['calendar-invites-v1', 'ban-mail-v1'] as const;
+export const MAIL_HANDLER_NAMES = [
+  'calendar-invites-v1',
+  'ban-mail-v1',
+  'player-invitation-mail-v1',
+] as const;
 
 /**
  * Every handler that reacts to domain events. Each is idempotent (see `Handler`), so the sweeper
@@ -39,9 +48,11 @@ export function handlersFor(
   const handler = inviteHandler(env);
   const bell = [...bellHandlers, ...socialFor(env).handlers];
   const banMail = banMailHandler(env);
+  const playerInvitations = playerInvitationMailHandler(env);
   return [
     ...(handler ? [handler] : []),
     ...(banMail ? [banMail] : []),
+    ...(playerInvitations ? [playerInvitations] : []),
     ...bell,
     ...analyticsHandlers(env),
   ];

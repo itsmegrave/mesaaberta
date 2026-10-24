@@ -1,13 +1,14 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import { and, eq, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables } from '../db/schema';
+import { gameTables, playerInvitations } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Forbidden, Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { diffFields } from '../events/changes';
 import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
+import { cancelPendingInvitations } from '../invitations/service';
 import { localToInstant } from './schedule';
 import { lockTableSchedule, guardTableSchedule } from './schedule-guard';
 
@@ -97,6 +98,11 @@ async function answer(
       .returning({ id: gameTables.id });
     if (!updated) throw new Forbidden('table:confirm');
 
+    await cancelPendingInvitations(
+      tx as unknown as AnyDb,
+      eq(playerInvitations.tableId, table.id),
+      'table_changed',
+    );
     return recordEvent(tx as unknown as AnyDb, {
       type: event,
       actorId: actor!.id,

@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
 import { DASHBOARD_PAGE_SIZE, read } from './dashboard';
 
+vi.mock('#lib/server/invitations/api.js', () => ({
+  listReceivedInvitations: vi.fn(async () => []),
+}));
+
 vi.mock('@mesaaberta/core/server/dashboard/queries', () => ({
   listPlaying: vi.fn(),
   listRunning: vi.fn(),

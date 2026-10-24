@@ -1,8 +1,10 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, or } from 'drizzle-orm';
 import { eraseMessagesOf } from '@mesaaberta/core/server/messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversations,
+  gmInviteBlocks,
+  playerInvitations,
   gameTables,
   gmScores,
   messages,
@@ -13,6 +15,11 @@ import {
   registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
+import {
+  cancelPendingInvitations,
+  lockInvitationProfiles,
+  lockInvitationTablesForProfile,
+} from '../invitations/service';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 /**
@@ -30,6 +37,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       city: profiles.city,
       timezone: profiles.timezone,
       directMessagesEnabled: profiles.directMessagesEnabled,
+      invitationsEnabled: profiles.invitationsEnabled,
       avatarUrl: profiles.avatarUrl,
       avatarPath: profiles.avatarPath,
       createdAt: profiles.createdAt,
@@ -127,7 +135,39 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
         .orderBy(asc(messages.createdAt)),
     ]);
 
+  const [invitationsReceived, invitationsSent, invitationBlocks] = await Promise.all([
+    db
+      .select({
+        id: playerInvitations.id,
+        tableId: playerInvitations.tableId,
+        gmId: playerInvitations.gmId,
+        status: playerInvitations.status,
+        createdAt: playerInvitations.createdAt,
+        expiresAt: playerInvitations.expiresAt,
+        respondedAt: playerInvitations.respondedAt,
+        cancellationReason: playerInvitations.cancellationReason,
+      })
+      .from(playerInvitations)
+      .where(eq(playerInvitations.playerId, userId)),
+    db
+      .select({
+        id: playerInvitations.id,
+        tableId: playerInvitations.tableId,
+        status: playerInvitations.status,
+        createdAt: playerInvitations.createdAt,
+        expiresAt: playerInvitations.expiresAt,
+      })
+      .from(playerInvitations)
+      .where(eq(playerInvitations.gmId, userId)),
+    db
+      .select({ gmId: gmInviteBlocks.gmId, createdAt: gmInviteBlocks.createdAt })
+      .from(gmInviteBlocks)
+      .where(eq(gmInviteBlocks.playerId, userId)),
+  ]);
   return {
+    invitationsReceived,
+    invitationsSent,
+    invitationBlocks,
     exportedAt: now.toISOString(),
     account: { id: userId, email },
     profile: profile ?? null,
@@ -151,6 +191,13 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventIds: string[] }> {
   const eventIds = await db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
+    await lockInvitationProfiles(t, [userId]);
+    await lockInvitationTablesForProfile(t, userId);
+    const cancelled = await cancelPendingInvitations(
+      t,
+      or(eq(playerInvitations.playerId, userId), eq(playerInvitations.gmId, userId))!,
+      'account_closed',
+    );
     const active = await t
       .select({
         id: gameTables.id,
@@ -161,7 +208,7 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
       .from(gameTables)
       .where(and(eq(gameTables.gmId, userId), eq(gameTables.status, 'active')));
 
-    const ids: string[] = [];
+    const ids: string[] = [...cancelled];
     for (const table of active) {
       await t
         .update(gameTables)
@@ -200,6 +247,13 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
  */
 export async function anonymiseProfile(db: AnyDb, userId: string) {
   await db.transaction(async (tx) => {
+    await lockInvitationProfiles(tx as unknown as AnyDb, [userId]);
+    await tx
+      .delete(playerInvitations)
+      .where(or(eq(playerInvitations.playerId, userId), eq(playerInvitations.gmId, userId)));
+    await tx
+      .delete(gmInviteBlocks)
+      .where(or(eq(gmInviteBlocks.playerId, userId), eq(gmInviteBlocks.gmId, userId)));
     await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, userId));
     await tx.delete(notifications).where(eq(notifications.recipientId, userId));
     await tx
@@ -215,6 +269,7 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
         avatarUrl: null,
         avatarPath: null,
         status: 'suspended',
+        invitationsEnabled: false,
       })
       .where(eq(profiles.id, userId));
   });

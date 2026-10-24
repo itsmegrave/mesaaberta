@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import { requireUser } from '#lib/server/auth/guard.js';
+import { listReceivedInvitations } from '#lib/server/invitations/api.js';
 import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
 import type { RequestEvent } from '@sveltejs/kit';
 
@@ -35,6 +36,7 @@ export const read = async ({ locals, url }: RequestEvent) => {
   const waitingIndex = running.findIndex((table) => table.requests.length > 0);
   const waitingTables = running.filter((table) => table.requests.length > 0);
   return {
+    invitations: await listReceivedInvitations(locals, await locals.getProfile()),
     playing: slice(playing),
     running: slice(running),
     totals: { playing: playing.length, running: running.length },

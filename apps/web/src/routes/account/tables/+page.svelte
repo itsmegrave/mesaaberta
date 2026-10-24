@@ -19,6 +19,11 @@
   const data = $derived({ ...serverData, ...remote.data });
 
   const locale = getLocale();
+  const invitations = $derived(
+    data.invitations.filter(
+      (invitation) => invitation.status === 'pending' && invitation.expiresAt > new Date(),
+    ),
+  );
   // Every action posted from here comes back here.
   const next = localizedHref('/account/tables', locale);
 
@@ -66,6 +71,31 @@
 
 <section class="pt-2 pb-4 md:pt-12">
   <Breadcrumbs class="mb-8" items={[{ label: m.nav_my_tables() }]} />
+  {#if invitations.length > 0}
+    <section
+      aria-labelledby="received-invitations"
+      class="mb-6 rounded-lg border border-surface-200-800 bg-panel p-6"
+    >
+      <h2 id="received-invitations" class="text-2xl font-semibold">{m.invitation_received()}</h2>
+      <ul class="mt-4 grid gap-3">
+        {#each invitations as invitation (invitation.id)}
+          <li>
+            <a
+              class="link-underline font-semibold"
+              href={localizedHref(`/account/invitations/${invitation.id}`, locale)}
+              >{invitation.table.title}</a
+            >
+            <p class="text-sm text-muted">
+              {m.invitation_from({
+                gm: invitation.gmUsername || '',
+                title: invitation.table.title,
+              })}
+            </p>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
     <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
       {m.dash_title()}

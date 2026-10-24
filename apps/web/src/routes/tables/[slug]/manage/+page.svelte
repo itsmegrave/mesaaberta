@@ -1,4 +1,5 @@
 <script lang="ts">
+  import InvitationAction from '#lib/components/InvitationAction.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import UserText from '#lib/components/UserText.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
@@ -24,7 +25,7 @@
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { onMount } from 'svelte';
 
-  let { data: serverData } = $props();
+  let { data: serverData, form: result } = $props();
   const remote = pageQuery(() => serverData);
   const data = $derived({ ...serverData, ...remote.data });
 
@@ -39,7 +40,12 @@
   const here = $derived(localizedHref(`/tables/${table.slug}/manage`, locale));
   const tablePage = $derived(localizedHref(`/tables/${table.slug}`, locale));
   const editPage = $derived(localizedHref(`/tables/${table.slug}/edit`, locale));
-  const taken = $derived(table.capacity - table.seatsLeft);
+  const taken = $derived(data.players.length);
+  const reservations = $derived(
+    data.invitations.filter(
+      (invitation) => invitation.status === 'pending' && invitation.expiresAt > new Date(),
+    ),
+  );
 
   // The "3 dots": beside the title for the table, on each player's row for that player.
   let disableOpen = $state(false);
@@ -247,6 +253,46 @@
 
   <div class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12">
     <div class="grid min-w-0 content-start gap-8 lg:col-span-2">
+      <section aria-labelledby="invitations" class={card}>
+        <h2 id="invitations" class="text-2xl font-semibold">{m.invitation_manage_title()}</h2>
+        <p class="mt-2 text-muted">{m.invitation_manage_help()}</p>
+        {#if result && ('error' in result || ('form' in result && 'invitationId' in result.form.data && !result.form.valid))}<p
+            role="alert"
+            class="mt-3 text-error-alert"
+          >
+            {m.invitation_unavailable()}
+          </p>{/if}
+        <p class="mt-3 font-semibold">
+          {m.invitation_seats({
+            confirmed: taken,
+            reserved: table.reserved,
+            available: table.seatsLeft,
+          })}
+        </p>
+        {#if data.canInvite && table.status === 'active' && table.startsAt > new Date()}
+          <div class="mt-4 max-w-md">
+            <InvitationAction action="?/invite" username label={m.invitation_send()} />
+          </div>
+        {/if}
+        {#if reservations.length > 0}
+          <ul class="mt-4 divide-y divide-surface-200-800">
+            {#each reservations as invitation (invitation.id)}
+              <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                <span
+                  ><UserLink username={invitation.username} /><span class="block text-sm text-muted"
+                    >{m.invitation_deadline({ date: moment(invitation.expiresAt) })}</span
+                  ></span
+                >
+                <InvitationAction
+                  action="?/cancelInvitation"
+                  invitationId={invitation.id}
+                  label={m.invitation_cancel()}
+                />
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </section>
       <section aria-labelledby="requests" class={card}>
         <div class="flex items-center gap-3">
           <h2 id="requests" class="text-2xl font-semibold">{m.table_requests()}</h2>

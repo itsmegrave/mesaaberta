@@ -64,6 +64,7 @@
     </li>
     <li>As avaliações que você dá aos mestres, com o comentário, se escrever um.</li>
   </ul>
+  <p>{m.privacy_invitations()}</p>
   <h3>Mensagens</h3>
   <ul>
     <li>

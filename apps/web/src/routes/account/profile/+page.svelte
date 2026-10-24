@@ -1,4 +1,5 @@
 <script lang="ts">
+  import InvitationAction from '#lib/components/InvitationAction.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { queryClient } from '#lib/query/context.js';
   const client = queryClient();
@@ -245,6 +246,47 @@
         <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
       </section>
 
+      <section aria-labelledby="invitation-settings" class={card}>
+        <h2 id="invitation-settings" class={heading}>{m.invitation_settings_title()}</h2>
+        <p class="mt-3 text-muted">{m.invitation_settings_help()}</p>
+        {#if result && ('error' in result || ('form' in result && 'invitationId' in result.form.data && !result.form.valid))}<p
+            role="alert"
+            class="mt-3 text-error-alert"
+          >
+            {m.invitation_unavailable()}
+          </p>{/if}
+        <p class="mt-3 font-semibold">
+          {data.invitationPreferences.enabled
+            ? m.invitation_settings_enabled()
+            : m.invitation_settings_disabled()}
+        </p>
+        <div class="mt-4">
+          <InvitationAction
+            action="?/invitations"
+            enabled={!data.invitationPreferences.enabled}
+            label={data.invitationPreferences.enabled
+              ? m.invitation_disable()
+              : m.invitation_enable()}
+          />
+        </div>
+        <h3 class="mt-6 text-lg font-semibold">{m.invitation_blocks_title()}</h3>
+        {#if data.invitationPreferences.blocks.length === 0}<p class="mt-2 text-muted">
+            {m.invitation_blocks_empty()}
+          </p>{:else}
+          <ul class="mt-3 divide-y divide-surface-200-800">
+            {#each data.invitationPreferences.blocks as block (block.gmId)}
+              <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                <span class="font-semibold">{atHandle(block.username || '')}</span><InvitationAction
+                  action="?/invitationBlock"
+                  gmId={block.gmId}
+                  blocked={false}
+                  label={m.invitation_unblock()}
+                />
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </section>
       <section aria-labelledby="your-data" class={card}>
         <h2 id="your-data" class={heading}>{m.account_data_title()}</h2>
         <p class="mt-3 max-w-prose">

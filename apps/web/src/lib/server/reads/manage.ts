@@ -3,6 +3,7 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { listTableInvitations } from '#lib/server/invitations/api.js';
 import { loadManage } from '@mesaaberta/core/server/tables/manage';
 import type { RequestEvent } from '@sveltejs/kit';
 
@@ -29,6 +30,9 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
       // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
       canDuplicate: manage.canDuplicate,
       canEdit: can(profile, 'table:edit', { gmId, tableStatus: manage.table.status }),
+      invitations:
+        profile?.id === gmId ? await listTableInvitations(locals, profile, params.slug!) : [],
+      canInvite: profile?.id === gmId,
       systemWaiting: manage.systemWaiting,
       gm: withPicture(manage.gm),
       gmRating: manage.gmRating,

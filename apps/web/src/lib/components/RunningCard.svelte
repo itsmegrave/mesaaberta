@@ -17,6 +17,8 @@
     title: string;
     tableStatus: TableStatus;
     capacity: number;
+    reserved?: number;
+    seatsLeft?: number;
     timezone: string;
     startsAt: Date;
     players: Person[];
@@ -54,6 +56,16 @@
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >
   </p>
+  {#if item.reserved}
+    <p class="mt-2 text-sm text-muted">
+      {m.invitation_seats({
+        confirmed: item.players.length,
+        reserved: item.reserved,
+        available:
+          item.seatsLeft ?? Math.max(0, item.capacity - item.players.length - item.reserved),
+      })}
+    </p>
+  {/if}
 
   <!-- The date has passed: the GM says whether it happened. Table statuses are only for admin. -->
   {#if item.tableStatus === 'awaiting_confirmation'}

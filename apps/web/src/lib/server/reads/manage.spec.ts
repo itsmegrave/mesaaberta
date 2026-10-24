@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { loadManage } from '@mesaaberta/core/server/tables/manage';
 import { read } from './manage';
 
+vi.mock('#lib/server/invitations/api.js', () => ({
+  listTableInvitations: vi.fn(async () => []),
+}));
 vi.mock('@mesaaberta/core/server/tables/manage', () => ({ loadManage: vi.fn() }));
 
 const event = {

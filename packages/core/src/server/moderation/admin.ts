@@ -1,3 +1,4 @@
+import { cancelPendingInvitations, lockInvitationTablesForProfile } from '../invitations/service';
 import { and, asc, count, desc, eq, ilike, inArray, isNotNull, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import {
@@ -13,6 +14,7 @@ import {
   crowdfundings,
   events,
   gameTables,
+  playerInvitations,
   partnerLinks,
   partners,
   profiles,
@@ -349,6 +351,13 @@ export async function closeReportedTable(
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
       accepted,
+      ...(await cancelPendingInvitations(
+        t,
+        eq(playerInvitations.tableId, table.id),
+        'moderation',
+        now,
+        actor!.id,
+      )),
       await recordEvent(t, { type: 'TableDisabled', actorId: actor!.id, payload: facts }),
       await recordEvent(t, {
         type: 'TableClosedByModeration',
@@ -392,6 +401,13 @@ export async function closeTableByAdmin(
       .where(eq(gameTables.id, table.id));
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
+      ...(await cancelPendingInvitations(
+        t,
+        eq(playerInvitations.tableId, table.id),
+        'moderation',
+        now,
+        actor!.id,
+      )),
       await recordEvent(t, { type: 'TableDisabled', actorId: actor!.id, payload: facts }),
       await recordEvent(t, {
         type: 'TableClosedByModeration',
@@ -435,12 +451,19 @@ export async function banAccount(
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
     if (target.status === 'suspended') throw new Invalid('profileId', 'banned');
+    await lockInvitationTablesForProfile(t, profileId);
 
     await t
       .update(profiles)
       .set({ status: 'suspended', bannedAt: now, bannedUntil: until, banReason: reason })
       .where(eq(profiles.id, profileId));
-    const eventIds: string[] = [];
+    const eventIds: string[] = await cancelPendingInvitations(
+      t,
+      or(eq(playerInvitations.playerId, profileId), eq(playerInvitations.gmId, profileId))!,
+      'account_suspended',
+      now,
+      actor!.id,
+    );
 
     const open = await t
       .select({

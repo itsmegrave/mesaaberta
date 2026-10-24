@@ -121,3 +121,13 @@ describe('TableCard', () => {
     expect(document.querySelectorAll('img')).toHaveLength(0);
   });
 });
+
+it('distinguishes confirmed players from reserved invitations in the public seat count', async () => {
+  render(TableCard, { table: { ...base, seatsLeft: 0, taken: 2, reserved: 3 } });
+  await expect
+    .element(page.getByText('2 confirmados · 3 reservadas · 0 disponíveis'))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole('img', { name: '2 confirmados · 3 reservadas · 0 disponíveis' }))
+    .toBeVisible();
+});

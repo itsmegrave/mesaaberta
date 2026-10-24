@@ -150,7 +150,7 @@
     return items;
   });
 
-  const taken = $derived(table.capacity - table.seatsLeft);
+  const taken = $derived(table.taken);
   const seats = $derived(
     table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
   );
@@ -393,6 +393,12 @@
             success={m.toast_request_withdrawn()}
             onfail={(message) => (failed = message)}
           />
+        {:else if data.invitation}
+          <a
+            href={localizedHref(`/account/invitations/${data.invitation.id}`, locale)}
+            class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold"
+            >{m.invitation_review()}</a
+          >
         {:else if data.canJoin && table.joinMode === 'approval'}
           <JoinRequestDialog
             onfail={(message) => (failed = message)}

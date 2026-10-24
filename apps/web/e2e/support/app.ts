@@ -141,7 +141,14 @@ export async function createTable(page: Page, table: NewTable) {
     await page.getByLabel(/Como entrar \(link/).fill(table.joinDetails);
   }
   if (table.image) await pickImage(page, table.image);
+  // Observe the actual mutation before asserting its redirect; a cold local Worker may need
+  // more than the short UI assertion budget to establish its first database connection.
+  const submitted = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/tables/new',
+  );
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
+  expect((await submitted).status()).toBeLessThan(400);
 
   await expect(page).toHaveURL(/\/tables\/(?!new$)[^/]+$/);
   return new URL(page.url()).pathname.split('/').at(-1)!;

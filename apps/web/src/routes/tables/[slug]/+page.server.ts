@@ -6,6 +6,7 @@ import { failFrom } from '#lib/server/fail-from.js';
 import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { loadRead } from '#lib/server/reads/load.js';
 
+import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { submitRating } from '@mesaaberta/core/server/ratings/service';
 import { ratingSchema } from '@mesaaberta/core/tables/rating';
 import { joinSchema, playerActionSchema, tableActionSchema } from '#lib/tables/registration.js';
@@ -75,6 +76,12 @@ export const actions: Actions = {
 
   join: async (event) => {
     const { locals, params } = event;
+    const user = await locals.getUser();
+    if (user) {
+      const actor = await locals.getProfile();
+      const invitation = actor && (await pendingInvitationFor(locals, actor, params.slug!));
+      if (invitation) redirect(303, `/account/invitations/${invitation.id}`);
+    }
     // The attempt, before it succeeds or fails: `player_seat_claimed` comes from the outbox.
     const playerId = (await locals.getUser())?.id;
     locals.track('player_seat_claim_initiated', playerId, async (db) => {

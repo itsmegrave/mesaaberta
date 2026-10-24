@@ -2,6 +2,7 @@ import { and, eq, gt, ne, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
+import { reservedSeatsSql } from '../invitations/seats';
 import { weeklyInterval } from './schedule';
 import { catalogOf } from '../catalog';
 import { gmRatings, type GmRating } from '../ratings/service';
@@ -43,9 +44,9 @@ export type TableView = ReturnType<typeof shape> & {
   gmRating: GmRating;
 };
 
-const query = (db: AnyDb, where: SQL | undefined) =>
+const query = (db: AnyDb, where: SQL | undefined, now: Date) =>
   db
-    .select(columns)
+    .select({ ...columns, reserved: reservedSeatsSql(gameTables.id, now) })
     .from(gameTables)
     .innerJoin(systems, eq(gameTables.systemId, systems.id))
     .innerJoin(profiles, eq(gameTables.gmId, profiles.id))
@@ -61,7 +62,7 @@ const shape = (row: Row) => {
   return {
     ...table,
     system: { name: systemName, slug: systemSlug },
-    seatsLeft: seatsLeft(row.capacity, row.taken),
+    seatsLeft: seatsLeft(row.capacity, row.taken + row.reserved),
     // Weeks between sessions for a weekly campaign; null for a one-shot. Information only: the
     // platform keeps one date per table, `startsAt`.
     everyWeeks: row.kind === 'campaign' ? weeklyInterval(row.recurrence) : null,
@@ -88,6 +89,7 @@ export async function listUpcomingTables(
       gt(gameTables.startsAt, now),
       systemSlug ? eq(systems.slug, systemSlug) : undefined,
     ),
+    now,
   );
 
   return withExtras(db, rows.map(shape), now);
@@ -104,6 +106,7 @@ export async function listUpcomingTablesByGm(
   const rows = await query(
     db,
     and(eq(gameTables.gmId, gmId), eq(gameTables.status, 'active'), gt(gameTables.startsAt, now)),
+    now,
   );
   const upcoming = rows.map(shape);
   return {
@@ -148,7 +151,11 @@ export async function findTableBySlug(
   now: Date,
   viewer?: { id: string; admin: boolean } | null,
 ): Promise<TableView | null> {
-  const [row] = await query(db, and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')));
+  const [row] = await query(
+    db,
+    and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')),
+    now,
+  );
   if (!row) return null;
   const table = shape(row);
   if (table.status === 'draft' && !(viewer && (viewer.admin || viewer.id === table.gmId)))
