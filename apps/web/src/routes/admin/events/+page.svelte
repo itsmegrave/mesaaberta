@@ -17,6 +17,7 @@
   const locale = getLocale();
   const zone = $derived(data.viewer.timezone);
   const queue = $derived(data.queue);
+  const backlog = $derived(data.backlog);
 
   const statusLabel = (status: EventStatus) =>
     ({
@@ -50,6 +51,16 @@
 <svelte:head><title>{m.admin_events_title()} | Mesa Aberta</title></svelte:head>
 
 <AdminPage title={m.admin_events_title()} lede={m.admin_events_lede()}>
+  {#if backlog}
+    <p class="mt-6 rounded-lg border border-surface-200-800 bg-panel p-4 text-sm" role="status">
+      <span class="font-semibold">{m.admin_events_backlog()}:</span>
+      {m.admin_events_backlog_count({ count: backlog.count })}
+      {#if backlog.oldest}
+        · {m.admin_events_backlog_oldest({ date: when(backlog.oldest) })}
+      {/if}
+    </p>
+  {/if}
+
   {#if queue.status === 'failed' && queue.counts.failed > 0}
     <div class="mt-6"><EventRetryAll max={25} /></div>
   {/if}

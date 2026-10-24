@@ -14,9 +14,12 @@ export { createMemoryTransport } from './memory-transport';
 export {
   MAX_DELAY_SECONDS,
   createQueueConsumer,
+  queueBacklog,
   queueTransport,
   type ConsumerSummary,
+  type QueueBacklog,
   type QueueBatch,
   type QueueBinding,
   type QueueMessage,
+  type QueueMetrics,
 } from './cloudflare-queues';
