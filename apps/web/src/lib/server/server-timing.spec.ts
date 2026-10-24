@@ -30,4 +30,13 @@ describe('handleServerTiming', () => {
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('server-timing')).toMatch(/^db;dur=3, total;dur=\d+\.\d$/);
   });
+
+  it('adds the database time, in milliseconds, when the request used the database', async () => {
+    const response = await createHandleServerTiming('bun')({
+      event: { locals: { dbSeconds: 0.0123 } } as unknown as RequestEvent,
+      resolve: async () => new Response('ok'),
+    });
+
+    expect(response.headers.get('server-timing')).toMatch(/^db;dur=12\.3, total;dur=\d+\.\d$/);
+  });
 });

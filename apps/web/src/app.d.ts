@@ -28,6 +28,8 @@ declare global {
       log: import('@mesaaberta/core/server/logger').Logger;
       /** The database, or null while none is configured (see `handleDatabase`). */
       db: import('@mesaaberta/core/server/db/client').Db | null;
+      /** Seconds this request has spent in database queries (summed; overlapping queries add up). For `Server-Timing`. */
+      dbSeconds?: number;
       /** Runs `task` after the response, with the request's database, before the connection closes. */
       afterResponse: (
         task: (db: import('@mesaaberta/core/server/db/client').Db) => Promise<unknown>,
