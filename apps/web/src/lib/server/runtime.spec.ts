@@ -7,6 +7,7 @@ import { host as bunHost } from './host/bun';
 const run = async (bindings: Partial<HostBindings>) => {
   const event = { locals: {} } as unknown as RequestEvent;
   await createHandleRuntime({
+    name: 'bun',
     env: () => undefined,
     telemetry:
       () =>
