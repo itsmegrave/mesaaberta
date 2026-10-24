@@ -3,15 +3,14 @@ import type { AnyDb } from '../db/client';
 import { gameTables, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
-import { catalogOf } from '../catalog';
+import { catalogOf, type CatalogItem } from '../catalog';
 import { isLocalDateTime, tableInputSchema, type TableInput } from '../../tables/schema';
 import { instantToLocal, localToInstant } from './schedule';
-import { guardNewCopy, lockTableSchedule } from './schedule-guard';
+import { assertTableSchedule, lockTableFamily, lockTableSchedule } from './schedule-guard';
 import { createTable } from './write';
 
-async function sourceFor(db: AnyDb, actor: Actor | null, slug: string, lock = false) {
-  const query = db.select().from(gameTables).where(eq(gameTables.slug, slug));
-  const [source] = await (lock ? query.for('update') : query);
+async function sourceFor(db: AnyDb, actor: Actor | null, slug: string) {
+  const [source] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
   if (!source) throw new NotFound('table');
   authorize(actor, 'table:duplicate', { gmId: source.gmId, moderatedAt: source.moderatedAt });
   return source;
@@ -27,10 +26,11 @@ export async function loadTableForDuplication(
   sourceSlug: string;
   input: Omit<TableInput, 'startsAtLocal'> & { startsAtLocal: '' };
   imagePath: string | null;
+  heldCatalog: { systems: CatalogItem[]; platforms: CatalogItem[]; tags: CatalogItem[] };
 }> {
   const source = await sourceFor(db, actor, sourceSlug);
   const [system] = await db
-    .select({ slug: systems.slug })
+    .select({ slug: systems.slug, name: systems.name, status: systems.status })
     .from(systems)
     .where(eq(systems.id, source.systemId));
   const catalog = (await catalogOf(db, [source.id], { withPending: true })).get(source.id)!;
@@ -38,6 +38,14 @@ export async function loadTableForDuplication(
     sourceId: source.id,
     sourceSlug: source.slug,
     imagePath: source.imagePath,
+    heldCatalog: {
+      systems:
+        system.status === 'pending'
+          ? [{ slug: system.slug, name: system.name, pending: true }]
+          : [],
+      platforms: catalog.platforms,
+      tags: catalog.tags,
+    },
     input: {
       systemSlug: system.slug,
       title: source.title,
@@ -125,8 +133,10 @@ export async function duplicateTable(
         };
       }
     }
-    const source = await sourceFor(tx, actor, sourceSlug, true);
-    await guardNewCopy(tx, source.id, {
+    const initial = await sourceFor(tx, actor, sourceSlug);
+    const { table: source, linked } = await lockTableFamily(tx, initial.id, { newCopy: true });
+    authorize(actor, 'table:duplicate', { gmId: source.gmId, moderatedAt: source.moderatedAt });
+    assertTableSchedule(linked, {
       startsAt: localToInstant(input.startsAtLocal, input.timezone),
       durationMinutes: input.durationMinutes,
     });

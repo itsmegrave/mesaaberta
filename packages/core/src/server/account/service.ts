@@ -13,6 +13,7 @@ import {
   registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
+import { lockTableRows } from '../tables/schedule-guard';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 /**
@@ -151,7 +152,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
 export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventIds: string[] }> {
   const eventIds = await db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
-    const active = await t
+    const candidates = await t
       .select({
         id: gameTables.id,
         slug: gameTables.slug,
@@ -161,6 +162,12 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
       .from(gameTables)
       .where(and(eq(gameTables.gmId, userId), eq(gameTables.status, 'active')));
 
+    const active = (
+      await lockTableRows(
+        t,
+        candidates.map(({ id }) => id),
+      )
+    ).filter(({ status }) => status === 'active');
     const ids: string[] = [];
     for (const table of active) {
       await t
