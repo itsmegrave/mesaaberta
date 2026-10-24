@@ -208,6 +208,11 @@ jobs:
           echo "$health"
           echo "$health" | grep -q '"database":"ok"'
           curl -fsS http://localhost:8025/api/v1/info -o /dev/null
+          # Metrics are for the Docker network: the proxy refuses them, each service answers inside it.
+          test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/metrics)" = 404
+          for target in web:3000 api:8788 worker:9464; do
+            docker compose exec -T web bun -e "const r = await fetch('http://$target/metrics'); const t = await r.text(); if (!r.ok || !t.includes('# TYPE mesaaberta_')) process.exit(1)"
+          done
       - name: Compose logs
         if: failure()
         run: docker compose logs --no-color --tail 200
