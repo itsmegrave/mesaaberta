@@ -6,6 +6,7 @@ import type { HostBindings } from './types';
  * log), there is no shared cache, and there is no Workers context to set error reporting up around.
  */
 export const host: HostBindings = {
+  name: 'bun',
   env: () => process.env as unknown as App.Locals['env'],
   waitUntil: (promise) => void promise.catch(() => undefined),
   cache: undefined,

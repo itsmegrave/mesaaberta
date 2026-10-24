@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { createHttpMetrics } from '@mesaaberta/core/server/metrics';
 import { createApi } from '../app';
 import { internalToken } from '../internal-token';
 
@@ -12,6 +13,22 @@ if (!token) {
 }
 
 const app = new Hono();
+const metrics = createHttpMetrics('api');
+// Counts every request by its route template, the refused ones included.
+app.use('*', async (c, next) => {
+  const started = performance.now();
+  await next();
+  metrics.observe({
+    route: c.req.routePath === '/*' ? '/unmatched' : c.req.routePath,
+    method: c.req.method,
+    status: c.res.status,
+    seconds: (performance.now() - started) / 1000,
+  });
+});
+// Open like the probe: the api listens on the private network only, and the numbers name no one.
+app.get('/metrics', (c) =>
+  c.text(metrics.render(), 200, { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' }),
+);
 // The probe is open (a container health check has no secret); everything else needs the token.
 app.get('/healthz', (c) => c.json({ status: 'ok', service: 'api' }));
 app.use('/v1/*', internalToken(token));

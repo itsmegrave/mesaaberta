@@ -44,6 +44,7 @@ export const load: PageServerLoad = async (event) => {
           sourceSlug: source.sourceSlug,
           title: input!.title,
           requestKey: crypto.randomUUID(),
+          heldCatalog: source.heldCatalog,
           imageUrl: imageUrl(supabaseUrlOf(locals.env), source.imagePath),
         }
       : null,
@@ -150,7 +151,8 @@ export const actions: Actions = {
           requestKey = key.data;
         }
         const actor = await locals.getProfile();
-        if (actor)
+        // The API checks limits only for a new copy, after its idempotency lookup.
+        if (actor && !sourceSlug)
           await checkRateLimit(db, actor.id, draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT);
       },
       // A draft goes to where its GM manages it, which says it is not public yet.

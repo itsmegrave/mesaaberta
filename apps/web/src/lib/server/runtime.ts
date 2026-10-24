@@ -4,6 +4,7 @@ import { host as hostBindings } from '#host';
 import { sentryOptionsFor } from '#lib/observability/privacy.js';
 import type { PayloadCache } from '@mesaaberta/core/server/flags/payload';
 import type { HostBindings } from './host/types';
+import { createHandleServerTiming } from './server-timing';
 
 /** What the host offers beyond variables. Every member is optional: plain `vite dev` has none. */
 export type Host = {
@@ -28,6 +29,12 @@ export const createHandleRuntime =
   };
 
 export const handleRuntime = createHandleRuntime(hostBindings);
+
+/** Which host this build runs on. */
+export const backend = hostBindings.name;
+
+/** `x-backend` and `Server-Timing` for this host, around everything else. */
+export const handleServerTiming = createHandleServerTiming(backend);
 
 /**
  * Starts error reporting for the request the way this host needs it. On Workers the SDK must be

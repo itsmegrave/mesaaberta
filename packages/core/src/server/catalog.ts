@@ -99,7 +99,12 @@ async function suggestionId(
 export async function setTableCatalog(
   db: AnyDb,
   tableId: string,
-  { gmId, platformSlugs, tagSlugs }: { gmId: string; platformSlugs: string[]; tagSlugs: string[] },
+  {
+    gmId,
+    platformSlugs,
+    tagSlugs,
+    inheritedFromTableId,
+  }: { gmId: string; platformSlugs: string[]; tagSlugs: string[]; inheritedFromTableId?: string },
 ) {
   const resolve = async (
     table: CatalogTable,
@@ -113,7 +118,9 @@ export async function setTableCatalog(
       const linkedToTable = db
         .select({ id: 'platformId' in link ? link.platformId : link.tagId })
         .from(link)
-        .where(eq(link.tableId, tableId));
+        .where(
+          inArray(link.tableId, inheritedFromTableId ? [tableId, inheritedFromTableId] : [tableId]),
+        );
       const rows = await db
         .select({ id: table.id, slug: table.slug })
         .from(table)

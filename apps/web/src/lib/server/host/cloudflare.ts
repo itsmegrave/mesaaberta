@@ -21,6 +21,7 @@ const workersCache = (): PayloadCache => {
 
 /** Cloudflare Workers (SvelteKit 3's adapter reads the bindings from `cloudflare:workers`). */
 export const host: HostBindings = {
+  name: 'cloudflare',
   env: () => env as App.Locals['env'],
   waitUntil: (promise) => waitUntil(promise),
   cache: workersCache,

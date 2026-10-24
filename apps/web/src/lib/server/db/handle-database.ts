@@ -30,7 +30,10 @@ export const handleDatabase: Handle = async ({ event, resolve }) => {
     get: () => {
       if (!connectionString) return null;
       if (!connection) {
-        connection = createDb(connectionString);
+        // Each query adds its time to the request, for `Server-Timing: db`.
+        connection = createDb(connectionString, {
+          onQuery: (seconds) => (event.locals.dbSeconds = (event.locals.dbSeconds ?? 0) + seconds),
+        });
         // The flag is read when an event is dispatched, not here: `handleFlags` runs later.
         registerFencing(
           connection.db,

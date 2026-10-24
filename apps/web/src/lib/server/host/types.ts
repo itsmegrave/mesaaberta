@@ -8,6 +8,8 @@ import type { PayloadCache } from '@mesaaberta/core/server/flags/payload';
  * `host.config.ts`); `runtime.ts` is the only module that uses it.
  */
 export type HostBindings = {
+  /** Which backend answers: `x-backend` on every response, so a benchmark can tell them apart. */
+  name: 'cloudflare' | 'bun';
   /** The variables and bindings, or undefined when the host has none. */
   env: () => App.Locals['env'];
   /** Keeps the request alive until the promise settles, without holding up the response. */
