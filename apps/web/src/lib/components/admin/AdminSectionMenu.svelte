@@ -5,12 +5,12 @@
   import { page } from '$app/state';
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { adminGroups, sectionOf } from '#lib/admin/sections.js';
   import { m } from '#lib/paraglide/messages.js';
 
-  const counts = $derived(
-    page.data.adminCounts ?? { reports: 0, queue: 0, connections: 0, events: 0, partners: 0 },
-  );
+  const live = adminCounts(() => page.data.adminCounts);
+  const counts = $derived(live.current);
   const groups = $derived(adminGroups(counts));
   const current = $derived(sectionOf(groups, page.route.id));
   const waiting = $derived(counts.reports + counts.queue + counts.connections + counts.partners);

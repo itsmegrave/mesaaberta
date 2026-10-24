@@ -6,6 +6,7 @@
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { dayLabel, shortDate, timeLabel } from '#lib/admin/format.js';
   import type { IconName } from '#lib/icons/names.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -15,6 +16,7 @@
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
   const data = $derived({ ...serverData, ...remote.data });
+  const counts = adminCounts(() => serverData.adminCounts);
   const locale = getLocale();
   const zone = $derived(serverData.viewer.timezone);
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
@@ -101,7 +103,7 @@
   const attention = $derived.by(() => {
     const { reports, posts, awaiting, suggestions } = data.attention;
     const found: Attention[] = [];
-    const waitingReports = serverData.adminCounts?.reports ?? 0;
+    const waitingReports = counts.current.reports;
     if (reports.oldestAt)
       found.push({
         id: 'reports',
