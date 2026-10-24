@@ -72,6 +72,11 @@ export const flagDefaults = {
   // registry; refusals (rate limit, direct messages off) come back as the codes the form shows and a
   // call that cannot be made falls back to the web path. Needs the API binding. Admins first.
   api_inbox: false,
+  // Off: the new-table and edit forms read the catalog of systems, platforms and tags in the web
+  // Worker. On: the api Worker answers it over the Service Binding from the same reader, as the
+  // signed-in person (their own pending suggestions included); a call that cannot be made falls
+  // back to the web path. Needs the API binding. Admins first.
+  api_reads_catalog: false,
   // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
   // the web Worker still validates the form and stores the picture, then the api Worker saves it
   // over the Service Binding from the same services; refusals come back as the codes the form
