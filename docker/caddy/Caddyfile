@@ -2,5 +2,7 @@
 # its own local CA); set it to your domain and Caddy gets a public certificate. Only the web app is
 # proxied: the api stays on the private network.
 {$SITE_ADDRESS:localhost} {
+	# Metrics are for a scraper on the Docker network, never for the internet.
+	respond /metrics 404
 	reverse_proxy web:3000
 }
