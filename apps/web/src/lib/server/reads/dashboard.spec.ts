@@ -17,6 +17,7 @@ const event = (search = '') =>
   ({
     locals: {
       db: {},
+      flags: { isEnabled: async () => false },
       getUser: async () => ({ id: 'gm' }),
       getProfile: async () => ({ id: 'gm', username: 'gm' }),
     },

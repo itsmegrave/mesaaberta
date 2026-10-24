@@ -11,6 +11,7 @@ import {
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
+import { readDashboard } from '@mesaaberta/core/server/reads/dashboard';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
@@ -248,5 +249,34 @@ describe('GET /v1/reads/detail/:slug', () => {
 
   it('needs a known actor', async () => {
     expect((await getDetail('mesa-detalhe', null)).status).toBe(401);
+  });
+});
+
+describe('GET /v1/reads/dashboard', () => {
+  const getDashboard = (query = '', actor: string | null = ana) =>
+    app.request(`/dashboard${query}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+
+  it('answers exactly what the in-process reader builds, for what each person runs and plays', async () => {
+    // Needs the table the detail specs seed: Ana runs it, Bia has a confirmed seat.
+    for (const who of [ana, bia]) {
+      const answer = await getDashboard('', who);
+      expect(answer.status).toBe(200);
+      expect(await answer.json()).toEqual(
+        JSON.parse(JSON.stringify(await readDashboard(test.db, who, null, new Date()))),
+      );
+    }
+    const mine = (await (await getDashboard('', ana)).json()) as { totals: { running: number } };
+    const hers = (await (await getDashboard('', bia)).json()) as { totals: { playing: number } };
+    expect(mine.totals.running).toBeGreaterThan(0);
+    expect(hers.totals.playing).toBeGreaterThan(0);
+  });
+
+  it('reads junk as page 1 and answers a 404 past the last page', async () => {
+    expect(((await (await getDashboard('?page=abc')).json()) as { page: number }).page).toBe(1);
+    expect((await getDashboard('?page=99')).status).toBe(404);
+  });
+
+  it('needs a known actor', async () => {
+    expect((await getDashboard('', null)).status).toBe(401);
   });
 });
