@@ -90,23 +90,44 @@ export async function signUpWithEmail(
   return 'signed_in';
 }
 
-export async function signInWithEmail(
+/** The JWT pair Supabase issued; the caller sets it as the person's session. Never log it. */
+export type SessionTokens = { accessToken: string; refreshToken: string };
+
+/**
+ * Signs in and, when the person keeps the session, hands back its tokens so another Worker (the
+ * api) can pass the session to the one that sets the cookie. `signInWithEmail` is this without them.
+ */
+export async function signInForSession(
   deps: Deps,
   { email, password }: { email: string; password: string },
-): Promise<SignInResult> {
+): Promise<{ result: SignInResult; session: SessionTokens | null }> {
   const { data, error } = await deps.supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     // A wrong password and an unknown address get the same code, so the form cannot tell them apart.
-    if (error.code === 'invalid_credentials') return 'invalid';
-    if (error.code === 'email_not_confirmed') return 'unconfirmed';
-    if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
+    if (error.code === 'invalid_credentials') return { result: 'invalid', session: null };
+    if (error.code === 'email_not_confirmed') return { result: 'unconfirmed', session: null };
+    if (error.code && RATE_LIMITED.has(error.code))
+      return { result: 'rate_limited', session: null };
     deps.log.warn('email auth: sign-in refused', { code: error.code, status: error.status });
-    return 'failed';
+    return { result: 'failed', session: null };
   }
 
   const kept = await keepProfile(deps, data.user);
-  if (kept !== 'kept') return kept;
+  if (kept !== 'kept') return { result: kept, session: null };
   await signedIn(deps, data.user);
-  return 'ok';
+  return {
+    result: 'ok',
+    session: {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    },
+  };
+}
+
+export async function signInWithEmail(
+  deps: Deps,
+  credentials: { email: string; password: string },
+): Promise<SignInResult> {
+  return (await signInForSession(deps, credentials)).result;
 }

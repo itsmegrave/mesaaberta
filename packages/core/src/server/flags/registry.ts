@@ -145,6 +145,13 @@ export const flagDefaults = {
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:
   // the flag is all or nothing. Needs the API binding and, on the api Worker, the Supabase settings.
   api_auth: false,
+  // Off: signing in with e-mail and password (/login) runs in the web Worker. On: the api Worker
+  // does it over the Service Binding (limit, Supabase, profile) and answers the JWT pair Supabase
+  // issued, which the web Worker sets as the cookie session; refusals come back as the codes the form
+  // shows and a call that cannot be made falls back to the web path. Visitors are targeted by a hash
+  // of their network, so a rollout is a share of networks. Needs the API binding and, on the api
+  // Worker, the Supabase settings.
+  api_auth_sign_in: false,
   // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
   // the api Worker does it over the Service Binding and the web Worker dispatches the event it
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
