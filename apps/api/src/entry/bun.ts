@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { setAppName } from '@mesaaberta/core/server/logger';
 import { createHttpMetrics } from '@mesaaberta/core/server/metrics';
 import { createApi } from '../app';
 import { internalToken } from '../internal-token';
@@ -6,6 +7,8 @@ import { internalToken } from '../internal-token';
 // The api on Bun, for a self-hosted deployment (Docker). Same Hono app as the Worker. It listens on
 // a private network behind the web app, never on the internet, and refuses a request without the
 // shared secret (`API_INTERNAL_TOKEN`), because over HTTP the actor header is only a claim.
+setAppName('api');
+
 const token = process.env.API_INTERNAL_TOKEN ?? '';
 if (!token) {
   console.error('API_INTERNAL_TOKEN is required: the api only answers requests that carry it.');

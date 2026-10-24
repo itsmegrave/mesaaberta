@@ -11,7 +11,7 @@ import { handleAuth } from '#lib/server/auth/handle-auth.js';
 import { handleSuspended } from '#lib/server/auth/suspended.js';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { handleDatabase } from '#lib/server/db/handle-database.js';
-import { logger, setTelemetrySink } from '@mesaaberta/core/server/logger';
+import { logger, setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '#lib/server/sentry-sink.js';
 import { handleRequestLog, handleUserTag } from '#lib/server/request-log.js';
 import { handleHostTelemetry, handleRuntime, handleServerTiming } from '#lib/server/runtime.js';
@@ -28,6 +28,7 @@ import { paraglideMiddleware } from '#lib/paraglide/server.js';
 // The logger knows no vendor; this deployment mirrors it to Sentry. Set at module load, so every
 // request in the isolate reports as before.
 setTelemetrySink(sentrySink);
+setAppName('web');
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {

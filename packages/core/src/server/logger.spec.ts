@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createLogger, setTelemetrySink } from './logger';
+import { createLogger, setAppName, setTelemetrySink } from './logger';
 
 const capture = () => {
   const lines: Record<string, unknown>[] = [];
@@ -33,6 +33,20 @@ describe('logger', () => {
         msg: 'request.completed',
       },
     ]);
+  });
+  it('stamps the app name on every line once it is set', () => {
+    const { lines, log } = capture();
+    log.info('before');
+    setAppName('worker');
+    try {
+      log.info('after', { app: 'web' });
+      log.child({ requestId: '0123456789abcdef-GRU' }).warn('child');
+    } finally {
+      setAppName(null);
+    }
+    expect(lines[0]).not.toHaveProperty('app');
+    expect(lines[1]).toMatchObject({ app: 'worker' });
+    expect(lines[2]).toMatchObject({ app: 'worker', requestId: '0123456789abcdef-GRU' });
   });
   it('stamps children with the request id without contaminating the parent', () => {
     const { lines, log } = capture();

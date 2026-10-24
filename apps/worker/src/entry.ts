@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
-import { privateSentryOptions } from '@mesaaberta/core/observability/sentry-options';
-import { setTelemetrySink } from '@mesaaberta/core/server/logger';
+import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createWorker, type WorkerEnv } from './index';
 import { sentrySink } from './sentry-sink';
 
@@ -8,10 +8,11 @@ import { sentrySink } from './sentry-sink';
 // itself stays testable without the SDK. Same privacy policy as the web app; without SENTRY_DSN
 // the SDK stays off and the logger still writes to the console.
 setTelemetrySink(sentrySink);
+setAppName('worker');
 
 export default Sentry.withSentry(
   (env: WorkerEnv) => ({
-    ...privateSentryOptions,
+    ...sentryOptionsForApp('worker'),
     dsn: env.SENTRY_DSN,
     environment: 'production',
     release: env.CF_VERSION_METADATA?.id,
