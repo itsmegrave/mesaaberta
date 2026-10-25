@@ -2,46 +2,24 @@
   import BadgeVisibility from '#lib/components/BadgeVisibility.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { BADGE_PRESENTATION, presentationOf } from '#lib/badges/presentation.js';
+  import { withLook, type HeldBadge } from '#lib/badges/shown.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
-  type Held = { badgeId: string; awardedAt: Date | string; hidden: boolean; backfilled: boolean };
   type Progress = { badgeId: string; current: number; goal: number };
-  let {
-    badges,
-    progress = [],
-    isOwner = false,
-  }: { badges: Held[]; progress?: Progress[]; isOwner?: boolean } = $props();
+  // The owner's own view of their badges: every one earned with an eye to hide it from the profile,
+  // and what is left to earn. Visitors see only the icons under the handle (`BadgeIcons`).
+  let { badges, progress = [] }: { badges: HeldBadge[]; progress?: Progress[] } = $props();
 
   const since = new Intl.DateTimeFormat(getLocale(), {
     month: 'short',
     year: 'numeric',
     timeZone: 'UTC',
   });
-  // What a visitor sees: the ones the owner hid are theirs alone, and a badge without artwork waits for it.
-  const earned = $derived(
-    badges.flatMap((badge) => {
-      const look = presentationOf(badge.badgeId);
-      return look && (isOwner || !badge.hidden) ? [{ ...badge, look }] : [];
-    }),
-  );
-  // A visitor sees the highest rung held of a ladder; the owner sees them all.
-  const visible = $derived(
-    isOwner
-      ? earned
-      : earned.filter(
-          (badge) =>
-            !badge.look.ladder ||
-            !earned.some(
-              (other) =>
-                other.look.ladder === badge.look.ladder && other.look.tier > badge.look.tier,
-            ),
-        ),
-  );
+  const visible = $derived(withLook(badges));
   // The owner's "A conquistar": the next rung of each ladder and the single badges, then the ones
   // only the team gives (nothing to measure, so 0 of 1).
   const locked = $derived.by(() => {
-    if (!isOwner) return [];
     const have = new Set(badges.map((badge) => badge.badgeId));
     const measured = progress.flatMap((entry) => {
       const look = presentationOf(entry.badgeId);
@@ -66,7 +44,7 @@
         {visible.length}
       </span>
     </div>
-    {#if isOwner}<p class="mt-2 max-w-prose text-sm text-muted">{m.badges_intro()}</p>{/if}
+    <p class="mt-2 max-w-prose text-sm text-muted">{m.badges_intro()}</p>
 
     <ul class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {#each visible as badge (badge.badgeId)}
@@ -101,7 +79,7 @@
               {/if}
             </p>
           </div>
-          {#if isOwner}<BadgeVisibility badgeId={badge.badgeId} hidden={badge.hidden} />{/if}
+          <BadgeVisibility badgeId={badge.badgeId} hidden={badge.hidden} />
         </li>
       {/each}
     </ul>

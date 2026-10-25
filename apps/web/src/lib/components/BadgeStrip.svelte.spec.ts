@@ -12,14 +12,14 @@ const held = (badgeId: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe('BadgeStrip', () => {
-  it('shows each badge with its name, what it says and when it was earned', async () => {
+describe('BadgeStrip (the owner’s view)', () => {
+  it('shows each earned badge with its name, what it says and since when', async () => {
     render(BadgeStrip, { badges: [held('first-table')] });
 
     await expect.element(page.getByRole('heading', { name: 'Conquistas' })).toBeVisible();
     await expect.element(page.getByText('Primeira mesa')).toBeVisible();
     await expect.element(page.getByText('Jogou a primeira sessão.')).toBeVisible();
-    await expect.element(page.getByText(/^Desde .*2026/)).toBeVisible();
+    await expect.element(page.getByText(/^Conquistada em .*2026/)).toBeVisible();
   });
 
   it('says a backfilled badge came before the release instead of giving a date', async () => {
@@ -28,32 +28,9 @@ describe('BadgeStrip', () => {
     await expect.element(page.getByText('Antes da estreia das conquistas')).toBeVisible();
   });
 
-  it('shows a visitor only the highest rung held of a ladder', async () => {
-    render(BadgeStrip, { badges: [held('regular-player-1'), held('regular-player-2')] });
-
-    await expect.element(page.getByText('Presença constante II')).toBeVisible();
-    expect(page.getByText('Presença constante I', { exact: true }).elements()).toHaveLength(0);
-  });
-
-  const hiddenAndUnknown = [held('first-table', { hidden: true }), held('not-a-badge')];
-
-  it('shows a visitor neither what the owner hid nor a badge without artwork', async () => {
-    render(BadgeStrip, { badges: hiddenAndUnknown });
-
-    expect(page.getByRole('heading', { name: 'Conquistas' }).elements()).toHaveLength(0);
-    expect(page.getByText('Primeira mesa').elements()).toHaveLength(0);
-  });
-
-  it('shows the owner what they hid', async () => {
-    render(BadgeStrip, { badges: hiddenAndUnknown, isOwner: true });
-
-    await expect.element(page.getByText('Primeira mesa')).toBeVisible();
-  });
-
-  it('gives the owner an eye on each earned badge, and the way back for a hidden one', async () => {
+  it('gives an eye on each earned badge, and the way back for a hidden one', async () => {
     render(BadgeStrip, {
       badges: [held('first-table'), held('partner', { hidden: true })],
-      isOwner: true,
     });
 
     await expect
@@ -65,11 +42,10 @@ describe('BadgeStrip', () => {
     await expect.element(page.getByText('Escondida do seu perfil')).toBeVisible();
   });
 
-  it('shows the owner what is left to earn, with progress, and the badges only the team gives', async () => {
+  it('shows what is left to earn, with progress, and the badges only the team gives', async () => {
     render(BadgeStrip, {
       badges: [held('first-table')],
       progress: [{ badgeId: 'regular-player-2', current: 14, goal: 25 }],
-      isOwner: true,
     });
 
     await expect.element(page.getByRole('heading', { name: 'A conquistar' })).toBeVisible();
@@ -82,13 +58,10 @@ describe('BadgeStrip', () => {
       .toHaveAttribute('value', '14');
   });
 
-  it('shows a visitor no eye and nothing left to earn', async () => {
-    render(BadgeStrip, {
-      badges: [held('first-table')],
-      progress: [{ badgeId: 'regular-player-2', current: 14, goal: 25 }],
-    });
+  it('skips a badge without artwork', async () => {
+    render(BadgeStrip, { badges: [held('first-table'), held('not-a-badge')] });
 
-    expect(page.getByRole('button').elements()).toHaveLength(0);
-    expect(page.getByText('A conquistar').elements()).toHaveLength(0);
+    await expect.element(page.getByText('Primeira mesa')).toBeVisible();
+    expect(page.getByText('not-a-badge').elements()).toHaveLength(0);
   });
 });

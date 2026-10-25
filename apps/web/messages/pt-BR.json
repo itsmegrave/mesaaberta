@@ -906,7 +906,7 @@
   "badges_visibility_failed": "Não foi possível mudar a visibilidade. Tente de novo.",
   "badges_visibility_saved": "Pronto.",
   "badges_title": "Conquistas",
-  "badges_earned_on": "Desde {date}",
+  "badges_earned_on": "Conquistada em {date}",
   "badges_before_release": "Antes da estreia das conquistas",
   "notification_badge_earned_named": "Você ganhou a conquista {badge}.",
   "notification_badge_earned": "Uma conquista nova chegou ao seu perfil.",
