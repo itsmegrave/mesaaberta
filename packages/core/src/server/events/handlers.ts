@@ -53,11 +53,12 @@ export function handlersFor(
   const bell = [...bellHandlers, ...socialFor(env).handlers];
   const banMail = banMailHandler(env);
   const playerInvitations = playerInvitationMailHandler(env);
+  // The bell first: a slow or failing mail provider must not hold up the in-app notice.
   return [
+    ...bell,
     ...(handler ? [handler] : []),
     ...(banMail ? [banMail] : []),
     ...(playerInvitations ? [playerInvitations] : []),
-    ...bell,
     ...extensionHandlers(),
     ...analyticsHandlers(env),
   ];

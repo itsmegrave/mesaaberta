@@ -89,6 +89,8 @@ export type JobMetrics = {
   observe: (run: { job: string; ok: boolean; seconds: number; at: Date }) => void;
   /** The outbox as the worker last read it; rendered as gauges until the next reading. */
   setOutbox: (depth: { pending: number; failed: number; oldestPendingSeconds: number }) => void;
+  /** Records one run of an event handler. Handler names are a fixed set, so the labels stay bounded. */
+  observeHandler: (run: { handler: string; ok: boolean; seconds: number }) => void;
   render: () => string;
 };
 
@@ -96,8 +98,16 @@ export type JobMetrics = {
 export function createJobMetrics(service: string): JobMetrics {
   const runs = new Map<string, { ok: number; failed: number; sum: number; last: number }>();
   let outbox: { pending: number; failed: number; oldestPendingSeconds: number } | undefined;
+  const handlers = new Map<string, { ok: number; failed: number; sum: number }>();
 
   return {
+    observeHandler({ handler, ok, seconds }) {
+      const entry = handlers.get(handler) ?? { ok: 0, failed: 0, sum: 0 };
+      entry[ok ? 'ok' : 'failed']++;
+      entry.sum += seconds;
+      handlers.set(handler, entry);
+    },
+
     setOutbox(depth) {
       outbox = depth;
     },
@@ -134,6 +144,24 @@ export function createJobMetrics(service: string): JobMetrics {
       for (const [job, e] of runs)
         lines.push(
           `mesaaberta_job_last_run_timestamp_seconds{${labels({ service, job })}} ${e.last}`,
+        );
+      lines.push(
+        '# HELP mesaaberta_event_handler_runs_total Event handler runs, by handler and outcome.',
+        '# TYPE mesaaberta_event_handler_runs_total counter',
+      );
+      for (const [handler, e] of handlers) {
+        lines.push(
+          `mesaaberta_event_handler_runs_total{${labels({ service, handler, outcome: 'ok' })}} ${e.ok}`,
+          `mesaaberta_event_handler_runs_total{${labels({ service, handler, outcome: 'failed' })}} ${e.failed}`,
+        );
+      }
+      lines.push(
+        '# HELP mesaaberta_event_handler_seconds_sum Seconds spent in an event handler, in total.',
+        '# TYPE mesaaberta_event_handler_seconds_sum counter',
+      );
+      for (const [handler, e] of handlers)
+        lines.push(
+          `mesaaberta_event_handler_seconds_sum{${labels({ service, handler })}} ${e.sum}`,
         );
       if (outbox) {
         lines.push(

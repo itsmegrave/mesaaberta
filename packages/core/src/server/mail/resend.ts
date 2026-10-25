@@ -4,6 +4,9 @@ import { templateVariables, welcomeHtml, welcomeSection } from './templates';
 export type ResendEnv = { RESEND_API_KEY: string; RESEND_FROM: string };
 type Fetch = typeof fetch;
 
+/** A stuck request fails the handler, which retries with backoff (the Idempotency-Key keeps it single). */
+export const RESEND_TIMEOUT_MS = 10_000;
+
 export const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -44,6 +47,7 @@ export function resendMailer(env: ResendEnv, request: Fetch = fetch): Mailer {
           'content-type': 'application/json',
           'Idempotency-Key': mail.idempotencyKey,
         },
+        signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
         body: JSON.stringify({
           from: env.RESEND_FROM,
           to: [mail.to],

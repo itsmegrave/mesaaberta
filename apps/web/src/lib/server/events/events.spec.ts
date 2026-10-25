@@ -13,6 +13,7 @@ import {
   sweepEvents,
 } from '@mesaaberta/core/server/events/dispatcher';
 import { createLogger } from '@mesaaberta/core/server/logger';
+import { setHandlerObserver, type HandlerRun } from '@mesaaberta/core/server/events/handler-runs';
 import type { Handler, StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -254,6 +255,28 @@ describe('dispatchEvent', () => {
       expect(good.calls).toHaveLength(1); // not run again: it had succeeded
       expect(flaky.calls).toHaveLength(2);
       expect((await row(id)).processedAt).toEqual(later(backoffSeconds(1)));
+    });
+
+    it('reports each handler run and its outcome to the observer, for the worker metrics', async () => {
+      const id = await record();
+      const runs: HandlerRun[] = [];
+      setHandlerObserver((run) => runs.push(run));
+      try {
+        await dispatchEvent(
+          test.db,
+          [handler('good'), handler('bad', async () => Promise.reject(new Error('no')))],
+          id,
+          t0,
+        );
+      } finally {
+        setHandlerObserver(undefined);
+      }
+
+      expect(runs.map(({ handler, ok }) => ({ handler, ok }))).toEqual([
+        { handler: 'good', ok: true },
+        { handler: 'bad', ok: false },
+      ]);
+      expect(runs.every((run) => run.seconds >= 0)).toBe(true);
     });
 
     it('gives up after the attempt cap and leaves the event for a person to look at', async () => {
