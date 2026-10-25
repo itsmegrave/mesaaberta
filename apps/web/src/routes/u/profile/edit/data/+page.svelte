@@ -3,7 +3,7 @@
   // account keeps, and closing the account (typing the @usuário to confirm).
   import Form from '#lib/components/Form.svelte';
   import SettingsSection from '#lib/components/SettingsSection.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import Button from '#lib/components/Button.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
@@ -110,14 +110,14 @@
         message={closing.errors.confirm ? m.account_delete_error() : undefined}
       />
       <div>
-        <SubmitButton
-          submitting={closing.pending}
-          delayed={closing.delayed}
-          timeout={closing.timeout}
-          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
+        <Button
+          type="submit"
+          size="custom"
+          controller={closing}
+          class="btn h-12 gap-2 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
         >
           {m.account_delete_button()}
-        </SubmitButton>
+        </Button>
       </div>
     </Form>
   </div>

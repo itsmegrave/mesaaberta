@@ -7,7 +7,7 @@
   import FormBanner from '#lib/components/FormBanner.svelte';
   import Form from '#lib/components/Form.svelte';
   import AuthField from '#lib/components/AuthField.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import Button from '#lib/components/Button.svelte';
   import PasswordField from '#lib/components/PasswordField.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
@@ -77,14 +77,14 @@
 
     {#if !sent}
       <Form action="?/passwordCode" onsubmit={asking.submit} class="mt-5">
-        <SubmitButton
-          submitting={asking.pending}
-          delayed={asking.delayed}
-          timeout={asking.timeout}
-          class="btn h-12 rounded-lg border-2 border-primary-500 px-5 font-semibold"
+        <Button
+          type="submit"
+          size="custom"
+          controller={asking}
+          class="btn h-12 gap-2 rounded-lg border-2 border-primary-500 px-5 font-semibold"
         >
           {m.password_add_send()}
-        </SubmitButton>
+        </Button>
       </Form>
     {:else}
       <p role="status" class="mt-3 text-sm font-semibold">{m.password_add_sent()}</p>
@@ -124,25 +124,25 @@
           }
         />
 
-        <SubmitButton
-          submitting={setting.pending}
-          delayed={setting.delayed}
-          timeout={setting.timeout}
-          class="btn h-12 rounded-lg preset-filled-primary-500 text-base font-semibold"
+        <Button
+          type="submit"
+          size="custom"
+          controller={setting}
+          class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.password_add_submit()}
-        </SubmitButton>
+        </Button>
       </Form>
 
       <Form action="?/passwordCode" onsubmit={asking.submit} class="mt-3">
-        <SubmitButton
-          submitting={asking.pending}
-          delayed={asking.delayed}
-          timeout={asking.timeout}
-          class="btn h-12 rounded-lg px-0 link-underline font-semibold text-link"
+        <Button
+          type="submit"
+          size="custom"
+          controller={asking}
+          class="btn h-12 gap-2 rounded-lg px-0 link-underline font-semibold text-link"
         >
           {m.password_add_resend()}
-        </SubmitButton>
+        </Button>
       </Form>
     {/if}
   {/if}

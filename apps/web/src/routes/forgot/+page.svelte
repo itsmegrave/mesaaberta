@@ -1,6 +1,6 @@
 <script lang="ts">
   import FormBanner from '#lib/components/FormBanner.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import Button from '#lib/components/Button.svelte';
   import AuthShell from '#lib/components/AuthShell.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult } from '#lib/forms/contract.js';
@@ -55,14 +55,14 @@
       />
 
       <div>
-        <SubmitButton
-          submitting={controller.pending}
-          delayed={controller.delayed}
-          timeout={controller.timeout}
-          class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
+        <Button
+          type="submit"
+          size="custom"
+          {controller}
+          class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.forgot_submit()}
-        </SubmitButton>
+        </Button>
       </div>
     </Form>
   {/if}

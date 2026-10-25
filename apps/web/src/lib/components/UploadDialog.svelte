@@ -9,7 +9,7 @@
   import Form from '#lib/components/Form.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ImageCropper from '#lib/components/ImageCropper.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import Button from '#lib/components/Button.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { isDecodable } from '#lib/forms/decodable.js';
   import type { IconName } from '#lib/icons/names.js';
@@ -193,7 +193,12 @@
       <p id="{id}-error" role="alert" class="text-sm font-semibold text-error-alert">{error}</p>
     {/if}
     <div>
-      <SubmitButton class={trigger}>{m.upload_send()}</SubmitButton>
+      <Button
+        type="submit"
+        variant="secondary"
+        size="md"
+        class="w-full gap-2 bg-panel font-semibold sm:w-auto">{m.upload_send()}</Button
+      >
     </div>
   </Form>
 {/if}
