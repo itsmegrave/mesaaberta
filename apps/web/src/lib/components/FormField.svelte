@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import InfoTip from '#lib/components/InfoTip.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   /**
@@ -65,7 +66,5 @@
   </div>
   {#if hint}<p id="{id}-hint" class="text-sm text-surface-700-300">{hint}</p>{/if}
   <div class="mt-1">{@render children(control)}</div>
-  {#if error}<p id="{id}-error" role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
-      {error}
-    </p>{/if}
+  <FieldError {id} message={error} />
 </div>

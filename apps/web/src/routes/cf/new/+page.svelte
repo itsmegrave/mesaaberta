@@ -9,6 +9,7 @@
   import ImageUpload from '#lib/components/ImageUpload.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import {
     CROWDFUNDING_LIMITS,
     crowdfundingFormSchema,
@@ -241,13 +242,7 @@
                 invalid={!!invalid('startsOn')}
                 describedby={err('startsOn') ? 'startsOn-error' : undefined}
               />
-              {#if err('startsOn')}<p
-                  id="startsOn-error"
-                  role="alert"
-                  class="mt-1 text-sm font-semibold text-error-700-300"
-                >
-                  {err('startsOn')}
-                </p>{/if}
+              <FieldError id="startsOn" message={err('startsOn')} />
             </div>
             <div class="min-w-0">
               <DateTimeField
@@ -260,13 +255,7 @@
                 invalid={!!invalid('endsOn')}
                 describedby={err('endsOn') ? 'endsOn-error' : undefined}
               />
-              {#if err('endsOn')}<p
-                  id="endsOn-error"
-                  role="alert"
-                  class="mt-1 text-sm font-semibold text-error-700-300"
-                >
-                  {err('endsOn')}
-                </p>{/if}
+              <FieldError id="endsOn" message={err('endsOn')} />
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import TextInput from '#lib/components/TextInput.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import CepLookup from './CepLookup.svelte';
@@ -203,13 +204,7 @@
           {#if systemWaits}
             <p class="mt-1 text-sm text-muted">{m.form_system_waiting_hint()}</p>
           {/if}
-          {#if err('systemSlug')}<p
-              id="systemSlug-error"
-              role="alert"
-              class="mt-1 text-sm font-semibold text-error-700-300"
-            >
-              {err('systemSlug')}
-            </p>{/if}
+          <FieldError id="systemSlug" message={err('systemSlug')} />
         </div>
         <FormField
           id="title"
@@ -248,12 +243,7 @@
               onchange={(picked) => ($draft[group.field] = picked)}
             />
             <p class="mt-1 text-sm text-surface-700-300">{group.hint}</p>
-            {#if err(group.field)}<p
-                role="alert"
-                class="mt-1 text-sm font-semibold text-error-700-300"
-              >
-                {err(group.field)}
-              </p>{/if}
+            <FieldError id={group.field} message={err(group.field)} />
           </div>
         {/each}
         <FormField
@@ -326,12 +316,7 @@
             class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
             ><input type="radio" name="kind" {value} bind:group={$draft.kind} />{label}</label
           >{/each}
-        {#if controller.errors.kind}<p
-            role="alert"
-            class="text-sm font-semibold text-error-700-300"
-          >
-            {err('kind')}
-          </p>{/if}
+        <FieldError id="kind" class="" message={err('kind')} />
       </fieldset>
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="min-w-0 sm:col-span-2">
@@ -344,13 +329,7 @@
             describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
           />
           {#each ['startsAtLocal', 'durationHours'] as const as field (field)}
-            {#if err(field)}<p
-                id="{field}-error"
-                role="alert"
-                class="mt-1 text-sm font-semibold text-error-700-300"
-              >
-                {err(field)}
-              </p>{/if}
+            <FieldError id={field} message={err(field)} />
           {/each}
         </div>
         <div class="min-w-0 sm:col-span-2">
@@ -386,13 +365,7 @@
               onchange={(picked) =>
                 ($draft.repeat = picked[0] === 'biweekly' ? 'biweekly' : 'weekly')}
             />
-            {#if err('repeat')}<p
-                id="repeat-error"
-                role="alert"
-                class="mt-1 text-sm font-semibold text-error-700-300"
-              >
-                {err('repeat')}
-              </p>{/if}
+            <FieldError id="repeat" message={err('repeat')} />
           </div>
           <div class="min-w-0">
             <DateTimeField
@@ -405,13 +378,7 @@
               invalid={!!invalid('until')}
               describedby={['until-hint', err('until') ? 'until-error' : ''].join(' ').trim()}
             />
-            {#if err('until')}<p
-                id="until-error"
-                role="alert"
-                class="mt-1 text-sm font-semibold text-error-700-300"
-              >
-                {err('until')}
-              </p>{/if}
+            <FieldError id="until" message={err('until')} />
           </div>
         </div>
       {/if}
@@ -519,13 +486,7 @@
               <a href={manageHref} class="anchor">{m.form_capacity_remove_players()}</a>
             {/if}
           </p>{/if}
-        {#if err('capacity')}<p
-            id="capacity-error"
-            role="alert"
-            class="mt-1 text-sm font-semibold text-error-700-300"
-          >
-            {err('capacity')}
-          </p>{/if}
+        <FieldError id="capacity" message={err('capacity')} />
       </div>
       <FormField
         id="minPlayers"

@@ -5,6 +5,7 @@
   import SettingsSection from '#lib/components/SettingsSection.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { deleteAccountSchema } from '#lib/profile/delete.js';
   import { queryClient } from '#lib/query/context.js';
@@ -103,11 +104,11 @@
         aria-describedby={closing.errors.confirm ? 'confirm-error' : undefined}
         class="input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3"
       />
-      {#if closing.errors.confirm}
-        <p id="confirm-error" role="alert" class="text-sm font-semibold text-error-700-300">
-          {m.account_delete_error()}
-        </p>
-      {/if}
+      <FieldError
+        id="confirm"
+        class=""
+        message={closing.errors.confirm ? m.account_delete_error() : undefined}
+      />
       <div>
         <SubmitButton
           submitting={closing.pending}

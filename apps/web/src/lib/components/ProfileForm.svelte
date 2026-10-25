@@ -1,5 +1,6 @@
 <script lang="ts">
   import TextInput from '#lib/components/TextInput.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
   import Button from '#lib/components/Button.svelte';
   import { browser } from '$app/env';
@@ -403,13 +404,12 @@
                 picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
               ) as never)}
           />
-          {#if controller.errors[picker.field]}<p
-              id="{picker.id}-error"
-              role="alert"
-              class="mt-1 text-sm font-semibold text-error-700-300"
-            >
-              {errorText(controller.errors[picker.field]?.[0])}
-            </p>{/if}
+          <FieldError
+            id={picker.id}
+            message={controller.errors[picker.field]
+              ? errorText(controller.errors[picker.field]?.[0])
+              : undefined}
+          />
         </div>
       {/each}
     </div>
@@ -473,13 +473,7 @@
       <p id="timezone-hint" class="mt-1 text-sm text-surface-700-300">
         {m.profile_timezone_hint()}
       </p>
-      {#if controller.errors.timezone}<p
-          id="timezone-error"
-          role="alert"
-          class="mt-1 text-sm font-semibold text-error-700-300"
-        >
-          {errorText(controller.errors.timezone[0])}
-        </p>{/if}
+      <FieldError id="timezone" message={errorText(controller.errors.timezone?.[0])} />
     </div>
   {/if}
 
