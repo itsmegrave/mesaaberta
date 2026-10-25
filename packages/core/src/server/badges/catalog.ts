@@ -1,7 +1,7 @@
 import type { EventType } from '@mesaaberta/contracts';
-import { and, count, countDistinct, eq, isNotNull, isNull, ne, or } from 'drizzle-orm';
+import { and, count, countDistinct, eq, isNotNull, isNull, lt, ne, or } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, partners, ratings, registrations } from '../db/schema';
+import { gameTables, partners, profiles, ratings, registrations } from '../db/schema';
 
 /** What a rule can ask about one person. Each answer is worked out once, when first asked. */
 export type BadgeStats = {
@@ -16,7 +16,12 @@ export type BadgeStats = {
   ratingsGiven(): Promise<number>;
   /** Whether a partner the person submitted is on the page. */
   hasApprovedPartner(): Promise<boolean>;
+  /** Whether the person is among the first `FIRST_MEMBERS` to finish signing up, by signup date. */
+  joinedEarly(): Promise<boolean>;
 };
+
+/** How many members the "Primeira centena" badge goes to. */
+export const FIRST_MEMBERS = 100;
 
 export type BadgeDefinition = {
   /** Stable and unique: it is stored in `user_badges`. Lowercase words joined by hyphens. */
@@ -26,8 +31,17 @@ export type BadgeDefinition = {
   tier?: number;
   /** The events after which the rule is worth checking. */
   triggers: readonly EventType[];
-  check(stats: BadgeStats): Promise<boolean>;
+  /** How far along the person is, in the unit of `goal` (sessions, systems, 0 or 1 ...). */
+  measure(stats: BadgeStats): Promise<number>;
+  /** The badge is earned once `measure` reaches this. */
+  goal: number;
+  /** Not something to work toward: it is left out of the owner's progress list. */
+  unlisted?: boolean;
 };
+
+/** Whether the person has earned the badge. */
+export const meets = async (rule: BadgeDefinition, stats: BadgeStats): Promise<boolean> =>
+  (await rule.measure(stats)) >= rule.goal;
 
 const memo = <T>(load: () => Promise<T>): (() => Promise<T>) => {
   let pending: Promise<T> | undefined;
@@ -93,6 +107,27 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
         .where(eq(ratings.playerId, profileId));
       return row.total;
     }),
+    joinedEarly: memo(async () => {
+      const [me] = await db
+        .select({ createdAt: profiles.createdAt, username: profiles.username })
+        .from(profiles)
+        .where(eq(profiles.id, profileId));
+      if (!me?.username) return false;
+      // Whoever finished signing up before this person, the earlier id first on the same instant.
+      const [before] = await db
+        .select({ total: count() })
+        .from(profiles)
+        .where(
+          and(
+            isNotNull(profiles.username),
+            or(
+              lt(profiles.createdAt, me.createdAt),
+              and(eq(profiles.createdAt, me.createdAt), lt(profiles.id, profileId)),
+            ),
+          ),
+        );
+      return before.total < FIRST_MEMBERS;
+    }),
     hasApprovedPartner: memo(async () => {
       const [row] = await db
         .select({ total: count() })
@@ -113,15 +148,16 @@ const ATTENDANCE: readonly EventType[] = ['TableConcluded'];
 
 const ladder = (
   name: string,
-  thresholds: readonly number[],
-  measure: (stats: BadgeStats) => Promise<number>,
+  goals: readonly number[],
+  measure: BadgeDefinition['measure'],
 ): BadgeDefinition[] =>
-  thresholds.map((threshold, index) => ({
+  goals.map((goal, index) => ({
     id: `${name}-${index + 1}`,
     ladder: name,
     tier: index + 1,
     triggers: ATTENDANCE,
-    check: async (stats) => (await measure(stats)) >= threshold,
+    goal,
+    measure,
   }));
 
 /**
@@ -129,36 +165,39 @@ const ladder = (
  * not here. Adding one is safe at any time; renaming or removing an id is not.
  */
 export const BADGES: readonly BadgeDefinition[] = [
-  {
-    id: 'first-table',
-    triggers: ATTENDANCE,
-    check: async (stats) => (await stats.sessionsPlayed()) >= 1,
-  },
+  { id: 'first-table', triggers: ATTENDANCE, goal: 1, measure: (stats) => stats.sessionsPlayed() },
   ...ladder('regular-player', [5, 25, 100], (stats) => stats.sessionsPlayed()),
   {
     id: 'system-explorer',
     triggers: ATTENDANCE,
-    check: async (stats) => (await stats.systemsPlayed()) >= 5,
+    goal: 5,
+    measure: (stats) => stats.systemsPlayed(),
   },
   {
     id: 'in-person-table',
     triggers: ATTENDANCE,
-    check: async (stats) => (await stats.inPersonTables()) >= 1,
+    goal: 1,
+    measure: (stats) => stats.inPersonTables(),
   },
   {
     id: 'thoughtful-critic',
     triggers: ['RatingSubmitted'],
-    check: async (stats) => (await stats.ratingsGiven()) >= 10,
+    goal: 10,
+    measure: (stats) => stats.ratingsGiven(),
   },
-  {
-    id: 'gm-first',
-    triggers: ATTENDANCE,
-    check: async (stats) => (await stats.tablesRun()) >= 1,
-  },
+  { id: 'gm-first', triggers: ATTENDANCE, goal: 1, measure: (stats) => stats.tablesRun() },
   ...ladder('gm-master', [5, 25, 100], (stats) => stats.tablesRun()),
+  {
+    id: 'first-100',
+    triggers: ['ProfileUpdated'],
+    goal: 1,
+    unlisted: true,
+    measure: async (stats) => ((await stats.joinedEarly()) ? 1 : 0),
+  },
   {
     id: 'partner',
     triggers: ['PartnerApproved'],
-    check: (stats) => stats.hasApprovedPartner(),
+    goal: 1,
+    measure: async (stats) => ((await stats.hasApprovedPartner()) ? 1 : 0),
   },
 ];

@@ -12,8 +12,6 @@
     username,
     avatarUrl,
     messagesUnread = 0,
-    isAdmin = false,
-    pendingSuggestionsCount = 0,
     placement = 'bottom-end',
     compact = false,
     wide = false,
@@ -23,21 +21,21 @@
     avatarUrl: string | null;
     /** Conversations with something unread. */
     messagesUnread?: number;
-    /** Adds the admin link: the phone's header has no room for it in the tab bar. */
-    isAdmin?: boolean;
-    /** Suggestions waiting for an admin, shown on the admin link. */
-    pendingSuggestionsCount?: number;
     /** Where the menu opens: under the header's button, beside the side rail's, above the open side nav's. */
     placement?: 'bottom-end' | 'right-end' | 'top-start';
     /** Only the avatar, for the side rail. */
     compact?: boolean;
-    /** One full-width button holding the avatar and the name, for the open side nav. */
+    /** One full-width button holding the avatar, the name and the handle, for the open side nav. */
     wide?: boolean;
   } = $props();
 
   // Signing out is a plain POST to an endpoint (not a form action), so the page itself goes away;
   // until it does, a second click is ignored. Coming back through the history resets it.
   let signingOut = $state(false);
+  const unreadLabel = $derived(
+    messagesUnread > 0 ? `, ${m.account_menu_unread({ count: messagesUnread })}` : '',
+  );
+  const shownCount = $derived(messagesUnread > 9 ? '9+' : String(messagesUnread));
   const item =
     'btn hover:preset-tonal flex h-12 w-full items-center justify-start gap-3 rounded-lg px-3 text-left text-base font-semibold';
 </script>
@@ -54,17 +52,30 @@
   {/if}
   <Popover positioning={{ placement, offset: { mainAxis: 8 } }}>
     <Popover.Trigger
-      aria-label="{m.nav_account_menu()}: {name}"
-      class="btn flex items-center border border-surface-200-800 bg-panel font-semibold hover:preset-tonal {wide
-        ? 'h-12 w-full justify-start gap-3 rounded-lg px-2 text-sm'
+      aria-label="{m.nav_account_menu()}: {name}{unreadLabel}"
+      class="relative btn flex items-center border border-surface-200-800 bg-panel font-semibold hover:preset-tonal {wide
+        ? 'w-full justify-start gap-2.5 rounded-lg px-2.5 py-2 text-sm'
         : 'size-11 justify-center rounded-full p-0'} {compact || wide
         ? ''
         : 'md:h-12 md:w-auto md:gap-2 md:rounded-lg md:px-1'}"
     >
-      <Avatar src={avatarUrl} {name} size={32} />
+      <Avatar src={avatarUrl} {name} size={wide ? 36 : 32} />
       {#if wide}
-        <!-- The button's accessible name already carries it. -->
-        <span aria-hidden="true" class="min-w-0 flex-1 truncate text-left">{name}</span>
+        <!-- The button's accessible name already carries them. -->
+        <span aria-hidden="true" class="min-w-0 flex-1 text-left">
+          <span class="block truncate">{name}</span>
+          {#if username}
+            <span class="block truncate text-xs font-normal text-muted">@{username}</span>
+          {/if}
+        </span>
+      {/if}
+      {#if messagesUnread > 0}
+        <span
+          aria-hidden="true"
+          class="badge rounded-full preset-filled-warning-500 text-xs font-bold {wide
+            ? 'h-5.5 min-w-5.5 px-1.5'
+            : 'absolute top-0 right-0 h-4 min-w-4 px-1'}">{shownCount}</span
+        >
       {/if}
       <svg
         width="16"
@@ -76,7 +87,7 @@
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
-        class="shrink-0 {wide ? '' : compact ? 'hidden' : 'hidden md:block'}"
+        class="shrink-0 text-muted {wide ? '' : compact ? 'hidden' : 'hidden md:block'}"
       >
         <path d="M6 9l6 6 6-6" />
       </svg>
@@ -108,33 +119,12 @@
                 <span
                   data-testid="messages-count"
                   aria-hidden="true"
-                  class="ml-auto badge min-w-6 rounded-full preset-filled-error-500 px-1 font-bold"
+                  class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 font-bold"
                 >
                   {messagesUnread > 9 ? '9+' : messagesUnread}
                 </span>
               {/if}
             </a>
-
-            {#if isAdmin}
-              <a
-                href="/admin"
-                class={item}
-                aria-label={pendingSuggestionsCount > 0
-                  ? `${m.nav_admin()}: ${pendingSuggestionsCount}`
-                  : undefined}
-              >
-                <Icon name="shield" size={20} />
-                {m.nav_admin()}
-                {#if pendingSuggestionsCount > 0}
-                  <span
-                    aria-hidden="true"
-                    class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
-                  >
-                    {pendingSuggestionsCount > 9 ? '9+' : pendingSuggestionsCount}
-                  </span>
-                {/if}
-              </a>
-            {/if}
 
             <Form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
               <SubmitButton submitting={signingOut} class={item}>

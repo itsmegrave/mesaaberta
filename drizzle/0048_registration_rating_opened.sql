@@ -1,0 +1,1 @@
+ALTER TABLE "registrations" ADD COLUMN "rating_opened_at" timestamp with time zone;

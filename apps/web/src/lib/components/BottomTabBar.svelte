@@ -12,7 +12,17 @@
   const isNewTableActive = $derived(pathname === '/t/new');
   // Only the tables' own pages: the profile and the rest of the account are not "Minhas mesas".
   const isMyTablesActive = $derived(pathname === '/u/tables' || pathname.startsWith('/u/tables/'));
-  const isPartnersActive = $derived(pathname === '/p' || pathname.startsWith('/p/'));
+  const isAdminActive = $derived(pathname === '/admin' || pathname.startsWith('/admin/'));
+
+  let {
+    isAdmin = false,
+    pendingSuggestionsCount = 0,
+  }: {
+    /** Admins get a fifth tab. Parceiros has no tab. */
+    isAdmin?: boolean;
+    /** Suggestions waiting for an admin, shown on the Admin tab. */
+    pendingSuggestionsCount?: number;
+  } = $props();
 </script>
 
 <nav
@@ -54,23 +64,6 @@
     {m.nav_crowdfunding_short()}
   </a>
 
-  <!-- Parceiros -->
-  <a
-    href="/p"
-    class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isPartnersActive
-      ? 'text-surface-950-50'
-      : 'text-muted hover:text-surface-950-50'}"
-  >
-    <span
-      class="flex h-7 w-14 items-center justify-center rounded-full {isPartnersActive
-        ? 'bg-surface-200-800'
-        : 'bg-transparent'}"
-    >
-      <Icon name="game-icons:trade" size={22} />
-    </span>
-    {m.partner_nav_label()}
-  </a>
-
   <!-- Abrir mesa -->
   <a
     href="/t/new"
@@ -102,4 +95,34 @@
     </span>
     {m.nav_my_tables()}
   </a>
+
+  {#if isAdmin}
+    <a
+      href="/admin"
+      aria-label={pendingSuggestionsCount > 0
+        ? `${m.nav_admin()}: ${pendingSuggestionsCount}`
+        : undefined}
+      aria-current={isAdminActive ? 'page' : undefined}
+      class="relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline {isAdminActive
+        ? 'text-surface-950-50'
+        : 'text-muted hover:text-surface-950-50'}"
+    >
+      <span
+        class="relative flex h-7 w-14 items-center justify-center rounded-full {isAdminActive
+          ? 'bg-surface-200-800'
+          : 'bg-transparent'}"
+      >
+        <Icon name="game-icons:black-knight-helm" size={22} />
+        {#if pendingSuggestionsCount > 0}
+          <span
+            aria-hidden="true"
+            class="absolute -top-1 right-1 badge h-4 min-w-4 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
+          >
+            {pendingSuggestionsCount > 9 ? '9+' : pendingSuggestionsCount}
+          </span>
+        {/if}
+      </span>
+      {m.nav_admin()}
+    </a>
+  {/if}
 </nav>

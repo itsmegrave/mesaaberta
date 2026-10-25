@@ -76,6 +76,7 @@ describe('admin pages on a phone', () => {
     render(Tables, {
       data: {
         instagramAvailable: true,
+        socialInstalled: true,
         tables: {
           rows: [
             {

@@ -21,6 +21,7 @@
   import NotificationBell from '#lib/components/NotificationBell.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import SideNav from '#lib/components/SideNav.svelte';
+  import SiteFooter from '#lib/components/SiteFooter.svelte';
   import TableLogo from '#lib/components/TableLogo.svelte';
   import ThemeToggle from '#lib/components/ThemeToggle.svelte';
   import Toaster from '#lib/components/Toaster.svelte';
@@ -98,6 +99,8 @@
 
   <link rel="icon" type="image/png" sizes="16x16" href={asset('favicon-16x16.png')} />
 
+  <link rel="icon" type="image/svg+xml" sizes="any" href={asset('favicon.svg')} />
+
   <link rel="manifest" href={asset('site.webmanifest')} />
 
   {#if data.maintenance}
@@ -161,8 +164,6 @@
                 username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
-                isAdmin={data.account.isAdmin}
-                pendingSuggestionsCount={data.account.pendingSuggestionsCount}
               />
             {:else if data.authEnabled}
               <a
@@ -223,81 +224,14 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar />
+        <BottomTabBar
+          isAdmin={data.account?.isAdmin ?? false}
+          pendingSuggestionsCount={data.account?.pendingSuggestionsCount ?? 0}
+        />
       {/if}
 
       {#if !data.maintenance}
-        <footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
-          <div
-            class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
-          >
-            <div class="flex flex-col gap-3">
-              <p class="flex items-center gap-2 text-surface-950-50">
-                <TableLogo size={26} />
-                <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
-              </p>
-              <p class="md:max-w-md">
-                {m.footer_made_with()}
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  role="img"
-                  aria-label={m.footer_made_with_love()}
-                  class="inline shrink-0 fill-secondary-300 align-middle"
-                >
-                  <path
-                    d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
-                  ></path>
-                </svg>
-                {m.footer_made_by()}
-                <a
-                  href="https://github.com/itsmegrave"
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">itsmegrave</a
-                >.
-              </p>
-              <p>
-                {m.footer_help()}
-                <a
-                  href="mailto:{data.site.CONTACT_EMAIL}"
-                  class="link-underline text-surface-950-50">{data.site.CONTACT_EMAIL}</a
-                >.
-              </p>
-              {#if data.site.INSTAGRAM_HANDLE}
-                <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
-                <a
-                  href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
-                  rel="noopener"
-                  target="_blank"
-                  aria-label={m.footer_instagram_label({ handle: data.site.INSTAGRAM_HANDLE })}
-                  title="@{data.site.INSTAGRAM_HANDLE}"
-                  class="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-surface-950-50 hover:preset-tonal"
-                >
-                  <Icon name="instagram" size={22} />
-                </a>
-                <!-- eslint-enable svelte/no-navigation-without-resolve -->
-              {/if}
-            </div>
-            <div class="flex flex-col gap-3 md:max-w-sm">
-              <p>
-                {m.footer_community()}
-                <a
-                  href="https://linktr.ee/lenindragonsrpg"
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">Lenindragons</a
-                >.
-              </p>
-              <p>
-                <a href="/p" class="link-underline text-surface-950-50"
-                  >{m.footer_partners_link()}</a
-                >
-              </p>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter site={data.site} />
       {/if}
     </div>
   </div>

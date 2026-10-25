@@ -11,3 +11,14 @@ export const postponeSchema = z.object({
   startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
   next,
 });
+
+/**
+ * A session that happened with more to come: when the next one is, as wall-clock time in the
+ * table's zone. Blank for a campaign takes its next weekly date; an adventure needs one.
+ */
+export const heldSchema = z.object({
+  nextStartsAtLocal: z
+    .string()
+    .refine((value) => value === '' || isLocalDateTime(value), 'invalid'),
+  next,
+});

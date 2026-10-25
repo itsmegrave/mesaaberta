@@ -16,6 +16,7 @@
   import { toast } from '#lib/toaster.js';
   import SeatDots from '#lib/components/SeatDots.svelte';
   import SessionConfirmation from '#lib/components/SessionConfirmation.svelte';
+  import TableGoingOn from '#lib/components/TableGoingOn.svelte';
   import DraftNotice from '#lib/components/DraftNotice.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -212,7 +213,15 @@
   </div>
 
   {#if table.status === 'awaiting_confirmation'}
-    <SessionConfirmation next={here} players={data.players} />
+    <SessionConfirmation
+      next={here}
+      players={data.players}
+      multi={table.kind !== 'one_shot'}
+      dateRequired={table.kind === 'adventure'}
+    />
+  {/if}
+  {#if data.canFinish && table.status === 'active'}
+    <TableGoingOn next={here} tableManage={here} players={data.players} />
   {/if}
   {#if table.status === 'draft'}
     <DraftNotice action="?/publish" next={here} waiting={data.systemWaiting} />
@@ -427,7 +436,7 @@
               <span class="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  class="block size-10 shrink-0 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
+                  class="block size-10 shrink-0 rounded-full border-2 border-lamp bg-lamp-wash"
                 ></span>
                 <span>
                   <span class="block font-semibold">{m.manage_free_seat()}</span>

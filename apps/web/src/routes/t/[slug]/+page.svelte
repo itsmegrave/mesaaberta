@@ -330,14 +330,9 @@
       <p aria-hidden="true" class="mt-3 flex flex-wrap gap-2">
         {#each { length: table.capacity }, i (i)}
           {#if i < table.capacity - table.seatsLeft}
-            <span
-              class="flex size-8 items-center justify-center rounded-full {seatColours[
-                i % seatColours.length
-              ]}"><span class="size-3 rounded-full bg-surface-950/30"></span></span
-            >
+            <span class="block size-8 rounded-full {seatColours[i % seatColours.length]}"></span>
           {:else}
-            <span class="block size-8 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
-            ></span>
+            <span class="block size-8 rounded-full border-2 border-lamp bg-lamp-wash"></span>
           {/if}
         {/each}
       </p>

@@ -1,9 +1,12 @@
 <script lang="ts">
   import { m } from '#lib/paraglide/messages.js';
 
-  // On the blue panel of the sign-in pages the tabletop is a shade instead of blue, and the lamp
-  // colours are the light ones.
+  // On the blue panel of the sign-in pages the tabletop is a shade instead of blue, the lamp's pool
+  // of light is white, and the empty chair takes the light lamp colours.
   let { onBrand = false }: { onBrand?: boolean } = $props();
+
+  // Two illustrations may share a page, and a gradient's id must be unique in the document.
+  const lampId = $props.id();
 
   const centre = 200;
 
@@ -12,6 +15,9 @@
     ...[160, 180, 200, 220, 240].map((x) => `M${x} 150V250`),
     ...[170, 190, 210, 230].map((y) => `M140 ${y}H260`),
   ].join('');
+
+  // The chairs sit on a ring around the table, 60° apart, each turned to face it. The empty one is
+  // in the top-right, where the logo keeps its open seat too.
   const orbit = 150;
 
   const at = (degrees: number) => {
@@ -19,18 +25,23 @@
     return {
       x: +(centre + orbit * Math.cos(radians)).toFixed(1),
       y: +(centre + orbit * Math.sin(radians)).toFixed(1),
+      turn: degrees + 90,
     };
   };
 
   const players = [
-    { angle: -90, colour: 'fill-success-500' },
-    { angle: -30, colour: 'fill-tertiary-400' },
-    { angle: 90, colour: 'fill-secondary-300' },
-    { angle: 150, colour: 'fill-success-500' },
-    { angle: 210, colour: 'fill-tertiary-400' },
+    { angle: -90, colour: 'fill-success-500 stroke-success-500' },
+    { angle: 30, colour: 'fill-tertiary-400 stroke-tertiary-400' },
+    { angle: 90, colour: 'fill-secondary-300 stroke-secondary-300' },
+    { angle: 150, colour: 'fill-success-500 stroke-success-500' },
+    { angle: 210, colour: 'fill-tertiary-400 stroke-tertiary-400' },
   ].map((player) => ({ ...player, ...at(player.angle) }));
 
-  const emptySeat = at(30);
+  const emptySeat = at(-30);
+
+  // A chair seen from above, in the seat's own frame where +y points at the table: the backrest is
+  // an arc on the far side, and the person a head in front of it.
+  const backrest = 'M-26.1 -7A27 27 0 0 1 26.1 -7';
 </script>
 
 <svg
@@ -39,14 +50,14 @@
   aria-label={m.table_illustration_label()}
   class="mx-auto h-auto w-full max-w-md"
 >
-  <circle
-    cx={centre}
-    cy={centre}
-    r="186"
-    class="fill-none {onBrand ? 'stroke-warning-300' : 'stroke-lamp'}"
-    stroke-opacity="0.28"
-    stroke-width="2"
-  />
+  <defs>
+    <radialGradient id={lampId} cx={centre} cy={centre} r="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0.45" class={onBrand ? 'lamp-stop-brand' : 'lamp-stop'} />
+      <stop offset="1" class={onBrand ? 'lamp-stop-brand' : 'lamp-stop'} stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <!-- The lamp over the table: a pool of light that fades out past the chairs. -->
+  <circle cx={centre} cy={centre} r="190" fill="url(#{lampId})" />
   <circle
     cx={centre}
     cy={centre}
@@ -73,27 +84,41 @@
   </g>
 
   {#each players as player, i (player.angle)}
-    <g transform="translate({player.x} {player.y})">
-      <g data-seat={i}>
-        <circle r="24" class={player.colour} />
-        <circle r="9" cy="-2" class="fill-surface-950/25" />
+    <g transform="translate({player.x} {player.y}) rotate({player.turn})">
+      <g data-seat={i} class={player.colour}>
+        <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
+        <circle r="15" cy="2" />
       </g>
     </g>
   {/each}
 
-  <g transform="translate({emptySeat.x} {emptySeat.y})">
-    <g data-seat={players.length}>
+  <g transform="translate({emptySeat.x} {emptySeat.y}) rotate({emptySeat.turn})">
+    <g data-seat={players.length} class={onBrand ? 'stroke-warning-300' : 'stroke-lamp'}>
+      <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
       <circle
-        r="28"
-        class={onBrand ? 'fill-warning-500/15 stroke-warning-300' : 'fill-lamp-wash stroke-lamp'}
-        stroke-width="3.5"
-        stroke-dasharray="7 8"
+        r="15"
+        cy="2"
+        data-empty-seat
+        class={onBrand ? 'fill-warning-500/15' : 'fill-lamp-wash'}
+        stroke-width="4"
       />
     </g>
   </g>
 </svg>
 
 <style>
+  /* Lamp light: the warm wash of the layout tokens in light and dark, white on the blue panel. */
+  .lamp-stop {
+    stop-color: light-dark(
+      color-mix(in oklab, var(--color-warning-500) 26%, transparent),
+      color-mix(in oklab, var(--color-warning-400) 16%, transparent)
+    );
+  }
+
+  .lamp-stop-brand {
+    stop-color: color-mix(in oklab, white 12%, transparent);
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     [data-seat] {
       transform-box: fill-box;

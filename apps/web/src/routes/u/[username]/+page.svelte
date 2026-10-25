@@ -5,6 +5,7 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import BadgeIcons from '#lib/components/BadgeIcons.svelte';
   import BadgeStrip from '#lib/components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
@@ -101,6 +102,7 @@
               </ActionForm>
             {/if}
           </div>
+          {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
           {#if profile.links.length > 0}
             <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
               {#each profile.links as link, index (`${link.network}-${index}`)}
@@ -169,7 +171,9 @@
     </div>
   </header>
 
-  {#if data.badges}<BadgeStrip badges={data.badges} isOwner={data.isOwner} />{/if}
+  {#if data.badges && data.isOwner}
+    <BadgeStrip badges={data.badges} progress={data.badgeProgress ?? []} />
+  {/if}
 
   <section aria-labelledby="upcoming-tables" class="mt-8">
     <h2 id="upcoming-tables" class="text-2xl leading-tight font-semibold tracking-tight">

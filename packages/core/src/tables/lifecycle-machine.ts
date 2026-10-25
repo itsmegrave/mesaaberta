@@ -3,7 +3,8 @@ import { createMachine, getNextSnapshot } from 'xstate';
 import type { TableStatus } from './status-values';
 
 /** What can happen to a table once its date has come. */
-export type LifecycleEvent = 'SESSION_ENDED' | 'HAPPENED' | 'NOT_HELD' | 'POSTPONE';
+export type LifecycleEvent =
+  'SESSION_ENDED' | 'HAPPENED' | 'SESSION_HELD' | 'NOT_HELD' | 'POSTPONE' | 'FINISH';
 
 /**
  * The statuses a table moves through after its date (see `TableStatus`). This is the one place that
@@ -17,9 +18,16 @@ export const tableLifecycle = createMachine({
   id: 'tableLifecycle',
   initial: 'active',
   states: {
-    active: { on: { SESSION_ENDED: 'awaiting_confirmation' } },
+    // `FINISH`: the GM of a campaign or adventure that went on ends it without another session.
+    active: { on: { SESSION_ENDED: 'awaiting_confirmation', FINISH: 'concluded' } },
     awaiting_confirmation: {
-      on: { HAPPENED: 'concluded', NOT_HELD: 'not_held', POSTPONE: 'active' },
+      // `SESSION_HELD`: it happened and more sessions follow, so the table stays open.
+      on: {
+        HAPPENED: 'concluded',
+        SESSION_HELD: 'active',
+        NOT_HELD: 'not_held',
+        POSTPONE: 'active',
+      },
     },
     concluded: {},
     not_held: {},

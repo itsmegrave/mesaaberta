@@ -13,6 +13,7 @@ import {
   markAllRead,
   markRead,
 } from '@mesaaberta/core/server/notifications/service';
+import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import type { Actions, PageServerLoad } from './$types';
 
 const categoryOf = (value: string | null): NotificationCategory | undefined =>
@@ -22,10 +23,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
 
+  const profile = await locals.getProfile();
+  const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
   const category = categoryOf(url.searchParams.get('category'));
   return {
     category: category ?? null,
-    notifications: await listNotifications(locals.db, user.id, { category }),
+    // The "Conquistas" filter and the badge notices wait for the badges to be released.
+    withAchievements,
+    notifications: await listNotifications(locals.db, user.id, { category, withAchievements }),
   };
 };
 

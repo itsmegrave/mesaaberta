@@ -70,6 +70,23 @@ export type DomainEvent =
       type: 'TableConcluded';
       payload: { tableId: string; slug: string; title: string; absentPlayerIds?: string[] };
     }
+  // A session of a campaign or adventure happened and more follow: the table stays open for the next
+  // one (`nextStartsAt`, ISO). `absentPlayerIds` as in `TableConcluded`.
+  | {
+      type: 'TableSessionHeld';
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        nextStartsAt: string;
+        absentPlayerIds?: string[];
+      };
+    }
+  // The GM let these players rate a table that is still going. Each rates once, whatever the sessions.
+  | {
+      type: 'RatingsOpened';
+      payload: { tableId: string; slug: string; title: string; playerIds: string[] };
+    }
   | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
   // A player asked for a seat at a table that approves each one. Takes no seat.
   | { type: 'JoinRequested'; payload: Registration }

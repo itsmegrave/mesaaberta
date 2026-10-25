@@ -239,14 +239,20 @@ export async function listRegistrations(db: AnyDb, actor: Actor | null, slug: st
     .orderBy(asc(registrations.createdAt), asc(profiles.username));
 }
 
-/** Whether the GM said this player showed up: null until the session is confirmed (or before attendance existed). */
+/**
+ * What the GM said about this player: whether they showed up (null until the session is confirmed,
+ * or before attendance existed) and whether they may rate before the table is concluded.
+ */
 export async function attendanceOf(db: AnyDb, tableId: string, playerId: string) {
   const [registration] = await db
-    .select({ attended: registrations.attended })
+    .select({ attended: registrations.attended, ratingOpenedAt: registrations.ratingOpenedAt })
     .from(registrations)
     .where(and(eq(registrations.tableId, tableId), eq(registrations.playerId, playerId)));
 
-  return registration?.attended ?? null;
+  return {
+    attended: registration?.attended ?? null,
+    ratingOpened: registration?.ratingOpenedAt != null,
+  };
 }
 
 /** A player's own place at a table: `confirmed`, `pending`, or null. */

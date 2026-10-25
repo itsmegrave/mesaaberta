@@ -6,6 +6,7 @@ import { instagramAccounts } from '@mesaaberta/core/server/db/schema';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { readViaApi } from '../api-read';
 import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
+import { noSocial } from '@mesaaberta/core/server/social/none';
 export async function read({ locals, setHeaders, url }: RequestEvent) {
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
@@ -38,6 +39,8 @@ export async function read({ locals, setHeaders, url }: RequestEvent) {
         cover: imageUrl(supabase, imagePath),
       })),
     },
+    // Whether a social connector is installed: without one the page has no post column or filter.
+    socialInstalled: socialFor(locals.env as SocialEnv) !== noSocial,
     instagramAvailable:
       socialFor(locals.env as SocialEnv).configured(locals.env) &&
       !!account &&

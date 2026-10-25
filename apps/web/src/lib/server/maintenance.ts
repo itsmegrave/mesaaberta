@@ -17,6 +17,7 @@ const exactExempt = new Set([
   '/logout',
   '/robots.txt',
   '/favicon.ico',
+  '/favicon.svg',
   '/site.webmanifest',
 ]);
 

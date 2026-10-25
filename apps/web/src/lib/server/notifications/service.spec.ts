@@ -46,6 +46,25 @@ const add = async (
   return row.id;
 };
 
+describe('badge notices before the badges are released', () => {
+  it('leaves them out of the feed, the bell and the count unless asked for', async () => {
+    await add({ recipientId: ana, type: 'table_updated' });
+    await add({
+      recipientId: ana,
+      category: 'achievements',
+      type: 'badge_earned',
+      metadata: { badgeId: 'first-table' },
+    });
+
+    expect(await listNotifications(test.db, ana)).toHaveLength(2);
+    expect(await unreadCount(test.db, ana)).toBe(2);
+
+    const hidden = await listNotifications(test.db, ana, { withAchievements: false });
+    expect(hidden.map((item) => item.type)).toEqual(['table_updated']);
+    expect(await unreadCount(test.db, ana, { withAchievements: false })).toBe(1);
+  });
+});
+
 describe('listNotifications', () => {
   it('lists only the recipient’s own, newest first, with who did it', async () => {
     await add({ recipientId: ana, createdAt: minutes(1) });

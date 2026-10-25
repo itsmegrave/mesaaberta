@@ -3,7 +3,14 @@ import '../../forms/zod-codes';
 import { isLocalDateTime } from '../../tables/schema';
 import type { Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { concludeTable, markTableNotHeld, postponeTable } from './lifecycle';
+import {
+  allowRatings,
+  concludeTable,
+  finishTable,
+  holdSession,
+  markTableNotHeld,
+  postponeTable,
+} from './lifecycle';
 import { publishTable } from './write';
 
 const none = z.object({});
@@ -29,6 +36,28 @@ export const tableLifecycleActions = {
       slug: string,
       { presentPlayerIds }: { presentPlayerIds?: string[] },
     ) => concludeTable(db, actor, slug, presentPlayerIds),
+  },
+  // A session of a campaign or adventure happened and more follow: the table stays open.
+  sessionHeld: {
+    schema: z.object({
+      presentPlayerIds: z.array(z.uuid()).optional(),
+      nextStartsAtLocal: z.string().refine(isLocalDateTime, 'invalid').optional(),
+    }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { presentPlayerIds?: string[]; nextStartsAtLocal?: string },
+    ) => holdSession(db, actor, slug, data),
+  },
+  finish: {
+    schema: none,
+    apply: (db: AnyDb, actor: Actor | null, slug: string) => finishTable(db, actor, slug),
+  },
+  allowRatings: {
+    schema: z.object({ playerIds: z.array(z.uuid()).min(1) }),
+    apply: (db: AnyDb, actor: Actor | null, slug: string, { playerIds }: { playerIds: string[] }) =>
+      allowRatings(db, actor, slug, playerIds),
   },
   notHeld: {
     schema: none,

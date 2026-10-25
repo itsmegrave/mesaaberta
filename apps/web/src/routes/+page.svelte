@@ -58,16 +58,9 @@
   <span class="inline-flex flex-wrap items-center gap-1">
     {#each { length: total }, i (i)}
       {#if i < occupied}
-        <span
-          class="flex size-6 items-center justify-center rounded-full {seatColours[
-            i % seatColours.length
-          ]}"
-        >
-          <span class="size-2 rounded-full bg-surface-950/30"></span>
-        </span>
+        <span class="block size-6 rounded-full {seatColours[i % seatColours.length]}"></span>
       {:else}
-        <span class="block size-6 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
-        ></span>
+        <span class="block size-6 rounded-full border-2 border-lamp bg-lamp-wash"></span>
       {/if}
     {/each}
   </span>
@@ -80,8 +73,7 @@
     <p
       class="inline-flex items-center gap-2 rounded-full bg-lamp-wash py-1 pr-3 pl-2 text-sm leading-tight font-semibold text-lamp"
     >
-      <span aria-hidden="true" class="block size-3 rounded-full border-2 border-dashed border-lamp"
-      ></span>
+      <span aria-hidden="true" class="block size-3 rounded-full border-2 border-lamp"></span>
       Mesas de RPG com vagas abertas
     </p>
     <h1
