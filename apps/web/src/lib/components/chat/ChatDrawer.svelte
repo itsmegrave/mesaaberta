@@ -109,9 +109,7 @@
         : m.messages_drawer_open()}
     >
       <Icon name="game-icons:scroll-quill" size={24} />
-      {#if unread > 0}<span class="absolute -top-1 -right-1 badge preset-filled-error-500"
-          >{unread}</span
-        >{/if}
+      <CountBadge count={unread} capped={false} tone="error" class="absolute -top-1 -right-1" />
     </Dialog.Trigger>
     {#if open}<Portal>
         <Dialog.Positioner
