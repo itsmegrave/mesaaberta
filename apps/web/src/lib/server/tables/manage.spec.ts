@@ -86,7 +86,11 @@ describe('loadManage', () => {
   it('gives each request its score as a participant, and each player whether they can be rated and what they got', async () => {
     const before = await loadManage(test.db, gm, 'mesa', now);
     expect(before.requests[0].participantRating).toEqual({ score: null, count: 0, isNew: true });
-    expect(before.players[0]).toMatchObject({ markedPresent: false, playerRating: null });
+    expect(before.players[0]).toMatchObject({
+      tablesPlayed: 0,
+      markedPresent: false,
+      playerRating: null,
+    });
 
     await test.db
       .update(registrations)

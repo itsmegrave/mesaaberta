@@ -2132,5 +2132,16 @@
   "participant_rating": "Nota como participante",
   "participant_rating_new": "Estreia como participante",
   "participant_rating_as": "como participante",
-  "public_profile_scores_hint": "Sua nota como participante vem de quem mestrou as mesas em que você jogou. As duas notas aparecem depois de 3 avaliações."
+  "public_profile_scores_hint": "Sua nota como participante vem de quem mestrou as mesas em que você jogou. As duas notas aparecem depois de 3 avaliações.",
+  "player_rating_tables_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Primeira mesa",
+        "count=1": "Jogou 1 mesa",
+        "count=*": "Jogou {count} mesas"
+      }
+    }
+  ]
 }

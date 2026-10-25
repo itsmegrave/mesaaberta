@@ -15,6 +15,7 @@ import { participantRatings, playerRatingsAt } from '@mesaaberta/core/server/rat
 import { findTableBySlug } from '@mesaaberta/core/server/tables/queries';
 import { systemWaitingOf } from '../systems';
 import { markedPresent } from './attendance';
+import { tablesPlayed } from '../profile/public';
 
 /** The events a GM sees in "Atividade recente": what people did at the table, newest first. */
 export const ACTIVITY_TYPES = [
@@ -100,11 +101,19 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
   ]);
   const requests = rows.filter((row) => row.status === 'pending');
   // What the GM weighs a request by: the asker's public score as a participant.
-  const scores = await participantRatings(
-    db,
-    requests.map((row) => row.playerId),
-    now,
-  );
+  const confirmed = rows.filter((row) => row.status === 'confirmed');
+  const [scores, played] = await Promise.all([
+    participantRatings(
+      db,
+      requests.map((row) => row.playerId),
+      now,
+    ),
+    // "Jogou N mesas" on the rating rows: the same total as the profile's "Mesas jogadas".
+    tablesPlayed(
+      db,
+      confirmed.map((row) => row.playerId),
+    ),
+  ]);
 
   // The players the activity names, by id: one query, whoever they are.
   const playerIds = [
@@ -141,13 +150,12 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
       participantRating: scores.get(row.playerId)!,
     })),
     // `markedPresent`: the GM can rate them; `playerRating`: the score the GM gave them here, or null.
-    players: rows
-      .filter((row) => row.status === 'confirmed')
-      .map((row) => ({
-        ...row,
-        markedPresent: markedPresent(row),
-        playerRating: given.get(row.playerId) ?? null,
-      })),
+    players: confirmed.map((row) => ({
+      ...row,
+      tablesPlayed: played.get(row.playerId)!,
+      markedPresent: markedPresent(row),
+      playerRating: given.get(row.playerId) ?? null,
+    })),
     activity: recent.map((event) => {
       const payload = event.payload as { playerId?: string; reason?: 'left' | 'removed' };
       return {

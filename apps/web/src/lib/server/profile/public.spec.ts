@@ -9,7 +9,7 @@ import {
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { publicProfile } from '@mesaaberta/core/server/profile/public';
+import { publicProfile, tablesPlayed } from '@mesaaberta/core/server/profile/public';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -252,6 +252,15 @@ describe('public profiles', () => {
   it('counts concluded tables once, with confirmed seats, excluding the GM from players', async () => {
     expect((await read())?.profile.totals).toEqual({ played: 1, hosted: 3 });
     expect((await read('jogador-bia'))?.profile.totals).toEqual({ played: 1, hosted: 0 });
+  });
+
+  it('gives the same "Mesas jogadas" for many people at once, 0 for who played none', async () => {
+    const played = await tablesPlayed(test.db, [id(1), id(2), id(3)]);
+    expect([...played]).toEqual([
+      [id(1), 1],
+      [id(2), 1],
+      [id(3), 0],
+    ]);
   });
 
   it('uses the GM score and keeps unreviewed profiles distinct from zero', async () => {

@@ -22,6 +22,8 @@
       playerId: string;
       username: string;
       avatarUrl: string | null;
+      /** Their "Mesas jogadas" total, under the name. */
+      tablesPlayed: number;
       /** The score already given at this table, or null. */
       playerRating: number | null;
     };
@@ -49,7 +51,12 @@
   {#if player.playerRating !== null}
     <div class="flex flex-wrap items-center gap-3">
       <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
-      <span class="min-w-0 flex-1 truncate font-semibold">{player.username}</span>
+      <span class="flex min-w-0 flex-1 flex-col">
+        <span class="truncate font-semibold">{player.username}</span>
+        <span class="text-sm text-muted"
+          >{m.player_rating_tables_played({ count: player.tablesPlayed })}</span
+        >
+      </span>
       <StarRating
         name="score-{player.playerId}"
         label={m.player_rating_for({ name: player.username })}
@@ -65,7 +72,12 @@
       <input type="hidden" name="next" value={next} />
       <div class="flex flex-wrap items-center gap-3">
         <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
-        <span class="min-w-0 flex-1 truncate font-semibold">{player.username}</span>
+        <span class="flex min-w-0 flex-1 flex-col">
+          <span class="truncate font-semibold">{player.username}</span>
+          <span class="text-sm text-muted"
+            >{m.player_rating_tables_played({ count: player.tablesPlayed })}</span
+          >
+        </span>
         <StarRating
           name="score"
           label={m.player_rating_for({ name: player.username })}

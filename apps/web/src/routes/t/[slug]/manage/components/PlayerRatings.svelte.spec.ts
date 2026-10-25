@@ -7,6 +7,7 @@ const player = (n: number, over = {}) => ({
   playerId: `00000000-0000-4000-8000-00000000000${n}`,
   username: ['ana', 'bia', 'caio'][n - 1],
   avatarUrl: null,
+  tablesPlayed: n - 1,
   markedPresent: true,
   playerRating: null,
   ...over,
@@ -26,6 +27,8 @@ describe('PlayerRatings', () => {
     // "Enviar nota", or "Enviar" on a phone.
     expect(page.getByRole('button', { name: /^Enviar/ }).elements()).toHaveLength(1);
     await expect.element(page.getByText('Nota enviada')).toBeVisible();
+    await expect.element(page.getByText('Primeira mesa')).toBeVisible();
+    await expect.element(page.getByText('Jogou 2 mesas')).toBeVisible();
   });
 
   it('opens the comment only when asked, and says it stays with the GM', async () => {

@@ -16,6 +16,7 @@
       playerId: string;
       username: string;
       avatarUrl: string | null;
+      tablesPlayed: number;
       /** Marked present by the GM (`markedPresent`): only these can be rated. */
       markedPresent: boolean;
       playerRating: number | null;
