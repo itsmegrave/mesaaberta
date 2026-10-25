@@ -1,12 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
-import {
-  gameTables,
-  instagramAccounts,
-  instagramPosts,
-  profiles,
-  systems,
-} from '@mesaaberta/db/schema';
+import { z } from 'zod';
+import type { Extension } from '@mesaaberta/core/server/extensions/index';
+import { profiles } from '@mesaaberta/db/schema';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
 import { extensionRoutes } from './extensions';
@@ -15,7 +10,18 @@ let test: Awaited<ReturnType<typeof createTestDb>>;
 const admin = '00000000-0000-4000-8000-000000000ca1';
 const member = '00000000-0000-4000-8000-000000000ca2';
 const env = { DATABASE_URL: 'postgres://test' };
-let tableId: string;
+
+// The public build installs no extension, so the route is tested with one of its own.
+const fake: Extension = {
+  id: 'fake',
+  adminActions: {
+    echo: {
+      schema: z.object({ n: z.number() }),
+      apply: async (_db, _env, data: { n: number }) => ({ echoed: data.n }),
+    },
+  },
+};
+const plain: Extension = { id: 'plain' };
 
 beforeAll(async () => {
   test = await createTestDb();
@@ -23,32 +29,19 @@ beforeAll(async () => {
     { id: admin, username: 'admin', role: 'admin' },
     { id: member, username: 'member', role: 'member' },
   ]);
-  const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
-  const [table] = await test.db
-    .insert(gameTables)
-    .values({
-      slug: 'mesa-instagram',
-      title: 'Mesa',
-      kind: 'one_shot',
-      capacity: 4,
-      status: 'active',
-      startsAt: new Date('2099-01-01T20:00:00Z'),
-      durationMinutes: 60,
-      timezone: 'UTC',
-      gmId: member,
-      systemId: system.id,
-    })
-    .returning();
-  tableId = table.id;
-  await test.db
-    .insert(instagramPosts)
-    .values({ tableId, eventId: crypto.randomUUID(), status: 'uncertain' });
 });
 afterAll(() => test.close());
 
-const app = () => extensionRoutes((() => ({ db: test.db, close: async () => {} })) as never);
-const post = (action: string, body: unknown, actor?: string, extension = 'instagram') =>
-  app().request(
+const app = (installed: readonly Extension[] = [fake, plain]) =>
+  extensionRoutes((() => ({ db: test.db, close: async () => {} })) as never, installed);
+const post = (
+  action: string,
+  body: unknown,
+  actor?: string,
+  extension = 'fake',
+  list?: Extension[],
+) =>
+  app(list).request(
     `/${extension}/${action}`,
     {
       method: 'POST',
@@ -58,78 +51,28 @@ const post = (action: string, body: unknown, actor?: string, extension = 'instag
     env,
   );
 
-describe('api extension routes over a database (Instagram)', () => {
-  it('answers that Instagram is unavailable when it is not configured, and queues nothing', async () => {
-    const response = await post('queue', { tableId }, admin);
+describe('api extension routes over a database', () => {
+  it('runs an installed extension’s admin action for an admin', async () => {
+    const response = await post('echo', { n: 3 }, admin);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ eventIds: [], result: 'unavailable' });
+    expect(await response.json()).toEqual({ eventIds: [], echoed: 3 });
   });
 
-  it('reconciles only an uncertain post, with the permalink the admin read from Instagram', async () => {
-    const permalink = 'https://www.instagram.com/p/Abc_123-x/';
-
-    const response = await post('reconcile', { tableId, permalink }, admin);
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ eventIds: [], reconciled: true });
-    const [row] = await test.db
-      .select()
-      .from(instagramPosts)
-      .where(eq(instagramPosts.tableId, tableId));
-    expect(row).toMatchObject({ status: 'published', permalink, image: null, lastError: null });
+  it('refuses a member, a visitor and data the schema refuses', async () => {
+    expect((await post('echo', { n: 3 }, member)).status).toBe(403);
+    expect((await post('echo', { n: 3 })).status).toBe(401);
+    expect((await post('echo', { n: 'three' }, admin)).status).toBe(400);
   });
 
-  it('does not touch a post that is not uncertain', async () => {
-    await test.db
-      .update(instagramPosts)
-      .set({ status: 'failed', permalink: null })
-      .where(eq(instagramPosts.tableId, tableId));
-
-    await post('reconcile', { tableId, permalink: 'https://www.instagram.com/p/Zzz/' }, admin);
-
-    const [row] = await test.db
-      .select()
-      .from(instagramPosts)
-      .where(eq(instagramPosts.tableId, tableId));
-    expect(row.status).toBe('failed');
-  });
-
-  it('refuses a member, a permalink that is not Instagram’s and an unknown action', async () => {
-    expect((await post('queue', { tableId }, member)).status).toBe(403);
-    expect(
-      (await post('reconcile', { tableId, permalink: 'https://evil.example/p/x/' }, admin)).status,
-    ).toBe(400);
+  it('answers 404 for an unknown action, an extension nobody installed or one with no admin actions', async () => {
     expect((await post('explode', {}, admin)).status).toBe(404);
-    expect((await post('queue', { tableId })).status).toBe(401);
+    expect((await post('echo', { n: 1 }, admin, 'missing')).status).toBe(404);
+    expect((await post('echo', { n: 1 }, admin, 'plain')).status).toBe(404);
+    expect((await post('echo', { n: 1 }, admin, 'toString')).status).toBe(404);
   });
 
-  it('answers 404 for an extension nobody installed, or one with no admin actions', async () => {
-    expect((await post('queue', { tableId }, admin, 'patreon')).status).toBe(404);
-    expect((await post('queue', { tableId }, admin, 'toString')).status).toBe(404);
-  });
-
-  it('saves the connected account with its encrypted token, and connecting again replaces it', async () => {
-    const account = {
-      userId: '1784',
-      username: 'mesaaberta',
-      token: 'enc:abc',
-      expiresAt: '2099-01-01T00:00:00.000Z',
-    };
-
-    const first = await post('connect', account, admin);
-    await post('connect', { ...account, username: 'mesa', token: 'enc:def' }, admin);
-
-    expect(await first.json()).toEqual({ eventIds: [], connected: true });
-    const rows = await test.db.select().from(instagramAccounts);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ username: 'mesa', token: 'enc:def' });
-    expect(rows[0].expiresAt).toEqual(new Date(account.expiresAt));
-  });
-
-  it('refuses a member and a connection without a token', async () => {
-    const account = { userId: '1', username: 'x', token: 't', expiresAt: '2099-01-01T00:00:00Z' };
-    expect((await post('connect', account, member)).status).toBe(403);
-    expect((await post('connect', { ...account, token: '' }, admin)).status).toBe(400);
+  it('answers 404 for everything in the public build, which installs nothing', async () => {
+    expect((await post('queue', { tableId: 'x' }, admin, 'instagram', [])).status).toBe(404);
   });
 });

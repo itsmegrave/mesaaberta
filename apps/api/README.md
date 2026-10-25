@@ -22,7 +22,7 @@ still validates the form, stores the image and resolves the CEP, and sends the r
 `send`, `mute`, `open`, `read` and `readAll`, behind `api_inbox`). What a member submits
 (`POST /v1/submissions/partners`, `/partners/:id` and `/crowdfundings`, behind `api_submissions`; web
 still validates the form and stores the picture). The admin's hand actions on an installed extension (`POST /v1/admin/:extension/:action`, from its
-`adminActions`: Instagram's `queue` and `reconcile` today, behind `api_admin_instagram`; the render and the publish stay in the background). The admin
+`adminActions`, behind the flag `api_admin_<extension>` that the extension declares; none is installed in this repository, and the private Instagram connector's `queue` and `reconcile` use `api_admin_instagram`). The admin
 announcements console (`POST /v1/admin/announcements`: count the audience, then send,
 behind `api_admin_announcements`) and the direct conversation with someone (`POST /v1/inbox/direct`,
 behind `api_inbox`). Reporting a table, a partner or a campaign and withdrawing
