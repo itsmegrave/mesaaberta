@@ -85,8 +85,6 @@
   }
 </script>
 
-<svelte:head><title>{m.admin_audit_title()} | Mesa Aberta</title></svelte:head>
-
 <AdminPage title={m.admin_audit_title()} lede={m.admin_audit_lede()}>
   <ListPanel
     label={m.admin_audit_title()}

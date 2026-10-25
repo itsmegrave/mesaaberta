@@ -11,13 +11,11 @@
   import ListCard from '#lib/components/admin/ListCard.svelte';
   import Media from '#lib/components/admin/Media.svelte';
   import PostStatus from '#lib/components/admin/PostStatus.svelte';
+  import RefreshButton from '#lib/components/admin/RefreshButton.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import Button from '#lib/components/Button.svelte';
-  import Icon from '#lib/components/Icon.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import Spinner from '#lib/components/Spinner.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { instagramStatus } from '#lib/admin/instagram-status.js';
@@ -114,20 +112,9 @@
   const busy = $derived(remote.isFetching || !!navigating.to);
 </script>
 
-<svelte:head><title>{m.admin_tables()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_tables()} lede={m.admin_tables_lede()}>
   {#snippet actions()}
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
-      disabled={remote.isFetching}
-      onclick={() => remote.refetch()}
-      >{#if remote.isFetching}<Spinner />{:else}<Icon
-          name="refresh-cw"
-          size={18}
-        />{/if}{m.admin_refresh()}</Button
-    >
+    <RefreshButton query={remote} />
   {/snippet}
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
   <DataTable

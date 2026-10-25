@@ -9,6 +9,7 @@
 
   let {
     title,
+    tabTitle,
     lede,
     eyebrow,
     crumbs,
@@ -20,6 +21,8 @@
   }: {
     /** The section's name; on a detail page, what it is about. */
     title: string;
+    /** The browser tab's title, when it is not "<title> | Mesa Aberta" (a detail page names its kind). */
+    tabTitle?: string;
     lede?: string;
     eyebrow?: string;
     /** The levels after "Início": by default Admin and the section named like the title. */
@@ -32,6 +35,8 @@
     children?: Snippet;
   } = $props();
 </script>
+
+<svelte:head><title>{tabTitle ?? `${title} | Mesa Aberta`}</title></svelte:head>
 
 <section class="py-6 md:py-8">
   <Breadcrumbs

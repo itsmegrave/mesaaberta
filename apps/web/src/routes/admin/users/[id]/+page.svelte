@@ -105,9 +105,9 @@
   });
 </script>
 
-<svelte:head><title>{data.user.username ?? m.admin_user_title()} | Mesa Aberta</title></svelte:head>
 <AdminPage
   title={handle}
+  tabTitle={`${data.user.username ?? m.admin_user_title()} | Mesa Aberta`}
   eyebrow={m.admin_user_title()}
   crumbs={[
     { label: m.nav_admin(), href: '/admin' },

@@ -15,11 +15,9 @@
   const table = $derived(data.table);
 </script>
 
-<svelte:head
-  ><title>{m.admin_table_page_title({ title: table.title })} | Mesa Aberta</title></svelte:head
->
 <AdminPage
   title={table.title}
+  tabTitle={`${m.admin_table_page_title({ title: table.title })} | Mesa Aberta`}
   eyebrow={m.admin_tables()}
   lede={m.admin_table_page_lede()}
   crumbs={[

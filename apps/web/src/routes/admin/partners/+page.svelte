@@ -130,7 +130,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_nav_partners()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_nav_partners()} lede={m.admin_partners_lede()}>
   <DataTable
     rows={list.rows}

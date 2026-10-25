@@ -7,7 +7,10 @@
   const { Panel } = $derived(data);
 </script>
 
-<svelte:head><title>{m.admin_connections_title()} · Mesa Aberta</title></svelte:head>
-<AdminPage title={m.admin_connections_title()} lede={m.admin_connections_description()}>
+<AdminPage
+  title={m.admin_connections_title()}
+  tabTitle={`${m.admin_connections_title()} · Mesa Aberta`}
+  lede={m.admin_connections_description()}
+>
   <Panel {data} />
 </AdminPage>

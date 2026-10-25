@@ -73,7 +73,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_profile_list()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_profile_list()} lede={m.admin_users_lede()}>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
   <DataTable

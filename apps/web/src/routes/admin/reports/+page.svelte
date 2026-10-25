@@ -84,7 +84,6 @@
   ];
 </script>
 
-<svelte:head><title>{m.admin_reports_title()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_reports_title()} lede={m.admin_reports_lede()}>
   <DataTable
     rows={reports.rows}

@@ -68,10 +68,9 @@
     'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
-<svelte:head><title>{m.admin_report_title()} | Mesa Aberta</title></svelte:head>
-
 <AdminPage
   title={target}
+  tabTitle={`${m.admin_report_title()} | Mesa Aberta`}
   eyebrow={m.admin_report_eyebrow({ date: when(report.report.createdAt) })}
   crumbs={[
     { label: m.nav_admin(), href: '/admin' },

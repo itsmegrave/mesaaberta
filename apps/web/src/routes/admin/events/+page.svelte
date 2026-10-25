@@ -49,8 +49,6 @@
   const canForce = (status: EventStatus) => status !== 'processed' && status !== 'running';
 </script>
 
-<svelte:head><title>{m.admin_events_title()} | Mesa Aberta</title></svelte:head>
-
 <AdminPage title={m.admin_events_title()} lede={m.admin_events_lede()}>
   {#if backlog}
     <p class="mt-6 rounded-lg border border-surface-200-800 bg-panel p-4 text-sm" role="status">

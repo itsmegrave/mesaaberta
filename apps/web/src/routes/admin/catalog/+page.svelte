@@ -66,8 +66,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_catalog_title()} | Mesa Aberta</title></svelte:head>
-
 <AdminPage title={m.admin_catalog_title()} lede={m.admin_catalog_lede()}>
   {#snippet actions()}
     <!-- A different catalog needs new defaults; refetches within the same kind preserve drafts. -->

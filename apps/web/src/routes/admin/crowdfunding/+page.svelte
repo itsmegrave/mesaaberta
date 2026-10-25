@@ -78,7 +78,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_nav_crowdfunding()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_nav_crowdfunding()} lede={m.admin_crowdfunding_lede()}>
   <DataTable
     rows={list.rows}
