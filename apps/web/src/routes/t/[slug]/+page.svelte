@@ -28,6 +28,7 @@
   import Icon from '#lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import SeatDots from '#lib/components/SeatDots.svelte';
   import DraftNotice from '#lib/components/DraftNotice.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
 
@@ -70,7 +71,6 @@
     },
   });
   const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
-  const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
 
   // The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
   const dateBox = $derived.by(() => {
@@ -327,14 +327,8 @@
           {m.table_seats_taken({ taken: table.capacity - table.seatsLeft, total: table.capacity })}
         </p>
       </div>
-      <p aria-hidden="true" class="mt-3 flex flex-wrap gap-2">
-        {#each { length: table.capacity }, i (i)}
-          {#if i < table.capacity - table.seatsLeft}
-            <span class="block size-8 rounded-full {seatColours[i % seatColours.length]}"></span>
-          {:else}
-            <span class="block size-8 rounded-full border-2 border-lamp bg-lamp-wash"></span>
-          {/if}
-        {/each}
+      <p class="mt-3">
+        <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
       </p>
       {#if table.minPlayers}
         <p class="mt-3 text-sm text-muted">

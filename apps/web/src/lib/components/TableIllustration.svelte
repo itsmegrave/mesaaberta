@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Chair from './Chair.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   // On the blue panel of the sign-in pages the tabletop is a shade instead of blue, the lamp's pool
@@ -16,32 +17,30 @@
     ...[170, 190, 210, 230].map((y) => `M140 ${y}H260`),
   ].join('');
 
-  // The chairs sit on a ring around the table, 60° apart, each turned to face it. The empty one is
-  // in the top-right, where the logo keeps its open seat too.
+  // Six chairs sit on a ring around the table, 60° apart, each turned to face it: the GM's at the
+  // top (as on the table cards), the empty one next to it in the top-right, where the logo keeps its
+  // open seat too, then four players.
   const orbit = 150;
+  const step = 360 / 6;
 
-  const at = (degrees: number) => {
+  const at = (slot: number) => {
+    const degrees = -90 + step * slot;
     const radians = (degrees * Math.PI) / 180;
     return {
       x: +(centre + orbit * Math.cos(radians)).toFixed(1),
       y: +(centre + orbit * Math.sin(radians)).toFixed(1),
-      turn: degrees + 90,
+      turn: +(degrees + 90).toFixed(1),
     };
   };
 
+  const gmSeat = at(0);
+  const emptySeat = at(1);
   const players = [
-    { angle: -90, colour: 'fill-success-500 stroke-success-500' },
-    { angle: 30, colour: 'fill-tertiary-400 stroke-tertiary-400' },
-    { angle: 90, colour: 'fill-secondary-300 stroke-secondary-300' },
-    { angle: 150, colour: 'fill-success-500 stroke-success-500' },
-    { angle: 210, colour: 'fill-tertiary-400 stroke-tertiary-400' },
-  ].map((player) => ({ ...player, ...at(player.angle) }));
-
-  const emptySeat = at(-30);
-
-  // A chair seen from above, in the seat's own frame where +y points at the table: the backrest is
-  // an arc on the far side, and the person a head in front of it.
-  const backrest = 'M-26.1 -7A27 27 0 0 1 26.1 -7';
+    'fill-success-500 stroke-success-500',
+    'fill-tertiary-400 stroke-tertiary-400',
+    'fill-secondary-300 stroke-secondary-300',
+    'fill-success-500 stroke-success-500',
+  ].map((colour, i) => ({ colour, ...at(i + 2) }));
 </script>
 
 <svg
@@ -73,36 +72,52 @@
     <circle cx="190" cy="220" r="7" class="fill-success-500" />
     <circle cx="230" cy="180" r="7" class="fill-tertiary-400" />
   </g>
-  <g transform="translate(262 238) rotate(14)">
-    <path d="M0-15 13-7.5v15L0 15-13 7.5v-15z" class="fill-warning-400" />
+  <!-- A d20 beside the map, drawn from arcticons:rpg-dice (48-unit grid): the outline, the faces
+       around the front one, and the front face with its 20 (white on error-700, 5.2:1). Red on
+       the blue table, so a white border keeps it apart: red and blue are about as light as each
+       other, white on blue is 4.5:1. -->
+  <g transform="translate(262 238) rotate(14) scale(0.85) translate(-24 -24)">
     <path
-      d="M0-15 7.5 5h-15zM-13 7.5 -7.5 5M13 7.5 7.5 5M0 15V5"
-      class="fill-none stroke-warning-950/60"
-      stroke-width="1.5"
+      d="m39.227 38.684 5.111-20.5L29.111 3.5 8.773 9.316l-5.111 20.5L18.889 44.5z"
+      class="fill-error-500 stroke-surface-50"
+      stroke-width="3"
       stroke-linejoin="round"
     />
+    <path d="M33.729 34.984 10.254 29.13l16.934-17.916z" class="fill-error-700" />
+    <path
+      d="m39.227 38.684 5.111-20.5L29.111 3.5 8.773 9.316l-5.111 20.5L18.889 44.5zm-5.498-3.7 10.61-16.8-17.151-6.97L8.773 9.316l1.48 19.815L18.89 44.5zM33.729 34.984 10.254 29.13l16.934-17.916zm-6.541-23.77L29.111 3.5m4.618 31.484 5.498 3.7M10.254 29.13l-6.592.685"
+      class="fill-none stroke-error-950/50"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <text
+      x="23.7"
+      y="28"
+      text-anchor="middle"
+      font-size="9"
+      font-weight="700"
+      class="fill-surface-50">20</text
+    >
   </g>
 
-  {#each players as player, i (player.angle)}
+  <g transform="translate({gmSeat.x} {gmSeat.y}) rotate({gmSeat.turn})">
+    <Chair data-seat={0} gm />
+  </g>
+
+  {#each players as player, i (i)}
     <g transform="translate({player.x} {player.y}) rotate({player.turn})">
-      <g data-seat={i} class={player.colour}>
-        <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
-        <circle r="15" cy="2" />
-      </g>
+      <Chair data-seat={i + 1} colour={player.colour} />
     </g>
   {/each}
 
   <g transform="translate({emptySeat.x} {emptySeat.y}) rotate({emptySeat.turn})">
-    <g data-seat={players.length} class={onBrand ? 'stroke-warning-300' : 'stroke-lamp'}>
-      <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
-      <circle
-        r="15"
-        cy="2"
-        data-empty-seat
-        class={onBrand ? 'fill-warning-500/15' : 'fill-lamp-wash'}
-        stroke-width="4"
-      />
-    </g>
+    <Chair
+      data-seat={players.length + 1}
+      data-empty-seat
+      colour={onBrand ? 'stroke-warning-300' : 'stroke-lamp'}
+      free
+    />
   </g>
 </svg>
 
@@ -120,7 +135,7 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    [data-seat] {
+    svg :global([data-seat]) {
       transform-box: fill-box;
       transform-origin: center;
       animation: sit 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -128,23 +143,23 @@
     }
 
     /* The seat number reaches the CSS through an attribute, not an inline `style`, because the
-		   Content-Security-Policy blocks inline styles. One rule per seat: five players and one empty. */
-    [data-seat='0'] {
+		   Content-Security-Policy blocks inline styles. One rule per seat: the GM, four players and one empty. */
+    svg :global([data-seat='0']) {
       --i: 0;
     }
-    [data-seat='1'] {
+    svg :global([data-seat='1']) {
       --i: 1;
     }
-    [data-seat='2'] {
+    svg :global([data-seat='2']) {
       --i: 2;
     }
-    [data-seat='3'] {
+    svg :global([data-seat='3']) {
       --i: 3;
     }
-    [data-seat='4'] {
+    svg :global([data-seat='4']) {
       --i: 4;
     }
-    [data-seat='5'] {
+    svg :global([data-seat='5']) {
       --i: 5;
     }
   }

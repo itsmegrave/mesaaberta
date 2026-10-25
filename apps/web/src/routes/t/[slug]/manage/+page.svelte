@@ -14,6 +14,7 @@
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import { page } from '$app/state';
   import { toast } from '#lib/toaster.js';
+  import Chair from '#lib/components/Chair.svelte';
   import SeatDots from '#lib/components/SeatDots.svelte';
   import SessionConfirmation from '#lib/components/SessionConfirmation.svelte';
   import TableGoingOn from '#lib/components/TableGoingOn.svelte';
@@ -434,10 +435,9 @@
           {#each { length: table.seatsLeft }, i (i)}
             <li class={row}>
               <span class="flex items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  class="block size-10 shrink-0 rounded-full border-2 border-lamp bg-lamp-wash"
-                ></span>
+                <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-10 shrink-0">
+                  <Chair colour="stroke-lamp" free />
+                </svg>
                 <span>
                   <span class="block font-semibold">{m.manage_free_seat()}</span>
                   <span class="block text-sm text-muted">{m.manage_free_seat_hint()}</span>

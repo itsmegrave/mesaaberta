@@ -2,6 +2,7 @@
   import Icon from '#lib/components/Icon.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
+  import SeatDots from '#lib/components/SeatDots.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
   import TableIllustration from '#lib/components/TableIllustration.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -15,8 +16,6 @@
     { title: m.how_step_2_title, text: m.how_step_2_text, colour: 'bg-tertiary-400' },
     { title: m.how_step_3_title, text: m.how_step_3_text, colour: 'bg-secondary-300' },
   ];
-
-  const seatColours = ['bg-success-500', 'bg-tertiary-400', 'bg-secondary-300'];
 
   const star = 'M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.6l-5.9 3.2 1.2-6.5L2.5 9.7l6.6-.9z';
 </script>
@@ -50,18 +49,6 @@
       <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" class="fill-lamp">
         <path d={star} />
       </svg>
-    {/each}
-  </span>
-{/snippet}
-
-{#snippet seatDots(occupied: number, total: number)}
-  <span class="inline-flex flex-wrap items-center gap-1">
-    {#each { length: total }, i (i)}
-      {#if i < occupied}
-        <span class="block size-6 rounded-full {seatColours[i % seatColours.length]}"></span>
-      {:else}
-        <span class="block size-6 rounded-full border-2 border-lamp bg-lamp-wash"></span>
-      {/if}
     {/each}
   </span>
 {/snippet}
@@ -276,7 +263,7 @@
         >
       </p>
       <div class="flex items-center gap-3">
-        {@render seatDots(3, 6)}
+        <SeatDots taken={3} capacity={6} />
         <span class="text-sm font-semibold text-muted">3 de 6 vagas ocupadas</span>
       </div>
       <div class="flex items-center gap-3 rounded-lg bg-lamp-wash p-3">
@@ -331,7 +318,7 @@
         >
       </div>
       <div class="flex items-center gap-3">
-        {@render seatDots(3, 5)}
+        <SeatDots taken={3} capacity={5} />
         <span class="text-sm font-semibold text-muted">3 de 5 vagas ocupadas</span>
       </div>
       <div>

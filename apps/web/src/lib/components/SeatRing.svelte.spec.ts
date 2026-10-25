@@ -3,15 +3,31 @@ import { render } from 'vitest-browser-svelte';
 import SeatRing from './SeatRing.svelte';
 
 describe('SeatRing', () => {
-  it('renders table surface and correct number of seat circles', () => {
+  it('draws a chair per seat plus the GM, around the table', () => {
     render(SeatRing, { capacity: 5, seatsLeft: 2 });
 
-    const circles = document.querySelectorAll('circle');
-    // 1 center table + 5 seats = 6 circles
-    expect(circles.length).toBe(6);
+    // The GM and the 3 taken seats are filled; the 2 free ones are unfilled outlines.
+    expect(document.querySelectorAll('[data-chair]').length).toBe(6);
+    expect(document.querySelectorAll('[data-chair="taken"]').length).toBe(4);
+    expect(document.querySelectorAll('[data-chair="free"]').length).toBe(2);
+    expect(document.querySelectorAll('[data-chair="free"] path.fill-none').length).toBe(4);
 
     const svg = document.querySelector('svg');
     expect(svg?.getAttribute('aria-label')).toBe('3 de 5 vagas ocupadas');
+  });
+
+  it('puts the GM first, at the top', () => {
+    render(SeatRing, { capacity: 5, seatsLeft: 5 });
+
+    const first = document.querySelector('[data-chair]');
+    // The same meeple as the players, in the three seat colours with a 1px ink border.
+    expect(document.querySelectorAll('[data-gm-chair]').length).toBe(1);
+    const gm = first?.querySelector('[data-gm-chair]');
+    expect(gm?.getAttribute('fill')).toMatch(/^url\(#.+\)$/);
+    expect(first?.querySelectorAll('linearGradient stop').length).toBe(3);
+    expect(gm?.getAttribute('stroke-width')).toBe('1');
+    expect(gm?.getAttribute('vector-effect')).toBe('non-scaling-stroke');
+    expect(first?.getAttribute('transform')).toMatch(/^translate\(50\.0 18\.0\) rotate\(0\)/);
   });
 
   it('renders full table properly', () => {
@@ -19,6 +35,7 @@ describe('SeatRing', () => {
 
     const svg = document.querySelector('svg');
     expect(svg?.getAttribute('aria-label')).toBe('4 de 4 vagas ocupadas');
+    expect(document.querySelectorAll('[data-chair="free"]').length).toBe(0);
   });
 
   it('renders empty table properly', () => {
@@ -26,6 +43,7 @@ describe('SeatRing', () => {
 
     const svg = document.querySelector('svg');
     expect(svg?.getAttribute('aria-label')).toBe('0 de 6 vagas ocupadas');
+    expect(document.querySelectorAll('[data-chair="free"]').length).toBe(6);
   });
 
   it('sets width and height from size prop', () => {
