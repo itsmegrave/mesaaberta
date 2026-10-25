@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
+import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readTableFilters } from '@mesaaberta/core/tables/filters';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
@@ -28,12 +29,12 @@ export function readRoutes(open: Open = openDb) {
 
   app.get('/catalog', async (c) => c.json(await readCatalog(c.get('db'), c.get('actorId'))));
 
-  app.get('/preview', async (c) => c.json(await readPreview(c.get('db'), new Date())));
+  app.get('/preview', async (c) => c.json(await readPreview(c.get('db'), publicReadNow())));
 
   app.get('/tables', async (c) =>
     c.json(
       // The same validation web ran: what is not a filter is dropped, not refused.
-      await readTables(c.get('db'), await readTableFilters(new URL(c.req.url)), new Date()),
+      await readTables(c.get('db'), await readTableFilters(new URL(c.req.url)), publicReadNow()),
     ),
   );
 
