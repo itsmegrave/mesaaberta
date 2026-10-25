@@ -842,6 +842,7 @@
   "notification_player_left": "{player} saiu de {table}.",
   "notification_player_removed": "Sua vaga em {table} foi encerrada pela mestria da mesa.",
   "notification_rating_received": "{table} recebeu uma nova avaliação.",
+  "notification_badge_earned": "Uma conquista nova chegou ao seu perfil.",
   "notification_rating_prompt": "A sessão de {table} terminou. Que tal deixar uma avaliação?",
   "notification_catalog_suggestion_approved": "Sua sugestão “{name}” foi aprovada no catálogo.",
   "notification_catalog_suggestion_merged": "Sua sugestão “{name}” foi unida a “{into}”, que já existia.",
