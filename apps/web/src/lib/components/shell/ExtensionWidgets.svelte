@@ -45,20 +45,27 @@
       : undefined,
   );
 
+  // An answered widget (a vote, "Agora não") never comes back: the page shows what the answer
+  // returned, and every other page's cached list drops it, so it does not reappear on the way back.
   function answered(ext: string, id: string, next: WidgetPayload | null) {
-    client.setQueryData<WidgetsResponse>(
-      key,
-      (current) =>
-        current && {
-          widgets: current.widgets.flatMap((entry) =>
-            entry.ext !== ext || entry.widget.id !== id
-              ? [entry]
-              : next
-                ? [{ ext, widget: next }]
-                : [],
-          ),
-        },
+    const update = (current: WidgetsResponse | undefined, keep: WidgetPayload | null) =>
+      current && {
+        widgets: current.widgets.flatMap((entry) =>
+          entry.ext !== ext || entry.widget.id !== id
+            ? [entry]
+            : keep
+              ? [{ ext, widget: keep }]
+              : [],
+        ),
+      };
+    client.setQueriesData<WidgetsResponse>(
+      {
+        queryKey: widgetsKey(null).slice(0, 1),
+        predicate: (query) => query.queryKey[1] !== routeId,
+      },
+      (current) => update(current, null),
     );
+    client.setQueryData<WidgetsResponse>(key, (current) => update(current, next));
   }
 </script>
 
