@@ -1,5 +1,6 @@
 <script lang="ts">
   import UserLink from '#lib/components/UserLink.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import ActionForm from './ActionForm.svelte';
   import NextSession from './NextSession.svelte';
@@ -24,14 +25,9 @@
 <article class="rounded-lg border border-surface-200-800 bg-panel p-6">
   <p class="flex flex-wrap items-center gap-2 text-sm">
     {#if item.status === 'pending'}
-      <span
-        class="chip h-6 rounded-full bg-warning-status px-3 text-xs font-semibold text-surface-50-950"
-        >{m.dash_waiting()}</span
-      >
+      <Pill tone="warning">{m.dash_waiting()}</Pill>
     {:else}
-      <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
-        {m.dash_you_have_seat()}
-      </span>
+      <Pill>{m.dash_you_have_seat()}</Pill>
     {/if}
     <span class="font-semibold text-muted">{item.systemName}</span>
   </p>

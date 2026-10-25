@@ -2,6 +2,7 @@
   import { copyText } from '#lib/clipboard.js';
   import TextArea from '#lib/components/TextArea.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import RichText from '#lib/components/RichText.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
@@ -139,9 +140,7 @@
   <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-3 lg:gap-16">
     <div class="min-w-0 lg:col-span-2">
       <p class="flex flex-wrap items-center gap-3">
-        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
-          {kindLabel(table.kind)}
-        </span>
+        <Pill>{kindLabel(table.kind)}</Pill>
         <a
           href="/t?system={encodeURIComponent(table.system.slug)}"
           class="font-semibold text-link underline decoration-2 underline-offset-4"

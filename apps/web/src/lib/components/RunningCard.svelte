@@ -1,5 +1,6 @@
 <script lang="ts">
   import UserLink from '#lib/components/UserLink.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import type { TableStatus } from '#lib/tables/status.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -47,9 +48,7 @@
 >
   <p class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
     {#if item.tableStatus === 'draft'}
-      <span class="chip h-6 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
-        >{m.table_status_draft()}</span
-      >
+      <Pill tone="outline">{m.table_status_draft()}</Pill>
     {/if}
     <span class="ml-auto"
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span

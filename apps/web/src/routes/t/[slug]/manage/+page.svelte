@@ -4,6 +4,7 @@
   import GmRating from '#lib/components/GmRating.svelte';
   import UserText from '#lib/components/UserText.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
@@ -169,9 +170,7 @@
   />
 
   <p class="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
-    <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"
-      >{m.manage_you_are_gm()}</span
-    >
+    <Pill>{m.manage_you_are_gm()}</Pill>
     <span class="font-semibold text-muted">{table.system.name} · {kindLabel(table.kind)}</span>
   </p>
   <div class="mt-3 flex items-start justify-between gap-3">

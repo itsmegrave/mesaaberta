@@ -4,6 +4,7 @@
   import { pageQuery } from '#lib/query/page.svelte.js';
   import SeatDots from '#lib/components/SeatDots.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
   import TableIllustration from '#lib/components/TableIllustration.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -204,9 +205,7 @@
       class="mt-6 flex flex-col gap-3 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:mt-auto md:p-6"
     >
       <div class="flex items-center justify-between gap-3">
-        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"
-          >Você tem uma vaga</span
-        >
+        <Pill>Você tem uma vaga</Pill>
         <span
           class="chip h-6 gap-1 rounded-lg border border-surface-200-800 bg-panel px-2 text-xs font-semibold"
         >
@@ -289,10 +288,7 @@
           <span class="block text-sm font-semibold text-muted">Urban Shadows 2e</span>
           <span class="text-lg font-semibold md:text-xl">Noites de Neon</span>
         </span>
-        <span
-          class="chip h-6 shrink-0 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
-          >Campanha</span
-        >
+        <Pill tone="outline" class="shrink-0">Campanha</Pill>
       </div>
       <div class="flex items-center gap-3">
         <SeatDots taken={3} capacity={5} />
