@@ -143,7 +143,7 @@ export const flagDefaults = {
   // owner's progress and hide toggle on the profile, the bell notice and the feed filter, and the
   // unread count of those notices. Badges are still earned and stored quietly, so turning it on
   // starts with the history already in place. Targeted by the person's id (profile and bell agree).
-  api_badges: false,
+  use_badges: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

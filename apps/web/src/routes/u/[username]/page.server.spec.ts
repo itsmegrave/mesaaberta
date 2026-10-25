@@ -47,7 +47,7 @@ describe('the public profile route', () => {
     const { showBadges } = vi.mocked(publicProfile).mock.calls[0][2]!;
 
     await expect(showBadges!({ id: 'p1', isAdmin: false })).resolves.toBe(true);
-    expect(isEnabled).toHaveBeenCalledWith('api_badges', { id: 'p1', isAdmin: false });
+    expect(isEnabled).toHaveBeenCalledWith('use_badges', { id: 'p1', isAdmin: false });
   });
   it('shows the owner the page as a visitor sees it with ?as=visitor, and only the owner', async () => {
     const owned = { ...result, isOwner: true };

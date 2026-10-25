@@ -53,7 +53,7 @@ export async function publicProfile(
     now?: Date;
     supabaseUrl?: string;
     viewerId?: string | null;
-    /** Whether this profile shows its badges (the `api_badges` rollout). Omitted: it does not. */
+    /** Whether this profile shows its badges (the `use_badges` rollout). Omitted: it does not. */
     showBadges?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
   } = {},
 ) {
