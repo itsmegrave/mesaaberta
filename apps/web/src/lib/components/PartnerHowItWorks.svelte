@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   // "Como funciona": the three steps of the link exchange, our link to copy and the button to send a
   // partner. The partner is listed after an admin approves it, and the note says what can take it off.
   import Icon from '#lib/components/Icon.svelte';
@@ -8,7 +9,6 @@
 
   // The address a partner puts on their site, bio or Discord: the "troca de links" (link exchange).
   const ourLink = $derived(appPage.data.site?.APP_ORIGIN ?? '');
-  import { toast } from '#lib/toaster.js';
 
   const steps = $derived([
     { title: m.partner_step1_title(), text: m.partner_step1_text() },
@@ -16,13 +16,8 @@
     { title: m.partner_step3_title(), text: m.partner_step3_text() },
   ]);
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(ourLink);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copy() {
+    return copyText(ourLink, m.toast_link_copied());
   }
 </script>
 

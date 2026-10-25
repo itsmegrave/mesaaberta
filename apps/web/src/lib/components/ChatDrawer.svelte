@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import Button from '#lib/components/Button.svelte';
   import { onMount, tick } from 'svelte';
   import { Dialog, Portal, Tabs } from '@skeletonlabs/skeleton-svelte';
@@ -158,13 +159,7 @@
                         class="btn h-12 gap-2 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
                       >
                         {label}
-                        {#if count > 0}
-                          <span
-                            aria-hidden="true"
-                            class="badge min-w-6 rounded-full preset-filled-error-500 px-1 text-xs font-bold"
-                            >{count > 9 ? '9+' : count}</span
-                          >
-                        {/if}
+                        <CountBadge {count} tone="error" aria-hidden="true" class="min-w-6 px-1" />
                       </Tabs.Trigger>
                     {/each}
                   </Tabs.List>

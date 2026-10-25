@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   // The admin's sections as a column beside the content, in groups, with what waits on an admin
   // counted beside them. Phones have no column: the page head holds the "Seção: …" menu instead.
   import Icon from '#lib/components/Icon.svelte';
@@ -40,12 +41,7 @@
             >
               <Icon name={section.icon} size={20} class="shrink-0 text-muted" />
               <span class="min-w-0 flex-1 truncate">{section.label}</span>
-              {#if section.count}
-                <span
-                  class="badge min-w-6 rounded-full preset-filled-warning-500 px-1 text-xs font-bold tabular-nums"
-                  >{section.count > 99 ? '99+' : section.count}</span
-                >
-              {/if}
+              <CountBadge count={section.count ?? 0} max={99} class="min-w-6 px-1" />
             </a>
             {#if here}
               <!-- The bar of the current section, on the left edge of its item. -->

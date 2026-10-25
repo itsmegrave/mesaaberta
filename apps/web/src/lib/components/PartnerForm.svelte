@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   // "Quero ser parceiro" and "Editar parceiro": the same form. Name and a line about the partner,
   // the logo, the links (the site and up to six networks), where the link to Mesa Aberta is, and an
   // optional coupon. A preview card sits beside it (below it on a phone). An admin approves what is
@@ -189,13 +190,8 @@
     }),
   });
 
-  async function copyOurLink() {
-    try {
-      await navigator.clipboard.writeText(ourLink);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyOurLink() {
+    return copyText(ourLink, m.toast_link_copied());
   }
 
   const input = 'input h-12 rounded-lg border-surface-200-800 bg-panel px-3';

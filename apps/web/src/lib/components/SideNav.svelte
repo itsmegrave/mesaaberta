@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import Button from '#lib/components/Button.svelte';
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
@@ -130,12 +131,7 @@
 {/snippet}
 
 {#snippet count(value: number, label: string, placed: string)}
-  <span
-    aria-label={label}
-    class="badge rounded-full preset-filled-warning-500 text-xs font-bold {placed}"
-  >
-    {value > 9 ? '9+' : value}
-  </span>
+  <CountBadge count={value} aria-label={label} class={placed} />
 {/snippet}
 
 <Navigation

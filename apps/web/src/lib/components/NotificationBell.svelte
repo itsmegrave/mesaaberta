@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
   import Icon from '#lib/components/Icon.svelte';
@@ -65,15 +66,12 @@
       >{/if}
     {#if unread > 0}
       <!-- Counts are warning, never danger: they mean "needs attention", not an error. -->
-      <span
+      <CountBadge
+        count={unread}
         data-testid="notification-count"
         aria-hidden="true"
-        class="badge rounded-full preset-filled-warning-500 text-xs font-bold {labelled
-          ? 'h-5.5 min-w-5.5 px-1.5'
-          : 'absolute top-0 right-0 h-4 min-w-4 px-1'}"
-      >
-        {unread > 9 ? '9+' : unread}
-      </span>
+        class={labelled ? 'h-5.5 min-w-5.5 px-1.5' : 'absolute top-0 right-0 h-4 min-w-4 px-1'}
+      />
     {/if}
   </Popover.Trigger>
 

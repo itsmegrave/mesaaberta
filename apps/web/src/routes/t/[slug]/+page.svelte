@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import TextArea from '#lib/components/TextArea.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
@@ -90,13 +91,8 @@
   // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
   let disableOpen = $state(false);
   let reportOpen = $state(false);
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(new URL(`/t/${table.slug}`, page.url.origin).href);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyLink() {
+    return copyText(new URL(`/t/${table.slug}`, page.url.origin).href, m.toast_link_copied());
   }
   const menu = $derived.by(() => {
     const items: KebabItem[] = [];

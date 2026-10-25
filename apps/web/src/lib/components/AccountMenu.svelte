@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import Form from '#lib/components/Form.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
@@ -35,7 +36,6 @@
   const unreadLabel = $derived(
     messagesUnread > 0 ? `, ${m.account_menu_unread({ count: messagesUnread })}` : '',
   );
-  const shownCount = $derived(messagesUnread > 9 ? '9+' : String(messagesUnread));
   const item =
     'btn hover:preset-tonal flex h-12 w-full items-center justify-start gap-3 rounded-lg px-3 text-left text-base font-semibold';
 </script>
@@ -69,14 +69,11 @@
           {/if}
         </span>
       {/if}
-      {#if messagesUnread > 0}
-        <span
-          aria-hidden="true"
-          class="badge rounded-full preset-filled-warning-500 text-xs font-bold {wide
-            ? 'h-5.5 min-w-5.5 px-1.5'
-            : 'absolute top-0 right-0 h-4 min-w-4 px-1'}">{shownCount}</span
-        >
-      {/if}
+      <CountBadge
+        count={messagesUnread}
+        aria-hidden="true"
+        class={wide ? 'h-5.5 min-w-5.5 px-1.5' : 'absolute top-0 right-0 h-4 min-w-4 px-1'}
+      />
       <svg
         width="16"
         height="16"
@@ -115,15 +112,12 @@
             >
               <Icon name="game-icons:scroll-quill" size={20} />
               {m.messages_menu()}
-              {#if messagesUnread > 0}
-                <span
-                  data-testid="messages-count"
-                  aria-hidden="true"
-                  class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 font-bold"
-                >
-                  {messagesUnread > 9 ? '9+' : messagesUnread}
-                </span>
-              {/if}
+              <CountBadge
+                count={messagesUnread}
+                data-testid="messages-count"
+                aria-hidden="true"
+                class="ml-auto min-w-6 px-1"
+              />
             </a>
 
             <Form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>

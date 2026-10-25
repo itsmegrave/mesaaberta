@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
@@ -14,7 +15,6 @@
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import { PROFILE_STANDINGS } from '@mesaaberta/core/profile/standing';
-  import { toast } from '#lib/toaster.js';
   import type { AdminProfilesView } from '#lib/server/reads/admin-users.js';
 
   let { data: serverData } = $props();
@@ -42,13 +42,8 @@
   const nameOf = (row: Profile) =>
     row.username ? `@${row.username}` : m.admin_profile_no_username();
   const detailsHref = (id: string) => `/admin/users/${id}?${current.url.searchParams}`;
-  async function copyId(id: string) {
-    try {
-      await navigator.clipboard.writeText(id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId(id: string) {
+    return copyText(id, m.toast_id_copied());
   }
   const menuOf = (row: Profile): KebabItem[] => [
     { id: 'details', label: m.admin_menu_details(), icon: 'eye', href: detailsHref(row.id) },

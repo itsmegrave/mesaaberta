@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import GmRating from '#lib/components/GmRating.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
@@ -16,7 +17,6 @@
     TABLE_REPORTS_WARNING,
   } from '@mesaaberta/core/moderation/reports';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { toast } from '#lib/toaster.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -52,13 +52,8 @@
       : m.admin_user_meaning_closed();
   });
 
-  async function copyId() {
-    try {
-      await navigator.clipboard.writeText(data.user.id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId() {
+    return copyText(data.user.id, m.toast_id_copied());
   }
   // The title's "3 dots": the user's public page, their ID, and the decisions (each asks first).
   let suspending = $state(false);

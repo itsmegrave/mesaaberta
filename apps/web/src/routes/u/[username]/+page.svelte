@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import UserLink from '#lib/components/UserLink.svelte';
   import { page } from '$app/state';
   import Avatar from '#lib/components/Avatar.svelte';
@@ -10,7 +11,6 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
-  import { toast } from '#lib/toaster.js';
   import { pageHref } from '#lib/admin/page-href.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
@@ -27,13 +27,8 @@
   const chip =
     'inline-flex h-10 max-w-full items-center gap-2 rounded-lg border border-surface-200-800 px-3 text-sm font-semibold text-surface-950-50';
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(data.canonical);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyLink() {
+    return copyText(data.canonical, m.toast_link_copied());
   }
   const menu = $derived.by(() => {
     const items: KebabItem[] = [

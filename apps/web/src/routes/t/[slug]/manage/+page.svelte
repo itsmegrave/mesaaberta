@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import UserText from '#lib/components/UserText.svelte';
@@ -13,7 +14,6 @@
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import { page } from '$app/state';
-  import { toast } from '#lib/toaster.js';
   import Chair from '#lib/components/Chair.svelte';
   import SeatDots from '#lib/components/SeatDots.svelte';
   import SessionConfirmation from '#lib/components/SessionConfirmation.svelte';
@@ -51,13 +51,8 @@
   // The "3 dots": beside the title for the table, on each player's row for that player.
   let disableOpen = $state(false);
   let removing = $state<{ playerId: string; username: string | null } | null>(null);
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(new URL(tablePage, page.url.origin).href);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyLink() {
+    return copyText(new URL(tablePage, page.url.origin).href, m.toast_link_copied());
   }
   const tableMenu = $derived.by(() => {
     const items: KebabItem[] = [

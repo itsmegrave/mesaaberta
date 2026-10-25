@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import Icon from '#lib/components/Icon.svelte';
@@ -21,7 +22,6 @@
     PARTNER_BACKLINK_FILTERS,
   } from '@mesaaberta/core/partners/admin-filters';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
-  import { toast } from '#lib/toaster.js';
   import type { AdminPartners } from '@mesaaberta/core/server/partners/admin';
 
   type Row = AdminPartners['rows'][number] & { logo: string | null };
@@ -54,13 +54,8 @@
     ...row.links,
   ];
 
-  async function copyId(row: Row) {
-    try {
-      await navigator.clipboard.writeText(row.id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId(row: Row) {
+    return copyText(row.id, m.toast_id_copied());
   }
   const items = (row: Row): KebabItem[] => [
     ...(!row.removedAt && !row.approvedAt

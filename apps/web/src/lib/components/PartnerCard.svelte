@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   // One partner of the "Parceiros" page: the logo, the name, an optional line about them, the coupon
   // they give Mesa Aberta members (if any) and one icon per link. Every icon is a link of its own
   // that opens in a new tab and says so. The card does not say who sent it: only admins see that.
@@ -8,7 +9,6 @@
 
   import type { Network } from '@mesaaberta/core/profile/social-links';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
-  import { toast } from '#lib/toaster.js';
 
   type Partner = {
     id: string;
@@ -43,13 +43,8 @@
     ...partner.links,
   ]);
 
-  async function copy(text: string, done: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(done);
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copy(text: string, done: string) {
+    return copyText(text, done);
   }
 
   const items = $derived<KebabItem[]>([

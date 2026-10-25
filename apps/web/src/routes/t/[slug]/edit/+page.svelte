@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
@@ -31,13 +32,8 @@
   guardDraft(controller);
 
   const tablePage = $derived(`/t/${data.slug}`);
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(new URL(tablePage, page.url.origin).href);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyLink() {
+    return copyText(new URL(tablePage, page.url.origin).href, m.toast_link_copied());
   }
   const menu = $derived.by(() => {
     const items: KebabItem[] = [

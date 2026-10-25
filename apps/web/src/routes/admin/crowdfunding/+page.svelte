@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import ListCard from '#lib/components/admin/ListCard.svelte';
@@ -19,7 +20,6 @@
   } from '@mesaaberta/core/moderation/reports';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
-  import { toast } from '#lib/toaster.js';
   import type { AdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
 
   type Row = AdminCrowdfundings['rows'][number] & { cover: string | null };
@@ -39,13 +39,8 @@
   let removing = $state<Row | null>(null);
   const badge = (row: Row) =>
     (row.removedAt ? 'crowdfunding:removed' : `crowdfunding:${phaseOf(row)}`) as Status;
-  async function copyId(row: Row) {
-    try {
-      await navigator.clipboard.writeText(row.id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId(row: Row) {
+    return copyText(row.id, m.toast_id_copied());
   }
   const items = (row: Row): KebabItem[] => [
     {

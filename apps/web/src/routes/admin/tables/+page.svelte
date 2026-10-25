@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '#lib/clipboard.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
@@ -22,7 +23,6 @@
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '@mesaaberta/core/moderation/reports';
-  import { toast } from '#lib/toaster.js';
   import { TABLE_STATUSES } from '@mesaaberta/core/tables/status-values';
   import type { AdminTablesView } from '#lib/server/reads/admin-tables.js';
 
@@ -47,13 +47,8 @@
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
   let closing = $state<Row | null>(null);
   const href = (row: Row) => `/t/${row.slug}`;
-  async function copyLink(row: Row) {
-    try {
-      await navigator.clipboard.writeText(new URL(href(row), current.url.origin).href);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyLink(row: Row) {
+    return copyText(new URL(href(row), current.url.origin).href, m.toast_link_copied());
   }
   const canPublish = (row: Row) =>
     data.instagramAvailable &&

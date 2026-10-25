@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { page } from '$app/state';
   import { m } from '#lib/paraglide/messages.js';
@@ -113,14 +114,11 @@
           : 'bg-transparent'}"
       >
         <Icon name="game-icons:black-knight-helm" size={22} />
-        {#if pendingSuggestionsCount > 0}
-          <span
-            aria-hidden="true"
-            class="absolute -top-1 right-1 badge h-4 min-w-4 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
-          >
-            {pendingSuggestionsCount > 9 ? '9+' : pendingSuggestionsCount}
-          </span>
-        {/if}
+        <CountBadge
+          count={pendingSuggestionsCount}
+          aria-hidden="true"
+          class="absolute -top-1 right-1 h-4 min-w-4 px-1"
+        />
       </span>
       {m.nav_admin()}
     </a>
