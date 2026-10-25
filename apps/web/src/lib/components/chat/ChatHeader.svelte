@@ -55,7 +55,7 @@
       <a
         href={`/u/${encodeURIComponent(conversation.other.username)}`}
         aria-current="page"
-        class="flex min-w-0 items-center gap-2 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-primary-500"
+        class="flex min-w-0 items-center gap-2 rounded-sm hover:underline focus-visible:outline-4 focus-visible:outline-primary-500"
       >
         {@render identity()}
       </a>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { m } from '#lib/paraglide/messages.js';
-import { dateBox, kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from './format';
+import { dateBox, kindLabel, scheduleLabel, seatsLeftLabel } from './format';
 
 describe('kindLabel', () => {
   it('names each kind', () => {
@@ -31,15 +31,6 @@ describe('seatsLeftLabel', () => {
   it('says the table is full at zero', () => {
     expect(seatsLeftLabel(0)).toBe('Mesa cheia');
     expect(seatsLeftLabel(2)).toBe(m.table_seats_left({ count: 2 }));
-  });
-});
-
-describe('minPlayersLabel', () => {
-  it('says whether the confirmed seats reach the minimum', () => {
-    expect(minPlayersLabel(3, 3)).toBe(`${m.table_min_players({ count: 3 })} · Mínimo atingido`);
-    expect(minPlayersLabel(3, 1)).toBe(
-      `${m.table_min_players({ count: 3 })} · ${m.table_min_players_missing({ count: 2 })}`,
-    );
   });
 });
 

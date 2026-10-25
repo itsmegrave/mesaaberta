@@ -22,7 +22,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await playerPage.goto(`/t/${slug}`);
   // The floating chat mounts after hydration; wait before opening the client-side menu.
   await expect(playerPage.getByRole('button', { name: 'Abrir chat' })).toBeVisible();
-  await chooseFromMenu(playerPage, 'Mandar mensagem ao mestre');
+  await chooseFromMenu(playerPage, 'Mandar mensagem para quem mestra');
   await expect(playerPage).toHaveURL(/\/m\/[0-9a-f-]+/);
   await playerPage.getByRole('textbox', { name: 'Mensagem' }).fill('Ainda tem vaga?');
   await playerPage.keyboard.press('Enter');
@@ -103,7 +103,9 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
   await gmSession.context.close();
 });
 
-test('turning direct messages off hides "Mandar mensagem ao mestre"', async ({ browser }) => {
+test('turning direct messages off hides "Mandar mensagem para quem mestra"', async ({
+  browser,
+}) => {
   const gm = await createUser('Mestre Caio');
   const gmSession = await asUser(browser, gm);
   const slug = await createTable(gmSession.page, { title: uniqueTitle('Mesa') });
@@ -119,7 +121,7 @@ test('turning direct messages off hides "Mandar mensagem ao mestre"', async ({ b
   await pageMenu(playerSession.page).click();
   await expect(playerSession.page.getByRole('menuitem', { name: 'Copiar link' })).toBeVisible();
   await expect(
-    playerSession.page.getByRole('menuitem', { name: 'Mandar mensagem ao mestre' }),
+    playerSession.page.getByRole('menuitem', { name: 'Mandar mensagem para quem mestra' }),
   ).toHaveCount(0);
 
   await playerSession.context.close();

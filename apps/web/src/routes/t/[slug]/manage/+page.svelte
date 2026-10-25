@@ -29,7 +29,8 @@
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { formatHours } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
   import { onMount } from 'svelte';
 
   let { data: serverData, form: result } = $props();
@@ -63,10 +64,27 @@
   const tableMenu = $derived.by(() => {
     const items: KebabItem[] = [
       ...(data.canEdit
-        ? [{ id: 'edit', label: m.table_edit(), icon: 'square-pen' as const, href: editPage }]
+        ? [
+            {
+              id: 'edit',
+              label: table.status === 'draft' ? m.menu_edit_draft() : m.table_edit(),
+              icon: 'square-pen' as const,
+              href: editPage,
+            },
+          ]
+        : []),
+      ...(data.canDuplicate
+        ? [
+            {
+              id: 'duplicate',
+              label: m.table_duplicate(),
+              icon: 'copy' as const,
+              href: `/t/new?duplicate=${encodeURIComponent(table.slug)}`,
+            },
+          ]
         : []),
       { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
-      { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
+      { id: 'copy', label: m.menu_copy_link(), icon: 'link', onselect: copyLink },
     ];
     if (
       data.canEnd &&
@@ -223,13 +241,6 @@
           >{m.table_edit()}</a
         >
       {/if}
-      {#if data.canDuplicate}
-        <a
-          href={`/t/new?duplicate=${encodeURIComponent(table.slug)}`}
-          class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
-          >{m.table_duplicate()}</a
-        >
-      {/if}
     </nav>
     <a href={tablePage} class="hidden link-underline font-semibold sm:inline"
       >{m.manage_view_page()}</a
@@ -352,7 +363,7 @@
           ><SeatDots {taken} capacity={table.capacity} />
         </p>
         {#if table.minPlayers}
-          <p class="mt-2 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
+          <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
         {/if}
         <ul class="mt-3">
           <RosterRow

@@ -54,7 +54,7 @@
         <code class="min-w-0 truncate font-mono text-sm">{ourLink}</code>
         <button
           type="button"
-          class="btn h-11 shrink-0 gap-2 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal"
+          class="btn h-11 shrink-0 gap-2 rounded-lg btn-secondary px-3 font-semibold"
           onclick={() => void copy()}
         >
           <Icon name="copy" size={18} />{m.partner_copy()}

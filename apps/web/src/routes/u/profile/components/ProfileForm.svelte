@@ -136,9 +136,9 @@
     slug: option,
   }));
 
-  const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
+  const input = 'input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
   const secondary =
-    'btn h-12 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
+    'btn h-12 min-w-11 rounded-lg btn-secondary px-3 font-semibold disabled:opacity-50';
 
   const ERRORS: Record<string, () => string> = {
     required: m.profile_error_required,
@@ -332,7 +332,7 @@
           rows={4}
           maxlength={PROFILE_LIMITS.bio}
           bind:value={$draft.bio}
-          class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
+          class="textarea w-full rounded-lg border-control border-ink-muted bg-panel p-3"
           {...aria}
         />
       {/snippet}

@@ -61,8 +61,7 @@
     hint: m.moderation_note_hint({ max: RESOLUTION_NOTE_MAX }),
   };
 
-  const ghost =
-    'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
+  const ghost = 'btn h-12 w-full rounded-lg btn-secondary px-4 font-semibold';
   const primary = 'btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const danger =
     'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';

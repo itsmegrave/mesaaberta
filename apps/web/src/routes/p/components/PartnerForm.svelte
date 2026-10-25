@@ -159,9 +159,8 @@
     return copyText(ourLink, m.toast_link_copied());
   }
 
-  const input = 'input h-12 rounded-lg border-surface-200-800 bg-panel px-3';
-  const secondary =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
+  const input = 'input h-13 rounded-lg border-control border-ink-muted bg-panel px-3';
+  const secondary = 'btn h-11 rounded-lg btn-secondary px-4 font-semibold';
 </script>
 
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its

@@ -86,8 +86,7 @@
 
   const accept = IMAGE_TYPES.join(',');
   const avatar = $derived(kind === 'avatar');
-  const trigger =
-    'btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold hover:preset-tonal sm:w-auto';
+  const trigger = 'btn h-12 w-full gap-2 rounded-lg btn-secondary px-4 font-semibold sm:w-auto';
 </script>
 
 {#if mounted}

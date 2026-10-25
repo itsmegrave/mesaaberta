@@ -17,7 +17,7 @@ test('the GM approves a request and removes a player from the manage page, after
   const { page, context } = await asUser(browser, bruno);
   await page.goto(`/t/${slug}`);
   await page.getByRole('button', { name: 'Pedir vaga' }).click();
-  await page.getByLabel(/Mensagem para o mestre/).fill('Sou o Bruno, nunca joguei Tormenta.');
+  await page.getByLabel(/Mensagem para quem mestra/).fill('Sou o Bruno, nunca joguei Tormenta.');
   await page.getByRole('button', { name: 'Enviar pedido' }).click();
   await expect(page.getByText(/pedido/i).first()).toBeVisible();
 
@@ -34,7 +34,7 @@ test('the GM approves a request and removes a player from the manage page, after
   const trail = gmPage.getByRole('navigation', { name: 'Trilha de navegação' });
   await expect(trail.getByRole('link', { name: 'Minhas mesas' })).toBeVisible();
   await expect(trail.getByRole('link', { name: title })).toHaveAttribute('href', `/t/${slug}`);
-  await expect(trail.getByText('Jogadores e pedidos')).toHaveAttribute('aria-current', 'page');
+  await expect(trail.getByText('Participantes e pedidos')).toHaveAttribute('aria-current', 'page');
 
   const requests = gmPage.getByRole('region', { name: 'Pedidos de vaga' });
   await expect(requests.getByRole('link', { name: `@${bruno.username}` })).toBeVisible();

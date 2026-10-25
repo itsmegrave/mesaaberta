@@ -68,7 +68,7 @@ describe('admin overview', () => {
 
     await expect.element(page.getByText('Vagas confirmadas')).toBeVisible();
     await expect.element(page.getByText('Todas ativas')).toBeVisible();
-    await expect.element(page.getByText('Nenhum pedido esperando o mestre')).toBeVisible();
+    await expect.element(page.getByText('Nenhum pedido esperando resposta')).toBeVisible();
   });
 
   it('counts the events in the queue and the ones that failed', async () => {

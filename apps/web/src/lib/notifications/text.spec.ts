@@ -68,6 +68,25 @@ describe('notificationText', () => {
     );
   });
 
+  it('reminds of a session with its start in the viewer timezone', () => {
+    const base = { tableId: 't', slug: 'mesa', title: 'Mesa do Dragão' };
+    const reminder = (metadata: Record<string, string>) =>
+      shown({ type: 'session_reminder', metadata: { ...base, ...metadata } });
+    expect(
+      notificationText(
+        reminder({ startsAt: '2026-10-10T22:00:00.000Z', window: '24h' }),
+        'America/Sao_Paulo',
+      ),
+    ).toMatch(/^Lembrete: a sessão de Mesa do Dragão é sábado, 10 de outubro.+19:00 GMT-3\.$/);
+    expect(
+      notificationText(
+        reminder({ startsAt: '2026-10-10T22:00:00.000Z', window: '1h' }),
+        'Europe/Lisbon',
+      ),
+    ).toMatch(/^A sessão de Mesa do Dragão começa em menos de uma hora: .+23:00 GMT\+1\.$/);
+    expect(notificationText(reminder({}))).toBe('A sessão de Mesa do Dragão está chegando.');
+  });
+
   it('says someone when the account behind it is gone', () => {
     expect(notificationText(shown({ type: 'player_left' }))).toBe('Alguém saiu de Mesa do Dragão.');
   });

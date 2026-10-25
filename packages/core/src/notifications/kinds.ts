@@ -100,7 +100,8 @@ export const isNotificationType = (type: string): type is NotificationType =>
 /**
  * What a table notification carries in `metadata`: enough to word it and link to the table. A
  * change notice also says which fields changed (`changed`, comma-separated) and, when the start
- * moved, the old and new start as ISO times, so each viewer reads them in their own timezone.
+ * moved, the old and new start as ISO times, so each viewer reads them in their own timezone. A
+ * session reminder carries the start the same way, and which one it is (`24h` or `1h` before).
  */
 export type TableMetadata = {
   tableId: string;
@@ -109,6 +110,8 @@ export type TableMetadata = {
   changed?: string;
   startsAtFrom?: string;
   startsAtTo?: string;
+  startsAt?: string;
+  window?: '24h' | '1h';
 };
 
 /** The fields a change notice names, in the order it names them. Only what players see. */

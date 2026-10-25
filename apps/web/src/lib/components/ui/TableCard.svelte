@@ -168,9 +168,12 @@
       </a>
     </h3>
 
-    <div class="mt-2 flex flex-wrap items-center gap-x-3 text-sm leading-normal text-muted">
-      <span>{m.table_gm()}: <UserLink username={table.gmName} /></span>
-      {#if table.gmRating}<GmRating rating={table.gmRating} />{/if}
+    <!-- Who runs it and the rating, with no "Mestre:" prefix; the label is for screen readers. -->
+    <div class="mt-2 flex flex-wrap items-center gap-x-2 text-sm leading-normal">
+      <span class="font-semibold"
+        ><span class="sr-only">{m.table_gm()}: </span><UserLink username={table.gmName} /></span
+      >
+      {#if table.gmRating}<GmRating rating={table.gmRating} variant="short" />{/if}
     </div>
 
     {#if table.modality}

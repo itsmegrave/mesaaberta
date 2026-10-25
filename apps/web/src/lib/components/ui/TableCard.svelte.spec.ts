@@ -29,7 +29,9 @@ describe('TableCard', () => {
 
     await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
     await expect.element(page.getByText('One-shot')).toBeVisible();
-    await expect.element(page.getByText('Quem mestra: @Mestre Ana')).toBeVisible();
+    // No "Mestre:" prefix: the handle stands alone, named for screen readers.
+    await expect.element(page.getByText('@Mestre Ana')).toBeVisible();
+    await expect.element(page.getByText('Mestre:')).not.toBeInTheDocument();
     await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeInTheDocument();
   });
 

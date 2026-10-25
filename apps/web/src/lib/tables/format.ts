@@ -28,14 +28,6 @@ export function scheduleLabel(kind: TableKind, everyWeeks: number | null): strin
 export const seatsLeftLabel = (seatsLeft: number): string =>
   seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: seatsLeft });
 
-/** The minimum players and whether the confirmed seats reach it. */
-export const minPlayersLabel = (minPlayers: number, taken: number): string =>
-  `${m.table_min_players({ count: minPlayers })} · ${
-    taken >= minPlayers
-      ? m.table_min_players_met()
-      : m.table_min_players_missing({ count: minPlayers - taken })
-  }`;
-
 /** The calendar tile next to the session: "SÁB / 26 / SET" (shown upper case), in `timeZone`. */
 export function dateBox(startsAt: Date, timeZone: string, locale: string) {
   const part = (options: Intl.DateTimeFormatOptions) =>
