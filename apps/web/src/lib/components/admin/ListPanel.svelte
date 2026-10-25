@@ -84,7 +84,7 @@
   <div
     class="flex flex-wrap items-center justify-between gap-4 border-t border-surface-200-800 px-4 py-3"
   >
-    <!-- An empty list already says so above; a table's empty row does not repeat the count. -->
+    <!-- A panel with its own empty state says so above; a table keeps "0 mesas" here. -->
     <p class="text-sm text-muted" aria-live="polite">
       {#if total > 0}{m.admin_list_range({
           from: range.from,

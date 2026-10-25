@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import ListPanel from '#lib/components/admin/ListPanel.svelte';
   import ListSearch from '#lib/components/admin/ListSearch.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import UserText from '#lib/components/UserText.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
-  import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
   import { AUDIT_KINDS, type AuditKind } from '@mesaaberta/core/admin/report-filters';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AuditLog } from '@mesaaberta/core/server/moderation/admin';
@@ -37,9 +35,6 @@
     }
     return groups;
   });
-  const range = $derived(pageRange(data.log.page, data.log.pageSize, data.log.total));
-  const pageLink = (next: number) =>
-    listPath(page.url.pathname, listQuery(page.url.searchParams, { page: next }));
   const filtered = $derived(data.log.kind !== 'all' || !!data.log.query);
   const handle = (username: string | null) =>
     username ? atHandle(username) : m.admin_profile_no_username();
@@ -93,11 +88,18 @@
 <svelte:head><title>{m.admin_audit_title()} | Mesa Aberta</title></svelte:head>
 
 <AdminPage title={m.admin_audit_title()} lede={m.admin_audit_lede()}>
-  <section
-    aria-label={m.admin_audit_title()}
-    class="mt-6 rounded-lg border border-surface-200-800 bg-panel"
+  <ListPanel
+    label={m.admin_audit_title()}
+    class="mt-6"
+    total={data.log.total}
+    totalLabel={m.admin_audit_total({ count: data.log.total })}
+    page={data.log.page}
+    pageSize={data.log.pageSize}
+    pages={data.log.pages}
+    empty={filtered ? m.admin_audit_filtered_empty() : m.admin_audit_empty()}
+    {filtered}
   >
-    <div class="grid gap-3 border-b border-surface-200-800 p-4">
+    {#snippet toolbar()}
       <div class="flex flex-wrap items-center gap-3">
         <ListSearch value={data.log.query} label={m.admin_audit_search()} />
         <p role="status" class="ml-auto text-sm font-semibold text-muted">
@@ -110,64 +112,38 @@
         options={kinds}
         value={data.log.kind}
       />
-    </div>
+    {/snippet}
 
-    {#if data.log.rows.length === 0}
-      <p class="p-6 text-center text-muted" role="status">
-        {filtered ? m.admin_audit_filtered_empty() : m.admin_audit_empty()}
-      </p>
-      {#if filtered}
-        <p class="pb-6 text-center">
-          <a class="inline-flex min-h-11 items-center anchor font-semibold" href={page.url.pathname}
-            >{m.admin_list_clear()}</a
-          >
-        </p>
-      {/if}
-    {:else}
-      {#each days as group (group.day)}
-        <h2 class="bg-surface-wash px-4 py-2 text-sm font-semibold text-muted">{group.day}</h2>
-        <ol class="divide-y divide-surface-200-800">
-          {#each group.rows as entry (entry.id)}
-            <li class="flex min-h-17 items-start gap-4 px-4 py-3">
-              <time
-                datetime={entry.at.toISOString()}
-                class="w-24 shrink-0 pt-0.5 text-sm text-muted tabular-nums"
-                >{timeLabel(entry.at, locale, zone)}</time
-              >
-              <div class="min-w-0 flex-1">
-                <p class="font-semibold wrap-break-word">
-                  <UserText text={entryText(entry)} username={entry.subject} />
-                  {#if entry.reportId}
-                    <a
-                      class="ml-1 anchor text-sm font-normal"
-                      href={`/admin/reports/${entry.reportId}`}>{m.admin_audit_see_report()}</a
-                    >
-                  {/if}
-                </p>
-                <p class="text-sm text-muted">
-                  {#if entry.by}<UserText
-                      text={m.admin_decision_by({ username: entry.by })}
-                      username={entry.by}
-                    />{:else}{m.admin_decision_by_gone()}{/if}
-                </p>
-              </div>
-            </li>
-          {/each}
-        </ol>
-      {/each}
-    {/if}
-
-    <div
-      class="flex flex-wrap items-center justify-between gap-4 border-t border-surface-200-800 px-4 py-3"
-    >
-      <p class="text-sm text-muted" aria-live="polite">
-        {#if data.log.total > 0}{m.admin_list_range({
-            from: range.from,
-            to: range.to,
-            total: m.admin_audit_total({ count: data.log.total }),
-          })}{/if}
-      </p>
-      <Pager page={data.log.page} pages={data.log.pages} href={pageLink} />
-    </div>
-  </section>
+    {#each days as group (group.day)}
+      <h2 class="bg-surface-wash px-4 py-2 text-sm font-semibold text-muted">{group.day}</h2>
+      <ol class="divide-y divide-surface-200-800">
+        {#each group.rows as entry (entry.id)}
+          <li class="flex min-h-17 items-start gap-4 px-4 py-3">
+            <time
+              datetime={entry.at.toISOString()}
+              class="w-24 shrink-0 pt-0.5 text-sm text-muted tabular-nums"
+              >{timeLabel(entry.at, locale, zone)}</time
+            >
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold wrap-break-word">
+                <UserText text={entryText(entry)} username={entry.subject} />
+                {#if entry.reportId}
+                  <a
+                    class="ml-1 anchor text-sm font-normal"
+                    href={`/admin/reports/${entry.reportId}`}>{m.admin_audit_see_report()}</a
+                  >
+                {/if}
+              </p>
+              <p class="text-sm text-muted">
+                {#if entry.by}<UserText
+                    text={m.admin_decision_by({ username: entry.by })}
+                    username={entry.by}
+                  />{:else}{m.admin_decision_by_gone()}{/if}
+              </p>
+            </div>
+          </li>
+        {/each}
+      </ol>
+    {/each}
+  </ListPanel>
 </AdminPage>
