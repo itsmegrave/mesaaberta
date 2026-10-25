@@ -508,11 +508,26 @@ export async function listMessages(
     .orderBy(desc(messages.createdAt), desc(messages.id))
     .limit(limit + 1);
 
+  // When the other person last read a direct conversation, so "Visto" follows the poll.
+  const [other] =
+    conversation.kind === 'direct'
+      ? await db
+          .select({ lastReadAt: conversationMembers.lastReadAt })
+          .from(conversationMembers)
+          .where(
+            and(
+              eq(conversationMembers.conversationId, conversationId),
+              ne(conversationMembers.profileId, actor!.id),
+            ),
+          )
+      : [];
+
   const hasMore = rows.length > limit;
   const page = rows.slice(0, limit).reverse();
   return {
     messages: page.map(({ senderId, ...row }) => ({ ...row, own: senderId === actor!.id })),
     hasMore,
+    otherLastReadAt: other?.lastReadAt ?? null,
   };
 }
 
