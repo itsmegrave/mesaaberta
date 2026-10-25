@@ -23,6 +23,29 @@ describe('public search metadata', () => {
     expect(JSON.stringify(result)).not.toContain('PRIVATE');
     expect(JSON.stringify(result)).not.toContain('<p>');
   });
+  it('preserves angle brackets and literal entities in plain titles, systems and bios', () => {
+    const table = publicMetadata(
+      '/t/angle-brackets',
+      {
+        table: {
+          title: 'Aventura <D&D>',
+          system: { name: 'Fate &amp; friends' },
+          description: '<p>Teste &lt;3 e &lt;strong&gt;literal&lt;/strong&gt;.</p>',
+        },
+      },
+      origin,
+    );
+    expect(table?.title).toContain('Aventura <D&D>');
+    expect(table?.title).toContain('Fate &amp; friends');
+    expect(table?.description).toContain('Teste <3 e <strong>literal</strong>.');
+    const profile = publicMetadata(
+      '/u/ana',
+      { profile: { username: 'ana', bio: 'Gosto de <D&D> &amp; RPGs. <3' } },
+      origin,
+    );
+    expect(profile?.description).toBe('Gosto de <D&D> &amp; RPGs. <3');
+  });
+
   it('shares branded listings, public handles and safe images', () => {
     expect(publicMetadata('/t', {}, origin)?.title).toContain('Mesa Aberta');
     const profile = publicMetadata(

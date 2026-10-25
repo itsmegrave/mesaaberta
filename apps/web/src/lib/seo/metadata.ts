@@ -2,7 +2,7 @@ import { m } from '#lib/paraglide/messages.js';
 import { toPlainText } from '@mesaaberta/core/text/rich';
 
 const text = (value: string, limit = 160) => {
-  const clean = toPlainText(value).replace(/\s+/g, ' ').trim();
+  const clean = value.replace(/\s+/g, ' ').trim();
   return [...clean].length > limit
     ? `${[...clean]
         .slice(0, limit - 1)
@@ -60,7 +60,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     const description = text(
       m.seo_table_description({
         system: text(table.system.name, 60),
-        description: text(table.description ?? '', 160),
+        description: toPlainText(table.description ?? ''),
       }),
     );
     return { title, description, image: imageUrl(table.imageUrl, fallback), type: 'website' };
