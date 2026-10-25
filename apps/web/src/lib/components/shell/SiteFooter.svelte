@@ -26,15 +26,15 @@
 
 <footer class="border-t border-surface-200-800 bg-panel pb-24 md:pb-0">
   <div class="mx-auto w-full max-w-7xl px-5 md:px-8">
-    <div class="grid grid-cols-1 gap-7 pt-8 pb-6 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:py-14">
-      <div class="flex flex-col gap-3 sm:col-span-2 md:col-span-6 md:gap-5">
+    <div class="grid grid-cols-1 gap-4 pt-6 pb-3 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:pt-8 md:pb-5">
+      <div class="flex flex-col gap-1 sm:col-span-2 md:col-span-6 md:gap-2">
         <p class="flex items-center gap-3 text-surface-950-50">
-          <TableLogo size={48} />
-          <span class="font-brand text-2xl font-semibold tracking-wider md:text-3xl"
+          <TableLogo size={32} />
+          <span class="font-brand text-xl font-semibold tracking-wider"
             >Mesa Aberta</span
           >
         </p>
-        <p class="max-w-sm text-base leading-relaxed text-muted">
+        <p class="max-w-sm text-sm leading-relaxed text-muted">
           {m.footer_community()}
           {#each footerNotes as note (note.text)}
             {note.text}
@@ -61,9 +61,9 @@
         {/if}
       </div>
 
-      <div class="flex flex-col gap-0 md:col-span-3 md:gap-4">
+      <div class="flex flex-col gap-0 md:col-span-3 md:gap-2">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_pages()}</h2>
-        <ul class="flex flex-wrap gap-x-5 text-sm md:flex-col md:gap-3">
+        <ul class="flex flex-wrap gap-x-5 text-sm md:gap-x-4 md:gap-y-1">
           {#each pages as item (item.path)}
             <li>
               <a
@@ -78,7 +78,7 @@
         </ul>
       </div>
 
-      <div class="flex flex-col gap-2 md:col-span-3 md:gap-4">
+      <div class="flex flex-col gap-1 md:col-span-3 md:gap-2">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_support()}</h2>
         <a
           href={resolve('/changelog')}
@@ -96,7 +96,7 @@
     </div>
 
     <div
-      class="flex flex-col gap-2 border-t border-surface-200-800 py-5 text-sm leading-relaxed text-muted md:flex-row md:items-center md:justify-between md:gap-8 md:py-6"
+      class="flex flex-col gap-1 border-t border-surface-200-800 py-3 text-sm leading-relaxed text-muted md:flex-row md:items-center md:justify-between md:gap-8"
     >
       <p>
         {m.footer_open_source()}
