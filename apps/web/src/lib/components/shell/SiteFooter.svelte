@@ -80,6 +80,12 @@
 
       <div class="flex flex-col gap-2 md:col-span-3 md:gap-4">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_support()}</h2>
+        <a
+          href={resolve('/changelog')}
+          aria-current={current('/changelog') ? 'page' : undefined}
+          class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
+          >{m.changelog_title()}</a
+        >
         <p class="text-sm leading-relaxed text-muted">
           {m.footer_help()}
           <a href="mailto:{site.CONTACT_EMAIL}" class="{strong} whitespace-nowrap"

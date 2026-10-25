@@ -1,0 +1,222 @@
+[
+  {
+    "date": "2026-10-25",
+    "title": "Um perfil mais seu, uma mesa que continua",
+    "summary": "Escolha uma capa, conte um pouco sobre você e siga com o grupo depois da sessão.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Capa e bio no perfil",
+        "description": "Você pode escolher uma capa e escrever uma bio para quem visita seu perfil.",
+        "href": "/u/profile/edit"
+      },
+      {
+        "kind": "new",
+        "title": "Novidades de volta",
+        "description": "Esta página mostra o que mudou na Mesa Aberta, dia a dia, com filtros por tipo e um link para cada dia."
+      },
+      {
+        "kind": "new",
+        "title": "Presença na sessão",
+        "description": "Depois da sessão, quem mestra marca quem compareceu, e só quem esteve lá avalia a mestragem.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "new",
+        "title": "A mesa continua",
+        "description": "Campanhas e aventuras podem seguir com as mesmas pessoas depois da sessão, com uma avaliação da mestragem por pessoa ao longo da mesa.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Editar perfil em seções",
+        "description": "Um menu separa perfil público, informações pessoais, acesso, mensagens e privacidade para você encontrar o que quer mudar.",
+        "href": "/u/profile/edit"
+      },
+      {
+        "kind": "improved",
+        "title": "Foto e capa em uma janela",
+        "description": "Ao trocar a foto ou a capa do perfil, uma janela reúne o envio da imagem e o ajuste do recorte."
+      },
+      {
+        "kind": "improved",
+        "title": "Cadeiras e marca redesenhadas",
+        "description": "As vagas usam as cadeiras da ilustração do início, e o rodapé reúne os links em Páginas e Suporte."
+      },
+      {
+        "kind": "improved",
+        "title": "Listas mais rápidas",
+        "description": "As listas de mesas, parceiros e financiamentos reaproveitam os resultados recentes para abrir mais rápido."
+      }
+    ]
+  },
+  {
+    "date": "2026-10-23",
+    "title": "Mais tempo para conversar depois da sessão",
+    "summary": "O chat continua aberto depois da sessão, e as mesas concluídas ficam mais claras.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Chat aberto por 30 dias",
+        "description": "Depois que a sessão termina, o chat aceita mensagens por mais 30 dias e então fica só para leitura; em mesas canceladas ou desativadas, ele fecha na hora.",
+        "href": "/m"
+      },
+      {
+        "kind": "fixed",
+        "title": "Edição de mesas concluídas",
+        "description": "A página de participantes deixa de mostrar Editar, e um link antigo de edição explica que a mesa já foi concluída em vez de mostrar um erro."
+      },
+      {
+        "kind": "fixed",
+        "title": "Aviso de acesso negado",
+        "description": "Páginas sem permissão de acesso agora dizem Acesso negado em vez de Algo deu errado."
+      },
+      {
+        "kind": "new",
+        "title": "Sua própria instalação",
+        "description": "Quem quer hospedar a Mesa Aberta pode seguir as instruções do repositório e iniciar a instalação com Docker Compose.",
+        "href": "https://github.com/itsmegrave/mesaaberta#self-hosting-with-docker"
+      }
+    ],
+    "preview": "chat"
+  },
+  {
+    "date": "2026-10-15",
+    "title": "Entre também com uma senha",
+    "summary": "Quem entra com Google ou Discord pode criar uma senha para a mesma conta.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Criar uma senha",
+        "description": "Em Editar perfil, confirme o código de seis dígitos enviado por email e escolha uma senha; as outras sessões da conta são encerradas.",
+        "href": "/u/profile/edit"
+      }
+    ],
+    "preview": "password"
+  },
+  {
+    "date": "2026-10-02",
+    "title": "Seu perfil para compartilhar",
+    "summary": "Seu perfil tem um endereço próprio, que pode ser aberto mesmo sem entrar na conta.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Perfil público",
+        "description": "Compartilhe mesaaberta.app/u/seu-usuario para mostrar sua foto, redes sociais, nota da mestragem e próximas mesas que você organiza."
+      },
+      {
+        "kind": "new",
+        "title": "Mesas no perfil",
+        "description": "Os contadores mostram as mesas concluídas que você mestrou e as que jogou com participação confirmada, contando cada mesa uma vez."
+      }
+    ]
+  },
+  {
+    "date": "2026-10-01",
+    "title": "Mais recursos para organizar sua mesa",
+    "summary": "Defina o mínimo de participantes, formate os textos e acompanhe o que aconteceu depois da sessão.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Mínimo de participantes",
+        "description": "Quem mestra pode definir de uma pessoa até o total de vagas como mínimo, sem cancelar a mesa nem bloquear inscrições se ele não for atingido.",
+        "href": "/t/new"
+      },
+      {
+        "kind": "new",
+        "title": "Texto com formatação",
+        "description": "Descrições, informações extras, instruções e mensagens de boas-vindas aceitam negrito, listas, títulos, citações, código e links."
+      },
+      {
+        "kind": "improved",
+        "title": "Minhas mesas em páginas",
+        "description": "Todas as suas mesas aparecem em páginas de dez, e o aviso de pedidos pendentes leva à mesa certa.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "new",
+        "title": "Denúncias",
+        "description": "Você pode denunciar uma mesa ou alguém com quem divide a mesa sem revelar sua identidade e recebe um aviso quando a moderação analisa o caso."
+      },
+      {
+        "kind": "new",
+        "title": "Confirmar se a sessão aconteceu",
+        "description": "Depois do horário marcado, quem mestra confirma a sessão, informa que ela não aconteceu ou escolhe uma nova data.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Imagens mais leves",
+        "description": "Estamos preparando recortes menores e o reaproveitamento das imagens pelo navegador para agilizar as próximas visitas."
+      }
+    ]
+  },
+  {
+    "date": "2026-09-30",
+    "title": "Converse com o grupo e encontre suas mesas",
+    "summary": "Chegar à mesa, conversar e escolher suas imagens ficou mais fácil.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Mesas de aventura",
+        "description": "Abra uma aventura com várias sessões e informe só a primeira data; o grupo combina as próximas sem uma recorrência fixa.",
+        "href": "/t/new"
+      },
+      {
+        "kind": "new",
+        "title": "Mensagens na plataforma",
+        "description": "Converse no chat da mesa ou mande uma mensagem direta a quem mestra antes de pedir uma vaga.",
+        "href": "/m"
+      },
+      {
+        "kind": "new",
+        "title": "Recorte de fotos e capas",
+        "description": "Enquadre a foto do perfil ou a capa da mesa antes de enviar, com prévia, zoom e controles pelo teclado."
+      },
+      {
+        "kind": "new",
+        "title": "Mesas no Instagram",
+        "description": "Novas mesas públicas geram uma publicação no Instagram da Mesa Aberta, que você acompanha no gerenciamento da mesa."
+      },
+      {
+        "kind": "improved",
+        "title": "Menu lateral no computador",
+        "description": "Mesas, Abrir mesa e Minhas mesas ficam na barra à esquerda, que pode ser expandida e lembra sua escolha."
+      },
+      {
+        "kind": "improved",
+        "title": "Controles do menu reorganizados",
+        "description": "Tema, notificações, administração e perfil ficam separados para facilitar o acesso e evitar opções repetidas."
+      },
+      {
+        "kind": "improved",
+        "title": "Minhas mesas no celular",
+        "description": "As abas Jogando e Mestrando mostram suas contagens, e a lista de participantes pode ser recolhida.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Contagens no singular",
+        "description": "Vagas, mesas, avaliações e contas usam a forma certa para nenhuma, uma ou várias."
+      },
+      {
+        "kind": "fixed",
+        "title": "Envio de mensagens",
+        "description": "As conversas voltaram a enviar mensagens e registrar os avisos de novas mensagens."
+      }
+    ]
+  },
+  {
+    "date": "2026-09-29",
+    "title": "A Mesa Aberta está no ar",
+    "summary": "Um lugar para encontrar pessoas e jogar RPG.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Abra uma mesa ou pegue uma vaga",
+        "description": "Encontre uma mesa de RPG para jogar ou abra a sua para reunir o grupo.",
+        "href": "/t"
+      }
+    ]
+  }
+]

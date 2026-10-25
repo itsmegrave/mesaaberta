@@ -13,6 +13,12 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 See the [README](README.md) for setup and scripts.
 
+## Changelog
+
+User-facing releases are recorded in `apps/web/src/content/changelog.json` and published at `/changelog` (linked under Suporte in the footer). Add changes to the release day, newest first, with a short title and one plain sentence about what changed for the person using the app. Use pt-BR, sentence case and gender-neutral roles (quem mestra, quem joga). Categories are `new`, `improved` and `fixed`; optional links point to the relevant page or instructions. Internal changes, dependency updates and admin-only work stay in GitHub.
+
+Keep one entry per day. The page derives highlights, category counts and pagination from the content. The newest three days are the highlights; give one a `preview` (`chat` or `password`, light and dark captures in `apps/web/static/changelog/`) to show a capture instead of the table illustration. Content is rendered as escaped text, never HTML.
+
 ## Code style
 
 Tabs for indentation and semicolons at the end of statements (YAML is the one exception and uses spaces). Prettier is the only formatter: `prettier.config.js` sets the rules and `.editorconfig` tells editors the same. ESLint checks code quality and never formatting.

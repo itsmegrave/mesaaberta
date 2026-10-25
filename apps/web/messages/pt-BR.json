@@ -2045,5 +2045,48 @@
   "account_about_save": "Salvar",
   "account_danger_zone": "Zona de perigo",
   "upload_sending": "Enviando a imagem…",
-  "public_profile_cover": "Capa do perfil de {username}"
+  "public_profile_cover": "Capa do perfil de {username}",
+  "changelog_title": "Novidades",
+  "changelog_lede": "O que mudou na Mesa Aberta, das mesas às conquistas. As mudanças mais recentes vêm primeiro.",
+  "changelog_description": "Acompanhe os recursos novos, as melhorias e as correções da Mesa Aberta.",
+  "changelog_highlights": "Destaques",
+  "changelog_previous": "Destaque anterior",
+  "changelog_next": "Próximo destaque",
+  "changelog_slide": "Destaque {number}: {title}",
+  "changelog_slide_count": "{current} de {total}",
+  "changelog_read": "Ver o que mudou",
+  "changelog_filter": "Filtrar por tipo",
+  "changelog_all": "Tudo",
+  "changelog_new": "Novo",
+  "changelog_improved": "Melhoria",
+  "changelog_fixed": "Correção",
+  "changelog_improvements": "Melhorias",
+  "changelog_fixes": "Correções",
+  "changelog_latest": "Mais recente",
+  "changelog_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mudança",
+        "count=*": "{count} mudanças"
+      }
+    }
+  ],
+  "changelog_copy": "Copiar link de {date}",
+  "changelog_copy_label": "Copiar link",
+  "changelog_copied": "Link de {date} copiado.",
+  "changelog_copy_failed": "Não deu para copiar o link. Tente de novo.",
+  "changelog_guide": "Como ler esta página",
+  "changelog_new_hint": "Algo que você ainda não podia fazer.",
+  "changelog_improved_hint": "Algo que já existia e ficou mais fácil ou mais rápido.",
+  "changelog_fixed_hint": "Algo que não funcionava como devia e agora funciona.",
+  "changelog_feedback_title": "Sentiu falta de algo?",
+  "changelog_feedback": "Conte o que faria diferença na sua mesa. A Mesa Aberta é open source, e os detalhes técnicos de cada mudança ficam no GitHub.",
+  "changelog_suggest": "Sugerir uma melhoria",
+  "changelog_github": "Ver no GitHub",
+  "changelog_empty": "Ainda não há mudanças deste tipo.",
+  "changelog_details": "Ver detalhes",
+  "changelog_pagination": "Páginas de novidades",
+  "changelog_preview": "Captura da plataforma: {title}"
 }
