@@ -2,21 +2,21 @@
   import TextInput from '#lib/components/TextInput.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import CepLookup from './CepLookup.svelte';
+  import CepLookup from '#lib/components/CepLookup.svelte';
   import FormBanner from '#lib/components/FormBanner.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from './Form.svelte';
+  import Form from '#lib/components/Form.svelte';
   import { NAMELESS } from '@mesaaberta/core/profile/handle';
-  import FormField from './FormField.svelte';
-  import ErrorSummary from './ErrorSummary.svelte';
-  import RichTextField from './RichTextField.svelte';
-  import SearchSelect from './SearchSelect.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import ErrorSummary from '#lib/components/ErrorSummary.svelte';
+  import RichTextField from '#lib/components/RichTextField.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
   import SeatSlider from './SeatSlider.svelte';
-  import DateTimeField from './DateTimeField.svelte';
+  import DateTimeField from '#lib/components/DateTimeField.svelte';
   import SessionPicker from './SessionPicker.svelte';
-  import ImageUpload from './ImageUpload.svelte';
+  import ImageUpload from '#lib/components/ImageUpload.svelte';
   import { errorText, formProblem, type TableFormValues } from '#lib/tables/form-values.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -25,7 +25,7 @@
   import { pickName } from '@mesaaberta/core/tables/catalog';
 
   type CatalogPick = { name: string; slug: string; pending?: true };
-  import TableCard from './TableCard.svelte';
+  import TableCard from '#lib/components/TableCard.svelte';
 
   type Props = {
     controller: ReturnType<typeof actionForm<TableFormValues>>;

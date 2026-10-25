@@ -7,7 +7,7 @@
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { shortDate } from '#lib/admin/format.js';
   import { m } from '#lib/paraglide/messages.js';

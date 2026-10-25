@@ -6,7 +6,7 @@
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import { page } from '$app/state';
-  import TableForm from '#lib/components/TableForm.svelte';
+  import TableForm from '../../components/TableForm.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';

@@ -4,8 +4,8 @@
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import PlayingCard from '#lib/components/PlayingCard.svelte';
-  import RunningCard from '#lib/components/RunningCard.svelte';
+  import PlayingCard from './components/PlayingCard.svelte';
+  import RunningCard from './components/RunningCard.svelte';
   import { page } from '$app/state';
   import { pageHref } from '#lib/admin/page-href.js';
   import Icon from '#lib/components/Icon.svelte';

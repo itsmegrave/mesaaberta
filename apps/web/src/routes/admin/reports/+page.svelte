@@ -6,7 +6,7 @@
   import Media from '#lib/components/admin/Media.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { REPORT_FILTERS, type ReportFilter } from '@mesaaberta/core/admin/report-filters';

@@ -4,7 +4,7 @@
   import { Slider } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
   import { m } from '#lib/paraglide/messages.js';
-  import SeatDots from './SeatDots.svelte';
+  import SeatDots from '#lib/components/SeatDots.svelte';
 
   let {
     id,

@@ -4,7 +4,7 @@
   // takes the last way in. Nothing here is public: no provider shows on the profile.
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import DisconnectProvider from '#lib/components/DisconnectProvider.svelte';
+  import DisconnectProvider from './DisconnectProvider.svelte';
   import ProviderLogo from '#lib/components/ProviderLogo.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import type { Provider } from '@mesaaberta/core/auth/providers';

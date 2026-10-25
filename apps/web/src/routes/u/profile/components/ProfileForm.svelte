@@ -22,10 +22,10 @@
   } from '@mesaaberta/core/profile/schema';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
-  import Form from './Form.svelte';
-  import FormField from './FormField.svelte';
-  import ErrorSummary from './ErrorSummary.svelte';
-  import SearchSelect from './SearchSelect.svelte';
+  import Form from '#lib/components/Form.svelte';
+  import FormField from '#lib/components/FormField.svelte';
+  import ErrorSummary from '#lib/components/ErrorSummary.svelte';
+  import SearchSelect from '#lib/components/SearchSelect.svelte';
   import { timezoneOptions } from '@mesaaberta/core/time/timezone';
   import { onMount } from 'svelte';
   import { m } from '#lib/paraglide/messages.js';

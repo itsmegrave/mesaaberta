@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import AdminNav from '#lib/components/AdminNav.svelte';
+  import AdminNav from './components/AdminNav.svelte';
   import { provideAdminCounts } from '#lib/admin/counts.svelte.js';
 
   let { children, data } = $props();

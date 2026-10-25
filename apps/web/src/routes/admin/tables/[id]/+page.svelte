@@ -1,7 +1,7 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../../components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { m } from '#lib/paraglide/messages.js';

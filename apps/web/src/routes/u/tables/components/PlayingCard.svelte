@@ -4,7 +4,7 @@
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
-  import ActionForm from './ActionForm.svelte';
+  import ActionForm from '#lib/components/ActionForm.svelte';
 
   type Item = {
     slug: string;

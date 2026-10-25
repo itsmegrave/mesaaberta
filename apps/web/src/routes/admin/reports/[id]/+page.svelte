@@ -1,7 +1,7 @@
 <script lang="ts">
   import UserLink from '#lib/components/UserLink.svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../../components/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';

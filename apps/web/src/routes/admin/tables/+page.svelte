@@ -13,7 +13,7 @@
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../components/StatusBadge.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { instagramStatus } from '#lib/admin/instagram-status.js';
   import { publishTable } from '#lib/admin/publish-table.js';

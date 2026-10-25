@@ -1,4 +1,4 @@
-import '../../routes/layout.css';
+import '../../../../../layout.css';
 import { render } from 'vitest-browser-svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';

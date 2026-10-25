@@ -13,7 +13,7 @@
   import NotificationIcon from '#lib/components/NotificationIcon.svelte';
   import RichText from '#lib/components/RichText.svelte';
   import RichTextField from '#lib/components/RichTextField.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../components/StatusBadge.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { ANNOUNCEMENT_LIMITS, announcementSchema } from '#lib/notifications/announcement.js';
   import type { AnnouncementMessage } from '#lib/notifications/announcement-message.js';

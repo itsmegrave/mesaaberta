@@ -4,9 +4,9 @@
   import { page } from '$app/state';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
-  import ProfileForm from '#lib/components/ProfileForm.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
-  import UploadDialog from '#lib/components/UploadDialog.svelte';
+  import ProfileForm from '../components/ProfileForm.svelte';
+  import SettingsSection from './components/SettingsSection.svelte';
+  import UploadDialog from './components/UploadDialog.svelte';
   import { bannerSchema, photoSchema } from '#lib/profile/photo.js';
   import { toast } from '#lib/toaster.js';
   import { m } from '#lib/paraglide/messages.js';

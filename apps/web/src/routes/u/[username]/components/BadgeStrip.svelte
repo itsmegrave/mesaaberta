@@ -1,5 +1,5 @@
 <script lang="ts">
-  import BadgeVisibility from '#lib/components/BadgeVisibility.svelte';
+  import BadgeVisibility from './BadgeVisibility.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { BADGE_PRESENTATION, presentationOf } from '#lib/badges/presentation.js';
   import { withLook, type HeldBadge } from '#lib/badges/shown.js';

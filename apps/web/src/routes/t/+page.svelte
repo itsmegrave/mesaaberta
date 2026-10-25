@@ -6,7 +6,7 @@
   import { navigating, page } from '$app/state';
   import ListSkeleton from '#lib/components/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
-  import TablesFilters from '#lib/components/TablesFilters.svelte';
+  import TablesFilters from './components/TablesFilters.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
   import { m } from '#lib/paraglide/messages.js';
 

@@ -7,7 +7,7 @@
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../components/StatusBadge.svelte';
   import {
     approvePartnerSchema,
     PARTNER_REPORT_REASONS,

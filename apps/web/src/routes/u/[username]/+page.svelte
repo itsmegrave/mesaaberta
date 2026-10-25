@@ -5,8 +5,8 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import BadgeIcons from '#lib/components/BadgeIcons.svelte';
-  import BadgeStrip from '#lib/components/BadgeStrip.svelte';
+  import BadgeIcons from './components/BadgeIcons.svelte';
+  import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import TableCard from '#lib/components/TableCard.svelte';

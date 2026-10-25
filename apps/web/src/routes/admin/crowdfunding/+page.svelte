@@ -6,7 +6,7 @@
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '../components/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
   import Icon from '#lib/components/Icon.svelte';
   import { periodLabel } from '#lib/crowdfunding/format.js';

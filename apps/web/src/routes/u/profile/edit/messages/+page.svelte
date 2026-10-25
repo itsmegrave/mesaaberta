@@ -5,7 +5,7 @@
   import { tick } from 'svelte';
   import Form from '#lib/components/Form.svelte';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
+  import SettingsSection from '../components/SettingsSection.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';

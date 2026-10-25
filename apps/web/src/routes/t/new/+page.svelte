@@ -4,7 +4,7 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import TableForm from '#lib/components/TableForm.svelte';
+  import TableForm from '../components/TableForm.svelte';
 
   import { m } from '#lib/paraglide/messages.js';
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';

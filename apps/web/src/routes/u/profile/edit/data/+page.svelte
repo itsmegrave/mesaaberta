@@ -2,7 +2,7 @@
   // "Privacidade e dados": what everyone else sees of the profile, a download of everything the
   // account keeps, and closing the account (typing the @usuário to confirm).
   import Form from '#lib/components/Form.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
+  import SettingsSection from '../components/SettingsSection.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';

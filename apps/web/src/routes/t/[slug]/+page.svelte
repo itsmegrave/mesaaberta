@@ -19,17 +19,17 @@
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { ratingSchema } from '@mesaaberta/core/tables/rating';
   import { registrationError } from '#lib/tables/registration-errors.js';
-  import ReportDialog from '#lib/components/ReportDialog.svelte';
+  import ReportDialog from './components/ReportDialog.svelte';
   import { toast } from '#lib/toaster.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import JoinRequestDialog from '#lib/components/JoinRequestDialog.svelte';
+  import JoinRequestDialog from './components/JoinRequestDialog.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
-  import StarRating from '#lib/components/StarRating.svelte';
+  import StarRating from './components/StarRating.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import SeatDots from '#lib/components/SeatDots.svelte';
-  import DraftNotice from '#lib/components/DraftNotice.svelte';
+  import DraftNotice from './components/DraftNotice.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
 
   let { data: serverData, form } = $props();

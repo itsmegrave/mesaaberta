@@ -5,7 +5,7 @@
   import Icon from '#lib/components/Icon.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from './components/StatusBadge.svelte';
   import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { dayLabel, shortDate, timeLabel } from '#lib/admin/format.js';
   import type { IconName } from '#lib/icons/names.js';

@@ -6,11 +6,11 @@
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
-  import ActionForm from './ActionForm.svelte';
-  import Icon from './Icon.svelte';
-  import Button from './Button.svelte';
-  import ConfirmDialog from './ConfirmDialog.svelte';
-  import SeatDots from './SeatDots.svelte';
+  import ActionForm from '#lib/components/ActionForm.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import SeatDots from '#lib/components/SeatDots.svelte';
 
   type Person = { playerId: string; username: string };
   type Item = {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import PartnerForm from '#lib/components/PartnerForm.svelte';
+  import PartnerForm from '../../components/PartnerForm.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form = null } = $props();

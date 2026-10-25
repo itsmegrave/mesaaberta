@@ -4,7 +4,7 @@
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import ConfirmAction from '#lib/components/ConfirmAction.svelte';
+  import ConfirmAction from './ConfirmAction.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import { answerSchema } from '#lib/tables/confirmation.js';
   import { m } from '#lib/paraglide/messages.js';

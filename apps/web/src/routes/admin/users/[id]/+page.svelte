@@ -7,7 +7,7 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge from '#lib/components/StatusBadge.svelte';
+  import StatusBadge from '../../components/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import {
     accountSchema,

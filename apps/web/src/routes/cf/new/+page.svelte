@@ -1,6 +1,6 @@
 <script lang="ts">
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
+  import CrowdfundingCard from '../components/CrowdfundingCard.svelte';
   import DateTimeField from '#lib/components/DateTimeField.svelte';
   import ErrorSummary from '#lib/components/ErrorSummary.svelte';
   import Form from '#lib/components/Form.svelte';

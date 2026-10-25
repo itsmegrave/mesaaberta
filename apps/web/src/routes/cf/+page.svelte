@@ -1,9 +1,9 @@
 <script lang="ts">
   import { navigating, page } from '$app/state';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
-  import CrowdfundingFilters from '#lib/components/CrowdfundingFilters.svelte';
-  import CrowdfundingReportDialog from '#lib/components/CrowdfundingReportDialog.svelte';
+  import CrowdfundingCard from './components/CrowdfundingCard.svelte';
+  import CrowdfundingFilters from './components/CrowdfundingFilters.svelte';
+  import CrowdfundingReportDialog from './components/CrowdfundingReportDialog.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ListSkeleton from '#lib/components/ListSkeleton.svelte';
   import Pager from '#lib/components/admin/Pager.svelte';

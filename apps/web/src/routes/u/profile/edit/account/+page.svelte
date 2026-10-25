@@ -1,10 +1,10 @@
 <script lang="ts">
   // "Conta e acesso": the email and the @usuário (both read-only here), the ways to sign in and,
   // for an account without one, creating a password.
-  import AddPassword from '#lib/components/AddPassword.svelte';
-  import ConnectedAccounts from '#lib/components/ConnectedAccounts.svelte';
+  import AddPassword from './components/AddPassword.svelte';
+  import ConnectedAccounts from './components/ConnectedAccounts.svelte';
   import FormField from '#lib/components/FormField.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
+  import SettingsSection from '../components/SettingsSection.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { m } from '#lib/paraglide/messages.js';
 

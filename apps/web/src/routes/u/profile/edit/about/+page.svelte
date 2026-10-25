@@ -1,7 +1,7 @@
 <script lang="ts">
   // "Sobre você": age range, gender, city and timezone, in a form of their own.
-  import ProfileForm from '#lib/components/ProfileForm.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
+  import ProfileForm from '../../components/ProfileForm.svelte';
+  import SettingsSection from '../components/SettingsSection.svelte';
   import { toast } from '#lib/toaster.js';
   import { m } from '#lib/paraglide/messages.js';
 

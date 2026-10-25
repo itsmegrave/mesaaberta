@@ -11,7 +11,7 @@
   import FormField from '#lib/components/FormField.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ImageUpload from '#lib/components/ImageUpload.svelte';
-  import PartnerCard from '#lib/components/PartnerCard.svelte';
+  import PartnerCard from './PartnerCard.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
