@@ -8,6 +8,7 @@
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fieldErrors, problem } from '#lib/forms/field-errors.js';
   import Form from './Form.svelte';
   import { NAMELESS } from '@mesaaberta/core/profile/handle';
   import FormField from './FormField.svelte';
@@ -105,27 +106,13 @@
     platforms: $draft.platforms.map((pick) => pickName(catalog.platforms, pick)),
     tags: $draft.tags.map((pick) => pickName(catalog.tags, pick)),
   });
-  // A plain field's errors are a list; a list field's (platforms, tags) are under `_errors`.
-  const firstError = (value: unknown): string | undefined =>
-    Array.isArray(value)
-      ? (value[0] as string | undefined)
-      : ((value as { _errors?: string[] } | undefined)?._errors?.[0] ?? undefined);
-  const err = (field: keyof TableFormValues) => {
-    const code = firstError(controller.errors[field]);
-    return code ? errorText(code, field) : undefined;
-  };
-  const imageError = $derived(
-    err('image') ??
-      (controller.message?.field === 'image'
-        ? errorText(controller.message.code, 'image')
-        : undefined),
-  );
-  const invalid = (field: keyof TableFormValues) =>
-    firstError(controller.errors[field]) ? 'true' : undefined;
-  const problem = $derived(formProblem(controller.message));
+  const errors = fieldErrors<keyof TableFormValues>(() => controller, errorText);
+  const { err, invalid } = errors;
+  const imageError = $derived(errors.withMessage('image'));
+  const formError = $derived(formProblem(controller.message));
   // Each invalid field, in the order the form asks for them, for the summary at the top.
-  const summary = $derived(
-    (
+  const problems = $derived(
+    errors.summary(
       [
         ['systemSlug', m.form_system()],
         ['title', m.form_title()],
@@ -144,16 +131,9 @@
         ['joinDetails', m.form_join_details_link()],
         ['capacity', m.form_capacity()],
         ['minPlayers', m.form_min_players()],
-      ] as const
-    ).flatMap(([field, label]) => {
-      const message = err(field);
-      return message ? [{ id: field, label, message }] : [];
-    }),
-  );
-  const problems = $derived(
-    imageError
-      ? [...summary, { id: 'image', label: m.form_image(), message: imageError }]
-      : summary,
+      ],
+      problem('image', m.form_image(), imageError),
+    ),
   );
 </script>
 
@@ -171,7 +151,7 @@
     />{/if}
   <div class="grid gap-8 lg:col-span-2">
     <ErrorSummary errors={problems} />
-    <FormBanner text={problem} />
+    <FormBanner text={formError} />
 
     <section
       aria-labelledby="about-table"

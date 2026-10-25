@@ -23,6 +23,7 @@
   } from '@mesaaberta/core/profile/schema';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
+  import { fieldErrors, problem, type Problem } from '#lib/forms/field-errors.js';
   import Form from './Form.svelte';
   import FormField from './FormField.svelte';
   import ErrorSummary from './ErrorSummary.svelte';
@@ -157,6 +158,8 @@
   };
   const errorText = (code: string | undefined) =>
     code ? (ERRORS[code] ?? m.profile_error_invalid)() : undefined;
+  const errors = fieldErrors<keyof ProfileInput>(controller, (code) => errorText(code));
+  const { err } = errors;
 
   const NETWORK_LABELS: Record<Network, () => string> = {
     instagram: m.network_instagram,
@@ -174,7 +177,7 @@
 
   const itemError = (field: 'linkNetwork' | 'linkUrl', index: number) =>
     errorText(controller.errors[`${field}.${index}`]?.[0]);
-  const listError = () => errorText(controller.errors.linkUrl?.[0]);
+  const listError = () => err('linkUrl');
 
   // --- the username, checked against the server while it is typed --------------------------------
 
@@ -213,33 +216,23 @@
   );
 
   const usernameError = $derived(
-    errorText(controller.errors.username?.[0]) ??
-      (availability === 'taken' ? m.profile_error_taken() : undefined),
+    err('username') ?? (availability === 'taken' ? m.profile_error_taken() : undefined),
   );
 
   // Each invalid field, in the order the form asks for them, for the summary at the top.
   const summary = $derived(
-    (
-      [
-        ['username', m.profile_username(), usernameLocked ? undefined : usernameError],
-        ['name', m.profile_name(), errorText(controller.errors.name?.[0])],
-        ['bio', m.profile_bio(), errorText(controller.errors.bio?.[0])],
-
-        ['age-range', m.profile_age_range(), errorText(controller.errors.ageRange?.[0])],
-
-        ['gender', m.profile_gender(), errorText(controller.errors.gender?.[0])],
-
-        [
-          'gender-other',
-          m.profile_gender_other_label(),
-          errorText(controller.errors.genderOther?.[0]),
-        ],
-
-        ['city', m.profile_city(), errorText(controller.errors.city?.[0])],
-
-        ['timezone', m.profile_timezone(), errorText(controller.errors.timezone?.[0])],
-      ] as const
-    ).flatMap(([id, label, message]) => (message ? [{ id, label, message }] : [])),
+    [
+      ...(usernameLocked ? [] : [problem('username', m.profile_username(), usernameError)]),
+      ...errors.summary([
+        ['name', m.profile_name()],
+        ['bio', m.profile_bio()],
+        ['ageRange', m.profile_age_range(), 'age-range'],
+        ['gender', m.profile_gender()],
+        ['genderOther', m.profile_gender_other_label(), 'gender-other'],
+        ['city', m.profile_city()],
+        ['timezone', m.profile_timezone()],
+      ]),
+    ].filter((entry): entry is Problem => !!entry),
   );
 
   // --- the links: a list to add to, remove from and reorder -------------------------------------
@@ -343,7 +336,7 @@
       hint={m.profile_name_hint()}
       optional
       counter={{ count: $draft.name.length, max: PROFILE_LIMITS.name }}
-      error={errorText(controller.errors.name?.[0])}
+      error={err('name')}
     >
       {#snippet children(aria)}
         <TextInput
@@ -368,7 +361,7 @@
       hint={m.profile_bio_hint()}
       optional
       counter={{ count: $draft.bio.length, max: PROFILE_LIMITS.bio }}
-      error={errorText(controller.errors.bio?.[0])}
+      error={err('bio')}
     >
       {#snippet children(aria)}
         <TextArea
@@ -398,18 +391,13 @@
             items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
             value={$draft[picker.field] ? [$draft[picker.field]] : []}
             placeholder={picker.none}
-            invalid={Boolean(controller.errors[picker.field])}
+            invalid={!!errors.invalid(picker.field)}
             onchange={(picked) =>
               ($draft[picker.field] = (
                 picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
               ) as never)}
           />
-          <FieldError
-            id={picker.id}
-            message={controller.errors[picker.field]
-              ? errorText(controller.errors[picker.field]?.[0])
-              : undefined}
-          />
+          <FieldError id={picker.id} message={err(picker.field)} />
         </div>
       {/each}
     </div>
@@ -421,7 +409,7 @@
         id="gender-other"
         label={m.profile_gender_other_label()}
         hint={m.profile_gender_other_hint()}
-        error={errorText(controller.errors.genderOther?.[0])}
+        error={err('genderOther')}
       >
         {#snippet children(aria)}
           <TextInput
@@ -437,12 +425,7 @@
       </FormField>
     {/if}
 
-    <FormField
-      id="city"
-      label={m.profile_city()}
-      optional
-      error={errorText(controller.errors.city?.[0])}
-    >
+    <FormField id="city" label={m.profile_city()} optional error={err('city')}>
       {#snippet children(aria)}
         <TextInput
           id="city"
@@ -467,13 +450,13 @@
         items={timezones}
         value={$draft.timezone ? [$draft.timezone] : []}
         placeholder={m.profile_timezone_placeholder()}
-        invalid={Boolean(controller.errors.timezone)}
+        invalid={!!errors.invalid('timezone')}
         onchange={(picked) => ($draft.timezone = picked[0] ?? '')}
       />
       <p id="timezone-hint" class="mt-1 text-sm text-surface-700-300">
         {m.profile_timezone_hint()}
       </p>
-      <FieldError id="timezone" message={errorText(controller.errors.timezone?.[0])} />
+      <FieldError id="timezone" message={err('timezone')} />
     </div>
   {/if}
 

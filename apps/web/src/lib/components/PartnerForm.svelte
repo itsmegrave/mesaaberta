@@ -18,6 +18,7 @@
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
+  import { fieldErrors, problem } from '#lib/forms/field-errors.js';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -94,23 +95,22 @@
   };
   const say = (code: string | undefined, field = '') =>
     code ? (codes[code]?.() ?? errorText(code, field)) : undefined;
-  const err = (field: string) => say(controller.errors[field]?.[0], field);
+  const errors = fieldErrors<keyof Values>(controller, say);
+  const { err } = errors;
   const logoError = $derived(
     controller.errors.logo?.[0]
       ? controller.errors.logo[0] === 'empty' || controller.errors.logo[0] === 'required'
         ? m.partner_err_logo_required()
         : errorText(controller.errors.logo[0], 'image')
-      : controller.message?.field === 'logo'
-        ? errorText(controller.message.code, 'image')
-        : undefined,
+      : errors.withMessage('logo', (code) => errorText(code, 'image')),
   );
   const itemError = (field: 'linkNetwork' | 'linkUrl', index: number) =>
     say(controller.errors[`${field}.${index}`]?.[0]);
   const listError = () => say(controller.errors.linkUrl?.[0]);
-  const problem = $derived(formProblem(controller.message));
+  const formError = $derived(formProblem(controller.message));
 
-  const summary = $derived(
-    (
+  const problems = $derived(
+    errors.summary(
       [
         ['name', m.partner_form_name()],
         ['description', m.partner_form_description()],
@@ -119,16 +119,9 @@
         ['backlinkUrl', m.partner_form_backlink()],
         ['couponCode', m.partner_form_coupon_code()],
         ['couponDescription', m.partner_form_coupon_description()],
-      ] as const
-    ).flatMap(([field, label]) => {
-      const message = err(field);
-      return message ? [{ id: field, label, message }] : [];
-    }),
-  );
-  const problems = $derived(
-    logoError
-      ? [...summary, { id: 'logo', label: m.partner_form_logo(), message: logoError }]
-      : summary,
+      ],
+      problem('logo', m.partner_form_logo(), logoError),
+    ),
   );
 
   // --- the networks: a list to add to and remove from ----------------------------------------------
@@ -210,7 +203,7 @@
 >
   <div class="grid gap-8 lg:col-span-2">
     <ErrorSummary errors={problems} />
-    <FormBanner text={problem} />
+    <FormBanner text={formError} />
     {#if editing}
       <p role="note" class="rounded-lg border border-warning-500 bg-panel p-4">
         {m.partner_form_edit_notice()}

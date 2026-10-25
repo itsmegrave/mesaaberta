@@ -17,6 +17,7 @@
   import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
   import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fieldErrors, problem } from '#lib/forms/field-errors.js';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -60,36 +61,21 @@
     if (code === 'too_small') return m.form_error_required();
     return errorText(code, field);
   };
-  const err = (field: keyof Values) => {
-    const code = controller.errors[field]?.[0];
-    return code ? text(code, field) : undefined;
-  };
-  const imageError = $derived(
-    err('image') ??
-      (controller.message?.field === 'image'
-        ? errorText(controller.message.code, 'image')
-        : undefined),
-  );
-  const invalid = (field: keyof Values) => (controller.errors[field]?.[0] ? 'true' : undefined);
-  const problem = $derived(formProblem(controller.message));
-  const summary = $derived(
-    (
+  const errors = fieldErrors<keyof Values>(controller, text);
+  const { err, invalid } = errors;
+  const imageError = $derived(errors.withMessage('image', (code) => errorText(code, 'image')));
+  const formError = $derived(formProblem(controller.message));
+  const problems = $derived(
+    errors.summary(
       [
         ['url', m.crowdfunding_form_url()],
         ['name', m.crowdfunding_form_name()],
         ['owner', m.crowdfunding_form_owner()],
         ['startsOn', m.crowdfunding_form_starts()],
         ['endsOn', m.crowdfunding_form_ends()],
-      ] as const
-    ).flatMap(([field, label]) => {
-      const message = err(field);
-      return message ? [{ id: field, label, message }] : [];
-    }),
-  );
-  const problems = $derived(
-    imageError
-      ? [...summary, { id: 'image', label: m.crowdfunding_form_image(), message: imageError }]
-      : summary,
+      ],
+      problem('image', m.crowdfunding_form_image(), imageError),
+    ),
   );
 
   // Once a link is typed, the page's title fills the name (when the member has not typed one). The
@@ -157,7 +143,7 @@
   >
     <div class="grid gap-8 lg:col-span-2">
       <ErrorSummary errors={problems} />
-      <FormBanner text={problem} />
+      <FormBanner text={formError} />
 
       <section
         aria-labelledby="campaign-section"
