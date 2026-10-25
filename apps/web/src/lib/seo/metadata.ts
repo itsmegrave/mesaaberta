@@ -1,0 +1,80 @@
+import { m } from '#lib/paraglide/messages.js';
+import { toPlainText } from '@mesaaberta/core/text/rich';
+
+const text = (value: string, limit = 160) => {
+  const clean = toPlainText(value).replace(/\s+/g, ' ').trim();
+  return [...clean].length > limit
+    ? `${[...clean]
+        .slice(0, limit - 1)
+        .join('')
+        .trimEnd()}…`
+    : clean;
+};
+const imageUrl = (value: unknown, fallback: string) => {
+  try {
+    const url = new URL(typeof value === 'string' ? value : '');
+    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password
+      ? url.href
+      : fallback;
+  } catch {
+    return fallback;
+  }
+};
+type PublicData = {
+  table?: {
+    title: string;
+    description?: string | null;
+    system: { name: string };
+    imageUrl?: string | null;
+    status?: string;
+    [key: string]: unknown;
+  };
+  profile?: {
+    username: string | null;
+    bio?: string | null;
+    avatarUrl?: string | null;
+    [key: string]: unknown;
+  };
+};
+export function publicMetadata(path: string, data: PublicData, origin: string) {
+  const fallback = `${origin}/android-chrome-512x512.png`;
+  const listings: Record<string, [string, string]> = {
+    '/': [m.home_title(), m.home_description()],
+    '/t': [m.seo_tables_title(), m.tables_description()],
+    '/p': [m.seo_partners_title(), m.partner_description()],
+    '/cf': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
+    '/changelog': [`${m.changelog_title()} · Mesa Aberta`, m.changelog_description()],
+    '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],
+    '/terms': [`${m.terms_title()} · Mesa Aberta`, m.terms_description()],
+  };
+  if (listings[path]) {
+    const [title, description] = listings[path];
+    return { title, description, image: fallback, type: 'website' };
+  }
+  if (/^\/t\/[^/]+$/.test(path) && data.table) {
+    const table = data.table;
+    const title = m.seo_table_title({
+      title: text(table.title, 100),
+      system: text(table.system.name, 60),
+    });
+    const description = text(
+      m.seo_table_description({
+        system: text(table.system.name, 60),
+        description: text(table.description ?? '', 160),
+      }),
+    );
+    return { title, description, image: imageUrl(table.imageUrl, fallback), type: 'website' };
+  }
+  if (/^\/u\/[^/]+$/.test(path) && data.profile?.username) {
+    const profile = data.profile;
+    return {
+      title: m.seo_profile_title({ username: `@${profile.username}` }),
+      description: text(
+        profile.bio || m.public_profile_description({ username: `@${profile.username}` }),
+      ),
+      image: imageUrl(profile.avatarUrl, fallback),
+      type: 'profile',
+    };
+  }
+  return null;
+}

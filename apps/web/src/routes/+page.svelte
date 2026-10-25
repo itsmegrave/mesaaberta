@@ -22,10 +22,6 @@
   const star = 'M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.6l-5.9 3.2 1.2-6.5L2.5 9.7l6.6-.9z';
 </script>
 
-<svelte:head>
-  <title>{m.home_title()}</title>
-  <meta name="description" content={m.home_description()} />
-</svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 {#snippet arrow()}

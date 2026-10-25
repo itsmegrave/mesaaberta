@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { seoRoutes } from './seo';
 import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
 import { ACTOR_HEADER } from './admin-guard';
@@ -79,6 +80,7 @@ export function createApi() {
   app.route('/v1/account', accountRoutes());
 
   // The read side, one resource at a time (the catalog first), behind `api_reads_<resource>`.
+  app.route('/v1/seo', seoRoutes());
   app.route('/v1/reads', readRoutes());
   // The admin pages' data (overview, users, tables), behind `api_reads_admin*`.
   app.route('/v1/admin-reads', adminReadRoutes());

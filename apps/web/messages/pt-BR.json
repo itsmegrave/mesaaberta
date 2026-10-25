@@ -2119,5 +2119,11 @@
   "changelog_empty": "Ainda não há mudanças deste tipo.",
   "changelog_details": "Ver detalhes",
   "changelog_pagination": "Páginas de novidades",
-  "changelog_preview": "Captura da plataforma: {title}"
+  "changelog_preview": "Captura da plataforma: {title}",
+  "seo_tables_title": "Mesas de RPG com vagas abertas · Mesa Aberta",
+  "seo_partners_title": "Parceiros da comunidade de RPG · Mesa Aberta",
+  "seo_crowdfunding_title": "Financiamentos coletivos de RPG · Mesa Aberta",
+  "seo_table_title": "{title} — {system} · Mesa Aberta",
+  "seo_table_description": "Mesa de {system}. {description}",
+  "seo_profile_title": "{username} · Mesa Aberta"
 }

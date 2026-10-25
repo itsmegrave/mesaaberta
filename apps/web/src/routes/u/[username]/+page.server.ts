@@ -1,3 +1,5 @@
+import { indexingPolicy } from '#lib/seo/policy.js';
+import { siteOf } from '@mesaaberta/core/server/site';
 import { error, fail, isRedirect, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { requireUser } from '#lib/server/auth/guard.js';
@@ -35,7 +37,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     ...data,
     isOwner: data.isOwner && !previewing,
     previewing,
-    canonical: new URL(path, url.origin).href,
+    canonical: indexingPolicy(url, siteOf(locals.env, locals.log).APP_ORIGIN).canonical!,
   };
 };
 
