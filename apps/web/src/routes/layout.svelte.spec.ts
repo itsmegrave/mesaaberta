@@ -131,7 +131,7 @@ describe('+layout.svelte', () => {
     expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
   });
 
-  it('collapses to an 80px rail, with Admin among the links and the bell, theme and account together', async () => {
+  it('collapses to an 80px rail with the same groups as the open nav: Sua conta, then the theme and account', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     await nav.getByRole('button', { name: 'Recolher menu' }).click();
@@ -141,9 +141,13 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'false');
     const theme = nav.getByRole('button', { name: 'Tema escuro' }).element();
     const bell = nav.getByRole('button', { name: 'Notificações', exact: true }).element();
+    const admin = nav.getByRole('link', { name: 'Admin' }).element();
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
-    expect(theme.parentElement).toBe(bell.parentElement);
+    // Notificações and Admin share the "Sua conta" group, as when open; its label is hidden.
+    expect(bell.parentElement).toBe(admin.parentElement);
+    await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
     expect(theme.parentElement?.contains(account)).toBe(true);
+    expect(theme.parentElement?.contains(bell)).toBe(false);
     // The width animates, so wait for it to settle.
     await expect.poll(() => nav.element().getBoundingClientRect().width).toBe(80);
     await expect

@@ -26,13 +26,13 @@
 
 <footer class="border-t border-surface-200-800 bg-panel pb-24 md:pb-0">
   <div class="mx-auto w-full max-w-7xl px-5 md:px-8">
-    <div class="grid grid-cols-1 gap-4 pt-6 pb-3 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:pt-8 md:pb-5">
+    <div
+      class="grid grid-cols-1 gap-4 pt-6 pb-3 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:pt-8 md:pb-5"
+    >
       <div class="flex flex-col gap-1 sm:col-span-2 md:col-span-6 md:gap-2">
         <p class="flex items-center gap-3 text-surface-950-50">
           <TableLogo size={32} />
-          <span class="font-brand text-xl font-semibold tracking-wider"
-            >Mesa Aberta</span
-          >
+          <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
         </p>
         <p class="max-w-sm text-sm leading-relaxed text-muted">
           {m.footer_community()}

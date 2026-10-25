@@ -220,7 +220,11 @@
                   </span>
                   <span class="min-w-0 flex-1">{m.nav_admin()}</span>
                   {#if pending > 0}
-                    {@render count(pending, `${m.nav_admin()}: ${pending}`, 'h-5.5 min-w-5.5 px-1.5')}
+                    {@render count(
+                      pending,
+                      `${m.nav_admin()}: ${pending}`,
+                      'h-5.5 min-w-5.5 px-1.5',
+                    )}
                   {/if}
                 </a>
               {:else}

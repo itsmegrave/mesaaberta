@@ -65,7 +65,9 @@
         data-shown={glyph.shown}
         class="col-start-1 row-start-1 flex {animate
           ? 'transition duration-300 ease-out motion-reduce:transition-none'
-          : ''} {glyph.shown ? 'scale-100 rotate-0 opacity-100' : `scale-50 opacity-0 ${glyph.hidden}`}"
+          : ''} {glyph.shown
+          ? 'scale-100 rotate-0 opacity-100'
+          : `scale-50 opacity-0 ${glyph.hidden}`}"
       >
         <Icon name={glyph.name} size={20} />
       </span>

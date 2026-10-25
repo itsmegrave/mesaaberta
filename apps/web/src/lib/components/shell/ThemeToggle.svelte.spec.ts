@@ -96,7 +96,9 @@ describe('ThemeToggle', () => {
 
     expect(shown()?.getAttribute('data-icon')).toBe('sun');
     // The moon stays in place to fade out; it is hidden, not removed.
-    expect(button.element().querySelector('[data-shown="false"] [data-icon="moon"]')).not.toBeNull();
+    expect(
+      button.element().querySelector('[data-shown="false"] [data-icon="moon"]'),
+    ).not.toBeNull();
   });
 
   it('turns the icon only after a change, and never with reduced motion', async () => {
@@ -120,6 +122,8 @@ describe('ThemeToggle', () => {
     await button.click();
 
     await expect.element(button).toHaveAttribute('aria-pressed', 'true');
-    expect(button.element().querySelector('[data-shown="true"] [data-icon]')?.getAttribute('data-icon')).toBe('sun');
+    expect(
+      button.element().querySelector('[data-shown="true"] [data-icon]')?.getAttribute('data-icon'),
+    ).toBe('sun');
   });
 });
