@@ -29,6 +29,8 @@ const serverVars = [
   '--var CONTACT_EMAIL:contato@example.test',
   '--var PRIVACY_EMAIL:privacidade@example.test',
   '--var INSTAGRAM_HANDLE:mesaaberta.test',
+  // On purpose: security.e2e.ts checks the dev login is still a 404 in a production build.
+  '--var DEV_LOGIN:true',
 ];
 
 export default defineConfig({

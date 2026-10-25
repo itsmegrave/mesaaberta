@@ -153,6 +153,8 @@ jobs:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
       - run: bun run build
+      # The dev login (/dev/login) exists only under `vite dev`: fail if it reached this build.
+      - run: bun scripts/check-no-dev-login.ts
       - run: bun run wrangler deploy --dry-run
 
   e2e:

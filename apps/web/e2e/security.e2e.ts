@@ -83,3 +83,16 @@ test.describe('CSRF', () => {
     expect(response.status()).not.toBe(403);
   });
 });
+
+// The preview server is the production build with DEV_LOGIN on, on localhost, against a local
+// Supabase: every runtime gate is open, so only the build gate keeps the dev login out.
+test.describe('dev login', () => {
+  for (const path of ['/dev/login?as=admin&next=/admin', '/dev/logout']) {
+    test(`does not exist in a production build (${path})`, async ({ page }) => {
+      const response = await page.goto(path);
+
+      expect(response?.status()).toBe(404);
+      expect(new URL(page.url()).pathname).toBe(path.split('?')[0]);
+    });
+  }
+});
