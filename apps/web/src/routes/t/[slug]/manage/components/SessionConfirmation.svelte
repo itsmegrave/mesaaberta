@@ -12,7 +12,9 @@
   import SessionPicker from '#lib/components/ui/SessionPicker.svelte';
 
   // `players` are the confirmed seats. "It happened" also asks who showed up, everyone checked,
-  // and whoever is left unchecked cannot rate the GM.
+  // and whoever is left unchecked cannot rate the GM. A player who already rated (a table that goes
+  // on, where the GM let them) played it: their box stays checked and locked, and the server keeps
+  // them present too. A disabled box is not posted, so a hidden field sends them.
   // `multi`: a campaign or adventure, whose table can go on after this session; an adventure has no
   // repeat rule, so its picker starts empty and the server asks for the date.
   let {
@@ -24,7 +26,7 @@
     durationHours = 4,
   }: {
     next: string;
-    players?: { playerId: string; username: string; avatarUrl: string | null }[];
+    players?: { playerId: string; username: string; avatarUrl: string | null; rated?: boolean }[];
     multi?: boolean;
     /** A weekly campaign's next date (`YYYY-MM-DDTHH:mm`, the table's zone): the picker starts on it. */
     nextSession?: string | null;
@@ -112,15 +114,26 @@
             {#each players as player (player.playerId)}
               <li>
                 <label class="flex items-center gap-3 font-semibold">
+                  {#if player.rated}
+                    <input type="hidden" name="present" value={player.playerId} />
+                  {/if}
                   <input
                     type="checkbox"
-                    name="present"
+                    name={player.rated ? undefined : 'present'}
                     value={player.playerId}
                     checked
+                    disabled={player.rated}
                     class="checkbox"
                   />
                   <MAAvatar src={player.avatarUrl} name={player.username} size={32} />
-                  <span class="min-w-0 truncate">{player.username}</span>
+                  <span class="flex min-w-0 flex-col">
+                    <span class="truncate">{player.username}</span>
+                    {#if player.rated}
+                      <span class="text-sm font-normal text-muted"
+                        >{m.manage_attendance_rated()}</span
+                      >
+                    {/if}
+                  </span>
                 </label>
               </li>
             {/each}

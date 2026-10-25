@@ -1,7 +1,13 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
-import { events, profiles, registrations, gameTables } from '@mesaaberta/core/server/db/schema';
+import {
+  events,
+  profiles,
+  ratings,
+  registrations,
+  gameTables,
+} from '@mesaaberta/core/server/db/schema';
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
@@ -60,10 +66,19 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
         message: registrations.message,
         attended: registrations.attended,
         ratingOpenedAt: registrations.ratingOpenedAt,
+        // Already rated the table: the GM cannot mark them absent any more.
+        rated: sql<boolean>`${ratings.playerId} is not null`,
         ...person,
       })
       .from(registrations)
       .innerJoin(profiles, eq(registrations.playerId, profiles.id))
+      .leftJoin(
+        ratings,
+        and(
+          eq(ratings.tableId, registrations.tableId),
+          eq(ratings.playerId, registrations.playerId),
+        ),
+      )
       .where(eq(registrations.tableId, table.id))
       .orderBy(asc(registrations.updatedAt), asc(profiles.username)),
     db.select(person).from(profiles).where(eq(profiles.id, table.gmId)),

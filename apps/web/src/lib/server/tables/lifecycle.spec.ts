@@ -5,6 +5,7 @@ import {
   events,
   gameTables,
   profiles,
+  ratings,
   registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
@@ -370,6 +371,18 @@ describe('a campaign or adventure that goes on', () => {
     await holdSession(test.db, gm, table.slug, { presentPlayerIds: [id(2)] }, now);
 
     expect((await rowOf(table.id, 3)).attended).toBe(true);
+  });
+
+  it('keeps a player who already rated present, even when the list leaves them out', async () => {
+    const table = await waitingCampaign();
+    await seat(table.id, 2, 3);
+    await test.db.insert(ratings).values({ tableId: table.id, playerId: id(3), gmScore: 5 });
+
+    await concludeTable(test.db, gm, table.slug, [id(2)]);
+
+    expect((await rowOf(table.id, 3)).attended).toBe(true);
+    const [event] = await eventsOf(table.id);
+    expect(event.payload).toMatchObject({ absentPlayerIds: [] });
   });
 
   it('lets chosen players rate while it goes on, once each, never one marked absent', async () => {

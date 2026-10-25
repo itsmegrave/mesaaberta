@@ -1,7 +1,7 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, playerInvitations, registrations } from '../db/schema';
+import { gameTables, playerInvitations, ratings, registrations } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Forbidden, Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
@@ -152,6 +152,7 @@ async function answer(
 /**
  * Records who showed up: the confirmed players in `presentPlayerIds` attended and every other
  * confirmed player did not. Ids that hold no confirmed seat are ignored. Answers the absent ids.
+ * A player who already rated the table played it, so they stay present whatever the list says.
  * `keepPresent`: a session of a table that goes on never takes back what an earlier one recorded,
  * so someone who showed up once stays present.
  */
@@ -165,7 +166,11 @@ async function markAttendance(
     .select({ id: registrations.playerId, attended: registrations.attended })
     .from(registrations)
     .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
-  const present = new Set(presentPlayerIds);
+  const rated = await tx
+    .select({ id: ratings.playerId })
+    .from(ratings)
+    .where(eq(ratings.tableId, tableId));
+  const present = new Set([...presentPlayerIds, ...rated.map(({ id }) => id)]);
   const here = seated.filter(({ id }) => present.has(id)).map(({ id }) => id);
   const absent = seated
     .filter(({ id, attended }) => !present.has(id) && !(keepPresent && attended === true))

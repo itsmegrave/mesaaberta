@@ -30,6 +30,26 @@ describe('SessionConfirmation', () => {
     expect(new FormData(form).getAll('present')).toEqual([players[0].playerId]);
   });
 
+  it('locks a player who already rated as present, and still sends them', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players: [players[0], { ...players[1], rated: true }],
+      multi: true,
+    });
+
+    // The note is part of the label, so it is read with the name.
+    const bia = page.getByRole('checkbox', { name: /^bia/ });
+    await expect.element(bia).toBeChecked();
+    await expect.element(bia).toBeDisabled();
+    await expect
+      .element(page.getByText('Já avaliou a mesa, então conta como presente.'))
+      .toBeVisible();
+
+    await page.getByRole('checkbox', { name: 'ana' }).click();
+    const form = bia.element().closest('form')!;
+    expect(new FormData(form).getAll('present')).toEqual([players[1].playerId]);
+  });
+
   it('does not ask who showed up when no one has a seat', async () => {
     render(SessionConfirmation, { next: '/t/mesa/manage', players: [] });
 

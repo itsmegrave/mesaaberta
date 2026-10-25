@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
+import { gameTables, profiles, ratings, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
@@ -60,6 +60,19 @@ describe('loadManage', () => {
     expect(manage.players[0].since).toBeInstanceOf(Date);
     expect(manage.gm.username).toBe('mestra');
     expect(manage.table.seatsLeft).toBe(3);
+  });
+
+  it('tells which players already rated the table', async () => {
+    const before = await loadManage(test.db, gm, 'mesa', now);
+    expect(before.players[0].rated).toBe(false);
+
+    await test.db
+      .insert(ratings)
+      .values({ tableId: before.table.id, playerId: ana.id, gmScore: 4 });
+    const after = await loadManage(test.db, gm, 'mesa', now);
+
+    expect(after.players.map((p) => [p.username, p.rated])).toEqual([['ana', true]]);
+    await test.db.delete(ratings);
   });
 
   it('shows the latest activity first, naming the player and telling a removal from leaving', async () => {
