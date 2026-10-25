@@ -2,10 +2,13 @@
   // When a table plays: the day on an inline calendar, the hour and the minute (every 15) on two
   // selects, the length as 2 h / 3 h / 4 h / Outra, and one sentence saying it back, with the zone.
   // The form gets `startsAtLocal` as `YYYY-MM-DDTHH:mm` and `durationHours` as a number.
-  import { DatePicker, parseDate } from '@skeletonlabs/skeleton-svelte';
+  import { DatePicker } from '@skeletonlabs/skeleton-svelte';
   import { m } from '#lib/paraglide/messages.js';
+  import { DEFAULT_TIME, pickerTranslations, safeParse } from '#lib/forms/date.js';
+  import CalendarDays from './CalendarDays.svelte';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
   import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
 
   let {
@@ -26,7 +29,6 @@
     describedby?: string;
   } = $props();
 
-  const DEFAULT_TIME = '19:00';
   const PRESETS = [2, 3, 4];
   const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'));
   const minutes = ['00', '15', '30', '45'];
@@ -37,13 +39,6 @@
   const set = (nextDay: string, nextHour: string, nextMinute: string) =>
     (startsAt = nextDay ? `${nextDay}T${nextHour}:${nextMinute}` : '');
 
-  const safeParse = (text: string) => {
-    try {
-      return text ? parseDate(text) : undefined;
-    } catch {
-      return undefined;
-    }
-  };
   const picked = $derived(safeParse(day));
   const earliest = $derived(min ? safeParse(min) : undefined);
 
@@ -69,7 +64,6 @@
 
   const segment =
     'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
-  const navButton = 'btn size-11 rounded-lg hover:preset-tonal';
 </script>
 
 <div class="grid gap-5">
@@ -79,22 +73,7 @@
       locale="pt-BR"
       value={picked ? [picked] : []}
       min={earliest}
-      translations={{
-        dayCell: (state) =>
-          state.unavailable || state.disabled
-            ? m.date_picker_day_unavailable({ date: state.valueText })
-            : m.date_picker_day({ date: state.valueText }),
-        nextTrigger: () => m.date_picker_next(),
-        prevTrigger: () => m.date_picker_prev(),
-        viewTrigger: () => m.date_picker_view(),
-        presetTrigger: () => '',
-        monthSelect: m.date_picker_month(),
-        yearSelect: m.date_picker_year(),
-        clearTrigger: m.date_picker_clear(),
-        trigger: () => m.session_day(),
-        content: m.date_picker_calendar(),
-        placeholder: () => ({ day: 'dd', month: 'mm', year: 'aaaa' }),
-      }}
+      translations={pickerTranslations(() => m.session_day())}
       onValueChange={(details) => set(details.value[0]?.toString() ?? '', hour, minute)}
     >
       <DatePicker.Label class="label-text font-semibold">{m.session_day()}</DatePicker.Label>
@@ -104,66 +83,7 @@
           : 'border-surface-200-800'} bg-panel"
         aria-describedby={describedby}
       >
-        <DatePicker.View view="day">
-          <DatePicker.Context>
-            {#snippet children(calendar)}
-              <DatePicker.ViewControl class="mb-2 flex items-center justify-between gap-2">
-                <DatePicker.PrevTrigger class={navButton} aria-label={m.date_picker_prev()}
-                  ><svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg
-                  ></DatePicker.PrevTrigger
-                >
-                <DatePicker.RangeText class="font-semibold capitalize" />
-                <DatePicker.NextTrigger class={navButton} aria-label={m.date_picker_next()}
-                  ><svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg
-                  ></DatePicker.NextTrigger
-                >
-              </DatePicker.ViewControl>
-              <DatePicker.Table class="w-full text-center text-sm">
-                <DatePicker.TableHead>
-                  <DatePicker.TableRow>
-                    {#each calendar().weekDays as weekDay (weekDay.long)}
-                      <DatePicker.TableHeader class="pb-1 text-xs font-semibold text-muted"
-                        >{weekDay.narrow}</DatePicker.TableHeader
-                      >
-                    {/each}
-                  </DatePicker.TableRow>
-                </DatePicker.TableHead>
-                <DatePicker.TableBody>
-                  {#each calendar().weeks as week, row (row)}
-                    <DatePicker.TableRow>
-                      {#each week as date (date.toString())}
-                        <DatePicker.TableCell value={date}>
-                          <DatePicker.TableCellTrigger
-                            class="mx-auto flex size-11 items-center justify-center rounded-lg hover:preset-tonal data-disabled:opacity-40 data-outside-range:opacity-40 data-selected:preset-filled-primary-500 data-today:font-bold"
-                            >{date.day}</DatePicker.TableCellTrigger
-                          >
-                        </DatePicker.TableCell>
-                      {/each}
-                    </DatePicker.TableRow>
-                  {/each}
-                </DatePicker.TableBody>
-              </DatePicker.Table>
-            {/snippet}
-          </DatePicker.Context>
-        </DatePicker.View>
+        <CalendarDays />
       </DatePicker.Content>
     </DatePicker>
   </div>
@@ -217,7 +137,7 @@
     {#if other}
       <label class="grid gap-1">
         <span class="label-text">{m.session_duration_custom()}</span>
-        <input
+        <TextInput
           type="number"
           inputmode="decimal"
           min={TABLE_LIMITS.durationHours.min}

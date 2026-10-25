@@ -1,7 +1,8 @@
 <script lang="ts">
   import TextInput from '#lib/components/TextInput.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
-  import Button from '#lib/components/Button.svelte';
+  import NetworkLinksField from '#lib/components/NetworkLinksField.svelte';
   import { browser } from '$app/env';
   import { page } from '$app/state';
   import { createQuery } from '@tanstack/svelte-query';
@@ -9,7 +10,7 @@
   import { usernameAvailability } from '#lib/query/lookups.js';
   const client = queryClient();
   import { guardDraft } from '#lib/forms/guard.svelte.js';
-  import { tick } from 'svelte';
+  import Button from '#lib/components/Button.svelte';
   import {
     AGE_RANGES,
     GENDER_OPTIONS,
@@ -21,6 +22,7 @@
   } from '@mesaaberta/core/profile/schema';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
+  import { fieldErrors, problem, type Problem } from '#lib/forms/field-errors.js';
   import Form from './Form.svelte';
   import FormField from './FormField.svelte';
   import ErrorSummary from './ErrorSummary.svelte';
@@ -155,6 +157,8 @@
   };
   const errorText = (code: string | undefined) =>
     code ? (ERRORS[code] ?? m.profile_error_invalid)() : undefined;
+  const errors = fieldErrors<keyof ProfileInput>(controller, (code) => errorText(code));
+  const { err } = errors;
 
   const NETWORK_LABELS: Record<Network, () => string> = {
     instagram: m.network_instagram,
@@ -170,9 +174,14 @@
     website: m.network_website,
   };
 
-  const itemError = (field: 'linkNetwork' | 'linkUrl', index: number) =>
-    errorText(controller.errors[`${field}.${index}`]?.[0]);
-  const listError = () => errorText(controller.errors.linkUrl?.[0]);
+  const rowErrors = (index: number) => ({
+    url: errorText(controller.errors[`linkUrl.${index}`]?.[0]),
+    network: errorText(controller.errors[`linkNetwork.${index}`]?.[0]),
+  });
+  const networkItems = NETWORKS.map((network) => ({
+    name: NETWORK_LABELS[network](),
+    slug: network,
+  }));
 
   // --- the username, checked against the server while it is typed --------------------------------
 
@@ -211,80 +220,24 @@
   );
 
   const usernameError = $derived(
-    errorText(controller.errors.username?.[0]) ??
-      (availability === 'taken' ? m.profile_error_taken() : undefined),
-  );
-
-  const usernameDescription = $derived(
-    ['username-hint', usernameError ? 'username-error' : 'username-status'].join(' '),
+    err('username') ?? (availability === 'taken' ? m.profile_error_taken() : undefined),
   );
 
   // Each invalid field, in the order the form asks for them, for the summary at the top.
   const summary = $derived(
-    (
-      [
-        ['username', m.profile_username(), usernameLocked ? undefined : usernameError],
-        ['name', m.profile_name(), errorText(controller.errors.name?.[0])],
-        ['bio', m.profile_bio(), errorText(controller.errors.bio?.[0])],
-
-        ['age-range', m.profile_age_range(), errorText(controller.errors.ageRange?.[0])],
-
-        ['gender', m.profile_gender(), errorText(controller.errors.gender?.[0])],
-
-        [
-          'gender-other',
-          m.profile_gender_other_label(),
-          errorText(controller.errors.genderOther?.[0]),
-        ],
-
-        ['city', m.profile_city(), errorText(controller.errors.city?.[0])],
-
-        ['timezone', m.profile_timezone(), errorText(controller.errors.timezone?.[0])],
-      ] as const
-    ).flatMap(([id, label, message]) => (message ? [{ id, label, message }] : [])),
+    [
+      ...(usernameLocked ? [] : [problem('username', m.profile_username(), usernameError)]),
+      ...errors.summary([
+        ['name', m.profile_name()],
+        ['bio', m.profile_bio()],
+        ['ageRange', m.profile_age_range(), 'age-range'],
+        ['gender', m.profile_gender()],
+        ['genderOther', m.profile_gender_other_label(), 'gender-other'],
+        ['city', m.profile_city()],
+        ['timezone', m.profile_timezone()],
+      ]),
+    ].filter((entry): entry is Problem => !!entry),
   );
-
-  // --- the links: a list to add to, remove from and reorder -------------------------------------
-  // Each row keeps an id of its own, so a row that moves keeps what was typed in it and its focus.
-  let nextId = 0;
-  let ids = $state($draft.linkNetwork.map(() => nextId++));
-  let announcement = $state('');
-  let addButton: HTMLButtonElement | undefined = $state();
-
-  const canAdd = $derived(ids.length < MAX_SOCIAL_LINKS);
-
-  function addLink() {
-    $draft.linkNetwork = [...$draft.linkNetwork, 'instagram'];
-    $draft.linkUrl = [...$draft.linkUrl, ''];
-    const id = nextId++;
-    ids.push(id);
-
-    tick().then(() => document.getElementById(`link-url-${id}`)?.focus());
-  }
-
-  function removeLink(index: number) {
-    $draft.linkNetwork = $draft.linkNetwork.filter((_, i) => i !== index);
-    $draft.linkUrl = $draft.linkUrl.filter((_, i) => i !== index);
-    ids.splice(index, 1);
-    announcement = m.profile_link_removed();
-
-    // The row that had the focus is gone: keep the focus in the list.
-    tick().then(() => addButton?.focus());
-  }
-
-  function moveLink(index: number, by: -1 | 1) {
-    const to = index + by;
-    const swap = <T,>(list: T[]) => {
-      const copy = [...list];
-      [copy[index], copy[to]] = [copy[to], copy[index]];
-      return copy;
-    };
-
-    $draft.linkNetwork = swap($draft.linkNetwork);
-    $draft.linkUrl = swap($draft.linkUrl);
-    ids = swap(ids);
-    announcement = m.profile_link_moved({ n: index + 1, position: to + 1 });
-  }
 </script>
 
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its
@@ -303,35 +256,39 @@
       hint={usernameLocked ? m.profile_username_locked_hint() : m.profile_username_hint()}
       error={usernameLocked ? undefined : usernameError}
     >
-      <TextInput
-        id="username"
-        name="username"
-        type="text"
-        aria-required="true"
-        maxlength={MAX_USERNAME_LENGTH}
-        autocomplete="username"
-        autocapitalize="none"
-        spellcheck="false"
-        bind:value={$draft.username}
-        readonly={usernameLocked}
-        class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
-        aria-invalid={usernameError ? 'true' : undefined}
-        aria-describedby={usernameDescription}
-      />
-      <!-- Announced politely as the check finishes; it never blocks the form. -->
-      <p
-        id="username-status"
-        role="status"
-        class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
-      >
-        {#if availability === 'checking'}
-          {m.profile_username_checking()}
-        {:else if availability === 'free'}
-          {m.profile_username_free()}
-        {:else if availability === 'failed'}
-          {m.profile_username_check_failed()}
-        {/if}
-      </p>
+      {#snippet children(aria)}
+        <TextInput
+          id="username"
+          name="username"
+          type="text"
+          aria-required="true"
+          maxlength={MAX_USERNAME_LENGTH}
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          bind:value={$draft.username}
+          readonly={usernameLocked}
+          class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
+          {...aria}
+          aria-describedby={aria['aria-invalid']
+            ? aria['aria-describedby']
+            : `${aria['aria-describedby']} username-status`}
+        />
+        <!-- Announced politely as the check finishes; it never blocks the form. -->
+        <p
+          id="username-status"
+          role="status"
+          class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
+        >
+          {#if availability === 'checking'}
+            {m.profile_username_checking()}
+          {:else if availability === 'free'}
+            {m.profile_username_free()}
+          {:else if availability === 'failed'}
+            {m.profile_username_check_failed()}
+          {/if}
+        </p>
+      {/snippet}
     </FormField>{/if}
 
   {#if shows('public')}
@@ -341,19 +298,20 @@
       hint={m.profile_name_hint()}
       optional
       counter={{ count: $draft.name.length, max: PROFILE_LIMITS.name }}
-      error={errorText(controller.errors.name?.[0])}
+      error={err('name')}
     >
-      <TextInput
-        id="name"
-        name="name"
-        type="text"
-        maxlength={PROFILE_LIMITS.name}
-        autocomplete="name"
-        bind:value={$draft.name}
-        class={input}
-        aria-invalid={controller.errors.name ? 'true' : undefined}
-        aria-describedby="name-hint{controller.errors.name ? ' name-error' : ''}"
-      />
+      {#snippet children(aria)}
+        <TextInput
+          id="name"
+          name="name"
+          type="text"
+          maxlength={PROFILE_LIMITS.name}
+          autocomplete="name"
+          bind:value={$draft.name}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
     </FormField>
   {/if}
 
@@ -365,18 +323,19 @@
       hint={m.profile_bio_hint()}
       optional
       counter={{ count: $draft.bio.length, max: PROFILE_LIMITS.bio }}
-      error={errorText(controller.errors.bio?.[0])}
+      error={err('bio')}
     >
-      <TextArea
-        id="bio"
-        name="bio"
-        rows={4}
-        maxlength={PROFILE_LIMITS.bio}
-        bind:value={$draft.bio}
-        class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
-        aria-invalid={controller.errors.bio ? 'true' : undefined}
-        aria-describedby="bio-hint{controller.errors.bio ? ' bio-error' : ''}"
-      />
+      {#snippet children(aria)}
+        <TextArea
+          id="bio"
+          name="bio"
+          rows={4}
+          maxlength={PROFILE_LIMITS.bio}
+          bind:value={$draft.bio}
+          class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
+          {...aria}
+        />
+      {/snippet}
     </FormField>
   {/if}
 
@@ -394,19 +353,13 @@
             items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
             value={$draft[picker.field] ? [$draft[picker.field]] : []}
             placeholder={picker.none}
-            invalid={Boolean(controller.errors[picker.field])}
+            invalid={!!errors.invalid(picker.field)}
             onchange={(picked) =>
               ($draft[picker.field] = (
                 picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
               ) as never)}
           />
-          {#if controller.errors[picker.field]}<p
-              id="{picker.id}-error"
-              role="alert"
-              class="mt-1 text-sm font-semibold text-error-700-300"
-            >
-              {errorText(controller.errors[picker.field]?.[0])}
-            </p>{/if}
+          <FieldError id={picker.id} message={err(picker.field)} />
         </div>
       {/each}
     </div>
@@ -418,40 +371,35 @@
         id="gender-other"
         label={m.profile_gender_other_label()}
         hint={m.profile_gender_other_hint()}
-        error={errorText(controller.errors.genderOther?.[0])}
+        error={err('genderOther')}
       >
-        <TextInput
-          id="gender-other"
-          name="genderOther"
-          type="text"
-          maxlength={PROFILE_LIMITS.gender}
-          bind:value={$draft.genderOther}
-          class={input}
-          aria-invalid={controller.errors.genderOther ? 'true' : undefined}
-          aria-describedby="gender-other-hint{controller.errors.genderOther
-            ? ' gender-other-error'
-            : ''}"
-        />
+        {#snippet children(aria)}
+          <TextInput
+            id="gender-other"
+            name="genderOther"
+            type="text"
+            maxlength={PROFILE_LIMITS.gender}
+            bind:value={$draft.genderOther}
+            class={input}
+            {...aria}
+          />
+        {/snippet}
       </FormField>
     {/if}
 
-    <FormField
-      id="city"
-      label={m.profile_city()}
-      optional
-      error={errorText(controller.errors.city?.[0])}
-    >
-      <TextInput
-        id="city"
-        name="city"
-        type="text"
-        maxlength={PROFILE_LIMITS.city}
-        autocomplete="address-level2"
-        bind:value={$draft.city}
-        class={input}
-        aria-invalid={controller.errors.city ? 'true' : undefined}
-        aria-describedby="city-hint{controller.errors.city ? ' city-error' : ''}"
-      />
+    <FormField id="city" label={m.profile_city()} optional error={err('city')}>
+      {#snippet children(aria)}
+        <TextInput
+          id="city"
+          name="city"
+          type="text"
+          maxlength={PROFILE_LIMITS.city}
+          autocomplete="address-level2"
+          bind:value={$draft.city}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
     </FormField>
 
     <div class="min-w-0">
@@ -464,138 +412,56 @@
         items={timezones}
         value={$draft.timezone ? [$draft.timezone] : []}
         placeholder={m.profile_timezone_placeholder()}
-        invalid={Boolean(controller.errors.timezone)}
+        invalid={!!errors.invalid('timezone')}
         onchange={(picked) => ($draft.timezone = picked[0] ?? '')}
       />
       <p id="timezone-hint" class="mt-1 text-sm text-surface-700-300">
         {m.profile_timezone_hint()}
       </p>
-      {#if controller.errors.timezone}<p
-          id="timezone-error"
-          role="alert"
-          class="mt-1 text-sm font-semibold text-error-700-300"
-        >
-          {errorText(controller.errors.timezone[0])}
-        </p>{/if}
+      <FieldError id="timezone" message={err('timezone')} />
     </div>
   {/if}
 
-  {#if shows('public')}<fieldset class="grid gap-3" aria-describedby="links-hint">
-      <legend class="font-semibold">{m.profile_links()}</legend>
-      <p id="links-hint" class="text-sm">{m.profile_links_hint()}</p>
-
-      {#if listError()}
-        <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
-      {/if}
-
-      {#if ids.length === 0}
-        <p class="text-sm">{m.profile_links_empty()}</p>
-      {/if}
-
-      <ul class="grid gap-4">
-        {#each ids as id, index (id)}
-          {@const urlError = itemError('linkUrl', index)}
-          {@const networkError = itemError('linkNetwork', index)}
-          <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-            <div class="grid gap-2 sm:grid-cols-4">
-              <SearchSelect
-                id="link-network-{id}"
-                name="linkNetwork"
-                label={m.profile_link_network({ n: index + 1 })}
-                labelClass="sr-only"
-                class="grid"
-                items={NETWORKS.map((network) => ({
-                  name: NETWORK_LABELS[network](),
-                  slug: network,
-                }))}
-                value={[$draft.linkNetwork[index]]}
-                placeholder={m.profile_link_network({ n: index + 1 })}
-                invalid={!!networkError}
-                onchange={(picked) =>
-                  ($draft.linkNetwork[index] = (picked[0] ?? 'instagram') as Network)}
-              />
-              <TextInput
-                id="link-url-{id}"
-                name="linkUrl"
-                type="text"
-                inputmode={takesHandle($draft.linkNetwork[index] as Network) ? 'text' : 'url'}
-                autocapitalize="none"
-                spellcheck="false"
-                placeholder={takesHandle($draft.linkNetwork[index] as Network)
-                  ? m.profile_link_handle_placeholder()
-                  : 'https://'}
-                aria-label={takesHandle($draft.linkNetwork[index] as Network)
-                  ? m.profile_link_handle({ n: index + 1 })
-                  : m.profile_link_url({ n: index + 1 })}
-                bind:value={$draft.linkUrl[index]}
-                class="{input} sm:col-span-3"
-                aria-invalid={urlError ? 'true' : undefined}
-                aria-describedby={urlError ? `link-error-${id}` : undefined}
-              />
-            </div>
-            {#if urlError || networkError}
-              <p id="link-error-{id}" role="alert" class="text-sm font-semibold text-error-700-300">
-                {urlError ?? networkError}
-              </p>
-            {/if}
-            <div class="flex flex-wrap gap-2">
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                disabled={index === 0}
-                aria-label={m.profile_link_up({ n: index + 1 })}
-                onclick={() => moveLink(index, -1)}
-              >
-                <span aria-hidden="true">↑</span>
-              </Button>
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                disabled={index === ids.length - 1}
-                aria-label={m.profile_link_down({ n: index + 1 })}
-                onclick={() => moveLink(index, 1)}
-              >
-                <span aria-hidden="true">↓</span>
-              </Button>
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                aria-label={m.profile_link_remove({ n: index + 1 })}
-                onclick={() => removeLink(index)}
-              >
-                <span aria-hidden="true">×</span>
-              </Button>
-            </div>
-          </li>
-        {/each}
-      </ul>
-
-      <div>
-        <Button
-          size="custom"
-          type="button"
-          class={secondary}
-          disabled={!canAdd}
-          bind:element={addButton}
-          onclick={addLink}
-        >
-          {m.profile_link_add()}
-        </Button>
-      </div>
-      <p class="sr-only" role="status">{announcement}</p>
-    </fieldset>{/if}
+  {#if shows('public')}
+    <NetworkLinksField
+      bind:networks={$draft.linkNetwork}
+      bind:urls={$draft.linkUrl}
+      items={networkItems}
+      max={MAX_SOCIAL_LINKS}
+      idPrefix="link"
+      legend={m.profile_links()}
+      hint={m.profile_links_hint()}
+      empty={m.profile_links_empty()}
+      reorder
+      error={err('linkUrl')}
+      {rowErrors}
+      placeholder={(network) =>
+        takesHandle(network as Network) ? m.profile_link_handle_placeholder() : 'https://'}
+      inputmode={(network) => (takesHandle(network as Network) ? 'text' : 'url')}
+      labels={{
+        network: (n) => m.profile_link_network({ n }),
+        url: (n, network) =>
+          takesHandle(network as Network)
+            ? m.profile_link_handle({ n })
+            : m.profile_link_url({ n }),
+        remove: (n) => m.profile_link_remove({ n }),
+        up: (n) => m.profile_link_up({ n }),
+        down: (n) => m.profile_link_down({ n }),
+        add: m.profile_link_add(),
+        removed: m.profile_link_removed,
+        moved: (n, position) => m.profile_link_moved({ n, position }),
+      }}
+      inputClass={input}
+      buttonClass={secondary}
+    />
+  {/if}
 
   <div class="flex flex-wrap items-center gap-5">
     <Button
       type="submit"
       size="custom"
-      submitting={controller.pending}
-      delayed={controller.delayed}
-      timeout={controller.timeout}
-      class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
+      {controller}
+      class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
     </Button>

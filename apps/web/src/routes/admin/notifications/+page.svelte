@@ -8,6 +8,7 @@
   import { apiRead } from '#lib/api/http.js';
   import { onMount } from 'svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fromResult } from '#lib/forms/contract.js';
   import Form from '#lib/components/Form.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import NotificationIcon from '#lib/components/NotificationIcon.svelte';
@@ -47,11 +48,8 @@
   onMount(() => (mounted = true));
 
   // svelte-ignore state_referenced_locally
-  const initial = result?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(result?.form ?? data.form),
     schema: announcementSchema,
     errorMessage: m.admin_announce_error_invalid,
     onSuccess() {

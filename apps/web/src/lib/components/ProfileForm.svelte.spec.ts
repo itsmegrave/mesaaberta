@@ -71,6 +71,23 @@ describe('ProfileForm', () => {
     expect(fields()).not.toEqual(expect.arrayContaining(['bio']));
   });
 
+  it('points every field only at hints and errors that are on the page', async () => {
+    const form = initialForm({ ...empty, username: 'ana' });
+    form.errors = { city: ['too_long'], name: ['too_long'] };
+    render(ProfileForm, { form, checkUsername: vi.fn() });
+
+    const described = [...document.querySelectorAll('form [aria-describedby]')];
+    expect(described.length).toBeGreaterThan(0);
+    for (const element of described) {
+      for (const id of element.getAttribute('aria-describedby')!.split(' ')) {
+        expect(document.getElementById(id), `#${id}`).not.toBeNull();
+      }
+    }
+    await expect
+      .element(page.getByLabelText(/^Cidade/))
+      .toHaveAttribute('aria-describedby', 'city-error');
+  });
+
   it('is a plain POST form where every field has a label and only the username is required', async () => {
     await setup();
 

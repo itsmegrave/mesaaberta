@@ -3,20 +3,17 @@
   import FormBanner from '#lib/components/FormBanner.svelte';
   import AuthShell from '#lib/components/AuthShell.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fromResult } from '#lib/forms/contract.js';
   import Form from '#lib/components/Form.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import PasswordField from '#lib/components/PasswordField.svelte';
   import { resolve } from '$app/paths';
   import { newPasswordSchema } from '#lib/auth/credentials.js';
-  import FormField from '#lib/components/FormField.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
-  const initial = result?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(result?.form ?? data.form),
     schema: newPasswordSchema,
     domain: 'account',
     onSuccess: () => {},
@@ -53,58 +50,36 @@
     <Form onsubmit={controller.submit} class="grid gap-4">
       <FormBanner text={problem} />
 
-      <FormField
+      <PasswordField
         id="password"
+        name="password"
         label={m.reset_password()}
         hint={m.auth_password_hint()}
         error={controller.errors.password ? m.auth_error_password() : undefined}
-      >
-        <TextInput
-          id="password"
-          name="password"
-          type="password"
-          required
-          minlength={8}
-          maxlength={72}
-          autocomplete="new-password"
-          bind:value={
-            () => controller.values.password, (value) => controller.change('password', value)
-          }
-          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={controller.errors.password ? 'true' : undefined}
-        />
-      </FormField>
+        autocomplete="new-password"
+        bind:value={
+          () => controller.values.password, (value) => controller.change('password', value)
+        }
+      />
 
-      <FormField
+      <PasswordField
         id="passwordConfirm"
+        name="passwordConfirm"
         label={m.reset_confirm()}
         error={controller.errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
-      >
-        <TextInput
-          id="passwordConfirm"
-          name="passwordConfirm"
-          type="password"
-          required
-          minlength={8}
-          maxlength={72}
-          autocomplete="new-password"
-          bind:value={
-            () => controller.values.passwordConfirm,
-            (value) => controller.change('passwordConfirm', value)
-          }
-          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={controller.errors.passwordConfirm ? 'true' : undefined}
-        />
-      </FormField>
+        autocomplete="new-password"
+        bind:value={
+          () => controller.values.passwordConfirm,
+          (value) => controller.change('passwordConfirm', value)
+        }
+      />
 
       <div>
         <Button
           type="submit"
           size="custom"
-          submitting={controller.pending}
-          delayed={controller.delayed}
-          timeout={controller.timeout}
-          class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
+          {controller}
+          class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.reset_submit()}
         </Button>

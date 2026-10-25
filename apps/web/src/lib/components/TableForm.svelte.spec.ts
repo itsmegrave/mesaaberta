@@ -135,6 +135,9 @@ describe('TableForm', () => {
     await expect
       .element(page.getByLabelText(/Mínimo de jogadores/))
       .toHaveAttribute('aria-invalid', 'true');
+    await expect
+      .element(page.getByLabelText(/Mínimo de jogadores/))
+      .toHaveAttribute('aria-describedby', 'minPlayers-hint minPlayers-error');
   });
 
   it('takes the current image off on save, and can take that back', async () => {
@@ -178,6 +181,9 @@ describe('TableForm', () => {
 
     await expect.element(page.getByLabelText('Título')).toHaveValue('ab');
     await expect.element(page.getByLabelText('Título')).toHaveAttribute('aria-invalid', 'true');
+    await expect
+      .element(page.getByLabelText('Título'))
+      .toHaveAccessibleDescription('Muito curto ou pequeno demais.');
     await expect.element(page.getByText('Muito curto ou pequeno demais.')).toBeVisible();
     await expect.element(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
   });

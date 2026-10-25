@@ -7,8 +7,8 @@
   import { addPasswordFormSchema } from '@mesaaberta/core/auth/password-setup';
   import FormBanner from '#lib/components/FormBanner.svelte';
   import Form from '#lib/components/Form.svelte';
-  import FormField from '#lib/components/FormField.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import AuthField from '#lib/components/AuthField.svelte';
+  import PasswordField from '#lib/components/PasswordField.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -80,10 +80,8 @@
         <Button
           type="submit"
           size="custom"
-          submitting={asking.pending}
-          delayed={asking.delayed}
-          timeout={asking.timeout}
-          class="btn h-12 rounded-lg border-2 border-primary-500 px-5 font-semibold"
+          controller={asking}
+          class="btn h-12 gap-2 rounded-lg border-2 border-primary-500 px-5 font-semibold"
         >
           {m.password_add_send()}
         </Button>
@@ -91,70 +89,46 @@
     {:else}
       <p role="status" class="mt-3 text-sm font-semibold">{m.password_add_sent()}</p>
       <Form action="?/addPassword" onsubmit={setting.submit} class="mt-5 grid max-w-sm gap-4">
-        <FormField id="password-code" label={m.password_add_code()} error={fieldProblem('code')}>
-          <TextInput
-            id="password-code"
-            name="code"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            required
-            minlength={6}
-            maxlength={6}
-            bind:value={() => setting.values.code, (value) => setting.change('code', value)}
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            aria-invalid={setting.errors.code ? 'true' : undefined}
-          />
-        </FormField>
+        <AuthField
+          id="password-code"
+          name="code"
+          label={m.password_add_code()}
+          error={fieldProblem('code')}
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          required
+          minlength={6}
+          maxlength={6}
+          bind:value={() => setting.values.code, (value) => setting.change('code', value)}
+        />
 
-        <FormField
+        <PasswordField
           id="password-new"
+          name="password"
           label={m.password_add_password()}
           hint={m.auth_password_hint()}
           error={fieldProblem('password')}
-        >
-          <TextInput
-            id="password-new"
-            name="password"
-            type="password"
-            required
-            minlength={8}
-            maxlength={72}
-            autocomplete="new-password"
-            bind:value={() => setting.values.password, (value) => setting.change('password', value)}
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            aria-invalid={setting.errors.password ? 'true' : undefined}
-          />
-        </FormField>
+          autocomplete="new-password"
+          bind:value={() => setting.values.password, (value) => setting.change('password', value)}
+        />
 
-        <FormField
+        <PasswordField
           id="password-confirm"
+          name="passwordConfirm"
           label={m.password_add_confirm()}
           error={setting.errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
-        >
-          <TextInput
-            id="password-confirm"
-            name="passwordConfirm"
-            type="password"
-            required
-            minlength={8}
-            maxlength={72}
-            autocomplete="new-password"
-            bind:value={
-              () => setting.values.passwordConfirm,
-              (value) => setting.change('passwordConfirm', value)
-            }
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            aria-invalid={setting.errors.passwordConfirm ? 'true' : undefined}
-          />
-        </FormField>
+          autocomplete="new-password"
+          bind:value={
+            () => setting.values.passwordConfirm,
+            (value) => setting.change('passwordConfirm', value)
+          }
+        />
 
         <Button
           type="submit"
           size="custom"
-          submitting={setting.pending}
-          delayed={setting.delayed}
-          timeout={setting.timeout}
-          class="btn h-12 rounded-lg preset-filled-primary-500 text-base font-semibold"
+          controller={setting}
+          class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.password_add_submit()}
         </Button>
@@ -164,10 +138,8 @@
         <Button
           type="submit"
           size="custom"
-          submitting={asking.pending}
-          delayed={asking.delayed}
-          timeout={asking.timeout}
-          class="btn h-12 rounded-lg px-0 link-underline font-semibold text-link"
+          controller={asking}
+          class="btn h-12 gap-2 rounded-lg px-0 link-underline font-semibold text-link"
         >
           {m.password_add_resend()}
         </Button>

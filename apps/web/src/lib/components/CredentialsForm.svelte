@@ -3,8 +3,8 @@
   import FormBanner from '#lib/components/FormBanner.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
-  import TextInput from './TextInput.svelte';
-  import FormField from './FormField.svelte';
+  import EmailField from './EmailField.svelte';
+  import PasswordField from './PasswordField.svelte';
   import type { CredentialsData } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -31,51 +31,27 @@
 
   <input type="hidden" name="next" value={controller.values.next} />
 
-  <FormField
-    id="email"
-    label={m.auth_email()}
+  <EmailField
+    bind:value={() => controller.values.email, (value) => controller.change('email', value)}
     error={controller.errors.email ? m.auth_error_email() : undefined}
-  >
-    <TextInput
-      id="email"
-      name="email"
-      type="email"
-      required
-      autocomplete="email"
-      bind:value={() => controller.values.email, (value) => controller.change('email', value)}
-      class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-      aria-invalid={controller.errors.email ? 'true' : undefined}
-    />
-  </FormField>
+  />
 
-  <FormField
+  <PasswordField
     id="password"
+    name="password"
     label={m.auth_password()}
     hint={mode === 'signup' ? m.auth_password_hint() : undefined}
     error={controller.errors.password ? m.auth_error_password() : undefined}
-  >
-    <TextInput
-      id="password"
-      name="password"
-      type="password"
-      required
-      minlength={8}
-      maxlength={72}
-      autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
-      bind:value={() => controller.values.password, (value) => controller.change('password', value)}
-      class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-      aria-invalid={controller.errors.password ? 'true' : undefined}
-    />
-  </FormField>
+    autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
+    bind:value={() => controller.values.password, (value) => controller.change('password', value)}
+  />
 
   <div>
     <Button
       type="submit"
       size="custom"
-      submitting={controller.pending}
-      delayed={controller.delayed}
-      timeout={controller.timeout}
-      class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
+      {controller}
+      class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
     >
       {mode === 'signup' ? m.signup_submit() : m.login_submit()}
     </Button>

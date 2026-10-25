@@ -55,12 +55,10 @@
       <input type="hidden" name="next" value={next} />
       <Button
         type="submit"
-        size="custom"
-        submitting={publish.pending}
-        delayed={publish.delayed}
-        timeout={publish.timeout}
-        class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-        >{m.draft_publish()}</Button
+        variant="primary"
+        size="md"
+        controller={publish}
+        class="gap-2 font-semibold">{m.draft_publish()}</Button
       >
       {#if error}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">{error}</p>

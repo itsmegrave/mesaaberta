@@ -4,6 +4,7 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fromResult } from '#lib/forms/contract.js';
   import TableForm from '#lib/components/TableForm.svelte';
 
   import { m } from '#lib/paraglide/messages.js';
@@ -21,11 +22,8 @@
   ];
 
   // svelte-ignore state_referenced_locally
-  const initial = form?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(form?.form ?? data.form),
     schema: tableFormSchema,
     domain: 'table',
     onSuccess: () => {},

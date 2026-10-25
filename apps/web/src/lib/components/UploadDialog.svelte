@@ -193,7 +193,12 @@
       <p id="{id}-error" role="alert" class="text-sm font-semibold text-error-alert">{error}</p>
     {/if}
     <div>
-      <Button type="submit" size="custom" class={trigger}>{m.upload_send()}</Button>
+      <Button
+        type="submit"
+        variant="secondary"
+        size="md"
+        class="w-full gap-2 bg-panel font-semibold sm:w-auto">{m.upload_send()}</Button
+      >
     </div>
   </Form>
 {/if}

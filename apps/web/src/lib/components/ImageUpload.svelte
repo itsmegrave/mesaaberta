@@ -6,6 +6,7 @@
   import { FileUpload } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
   import ImageCropper from '#lib/components/ImageCropper.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import { isDecodable } from '#lib/forms/decodable.js';
   import { IMAGE_TYPES } from '@mesaaberta/core/forms/files';
   import { m } from '#lib/paraglide/messages.js';
@@ -192,7 +193,5 @@
       onunreadable={() => finish([framing!.file])}
     />
   {/if}
-  {#if error}<p id="{id}-error" role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
-      {error}
-    </p>{/if}
+  <FieldError {id} message={error} />
 </div>

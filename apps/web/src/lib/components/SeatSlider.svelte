@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
   import { m } from '#lib/paraglide/messages.js';
   import SeatDots from './SeatDots.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
 
   let {
     id,
@@ -69,7 +70,7 @@
 {:else}
   <div class="grid gap-1">
     <label for={id} class="label-text font-semibold">{label}</label>
-    <input
+    <TextInput
       {id}
       {name}
       type="number"
