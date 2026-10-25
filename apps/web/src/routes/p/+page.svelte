@@ -1,17 +1,20 @@
 <script lang="ts">
   import { navigating, page } from '$app/state';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
-  import PartnerCard from '#lib/components/PartnerCard.svelte';
-  import PartnerFilters from '#lib/components/PartnerFilters.svelte';
-  import PartnerHowItWorks from '#lib/components/PartnerHowItWorks.svelte';
-  import PartnerReportDialog from '#lib/components/PartnerReportDialog.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import EmptyState from '#lib/components/ui/EmptyState.svelte';
+  import PageHead from '#lib/components/ui/PageHead.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
+  import PartnerCard from './components/PartnerCard.svelte';
+  import PartnerFilters from './components/PartnerFilters.svelte';
+  import PartnerHowItWorks from './components/PartnerHowItWorks.svelte';
+  import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { partnerIdSchema } from '@mesaaberta/core/moderation/reports';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { Target } from '#lib/target.svelte.js';
 
   let { data } = $props();
 
@@ -24,8 +27,8 @@
 
   const anyFilter = $derived(data.filters.query !== '');
 
-  let reporting = $state<{ id: string; name: string } | null>(null);
-  let withdrawing = $state<{ id: string; name: string } | null>(null);
+  const reporting = new Target<{ id: string; name: string }>();
+  const withdrawing = new Target<{ id: string; name: string }>();
 </script>
 
 <svelte:head>
@@ -34,13 +37,11 @@
 </svelte:head>
 
 <section class="py-2 md:pt-12">
-  <Breadcrumbs class="mb-8" items={[{ label: m.partner_nav_label() }]} />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-    {m.partner_title()}
-  </h1>
-  <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
-    {m.partner_lede()}
-  </p>
+  <PageHead
+    crumbs={[{ label: m.partner_nav_label() }]}
+    title={m.partner_title()}
+    lede={m.partner_lede()}
+  />
 
   {#if data.sent}
     <p role="status" class="mt-6 rounded-lg border border-success-500 bg-panel p-4 font-semibold">
@@ -55,18 +56,18 @@
   {#if filtering.current}
     <ListSkeleton kind="cards" />
   {:else if data.cards.length > 0}
-    <ul class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <CardGrid class="mt-6">
       {#each data.cards as partner (partner.id)}
         <li>
           <PartnerCard
             {partner}
             canEdit={partner.canEdit}
-            onreport={partner.canReport ? (picked) => (reporting = picked) : undefined}
-            onwithdraw={(picked) => (withdrawing = picked)}
+            onreport={partner.canReport ? (picked) => (reporting.current = picked) : undefined}
+            onwithdraw={(picked) => (withdrawing.current = picked)}
           />
         </li>
       {/each}
-    </ul>
+    </CardGrid>
     <div class="mt-8">
       <Pager
         page={data.filters.page}
@@ -75,35 +76,31 @@
       />
     </div>
   {:else}
-    <div class="mt-10 max-w-sm" role="status">
-      <p class="text-lg">{anyFilter ? m.partner_empty_filtered() : m.partner_empty()}</p>
-      {#if anyFilter}
-        <a href="/p" class="mt-3 inline-block anchor">{m.partner_filter_clear()}</a>
-      {/if}
-    </div>
+    <EmptyState
+      text={anyFilter ? m.partner_empty_filtered() : m.partner_empty()}
+      clearHref={anyFilter ? '/p' : undefined}
+      clearLabel={m.partner_filter_clear()}
+    />
   {/if}
 </section>
 
-{#if reporting}
-  {#key reporting.id}
-    <PartnerReportDialog
-      partner={reporting}
-      bind:open={() => reporting !== null, (value) => !value && (reporting = null)}
-    />
+{#if reporting.current}
+  {#key reporting.current.id}
+    <EntityReportDialog kind="partner" entity={reporting.current} bind:open={reporting.open} />
   {/key}
 {/if}
 
-{#if withdrawing}
-  {#key withdrawing.id}
+{#if withdrawing.current}
+  {#key withdrawing.current.id}
     <ModerationDialog
-      bind:open={() => withdrawing !== null, (value) => !value && (withdrawing = null)}
+      bind:open={withdrawing.open}
       trigger={false}
       action="?/withdraw"
       schema={partnerIdSchema}
-      fields={{ id: withdrawing.id }}
+      fields={{ id: withdrawing.current.id }}
       danger
       label={m.partner_withdraw()}
-      title={m.partner_withdraw_title({ name: withdrawing.name })}
+      title={m.partner_withdraw_title({ name: withdrawing.current.name })}
       text={m.partner_withdraw_text()}
       confirm={m.partner_withdraw_confirm()}
       success={m.partner_withdraw_done()}

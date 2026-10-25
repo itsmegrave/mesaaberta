@@ -117,4 +117,38 @@ describe('admin DataTable', () => {
       .element(page.getByRole('link', { name: /Mostrar mais/ }))
       .toHaveAttribute('href', '/admin/things?size=50');
   });
+  it('adds the row menu as the last, unnamed column, and a spinner while the row is busy', async () => {
+    render(Harness, { rows, withMenu: true, busyRow: '2' });
+
+    await expect.element(page.getByRole('columnheader', { name: 'Ações' })).toBeInTheDocument();
+    await expect
+      .element(page.getByRole('button', { name: /Ações de Primeiro/ }).first())
+      .toBeVisible();
+    // The busy row has no menu to open while its action runs.
+    await expect
+      .element(page.getByRole('button', { name: /Ações de Segundo/ }))
+      .not.toBeInTheDocument();
+  });
+
+  it('puts the row menu at the end of each card on a phone', async () => {
+    await page.viewport(390, 800);
+    render(Harness, { rows, withMenu: true });
+
+    const card = page.getByRole('listitem').first();
+    await expect.element(card.getByRole('button', { name: /Ações de Primeiro/ })).toBeVisible();
+  });
+
+  it('draws one filter snippet in the toolbar on a desktop and in the "Filtros" sheet on a phone', async () => {
+    render(Harness, { rows, withSelect: true, sheet: true });
+    expect(document.getElementById('kind-filter')).not.toBeNull();
+
+    await page.viewport(390, 800);
+    // On a phone the segments leave the page for the sheet.
+    await expect.element(page.getByRole('radiogroup', { name: 'Status' })).not.toBeInTheDocument();
+    await page.getByRole('button', { name: /Filtros/ }).click();
+
+    const sheet = page.getByRole('dialog');
+    await expect.element(sheet.getByRole('radiogroup', { name: 'Status' })).toBeVisible();
+    expect(document.getElementById('kind-filter-sheet')).not.toBeNull();
+  });
 });

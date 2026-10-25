@@ -1,0 +1,40 @@
+<script lang="ts">
+  // The app's icons by name, from the per-icon components in `#lib/icons/registry.js`.
+  import { DRAWINGS } from '#lib/icons/drawings.generated.js';
+  import { ICONS } from '#lib/icons/registry.js';
+  import type { IconName } from '#lib/icons/names.js';
+
+  let {
+    name,
+    size = 20,
+    motion = true,
+    class: className = '',
+  }: { name: IconName; size?: number; motion?: boolean; class?: string } = $props();
+
+  const Component = $derived(ICONS[name]);
+  // Embed SVG attributes for SSR and offline rendering; no CSS geometry or remote fallback.
+  const drawing = $derived({
+    content: {
+      ...DRAWINGS[name],
+      body: motion
+        ? DRAWINGS[name].body
+        : DRAWINGS[name].body.replace(/<animateTransform[^>]*\/>/g, ''),
+    },
+    fallback: {
+      ...DRAWINGS[name],
+      body: motion
+        ? DRAWINGS[name].body
+        : DRAWINGS[name].body.replace(/<animateTransform[^>]*\/>/g, ''),
+    },
+  });
+</script>
+
+<!-- Decorative: the text next to an icon says what it means. -->
+<Component
+  {...drawing}
+  width={String(size)}
+  height={String(size)}
+  data-icon={name}
+  aria-hidden="true"
+  class="shrink-0 {className}"
+/>

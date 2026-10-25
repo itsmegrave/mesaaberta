@@ -1,22 +1,25 @@
 <script lang="ts">
-  import GmRating from '#lib/components/GmRating.svelte';
-  import UserLink from '#lib/components/UserLink.svelte';
-  import Avatar from '#lib/components/Avatar.svelte';
+  import { copyText } from '#lib/clipboard.js';
+  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import AuditTimeline from '../../components/ui/AuditTimeline.svelte';
+  import DetailList from '#lib/components/ui/DetailList.svelte';
+  import DetailRow from '#lib/components/ui/DetailRow.svelte';
+  import Panel from '#lib/components/ui/Panel.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge from '#lib/components/StatusBadge.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge from '#lib/components/ui/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import {
     accountSchema,
     banSchema,
-    RESOLUTION_NOTE_MAX,
     TABLE_REPORTS_WARNING,
   } from '@mesaaberta/core/moderation/reports';
+  import { ban as banWords, banReason } from '#lib/admin/moderation-presets.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { toast } from '#lib/toaster.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -52,13 +55,8 @@
       : m.admin_user_meaning_closed();
   });
 
-  async function copyId() {
-    try {
-      await navigator.clipboard.writeText(data.user.id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId() {
+    return copyText(data.user.id, m.toast_id_copied());
   }
   // The title's "3 dots": the user's public page, their ID, and the decisions (each asks first).
   let suspending = $state(false);
@@ -105,18 +103,11 @@
     }
     return items;
   });
-  const banWrite = {
-    name: 'reason',
-    label: m.moderation_ban_reason(),
-    hint: m.moderation_ban_reason_hint({ max: RESOLUTION_NOTE_MAX }),
-    required: true,
-  } as const;
-  const card = 'rounded-lg border border-surface-200-800 bg-panel p-5';
 </script>
 
-<svelte:head><title>{data.user.username ?? m.admin_user_title()} | Mesa Aberta</title></svelte:head>
 <AdminPage
   title={handle}
+  tabTitle={`${data.user.username ?? m.admin_user_title()} | Mesa Aberta`}
   eyebrow={m.admin_user_title()}
   crumbs={[
     { label: m.nav_admin(), href: '/admin' },
@@ -126,7 +117,7 @@
   {menu}
 >
   {#snippet lead()}
-    <Avatar
+    <MAAvatar
       src={data.avatar}
       name={data.user.name ?? data.user.username ?? m.admin_user_title()}
       size={72}
@@ -172,7 +163,7 @@
         danger
         durations
         choices={['7', '30', '90']}
-        write={banWrite}
+        write={banReason()}
         label={m.admin_menu_suspend()}
         title={m.admin_suspend_title({ user: handle })}
         username={data.user.username}
@@ -186,16 +177,10 @@
         action="?/ban"
         schema={banSchema}
         fields={{ profileId: data.user.id }}
-        danger
-        durations
+        {...banWords(handle)}
         choices={['permanent']}
-        write={banWrite}
         label={m.admin_menu_ban()}
-        title={m.admin_ban_title({ user: handle })}
         username={data.user.username}
-        text={m.admin_ban_text()}
-        confirm={m.admin_ban()}
-        success={m.admin_ban_done()}
       />
     {/if}
   {/if}
@@ -214,58 +199,46 @@
   {/if}
 
   <div class="mt-8 grid gap-6 lg:grid-cols-2">
-    <section aria-labelledby="user-data" class={card}>
-      <h2 id="user-data" class="text-lg font-semibold">{m.admin_user_data()}</h2>
-      <dl class="mt-3 divide-y divide-surface-200-800">
+    <Panel title={m.admin_user_data()}>
+      <DetailList class="mt-3">
         {#each details as [label, value] (label)}
-          <div class="grid gap-1 py-3 sm:grid-cols-2">
-            <dt class="text-sm font-semibold text-muted">{label}</dt>
-            <dd class="text-sm break-all">
-              {#if label === m.admin_profile_username()}<UserLink
-                  username={data.user.username}
-                  label={value}
-                />{:else}{value}{/if}
-            </dd>
-          </div>
+          <DetailRow {label} class="text-sm break-all">
+            {#if label === m.admin_profile_username()}<UserLink
+                username={data.user.username}
+                label={value}
+              />{:else}{value}{/if}
+          </DetailRow>
         {/each}
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_profile_id()}</dt>
-          <dd class="font-mono text-xs break-all">{data.user.id}</dd>
-        </div>
-      </dl>
-    </section>
+        <DetailRow label={m.admin_profile_id()} class="font-mono text-xs break-all"
+          >{data.user.id}</DetailRow
+        >
+      </DetailList>
+    </Panel>
 
-    <section aria-labelledby="user-activity" class={card}>
-      <h2 id="user-activity" class="text-lg font-semibold">{m.admin_user_activity()}</h2>
-      <dl class="mt-3 divide-y divide-surface-200-800">
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_playing()}</dt>
-          <dd class="text-sm tabular-nums">{activity.playing}</dd>
-        </div>
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_running()}</dt>
-          <dd class="text-sm tabular-nums">{activity.running}</dd>
-        </div>
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_rating()}</dt>
-          <dd class="text-sm"><GmRating rating={activity.rating} /></dd>
-        </div>
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_reports()}</dt>
-          <dd class="text-sm tabular-nums">{reported}</dd>
-        </div>
-      </dl>
+    <Panel title={m.admin_user_activity()}>
+      <DetailList class="mt-3">
+        <DetailRow label={m.admin_user_playing()} class="text-sm tabular-nums"
+          >{activity.playing}</DetailRow
+        >
+        <DetailRow label={m.admin_user_running()} class="text-sm tabular-nums"
+          >{activity.running}</DetailRow
+        >
+        <DetailRow label={m.admin_user_rating()} class="text-sm"
+          ><GmRating rating={activity.rating} /></DetailRow
+        >
+        <DetailRow label={m.admin_user_reports()} class="text-sm tabular-nums">{reported}</DetailRow
+        >
+      </DetailList>
       {#if reported >= TABLE_REPORTS_WARNING && !ban}
         <p role="note" class="mt-3 flex items-start gap-2 text-sm font-semibold">
           <Icon name="triangle-alert" size={18} class="mt-0.5 text-warning-700-300" />
           {m.admin_table_reports_warning()}
         </p>
       {/if}
-    </section>
+    </Panel>
   </div>
 
-  <section aria-labelledby="user-history" class="mt-6 {card}">
-    <h2 id="user-history" class="text-lg font-semibold">{m.history_title()}</h2>
+  <Panel title={m.history_title()} class="mt-6 p-5">
     <AuditTimeline history={data.history} zone={data.viewer.timezone} showTable />
-  </section>
+  </Panel>
 </AdminPage>

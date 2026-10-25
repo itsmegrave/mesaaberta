@@ -1,25 +1,24 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+  import { copyText } from '#lib/clipboard.js';
+  import { Target } from '#lib/target.svelte.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
-  import {
-    CROWDFUNDING_REPORT_REASONS,
-    removeCrowdfundingSchema,
-    RESOLUTION_NOTE_MAX,
-  } from '@mesaaberta/core/moderation/reports';
+  import { removeCrowdfundingSchema } from '@mesaaberta/core/moderation/reports';
+  import { removeCrowdfunding } from '#lib/admin/moderation-presets.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
-  import { toast } from '#lib/toaster.js';
   import type { AdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
 
   type Row = AdminCrowdfundings['rows'][number] & { cover: string | null };
@@ -32,20 +31,14 @@
     { id: 'status', header: m.admin_crowdfunding_col_status(), width: 'w-52' },
     { id: 'sender', header: m.crowdfunding_sent_by_label(), width: 'w-40' },
     { id: 'reports', header: m.admin_crowdfunding_col_reports(), align: 'right', width: 'w-28' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
 
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
-  let removing = $state<Row | null>(null);
+  const removing = new Target<Row>();
   const badge = (row: Row) =>
     (row.removedAt ? 'crowdfunding:removed' : `crowdfunding:${phaseOf(row)}`) as Status;
-  async function copyId(row: Row) {
-    try {
-      await navigator.clipboard.writeText(row.id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId(row: Row) {
+    return copyText(row.id, m.toast_id_copied());
   }
   const items = (row: Row): KebabItem[] => [
     {
@@ -70,7 +63,7 @@
             label: m.admin_crowdfunding_remove_menu(),
             icon: 'trash' as const,
             destructive: true,
-            onselect: () => (removing = row),
+            onselect: () => (removing.current = row),
           },
         ]),
   ];
@@ -86,7 +79,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_nav_crowdfunding()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_nav_crowdfunding()} lede={m.admin_crowdfunding_lede()}>
   <DataTable
     rows={list.rows}
@@ -102,17 +94,13 @@
     filtered={!!list.query || list.status !== 'up'}
     empty={m.admin_crowdfunding_empty()}
     sizes={false}
+    sheet
+    menu={(row: Row) => ({
+      name: m.admin_crowdfunding_action_label({ name: row.name }),
+      items: items(row),
+    })}
   >
     {#snippet segments()}
-      <SegmentedFilter
-        name="status"
-        label={m.admin_profile_status()}
-        {options}
-        value={list.status}
-        fallback="up"
-      />
-    {/snippet}
-    {#snippet sheet()}
       <SegmentedFilter
         name="status"
         label={m.admin_profile_status()}
@@ -157,15 +145,10 @@
         {/if}
       {:else if id === 'reports'}
         {row.reports}
-      {:else if id === 'actions'}
-        <KebabMenu
-          name={m.admin_crowdfunding_action_label({ name: row.name })}
-          items={items(row)}
-        />
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media
             kind="cover"
             src={row.cover}
@@ -197,35 +180,19 @@
             >
           {/if}
         {/snippet}
-        {#snippet action()}
-          <KebabMenu
-            name={m.admin_crowdfunding_action_label({ name: row.name })}
-            items={items(row)}
-          />
-        {/snippet}
       </ListCard>
     {/snippet}
   </DataTable>
-  {#if removing}
-    {#key removing.id}
+  {#if removing.current}
+    {@const row = removing.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => removing !== null, (value) => !value && (removing = null)}
+        bind:open={removing.open}
         trigger={false}
         action="?/remove"
         schema={removeCrowdfundingSchema}
-        fields={{ id: removing.id }}
-        danger
-        reasons={CROWDFUNDING_REPORT_REASONS}
-        write={{
-          name: 'note',
-          label: m.admin_crowdfunding_remove_note(),
-          hint: m.admin_crowdfunding_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
-        }}
-        label={m.admin_crowdfunding_remove()}
-        title={m.admin_crowdfunding_remove_title({ name: removing.name })}
-        text={m.admin_crowdfunding_remove_text()}
-        confirm={m.admin_crowdfunding_remove_confirm()}
-        success={m.admin_crowdfunding_remove_done()}
+        fields={{ id: row.id }}
+        {...removeCrowdfunding(row.name)}
       />
     {/key}
   {/if}

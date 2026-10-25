@@ -1,44 +1,13 @@
-<script lang="ts">
-  import type { Snippet } from 'svelte';
-  import type { HTMLButtonAttributes } from 'svelte/elements';
-
-  let {
-    children,
-    element = $bindable(),
-    type = 'button',
-    size = 'md',
-    variant = 'ghost',
-    class: className = '',
-    ...attributes
-  }: HTMLButtonAttributes & {
-    children?: Snippet;
-    element?: HTMLButtonElement;
-    size?: 'md' | 'sm' | 'icon' | 'custom';
-    variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  } = $props();
-  const sizes = {
-    md: 'h-12 rounded-lg px-4',
-    sm: 'h-11 rounded-lg px-3',
-    icon: 'size-12 rounded-lg p-0',
-    custom: '',
-  };
-  const variants = {
-    primary: 'preset-filled-primary-500',
-    secondary: 'border-2 border-surface-200-800 hover:preset-tonal',
-    danger: 'preset-filled-error-500',
-    ghost: '',
-  };
+<script module lang="ts">
+  export { buttonClass, type ButtonSize, type ButtonVariant } from './ui/MAButton.svelte';
 </script>
 
-<button
-  bind:this={element}
-  {type}
-  {...attributes}
-  class="{size === 'custom'
-    ? ''
-    : 'btn'} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-50 {sizes[
-    size
-  ]} {variants[variant]} {className}"
->
-  {@render children?.()}
-</button>
+<script lang="ts">
+  // @mesaaberta/privy imports this path; the component is ui/MAButton.svelte.
+  import MAButton from './ui/MAButton.svelte';
+  import type { ComponentProps } from 'svelte';
+
+  let props: ComponentProps<typeof MAButton> = $props();
+</script>
+
+<MAButton {...props} />

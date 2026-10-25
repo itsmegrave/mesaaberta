@@ -2,13 +2,14 @@
   // The frame of an admin page: the breadcrumbs (Início / Admin / section) and the head. Every page
   // of the admin opens with it, so they share one rhythm.
   import type { Snippet } from 'svelte';
-  import AdminPageHead from '#lib/components/AdminPageHead.svelte';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
+  import AdminPageHead from '#lib/components/admin/ui/AdminPageHead.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let {
     title,
+    tabTitle,
     lede,
     eyebrow,
     crumbs,
@@ -20,6 +21,8 @@
   }: {
     /** The section's name; on a detail page, what it is about. */
     title: string;
+    /** The browser tab's title, when it is not "<title> | Mesa Aberta" (a detail page names its kind). */
+    tabTitle?: string;
     lede?: string;
     eyebrow?: string;
     /** The levels after "Início": by default Admin and the section named like the title. */
@@ -32,6 +35,8 @@
     children?: Snippet;
   } = $props();
 </script>
+
+<svelte:head><title>{tabTitle ?? `${title} | Mesa Aberta`}</title></svelte:head>
 
 <section class="py-6 md:py-8">
   <Breadcrumbs

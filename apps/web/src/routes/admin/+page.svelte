@@ -1,11 +1,10 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
-  import Button from '#lib/components/Button.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import Spinner from '#lib/components/Spinner.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
+  import RefreshButton from '#lib/components/admin/RefreshButton.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { dayLabel, shortDate, timeLabel } from '#lib/admin/format.js';
   import type { IconName } from '#lib/icons/names.js';
@@ -161,8 +160,6 @@
   const href = (path: string) => path;
 </script>
 
-<svelte:head><title>{m.admin_nav_overview()} | Mesa Aberta</title></svelte:head>
-
 <AdminPage
   title={m.admin_nav_overview()}
   lede={m.admin_updated({ time: updated(data.updatedAt) })}
@@ -177,16 +174,7 @@
   ]}
 >
   {#snippet actions()}
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
-      disabled={remote.isFetching}
-      onclick={() => remote.refetch()}
-    >
-      {#if remote.isFetching}<Spinner />{:else}<Icon name="refresh-cw" size={18} />{/if}
-      {m.admin_refresh()}
-    </Button>
+    <RefreshButton query={remote} />
   {/snippet}
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 

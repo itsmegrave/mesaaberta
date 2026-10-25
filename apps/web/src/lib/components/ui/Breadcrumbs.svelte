@@ -1,0 +1,96 @@
+<script lang="ts">
+  import { goto } from '$app/navigation';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+
+  import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
+
+  type Crumb = { label: string; href?: string };
+
+  /**
+   * Where a page sits, from the home page down: pass the levels after "Início"; the last is the
+   * current page (text, `aria-current`). Every page but the home page shows one, on every screen
+   * size. On a phone a trail over three levels folds its middle into a "…" menu, so it never wraps
+   * or scrolls sideways; middle links truncate at 150px and the current page keeps at least 72px.
+   */
+  let { items, class: className = '' }: { items: Crumb[]; class?: string } = $props();
+
+  const trail = $derived([{ label: m.breadcrumbs_home(), href: '/' }, ...items]);
+  const folds = $derived(trail.length > 3);
+  const hidden = $derived(trail.slice(1, -1));
+  const current = $derived(trail[trail.length - 1]);
+
+  // A menu item's value is the crumb's link, already canonical.
+  const open = (href: string) => goto(href);
+</script>
+
+{#snippet separator()}
+  <Icon name="chevron-right" size={16} class="text-muted" />
+{/snippet}
+
+{#snippet home()}
+  <a href="/" class="inline-flex min-h-11 items-center gap-1 link-underline md:min-h-0">
+    <Icon name="game-icons:house" size={16} />{trail[0].label}
+  </a>
+{/snippet}
+
+{#snippet here()}
+  <span aria-current="page" class="block min-w-18 truncate font-semibold text-surface-950-50"
+    >{current.label}</span
+  >
+{/snippet}
+
+<nav aria-label={m.breadcrumbs_label()} class="min-w-0 {className}">
+  <ol class="flex items-center gap-2 text-sm text-muted">
+    {#each trail as crumb, index (index)}
+      {@const middle = index > 0 && index < trail.length - 1}
+      <!-- On a phone the middle of a long trail is folded into the "…" menu below. -->
+      <li class="min-w-0 items-center gap-2 {middle && folds ? 'hidden md:flex' : 'flex'}">
+        {#if index > 0}{@render separator()}{/if}
+        {#if index === 0}
+          {@render home()}
+        {:else if index === trail.length - 1}
+          {@render here()}
+        {:else if crumb.href}
+          <a href={crumb.href} class="block max-w-37.5 truncate link-underline">{crumb.label}</a>
+        {:else}
+          <span class="block max-w-37.5 truncate">{crumb.label}</span>
+        {/if}
+      </li>
+      {#if folds && index === 0}
+        <li class="flex items-center gap-2 md:hidden">
+          {@render separator()}
+          <Menu
+            positioning={{ placement: 'bottom-start', offset: { mainAxis: 4 } }}
+            onSelect={({ value }) => open(value)}
+          >
+            <Menu.Trigger
+              aria-label={m.breadcrumbs_more()}
+              class="btn inline-flex size-11 items-center justify-center rounded-lg p-0 hover:preset-tonal"
+            >
+              <span aria-hidden="true">…</span>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner class="z-50!">
+                <Menu.Content
+                  class="w-64 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
+                >
+                  {#each hidden as crumb (crumb.label)}
+                    {#if crumb.href}
+                      <Menu.Item
+                        value={crumb.href}
+                        class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+                      >
+                        <span class="truncate">{crumb.label}</span>
+                      </Menu.Item>
+                    {/if}
+                  {/each}
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu>
+        </li>
+      {/if}
+    {/each}
+  </ol>
+</nav>

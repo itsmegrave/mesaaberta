@@ -1,15 +1,18 @@
 <script lang="ts">
   import { navigating, page } from '$app/state';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
-  import CrowdfundingFilters from '#lib/components/CrowdfundingFilters.svelte';
-  import CrowdfundingReportDialog from '#lib/components/CrowdfundingReportDialog.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import EmptyState from '#lib/components/ui/EmptyState.svelte';
+  import PageHead from '#lib/components/ui/PageHead.svelte';
+  import CrowdfundingCard from './components/ui/CrowdfundingCard.svelte';
+  import CrowdfundingFilters from './components/CrowdfundingFilters.svelte';
+  import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { Target } from '#lib/target.svelte.js';
 
   let { data } = $props();
 
@@ -34,7 +37,7 @@
     return link(parts.length > 0 ? `?${parts.join('&')}` : '');
   };
 
-  let reporting = $state<{ id: string; name: string } | null>(null);
+  const reporting = new Target<{ id: string; name: string }>();
   const shown = $derived(
     data.filters.ended ? data.ended.length : data.running.length + data.upcoming.length,
   );
@@ -46,38 +49,35 @@
 </svelte:head>
 
 <section class="py-2 md:pt-12">
-  <Breadcrumbs class="mb-8" items={[{ label: m.nav_crowdfunding_label() }]} />
-  <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
-    <div>
-      <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-        {m.crowdfunding_title()}
-      </h1>
-      <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
-        {m.crowdfunding_lede()}
-      </p>
-    </div>
-    <a
-      href="/cf/new"
-      class="btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
-    >
-      <Icon name="plus" size={20} />
-      {m.crowdfunding_add_cta()}
-    </a>
-  </div>
+  <PageHead
+    crumbs={[{ label: m.nav_crowdfunding_label() }]}
+    title={m.crowdfunding_title()}
+    lede={m.crowdfunding_lede()}
+  >
+    {#snippet actions()}
+      <a
+        href="/cf/new"
+        class="btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+      >
+        <Icon name="plus" size={20} />
+        {m.crowdfunding_add_cta()}
+      </a>
+    {/snippet}
+  </PageHead>
 
   <CrowdfundingFilters picked={data.filters} />
 
   {#snippet cards(list: typeof data.running)}
-    <ul class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <CardGrid class="mt-4">
       {#each list as campaign (campaign.id)}
         <li>
           <CrowdfundingCard
             {campaign}
-            onreport={campaign.canReport ? (picked) => (reporting = picked) : undefined}
+            onreport={campaign.canReport ? (picked) => (reporting.current = picked) : undefined}
           />
         </li>
       {/each}
-    </ul>
+    </CardGrid>
   {/snippet}
 
   {#if filtering.current}
@@ -121,14 +121,11 @@
       </p>
     {/if}
   {:else}
-    <div class="mt-10 max-w-sm" role="status">
-      <p class="text-lg">
-        {anyFilter ? m.crowdfunding_empty_filtered() : m.crowdfunding_empty()}
-      </p>
-      {#if anyFilter}
-        <a href={link('')} class="mt-3 inline-block anchor">{m.crowdfunding_filter_clear()}</a>
-      {/if}
-    </div>
+    <EmptyState
+      text={anyFilter ? m.crowdfunding_empty_filtered() : m.crowdfunding_empty()}
+      clearHref={anyFilter ? link('') : undefined}
+      clearLabel={m.crowdfunding_filter_clear()}
+    />
     {#if data.endedCount > 0}
       <p class="mt-4">
         <a class="anchor font-semibold" href={href(['status=ended'])}
@@ -139,11 +136,8 @@
   {/if}
 </section>
 
-{#if reporting}
-  {#key reporting.id}
-    <CrowdfundingReportDialog
-      campaign={reporting}
-      bind:open={() => reporting !== null, (value) => !value && (reporting = null)}
-    />
+{#if reporting.current}
+  {#key reporting.current.id}
+    <EntityReportDialog kind="crowdfunding" entity={reporting.current} bind:open={reporting.open} />
   {/key}
 {/if}

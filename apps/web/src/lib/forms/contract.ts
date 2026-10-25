@@ -42,6 +42,14 @@ export function initialForm<T>(data: T): FormResult<T> {
   return { valid: false, data, errors: {} };
 }
 
+/**
+ * What an actionForm starts from: the form the action sent back after a failed submit, or the one
+ * `load` made (`fromResult(result?.form ?? data.form)`), with its values, errors and message.
+ */
+export function fromResult<T>(form: FormResult<T>) {
+  return { initial: form.data, initialErrors: form.errors, initialMessage: form.message };
+}
+
 /** Explicit decoders for native POST values, including repeated arrays and unchecked booleans. */
 export function validateFormData<S extends ZodType>(
   data: FormData,

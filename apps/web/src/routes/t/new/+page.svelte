@@ -1,10 +1,11 @@
 <script lang="ts">
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import TableForm from '#lib/components/TableForm.svelte';
+  import { fromResult } from '#lib/forms/contract.js';
+  import TableForm from '../components/TableForm.svelte';
 
   import { m } from '#lib/paraglide/messages.js';
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';
@@ -21,11 +22,8 @@
   ];
 
   // svelte-ignore state_referenced_locally
-  const initial = form?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(form?.form ?? data.form),
     schema: tableFormSchema,
     domain: 'table',
     onSuccess: () => {},

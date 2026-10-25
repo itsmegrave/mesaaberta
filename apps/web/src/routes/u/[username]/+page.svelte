@@ -1,16 +1,18 @@
 <script lang="ts">
-  import UserLink from '#lib/components/UserLink.svelte';
+  import { copyText } from '#lib/clipboard.js';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
   import { page } from '$app/state';
-  import Avatar from '#lib/components/Avatar.svelte';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import GmRating from '#lib/components/GmRating.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import BadgeIcons from '#lib/components/BadgeIcons.svelte';
-  import BadgeStrip from '#lib/components/BadgeStrip.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
+  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import BadgeIcons from './components/ui/BadgeIcons.svelte';
+  import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import TableCard from '#lib/components/TableCard.svelte';
-  import { toast } from '#lib/toaster.js';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import TableCard from '#lib/components/ui/TableCard.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
@@ -27,13 +29,8 @@
   const chip =
     'inline-flex h-10 max-w-full items-center gap-2 rounded-lg border border-surface-200-800 px-3 text-sm font-semibold text-surface-950-50';
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(data.canonical);
-      toast.success(m.toast_link_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyLink() {
+    return copyText(data.canonical, m.toast_link_copied());
   }
   const menu = $derived.by(() => {
     const items: KebabItem[] = [
@@ -95,7 +92,7 @@
             ? '-mt-12 md:-mt-16'
             : ''}"
         >
-          <Avatar
+          <MAAvatar
             src={profile.avatarUrl}
             name={profile.username}
             size={96}
@@ -204,33 +201,16 @@
     {#if data.tables.length === 0}
       <p class="mt-4 text-muted">{m.public_profile_no_tables()}</p>
     {:else}
-      <ul class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+      <CardGrid class="mt-5">
         {#each data.tables as table (table.slug)}<li><TableCard {table} /></li>{/each}
-      </ul>
+      </CardGrid>
     {/if}
-    {#if data.pages > 1}
-      <nav
-        aria-label={m.admin_pagination()}
-        class="mt-8 flex flex-wrap items-center justify-center gap-3"
-      >
-        {#if data.page > 1}
-          <a
-            class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50"
-            href={pageHref(path, page.url.searchParams, data.page - 1)}
-            aria-label={m.admin_profile_previous()}><Icon name="chevron-left" /></a
-          >
-        {/if}
-        <span class="font-semibold"
-          >{m.admin_profile_page({ page: data.page, pages: data.pages })}</span
-        >
-        {#if data.page < data.pages}
-          <a
-            class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50"
-            href={pageHref(path, page.url.searchParams, data.page + 1)}
-            aria-label={m.admin_profile_next()}><Icon name="chevron-right" /></a
-          >
-        {/if}
-      </nav>
-    {/if}
+    <Pager
+      compact
+      class="mt-8"
+      page={data.page}
+      pages={data.pages}
+      href={(number) => pageHref(path, page.url.searchParams, number)}
+    />
   </section>
 </section>

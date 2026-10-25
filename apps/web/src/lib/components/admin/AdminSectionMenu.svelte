@@ -1,10 +1,11 @@
 <script lang="ts">
+  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   // On a phone the sections are one full-width button, "Seção: Mesas", with what waits on an admin
   // in total, that opens the same groups and counts as a menu.
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { adminGroups, sectionOf } from '#lib/admin/sections.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -21,12 +22,7 @@
 </script>
 
 {#snippet badge(value: number | undefined)}
-  {#if value}
-    <span
-      class="badge min-w-6 rounded-full preset-filled-warning-500 px-1 text-xs font-bold tabular-nums"
-      >{value > 99 ? '99+' : value}</span
-    >
-  {/if}
+  <CountBadge count={value ?? 0} max={99} class="min-w-6 px-1" />
 {/snippet}
 
 <div class="md:hidden">

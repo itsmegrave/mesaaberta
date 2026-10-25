@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Form from '#lib/components/Form.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
   import type { Snippet } from 'svelte';
   import { deserialize, applyAction, type ActionResult } from '$app/forms';
   import { refreshAll } from '$app/navigation';
@@ -44,7 +44,7 @@
   );
 </script>
 
-<Form
+<MAForm
   method="POST"
   {action}
   aria-busy={mutation.isPending}
@@ -56,4 +56,4 @@
   }}
 >
   {@render children(mutation.isPending)}
-</Form>
+</MAForm>

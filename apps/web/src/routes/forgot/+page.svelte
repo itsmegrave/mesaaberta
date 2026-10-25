@@ -1,22 +1,19 @@
 <script lang="ts">
-  import FormBanner from '#lib/components/FormBanner.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import AuthShell from '#lib/components/AuthShell.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import FormBanner from '#lib/components/ui/FormBanner.svelte';
+  import AuthShell from '#lib/components/ui/AuthShell.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from '#lib/components/Form.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import { fromResult } from '#lib/forms/contract.js';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
+  import EmailField from '#lib/components/ui/EmailField.svelte';
   import { resolve } from '$app/paths';
   import { emailSchema } from '#lib/auth/credentials.js';
-  import FormField from '#lib/components/FormField.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
-  const initial = result?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(result?.form ?? data.form),
     schema: emailSchema,
     domain: 'account',
     onSuccess: () => {},
@@ -43,7 +40,7 @@
       <p role="alert" class="mt-6 max-w-sm font-semibold">{m.forgot_link_expired()}</p>
     {/if}
 
-    <Form onsubmit={controller.submit} class="mt-6 grid gap-4">
+    <MAForm onsubmit={controller.submit} class="mt-6 grid gap-4">
       <FormBanner
         text={controller.message
           ? controller.message.code === 'rate_limited'
@@ -52,34 +49,22 @@
           : null}
       />
 
-      <FormField
-        id="email"
-        label={m.auth_email()}
+      <EmailField
+        bind:value={() => controller.values.email, (value) => controller.change('email', value)}
         error={controller.errors.email ? m.auth_error_email() : undefined}
-      >
-        <TextInput
-          id="email"
-          name="email"
-          type="email"
-          required
-          autocomplete="email"
-          bind:value={() => controller.values.email, (value) => controller.change('email', value)}
-          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={controller.errors.email ? 'true' : undefined}
-        />
-      </FormField>
+      />
 
       <div>
-        <SubmitButton
-          submitting={controller.pending}
-          delayed={controller.delayed}
-          timeout={controller.timeout}
-          class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
+        <MAButton
+          type="submit"
+          size="custom"
+          {controller}
+          class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.forgot_submit()}
-        </SubmitButton>
+        </MAButton>
       </div>
-    </Form>
+    </MAForm>
   {/if}
 
   <p class="mt-8">

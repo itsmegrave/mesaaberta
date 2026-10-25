@@ -1,14 +1,10 @@
 <script lang="ts">
-  import LegalPage from '#lib/components/LegalPage.svelte';
+  import LegalPage from '#lib/components/ui/LegalPage.svelte';
   import { page } from '$app/state';
-  import { updated } from '#lib/legal.js';
-
-  // Who answers for the personal data (LGPD art. 5, VI) and where the data subject writes to.
-  const controller = $derived({
-    name: page.data.site?.PRIVACY_CONTROLLER_NAME ?? '',
-    email: page.data.site?.PRIVACY_EMAIL ?? '',
-  });
+  import { controllerOf } from '#lib/legal.js';
   import { m } from '#lib/paraglide/messages.js';
+
+  const controller = $derived(controllerOf(page.data.site));
 </script>
 
 <svelte:head>
@@ -16,7 +12,7 @@
   <meta name="description" content={m.terms_description()} />
 </svelte:head>
 
-<LegalPage title={m.terms_title()} {updated}>
+<LegalPage title={m.terms_title()}>
   <p>
     Estes termos valem para quem usa a Mesa Aberta, a plataforma em que mestres abrem mesas de RPG e
     jogadores pegam as vagas. Ao criar uma conta ou entrar nela, você concorda com eles e com a

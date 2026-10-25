@@ -2,8 +2,8 @@
   // A seat or table action with its own button (Remover, Recusar): the button opens a
   // `ConfirmDialog`, and only its confirm button posts.
   import type { FormMessage } from '#lib/forms/message.js';
-  import ConfirmDialog from './ConfirmDialog.svelte';
-  import Button from './Button.svelte';
+  import ConfirmDialog from './ui/ConfirmDialog.svelte';
+  import MAButton from './ui/MAButton.svelte';
 
   type Props = {
     action: string;
@@ -26,7 +26,7 @@
   let open = $state(false);
 </script>
 
-<Button size="custom" type="button" class={buttonClass} onclick={() => (open = true)}>
+<MAButton size="custom" type="button" class={buttonClass} onclick={() => (open = true)}>
   {label}
-</Button>
+</MAButton>
 <ConfirmDialog bind:open {label} {...dialog} />

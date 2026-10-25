@@ -1,10 +1,11 @@
 <script lang="ts">
+  import MAButton from '#lib/components/ui/MAButton.svelte';
   // "Privacidade e dados": what everyone else sees of the profile, a download of everything the
   // account keeps, and closing the account (typing the @usuário to confirm).
-  import Form from '#lib/components/Form.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
+  import SettingsSection from '../components/ui/SettingsSection.svelte';
+  import TextInput from '#lib/components/ui/TextInput.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { deleteAccountSchema } from '#lib/profile/delete.js';
   import { queryClient } from '#lib/query/context.js';
@@ -88,7 +89,7 @@
   <div class="mt-8 border-t border-surface-200-800 pt-6">
     <h4 class="text-lg font-semibold">{m.account_delete_title()}</h4>
     <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
-    <Form action="?/delete" onsubmit={closing.submit} class="mt-4 grid max-w-sm gap-3">
+    <MAForm action="?/delete" onsubmit={closing.submit} class="mt-4 grid max-w-sm gap-3">
       <label for="confirm" class="label-text font-semibold">{m.account_delete_confirm()}</label>
       <TextInput
         id="confirm"
@@ -103,21 +104,21 @@
         aria-describedby={closing.errors.confirm ? 'confirm-error' : undefined}
         class="input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3"
       />
-      {#if closing.errors.confirm}
-        <p id="confirm-error" role="alert" class="text-sm font-semibold text-error-700-300">
-          {m.account_delete_error()}
-        </p>
-      {/if}
+      <FieldError
+        id="confirm"
+        class=""
+        message={closing.errors.confirm ? m.account_delete_error() : undefined}
+      />
       <div>
-        <SubmitButton
-          submitting={closing.pending}
-          delayed={closing.delayed}
-          timeout={closing.timeout}
-          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
+        <MAButton
+          type="submit"
+          size="custom"
+          controller={closing}
+          class="btn h-12 gap-2 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
         >
           {m.account_delete_button()}
-        </SubmitButton>
+        </MAButton>
       </div>
-    </Form>
+    </MAForm>
   </div>
 </section>

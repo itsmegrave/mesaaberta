@@ -1,20 +1,19 @@
 <script lang="ts">
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fromResult } from '#lib/forms/contract.js';
   import { resolve } from '$app/paths';
   import CredentialsForm from '#lib/components/CredentialsForm.svelte';
-  import LegalConsent from '#lib/components/LegalConsent.svelte';
-  import ProviderButtons from '#lib/components/ProviderButtons.svelte';
-  import AuthShell from '#lib/components/AuthShell.svelte';
+  import LegalConsent from '#lib/components/ui/LegalConsent.svelte';
+  import ProviderButtons from '#lib/components/ui/ProviderButtons.svelte';
+  import AuthDivider from '#lib/components/ui/AuthDivider.svelte';
+  import AuthShell from '#lib/components/ui/AuthShell.svelte';
   import { credentialsSchema } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
-  const initial = result?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(result?.form ?? data.form),
     schema: credentialsSchema,
     domain: 'account',
     onSuccess: () => {},
@@ -48,11 +47,7 @@
         <a href="/forgot" class="link-underline font-semibold text-link">{m.login_forgot()}</a>
       </p>
 
-      <p class="flex items-center gap-3" aria-hidden="true">
-        <span class="h-px grow bg-surface-200-800"></span>
-        <span class="text-sm font-semibold text-muted">{m.login_or()}</span>
-        <span class="h-px grow bg-surface-200-800"></span>
-      </p>
+      <AuthDivider />
 
       <ProviderButtons next={data.next} />
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import Icon from '#lib/components/Icon.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { m } from '#lib/paraglide/messages.js';
 </script>
 

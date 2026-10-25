@@ -1,20 +1,21 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+  import { copyText } from '#lib/clipboard.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import UserLink from '#lib/components/UserLink.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
   import { shortDate } from '#lib/admin/format.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import { PROFILE_STANDINGS } from '@mesaaberta/core/profile/standing';
-  import { toast } from '#lib/toaster.js';
   import type { AdminProfilesView } from '#lib/server/reads/admin-users.js';
 
   let { data: serverData } = $props();
@@ -29,7 +30,6 @@
     { id: 'tables', header: m.admin_profile_tables(), width: 'w-56' },
     { id: 'joined', header: m.admin_profile_joined(), sortable: true, width: 'w-36' },
     { id: 'status', header: m.admin_profile_status(), width: 'w-40' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
   const tablesOf = (row: Profile) => {
     const parts = [
@@ -42,13 +42,8 @@
   const nameOf = (row: Profile) =>
     row.username ? `@${row.username}` : m.admin_profile_no_username();
   const detailsHref = (id: string) => `/admin/users/${id}?${current.url.searchParams}`;
-  async function copyId(id: string) {
-    try {
-      await navigator.clipboard.writeText(id);
-      toast.success(m.toast_id_copied());
-    } catch {
-      // Clipboard access refused: nothing was copied, and nothing is claimed.
-    }
+  function copyId(id: string) {
+    return copyText(id, m.toast_id_copied());
   }
   const menuOf = (row: Profile): KebabItem[] => [
     { id: 'details', label: m.admin_menu_details(), icon: 'eye', href: detailsHref(row.id) },
@@ -78,7 +73,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_profile_list()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_profile_list()} lede={m.admin_users_lede()}>
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
   <DataTable
@@ -97,6 +91,7 @@
     filtered={!!profiles.query || profiles.status !== 'all'}
     empty={m.admin_profile_empty()}
     busy={remote.isFetching || !!navigating.to}
+    menu={(row: Profile) => ({ name: nameOf(row), items: menuOf(row) })}
   >
     {#snippet segments()}
       <SegmentedFilter
@@ -126,12 +121,10 @@
         <span class="tabular-nums">{shortDate(row.createdAt, locale)}</span>
       {:else if id === 'status'}
         <StatusBadge status={badge(row)} />
-      {:else if id === 'actions'}
-        <KebabMenu name={nameOf(row)} items={menuOf(row)} />
       {/if}
     {/snippet}
-    {#snippet card(row: Profile)}
-      <ListCard>
+    {#snippet card(row: Profile, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media
             kind="avatar"
             src={row.avatar}
@@ -152,7 +145,6 @@
           <StatusBadge status={badge(row)} />
           <span class="text-sm text-muted">{shortDate(row.createdAt, locale)}</span>
         {/snippet}
-        {#snippet action()}<KebabMenu name={nameOf(row)} items={menuOf(row)} />{/snippet}
       </ListCard>
     {/snippet}
   </DataTable>

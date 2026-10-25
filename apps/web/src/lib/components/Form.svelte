@@ -1,14 +1,9 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
-  import type { HTMLFormAttributes } from 'svelte/elements';
-  let {
-    children,
-    element = $bindable(),
-    method = 'POST',
-    ...attributes
-  }: HTMLFormAttributes & { children: Snippet; element?: HTMLFormElement } = $props();
+  // @mesaaberta/privy imports this path; the component is ui/MAForm.svelte.
+  import MAForm from './ui/MAForm.svelte';
+  import type { ComponentProps } from 'svelte';
+
+  let props: ComponentProps<typeof MAForm> = $props();
 </script>
 
-<form bind:this={element} {method} {...attributes}>
-  {@render children()}
-</form>
+<MAForm {...props} />

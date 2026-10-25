@@ -1,20 +1,20 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
-  import Button from '#lib/components/Button.svelte';
-  import UserText from '#lib/components/UserText.svelte';
+  import TextInput from '#lib/components/ui/TextInput.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
   import { createQuery } from '@tanstack/svelte-query';
   import { queryClient } from '#lib/query/context.js';
   import { apiRead } from '#lib/api/http.js';
   import { onMount } from 'svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from '#lib/components/Form.svelte';
-  import FormField from '#lib/components/FormField.svelte';
-  import NotificationIcon from '#lib/components/NotificationIcon.svelte';
-  import RichText from '#lib/components/RichText.svelte';
-  import RichTextField from '#lib/components/RichTextField.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import { fromResult } from '#lib/forms/contract.js';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
+  import FormField from '#lib/components/ui/FormField.svelte';
+  import NotificationIcon from '#lib/components/ui/NotificationIcon.svelte';
+  import RichText from '#lib/components/ui/RichText.svelte';
+  import RichTextField from '#lib/components/ui/RichTextField.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { ANNOUNCEMENT_LIMITS, announcementSchema } from '#lib/notifications/announcement.js';
   import type { AnnouncementMessage } from '#lib/notifications/announcement-message.js';
   import {
@@ -48,11 +48,8 @@
   onMount(() => (mounted = true));
 
   // svelte-ignore state_referenced_locally
-  const initial = result?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(result?.form ?? data.form),
     schema: announcementSchema,
     errorMessage: m.admin_announce_error_invalid,
     onSuccess() {
@@ -182,13 +179,13 @@
     'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10';
 </script>
 
-<svelte:head>
-  <title>{m.admin_announce_title()} · {m.admin_title()}</title>
-</svelte:head>
-
-<AdminPage title={m.admin_nav_notifications()} lede={m.admin_announce_lede()}>
+<AdminPage
+  title={m.admin_nav_notifications()}
+  tabTitle={`${m.admin_announce_title()} · ${m.admin_title()}`}
+  lede={m.admin_announce_lede()}
+>
   <div class="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
-    <Form
+    <MAForm
       onsubmit={controller.submit}
       oninput={() => (confirming = false)}
       class="grid h-fit gap-6 rounded-lg border border-surface-200-800 bg-panel p-5"
@@ -334,35 +331,37 @@
           </h3>
           <p class="mt-1"><UserText text={confirmText} username={shown?.recipient} /></p>
           <div class="mt-4 flex flex-wrap gap-3">
-            <Button
+            <MAButton
               size="custom"
               type="submit"
               name="confirmed"
               value="true"
               class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-              >{m.admin_announce_confirm_send()}</Button
+              >{m.admin_announce_confirm_send()}</MAButton
             >
-            <Button
+            <MAButton
               size="custom"
               type="button"
               onclick={() => (confirming = false)}
               class="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold"
-              >{m.admin_announce_confirm_back()}</Button
+              >{m.admin_announce_confirm_back()}</MAButton
             >
           </div>
         </div>
       {:else}
         <p>
-          <SubmitButton
+          <MAButton
+            type="submit"
+            size="custom"
             submitting={controller.pending}
             delayed={controller.delayed}
             timeout={controller.timeout}
             class="btn h-12 rounded-lg preset-filled-primary-500 px-6 font-semibold"
-            >{m.admin_announce_review()}</SubmitButton
+            >{m.admin_announce_review()}</MAButton
           >
         </p>
       {/if}
-    </Form>
+    </MAForm>
 
     <aside aria-labelledby="preview" class="xl:sticky xl:top-6 xl:self-start">
       <h2 id="preview" class="text-lg font-semibold">

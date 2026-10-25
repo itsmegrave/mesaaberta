@@ -1,12 +1,13 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import CatalogDialog from '#lib/components/admin/CatalogDialog.svelte';
+  import CatalogDialog from '../components/CatalogDialog.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import UserText from '#lib/components/UserText.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -21,7 +22,6 @@
     { id: 'origin', header: m.admin_catalog_origin(), width: 'w-56' },
     { id: 'uses', header: m.admin_catalog_uses(), sortable: true, align: 'right', width: 'w-28' },
     { id: 'status', header: m.admin_catalog_status(), width: 'w-40' },
-    { id: 'actions', header: m.admin_catalog_actions(), hideHeader: true, width: 'w-16' },
   ];
   // A rejected entry is not shown as its own state: the admin sees it as disabled.
   const badge = (row: Row) =>
@@ -65,8 +65,6 @@
     data.sort?.id === 'uses' ? m.admin_catalog_uses() : m.admin_catalog_name(),
   );
 </script>
-
-<svelte:head><title>{m.admin_catalog_title()} | Mesa Aberta</title></svelte:head>
 
 <AdminPage title={m.admin_catalog_title()} lede={m.admin_catalog_lede()}>
   {#snippet actions()}
@@ -116,6 +114,7 @@
     filterKeys={['q', 'status', 'page']}
     filtered={!!data.query || data.status !== 'all'}
     empty={m.admin_catalog_empty()}
+    menu={(row: Row) => ({ name: row.name, items: menuOf(row) })}
   >
     {#snippet segments()}
       <SegmentedFilter
@@ -138,12 +137,10 @@
         {number.format(row.uses)}
       {:else if id === 'status'}
         <StatusBadge status={badge(row)} />
-      {:else if id === 'actions'}
-        <KebabMenu name={row.name} items={menuOf(row)} />
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet title()}{row.name}{/snippet}
         {#snippet meta()}
           <p class="truncate">{row.slug}</p>
@@ -160,7 +157,6 @@
             >{m.admin_catalog_uses_phone({ count: number.format(row.uses) })}</span
           >
         {/snippet}
-        {#snippet action()}<KebabMenu name={row.name} items={menuOf(row)} />{/snippet}
       </ListCard>
     {/snippet}
   </DataTable>

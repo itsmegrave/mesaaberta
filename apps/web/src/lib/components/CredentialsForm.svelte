@@ -1,10 +1,10 @@
 <script lang="ts">
-  import FormBanner from '#lib/components/FormBanner.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import FormBanner from '#lib/components/ui/FormBanner.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from './Form.svelte';
-  import TextInput from './TextInput.svelte';
-  import FormField from './FormField.svelte';
+  import MAForm from './ui/MAForm.svelte';
+  import EmailField from './ui/EmailField.svelte';
+  import PasswordField from './ui/PasswordField.svelte';
   import type { CredentialsData } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -26,56 +26,34 @@
   };
 </script>
 
-<Form {action} onsubmit={controller.submit} onfocusout={controller.blur} class="grid gap-4">
+<MAForm {action} onsubmit={controller.submit} onfocusout={controller.blur} class="grid gap-4">
   <FormBanner text={controller.message ? messages[controller.message.code]?.() : null} />
 
   <input type="hidden" name="next" value={controller.values.next} />
 
-  <FormField
-    id="email"
-    label={m.auth_email()}
+  <EmailField
+    bind:value={() => controller.values.email, (value) => controller.change('email', value)}
     error={controller.errors.email ? m.auth_error_email() : undefined}
-  >
-    <TextInput
-      id="email"
-      name="email"
-      type="email"
-      required
-      autocomplete="email"
-      bind:value={() => controller.values.email, (value) => controller.change('email', value)}
-      class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-      aria-invalid={controller.errors.email ? 'true' : undefined}
-    />
-  </FormField>
+  />
 
-  <FormField
+  <PasswordField
     id="password"
+    name="password"
     label={m.auth_password()}
     hint={mode === 'signup' ? m.auth_password_hint() : undefined}
     error={controller.errors.password ? m.auth_error_password() : undefined}
-  >
-    <TextInput
-      id="password"
-      name="password"
-      type="password"
-      required
-      minlength={8}
-      maxlength={72}
-      autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
-      bind:value={() => controller.values.password, (value) => controller.change('password', value)}
-      class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-      aria-invalid={controller.errors.password ? 'true' : undefined}
-    />
-  </FormField>
+    autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
+    bind:value={() => controller.values.password, (value) => controller.change('password', value)}
+  />
 
   <div>
-    <SubmitButton
-      submitting={controller.pending}
-      delayed={controller.delayed}
-      timeout={controller.timeout}
-      class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
+    <MAButton
+      type="submit"
+      size="custom"
+      {controller}
+      class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
     >
       {mode === 'signup' ? m.signup_submit() : m.login_submit()}
-    </SubmitButton>
+    </MAButton>
   </div>
-</Form>
+</MAForm>
