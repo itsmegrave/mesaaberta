@@ -365,6 +365,13 @@
       "when": 1792960173021,
       "tag": "0051_notifications_written_at",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792961539105,
+      "tag": "0052_table_published_at",
+      "breakpoints": true
     }
   ]
 }
