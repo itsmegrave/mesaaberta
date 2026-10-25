@@ -10,7 +10,11 @@ for (const [name, path] of [
     const footer = page.getByRole('contentinfo');
     await expect(footer.getByRole('link', { name: 'itsmegrave' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Lenindragons' })).toBeVisible();
-    await expect(footer.getByRole('link', { name: 'contato@example.test' })).toHaveAttribute(
+    await expect(footer.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
+      'href',
+      'https://github.com/itsmegrave/mesaaberta',
+    );
+    await expect(footer.getByRole('link', { name: 'Contato' })).toHaveAttribute(
       'href',
       'mailto:contato@example.test',
     );
