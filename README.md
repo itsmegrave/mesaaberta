@@ -194,7 +194,7 @@ To offer another provider later (Apple, Facebook, ...), enable it in Supabase, a
 
 ### Dev login
 
-A local dev server can sign in as a test persona without a password, so a person or an agent can look at the app as a member, a GM or an admin. `bun run dev:up` starts the local Supabase (as `e2e:up` does), creates the personas in its Auth and writes their settings to `.dev.vars`; `bun run dev:local` starts `vite dev` and the api against it. Then open `http://localhost:5173/dev/login?as=gm&next=/t/os-sinos-de-sablewood/manage`; `/dev/logout` signs out. `bun scripts/dev/shot.ts --as gm /path` saves desktop and phone screenshots.
+A local dev server can sign in as a test persona without a password, so a person or an agent can look at the app as a member, a GM or an admin. `bun run dev:up` starts the local Supabase (as `e2e:up` does, and the Docker daemon first when it is not running and it can: as root with `dockerd` installed, like a cloud session; otherwise it says to start Docker), creates the personas in its Auth and writes their settings to `.dev.vars`; `bun run dev:local` starts `vite dev` and the api against it. Then open `http://localhost:5173/dev/login?as=gm&next=/t/os-sinos-de-sablewood/manage`; `/dev/logout` signs out. `bun scripts/dev/shot.ts --as gm /path` saves desktop and phone screenshots.
 
 | Persona  | Who                                                     |
 | -------- | ------------------------------------------------------- |
