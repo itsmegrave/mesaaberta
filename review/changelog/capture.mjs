@@ -18,6 +18,7 @@ for (const size of ['desktop', 'mobile']) {
       document.documentElement.style.colorScheme = mode;
     }, mode);
     await page.getByRole('heading', { name: 'Novidades', exact: true }).waitFor();
+    await expect(page.getByRole('button', { name: 'Próximo destaque', exact: true })).toBeEnabled();
     await page.screenshot({ path: `review/changelog/${size}-${mode}.png` });
     await page.screenshot({ path: `review/changelog/${size}-${mode}-full.png`, fullPage: true });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);

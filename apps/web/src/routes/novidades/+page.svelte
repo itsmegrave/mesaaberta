@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { asset } from '$app/paths';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
@@ -13,6 +14,10 @@
 
   let { data } = $props();
   let slide = $state(0);
+  let hydrated = $state(false);
+  onMount(() => {
+    hydrated = true;
+  });
   const highlight = $derived(data.highlights[slide]);
   const preview = $derived(highlight.preview);
   const filters = [
@@ -69,11 +74,15 @@
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h2 class="text-xl font-semibold">{m.changelog_highlights()}</h2>
       <div class="flex items-center gap-1">
-        <MAButton size="sm" aria-label={m.changelog_previous()} onclick={() => move(-1)}
-          ><Icon name="chevron-left" size={20} /></MAButton
+        <MAButton
+          disabled={!hydrated}
+          size="sm"
+          aria-label={m.changelog_previous()}
+          onclick={() => move(-1)}><Icon name="chevron-left" size={20} /></MAButton
         >
         {#each data.highlights as item, index (item.date)}
           <MAButton
+            disabled={!hydrated}
             size="sm"
             aria-label={m.changelog_slide({ number: index + 1, title: item.title })}
             aria-pressed={slide === index}
@@ -89,8 +98,11 @@
             ></span>
           </MAButton>
         {/each}
-        <MAButton size="sm" aria-label={m.changelog_next()} onclick={() => move(1)}
-          ><Icon name="chevron-right" size={20} /></MAButton
+        <MAButton
+          disabled={!hydrated}
+          size="sm"
+          aria-label={m.changelog_next()}
+          onclick={() => move(1)}><Icon name="chevron-right" size={20} /></MAButton
         >
         <span class="ml-2 text-sm text-muted tabular-nums" aria-live="polite"
           >{m.changelog_slide_count({ current: slide + 1, total: data.highlights.length })}</span
@@ -199,6 +211,7 @@
                       · {m.changelog_count({ count: entry.changes.length })}</a
                     >
                     <MAButton
+                      disabled={!hydrated}
                       size="sm"
                       class="gap-2 text-xs text-muted"
                       aria-label={m.changelog_copy({ date: day(entry.date) })}
