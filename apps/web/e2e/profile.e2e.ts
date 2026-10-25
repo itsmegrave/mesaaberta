@@ -18,7 +18,7 @@ test('the account menu leads to the profile, where the details are saved and the
     .click();
   await page.getByRole('link', { name: 'Editar perfil' }).click();
   await expect(page).toHaveURL(/\/u\/profile\/edit$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Editar perfil');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Seu perfil');
 
   // "Perfil público" first: the name, the bio and the links.
   await page.getByLabel(/^Bio/).fill('Mestro horror cósmico.\nSessão zero antes de tudo.');
