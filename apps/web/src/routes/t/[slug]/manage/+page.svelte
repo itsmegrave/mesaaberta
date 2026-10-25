@@ -427,7 +427,7 @@
               <span class="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  class="block size-10 shrink-0 rounded-full border-2 border-dashed border-lamp bg-lamp-wash"
+                  class="block size-10 shrink-0 rounded-full border-2 border-lamp bg-lamp-wash"
                 ></span>
                 <span>
                   <span class="block font-semibold">{m.manage_free_seat()}</span>

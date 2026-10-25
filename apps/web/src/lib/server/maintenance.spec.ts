@@ -118,10 +118,13 @@ describe('handleMaintenance', () => {
 });
 
 describe('isExempt', () => {
-  it.each(['/robots.txt', '/favicon.ico', '/favicon-32x32.png', '/_app/immutable/x.js'])(
-    'lets the static file %s through',
-    (path) => expect(isExempt(path)).toBe(true),
-  );
+  it.each([
+    '/robots.txt',
+    '/favicon.ico',
+    '/favicon.svg',
+    '/favicon-32x32.png',
+    '/_app/immutable/x.js',
+  ])('lets the static file %s through', (path) => expect(isExempt(path)).toBe(true));
 
   it.each([
     '/',

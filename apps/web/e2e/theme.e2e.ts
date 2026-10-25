@@ -189,7 +189,7 @@ test.describe('the hero table in the dark mode', () => {
   test('the empty seat still stands out from the page', async ({ browser }) => {
     const { page, context } = await open(browser, 'dark');
 
-    const seat = await renderedColour(page, 'svg circle[stroke-dasharray]', 'stroke');
+    const seat = await renderedColour(page, 'svg[role="img"] circle[data-empty-seat]', 'stroke');
     const background = (await colours(page)).background;
 
     expect(contrast(seat, background)).toBeGreaterThanOrEqual(3);

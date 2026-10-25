@@ -83,7 +83,7 @@ export async function shareSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" font-family="DejaVu Sans" font-weight="bold">
  <rect width="1080" height="1350" fill="#151224"/>
  ${background ? `<image href="${background}" width="1080" height="1350" preserveAspectRatio="xMidYMid slice"/><rect width="1080" height="1350" fill="#151224" opacity="0.8"/>` : ''}
- <g transform="translate(64 64) scale(2.6)"><circle cx="17" cy="17" r="10.5" fill="#7054bd"/><g transform="rotate(-12 17 17)"><rect x="11" y="12" width="12" height="10" rx="1.2" fill="white"/><path d="M15 12v10M19 12v10M11 15.3h12M11 18.7h12" stroke="#7054bd" stroke-width=".8"/></g><circle cx="17" cy="4.6" r="3.4" fill="#79c990"/><circle cx="28.6" cy="22" r="3.4" fill="#ce91d4"/><circle cx="6.4" cy="24" r="3.4" fill="#eed196"/><circle cx="28" cy="9" r="2.8" fill="none" stroke="#f2c86a" stroke-width="1.6" stroke-dasharray="2.6 2.6"/></g>
+ <g transform="translate(64 64) scale(2.75)"><circle cx="16" cy="16" r="7.25" fill="#0875f5"/><g transform="rotate(-12 16 16)"><rect x="11.5" y="12.25" width="9" height="7.5" rx=".9" fill="white"/><path d="M14.5 12.25v7.5M17.5 12.25v7.5M11.5 14.75h9M11.5 17.25h9" stroke="#0875f5" stroke-opacity=".5" stroke-width=".75"/></g><circle cx="7.87" cy="7.87" r="3.5" fill="#4ddfc1"/><circle cx="24.13" cy="24.13" r="3.5" fill="#ff239b"/><circle cx="7.87" cy="24.13" r="3.5" fill="#a268dc"/><circle cx="24.13" cy="7.87" r="2.75" fill="none" stroke="#f2c86a" stroke-width="1.5"/></g>
  ${text('Mesa Aberta', 172, 120, 42)}
  ${lines(table.system.name, 38, 2)
    .map((line, i) => text(line, 64, 248 + i * 48, 40, '#f2c86a'))
