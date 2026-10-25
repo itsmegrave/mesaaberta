@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/sveltekit';
 import { error } from '@sveltejs/kit';
 import { browser } from '$app/env';
-import { observedLoad } from '@mesaaberta/core/server/extensions/observe';
+import { observedLoad } from '@mesaaberta/core/server/extensions/observe-load';
 import { panels } from '#lib/extensions/panels.js';
 import type { PageLoad } from './$types';
 

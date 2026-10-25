@@ -20,29 +20,4 @@ export function logInstalled(
   }
 }
 
-/**
- * Runs a load (a panel, a widget, a module) and logs how long it took. A failure is logged as an
- * error, reported, and rethrown: the caller still decides what the person sees.
- */
-export async function observedLoad<T>(
-  resourceType: string,
-  resourceId: string,
-  load: () => Promise<T>,
-  log: Logger = defaultLogger,
-  now: () => number = Date.now,
-): Promise<T> {
-  const started = now();
-  try {
-    const loaded = await load();
-    log.info('extension.loaded', { resourceType, resourceId, durationMs: now() - started });
-    return loaded;
-  } catch (error) {
-    log.error('extension.load_failed', {
-      resourceType,
-      resourceId,
-      durationMs: now() - started,
-      error,
-    });
-    throw error;
-  }
-}
+export { observedLoad } from './observe-load';
