@@ -1,6 +1,7 @@
 import { page } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { QueryClient } from '@tanstack/svelte-query';
 import ExtensionWidgets from './ExtensionWidgets.svelte';
 import Fixture from './widget-fixture.svelte';
 
@@ -15,6 +16,11 @@ vi.mock('$app/state', () => ({
     url: new URL('https://x.test/t?page=2'),
   },
 }));
+const shared = vi.hoisted(() => ({ client: undefined as unknown }));
+vi.mock('#lib/query/context.js', async (original) => {
+  const actual = await original<typeof import('#lib/query/context.js')>();
+  return { ...actual, queryClient: () => shared.client ?? actual.queryClient() };
+});
 vi.mock('#lib/extensions/panels.js', () => ({
   widgets: { poll: async () => ({ default: Fixture }) },
 }));
@@ -33,6 +39,7 @@ const afterDelay = () => new Promise((resolve) => setTimeout(resolve, 3200));
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  shared.client = undefined;
   route.id = '/t';
 });
 
@@ -71,5 +78,19 @@ describe('ExtensionWidgets', () => {
 
     expect(fetch).not.toHaveBeenCalled();
     await expect.element(page.getByRole('region')).not.toBeInTheDocument();
+  });
+
+  it('drops an answered widget from every page, so it does not come back on the way back', async () => {
+    const client = new QueryClient();
+    shared.client = client;
+    // The home page already listed the same poll before the person came to /t.
+    client.setQueryData(['widgets', '/'], { widgets: [poll('p1', 'Qual sistema?')] });
+    serve([poll('p1', 'Qual sistema?')]);
+    render(ExtensionWidgets);
+    await afterDelay();
+
+    await page.getByRole('button', { name: 'Agora não' }).click();
+    await expect.element(page.getByRole('region')).not.toBeInTheDocument();
+    expect(client.getQueryData(['widgets', '/'])).toEqual({ widgets: [] });
   });
 });
