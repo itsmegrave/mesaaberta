@@ -29,7 +29,10 @@
 {/snippet}
 
 {#snippet home()}
-  <a href="/" class="inline-flex min-h-11 items-center gap-1 link-underline md:min-h-0">
+  <a
+    href="/"
+    class="inline-flex min-h-11 items-center gap-1 font-semibold text-muted no-underline hover:underline focus-visible:underline md:min-h-0"
+  >
     <Icon name="game-icons:house" size={16} />{trail[0].label}
   </a>
 {/snippet}
@@ -41,7 +44,7 @@
 {/snippet}
 
 <nav aria-label={m.breadcrumbs_label()} class="min-w-0 {className}">
-  <ol class="flex items-center gap-2 text-sm text-muted">
+  <ol class="flex items-center gap-2 text-sm font-semibold text-muted">
     {#each trail as crumb, index (index)}
       {@const middle = index > 0 && index < trail.length - 1}
       <!-- On a phone the middle of a long trail is folded into the "…" menu below. -->
@@ -52,7 +55,11 @@
         {:else if index === trail.length - 1}
           {@render here()}
         {:else if crumb.href}
-          <a href={crumb.href} class="block max-w-37.5 truncate link-underline">{crumb.label}</a>
+          <a
+            href={crumb.href}
+            class="block max-w-37.5 truncate font-semibold text-muted no-underline hover:underline focus-visible:underline"
+            >{crumb.label}</a
+          >
         {:else}
           <span class="block max-w-37.5 truncate">{crumb.label}</span>
         {/if}
