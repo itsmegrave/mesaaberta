@@ -73,16 +73,20 @@
     <circle cx="230" cy="180" r="7" class="fill-tertiary-400" />
   </g>
   <!-- A d20 beside the map, drawn from arcticons:rpg-dice (48-unit grid): the outline, the faces
-       around the front one, and the front face with its 20. -->
+       around the front one, and the front face with its 20 (white on error-700, 5.2:1). Red on
+       the blue table, so a white border keeps it apart: red and blue are about as light as each
+       other, white on blue is 4.5:1. -->
   <g transform="translate(262 238) rotate(14) scale(0.85) translate(-24 -24)">
     <path
       d="m39.227 38.684 5.111-20.5L29.111 3.5 8.773 9.316l-5.111 20.5L18.889 44.5z"
-      class="fill-warning-400"
+      class="fill-error-500 stroke-surface-50"
+      stroke-width="3"
+      stroke-linejoin="round"
     />
-    <path d="M33.729 34.984 10.254 29.13l16.934-17.916z" class="fill-warning-300" />
+    <path d="M33.729 34.984 10.254 29.13l16.934-17.916z" class="fill-error-700" />
     <path
       d="m39.227 38.684 5.111-20.5L29.111 3.5 8.773 9.316l-5.111 20.5L18.889 44.5zm-5.498-3.7 10.61-16.8-17.151-6.97L8.773 9.316l1.48 19.815L18.89 44.5zM33.729 34.984 10.254 29.13l16.934-17.916zm-6.541-23.77L29.111 3.5m4.618 31.484 5.498 3.7M10.254 29.13l-6.592.685"
-      class="fill-none stroke-warning-950/60"
+      class="fill-none stroke-error-950/50"
       stroke-width="1.6"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -93,17 +97,15 @@
       text-anchor="middle"
       font-size="9"
       font-weight="700"
-      class="fill-warning-950/80">20</text
+      class="fill-surface-50">20</text
     >
   </g>
 
   <g transform="translate({gmSeat.x} {gmSeat.y}) rotate({gmSeat.turn})">
     <Chair
       data-seat={0}
-      colour={onBrand
-        ? 'fill-primary-contrast-500 stroke-primary-contrast-500'
-        : 'fill-surface-950-50 stroke-surface-950-50'}
-      gm
+      colour={onBrand ? 'stroke-primary-contrast-500' : 'stroke-surface-950-50'}
+      border="fill-surface-50 stroke-surface-950"
     />
   </g>
 

@@ -16,31 +16,40 @@
   let {
     colour,
     free = false,
-    gm = false,
+    border,
     ...rest
   }: {
     /** Fill and stroke classes, e.g. `fill-success-500 stroke-success-500`. */
     colour: string;
     /** An open seat: the meeple is an outline, unfilled. */
     free?: boolean;
-    /** The GM's seat: the same meeple with a thin outline around it. */
-    gm?: boolean;
+    /**
+     * The GM's seat: fill and stroke classes for the meeple, which gets a 1px border (e.g.
+     * `fill-surface-50 stroke-surface-950`). Pick a border that stands out from both the meeple and
+     * the background.
+     */
+    border?: string;
   } & SVGAttributes<SVGGElement> = $props();
 
   const backrest = 'M-26.1 -7A27 27 0 0 1 26.1 -7';
   // The meeple's 512-unit drawing, centred in front of the backrest and about 35 units wide. Stroke
   // widths are in its own units: 12.5 ≈ 1 chair unit.
   const place = 'translate(0 2) scale(0.08) translate(-256 -256)';
-  // The GM's outline: the meeple a quarter larger, stroked 1 unit, leaving a gap around the person.
-  const halo = 'translate(0 2) scale(0.1) translate(-256 -256)';
 </script>
 
 <g {...rest} class={colour} data-chair={free ? 'free' : 'taken'}>
   <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
-  {#if gm}
-    <path d={meeple} transform={halo} class="fill-none" stroke-width="10" data-gm-chair />
-  {/if}
-  {#if free}
+  {#if border}
+    <path
+      d={meeple}
+      transform={place}
+      class={border}
+      stroke-width="1"
+      vector-effect="non-scaling-stroke"
+      stroke-linejoin="round"
+      data-gm-chair
+    />
+  {:else if free}
     <path
       d={meeple}
       transform={place}
