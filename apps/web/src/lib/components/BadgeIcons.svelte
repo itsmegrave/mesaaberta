@@ -1,8 +1,8 @@
 <script lang="ts">
   // The badges under the user handle: only the icons. Hover or focus shows the details on a desktop;
   // a tap opens them on a phone, and Esc closes them.
-  import { Portal, Tooltip } from '@skeletonlabs/skeleton-svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import Tip from '#lib/components/ui/Tip.svelte';
   import { publicBadges, type HeldBadge } from '#lib/badges/shown.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -28,38 +28,23 @@
   >
     {#each shown as badge (badge.badgeId)}
       <li>
-        <Tooltip
-          open={openId === badge.badgeId}
-          onOpenChange={(details) => (openId = details.open ? badge.badgeId : null)}
-          closeOnClick={false}
-          positioning={{ placement: 'bottom' }}
+        <Tip
+          bind:open={
+            () => openId === badge.badgeId, (open) => (openId = open ? badge.badgeId : null)
+          }
+          placement="bottom"
+          label={badge.look.name()}
+          triggerClass="flex size-10 items-center justify-center rounded-full bg-primary-500 text-primary-contrast-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 sm:size-9"
         >
-          <Tooltip.Trigger
-            type="button"
-            aria-label={badge.look.name()}
-            onclick={() => (openId = openId === badge.badgeId ? null : badge.badgeId)}
-            class="flex size-10 items-center justify-center rounded-full bg-primary-500 text-primary-contrast-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 sm:size-9"
-          >
-            <Icon name={badge.look.icon} size={22} />
-          </Tooltip.Trigger>
-          {#if openId === badge.badgeId}
-            <Portal>
-              <Tooltip.Positioner class="z-50!">
-                <Tooltip.Content
-                  class="max-w-72 card border border-surface-200-800 bg-surface-100-900 p-3 text-sm shadow-2xl"
-                >
-                  <p class="font-semibold">{badge.look.name()}</p>
-                  <p class="text-muted">{badge.look.description()}</p>
-                  <p class="mt-1 text-muted">
-                    {badge.backfilled
-                      ? m.badges_before_release()
-                      : m.badges_earned_on({ date: since.format(new Date(badge.awardedAt)) })}
-                  </p>
-                </Tooltip.Content>
-              </Tooltip.Positioner>
-            </Portal>
-          {/if}
-        </Tooltip>
+          {#snippet trigger()}<Icon name={badge.look.icon} size={22} />{/snippet}
+          <p class="font-semibold">{badge.look.name()}</p>
+          <p class="text-muted">{badge.look.description()}</p>
+          <p class="mt-1 text-muted">
+            {badge.backfilled
+              ? m.badges_before_release()
+              : m.badges_earned_on({ date: since.format(new Date(badge.awardedAt)) })}
+          </p>
+        </Tip>
       </li>
     {/each}
   </ul>
