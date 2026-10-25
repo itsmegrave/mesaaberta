@@ -27,9 +27,10 @@ describe('TableGoingOn', () => {
     await expect.element(page.getByRole('checkbox', { name: 'ana' })).not.toBeChecked();
     await expect.element(page.getByRole('checkbox', { name: 'bia' })).not.toBeInTheDocument();
     await expect.element(page.getByRole('checkbox', { name: 'caio' })).not.toBeInTheDocument();
-    await expect.element(page.getByText('Já liberada: caio')).toBeVisible();
+    await expect.element(page.getByText(/^Avaliação liberada em /)).toBeVisible();
+    await expect.element(page.getByText('caio')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Liberar avaliação' })).toBeVisible();
-    await expect.element(page.getByRole('button', { name: 'Encerrar mesa' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Encerrar mesa…' })).toBeVisible();
   });
 
   it('has nothing to send when nobody is left to let', async () => {

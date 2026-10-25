@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   // The GM's answer to "did the session happen?", once its date has passed: it happened (players are
   // asked to rate), it did not, or a new date (the table opens again until then).
@@ -8,22 +9,31 @@
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import SessionPicker from '#lib/components/ui/SessionPicker.svelte';
 
   // `players` are the confirmed seats. "It happened" also asks who showed up, everyone checked,
   // and whoever is left unchecked cannot rate the GM.
   // `multi`: a campaign or adventure, whose table can go on after this session; an adventure has no
-  // repeat rule, so it needs the next date (`dateRequired`).
+  // repeat rule, so its picker starts empty and the server asks for the date.
   let {
     next,
     players = [],
     multi = false,
-    dateRequired = false,
+    nextSession = null,
+    timezone = 'America/Sao_Paulo',
+    durationHours = 4,
   }: {
     next: string;
     players?: { playerId: string; username: string; avatarUrl: string | null }[];
     multi?: boolean;
-    dateRequired?: boolean;
+    /** A weekly campaign's next date (`YYYY-MM-DDTHH:mm`, the table's zone): the picker starts on it. */
+    nextSession?: string | null;
+    timezone?: string;
+    durationHours?: number;
   } = $props();
+
+  // svelte-ignore state_referenced_locally
+  let nextAt = $state(nextSession ?? '');
 
   let more = $state(true);
   const goesOn = $derived(multi && more);
@@ -44,6 +54,10 @@
     domain: 'table',
     errorMessage: m.manage_confirm_error,
     onSuccess: () => toast.success(m.toast_table_session_held()),
+  });
+  $effect(() => {
+    const value = nextAt;
+    untrack(() => held.change('nextStartsAtLocal', value));
   });
   const heldError = $derived(
     held.errors.nextStartsAtLocal?.[0] === 'in_the_past'
@@ -117,31 +131,35 @@
         <fieldset class="mb-4 min-w-0">
           <legend class="font-semibold">{m.manage_confirm_more_title()}</legend>
           <div class="mt-2 flex flex-col gap-2">
-            <label class="flex items-center gap-3 font-semibold">
-              <input type="radio" class="radio" bind:group={more} value={true} />
-              {m.manage_confirm_more_yes()}
-            </label>
-            <label class="flex items-center gap-3 font-semibold">
-              <input type="radio" class="radio" bind:group={more} value={false} />
-              {m.manage_confirm_more_no()}
-            </label>
+            {#each [{ value: true, label: m.manage_confirm_more_yes(), hint: m.manage_confirm_more_yes_hint() }, { value: false, label: m.manage_confirm_more_no(), hint: m.manage_confirm_more_no_hint() }] as option (option.label)}
+              <label
+                class="flex min-h-14 items-center gap-3 rounded-lg border-2 border-surface-200-800 px-3 py-2 has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500"
+              >
+                <input type="radio" class="radio" bind:group={more} value={option.value} />
+                <span class="flex flex-col">
+                  <span class="font-semibold">{option.label}</span>
+                  <span class="text-sm text-muted">{option.hint}</span>
+                </span>
+              </label>
+            {/each}
           </div>
           {#if more}
-            <label class="mt-3 flex flex-col gap-1 text-sm font-semibold">
-              {m.manage_confirm_next_label()}
-              <input
-                type="datetime-local"
-                name="nextStartsAtLocal"
-                required={dateRequired}
-                value={held.values.nextStartsAtLocal}
-                oninput={(event) => held.change('nextStartsAtLocal', event.currentTarget.value)}
-                aria-invalid={heldError ? 'true' : undefined}
-                class="input h-12 rounded-lg border-surface-200-800 px-3"
-              />
-              {#if !dateRequired}
-                <span class="font-normal text-muted">{m.manage_confirm_next_hint()}</span>
+            <div class="mt-4">
+              <p class="label-text font-semibold">{m.manage_confirm_next_label()}</p>
+              {#if nextSession}
+                <p class="mt-1 text-sm text-muted">{m.manage_confirm_next_hint()}</p>
               {/if}
-            </label>
+              <div class="mt-3">
+                <SessionPicker
+                  bind:startsAt={nextAt}
+                  duration={durationHours}
+                  {timezone}
+                  withDuration={false}
+                  name="nextStartsAtLocal"
+                  invalid={!!heldError}
+                />
+              </div>
+            </div>
           {/if}
         </fieldset>
       {/if}
@@ -150,7 +168,11 @@
         variant="primary"
         controller={goesOn ? held : happened}
         class="font-semibold"
-        >{goesOn ? m.manage_confirm_held() : m.manage_confirm_happened()}</MAButton
+        >{goesOn
+          ? m.manage_confirm_held()
+          : multi
+            ? m.manage_confirm_conclude()
+            : m.manage_confirm_happened()}</MAButton
       >
       {#if goesOn ? heldError : happened.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">

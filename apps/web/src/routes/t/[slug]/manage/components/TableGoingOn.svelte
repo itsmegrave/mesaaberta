@@ -6,6 +6,9 @@
   import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import StatusBadge from '#lib/components/ui/StatusBadge.svelte';
+  import { getLocale } from '#lib/paraglide/runtime.js';
   import { answerSchema } from '#lib/tables/confirmation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
@@ -27,6 +30,10 @@
     }[];
   } = $props();
 
+  const day = new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'long' });
+  const letOn = (at: Date | string | null) => day.format(new Date(at ?? 0));
+  let picked = $state(0);
+
   // Not the ones marked absent, nor the ones already let.
   const eligible = $derived(
     players.filter((player) => player.attended !== false && !player.ratingOpenedAt),
@@ -45,9 +52,12 @@
 
 <section
   aria-labelledby="going-on"
-  class="mt-8 rounded-lg border-2 border-surface-200-800 bg-panel p-5 md:p-6"
+  class="mt-8 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:p-6"
 >
-  <h2 id="going-on" class="text-xl font-semibold">{m.manage_going_title()}</h2>
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 id="going-on" class="text-xl font-semibold">{m.manage_going_title()}</h2>
+    <StatusBadge status="table:going_on" />
+  </div>
   <p class="mt-2 text-surface-700-300">{m.manage_going_text()}</p>
 
   <MAForm action="?/allowRatings" onsubmit={allow.submit} class="mt-5">
@@ -56,30 +66,48 @@
     <fieldset class="min-w-0">
       <legend class="font-semibold">{m.manage_going_rate_title()}</legend>
       <p class="mt-1 text-sm text-muted">{m.manage_going_rate_hint()}</p>
+      <ul class="mt-3 flex flex-col gap-2">
+        {#each eligible as player (player.playerId)}
+          <li>
+            <label
+              class="flex min-h-16 items-center gap-3 rounded-lg border border-surface-200-800 px-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
+            >
+              <input
+                type="checkbox"
+                name="present"
+                value={player.playerId}
+                class="checkbox"
+                onchange={(event) => (picked += event.currentTarget.checked ? 1 : -1)}
+              />
+              <MAAvatar src={player.avatarUrl} name={player.username} size={32} />
+              <span class="min-w-0 truncate">{player.username}</span>
+            </label>
+          </li>
+        {/each}
+        {#each letAlready as player (player.playerId)}
+          <li
+            class="flex min-h-16 items-center gap-3 rounded-lg border border-surface-200-800 px-3"
+          >
+            <Icon name="check" size={20} class="shrink-0 text-success-500" />
+            <MAAvatar src={player.avatarUrl} name={player.username} size={32} />
+            <span class="flex min-w-0 flex-col">
+              <span class="truncate font-semibold">{player.username}</span>
+              <span class="text-sm text-muted"
+                >{m.manage_going_rated_on({ date: letOn(player.ratingOpenedAt) })}</span
+              >
+            </span>
+          </li>
+        {/each}
+      </ul>
       {#if eligible.length === 0}
         <p class="mt-3 text-sm text-muted">{m.manage_going_rate_none()}</p>
-      {:else}
-        <ul class="mt-3 flex flex-col gap-2">
-          {#each eligible as player (player.playerId)}
-            <li>
-              <label class="flex items-center gap-3 font-semibold">
-                <input type="checkbox" name="present" value={player.playerId} class="checkbox" />
-                <MAAvatar src={player.avatarUrl} name={player.username} size={32} />
-                <span class="min-w-0 truncate">{player.username}</span>
-              </label>
-            </li>
-          {/each}
-        </ul>
-      {/if}
-      {#if letAlready.length > 0}
-        <p class="mt-3 text-sm text-muted">
-          {m.manage_going_rated_already()}: {letAlready.map((player) => player.username).join(', ')}
-        </p>
       {/if}
     </fieldset>
     {#if eligible.length > 0}
       <MAButton type="submit" variant="primary" controller={allow} class="mt-4 font-semibold"
-        >{m.manage_going_rate_submit()}</MAButton
+        >{picked > 0
+          ? m.manage_going_rate_submit_count({ count: picked })
+          : m.manage_going_rate_submit()}</MAButton
       >
     {/if}
     {#if allow.errors._errors?.[0]}
@@ -90,6 +118,7 @@
   </MAForm>
 
   <div class="mt-6 border-t border-surface-200-800 pt-5">
+    <p class="text-sm text-muted">{m.manage_going_finish_lead()}</p>
     <ConfirmAction
       action="{tableManage}?/finish"
       success={m.toast_table_finished()}
@@ -97,7 +126,7 @@
       label={m.manage_going_finish()}
       title={m.manage_going_finish_title()}
       text={m.manage_going_finish_text()}
-      class="{buttonClass('secondary')} font-semibold"
+      class="{buttonClass('danger')} mt-3 font-semibold"
     />
   </div>
 </section>

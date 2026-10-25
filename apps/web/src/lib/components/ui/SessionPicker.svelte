@@ -18,6 +18,8 @@
     min,
     invalid = false,
     describedby,
+    withDuration = true,
+    name = 'startsAtLocal',
   }: {
     startsAt: string;
     /** Hours. */
@@ -27,6 +29,10 @@
     min?: string;
     invalid?: boolean;
     describedby?: string;
+    /** False to pick only the day and hour (the next session of a table whose length is known). */
+    withDuration?: boolean;
+    /** The form field that carries `startsAt`. */
+    name?: string;
   } = $props();
 
   const PRESETS = [2, 3, 4];
@@ -107,50 +113,54 @@
     {/each}
   </div>
 
-  <fieldset class="grid gap-2">
-    <legend class="label-text font-semibold">{m.session_duration()}</legend>
-    <div class="flex flex-wrap gap-2">
-      {#each PRESETS as preset (preset)}
+  {#if withDuration}
+    <fieldset class="grid gap-2">
+      <legend class="label-text font-semibold">{m.session_duration()}</legend>
+      <div class="flex flex-wrap gap-2">
+        {#each PRESETS as preset (preset)}
+          <label class={segment}>
+            <input
+              type="radio"
+              name="durationPreset"
+              class="sr-only"
+              checked={!other && length === preset}
+              onchange={() => {
+                custom = false;
+                duration = preset;
+              }}
+            />{m.session_duration_hours({ hours: preset })}
+          </label>
+        {/each}
         <label class={segment}>
           <input
             type="radio"
             name="durationPreset"
             class="sr-only"
-            checked={!other && length === preset}
-            onchange={() => {
-              custom = false;
-              duration = preset;
-            }}
-          />{m.session_duration_hours({ hours: preset })}
+            checked={other}
+            onchange={() => (custom = true)}
+          />{m.session_duration_other()}
         </label>
-      {/each}
-      <label class={segment}>
-        <input
-          type="radio"
-          name="durationPreset"
-          class="sr-only"
-          checked={other}
-          onchange={() => (custom = true)}
-        />{m.session_duration_other()}
-      </label>
-    </div>
-    {#if other}
-      <label class="grid gap-1">
-        <span class="label-text">{m.session_duration_custom()}</span>
-        <TextInput
-          type="number"
-          inputmode="decimal"
-          min={TABLE_LIMITS.durationHours.min}
-          max={TABLE_LIMITS.durationHours.max}
-          step={TABLE_LIMITS.durationHours.step}
-          bind:value={duration}
-          class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
-        />
-      </label>
-    {/if}
-  </fieldset>
+      </div>
+      {#if other}
+        <label class="grid gap-1">
+          <span class="label-text">{m.session_duration_custom()}</span>
+          <TextInput
+            type="number"
+            inputmode="decimal"
+            min={TABLE_LIMITS.durationHours.min}
+            max={TABLE_LIMITS.durationHours.max}
+            step={TABLE_LIMITS.durationHours.step}
+            bind:value={duration}
+            class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+          />
+        </label>
+      {/if}
+    </fieldset>
+  {/if}
 
   <p role="status" class="text-sm font-semibold">{summary}</p>
-  <input type="hidden" name="startsAtLocal" value={startsAt} />
-  <input type="hidden" name="durationHours" value={duration} />
+  <input type="hidden" {name} value={startsAt} />
+  {#if withDuration}
+    <input type="hidden" name="durationHours" value={duration} />
+  {/if}
 </div>
