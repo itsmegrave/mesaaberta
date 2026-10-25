@@ -559,6 +559,8 @@ export const notificationCategory = pgEnum('notification_category', [
   'moderation',
   'system',
   'messages',
+  // A badge was earned (see `userBadges`).
+  'achievements',
 ]);
 
 // The bell in the header. A domain notification keeps its type and ids only, and is worded when it
@@ -601,6 +603,42 @@ export const notifications = pgTable(
     uniqueIndex('notifications_unread_message_idx')
       .on(notification.recipientId, sql`(${notification.metadata}->>'conversationId')`)
       .where(sql`${notification.type} = 'message_received' AND ${notification.readAt} IS NULL`),
+  ],
+).enableRLS();
+
+// The badges a person holds, one row per person and badge. The catalog (name, icon, rule) lives in
+// code and `badge_id` is its stable id, never renamed (like a handler name), so it is not a foreign
+// key. A row is `insert ... on conflict do nothing`, which makes awarding safe to repeat. A revoked
+// badge keeps its row, so the next event does not award it again. The rows go when the account is
+// closed (see `anonymiseProfile`), and the profile row stays, so no cascade does it.
+export const userBadges = pgTable(
+  'user_badges',
+  {
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    badgeId: text('badge_id').notNull(),
+    // When it was earned: the event's time, or the qualifying row's date for a backfill.
+    awardedAt: timestamp('awarded_at', { withTimezone: true }).notNull().defaultNow(),
+    // The event that tipped it. Not a foreign key: events are pruned. Null for a backfill or a grant.
+    sourceEventId: uuid('source_event_id'),
+    // The admin who granted it by hand; null when a rule awarded it.
+    grantedBy: uuid('granted_by').references(() => profiles.id, { onDelete: 'set null' }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokeReason: text('revoke_reason'),
+    // The person chose not to show it on their profile.
+    hidden: boolean('hidden').notNull().default(false),
+  },
+  (badge) => [
+    primaryKey({ columns: [badge.profileId, badge.badgeId] }),
+    // Who holds a badge, for the admin catalog's counts.
+    index('user_badges_badge_idx').on(badge.badgeId),
+    check('user_badges_badge_id_format', sql`${badge.badgeId} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    // A reason only comes with a revocation. Mirrors the reason limit of a report's resolution note.
+    check(
+      'user_badges_revoke_reason',
+      sql`${badge.revokeReason} IS NULL OR (${badge.revokedAt} IS NOT NULL AND char_length(${badge.revokeReason}) <= 1000)`,
+    ),
   ],
 ).enableRLS();
 

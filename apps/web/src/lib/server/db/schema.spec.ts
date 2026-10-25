@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb, pgErrorCode } from './test-db';
 import { eq, sql } from 'drizzle-orm';
-import { gameTables, genderIdentity, profiles, systems } from '@mesaaberta/core/server/db/schema';
+import {
+  gameTables,
+  genderIdentity,
+  profiles,
+  systems,
+  userBadges,
+} from '@mesaaberta/core/server/db/schema';
 import { GENDER_OPTIONS } from '@mesaaberta/core/profile/schema';
 
 const UNIQUE_VIOLATION = '23505';
@@ -41,6 +47,51 @@ describe('profiles', () => {
     const [profile] = await test.db.select().from(profiles);
 
     expect(profile).toMatchObject({ role: 'member', status: 'active', avatarUrl: null });
+  });
+});
+
+describe('user_badges', () => {
+  const badge = (overrides: Partial<typeof userBadges.$inferInsert> = {}) => ({
+    profileId: gm.id,
+    badgeId: 'first-table',
+    ...overrides,
+  });
+
+  it('holds one row per person and badge, so awarding twice is a no-op', async () => {
+    await test.db.insert(userBadges).values(badge());
+    await test.db.insert(userBadges).values(badge()).onConflictDoNothing();
+
+    const rows = await test.db.select().from(userBadges).where(eq(userBadges.profileId, gm.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ hidden: false, revokedAt: null, grantedBy: null });
+    expect(await pgErrorCode(test.db.insert(userBadges).values(badge()))).toBe(UNIQUE_VIOLATION);
+  });
+
+  it('only takes ids written like the catalog writes them', async () => {
+    expect(await pgErrorCode(test.db.insert(userBadges).values(badge({ badgeId: 'Bad Id' })))).toBe(
+      CHECK_VIOLATION,
+    );
+  });
+
+  it('keeps a revoke reason only with a revocation', async () => {
+    expect(
+      await pgErrorCode(
+        test.db.insert(userBadges).values(badge({ badgeId: 'gm-10', revokeReason: 'abuso' })),
+      ),
+    ).toBe(CHECK_VIOLATION);
+    await test.db
+      .insert(userBadges)
+      .values(badge({ badgeId: 'gm-25', revokedAt: new Date(), revokeReason: 'abuso' }));
+  });
+
+  it('refuses a badge for someone who has no profile', async () => {
+    expect(
+      await pgErrorCode(
+        test.db
+          .insert(userBadges)
+          .values(badge({ profileId: '00000000-0000-4000-8000-0000000000ff' })),
+      ),
+    ).toBe(FOREIGN_KEY_VIOLATION);
   });
 });
 

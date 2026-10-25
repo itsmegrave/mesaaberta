@@ -330,6 +330,13 @@
       "when": 1792896367264,
       "tag": "0046_registration_attended",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792929182959,
+      "tag": "0047_user_badges",
+      "breakpoints": true
     }
   ]
 }

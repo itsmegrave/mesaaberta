@@ -11,6 +11,7 @@ import {
   ratings,
   registrations,
   systems,
+  userBadges,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import {
@@ -199,6 +200,7 @@ describe('anonymiseProfile', () => {
       type: 'system_announcement',
       title: 'Oi',
     });
+    await test.db.insert(userBadges).values({ profileId: person, badgeId: 'first-table' });
 
     await anonymiseProfile(test.db, person);
 
@@ -223,6 +225,10 @@ describe('anonymiseProfile', () => {
     expect(
       await test.db.select().from(notifications).where(eq(notifications.recipientId, person)),
     ).toEqual([]);
+    // The profile row stays, so nothing cascades: the badges must be deleted with the rest.
+    expect(await test.db.select().from(userBadges).where(eq(userBadges.profileId, person))).toEqual(
+      [],
+    );
   });
 });
 
