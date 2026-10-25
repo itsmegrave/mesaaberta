@@ -1,6 +1,6 @@
 <script lang="ts">
   // A table seen from above with its chairs around it, drawn as the hero draws them. The first chair,
-  // at the top, is the GM's (a white meeple with a 1px dark border), so a table with 5 seats shows 6 chairs; then the taken seats
+  // at the top, is the GM's (an ink meeple with a 1px light border), so a table with 5 seats shows 6 chairs; then the taken seats
   // clockwise in the seat colours, then the free ones as unfilled meeples in the light lamp colour.
   import Chair from './Chair.svelte';
 
@@ -36,7 +36,7 @@
       const y = (50 + orbitRadius * Math.sin(radians)).toFixed(1);
       const colour =
         i === 0
-          ? 'stroke-primary-contrast-500'
+          ? 'stroke-surface-950'
           : i <= occupied
             ? SEAT_COLOURS[(i - 1) % SEAT_COLOURS.length]
             : 'stroke-warning-300';
@@ -65,7 +65,7 @@
       transform={seat.transform}
       colour={seat.colour}
       free={seat.free}
-      border={i === 0 ? 'fill-primary-contrast-500 stroke-surface-950' : undefined}
+      border={i === 0 ? 'fill-surface-950 stroke-surface-50' : undefined}
     />
   {/each}
 </svg>

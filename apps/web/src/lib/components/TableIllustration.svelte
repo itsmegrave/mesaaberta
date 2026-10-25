@@ -104,8 +104,10 @@
   <g transform="translate({gmSeat.x} {gmSeat.y}) rotate({gmSeat.turn})">
     <Chair
       data-seat={0}
-      colour={onBrand ? 'stroke-primary-contrast-500' : 'stroke-surface-950-50'}
-      border="fill-surface-50 stroke-surface-950"
+      colour={onBrand ? 'stroke-surface-950' : 'stroke-surface-950-50'}
+      border={onBrand
+        ? 'fill-surface-950 stroke-surface-50'
+        : 'fill-surface-950-50 stroke-surface-50-950'}
     />
   </g>
 

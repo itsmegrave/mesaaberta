@@ -25,8 +25,8 @@
     free?: boolean;
     /**
      * The GM's seat: fill and stroke classes for the meeple, which gets a 1px border (e.g.
-     * `fill-surface-50 stroke-surface-950`). Pick a border that stands out from both the meeple and
-     * the background.
+     * `fill-surface-950 stroke-surface-50`, ink with a light border). Pick a border that stands out
+     * from both the meeple and the background.
      */
     border?: string;
   } & SVGAttributes<SVGGElement> = $props();

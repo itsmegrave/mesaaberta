@@ -20,11 +20,11 @@ describe('SeatRing', () => {
     render(SeatRing, { capacity: 5, seatsLeft: 5 });
 
     const first = document.querySelector('[data-chair]');
-    expect(first?.getAttribute('class')).toContain('stroke-primary-contrast-500');
-    // The same meeple as the players, white with a 1px dark border, only on the GM's chair.
+    expect(first?.getAttribute('class')).toContain('stroke-surface-950');
+    // The same meeple as the players, in ink with a 1px light border, only on the GM's chair.
     expect(document.querySelectorAll('[data-gm-chair]').length).toBe(1);
     const gm = first?.querySelector('[data-gm-chair]');
-    expect(gm?.getAttribute('class')).toBe('fill-primary-contrast-500 stroke-surface-950');
+    expect(gm?.getAttribute('class')).toBe('fill-surface-950 stroke-surface-50');
     expect(gm?.getAttribute('stroke-width')).toBe('1');
     expect(gm?.getAttribute('vector-effect')).toBe('non-scaling-stroke');
     expect(first?.getAttribute('transform')).toMatch(/^translate\(50\.0 18\.0\) rotate\(0\)/);
