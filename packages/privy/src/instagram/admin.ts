@@ -1,6 +1,6 @@
 import { count, eq } from 'drizzle-orm';
-import type { AdminSurface } from '../extensions/contract';
-import { instagramAccounts, instagramPosts } from '../db/schema';
+import type { AdminSurface } from '@mesaaberta/core/server/extensions/contract';
+import { instagramAccounts, instagramPosts } from '@mesaaberta/core/server/db/schema';
 import { configured, decryptToken, type InstagramEnv } from './api';
 
 /** The Instagram panel of the admin's connections page: the account, and posts to reconcile. */

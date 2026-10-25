@@ -1,6 +1,5 @@
 import { expireInvitations } from '../invitations/service';
 import { socialFor, type SocialEnv } from '../social';
-import type { InstagramEnv } from '../instagram/api';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
 import type { Logger } from '../logger';
 import { closeElapsedTables } from '../tables/lifecycle';
@@ -34,7 +33,7 @@ type Deps = {
  * and table chats past their retention period. Does nothing without a database. Returns how many events it tried.
  */
 export async function runSweeper(
-  env: DatabaseEnv & InstagramEnv & PollerEnv,
+  env: DatabaseEnv & PollerEnv,
   { open = createDb, handlers, log }: Deps,
 ): Promise<number> {
   const connectionString = connectionStringFrom(env);

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { createTestDb } from '../db/test-db';
+import { createTestDb } from '../../../../apps/web/src/lib/server/db/test-db';
 import {
   events,
   gameTables,
@@ -9,18 +9,13 @@ import {
   profiles,
   systems,
 } from '@mesaaberta/core/server/db/schema';
-import {
-  encryptToken,
-  InstagramError,
-  type InstagramEnv,
-  graph,
-} from '@mesaaberta/core/server/instagram/api';
+import { encryptToken, InstagramError, type InstagramEnv, graph } from './api';
 import {
   instagramQueueHandler,
   publishInstagramPosts,
   publishInstagramTable,
   queueInstagramTable,
-} from '@mesaaberta/core/server/instagram/publisher';
+} from './publisher';
 import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;

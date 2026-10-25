@@ -1,13 +1,12 @@
-import type { InstagramEnv } from '../instagram/api';
-import { configured } from '../instagram/api';
+import type { InstagramEnv } from './api';
+import { configured } from './api';
 import {
   instagramQueueHandler,
   publishInstagramPosts,
   publishInstagramTable,
   queueInstagramTable,
-} from '../instagram/publisher';
-import type { Extension } from '../extensions/contract';
-import type { SocialPublisher } from './port';
+} from './publisher';
+import type { SocialPublisher } from '@mesaaberta/core/server/social/port';
 
 /** The Instagram connector: the existing publisher behind the port, unchanged. */
 export const instagramSocial: SocialPublisher = {
@@ -21,6 +20,3 @@ export const instagramSocial: SocialPublisher = {
   // Always registered, even before OAuth is configured: creation events stay decoupled from Meta.
   handlers: [instagramQueueHandler],
 };
-
-/** Instagram as an extension: its connector and nothing else yet. */
-export const instagramExtension: Extension = { id: 'instagram', social: instagramSocial };

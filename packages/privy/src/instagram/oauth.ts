@@ -1,4 +1,4 @@
-import type { OAuthConnection } from '../extensions/contract';
+import type { OAuthConnection } from '@mesaaberta/core/server/extensions/contract';
 import {
   callbackUrl,
   configured,

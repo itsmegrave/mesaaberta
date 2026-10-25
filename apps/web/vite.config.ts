@@ -142,6 +142,7 @@ export default defineConfig({
           exclude: [
             'src/**/*.svelte.{test,spec}.{js,ts}',
             'src/**/*.integration.spec.ts',
+            '../../packages/**/*.integration.spec.ts',
             '**/node_modules/**',
             '../../**/node_modules/**',
             '../**/node_modules/**',
@@ -155,7 +156,7 @@ export default defineConfig({
         test: {
           name: 'integration',
           environment: 'node',
-          include: ['src/**/*.integration.spec.ts'],
+          include: ['src/**/*.integration.spec.ts', '../../packages/**/*.integration.spec.ts'],
           testTimeout: 30_000,
           hookTimeout: 30_000,
           // One file at a time: they share the database.

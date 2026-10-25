@@ -1,16 +1,12 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 import { publishInstagramAction } from './instagram-action';
-import {
-  publishInstagramTable,
-  queueInstagramTable,
-} from '@mesaaberta/core/server/instagram/publisher';
-vi.mock('@mesaaberta/core/server/instagram/publisher', () => ({
-  queueInstagramTable: vi.fn(async () => 'queued'),
-  publishInstagramTable: vi.fn(async () => 'published'),
-  publishInstagramPosts: vi.fn(async () => 0),
-  instagramQueueHandler: { name: 'instagram-queue', types: ['TableCreated'], handle: vi.fn() },
+// The action talks to the port, so any installed connector behaves the same here.
+const social = vi.hoisted(() => ({
+  queueTable: vi.fn(async () => 'queued'),
+  publishTable: vi.fn(async () => 'published'),
 }));
+vi.mock('@mesaaberta/core/server/social/index', () => ({ socialFor: vi.fn(() => social) }));
 vi.mock('@mesaaberta/core/server/auth/policy', () => ({ can: () => true }));
 beforeEach(() => vi.clearAllMocks());
 it('returns queue feedback before running rendering or publication', async () => {
@@ -30,18 +26,14 @@ it('returns queue feedback before running rendering or publication', async () =>
     },
   } as unknown as RequestEvent;
   expect(await publishInstagramAction(event)).toEqual({ publishResult: 'queued' });
-  expect(queueInstagramTable).toHaveBeenCalledOnce();
-  expect(publishInstagramTable).not.toHaveBeenCalled();
+  expect(social.queueTable).toHaveBeenCalledOnce();
+  expect(social.publishTable).not.toHaveBeenCalled();
   // The image flag is read in the background task; only the api kill switch is read before.
   expect(flags.isEnabled).not.toHaveBeenCalledWith('use_table_image');
   expect(tasks).toHaveLength(1);
   await tasks[0]({});
   expect(flags.isEnabled).toHaveBeenCalledWith('use_table_image');
-  expect(publishInstagramTable).toHaveBeenCalledWith(
-    {},
-    {},
-    form.get('tableId'),
-    expect.any(Date),
-    { useTableImage: true },
-  );
+  expect(social.publishTable).toHaveBeenCalledWith({}, {}, form.get('tableId'), expect.any(Date), {
+    useTableImage: true,
+  });
 });

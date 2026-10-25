@@ -1,9 +1,9 @@
 import { and, asc, eq, inArray, isNull, lte, or } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { gameTables, instagramAccounts, instagramPosts } from '../db/schema';
-import type { Handler } from '../events/types';
-import { backoffSeconds } from '../events/dispatcher';
-import { bytesToBase64 } from '../base64';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { gameTables, instagramAccounts, instagramPosts } from '@mesaaberta/core/server/db/schema';
+import type { Handler } from '@mesaaberta/core/server/events/types';
+import { backoffSeconds } from '@mesaaberta/core/server/events/dispatcher';
+import { bytesToBase64 } from '@mesaaberta/core/server/base64';
 import {
   configured,
   decryptToken,
@@ -14,10 +14,10 @@ import {
   type InstagramEnv,
 } from './api';
 import { renderShareImage, shareFacts } from './image';
-import { createFlags } from '../flags/flags';
-import { growthBookPayload } from '../flags/payload';
-import { findTableBySlug } from '../tables/queries';
-import { hasStarted } from '../tables/schedule';
+import { createFlags } from '@mesaaberta/core/server/flags/flags';
+import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
+import { findTableBySlug } from '@mesaaberta/core/server/tables/queries';
+import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 
 // Always registered, even before OAuth is configured: creation events remain decoupled from Meta.
 export const instagramQueueHandler: Handler = {

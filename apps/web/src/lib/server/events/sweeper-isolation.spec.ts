@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { encryptToken } from '@mesaaberta/core/server/instagram/api';
-import { events, instagramAccounts, workerHeartbeats } from '@mesaaberta/core/server/db/schema';
+import { events, workerHeartbeats } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { SWEEPER_HEARTBEAT } from '@mesaaberta/core/server/events/heartbeat';
 import { runSweeper } from '@mesaaberta/core/server/events/sweeper';
@@ -11,7 +10,6 @@ beforeAll(async () => (test = await createTestDb()));
 afterAll(() => test.close());
 beforeEach(async () => {
   await test.db.delete(workerHeartbeats);
-  await test.db.delete(instagramAccounts);
   await test.db.delete(events);
 });
 
@@ -22,24 +20,19 @@ const log = () => ({
   debug: vi.fn(),
   child: vi.fn(),
 });
-const env = {
-  DATABASE_URL: 'postgres://x',
-  INSTAGRAM_APP_ID: 'app',
-  INSTAGRAM_APP_SECRET: 'secret',
-  INSTAGRAM_TOKEN_KEY: 'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=',
-  APP_ORIGIN: 'https://mesaaberta.app',
-};
+const env = { DATABASE_URL: 'postgres://x' };
+
+// Whatever connector is installed (a private build brings its own), its failure must stay isolated.
+vi.mock('@mesaaberta/core/server/social/index', () => ({
+  socialFor: () => ({
+    publishDue: async () => {
+      throw new Error('the connector cannot read its stored credentials');
+    },
+  }),
+}));
 
 describe('the sweeper when the social publisher fails', () => {
-  it('still prunes, records its heartbeat and only warns when the stored token cannot be read', async () => {
-    // Encrypted with the key that was replaced: decrypting it throws an OperationError.
-    await test.db.insert(instagramAccounts).values({
-      id: 'mesaaberta',
-      userId: '1',
-      username: 'mesaaberta',
-      token: await encryptToken('long-lived', 'QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE='),
-      expiresAt: new Date(Date.now() + 30 * 24 * 3600_000),
-    });
+  it('still prunes, records its heartbeat and only warns when the connector throws', async () => {
     const logger = log();
     const close = vi.fn();
 

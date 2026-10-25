@@ -1,4 +1,4 @@
-import { bytesToBase64 } from '../base64';
+import { bytesToBase64 } from '@mesaaberta/core/server/base64';
 /** Server-only environment. Keep credentials out of vars, event payloads, and request logs. */
 export type InstagramEnv = {
   INSTAGRAM_APP_ID?: string;

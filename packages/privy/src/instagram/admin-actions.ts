@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import type { AnyDb } from '../db/client';
-import { instagramAccounts, instagramPosts } from '../db/schema';
-import { socialFor, type SocialEnv } from '../social/index';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { instagramAccounts, instagramPosts } from '@mesaaberta/core/server/db/schema';
+import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 import type { InstagramEnv } from './api';
 
 const tableId = z.string().regex(/^[0-9a-f-]{36}$/i);

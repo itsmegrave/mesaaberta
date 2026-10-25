@@ -1,0 +1,17 @@
+{
+  "name": "@mesaaberta/privy",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./instagram": "./src/instagram/index.ts"
+  },
+  "peerDependencies": {
+    "@cf-wasm/resvg": "*",
+    "@mesaaberta/core": "*",
+    "drizzle-orm": "*",
+    "jpeg-js": "*",
+    "qrcode": "*",
+    "zod": "*"
+  }
+}

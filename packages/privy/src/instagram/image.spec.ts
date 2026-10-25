@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import jpeg from 'jpeg-js';
 import { HEIGHT, MAX_BYTES, renderShareImage, shareFacts, shareSvg, WIDTH } from './image';
-import type { TableView } from '../tables/queries';
+import type { TableView } from '@mesaaberta/core/server/tables/queries';
 const table = {
   slug: 'a-ventura',
   title: 'Dragões & <aventuras>',

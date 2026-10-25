@@ -1,4 +1,4 @@
-import { instagramExtension } from '../instagram/extension';
+import { instagramExtension } from '@mesaaberta/privy/instagram';
 import type { Extension } from './contract';
 
 /**

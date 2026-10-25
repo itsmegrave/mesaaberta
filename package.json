@@ -88,6 +88,7 @@
     "@mesaaberta/core": "workspace:*",
     "@mesaaberta/db": "workspace:*",
     "@mesaaberta/events": "workspace:*",
+    "@mesaaberta/privy": "workspace:*",
     "@sentry/cloudflare": "11.1.0",
     "@sentry/core": "11.1.0",
     "@sentry/sveltekit": "^11.1.0",
@@ -128,7 +129,7 @@
     "supabase"
   ],
   "overrides": {
-    "undici@7.29.0": "7.29.1",
+    "undici@<7.30.1": "7.30.1",
     "devalue@<5.9.3": "5.9.4",
     "cookie@<0.7.0": "0.7.2",
     "esbuild@<0.25.0": "0.25.12",

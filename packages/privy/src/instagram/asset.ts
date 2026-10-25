@@ -1,7 +1,7 @@
 import { and, eq, gt, isNotNull } from 'drizzle-orm';
-import type { AnyDb } from '../db/client';
-import { instagramPosts } from '../db/schema';
-import type { PublicAsset } from '../extensions/contract';
+import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { instagramPosts } from '@mesaaberta/core/server/db/schema';
+import type { PublicAsset } from '@mesaaberta/core/server/extensions/contract';
 
 /** The share image of a post, by the random key in its URL. It expires; nothing names a table or player. */
 export async function instagramAsset(db: AnyDb, key: string): Promise<PublicAsset | null> {
