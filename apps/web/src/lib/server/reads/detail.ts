@@ -39,10 +39,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
   const { gmProfile = null, ...rest } = detail;
   return {
     ...rest,
-    gm: gmProfile && {
-      name: gmProfile.name,
-      avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile),
-    },
+    gm: gmProfile && { avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile) },
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     signedIn,
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,

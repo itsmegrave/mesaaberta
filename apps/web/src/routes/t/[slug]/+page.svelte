@@ -180,24 +180,20 @@
         </ul>
       {/if}
 
-      <!-- Quem mestra: the picture, the label over the name, then the rating pill. -->
+      <!-- Quem mestra: the picture, the label over the handle, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
         <div class="flex min-w-0 items-center gap-4">
-          <MAAvatar
-            src={data.gm?.avatarUrl ?? null}
-            name={data.gm?.name ?? table.gmName}
-            size={44}
-          />
+          <MAAvatar src={data.gm?.avatarUrl ?? null} name={table.gmName} size={44} />
           <p class="min-w-0">
             <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
             {#if data.gmUsername}
               <a
                 href={`/u/${encodeURIComponent(data.gmUsername)}`}
                 class="text-lg font-semibold text-surface-950-50 underline decoration-surface-200-800 underline-offset-3 hover:decoration-primary-500"
-                >{data.gm?.name || atHandle(table.gmName)}</a
+                >{atHandle(table.gmName)}</a
               >
             {:else}
-              <span class="text-lg font-semibold">{data.gm?.name || atHandle(table.gmName)}</span>
+              <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
             {/if}
           </p>
         </div>
