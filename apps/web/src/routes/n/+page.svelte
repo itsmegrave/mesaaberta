@@ -113,10 +113,12 @@
                 next={here}
                 buttonClass="text-left link-underline {item.read ? 'font-normal' : ''}"
               >
-                {notificationText(item)}
+                {notificationText(item, shownTimezone('America/Sao_Paulo'))}
               </NotificationAction>
             {:else}
-              <p class={item.read ? '' : 'font-semibold'}>{notificationText(item)}</p>
+              <p class={item.read ? '' : 'font-semibold'}>
+                {notificationText(item, shownTimezone('America/Sao_Paulo'))}
+              </p>
             {/if}
             <p class="mt-1 text-sm text-muted">{when(item.createdAt)}</p>
           </div>

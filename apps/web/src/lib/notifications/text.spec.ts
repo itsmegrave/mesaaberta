@@ -40,6 +40,34 @@ describe('notificationText', () => {
     ).toBe('Uma conquista nova chegou ao seu perfil.');
   });
 
+  it('says what changed on a table, with the old and new start in the viewer timezone', () => {
+    const base = { tableId: 't', slug: 'mesa', title: 'Mesa do Dragão' };
+    const moved = shown({
+      metadata: {
+        ...base,
+        changed: 'startsAt,locationArea',
+        startsAtFrom: '2026-10-10T22:00:00.000Z',
+        startsAtTo: '2026-10-11T21:00:00.000Z',
+      },
+    });
+    // ICU words the date and time joint differently across versions (", " or " às "), so match around it.
+    expect(notificationText(moved, 'America/Sao_Paulo')).toMatch(
+      /^A mesa Mesa do Dragão mudou de horário: de sábado, 10 de outubro.+19:00 GMT-3 para domingo, 11 de outubro.+18:00 GMT-3\. Também mudou: local\.$/,
+    );
+    expect(notificationText(moved, 'Europe/Lisbon')).toMatch(
+      /de sábado, 10 de outubro.+23:00 GMT\+1/,
+    );
+    expect(
+      notificationText(
+        shown({ metadata: { ...base, changed: 'durationMinutes,modality,locationArea' } }),
+      ),
+    ).toBe('A mesa Mesa do Dragão mudou: duração e local.');
+    // A notice written before the summary existed stays generic.
+    expect(notificationText(shown({}))).toBe(
+      'A mesa Mesa do Dragão mudou. Confira data, horário e local.',
+    );
+  });
+
   it('says someone when the account behind it is gone', () => {
     expect(notificationText(shown({ type: 'player_left' }))).toBe('Alguém saiu de Mesa do Dragão.');
   });
