@@ -1,6 +1,7 @@
 <script lang="ts">
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
-  import { navigating, page } from '$app/state';
+  import { navigating, page, updated } from '$app/state';
+  import AppUpdateNotice from '#lib/components/shell/AppUpdateNotice.svelte';
   import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import NotificationAction from '#lib/components/NotificationAction.svelte';
@@ -26,8 +27,8 @@
   // Every form comes back to the filter it was sent from.
   const here = $derived(page.url.pathname + page.url.search);
 
-  // Only the categories that have events today; catalog, moderation and announcements join the
-  // filters with the slices that write them.
+  // Only the categories that have events today; catalog and moderation join the filters with the
+  // slices that write them. "Avisos" holds the announcements and the new-version item.
   const filters: { category: NotificationCategory | null; label: () => string }[] = [
     { category: null, label: m.notifications_filter_all },
     { category: 'table', label: m.notifications_filter_table },
@@ -35,10 +36,10 @@
     { category: 'rating', label: m.notifications_filter_rating },
     { category: 'messages', label: m.notifications_filter_messages },
     { category: 'achievements', label: m.notifications_filter_achievements },
+    { category: 'system', label: m.notifications_filter_system },
   ];
 
   // The feed with this filter, on page 1 unless another is given (`?page=N`, none for the first).
-  // The feed with this filter, on page 1 unless another is given.
   const hrefFor = (over: Partial<FeedQuery> = {}) =>
     feedHref({ category: data.category, unread: data.unread, page: 1, ...over });
   const pageLink = `${buttonClass('secondary', 'md')} text-sm font-semibold`;
@@ -107,6 +108,10 @@
       </li>
     </ul>
   </nav>
+
+  {#if updated.current && (data.category === null || data.category === 'system')}
+    <div class="mt-6"><AppUpdateNotice /></div>
+  {/if}
 
   {#if filtering.current}
     <ListSkeleton kind="rows" />

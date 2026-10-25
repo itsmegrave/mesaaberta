@@ -1,7 +1,8 @@
 <script lang="ts">
   import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
-  import { page } from '$app/state';
+  import { page, updated } from '$app/state';
+  import AppUpdateNotice from './AppUpdateNotice.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import NotificationAction from '#lib/components/NotificationAction.svelte';
   import NotificationIcon from '#lib/components/ui/NotificationIcon.svelte';
@@ -47,7 +48,11 @@
       hourCycle: 'h23',
     }).format(date);
   const label = $derived(
-    unread > 0 ? m.notifications_bell_unread({ count: unread }) : m.notifications_bell(),
+    unread > 0
+      ? m.notifications_bell_unread({ count: unread })
+      : updated.current
+        ? m.notifications_bell_update()
+        : m.notifications_bell(),
   );
 </script>
 
@@ -75,6 +80,13 @@
         aria-hidden="true"
         class={labelled ? 'h-5.5 min-w-5.5 px-1.5' : 'absolute top-0 right-0 h-4 min-w-4 px-1'}
       />
+    {:else if updated.current}
+      <!-- A new version is not an unread notification: a dot, not a count. -->
+      <span
+        data-testid="app-update-dot"
+        aria-hidden="true"
+        class="size-2.5 rounded-full bg-primary-500 {labelled ? '' : 'absolute top-0.5 right-0.5'}"
+      ></span>
     {/if}
   </Popover.Trigger>
 
@@ -97,6 +109,9 @@
           {/if}
         </div>
 
+        {#if open && updated.current}
+          <div class="mb-1"><AppUpdateNotice compact /></div>
+        {/if}
         {#if !open}
           <!-- Nothing until the menu opens. -->
         {:else if latest.length === 0}
