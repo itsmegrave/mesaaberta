@@ -34,23 +34,64 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { HTMLButtonAttributes } from 'svelte/elements';
+  import Spinner from './Spinner.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
+  /**
+   * Every button. As a form's submit button, pass the form's `controller` (an actionForm), or its
+   * `submitting`, `delayed` (500 ms) and `timeout` (8 s) one by one. It is never disabled before the
+   * first attempt. From the moment the form is sent it is `aria-disabled` and `aria-busy` and a
+   * second click does nothing; the spinner waits for the submit to be slow, so a quick one does not
+   * flash it, and a note shows once it is very slow. It is `aria-disabled`, not `disabled`, so it
+   * keeps its focus and its place in the tab order.
+   */
   let {
     children,
     element = $bindable(),
     type = 'button',
     size = 'md',
     variant = 'ghost',
+    controller,
+    submitting: submittingProp = false,
+    delayed: delayedProp = false,
+    timeout: timeoutProp = false,
     class: className = '',
+    onclick,
     ...attributes
   }: HTMLButtonAttributes & {
     children?: Snippet;
     element?: HTMLButtonElement;
     size?: ButtonSize;
     variant?: ButtonVariant;
+    /** The form's controller; its state wins over the three flags below. */
+    controller?: { pending: boolean; delayed: boolean; timeout: boolean };
+    submitting?: boolean;
+    delayed?: boolean;
+    timeout?: boolean;
   } = $props();
+
+  const submitting = $derived(controller?.pending ?? submittingProp);
+  const delayed = $derived(controller?.delayed ?? delayedProp);
+  const timeout = $derived(controller?.timeout ?? timeoutProp);
+  const busy = $derived(submitting || delayed);
+
+  const click: typeof onclick = (event) => {
+    if (busy) event.preventDefault();
+    else onclick?.(event);
+  };
 </script>
 
-<button bind:this={element} {type} {...attributes} class="{buttonClass(variant, size)} {className}">
-  {@render children?.()}
+<button
+  bind:this={element}
+  {type}
+  {...attributes}
+  aria-busy={busy || attributes['aria-busy'] || undefined}
+  aria-disabled={busy || attributes['aria-disabled'] || undefined}
+  onclick={click}
+  class="{buttonClass(variant, size)} {delayed ? 'gap-2' : ''} {className}"
+>
+  {#if delayed}
+    <Spinner />
+  {/if}
+  {#if timeout}{m.form_still_saving()}{:else}{@render children?.()}{/if}
 </button>
