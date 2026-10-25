@@ -1,7 +1,6 @@
 <script lang="ts">
   // "Pedir vaga" on a table that approves each player: a modal with an optional note, so the player
   // can introduce themselves to the GM. The server checks everything again.
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { JOIN_MESSAGE_MAX, joinSchema } from '#lib/tables/registration.js';
   import { registrationError } from '#lib/tables/registration-errors.js';
@@ -9,7 +8,8 @@
   import Form from '#lib/components/Form.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
@@ -50,66 +50,45 @@
   );
 </script>
 
-<Dialog
-  {open}
-  onOpenChange={(details) => {
-    open = details.open;
-  }}
+<DialogShell
+  bind:open
+  size="lg"
+  scroll
+  {triggerClass}
+  title={m.join_request_title()}
+  description={m.join_request_lede()}
 >
-  <Dialog.Trigger class={triggerClass}>
+  {#snippet trigger()}
     <Icon name="game-icons:bar-stool" size={20} />
     {m.table_join_request()}
-  </Dialog.Trigger>
-  {#if open}
-    <Portal>
-      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-      <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <Dialog.Content
-          class="max-h-full w-full max-w-lg overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
-        >
-          <Dialog.Title class="text-xl font-semibold">{m.join_request_title()}</Dialog.Title>
-          <Dialog.Description class="mt-2 text-surface-700-300"
-            >{m.join_request_lede()}</Dialog.Description
-          >
-          <Form {action} onsubmit={form.submit} class="mt-4 grid gap-4">
-            <FormField
-              id="join-message"
-              label={m.join_request_message()}
-              hint={m.join_request_message_hint()}
-              error={messageError}
-              optional
-              counter={{ count: data.message.length, max: JOIN_MESSAGE_MAX, remaining: true }}
-            >
-              {#snippet children(aria)}
-                <TextArea
-                  id="join-message"
-                  name="message"
-                  rows={5}
-                  maxlength={JOIN_MESSAGE_MAX}
-                  class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
-                  value={data.message}
-                  oninput={(event) => form.change('message', event.currentTarget.value)}
-                  {...aria}
-                ></TextArea>
-              {/snippet}
-            </FormField>
+  {/snippet}
+  <Form {action} onsubmit={form.submit} class="mt-4 grid gap-4">
+    <FormField
+      id="join-message"
+      label={m.join_request_message()}
+      hint={m.join_request_message_hint()}
+      error={messageError}
+      optional
+      counter={{ count: data.message.length, max: JOIN_MESSAGE_MAX, remaining: true }}
+    >
+      {#snippet children(aria)}
+        <TextArea
+          id="join-message"
+          name="message"
+          rows={5}
+          maxlength={JOIN_MESSAGE_MAX}
+          class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
+          value={data.message}
+          oninput={(event) => form.change('message', event.currentTarget.value)}
+          {...aria}
+        ></TextArea>
+      {/snippet}
+    </FormField>
 
-            <div class="mt-2 flex flex-wrap justify-end gap-3">
-              <Dialog.CloseTrigger
-                class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-                >{m.admin_dialog_cancel()}</Dialog.CloseTrigger
-              >
-              <SubmitButton
-                submitting={form.pending}
-                delayed={form.delayed}
-                timeout={form.timeout}
-                class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-                >{m.join_request_submit()}</SubmitButton
-              >
-            </div>
-          </Form>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Portal>
-  {/if}
-</Dialog>
+    <DialogActions
+      cancel={m.admin_dialog_cancel()}
+      controller={form}
+      confirm={m.join_request_submit()}
+    />
+  </Form>
+</DialogShell>

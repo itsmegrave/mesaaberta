@@ -1,13 +1,11 @@
 <script lang="ts">
-  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import ReasonSelect from '#lib/components/ReasonSelect.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
   import UserText from '#lib/components/UserText.svelte';
   // One moderation decision behind a confirmation: accept, dismiss, close a table, ban or revoke a
   // ban. Mounted per action; the server authorizes it again.
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import type { ZodType } from 'zod';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import { reasonLabel } from '#lib/moderation/labels.js';
   import {
     BAN_DURATIONS,
     RESOLUTION_NOTE_MAX,
@@ -17,7 +15,8 @@
   } from '@mesaaberta/core/moderation/reports';
   import Form from '#lib/components/Form.svelte';
   import FormField from '#lib/components/FormField.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
 
@@ -25,7 +24,7 @@
     action,
     schema,
     fields,
-    title,
+    title: titleText,
     username,
     text,
     confirm,
@@ -122,136 +121,87 @@
   const id = action.slice(2);
 </script>
 
-<Dialog
-  {open}
-  onOpenChange={(details) => {
-    open = details.open;
-  }}
+<DialogShell
+  bind:open
   role={danger ? 'alertdialog' : 'dialog'}
+  scroll
+  trigger={trigger ? triggerContent : undefined}
+  {triggerClass}
+  description={text}
 >
-  {#if trigger}<Dialog.Trigger class={triggerClass}>{label}</Dialog.Trigger>{/if}
-  {#if open}
-    <Portal>
-      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-      <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <Dialog.Content
-          class="max-h-full w-full max-w-md overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
-        >
-          <Dialog.Title class="text-xl font-semibold"
-            ><UserText text={title} {username} /></Dialog.Title
-          >
-          <Dialog.Description class="mt-2 text-surface-700-300">{text}</Dialog.Description>
-          <Form method="POST" {action} onsubmit={form.submit} class="mt-4 grid gap-4">
-            {#each Object.keys(fields) as name (name)}
-              <input type="hidden" {name} value={data[name]} />
-            {/each}
-            {#if durations && choices.length === 1}
-              <input type="hidden" name="duration" value={choices[0]} />
-            {:else if durations}
-              <fieldset
-                class="grid gap-2"
-                aria-describedby={durationError ? `${id}-duration-error` : undefined}
-              >
-                <legend class="label-text font-semibold">{m.moderation_ban_duration()}</legend>
-                <div class="grid grid-cols-2 gap-2">
-                  {#each choices as duration (duration)}
-                    <label
-                      class="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-surface-200-800 px-3 has-checked:border-primary-500 has-checked:preset-tonal-primary"
-                    >
-                      <input
-                        type="radio"
-                        class="radio"
-                        name="duration"
-                        value={duration}
-                        checked={data.duration === duration}
-                        onchange={() => form.change('duration', duration)}
-                      />
-                      {durationLabel(duration)}
-                    </label>
-                  {/each}
-                </div>
-                {#if durationError}
-                  <p
-                    id="{id}-duration-error"
-                    role="alert"
-                    class="text-sm font-semibold text-error-700-300"
-                  >
-                    {durationError}
-                  </p>
-                {/if}
-              </fieldset>
-            {/if}
-            {#if reasons}
-              <div class="min-w-0">
-                <SearchSelect
-                  id="{id}-reason"
-                  name="reason"
-                  label={m.report_reason()}
-                  labelClass="label-text block font-semibold"
-                  class="grid gap-1"
-                  inDialog
-                  required
-                  invalid={!!reasonError}
-                  items={reasons.map((reason) => ({
-                    name: reasonLabel(reason, reasonTarget),
-                    slug: reason,
-                  }))}
-                  value={data.reason ? [data.reason] : []}
-                  placeholder={m.report_reason_pick()}
-                  onchange={(picked) => form.change('reason', picked[0] ?? '')}
-                />
-                {#if reasonError}<p
-                    id="{id}-reason-error"
-                    role="alert"
-                    class="mt-1 text-sm font-semibold text-error-700-300"
-                  >
-                    {reasonError}
-                  </p>{/if}
-              </div>
-            {/if}
-            {#if write}
-              <FormField
-                id="{id}-{write.name}"
-                label={write.label}
-                hint={write.hint}
-                error={textError}
-              >
-                <TextArea
-                  id="{id}-{write.name}"
-                  name={write.name}
-                  rows={3}
-                  maxlength={RESOLUTION_NOTE_MAX}
-                  required={write.required}
-                  class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
-                  value={data[write.name]}
-                  oninput={(event) => form.change(write.name, event.currentTarget.value)}
-                  aria-invalid={textError ? 'true' : undefined}
-                  aria-describedby="{id}-{write.name}-hint{textError
-                    ? ` ${id}-${write.name}-error`
-                    : ''}"
-                ></TextArea>
-              </FormField>
-            {/if}
-            {#if formError}
-              <p role="alert" class="text-sm font-semibold text-error-700-300">{formError}</p>
-            {/if}
-            <div class="mt-2 flex flex-wrap justify-end gap-3">
-              <Dialog.CloseTrigger
-                class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-                >{m.admin_dialog_cancel()}</Dialog.CloseTrigger
-              >
-              <SubmitButton
-                submitting={form.pending}
-                delayed={form.delayed}
-                timeout={form.timeout}
-                class="btn h-12 rounded-lg px-4 font-semibold {danger
-                  ? 'preset-filled-error-500'
-                  : 'preset-filled-primary-500'}">{confirm}</SubmitButton
-              >
-            </div>
-          </Form>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Portal>
-  {/if}
-</Dialog>
+  {#snippet title()}<UserText text={titleText} {username} />{/snippet}
+  <Form method="POST" {action} onsubmit={form.submit} class="mt-4 grid gap-4">
+    {#each Object.keys(fields) as name (name)}
+      <input type="hidden" {name} value={data[name]} />
+    {/each}
+    {#if durations && choices.length === 1}
+      <input type="hidden" name="duration" value={choices[0]} />
+    {:else if durations}
+      <fieldset
+        class="grid gap-2"
+        aria-describedby={durationError ? `${id}-duration-error` : undefined}
+      >
+        <legend class="label-text font-semibold">{m.moderation_ban_duration()}</legend>
+        <div class="grid grid-cols-2 gap-2">
+          {#each choices as duration (duration)}
+            <label
+              class="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-surface-200-800 px-3 has-checked:border-primary-500 has-checked:preset-tonal-primary"
+            >
+              <input
+                type="radio"
+                class="radio"
+                name="duration"
+                value={duration}
+                checked={data.duration === duration}
+                onchange={() => form.change('duration', duration)}
+              />
+              {durationLabel(duration)}
+            </label>
+          {/each}
+        </div>
+        {#if durationError}
+          <p id="{id}-duration-error" role="alert" class="text-sm font-semibold text-error-700-300">
+            {durationError}
+          </p>
+        {/if}
+      </fieldset>
+    {/if}
+    {#if reasons}
+      <ReasonSelect
+        id="{id}-reason"
+        {reasons}
+        target={reasonTarget}
+        value={data.reason}
+        error={reasonError}
+        onchange={(reason) => form.change('reason', reason)}
+      />
+    {/if}
+    {#if write}
+      <FormField id="{id}-{write.name}" label={write.label} hint={write.hint} error={textError}>
+        <TextArea
+          id="{id}-{write.name}"
+          name={write.name}
+          rows={3}
+          maxlength={RESOLUTION_NOTE_MAX}
+          required={write.required}
+          class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
+          value={data[write.name]}
+          oninput={(event) => form.change(write.name, event.currentTarget.value)}
+          aria-invalid={textError ? 'true' : undefined}
+          aria-describedby="{id}-{write.name}-hint{textError ? ` ${id}-${write.name}-error` : ''}"
+        ></TextArea>
+      </FormField>
+    {/if}
+    {#if formError}
+      <p role="alert" class="text-sm font-semibold text-error-700-300">{formError}</p>
+    {/if}
+    <DialogActions
+      cancel={m.admin_dialog_cancel()}
+      tone={danger ? 'danger' : 'primary'}
+      controller={form}
+      {confirm}
+    />
+  </Form>
+</DialogShell>
+
+{#snippet triggerContent()}{label}{/snippet}

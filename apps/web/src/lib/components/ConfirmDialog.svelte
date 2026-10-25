@@ -4,7 +4,9 @@
   // says what will happen, focus starts on "Cancelar", Escape closes, and only the confirm button
   // acts. A bottom sheet on a phone. It opens from anywhere (a menu item, a button): the caller
   // owns `open`.
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+  import { buttonClass } from '#lib/components/Button.svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import type { FormMessage } from '#lib/forms/message.js';
   import { m } from '#lib/paraglide/messages.js';
   import ActionForm from './ActionForm.svelte';
@@ -28,7 +30,7 @@
 
   let {
     open = $bindable(),
-    title,
+    title: titleText,
     text,
     label,
     action,
@@ -43,45 +45,34 @@
   const cancel = () => document.querySelector<HTMLElement>('[data-confirm-cancel]');
 </script>
 
-<Dialog
-  {open}
-  onOpenChange={(details) => (open = details.open)}
+<DialogShell
+  bind:open
   role="alertdialog"
+  sheet
+  lazy={false}
   initialFocusEl={cancel}
+  description={text}
 >
-  <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-    <Dialog.Positioner
-      class="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4"
-    >
-      <Dialog.Content
-        class="w-full max-w-md card rounded-b-none border border-surface-200-800 bg-surface-50-950 p-6 pb-8 shadow-2xl md:rounded-b-lg md:pb-6"
-      >
-        <Dialog.Title class="text-xl font-semibold"
-          ><UserText text={title} {username} /></Dialog.Title
-        >
-        <Dialog.Description class="mt-2 text-surface-700-300">{text}</Dialog.Description>
-        <div class="mt-6 flex flex-wrap justify-end gap-3">
-          <Dialog.CloseTrigger
-            data-confirm-cancel=""
-            class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-            >{m.confirm_cancel()}</Dialog.CloseTrigger
-          >
-          <ActionForm
-            {action}
-            {playerId}
-            {next}
-            {label}
-            buttonClass="btn h-12 rounded-lg preset-filled-error-500 px-4 font-semibold"
-            {success}
-            onsuccess={() => (open = false)}
-            onfail={(message) => {
-              open = false;
-              onfail?.(message);
-            }}
-          />
-        </div>
-      </Dialog.Content>
-    </Dialog.Positioner>
-  </Portal>
-</Dialog>
+  {#snippet title()}<UserText text={titleText} {username} />{/snippet}
+  <DialogActions
+    class="mt-6"
+    cancel={m.confirm_cancel()}
+    cancelAttributes={{ 'data-confirm-cancel': '' }}
+  >
+    {#snippet confirmButton()}
+      <ActionForm
+        {action}
+        {playerId}
+        {next}
+        {label}
+        buttonClass="{buttonClass('danger', 'md')} font-semibold"
+        {success}
+        onsuccess={() => (open = false)}
+        onfail={(message) => {
+          open = false;
+          onfail?.(message);
+        }}
+      />
+    {/snippet}
+  </DialogActions>
+</DialogShell>
