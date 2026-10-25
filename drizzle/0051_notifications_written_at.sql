@@ -1,0 +1,1 @@
+ALTER TABLE "notifications" ADD COLUMN "written_at" timestamp with time zone DEFAULT now() NOT NULL;

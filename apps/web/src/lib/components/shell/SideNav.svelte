@@ -26,12 +26,14 @@
     authEnabled,
     unread,
     latest,
+    seenAt,
     messagesUnread,
   }: {
     account: Account | null;
     authEnabled: boolean;
     unread: number;
     latest: NonNullable<Parameters<typeof NotificationBell>[1]>['latest'];
+    seenAt?: string;
     messagesUnread: number;
   } = $props();
 
@@ -217,7 +219,7 @@
               class="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
               >{m.nav_account_group()}</Navigation.Label
             >
-            <NotificationBell {unread} {latest} placement="right-end" labelled />
+            <NotificationBell {unread} {latest} {seenAt} placement="right-end" labelled />
             {#if account.isAdmin}
               <a
                 href="/admin"
@@ -240,7 +242,7 @@
           class="mt-auto flex flex-col {expanded ? 'items-stretch gap-2' : 'items-center gap-3'}"
         >
           {#if account && !expanded}
-            <NotificationBell {unread} {latest} placement="right-end" />
+            <NotificationBell {unread} {latest} {seenAt} placement="right-end" />
           {/if}
           <ThemeToggle labelled={expanded} />
           {#if account}

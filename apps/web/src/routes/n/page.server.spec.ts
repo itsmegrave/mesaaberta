@@ -1,14 +1,20 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  listNotifications,
   markAllRead,
   markRead,
+  notificationPage,
 } from '@mesaaberta/core/server/notifications/service';
+import { NotFound } from '@mesaaberta/core/server/errors';
 import { actions, load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/notifications/service', () => ({
-  listNotifications: vi.fn(async () => []),
+  notificationPage: vi.fn(async (_db: unknown, _id: string, page: number) => ({
+    items: [],
+    page,
+    pages: 1,
+  })),
+  unreadCount: vi.fn(async () => 3),
   markRead: vi.fn(),
   markAllRead: vi.fn(),
 }));
@@ -54,16 +60,18 @@ describe('load', () => {
 
   it('lists the viewer’s notifications, filtered by a known category', async () => {
     expect((await run('?category=rating')).category).toBe('rating');
-    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', {
+    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 1, {
       category: 'rating',
+      unread: false,
       withAchievements: false,
     });
   });
 
   it('ignores a category it does not know', async () => {
     expect((await run('?category=nope')).category).toBeNull();
-    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', {
+    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 1, {
       category: undefined,
+      unread: false,
       withAchievements: false,
     });
   });
@@ -77,10 +85,29 @@ describe('load', () => {
       locals: on,
     } as never)) as { withAchievements: boolean };
     expect(result.withAchievements).toBe(true);
-    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', {
+    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 1, {
       category: undefined,
+      unread: false,
       withAchievements: true,
     });
+  });
+
+  it('reads the page and the unread filter from the query, a bad page as the first', async () => {
+    const result = await run('?category=table&unread=1&page=2');
+    expect(result).toMatchObject({ page: 2, unread: true, unreadTotal: 3 });
+    expect(Number.isNaN(Date.parse(result.seenAt))).toBe(false);
+    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 2, {
+      category: 'table',
+      unread: true,
+      withAchievements: false,
+    });
+    await run('?page=abc');
+    expect(vi.mocked(notificationPage).mock.lastCall?.[2]).toBe(1);
+  });
+
+  it('answers 404 past the last page', async () => {
+    vi.mocked(notificationPage).mockRejectedValueOnce(new NotFound('no such page'));
+    await expect(run('?page=9')).rejects.toMatchObject({ status: 404 });
   });
 
   it('sends an anonymous visitor to log in', async () => {
@@ -119,7 +146,15 @@ describe('actions', () => {
 
   it('readAll marks every one read and goes back', async () => {
     expect(await location(act('readAll', event('', { next: '/u/tables' })))).toBe('/u/tables');
-    expect(markAllRead).toHaveBeenCalledWith({}, 'me');
+    expect(markAllRead).toHaveBeenCalledWith({}, 'me', expect.any(Date), { until: undefined });
+  });
+
+  it('readAll stops at when the page was loaded, so what came later stays unread', async () => {
+    const until = '2026-10-25T12:00:00.000Z';
+    await location(act('readAll', event('', { next: '/n', until })));
+    expect(markAllRead).toHaveBeenCalledWith({}, 'me', expect.any(Date), {
+      until: new Date(until),
+    });
   });
 
   it('rejects repeated notification ids without discarding a valid return address', async () => {

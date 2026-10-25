@@ -39,7 +39,7 @@ const memberAccount = {
   isAdmin: false,
   pendingSuggestionsCount: 0,
   messagesUnread: 0,
-  notifications: { unread: 0, latest: [] },
+  notifications: { unread: 0, latest: [], seenAt: '2026-10-25T12:00:00.000Z' },
 };
 const adminAccount = {
   displayName: 'Mestre Silva',
@@ -48,7 +48,7 @@ const adminAccount = {
   isAdmin: true,
   pendingSuggestionsCount: 3,
   messagesUnread: 0,
-  notifications: { unread: 0, latest: [] },
+  notifications: { unread: 0, latest: [], seenAt: '2026-10-25T12:00:00.000Z' },
 };
 
 describe('+layout.svelte', () => {
@@ -90,7 +90,11 @@ describe('+layout.svelte', () => {
       children,
       data: {
         ...signedOut,
-        account: { ...adminAccount, messagesUnread: 2, notifications: { unread: 4, latest: [] } },
+        account: {
+          ...adminAccount,
+          messagesUnread: 2,
+          notifications: { unread: 4, latest: [], seenAt: '2026-10-25T12:00:00.000Z' },
+        },
       },
     });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
@@ -320,6 +324,7 @@ describe('+layout.svelte', () => {
           account: {
             ...memberAccount,
             notifications: {
+              seenAt: '2026-10-25T12:00:00.000Z',
               unread: 2,
               latest: [
                 {

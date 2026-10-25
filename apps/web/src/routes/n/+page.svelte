@@ -10,6 +10,8 @@
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import { feedHref, type FeedQuery } from '#lib/notifications/feed-href.js';
 
   let { data } = $props();
 
@@ -35,7 +37,11 @@
     { category: 'achievements', label: m.notifications_filter_achievements },
   ];
 
-  const unread = $derived(data.notifications.some((item) => !item.read));
+  // The feed with this filter, on page 1 unless another is given (`?page=N`, none for the first).
+  // The feed with this filter, on page 1 unless another is given.
+  const hrefFor = (over: Partial<FeedQuery> = {}) =>
+    feedHref({ category: data.category, unread: data.unread, page: 1, ...over });
+  const pageLink = `${buttonClass('secondary', 'md')} text-sm font-semibold`;
   const when = (date: Date) =>
     new Intl.DateTimeFormat(locale, {
       timeZone: shownTimezone('America/Sao_Paulo'),
@@ -65,10 +71,11 @@
         {m.notifications_lede()}
       </p>
     </div>
-    {#if unread}
+    {#if data.unreadTotal > 0}
       <NotificationAction
         action="readAll"
         next={here}
+        until={data.seenAt}
         buttonClass="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
       >
         {m.notifications_mark_all()}
@@ -81,7 +88,7 @@
       {#each filters.filter((filter) => filter.category !== 'achievements' || data.withAchievements) as filter (filter.category)}
         <li>
           <a
-            href={filter.category ? `/n?category=${filter.category}` : '/n'}
+            href={hrefFor({ category: filter.category })}
             aria-current={data.category === filter.category ? 'page' : undefined}
             class={chip}
           >
@@ -89,13 +96,24 @@
           </a>
         </li>
       {/each}
+      <li>
+        <a
+          href={hrefFor({ unread: !data.unread })}
+          aria-current={data.unread ? 'true' : undefined}
+          class="{chip} aria-current:border-primary-500 aria-current:preset-tonal-primary"
+        >
+          {m.notifications_filter_unread()}
+        </a>
+      </li>
     </ul>
   </nav>
 
   {#if filtering.current}
     <ListSkeleton kind="rows" />
   {:else if data.notifications.length === 0}
-    <p class="mt-8 text-lg" role="status">{m.notifications_empty()}</p>
+    <p class="mt-8 text-lg" role="status">
+      {data.unread ? m.notifications_empty_unread() : m.notifications_empty()}
+    </p>
   {:else}
     <ul class="mt-6 grid gap-2">
       {#each data.notifications as item (item.id)}
@@ -136,5 +154,29 @@
         </li>
       {/each}
     </ul>
+    {#if data.pages > 1}
+      <nav
+        aria-label={m.notifications_pagination_label()}
+        class="mt-6 flex flex-wrap items-center justify-between gap-2"
+      >
+        {#if data.page > 1}
+          <a href={hrefFor({ page: data.page - 1 })} class={pageLink}
+            >{m.notifications_page_previous()}</a
+          >
+        {:else}
+          <span></span>
+        {/if}
+        <span class="text-sm text-muted"
+          >{m.messages_page_status({ page: data.page, pages: data.pages })}</span
+        >
+        {#if data.page < data.pages}
+          <a href={hrefFor({ page: data.page + 1 })} class={pageLink}
+            >{m.notifications_page_next()}</a
+          >
+        {:else}
+          <span></span>
+        {/if}
+      </nav>
+    {/if}
   {/if}
 </section>

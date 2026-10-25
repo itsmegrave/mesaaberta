@@ -1,10 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { notifications, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
+import { NotFound } from '@mesaaberta/core/server/errors';
 import {
+  FEED_LIMIT,
   listNotifications,
   markAllRead,
   markRead,
+  notificationPage,
   NOTIFICATION_RETENTION_DAYS,
   pruneNotifications,
   unreadCount,
@@ -113,6 +116,18 @@ describe('reading', () => {
     expect(await unreadCount(test.db, bia)).toBe(1);
   });
 
+  it('leaves unread what was written after the page the person marked from', async () => {
+    const seen = await add({ recipientId: ana, writtenAt: minutes(1) });
+    // A late handler: the event is older than the page, the row was written after it.
+    const late = await add({ recipientId: ana, createdAt: t0, writtenAt: minutes(10) });
+
+    await markAllRead(test.db, ana, minutes(11), { until: minutes(5) });
+
+    const byId = new Map((await listNotifications(test.db, ana)).map((item) => [item.id, item]));
+    expect(byId.get(seen)?.read).toBe(true);
+    expect(byId.get(late)?.read).toBe(false);
+  });
+
   it('marks all of a person’s as read, and leaves the first read time alone', async () => {
     const early = await add({ recipientId: ana, readAt: t0 });
     await add({ recipientId: ana });
@@ -124,6 +139,52 @@ describe('reading', () => {
     expect(await unreadCount(test.db, bia)).toBe(1);
     const feed = await listNotifications(test.db, ana);
     expect(feed.find((item) => item.id === early)?.readAt).toEqual(t0);
+  });
+});
+
+describe('notificationPage', () => {
+  it('pages the feed newest first, and answers NotFound past the last page', async () => {
+    await test.db.insert(notifications).values(
+      Array.from({ length: FEED_LIMIT + 3 }, (_, i) => ({
+        recipientId: ana,
+        category: 'table' as const,
+        type: 'table_updated',
+        metadata,
+        createdAt: minutes(i),
+      })),
+    );
+
+    const first = await notificationPage(test.db, ana, 1);
+    expect(first).toMatchObject({ page: 1, pages: 2 });
+    expect(first.items).toHaveLength(FEED_LIMIT);
+    expect(first.items[0].createdAt).toEqual(minutes(FEED_LIMIT + 2));
+    const second = await notificationPage(test.db, ana, 2);
+    expect(second.items.map((item) => item.createdAt)).toEqual([
+      minutes(2),
+      minutes(1),
+      minutes(0),
+    ]);
+    await expect(notificationPage(test.db, ana, 3)).rejects.toThrow(NotFound);
+  });
+
+  it('combines the unread filter with a category, and still has a first page when empty', async () => {
+    const read = await add({ recipientId: ana, createdAt: minutes(1) });
+    await markRead(test.db, ana, read);
+    await add({ recipientId: ana, createdAt: minutes(2) });
+    await add({
+      recipientId: ana,
+      category: 'rating',
+      type: 'rating_received',
+      createdAt: minutes(3),
+    });
+
+    const unreadTables = await notificationPage(test.db, ana, 1, {
+      category: 'table',
+      unread: true,
+    });
+    expect(unreadTables.items).toHaveLength(1);
+    expect(unreadTables.items[0].createdAt).toEqual(minutes(2));
+    expect(await notificationPage(test.db, bia, 1)).toMatchObject({ items: [], pages: 1 });
   });
 });
 
