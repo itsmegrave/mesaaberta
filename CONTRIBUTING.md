@@ -35,6 +35,8 @@ When you must disable an ESLint rule, say why on the same line: `// eslint-disab
 
 Prefer Skeleton primitives and the shared `MAForm`, `FormField`, `TextInput` and `MAButton` components (`src/lib/components/ui/`). A submit button is `<MAButton type="submit" controller={form}>`: it is busy, `aria-disabled` and spinner-bearing while the form sends, never disabled before the first attempt. Use `MATextArea` for plain multiline text. Basic controls use semantic HTML inside their wrappers because Skeleton does not provide standalone Button, TextInput or Form components; a wrapper named like an HTML element or a Skeleton component takes the MA prefix. Use theme tokens and Tailwind's 4px spacing grid; document calculated layout exceptions.
 
+The app requires JavaScript. Do not build no-JS fallbacks: no `<noscript>` buttons, no native inputs shown before mount, and filters can apply on change. What stays is the server side: forms still submit to SvelteKit actions through `MAForm` and the shared actionForm, and server authorization and validation remain authoritative.
+
 New form migrations use TanStack Form for values/validation and TanStack Query for mutations/cache. The catalog, approval queue and notification actions are migrated flows. `src/lib/forms/action-form.svelte.ts` supplies a single submit handler, validation errors, pending/delayed/timeout states and failure-safe drafts. Pass the affected cache domain explicitly for Query-backed reads; route-only data such as notifications reloads through SvelteKit. Pair it with `MAForm` and the existing SvelteKit action; do not add a second enhancement handler or automatic write retries. Server authorization and Zod validation remain authoritative.
 
 ### Native form elements that stay
@@ -42,8 +44,8 @@ New form migrations use TanStack Form for values/validation and TanStack Query f
 Raw `<input>`, `<select>`, `<textarea>`, `<button>` and `<form>` appear only in these cases; anything else should use the shared controls:
 
 - **Wrappers.** `MAForm`, `MAButton`, `ActionForm`, `PostButton`, `TextInput`, `MATextArea` and the test harnesses under `src/lib/forms` and `src/lib/query`.
-- **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and keep the form working without JavaScript.
-- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and no-JS submission, and Skeleton has no standalone radio group or checkbox.
+- **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and carry the value to the SvelteKit action.
+- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and native form values, and Skeleton has no standalone radio group or checkbox.
 - **No native `<select>`.** Pickers, including `ProfileForm`'s age range, gender and timezone, use `SearchSelect` (Skeleton's Combobox), which submits its picks as hidden inputs.
 
 Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui-migration-plan.md).
@@ -52,7 +54,7 @@ Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui
 
 Multiline text a person writes for others to read (a table's description, the welcome message, an announcement) uses `RichTextField` and is shown with `RichText`. It is stored as the small HTML subset of `src/lib/text/rich.ts` (paragraphs, headings, bold, italic, underline, strikethrough, lists, quotes, code, dividers and http/https/mailto links; no images, colours or alignment, because the CSP blocks inline `style`). Validate it with `richText(max)` from `#lib/text/rich-schema`, whose limit counts what a reader sees, and show it only through `RichText`, the one place `{@html}` is allowed. Calendar, Instagram and the plain-text e-mail copy use `toPlainText`. Chat messages and rating comments use the plain-text `MATextArea` wrapper.
 
-Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
+Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage.
 
 ## Icons
 
