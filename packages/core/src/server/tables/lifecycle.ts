@@ -1,5 +1,5 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
-import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, playerInvitations, ratings, registrations } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
@@ -10,6 +10,7 @@ import { diffFields } from '../events/changes';
 import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
+import { markedPresentAt } from './attendance';
 import { localToInstant, nextWeeklySession, weeklyInterval } from './schedule';
 import {
   lockTableSchedule,
@@ -203,6 +204,28 @@ export const concludeTable = (
 ) => answer(db, actor, slug, 'HAPPENED', () => ({}), 'TableConcluded', undefined, presentPlayerIds);
 
 /**
+ * When the next session of a campaign or adventure is: `nextStartsAtLocal` (in the table's zone),
+ * or a weekly campaign's next date without it. Throws `Invalid` for a one-shot, a missing date
+ * on an adventure and a date that is not in the future.
+ */
+function nextSessionAt(
+  table: Awaited<ReturnType<typeof findAwaiting>>,
+  nextStartsAtLocal: string | undefined,
+  now: Date,
+): Date {
+  if (table.kind === 'one_shot') throw new Invalid('slug', 'not_multi_session');
+  let startsAt: Date;
+  if (nextStartsAtLocal) startsAt = localToInstant(nextStartsAtLocal, table.timezone);
+  else {
+    const interval = weeklyInterval(table.recurrence);
+    if (!interval) throw new Invalid('nextStartsAtLocal', 'required');
+    startsAt = nextWeeklySession(table.startsAt, interval, table.timezone, now);
+  }
+  if (startsAt <= now) throw new Invalid('nextStartsAtLocal', 'in_the_past');
+  return startsAt;
+}
+
+/**
  * The GM says a session of a campaign or adventure happened and more follow. The table stays open
  * for the next one: `nextStartsAtLocal` (in the table's zone) is required for an adventure, and a
  * campaign without it takes its next weekly date. Attendance only adds: whoever showed up once
@@ -219,15 +242,7 @@ export async function holdSession(
   now = new Date(),
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
-  if (table.kind === 'one_shot') throw new Invalid('slug', 'not_multi_session');
-  let startsAt: Date;
-  if (nextStartsAtLocal) startsAt = localToInstant(nextStartsAtLocal, table.timezone);
-  else {
-    const interval = weeklyInterval(table.recurrence);
-    if (!interval) throw new Invalid('nextStartsAtLocal', 'required');
-    startsAt = nextWeeklySession(table.startsAt, interval, table.timezone, now);
-  }
-  if (startsAt <= now) throw new Invalid('nextStartsAtLocal', 'in_the_past');
+  const startsAt = nextSessionAt(table, nextStartsAtLocal, now);
 
   return answer(
     db,
@@ -301,9 +316,9 @@ export async function finishTable(
 }
 
 /**
- * The GM lets players rate a campaign or adventure that is still going. Only confirmed players not
- * marked absent, once each: a player already let is left as is. Throws `Invalid` when nobody new
- * could be let.
+ * The GM lets players rate a campaign or adventure that is still going. Only confirmed players the
+ * GM marked present at a session, once each: a player already let is left as is. Throws `Invalid`
+ * when nobody new could be let.
  */
 export async function allowRatings(
   db: AnyDb,
@@ -327,11 +342,9 @@ export async function allowRatings(
           .set({ ratingOpenedAt: now })
           .where(
             and(
-              eq(registrations.tableId, found.id),
-              eq(registrations.status, 'confirmed'),
+              markedPresentAt(found.id),
               inArray(registrations.playerId, playerIds),
               isNull(registrations.ratingOpenedAt),
-              or(isNull(registrations.attended), ne(registrations.attended, false)),
             ),
           )
           .returning({ id: registrations.playerId })
@@ -351,7 +364,36 @@ export async function allowRatings(
   return { eventId };
 }
 
-/** The GM says the session did not happen. Nobody is notified and nothing can be rated. */
+/**
+ * A session of a campaign or adventure did not happen, and the table goes on: it opens again for
+ * the next one (the date as in `holdSession`). Attendance is not touched and nobody is asked to
+ * rate. Players hear about the new date as with a postponement.
+ */
+export async function skipSession(
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  { nextStartsAtLocal }: { nextStartsAtLocal?: string },
+  now = new Date(),
+): Promise<{ eventId: string }> {
+  const table = await findAwaiting(db, actor, slug);
+  const startsAt = nextSessionAt(table, nextStartsAtLocal, now);
+
+  return answer(
+    db,
+    actor,
+    slug,
+    'POSTPONE',
+    (current) => ({ startsAt, icalSequence: current.icalSequence + 1 }),
+    'TableUpdated',
+    diffFields({ startsAt: table.startsAt }, { startsAt }),
+  );
+}
+
+/**
+ * The GM says the session did not happen, and the table ends there: it is not held and nothing
+ * can be rated, a campaign or adventure included (`skipSession` keeps one going). Nobody is notified.
+ */
 export const markTableNotHeld = (db: AnyDb, actor: Actor | null, slug: string) =>
   answer(db, actor, slug, 'NOT_HELD', () => ({}), 'TableNotHeld');
 

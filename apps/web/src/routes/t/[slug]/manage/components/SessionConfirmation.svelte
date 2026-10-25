@@ -75,6 +75,31 @@
     errorMessage: m.manage_confirm_error,
     onSuccess: () => toast.success(m.toast_table_not_held()),
   });
+  // A campaign or adventure whose session did not happen: skip it (the table opens for the next
+  // date) or close the table, which is then not held and cannot be rated.
+  let skip = $state(true);
+  // svelte-ignore state_referenced_locally
+  let skipAt = $state(nextSession ?? '');
+  // svelte-ignore state_referenced_locally
+  const skipped = actionForm({
+    initial: { nextStartsAtLocal: '', next },
+    schema: heldSchema,
+    domain: 'table',
+    errorMessage: m.manage_confirm_error,
+    onSuccess: () => toast.success(m.toast_table_session_skipped()),
+  });
+  $effect(() => {
+    const value = skipAt;
+    untrack(() => skipped.change('nextStartsAtLocal', value));
+  });
+  const skippedError = $derived(
+    skipped.errors.nextStartsAtLocal?.[0] === 'in_the_past'
+      ? m.manage_confirm_in_the_past()
+      : skipped.errors.nextStartsAtLocal?.[0] === 'required'
+        ? m.manage_confirm_next_required()
+        : (skipped.errors.nextStartsAtLocal?.[0] ?? skipped.errors._errors?.[0]),
+  );
+
   // svelte-ignore state_referenced_locally
   const postpone = actionForm({
     initial: { startsAtLocal: '', next },
@@ -83,6 +108,9 @@
     errorMessage: m.manage_confirm_error,
     onSuccess: () => toast.success(m.toast_table_postponed()),
   });
+
+  const choiceClass =
+    'flex min-h-14 items-center gap-3 rounded-lg border-2 border-surface-200-800 px-3 py-2 has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 
   const postponeError = $derived(
     postpone.errors.startsAtLocal?.[0] === 'in_the_past'
@@ -96,7 +124,9 @@
   class="mt-8 rounded-lg border-2 border-primary-500 bg-panel p-5 md:p-6"
 >
   <h2 id="session-confirmation" class="text-xl font-semibold">{m.manage_confirm_title()}</h2>
-  <p class="mt-2 text-surface-700-300">{m.manage_confirm_text()}</p>
+  <p class="mt-2 text-surface-700-300">
+    {multi ? m.manage_confirm_text_multi() : m.manage_confirm_text()}
+  </p>
 
   <div class="mt-5 flex flex-wrap gap-3">
     <MAForm
@@ -145,14 +175,9 @@
           <legend class="font-semibold">{m.manage_confirm_more_title()}</legend>
           <div class="mt-2 flex flex-col gap-2">
             {#each [{ value: true, label: m.manage_confirm_more_yes(), hint: m.manage_confirm_more_yes_hint() }, { value: false, label: m.manage_confirm_more_no(), hint: m.manage_confirm_more_no_hint() }] as option (option.label)}
-              <label
-                class="flex min-h-14 items-center gap-3 rounded-lg border-2 border-surface-200-800 px-3 py-2 has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500"
-              >
+              <label class={choiceClass}>
                 <input type="radio" class="radio" bind:group={more} value={option.value} />
-                <span class="flex flex-col">
-                  <span class="font-semibold">{option.label}</span>
-                  <span class="text-sm text-muted">{option.hint}</span>
-                </span>
+                {@render choice(option.label, option.hint)}
               </label>
             {/each}
           </div>
@@ -193,42 +218,103 @@
         </p>
       {/if}
     </MAForm>
-    <MAForm action="?/notHeld" onsubmit={notHeld.submit} class="m-0">
+    {#if !multi}
+      <MAForm action="?/notHeld" onsubmit={notHeld.submit} class="m-0">
+        <input type="hidden" name="next" value={next} />
+        <MAButton type="submit" variant="secondary" controller={notHeld} class="font-semibold"
+          >{m.manage_confirm_not_held()}</MAButton
+        >
+        {#if notHeld.errors._errors?.[0]}
+          <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
+            {notHeld.errors._errors[0]}
+          </p>
+        {/if}
+      </MAForm>
+    {/if}
+  </div>
+
+  {#if multi}
+    <!-- Skipping takes a date, so it replaces "Adiar" here. -->
+    <MAForm
+      action={skip ? '?/sessionSkipped' : '?/notHeld'}
+      onsubmit={skip ? skipped.submit : notHeld.submit}
+      class="mt-6 border-t border-surface-200-800 pt-5"
+    >
       <input type="hidden" name="next" value={next} />
-      <MAButton type="submit" variant="secondary" controller={notHeld} class="font-semibold"
-        >{m.manage_confirm_not_held()}</MAButton
+      <fieldset class="mb-4 min-w-0">
+        <legend class="font-semibold">{m.manage_skip_title()}</legend>
+        <div class="mt-2 flex flex-col gap-2">
+          {#each [{ value: true, label: m.manage_skip_yes(), hint: m.manage_skip_yes_hint() }, { value: false, label: m.manage_skip_close(), hint: m.manage_skip_close_hint() }] as option (option.label)}
+            <label class={choiceClass}>
+              <input type="radio" class="radio" bind:group={skip} value={option.value} />
+              {@render choice(option.label, option.hint)}
+            </label>
+          {/each}
+        </div>
+        {#if skip}
+          <div class="mt-4">
+            <p class="label-text font-semibold">{m.manage_confirm_next_label()}</p>
+            {#if nextSession}
+              <p class="mt-1 text-sm text-muted">{m.manage_confirm_next_hint()}</p>
+            {/if}
+            <div class="mt-3">
+              <SessionPicker
+                bind:startsAt={skipAt}
+                duration={durationHours}
+                {timezone}
+                withDuration={false}
+                name="nextStartsAtLocal"
+                invalid={!!skippedError}
+              />
+            </div>
+          </div>
+        {/if}
+      </fieldset>
+      <MAButton
+        type="submit"
+        variant="secondary"
+        controller={skip ? skipped : notHeld}
+        class="font-semibold"
+        >{skip ? m.manage_skip_submit() : m.manage_skip_close_submit()}</MAButton
       >
-      {#if notHeld.errors._errors?.[0]}
+      {#if skip ? skippedError : notHeld.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
-          {notHeld.errors._errors[0]}
+          {skip ? skippedError : notHeld.errors._errors?.[0]}
         </p>
       {/if}
     </MAForm>
-  </div>
-
-  <MAForm
-    action="?/postpone"
-    onsubmit={postpone.submit}
-    class="mt-6 flex flex-wrap items-end gap-3 border-t border-surface-200-800 pt-5"
-  >
-    <input type="hidden" name="next" value={next} />
-    <label class="flex flex-col gap-1 text-sm font-semibold">
-      {m.manage_confirm_postpone_label()}
-      <input
-        type="datetime-local"
-        name="startsAtLocal"
-        required
-        value={postpone.values.startsAtLocal}
-        oninput={(event) => postpone.change('startsAtLocal', event.currentTarget.value)}
-        aria-invalid={postponeError ? 'true' : undefined}
-        class="input h-12 rounded-lg border-surface-200-800 px-3"
-      />
-    </label>
-    <MAButton type="submit" variant="secondary" controller={postpone} class="font-semibold"
-      >{m.manage_confirm_postpone()}</MAButton
+  {:else}
+    <MAForm
+      action="?/postpone"
+      onsubmit={postpone.submit}
+      class="mt-6 flex flex-wrap items-end gap-3 border-t border-surface-200-800 pt-5"
     >
-    {#if postponeError}
-      <p role="alert" class="w-full text-sm font-semibold text-error-700-300">{postponeError}</p>
-    {/if}
-  </MAForm>
+      <input type="hidden" name="next" value={next} />
+      <label class="flex flex-col gap-1 text-sm font-semibold">
+        {m.manage_confirm_postpone_label()}
+        <input
+          type="datetime-local"
+          name="startsAtLocal"
+          required
+          value={postpone.values.startsAtLocal}
+          oninput={(event) => postpone.change('startsAtLocal', event.currentTarget.value)}
+          aria-invalid={postponeError ? 'true' : undefined}
+          class="input h-12 rounded-lg border-surface-200-800 px-3"
+        />
+      </label>
+      <MAButton type="submit" variant="secondary" controller={postpone} class="font-semibold"
+        >{m.manage_confirm_postpone()}</MAButton
+      >
+      {#if postponeError}
+        <p role="alert" class="w-full text-sm font-semibold text-error-700-300">{postponeError}</p>
+      {/if}
+    </MAForm>
+  {/if}
 </section>
+
+{#snippet choice(label: string, hint: string)}
+  <span class="flex flex-col">
+    <span class="font-semibold">{label}</span>
+    <span class="text-sm text-muted">{hint}</span>
+  </span>
+{/snippet}

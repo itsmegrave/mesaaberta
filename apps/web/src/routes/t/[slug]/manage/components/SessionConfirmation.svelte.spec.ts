@@ -74,6 +74,29 @@ describe('SessionConfirmation', () => {
       .toBeVisible();
   });
 
+  it('for a campaign that did not happen, skips the session or closes the table', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      nextSession: '2026-10-08T19:00',
+    });
+
+    const skip = page.getByRole('button', { name: 'Não aconteceu, pular sessão' });
+    const form = skip.element().closest('form')!;
+    expect(form.getAttribute('action')).toBe('?/sessionSkipped');
+    expect(new FormData(form).get('nextStartsAtLocal')).toBe('2026-10-08T19:00');
+    // A campaign has no separate "Adiar": skipping is how it gets a new date.
+    await expect.element(page.getByRole('button', { name: 'Adiar' })).not.toBeInTheDocument();
+
+    await page.getByRole('radio', { name: /Encerrar a mesa/ }).click();
+
+    expect(form.getAttribute('action')).toBe('?/notHeld');
+    await expect
+      .element(page.getByRole('button', { name: 'Não aconteceu, encerrar a mesa' }))
+      .toBeVisible();
+  });
+
   it('asks the next date with the calendar picker, and no duration', async () => {
     render(SessionConfirmation, {
       next: '/t/mesa/manage',

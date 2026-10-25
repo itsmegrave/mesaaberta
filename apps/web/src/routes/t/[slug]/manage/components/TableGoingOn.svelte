@@ -34,9 +34,9 @@
   const letOn = (at: Date | string | null) => day.format(new Date(at ?? 0));
   let picked = $state(0);
 
-  // Not the ones marked absent, nor the ones already let.
+  // Only the ones marked present at a session, and not the ones already let.
   const eligible = $derived(
-    players.filter((player) => player.attended !== false && !player.ratingOpenedAt),
+    players.filter((player) => player.attended === true && !player.ratingOpenedAt),
   );
   const letAlready = $derived(players.filter((player) => player.ratingOpenedAt));
 
