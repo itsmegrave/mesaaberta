@@ -139,6 +139,7 @@ type InviteEvent = Extract<
       | 'JoinDeclined'
       | 'PlayerLeft'
       | 'TableUpdated'
+      | 'TableSessionHeld'
       | 'TableDisabled';
   }
 >;
@@ -182,6 +183,8 @@ export function createInviteHandler(
       'JoinDeclined',
       'PlayerLeft',
       'TableUpdated',
+      // A campaign or adventure that goes on moves to its next session: the calendar follows.
+      'TableSessionHeld',
       'TableDisabled',
     ],
     async handle(event: InviteEvent, db) {
@@ -267,19 +270,29 @@ export function createInviteHandler(
           baseUrl: env.APP_ORIGIN,
           uidDomain: env.CALENDAR_UID_DOMAIN,
         });
+        // The GM runs the table and has no seat: their copy says what happened to their table, never
+        // "your seat is confirmed", and it skips the players' hosted templates.
+        const gmMail =
+          recipient.id === table.gmId
+            ? gmCopy(event.type, method, table.title, startsAtFor(recipient))
+            : null;
         const subject =
-          method === 'REQUEST' ? `Convite: ${table.title}` : `Cancelada: ${table.title}`;
+          gmMail?.subject ??
+          (method === 'REQUEST' ? `Convite: ${table.title}` : `Cancelada: ${table.title}`);
         const text =
-          method === 'REQUEST'
+          gmMail?.text ??
+          (method === 'REQUEST'
             ? `Você tem uma vaga confirmada em "${table.title}". O convite de calendário está anexado.`
-            : `Sua participação em "${table.title}" foi cancelada. O cancelamento de calendário está anexado.`;
+            : `Sua participação em "${table.title}" foi cancelada. O cancelamento de calendário está anexado.`);
         await mailer.send({
           to: email,
           subject,
           text,
-          ...(method === 'REQUEST'
-            ? hosted('invite', 'REQUEST', recipient, text)
-            : hosted('cancel', 'CANCEL', recipient, text)),
+          ...(gmMail
+            ? {}
+            : method === 'REQUEST'
+              ? hosted('invite', 'REQUEST', recipient, text)
+              : hosted('cancel', 'CANCEL', recipient, text)),
           welcomeMessage,
           attachments: [
             {
@@ -292,6 +305,37 @@ export function createInviteHandler(
         });
       }
     },
+  };
+}
+
+/**
+ * What the GM reads about their own table: created, moved to its next session, changed or
+ * cancelled, with the session as they would see it. The calendar file goes along either way.
+ */
+function gmCopy(
+  type: InviteEvent['type'],
+  method: 'REQUEST' | 'CANCEL',
+  title: string,
+  startsAt: string,
+): { subject: string; text: string } {
+  if (method === 'CANCEL')
+    return {
+      subject: `Mesa cancelada: ${title}`,
+      text: `Sua mesa "${title}" foi cancelada. O cancelamento de calendário está anexado.`,
+    };
+  if (type === 'TableCreated')
+    return {
+      subject: `Mesa criada: ${title}`,
+      text: `Sua mesa "${title}" foi criada. A sessão é ${startsAt}. O convite de calendário está anexado.`,
+    };
+  if (type === 'TableSessionHeld')
+    return {
+      subject: `Próxima sessão: ${title}`,
+      text: `A próxima sessão da sua mesa "${title}" é ${startsAt}. O convite de calendário anexado atualiza o evento na sua agenda.`,
+    };
+  return {
+    subject: `Mesa atualizada: ${title}`,
+    text: `Sua mesa "${title}" foi atualizada. A sessão é ${startsAt}. O convite de calendário anexado atualiza o evento na sua agenda.`,
   };
 }
 

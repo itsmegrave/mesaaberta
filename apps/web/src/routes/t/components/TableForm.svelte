@@ -515,7 +515,9 @@
           ? $draft.repeat === 'biweekly'
             ? m.form_repeat_biweekly()
             : m.form_repeat_weekly()
-          : m.table_recurrence_once()}, {formatHours(
+          : $draft.kind === 'adventure'
+            ? m.form_schedule_adventure()
+            : m.table_recurrence_once()}, {formatHours(
           (Number($draft.durationHours) || 0) * 60,
           getLocale(),
         )}
