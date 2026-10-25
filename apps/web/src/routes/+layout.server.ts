@@ -2,6 +2,7 @@ import { siteOf } from '@mesaaberta/core/server/site';
 import { loadRead } from '#lib/server/reads/load.js';
 import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
+import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import {
@@ -48,11 +49,12 @@ export const load: LayoutServerLoad = async (event) => {
     const cacheIdentity = (await locals.getUser())?.id ?? 'anonymous';
     const accountRead = await loadRead(event, 'account');
     // The bell: how many are unread, and the latest few for its menu.
+    const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
     const [unread, latest, messagesUnread] =
       profile && locals.db
         ? await Promise.all([
-            unreadCount(locals.db, profile.id),
-            listNotifications(locals.db, profile.id, { limit: BELL_LIMIT }),
+            unreadCount(locals.db, profile.id, { withAchievements }),
+            listNotifications(locals.db, profile.id, { limit: BELL_LIMIT, withAchievements }),
             unreadConversations(locals.db, profile.id),
           ])
         : [0, [], 0];

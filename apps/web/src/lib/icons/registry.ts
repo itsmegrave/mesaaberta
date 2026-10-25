@@ -70,6 +70,8 @@ import GameWizardStaffIcon from '@iconify-svelte/game-icons/wizard-staff';
 import GameShakingHandsIcon from '@iconify-svelte/game-icons/shaking-hands';
 import GameRoundTableIcon from '@iconify-svelte/game-icons/round-table';
 import GameSunriseIcon from '@iconify-svelte/game-icons/sunrise';
+import GameLaurelsIcon from '@iconify-svelte/game-icons/laurels';
+import EyeOffIcon from '@iconify-svelte/reicon/eye-off';
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
 import PanelLeftOpenIcon from '@iconify-svelte/reicon/sidebar-left';
 import PanelLeftCloseIcon from '@iconify-svelte/reicon/sidebar-left';
@@ -126,6 +128,7 @@ export const ICONS = {
   more: MoreHIcon,
   copy: CopyIcon,
   eye: EyeIcon,
+  'eye-off': EyeOffIcon,
   trash: TrashIcon,
   routing: RoutingIcon,
   lock: LockIcon,
@@ -169,6 +172,7 @@ export const ICONS = {
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
   'game-icons:trade': GameTradeIcon,
   'game-icons:compass': GameCompassIcon,
+  'game-icons:laurels': GameLaurelsIcon,
   'game-icons:wooden-chair': GameWoodenChairIcon,
   'game-icons:rolling-dices': GameRollingDicesIcon,
   'game-icons:quill-ink': GameQuillInkIcon,

@@ -54,12 +54,33 @@ describe('load', () => {
 
   it('lists the viewer’s notifications, filtered by a known category', async () => {
     expect((await run('?category=rating')).category).toBe('rating');
-    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', { category: 'rating' });
+    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', {
+      category: 'rating',
+      withAchievements: false,
+    });
   });
 
   it('ignores a category it does not know', async () => {
     expect((await run('?category=nope')).category).toBeNull();
-    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', { category: undefined });
+    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', {
+      category: undefined,
+      withAchievements: false,
+    });
+  });
+
+  it('includes the badge notices only where the badges are released', async () => {
+    expect((await run('')).withAchievements).toBe(false);
+
+    const on = { ...locals(), flags: { isEnabled: async () => true } };
+    const result = (await load({
+      ...event(''),
+      locals: on,
+    } as never)) as { withAchievements: boolean };
+    expect(result.withAchievements).toBe(true);
+    expect(listNotifications).toHaveBeenLastCalledWith({}, 'me', {
+      category: undefined,
+      withAchievements: true,
+    });
   });
 
   it('sends an anonymous visitor to log in', async () => {

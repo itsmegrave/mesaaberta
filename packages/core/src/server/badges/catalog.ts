@@ -26,8 +26,15 @@ export type BadgeDefinition = {
   tier?: number;
   /** The events after which the rule is worth checking. */
   triggers: readonly EventType[];
-  check(stats: BadgeStats): Promise<boolean>;
+  /** How far along the person is, in the unit of `goal` (sessions, systems, 0 or 1 ...). */
+  measure(stats: BadgeStats): Promise<number>;
+  /** The badge is earned once `measure` reaches this. */
+  goal: number;
 };
+
+/** Whether the person has earned the badge. */
+export const meets = async (rule: BadgeDefinition, stats: BadgeStats): Promise<boolean> =>
+  (await rule.measure(stats)) >= rule.goal;
 
 const memo = <T>(load: () => Promise<T>): (() => Promise<T>) => {
   let pending: Promise<T> | undefined;
@@ -113,15 +120,16 @@ const ATTENDANCE: readonly EventType[] = ['TableConcluded'];
 
 const ladder = (
   name: string,
-  thresholds: readonly number[],
-  measure: (stats: BadgeStats) => Promise<number>,
+  goals: readonly number[],
+  measure: BadgeDefinition['measure'],
 ): BadgeDefinition[] =>
-  thresholds.map((threshold, index) => ({
+  goals.map((goal, index) => ({
     id: `${name}-${index + 1}`,
     ladder: name,
     tier: index + 1,
     triggers: ATTENDANCE,
-    check: async (stats) => (await measure(stats)) >= threshold,
+    goal,
+    measure,
   }));
 
 /**
@@ -129,36 +137,32 @@ const ladder = (
  * not here. Adding one is safe at any time; renaming or removing an id is not.
  */
 export const BADGES: readonly BadgeDefinition[] = [
-  {
-    id: 'first-table',
-    triggers: ATTENDANCE,
-    check: async (stats) => (await stats.sessionsPlayed()) >= 1,
-  },
+  { id: 'first-table', triggers: ATTENDANCE, goal: 1, measure: (stats) => stats.sessionsPlayed() },
   ...ladder('regular-player', [5, 25, 100], (stats) => stats.sessionsPlayed()),
   {
     id: 'system-explorer',
     triggers: ATTENDANCE,
-    check: async (stats) => (await stats.systemsPlayed()) >= 5,
+    goal: 5,
+    measure: (stats) => stats.systemsPlayed(),
   },
   {
     id: 'in-person-table',
     triggers: ATTENDANCE,
-    check: async (stats) => (await stats.inPersonTables()) >= 1,
+    goal: 1,
+    measure: (stats) => stats.inPersonTables(),
   },
   {
     id: 'thoughtful-critic',
     triggers: ['RatingSubmitted'],
-    check: async (stats) => (await stats.ratingsGiven()) >= 10,
+    goal: 10,
+    measure: (stats) => stats.ratingsGiven(),
   },
-  {
-    id: 'gm-first',
-    triggers: ATTENDANCE,
-    check: async (stats) => (await stats.tablesRun()) >= 1,
-  },
+  { id: 'gm-first', triggers: ATTENDANCE, goal: 1, measure: (stats) => stats.tablesRun() },
   ...ladder('gm-master', [5, 25, 100], (stats) => stats.tablesRun()),
   {
     id: 'partner',
     triggers: ['PartnerApproved'],
-    check: (stats) => stats.hasApprovedPartner(),
+    goal: 1,
+    measure: async (stats) => ((await stats.hasApprovedPartner()) ? 1 : 0),
   },
 ];

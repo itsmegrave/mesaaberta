@@ -7,7 +7,7 @@ import {
   registrations,
 } from '@mesaaberta/core/server/db/schema';
 import { pictureOf, imageUrl } from '@mesaaberta/core/server/images';
-import { heldBadges } from '@mesaaberta/core/server/badges/reads';
+import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '../../profile/social-links';
@@ -87,12 +87,15 @@ export async function publicProfile(
   ]);
 
   // Null: the rollout has not reached this profile, so the page shows no strip at all.
+  const isOwnerView = viewerId === found.id;
   const badges = (await showBadges?.({ id: found.id, isAdmin: found.role === 'admin' }))
-    ? await heldBadges(db, found.id, { includeHidden: viewerId === found.id })
+    ? await heldBadges(db, found.id, { includeHidden: isOwnerView })
     : null;
 
   return {
     badges,
+    // What the owner has yet to earn, for their own view only.
+    badgeProgress: badges && isOwnerView ? await badgeProgress(db, found.id) : null,
     profile: {
       username: found.username!,
       avatarUrl: pictureOf(supabaseUrl, found),

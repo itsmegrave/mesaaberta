@@ -13,6 +13,14 @@ describe('badge presentation', () => {
     }
   });
 
+  it('words what each rule asks and its progress, in step with the catalog goal', () => {
+    for (const rule of BADGES) {
+      const look = presentationOf(rule.id)!;
+      expect(look.goal?.(), rule.id).toBeTruthy();
+      expect(look.progress?.({ current: 0 }), rule.id).toContain(`de ${rule.goal} `);
+    }
+  });
+
   it('gives the rungs of a ladder rising tiers, and no artwork for an unknown id', () => {
     for (const ladder of ['regular-player', 'gm-master']) {
       expect([1, 2, 3].map((n) => BADGE_PRESENTATION[`${ladder}-${n}`].tier)).toEqual([1, 2, 3]);

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, or } from 'drizzle-orm';
 import { eraseMessagesOf } from '@mesaaberta/core/server/messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
@@ -47,95 +47,117 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     .from(profiles)
     .where(eq(profiles.id, userId));
 
-  const [socialLinks, tablesAsGm, seats, ratingsGiven, notificationsReceived, messagesSent] =
-    await Promise.all([
-      db
-        .select({
-          network: profileSocialLinks.network,
-          handle: profileSocialLinks.handle,
-          url: profileSocialLinks.url,
-        })
-        .from(profileSocialLinks)
-        .where(eq(profileSocialLinks.profileId, userId))
-        .orderBy(asc(profileSocialLinks.position)),
-      db
-        .select({
-          slug: gameTables.slug,
-          title: gameTables.title,
-          system: systems.name,
-          kind: gameTables.kind,
-          status: gameTables.status,
-          description: gameTables.description,
-          extraInfo: gameTables.extraInfo,
-          welcomeMessage: gameTables.welcomeMessage,
-          modality: gameTables.modality,
-          locationArea: gameTables.locationArea,
-          joinDetails: gameTables.joinDetails,
-          capacity: gameTables.capacity,
-          joinMode: gameTables.joinMode,
-          startsAt: gameTables.startsAt,
-          durationMinutes: gameTables.durationMinutes,
-          timezone: gameTables.timezone,
-          recurrence: gameTables.recurrence,
-          until: gameTables.until,
-          createdAt: gameTables.createdAt,
-        })
-        .from(gameTables)
-        .innerJoin(systems, eq(gameTables.systemId, systems.id))
-        .where(eq(gameTables.gmId, userId))
-        .orderBy(asc(gameTables.createdAt)),
-      db
-        .select({
-          table: gameTables.title,
-          slug: gameTables.slug,
-          status: registrations.status,
-          message: registrations.message,
-          createdAt: registrations.createdAt,
-        })
-        .from(registrations)
-        .innerJoin(gameTables, eq(registrations.tableId, gameTables.id))
-        .where(eq(registrations.playerId, userId))
-        .orderBy(asc(registrations.createdAt)),
-      db
-        .select({
-          table: gameTables.title,
-          slug: gameTables.slug,
-          gmScore: ratings.gmScore,
-          comment: ratings.comment,
-          createdAt: ratings.createdAt,
-        })
-        .from(ratings)
-        .innerJoin(gameTables, eq(ratings.tableId, gameTables.id))
-        .where(eq(ratings.playerId, userId))
-        .orderBy(asc(ratings.createdAt)),
-      db
-        .select({
-          type: notifications.type,
-          category: notifications.category,
-          title: notifications.title,
-          body: notifications.body,
-          link: notifications.link,
-          metadata: notifications.metadata,
-          readAt: notifications.readAt,
-          createdAt: notifications.createdAt,
-        })
-        .from(notifications)
-        .where(eq(notifications.recipientId, userId))
-        .orderBy(asc(notifications.createdAt)),
-      // What the person wrote. The other people's messages are their data, so they are left out.
-      db
-        .select({
-          kind: conversations.kind,
-          table: gameTables.title,
-          body: messages.body,
-          createdAt: messages.createdAt,
-        })
-        .from(messages)
-        .innerJoin(conversations, eq(conversations.id, messages.conversationId))
-        .leftJoin(gameTables, eq(gameTables.id, conversations.tableId))
-        .where(eq(messages.senderId, userId))
-        .orderBy(asc(messages.createdAt)),
-    ]);
+  const [
+    socialLinks,
+    tablesAsGm,
+    seats,
+    ratingsGiven,
+    notificationsReceived,
+    messagesSent,
+    badges,
+  ] = await Promise.all([
+    db
+      .select({
+        network: profileSocialLinks.network,
+        handle: profileSocialLinks.handle,
+        url: profileSocialLinks.url,
+      })
+      .from(profileSocialLinks)
+      .where(eq(profileSocialLinks.profileId, userId))
+      .orderBy(asc(profileSocialLinks.position)),
+    db
+      .select({
+        slug: gameTables.slug,
+        title: gameTables.title,
+        system: systems.name,
+        kind: gameTables.kind,
+        status: gameTables.status,
+        description: gameTables.description,
+        extraInfo: gameTables.extraInfo,
+        welcomeMessage: gameTables.welcomeMessage,
+        modality: gameTables.modality,
+        locationArea: gameTables.locationArea,
+        joinDetails: gameTables.joinDetails,
+        capacity: gameTables.capacity,
+        joinMode: gameTables.joinMode,
+        startsAt: gameTables.startsAt,
+        durationMinutes: gameTables.durationMinutes,
+        timezone: gameTables.timezone,
+        recurrence: gameTables.recurrence,
+        until: gameTables.until,
+        createdAt: gameTables.createdAt,
+      })
+      .from(gameTables)
+      .innerJoin(systems, eq(gameTables.systemId, systems.id))
+      .where(eq(gameTables.gmId, userId))
+      .orderBy(asc(gameTables.createdAt)),
+    db
+      .select({
+        table: gameTables.title,
+        slug: gameTables.slug,
+        status: registrations.status,
+        message: registrations.message,
+        // What the GM marked after the session: null until then.
+        attended: registrations.attended,
+        createdAt: registrations.createdAt,
+      })
+      .from(registrations)
+      .innerJoin(gameTables, eq(registrations.tableId, gameTables.id))
+      .where(eq(registrations.playerId, userId))
+      .orderBy(asc(registrations.createdAt)),
+    db
+      .select({
+        table: gameTables.title,
+        slug: gameTables.slug,
+        gmScore: ratings.gmScore,
+        comment: ratings.comment,
+        createdAt: ratings.createdAt,
+      })
+      .from(ratings)
+      .innerJoin(gameTables, eq(ratings.tableId, gameTables.id))
+      .where(eq(ratings.playerId, userId))
+      .orderBy(asc(ratings.createdAt)),
+    db
+      .select({
+        type: notifications.type,
+        category: notifications.category,
+        title: notifications.title,
+        body: notifications.body,
+        link: notifications.link,
+        metadata: notifications.metadata,
+        readAt: notifications.readAt,
+        createdAt: notifications.createdAt,
+      })
+      .from(notifications)
+      .where(eq(notifications.recipientId, userId))
+      .orderBy(asc(notifications.createdAt)),
+    // What the person wrote. The other people's messages are their data, so they are left out.
+    db
+      .select({
+        kind: conversations.kind,
+        table: gameTables.title,
+        body: messages.body,
+        createdAt: messages.createdAt,
+      })
+      .from(messages)
+      .innerJoin(conversations, eq(conversations.id, messages.conversationId))
+      .leftJoin(gameTables, eq(gameTables.id, conversations.tableId))
+      .where(eq(messages.senderId, userId))
+      .orderBy(asc(messages.createdAt)),
+    // Every badge the account has, hidden or revoked too. Who granted one is that admin's data.
+    db
+      .select({
+        badgeId: userBadges.badgeId,
+        awardedAt: userBadges.awardedAt,
+        hidden: userBadges.hidden,
+        revokedAt: userBadges.revokedAt,
+        revokeReason: userBadges.revokeReason,
+        grantedByAdmin: isNotNull(userBadges.grantedBy),
+      })
+      .from(userBadges)
+      .where(eq(userBadges.profileId, userId))
+      .orderBy(asc(userBadges.awardedAt), asc(userBadges.badgeId)),
+  ]);
 
   const [invitationsReceived, invitationsSent, invitationBlocks] = await Promise.all([
     db
@@ -179,6 +201,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     ratingsGiven,
     notifications: notificationsReceived,
     messagesSent,
+    badges,
   };
 }
 

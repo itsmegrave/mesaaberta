@@ -1,6 +1,6 @@
 // Relative imports only: `pruneNotifications` runs in the Cron Trigger's Worker, which is bundled
 // without SvelteKit's `#lib` alias.
-import { and, count, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, lt, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { notifications, profiles } from '../db/schema';
 import type { NotificationCategory } from '../../notifications/kinds';
@@ -21,7 +21,11 @@ export type NotificationItem = Awaited<ReturnType<typeof listNotifications>>[num
 export async function listNotifications(
   db: AnyDb,
   recipientId: string,
-  { category, limit = FEED_LIMIT }: { category?: NotificationCategory; limit?: number } = {},
+  {
+    category,
+    limit = FEED_LIMIT,
+    withAchievements = true,
+  }: { category?: NotificationCategory; limit?: number; withAchievements?: boolean } = {},
 ) {
   const rows = await db
     .select({
@@ -43,6 +47,8 @@ export async function listNotifications(
       and(
         eq(notifications.recipientId, recipientId),
         category ? eq(notifications.category, category) : undefined,
+        // Badge notices wait for the badges to be released (`api_badges`).
+        withAchievements ? undefined : ne(notifications.category, 'achievements'),
       ),
     )
     .orderBy(desc(notifications.createdAt), desc(notifications.id))
@@ -56,11 +62,21 @@ export async function listNotifications(
 }
 
 /** The number on the bell. */
-export async function unreadCount(db: AnyDb, recipientId: string): Promise<number> {
+export async function unreadCount(
+  db: AnyDb,
+  recipientId: string,
+  { withAchievements = true }: { withAchievements?: boolean } = {},
+): Promise<number> {
   const [row] = await db
     .select({ unread: count() })
     .from(notifications)
-    .where(and(eq(notifications.recipientId, recipientId), isNull(notifications.readAt)));
+    .where(
+      and(
+        eq(notifications.recipientId, recipientId),
+        isNull(notifications.readAt),
+        withAchievements ? undefined : ne(notifications.category, 'achievements'),
+      ),
+    );
   return row?.unread ?? 0;
 }
 
