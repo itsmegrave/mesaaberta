@@ -13,11 +13,16 @@ const isEnabled = vi.fn(async () => true);
 const run = (username = 'ana', query = '', db: object | null = {}) => {
   const setHeaders = vi.fn();
   const event = {
-    locals: { db, getUser: async () => null, flags: { isEnabled } },
+    locals: {
+      db,
+      env: { APP_ORIGIN: 'https://mesaaberta.app' },
+      getUser: async () => null,
+      flags: { isEnabled },
+    },
     params: { username },
     platform: undefined,
     setHeaders,
-    url: new URL(`https://mesaaberta.app/${username}${query}`),
+    url: new URL(`https://untrusted.example/u/${username}${query}`),
   };
   return { promise: load(event as unknown as Parameters<typeof load>[0]), setHeaders };
 };
@@ -41,6 +46,12 @@ describe('the public profile route', () => {
       'ana',
       expect.objectContaining({ viewerId: undefined, page: 1 }),
     );
+  });
+  it('shares the configured origin and the actual profile page without visitor or tracking parameters', async () => {
+    vi.mocked(publicProfile).mockResolvedValue({ ...result, page: 2, pages: 2 } as never);
+    await expect(run('ana', '?page=2&as=visitor&utm_source=share').promise).resolves.toMatchObject({
+      canonical: 'https://mesaaberta.app/u/ana?page=2',
+    });
   });
   it('asks the badge rollout about the profile being shown, not the visitor', async () => {
     await run().promise;
