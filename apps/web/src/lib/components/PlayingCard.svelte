@@ -1,10 +1,8 @@
 <script lang="ts">
   import UserLink from '#lib/components/UserLink.svelte';
-  import { formatSession } from '@mesaaberta/core/tables/format';
-  import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
   import ActionForm from './ActionForm.svelte';
+  import NextSession from './NextSession.svelte';
 
   type Item = {
     slug: string;
@@ -20,7 +18,6 @@
 
   let { item, next }: { item: Item; next: string } = $props();
 
-  const locale = getLocale();
   const page = $derived(`/t/${item.slug}`);
 </script>
 
@@ -44,27 +41,7 @@
   </h3>
   <p class="mt-1 text-sm text-muted">{m.table_gm()}: <UserLink username={item.gmName} /></p>
 
-  <p class="mt-4 flex items-start gap-2">
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-      class="mt-1 shrink-0"
-      ><rect x="3.5" y="5" width="17" height="15.5" rx="3" /><path
-        d="M3.5 10h17M8 3v4M16 3v4"
-      /></svg
-    >
-    <span
-      ><span class="font-semibold">{m.table_next_session()}:</span>
-      {formatSession(item.startsAt, shownTimezone(item.timezone), locale)}</span
-    >
-  </p>
+  <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 
   {#if item.canRate}
     <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-lamp-wash px-4 py-3">

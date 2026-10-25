@@ -2,14 +2,12 @@
   import UserLink from '#lib/components/UserLink.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import type { TableStatus } from '#lib/tables/status.js';
-  import { formatSession } from '@mesaaberta/core/tables/format';
-  import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { getLocale } from '#lib/paraglide/runtime.js';
   import ActionForm from './ActionForm.svelte';
   import Icon from './Icon.svelte';
   import Button from './Button.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
+  import NextSession from './NextSession.svelte';
   import SeatDots from './SeatDots.svelte';
 
   type Person = { playerId: string; username: string };
@@ -39,7 +37,6 @@
   let playersOpen = $state(openPlayers);
   let endOpen = $state(false);
 
-  const locale = getLocale();
   const page = $derived(`/t/${item.slug}`);
   const manage = $derived(`/t/${item.slug}/manage`);
 </script>
@@ -102,27 +99,7 @@
   </h3>
   <p class="mt-3"><SeatDots taken={item.players.length} capacity={item.capacity} /></p>
 
-  <p class="mt-4 flex items-start gap-2">
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-      class="mt-1 shrink-0"
-      ><rect x="3.5" y="5" width="17" height="15.5" rx="3" /><path
-        d="M3.5 10h17M8 3v4M16 3v4"
-      /></svg
-    >
-    <span>
-      <span class="font-semibold">{m.table_next_session()}:</span>
-      {formatSession(item.startsAt, shownTimezone(item.timezone), locale)}
-    </span>
-  </p>
+  <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 
   <p class="mt-4 flex flex-wrap gap-3">
     <a

@@ -245,19 +245,7 @@
         aria-hidden="true"
         class="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-wash text-surface-950-50 transition-transform group-hover:translate-x-1"
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="shrink-0"
-        >
-          <path d="M5 12h14M13 6l6 6-6 6"></path>
-        </svg>
+        <Icon name="arrow-right" size={18} />
       </span>
     </div>
   </div>
