@@ -32,6 +32,13 @@
   import SeatDots from '#lib/components/SeatDots.svelte';
   import DraftNotice from '#lib/components/DraftNotice.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
+  import {
+    dateBox as dateBoxOf,
+    kindLabel,
+    minPlayersLabel,
+    scheduleLabel,
+    seatsLeftLabel,
+  } from '#lib/tables/format.js';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -47,17 +54,7 @@
   const table = $derived(data.table);
   const locale = getLocale();
 
-  const recurrence = $derived(
-    table.kind !== 'campaign'
-      ? table.kind === 'adventure'
-        ? m.table_adventure_schedule()
-        : m.table_recurrence_once()
-      : table.everyWeeks === 1
-        ? m.table_recurrence_weekly()
-        : table.everyWeeks
-          ? m.table_recurrence_weeks({ weeks: table.everyWeeks })
-          : null,
-  );
+  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
   // svelte-ignore state_referenced_locally
   const rating = actionForm({
     initial: data.ratingForm.data,
@@ -74,17 +71,7 @@
   const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
 
   // The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
-  const dateBox = $derived.by(() => {
-    const part = (options: Intl.DateTimeFormatOptions) =>
-      new Intl.DateTimeFormat(locale, { timeZone: shownTimezone(table.timezone), ...options })
-        .format(table.startsAt)
-        .replace('.', '');
-    return {
-      weekday: part({ weekday: 'short' }),
-      day: part({ day: 'numeric' }),
-      month: part({ month: 'short' }),
-    };
-  });
+  const dateBox = $derived(dateBoxOf(table.startsAt, shownTimezone(table.timezone), locale));
   // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
   const stateLabel = $derived(tableStatusLabel(table.status));
 
@@ -144,9 +131,7 @@
   });
 
   const taken = $derived(table.taken);
-  const seats = $derived(
-    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
-  );
+  const seats = $derived(seatsLeftLabel(table.seatsLeft));
 </script>
 
 <svelte:head>
@@ -162,11 +147,7 @@
     <div class="min-w-0 lg:col-span-2">
       <p class="flex flex-wrap items-center gap-3">
         <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
-          {table.kind === 'campaign'
-            ? m.table_kind_campaign()
-            : table.kind === 'adventure'
-              ? m.table_kind_adventure()
-              : m.table_kind_one_shot()}
+          {kindLabel(table.kind)}
         </span>
         <a
           href="/t?system={encodeURIComponent(table.system.slug)}"
@@ -327,12 +308,7 @@
         <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
       </p>
       {#if table.minPlayers}
-        <p class="mt-3 text-sm text-muted">
-          {m.table_min_players({ count: table.minPlayers })} ·
-          {taken >= table.minPlayers
-            ? m.table_min_players_met()
-            : m.table_min_players_missing({ count: table.minPlayers - taken })}
-        </p>
+        <p class="mt-3 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
       {/if}
 
       {#if problem}

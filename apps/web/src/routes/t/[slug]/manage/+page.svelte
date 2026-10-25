@@ -24,6 +24,13 @@
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import {
+    dateBox as dateBoxOf,
+    kindLabel,
+    minPlayersLabel,
+    scheduleLabel,
+    seatsLeftLabel,
+  } from '#lib/tables/format.js';
   import { onMount } from 'svelte';
 
   let { data: serverData, form: result } = $props();
@@ -118,31 +125,9 @@
       hourCycle: 'h23',
     }).format(date);
 
-  const dateBox = $derived.by(() => {
-    const part = (options: Intl.DateTimeFormatOptions) =>
-      new Intl.DateTimeFormat(locale, { timeZone: zone, ...options })
-        .format(table.startsAt)
-        .replace('.', '');
-    return {
-      weekday: part({ weekday: 'short' }),
-      day: part({ day: 'numeric' }),
-      month: part({ month: 'short' }),
-    };
-  });
-  const recurrence = $derived(
-    table.kind !== 'campaign'
-      ? table.kind === 'adventure'
-        ? m.table_adventure_schedule()
-        : m.table_recurrence_once()
-      : table.everyWeeks === 1
-        ? m.table_recurrence_weekly()
-        : table.everyWeeks
-          ? m.table_recurrence_weeks({ weeks: table.everyWeeks })
-          : m.table_recurrence_weekly(),
-  );
-  const seats = $derived(
-    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
-  );
+  const dateBox = $derived(dateBoxOf(table.startsAt, zone, locale));
+  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
+  const seats = $derived(seatsLeftLabel(table.seatsLeft));
 
   const activityText = (item: (typeof data.activity)[number]) => {
     const player = atHandle(item.player ?? '');
@@ -193,13 +178,7 @@
     <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"
       >{m.manage_you_are_gm()}</span
     >
-    <span class="font-semibold text-muted"
-      >{table.system.name} · {table.kind === 'campaign'
-        ? m.table_kind_campaign()
-        : table.kind === 'adventure'
-          ? m.table_kind_adventure()
-          : m.table_kind_one_shot()}</span
-    >
+    <span class="font-semibold text-muted">{table.system.name} · {kindLabel(table.kind)}</span>
   </p>
   <div class="mt-3 flex items-start justify-between gap-3">
     <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
@@ -380,12 +359,7 @@
           ><SeatDots {taken} capacity={table.capacity} />
         </p>
         {#if table.minPlayers}
-          <p class="mt-2 text-sm text-muted">
-            {m.table_min_players({ count: table.minPlayers })} ·
-            {taken >= table.minPlayers
-              ? m.table_min_players_met()
-              : m.table_min_players_missing({ count: table.minPlayers - taken })}
-          </p>
+          <p class="mt-2 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
         {/if}
         <ul class="mt-3">
           <li class={row}>
@@ -564,7 +538,7 @@
             {m.table_schedule()}
           </dt>
           <dd class="col-span-2 border-b border-surface-200-800 py-3">
-            {recurrence}, {formatHours(table.durationMinutes, locale)}
+            {recurrence ? `${recurrence}, ` : ''}{formatHours(table.durationMinutes, locale)}
           </dd>
         </dl>
 

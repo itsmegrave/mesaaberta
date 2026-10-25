@@ -2,6 +2,7 @@
   import UserLink from '#lib/components/UserLink.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
+  import { kindLabel, seatsLeftLabel } from '#lib/tables/format.js';
   import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -38,9 +39,7 @@
   let { table }: { table: Table } = $props();
 
   const locale = getLocale();
-  const seats = $derived(
-    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
-  );
+  const seats = $derived(seatsLeftLabel(table.seatsLeft));
 
   // With seats reserved for invitations, how many are confirmed, reserved and still free: the seat
   // ring's label and the line under the footer's count.
@@ -55,13 +54,7 @@
       : undefined,
   );
 
-  const kindLabel = $derived(
-    table.kind === 'campaign'
-      ? m.table_kind_campaign()
-      : table.kind === 'adventure'
-        ? m.table_kind_adventure()
-        : m.table_kind_one_shot(),
-  );
+  const kind = $derived(kindLabel(table.kind));
 
   const cardDate = $derived(
     table.startsAt ? formatCardDate(table.startsAt, shownTimezone(table.timezone), locale) : null,
@@ -95,7 +88,7 @@
       <!-- Kind pill -->
       <div class="absolute top-3 left-3">
         <span class="chip h-6 gap-1 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm">
-          {kindLabel}
+          {kind}
         </span>
       </div>
       <!-- Date chip -->
@@ -129,7 +122,7 @@
         <span
           class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-primary-contrast-500/15 px-3 text-xs font-semibold"
         >
-          {kindLabel}
+          {kind}
         </span>
         {#if table.startsAt && cardDate}
           <div>
