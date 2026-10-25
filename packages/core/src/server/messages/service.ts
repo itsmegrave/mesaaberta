@@ -241,6 +241,8 @@ export async function sendMessage(
         do update set
           actor_id = excluded.actor_id,
           created_at = excluded.created_at,
+          -- A new message is news again: "mark all read" from an older page leaves it.
+          written_at = now(),
           metadata = jsonb_set(
             notifications.metadata, '{count}',
             to_jsonb((coalesce((notifications.metadata->>'count')::int, 1) + 1))

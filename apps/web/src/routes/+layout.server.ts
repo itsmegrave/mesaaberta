@@ -75,7 +75,8 @@ export const load: LayoutServerLoad = async (event) => {
         isAdmin: can(profile, 'admin:access'),
         pendingSuggestionsCount:
           locals.db && can(profile, 'admin:access') ? await pendingCount(locals.db) : 0,
-        notifications: { unread, latest },
+        // When the bell's list was read: "mark all read" leaves what came after it.
+        notifications: { unread, latest, seenAt: new Date().toISOString() },
         messagesUnread,
       },
     };

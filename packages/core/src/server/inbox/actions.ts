@@ -61,10 +61,14 @@ export const inboxActions = {
       return {};
     },
   },
+  // `until` is when the page was loaded: what arrived after it stays unread.
   readAll: {
-    schema: z.object({}),
-    apply: async (db: AnyDb, actor: Actor | null) => {
-      if (actor) await markAllRead(db, actor.id);
+    schema: z.object({ until: z.iso.datetime().optional() }),
+    apply: async (db: AnyDb, actor: Actor | null, data: { until?: string }) => {
+      if (actor)
+        await markAllRead(db, actor.id, new Date(), {
+          until: data.until ? new Date(data.until) : undefined,
+        });
       return {};
     },
   },

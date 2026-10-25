@@ -76,6 +76,7 @@ export async function deliverAnnouncement(
           metadata: sql`${JSON.stringify({ tone: payload.tone })}::jsonb`.as('metadata'),
           readAt: sql`null`.as('read_at'),
           createdAt: sql`${event.createdAt.toISOString()}::timestamptz`.as('created_at'),
+          writtenAt: sql`now()`.as('written_at'),
         })
         .from(profiles)
         .where(audienceWhere(payload.audience, payload.recipientId)),

@@ -132,6 +132,7 @@
           authEnabled={data.authEnabled}
           unread={badges.data?.unread ?? data.account?.notifications.unread ?? 0}
           latest={data.account?.notifications.latest ?? []}
+          seenAt={data.account?.notifications.seenAt}
           messagesUnread={badges.data?.messages ?? data.account?.messagesUnread ?? 0}
         />
       </div>
@@ -160,6 +161,7 @@
               <NotificationBell
                 unread={badges.data?.unread ?? data.account.notifications.unread}
                 latest={data.account.notifications.latest}
+                seenAt={data.account.notifications.seenAt}
               />
               <AccountMenu
                 name={data.account.displayName}

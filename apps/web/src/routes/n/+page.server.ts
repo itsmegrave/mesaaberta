@@ -8,10 +8,13 @@ import {
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { NotFound } from '@mesaaberta/core/server/errors';
+import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import {
-  listNotifications,
   markAllRead,
   markRead,
+  notificationPage,
+  unreadCount,
 } from '@mesaaberta/core/server/notifications/service';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -26,12 +29,33 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const profile = await locals.getProfile();
   const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
   const category = categoryOf(url.searchParams.get('category'));
-  return {
-    category: category ?? null,
-    // The "Conquistas" filter and the badge notices wait for the badges to be released.
-    withAchievements,
-    notifications: await listNotifications(locals.db, user.id, { category, withAchievements }),
-  };
+  const unread = url.searchParams.get('unread') === '1';
+  const seenAt = new Date().toISOString();
+  try {
+    const [feed, unreadTotal] = await Promise.all([
+      notificationPage(locals.db, user.id, pageNumber(url.searchParams.get('page')), {
+        category,
+        unread,
+        withAchievements,
+      }),
+      unreadCount(locals.db, user.id, { withAchievements }),
+    ]);
+    return {
+      category: category ?? null,
+      unread,
+      page: feed.page,
+      pages: feed.pages,
+      // Every category and page counts for "mark all read", not only what this filter shows.
+      unreadTotal,
+      seenAt,
+      // The "Conquistas" filter and the badge notices wait for the badges to be released.
+      withAchievements,
+      notifications: feed.items,
+    };
+  } catch (cause) {
+    if (cause instanceof NotFound) error(404, 'Not found');
+    throw cause;
+  }
 };
 
 /**
@@ -42,10 +66,12 @@ async function submitted(request: Request) {
   const form = validateStringForm(await request.formData(), notificationActionSchema, [
     'id',
     'next',
+    'until',
   ]);
   const id = form.errors.id ? undefined : form.data.id;
   const next = form.errors.next ? null : form.data.next;
-  return { id, back: safeNext(next, '/n') };
+  const until = form.errors.until ? undefined : form.data.until;
+  return { id, until, back: safeNext(next, '/n') };
 }
 
 // Plain POST works without JavaScript. The anonymous visitor goes to log in first.
@@ -84,12 +110,15 @@ export const actions: Actions = {
   readAll: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
-    const { back } = await submitted(request);
+    const { back, until } = await submitted(request);
     const profile = await locals.getProfile();
     const remote = profile
-      ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/readAll', {})
+      ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/readAll', { until })
       : null;
-    if (!remote) await markAllRead(locals.db, user.id);
+    if (!remote)
+      await markAllRead(locals.db, user.id, new Date(), {
+        until: until ? new Date(until) : undefined,
+      });
     redirect(303, back);
   },
 };

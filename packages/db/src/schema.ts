@@ -597,6 +597,9 @@ export const notifications = pgTable(
     metadata: jsonb('metadata').notNull().default({}),
     readAt: timestamp('read_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // When the row was written, which can be later than `created_at` (the event's time) when the
+    // handler ran late. "Mark all read" stops at what the person could have seen by this time.
+    writtenAt: timestamp('written_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (notification) => [
     uniqueIndex('notifications_event_recipient_idx').on(

@@ -15,11 +15,14 @@
   let {
     unread,
     latest,
+    seenAt,
     placement = 'bottom-end',
     labelled = false,
   }: {
     unread: number;
     latest: Item[];
+    /** When `latest` was read, so "mark all read" leaves what arrived after it. */
+    seenAt?: string;
     /** Where the list opens: under the header's bell, beside the side rail's. */
     placement?: 'bottom-end' | 'right-end';
     /** A full-width row with the word "Notificações" and the count, for the open side nav. */
@@ -86,6 +89,7 @@
             <NotificationAction
               action="readAll"
               next={here}
+              until={seenAt}
               buttonClass="btn h-11 rounded-lg px-2 text-sm font-semibold text-link"
             >
               {m.notifications_mark_all()}
