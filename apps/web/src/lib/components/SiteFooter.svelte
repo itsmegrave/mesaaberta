@@ -55,7 +55,7 @@
         {/if}
       </div>
 
-      <nav aria-label={m.footer_pages()} class="flex flex-col gap-0 md:col-span-3 md:gap-4">
+      <div class="flex flex-col gap-0 md:col-span-3 md:gap-4">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_pages()}</h2>
         <ul class="flex flex-wrap gap-x-5 text-sm md:flex-col md:gap-3">
           {#each pages as item (item.path)}
@@ -70,7 +70,7 @@
             </li>
           {/each}
         </ul>
-      </nav>
+      </div>
 
       <div class="flex flex-col gap-2 md:col-span-3 md:gap-4">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_support()}</h2>
