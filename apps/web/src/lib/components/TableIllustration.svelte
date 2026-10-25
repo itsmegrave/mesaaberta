@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Chair from './Chair.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   // On the blue panel of the sign-in pages the tabletop is a shade instead of blue, the lamp's pool
@@ -38,10 +39,6 @@
   ].map((player) => ({ ...player, ...at(player.angle) }));
 
   const emptySeat = at(-30);
-
-  // A chair seen from above, in the seat's own frame where +y points at the table: the backrest is
-  // an arc on the far side, and the person a head in front of it.
-  const backrest = 'M-26.1 -7A27 27 0 0 1 26.1 -7';
 </script>
 
 <svg
@@ -85,24 +82,16 @@
 
   {#each players as player, i (player.angle)}
     <g transform="translate({player.x} {player.y}) rotate({player.turn})">
-      <g data-seat={i} class={player.colour}>
-        <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
-        <circle r="15" cy="2" />
-      </g>
+      <Chair data-seat={i} colour={player.colour} />
     </g>
   {/each}
 
   <g transform="translate({emptySeat.x} {emptySeat.y}) rotate({emptySeat.turn})">
-    <g data-seat={players.length} class={onBrand ? 'stroke-warning-300' : 'stroke-lamp'}>
-      <path d={backrest} class="fill-none" stroke-width="5" stroke-linecap="round" />
-      <circle
-        r="15"
-        cy="2"
-        data-empty-seat
-        class={onBrand ? 'fill-warning-500/15' : 'fill-lamp-wash'}
-        stroke-width="4"
-      />
-    </g>
+    <Chair
+      data-seat={players.length}
+      colour={onBrand ? 'stroke-warning-300 fill-warning-500/15' : 'stroke-lamp fill-lamp-wash'}
+      head="ring"
+    />
   </g>
 </svg>
 
@@ -120,7 +109,7 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    [data-seat] {
+    svg :global([data-seat]) {
       transform-box: fill-box;
       transform-origin: center;
       animation: sit 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -129,22 +118,22 @@
 
     /* The seat number reaches the CSS through an attribute, not an inline `style`, because the
 		   Content-Security-Policy blocks inline styles. One rule per seat: five players and one empty. */
-    [data-seat='0'] {
+    svg :global([data-seat='0']) {
       --i: 0;
     }
-    [data-seat='1'] {
+    svg :global([data-seat='1']) {
       --i: 1;
     }
-    [data-seat='2'] {
+    svg :global([data-seat='2']) {
       --i: 2;
     }
-    [data-seat='3'] {
+    svg :global([data-seat='3']) {
       --i: 3;
     }
-    [data-seat='4'] {
+    svg :global([data-seat='4']) {
       --i: 4;
     }
-    [data-seat='5'] {
+    svg :global([data-seat='5']) {
       --i: 5;
     }
   }

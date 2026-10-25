@@ -1,4 +1,9 @@
 <script lang="ts">
+  // A table seen from above with its chairs around it, drawn as the hero draws them. The first chair,
+  // at the top, is the GM's (white), so a table with 5 seats shows 6 chairs; then the taken seats
+  // clockwise in the seat colours, then the free ones in the lamp colours with a dashed head.
+  import Chair from './Chair.svelte';
+
   interface Props {
     capacity: number;
     seatsLeft: number;
@@ -9,28 +14,36 @@
 
   let { capacity = 5, seatsLeft = 0, size = 64, label, class: className = '' }: Props = $props();
 
-  const SEAT_COLORS = [
-    'var(--color-success-500)',
-    'var(--color-tertiary-400)',
-    'var(--color-secondary-300)',
+  const SEAT_COLOURS = [
+    'fill-success-500 stroke-success-500',
+    'fill-tertiary-400 stroke-tertiary-400',
+    'fill-secondary-300 stroke-secondary-300',
   ];
 
-  const occupied = $derived(Math.max(0, capacity - Math.max(0, seatsLeft)));
-  const total = $derived(Math.max(1, capacity));
-  const seatRadius = $derived(Math.min(9.5, Math.max(5, 75 / total)));
-  const orbitRadius = 37;
+  const players = $derived(Math.max(1, capacity));
+  const occupied = $derived(Math.max(0, players - Math.max(0, seatsLeft)));
+  // The players' seats plus the GM's.
+  const total = $derived(players + 1);
+  // The hero's chair is 15 units of head on a 27-unit backrest; scaled so the ring fits the 100-unit box.
+  const scale = $derived(((Math.min(9.5, Math.max(5, 75 / total)) / 15) * 0.75).toFixed(3));
+  const orbitRadius = 34;
 
   const seats = $derived(
     Array.from({ length: total }, (_, i) => {
-      const angle = -Math.PI / 2 + (2 * Math.PI * i) / total;
-      const cx = 50 + orbitRadius * Math.cos(angle);
-      const cy = 50 + orbitRadius * Math.sin(angle);
-      const isOccupied = i < occupied;
+      const degrees = -90 + (360 * i) / total;
+      const radians = (degrees * Math.PI) / 180;
+      const x = (50 + orbitRadius * Math.cos(radians)).toFixed(1);
+      const y = (50 + orbitRadius * Math.sin(radians)).toFixed(1);
+      const colour =
+        i === 0
+          ? 'fill-primary-contrast-500 stroke-primary-contrast-500'
+          : i <= occupied
+            ? SEAT_COLOURS[(i - 1) % SEAT_COLOURS.length]
+            : 'fill-warning-500/15 stroke-warning-300';
       return {
-        cx: Number(cx.toFixed(1)),
-        cy: Number(cy.toFixed(1)),
-        isOccupied,
-        color: SEAT_COLORS[i % SEAT_COLORS.length],
+        transform: `translate(${x} ${y}) rotate(${degrees + 90}) scale(${scale})`,
+        colour,
+        free: i > occupied,
       };
     }),
   );
@@ -41,24 +54,13 @@
   height={size}
   viewBox="0 0 100 100"
   role="img"
-  aria-label={label ?? `${occupied} de ${total} vagas ocupadas`}
+  aria-label={label ?? `${occupied} de ${players} vagas ocupadas`}
   class="shrink-0 {className}"
 >
   <!-- Central table surface -->
   <circle cx="50" cy="50" r="20" class="fill-surface-950/25" />
 
-  <!-- Seats around the table -->
-  {#each seats as seat (seat.cx + '-' + seat.cy)}
-    {#if seat.isOccupied}
-      <circle cx={seat.cx} cy={seat.cy} r={seatRadius} fill={seat.color} />
-    {:else}
-      <circle
-        cx={seat.cx}
-        cy={seat.cy}
-        r={seatRadius}
-        class="fill-warning-500/15 stroke-warning-300"
-        stroke-width="2.5"
-      />
-    {/if}
+  {#each seats as seat, i (i)}
+    <Chair transform={seat.transform} colour={seat.colour} head={seat.free ? 'dashed' : 'solid'} />
   {/each}
 </svg>
