@@ -65,10 +65,7 @@
   />
   <meta property="og:url" content={data.canonical} />
   <meta property="og:type" content="profile" />
-  {#if profile.bannerUrl ?? profile.avatarUrl}<meta
-      property="og:image"
-      content={profile.bannerUrl ?? profile.avatarUrl}
-    />{/if}
+  {#if profile.avatarUrl}<meta property="og:image" content={profile.avatarUrl} />{/if}
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
@@ -82,20 +79,22 @@
   {/if}
 
   <header class="overflow-hidden rounded-lg border border-surface-200-800 bg-panel">
-    <!-- The cover the person picked (4:1, cut that way when it was sent), or a plain band. -->
+    <!-- The cover the person picked (4:1, cut that way when it was sent). Without one, the header is as before. -->
     {#if profile.bannerUrl}
       <img
         src={profile.bannerUrl}
         alt={m.public_profile_cover({ username: atHandle(profile.username) })}
         class="aspect-4/1 w-full object-cover"
       />
-    {:else}
-      <div aria-hidden="true" class="h-24 bg-surface-wash md:h-32"></div>
     {/if}
-    <div class="px-6 pb-6 md:px-8 md:pb-8">
+    <div class="px-6 pb-6 md:px-8 md:pb-8 {profile.bannerUrl ? '' : 'pt-6 md:pt-8'}">
       <div class="flex flex-wrap items-end justify-between gap-4">
-        <!-- The photo sits over the cover's bottom edge, in a ring of the card's colour. -->
-        <span class="-mt-12 inline-flex rounded-full bg-panel p-1 md:-mt-16">
+        <!-- With a cover, the photo sits over its bottom edge, in a ring of the card's colour. -->
+        <span
+          class="inline-flex rounded-full bg-panel p-1 {profile.bannerUrl
+            ? '-mt-12 md:-mt-16'
+            : ''}"
+        >
           <Avatar
             src={profile.avatarUrl}
             name={profile.username}
