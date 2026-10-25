@@ -1,6 +1,8 @@
 import type { ZodType } from 'zod';
+import type { ViewerSegments } from '../audience/segments';
 import type { AnyDb } from '../db/client';
 import type { Handler } from '../events/types';
+import type { Flags } from '../flags/flags';
 import type { SocialPublisher } from '../social/port';
 
 /**
@@ -38,6 +40,52 @@ export interface AdminSurface {
   load(db: AnyDb, env: object | undefined): Promise<Record<string, unknown>>;
 }
 
+/** The signed-in person a widget is chosen for, with the facts an audience rule reads. */
+export type WidgetViewer = { id: string; segments: ViewerSegments };
+
+/**
+ * A widget for the page to show. `kind` picks its component (the `widgets` map of the web app's
+ * `panels.ts`), which is the only reader of `data`. Plain JSON: it crosses the network.
+ */
+export type WidgetPayload = { id: string; kind: string; data: Record<string, unknown> };
+
+/** What an answer did: the widget as it now stands, null once it has nothing more to show, or a refusal. */
+export type WidgetAnswer = { widget: WidgetPayload | null } | { invalid: true };
+
+/**
+ * Small things shown over any page, such as a poll (Trello #231). The public code only asks for
+ * them and hands answers back; which widgets exist, where they show and who sees them is the
+ * extension's business. Every method reads its own flags, so a widget nobody turned on stays out.
+ */
+export interface WidgetSurface {
+  /**
+   * The widgets this person may see on the page with this SvelteKit route id (`/t/[slug]`), most
+   * important first. The page shows the first one whose kind it has a component for.
+   */
+  forViewer(
+    db: AnyDb,
+    viewer: WidgetViewer,
+    routeId: string,
+    flags: Flags,
+  ): Promise<readonly WidgetPayload[]>;
+  /**
+   * Records an answer (a vote, a dismissal: the form's fields, as the component sent them). Null
+   * when there is no such widget for this person, which the page answers with a 404.
+   */
+  respond(
+    db: AnyDb,
+    viewer: WidgetViewer,
+    widgetId: string,
+    fields: Readonly<Record<string, string>>,
+    flags: Flags,
+  ): Promise<WidgetAnswer | null>;
+  /**
+   * The widget on its own page (`/<id>/w/<widgetId>`), for anyone, signed in or not: a poll's
+   * public results. Null when it has no public page.
+   */
+  page?(db: AnyDb, widgetId: string, flags: Flags): Promise<WidgetPayload | null>;
+}
+
 /**
  * A feature that plugs into Mesa Aberta from outside the public code: Instagram today, more later
  * (Trello #207, #208). An extension fills only the points it uses. The public code reads extensions
@@ -71,4 +119,11 @@ export interface Extension {
   readonly adminActions?: Readonly<Record<string, AdminAction>>;
   /** Looks up a public asset by key, or null when there is none (or it expired). */
   asset?(db: AnyDb, key: string): Promise<PublicAsset | null>;
+  /** Widgets shown over the app's pages, such as polls. */
+  readonly widgets?: WidgetSurface;
+  /**
+   * Erases what it keeps about a person whose account is being closed (`closeAccount`), inside
+   * that transaction. The profile row stays, so a foreign key cascade never fires: delete here.
+   */
+  onAccountClosed?(tx: AnyDb, profileId: string): Promise<void>;
 }
