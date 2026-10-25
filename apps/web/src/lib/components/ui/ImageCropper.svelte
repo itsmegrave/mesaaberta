@@ -134,14 +134,14 @@
     <MAButton
       size="custom"
       type="button"
-      class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
+      class="btn size-12 rounded-lg btn-secondary"
       aria-label={m.image_crop_zoom_out()}
       onclick={() => zoom(-0.1)}>−</MAButton
     >
     <MAButton
       size="custom"
       type="button"
-      class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
+      class="btn size-12 rounded-lg btn-secondary"
       aria-label={m.image_crop_zoom_in()}
       onclick={() => zoom(0.1)}><Icon name="plus" size={18} /></MAButton
     >

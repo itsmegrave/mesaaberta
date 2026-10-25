@@ -110,7 +110,7 @@
   });
 
   const choiceClass =
-    'flex min-h-14 items-center gap-3 rounded-lg border-2 border-surface-200-800 px-3 py-2 has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'flex min-h-14 items-center gap-3 rounded-lg border-2 border-surface-200-800 px-3 py-2 has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 
   const postponeError = $derived(
     postpone.errors.startsAtLocal?.[0] === 'in_the_past'
@@ -299,7 +299,7 @@
           value={postpone.values.startsAtLocal}
           oninput={(event) => postpone.change('startsAtLocal', event.currentTarget.value)}
           aria-invalid={postponeError ? 'true' : undefined}
-          class="input h-12 rounded-lg border-surface-200-800 px-3"
+          class="input h-13 rounded-lg border-control border-ink-muted px-3"
         />
       </label>
       <MAButton type="submit" variant="secondary" controller={postpone} class="font-semibold"

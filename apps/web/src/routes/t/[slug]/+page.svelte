@@ -296,7 +296,7 @@
             action="?/leave"
             class="mt-3"
             label={m.table_leave()}
-            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
             success={m.toast_left()}
             onfail={(message) => (failed = message)}
           />
@@ -306,7 +306,7 @@
             action="?/leave"
             class="mt-3"
             label={m.table_cancel_request()}
-            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
             success={m.toast_request_withdrawn()}
             onfail={(message) => (failed = message)}
           />
@@ -334,7 +334,7 @@
       {#if data.isGm || data.myStatus === 'confirmed'}
         <a
           href={`/t/${table.slug}/chat`}
-          class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+          class="mt-3 btn h-12 w-full gap-2 rounded-lg btn-secondary font-semibold"
         >
           <Icon name="game-icons:scroll-quill" size={18} />
           {m.messages_table_chat()}

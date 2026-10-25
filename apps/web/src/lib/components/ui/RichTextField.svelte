@@ -330,7 +330,7 @@
 <!-- Always in the page, so the editor has an element to mount in; shown once it is ready. -->
 <div
   hidden={!ready}
-  class="rounded-lg border border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500 {invalid ||
+  class="rounded-lg border border-surface-200-800 bg-panel focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-primary-500 {invalid ||
   over
     ? 'border-error-500'
     : ''}"

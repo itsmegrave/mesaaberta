@@ -58,7 +58,7 @@
       </Slider.Track>
       <Slider.Thumb
         index={0}
-        class="size-6 rounded-full border-2 border-primary-500 bg-surface-50-950 shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+        class="size-6 rounded-full border-2 border-primary-500 bg-surface-50-950 shadow-md focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
         aria-invalid={invalid || undefined}
         aria-describedby={describedby}
       >
@@ -78,7 +78,7 @@
       {min}
       {max}
       bind:value
-      class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+      class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
       aria-invalid={invalid || undefined}
       aria-describedby={describedby}
     />

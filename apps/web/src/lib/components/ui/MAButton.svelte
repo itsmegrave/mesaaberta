@@ -10,7 +10,7 @@
   };
   const variants: Record<ButtonVariant, string> = {
     primary: 'preset-filled-primary-500',
-    secondary: 'border-2 border-surface-200-800 hover:preset-tonal',
+    secondary: 'btn-secondary',
     danger: 'preset-filled-error-500',
     ghost: '',
   };
@@ -22,7 +22,7 @@
   export function buttonClass(variant: ButtonVariant = 'ghost', size: ButtonSize = 'md'): string {
     return [
       size === 'custom' ? '' : 'btn',
-      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-50',
+      'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-50',
       sizes[size],
       variants[variant],
     ]

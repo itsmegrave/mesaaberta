@@ -3,7 +3,7 @@
   let {
     value = $bindable(''),
     element = $bindable(),
-    class: className = 'textarea w-full rounded-lg border-surface-200-800 px-3 py-3',
+    class: className = 'textarea w-full rounded-lg border-control border-ink-muted px-3 py-3',
     ...attributes
   }: HTMLTextareaAttributes & { element?: HTMLTextAreaElement } = $props();
 </script>

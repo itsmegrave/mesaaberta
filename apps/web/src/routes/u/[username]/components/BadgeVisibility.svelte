@@ -25,7 +25,7 @@
   <input type="hidden" name="hidden" value={hidden ? '0' : '1'} />
   <button
     type="submit"
-    class="btn size-10 shrink-0 rounded-lg p-0 hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+    class="btn size-10 shrink-0 rounded-lg p-0 hover:preset-tonal focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
     aria-pressed={hidden}
     aria-label={hidden ? m.badges_show() : m.badges_hide()}
     title={hidden ? m.badges_show() : m.badges_hide()}

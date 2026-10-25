@@ -112,7 +112,7 @@
         bind:value={$closingData.confirm}
         aria-invalid={closing.errors.confirm ? 'true' : undefined}
         aria-describedby={closing.errors.confirm ? 'confirm-error' : undefined}
-        class="input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3"
+        class="input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3"
       />
       <FieldError
         id="confirm"

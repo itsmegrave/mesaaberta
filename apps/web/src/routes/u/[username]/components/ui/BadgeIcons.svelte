@@ -34,7 +34,7 @@
           }
           placement="bottom"
           label={badge.look.name()}
-          triggerClass="flex size-10 items-center justify-center rounded-full bg-primary-500 text-primary-contrast-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 sm:size-9"
+          triggerClass="flex size-10 items-center justify-center rounded-full bg-primary-500 text-primary-contrast-500 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500 sm:size-9"
         >
           {#snippet trigger()}<Icon name={badge.look.icon} size={22} />{/snippet}
           <p class="font-semibold">{badge.look.name()}</p>
