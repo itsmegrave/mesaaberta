@@ -3,6 +3,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { publishInstagramAction } from './instagram-action';
 // The action talks to the port, so any installed connector behaves the same here.
 const social = vi.hoisted(() => ({
+  name: 'instagram',
   queueTable: vi.fn(async () => 'queued'),
   publishTable: vi.fn(async () => 'published'),
 }));
