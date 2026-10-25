@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // The list's filters. On a desktop one row: the system, the modality, a multi-select box each for
   // the platforms and the tags. On a phone the modality and a "Filtros (N)" button that opens a
   // full-screen sheet with all of them. A change applies at once (the list reloads on the new
@@ -174,8 +175,10 @@
         </li>
       {/each}
       <li>
-        <button type="button" class="btn min-h-11 px-2 anchor font-semibold" onclick={clearAll}
-          >{m.tables_filters_clear_all()}</button
+        <button
+          type="button"
+          class="{buttonClass('secondary', 'sm')} font-semibold"
+          onclick={clearAll}>{m.tables_filters_clear_all()}</button
         >
       </li>
     </ul>
@@ -234,8 +237,10 @@
           <footer
             class="flex items-center justify-between gap-3 border-t border-surface-200-800 px-5 py-3"
           >
-            <button type="button" class="btn min-h-11 px-0 anchor font-semibold" onclick={clearAll}
-              >{m.tables_filters_clear_everything()}</button
+            <button
+              type="button"
+              class="{buttonClass('secondary', 'sm')} font-semibold"
+              onclick={clearAll}>{m.tables_filters_clear_everything()}</button
             >
             <Dialog.CloseTrigger
               class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
