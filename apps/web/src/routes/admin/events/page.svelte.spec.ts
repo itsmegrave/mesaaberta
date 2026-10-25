@@ -145,6 +145,19 @@ describe('admin events page', () => {
     });
 
     await expect.element(page.getByText('Nenhum evento neste estado.')).toBeVisible();
+    // An empty state is not a filter: nothing to clear.
+    await expect
+      .element(page.getByRole('link', { name: 'Limpar filtros' }))
+      .not.toBeInTheDocument();
+  });
+
+  it('offers "Limpar filtros" when the type filter leaves nothing', async () => {
+    show({ type: 'TableCreated', total: 0, rows: [] });
+
+    await expect.element(page.getByText('Nenhum evento com esses filtros.')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Limpar filtros' }))
+      .toHaveAttribute('href', '/admin/events');
   });
 
   it('stays inside a phone screen with a long payload and long handler names', async () => {

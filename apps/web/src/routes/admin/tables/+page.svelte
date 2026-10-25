@@ -1,19 +1,22 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
+  import { Target } from '#lib/target.svelte.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import DataTable, {
+    type DataColumn,
+    type FilterPlace,
+  } from '#lib/components/admin/DataTable.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
   import ListCard from '#lib/components/admin/ListCard.svelte';
   import Media from '#lib/components/admin/Media.svelte';
   import PostStatus from '#lib/components/admin/PostStatus.svelte';
+  import RefreshButton from '#lib/components/admin/RefreshButton.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import Button from '#lib/components/Button.svelte';
-  import Icon from '#lib/components/Icon.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import Spinner from '#lib/components/Spinner.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { instagramStatus } from '#lib/admin/instagram-status.js';
@@ -22,7 +25,8 @@
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '@mesaaberta/core/moderation/reports';
+  import { closeTableByIdSchema } from '@mesaaberta/core/moderation/reports';
+  import { closeTable } from '#lib/admin/moderation-presets.js';
   import { TABLE_STATUSES } from '@mesaaberta/core/tables/status-values';
   import type { AdminTablesView } from '#lib/server/reads/admin-tables.js';
 
@@ -38,14 +42,13 @@
     { id: 'next', header: m.admin_tables_date(), sortable: true, width: 'w-40' },
     { id: 'seats', header: m.admin_tables_col_seats(), align: 'right', width: 'w-24' },
     { id: 'status', header: m.admin_tables_col_status(), width: 'w-56' },
-    { id: 'actions', header: m.admin_tables_actions(), hideHeader: true, width: 'w-16' },
   ];
   // The sort order the list opens on has no parameter; "Mesa" orders by title.
   const sort = $derived(tables.sort.id === 'created' ? null : tables.sort);
 
   let publishing = $state<string | null>(null);
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
-  let closing = $state<Row | null>(null);
+  const closing = new Target<Row>();
   const href = (row: Row) => `/t/${row.slug}`;
   function copyLink(row: Row) {
     return copyText(new URL(href(row), current.url.origin).href, m.toast_link_copied());
@@ -83,7 +86,7 @@
             label: m.admin_tables_close(),
             icon: 'lock' as const,
             destructive: true,
-            onselect: () => (closing = row),
+            onselect: () => (closing.current = row),
           },
         ]
       : []),
@@ -110,20 +113,9 @@
   const busy = $derived(remote.isFetching || !!navigating.to);
 </script>
 
-<svelte:head><title>{m.admin_tables()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_tables()} lede={m.admin_tables_lede()}>
   {#snippet actions()}
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
-      disabled={remote.isFetching}
-      onclick={() => remote.refetch()}
-      >{#if remote.isFetching}<Spinner />{:else}<Icon
-          name="refresh-cw"
-          size={18}
-        />{/if}{m.admin_refresh()}</Button
-    >
+    <RefreshButton query={remote} />
   {/snippet}
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
   <DataTable
@@ -142,15 +134,23 @@
     {filtered}
     empty={m.admin_tables_empty()}
     {busy}
+    sheet
+    menu={(row: Row) => ({
+      name: m.admin_tables_action_label({ title: row.title }),
+      items: items(row),
+      busy: publishing === row.id,
+    })}
   >
-    {#snippet selects()}
+    {#snippet selects({ inSheet }: FilterPlace)}
       {#if data.socialInstalled}
         <FilterSelect
-          id="instagram-filter"
+          id={inSheet ? 'instagram-filter-sheet' : 'instagram-filter'}
           name="instagram"
           label={m.admin_instagram_filter()}
           options={instagramOptions}
           value={tables.instagram}
+          class={inSheet ? 'w-full' : 'w-56'}
+          inDialog={inSheet}
         />
       {/if}
     {/snippet}
@@ -161,27 +161,6 @@
         options={statusOptions}
         value={tables.status}
       />
-    {/snippet}
-    {#snippet sheet()}
-      <div class="grid gap-4">
-        <SegmentedFilter
-          name="status"
-          label={m.admin_profile_status()}
-          options={statusOptions}
-          value={tables.status}
-        />
-        {#if data.socialInstalled}
-          <FilterSelect
-            id="instagram-filter-sheet"
-            name="instagram"
-            label={m.admin_instagram_filter()}
-            options={instagramOptions}
-            value={tables.instagram}
-            class="w-full"
-            inDialog
-          />
-        {/if}
-      </div>
     {/snippet}
     {#snippet cell(row: Row, id: string)}
       {#if id === 'title'}
@@ -205,14 +184,10 @@
           <StatusBadge status={`table:${row.status}` as Status} />
           {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
         </div>
-      {:else if id === 'actions'}
-        {#if publishing === row.id}<Spinner />{:else}
-          <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
-        {/if}
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media kind="cover" src={row.cover} />{/snippet}
         {#snippet title()}<a class="link-underline" href={href(row)}>{row.title}</a>{/snippet}
         {#snippet meta()}
@@ -232,32 +207,22 @@
           >
           {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
         {/snippet}
-        {#snippet action()}
-          <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
-        {/snippet}
       </ListCard>
     {/snippet}
   </DataTable>
   <p class="mt-4 max-w-2xl text-sm text-muted">{m.admin_tables_footnote()}</p>
-  {#if closing}
-    {#key closing.id}
+  {#if closing.current}
+    {@const row = closing.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => closing !== null, (value) => !value && (closing = null)}
+        bind:open={closing.open}
         trigger={false}
         action="?/close"
         schema={closeTableByIdSchema}
-        fields={{ tableId: closing.id }}
-        danger
-        write={{
-          name: 'note',
-          label: m.moderation_close_table_note(),
-          hint: m.moderation_close_table_hint({ max: RESOLUTION_NOTE_MAX }),
-          required: true,
-        }}
+        fields={{ tableId: row.id }}
+        {...closeTable(row.title)}
         label={m.admin_tables_close()}
-        title={m.admin_report_close_table_title({ table: closing.title })}
         text={m.admin_tables_close_text()}
-        confirm={m.admin_report_close_table()}
         success={m.admin_tables_close_done()}
       />
     {/key}

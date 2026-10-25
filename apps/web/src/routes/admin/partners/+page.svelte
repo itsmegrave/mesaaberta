@@ -1,5 +1,7 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
+  import { Target } from '#lib/target.svelte.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import Icon from '#lib/components/Icon.svelte';
@@ -7,14 +9,10 @@
   import Media from '#lib/components/admin/Media.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import {
-    approvePartnerSchema,
-    PARTNER_REPORT_REASONS,
-    removePartnerSchema,
-    RESOLUTION_NOTE_MAX,
-  } from '@mesaaberta/core/moderation/reports';
+  import { approvePartnerSchema, removePartnerSchema } from '@mesaaberta/core/moderation/reports';
+  import { removePartner } from '#lib/admin/moderation-presets.js';
   import { m } from '#lib/paraglide/messages.js';
 
   import {
@@ -34,12 +32,11 @@
     { id: 'backlink', header: m.admin_partners_col_backlink(), width: 'w-40' },
     { id: 'sender', header: m.admin_partners_col_sender(), width: 'w-40' },
     { id: 'reports', header: m.admin_partners_col_reports(), align: 'right', width: 'w-28' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
 
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.
-  let approving = $state<Row | null>(null);
-  let removing = $state<Row | null>(null);
+  const approving = new Target<Row>();
+  const removing = new Target<Row>();
   const badge = (row: Row) =>
     (row.removedAt
       ? row.withdrawn
@@ -64,7 +61,7 @@
             id: 'approve',
             label: m.admin_partners_approve_menu(),
             icon: 'check' as const,
-            onselect: () => (approving = row),
+            onselect: () => (approving.current = row),
           },
         ]
       : []),
@@ -105,7 +102,7 @@
             label: row.approvedAt ? m.admin_partners_remove_menu() : m.admin_partners_reject_menu(),
             icon: 'trash' as const,
             destructive: true,
-            onselect: () => (removing = row),
+            onselect: () => (removing.current = row),
           },
         ]),
   ];
@@ -134,7 +131,6 @@
   );
 </script>
 
-<svelte:head><title>{m.admin_nav_partners()} | Mesa Aberta</title></svelte:head>
 <AdminPage title={m.admin_nav_partners()} lede={m.admin_partners_lede()}>
   <DataTable
     rows={list.rows}
@@ -150,24 +146,13 @@
     filtered={!!list.query || list.status !== 'pending' || list.backlink !== 'any'}
     empty={m.admin_partners_empty()}
     sizes={false}
+    sheet
+    menu={(row: Row) => ({
+      name: m.admin_partners_action_label({ name: row.name }),
+      items: items(row),
+    })}
   >
     {#snippet segments()}
-      <SegmentedFilter
-        name="status"
-        label={m.admin_partners_status()}
-        options={statusOptions}
-        value={list.status}
-        fallback="pending"
-      />
-      <SegmentedFilter
-        name="backlink"
-        label={m.admin_partners_col_backlink()}
-        options={backlinkOptions}
-        value={list.backlink}
-        fallback="any"
-      />
-    {/snippet}
-    {#snippet sheet()}
       <SegmentedFilter
         name="status"
         label={m.admin_partners_status()}
@@ -252,12 +237,10 @@
         {/if}
       {:else if id === 'reports'}
         {row.reports}
-      {:else if id === 'actions'}
-        <KebabMenu name={m.admin_partners_action_label({ name: row.name })} items={items(row)} />
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media kind="avatar" src={row.logo} name={row.name} />{/snippet}
         {#snippet title()}{row.name}{/snippet}
         {#snippet meta()}
@@ -278,50 +261,37 @@
             >
           {/if}
         {/snippet}
-        {#snippet action()}
-          <KebabMenu name={m.admin_partners_action_label({ name: row.name })} items={items(row)} />
-        {/snippet}
       </ListCard>
     {/snippet}
   </DataTable>
 
-  {#if approving}
-    {#key approving.id}
+  {#if approving.current}
+    {@const row = approving.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => approving !== null, (value) => !value && (approving = null)}
+        bind:open={approving.open}
         trigger={false}
         action="?/approve"
         schema={approvePartnerSchema}
-        fields={{ id: approving.id }}
+        fields={{ id: row.id }}
         label={m.admin_partners_approve()}
-        title={m.admin_partners_approve_title({ name: approving.name })}
+        title={m.admin_partners_approve_title({ name: row.name })}
         text={m.admin_partners_approve_text()}
         confirm={m.admin_partners_approve_confirm()}
         success={m.admin_partners_approve_done()}
       />
     {/key}
   {/if}
-  {#if removing}
-    {#key removing.id}
+  {#if removing.current}
+    {@const row = removing.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => removing !== null, (value) => !value && (removing = null)}
+        bind:open={removing.open}
         trigger={false}
         action="?/remove"
         schema={removePartnerSchema}
-        fields={{ id: removing.id }}
-        danger
-        reasons={PARTNER_REPORT_REASONS}
-        reasonTarget="partner"
-        write={{
-          name: 'note',
-          label: m.admin_partners_remove_note(),
-          hint: m.admin_partners_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
-        }}
-        label={m.admin_partners_remove()}
-        title={m.admin_partners_remove_title({ name: removing.name })}
-        text={m.admin_partners_remove_text()}
-        confirm={m.admin_partners_remove_confirm()}
-        success={m.admin_partners_remove_done()}
+        fields={{ id: row.id }}
+        {...removePartner(row.name)}
       />
     {/key}
   {/if}

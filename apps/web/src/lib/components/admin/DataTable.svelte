@@ -1,4 +1,6 @@
 <script lang="ts" module>
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
+
   export type DataColumn = {
     id: string;
     /** The header's words; an icon-only column (the row's menu) gives its name and hides it. */
@@ -10,6 +12,10 @@
     align?: 'right';
     hideHeader?: boolean;
   };
+  /** A row's KebabMenu; `busy` swaps it for a Spinner while the row's action runs. */
+  export type RowMenu = { name: string; items: KebabItem[]; busy?: boolean };
+  /** Where a filter snippet is drawn: the desktop toolbar, or the phone's "Filtros" sheet. */
+  export type FilterPlace = { inSheet: boolean };
 </script>
 
 <script lang="ts" generics="T extends RowData">
@@ -28,16 +34,17 @@
     type RowData,
   } from '@tanstack/svelte-table';
   import Icon from '#lib/components/Icon.svelte';
+  import KebabMenu from '#lib/components/KebabMenu.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   import FilterSheet from '#lib/components/admin/FilterSheet.svelte';
   import ListSearch from '#lib/components/admin/ListSearch.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
+  import ListPanel from '#lib/components/admin/ListPanel.svelte';
+  import Spinner from '#lib/components/Spinner.svelte';
   import {
     nextSort,
     PAGE_SIZES,
     listPath,
     listQuery,
-    pageRange,
     showMore,
     type Sort,
   } from '@mesaaberta/core/admin/list';
@@ -59,8 +66,9 @@
     search,
     selects,
     segments,
-    sheet,
+    sheet = false,
     sheetResults,
+    menu,
     filterKeys = ['q', 'status', 'page'],
     filtered = false,
     empty,
@@ -75,8 +83,8 @@
     caption: string;
     /** One cell of the desktop table, by column id. */
     cell: Snippet<[T, string]>;
-    /** One row of the phone list: a `ListCard`. */
-    card: Snippet<[T]>;
+    /** One row of the phone list: a `ListCard`, given the row's menu for its `action`. */
+    card: Snippet<[T, Snippet | undefined]>;
     total: number;
     /** "9 mesas": the count the toolbar and the footer say. */
     totalLabel: string;
@@ -86,13 +94,15 @@
     /** The column the phone list says it is ordered by ("Próxima sessão"). */
     sortLabel?: string;
     search?: { value: string; label: string; placeholder?: string; maxlength?: number };
-    /** Selects beside the search, on the desktop's first row. */
-    selects?: Snippet;
+    /** Selects beside the search, on the desktop's first row; on a phone only in the sheet. */
+    selects?: Snippet<[FilterPlace]>;
     /** The segmented filter, on the desktop's second row and straight under the search on a phone. */
-    segments?: Snippet;
-    /** What the phone's "Filtros" sheet holds, besides the segments. */
-    sheet?: Snippet;
+    segments?: Snippet<[FilterPlace]>;
+    /** On a phone the segments and the selects go into a "Filtros" sheet beside the search. */
+    sheet?: boolean;
     sheetResults?: string;
+    /** The row's menu: it adds the last, unnamed column and fills the phone card's action. */
+    menu?: (row: T) => RowMenu | null;
     /** The query parameters "Limpar filtros" removes. */
     filterKeys?: string[];
     /** Whether any filter is on: it shows "Limpar filtros" in the empty state. */
@@ -106,8 +116,16 @@
   } = $props();
 
   const features = tableFeatures({});
+  const allColumns = $derived<DataColumn[]>(
+    menu
+      ? [
+          ...columns,
+          { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
+        ]
+      : columns,
+  );
   const defs = $derived(
-    columns.map((column): ColumnDef<typeof features, T> => ({
+    allColumns.map((column): ColumnDef<typeof features, T> => ({
       id: column.id,
       header: () => column.header,
     })),
@@ -122,10 +140,9 @@
     },
     getRowId: (row) => rowId(row),
   });
-  const meta = (id: string) => columns.find((column) => column.id === id);
+  const meta = (id: string) => allColumns.find((column) => column.id === id);
 
   const pages = $derived(Math.max(1, Math.ceil(total / pageSize)));
-  const range = $derived(pageRange(page, pageSize, total));
   const href = (changes: Record<string, string | number | null>, withHash = hash) =>
     listPath(current.url.pathname, listQuery(current.url.searchParams, changes), withHash);
   const go = (changes: Record<string, string | number | null>) =>
@@ -140,28 +157,67 @@
     sort?.id === id ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined;
 </script>
 
+{#snippet rowMenu(row: T)}
+  {@const choice = menu?.(row)}
+  {#if choice?.busy}<Spinner />{:else if choice}<KebabMenu
+      name={choice.name}
+      items={choice.items}
+    />{/if}
+{/snippet}
+
+{#snippet toolbar()}
+  <div class="flex flex-wrap items-center gap-3">
+    {#if search}
+      <ListSearch
+        value={search.value}
+        label={search.label}
+        placeholder={search.placeholder}
+        maxlength={search.maxlength}
+        {hash}
+      />
+    {/if}
+    {@render selects?.({ inSheet: false })}
+    <p role="status" class="ml-auto text-sm font-semibold text-muted">{totalLabel}</p>
+  </div>
+  {#if segments}<div>{@render segments({ inSheet: false })}</div>{/if}
+{/snippet}
+
+{#snippet sizeChoice()}
+  <div class="w-44">
+    <SearchSelect
+      id="page-size"
+      name="size"
+      label={m.admin_profile_size()}
+      labelClass="text-sm"
+      class="flex items-center gap-2"
+      compact
+      items={PAGE_SIZES.map((size) => ({ name: String(size), slug: String(size) }))}
+      value={[String(pageSize)]}
+      placeholder={String(pageSize)}
+      disabled={busy}
+      onchange={(picked) => {
+        // The select also reports the size the page already has; only a new size starts over.
+        const size = Number(picked[0] ?? pageSize);
+        if (size !== pageSize) void go({ size: size === PAGE_SIZES[0] ? null : size });
+      }}
+    />
+  </div>
+{/snippet}
+
 <section aria-label={caption} aria-busy={busy} class="mt-6">
   <!-- Desktop: one card with the toolbar, the table and the footer. -->
-  <div class="hidden rounded-lg border border-surface-200-800 bg-panel md:block">
-    {#if search || selects || segments}
-      <div class="grid gap-3 border-b border-surface-200-800 p-4">
-        <div class="flex flex-wrap items-center gap-3">
-          {#if search}
-            <ListSearch
-              value={search.value}
-              label={search.label}
-              placeholder={search.placeholder}
-              maxlength={search.maxlength}
-              {hash}
-            />
-          {/if}
-          {@render selects?.()}
-          <p role="status" class="ml-auto text-sm font-semibold text-muted">{totalLabel}</p>
-        </div>
-        {#if segments}<div>{@render segments()}</div>{/if}
-      </div>
-    {/if}
-
+  <ListPanel
+    as="div"
+    class="hidden md:block"
+    toolbar={search || selects || segments ? toolbar : undefined}
+    {total}
+    {totalLabel}
+    {page}
+    {pageSize}
+    {pages}
+    pageHref={(next) => href({ page: next })}
+    footer={sizes ? sizeChoice : undefined}
+  >
     <!-- `table-fixed`: every list has one column without a width (the name) and it takes what the
          others leave, so its `truncate` works. In the automatic layout a long description made
          the column as wide as the text, the table wider than the card, and the card scrolled
@@ -222,13 +278,17 @@
                     ? 'text-right tabular-nums'
                     : ''}"
                 >
-                  {@render cell(row.original, item.column.id)}
+                  {#if menu && item.column.id === 'actions'}
+                    {@render rowMenu(row.original)}
+                  {:else}
+                    {@render cell(row.original, item.column.id)}
+                  {/if}
                 </td>
               {/each}
             </tr>
           {:else}
             <tr>
-              <td colspan={columns.length} class="px-4 py-10 text-center text-muted">
+              <td colspan={allColumns.length} class="px-4 py-10 text-center text-muted">
                 <p>{empty}</p>
                 {#if filtered}
                   <a
@@ -242,43 +302,7 @@
         </tbody>
       </table>
     </div>
-
-    <div
-      class="flex flex-wrap items-center justify-between gap-4 border-t border-surface-200-800 px-4 py-3"
-    >
-      <p class="text-sm text-muted" aria-live="polite">
-        {#if total > 0}{m.admin_list_range({
-            from: range.from,
-            to: range.to,
-            total: totalLabel,
-          })}{:else}{totalLabel}{/if}
-      </p>
-      <div class="flex flex-wrap items-center gap-4">
-        {#if sizes}
-          <div class="w-44">
-            <SearchSelect
-              id="page-size"
-              name="size"
-              label={m.admin_profile_size()}
-              labelClass="text-sm"
-              class="flex items-center gap-2"
-              compact
-              items={PAGE_SIZES.map((size) => ({ name: String(size), slug: String(size) }))}
-              value={[String(pageSize)]}
-              placeholder={String(pageSize)}
-              disabled={busy}
-              onchange={(picked) => {
-                // The select also reports the size the page already has; only a new size starts over.
-                const size = Number(picked[0] ?? pageSize);
-                if (size !== pageSize) void go({ size: size === PAGE_SIZES[0] ? null : size });
-              }}
-            />
-          </div>
-        {/if}
-        <Pager {page} {pages} href={(next) => href({ page: next })} />
-      </div>
-    </div>
-  </div>
+  </ListPanel>
 
   <!-- Phone: no table. One list of cards, the filters in a sheet, and "Mostrar mais". -->
   <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:hidden">
@@ -299,12 +323,19 @@
             results={sheetResults ?? totalLabel}
             clearHref={filtered ? clearHref : undefined}
           >
-            {@render sheet()}
+            {#if selects}
+              <div class="grid gap-4">
+                {@render segments?.({ inSheet: true })}
+                {@render selects({ inSheet: true })}
+              </div>
+            {:else}
+              {@render segments?.({ inSheet: true })}
+            {/if}
           </FilterSheet>
         {/if}
       </div>
     {/if}
-    {#if segments && !sheet}{@render segments()}{/if}
+    {#if segments && !sheet}{@render segments({ inSheet: false })}{/if}
     <div class="flex items-center justify-between gap-3 text-sm">
       <p role="status" class="font-semibold">{totalLabel}</p>
       {#if sortLabel && sort}
@@ -320,7 +351,10 @@
         data-testid="list-rows"
         class="divide-y divide-surface-200-800 rounded-lg border border-surface-200-800 bg-panel"
       >
-        {#each rows as row (rowId(row))}{@render card(row)}{/each}
+        {#each rows as row (rowId(row))}
+          {#snippet action()}{@render rowMenu(row)}{/snippet}
+          {@render card(row, menu?.(row) ? action : undefined)}
+        {/each}
       </ul>
     {:else}
       <div class="rounded-lg border border-surface-200-800 bg-panel p-6 text-center text-muted">

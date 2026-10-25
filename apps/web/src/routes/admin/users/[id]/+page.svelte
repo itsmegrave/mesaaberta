@@ -5,6 +5,9 @@
   import Avatar from '#lib/components/Avatar.svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import DetailList from '#lib/components/ui/DetailList.svelte';
+  import DetailRow from '#lib/components/ui/DetailRow.svelte';
+  import Panel from '#lib/components/ui/Panel.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { type KebabItem } from '#lib/components/KebabMenu.svelte';
@@ -13,9 +16,9 @@
   import {
     accountSchema,
     banSchema,
-    RESOLUTION_NOTE_MAX,
     TABLE_REPORTS_WARNING,
   } from '@mesaaberta/core/moderation/reports';
+  import { ban as banWords, banReason } from '#lib/admin/moderation-presets.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -100,18 +103,11 @@
     }
     return items;
   });
-  const banWrite = {
-    name: 'reason',
-    label: m.moderation_ban_reason(),
-    hint: m.moderation_ban_reason_hint({ max: RESOLUTION_NOTE_MAX }),
-    required: true,
-  } as const;
-  const card = 'rounded-lg border border-surface-200-800 bg-panel p-5';
 </script>
 
-<svelte:head><title>{data.user.username ?? m.admin_user_title()} | Mesa Aberta</title></svelte:head>
 <AdminPage
   title={handle}
+  tabTitle={`${data.user.username ?? m.admin_user_title()} | Mesa Aberta`}
   eyebrow={m.admin_user_title()}
   crumbs={[
     { label: m.nav_admin(), href: '/admin' },
@@ -167,7 +163,7 @@
         danger
         durations
         choices={['7', '30', '90']}
-        write={banWrite}
+        write={banReason()}
         label={m.admin_menu_suspend()}
         title={m.admin_suspend_title({ user: handle })}
         username={data.user.username}
@@ -181,16 +177,10 @@
         action="?/ban"
         schema={banSchema}
         fields={{ profileId: data.user.id }}
-        danger
-        durations
+        {...banWords(handle)}
         choices={['permanent']}
-        write={banWrite}
         label={m.admin_menu_ban()}
-        title={m.admin_ban_title({ user: handle })}
         username={data.user.username}
-        text={m.admin_ban_text()}
-        confirm={m.admin_ban()}
-        success={m.admin_ban_done()}
       />
     {/if}
   {/if}
@@ -209,58 +199,46 @@
   {/if}
 
   <div class="mt-8 grid gap-6 lg:grid-cols-2">
-    <section aria-labelledby="user-data" class={card}>
-      <h2 id="user-data" class="text-lg font-semibold">{m.admin_user_data()}</h2>
-      <dl class="mt-3 divide-y divide-surface-200-800">
+    <Panel title={m.admin_user_data()}>
+      <DetailList class="mt-3">
         {#each details as [label, value] (label)}
-          <div class="grid gap-1 py-3 sm:grid-cols-2">
-            <dt class="text-sm font-semibold text-muted">{label}</dt>
-            <dd class="text-sm break-all">
-              {#if label === m.admin_profile_username()}<UserLink
-                  username={data.user.username}
-                  label={value}
-                />{:else}{value}{/if}
-            </dd>
-          </div>
+          <DetailRow {label} class="text-sm break-all">
+            {#if label === m.admin_profile_username()}<UserLink
+                username={data.user.username}
+                label={value}
+              />{:else}{value}{/if}
+          </DetailRow>
         {/each}
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_profile_id()}</dt>
-          <dd class="font-mono text-xs break-all">{data.user.id}</dd>
-        </div>
-      </dl>
-    </section>
+        <DetailRow label={m.admin_profile_id()} class="font-mono text-xs break-all"
+          >{data.user.id}</DetailRow
+        >
+      </DetailList>
+    </Panel>
 
-    <section aria-labelledby="user-activity" class={card}>
-      <h2 id="user-activity" class="text-lg font-semibold">{m.admin_user_activity()}</h2>
-      <dl class="mt-3 divide-y divide-surface-200-800">
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_playing()}</dt>
-          <dd class="text-sm tabular-nums">{activity.playing}</dd>
-        </div>
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_running()}</dt>
-          <dd class="text-sm tabular-nums">{activity.running}</dd>
-        </div>
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_rating()}</dt>
-          <dd class="text-sm"><GmRating rating={activity.rating} /></dd>
-        </div>
-        <div class="grid gap-1 py-3 sm:grid-cols-2">
-          <dt class="text-sm font-semibold text-muted">{m.admin_user_reports()}</dt>
-          <dd class="text-sm tabular-nums">{reported}</dd>
-        </div>
-      </dl>
+    <Panel title={m.admin_user_activity()}>
+      <DetailList class="mt-3">
+        <DetailRow label={m.admin_user_playing()} class="text-sm tabular-nums"
+          >{activity.playing}</DetailRow
+        >
+        <DetailRow label={m.admin_user_running()} class="text-sm tabular-nums"
+          >{activity.running}</DetailRow
+        >
+        <DetailRow label={m.admin_user_rating()} class="text-sm"
+          ><GmRating rating={activity.rating} /></DetailRow
+        >
+        <DetailRow label={m.admin_user_reports()} class="text-sm tabular-nums">{reported}</DetailRow
+        >
+      </DetailList>
       {#if reported >= TABLE_REPORTS_WARNING && !ban}
         <p role="note" class="mt-3 flex items-start gap-2 text-sm font-semibold">
           <Icon name="triangle-alert" size={18} class="mt-0.5 text-warning-700-300" />
           {m.admin_table_reports_warning()}
         </p>
       {/if}
-    </section>
+    </Panel>
   </div>
 
-  <section aria-labelledby="user-history" class="mt-6 {card}">
-    <h2 id="user-history" class="text-lg font-semibold">{m.history_title()}</h2>
+  <Panel title={m.history_title()} class="mt-6 p-5">
     <AuditTimeline history={data.history} zone={data.viewer.timezone} showTable />
-  </section>
+  </Panel>
 </AdminPage>

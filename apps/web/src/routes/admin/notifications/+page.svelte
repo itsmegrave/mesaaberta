@@ -181,11 +181,11 @@
     'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10';
 </script>
 
-<svelte:head>
-  <title>{m.admin_announce_title()} · {m.admin_title()}</title>
-</svelte:head>
-
-<AdminPage title={m.admin_nav_notifications()} lede={m.admin_announce_lede()}>
+<AdminPage
+  title={m.admin_nav_notifications()}
+  tabTitle={`${m.admin_announce_title()} · ${m.admin_title()}`}
+  lede={m.admin_announce_lede()}
+>
   <div class="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
     <Form
       onsubmit={controller.submit}

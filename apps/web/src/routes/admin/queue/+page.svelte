@@ -43,8 +43,6 @@
     'btn h-12 rounded-lg px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
-<svelte:head><title>{m.admin_queue_title()} | Mesa Aberta</title></svelte:head>
-
 <AdminPage title={m.admin_queue_title()} lede={m.admin_queue_lede()}>
   <div class="mt-8 grid gap-8 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
     <div>
