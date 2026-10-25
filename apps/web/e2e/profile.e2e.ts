@@ -35,7 +35,7 @@ test('the account menu leads to the profile, where the details are saved and the
     (response) =>
       response.request().method() === 'POST' && response.url().includes('/u/profile/edit/about'),
   );
-  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   await saved;
   await expect(page.getByText('Perfil salvo.').first()).toBeVisible();
 
@@ -61,7 +61,7 @@ test("the timezone on the profile wins over the browser's, on every page", async
   await expect(field).toHaveValue('America/Sao Paulo');
 
   await pickFromSearch(page, 'Fuso horário', 'Asia/Tokyo');
-  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   await expect(page.getByText('Perfil salvo.')).toBeVisible();
 
   await page.goto('/t/os-sinos-de-sablewood');

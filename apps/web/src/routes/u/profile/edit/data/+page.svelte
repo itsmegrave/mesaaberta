@@ -6,6 +6,7 @@
   import SettingsSection from '../components/ui/SettingsSection.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { deleteAccountSchema } from '#lib/profile/delete.js';
   import { queryClient } from '#lib/query/context.js';
@@ -85,8 +86,17 @@
     >
     {m.account_export()}
   </a>
+</section>
 
-  <div class="mt-8 border-t border-surface-200-800 pt-6">
+<!-- What cannot be undone gets a card of its own, last on the page (DS DangerZone). -->
+<section
+  aria-labelledby="danger-zone"
+  class="rounded-lg border-2 border-error-500 bg-panel p-6 md:p-8"
+>
+  <h3 id="danger-zone" class="flex items-center gap-2 {heading} text-error-alert">
+    <Icon name="triangle-alert" size={24} />{m.account_danger_zone()}
+  </h3>
+  <div class="mt-5">
     <h4 class="text-lg font-semibold">{m.account_delete_title()}</h4>
     <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
     <MAForm action="?/delete" onsubmit={closing.submit} class="mt-4 grid max-w-sm gap-3">
@@ -114,7 +124,8 @@
           type="submit"
           size="custom"
           controller={closing}
-          class="btn h-12 gap-2 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
+          variant="danger"
+          class="btn h-12 gap-2 rounded-lg px-6 font-semibold"
         >
           {m.account_delete_button()}
         </MAButton>
