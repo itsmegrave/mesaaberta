@@ -27,6 +27,15 @@ describe('sentry options', () => {
     expect(out.breadcrumbs).toBeUndefined();
   });
 
+  it('drops a request the app cancelled itself', () => {
+    const aborted = {
+      event_id: 'e1',
+      exception: { values: [{ type: 'AbortError', value: 'signal is aborted without reason' }] },
+    } as unknown as ErrorEvent;
+    expect(privateEvent(aborted)).toBeNull();
+    expect(sentryOptionsForApp('web').beforeSend(aborted)).toBeNull();
+  });
+
   it('forwards only the application logger and scrubs its message', () => {
     expect(
       privateLog({ level: 'info', message: 'x', attributes: { service: 'other' } }),
@@ -50,7 +59,7 @@ describe('sentry options', () => {
     const options = sentryOptionsForApp('api');
     expect(options.initialScope.tags.app).toBe('api');
     const event = { event_id: 'e1', tags: { app: 'web', route: '/x' } } as unknown as ErrorEvent;
-    expect(options.beforeSend(event).tags).toEqual({ app: 'api', route: '/x' });
+    expect(options.beforeSend(event)?.tags).toEqual({ app: 'api', route: '/x' });
     expect(
       privateLog({ level: 'info', message: 'x', attributes: { service: 'mesaaberta', app: 'api' } })
         ?.attributes,
