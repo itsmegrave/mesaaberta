@@ -33,6 +33,8 @@ This starts Postgres, applies the migrations, then runs the web app, the api (on
 | Script              | What it does                                                                                        |
 | ------------------- | --------------------------------------------------------------------------------------------------- |
 | `bun run dev`       | Dev server                                                                                          |
+| `bun run dev:up`    | Local Supabase with the dev personas, and `.dev.vars` pointed at it (see "Dev login")               |
+| `bun run dev:local` | Dev server and api against that Supabase, with the dev login on                                     |
 | `bun run build`     | Production build                                                                                    |
 | `bun run lint`      | Prettier check and ESLint                                                                           |
 | `bun run format`    | Prettier write                                                                                      |
@@ -189,6 +191,22 @@ Profile pictures are shown from Google's and Discord's image hosts, which the Co
 **Partner logos.** A member sending a partner on `/p/new` uploads its square logo (same checks as profile pictures). It goes to the same public `profile-avatars` bucket, under `partners/<user id>/`, and a replaced logo is deleted. The Storage policy for that folder comes from `drizzle/0036_partners.sql`; the local stack gets it from `seed.sql`. Every partner waits for an admin before it is public, and editing an approved one sends it back to review.
 
 To offer another provider later (Apple, Facebook, ...), enable it in Supabase, add it to `providers` in `src/lib/auth/providers.ts` and to the buttons on the login page, and allow its picture host in `img-src` if it sends one.
+
+### Dev login
+
+A local dev server can sign in as a test persona without a password, so a person or an agent can look at the app as a member, a GM or an admin. `bun run dev:up` starts the local Supabase (as `e2e:up` does), creates the personas in its Auth and writes their settings to `.dev.vars`; `bun run dev:local` starts `vite dev` and the api against it. Then open `http://localhost:5173/dev/login?as=gm&next=/t/os-sinos-de-sablewood/manage`; `/dev/logout` signs out. `bun scripts/dev/shot.ts --as gm /path` saves desktop and phone screenshots.
+
+| Persona  | Who                                                     |
+| -------- | ------------------------------------------------------- |
+| `member` | A member who finished onboarding                        |
+| `gm`     | The seeded GM, who owns the seeded tables               |
+| `player` | A member with a seat at Os Sinos de Sablewood           |
+| `admin`  | An admin                                                |
+| `new`    | Someone without a username, sent to the onboarding step |
+
+It signs in through the real Supabase login (`signInWithPassword`), so `getUser()`, the policy and the api are unchanged. It never reaches production: `apps/web/src/lib/server/dev` is loaded only when `import.meta.env.DEV` (so not by any build), and even then answers 404 unless `DEV_LOGIN=true`, the request is for `localhost` and `SUPABASE_URL` is a local Supabase. CI builds the app and fails if the route or a persona is in the output (`scripts/check-no-dev-login.ts`), the e2e suite checks it is a 404 on the production build, and ESLint keeps every other module from importing it. Run `bun run e2e:up` before the e2e suite: it resets the seat the `player` persona takes.
+
+In a Claude Code cloud session, `.claude/settings.json` starts all of this in the background (`scripts/dev/cloud-session.sh`, only when `CLAUDE_CODE_REMOTE=true`); its log is `/tmp/mesaaberta-dev-up.log`.
 
 ## Authorization
 
