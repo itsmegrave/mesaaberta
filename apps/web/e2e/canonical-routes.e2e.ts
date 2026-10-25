@@ -78,12 +78,13 @@ test.describe('canonical resource URLs', () => {
     expect(table.status()).toBe(400);
     expect(await table.text()).toContain('Title from an old form');
 
+    // The old profile form lands on "Perfil público", which checks its own fields.
     const profile = await page.request.post('/account/profile?/save', {
       headers,
-      form: { name: user.name, ageRange: 'invalid', city: 'City from an old form' },
+      form: { name: 'Name from an old form', bio: 'x'.repeat(301) },
       maxRedirects: 0,
     });
     expect(profile.status()).toBe(400);
-    expect(await profile.text()).toContain('City from an old form');
+    expect(await profile.text()).toContain('Name from an old form');
   });
 });
