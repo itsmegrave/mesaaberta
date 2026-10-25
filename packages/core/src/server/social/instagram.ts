@@ -6,6 +6,7 @@ import {
   publishInstagramTable,
   queueInstagramTable,
 } from '../instagram/publisher';
+import type { Extension } from '../extensions/contract';
 import type { SocialPublisher } from './port';
 
 /** The Instagram connector: the existing publisher behind the port, unchanged. */
@@ -20,3 +21,6 @@ export const instagramSocial: SocialPublisher = {
   // Always registered, even before OAuth is configured: creation events stay decoupled from Meta.
   handlers: [instagramQueueHandler],
 };
+
+/** Instagram as an extension: its connector and nothing else yet. */
+export const instagramExtension: Extension = { id: 'instagram', social: instagramSocial };
