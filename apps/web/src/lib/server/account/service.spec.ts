@@ -175,6 +175,30 @@ describe('closeAccount', () => {
       await test.db.select().from(registrations).where(eq(registrations.tableId, active.id)),
     ).toHaveLength(1);
   });
+  it('lets each extension erase what it keeps, inside the same transaction', async () => {
+    const person = id(13);
+    await test.db.insert(profiles).values({ id: person, username: 'gaia' });
+    const erased: string[] = [];
+    const extension = {
+      id: 'fake',
+      onAccountClosed: async (tx: unknown, profileId: string) => {
+        // The transaction, not the outer handle: a failure here must undo the whole closing.
+        expect(tx).not.toBe(test.db);
+        erased.push(profileId);
+      },
+    };
+    await closeAccount(test.db, person, [{ id: 'bare' }, extension]);
+    expect(erased).toEqual([person]);
+
+    const failing = {
+      id: 'broken',
+      onAccountClosed: async () => Promise.reject(new Error('boom')),
+    };
+    const table = await makeTable(person);
+    await expect(closeAccount(test.db, person, [failing])).rejects.toThrow('boom');
+    const [kept] = await test.db.select().from(gameTables).where(eq(gameTables.id, table.id));
+    expect(kept.status).toBe('active');
+  });
 });
 
 describe('anonymiseProfile', () => {
