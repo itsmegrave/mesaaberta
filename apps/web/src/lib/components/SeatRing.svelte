@@ -57,8 +57,7 @@
         cy={seat.cy}
         r={seatRadius}
         class="fill-warning-500/15 stroke-warning-300"
-        stroke-width="2"
-        stroke-dasharray="3 3"
+        stroke-width="2.5"
       />
     {/if}
   {/each}

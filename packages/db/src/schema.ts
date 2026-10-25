@@ -474,6 +474,9 @@ export const registrations = pgTable(
     // not recorded (before the session, and every session confirmed before attendance existed): only
     // a false blocks rating the GM.
     attended: boolean('attended'),
+    // When the GM let the player rate before the table was concluded (a campaign or adventure that
+    // goes on). Null: the player rates once the table is concluded, as for any table.
+    ratingOpenedAt: timestamp('rating_opened_at', { withTimezone: true }),
     ...timestamps,
   },
   (registration) => [

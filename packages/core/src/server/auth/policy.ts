@@ -25,6 +25,12 @@ type Resources = {
   'table:end': { gmId: string };
   /** After the session: say it happened, that it did not, or move it to a new date. */
   'table:confirm': { gmId: string; tableStatus: TableStatus };
+  /** A campaign or adventure that went on: the GM ends it, or lets players rate it meanwhile. */
+  'table:finish': {
+    gmId: string;
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure';
+  };
   /** The facts a join depends on, read inside the capacity transaction. */
   'table:join': {
     gmId: string;
@@ -42,6 +48,8 @@ type Resources = {
     firstSessionEnded: boolean;
     /** The GM's word on whether the player showed up: only `false` blocks. Null when not recorded. */
     attended?: boolean | null;
+    /** The GM let this player rate before the table is concluded. */
+    ratingOpened?: boolean;
   };
   /** Approve or decline a request, or remove a player. */
   'registration:manage': { gmId: string };
@@ -117,8 +125,16 @@ export function rateBlocker(
   if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
   if (facts.registration !== 'confirmed') return 'not_registered';
   if (facts.attended === false) return 'absent';
-  // Until the GM says the session happened, there is nothing to rate yet.
-  if (!facts.firstSessionEnded || facts.tableStatus !== 'concluded') return 'too_early';
+  // Until the GM says the session happened, there is nothing to rate yet. A table that goes on can
+  // be rated before it ends, by the players the GM let: its date has moved on to the next session,
+  // so the GM's word replaces the first-session check.
+  const letByGm =
+    facts.ratingOpened === true &&
+    (facts.tableStatus === 'active' ||
+      facts.tableStatus === 'awaiting_confirmation' ||
+      facts.tableStatus === 'concluded');
+  if (!letByGm && (!facts.firstSessionEnded || facts.tableStatus !== 'concluded'))
+    return 'too_early';
 
   return null;
 }
@@ -135,6 +151,11 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'table:confirm': (actor, table) =>
     table !== undefined &&
     nextStatus(table.tableStatus, 'HAPPENED') !== null &&
+    isGmOrAdmin(actor, table),
+  'table:finish': (actor, table) =>
+    table !== undefined &&
+    table.kind !== 'one_shot' &&
+    ['active', 'awaiting_confirmation'].includes(table.tableStatus) &&
     isGmOrAdmin(actor, table),
   'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
   'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,

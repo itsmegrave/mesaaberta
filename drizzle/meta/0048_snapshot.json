@@ -1,5 +1,5 @@
 {
-  "id": "26a2962c-27c6-447b-a7c7-54d62c45cc7b",
+  "id": "baecda6e-e7ca-4dbb-8fda-340a1b7abf5d",
   "prevId": "65960672-b224-4ff1-8de4-07cab7171300",
   "version": "7",
   "dialect": "postgresql",
@@ -3046,18 +3046,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "banner_path": {
-          "name": "banner_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bio": {
-          "name": "bio",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "timezone": {
           "name": "timezone",
           "type": "text",
@@ -3172,10 +3160,6 @@
         "profiles_ban_reason_length": {
           "name": "profiles_ban_reason_length",
           "value": "char_length(\"profiles\".\"ban_reason\") <= 1000"
-        },
-        "profiles_bio_length": {
-          "name": "profiles_bio_length",
-          "value": "char_length(\"profiles\".\"bio\") <= 300"
         }
       },
       "isRLSEnabled": true
@@ -3324,6 +3308,12 @@
         "attended": {
           "name": "attended",
           "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_opened_at": {
+          "name": "rating_opened_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

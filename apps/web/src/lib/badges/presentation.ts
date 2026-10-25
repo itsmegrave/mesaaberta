@@ -126,6 +126,12 @@ export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
     goal: m.badge_partner_goal,
     progress: m.badge_partner_progress,
   },
+  'first-100': {
+    icon: 'game-icons:podium',
+    tier: 0,
+    name: m.badge_first_100_name,
+    description: m.badge_first_100_description,
+  },
   pioneer: {
     icon: 'game-icons:sunrise',
     tier: 0,

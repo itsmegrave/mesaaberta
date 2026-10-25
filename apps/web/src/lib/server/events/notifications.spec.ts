@@ -4,6 +4,7 @@ import {
   gameTables,
   notifications,
   profiles,
+  ratings,
   registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
@@ -206,5 +207,22 @@ describe('notificationHandler', () => {
     );
 
     expect((await written()).map((row) => row.to)).toEqual([ana]);
+  });
+
+  it('does not ask again someone who already rated while the table went on', async () => {
+    await test.db.insert(ratings).values({ tableId, playerId: ana, gmScore: 5 });
+
+    await handle(stored({ type: 'TableConcluded', payload: table }, gm));
+
+    expect((await written()).map((row) => row.to)).toEqual([bia]);
+    await test.db.delete(ratings);
+  });
+
+  it('asks only the players the GM let to rate a table that goes on', async () => {
+    await handle(stored({ type: 'RatingsOpened', payload: { ...table, playerIds: [bia] } }, gm));
+
+    const rows = await written();
+    expect(rows.map((row) => row.to)).toEqual([bia]);
+    expect(rows[0]).toMatchObject({ type: 'rating_prompt', link: '/t/mesa' });
   });
 });

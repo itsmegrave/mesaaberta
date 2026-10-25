@@ -31,6 +31,8 @@ async function candidates(db: AnyDb, event: StoredEvent): Promise<string[]> {
       return [event.payload.playerId];
     case 'PartnerApproved':
       return [event.payload.submitterId];
+    case 'ProfileUpdated':
+      return [event.payload.profileId];
     default:
       return [];
   }
@@ -86,7 +88,7 @@ export async function awardBadges(
  */
 export const badgeHandler: Handler = {
   name: 'badges-v1',
-  types: ['TableConcluded', 'RatingSubmitted', 'PartnerApproved'],
+  types: ['TableConcluded', 'RatingSubmitted', 'PartnerApproved', 'ProfileUpdated'],
   async handle(event, db) {
     const rules = BADGES.filter((rule) => rule.triggers.includes(event.type));
     if (rules.length === 0) return;

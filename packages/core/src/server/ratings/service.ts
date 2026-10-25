@@ -31,7 +31,11 @@ export async function submitRating(
 
     const [registration] = actor
       ? await tx
-          .select({ status: registrations.status, attended: registrations.attended })
+          .select({
+            status: registrations.status,
+            attended: registrations.attended,
+            ratingOpenedAt: registrations.ratingOpenedAt,
+          })
           .from(registrations)
           .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, actor.id)))
       : [];
@@ -42,6 +46,7 @@ export async function submitRating(
       tableStatus: table.status,
       firstSessionEnded: firstSessionEnded(table, now),
       attended: registration?.attended ?? null,
+      ratingOpened: registration?.ratingOpenedAt != null,
     });
     if (blocker === 'too_early') throw new TooEarly();
     if (blocker) throw new Forbidden('table:rate');

@@ -36,4 +36,30 @@ describe('SessionConfirmation', () => {
     await expect.element(page.getByRole('button', { name: 'Aconteceu' })).toBeVisible();
     await expect.element(page.getByRole('checkbox')).not.toBeInTheDocument();
   });
+
+  it('for a campaign, asks if more sessions come and posts to the session-held action', async () => {
+    render(SessionConfirmation, { next: '/t/mesa/manage', players, multi: true });
+
+    const form = page.getByRole('checkbox', { name: 'ana' }).element().closest('form')!;
+    expect(form.getAttribute('action')).toBe('?/sessionHeld');
+    await expect
+      .element(page.getByRole('button', { name: 'Aconteceu, a mesa continua' }))
+      .toBeVisible();
+
+    await page.getByRole('radio', { name: 'Foi a última sessão' }).click();
+
+    expect(form.getAttribute('action')).toBe('?/happened');
+    await expect.element(page.getByRole('button', { name: 'Aconteceu' })).toBeVisible();
+  });
+
+  it('requires the next date for an adventure, which has no repeat rule', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players: [],
+      multi: true,
+      dateRequired: true,
+    });
+
+    await expect.element(page.getByLabelText('Próxima sessão')).toBeRequired();
+  });
 });

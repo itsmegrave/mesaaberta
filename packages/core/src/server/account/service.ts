@@ -23,6 +23,7 @@ import {
 } from '../invitations/service';
 import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { extensions, type Extension } from '../extensions/index';
 
 /**
  * Everything the account holds, for the data portability right (LGPD art. 18, V). Only this
@@ -215,7 +216,11 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
  * table stays as it was. Returns the events to dispatch. Run it before the Auth user is deleted:
  * the cancellation mail looks up the GM's address.
  */
-export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventIds: string[] }> {
+export async function closeAccount(
+  db: AnyDb,
+  userId: string,
+  installed: readonly Extension[] = extensions,
+): Promise<{ eventIds: string[] }> {
   const eventIds = await db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     await lockInvitationProfiles(t, [userId]);
@@ -270,6 +275,8 @@ export async function closeAccount(db: AnyDb, userId: string): Promise<{ eventId
     await t.delete(gmScores).where(eq(gmScores.gmId, userId));
     await t.update(ratings).set({ comment: null }).where(eq(ratings.playerId, userId));
     await eraseMessagesOf(t, userId);
+    // What extensions keep about the person (a poll's votes): the profile row stays, so no cascade.
+    for (const extension of installed) await extension.onAccountClosed?.(t, userId);
     return ids;
   });
 

@@ -38,3 +38,13 @@ export function extensionFlagDefaults(
   }
   return defaults;
 }
+
+/** The extensions that show widgets, in install order (the first one's widgets win a page). */
+export function widgetExtensions(
+  list: readonly Extension[] = extensions,
+): readonly (Extension & { widgets: NonNullable<Extension['widgets']> })[] {
+  return list.filter(
+    (extension): extension is Extension & { widgets: NonNullable<Extension['widgets']> } =>
+      !!extension.widgets,
+  );
+}

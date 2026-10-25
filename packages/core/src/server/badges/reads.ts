@@ -63,6 +63,7 @@ export async function badgeProgress(db: AnyDb, profileId: string): Promise<Badge
   const stats = statsFor(db, profileId);
   const next = BADGES.filter(
     (rule) =>
+      !rule.unlisted &&
       !have.has(rule.id) &&
       !BADGES.some(
         (other) =>
