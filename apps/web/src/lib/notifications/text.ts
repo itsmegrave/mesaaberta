@@ -1,6 +1,8 @@
 import { reasonLabel } from '#lib/moderation/labels.js';
 import type { ReportReason } from '@mesaaberta/core/moderation/reports';
 import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { formatSession } from '@mesaaberta/core/tables/format';
 import { presentationOf } from '#lib/badges/presentation.js';
 import { atHandle } from '@mesaaberta/core/profile/handle';
 import { toPlainText } from '@mesaaberta/core/text/rich';
@@ -8,6 +10,7 @@ import {
   ANNOUNCEMENT_ICONS,
   isNotificationType,
   NOTIFICATION_KINDS,
+  TABLE_NOTICE_FIELDS,
   type NotificationIcon,
 } from '@mesaaberta/core/notifications/kinds';
 
@@ -21,11 +24,55 @@ export type Shown = {
   actor: string | null;
 };
 
+type NoticeField = (typeof TABLE_NOTICE_FIELDS)[number];
+const FIELD_LABELS: Record<NoticeField, () => string> = {
+  startsAt: m.notification_change_schedule,
+  timezone: m.notification_change_timezone,
+  recurrence: m.notification_change_recurrence,
+  until: m.notification_change_recurrence,
+  durationMinutes: m.notification_change_duration,
+  modality: m.notification_change_place,
+  locationArea: m.notification_change_place,
+  joinDetails: m.notification_change_join,
+  title: m.notification_change_title,
+  kind: m.notification_change_kind,
+  description: m.notification_change_description,
+  extraInfo: m.notification_change_description,
+};
+
+/** The changed fields as one list ("duração e local"), each named once, the start left out if shown. */
+function changedList(changed: string | undefined, withoutStart: boolean): string {
+  const fields = (changed ?? '')
+    .split(',')
+    .filter((field): field is NoticeField => Object.hasOwn(FIELD_LABELS, field))
+    .filter((field) => !(withoutStart && (field === 'startsAt' || field === 'timezone')));
+  const labels = [...new Set(fields.map((field) => FIELD_LABELS[field]()))];
+  return new Intl.ListFormat(getLocale(), { type: 'conjunction' }).format(labels);
+}
+
+/** A table change, as specific as the notice's metadata allows; older notices stay generic. */
+function tableChangeText(table: string, metadata: Record<string, string>, timeZone: string) {
+  const { startsAtFrom, startsAtTo, changed } = metadata;
+  if (startsAtFrom && startsAtTo) {
+    const from = formatSession(new Date(startsAtFrom), timeZone, getLocale());
+    const to = formatSession(new Date(startsAtTo), timeZone, getLocale());
+    const what = changedList(changed, true);
+    return what
+      ? m.notification_table_rescheduled_more({ table, from, to, what })
+      : m.notification_table_rescheduled({ table, from, to });
+  }
+  const what = changedList(changed, false);
+  return what
+    ? m.notification_table_changed({ table, what })
+    : m.notification_table_updated({ table });
+}
+
 /**
  * The sentence a notification is shown as. An announcement is its own title (and body, which is
- * rich text and reads here as one line).
+ * rich text and reads here as one line). Times are shown in `timeZone`, the viewer's (see
+ * shownTimezone).
  */
-export function notificationText(item: Shown): string {
+export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): string {
   if (item.title) {
     const body = item.body ? toPlainText(item.body).replace(/\s+/g, ' ') : '';
     return body ? `${item.title}: ${body}` : item.title;
@@ -36,7 +83,7 @@ export function notificationText(item: Shown): string {
   if (!isNotificationType(item.type)) return m.notification_unknown();
   switch (item.type) {
     case 'table_updated':
-      return m.notification_table_updated({ table });
+      return tableChangeText(table, item.metadata, timeZone);
     case 'table_cancelled':
       return m.notification_table_cancelled({ table });
     case 'session_reminder':

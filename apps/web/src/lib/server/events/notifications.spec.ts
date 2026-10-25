@@ -161,6 +161,23 @@ describe('notificationHandler', () => {
     expect(row).toMatchObject({ actorId: caio, metadata: table, readAt: null });
   });
 
+  it('says which fields players see changed, and the old and new start, never a hidden value', async () => {
+    const changes = {
+      startsAt: { from: '2026-10-10T22:00:00.000Z', to: '2026-10-11T21:00:00.000Z' },
+      joinDetails: { redacted: true as const },
+      capacity: { from: 4, to: 5 },
+    };
+    await handle(stored({ type: 'TableUpdated', payload: { ...table, changes } }, gm));
+
+    const [row] = await test.db.select().from(notifications);
+    expect(row.metadata).toEqual({
+      ...table,
+      changed: 'startsAt,joinDetails',
+      startsAtFrom: '2026-10-10T22:00:00.000Z',
+      startsAtTo: '2026-10-11T21:00:00.000Z',
+    });
+  });
+
   it('never tells people about what they did themselves', async () => {
     // An admin who is also seated edits the table: the other player hears of it, the editor does not.
     await handle(stored({ type: 'TableUpdated', payload: table }, ana));

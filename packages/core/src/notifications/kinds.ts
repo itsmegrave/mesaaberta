@@ -97,5 +97,32 @@ export type NotificationType = keyof typeof NOTIFICATION_KINDS;
 export const isNotificationType = (type: string): type is NotificationType =>
   Object.hasOwn(NOTIFICATION_KINDS, type);
 
-/** What a table notification carries in `metadata`: enough to word it and link to the table. */
-export type TableMetadata = { tableId: string; slug: string; title: string };
+/**
+ * What a table notification carries in `metadata`: enough to word it and link to the table. A
+ * change notice also says which fields changed (`changed`, comma-separated) and, when the start
+ * moved, the old and new start as ISO times, so each viewer reads them in their own timezone.
+ */
+export type TableMetadata = {
+  tableId: string;
+  slug: string;
+  title: string;
+  changed?: string;
+  startsAtFrom?: string;
+  startsAtTo?: string;
+};
+
+/** The fields a change notice names, in the order it names them. Only what players see. */
+export const TABLE_NOTICE_FIELDS = [
+  'startsAt',
+  'timezone',
+  'recurrence',
+  'until',
+  'durationMinutes',
+  'modality',
+  'locationArea',
+  'joinDetails',
+  'title',
+  'kind',
+  'description',
+  'extraInfo',
+] as const;

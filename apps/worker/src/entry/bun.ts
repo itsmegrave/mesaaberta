@@ -2,6 +2,7 @@ import { createWorker, type WorkerEnv } from '../index';
 import { connectionStringFrom, createDb } from '@mesaaberta/core/server/db/client';
 import { outboxDepth } from '@mesaaberta/core/server/events/outbox-depth';
 import { SWEEPER_CRON } from '@mesaaberta/core/server/events/scheduled';
+import { setHandlerObserver } from '@mesaaberta/core/server/events/handler-runs';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName } from '@mesaaberta/core/server/logger';
 import { createJobMetrics } from '@mesaaberta/core/server/metrics';
@@ -18,6 +19,7 @@ const worker = createWorker();
 const sweepEverySeconds = Math.max(30, Number(process.env.SWEEP_INTERVAL_SECONDS ?? 300));
 
 const metrics = createJobMetrics('worker');
+setHandlerObserver(metrics.observeHandler);
 
 // The outbox is read once per sweep, not per scrape: a count over `events` is cheap, but a
 // scraper's interval is not ours to decide. A failed read keeps the last numbers.

@@ -363,6 +363,23 @@ describe('inbox and threads', () => {
     expect(older.hasMore).toBe(false);
   });
 
+  it('says when the other person last read a direct conversation, and nothing for a table chat', async () => {
+    const writer: Actor = { id: id(9), role: 'member', status: 'active' };
+    await test.db.insert(profiles).values({ id: writer.id, username: 'p9' });
+    await makeTable();
+    const direct = await openDirect(test.db, writer, gm.id);
+    await sendMessage(test.db, writer, direct.id, 'oi', { now: new Date('2032-01-01T10:00:00Z') });
+    expect((await listMessages(test.db, writer, direct.id)).otherLastReadAt).toBeNull();
+
+    const read = new Date('2032-01-01T10:05:00Z');
+    await markConversationRead(test.db, gm, direct.id, read);
+    expect((await listMessages(test.db, writer, direct.id)).otherLastReadAt).toEqual(read);
+
+    const table = await makeTable();
+    const group = await ensureTableConversation(test.db, table.id);
+    expect((await listMessages(test.db, gm, group.id)).otherLastReadAt).toBeNull();
+  });
+
   it('hides a conversation from people who are not in it', async () => {
     const table = await makeTable();
     const conversation = await ensureTableConversation(test.db, table.id);

@@ -110,7 +110,7 @@
                   <NotificationIcon icon={notificationIcon(item)} class="mt-1 text-muted" />
                   <span class="min-w-0 flex-1">
                     <span class="block text-sm {item.read ? '' : 'font-semibold'}"
-                      >{notificationText(item)}</span
+                      >{notificationText(item, shownTimezone('America/Sao_Paulo'))}</span
                     >
                     <span class="block text-xs text-muted">{when(item.createdAt)}</span>
                   </span>

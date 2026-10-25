@@ -4,10 +4,11 @@ import type { AnyDb } from '../db/client';
 import { gameTables, notifications, ratings, registrations } from '../db/schema';
 import {
   NOTIFICATION_KINDS,
+  TABLE_NOTICE_FIELDS,
   type NotificationType,
   type TableMetadata,
 } from '../../notifications/kinds';
-import type { Handler, StoredEvent } from './types';
+import type { Changes, Handler, StoredEvent } from './types';
 
 /** The events that notify someone. `TableCreated` tells nobody new, and `UserSignedIn` is a log. */
 type NotifyingEvent = Extract<
@@ -103,6 +104,23 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
 }
 
 /**
+ * What a change notice says changed: the player-facing fields, and the old and new start when it
+ * moved. A redacted field (the join details) is named, never its value.
+ */
+export function changeSummary(
+  changes: Changes | undefined,
+): Pick<TableMetadata, 'changed' | 'startsAtFrom' | 'startsAtTo'> {
+  if (!changes) return {};
+  const fields = TABLE_NOTICE_FIELDS.filter((field) => Object.hasOwn(changes, field));
+  const start = changes.startsAt;
+  const moved =
+    start && 'from' in start && typeof start.from === 'string' && typeof start.to === 'string'
+      ? { startsAtFrom: start.from, startsAtTo: start.to }
+      : {};
+  return { ...(fields.length > 0 ? { changed: fields.join(',') } : {}), ...moved };
+}
+
+/**
  * Writes the bell's notifications for table and registration events. One row per event and
  * recipient (a unique index), so a retry of the same event adds nothing. Nobody is told about what
  * they did themselves.
@@ -156,6 +174,7 @@ export const notificationHandler: Handler = {
       tableId: notifying.payload.tableId,
       slug: table.slug,
       title: table.title,
+      ...(notifying.type === 'TableUpdated' ? changeSummary(notifying.payload.changes) : {}),
     };
     await db
       .insert(notifications)

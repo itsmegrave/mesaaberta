@@ -27,7 +27,7 @@
   const conversationId = data.conversation.id;
   // svelte-ignore state_referenced_locally
   const viewerId = data.viewerId;
-  type Thread = { messages: ThreadItem[]; hasMore: boolean };
+  type Thread = { messages: ThreadItem[]; hasMore: boolean; otherLastReadAt?: Date | null };
 
   let visible = $state(true);
   let focused = $state(true);
@@ -135,7 +135,7 @@
   <MessageList
     {items}
     kind={data.conversation.kind}
-    otherLastReadAt={data.conversation.other?.lastReadAt ?? null}
+    otherLastReadAt={thread.data?.otherLastReadAt ?? data.conversation.other?.lastReadAt ?? null}
     {hasMore}
     onloadolder={loadOlder}
     {onretry}

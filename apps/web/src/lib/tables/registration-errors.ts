@@ -18,6 +18,8 @@ export function registrationError(code: string, retryAfter?: number): string {
       return m.table_error_too_early();
     case 'invalid':
       return m.table_error_invalid();
+    case 'direct_messages_off':
+      return m.messages_gm_dm_off();
     default:
       return m.table_error_other();
   }
