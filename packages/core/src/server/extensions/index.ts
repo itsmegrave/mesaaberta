@@ -1,4 +1,5 @@
 import type { Handler } from '../events/types';
+import { isFlagName } from '../flags/registry';
 import type { Extension } from './contract';
 import { extensions as installed } from './installed';
 
@@ -18,4 +19,22 @@ export function extensionById(
 /** The event handlers the extensions register beside their connectors'. */
 export function extensionHandlers(list: readonly Extension[] = extensions): readonly Handler[] {
   return list.flatMap((extension) => extension.handlers ?? []);
+}
+
+/**
+ * The flags the extensions declare, with their defaults. A name the app already uses is refused,
+ * so an extension cannot change what a public flag means.
+ */
+export function extensionFlagDefaults(
+  list: readonly Extension[] = extensions,
+): Readonly<Record<string, boolean>> {
+  const defaults: Record<string, boolean> = {};
+  for (const extension of list) {
+    for (const [name, value] of Object.entries(extension.flags ?? {})) {
+      if (isFlagName(name) || Object.hasOwn(defaults, name))
+        throw new Error(`Extension flag "${name}" is already taken`);
+      defaults[name] = value;
+    }
+  }
+  return defaults;
 }
