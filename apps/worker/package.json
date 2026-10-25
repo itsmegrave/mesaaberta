@@ -8,7 +8,7 @@
     "@cf-wasm/resvg": "*",
     "@growthbook/growthbook": "*",
     "@mesaaberta/core": "workspace:*",
-    "@mesaaberta/private": "workspace:*",
+    "@mesaaberta/privy": "workspace:*",
     "@mesaaberta/events": "workspace:*",
     "@sentry/cloudflare": "*",
     "@sentry/core": "*",

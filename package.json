@@ -88,7 +88,7 @@
     "@mesaaberta/core": "workspace:*",
     "@mesaaberta/db": "workspace:*",
     "@mesaaberta/events": "workspace:*",
-    "@mesaaberta/private": "workspace:*",
+    "@mesaaberta/privy": "workspace:*",
     "@sentry/cloudflare": "11.1.0",
     "@sentry/core": "11.1.0",
     "@sentry/sveltekit": "^11.1.0",

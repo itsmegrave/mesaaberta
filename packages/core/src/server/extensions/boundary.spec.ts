@@ -29,21 +29,21 @@ const specifiers = (file: string) =>
     (match) => match[1],
   );
 
-describe('the private package boundary', () => {
+describe('the privy package boundary', () => {
   it('is imported only by the seam files, never by the public code', () => {
     const offenders = ['apps', 'packages']
       .flatMap((root) => sources(join(REPO, root)))
       .map((file) => relative(REPO, file))
-      .filter((file) => !file.startsWith('packages/private/') && !SEAMS.has(file))
+      .filter((file) => !file.startsWith('packages/privy/') && !SEAMS.has(file))
       .filter((file) => !file.endsWith('.spec.ts'))
       .filter((file) =>
-        specifiers(join(REPO, file)).some((spec) => spec.startsWith('@mesaaberta/private')),
+        specifiers(join(REPO, file)).some((spec) => spec.startsWith('@mesaaberta/privy')),
       );
     expect(offenders).toEqual([]);
   });
 
   it('reaches the public code only through @mesaaberta/core and its own files', () => {
-    const own = join(REPO, 'packages/private');
+    const own = join(REPO, 'packages/privy');
     const offenders = sources(own)
       .filter((file) => !file.endsWith('.spec.ts'))
       .flatMap((file) =>
