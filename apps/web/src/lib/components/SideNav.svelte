@@ -56,7 +56,8 @@
     }
   }
 
-  // The rail marks the section you are in, as the bottom tab bar does on phones.
+  // The rail marks the section you are in, as the bottom tab bar does on phones. Parceiros has no
+  // link in the app chrome.
   const pathname = $derived(page.url.pathname);
   const links = $derived(
     [
@@ -73,12 +74,6 @@
         icon: 'game-icons:open-treasure-chest' as IconName,
         current: pathname === '/cf' || pathname.startsWith('/cf/'),
       },
-      {
-        href: '/p',
-        label: m.partner_nav_label(),
-        icon: 'game-icons:trade' as IconName,
-        current: pathname === '/p' || pathname.startsWith('/p/'),
-      },
       account && {
         href: '/t/new',
         label: expanded ? m.nav_open_table() : m.nav_open_table_short(),
@@ -94,7 +89,28 @@
     ].filter((link) => !!link),
   );
 
+  const pending = $derived(account?.pendingSuggestionsCount ?? 0);
+  const adminCurrent = $derived(pathname === '/admin' || pathname.startsWith('/admin/'));
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
+  // Open: a 44px row. Rail: a 64px column with the icon on a 40px tile over the label.
+  const row =
+    'relative flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold no-underline';
+  const column =
+    'group relative flex min-h-14 w-16 flex-col items-center justify-center gap-1 py-1 text-center text-xs leading-tight font-semibold no-underline';
+  // Skeleton's trigger is a `btn` with a square rail tile and a tonal hover, hence the `!` overrides.
+  function linkClass(current: boolean, primary: boolean) {
+    if (!expanded) {
+      const ink =
+        current || primary ? 'text-surface-950-50' : 'text-muted hover:text-surface-950-50';
+      return `${column} aspect-auto! w-16! gap-1! bg-transparent! p-1! hover:bg-transparent! ${ink}`;
+    }
+    const fill = primary
+      ? 'preset-filled-primary-500 hover:preset-filled-primary-500!'
+      : current
+        ? 'bg-surface-200-800! text-surface-950-50'
+        : 'bg-transparent! text-surface-950-50 hover:bg-surface-200-800!';
+    return `${row} justify-start! gap-3! px-3! py-0! ${fill}`;
+  }
 </script>
 
 {#snippet collapseButton()}
@@ -105,129 +121,152 @@
     aria-expanded={expanded}
     aria-label={expanded ? m.nav_collapse() : m.nav_expand()}
     title={expanded ? m.nav_collapse() : m.nav_expand()}
-    class="btn flex size-11 shrink-0 items-center justify-center rounded-lg p-0 hover:preset-tonal"
+    class="btn flex size-10 shrink-0 items-center justify-center rounded-lg p-0 text-muted hover:preset-tonal {expanded
+      ? 'border border-surface-200-800'
+      : ''}"
   >
     <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
   </Button>
 {/snippet}
 
-{#snippet adminLink()}
-  {#if account?.isAdmin}
-    <a
-      href="/admin"
-      aria-label={expanded ? undefined : m.nav_admin()}
-      title={expanded ? undefined : m.nav_admin()}
-      aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
-      class="group flex w-full items-center rounded-lg text-sm font-semibold no-underline {expanded
-        ? 'min-h-11 gap-2 px-3 hover:preset-tonal aria-[current=page]:bg-surface-200-800'
-        : 'flex-col justify-center gap-1 p-1 text-xs leading-tight'}"
-    >
-      <!-- Open: a plain row, lined up with "Notificações" above. Rail: a tile, like the links. -->
-      <span
-        class="relative {expanded
-          ? 'flex shrink-0 items-center'
-          : `${tile} group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800`}"
-      >
-        <Icon name="shield" size={20} />
-        {#if !expanded && account.pendingSuggestionsCount > 0}
-          <span
-            aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
-            class="absolute -top-1 -right-1 badge min-w-5 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
-          >
-            {account.pendingSuggestionsCount > 9 ? '9+' : account.pendingSuggestionsCount}
-          </span>
-        {/if}
-      </span>
-      <span>{m.nav_admin()}</span>
-      {#if expanded && account.pendingSuggestionsCount > 0}
-        <span
-          aria-label={m.nav_admin() + `: ${account.pendingSuggestionsCount}`}
-          class="ml-auto badge min-w-6 rounded-full preset-filled-warning-500 px-1 text-xs font-bold"
-        >
-          {account.pendingSuggestionsCount > 9 ? '9+' : account.pendingSuggestionsCount}
-        </span>
-      {/if}
-    </a>
-  {/if}
+{#snippet count(value: number, label: string, placed: string)}
+  <span
+    aria-label={label}
+    class="badge rounded-full preset-filled-warning-500 text-xs font-bold {placed}"
+  >
+    {value > 9 ? '9+' : value}
+  </span>
 {/snippet}
 
 <Navigation
   layout={expanded ? 'sidebar' : 'rail'}
   aria-label={m.nav_main()}
-  class="flex h-full flex-col items-stretch gap-4 border-r border-surface-200-800 py-5 {expanded
-    ? 'w-60 px-3'
-    : 'w-24 px-2'}"
+  class="flex h-full flex-col border-r border-surface-200-800 py-5 {expanded
+    ? 'w-60 items-stretch gap-6 bg-panel px-3'
+    : 'w-20 items-center gap-4 bg-transparent px-0'}"
 >
   {#snippet element(attributes)}
     <nav {...attributes as Record<string, unknown>}>
       <Navigation.Header
-        class="flex gap-4 {expanded
-          ? 'flex-row items-center justify-between'
-          : 'flex-col items-center'}"
+        class="flex {expanded
+          ? 'flex-row items-center justify-between gap-2 pl-1.5'
+          : 'flex-col items-center gap-4'}"
       >
         <a
           href="/"
           aria-label="Mesa Aberta"
-          class="flex min-w-0 items-center gap-3 no-underline {expanded ? 'px-1' : ''}"
+          class="flex min-w-0 items-center gap-2 text-surface-950-50 no-underline"
         >
           <TableLogo size={32} />
           {#if expanded}
-            <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
+            <span class="font-brand text-lg font-semibold tracking-wide whitespace-nowrap"
+              >Mesa Aberta</span
+            >
           {/if}
         </a>
         {@render collapseButton()}
       </Navigation.Header>
 
-      <Navigation.Content class="flex flex-1 flex-col justify-between gap-4">
-        <Navigation.Group class="flex flex-col gap-2">
-          <Navigation.Menu class="flex flex-col gap-2">
+      <Navigation.Content class="flex flex-1 flex-col {expanded ? 'gap-6' : 'items-center gap-4'}">
+        <Navigation.Group>
+          <Navigation.Menu
+            class="flex flex-col {expanded ? 'gap-1' : 'flex-none justify-start gap-2'}"
+          >
             {#each links as link (link.href)}
+              {@const primary = link.href === '/t/new'}
               <Navigation.TriggerAnchor
                 href={link.href}
                 aria-current={link.current ? 'page' : undefined}
                 aria-label={expanded ? undefined : link.label}
-                class="group flex! w-full! items-center rounded-lg! bg-transparent! p-1! text-sm font-semibold no-underline focus-visible:outline-2 focus-visible:outline-primary-500 aria-[current=page]:text-surface-950-50 {expanded
-                  ? 'flex-row! justify-start! gap-3!'
-                  : 'min-h-20 flex-col! justify-center! gap-1! text-center text-xs! leading-tight!'}"
+                class="{linkClass(link.current, primary)} whitespace-normal!"
               >
-                <span
-                  class="{tile} {link.href === '/t/new'
-                    ? 'preset-filled-primary-500'
-                    : 'group-hover:preset-tonal group-aria-[current=page]:bg-surface-200-800'}"
-                >
-                  <Icon name={link.icon} size={20} />
-                </span>
-                <span class="min-w-0 whitespace-normal! {expanded ? '' : 'w-full'}"
-                  >{link.label}</span
-                >
+                {#if expanded}
+                  {#if link.current}
+                    <span
+                      aria-hidden="true"
+                      class="absolute inset-y-2.5 -left-3 w-0.75 rounded-full bg-primary-500"
+                    ></span>
+                  {/if}
+                  <span class="flex shrink-0 {primary || link.current ? '' : 'text-muted'}">
+                    <Icon name={link.icon} size={20} />
+                  </span>
+                  <span class="min-w-0 flex-1">{link.label}</span>
+                {:else}
+                  <span
+                    class="{tile} {primary
+                      ? 'preset-filled-primary-500'
+                      : link.current
+                        ? 'bg-surface-200-800'
+                        : 'group-hover:bg-surface-200-800'}"
+                  >
+                    <Icon name={link.icon} size={20} />
+                  </span>
+                  <span class="w-full min-w-0">{link.label}</span>
+                {/if}
               </Navigation.TriggerAnchor>
             {/each}
+            {#if account?.isAdmin && !expanded}
+              <!-- In the rail Admin follows the links; open, it sits under "Sua conta". -->
+              <a
+                href="/admin"
+                aria-label={m.nav_admin()}
+                aria-current={adminCurrent ? 'page' : undefined}
+                class="{column} {adminCurrent
+                  ? 'text-surface-950-50'
+                  : 'text-muted hover:text-surface-950-50'}"
+              >
+                <span
+                  class="{tile} {adminCurrent
+                    ? 'bg-surface-200-800'
+                    : 'group-hover:bg-surface-200-800'}"
+                >
+                  <Icon name="game-icons:black-knight-helm" size={20} />
+                </span>
+                {#if pending > 0}
+                  {@render count(
+                    pending,
+                    `${m.nav_admin()}: ${pending}`,
+                    'absolute top-0.5 right-2 h-4 min-w-4 px-1',
+                  )}
+                {/if}
+                <span class="w-full min-w-0">{m.nav_admin()}</span>
+              </a>
+            {/if}
           </Navigation.Menu>
         </Navigation.Group>
 
-        <Navigation.Group class="flex flex-col gap-2 {expanded ? 'items-stretch' : 'items-center'}">
-          <hr class="my-1 w-full border-surface-200-800" />
-          {#if expanded}
-            {#if account}
-              <Navigation.Label
-                class="px-3 text-xs font-semibold tracking-wide text-muted uppercase"
-                >{m.nav_account_group()}</Navigation.Label
+        {#if expanded && account}
+          <Navigation.Group class="flex flex-col gap-1">
+            <Navigation.Label
+              class="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
+              >{m.nav_account_group()}</Navigation.Label
+            >
+            <NotificationBell {unread} {latest} placement="right-end" labelled />
+            {#if account.isAdmin}
+              <a
+                href="/admin"
+                aria-current={adminCurrent ? 'page' : undefined}
+                class="{row} text-surface-950-50 hover:bg-surface-200-800 aria-[current=page]:bg-surface-200-800"
               >
-
-              <NotificationBell {unread} {latest} placement="right-end" labelled />
-
-              {@render adminLink()}
+                <span class="flex shrink-0 text-muted">
+                  <Icon name="game-icons:black-knight-helm" size={20} />
+                </span>
+                <span class="min-w-0 flex-1">{m.nav_admin()}</span>
+                {#if pending > 0}
+                  {@render count(pending, `${m.nav_admin()}: ${pending}`, 'h-5.5 min-w-5.5 px-1.5')}
+                {/if}
+              </a>
             {/if}
-            <ThemeToggle />
-          {:else}
-            <div class="flex w-full flex-col items-center justify-center gap-2">
-              <ThemeToggle />
-              {#if account}
-                <NotificationBell {unread} {latest} placement="right-end" />
-              {/if}
-            </div>
-            {@render adminLink()}
+          </Navigation.Group>
+        {/if}
+
+        <Navigation.Group
+          class="mt-auto flex flex-col {expanded ? 'items-stretch gap-2' : 'items-center gap-3'}"
+        >
+          {#if account && !expanded}
+            <NotificationBell {unread} {latest} placement="right-end" />
           {/if}
+          <ThemeToggle labelled={expanded} />
           {#if account}
             <AccountMenu
               name={account.displayName}
@@ -241,9 +280,9 @@
           {:else if authEnabled}
             <a
               href={resolve('login')}
-              class="btn flex w-full items-center rounded-lg p-2 text-sm font-semibold whitespace-normal hover:preset-tonal {expanded
-                ? 'justify-start gap-3'
-                : 'flex-col gap-1'}"
+              class="btn flex items-center rounded-lg p-2 text-sm font-semibold whitespace-normal hover:preset-tonal {expanded
+                ? 'w-full justify-start gap-3'
+                : 'w-16 flex-col gap-1 text-xs'}"
             >
               <Icon name="game-icons:dungeon-gate" size={20} />
               {m.nav_sign_in()}

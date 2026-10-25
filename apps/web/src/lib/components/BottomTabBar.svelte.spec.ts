@@ -28,19 +28,26 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(tab).toHaveTextContent('FCs');
   });
 
-  it('offers the partners list to everyone', async () => {
+  it('leaves Parceiros off the bar', async () => {
     render(BottomTabBar);
 
-    await expect
-      .element(nav().getByRole('link', { name: 'Parceiros' }))
-      .toHaveAttribute('href', '/p');
+    await expect.element(nav().getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
   });
 
-  it('leaves the Admin link to the account menu, so five tabs fit the bar', async () => {
+  it('adds an Admin tab for admins, with the pending count', async () => {
+    render(BottomTabBar, { isAdmin: true, pendingSuggestionsCount: 3 });
+
+    await expect
+      .element(nav().getByRole('link', { name: 'Admin: 3' }))
+      .toHaveAttribute('href', '/admin');
+    expect(nav().getByRole('link').elements()).toHaveLength(5);
+  });
+
+  it('has four tabs for everyone else', async () => {
     render(BottomTabBar);
 
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
-    expect(nav().getByRole('link').elements()).toHaveLength(5);
+    expect(nav().getByRole('link').elements()).toHaveLength(4);
   });
   it('uses the new game artwork for every mobile tab', async () => {
     render(BottomTabBar);
@@ -48,7 +55,6 @@ describe('BottomTabBar.svelte', () => {
       '/t': 'game-icons:tavern-sign',
       '/t/new': 'game-icons:dice-twenty-faces-twenty',
       '/u/tables': 'game-icons:tabletop-players',
-      '/p': 'game-icons:trade',
     };
     for (const [href, icon] of Object.entries(expected)) {
       const svg = document.querySelector<SVGSVGElement>(`a[href="${href}"] svg`);
