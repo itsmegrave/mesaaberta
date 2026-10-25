@@ -9,18 +9,17 @@ for (const [name, path] of [
 
     const footer = page.getByRole('contentinfo');
     await expect(footer.getByRole('link', { name: 'itsmegrave' })).toBeVisible();
-    await expect(footer.getByRole('link', { name: 'Lenindragons' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
       'href',
       'https://github.com/itsmegrave/mesaaberta',
     );
-    await expect(footer.getByRole('link', { name: 'Contato' })).toHaveAttribute(
+    await expect(footer.getByRole('link', { name: 'contato@example.test' })).toHaveAttribute(
       'href',
       'mailto:contato@example.test',
     );
     await expect(
       footer.getByRole('link', { name: 'Instagram da Mesa Aberta, @mesaaberta.test' }),
     ).toHaveAttribute('href', 'https://www.instagram.com/mesaaberta.test/');
-    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveCount(0);
+    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveAttribute('href', '/p');
   });
 }

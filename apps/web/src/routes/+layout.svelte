@@ -20,6 +20,7 @@
   import NotificationBell from '#lib/components/NotificationBell.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import SideNav from '#lib/components/SideNav.svelte';
+  import SiteFooter from '#lib/components/SiteFooter.svelte';
   import TableLogo from '#lib/components/TableLogo.svelte';
   import ThemeToggle from '#lib/components/ThemeToggle.svelte';
   import Toaster from '#lib/components/Toaster.svelte';
@@ -83,8 +84,6 @@
   };
   // A list page on its way from another page: its skeleton stands in for the page being left. Within
   // the same page (a filter), the page draws its own skeleton under the filters.
-  const footerLink =
-    'font-semibold text-surface-950-50 underline decoration-surface-200-800 underline-offset-4 hover:decoration-primary-500';
   const arriving = $derived.by(() => {
     const to = loading.current;
     if (!to?.route.id || to.route.id === page.route.id) return null;
@@ -228,74 +227,7 @@
       {/if}
 
       {#if !data.maintenance}
-        <footer class="mx-auto w-full max-w-7xl px-5 pb-24 md:px-8 md:pb-0">
-          <div
-            class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
-          >
-            <div class="flex flex-col gap-3">
-              <p class="flex items-center gap-2.5 text-surface-950-50">
-                <TableLogo size={26} />
-                <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
-              </p>
-              <p class="md:max-w-md">
-                {m.footer_made_with()}
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  role="img"
-                  aria-label={m.footer_made_with_love()}
-                  class="inline shrink-0 fill-secondary-300 align-middle"
-                >
-                  <path
-                    d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2 0 3.6 1.1 4.6 2.7h1c1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"
-                  ></path>
-                </svg>
-                {m.footer_made_by()}
-                <a
-                  href="https://github.com/itsmegrave"
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">itsmegrave</a
-                >. {m.footer_open_source()}
-                <a
-                  href="https://github.com/itsmegrave/mesaaberta"
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">GitHub</a
-                >.
-              </p>
-            </div>
-            <div class="flex flex-col gap-2.5 md:max-w-sm">
-              <p>
-                {m.footer_community()}
-                <a
-                  href="https://linktr.ee/lenindragonsrpg"
-                  rel="noopener"
-                  target="_blank"
-                  class="link-underline text-surface-950-50">Lenindragons</a
-                >.
-              </p>
-              <!-- Quiet links: a line-coloured underline, unlike the primary one in the sentences. -->
-              <nav aria-label={m.footer_links()} class="flex flex-wrap gap-x-4 gap-y-1.5">
-                {#if data.site.INSTAGRAM_HANDLE}
-                  <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
-                  <a
-                    href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
-                    rel="noopener"
-                    target="_blank"
-                    aria-label={m.footer_instagram_label({ handle: data.site.INSTAGRAM_HANDLE })}
-                    class={footerLink}>Instagram</a
-                  >
-                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
-                {/if}
-                <a href="mailto:{data.site.CONTACT_EMAIL}" class={footerLink}
-                  >{m.footer_contact()}</a
-                >
-              </nav>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter site={data.site} />
       {/if}
     </div>
   </div>

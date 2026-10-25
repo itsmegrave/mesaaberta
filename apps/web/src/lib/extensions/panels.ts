@@ -11,3 +11,14 @@ import type { Component } from 'svelte';
 export type Panel = Component<{ data: any }>;
 
 export const panels: Readonly<Record<string, () => Promise<{ default: Panel }>>> = {};
+
+/**
+ * Lines the footer adds under its community sentence, each with an optional link: a private build
+ * names its own people and projects here. None in the public build.
+ */
+export interface FooterNote {
+  text: string;
+  link?: { label: string; href: `https://${string}` };
+}
+
+export const footerNotes: readonly FooterNote[] = [];
