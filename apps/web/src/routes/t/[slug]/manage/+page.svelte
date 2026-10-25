@@ -436,7 +436,7 @@
             <li class={row}>
               <span class="flex items-center gap-3">
                 <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-10 shrink-0">
-                  <Chair colour="fill-lamp-wash stroke-lamp" head="dashed" />
+                  <Chair colour="fill-lamp-wash stroke-lamp" person="dashed" />
                 </svg>
                 <span>
                   <span class="block font-semibold">{m.manage_free_seat()}</span>

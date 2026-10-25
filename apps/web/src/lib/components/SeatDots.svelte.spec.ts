@@ -18,15 +18,19 @@ describe('SeatDots', () => {
     expect(chairs[3].getAttribute('class')).toContain('stroke-lamp');
   });
 
-  it('dashes only the head of a free seat, not its backrest', () => {
+  it('dashes only the meeple of a free seat, not its backrest', () => {
     render(SeatDots, { taken: 0, capacity: 1 });
 
-    expect(
-      document.querySelector('[data-chair="free"] circle')?.getAttribute('stroke-dasharray'),
-    ).toBe('6 5.8');
-    expect(
-      document.querySelector('[data-chair="free"] path')?.hasAttribute('stroke-dasharray'),
-    ).toBe(false);
+    const [backrest, meeple] = document.querySelectorAll('[data-chair="free"] path');
+    expect(backrest.hasAttribute('stroke-dasharray')).toBe(false);
+    expect(meeple.getAttribute('stroke-dasharray')).toBe('75 72');
+  });
+
+  it("draws the person as the app's meeple icon", () => {
+    render(SeatDots, { taken: 1, capacity: 1 });
+
+    const meeple = document.querySelectorAll('[data-chair] path')[1];
+    expect(meeple.getAttribute('d')).toMatch(/^M256 54\.99/);
   });
 
   it('creates the chairs as SVG, not HTML', () => {

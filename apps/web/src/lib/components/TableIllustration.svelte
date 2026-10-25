@@ -90,7 +90,7 @@
     <Chair
       data-seat={players.length}
       colour={onBrand ? 'stroke-warning-300 fill-warning-500/15' : 'stroke-lamp fill-lamp-wash'}
-      head="ring"
+      person="ring"
     />
   </g>
 </svg>

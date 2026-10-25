@@ -61,6 +61,11 @@
   <circle cx="50" cy="50" r="20" class="fill-surface-950/25" />
 
   {#each seats as seat, i (i)}
-    <Chair transform={seat.transform} colour={seat.colour} head={seat.free ? 'dashed' : 'solid'} />
+    <Chair
+      transform={seat.transform}
+      colour={seat.colour}
+      person={seat.free ? 'dashed' : 'solid'}
+      gm={i === 0}
+    />
   {/each}
 </svg>

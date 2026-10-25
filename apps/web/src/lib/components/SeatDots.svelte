@@ -24,7 +24,7 @@
     <svg viewBox="-30 -36 60 60" class="block {seat}">
       <Chair
         colour={i < taken ? colours[i % colours.length] : 'fill-lamp-wash stroke-lamp'}
-        head={i >= taken ? 'dashed' : 'solid'}
+        person={i >= taken ? 'dashed' : 'solid'}
       />
     </svg>
   {/each}
