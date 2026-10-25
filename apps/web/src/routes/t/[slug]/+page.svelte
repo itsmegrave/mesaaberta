@@ -7,7 +7,7 @@
   import RichText from '#lib/components/RichText.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import Button from '#lib/components/Button.svelte';
+  import Button, { buttonClass } from '#lib/components/Button.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
@@ -313,8 +313,7 @@
         {:else if data.invitation}
           <a
             href={`/u/profile/invitations/${data.invitation.id}`}
-            class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold"
-            >{m.invitation_review()}</a
+            class="{buttonClass('primary')} w-full font-semibold">{m.invitation_review()}</a
           >
         {:else if data.canJoin && table.joinMode === 'approval'}
           <JoinRequestDialog

@@ -11,6 +11,7 @@
   import Icon from '#lib/components/Icon.svelte';
   import KebabMenu from '#lib/components/KebabMenu.svelte';
   import Pager from '#lib/components/admin/Pager.svelte';
+  import { buttonClass } from '#lib/components/Button.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data: serverData } = $props();
@@ -204,15 +205,13 @@
           <a
             href="{pageHref('/u/tables', page.url.searchParams, data.waiting.first.page)}#mesa-{data
               .waiting.first.slug}"
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
-            >{m.dash_banner_action()}</a
+            class="{buttonClass('primary')} font-semibold sm:ml-auto">{m.dash_banner_action()}</a
           >
         {:else}
           <a
             href="#mesa-{data.waiting?.first.slug}"
             onclick={showRunning}
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
-            >{m.dash_banner_action()}</a
+            class="{buttonClass('primary')} font-semibold sm:ml-auto">{m.dash_banner_action()}</a
           >
         {/if}
       </div>

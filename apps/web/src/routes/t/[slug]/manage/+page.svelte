@@ -10,6 +10,7 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
+  import { buttonClass } from '#lib/components/Button.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
@@ -151,8 +152,7 @@
   };
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6';
-  const secondary =
-    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
+  const secondary = `${buttonClass('secondary')} font-semibold`;
 </script>
 
 <svelte:head>
@@ -305,7 +305,7 @@
                       playerId={request.playerId}
                       next={here}
                       label={m.table_approve()}
-                      buttonClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+                      buttonClass="{buttonClass('primary')} font-semibold"
                       success={m.toast_approved()}
                     />
                     <ConfirmAction

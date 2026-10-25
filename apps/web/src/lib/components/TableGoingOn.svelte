@@ -3,7 +3,7 @@
   // Each player rates once, however many sessions the table has.
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import Button, { buttonClass } from '#lib/components/Button.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import { answerSchema } from '#lib/tables/confirmation.js';
@@ -78,12 +78,8 @@
       {/if}
     </fieldset>
     {#if eligible.length > 0}
-      <SubmitButton
-        submitting={allow.pending}
-        delayed={allow.delayed}
-        timeout={allow.timeout}
-        class="mt-4 btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-        >{m.manage_going_rate_submit()}</SubmitButton
+      <Button type="submit" variant="primary" controller={allow} class="mt-4 font-semibold"
+        >{m.manage_going_rate_submit()}</Button
       >
     {/if}
     {#if allow.errors._errors?.[0]}
@@ -101,7 +97,7 @@
       label={m.manage_going_finish()}
       title={m.manage_going_finish_title()}
       text={m.manage_going_finish_text()}
-      class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+      class="{buttonClass('secondary')} font-semibold"
     />
   </div>
 </section>

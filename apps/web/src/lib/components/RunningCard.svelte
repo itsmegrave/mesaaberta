@@ -6,7 +6,7 @@
   import { m } from '#lib/paraglide/messages.js';
   import ActionForm from './ActionForm.svelte';
   import Icon from './Icon.svelte';
-  import Button from './Button.svelte';
+  import Button, { buttonClass } from './Button.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import NextSession from './NextSession.svelte';
   import SeatDots from './SeatDots.svelte';
@@ -79,14 +79,14 @@
           action="{manage}?/happened"
           {next}
           label={m.dash_session_yes()}
-          buttonClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+          buttonClass="{buttonClass('primary')} font-semibold"
           success={m.toast_table_concluded()}
         />
         <ActionForm
           action="{manage}?/notHeld"
           {next}
           label={m.dash_session_no()}
-          buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+          buttonClass="{buttonClass('secondary')} font-semibold"
           success={m.toast_table_not_held()}
         />
       </div>
@@ -101,9 +101,8 @@
   <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 
   <p class="mt-4 flex flex-wrap gap-3">
-    <a
-      href={`/t/${item.slug}/manage`}
-      class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold">{m.dash_manage()}</a
+    <a href={`/t/${item.slug}/manage`} class="{buttonClass('primary')} font-semibold"
+      >{m.dash_manage()}</a
     >
     <a
       href={`/t/${item.slug}/edit`}
