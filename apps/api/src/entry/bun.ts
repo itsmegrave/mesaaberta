@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName } from '@mesaaberta/core/server/logger';
 import { createHttpMetrics } from '@mesaaberta/core/server/metrics';
 import { createApi } from '../app';
@@ -8,6 +9,7 @@ import { internalToken } from '../internal-token';
 // a private network behind the web app, never on the internet, and refuses a request without the
 // shared secret (`API_INTERNAL_TOKEN`), because over HTTP the actor header is only a claim.
 setAppName('api');
+logInstalled();
 
 const token = process.env.API_INTERNAL_TOKEN ?? '';
 if (!token) {

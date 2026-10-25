@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
 import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createApi } from './app';
 import { sentrySink } from './sentry-sink';
@@ -9,6 +10,7 @@ import { sentrySink } from './sentry-sink';
 // console (Workers Logs). Handled errors reach Sentry through the logger (see `onError` in app.ts).
 setTelemetrySink(sentrySink);
 setAppName('api');
+logInstalled();
 
 const api = createApi();
 

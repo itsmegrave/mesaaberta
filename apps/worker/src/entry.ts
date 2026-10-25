@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
 import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createWorker, type WorkerEnv } from './index';
 import { sentrySink } from './sentry-sink';
@@ -9,6 +10,7 @@ import { sentrySink } from './sentry-sink';
 // the SDK stays off and the logger still writes to the console.
 setTelemetrySink(sentrySink);
 setAppName('worker');
+logInstalled();
 
 export default Sentry.withSentry(
   (env: WorkerEnv) => ({
