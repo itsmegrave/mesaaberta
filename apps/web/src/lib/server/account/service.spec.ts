@@ -116,6 +116,38 @@ describe('exportAccount', () => {
   });
 });
 
+describe('exportAccount badges and attendance', () => {
+  it('holds the badges, hidden and revoked too, and what the GM marked, without who granted them', async () => {
+    const table = await makeTable(other, { title: 'Mesa marcada' });
+    await test.db
+      .insert(registrations)
+      .values({ tableId: table.id, playerId: me, status: 'confirmed', attended: false });
+    await test.db.insert(userBadges).values([
+      { profileId: me, badgeId: 'first-table', awardedAt: new Date('2026-10-01T00:00:00Z') },
+      { profileId: me, badgeId: 'partner', hidden: true, grantedBy: other },
+      {
+        profileId: me,
+        badgeId: 'pioneer',
+        revokedAt: new Date('2026-10-02T00:00:00Z'),
+        revokeReason: 'abuse',
+      },
+    ]);
+
+    const data = await exportAccount(test.db, me, 'ana@example.com');
+
+    expect(data.badges.map((b) => b.badgeId).sort()).toEqual(['first-table', 'partner', 'pioneer']);
+    expect(data.badges.find((b) => b.badgeId === 'partner')).toMatchObject({
+      hidden: true,
+      grantedByAdmin: true,
+    });
+    expect(data.badges.find((b) => b.badgeId === 'pioneer')).toMatchObject({
+      revokeReason: 'abuse',
+    });
+    expect(data.seats.find((seat) => seat.table === 'Mesa marcada')?.attended).toBe(false);
+    expect(JSON.stringify(data)).not.toContain(other);
+  });
+});
+
 describe('exportAccount messages', () => {
   it('holds what the person wrote, with where, and not what others wrote to them', async () => {
     const table = await makeTable(other, { title: 'Chat da mesa' });

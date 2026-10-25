@@ -44,6 +44,7 @@
   "notification_message_group_one": "Nova mensagem em {table}",
   "notification_message_group_many": "{count} novas mensagens em {table}",
   "notifications_filter_messages": "Mensagens",
+  "notifications_filter_achievements": "Conquistas",
   "messages_inbox_label": "Suas conversas",
   "messages_thread_label": "Conversa",
   "messages_pagination_label": "Páginas de conversas",
