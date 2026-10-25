@@ -20,22 +20,35 @@ test('the account menu leads to the profile, where the details are saved and the
   await expect(page).toHaveURL(/\/u\/profile\/edit$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Editar perfil');
 
-  await expect(page.getByLabel('Email')).toHaveValue(user.email);
-  await expect(page.getByLabel('Nome de usuário')).toHaveAttribute('readonly', '');
+  // "Perfil público" first: the name, the bio and the links.
+  await page.getByLabel(/^Bio/).fill('Mestro horror cósmico.\nSessão zero antes de tudo.');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await expect(page.getByText('Perfil salvo.')).toBeVisible();
+
+  // Each part of the page saves on its own, without touching the others.
+  const sections = page.getByRole('navigation', { name: 'Seções do perfil' });
+  await sections.getByRole('link', { name: 'Sobre você' }).click();
+  await expect(page).toHaveURL(/\/u\/profile\/edit\/about$/);
   await page.getByLabel('Cidade').fill('Recife');
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
   await expect(page.getByText('Perfil salvo.')).toBeVisible();
-  // Saved: back on the public page.
-  await expect(page).toHaveURL(new RegExp(`/u/${user.username}$`));
 
-  await page.goto('/u/profile/edit');
+  await page.reload();
   await expect(page.getByLabel('Cidade')).toHaveValue('Recife');
+  await sections.getByRole('link', { name: 'Conta e acesso' }).click();
+  await expect(page.getByLabel('Email')).toHaveValue(user.email);
   await expect(page.getByLabel('Nome de usuário')).toHaveValue(user.username);
+  await expect(page.getByLabel('Nome de usuário')).toHaveAttribute('readonly', '');
+
+  // The bio is on the public page, line breaks and all; the city is not.
+  await page.goto(`/u/${user.username}`);
+  await expect(page.getByText('Sessão zero antes de tudo.')).toBeVisible();
+  await expect(page.getByRole('main')).not.toContainText('Recife');
 });
 
 test("the timezone on the profile wins over the browser's, on every page", async ({ page }) => {
   const user = await createUser('Fuso Horario');
-  await signIn(page, user, '/u/profile/edit');
+  await signIn(page, user, '/u/profile/edit/about');
 
   // Not picked yet: the field offers the browser's zone.
   const field = page.getByRole('combobox', { name: 'Fuso horário' });
@@ -57,7 +70,7 @@ test("the timezone on the profile wins over the browser's, on every page", async
 
 test('downloads a copy of the account data as JSON', async ({ page }) => {
   const user = await createUser('Dados Exportados');
-  await signIn(page, user, '/u/profile/edit');
+  await signIn(page, user, '/u/profile/edit/data');
 
   const download = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Baixar meus dados' }).click();
@@ -75,7 +88,7 @@ test('closing the account asks for the username, then removes the person and sig
   page,
 }) => {
   const user = await createUser('Conta Apagada');
-  await signIn(page, user, '/u/profile/edit');
+  await signIn(page, user, '/u/profile/edit/data');
 
   await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
@@ -104,15 +117,15 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
   await signIn(page, user, '/u/profile/edit');
   await expect(page.getByRole('button', { name: 'Remover foto enviada' })).toHaveCount(0);
 
-  // Auto-upload starts after the native file field becomes the hydrated picker.
-  await expect(page.getByRole('button', { name: 'Escolher imagem', exact: true })).toBeVisible();
-  await page.locator('input[type="file"]').setInputFiles({
+  // The button opens a dialog with the drop zone; the picture is framed there, and using the crop
+  // sends it.
+  await page.getByRole('button', { name: 'Alterar foto de perfil' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Editar foto de perfil' });
+  await dialog.locator('input[type="file"]').setInputFiles({
     name: 'eu.png',
     mimeType: 'image/png',
     buffer: PNG,
   });
-  // The picture is framed first; using the crop sends it.
-  await expect(page.getByText('Enquadrar a imagem', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Aproximar' }).click();
   await page.getByRole('button', { name: 'Usar este recorte' }).click();
   await expect(page.getByText('Foto atualizada.')).toBeVisible();
@@ -138,17 +151,51 @@ test('uploads a profile picture to the own folder, shows it in the header, and r
   }
 });
 
+test('uploads a cover in 4:1, shows it on the public profile, and removes it', async ({ page }) => {
+  const user = await createUser('Capa Enviada');
+  await signIn(page, user, '/u/profile/edit');
+  await expect(page.getByText('Sem capa por enquanto')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Alterar capa' }).click();
+  await page
+    .getByRole('dialog', { name: 'Editar capa' })
+    .locator('input[type="file"]')
+    .setInputFiles({ name: 'capa.png', mimeType: 'image/png', buffer: PNG });
+  await page.getByRole('button', { name: 'Usar este recorte' }).click();
+  await expect(page.getByText('Capa atualizada.')).toBeVisible();
+
+  const sql = database();
+  try {
+    const [{ banner_path: path }] =
+      await sql`select banner_path from profiles where id = ${user.id}`;
+    expect(path).toMatch(new RegExp(`^${user.id}/banners/[0-9a-f-]+\\.(png|webp|jpg)$`));
+
+    await page.goto(`/u/${user.username}`);
+    await expect(page.locator(`img[src$="/profile-avatars/${path}"]`)).toHaveCount(1);
+
+    await page.goto('/u/profile/edit');
+    await page.getByRole('button', { name: 'Remover capa' }).click();
+    await expect(page.getByText('Capa removida.')).toBeVisible();
+    const [after] = await sql`select banner_path from profiles where id = ${user.id}`;
+    expect(after.banner_path).toBeNull();
+  } finally {
+    await sql.end();
+  }
+});
+
 test('refuses a file that is not a picture', async ({ page }) => {
   const user = await createUser('Foto Falsa');
   await signIn(page, user, '/u/profile/edit');
 
-  // Auto-upload starts after the native file field becomes the hydrated picker.
-  await expect(page.getByRole('button', { name: 'Escolher imagem', exact: true })).toBeVisible();
-  await page.locator('input[type="file"]').setInputFiles({
-    name: 'eu.png',
-    mimeType: 'image/png',
-    buffer: Buffer.from('<svg onload="alert(1)"></svg>'),
-  });
+  await page.getByRole('button', { name: 'Alterar foto de perfil' }).click();
+  await page
+    .getByRole('dialog', { name: 'Editar foto de perfil' })
+    .locator('input[type="file"]')
+    .setInputFiles({
+      name: 'eu.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('<svg onload="alert(1)"></svg>'),
+    });
   await expect(page.getByRole('alert')).toContainText('Envie uma foto PNG, JPEG ou WebP.');
 });
 
@@ -156,13 +203,13 @@ test('a slow submit locks its button: it says it is busy, and a second click sen
   page,
 }) => {
   const user = await createUser('Envio Lento');
-  await signIn(page, user, '/u/profile/edit');
+  await signIn(page, user, '/u/profile/edit/data');
 
   // Hold the answer, so the submit stays in flight while the test looks at the button.
   let posts = 0;
   let release = () => {};
   const held = new Promise<void>((resolve) => (release = resolve));
-  await page.route('**/u/profile/edit?/delete', async (route) => {
+  await page.route('**/u/profile/edit/data?/delete', async (route) => {
     posts++;
     await held;
     await route.continue();

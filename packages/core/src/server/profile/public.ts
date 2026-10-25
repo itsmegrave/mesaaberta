@@ -6,7 +6,7 @@ import {
   profileSocialLinks,
   registrations,
 } from '@mesaaberta/core/server/db/schema';
-import { pictureOf, imageUrl } from '@mesaaberta/core/server/images';
+import { bannerUrl, pictureOf, imageUrl } from '@mesaaberta/core/server/images';
 import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
@@ -64,6 +64,8 @@ export async function publicProfile(
       username: profiles.username,
       avatarPath: profiles.avatarPath,
       avatarUrl: profiles.avatarUrl,
+      bannerPath: profiles.bannerPath,
+      bio: profiles.bio,
       role: profiles.role,
     })
     .from(profiles)
@@ -99,6 +101,9 @@ export async function publicProfile(
     profile: {
       username: found.username!,
       avatarUrl: pictureOf(supabaseUrl, found),
+      bannerUrl: bannerUrl(supabaseUrl, found.bannerPath),
+      // Plain text in the person's own words; the page keeps its line breaks and escapes it.
+      bio: found.bio,
       // `text` is shown next to the icon; `href` is null where there is nothing to open (Discord).
       links: links.flatMap((link) => {
         if (!isNetwork(link.network)) return [];

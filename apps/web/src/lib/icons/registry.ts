@@ -30,6 +30,9 @@ import CheckIcon from '@iconify-svelte/reicon/check';
 import XmarkIcon from '@iconify-svelte/reicon/xmark';
 import UploadIcon from '@iconify-svelte/reicon/upload';
 import ImageIcon from '@iconify-svelte/reicon/image';
+import CameraIcon from '@iconify-svelte/reicon/camera';
+import CloudUploadIcon from '@iconify-svelte/reicon/cloud-upload';
+import UserIdIcon from '@iconify-svelte/reicon/user-id';
 import RepeatIcon from '@iconify-svelte/reicon/repeat';
 import CalendarIcon from '@iconify-svelte/reicon/calendar';
 import CircleXIcon from '@iconify-svelte/reicon/close-circle';
@@ -142,6 +145,9 @@ export const ICONS = {
   xmark: XmarkIcon,
   upload: UploadIcon,
   image: ImageIcon,
+  camera: CameraIcon,
+  'cloud-upload': CloudUploadIcon,
+  'user-id': UserIdIcon,
   repeat: RepeatIcon,
   calendar: CalendarIcon,
   'circle-x': CircleXIcon,

@@ -64,6 +64,7 @@ export async function loadProfileForm(
     gender: profile.gender ?? '',
     genderOther: profile.genderOther ?? '',
     city: profile.city ?? '',
+    bio: profile.bio ?? '',
     timezone: profile.timezone ?? '',
     linkNetwork: links.map((link) => link.network),
     // What the person typed: the handle of a network, the address of a website.
@@ -89,6 +90,7 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
     // Own words go with "Outro" only; picking another option forgets them.
     genderOther: (input.gender === 'other' && input.genderOther) || null,
     city: input.city || null,
+    bio: input.bio || null,
     timezone: input.timezone || null,
   };
 
@@ -115,13 +117,13 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
       }
 
       // The history: what the person changed, by themselves. Who they are (name, age range, gender,
-      // city) is personal data, so it says that it changed and what it became is not kept.
+      // city, bio) is personal data, so it says that it changed and what it became is not kept.
       const linkText = (rows: { network: string; handle?: string | null; url: string | null }[]) =>
         rows.map((link) => `${link.network}: ${link.handle ?? link.url}`);
       const changes = diffFields(
         { ...before, links: linkText(linksBefore) },
         { ...values, links: linkText(links) },
-        { hidden: ['name', 'ageRange', 'gender', 'genderOther', 'city'] },
+        { hidden: ['name', 'ageRange', 'gender', 'genderOther', 'city', 'bio'] },
       );
       if (hasChanges(changes))
         await recordEvent(tx as unknown as AnyDb, {

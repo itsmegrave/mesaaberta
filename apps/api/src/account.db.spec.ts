@@ -94,6 +94,22 @@ describe('api account routes over a database', () => {
     expect((await row(ana)).avatarPath).toBeNull();
   });
 
+  it('points the profile at a stored cover, only from the person’s own banners folder', async () => {
+    const first = await post('banner', { path: `${ana}/banners/a.webp` }, ana);
+    expect(await first.json()).toEqual({ eventIds: [], replaced: null });
+    expect((await row(ana)).bannerPath).toBe(`${ana}/banners/a.webp`);
+
+    for (const path of [`${ana}/a.webp`, `${bia}/banners/a.webp`, `${ana}/banners/../a.webp`]) {
+      const refused = await post('banner', { path }, ana);
+      expect(refused.status).toBe(400);
+      expect(await refused.json()).toMatchObject({ field: 'banner' });
+    }
+
+    const removed = await post('banner', { path: null }, ana);
+    expect(await removed.json()).toEqual({ eventIds: [], replaced: `${ana}/banners/a.webp` });
+    expect((await row(ana)).bannerPath).toBeNull();
+  });
+
   it('finishes the profile with the username picked here, then keeps it', async () => {
     const [{ id }] = await test.db
       .insert(profiles)

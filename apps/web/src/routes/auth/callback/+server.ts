@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => 
   if (refused && safeNext(url.searchParams.get('next')).startsWith('/u/profile/edit')) {
     redirect(
       303,
-      `/u/profile/edit?conta=${refused === 'identity_already_exists' ? 'de_outra_pessoa' : 'falhou'}`,
+      `/u/profile/edit/account?conta=${refused === 'identity_already_exists' ? 'de_outra_pessoa' : 'falhou'}`,
     );
   }
 

@@ -43,6 +43,8 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       invitationsEnabled: profiles.invitationsEnabled,
       avatarUrl: profiles.avatarUrl,
       avatarPath: profiles.avatarPath,
+      bannerPath: profiles.bannerPath,
+      bio: profiles.bio,
       createdAt: profiles.createdAt,
     })
     .from(profiles)
@@ -309,6 +311,8 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
         timezone: null,
         avatarUrl: null,
         avatarPath: null,
+        bannerPath: null,
+        bio: null,
         status: 'suspended',
         invitationsEnabled: false,
       })
@@ -333,5 +337,25 @@ export async function setAvatarPath(
       .for('update');
     await tx.update(profiles).set({ avatarPath: path }).where(eq(profiles.id, userId));
     return before?.avatarPath ?? null;
+  });
+}
+
+/**
+ * Points the profile at a newly uploaded cover, or at none. Returns the path it replaced, so the
+ * caller can delete that file.
+ */
+export async function setBannerPath(
+  db: AnyDb,
+  userId: string,
+  path: string | null,
+): Promise<string | null> {
+  return db.transaction(async (tx) => {
+    const [before] = await tx
+      .select({ bannerPath: profiles.bannerPath })
+      .from(profiles)
+      .where(eq(profiles.id, userId))
+      .for('update');
+    await tx.update(profiles).set({ bannerPath: path }).where(eq(profiles.id, userId));
+    return before?.bannerPath ?? null;
   });
 }

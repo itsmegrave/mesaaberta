@@ -9,7 +9,7 @@ import type { RequestHandler } from './$types';
 // on our side, and only the signed-in person's own browser can finish it.
 export const GET: RequestHandler = async ({ params, url, locals }) => {
   await requireUser(locals, url);
-  if (!locals.supabase) redirect(303, '/u/profile/edit?conta=indisponivel');
+  if (!locals.supabase) redirect(303, '/u/profile/edit/account?conta=indisponivel');
 
   const target = await startLink(locals.supabase, {
     provider: params.provider as never,
@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
   });
   if (!target) {
     locals.log.error('connect: Supabase gave no provider URL', { provider: params.provider });
-    redirect(303, '/u/profile/edit?conta=falhou');
+    redirect(303, '/u/profile/edit/account?conta=falhou');
   }
 
   redirect(303, target, supabaseOnly(locals.env));
