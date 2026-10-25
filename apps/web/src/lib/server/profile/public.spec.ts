@@ -143,10 +143,13 @@ describe('public profiles', () => {
       'bannerUrl',
       'bio',
       'links',
+      'participantRating',
       'rating',
       'totals',
       'username',
     ]);
+    // Off unless the `use_player_ratings` rollout reaches the profile.
+    expect(data.profile.participantRating).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
       'gmName',
@@ -258,6 +261,16 @@ describe('public profiles', () => {
       count: 0,
       isNew: true,
     });
+  });
+
+  it('adds the score as a participant once the rollout reaches the profile, asked by its id', async () => {
+    const asked: unknown[] = [];
+    const data = await publicProfile(test.db, 'mestre-ana', {
+      now,
+      showParticipantRating: async (target) => (asked.push(target), true),
+    });
+    expect(asked).toEqual([{ id: id(1), isAdmin: true }]);
+    expect(data?.profile.participantRating).toEqual({ score: null, count: 0, isNew: true });
   });
 
   it("paginates the right GM's tables that have not started, in a steady order, with seats", async () => {

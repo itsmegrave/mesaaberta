@@ -77,6 +77,7 @@ import GameWizardStaffIcon from '@iconify-svelte/game-icons/wizard-staff';
 import GameShakingHandsIcon from '@iconify-svelte/game-icons/shaking-hands';
 import GameRoundTableIcon from '@iconify-svelte/game-icons/round-table';
 import GameSunriseIcon from '@iconify-svelte/game-icons/sunrise';
+import GameSproutIcon from '@iconify-svelte/game-icons/sprout';
 import GameLaurelsIcon from '@iconify-svelte/game-icons/laurels';
 import GamePodiumIcon from '@iconify-svelte/game-icons/podium';
 import EyeOffIcon from '@iconify-svelte/reicon/eye-off-filled';
@@ -197,6 +198,7 @@ export const ICONS = {
   'game-icons:shaking-hands': GameShakingHandsIcon,
   'game-icons:round-table': GameRoundTableIcon,
   'game-icons:sunrise': GameSunriseIcon,
+  'game-icons:sprout': GameSproutIcon,
   'panel-left-open': PanelLeftOpenIcon,
   'panel-left-close': PanelLeftCloseIcon,
   bold: BoldIcon,

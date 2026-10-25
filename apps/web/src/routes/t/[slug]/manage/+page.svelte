@@ -23,6 +23,8 @@
   import SummaryRow from '../components/ui/SummaryRow.svelte';
   import { Target } from '#lib/target.svelte.js';
   import TableGoingOn from './components/TableGoingOn.svelte';
+  import PlayerRatings from './components/PlayerRatings.svelte';
+  import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import DraftNotice from '../components/DraftNotice.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -311,6 +313,16 @@
                 subline={m.manage_requested_at({ date: moment(request.since) })}
                 wrap
               >
+                {#snippet extra()}
+                  {#if data.playerRatings}
+                    <ScoreLine
+                      rating={request.participantRating}
+                      label={m.participant_rating()}
+                      debut={m.participant_rating_new()}
+                      suffix={m.participant_rating_as()}
+                    />
+                  {/if}
+                {/snippet}
                 {#snippet actions()}
                   <span class="flex gap-2">
                     <ActionForm
@@ -410,6 +422,10 @@
           {/each}
         </ul>
       </section>
+
+      {#if data.canRatePlayers}
+        <PlayerRatings next={here} goingOn={table.status !== 'concluded'} players={data.players} />
+      {/if}
 
       <section aria-labelledby="activity" class={card}>
         <Collapsible

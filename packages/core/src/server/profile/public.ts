@@ -9,6 +9,7 @@ import {
 import { bannerUrl, pictureOf, imageUrl } from '@mesaaberta/core/server/images';
 import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '../../profile/social-links';
 import { normalizeUsername, usernameProblem } from '../../profile/username';
@@ -48,6 +49,7 @@ export async function publicProfile(
     supabaseUrl,
     viewerId = null,
     showBadges,
+    showParticipantRating,
   }: {
     page?: number;
     now?: Date;
@@ -55,6 +57,8 @@ export async function publicProfile(
     viewerId?: string | null;
     /** Whether this profile shows its badges (the `use_badges` rollout). Omitted: it does not. */
     showBadges?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
+    /** Whether this profile shows its score as a participant (`use_player_ratings`). Omitted: no. */
+    showParticipantRating?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -94,6 +98,14 @@ export async function publicProfile(
     ? await heldBadges(db, found.id, { includeHidden: isOwnerView })
     : null;
 
+  // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
+  const participantRating = (await showParticipantRating?.({
+    id: found.id,
+    isAdmin: found.role === 'admin',
+  }))
+    ? await participantRatingOf(db, found.id, now)
+    : null;
+
   return {
     badges,
     // What the owner has yet to earn, for their own view only.
@@ -112,6 +124,7 @@ export async function publicProfile(
       }),
       totals,
       rating,
+      participantRating,
     },
     tables: upcoming.tables.map((table) => ({
       slug: table.slug,
