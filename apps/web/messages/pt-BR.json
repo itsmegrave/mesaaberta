@@ -1709,6 +1709,8 @@
   "notification_crowdfunding_removed_note": "Seu financiamento coletivo “{campaign}” foi removido pela moderação. Motivo: {reason}. Recado: {note}",
   "nav_crowdfunding": "Financiamentos",
   "nav_crowdfunding_rail": "Financia­mentos",
+  "nav_notifications_rail": "Notifi­cações",
+  "nav_theme_rail": "Tema",
   "nav_crowdfunding_short": "FCs",
   "nav_crowdfunding_label": "Financiamentos coletivos",
   "crowdfunding_title": "Financiamentos coletivos",

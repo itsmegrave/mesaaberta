@@ -19,6 +19,7 @@
 </script>
 
 <script lang="ts" generics="T extends RowData">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // Every list an admin works through is this one pattern on TanStack Table: one bordered card with
   // the toolbar, a header row on the wash, the rows and a footer; on a phone no table, but a list of
   // cards with a "Filtros" sheet and "Mostrar mais". The address is the state (`?q=&status=&sort=&dir=
@@ -291,9 +292,8 @@
               <td colspan={allColumns.length} class="px-4 py-10 text-center text-muted">
                 <p>{empty}</p>
                 {#if filtered}
-                  <a
-                    class="mt-2 inline-flex min-h-11 items-center anchor font-semibold"
-                    href={clearHref}>{m.admin_list_clear()}</a
+                  <a class="mt-3 {buttonClass('secondary', 'sm')} font-semibold" href={clearHref}
+                    >{m.admin_list_clear()}</a
                   >
                 {/if}
               </td>
@@ -360,7 +360,7 @@
       <div class="rounded-lg border border-surface-200-800 bg-panel p-6 text-center text-muted">
         <p>{empty}</p>
         {#if filtered}
-          <a class="mt-2 inline-flex min-h-11 items-center anchor font-semibold" href={clearHref}
+          <a class="mt-3 {buttonClass('secondary', 'sm')} font-semibold" href={clearHref}
             >{m.admin_list_clear()}</a
           >
         {/if}

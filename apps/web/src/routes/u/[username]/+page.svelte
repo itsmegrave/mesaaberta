@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { copyText } from '#lib/clipboard.js';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import { page } from '$app/state';
@@ -71,7 +72,9 @@
   {#if data.previewing}
     <p role="status" class="mb-4 flex flex-wrap items-center gap-3 font-semibold">
       {m.public_profile_previewing()}
-      <a href={path} class="anchor">{m.public_profile_stop_previewing()}</a>
+      <a href={path} class="{buttonClass('secondary', 'sm')} font-semibold"
+        >{m.public_profile_stop_previewing()}</a
+      >
     </p>
   {/if}
 

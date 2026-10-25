@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -61,7 +62,7 @@
       </div>
     {/if}
     {#if invitation.status === 'accepted'}<a
-        class="mt-6 inline-block link-underline"
+        class="mt-6 {buttonClass('secondary', 'md')} font-semibold"
         href={`/t/${invitation.table.slug}`}>{m.manage_view_page()}</a
       >{/if}
     <div class="mt-6 border-t border-surface-200-800 pt-6">

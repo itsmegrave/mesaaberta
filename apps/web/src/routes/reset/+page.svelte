@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import FormBanner from '#lib/components/ui/FormBanner.svelte';
   import AuthShell from '#lib/components/ui/AuthShell.svelte';
@@ -43,7 +44,7 @@
 >
   {#if data.done}
     <p role="status" class="max-w-sm text-lg">{m.reset_done_text()}</p>
-    <a href="/t" class="mt-6 inline-block link-underline font-semibold text-link">
+    <a href="/t" class="mt-6 {buttonClass('primary', 'md')} font-semibold">
       {m.reset_done_link()}
     </a>
   {:else}
