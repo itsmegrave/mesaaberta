@@ -66,12 +66,16 @@ const contrast = (a: string, b: string) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-// The theme control is the sun/moon icon button everywhere: the header on a phone, the side nav on
-// desktop. Only one of them is visible at a time.
+// The theme control is the sun/moon icon button in the phone header and the collapsed rail, and a
+// "Tema escuro" switch in the open side nav. Only one of them is visible at a time.
 const toggle = (page: import('@playwright/test').Page) =>
-  page.getByRole('button', { name: 'Tema escuro' });
+  page
+    .getByRole('button', { name: 'Tema escuro' })
+    .or(page.getByRole('switch', { name: 'Tema escuro' }));
 const isOn = (page: import('@playwright/test').Page) =>
-  toggle(page).evaluate((el) => el.getAttribute('aria-pressed') === 'true');
+  toggle(page).evaluate(
+    (el) => (el.getAttribute('aria-pressed') ?? el.getAttribute('aria-checked')) === 'true',
+  );
 
 test.describe('the mode follows the system by default', () => {
   test('a dark system gets a dark page and a light system a pale one, both readable', async ({

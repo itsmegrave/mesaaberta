@@ -83,6 +83,8 @@
   };
   // A list page on its way from another page: its skeleton stands in for the page being left. Within
   // the same page (a filter), the page draws its own skeleton under the filters.
+  const footerLink =
+    'font-semibold text-surface-950-50 underline decoration-surface-200-800 underline-offset-4 hover:decoration-primary-500';
   const arriving = $derived.by(() => {
     const to = loading.current;
     if (!to?.route.id || to.route.id === page.route.id) return null;
@@ -162,8 +164,6 @@
                 username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
-                isAdmin={data.account.isAdmin}
-                pendingSuggestionsCount={data.account.pendingSuggestionsCount}
               />
             {:else if data.authEnabled}
               <a
@@ -221,7 +221,10 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar />
+        <BottomTabBar
+          isAdmin={data.account?.isAdmin ?? false}
+          pendingSuggestionsCount={data.account?.pendingSuggestionsCount ?? 0}
+        />
       {/if}
 
       {#if !data.maintenance}
@@ -230,7 +233,7 @@
             class="flex flex-col gap-5 border-t border-surface-200-800 pt-7 pb-9 text-sm leading-relaxed text-muted md:flex-row md:items-start md:justify-between md:gap-12 md:pt-9 md:pb-11"
           >
             <div class="flex flex-col gap-3">
-              <p class="flex items-center gap-2 text-surface-950-50">
+              <p class="flex items-center gap-2.5 text-surface-950-50">
                 <TableLogo size={26} />
                 <span class="font-brand text-lg font-semibold tracking-wider">Mesa Aberta</span>
               </p>
@@ -254,31 +257,16 @@
                   rel="noopener"
                   target="_blank"
                   class="link-underline text-surface-950-50">itsmegrave</a
-                >.
-              </p>
-              <p>
-                {m.footer_help()}
+                >. {m.footer_open_source()}
                 <a
-                  href="mailto:{data.site.CONTACT_EMAIL}"
-                  class="link-underline text-surface-950-50">{data.site.CONTACT_EMAIL}</a
-                >.
-              </p>
-              {#if data.site.INSTAGRAM_HANDLE}
-                <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
-                <a
-                  href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
+                  href="https://github.com/itsmegrave/mesaaberta"
                   rel="noopener"
                   target="_blank"
-                  aria-label={m.footer_instagram_label({ handle: data.site.INSTAGRAM_HANDLE })}
-                  title="@{data.site.INSTAGRAM_HANDLE}"
-                  class="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-surface-950-50 hover:preset-tonal"
-                >
-                  <Icon name="instagram" size={22} />
-                </a>
-                <!-- eslint-enable svelte/no-navigation-without-resolve -->
-              {/if}
+                  class="link-underline text-surface-950-50">GitHub</a
+                >.
+              </p>
             </div>
-            <div class="flex flex-col gap-3 md:max-w-sm">
+            <div class="flex flex-col gap-2.5 md:max-w-sm">
               <p>
                 {m.footer_community()}
                 <a
@@ -288,11 +276,23 @@
                   class="link-underline text-surface-950-50">Lenindragons</a
                 >.
               </p>
-              <p>
-                <a href="/p" class="link-underline text-surface-950-50"
-                  >{m.footer_partners_link()}</a
+              <!-- Quiet links: a line-coloured underline, unlike the primary one in the sentences. -->
+              <nav aria-label={m.footer_links()} class="flex flex-wrap gap-x-4 gap-y-1.5">
+                {#if data.site.INSTAGRAM_HANDLE}
+                  <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
+                  <a
+                    href="https://www.instagram.com/{data.site.INSTAGRAM_HANDLE}/"
+                    rel="noopener"
+                    target="_blank"
+                    aria-label={m.footer_instagram_label({ handle: data.site.INSTAGRAM_HANDLE })}
+                    class={footerLink}>Instagram</a
+                  >
+                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                {/if}
+                <a href="mailto:{data.site.CONTACT_EMAIL}" class={footerLink}
+                  >{m.footer_contact()}</a
                 >
-              </p>
+              </nav>
             </div>
           </div>
         </footer>

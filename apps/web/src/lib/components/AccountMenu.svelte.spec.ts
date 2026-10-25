@@ -78,13 +78,13 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu().getByRole('link', { name: /Admin/i })).not.toBeInTheDocument();
   });
 
-  it('links "Ver meu perfil" to the public page, without an @ in the address', async () => {
+  it('links "Perfil" to the public page, without an @ in the address', async () => {
     render(AccountMenu, { name: 'Marina Alves', username: 'marina', avatarUrl: null });
 
     await trigger().click();
 
     await expect
-      .element(menu().getByRole('link', { name: 'Ver meu perfil' }))
+      .element(menu().getByRole('link', { name: 'Perfil' }))
       .toHaveAttribute('href', '/u/marina');
   });
 
@@ -93,23 +93,33 @@ describe('AccountMenu.svelte', () => {
 
     await trigger().click();
 
-    await expect
-      .element(menu().getByRole('link', { name: 'Ver meu perfil' }))
-      .not.toBeInTheDocument();
+    await expect.element(menu().getByRole('link', { name: 'Perfil' })).not.toBeInTheDocument();
   });
 
-  it('links to the admin area for an admin, with the suggestions waiting', async () => {
-    render(AccountMenu, {
-      name: 'Marina Alves',
-      avatarUrl: null,
-      isAdmin: true,
-      pendingSuggestionsCount: 3,
-    });
+  it('is Perfil, Mensagens and Sair: Admin lives in the nav', async () => {
+    render(AccountMenu, { name: 'Marina Alves', username: 'marina', avatarUrl: null });
 
     await trigger().click();
 
-    const admin = menu().getByRole('link', { name: 'Admin: 3' });
-    await expect.element(admin).toHaveAttribute('href', '/admin');
+    expect(
+      menu()
+        .getByRole('link')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Perfil', 'Mensagens']);
+    await expect.element(menu().getByRole('button', { name: 'Sair' })).toBeVisible();
+  });
+
+  it('shows the unread messages on the avatar, in warning, and says it in the name', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null, messagesUnread: 2 });
+
+    const button = page.getByRole('button', {
+      name: 'Menu da conta: Marina Alves, 2 mensagens não lidas',
+    });
+    await expect.element(button).toBeVisible();
+    expect(button.element().querySelector('.preset-filled-warning-500')?.textContent?.trim()).toBe(
+      '2',
+    );
   });
 
   it('has no admin link for a member', async () => {
