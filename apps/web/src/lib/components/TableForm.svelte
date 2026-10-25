@@ -4,15 +4,14 @@
   import Icon from '#lib/components/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import CepLookup from './CepLookup.svelte';
-  import FormBanner from '#lib/components/FormBanner.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import Button from '#lib/components/Button.svelte';
   import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fieldErrors, problem } from '#lib/forms/field-errors.js';
-  import Form from './Form.svelte';
+  import EditorForm from './EditorForm.svelte';
+  import FormSection from './ui/FormSection.svelte';
   import { NAMELESS } from '@mesaaberta/core/profile/handle';
   import FormField from './FormField.svelte';
-  import ErrorSummary from './ErrorSummary.svelte';
   import RichTextField from './RichTextField.svelte';
   import SearchSelect from './SearchSelect.svelte';
   import SeatSlider from './SeatSlider.svelte';
@@ -90,7 +89,7 @@
   );
 
   // The card the list will show, from what is typed so far.
-  const preview = $derived({
+  const card = $derived({
     slug: 'preview',
     title: $draft.title || m.form_preview_title(),
     kind: $draft.kind,
@@ -137,425 +136,364 @@
   );
 </script>
 
-<Form
-  {action}
-  enctype="multipart/form-data"
-  onsubmit={controller.submit}
-  onfocusout={controller.blur}
-  class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
->
+<EditorForm {action} {controller} {problems} banner={formError} {cancelHref}>
   {#if duplicationRequestKey}<input
       type="hidden"
       name="duplicationRequestKey"
       value={duplicationRequestKey}
     />{/if}
-  <div class="grid gap-8 lg:col-span-2">
-    <ErrorSummary errors={problems} />
-    <FormBanner text={formError} />
 
-    <section
-      aria-labelledby="about-table"
-      class="rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8"
+  <FormSection id="about-table" step={1} title="Sobre a mesa">
+    <div class="min-w-0">
+      <SearchSelect
+        id="systemSlug"
+        name="systemSlug"
+        label={m.form_system()}
+        labelClass="label-text block font-semibold"
+        class="grid gap-1"
+        items={systems}
+        value={$draft.systemSlug ? [$draft.systemSlug] : []}
+        placeholder={m.form_system_choose()}
+        required
+        invalid={!!invalid('systemSlug')}
+        onchange={(picked) => ($draft.systemSlug = picked[0] ?? '')}
+        suggestLabel={suggestSystem ? (name) => m.form_catalog_suggest({ name }) : undefined}
+        pendingLabel={m.form_catalog_pending()}
+      />
+      {#if systemWaits}
+        <p class="mt-1 text-sm text-muted">{m.form_system_waiting_hint()}</p>
+      {/if}
+      <FieldError id="systemSlug" message={err('systemSlug')} />
+    </div>
+    <FormField
+      id="title"
+      label={m.form_title()}
+      error={err('title')}
+      counter={{ count: $draft.title.length, max: TABLE_LIMITS.title.max }}
     >
-      <div class="mb-6 flex items-center gap-3">
-        <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
-          aria-hidden="true">1</span
-        >
-        <h2 id="about-table" class="text-2xl font-semibold tracking-tight">Sobre a mesa</h2>
+      {#snippet children(aria)}
+        <TextInput
+          id="title"
+          name="title"
+          required
+          minlength={3}
+          maxlength={80}
+          bind:value={$draft.title}
+          class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+    {#each [{ field: 'platforms', label: m.form_platforms(), hint: m.form_platforms_hint(), items: catalog.platforms }, { field: 'tags', label: m.form_tags(), hint: m.form_tags_hint(), items: catalog.tags }] as const as group (group.field)}
+      <div class="min-w-0">
+        <SearchSelect
+          id={group.field}
+          name={group.field}
+          label={group.label}
+          labelClass="label-text block font-semibold"
+          class="flex flex-col gap-1"
+          items={group.items}
+          multiple
+          value={$draft[group.field]}
+          placeholder={m.form_catalog_search()}
+          invalid={!!invalid(group.field)}
+          suggestLabel={(name) => m.form_catalog_suggest({ name })}
+          pendingLabel={m.form_catalog_pending()}
+          onchange={(picked) => ($draft[group.field] = picked)}
+        />
+        <p class="mt-1 text-sm text-surface-700-300">{group.hint}</p>
+        <FieldError id={group.field} message={err(group.field)} />
       </div>
-      <div class="grid gap-6">
+    {/each}
+    <FormField
+      id="description"
+      label={m.form_description()}
+      optional
+      error={err('description')}
+      counter={{ count: $draft.description.length, max: TABLE_LIMITS.description }}
+    >
+      <RichTextField
+        id="description"
+        name="description"
+        rows={5}
+        maxlength={TABLE_LIMITS.description}
+        bind:value={$draft.description}
+        invalid={invalid('description')}
+      />
+    </FormField>
+    <FormField
+      id="extraInfo"
+      label={m.form_extra_info()}
+      optional
+      counter={{ count: $draft.extraInfo.length, max: TABLE_LIMITS.extraInfo }}
+      hint={m.form_extra_info_hint()}
+      error={err('extraInfo')}
+    >
+      <RichTextField
+        id="extraInfo"
+        name="extraInfo"
+        rows={3}
+        maxlength={TABLE_LIMITS.extraInfo}
+        bind:value={$draft.extraInfo}
+        invalid={invalid('extraInfo')}
+      />
+    </FormField>
+    <FormField
+      id="welcomeMessage"
+      label={m.form_welcome_message()}
+      optional
+      counter={{ count: $draft.welcomeMessage.length, max: TABLE_LIMITS.welcomeMessage }}
+      hint={m.form_welcome_message_hint({ token: '{nome da mesa}' })}
+      error={err('welcomeMessage')}
+    >
+      <RichTextField
+        id="welcomeMessage"
+        name="welcomeMessage"
+        rows={4}
+        maxlength={TABLE_LIMITS.welcomeMessage}
+        bind:value={$draft.welcomeMessage}
+        invalid={invalid('welcomeMessage')}
+      />
+    </FormField>
+  </FormSection>
+
+  <FormSection id="when" step={2} title="Quando">
+    <fieldset class="grid gap-3 sm:grid-cols-2">
+      <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
+      {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()], ['adventure', m.form_kind_adventure()]] as [value, label] (value)}<label
+          class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
+          ><input type="radio" name="kind" {value} bind:group={$draft.kind} />{label}</label
+        >{/each}
+      <FieldError id="kind" class="" message={err('kind')} />
+    </fieldset>
+    <div class="grid gap-6 sm:grid-cols-2">
+      <div class="min-w-0 sm:col-span-2">
+        <SessionPicker
+          bind:startsAt={$draft.startsAtLocal}
+          bind:duration={$draft.durationHours}
+          timezone={$draft.timezone}
+          min={today}
+          invalid={!!invalid('startsAtLocal') || !!invalid('durationHours')}
+          describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
+        />
+        {#each ['startsAtLocal', 'durationHours'] as const as field (field)}
+          <FieldError id={field} message={err(field)} />
+        {/each}
+      </div>
+      <div class="min-w-0 sm:col-span-2">
+        <input type="hidden" name="timezone" value={$draft.timezone} />
+        <p class="text-sm text-surface-700-300">
+          {m.form_timezone_note({
+            zone: $draft.timezone.replaceAll('_', ' '),
+            offset: zoneOffset,
+          })}
+          <a href="/u/profile/edit/about" class="anchor">{m.form_timezone_change()}</a>
+        </p>
+        {#if calendarNote}<p class="mt-2 text-sm text-surface-700-300">
+            {m.form_edit_calendar_note()}
+          </p>{/if}
+      </div>
+    </div>
+    {#if $draft.kind === 'campaign'}
+      <div class="grid gap-6 sm:grid-cols-2">
         <div class="min-w-0">
           <SearchSelect
-            id="systemSlug"
-            name="systemSlug"
-            label={m.form_system()}
+            id="repeat"
+            name="repeat"
+            label={m.form_repeat()}
             labelClass="label-text block font-semibold"
             class="grid gap-1"
-            items={systems}
-            value={$draft.systemSlug ? [$draft.systemSlug] : []}
-            placeholder={m.form_system_choose()}
-            required
-            invalid={!!invalid('systemSlug')}
-            onchange={(picked) => ($draft.systemSlug = picked[0] ?? '')}
-            suggestLabel={suggestSystem ? (name) => m.form_catalog_suggest({ name }) : undefined}
-            pendingLabel={m.form_catalog_pending()}
+            items={[
+              { name: m.form_repeat_weekly(), slug: 'weekly' },
+              { name: m.form_repeat_biweekly(), slug: 'biweekly' },
+            ]}
+            value={[$draft.repeat]}
+            placeholder={m.form_repeat()}
+            invalid={!!invalid('repeat')}
+            onchange={(picked) =>
+              ($draft.repeat = picked[0] === 'biweekly' ? 'biweekly' : 'weekly')}
           />
-          {#if systemWaits}
-            <p class="mt-1 text-sm text-muted">{m.form_system_waiting_hint()}</p>
-          {/if}
-          <FieldError id="systemSlug" message={err('systemSlug')} />
+          <FieldError id="repeat" message={err('repeat')} />
         </div>
-        <FormField
-          id="title"
-          label={m.form_title()}
-          error={err('title')}
-          counter={{ count: $draft.title.length, max: TABLE_LIMITS.title.max }}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="title"
-              name="title"
-              required
-              minlength={3}
-              maxlength={80}
-              bind:value={$draft.title}
-              class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-        {#each [{ field: 'platforms', label: m.form_platforms(), hint: m.form_platforms_hint(), items: catalog.platforms }, { field: 'tags', label: m.form_tags(), hint: m.form_tags_hint(), items: catalog.tags }] as const as group (group.field)}
-          <div class="min-w-0">
-            <SearchSelect
-              id={group.field}
-              name={group.field}
-              label={group.label}
-              labelClass="label-text block font-semibold"
-              class="flex flex-col gap-1"
-              items={group.items}
-              multiple
-              value={$draft[group.field]}
-              placeholder={m.form_catalog_search()}
-              invalid={!!invalid(group.field)}
-              suggestLabel={(name) => m.form_catalog_suggest({ name })}
-              pendingLabel={m.form_catalog_pending()}
-              onchange={(picked) => ($draft[group.field] = picked)}
-            />
-            <p class="mt-1 text-sm text-surface-700-300">{group.hint}</p>
-            <FieldError id={group.field} message={err(group.field)} />
-          </div>
-        {/each}
-        <FormField
-          id="description"
-          label={m.form_description()}
-          optional
-          error={err('description')}
-          counter={{ count: $draft.description.length, max: TABLE_LIMITS.description }}
-        >
-          <RichTextField
-            id="description"
-            name="description"
-            rows={5}
-            maxlength={TABLE_LIMITS.description}
-            bind:value={$draft.description}
-            invalid={invalid('description')}
+        <div class="min-w-0">
+          <DateTimeField
+            id="until"
+            name="until"
+            label={m.form_until()}
+            hint={m.form_until_hint()}
+            min={$draft.startsAtLocal.slice(0, 10) || today}
+            bind:value={$draft.until}
+            invalid={!!invalid('until')}
+            describedby={['until-hint', err('until') ? 'until-error' : ''].join(' ').trim()}
           />
-        </FormField>
-        <FormField
-          id="extraInfo"
-          label={m.form_extra_info()}
-          optional
-          counter={{ count: $draft.extraInfo.length, max: TABLE_LIMITS.extraInfo }}
-          hint={m.form_extra_info_hint()}
-          error={err('extraInfo')}
-        >
-          <RichTextField
-            id="extraInfo"
-            name="extraInfo"
-            rows={3}
-            maxlength={TABLE_LIMITS.extraInfo}
-            bind:value={$draft.extraInfo}
-            invalid={invalid('extraInfo')}
-          />
-        </FormField>
-        <FormField
-          id="welcomeMessage"
-          label={m.form_welcome_message()}
-          optional
-          counter={{ count: $draft.welcomeMessage.length, max: TABLE_LIMITS.welcomeMessage }}
-          hint={m.form_welcome_message_hint({ token: '{nome da mesa}' })}
-          error={err('welcomeMessage')}
-        >
-          <RichTextField
-            id="welcomeMessage"
-            name="welcomeMessage"
-            rows={4}
-            maxlength={TABLE_LIMITS.welcomeMessage}
-            bind:value={$draft.welcomeMessage}
-            invalid={invalid('welcomeMessage')}
-          />
-        </FormField>
+          <FieldError id="until" message={err('until')} />
+        </div>
       </div>
-    </section>
+    {/if}
+  </FormSection>
 
-    <section
-      aria-labelledby="when"
-      class="grid gap-6 rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8"
-    >
-      <div class="flex items-center gap-3">
-        <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
-          aria-hidden="true">2</span
-        >
-        <h2 id="when" class="text-2xl font-semibold tracking-tight">Quando</h2>
-      </div>
-      <fieldset class="grid gap-3 sm:grid-cols-2">
-        <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
-        {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()], ['adventure', m.form_kind_adventure()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-            ><input type="radio" name="kind" {value} bind:group={$draft.kind} />{label}</label
-          >{/each}
-        <FieldError id="kind" class="" message={err('kind')} />
-      </fieldset>
-      <div class="grid gap-6 sm:grid-cols-2">
-        <div class="min-w-0 sm:col-span-2">
-          <SessionPicker
-            bind:startsAt={$draft.startsAtLocal}
-            bind:duration={$draft.durationHours}
-            timezone={$draft.timezone}
-            min={today}
-            invalid={!!invalid('startsAtLocal') || !!invalid('durationHours')}
-            describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
-          />
-          {#each ['startsAtLocal', 'durationHours'] as const as field (field)}
-            <FieldError id={field} message={err(field)} />
-          {/each}
-        </div>
-        <div class="min-w-0 sm:col-span-2">
-          <input type="hidden" name="timezone" value={$draft.timezone} />
-          <p class="text-sm text-surface-700-300">
-            {m.form_timezone_note({
-              zone: $draft.timezone.replaceAll('_', ' '),
-              offset: zoneOffset,
-            })}
-            <a href="/u/profile/edit/about" class="anchor">{m.form_timezone_change()}</a>
-          </p>
-          {#if calendarNote}<p class="mt-2 text-sm text-surface-700-300">
-              {m.form_edit_calendar_note()}
-            </p>{/if}
-        </div>
-      </div>
-      {#if $draft.kind === 'campaign'}
-        <div class="grid gap-6 sm:grid-cols-2">
-          <div class="min-w-0">
-            <SearchSelect
-              id="repeat"
-              name="repeat"
-              label={m.form_repeat()}
-              labelClass="label-text block font-semibold"
-              class="grid gap-1"
-              items={[
-                { name: m.form_repeat_weekly(), slug: 'weekly' },
-                { name: m.form_repeat_biweekly(), slug: 'biweekly' },
-              ]}
-              value={[$draft.repeat]}
-              placeholder={m.form_repeat()}
-              invalid={!!invalid('repeat')}
-              onchange={(picked) =>
-                ($draft.repeat = picked[0] === 'biweekly' ? 'biweekly' : 'weekly')}
-            />
-            <FieldError id="repeat" message={err('repeat')} />
-          </div>
-          <div class="min-w-0">
-            <DateTimeField
-              id="until"
-              name="until"
-              label={m.form_until()}
-              hint={m.form_until_hint()}
-              min={$draft.startsAtLocal.slice(0, 10) || today}
-              bind:value={$draft.until}
-              invalid={!!invalid('until')}
-              describedby={['until-hint', err('until') ? 'until-error' : ''].join(' ').trim()}
-            />
-            <FieldError id="until" message={err('until')} />
-          </div>
-        </div>
-      {/if}
-    </section>
-
-    <section
-      aria-labelledby="seats-entry"
-      class="grid gap-6 rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8"
-    >
-      <div class="flex items-center gap-3">
-        <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
-          aria-hidden="true">3</span
-        >
-        <h2 id="seats-entry" class="text-2xl font-semibold tracking-tight">Vagas e entrada</h2>
-      </div>
-      <fieldset class="grid gap-3 sm:grid-cols-2">
-        <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
-        >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as const as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-            ><input type="radio" name="modality" {value} bind:group={$draft.modality} /><Icon
-              name={modalityIcon(value)}
-              size={20}
-            />{label}</label
-          >{/each}
-      </fieldset>
-      {#if $draft.modality === 'in_person'}
-        <FormField
-          id="postalCode"
-          label={m.form_postal_code()}
-          hint={m.form_postal_code_hint()}
-          error={err('postalCode')}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="postalCode"
-              name="postalCode"
-              inputmode="numeric"
-              autocomplete="postal-code"
-              maxlength={10}
-              placeholder="00000-000"
-              bind:value={$draft.postalCode}
-              class="input h-12 max-w-48 rounded-lg border-surface-200-800 bg-panel px-3"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-        <CepLookup value={$draft.postalCode} bind:area={$draft.locationArea} />
-        <FormField
-          id="locationArea"
-          label={m.form_location_area()}
-          hint={$draft.postalCode ? m.form_location_area_hint_cep() : m.form_location_area_hint()}
-          error={err('locationArea')}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="locationArea"
-              name="locationArea"
-              maxlength={120}
-              autocomplete="off"
-              bind:value={$draft.locationArea}
-              class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-      {/if}
+  <FormSection id="seats-entry" step={3} title="Vagas e entrada">
+    <fieldset class="grid gap-3 sm:grid-cols-2">
+      <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
+      >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as const as [value, label] (value)}<label
+          class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
+          ><input type="radio" name="modality" {value} bind:group={$draft.modality} /><Icon
+            name={modalityIcon(value)}
+            size={20}
+          />{label}</label
+        >{/each}
+    </fieldset>
+    {#if $draft.modality === 'in_person'}
       <FormField
-        id="joinDetails"
-        label={$draft.modality === 'in_person'
-          ? m.form_join_details_place()
-          : m.form_join_details_link()}
-        hint={m.form_join_details_hint()}
-        error={err('joinDetails')}
-        counter={{ count: $draft.joinDetails.length, max: TABLE_LIMITS.joinDetails }}
-        ><RichTextField
-          id="joinDetails"
-          name="joinDetails"
-          rows={3}
-          maxlength={TABLE_LIMITS.joinDetails}
-          bind:value={$draft.joinDetails}
-          invalid={invalid('joinDetails')}
-        /></FormField
-      >
-      <div class="min-w-0">
-        <SeatSlider
-          id="capacity"
-          name="capacity"
-          label={m.form_capacity()}
-          bind:value={$draft.capacity}
-          min={minCapacity}
-          max={TABLE_LIMITS.capacity.max}
-          invalid={!!invalid('capacity')}
-          describedby={[
-            minCapacity > 1 ? 'capacity-taken' : '',
-            err('capacity') ? 'capacity-error' : '',
-          ]
-            .join(' ')
-            .trim() || undefined}
-        />
-        {#if minCapacity > 1}<p id="capacity-taken" class="mt-1 text-sm text-surface-700-300">
-            {m.form_capacity_taken({ count: minCapacity })}
-            {#if manageHref}
-              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
-              <a href={manageHref} class="anchor">{m.form_capacity_remove_players()}</a>
-            {/if}
-          </p>{/if}
-        <FieldError id="capacity" message={err('capacity')} />
-      </div>
-      <FormField
-        id="minPlayers"
-        label={m.form_min_players()}
-        optional
-        hint={m.form_min_players_hint()}
-        error={err('minPlayers')}
+        id="postalCode"
+        label={m.form_postal_code()}
+        hint={m.form_postal_code_hint()}
+        error={err('postalCode')}
       >
         {#snippet children(aria)}
           <TextInput
-            id="minPlayers"
-            name="minPlayers"
+            id="postalCode"
+            name="postalCode"
             inputmode="numeric"
-            autocomplete="off"
-            maxlength={2}
-            bind:value={$draft.minPlayers}
-            class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+            autocomplete="postal-code"
+            maxlength={10}
+            placeholder="00000-000"
+            bind:value={$draft.postalCode}
+            class="input h-12 max-w-48 rounded-lg border-surface-200-800 bg-panel px-3"
             {...aria}
           />
         {/snippet}
       </FormField>
-      <fieldset class="grid gap-3 sm:grid-cols-2">
-        <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
-        >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-            ><input
-              type="radio"
-              name="joinMode"
-              {value}
-              bind:group={$draft.joinMode}
-            />{label}</label
-          >{/each}
-      </fieldset>
-    </section>
-
-    <section
-      aria-labelledby="image-section"
-      class="rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8"
-    >
-      <div class="mb-6 flex items-center gap-3">
-        <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-base font-bold"
-          aria-hidden="true">4</span
-        >
-        <h2 id="image-section" class="text-2xl font-semibold tracking-tight">Imagem</h2>
-      </div>
-      <ImageUpload
-        id="image"
-        name="image"
-        label="{m.form_image()} ({m.form_optional()})"
-        hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
-        error={imageError}
-        currentUrl={imageUrl}
-        bind:removed={$draft.removeImage}
-        onpick={(files) => {
-          controller.change('image', files[0]);
-          controller.validateField('image');
-        }}
-      />
-    </section>
-    <div class="flex flex-wrap items-center gap-5">
-      <SubmitButton
-        submitting={controller.pending}
-        delayed={controller.delayed}
-        timeout={controller.timeout}
-        class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-        >{submitLabel}</SubmitButton
+      <CepLookup value={$draft.postalCode} bind:area={$draft.locationArea} />
+      <FormField
+        id="locationArea"
+        label={m.form_location_area()}
+        hint={$draft.postalCode ? m.form_location_area_hint_cep() : m.form_location_area_hint()}
+        error={err('locationArea')}
       >
-      {#if draftLabel}
-        <SubmitButton
-          name="intent"
-          value="draft"
-          submitting={controller.pending}
-          class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold hover:preset-tonal"
-          >{draftLabel}</SubmitButton
-        >
-      {/if}
-      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
-      <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
+        {#snippet children(aria)}
+          <TextInput
+            id="locationArea"
+            name="locationArea"
+            maxlength={120}
+            autocomplete="off"
+            bind:value={$draft.locationArea}
+            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            {...aria}
+          />
+        {/snippet}
+      </FormField>
+    {/if}
+    <FormField
+      id="joinDetails"
+      label={$draft.modality === 'in_person'
+        ? m.form_join_details_place()
+        : m.form_join_details_link()}
+      hint={m.form_join_details_hint()}
+      error={err('joinDetails')}
+      counter={{ count: $draft.joinDetails.length, max: TABLE_LIMITS.joinDetails }}
+      ><RichTextField
+        id="joinDetails"
+        name="joinDetails"
+        rows={3}
+        maxlength={TABLE_LIMITS.joinDetails}
+        bind:value={$draft.joinDetails}
+        invalid={invalid('joinDetails')}
+      /></FormField
+    >
+    <div class="min-w-0">
+      <SeatSlider
+        id="capacity"
+        name="capacity"
+        label={m.form_capacity()}
+        bind:value={$draft.capacity}
+        min={minCapacity}
+        max={TABLE_LIMITS.capacity.max}
+        invalid={!!invalid('capacity')}
+        describedby={[
+          minCapacity > 1 ? 'capacity-taken' : '',
+          err('capacity') ? 'capacity-error' : '',
+        ]
+          .join(' ')
+          .trim() || undefined}
+      />
+      {#if minCapacity > 1}<p id="capacity-taken" class="mt-1 text-sm text-surface-700-300">
+          {m.form_capacity_taken({ count: minCapacity })}
+          {#if manageHref}
+            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
+            <a href={manageHref} class="anchor">{m.form_capacity_remove_players()}</a>
+          {/if}
+        </p>{/if}
+      <FieldError id="capacity" message={err('capacity')} />
     </div>
-  </div>
-  <aside aria-labelledby="preview-title" class="lg:sticky lg:top-6 lg:self-start">
-    <p id="preview-title" class="text-sm font-bold tracking-wider text-muted uppercase">
-      {m.form_preview()}
-    </p>
-    <!-- A preview, not a link: `inert` keeps its card out of the tab order and the reading order. -->
-    <div class="mt-3" inert>
-      <TableCard table={preview} />
-    </div>
+    <FormField
+      id="minPlayers"
+      label={m.form_min_players()}
+      optional
+      hint={m.form_min_players_hint()}
+      error={err('minPlayers')}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="minPlayers"
+          name="minPlayers"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength={2}
+          bind:value={$draft.minPlayers}
+          class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+    <fieldset class="grid gap-3 sm:grid-cols-2">
+      <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
+      >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
+          class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
+          ><input type="radio" name="joinMode" {value} bind:group={$draft.joinMode} />{label}</label
+        >{/each}
+    </fieldset>
+  </FormSection>
+
+  <FormSection id="image-section" step={4} title="Imagem">
+    <ImageUpload
+      id="image"
+      name="image"
+      label="{m.form_image()} ({m.form_optional()})"
+      hint={imageUrl ? m.form_image_current() : m.form_image_hint()}
+      error={imageError}
+      currentUrl={imageUrl}
+      bind:removed={$draft.removeImage}
+      onpick={(files) => {
+        controller.change('image', files[0]);
+        controller.validateField('image');
+      }}
+    />
+  </FormSection>
+  {#snippet actions()}
+    <Button
+      type="submit"
+      size="custom"
+      {controller}
+      class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+      >{submitLabel}</Button
+    >
+    {#if draftLabel}
+      <Button
+        type="submit"
+        size="custom"
+        name="intent"
+        value="draft"
+        submitting={controller.pending}
+        class="btn h-12 gap-2 rounded-lg border-2 border-surface-200-800 px-5 font-semibold hover:preset-tonal"
+        >{draftLabel}</Button
+      >
+    {/if}
+  {/snippet}
+  {#snippet preview()}
+    <TableCard table={card} />
+  {/snippet}
+  {#snippet details()}
     <ul class="mt-4 grid gap-2 rounded-lg border border-surface-200-800 bg-panel p-5 text-sm">
       <li class="flex items-center gap-2">
         <Icon name={modalityIcon($draft.modality)} size={16} />
@@ -575,5 +513,5 @@
       </li>
       <li>{$draft.joinMode === 'approval' ? m.table_join_approval() : m.table_join_auto()}</li>
     </ul>
-  </aside>
-</Form>
+  {/snippet}
+</EditorForm>

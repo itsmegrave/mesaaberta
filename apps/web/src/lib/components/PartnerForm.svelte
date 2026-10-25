@@ -6,15 +6,13 @@
   // sent, and an edit takes an approved partner off the page until it is approved again.
   import { tick } from 'svelte';
   import Button from '#lib/components/Button.svelte';
-  import ErrorSummary from '#lib/components/ErrorSummary.svelte';
-  import Form from '#lib/components/Form.svelte';
-  import FormBanner from '#lib/components/FormBanner.svelte';
+  import EditorForm from '#lib/components/EditorForm.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ImageUpload from '#lib/components/ImageUpload.svelte';
   import PartnerCard from '#lib/components/PartnerCard.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
+  import FormSection from '#lib/components/ui/FormSection.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
@@ -166,7 +164,7 @@
     controller.validateField('logo');
   }
 
-  const preview = $derived({
+  const card = $derived({
     id: 'preview',
     name: $draft.name || m.partner_form_name(),
     description: $draft.description || null,
@@ -190,336 +188,298 @@
   const input = 'input h-12 rounded-lg border-surface-200-800 bg-panel px-3';
   const secondary =
     'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
-  const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8';
 </script>
 
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its
      own words, and show validation in the same translated messages as the server. -->
-<Form
-  enctype="multipart/form-data"
-  onsubmit={controller.submit}
-  onfocusout={controller.blur}
-  class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
+<EditorForm
+  {controller}
+  {problems}
+  banner={formError}
+  cancelHref="/p"
+  note={m.partner_form_review_note()}
 >
-  <div class="grid gap-8 lg:col-span-2">
-    <ErrorSummary errors={problems} />
-    <FormBanner text={formError} />
-    {#if editing}
-      <p role="note" class="rounded-lg border border-warning-500 bg-panel p-4">
-        {m.partner_form_edit_notice()}
-      </p>
-    {/if}
-
-    <section aria-labelledby="about-section" class={card}>
-      <h2 id="about-section" class="mb-6 text-2xl font-semibold tracking-tight">
-        {m.partner_form_about()}
-      </h2>
-      <div class="grid gap-6">
-        <FormField
-          id="name"
-          label={m.partner_form_name()}
-          error={err('name')}
-          counter={{ count: $draft.name.length, max: PARTNER_LIMITS.name }}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="name"
-              name="name"
-              maxlength={PARTNER_LIMITS.name}
-              bind:value={$draft.name}
-              class={input}
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-        <FormField
-          id="description"
-          label={m.partner_form_description()}
-          optional
-          hint={m.partner_form_description_hint()}
-          error={err('description')}
-          counter={{ count: $draft.description.length, max: PARTNER_LIMITS.description }}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="description"
-              name="description"
-              maxlength={PARTNER_LIMITS.description}
-              bind:value={$draft.description}
-              class={input}
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-        <FormField
-          id="contactEmail"
-          label={m.partner_form_contact_email()}
-          optional
-          tip={m.partner_form_contact_email_tip()}
-          error={err('contactEmail')}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="contactEmail"
-              name="contactEmail"
-              type="email"
-              inputmode="email"
-              autocomplete="email"
-              autocapitalize="none"
-              spellcheck="false"
-              maxlength={PARTNER_LIMITS.contactEmail}
-              bind:value={$draft.contactEmail}
-              class={input}
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-      </div>
-    </section>
-
-    <section aria-labelledby="logo-section" class={card}>
-      <h2 id="logo-section" class="mb-6 text-2xl font-semibold tracking-tight">
-        {m.partner_form_logo()}
-      </h2>
-      <ImageUpload
-        id="logo"
-        name="logo"
-        kind="avatar"
-        label={editing ? `${m.partner_form_logo()} (${m.form_optional()})` : m.partner_form_logo()}
-        hint={editing ? m.partner_form_logo_hint_edit() : m.partner_form_logo_hint()}
-        error={logoError}
-        currentUrl={logoUrl}
-        onpick={pick}
-      />
-    </section>
-
-    <section aria-labelledby="links-section" class={card}>
-      <h2 id="links-section" class="mb-2 text-2xl font-semibold tracking-tight">
-        {m.partner_form_links()}
-      </h2>
-      <p class="mb-6 text-muted">{m.partner_form_links_hint()}</p>
-      <div class="grid gap-6">
-        <FormField id="siteUrl" label={m.partner_form_site()} optional error={err('siteUrl')}>
-          {#snippet children(aria)}
-            <TextInput
-              id="siteUrl"
-              name="siteUrl"
-              type="text"
-              inputmode="url"
-              autocomplete="off"
-              autocapitalize="none"
-              spellcheck="false"
-              placeholder="https://"
-              bind:value={$draft.siteUrl}
-              class={input}
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-
-        <fieldset class="grid gap-3">
-          <legend class="font-semibold">{m.partner_form_networks()}</legend>
-          {#if listError()}
-            <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
-          {/if}
-          <ul class="grid gap-4">
-            {#each ids as id, index (id)}
-              {@const urlError = itemError('linkUrl', index)}
-              {@const networkError = itemError('linkNetwork', index)}
-              <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-                <div class="grid gap-2 sm:grid-cols-4">
-                  <SearchSelect
-                    id="partner-link-network-{id}"
-                    name="linkNetwork"
-                    label={m.partner_link_network({ n: index + 1 })}
-                    labelClass="sr-only"
-                    class="grid"
-                    items={networks}
-                    value={[$draft.linkNetwork[index]]}
-                    placeholder={m.partner_link_network({ n: index + 1 })}
-                    invalid={!!networkError}
-                    onchange={(chosen) =>
-                      ($draft.linkNetwork[index] = (chosen[0] ?? 'instagram') as Network)}
-                  />
-                  <TextInput
-                    id="partner-link-url-{id}"
-                    name="linkUrl"
-                    type="text"
-                    inputmode="url"
-                    autocapitalize="none"
-                    spellcheck="false"
-                    placeholder={$draft.linkNetwork[index] === 'discord'
-                      ? 'https://discord.gg/…'
-                      : m.partner_link_placeholder()}
-                    aria-label={m.partner_link_url({ n: index + 1 })}
-                    bind:value={$draft.linkUrl[index]}
-                    class="{input} sm:col-span-3"
-                    aria-invalid={urlError ? 'true' : undefined}
-                    aria-describedby={urlError ? `partner-link-error-${id}` : undefined}
-                  />
-                </div>
-                {#if urlError || networkError}
-                  <p
-                    id="partner-link-error-{id}"
-                    role="alert"
-                    class="text-sm font-semibold text-error-700-300"
-                  >
-                    {urlError ?? networkError}
-                  </p>
-                {/if}
-                <div>
-                  <Button
-                    size="custom"
-                    type="button"
-                    class={secondary}
-                    aria-label={m.partner_link_remove({ n: index + 1 })}
-                    onclick={() => removeLink(index)}
-                  >
-                    <span aria-hidden="true">×</span>
-                  </Button>
-                </div>
-              </li>
-            {/each}
-          </ul>
-          <div>
-            <Button
-              size="custom"
-              type="button"
-              class={secondary}
-              disabled={!canAdd}
-              bind:element={addButton}
-              onclick={addLink}
-            >
-              {m.partner_link_add()}
-            </Button>
-          </div>
-          <p class="sr-only" role="status">{announcement}</p>
-        </fieldset>
-      </div>
-    </section>
-
-    <section aria-labelledby="exchange-section" class={card}>
-      <h2 id="exchange-section" class="mb-2 text-2xl font-semibold tracking-tight">
-        {m.partner_form_exchange()}
-      </h2>
-      <p class="mb-6 text-muted">{m.partner_form_exchange_hint()}</p>
-      <div class="grid gap-6">
-        <div class="grid gap-1">
-          <p class="label-text font-semibold">{m.partner_our_link()}</p>
-          <div class="flex items-center justify-between gap-2">
-            <code class="min-w-0 truncate font-mono text-sm">{ourLink}</code>
-            <Button
-              size="custom"
-              type="button"
-              class={secondary}
-              onclick={() => void copyOurLink()}
-            >
-              <Icon name="copy" size={18} />{m.partner_copy()}
-            </Button>
-          </div>
-        </div>
-        <FormField
-          id="backlinkUrl"
-          label={m.partner_form_backlink()}
-          optional
-          hint={m.partner_form_backlink_hint()}
-          error={err('backlinkUrl')}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="backlinkUrl"
-              name="backlinkUrl"
-              type="text"
-              inputmode="url"
-              autocomplete="off"
-              autocapitalize="none"
-              spellcheck="false"
-              placeholder="https://"
-              bind:value={$draft.backlinkUrl}
-              class={input}
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-      </div>
-    </section>
-
-    <section aria-labelledby="coupon-section" class={card}>
-      <h2
-        id="coupon-section"
-        class="mb-2 flex items-center gap-2 text-2xl font-semibold tracking-tight"
-      >
-        <Icon name="ticket-percent" size={28} />{m.partner_form_coupon()}
-      </h2>
-      <p class="mb-6 text-muted">{m.partner_form_coupon_hint()}</p>
-      <div class="grid gap-6">
-        <FormField
-          id="couponCode"
-          label={m.partner_form_coupon_code()}
-          optional
-          error={err('couponCode')}
-          counter={{ count: $draft.couponCode.length, max: PARTNER_LIMITS.couponCode }}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="couponCode"
-              name="couponCode"
-              autocomplete="off"
-              autocapitalize="characters"
-              spellcheck="false"
-              maxlength={PARTNER_LIMITS.couponCode}
-              bind:value={$draft.couponCode}
-              class="{input} font-mono"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-        <FormField
-          id="couponDescription"
-          label={m.partner_form_coupon_description()}
-          optional
-          hint={m.partner_form_coupon_description_hint()}
-          error={err('couponDescription')}
-          counter={{
-            count: $draft.couponDescription.length,
-            max: PARTNER_LIMITS.couponDescription,
-          }}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="couponDescription"
-              name="couponDescription"
-              maxlength={PARTNER_LIMITS.couponDescription}
-              disabled={$draft.couponCode.trim() === ''}
-              bind:value={$draft.couponDescription}
-              class={input}
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
-      </div>
-    </section>
-
-    <div class="flex flex-wrap items-center gap-5">
-      <SubmitButton
-        submitting={controller.pending}
-        delayed={controller.delayed}
-        timeout={controller.timeout}
-        class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-        >{editing ? m.partner_form_submit_edit() : m.partner_form_submit()}</SubmitButton
-      >
-      <a href="/p" class="link-underline font-semibold text-link">{m.form_cancel()}</a>
-    </div>
-    <p class="text-sm text-muted">{m.partner_form_review_note()}</p>
-  </div>
-
-  <aside aria-labelledby="preview-title" class="lg:sticky lg:top-6 lg:self-start">
-    <p id="preview-title" class="text-sm font-bold tracking-wider text-muted uppercase">
-      {m.form_preview()}
+  {#if editing}
+    <p role="note" class="rounded-lg border border-warning-500 bg-panel p-4">
+      {m.partner_form_edit_notice()}
     </p>
-    <!-- A preview, not a link: `inert` keeps its card out of the tab order and the reading order. -->
-    <div class="mt-3" inert>
-      <PartnerCard partner={preview} />
+  {/if}
+
+  <FormSection id="about-section" title={m.partner_form_about()}>
+    <FormField
+      id="name"
+      label={m.partner_form_name()}
+      error={err('name')}
+      counter={{ count: $draft.name.length, max: PARTNER_LIMITS.name }}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="name"
+          name="name"
+          maxlength={PARTNER_LIMITS.name}
+          bind:value={$draft.name}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+    <FormField
+      id="description"
+      label={m.partner_form_description()}
+      optional
+      hint={m.partner_form_description_hint()}
+      error={err('description')}
+      counter={{ count: $draft.description.length, max: PARTNER_LIMITS.description }}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="description"
+          name="description"
+          maxlength={PARTNER_LIMITS.description}
+          bind:value={$draft.description}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+    <FormField
+      id="contactEmail"
+      label={m.partner_form_contact_email()}
+      optional
+      tip={m.partner_form_contact_email_tip()}
+      error={err('contactEmail')}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="contactEmail"
+          name="contactEmail"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          autocapitalize="none"
+          spellcheck="false"
+          maxlength={PARTNER_LIMITS.contactEmail}
+          bind:value={$draft.contactEmail}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+  </FormSection>
+
+  <FormSection id="logo-section" title={m.partner_form_logo()}>
+    <ImageUpload
+      id="logo"
+      name="logo"
+      kind="avatar"
+      label={editing ? `${m.partner_form_logo()} (${m.form_optional()})` : m.partner_form_logo()}
+      hint={editing ? m.partner_form_logo_hint_edit() : m.partner_form_logo_hint()}
+      error={logoError}
+      currentUrl={logoUrl}
+      onpick={pick}
+    />
+  </FormSection>
+
+  <FormSection id="links-section" title={m.partner_form_links()} hint={m.partner_form_links_hint()}>
+    <FormField id="siteUrl" label={m.partner_form_site()} optional error={err('siteUrl')}>
+      {#snippet children(aria)}
+        <TextInput
+          id="siteUrl"
+          name="siteUrl"
+          type="text"
+          inputmode="url"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          placeholder="https://"
+          bind:value={$draft.siteUrl}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+
+    <fieldset class="grid gap-3">
+      <legend class="font-semibold">{m.partner_form_networks()}</legend>
+      {#if listError()}
+        <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
+      {/if}
+      <ul class="grid gap-4">
+        {#each ids as id, index (id)}
+          {@const urlError = itemError('linkUrl', index)}
+          {@const networkError = itemError('linkNetwork', index)}
+          <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
+            <div class="grid gap-2 sm:grid-cols-4">
+              <SearchSelect
+                id="partner-link-network-{id}"
+                name="linkNetwork"
+                label={m.partner_link_network({ n: index + 1 })}
+                labelClass="sr-only"
+                class="grid"
+                items={networks}
+                value={[$draft.linkNetwork[index]]}
+                placeholder={m.partner_link_network({ n: index + 1 })}
+                invalid={!!networkError}
+                onchange={(chosen) =>
+                  ($draft.linkNetwork[index] = (chosen[0] ?? 'instagram') as Network)}
+              />
+              <TextInput
+                id="partner-link-url-{id}"
+                name="linkUrl"
+                type="text"
+                inputmode="url"
+                autocapitalize="none"
+                spellcheck="false"
+                placeholder={$draft.linkNetwork[index] === 'discord'
+                  ? 'https://discord.gg/…'
+                  : m.partner_link_placeholder()}
+                aria-label={m.partner_link_url({ n: index + 1 })}
+                bind:value={$draft.linkUrl[index]}
+                class="{input} sm:col-span-3"
+                aria-invalid={urlError ? 'true' : undefined}
+                aria-describedby={urlError ? `partner-link-error-${id}` : undefined}
+              />
+            </div>
+            {#if urlError || networkError}
+              <p
+                id="partner-link-error-{id}"
+                role="alert"
+                class="text-sm font-semibold text-error-700-300"
+              >
+                {urlError ?? networkError}
+              </p>
+            {/if}
+            <div>
+              <Button
+                size="custom"
+                type="button"
+                class={secondary}
+                aria-label={m.partner_link_remove({ n: index + 1 })}
+                onclick={() => removeLink(index)}
+              >
+                <span aria-hidden="true">×</span>
+              </Button>
+            </div>
+          </li>
+        {/each}
+      </ul>
+      <div>
+        <Button
+          size="custom"
+          type="button"
+          class={secondary}
+          disabled={!canAdd}
+          bind:element={addButton}
+          onclick={addLink}
+        >
+          {m.partner_link_add()}
+        </Button>
+      </div>
+      <p class="sr-only" role="status">{announcement}</p>
+    </fieldset>
+  </FormSection>
+
+  <FormSection
+    id="exchange-section"
+    title={m.partner_form_exchange()}
+    hint={m.partner_form_exchange_hint()}
+  >
+    <div class="grid gap-1">
+      <p class="label-text font-semibold">{m.partner_our_link()}</p>
+      <div class="flex items-center justify-between gap-2">
+        <code class="min-w-0 truncate font-mono text-sm">{ourLink}</code>
+        <Button size="custom" type="button" class={secondary} onclick={() => void copyOurLink()}>
+          <Icon name="copy" size={18} />{m.partner_copy()}
+        </Button>
+      </div>
     </div>
-  </aside>
-</Form>
+    <FormField
+      id="backlinkUrl"
+      label={m.partner_form_backlink()}
+      optional
+      hint={m.partner_form_backlink_hint()}
+      error={err('backlinkUrl')}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="backlinkUrl"
+          name="backlinkUrl"
+          type="text"
+          inputmode="url"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          placeholder="https://"
+          bind:value={$draft.backlinkUrl}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+  </FormSection>
+
+  <FormSection
+    id="coupon-section"
+    icon="ticket-percent"
+    title={m.partner_form_coupon()}
+    hint={m.partner_form_coupon_hint()}
+  >
+    <FormField
+      id="couponCode"
+      label={m.partner_form_coupon_code()}
+      optional
+      error={err('couponCode')}
+      counter={{ count: $draft.couponCode.length, max: PARTNER_LIMITS.couponCode }}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="couponCode"
+          name="couponCode"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          maxlength={PARTNER_LIMITS.couponCode}
+          bind:value={$draft.couponCode}
+          class="{input} font-mono"
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+    <FormField
+      id="couponDescription"
+      label={m.partner_form_coupon_description()}
+      optional
+      hint={m.partner_form_coupon_description_hint()}
+      error={err('couponDescription')}
+      counter={{
+        count: $draft.couponDescription.length,
+        max: PARTNER_LIMITS.couponDescription,
+      }}
+    >
+      {#snippet children(aria)}
+        <TextInput
+          id="couponDescription"
+          name="couponDescription"
+          maxlength={PARTNER_LIMITS.couponDescription}
+          disabled={$draft.couponCode.trim() === ''}
+          bind:value={$draft.couponDescription}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
+    </FormField>
+  </FormSection>
+
+  {#snippet actions()}
+    <Button
+      type="submit"
+      size="custom"
+      {controller}
+      class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+      >{editing ? m.partner_form_submit_edit() : m.partner_form_submit()}</Button
+    >
+  {/snippet}
+  {#snippet preview()}
+    <PartnerCard partner={card} />
+  {/snippet}
+</EditorForm>

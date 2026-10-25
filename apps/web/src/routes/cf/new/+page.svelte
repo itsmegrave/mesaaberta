@@ -2,13 +2,12 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
   import DateTimeField from '#lib/components/DateTimeField.svelte';
-  import ErrorSummary from '#lib/components/ErrorSummary.svelte';
-  import Form from '#lib/components/Form.svelte';
-  import FormBanner from '#lib/components/FormBanner.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import EditorForm from '#lib/components/EditorForm.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import ImageUpload from '#lib/components/ImageUpload.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
+  import FormSection from '#lib/components/ui/FormSection.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import {
     CROWDFUNDING_LIMITS,
@@ -103,7 +102,7 @@
   }
 
   const link = $derived(normalizeCampaignUrl($draft.url));
-  const preview = $derived({
+  const card = $derived({
     id: 'preview',
     name: $draft.name || m.crowdfunding_form_name(),
     owner: $draft.owner || m.crowdfunding_form_owner(),
@@ -135,157 +134,126 @@
     {m.crowdfunding_new_lede()}
   </p>
 
-  <Form
-    enctype="multipart/form-data"
-    onsubmit={controller.submit}
-    onfocusout={controller.blur}
-    class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12"
-  >
-    <div class="grid gap-8 lg:col-span-2">
-      <ErrorSummary errors={problems} />
-      <FormBanner text={formError} />
-
-      <section
-        aria-labelledby="campaign-section"
-        class="rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8"
+  <EditorForm {controller} {problems} banner={formError} cancelHref="/cf">
+    <FormSection id="campaign-section" title={m.crowdfunding_title()}>
+      <FormField
+        id="url"
+        label={m.crowdfunding_form_url()}
+        hint={m.crowdfunding_form_url_hint()}
+        error={err('url')}
       >
-        <h2 id="campaign-section" class="mb-6 text-2xl font-semibold tracking-tight">
-          {m.crowdfunding_title()}
-        </h2>
-        <div class="grid gap-6">
-          <FormField
+        {#snippet children(aria)}
+          <TextInput
             id="url"
-            label={m.crowdfunding_form_url()}
-            hint={m.crowdfunding_form_url_hint()}
-            error={err('url')}
-          >
-            {#snippet children(aria)}
-              <TextInput
-                id="url"
-                name="url"
-                type="url"
-                inputmode="url"
-                autocomplete="off"
-                required
-                maxlength={CROWDFUNDING_LIMITS.url}
-                bind:value={$draft.url}
-                onchange={readLink}
-                class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-                {...aria}
-              />
-            {/snippet}
-          </FormField>
-          <FormField
-            id="name"
-            label={m.crowdfunding_form_name()}
-            hint={m.crowdfunding_form_name_hint({ max: CROWDFUNDING_LIMITS.name })}
-            error={err('name')}
-            counter={{ count: $draft.name.length, max: CROWDFUNDING_LIMITS.name }}
-          >
-            {#snippet children(aria)}
-              <TextInput
-                id="name"
-                name="name"
-                required
-                maxlength={CROWDFUNDING_LIMITS.name}
-                bind:value={$draft.name}
-                oninput={() => (named = false)}
-                class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-                {...aria}
-              />
-              <p role="status" class="mt-1 text-sm text-muted">
-                {#if reading}{m.crowdfunding_form_reading()}{:else if named}{m.crowdfunding_form_name_read()}{/if}
-              </p>
-            {/snippet}
-          </FormField>
-          <FormField
-            id="owner"
-            label={m.crowdfunding_form_owner()}
-            hint={m.crowdfunding_form_owner_hint({ max: CROWDFUNDING_LIMITS.owner })}
-            error={err('owner')}
-            counter={{ count: $draft.owner.length, max: CROWDFUNDING_LIMITS.owner }}
-          >
-            {#snippet children(aria)}
-              <TextInput
-                id="owner"
-                name="owner"
-                required
-                maxlength={CROWDFUNDING_LIMITS.owner}
-                bind:value={$draft.owner}
-                class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-                {...aria}
-              />
-            {/snippet}
-          </FormField>
-          <div class="grid gap-6 sm:grid-cols-2">
-            <div class="min-w-0">
-              <DateTimeField
-                id="startsOn"
-                name="startsOn"
-                label={m.crowdfunding_form_starts()}
-                required
-                bind:value={$draft.startsOn}
-                invalid={!!invalid('startsOn')}
-                describedby={err('startsOn') ? 'startsOn-error' : undefined}
-              />
-              <FieldError id="startsOn" message={err('startsOn')} />
-            </div>
-            <div class="min-w-0">
-              <DateTimeField
-                id="endsOn"
-                name="endsOn"
-                label={m.crowdfunding_form_ends()}
-                required
-                min={$draft.startsOn || today}
-                bind:value={$draft.endsOn}
-                invalid={!!invalid('endsOn')}
-                describedby={err('endsOn') ? 'endsOn-error' : undefined}
-              />
-              <FieldError id="endsOn" message={err('endsOn')} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="image-section"
-        class="rounded-lg border border-surface-200-800 bg-panel p-6 sm:p-8"
+            name="url"
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            required
+            maxlength={CROWDFUNDING_LIMITS.url}
+            bind:value={$draft.url}
+            onchange={readLink}
+            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            {...aria}
+          />
+        {/snippet}
+      </FormField>
+      <FormField
+        id="name"
+        label={m.crowdfunding_form_name()}
+        hint={m.crowdfunding_form_name_hint({ max: CROWDFUNDING_LIMITS.name })}
+        error={err('name')}
+        counter={{ count: $draft.name.length, max: CROWDFUNDING_LIMITS.name }}
       >
-        <h2 id="image-section" class="mb-6 text-2xl font-semibold tracking-tight">
-          {m.crowdfunding_form_image()}
-        </h2>
-        <ImageUpload
-          id="image"
-          name="image"
-          label="{m.crowdfunding_form_image()} ({m.form_optional()})"
-          hint={m.crowdfunding_form_image_hint()}
-          error={imageError}
-          onpick={(files) => {
-            controller.change('image', files[0]);
-            controller.validateField('image');
-          }}
-        />
-      </section>
+        {#snippet children(aria)}
+          <TextInput
+            id="name"
+            name="name"
+            required
+            maxlength={CROWDFUNDING_LIMITS.name}
+            bind:value={$draft.name}
+            oninput={() => (named = false)}
+            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            {...aria}
+          />
+          <p role="status" class="mt-1 text-sm text-muted">
+            {#if reading}{m.crowdfunding_form_reading()}{:else if named}{m.crowdfunding_form_name_read()}{/if}
+          </p>
+        {/snippet}
+      </FormField>
+      <FormField
+        id="owner"
+        label={m.crowdfunding_form_owner()}
+        hint={m.crowdfunding_form_owner_hint({ max: CROWDFUNDING_LIMITS.owner })}
+        error={err('owner')}
+        counter={{ count: $draft.owner.length, max: CROWDFUNDING_LIMITS.owner }}
+      >
+        {#snippet children(aria)}
+          <TextInput
+            id="owner"
+            name="owner"
+            required
+            maxlength={CROWDFUNDING_LIMITS.owner}
+            bind:value={$draft.owner}
+            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            {...aria}
+          />
+        {/snippet}
+      </FormField>
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="min-w-0">
+          <DateTimeField
+            id="startsOn"
+            name="startsOn"
+            label={m.crowdfunding_form_starts()}
+            required
+            bind:value={$draft.startsOn}
+            invalid={!!invalid('startsOn')}
+            describedby={err('startsOn') ? 'startsOn-error' : undefined}
+          />
+          <FieldError id="startsOn" message={err('startsOn')} />
+        </div>
+        <div class="min-w-0">
+          <DateTimeField
+            id="endsOn"
+            name="endsOn"
+            label={m.crowdfunding_form_ends()}
+            required
+            min={$draft.startsOn || today}
+            bind:value={$draft.endsOn}
+            invalid={!!invalid('endsOn')}
+            describedby={err('endsOn') ? 'endsOn-error' : undefined}
+          />
+          <FieldError id="endsOn" message={err('endsOn')} />
+        </div>
+      </div>
+    </FormSection>
 
-      <div class="flex flex-wrap items-center gap-5">
-        <SubmitButton
-          submitting={controller.pending}
-          delayed={controller.delayed}
-          timeout={controller.timeout}
-          class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-          >{m.crowdfunding_form_submit()}</SubmitButton
-        >
-        <a href="/cf" class="link-underline font-semibold text-link">{m.form_cancel()}</a>
-      </div>
-    </div>
-    <aside aria-labelledby="preview-title" class="lg:sticky lg:top-6 lg:self-start">
-      <p id="preview-title" class="text-sm font-bold tracking-wider text-muted uppercase">
-        {m.form_preview()}
-      </p>
-      <!-- A preview, not a link: `inert` keeps its card out of the tab order and the reading order. -->
-      <div class="mt-3" inert>
-        <CrowdfundingCard campaign={preview} />
-      </div>
-    </aside>
-  </Form>
+    <FormSection id="image-section" title={m.crowdfunding_form_image()}>
+      <ImageUpload
+        id="image"
+        name="image"
+        label="{m.crowdfunding_form_image()} ({m.form_optional()})"
+        hint={m.crowdfunding_form_image_hint()}
+        error={imageError}
+        onpick={(files) => {
+          controller.change('image', files[0]);
+          controller.validateField('image');
+        }}
+      />
+    </FormSection>
+
+    {#snippet actions()}
+      <Button
+        type="submit"
+        size="custom"
+        {controller}
+        class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+        >{m.crowdfunding_form_submit()}</Button
+      >
+    {/snippet}
+    {#snippet preview()}
+      <CrowdfundingCard campaign={card} />
+    {/snippet}
+  </EditorForm>
 </section>
