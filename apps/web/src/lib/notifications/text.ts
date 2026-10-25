@@ -50,6 +50,16 @@ function changedList(changed: string | undefined, withoutStart: boolean): string
   return new Intl.ListFormat(getLocale(), { type: 'conjunction' }).format(labels);
 }
 
+/** A session reminder, with the start in the viewer's timezone; older reminders stay generic. */
+function reminderText(table: string, metadata: Record<string, string>, timeZone: string) {
+  const { startsAt, window } = metadata;
+  if (!startsAt) return m.notification_session_reminder({ table });
+  const when = formatSession(new Date(startsAt), timeZone, getLocale());
+  return window === '1h'
+    ? m.notification_session_reminder_hour({ table, when })
+    : m.notification_session_reminder_day({ table, when });
+}
+
 /** A table change, as specific as the notice's metadata allows; older notices stay generic. */
 function tableChangeText(table: string, metadata: Record<string, string>, timeZone: string) {
   const { startsAtFrom, startsAtTo, changed } = metadata;
@@ -87,7 +97,7 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
     case 'table_cancelled':
       return m.notification_table_cancelled({ table });
     case 'session_reminder':
-      return m.notification_session_reminder({ table });
+      return reminderText(table, item.metadata, timeZone);
     case 'session_confirmation':
       return m.notification_session_confirmation({ table });
     case 'player_invited':

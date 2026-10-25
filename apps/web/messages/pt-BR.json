@@ -893,6 +893,8 @@
   "notification_change_description": "descrição",
   "notification_table_cancelled": "A mesa {table} foi cancelada.",
   "notification_session_reminder": "A sessão de {table} está chegando.",
+  "notification_session_reminder_day": "Lembrete: a sessão de {table} é {when}.",
+  "notification_session_reminder_hour": "A sessão de {table} começa em menos de uma hora: {when}.",
   "notification_session_confirmation": "A mesa {table} já passou da data. Conte se ela aconteceu.",
   "notification_join_requested": "{player} pediu uma vaga em {table}.",
   "notification_join_approved": "Seu pedido de vaga em {table} foi aprovado.",
