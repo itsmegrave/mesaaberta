@@ -1,6 +1,9 @@
 <script lang="ts">
-  import UserLink from '#lib/components/UserLink.svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
+  import AdminPersonLink from '#lib/components/admin/AdminPersonLink.svelte';
+  import DetailList from '#lib/components/ui/DetailList.svelte';
+  import DetailRow from '#lib/components/ui/DetailRow.svelte';
+  import Panel from '#lib/components/ui/Panel.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import { periodLabel } from '#lib/crowdfunding/format.js';
@@ -63,7 +66,6 @@
   const primary = 'btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const danger =
     'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
-  const row = 'grid gap-1 py-3 sm:grid-cols-[10rem_1fr] sm:gap-4';
 </script>
 
 <svelte:head><title>{m.admin_report_title()} | Mesa Aberta</title></svelte:head>
@@ -94,266 +96,177 @@
 
   <div class="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
     <div class="grid content-start gap-6">
-      <section
-        aria-labelledby="report-what"
-        class="rounded-lg border border-surface-200-800 bg-panel p-5"
-      >
-        <h2 id="report-what" class="text-lg font-semibold">{m.admin_report_what()}</h2>
-        <dl class="mt-4 divide-y divide-surface-200-800 border-y border-surface-200-800">
-          <div class={row}>
-            <dt class="text-sm font-semibold text-muted">{m.report_reason()}</dt>
-            <dd>{reasonLabel(report.report.reason, kind)}</dd>
-          </div>
-          <div class={row}>
-            <dt class="text-sm font-semibold text-muted">{m.admin_report_details()}</dt>
-            <!-- Text the reporter typed: shown as text, never as markup. -->
-            <dd class="wrap-break-word whitespace-pre-line">
-              {report.report.details || m.admin_report_no_details()}
-            </dd>
-          </div>
-          <div class={row}>
-            <dt class="text-sm font-semibold text-muted">{m.admin_report_reporter()}</dt>
-            <dd>
-              <UserLink
-                username={report.reporter.username}
-                label={handle(report.reporter.username)}
-                class="font-semibold"
-              />
-              <a class="ml-2 anchor text-sm" href={`/admin/users/${report.reporter.id}`}
-                >{m.admin_user_title()}</a
-              >
-            </dd>
-          </div>
+      <Panel title={m.admin_report_what()}>
+        <DetailList layout="label" class="mt-4 border-y border-surface-200-800">
+          <DetailRow label={m.report_reason()}>{reasonLabel(report.report.reason, kind)}</DetailRow>
+          <!-- Text the reporter typed: shown as text, never as markup. -->
+          <DetailRow label={m.admin_report_details()} class="wrap-break-word whitespace-pre-line">
+            {report.report.details || m.admin_report_no_details()}
+          </DetailRow>
+          <DetailRow label={m.admin_report_reporter()}>
+            <AdminPersonLink person={report.reporter} />
+          </DetailRow>
           {#if report.report.resolvedAt}
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_closed()}</dt>
-              <dd>
-                {when(report.report.resolvedAt)}
-                {#if report.report.resolutionNote}
-                  <p class="mt-1 wrap-break-word whitespace-pre-line text-muted">
-                    {report.report.resolutionNote}
-                  </p>
-                {/if}
-              </dd>
-            </div>
+            <DetailRow label={m.admin_report_closed()}>
+              {when(report.report.resolvedAt)}
+              {#if report.report.resolutionNote}
+                <p class="mt-1 wrap-break-word whitespace-pre-line text-muted">
+                  {report.report.resolutionNote}
+                </p>
+              {/if}
+            </DetailRow>
           {/if}
-        </dl>
-      </section>
+        </DetailList>
+      </Panel>
 
-      <section
-        aria-labelledby="report-context"
-        class="rounded-lg border border-surface-200-800 bg-panel p-5"
-      >
-        <h2 id="report-context" class="text-lg font-semibold">{m.admin_report_context()}</h2>
-        <dl class="mt-4 divide-y divide-surface-200-800 border-y border-surface-200-800">
+      <Panel title={m.admin_report_context()}>
+        <DetailList layout="label" class="mt-4 border-y border-surface-200-800">
           {#if report.player}
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_profile()}</dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                <UserLink
-                  username={report.player.username}
-                  label={handle(report.player.username)}
-                  class="font-semibold"
-                />
-                <a class="ml-2 anchor text-sm" href={`/admin/users/${report.player.id}`}
-                  >{m.admin_user_title()}</a
-                >
-                {#if report.player.status === 'suspended'}
-                  <StatusBadge status="user:banned" />
-                {/if}
-              </dd>
-            </div>
+            <DetailRow label={m.admin_report_profile()} class="flex flex-wrap items-center gap-2">
+              <AdminPersonLink person={report.player} />
+            </DetailRow>
           {/if}
           {#if partner}
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_partner()}</dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                <span class="font-semibold">{partner.name}</span>
-                {#if partner.removedAt}
-                  <span class="text-sm text-muted">{m.admin_partners_removed()}</span>
-                {:else if !partner.approvedAt}
-                  <span class="text-sm text-muted">{m.partner_status_pending()}</span>
-                {/if}
-              </dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_partners_col_links()}</dt>
-              <dd>
-                <ul class="flex flex-wrap gap-3">
-                  {#each [...(partner.siteUrl ? [{ network: 'website' as const, url: partner.siteUrl }] : []), ...partner.links] as link (link.network + link.url)}
-                    <li>
-                      <!-- eslint-disable svelte/no-navigation-without-resolve -- the partner's own link on another site, not an app route -->
-                      <a
-                        class="inline-flex items-center gap-1 anchor"
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        ><Icon
-                          name={networkIcons[link.network as keyof typeof networkIcons]}
-                          size={18}
-                        />{networkLabels[link.network as keyof typeof networkLabels]()}<span
-                          class="sr-only"
-                        >
-                          {m.partner_opens_new_tab()}</span
-                        ></a
+            <DetailRow label={m.admin_report_partner()} class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold">{partner.name}</span>
+              {#if partner.removedAt}
+                <span class="text-sm text-muted">{m.admin_partners_removed()}</span>
+              {:else if !partner.approvedAt}
+                <span class="text-sm text-muted">{m.partner_status_pending()}</span>
+              {/if}
+            </DetailRow>
+            <DetailRow label={m.admin_partners_col_links()}>
+              <ul class="flex flex-wrap gap-3">
+                {#each [...(partner.siteUrl ? [{ network: 'website' as const, url: partner.siteUrl }] : []), ...partner.links] as link (link.network + link.url)}
+                  <li>
+                    <!-- eslint-disable svelte/no-navigation-without-resolve -- the partner's own link on another site, not an app route -->
+                    <a
+                      class="inline-flex items-center gap-1 anchor"
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      ><Icon
+                        name={networkIcons[link.network as keyof typeof networkIcons]}
+                        size={18}
+                      />{networkLabels[link.network as keyof typeof networkLabels]()}<span
+                        class="sr-only"
                       >
-                      <!-- eslint-enable svelte/no-navigation-without-resolve -->
-                    </li>
-                  {/each}
-                </ul>
-              </dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_partners_col_backlink()}</dt>
-              <dd>
-                {#if partner.backlinkUrl}
-                  <!-- eslint-disable svelte/no-navigation-without-resolve -- where the partner put our link, on another site -->
-                  <a
-                    class="anchor"
-                    href={partner.backlinkUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >{m.admin_partners_check()}<span class="sr-only">
-                      {m.partner_opens_new_tab()}</span
-                    ></a
-                  >
-                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
-                {:else}
-                  <span class="text-warning-700-300">{m.admin_partners_not_informed()}</span>
-                {/if}
-              </dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.partner_sent_by_label()}</dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                {#if partner.submitter}
-                  <UserLink
-                    username={partner.submitter.username}
-                    label={handle(partner.submitter.username)}
-                    class="font-semibold"
-                  />
-                  <a class="ml-2 anchor text-sm" href={`/admin/users/${partner.submitter.id}`}
-                    >{m.admin_user_title()}</a
-                  >
-                {/if}
-              </dd>
-            </div>
+                        {m.partner_opens_new_tab()}</span
+                      ></a
+                    >
+                    <!-- eslint-enable svelte/no-navigation-without-resolve -->
+                  </li>
+                {/each}
+              </ul>
+            </DetailRow>
+            <DetailRow label={m.admin_partners_col_backlink()}>
+              {#if partner.backlinkUrl}
+                <!-- eslint-disable svelte/no-navigation-without-resolve -- where the partner put our link, on another site -->
+                <a
+                  class="anchor"
+                  href={partner.backlinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{m.admin_partners_check()}<span class="sr-only">
+                    {m.partner_opens_new_tab()}</span
+                  ></a
+                >
+                <!-- eslint-enable svelte/no-navigation-without-resolve -->
+              {:else}
+                <span class="text-warning-700-300">{m.admin_partners_not_informed()}</span>
+              {/if}
+            </DetailRow>
+            <DetailRow label={m.partner_sent_by_label()} class="flex flex-wrap items-center gap-2">
+              {#if partner.submitter}
+                <AdminPersonLink person={partner.submitter} />
+              {/if}
+            </DetailRow>
             {#if partner.contactEmail}
-              <div class={row}>
-                <dt class="text-sm font-semibold text-muted">{m.admin_partners_contact_email()}</dt>
-                <dd>
-                  <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
-                  <a
-                    class="inline-flex items-center gap-1.5 anchor"
-                    href="mailto:{partner.contactEmail}"
-                    ><Icon name="mail" size={18} class="shrink-0" />{partner.contactEmail}</a
-                  >
-                  <!-- eslint-enable svelte/no-navigation-without-resolve -->
-                </dd>
-              </div>
+              <DetailRow label={m.admin_partners_contact_email()}>
+                <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
+                <a
+                  class="inline-flex items-center gap-1.5 anchor"
+                  href="mailto:{partner.contactEmail}"
+                  ><Icon name="mail" size={18} class="shrink-0" />{partner.contactEmail}</a
+                >
+                <!-- eslint-enable svelte/no-navigation-without-resolve -->
+              </DetailRow>
             {/if}
           {/if}
           {#if campaign}
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_crowdfunding()}</dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                <!-- The link a member shared: it leaves the site, so it opens apart and says so. -->
-                <a
-                  class="anchor font-semibold"
-                  href={campaign.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >{campaign.name}<span class="sr-only">
-                    {m.crowdfunding_opens_new_tab({
-                      site: siteName(campaign.platform, campaign.url),
-                    })}</span
-                  ></a
-                >
-                {#if campaign.removedAt}
-                  <span class="text-sm text-muted">{m.admin_crowdfunding_removed()}</span>
-                {/if}
-              </dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.crowdfunding_owner_label()}</dt>
-              <dd>{campaign.owner}</dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_platform()}</dt>
-              <dd>{platformLabel(campaign.platform)}</dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_period()}</dt>
-              <dd>{periodLabel(campaign.startsOn, campaign.endsOn, locale)}</dd>
-            </div>
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.crowdfunding_sent_by_label()}</dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                {#if campaign.submitter}
-                  <UserLink
-                    username={campaign.submitter.username}
-                    label={handle(campaign.submitter.username)}
-                    class="font-semibold"
-                  />
-                  <a class="ml-2 anchor text-sm" href={`/admin/users/${campaign.submitter.id}`}
-                    >{m.admin_user_title()}</a
-                  >
-                {:else}
-                  <span class="inline-flex items-center gap-1.5">
-                    <Icon name="import" size={18} class="shrink-0 text-muted" />
-                    {submissionLabel(null, campaign.importSource)}
-                  </span>
-                {/if}
-              </dd>
-            </div>
+            <DetailRow
+              label={m.admin_report_crowdfunding()}
+              class="flex flex-wrap items-center gap-2"
+            >
+              <!-- The link a member shared: it leaves the site, so it opens apart and says so. -->
+              <a
+                class="anchor font-semibold"
+                href={campaign.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                >{campaign.name}<span class="sr-only">
+                  {m.crowdfunding_opens_new_tab({
+                    site: siteName(campaign.platform, campaign.url),
+                  })}</span
+                ></a
+              >
+              {#if campaign.removedAt}
+                <span class="text-sm text-muted">{m.admin_crowdfunding_removed()}</span>
+              {/if}
+            </DetailRow>
+            <DetailRow label={m.crowdfunding_owner_label()}>{campaign.owner}</DetailRow>
+            <DetailRow label={m.admin_report_platform()}
+              >{platformLabel(campaign.platform)}</DetailRow
+            >
+            <DetailRow label={m.admin_report_period()}
+              >{periodLabel(campaign.startsOn, campaign.endsOn, locale)}</DetailRow
+            >
+            <DetailRow
+              label={m.crowdfunding_sent_by_label()}
+              class="flex flex-wrap items-center gap-2"
+            >
+              {#if campaign.submitter}
+                <AdminPersonLink person={campaign.submitter} />
+              {:else}
+                <span class="inline-flex items-center gap-1.5">
+                  <Icon name="import" size={18} class="shrink-0 text-muted" />
+                  {submissionLabel(null, campaign.importSource)}
+                </span>
+              {/if}
+            </DetailRow>
           {/if}
           {#if report.table}
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">
-                {isTable ? m.admin_report_table() : m.admin_report_where()}
-              </dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                {#if report.table.status === 'disabled'}
-                  <span class="font-semibold">{report.table.title}</span>
-                {:else}
-                  <a class="anchor font-semibold" href={`/t/${report.table.slug}`}
-                    >{report.table.title}</a
-                  >
-                {/if}
-                <StatusBadge status={`table:${report.table.status}` as Status} />
-              </dd>
-            </div>
+            <DetailRow
+              label={isTable ? m.admin_report_table() : m.admin_report_where()}
+              class="flex flex-wrap items-center gap-2"
+            >
+              {#if report.table.status === 'disabled'}
+                <span class="font-semibold">{report.table.title}</span>
+              {:else}
+                <a class="anchor font-semibold" href={`/t/${report.table.slug}`}
+                  >{report.table.title}</a
+                >
+              {/if}
+              <StatusBadge status={`table:${report.table.status}` as Status} />
+            </DetailRow>
           {/if}
           {#if report.gm}
-            <div class={row}>
-              <dt class="text-sm font-semibold text-muted">{m.admin_report_gm()}</dt>
-              <dd class="flex flex-wrap items-center gap-2">
-                <UserLink
-                  username={report.gm.username}
-                  label={handle(report.gm.username)}
-                  class="font-semibold"
-                />
-                <a class="ml-2 anchor text-sm" href={`/admin/users/${report.gm.id}`}
-                  >{m.admin_user_title()}</a
-                >
-                {#if report.gm.status === 'suspended'}
-                  <StatusBadge status="user:banned" />
-                {/if}
-              </dd>
-            </div>
+            <DetailRow label={m.admin_report_gm()} class="flex flex-wrap items-center gap-2">
+              <AdminPersonLink person={report.gm} />
+            </DetailRow>
           {/if}
-        </dl>
+        </DetailList>
         {#if isTable}
           <p class="mt-4 text-sm text-muted">{m.admin_report_table_ban_hint()}</p>
         {/if}
-      </section>
+      </Panel>
     </div>
 
-    <aside
-      aria-labelledby="report-actions"
-      class="grid h-fit content-start gap-3 rounded-lg border border-surface-200-800 bg-panel p-5 xl:sticky xl:top-6"
+    <Panel
+      as="aside"
+      title={m.admin_report_decision()}
+      class="grid h-fit content-start gap-3 p-5 xl:sticky xl:top-6"
     >
-      <h2 id="report-actions" class="text-lg font-semibold">{m.admin_report_decision()}</h2>
       <p class="text-sm text-muted">{m.admin_report_decision_note()}</p>
       {#if !report.can.close}
         <p class="text-muted">{m.admin_report_nothing_left()}</p>
@@ -438,6 +351,6 @@
           triggerClass={ghost}
         />
       {/if}
-    </aside>
+    </Panel>
   </div>
 </AdminPage>

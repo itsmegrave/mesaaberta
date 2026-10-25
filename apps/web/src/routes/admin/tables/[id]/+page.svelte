@@ -1,6 +1,9 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import DetailList from '#lib/components/ui/DetailList.svelte';
+  import DetailRow from '#lib/components/ui/DetailRow.svelte';
+  import Panel from '#lib/components/ui/Panel.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
@@ -10,7 +13,6 @@
   let { data } = $props();
   const locale = getLocale();
   const table = $derived(data.table);
-  const card = 'rounded-lg border border-surface-200-800 bg-panel p-5';
 </script>
 
 <svelte:head
@@ -34,32 +36,25 @@
     },
   ]}
 >
-  <section aria-labelledby="table-summary" class={card}>
-    <h2 id="table-summary" class="sr-only">{m.admin_table_page_title({ title: table.title })}</h2>
-    <dl class="divide-y divide-surface-200-800">
-      <div class="grid gap-1 py-3 sm:grid-cols-2">
-        <dt class="text-sm font-semibold text-muted">{m.admin_table_gm()}</dt>
-        <dd class="text-sm"><UserLink username={table.gm} label={`@${table.gm}`} /></dd>
-      </div>
-      <div class="grid gap-1 py-3 sm:grid-cols-2">
-        <dt class="text-sm font-semibold text-muted">{m.admin_table_session()}</dt>
-        <dd class="text-sm">
-          {dayLabel(table.startsAt, locale, table.timezone)} · {timeLabel(
-            table.startsAt,
-            locale,
-            table.timezone,
-          )}
-        </dd>
-      </div>
-      <div class="grid gap-1 py-3 sm:grid-cols-2">
-        <dt class="text-sm font-semibold text-muted">{m.admin_table_status()}</dt>
-        <dd><StatusBadge status={`table:${table.status}` as Status} /></dd>
-      </div>
-    </dl>
-  </section>
+  <Panel title={m.admin_table_page_title({ title: table.title })} titleClass="sr-only">
+    <DetailList>
+      <DetailRow label={m.admin_table_gm()} class="text-sm"
+        ><UserLink username={table.gm} label={`@${table.gm}`} /></DetailRow
+      >
+      <DetailRow label={m.admin_table_session()} class="text-sm">
+        {dayLabel(table.startsAt, locale, table.timezone)} · {timeLabel(
+          table.startsAt,
+          locale,
+          table.timezone,
+        )}
+      </DetailRow>
+      <DetailRow label={m.admin_table_status()}
+        ><StatusBadge status={`table:${table.status}` as Status} /></DetailRow
+      >
+    </DetailList>
+  </Panel>
 
-  <section aria-labelledby="table-history" class="mt-8 {card}">
-    <h2 id="table-history" class="text-lg font-semibold">{m.history_title()}</h2>
+  <Panel title={m.history_title()} class="mt-8 p-5">
     <AuditTimeline history={data.history} zone={data.viewer.timezone} />
-  </section>
+  </Panel>
 </AdminPage>
