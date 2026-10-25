@@ -10,6 +10,7 @@
   import { fieldErrors, problem } from '#lib/forms/field-errors.js';
   import EditorForm from './EditorForm.svelte';
   import FormSection from './ui/FormSection.svelte';
+  import RadioCards from './ui/RadioCards.svelte';
   import { NAMELESS } from '@mesaaberta/core/profile/handle';
   import FormField from './FormField.svelte';
   import RichTextField from './RichTextField.svelte';
@@ -258,14 +259,17 @@
   </FormSection>
 
   <FormSection id="when" step={2} title="Quando">
-    <fieldset class="grid gap-3 sm:grid-cols-2">
-      <legend class="mb-2 font-semibold sm:col-span-2">{m.form_kind()}</legend>
-      {#each [['one_shot', m.form_kind_one_shot()], ['campaign', m.form_kind_campaign()], ['adventure', m.form_kind_adventure()]] as [value, label] (value)}<label
-          class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-          ><input type="radio" name="kind" {value} bind:group={$draft.kind} />{label}</label
-        >{/each}
-      <FieldError id="kind" class="" message={err('kind')} />
-    </fieldset>
+    <RadioCards
+      name="kind"
+      legend={m.form_kind()}
+      options={[
+        { value: 'one_shot', label: m.form_kind_one_shot() },
+        { value: 'campaign', label: m.form_kind_campaign() },
+        { value: 'adventure', label: m.form_kind_adventure() },
+      ]}
+      bind:group={$draft.kind}
+      error={err('kind')}
+    />
     <div class="grid gap-6 sm:grid-cols-2">
       <div class="min-w-0 sm:col-span-2">
         <SessionPicker
@@ -333,16 +337,19 @@
   </FormSection>
 
   <FormSection id="seats-entry" step={3} title="Vagas e entrada">
-    <fieldset class="grid gap-3 sm:grid-cols-2">
-      <legend class="mb-2 font-semibold sm:col-span-2">{m.form_modality()}</legend
-      >{#each [['online', m.table_modality_online()], ['in_person', m.table_modality_in_person()]] as const as [value, label] (value)}<label
-          class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-          ><input type="radio" name="modality" {value} bind:group={$draft.modality} /><Icon
-            name={modalityIcon(value)}
-            size={20}
-          />{label}</label
-        >{/each}
-    </fieldset>
+    <RadioCards
+      name="modality"
+      legend={m.form_modality()}
+      options={[
+        { value: 'online', label: m.table_modality_online(), icon: modalityIcon('online') },
+        {
+          value: 'in_person',
+          label: m.table_modality_in_person(),
+          icon: modalityIcon('in_person'),
+        },
+      ]}
+      bind:group={$draft.modality}
+    />
     {#if $draft.modality === 'in_person'}
       <FormField
         id="postalCode"
@@ -446,13 +453,15 @@
         />
       {/snippet}
     </FormField>
-    <fieldset class="grid gap-3 sm:grid-cols-2">
-      <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
-      >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label
-          class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10"
-          ><input type="radio" name="joinMode" {value} bind:group={$draft.joinMode} />{label}</label
-        >{/each}
-    </fieldset>
+    <RadioCards
+      name="joinMode"
+      legend={m.form_join_mode()}
+      options={[
+        { value: 'auto', label: m.form_join_auto() },
+        { value: 'approval', label: m.form_join_approval() },
+      ]}
+      bind:group={$draft.joinMode}
+    />
   </FormSection>
 
   <FormSection id="image-section" step={4} title="Imagem">
