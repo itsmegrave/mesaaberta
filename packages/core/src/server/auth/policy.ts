@@ -40,6 +40,8 @@ type Resources = {
     registration: 'pending' | 'confirmed' | null;
     tableStatus: TableStatus;
     firstSessionEnded: boolean;
+    /** The GM's word on whether the player showed up: only `false` blocks. Null when not recorded. */
+    attended?: boolean | null;
   };
   /** Approve or decline a request, or remove a player. */
   'registration:manage': { gmId: string };
@@ -105,14 +107,16 @@ export function joinBlocker(
 
 /**
  * Why this actor may not rate, or null if they may: a confirmed registration, not the GM, and a
- * session the GM confirmed happened (you rate what you played).
+ * session the GM confirmed happened (you rate what you played). A player the GM marked absent
+ * did not play it.
  */
 export function rateBlocker(
   actor: Actor | null,
   facts: Resources['table:rate'] | undefined,
-): 'forbidden' | 'not_registered' | 'too_early' | null {
+): 'forbidden' | 'not_registered' | 'absent' | 'too_early' | null {
   if (!actor || actor.status !== 'active' || !facts || actor.id === facts.gmId) return 'forbidden';
   if (facts.registration !== 'confirmed') return 'not_registered';
+  if (facts.attended === false) return 'absent';
   // Until the GM says the session happened, there is nothing to rate yet.
   if (!facts.firstSessionEnded || facts.tableStatus !== 'concluded') return 'too_early';
 

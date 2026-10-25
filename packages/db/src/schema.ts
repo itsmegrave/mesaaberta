@@ -464,6 +464,10 @@ export const registrations = pgTable(
     // How the player introduced themselves to the GM when asking for the seat. Optional, plain text,
     // and only kept for a request that needs approval.
     message: text('message'),
+    // Whether the player showed up, said by the GM when the session is confirmed. Null while it is
+    // not recorded (before the session, and every session confirmed before attendance existed): only
+    // a false blocks rating the GM.
+    attended: boolean('attended'),
     ...timestamps,
   },
   (registration) => [

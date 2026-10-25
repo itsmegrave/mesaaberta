@@ -3,7 +3,7 @@ import type { AnyDb } from '../db/client';
 import { profiles } from '../db/schema';
 import { can, joinBlocker, rateBlocker, type Actor } from '../auth/policy';
 import { firstSessionEnded, ratingOf } from '../ratings/service';
-import { listRegistrations, registrationStatus } from '../registrations/service';
+import { attendanceOf, listRegistrations, registrationStatus } from '../registrations/service';
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
@@ -41,6 +41,8 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
 
   // The score is public (it comes with the table); the comment goes to no one but its author.
   const mine = profile ? await ratingOf(db, id, profile.id) : null;
+  const attended =
+    profile && myStatus === 'confirmed' ? await attendanceOf(db, id, profile.id) : null;
   // A rating is final: once given there is nothing left to do, only to show it.
   const canRate =
     !mine &&
@@ -49,6 +51,7 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
       registration: myStatus,
       tableStatus: found.status,
       firstSessionEnded: firstSessionEnded(found, now),
+      attended,
     }) === null;
 
   const [gm] = await db

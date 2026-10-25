@@ -199,4 +199,12 @@ describe('notificationHandler', () => {
     expect(rows.map((row) => row.to).sort()).toEqual([ana, bia].sort());
     expect(rows.every((row) => row.type === 'rating_prompt' && row.link === '/t/mesa')).toBe(true);
   });
+
+  it('does not ask a player the GM marked absent to rate', async () => {
+    await handle(
+      stored({ type: 'TableConcluded', payload: { ...table, absentPlayerIds: [bia] } }, gm),
+    );
+
+    expect((await written()).map((row) => row.to)).toEqual([ana]);
+  });
 });

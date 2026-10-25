@@ -7,8 +7,17 @@
   import { answerSchema, postponeSchema } from '#lib/tables/confirmation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
+  import Avatar from '#lib/components/Avatar.svelte';
 
-  let { next }: { next: string } = $props();
+  // `players` are the confirmed seats. "It happened" also asks who showed up, everyone checked,
+  // and whoever is left unchecked cannot rate the GM.
+  let {
+    next,
+    players = [],
+  }: {
+    next: string;
+    players?: { playerId: string; username: string; avatarUrl: string | null }[];
+  } = $props();
 
   const primary = 'btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const secondary =
@@ -54,8 +63,36 @@
   <p class="mt-2 text-surface-700-300">{m.manage_confirm_text()}</p>
 
   <div class="mt-5 flex flex-wrap gap-3">
-    <Form action="?/happened" onsubmit={happened.submit} class="m-0">
+    <Form
+      action="?/happened"
+      onsubmit={happened.submit}
+      class={players.length > 0 ? 'm-0 w-full' : 'm-0'}
+    >
       <input type="hidden" name="next" value={next} />
+      {#if players.length > 0}
+        <input type="hidden" name="attendance" value="1" />
+        <fieldset class="mb-4 min-w-0">
+          <legend class="font-semibold">{m.manage_attendance_title()}</legend>
+          <p class="mt-1 text-sm text-muted">{m.manage_attendance_hint()}</p>
+          <ul class="mt-3 flex flex-col gap-2">
+            {#each players as player (player.playerId)}
+              <li>
+                <label class="flex items-center gap-3 font-semibold">
+                  <input
+                    type="checkbox"
+                    name="present"
+                    value={player.playerId}
+                    checked
+                    class="checkbox"
+                  />
+                  <Avatar src={player.avatarUrl} name={player.username} size={32} />
+                  <span class="min-w-0 truncate">{player.username}</span>
+                </label>
+              </li>
+            {/each}
+          </ul>
+        </fieldset>
+      {/if}
       <SubmitButton
         submitting={happened.pending}
         delayed={happened.delayed}

@@ -212,7 +212,7 @@
   </div>
 
   {#if table.status === 'awaiting_confirmation'}
-    <SessionConfirmation next={here} />
+    <SessionConfirmation next={here} players={data.players} />
   {/if}
   {#if table.status === 'draft'}
     <DraftNotice action="?/publish" next={here} waiting={data.systemWaiting} />

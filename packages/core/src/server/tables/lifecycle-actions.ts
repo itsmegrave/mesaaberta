@@ -20,8 +20,15 @@ export const tableLifecycleActions = {
     apply: (db: AnyDb, actor: Actor | null, slug: string) => publishTable(db, actor, slug),
   },
   happened: {
-    schema: none,
-    apply: (db: AnyDb, actor: Actor | null, slug: string) => concludeTable(db, actor, slug),
+    // `presentPlayerIds`: the confirmed players the GM left checked. Without it nobody is marked
+    // and every confirmed player may rate, as before attendance existed.
+    schema: z.object({ presentPlayerIds: z.array(z.uuid()).optional() }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      { presentPlayerIds }: { presentPlayerIds?: string[] },
+    ) => concludeTable(db, actor, slug, presentPlayerIds),
   },
   notHeld: {
     schema: none,

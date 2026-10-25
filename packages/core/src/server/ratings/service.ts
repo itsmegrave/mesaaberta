@@ -15,7 +15,7 @@ export const firstSessionEnded = (
 
 /**
  * A player rates the GM of a table they played at. Needs a confirmed seat, not being the GM, and a
- * session the GM confirmed happened (`rateBlocker`). One rating per player and table, and it is
+ * session the GM confirmed happened, and not having been marked absent (`rateBlocker`). One rating per player and table, and it is
  * final: a second attempt throws `AlreadyRated`, nothing edits it, and it outlives the seat.
  */
 export async function submitRating(
@@ -31,7 +31,7 @@ export async function submitRating(
 
     const [registration] = actor
       ? await tx
-          .select({ status: registrations.status })
+          .select({ status: registrations.status, attended: registrations.attended })
           .from(registrations)
           .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, actor.id)))
       : [];
@@ -41,6 +41,7 @@ export async function submitRating(
       registration: registration?.status ?? null,
       tableStatus: table.status,
       firstSessionEnded: firstSessionEnded(table, now),
+      attended: registration?.attended ?? null,
     });
     if (blocker === 'too_early') throw new TooEarly();
     if (blocker) throw new Forbidden('table:rate');

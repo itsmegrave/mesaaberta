@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import {
   events,
   gameTables,
   gmScores,
   profiles,
   ratings,
+  registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
@@ -156,6 +157,33 @@ describe('submitRating', () => {
     const rows = await test.db.select().from(ratings).where(eq(ratings.tableId, table.id));
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ gmScore: 2, comment: 'Foi ok.' });
+  });
+
+  it('refuses a player the GM marked absent with Forbidden, and stores nothing', async () => {
+    const table = await makeTable();
+    await seated(6, table.slug);
+    await test.db
+      .update(registrations)
+      .set({ attended: false })
+      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, id(6))));
+
+    await expect(
+      submitRating(test.db, player(6), table.slug, input(), after),
+    ).rejects.toMatchObject({ name: 'Forbidden' });
+    expect(await ratingOf(test.db, table.id, id(6))).toBeNull();
+  });
+
+  it('lets a player the GM marked present rate', async () => {
+    const table = await makeTable();
+    await seated(6, table.slug);
+    await test.db
+      .update(registrations)
+      .set({ attended: true })
+      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, id(6))));
+
+    await submitRating(test.db, player(6), table.slug, input(), after);
+
+    expect(await ratingOf(test.db, table.id, id(6))).not.toBeNull();
   });
 
   it('refuses a rating before the first session has ended, with TooEarly', async () => {
