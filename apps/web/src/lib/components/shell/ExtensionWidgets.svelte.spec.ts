@@ -6,6 +6,7 @@ import Fixture from './widget-fixture.svelte';
 
 const route = vi.hoisted(() => ({ id: '/t' as string | null }));
 vi.mock('$app/env', () => ({ browser: true }));
+vi.mock('@sentry/sveltekit', () => ({ captureException: vi.fn() }));
 vi.mock('$app/state', () => ({
   page: {
     get route() {
