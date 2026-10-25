@@ -157,20 +157,13 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('leaves Parceiros out of the footer', async () => {
-    render(Layout, { children, data: signedOut });
-
-    await expect
-      .element(page.getByRole('contentinfo').getByRole('link', { name: 'Parceiros' }))
-      .not.toBeInTheDocument();
-  });
-
   describe('footer links', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
       ['Lenindragons', 'https://linktr.ee/lenindragonsrpg'],
       ['GitHub', 'https://github.com/itsmegrave/mesaaberta'],
-      ['Contato', 'mailto:contato@mesaaberta.app'],
+      ['contato@mesaaberta.app', 'mailto:contato@mesaaberta.app'],
+      ['Parceiros', '/p'],
       ['Instagram da Mesa Aberta, @mesaaberta.app', 'https://www.instagram.com/mesaaberta.app/'],
     ])('links %s to %s', async (name, href) => {
       render(Layout, { children, data: signedOut });
