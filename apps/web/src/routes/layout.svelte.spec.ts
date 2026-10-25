@@ -160,7 +160,6 @@ describe('+layout.svelte', () => {
   describe('footer links', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
-      ['Lenindragons', 'https://linktr.ee/lenindragonsrpg'],
       ['GitHub', 'https://github.com/itsmegrave/mesaaberta'],
       ['contato@mesaaberta.app', 'mailto:contato@mesaaberta.app'],
       ['Parceiros', '/p'],

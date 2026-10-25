@@ -3,10 +3,11 @@
   import { page } from '$app/state';
   import Icon from '#lib/components/Icon.svelte';
   import TableLogo from '#lib/components/TableLogo.svelte';
+  import { footerNotes } from '#lib/extensions/panels.js';
   import { m } from '#lib/paraglide/messages.js';
 
-  // The site footer: the brand with the community sentence, the pages and the contact, then a
-  // bottom bar with the open-source sentence and the credits.
+  // The site footer: the brand with the community sentence (and any notes a private build adds),
+  // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
   let { site }: { site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string } } = $props();
 
   const pages = [
@@ -35,9 +36,14 @@
         </p>
         <p class="max-w-sm text-base leading-relaxed text-muted">
           {m.footer_community()}
-          <a href="https://linktr.ee/lenindragonsrpg" rel="noopener" target="_blank" class={strong}
-            >Lenindragons</a
-          >.
+          {#each footerNotes as note (note.text)}
+            {note.text}
+            {#if note.link}
+              <a href={note.link.href} rel="noopener" target="_blank" class={strong}
+                >{note.link.label}</a
+              >.
+            {/if}
+          {/each}
         </p>
         {#if site.INSTAGRAM_HANDLE}
           <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->

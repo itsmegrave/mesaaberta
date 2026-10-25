@@ -12,10 +12,14 @@ vi.mock('$app/state', () => ({
   },
 }));
 
+const notes = vi.hoisted(() => [] as { text: string; link?: { label: string; href: string } }[]);
+vi.mock('#lib/extensions/panels.js', () => ({ footerNotes: notes }));
+
 const site = { CONTACT_EMAIL: 'oi@example.test', INSTAGRAM_HANDLE: 'mesa.example' };
 
 beforeEach(() => {
   location.pathname = '/';
+  notes.length = 0;
 });
 
 describe('SiteFooter.svelte', () => {
@@ -56,6 +60,30 @@ describe('SiteFooter.svelte', () => {
 
     await expect
       .element(browserPage.getByRole('link', { name: /Instagram/ }))
+      .not.toBeInTheDocument();
+  });
+
+  it('adds the notes a private build declares after the community sentence', async () => {
+    notes.push({
+      text: 'Conheça a',
+      link: { label: 'Taverna', href: 'https://example.test/taverna' },
+    });
+    render(SiteFooter, { site });
+
+    await expect.element(browserPage.getByText(/comunidade\. Conheça a/)).toBeVisible();
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Taverna' }))
+      .toHaveAttribute('href', 'https://example.test/taverna');
+  });
+
+  it('names no one else in the public build', async () => {
+    render(SiteFooter, { site });
+
+    await expect
+      .element(browserPage.getByText('Feito pela comunidade, para a comunidade.'))
+      .toBeVisible();
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Lenindragons' }))
       .not.toBeInTheDocument();
   });
 });
