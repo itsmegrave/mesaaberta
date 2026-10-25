@@ -1,5 +1,6 @@
 <script lang="ts">
   import BadgeVisibility from './BadgeVisibility.svelte';
+  import BadgeMedal from '#lib/components/ui/BadgeMedal.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import { BADGE_PRESENTATION, presentationOf } from '#lib/badges/presentation.js';
   import { withLook, type HeldBadge } from '#lib/badges/shown.js';
@@ -49,11 +50,7 @@
     <ul class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {#each visible as badge (badge.badgeId)}
         <li class="{tile} {badge.hidden ? 'border-dashed' : ''}">
-          <span
-            class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary-500 text-primary-contrast-500"
-          >
-            <Icon name={badge.look.icon} size={28} />
-          </span>
+          <BadgeMedal icon={badge.look.icon} mark={badge.look.mark} />
           <div class="min-w-0 flex-1">
             <p class="font-semibold">{badge.look.name()}</p>
             {#if badge.look.ladder}
@@ -89,12 +86,10 @@
       <ul class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {#each locked as badge (badge.badgeId)}
           <li class={tile}>
-            <span
-              class="relative flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-surface-500 bg-surface-200-800 text-muted"
-            >
-              <Icon name={badge.look.icon} size={28} />
+            <span class="relative shrink-0">
+              <BadgeMedal icon={badge.look.icon} mark={badge.look.mark} locked />
               <span
-                class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full bg-surface-50-950 text-muted"
+                class="absolute -right-1 bottom-0 flex size-5 items-center justify-center rounded-full bg-surface-50-950 text-muted"
               >
                 <Icon name="lock" size={12} />
                 <span class="sr-only">{m.badges_locked()}</span>
