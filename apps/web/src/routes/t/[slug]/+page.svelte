@@ -33,6 +33,7 @@
   import DraftNotice from './components/DraftNotice.svelte';
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
 
@@ -178,21 +179,24 @@
         </ul>
       {/if}
 
+      <!-- Quem mestra: the picture, the label over the name, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
-        <p>
-          <span class="block text-sm font-semibold text-muted">{m.table_gm()}</span>
-          {#if data.gmUsername}
-            <a href={`/u/${encodeURIComponent(data.gmUsername)}`} class="text-lg link-underline"
-              >{atHandle(table.gmName)}</a
-            >
-          {:else}
-            <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
-          {/if}
-        </p>
-        <GmRating
-          rating={table.gmRating}
-          class="h-12 rounded-lg border border-surface-200-800 px-3 text-lg"
-        />
+        <div class="flex min-w-0 items-center gap-4">
+          <MAAvatar src={data.gm?.avatarUrl ?? null} name={data.gm?.name ?? table.gmName} size={44} />
+          <p class="min-w-0">
+            <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
+            {#if data.gmUsername}
+              <a
+                href={`/u/${encodeURIComponent(data.gmUsername)}`}
+                class="text-lg font-semibold text-surface-950-50 underline decoration-surface-200-800 underline-offset-3 hover:decoration-primary-500"
+                >{data.gm?.name || atHandle(table.gmName)}</a
+              >
+            {:else}
+              <span class="text-lg font-semibold">{data.gm?.name || atHandle(table.gmName)}</span>
+            {/if}
+          </p>
+        </div>
+        <GmRating rating={table.gmRating} variant="pill" class="ml-2" />
       </div>
 
       {#if table.imageUrl}

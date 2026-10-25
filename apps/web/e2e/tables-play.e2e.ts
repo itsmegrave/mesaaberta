@@ -253,12 +253,16 @@ test.describe('ratings', () => {
       await page.getByLabel('Comentário (opcional)').fill('Noite ótima.');
       await page.getByRole('button', { name: 'Enviar avaliação' }).click();
 
-      // Final: the form is gone and what was given is only shown. One rating is "Novo mestre".
+      // Final: the form is gone and what was given is only shown. One rating is still a debut.
       await expect(
         page.getByText('Sua avaliação foi enviada e não pode ser alterada.'),
       ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Enviar avaliação' })).toHaveCount(0);
-      await expect(page.getByText('Novo mestre · 1 avaliação').first()).toBeVisible();
+      await expect(
+        page
+          .getByRole('group', { name: 'Nota da mestragem: estreia, 1 avaliação, ainda sem nota' })
+          .first(),
+      ).toBeVisible();
 
       // The dashboard shows what was given, and the GM cannot rate their own table.
       await page.goto('/u/tables');

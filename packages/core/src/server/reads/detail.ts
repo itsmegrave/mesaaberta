@@ -62,12 +62,21 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
       enabled: profiles.directMessagesEnabled,
       username: profiles.username,
       status: profiles.status,
+      name: profiles.name,
+      avatarUrl: profiles.avatarUrl,
+      avatarPath: profiles.avatarPath,
     })
     .from(profiles)
     .where(eq(profiles.id, gmId));
+  const gmActive = gm?.status === 'active';
 
   return {
-    gmUsername: gm?.status === 'active' ? gm.username : null,
+    gmUsername: gmActive ? gm.username : null,
+    // "Quem mestra" shows the display name and picture; like the table's picture, the uploaded one
+    // is still a storage path the caller turns into a URL.
+    gmProfile: gmActive
+      ? { name: gm.name, avatarUrl: gm.avatarUrl, avatarPath: gm.avatarPath }
+      : null,
     canRate,
     myRating: mine && {
       gmScore: mine.gmScore,
