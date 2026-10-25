@@ -12,13 +12,13 @@
       },
       {
         "kind": "new",
-        "title": "Conquistas no perfil",
-        "description": "As conquistas aparecem como ícones sob o @usuário, com os detalhes ao passar o mouse, focar ou tocar, e você escolhe quais mostrar."
+        "title": "Novidades de volta",
+        "description": "Esta página mostra o que mudou na Mesa Aberta, dia a dia, com filtros por tipo e um link para cada dia."
       },
       {
         "kind": "new",
         "title": "Presença na sessão",
-        "description": "Depois da sessão, quem mestra marca quem compareceu para liberar a avaliação da mestragem e contar a participação nas conquistas.",
+        "description": "Depois da sessão, quem mestra marca quem compareceu, e só quem esteve lá avalia a mestragem.",
         "href": "/u/tables"
       },
       {
@@ -48,8 +48,7 @@
         "title": "Listas mais rápidas",
         "description": "As listas de mesas, parceiros e financiamentos reaproveitam os resultados recentes para abrir mais rápido."
       }
-    ],
-    "preview": "profile"
+    ]
   },
   {
     "date": "2026-10-23",

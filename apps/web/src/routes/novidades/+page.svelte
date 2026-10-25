@@ -78,8 +78,10 @@
   {#if data.page > 1 || data.kind}<meta name="robots" content="noindex, follow" />{/if}
 </svelte:head>
 
-{#snippet controls(className: string)}
-  <div class="items-center gap-3 {className}">
+{#snippet controls()}
+  <div
+    class="mt-3 flex items-center justify-center gap-3 md:col-start-2 md:row-start-1 md:mt-0 md:justify-self-end"
+  >
     <MAButton
       disabled={!hydrated}
       variant="secondary"
@@ -133,22 +135,22 @@
   </header>
 
   <section
-    class="mt-6 md:mt-10"
+    class="mt-6 md:mt-10 md:grid md:grid-cols-2"
     aria-labelledby="highlights-title"
     aria-roledescription="carrossel"
   >
-    <div class="flex items-center justify-between gap-4">
-      <h2 id="highlights-title" class="text-xl font-semibold tracking-tight md:text-2xl">
-        {m.changelog_highlights()}
-      </h2>
-      {@render controls('hidden md:flex')}
-    </div>
+    <h2
+      id="highlights-title"
+      class="text-xl font-semibold tracking-tight md:row-start-1 md:self-center md:text-2xl"
+    >
+      {m.changelog_highlights()}
+    </h2>
     <div
       role="group"
       aria-roledescription="slide"
       aria-label="{slideCount}: {highlight.title}"
       aria-live="polite"
-      class="mt-3 grid overflow-hidden rounded-lg border border-surface-200-800 bg-panel md:mt-4 md:grid-cols-5"
+      class="mt-3 grid overflow-hidden rounded-lg border border-surface-200-800 bg-panel md:col-span-2 md:row-start-2 md:mt-4 md:grid-cols-5"
     >
       <div
         class="flex h-45 items-center justify-center border-b border-surface-200-800 bg-surface-wash p-4 md:col-span-3 md:h-90 md:border-r md:border-b-0 md:p-6"
@@ -157,15 +159,15 @@
           <img
             src={asset(`changelog/${preview}-light.jpg`)}
             alt={m.changelog_preview({ title: highlight.changes[0].title })}
-            width={preview === 'profile' ? 976 : 576}
-            height={preview === 'profile' ? 952 : preview === 'chat' ? 186 : 300}
+            width={576}
+            height={preview === 'chat' ? 186 : 300}
             class="size-full rounded-lg object-contain dark:hidden"
           />
           <img
             src={asset(`changelog/${preview}-dark.jpg`)}
             alt={m.changelog_preview({ title: highlight.changes[0].title })}
-            width={preview === 'profile' ? 976 : 576}
-            height={preview === 'profile' ? 952 : preview === 'chat' ? 186 : 300}
+            width={576}
+            height={preview === 'chat' ? 186 : 300}
             class="hidden size-full rounded-lg object-contain dark:block"
           />
         {:else}
@@ -187,7 +189,8 @@
         >
       </div>
     </div>
-    {@render controls('mt-3 flex justify-center md:hidden')}
+    <!-- After the slide on phones; on wider screens the grid moves it beside the heading. -->
+    {@render controls()}
   </section>
 
   <div class="mt-5 flex flex-col gap-6 md:mt-12 lg:flex-row lg:items-start lg:gap-16">
