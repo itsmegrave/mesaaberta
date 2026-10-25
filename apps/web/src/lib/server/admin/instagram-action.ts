@@ -1,6 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { InstagramError, type InstagramEnv } from '@mesaaberta/core/server/instagram/api';
 import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 import type { RequestEvent } from '@sveltejs/kit';
 import { extensionViaApi } from './extension-api';
@@ -12,7 +11,7 @@ export const publishInstagramAction = async ({ locals, request }: RequestEvent) 
   const tableId = String(form.get('tableId') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(tableId)) return fail(400, { publishError: 'invalid' });
   try {
-    const env = locals.env as InstagramEnv & SocialEnv;
+    const env = locals.env as SocialEnv;
     const social = socialFor(env);
     // Queued by the api Worker when `api_admin_instagram` is on; here otherwise. Either way the
     // render and the publish run in the background after this response.
@@ -42,7 +41,7 @@ export const publishInstagramAction = async ({ locals, request }: RequestEvent) 
     locals.log.error('instagram.publish_failed', {
       tableId,
       errorType: cause instanceof Error ? cause.name : 'unknown',
-      code: cause instanceof InstagramError ? cause.code : dbCode,
+      code: (cause as { code?: number } | null)?.code ?? dbCode,
     });
     return fail(502, { publishError: 'failed' });
   }

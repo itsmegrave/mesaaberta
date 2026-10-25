@@ -3,7 +3,7 @@ import { connectionStringFrom, createDb } from '@mesaaberta/core/server/db/clien
 import { createEventExecutor } from '@mesaaberta/core/server/events/executor';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { runScheduled } from '@mesaaberta/core/server/events/scheduled';
-import type { InstagramEnv } from '@mesaaberta/core/server/instagram/api';
+import type { SocialEnv } from '@mesaaberta/core/server/social/port';
 import { logger } from '@mesaaberta/core/server/logger';
 import { createDeadLetterConsumer, createQueueConsumer, type QueueBatch } from '@mesaaberta/events';
 
@@ -11,7 +11,7 @@ import { createDeadLetterConsumer, createQueueConsumer, type QueueBatch } from '
 // consumer. It is the same delivery graph the web Worker runs from `scheduled`, packaged on its own
 // so the web Worker can stop carrying it. Since the cutover in README.md this Worker owns the crons.
 export type WorkerEnv = ImportEnv &
-  InstagramEnv & {
+  SocialEnv & {
     EVENT_POLLER?: string;
     /**
      * Comma-separated handler names the queue consumer runs for real (ADR 0003, stage 3), for

@@ -17,6 +17,7 @@
         "@mesaaberta/core": "workspace:*",
         "@mesaaberta/db": "workspace:*",
         "@mesaaberta/events": "workspace:*",
+        "@mesaaberta/private": "workspace:*",
         "@sentry/cloudflare": "11.1.0",
         "@sentry/core": "11.1.0",
         "@sentry/sveltekit": "^11.1.0",
@@ -92,6 +93,7 @@
         "@growthbook/growthbook": "*",
         "@mesaaberta/core": "workspace:*",
         "@mesaaberta/db": "workspace:*",
+        "@mesaaberta/private": "workspace:*",
         "@sentry/cloudflare": "*",
         "@sentry/core": "*",
         "@sindresorhus/slugify": "*",
@@ -121,6 +123,7 @@
         "@growthbook/growthbook": "*",
         "@mesaaberta/core": "workspace:*",
         "@mesaaberta/events": "workspace:*",
+        "@mesaaberta/private": "workspace:*",
         "@sentry/cloudflare": "*",
         "@sentry/core": "*",
         "@sindresorhus/slugify": "*",
@@ -181,6 +184,18 @@
       "version": "0.0.1",
       "peerDependencies": {
         "drizzle-orm": "*",
+      },
+    },
+    "packages/private": {
+      "name": "@mesaaberta/private",
+      "version": "0.0.1",
+      "peerDependencies": {
+        "@cf-wasm/resvg": "*",
+        "@mesaaberta/core": "*",
+        "drizzle-orm": "*",
+        "jpeg-js": "*",
+        "qrcode": "*",
+        "zod": "*",
       },
     },
   },
@@ -497,6 +512,8 @@
     "@mesaaberta/db": ["@mesaaberta/db@workspace:packages/db"],
 
     "@mesaaberta/events": ["@mesaaberta/events@workspace:packages/events"],
+
+    "@mesaaberta/private": ["@mesaaberta/private@workspace:packages/private"],
 
     "@mesaaberta/web": ["@mesaaberta/web@workspace:apps/web"],
 

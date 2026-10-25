@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { instagramAsset } from '@mesaaberta/core/server/instagram/asset';
+import { instagramAsset } from './asset';
 import { gameTables, instagramPosts, profiles, systems } from '@mesaaberta/core/server/db/schema';
-import { createTestDb } from '../db/test-db';
+import { createTestDb } from '../../../../apps/web/src/lib/server/db/test-db';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const gmId = '00000000-0000-4000-8000-000000001201';

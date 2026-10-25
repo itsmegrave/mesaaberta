@@ -1,5 +1,5 @@
-import type { Extension } from '../extensions/contract';
-import { instagramSocial } from '../social/instagram';
+import type { Extension } from '@mesaaberta/core/server/extensions/contract';
+import { instagramSocial } from './social';
 import { instagramAdminActions } from './admin-actions';
 import { instagramAdmin } from './admin';
 import { instagramAsset } from './asset';

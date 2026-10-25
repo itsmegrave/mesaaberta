@@ -1,12 +1,12 @@
-import { routes } from '../../routes';
+import { routes } from '@mesaaberta/core/routes';
 import { Resvg } from '@cf-wasm/resvg';
 import jpeg from 'jpeg-js';
 import QRCode from 'qrcode';
 import type { InstagramEnv } from './api';
-import type { TableView } from '../tables/queries';
-import { imageUrl } from '../images';
-import { toPlainText } from '../../text/rich';
-import { bytesToBase64 } from '../base64';
+import type { TableView } from '@mesaaberta/core/server/tables/queries';
+import { imageUrl } from '@mesaaberta/core/server/images';
+import { toPlainText } from '@mesaaberta/core/text/rich';
+import { bytesToBase64 } from '@mesaaberta/core/server/base64';
 
 export const WIDTH = 1080;
 export const HEIGHT = 1350;
