@@ -6,6 +6,7 @@
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { LinkList } from '#lib/forms/link-list.svelte.js';
 
   let {
@@ -60,6 +61,9 @@
     buttonClass: string;
   } = $props();
 
+  // 44px icon buttons with no border, so a row reads as one line (DS LinksField).
+  const iconButton =
+    'btn size-11 shrink-0 rounded-lg p-0 hover:bg-surface-wash disabled:opacity-40';
   const hintId = $derived(`${idPrefix}s-hint`);
   const urlId = (id: number) => `${idPrefix}-url-${id}`;
   // svelte-ignore state_referenced_locally
@@ -92,17 +96,19 @@
     <p class="text-sm">{empty}</p>
   {/if}
 
-  <ul class="grid gap-4">
+  <!-- One line per link: the network, the address, then the move and remove icon buttons. On a
+       phone the two fields stack and the buttons close the row. -->
+  <ul class="grid gap-3">
     {#each list.ids as id, index (id)}
       {@const problem = rowErrors(index)}
-      <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-        <div class="grid gap-2 sm:grid-cols-4">
+      <li class="grid gap-1 border-b border-surface-200-800 pb-3 last:border-0 sm:border-0 sm:pb-0">
+        <div class="flex flex-wrap items-center gap-2">
           <SearchSelect
             id="{idPrefix}-network-{id}"
             name="linkNetwork"
             label={labels.network(index + 1)}
             labelClass="sr-only"
-            class="grid"
+            class="grid w-full sm:w-44 sm:shrink-0"
             {items}
             value={[networks[index]]}
             placeholder={labels.network(index + 1)}
@@ -119,42 +125,42 @@
             placeholder={placeholder(networks[index])}
             aria-label={labels.url(index + 1, networks[index])}
             bind:value={urls[index]}
-            class="{inputClass} sm:col-span-3"
+            class="{inputClass} w-full min-w-0 sm:w-auto sm:flex-1"
             aria-invalid={problem.url ? 'true' : undefined}
             aria-describedby={problem.url ? `${urlId(id)}-error` : undefined}
           />
+          <div class="ml-auto flex gap-1">
+            {#if reorder}
+              <MAButton
+                size="custom"
+                class="{iconButton} text-muted"
+                disabled={index === 0}
+                aria-label={labels.up?.(index + 1)}
+                onclick={() => list.move(index, -1)}
+              >
+                <Icon name="arrow-up" size={18} />
+              </MAButton>
+              <MAButton
+                size="custom"
+                class="{iconButton} text-muted"
+                disabled={index === list.ids.length - 1}
+                aria-label={labels.down?.(index + 1)}
+                onclick={() => list.move(index, 1)}
+              >
+                <Icon name="arrow-down" size={18} />
+              </MAButton>
+            {/if}
+            <MAButton
+              size="custom"
+              class="{iconButton} text-error-alert"
+              aria-label={labels.remove(index + 1)}
+              onclick={() => list.remove(index)}
+            >
+              <Icon name="trash" size={18} />
+            </MAButton>
+          </div>
         </div>
         <FieldError id={urlId(id)} class="" message={problem.url ?? problem.network} />
-        <div class={reorder ? 'flex flex-wrap gap-2' : undefined}>
-          {#if reorder}
-            <MAButton
-              size="custom"
-              class={buttonClass}
-              disabled={index === 0}
-              aria-label={labels.up?.(index + 1)}
-              onclick={() => list.move(index, -1)}
-            >
-              <span aria-hidden="true">↑</span>
-            </MAButton>
-            <MAButton
-              size="custom"
-              class={buttonClass}
-              disabled={index === list.ids.length - 1}
-              aria-label={labels.down?.(index + 1)}
-              onclick={() => list.move(index, 1)}
-            >
-              <span aria-hidden="true">↓</span>
-            </MAButton>
-          {/if}
-          <MAButton
-            size="custom"
-            class={buttonClass}
-            aria-label={labels.remove(index + 1)}
-            onclick={() => list.remove(index)}
-          >
-            <span aria-hidden="true">×</span>
-          </MAButton>
-        </div>
       </li>
     {/each}
   </ul>
@@ -162,12 +168,12 @@
   <div>
     <MAButton
       size="custom"
-      class={buttonClass}
+      class="{buttonClass} gap-2"
       disabled={!list.canAdd}
       bind:element={list.addButton}
       onclick={() => list.add()}
     >
-      {labels.add}
+      <Icon name="plus" size={18} />{labels.add}
     </MAButton>
   </div>
   <p class="sr-only" role="status">{list.announcement}</p>

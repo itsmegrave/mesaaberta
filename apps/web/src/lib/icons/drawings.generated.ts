@@ -327,6 +327,16 @@ export const DRAWINGS = {
     width: 24,
     height: 24,
   },
+  'arrow-up': {
+    body: '<path clip-rule="evenodd" fill="currentColor" fill-rule="evenodd" d="M11.47 3.47a.75.75 0 0 1 1.06 0l6 6a.75.75 0 1 1-1.06 1.06l-4.72-4.72V20a.75.75 0 0 1-1.5 0V5.81l-4.72 4.72a.75.75 0 1 1-1.06-1.06z"/>',
+    width: 24,
+    height: 24,
+  },
+  'arrow-down': {
+    body: '<path clip-rule="evenodd" fill="currentColor" fill-rule="evenodd" d="M12 3.25a.75.75 0 0 1 .75.75v14.19l4.72-4.72a.75.75 0 1 1 1.06 1.06l-6 6a.75.75 0 0 1-1.06 0l-6-6a.75.75 0 1 1 1.06-1.06l4.72 4.72V4a.75.75 0 0 1 .75-.75"/>',
+    width: 24,
+    height: 24,
+  },
   plus: {
     body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 12h12m-6 6V6"/>',
     width: 24,

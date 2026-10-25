@@ -15,6 +15,7 @@
   let { data, form: result = null } = $props();
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
+  const heading = 'text-2xl leading-tight font-semibold tracking-tight';
   const removeButton = 'btn h-12 rounded-lg px-4 font-semibold text-error-alert hover:preset-tonal';
 
   const photoErrors: Record<string, () => string> = {
@@ -46,7 +47,10 @@
   );
 </script>
 
-<SettingsSection title={m.profile_section_public()} lede={m.profile_section_public_lede()}>
+<SettingsSection
+  title={m.profile_section_public()}
+  lede={m.profile_section_public_lede({ username: data.username })}
+>
   {#snippet aside()}
     {#if data.username}
       <a href="/u/{data.username}" class="link-underline font-semibold text-link"
@@ -57,7 +61,8 @@
 </SettingsSection>
 
 <section aria-labelledby="images-heading" class={card}>
-  <h3 id="images-heading" class="sr-only">{m.account_images()}</h3>
+  <h3 id="images-heading" class={heading}>{m.account_images()}</h3>
+  <p class="mt-2 mb-5 max-w-prose text-muted">{m.account_images_hint()}</p>
   <!-- The cover as the profile shows it (4:1), with the photo over its bottom-left corner. -->
   <div class="relative pb-12">
     {#if data.bannerUrl}
@@ -129,7 +134,9 @@
   {/if}
 </section>
 
-<section aria-label={m.profile_section_public()} class={card}>
+<section aria-labelledby="public-fields" class={card}>
+  <h3 id="public-fields" class={heading}>{m.account_public_fields()}</h3>
+  <p class="mt-2 mb-6 max-w-prose text-muted">{m.account_public_fields_lede()}</p>
   <ProfileForm
     form={result?.form && 'username' in result.form.data
       ? { ...result.form, data: result.form.data as ProfileInput }

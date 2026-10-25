@@ -59,6 +59,8 @@ import SendIcon from '@iconify-svelte/reicon/send';
 import BellOffIcon from '@iconify-svelte/reicon/bell-off';
 import BellIcon from '@iconify-svelte/reicon/bell';
 import ArrowLeftIcon from '@iconify-svelte/reicon/arrow-left';
+import ArrowUpIcon from '@iconify-svelte/reicon/arrow-up';
+import ArrowDownIcon from '@iconify-svelte/reicon/arrow-down';
 import PlusIcon from '@iconify-svelte/reicon/add';
 import GlobeIcon from '@iconify-svelte/reicon/globe';
 import ImportIcon from '@iconify-svelte/reicon/cloud-download';
@@ -173,6 +175,8 @@ export const ICONS = {
   'bell-off': BellOffIcon,
   bell: BellIcon,
   'arrow-left': ArrowLeftIcon,
+  'arrow-up': ArrowUpIcon,
+  'arrow-down': ArrowDownIcon,
   plus: PlusIcon,
   globe: GlobeIcon,
   import: ImportIcon,
