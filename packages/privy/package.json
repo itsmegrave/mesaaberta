@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./instagram": "./src/instagram/index.ts"
+    "./instagram": "./src/instagram/index.ts",
+    "./instagram/panel": "./src/instagram/Panel.svelte"
   },
   "peerDependencies": {
     "@cf-wasm/resvg": "*",
