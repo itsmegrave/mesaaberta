@@ -4,14 +4,13 @@
   // the logo, the links (the site and up to six networks), where the link to Mesa Aberta is, and an
   // optional coupon. A preview card sits beside it (below it on a phone). An admin approves what is
   // sent, and an edit takes an approved partner off the page until it is approved again.
-  import { tick } from 'svelte';
   import Button from '#lib/components/Button.svelte';
   import EditorForm from '#lib/components/EditorForm.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ImageUpload from '#lib/components/ImageUpload.svelte';
+  import NetworkLinksField from '#lib/components/NetworkLinksField.svelte';
   import PartnerCard from '#lib/components/PartnerCard.svelte';
-  import SearchSelect from '#lib/components/SearchSelect.svelte';
   import FormSection from '#lib/components/ui/FormSection.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
@@ -102,9 +101,10 @@
         : errorText(controller.errors.logo[0], 'image')
       : errors.withMessage('logo', (code) => errorText(code, 'image')),
   );
-  const itemError = (field: 'linkNetwork' | 'linkUrl', index: number) =>
-    say(controller.errors[`${field}.${index}`]?.[0]);
-  const listError = () => say(controller.errors.linkUrl?.[0]);
+  const rowErrors = (index: number) => ({
+    url: say(controller.errors[`linkUrl.${index}`]?.[0]),
+    network: say(controller.errors[`linkNetwork.${index}`]?.[0]),
+  });
   const formError = $derived(formProblem(controller.message));
 
   const problems = $derived(
@@ -122,31 +122,7 @@
     ),
   );
 
-  // --- the networks: a list to add to and remove from ----------------------------------------------
-
-  // Each row keeps an id of its own, so a row that is removed does not move what was typed in another.
-  let nextId = 0;
-  let ids = $state($draft.linkNetwork.map(() => nextId++));
-  let announcement = $state('');
-  let addButton: HTMLButtonElement | undefined = $state();
-  const canAdd = $derived(ids.length < MAX_PARTNER_LINKS);
-
-  function addLink() {
-    $draft.linkNetwork = [...$draft.linkNetwork, 'instagram'];
-    $draft.linkUrl = [...$draft.linkUrl, ''];
-    const id = nextId++;
-    ids.push(id);
-    tick().then(() => document.getElementById(`partner-link-url-${id}`)?.focus());
-  }
-
-  function removeLink(index: number) {
-    $draft.linkNetwork = $draft.linkNetwork.filter((_, i) => i !== index);
-    $draft.linkUrl = $draft.linkUrl.filter((_, i) => i !== index);
-    ids.splice(index, 1);
-    announcement = m.partner_link_removed();
-    // The row that had the focus is gone: keep the focus in the list.
-    tick().then(() => addButton?.focus());
-  }
+  // --- the networks: up to six links, each a network and an address ------------------------------
 
   const networks = PARTNER_NETWORKS.map((network) => ({
     name: networkLabels[network](),
@@ -299,84 +275,27 @@
       {/snippet}
     </FormField>
 
-    <fieldset class="grid gap-3">
-      <legend class="font-semibold">{m.partner_form_networks()}</legend>
-      {#if listError()}
-        <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
-      {/if}
-      <ul class="grid gap-4">
-        {#each ids as id, index (id)}
-          {@const urlError = itemError('linkUrl', index)}
-          {@const networkError = itemError('linkNetwork', index)}
-          <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-            <div class="grid gap-2 sm:grid-cols-4">
-              <SearchSelect
-                id="partner-link-network-{id}"
-                name="linkNetwork"
-                label={m.partner_link_network({ n: index + 1 })}
-                labelClass="sr-only"
-                class="grid"
-                items={networks}
-                value={[$draft.linkNetwork[index]]}
-                placeholder={m.partner_link_network({ n: index + 1 })}
-                invalid={!!networkError}
-                onchange={(chosen) =>
-                  ($draft.linkNetwork[index] = (chosen[0] ?? 'instagram') as Network)}
-              />
-              <TextInput
-                id="partner-link-url-{id}"
-                name="linkUrl"
-                type="text"
-                inputmode="url"
-                autocapitalize="none"
-                spellcheck="false"
-                placeholder={$draft.linkNetwork[index] === 'discord'
-                  ? 'https://discord.gg/…'
-                  : m.partner_link_placeholder()}
-                aria-label={m.partner_link_url({ n: index + 1 })}
-                bind:value={$draft.linkUrl[index]}
-                class="{input} sm:col-span-3"
-                aria-invalid={urlError ? 'true' : undefined}
-                aria-describedby={urlError ? `partner-link-error-${id}` : undefined}
-              />
-            </div>
-            {#if urlError || networkError}
-              <p
-                id="partner-link-error-{id}"
-                role="alert"
-                class="text-sm font-semibold text-error-700-300"
-              >
-                {urlError ?? networkError}
-              </p>
-            {/if}
-            <div>
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                aria-label={m.partner_link_remove({ n: index + 1 })}
-                onclick={() => removeLink(index)}
-              >
-                <span aria-hidden="true">×</span>
-              </Button>
-            </div>
-          </li>
-        {/each}
-      </ul>
-      <div>
-        <Button
-          size="custom"
-          type="button"
-          class={secondary}
-          disabled={!canAdd}
-          bind:element={addButton}
-          onclick={addLink}
-        >
-          {m.partner_link_add()}
-        </Button>
-      </div>
-      <p class="sr-only" role="status">{announcement}</p>
-    </fieldset>
+    <NetworkLinksField
+      bind:networks={$draft.linkNetwork}
+      bind:urls={$draft.linkUrl}
+      items={networks}
+      max={MAX_PARTNER_LINKS}
+      idPrefix="partner-link"
+      legend={m.partner_form_networks()}
+      error={say(controller.errors.linkUrl?.[0])}
+      {rowErrors}
+      placeholder={(network) =>
+        network === 'discord' ? 'https://discord.gg/…' : m.partner_link_placeholder()}
+      labels={{
+        network: (n) => m.partner_link_network({ n }),
+        url: (n) => m.partner_link_url({ n }),
+        remove: (n) => m.partner_link_remove({ n }),
+        add: m.partner_link_add(),
+        removed: m.partner_link_removed,
+      }}
+      inputClass={input}
+      buttonClass={secondary}
+    />
   </FormSection>
 
   <FormSection

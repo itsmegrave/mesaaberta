@@ -2,7 +2,7 @@
   import TextInput from '#lib/components/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
-  import Button from '#lib/components/Button.svelte';
+  import NetworkLinksField from '#lib/components/NetworkLinksField.svelte';
   import { browser } from '$app/env';
   import { page } from '$app/state';
   import { createQuery } from '@tanstack/svelte-query';
@@ -11,7 +11,6 @@
   const client = queryClient();
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { tick } from 'svelte';
   import {
     AGE_RANGES,
     GENDER_OPTIONS,
@@ -175,9 +174,14 @@
     website: m.network_website,
   };
 
-  const itemError = (field: 'linkNetwork' | 'linkUrl', index: number) =>
-    errorText(controller.errors[`${field}.${index}`]?.[0]);
-  const listError = () => err('linkUrl');
+  const rowErrors = (index: number) => ({
+    url: errorText(controller.errors[`linkUrl.${index}`]?.[0]),
+    network: errorText(controller.errors[`linkNetwork.${index}`]?.[0]),
+  });
+  const networkItems = NETWORKS.map((network) => ({
+    name: NETWORK_LABELS[network](),
+    slug: network,
+  }));
 
   // --- the username, checked against the server while it is typed --------------------------------
 
@@ -234,48 +238,6 @@
       ]),
     ].filter((entry): entry is Problem => !!entry),
   );
-
-  // --- the links: a list to add to, remove from and reorder -------------------------------------
-  // Each row keeps an id of its own, so a row that moves keeps what was typed in it and its focus.
-  let nextId = 0;
-  let ids = $state($draft.linkNetwork.map(() => nextId++));
-  let announcement = $state('');
-  let addButton: HTMLButtonElement | undefined = $state();
-
-  const canAdd = $derived(ids.length < MAX_SOCIAL_LINKS);
-
-  function addLink() {
-    $draft.linkNetwork = [...$draft.linkNetwork, 'instagram'];
-    $draft.linkUrl = [...$draft.linkUrl, ''];
-    const id = nextId++;
-    ids.push(id);
-
-    tick().then(() => document.getElementById(`link-url-${id}`)?.focus());
-  }
-
-  function removeLink(index: number) {
-    $draft.linkNetwork = $draft.linkNetwork.filter((_, i) => i !== index);
-    $draft.linkUrl = $draft.linkUrl.filter((_, i) => i !== index);
-    ids.splice(index, 1);
-    announcement = m.profile_link_removed();
-
-    // The row that had the focus is gone: keep the focus in the list.
-    tick().then(() => addButton?.focus());
-  }
-
-  function moveLink(index: number, by: -1 | 1) {
-    const to = index + by;
-    const swap = <T,>(list: T[]) => {
-      const copy = [...list];
-      [copy[index], copy[to]] = [copy[to], copy[index]];
-      return copy;
-    };
-
-    $draft.linkNetwork = swap($draft.linkNetwork);
-    $draft.linkUrl = swap($draft.linkUrl);
-    ids = swap(ids);
-    announcement = m.profile_link_moved({ n: index + 1, position: to + 1 });
-  }
 </script>
 
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its
@@ -460,113 +422,39 @@
     </div>
   {/if}
 
-  {#if shows('public')}<fieldset class="grid gap-3" aria-describedby="links-hint">
-      <legend class="font-semibold">{m.profile_links()}</legend>
-      <p id="links-hint" class="text-sm">{m.profile_links_hint()}</p>
-
-      {#if listError()}
-        <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
-      {/if}
-
-      {#if ids.length === 0}
-        <p class="text-sm">{m.profile_links_empty()}</p>
-      {/if}
-
-      <ul class="grid gap-4">
-        {#each ids as id, index (id)}
-          {@const urlError = itemError('linkUrl', index)}
-          {@const networkError = itemError('linkNetwork', index)}
-          <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-            <div class="grid gap-2 sm:grid-cols-4">
-              <SearchSelect
-                id="link-network-{id}"
-                name="linkNetwork"
-                label={m.profile_link_network({ n: index + 1 })}
-                labelClass="sr-only"
-                class="grid"
-                items={NETWORKS.map((network) => ({
-                  name: NETWORK_LABELS[network](),
-                  slug: network,
-                }))}
-                value={[$draft.linkNetwork[index]]}
-                placeholder={m.profile_link_network({ n: index + 1 })}
-                invalid={!!networkError}
-                onchange={(picked) =>
-                  ($draft.linkNetwork[index] = (picked[0] ?? 'instagram') as Network)}
-              />
-              <TextInput
-                id="link-url-{id}"
-                name="linkUrl"
-                type="text"
-                inputmode={takesHandle($draft.linkNetwork[index] as Network) ? 'text' : 'url'}
-                autocapitalize="none"
-                spellcheck="false"
-                placeholder={takesHandle($draft.linkNetwork[index] as Network)
-                  ? m.profile_link_handle_placeholder()
-                  : 'https://'}
-                aria-label={takesHandle($draft.linkNetwork[index] as Network)
-                  ? m.profile_link_handle({ n: index + 1 })
-                  : m.profile_link_url({ n: index + 1 })}
-                bind:value={$draft.linkUrl[index]}
-                class="{input} sm:col-span-3"
-                aria-invalid={urlError ? 'true' : undefined}
-                aria-describedby={urlError ? `link-error-${id}` : undefined}
-              />
-            </div>
-            {#if urlError || networkError}
-              <p id="link-error-{id}" role="alert" class="text-sm font-semibold text-error-700-300">
-                {urlError ?? networkError}
-              </p>
-            {/if}
-            <div class="flex flex-wrap gap-2">
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                disabled={index === 0}
-                aria-label={m.profile_link_up({ n: index + 1 })}
-                onclick={() => moveLink(index, -1)}
-              >
-                <span aria-hidden="true">↑</span>
-              </Button>
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                disabled={index === ids.length - 1}
-                aria-label={m.profile_link_down({ n: index + 1 })}
-                onclick={() => moveLink(index, 1)}
-              >
-                <span aria-hidden="true">↓</span>
-              </Button>
-              <Button
-                size="custom"
-                type="button"
-                class={secondary}
-                aria-label={m.profile_link_remove({ n: index + 1 })}
-                onclick={() => removeLink(index)}
-              >
-                <span aria-hidden="true">×</span>
-              </Button>
-            </div>
-          </li>
-        {/each}
-      </ul>
-
-      <div>
-        <Button
-          size="custom"
-          type="button"
-          class={secondary}
-          disabled={!canAdd}
-          bind:element={addButton}
-          onclick={addLink}
-        >
-          {m.profile_link_add()}
-        </Button>
-      </div>
-      <p class="sr-only" role="status">{announcement}</p>
-    </fieldset>{/if}
+  {#if shows('public')}
+    <NetworkLinksField
+      bind:networks={$draft.linkNetwork}
+      bind:urls={$draft.linkUrl}
+      items={networkItems}
+      max={MAX_SOCIAL_LINKS}
+      idPrefix="link"
+      legend={m.profile_links()}
+      hint={m.profile_links_hint()}
+      empty={m.profile_links_empty()}
+      reorder
+      error={err('linkUrl')}
+      {rowErrors}
+      placeholder={(network) =>
+        takesHandle(network as Network) ? m.profile_link_handle_placeholder() : 'https://'}
+      inputmode={(network) => (takesHandle(network as Network) ? 'text' : 'url')}
+      labels={{
+        network: (n) => m.profile_link_network({ n }),
+        url: (n, network) =>
+          takesHandle(network as Network)
+            ? m.profile_link_handle({ n })
+            : m.profile_link_url({ n }),
+        remove: (n) => m.profile_link_remove({ n }),
+        up: (n) => m.profile_link_up({ n }),
+        down: (n) => m.profile_link_down({ n }),
+        add: m.profile_link_add(),
+        removed: m.profile_link_removed,
+        moved: (n, position) => m.profile_link_moved({ n, position }),
+      }}
+      inputClass={input}
+      buttonClass={secondary}
+    />
+  {/if}
 
   <div class="flex flex-wrap items-center gap-5">
     <SubmitButton
