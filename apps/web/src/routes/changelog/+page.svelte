@@ -46,11 +46,11 @@
   // The date box's short words ("DOM", "OUT"), without the abbreviation's dot.
   const short = (value: string, part: 'weekday' | 'month') =>
     date(value, { [part]: 'short' }).replace('.', '');
-  const href = (kind: ChangeKind | null, page = 1): `/novidades${string}` => {
+  const href = (kind: ChangeKind | null, page = 1): `/changelog${string}` => {
     const params = new SvelteURLSearchParams();
     if (kind) params.set('tipo', kind);
     if (page > 1) params.set('page', String(page));
-    return `/novidades${params.size ? `?${params}` : ''}`;
+    return `/changelog${params.size ? `?${params}` : ''}`;
   };
   // Release days by month ("2026-10"), in the page's order.
   const months = $derived(

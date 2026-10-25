@@ -13,9 +13,9 @@ describe('release history', () => {
   });
 
   it('shares the page containing a day, even when it is in the older history', () => {
-    expect(releaseHref(releases[0].date)).toBe(`/novidades#${releases[0].date}`);
+    expect(releaseHref(releases[0].date)).toBe(`/changelog#${releases[0].date}`);
     expect(releaseHref(releases[PAGE_SIZE].date)).toBe(
-      `/novidades?page=2#${releases[PAGE_SIZE].date}`,
+      `/changelog?page=2#${releases[PAGE_SIZE].date}`,
     );
   });
 

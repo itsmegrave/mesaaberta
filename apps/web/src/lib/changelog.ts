@@ -43,7 +43,7 @@ export function releasePage(type: string | null, requestedPage: string | null) {
   };
 }
 
-export function releaseHref(date: string): `/novidades${string}` {
+export function releaseHref(date: string): `/changelog${string}` {
   const page = Math.floor(releases.findIndex((release) => release.date === date) / PAGE_SIZE) + 1;
-  return `/novidades${page > 1 ? `?page=${page}` : ''}#${date}`;
+  return `/changelog${page > 1 ? `?page=${page}` : ''}#${date}`;
 }
