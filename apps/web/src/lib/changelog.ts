@@ -1,4 +1,4 @@
-import entries from '../content/changelog.json';
+import entries from '../content/changelog.json' with { type: 'json' };
 
 export type ChangeKind = 'new' | 'improved' | 'fixed';
 export type Change = { kind: ChangeKind; title: string; description: string; href?: string };
