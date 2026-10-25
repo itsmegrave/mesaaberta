@@ -148,7 +148,7 @@
                       network: networkLabels[link.network](),
                     })}
                     title={networkLabels[link.network]()}
-                    class="{chip} hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+                    class="{chip} hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                   >
                     <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
                     <span class="truncate">{link.text}</span>

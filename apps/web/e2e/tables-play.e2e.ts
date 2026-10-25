@@ -136,7 +136,7 @@ test.describe('a table where the GM approves each player', () => {
 
     await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
-    await page.getByLabel(/Mensagem para o mestre/).fill('Oi! Jogo há dois anos.');
+    await page.getByLabel(/Mensagem para quem mestra/).fill('Oi! Jogo há dois anos.');
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     await expect(
       page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
@@ -253,12 +253,16 @@ test.describe('ratings', () => {
       await page.getByLabel('Comentário (opcional)').fill('Noite ótima.');
       await page.getByRole('button', { name: 'Enviar avaliação' }).click();
 
-      // Final: the form is gone and what was given is only shown. One rating is "Novo mestre".
+      // Final: the form is gone and what was given is only shown. One rating is still a debut.
       await expect(
         page.getByText('Sua avaliação foi enviada e não pode ser alterada.'),
       ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Enviar avaliação' })).toHaveCount(0);
-      await expect(page.getByText('Novo mestre · 1 avaliação').first()).toBeVisible();
+      await expect(
+        page
+          .getByRole('group', { name: 'Nota da mestragem: estreia, 1 avaliação, ainda sem nota' })
+          .first(),
+      ).toBeVisible();
 
       // The dashboard shows what was given, and the GM cannot rate their own table.
       await page.goto('/u/tables');

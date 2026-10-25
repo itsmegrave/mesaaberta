@@ -174,7 +174,7 @@
       hourCycle: 'h23',
     }).format(date);
 
-  const input = 'input h-12 rounded-lg border-surface-200-800 bg-panel px-3';
+  const input = 'input h-13 rounded-lg border-control border-ink-muted bg-panel px-3';
   const choice =
     'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10';
 </script>

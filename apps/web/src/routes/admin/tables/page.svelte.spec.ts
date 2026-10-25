@@ -124,7 +124,7 @@ describe('admin tables', () => {
       .click();
     await page.getByRole('menuitem', { name: 'Fechar a mesa…' }).click();
     await expect.element(page.getByRole('alertdialog', { name: 'Fechar "Delfos"?' })).toBeVisible();
-    await expect.element(page.getByLabelText('Justificativa para o mestre')).toBeVisible();
+    await expect.element(page.getByLabelText('Justificativa para quem mestra')).toBeVisible();
   });
 
   it('sorts by the next session from its header', async () => {

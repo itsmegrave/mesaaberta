@@ -80,7 +80,7 @@
       name="details"
       rows={4}
       maxlength={REPORT_DETAILS_MAX}
-      class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
+      class="textarea rounded-lg border-control border-ink-muted bg-panel p-3"
       value={controller.values.details}
       oninput={(event) => controller.change('details', event.currentTarget.value)}
       aria-invalid={detailsError ? 'true' : undefined}

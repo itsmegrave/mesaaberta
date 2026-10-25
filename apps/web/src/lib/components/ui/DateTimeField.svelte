@@ -47,7 +47,7 @@
   const earliest = $derived(min ? safeParse(min) : undefined);
 
   const control =
-    'flex h-12 w-full items-center rounded-lg border-2 border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
+    'flex h-13 w-full items-center rounded-lg border-control border-ink-muted bg-panel focus-within:outline-4 focus-within:outline-offset-2 focus-within:outline-primary-500';
 </script>
 
 {#if mounted}
@@ -105,7 +105,7 @@
             aria-label={m.date_picker_time({ label })}
             aria-invalid={invalid || undefined}
             onchange={(event) => set(day, event.currentTarget.value || time)}
-            class="input h-12 w-32 shrink-0 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 w-32 shrink-0 rounded-lg border-control border-ink-muted bg-panel px-3"
           />
         {/if}
       </div>
@@ -132,7 +132,7 @@
       {required}
       min={min ? (withTime ? `${min}T00:00` : min) : undefined}
       bind:value
-      class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+      class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
       aria-invalid={invalid || undefined}
       aria-describedby={describedby}
     />

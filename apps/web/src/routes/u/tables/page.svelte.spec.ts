@@ -74,7 +74,8 @@ const panel = (name: string) => page.getByText(name, { exact: true });
 describe('Minhas mesas', () => {
   it('offers permanent deletion for a draft and explains the irreversible action before posting', async () => {
     show({ playing: [], running: [{ ...running, tableStatus: 'draft' }] });
-    await page.getByRole('button', { name: 'Excluir rascunho', exact: true }).click();
+    await page.getByRole('button', { name: `Mais ações: ${running.title}` }).click();
+    await page.getByRole('menuitem', { name: 'Excluir rascunho…' }).click();
     const dialog = page.getByRole('alertdialog');
     await expect.element(dialog.getByText(/não pode ser desfeita/)).toBeVisible();
     await expect.element(dialog.getByRole('button', { name: 'Cancelar' })).toHaveFocus();
@@ -90,7 +91,8 @@ describe('Minhas mesas', () => {
   });
   it('offers closing a published table while explaining that its history is preserved', async () => {
     show({ playing: [], running: [running] });
-    await page.getByRole('button', { name: 'Encerrar mesa', exact: true }).click();
+    await page.getByRole('button', { name: `Mais ações: ${running.title}` }).click();
+    await page.getByRole('menuitem', { name: 'Encerrar mesa…' }).click();
     const dialog = page.getByRole('alertdialog');
     await expect.element(dialog.getByText(/histórico será preservado/)).toBeVisible();
     expect(

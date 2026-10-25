@@ -119,10 +119,32 @@ body {
   grid-template-columns: calc(var(--spacing) * 20) minmax(0, var(--container-md));
 }
 
-/* Keyboard focus is always visible: a ring on whatever takes it, unless the control draws its own. */
+/* Field and secondary-button outlines are 1.5px in the design system, between Tailwind's 1px and 2px steps. */
+@utility border-control {
+  border-width: 1.5px;
+}
+
+/* Input borders use the muted ink, which keeps 3:1 against the page in both modes. */
+@utility border-ink-muted {
+  border-color: light-dark(var(--color-surface-600), var(--color-surface-300));
+}
+
+/* Secondary button: transparent with a primary outline and body-coloured text; hover is the wash. */
+@utility btn-secondary {
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: var(--color-primary-500);
+  background-color: transparent;
+  color: light-dark(var(--color-surface-950), var(--color-surface-50));
+  &:hover {
+    background-color: light-dark(var(--color-surface-200), var(--color-surface-800));
+  }
+}
+
+/* Keyboard focus is always visible: a 4px primary ring on whatever takes it, unless the control draws its own. */
 @layer base {
   :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
-    outline: 2px solid var(--color-primary-500);
+    outline: 4px solid var(--color-primary-500);
     outline-offset: 2px;
   }
 }

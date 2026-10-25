@@ -46,7 +46,7 @@ export const load: PageServerLoad = async (event) => {
 
 // Each action runs a registration operation as the signed-in player (see runRegistrationAction).
 export const actions: Actions = {
-  // "Falar com o mestre": opens the direct conversation with the GM, about this table.
+  // "Falar com quem mestra": opens the direct conversation with the GM, about this table.
   talk: async ({ locals, url, params }) => {
     await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
