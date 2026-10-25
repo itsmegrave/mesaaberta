@@ -68,4 +68,20 @@ describe('createJobMetrics', () => {
     expect(text).toContain('state="failed"} 1');
     expect(text).toContain('mesaaberta_outbox_oldest_pending_seconds{service="worker"} 42');
   });
+
+  it('counts event handler runs by handler and outcome, and adds up their time', () => {
+    const metrics = createJobMetrics('worker');
+    metrics.observeHandler({ handler: 'notifications-v1', ok: true, seconds: 0.25 });
+    metrics.observeHandler({ handler: 'notifications-v1', ok: false, seconds: 0.5 });
+    metrics.observeHandler({ handler: 'calendar-invites-v1', ok: true, seconds: 2 });
+
+    const text = metrics.render();
+    expect(text).toContain(
+      'mesaaberta_event_handler_runs_total{service="worker",handler="notifications-v1",outcome="ok"} 1',
+    );
+    expect(text).toContain('handler="notifications-v1",outcome="failed"} 1');
+    expect(text).toContain(
+      'mesaaberta_event_handler_seconds_sum{service="worker",handler="calendar-invites-v1"} 2',
+    );
+  });
 });

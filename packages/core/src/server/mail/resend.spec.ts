@@ -204,6 +204,14 @@ describe('resend mailer', () => {
     expect(Buffer.from(sentAttachment.content, 'base64').toString()).toBe(attachment.content);
   });
 
+  it('gives up on a request that hangs, so the handler fails and retries instead of stalling', async () => {
+    const sent = capture();
+
+    await resendMailer(env, sent.request).send(inline);
+
+    expect(sent.calls[0].init.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('throws when Resend refuses, so the sweeper retries the event', async () => {
     const sent = capture(422);
 

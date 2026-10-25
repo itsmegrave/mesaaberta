@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import { events } from '../db/schema';
 import { recordEvent } from './outbox';
 import { fencedFor } from './fencing';
+import { observeHandler } from './handler-runs';
 import { liveRoutingFor, publishLive } from './live-queue';
 import { publishShadow } from './shadow-queue';
 import { logger, scrubString, type Logger } from '../logger';
@@ -194,6 +195,7 @@ export async function dispatchEvent(
         event: 'event.handler.succeeded',
         durationMs: Date.now() - started,
       });
+      observeHandler({ handler: handler.name, ok: true, seconds: (Date.now() - started) / 1000 });
     } catch (error) {
       log.warn('event.handler.failed', {
         ...context,
@@ -201,6 +203,7 @@ export async function dispatchEvent(
         durationMs: Date.now() - started,
         error,
       });
+      observeHandler({ handler: handler.name, ok: false, seconds: (Date.now() - started) / 1000 });
       failures.push(error);
     }
   }
