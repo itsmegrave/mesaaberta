@@ -1,5 +1,5 @@
 // Gets a local dev server ready to sign in as a persona (`/dev/login?as=gm`): starts the local
-// Supabase if it is not running, creates the personas in its Auth, and points `.dev.vars` at it.
+// Supabase (and Docker, where it can) if it is not running, creates the personas in its Auth, and points `.dev.vars` at it.
 // Usage: bun run dev:up, then bun run dev:local. Safe to run again. It refuses a non-local stack.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -11,6 +11,7 @@ import {
   personas,
   type Persona,
 } from '../../apps/web/src/lib/server/dev/personas.ts';
+import { ensureDocker } from './docker.ts';
 import { DEV_API_PORT, DEV_API_TOKEN } from './local.ts';
 
 const running = (): Stack | null => {
@@ -21,7 +22,11 @@ const running = (): Stack | null => {
   }
 };
 
-if (!running()) execFileSync('bun', ['run', 'e2e:up'], { stdio: 'inherit' });
+if (!running()) {
+  await ensureDocker();
+  // The daemon may have brought the stack back by itself.
+  if (!running()) execFileSync('bun', ['run', 'e2e:up'], { stdio: 'inherit' });
+}
 const local = stack();
 
 for (const url of [local.API_URL, local.DB_URL]) {

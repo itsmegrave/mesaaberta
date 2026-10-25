@@ -8,12 +8,8 @@ cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 
 log=/tmp/mesaaberta-dev-up.log
 (
-  if ! docker info >/dev/null 2>&1; then
-    (dockerd >/tmp/dockerd.log 2>&1 &)
-    for _ in $(seq 1 60); do docker info >/dev/null 2>&1 && break; sleep 1; done
-  fi
   bunx bun@1.4.2 install --frozen-lockfile
-  # The image registries rate-limit now and then; one more try usually gets through.
+  # dev:up starts dockerd when it is not running. The image registries rate-limit now and then; one more try usually gets through.
   bun run dev:up || bun run dev:up
   echo "dev-up finished with exit code $?"
 ) >"$log" 2>&1 &
