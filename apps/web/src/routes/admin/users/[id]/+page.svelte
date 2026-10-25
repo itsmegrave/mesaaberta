@@ -13,9 +13,9 @@
   import {
     accountSchema,
     banSchema,
-    RESOLUTION_NOTE_MAX,
     TABLE_REPORTS_WARNING,
   } from '@mesaaberta/core/moderation/reports';
+  import { ban as banWords, banReason } from '#lib/admin/moderation-presets.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -100,12 +100,6 @@
     }
     return items;
   });
-  const banWrite = {
-    name: 'reason',
-    label: m.moderation_ban_reason(),
-    hint: m.moderation_ban_reason_hint({ max: RESOLUTION_NOTE_MAX }),
-    required: true,
-  } as const;
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-5';
 </script>
 
@@ -167,7 +161,7 @@
         danger
         durations
         choices={['7', '30', '90']}
-        write={banWrite}
+        write={banReason()}
         label={m.admin_menu_suspend()}
         title={m.admin_suspend_title({ user: handle })}
         username={data.user.username}
@@ -181,16 +175,10 @@
         action="?/ban"
         schema={banSchema}
         fields={{ profileId: data.user.id }}
-        danger
-        durations
+        {...banWords(handle)}
         choices={['permanent']}
-        write={banWrite}
         label={m.admin_menu_ban()}
-        title={m.admin_ban_title({ user: handle })}
         username={data.user.username}
-        text={m.admin_ban_text()}
-        confirm={m.admin_ban()}
-        success={m.admin_ban_done()}
       />
     {/if}
   {/if}

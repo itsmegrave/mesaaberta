@@ -11,13 +11,17 @@
     banFromReportSchema,
     closeReportSchema,
     closeTableSchema,
-    CROWDFUNDING_REPORT_REASONS,
-    PARTNER_REPORT_REASONS,
     removeCrowdfundingSchema,
     removePartnerSchema,
     reportIdSchema,
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
+  import {
+    ban,
+    closeTable,
+    removeCrowdfunding,
+    removePartner,
+  } from '#lib/admin/moderation-presets.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -359,18 +363,7 @@
           action="?/removeCrowdfunding"
           schema={removeCrowdfundingSchema}
           fields={{ id: campaign.id, reportId: report.report.id }}
-          danger
-          reasons={CROWDFUNDING_REPORT_REASONS}
-          write={{
-            name: 'note',
-            label: m.admin_crowdfunding_remove_note(),
-            hint: m.admin_crowdfunding_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
-          }}
-          label={m.admin_crowdfunding_remove()}
-          title={m.admin_crowdfunding_remove_title({ name: campaign.name })}
-          text={m.admin_crowdfunding_remove_text()}
-          confirm={m.admin_crowdfunding_remove_confirm()}
-          success={m.admin_crowdfunding_remove_done()}
+          {...removeCrowdfunding(campaign.name)}
           triggerClass={danger}
         />
       {/if}
@@ -379,19 +372,7 @@
           action="?/removePartner"
           schema={removePartnerSchema}
           fields={{ id: partner.id, reportId: report.report.id }}
-          danger
-          reasons={PARTNER_REPORT_REASONS}
-          reasonTarget="partner"
-          write={{
-            name: 'note',
-            label: m.admin_partners_remove_note(),
-            hint: m.admin_partners_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
-          }}
-          label={m.admin_partners_remove()}
-          title={m.admin_partners_remove_title({ name: partner.name })}
-          text={m.admin_partners_remove_text()}
-          confirm={m.admin_partners_remove_confirm()}
-          success={m.admin_partners_remove_done()}
+          {...removePartner(partner.name)}
           triggerClass={danger}
         />
       {/if}
@@ -400,17 +381,9 @@
           action="?/closeTable"
           schema={closeTableSchema}
           {fields}
-          danger
-          write={{
-            name: 'note',
-            label: m.moderation_close_table_note(),
-            hint: m.moderation_close_table_hint({ max: RESOLUTION_NOTE_MAX }),
-            required: true,
-          }}
+          {...closeTable(report.table?.title ?? '')}
           label={m.admin_report_close_table()}
-          title={m.admin_report_close_table_title({ table: report.table?.title ?? '' })}
           text={m.admin_report_close_table_text()}
-          confirm={m.admin_report_close_table()}
           success={m.admin_report_close_table_done()}
           triggerClass={danger}
         />
@@ -420,20 +393,9 @@
           action="?/ban"
           schema={banFromReportSchema}
           {fields}
-          danger
-          durations
-          write={{
-            name: 'reason',
-            label: m.moderation_ban_reason(),
-            hint: m.moderation_ban_reason_hint({ max: RESOLUTION_NOTE_MAX }),
-            required: true,
-          }}
+          {...ban(handle(report.player.username))}
           label={m.admin_ban()}
-          title={m.admin_ban_title({ user: handle(report.player.username) })}
           username={report.player.username}
-          text={m.admin_ban_text()}
-          confirm={m.admin_ban()}
-          success={m.admin_ban_done()}
           triggerClass={danger}
         />
       {/if}

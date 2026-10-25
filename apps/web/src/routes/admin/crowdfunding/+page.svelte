@@ -14,11 +14,8 @@
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
   import { phaseOf } from '@mesaaberta/core/crowdfunding/phase';
-  import {
-    CROWDFUNDING_REPORT_REASONS,
-    removeCrowdfundingSchema,
-    RESOLUTION_NOTE_MAX,
-  } from '@mesaaberta/core/moderation/reports';
+  import { removeCrowdfundingSchema } from '@mesaaberta/core/moderation/reports';
+  import { removeCrowdfunding } from '#lib/admin/moderation-presets.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import type { AdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
@@ -194,18 +191,7 @@
         action="?/remove"
         schema={removeCrowdfundingSchema}
         fields={{ id: removing.id }}
-        danger
-        reasons={CROWDFUNDING_REPORT_REASONS}
-        write={{
-          name: 'note',
-          label: m.admin_crowdfunding_remove_note(),
-          hint: m.admin_crowdfunding_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
-        }}
-        label={m.admin_crowdfunding_remove()}
-        title={m.admin_crowdfunding_remove_title({ name: removing.name })}
-        text={m.admin_crowdfunding_remove_text()}
-        confirm={m.admin_crowdfunding_remove_confirm()}
-        success={m.admin_crowdfunding_remove_done()}
+        {...removeCrowdfunding(removing.name)}
       />
     {/key}
   {/if}

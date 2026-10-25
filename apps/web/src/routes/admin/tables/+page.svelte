@@ -26,7 +26,8 @@
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import { closeTableByIdSchema, RESOLUTION_NOTE_MAX } from '@mesaaberta/core/moderation/reports';
+  import { closeTableByIdSchema } from '@mesaaberta/core/moderation/reports';
+  import { closeTable } from '#lib/admin/moderation-presets.js';
   import { TABLE_STATUSES } from '@mesaaberta/core/tables/status-values';
   import type { AdminTablesView } from '#lib/server/reads/admin-tables.js';
 
@@ -230,17 +231,9 @@
         action="?/close"
         schema={closeTableByIdSchema}
         fields={{ tableId: closing.id }}
-        danger
-        write={{
-          name: 'note',
-          label: m.moderation_close_table_note(),
-          hint: m.moderation_close_table_hint({ max: RESOLUTION_NOTE_MAX }),
-          required: true,
-        }}
+        {...closeTable(closing.title)}
         label={m.admin_tables_close()}
-        title={m.admin_report_close_table_title({ table: closing.title })}
         text={m.admin_tables_close_text()}
-        confirm={m.admin_report_close_table()}
         success={m.admin_tables_close_done()}
       />
     {/key}

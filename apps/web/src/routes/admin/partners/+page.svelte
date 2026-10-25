@@ -10,12 +10,8 @@
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import {
-    approvePartnerSchema,
-    PARTNER_REPORT_REASONS,
-    removePartnerSchema,
-    RESOLUTION_NOTE_MAX,
-  } from '@mesaaberta/core/moderation/reports';
+  import { approvePartnerSchema, removePartnerSchema } from '@mesaaberta/core/moderation/reports';
+  import { removePartner } from '#lib/admin/moderation-presets.js';
   import { m } from '#lib/paraglide/messages.js';
 
   import {
@@ -293,19 +289,7 @@
         action="?/remove"
         schema={removePartnerSchema}
         fields={{ id: removing.id }}
-        danger
-        reasons={PARTNER_REPORT_REASONS}
-        reasonTarget="partner"
-        write={{
-          name: 'note',
-          label: m.admin_partners_remove_note(),
-          hint: m.admin_partners_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
-        }}
-        label={m.admin_partners_remove()}
-        title={m.admin_partners_remove_title({ name: removing.name })}
-        text={m.admin_partners_remove_text()}
-        confirm={m.admin_partners_remove_confirm()}
-        success={m.admin_partners_remove_done()}
+        {...removePartner(removing.name)}
       />
     {/key}
   {/if}
