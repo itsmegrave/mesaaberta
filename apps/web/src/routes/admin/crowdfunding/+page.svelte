@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
+  import { Target } from '#lib/target.svelte.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import ListCard from '#lib/components/admin/ListCard.svelte';
@@ -33,7 +34,7 @@
   ];
 
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
-  let removing = $state<Row | null>(null);
+  const removing = new Target<Row>();
   const badge = (row: Row) =>
     (row.removedAt ? 'crowdfunding:removed' : `crowdfunding:${phaseOf(row)}`) as Status;
   function copyId(row: Row) {
@@ -62,7 +63,7 @@
             label: m.admin_crowdfunding_remove_menu(),
             icon: 'trash' as const,
             destructive: true,
-            onselect: () => (removing = row),
+            onselect: () => (removing.current = row),
           },
         ]),
   ];
@@ -182,15 +183,16 @@
       </ListCard>
     {/snippet}
   </DataTable>
-  {#if removing}
-    {#key removing.id}
+  {#if removing.current}
+    {@const row = removing.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => removing !== null, (value) => !value && (removing = null)}
+        bind:open={removing.open}
         trigger={false}
         action="?/remove"
         schema={removeCrowdfundingSchema}
-        fields={{ id: removing.id }}
-        {...removeCrowdfunding(removing.name)}
+        fields={{ id: row.id }}
+        {...removeCrowdfunding(row.name)}
       />
     {/key}
   {/if}

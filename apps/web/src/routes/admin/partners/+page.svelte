@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
+  import { Target } from '#lib/target.svelte.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import Icon from '#lib/components/Icon.svelte';
@@ -34,8 +35,8 @@
   ];
 
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.
-  let approving = $state<Row | null>(null);
-  let removing = $state<Row | null>(null);
+  const approving = new Target<Row>();
+  const removing = new Target<Row>();
   const badge = (row: Row) =>
     (row.removedAt
       ? row.withdrawn
@@ -60,7 +61,7 @@
             id: 'approve',
             label: m.admin_partners_approve_menu(),
             icon: 'check' as const,
-            onselect: () => (approving = row),
+            onselect: () => (approving.current = row),
           },
         ]
       : []),
@@ -101,7 +102,7 @@
             label: row.approvedAt ? m.admin_partners_remove_menu() : m.admin_partners_reject_menu(),
             icon: 'trash' as const,
             destructive: true,
-            onselect: () => (removing = row),
+            onselect: () => (removing.current = row),
           },
         ]),
   ];
@@ -264,31 +265,33 @@
     {/snippet}
   </DataTable>
 
-  {#if approving}
-    {#key approving.id}
+  {#if approving.current}
+    {@const row = approving.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => approving !== null, (value) => !value && (approving = null)}
+        bind:open={approving.open}
         trigger={false}
         action="?/approve"
         schema={approvePartnerSchema}
-        fields={{ id: approving.id }}
+        fields={{ id: row.id }}
         label={m.admin_partners_approve()}
-        title={m.admin_partners_approve_title({ name: approving.name })}
+        title={m.admin_partners_approve_title({ name: row.name })}
         text={m.admin_partners_approve_text()}
         confirm={m.admin_partners_approve_confirm()}
         success={m.admin_partners_approve_done()}
       />
     {/key}
   {/if}
-  {#if removing}
-    {#key removing.id}
+  {#if removing.current}
+    {@const row = removing.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => removing !== null, (value) => !value && (removing = null)}
+        bind:open={removing.open}
         trigger={false}
         action="?/remove"
         schema={removePartnerSchema}
-        fields={{ id: removing.id }}
-        {...removePartner(removing.name)}
+        fields={{ id: row.id }}
+        {...removePartner(row.name)}
       />
     {/key}
   {/if}

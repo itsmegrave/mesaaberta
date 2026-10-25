@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
+  import { Target } from '#lib/target.svelte.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, {
@@ -47,7 +48,7 @@
 
   let publishing = $state<string | null>(null);
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
-  let closing = $state<Row | null>(null);
+  const closing = new Target<Row>();
   const href = (row: Row) => `/t/${row.slug}`;
   function copyLink(row: Row) {
     return copyText(new URL(href(row), current.url.origin).href, m.toast_link_copied());
@@ -85,7 +86,7 @@
             label: m.admin_tables_close(),
             icon: 'lock' as const,
             destructive: true,
-            onselect: () => (closing = row),
+            onselect: () => (closing.current = row),
           },
         ]
       : []),
@@ -210,15 +211,16 @@
     {/snippet}
   </DataTable>
   <p class="mt-4 max-w-2xl text-sm text-muted">{m.admin_tables_footnote()}</p>
-  {#if closing}
-    {#key closing.id}
+  {#if closing.current}
+    {@const row = closing.current}
+    {#key row.id}
       <ModerationDialog
-        bind:open={() => closing !== null, (value) => !value && (closing = null)}
+        bind:open={closing.open}
         trigger={false}
         action="?/close"
         schema={closeTableByIdSchema}
-        fields={{ tableId: closing.id }}
-        {...closeTable(closing.title)}
+        fields={{ tableId: row.id }}
+        {...closeTable(row.title)}
         label={m.admin_tables_close()}
         text={m.admin_tables_close_text()}
         success={m.admin_tables_close_done()}
