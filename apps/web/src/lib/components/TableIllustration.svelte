@@ -70,14 +70,29 @@
     <circle cx="190" cy="220" r="7" class="fill-success-500" />
     <circle cx="230" cy="180" r="7" class="fill-tertiary-400" />
   </g>
-  <g transform="translate(262 238) rotate(14)">
-    <path d="M0-15 13-7.5v15L0 15-13 7.5v-15z" class="fill-warning-400" />
+  <!-- A d20 beside the map, drawn from arcticons:rpg-dice (48-unit grid): the outline, the faces
+       around the front one, and the front face with its 20. -->
+  <g transform="translate(262 238) rotate(14) scale(0.85) translate(-24 -24)">
     <path
-      d="M0-15 7.5 5h-15zM-13 7.5 -7.5 5M13 7.5 7.5 5M0 15V5"
+      d="m39.227 38.684 5.111-20.5L29.111 3.5 8.773 9.316l-5.111 20.5L18.889 44.5z"
+      class="fill-warning-400"
+    />
+    <path d="M33.729 34.984 10.254 29.13l16.934-17.916z" class="fill-warning-300" />
+    <path
+      d="m39.227 38.684 5.111-20.5L29.111 3.5 8.773 9.316l-5.111 20.5L18.889 44.5zm-5.498-3.7 10.61-16.8-17.151-6.97L8.773 9.316l1.48 19.815L18.89 44.5zM33.729 34.984 10.254 29.13l16.934-17.916zm-6.541-23.77L29.111 3.5m4.618 31.484 5.498 3.7M10.254 29.13l-6.592.685"
       class="fill-none stroke-warning-950/60"
-      stroke-width="1.5"
+      stroke-width="1.6"
+      stroke-linecap="round"
       stroke-linejoin="round"
     />
+    <text
+      x="23.7"
+      y="28"
+      text-anchor="middle"
+      font-size="9"
+      font-weight="700"
+      class="fill-warning-950/80">20</text
+    >
   </g>
 
   {#each players as player, i (player.angle)}
