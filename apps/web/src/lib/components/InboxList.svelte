@@ -17,6 +17,7 @@
   import UserText from '#lib/components/UserText.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
+  import { buttonClass } from '#lib/components/Button.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { shortTime } from '#lib/messages/format.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -54,8 +55,7 @@
       : body;
   };
   const pageHref = (target: number) => (target === 1 ? '/m' : `/m?page=${target}`);
-  const pageLink =
-    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal';
+  const pageLink = `${buttonClass('secondary', 'md')} text-sm font-semibold`;
 </script>
 
 {#if items.length === 0}

@@ -14,7 +14,7 @@
     playerId?: string;
     next?: string;
     class?: string;
-    /** The button's text. With it, the form draws its own `SubmitButton`, busy while it posts. */
+    /** The button's text. With it, the form draws its own submit button, busy while it posts. */
     label?: string;
     /** An icon before `label`. */
     icon?: IconName;
