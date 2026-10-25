@@ -5,15 +5,10 @@ import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { loadRead } from '#lib/server/reads/load.js';
 import { endActions } from '#lib/server/tables/end-actions.js';
 import { invitationAction } from '#lib/server/invitations/actions.js';
-import { attendanceOffered } from '#lib/server/tables/attendance.js';
 import { confirmationActions } from '#lib/server/tables/confirmation-actions.js';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => ({
-  ...(await loadRead(event, 'manage')),
-  // Whether "it happened" asks who showed up (`api_attendance`).
-  attendance: await attendanceOffered(event.locals, await event.locals.getProfile()),
-});
+export const load: PageServerLoad = (event) => loadRead(event, 'manage');
 
 export const actions: Actions = {
   // The answer to "did the session happen?" once its date has passed.

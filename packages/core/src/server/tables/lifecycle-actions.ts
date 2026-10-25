@@ -20,8 +20,8 @@ export const tableLifecycleActions = {
     apply: (db: AnyDb, actor: Actor | null, slug: string) => publishTable(db, actor, slug),
   },
   happened: {
-    // `presentPlayerIds` is only sent when attendance is on (`api_attendance`): the confirmed
-    // players the GM left checked. Without it nobody is marked and the old rules hold.
+    // `presentPlayerIds`: the confirmed players the GM left checked. Without it nobody is marked
+    // and every confirmed player may rate, as before attendance existed.
     schema: z.object({ presentPlayerIds: z.array(z.uuid()).optional() }),
     apply: (
       db: AnyDb,

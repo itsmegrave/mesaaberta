@@ -183,11 +183,6 @@ export const flagDefaults = {
   // publish stay in the background after the web response. A call that cannot be made falls back to
   // the web path. Needs the API binding. Every admin may have it: the flag is a kill switch.
   api_admin_instagram: false,
-  // Off: "it happened" only concludes the table, and any confirmed player may rate the GM. On: the
-  // GM sees the confirmed players, all marked as present, and unchecks whoever did not show up;
-  // absent players are not asked to rate and cannot (migration 0046, `registrations.attended`).
-  // Changes who may rate, so start with admins.
-  api_attendance: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

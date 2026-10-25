@@ -17,7 +17,6 @@ import {
   postponeTable,
 } from '@mesaaberta/core/server/tables/lifecycle';
 import { publishTable } from '@mesaaberta/core/server/tables/write';
-import { attendanceOffered } from './attendance';
 import type { TableLifecycleActionName } from '@mesaaberta/core/server/tables/lifecycle-actions';
 
 /**
@@ -33,7 +32,7 @@ function confirmationAction<Schema extends ZodType>(
     actor: Actor | null,
     slug: string,
     data: z.infer<Schema>,
-    /** The players the GM left checked as present, when attendance is on and the form sent it. */
+    /** The players the GM left checked as present, when the form sent attendance. */
     present?: string[],
   ) => Promise<{ eventId: string }>,
   /** The same answer for the api Worker, behind `api_table_lifecycle`; `apply` stays the fallback. */
@@ -55,11 +54,11 @@ function confirmationAction<Schema extends ZodType>(
     try {
       const profile = await locals.getProfile();
       const data = form.data as z.infer<Schema>;
-      // Attendance rides on the form only where it is on; the checkboxes are the players present.
-      const present =
-        formData.has('attendance') && (await attendanceOffered(locals, profile))
-          ? formData.getAll('present').filter((id): id is string => typeof id === 'string')
-          : undefined;
+      // The checkboxes are the players present. A form without the `attendance` marker (no
+      // confirmed players, or an old page) marks nobody.
+      const present = formData.has('attendance')
+        ? formData.getAll('present').filter((id): id is string => typeof id === 'string')
+        : undefined;
       const remote =
         api && profile
           ? await writeViaApi(

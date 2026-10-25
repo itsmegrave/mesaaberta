@@ -9,15 +9,13 @@
   import { toast } from '#lib/toaster.js';
   import Avatar from '#lib/components/Avatar.svelte';
 
-  // `players` are the confirmed seats. With `attendance` on, "it happened" also asks who showed up,
-  // everyone checked, and whoever is left unchecked cannot rate the GM.
+  // `players` are the confirmed seats. "It happened" also asks who showed up, everyone checked,
+  // and whoever is left unchecked cannot rate the GM.
   let {
     next,
-    attendance = false,
     players = [],
   }: {
     next: string;
-    attendance?: boolean;
     players?: { playerId: string; username: string; avatarUrl: string | null }[];
   } = $props();
 
@@ -68,10 +66,10 @@
     <Form
       action="?/happened"
       onsubmit={happened.submit}
-      class={attendance && players.length > 0 ? 'm-0 w-full' : 'm-0'}
+      class={players.length > 0 ? 'm-0 w-full' : 'm-0'}
     >
       <input type="hidden" name="next" value={next} />
-      {#if attendance && players.length > 0}
+      {#if players.length > 0}
         <input type="hidden" name="attendance" value="1" />
         <fieldset class="mb-4 min-w-0">
           <legend class="font-semibold">{m.manage_attendance_title()}</legend>
