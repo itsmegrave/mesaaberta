@@ -77,7 +77,7 @@
           name="message"
           rows={5}
           maxlength={JOIN_MESSAGE_MAX}
-          class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
+          class="textarea rounded-lg border-control border-ink-muted bg-panel p-3"
           value={data.message}
           oninput={(event) => form.change('message', event.currentTarget.value)}
           {...aria}

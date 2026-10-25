@@ -184,7 +184,7 @@
           rows={3}
           maxlength={RESOLUTION_NOTE_MAX}
           required={write.required}
-          class="textarea rounded-lg border-surface-200-800 bg-panel p-3"
+          class="textarea rounded-lg border-control border-ink-muted bg-panel p-3"
           value={data[write.name]}
           oninput={(event) => form.change(write.name, event.currentTarget.value)}
           aria-invalid={textError ? 'true' : undefined}

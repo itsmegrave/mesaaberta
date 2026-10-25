@@ -153,7 +153,7 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
   const rows = listRows(page, isMobile);
   // Enter applies the search at once, hydrated or not (the form is a plain GET before that); a
   // filter picked before it applied would be undone by it.
-  const search = shown(page.getByLabel('Buscar mesa, sistema ou @mestre'));
+  const search = shown(page.getByLabel('Buscar mesa, sistema ou @usuário de quem mestra'));
   await search.fill(prefix);
   await search.press('Enter');
   await expect(page).toHaveURL(/q=lifecycle-/);

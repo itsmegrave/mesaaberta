@@ -69,7 +69,7 @@
   });
 
   const segment =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 </script>
 
 <div class="grid gap-5">
@@ -151,7 +151,7 @@
             max={TABLE_LIMITS.durationHours.max}
             step={TABLE_LIMITS.durationHours.step}
             bind:value={duration}
-            class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
           />
         </label>
       {/if}

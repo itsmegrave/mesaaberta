@@ -151,7 +151,7 @@
             maxlength={CROWDFUNDING_LIMITS.url}
             bind:value={$draft.url}
             onchange={readLink}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -171,7 +171,7 @@
             maxlength={CROWDFUNDING_LIMITS.name}
             bind:value={$draft.name}
             oninput={() => (named = false)}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
           <p role="status" class="mt-1 text-sm text-muted">
@@ -193,7 +193,7 @@
             required
             maxlength={CROWDFUNDING_LIMITS.owner}
             bind:value={$draft.owner}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}

@@ -17,7 +17,7 @@
   }: {
     /** What the address already searches for. */
     value: string;
-    /** The accessible name, which says what is searched ("Buscar mesa, sistema ou @mestre"). */
+    /** The accessible name, which says what is searched ("Buscar mesa, sistema ou @usuário de quem mestra"). */
     label: string;
     placeholder?: string;
     maxlength?: number;

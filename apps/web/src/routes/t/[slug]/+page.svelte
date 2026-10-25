@@ -33,8 +33,10 @@
   import DraftNotice from './components/DraftNotice.svelte';
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -178,21 +180,24 @@
         </ul>
       {/if}
 
+      <!-- Quem mestra: the picture, the label over the handle, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
-        <p>
-          <span class="block text-sm font-semibold text-muted">{m.table_gm()}</span>
-          {#if data.gmUsername}
-            <a href={`/u/${encodeURIComponent(data.gmUsername)}`} class="text-lg link-underline"
-              >{atHandle(table.gmName)}</a
-            >
-          {:else}
-            <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
-          {/if}
-        </p>
-        <GmRating
-          rating={table.gmRating}
-          class="h-12 rounded-lg border border-surface-200-800 px-3 text-lg"
-        />
+        <div class="flex min-w-0 items-center gap-4">
+          <MAAvatar src={data.gm?.avatarUrl ?? null} name={table.gmName} size={44} />
+          <p class="min-w-0">
+            <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
+            {#if data.gmUsername}
+              <a
+                href={`/u/${encodeURIComponent(data.gmUsername)}`}
+                class="text-lg font-semibold text-surface-950-50 underline decoration-surface-200-800 underline-offset-3 hover:decoration-primary-500"
+                >{atHandle(table.gmName)}</a
+              >
+            {:else}
+              <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
+            {/if}
+          </p>
+        </div>
+        <GmRating rating={table.gmRating} variant="pill" class="ml-2" />
       </div>
 
       {#if table.imageUrl}
@@ -270,7 +275,7 @@
         <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
       </p>
       {#if table.minPlayers}
-        <p class="mt-3 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
+        <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-3" />
       {/if}
 
       {#if problem}
@@ -296,7 +301,7 @@
             action="?/leave"
             class="mt-3"
             label={m.table_leave()}
-            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
             success={m.toast_left()}
             onfail={(message) => (failed = message)}
           />
@@ -306,7 +311,7 @@
             action="?/leave"
             class="mt-3"
             label={m.table_cancel_request()}
-            buttonClass="btn h-12 w-full rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+            buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
             success={m.toast_request_withdrawn()}
             onfail={(message) => (failed = message)}
           />
@@ -334,14 +339,14 @@
       {#if data.isGm || data.myStatus === 'confirmed'}
         <a
           href={`/t/${table.slug}/chat`}
-          class="mt-3 btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 font-semibold hover:preset-tonal"
+          class="mt-3 btn h-12 w-full gap-2 rounded-lg btn-secondary font-semibold"
         >
           <Icon name="game-icons:scroll-quill" size={18} />
           {m.messages_table_chat()}
         </a>
       {/if}
       {#if data.signedIn && !data.isGm && data.gmAcceptsDirect}
-        <!-- Opened from the title menu ("Mandar mensagem ao mestre"). -->
+        <!-- Opened from the title menu ("Mandar mensagem para quem mestra"). -->
         <ActionForm action="?/talk" class="hidden">
           <button id="talk-to-gm" type="submit" tabindex="-1" aria-hidden="true"></button>
         </ActionForm>

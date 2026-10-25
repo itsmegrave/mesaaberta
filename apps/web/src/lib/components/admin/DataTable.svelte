@@ -368,7 +368,7 @@
     {/if}
     {#if moreHref}
       <a
-        class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+        class="btn h-12 rounded-lg btn-secondary px-4 font-semibold"
         href={moreHref}
         data-sveltekit-noscroll
         >{more ? m.admin_list_more({ count: more.more }) : m.admin_list_next_page()}</a

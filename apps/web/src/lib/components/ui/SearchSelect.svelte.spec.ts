@@ -34,7 +34,7 @@ describe('SearchSelect.svelte', () => {
     expect(getComputedStyle(button).position).toBe('static');
     expect(getComputedStyle(button).backgroundColor).toBe('rgba(0, 0, 0, 0)');
     expect(getComputedStyle(button).transform).toBe('none');
-    expect(box.getBoundingClientRect().height).toBe(48);
+    expect(box.getBoundingClientRect().height).toBe(52);
     expect(button.getBoundingClientRect().height).toBe(box.clientHeight);
   });
 

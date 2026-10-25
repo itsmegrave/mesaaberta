@@ -35,7 +35,9 @@
   <h3 class="mt-3 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
-  <p class="mt-1 text-sm text-muted">{m.table_gm()}: <UserLink username={item.gmName} /></p>
+  <p class="mt-1 text-sm font-semibold">
+    <span class="sr-only">{m.table_gm()}: </span><UserLink username={item.gmName} />
+  </p>
 
   <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 

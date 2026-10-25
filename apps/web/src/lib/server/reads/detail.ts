@@ -1,5 +1,5 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
-import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readViaApi } from '../api-read';
@@ -35,8 +35,11 @@ export const read = async ({ locals, params }: RequestEvent) => {
   if (!detail) error(404, 'Not found');
 
   const { imagePath, ...table } = detail.table;
+  // An api Worker from before the field answers without it; the page then shows the handle alone.
+  const { gmProfile = null, ...rest } = detail;
   return {
-    ...detail,
+    ...rest,
+    gm: gmProfile && { avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile) },
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     signedIn,
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,

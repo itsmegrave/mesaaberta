@@ -22,7 +22,7 @@ async function setup(browser: Parameters<typeof asUser>[0]) {
     await fixtureDb.end();
   }
   await host.page.goto(`/t/${slug}/manage`);
-  await host.page.getByLabel('@username do jogador').fill(`@${player.username}`);
+  await host.page.getByLabel('@usuário').fill(`@${player.username}`);
   await host.page.getByRole('button', { name: 'Enviar convite', exact: true }).click();
   await expect(host.page.getByText('0 confirmados · 1 reservadas · 0 disponíveis')).toBeVisible();
   await guest.page.goto(`/t/${slug}`);
@@ -67,7 +67,7 @@ test('decline prevents another invitation while allowing a voluntary request', a
   await guest.page.getByRole('button', { name: 'Recusar convite' }).click();
   await expect(guest.page.getByText('Convite recusado', { exact: true })).toBeVisible();
   await host.page.reload();
-  await host.page.getByLabel('@username do jogador').fill(`@${player.username}`);
+  await host.page.getByLabel('@usuário').fill(`@${player.username}`);
   await host.page.getByRole('button', { name: 'Enviar convite', exact: true }).click();
   await expect(host.page.getByText(/Não foi possível atualizar o convite/).first()).toBeVisible();
   await guest.page.goto(`/t/${slug}`);

@@ -18,13 +18,17 @@ test('the owner permanently deletes a draft after confirming and cancellation le
   const slug = new URL(page.url()).pathname.split('/').at(-2)!;
   await page.goto('/u/tables');
   const card = page.locator(`#mesa-${slug}`);
-  await card.getByRole('button', { name: 'Excluir rascunho', exact: true }).click();
+  const endFromMenu = async () => {
+    await card.getByRole('button', { name: /^Mais ações:/ }).click();
+    await page.getByRole('menuitem', { name: 'Excluir rascunho…' }).click();
+  };
+  await endFromMenu();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
   await expect(dialog).toContainText('Esta ação não pode ser desfeita.');
   await dialog.getByRole('button', { name: 'Cancelar' }).click();
   await expect(card).toBeVisible();
-  await card.getByRole('button', { name: 'Excluir rascunho', exact: true }).click();
+  await endFromMenu();
   await dialog.getByRole('button', { name: 'Excluir rascunho', exact: true }).click();
   await expect(card).toHaveCount(0);
   const db = database();
