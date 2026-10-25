@@ -1,14 +1,10 @@
 <script lang="ts">
   import LegalPage from '#lib/components/LegalPage.svelte';
   import { page } from '$app/state';
-  import { updated } from '#lib/legal.js';
-
-  // Who answers for the personal data (LGPD art. 5, VI) and where the data subject writes to.
-  const controller = $derived({
-    name: page.data.site?.PRIVACY_CONTROLLER_NAME ?? '',
-    email: page.data.site?.PRIVACY_EMAIL ?? '',
-  });
+  import { controllerOf } from '#lib/legal.js';
   import { m } from '#lib/paraglide/messages.js';
+
+  const controller = $derived(controllerOf(page.data.site));
 </script>
 
 <svelte:head>
@@ -16,7 +12,7 @@
   <meta name="description" content={m.privacy_description()} />
 </svelte:head>
 
-<LegalPage title={m.privacy_title()} {updated}>
+<LegalPage title={m.privacy_title()}>
   <p>
     Esta política explica quais dados pessoais a Mesa Aberta trata, para quê, com quem eles são
     compartilhados e como você exerce os seus direitos, conforme a Lei Geral de Proteção de Dados
