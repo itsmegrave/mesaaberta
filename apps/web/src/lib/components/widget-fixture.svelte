@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { WidgetProps } from '#lib/extensions/panels.js';
+  import type { WidgetProps } from '#lib/extensions/widget-types.js';
 
   let { widget, action, next, mode, onAnswer }: WidgetProps = $props();
 </script>
