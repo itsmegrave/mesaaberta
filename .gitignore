@@ -1,6 +1,8 @@
 # local tooling
 .nodeterm/
-.claude/
+.claude/*
+# Shared: the cloud-session start-up hook (scripts/dev/cloud-session.sh).
+!.claude/settings.json
 .remember/
 
 node_modules

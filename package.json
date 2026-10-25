@@ -10,6 +10,8 @@
   },
   "scripts": {
     "dev": "cd apps/web && bun run --bun vite dev",
+    "dev:up": "bun scripts/dev/up.ts",
+    "dev:local": "bun scripts/dev/serve.ts",
     "build": "bun scripts/migrate-on-deploy.ts && bun run wrangler types && cd apps/web && bun run --bun vite build",
     "preview": "bun run wrangler dev apps/web/.svelte-kit/cloudflare/_worker.js --port 4173",
     "prepare": "(cd apps/web && bun run --bun svelte-kit sync) && bun run i18n && bun run wrangler types || echo ''",

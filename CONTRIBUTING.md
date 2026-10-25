@@ -9,6 +9,8 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 - The PR should build green (`bun run lint`, `bun run check`, `bun run test`; and `bun run test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
 - Tests describe behavior, not wording. Each test should name the break it catches.
 
+- To see a change as a signed-in member, GM or admin, use the dev login (README, "Dev login"): `bun run dev:up`, `bun run dev:local`, then `/dev/login?as=gm`. It is for `vite dev` only; never import `src/lib/server/dev` from anywhere but `hooks.server.ts`.
+
 See the [README](README.md) for setup and scripts.
 
 ## Code style

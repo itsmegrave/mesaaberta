@@ -118,6 +118,25 @@ export default defineConfig(
     ignores: ['apps/web/src/**/*.spec.ts'],
     rules: { 'no-restricted-syntax': ['error', roleRead, hostEnvRead, hostSdkCall] },
   },
+  // The dev login and its personas run under `vite dev` only. hooks.server.ts loads them behind
+  // `import.meta.env.DEV`; an import from anywhere else would put them in a production build.
+  {
+    files: ['apps/web/src/**/*.{ts,svelte}'],
+    ignores: ['apps/web/src/lib/server/dev/**', 'apps/web/src/hooks.server.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/server/dev/*', '#lib/server/dev/*', '$lib/server/dev/*'],
+              message: 'The dev login is for `vite dev` only; hooks.server.ts is its one entry.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Access decisions live in one module, which is where a role is read.
   {
     files: ['apps/web/src/lib/server/auth/policy.ts'],
