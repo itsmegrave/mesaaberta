@@ -10,7 +10,7 @@
   import NotificationBell from '#lib/components/NotificationBell.svelte';
   import TableLogo from '#lib/components/TableLogo.svelte';
   import ThemeToggle from '#lib/components/ThemeToggle.svelte';
-  import type { IconName } from '#lib/icons/names.js';
+  import { ADMIN_LINK, mainNav } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
   type Account = {
@@ -61,37 +61,17 @@
   // link in the app chrome.
   const pathname = $derived(page.url.pathname);
   const links = $derived(
-    [
-      {
-        href: '/t',
-        label: m.nav_tables(),
-        icon: 'game-icons:tavern-sign' as IconName,
-        current: (pathname === '/t' || pathname.startsWith('/t/')) && pathname !== '/t/new',
-      },
-      {
-        href: '/cf',
-        // The rail is narrow, so it breaks the word where it can (a soft hyphen in the message).
-        label: expanded ? m.nav_crowdfunding() : m.nav_crowdfunding_rail(),
-        icon: 'game-icons:open-treasure-chest' as IconName,
-        current: pathname === '/cf' || pathname.startsWith('/cf/'),
-      },
-      account && {
-        href: '/t/new',
-        label: expanded ? m.nav_open_table() : m.nav_open_table_short(),
-        icon: 'game-icons:dice-twenty-faces-twenty' as IconName,
-        current: pathname === '/t/new',
-      },
-      account && {
-        href: '/u/tables',
-        label: m.nav_my_tables(),
-        icon: 'game-icons:tabletop-players' as IconName,
-        current: pathname === '/u/tables' || pathname.startsWith('/u/tables/'),
-      },
-    ].filter((link) => !!link),
+    mainNav('sidebar', { signedIn: !!account, isAdmin: !!account?.isAdmin }).map((link) => ({
+      href: link.href,
+      label: expanded ? link.label() : link.railLabel(),
+      icon: link.icon,
+      current: link.current(pathname),
+      primary: !!link.primary,
+    })),
   );
 
   const pending = $derived(account?.pendingSuggestionsCount ?? 0);
-  const adminCurrent = $derived(pathname === '/admin' || pathname.startsWith('/admin/'));
+  const adminCurrent = $derived(ADMIN_LINK.current(pathname));
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
   // Open: a 44px row. Rail: a 64px column with the icon on a 40px tile over the label.
   const row =
@@ -169,7 +149,7 @@
             class="flex flex-col {expanded ? 'gap-1' : 'flex-none justify-start gap-2'}"
           >
             {#each links as link (link.href)}
-              {@const primary = link.href === '/t/new'}
+              {@const primary = link.primary}
               <Navigation.TriggerAnchor
                 href={link.href}
                 aria-current={link.current ? 'page' : undefined}

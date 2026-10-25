@@ -29,6 +29,7 @@
   import { Progress } from '@skeletonlabs/skeleton-svelte';
   import { m } from '#lib/paraglide/messages.js';
 
+  import { isUnder } from '#lib/navigation/main-nav.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
   import { onMount } from 'svelte';
@@ -205,7 +206,7 @@
 
       <Toaster />
       <UnsavedChangesDialog />
-      {#if data.account && !data.maintenance && !(page.url.pathname === '/m' || page.url.pathname.startsWith('/m/'))}
+      {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/m')}
         {#key data.cacheIdentity}<ChatDrawer
             viewerId={data.cacheIdentity ?? 'anonymous'}
             unread={badges.data?.messages ?? data.account.messagesUnread}

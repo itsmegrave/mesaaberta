@@ -4,6 +4,7 @@
   import Icon from '#lib/components/Icon.svelte';
   import TableLogo from '#lib/components/TableLogo.svelte';
   import { footerNotes } from '#lib/extensions/panels.js';
+  import { isUnder } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
   // The site footer: the brand with the community sentence (and any notes a private build adds),
@@ -16,8 +17,7 @@
     { path: '/cf', label: m.nav_crowdfunding_label },
   ] as const;
 
-  const current = (path: string) =>
-    page.url.pathname === path || page.url.pathname.startsWith(`${path}/`);
+  const current = (path: string) => isUnder(page.url.pathname, path);
 
   // Links inside sentences carry the primary underline; page links are quiet until hovered, and the
   // page you are on reads in ink with the same underline.
