@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { extensions } from '@mesaaberta/core/server/extensions/index';
 import {
   MAX_USERNAME_LENGTH,
   MIN_USERNAME_LENGTH,
@@ -73,6 +74,10 @@ describe('usernameProblem', () => {
     ]) {
       expect(RESERVED_USERNAMES.has(route), route).toBe(true);
     }
+  });
+
+  it('reserves the id of every installed extension, which is a top-level URL segment', () => {
+    for (const { id } of extensions) expect(RESERVED_USERNAMES.has(id), id).toBe(true);
   });
 
   it('keeps the reserved words themselves valid usernames otherwise, so the list is the only reason', () => {
