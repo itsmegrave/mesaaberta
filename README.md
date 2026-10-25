@@ -693,6 +693,10 @@ Manual Instagram publishing persists a job and returns a queue confirmation imme
 
 Instagram publication status, links and feedback are shown only in the admin tabs, never on the GM table management page.
 
+### Badge backfill
+
+`bun run badges:backfill [--apply] [--pioneer-before=YYYY-MM-DD]` gives existing members the badges their history already earned. It points at whatever `DATABASE_URL` says, so check that first. Without `--apply` it only prints how many members would get each badge. It records no `BadgeEarned` event, so nobody is notified, and it is safe to run again: a held or revoked badge is left as it is. `--pioneer-before` also gives the Pioneiro to everyone who joined before that date (the release day); leave it out to give none. Active accounts that finished onboarding are the only ones looked at. Backfilled rows have no source event and carry the time of the run as `awarded_at`.
+
 ### Daily RPG crowdfunding imports
 
 The Worker discovers new tabletop RPG campaigns from Catarse and Meeplestarter at **01:00 America/Sao_Paulo** (`0 4 * * *`, UTC). The background Worker (`apps/worker`) dispatches this independently from the existing five-minute event sweeper. The production Wrangler configuration enables it; set `CROWDFUNDING_IMPORT_ENABLED=false` to pause discovery without deleting campaigns or import history. With no database binding or without the flag set to `true`, discovery does nothing.
