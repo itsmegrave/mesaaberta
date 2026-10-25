@@ -6,6 +6,11 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Conquistas no perfil",
+        "description": "Você ganha conquistas por mesas jogadas e mestradas, e elas aparecem como ícones no seu perfil, com os detalhes ao passar o mouse ou tocar."
+      },
+      {
+        "kind": "new",
         "title": "Capa e bio no perfil",
         "description": "Você pode escolher uma capa e escrever uma bio para quem visita seu perfil.",
         "href": "/u/profile/edit"
