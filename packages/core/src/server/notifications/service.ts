@@ -47,7 +47,7 @@ export async function listNotifications(
       and(
         eq(notifications.recipientId, recipientId),
         category ? eq(notifications.category, category) : undefined,
-        // Badge notices wait for the badges to be released (`api_badges`).
+        // Badge notices wait for the badges to be released (`use_badges`).
         withAchievements ? undefined : ne(notifications.category, 'achievements'),
       ),
     )
