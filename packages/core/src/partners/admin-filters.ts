@@ -1,5 +1,6 @@
 import { pageNumber } from '../admin/catalog';
 import { PARTNER_SEARCH_MAX } from './filters';
+import { isPartnerType } from './types';
 
 /** Where a partner stands for the admin: waiting, up, with open reports, or taken down. */
 export const PARTNER_ADMIN_STATUSES = ['pending', 'up', 'reported', 'removed', 'all'] as const;
@@ -14,6 +15,7 @@ export const PARTNER_ADMIN_PAGE_SIZE = 20;
 export function partnerAdminFilters(params: URLSearchParams) {
   const status = params.get('status') ?? '';
   const backlink = params.get('backlink') ?? '';
+  const type = params.get('type');
   return {
     // The list opens on what waits for an admin.
     status: (PARTNER_ADMIN_STATUSES as readonly string[]).includes(status)
@@ -22,6 +24,8 @@ export function partnerAdminFilters(params: URLSearchParams) {
     backlink: (PARTNER_BACKLINK_FILTERS as readonly string[]).includes(backlink)
       ? (backlink as PartnerBacklinkFilter)
       : ('any' as const),
+    // One kind, or none: the public list's `?type=`, plus `none` for a partner that has no kind yet.
+    type: isPartnerType(type) || type === 'none' ? type : null,
     query: (params.get('q') ?? '').trim().slice(0, PARTNER_SEARCH_MAX),
     page: pageNumber(params.get('page')),
     pageSize: PARTNER_ADMIN_PAGE_SIZE,

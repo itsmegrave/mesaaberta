@@ -6,6 +6,7 @@ describe('readPartnerFilters', () => {
   it('opens on the newest, first page', () => {
     expect(readPartnerFilters(new URLSearchParams(''))).toEqual({
       query: '',
+      type: null,
       sort: 'newest',
       page: 1,
     });
@@ -21,6 +22,12 @@ describe('readPartnerFilters', () => {
   it('falls back on a sort it does not know', () => {
     expect(readPartnerFilters(new URLSearchParams('sort=name')).sort).toBe('name');
     expect(readPartnerFilters(new URLSearchParams('sort=hax')).sort).toBe('newest');
+  });
+
+  it('keeps a known kind and drops any other', () => {
+    expect(readPartnerFilters(new URLSearchParams('type=publisher')).type).toBe('publisher');
+    expect(readPartnerFilters(new URLSearchParams('type=none')).type).toBeNull();
+    expect(readPartnerFilters(new URLSearchParams('type=hax')).type).toBeNull();
   });
 });
 

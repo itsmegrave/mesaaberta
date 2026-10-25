@@ -9,6 +9,7 @@ import {
   parseSocialUrl,
   type Network,
 } from '../profile/social-links';
+import { isPartnerType, MAX_PARTNER_TYPES } from './types';
 
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
 z.config({ jitless: true });
@@ -62,6 +63,8 @@ const optionalAddress = z
 const fields = {
   name: z.string().trim().min(1, 'required').max(PARTNER_LIMITS.name, 'too_long'),
   description: optionalText(PARTNER_LIMITS.description),
+  // One to MAX_PARTNER_TYPES kinds from PARTNER_TYPES, as checkboxes (so a list, like the links).
+  types: z.array(z.string()).default([]),
   // Only admins see it; optional. Lower-cased so the same address is always written the same way.
   contactEmail: z
     .string()
@@ -79,6 +82,7 @@ const fields = {
 };
 
 type Fields = {
+  types: string[];
   siteUrl: string;
   couponCode: string;
   couponDescription: string;
@@ -87,11 +91,15 @@ type Fields = {
 };
 
 function checkLinks(
-  { siteUrl, couponCode, couponDescription, linkNetwork, linkUrl }: Fields,
+  { types, siteUrl, couponCode, couponDescription, linkNetwork, linkUrl }: Fields,
   ctx: z.core.$RefinementCtx<unknown>,
 ) {
   const add = (message: string, path: (string | number)[]) =>
     ctx.addIssue({ code: 'custom', message, path });
+
+  if (!types.every(isPartnerType)) add('invalid', ['types']);
+  else if (new Set(types).size === 0) add('required', ['types']);
+  else if (new Set(types).size > MAX_PARTNER_TYPES) add('too_many_types', ['types']);
 
   if (couponDescription !== '' && couponCode === '') add('needs_code', ['couponCode']);
 
@@ -141,6 +149,7 @@ export type PartnerInput = Omit<EditPartnerInput, 'logo'>;
 export const NEW_PARTNER_VALUES = {
   name: '',
   description: '',
+  types: [] as string[],
   contactEmail: '',
   siteUrl: '',
   backlinkUrl: '',

@@ -14,6 +14,7 @@
   import { partnerIdSchema } from '@mesaaberta/core/moderation/reports';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { partnerTypeLabels } from '#lib/partners/type-labels.js';
   import { Target } from '#lib/target.svelte.js';
 
   let { data } = $props();
@@ -25,7 +26,7 @@
     return to?.route.id === page.route.id && to.url.search !== page.url.search ? to : null;
   }, 150);
 
-  const anyFilter = $derived(data.filters.query !== '');
+  const anyFilter = $derived(data.filters.query !== '' || data.filters.type !== null);
 
   const reporting = new Target<{ id: string; name: string }>();
   const withdrawing = new Target<{ id: string; name: string }>();
@@ -72,9 +73,15 @@
     </div>
   {:else}
     <EmptyState
-      text={anyFilter ? m.partner_empty_filtered() : m.partner_empty()}
+      text={data.filters.type && !data.filters.query
+        ? m.partner_empty_type({ type: partnerTypeLabels[data.filters.type]() })
+        : anyFilter
+          ? m.partner_empty_filtered()
+          : m.partner_empty()}
       clearHref={anyFilter ? '/p' : undefined}
-      clearLabel={m.partner_filter_clear()}
+      clearLabel={data.filters.type && !data.filters.query
+        ? m.partner_filter_show_all()
+        : m.partner_filter_clear()}
     />
   {/if}
 </section>

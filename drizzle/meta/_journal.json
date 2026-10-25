@@ -393,6 +393,13 @@
       "when": 1792977164485,
       "tag": "0055_rating_comment_public",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1792979318250,
+      "tag": "0056_partner_types",
+      "breakpoints": true
     }
   ]
 }

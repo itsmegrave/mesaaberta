@@ -10,12 +10,13 @@ import {
   profiles,
   reports,
 } from '@mesaaberta/core/server/db/schema';
-import { createTestDb } from '../db/test-db';
+import { createTestDb, pgErrorCode } from '../db/test-db';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import {
   approvePartner,
   listAdminPartners,
   removePartner,
+  setPartnerTypes,
 } from '@mesaaberta/core/server/partners/admin';
 import {
   addPartner,
@@ -37,6 +38,7 @@ const bruno = member(2);
 const input = (over: Partial<PartnerInput> = {}): PartnerInput => ({
   name: 'Taverna do Dado',
   description: 'Loja de jogos',
+  types: ['shop'],
   contactEmail: '',
   siteUrl: 'https://taverna.example',
   backlinkUrl: '',
@@ -106,6 +108,97 @@ describe('a new partner', () => {
     const [row] = await test.db.select().from(partners).where(eq(partners.id, partnerId));
     expect(row.couponCode).toBeNull();
     expect(row.couponDescription).toBeNull();
+  });
+});
+
+describe('kinds', () => {
+  const listed = async (query: string) =>
+    (await listPartners(test.db, filters(query), { viewerId: null }))!.cards.map(
+      (card) => card.name,
+    );
+  const approved = async (name: string, types: string[]) => {
+    const { id: partnerId } = await send({ name, types });
+    await approvePartner(test.db, admin, partnerId);
+    return partnerId;
+  };
+
+  it('are stored once each, in the list order, whatever order they were picked in', async () => {
+    const { id: partnerId } = await send({ types: ['podcast', 'publisher', 'podcast'] });
+    const [row] = await test.db.select().from(partners).where(eq(partners.id, partnerId));
+    expect(row.types).toEqual(['publisher', 'podcast']);
+  });
+
+  it('filter the page: a partner shows under each kind it picked', async () => {
+    await approved('Dragão de Papel', ['publisher', 'podcast']);
+    await approved('Covil do Goblin', ['shop']);
+    expect(await listed('type=podcast')).toEqual(['Dragão de Papel']);
+    expect(await listed('type=publisher')).toEqual(['Dragão de Papel']);
+    expect(await listed('type=shop')).toEqual(['Covil do Goblin']);
+    // An unknown kind in the address is dropped, not refused: the whole list shows.
+    expect((await listed('type=hax')).sort()).toEqual(['Covil do Goblin', 'Dragão de Papel']);
+  });
+
+  it('are refused by the database past three or outside the list', async () => {
+    const { id: partnerId } = await send();
+    expect(
+      await pgErrorCode(
+        test.db
+          .update(partners)
+          .set({ types: ['shop', 'podcast', 'event', 'art'] })
+          .where(eq(partners.id, partnerId)),
+      ),
+    ).toBe('23514');
+    expect(
+      await pgErrorCode(
+        test.db
+          .update(partners)
+          .set({ types: ['casino'] })
+          .where(eq(partners.id, partnerId)),
+      ),
+    ).toBe('23514');
+  });
+
+  it('go into the audit event when the submitter changes them', async () => {
+    const { id: partnerId } = await send();
+    await updatePartner(test.db, ana, partnerId, input({ types: ['shop', 'venue'] }), { now });
+    const [event] = (await test.db.select().from(events)).filter(
+      (row) => row.type === 'PartnerUpdated',
+    );
+    expect(JSON.stringify(event.payload)).toContain('shop,venue');
+  });
+
+  it('are corrected by an admin without taking the partner off the page', async () => {
+    const partnerId = await approved('Covil do Goblin', ['shop']);
+    await setPartnerTypes(test.db, admin, partnerId, ['venue', 'shop'], { now });
+    expect(await listed('type=venue')).toEqual(['Covil do Goblin']);
+    const [row] = await test.db.select().from(partners).where(eq(partners.id, partnerId));
+    expect(row.types).toEqual(['shop', 'venue']);
+    expect(row.approvedAt).not.toBeNull();
+  });
+
+  it('are corrected by admins only, and never on a partner that was taken down', async () => {
+    const partnerId = await approved('Covil do Goblin', ['shop']);
+    await expect(setPartnerTypes(test.db, ana, partnerId, ['venue'])).rejects.toBeInstanceOf(
+      Forbidden,
+    );
+    await withdrawPartner(test.db, ana, partnerId, { now });
+    await expect(setPartnerTypes(test.db, admin, partnerId, ['venue'])).rejects.toBeInstanceOf(
+      Invalid,
+    );
+  });
+
+  it('filter the admin list, which also finds the partners without a kind', async () => {
+    await approved('Covil do Goblin', ['shop']);
+    const untyped = await approved('Guilda Antiga', ['community']);
+    await test.db.update(partners).set({ types: [] }).where(eq(partners.id, untyped));
+    const rows = async (query: string) =>
+      (await listAdminPartners(
+        test.db,
+        admin,
+        new URLSearchParams(`status=all&${query}`),
+      ))!.rows.map((row) => row.name);
+    expect(await rows('type=shop')).toEqual(['Covil do Goblin']);
+    expect(await rows('type=none')).toEqual(['Guilda Antiga']);
   });
 });
 

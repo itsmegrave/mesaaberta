@@ -38,10 +38,11 @@ export const crowdfundingActions = {
   remove: decide('crowdfunding.remove', ['id', 'reason', 'note']),
 };
 
-/** Approving and rejecting partners from the partners list, `/admin/partners`. */
+/** Approving, rejecting and correcting the kinds of partners from the list, `/admin/partners`. */
 export const partnerActions = {
   approve: decide('partner.approve', ['id']),
   remove: decide('partner.remove', ['id', 'reason', 'note']),
+  setTypes: decide('partner.setTypes', ['id', 'types']),
 };
 
 /** Closing a table from the tables list, `/admin/tables`. */
