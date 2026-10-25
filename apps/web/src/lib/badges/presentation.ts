@@ -5,6 +5,8 @@ export type BadgePresentation = {
   icon: IconName;
   /** 1 to 3 on a ladder (the higher the stronger the look); 0 for a badge with one level. */
   tier: 0 | 1 | 2 | 3;
+  /** The ladder this badge is a rung of, so a visitor sees only the highest one held. */
+  ladder?: string;
   name: () => string;
   description: () => string;
 };
@@ -16,26 +18,29 @@ export type BadgePresentation = {
  */
 export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
   'first-table': {
-    icon: 'game-icons:rolling-dices',
+    icon: 'game-icons:wooden-chair',
     tier: 0,
     name: m.badge_first_table_name,
     description: m.badge_first_table_description,
   },
   'regular-player-1': {
-    icon: 'game-icons:wooden-chair',
+    icon: 'game-icons:rolling-dices',
     tier: 1,
+    ladder: 'regular-player',
     name: m.badge_regular_player_1_name,
     description: m.badge_regular_player_1_description,
   },
   'regular-player-2': {
-    icon: 'game-icons:wooden-chair',
+    icon: 'game-icons:rolling-dices',
     tier: 2,
+    ladder: 'regular-player',
     name: m.badge_regular_player_2_name,
     description: m.badge_regular_player_2_description,
   },
   'regular-player-3': {
-    icon: 'game-icons:wooden-chair',
+    icon: 'game-icons:rolling-dices',
     tier: 3,
+    ladder: 'regular-player',
     name: m.badge_regular_player_3_name,
     description: m.badge_regular_player_3_description,
   },
@@ -66,18 +71,21 @@ export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
   'gm-master-1': {
     icon: 'game-icons:wizard-staff',
     tier: 1,
+    ladder: 'gm-master',
     name: m.badge_gm_master_1_name,
     description: m.badge_gm_master_1_description,
   },
   'gm-master-2': {
     icon: 'game-icons:wizard-staff',
     tier: 2,
+    ladder: 'gm-master',
     name: m.badge_gm_master_2_name,
     description: m.badge_gm_master_2_description,
   },
   'gm-master-3': {
     icon: 'game-icons:wizard-staff',
     tier: 3,
+    ladder: 'gm-master',
     name: m.badge_gm_master_3_name,
     description: m.badge_gm_master_3_description,
   },

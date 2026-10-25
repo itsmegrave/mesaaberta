@@ -871,7 +871,7 @@
   "badges_title": "Conquistas",
   "badges_earned_on": "Em {date}",
   "badges_before_release": "Antes da estreia das conquistas",
-  "notification_badge_earned_named": "Conquista nova: {badge}.",
+  "notification_badge_earned_named": "Você ganhou a conquista {badge}.",
   "notification_badge_earned": "Uma conquista nova chegou ao seu perfil.",
   "notification_rating_prompt": "A sessão de {table} terminou. Que tal deixar uma avaliação?",
   "notification_catalog_suggestion_approved": "Sua sugestão “{name}” foi aprovada no catálogo.",

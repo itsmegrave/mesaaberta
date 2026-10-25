@@ -28,6 +28,13 @@ describe('BadgeStrip', () => {
     await expect.element(page.getByText('Antes da estreia das conquistas')).toBeVisible();
   });
 
+  it('shows a visitor only the highest rung held of a ladder', async () => {
+    render(BadgeStrip, { badges: [held('regular-player-1'), held('regular-player-2')] });
+
+    await expect.element(page.getByText('Presença constante II')).toBeVisible();
+    expect(page.getByText('Presença constante I', { exact: true }).elements()).toHaveLength(0);
+  });
+
   const hiddenAndUnknown = [held('first-table', { hidden: true }), held('not-a-badge')];
 
   it('shows a visitor neither what the owner hid nor a badge without artwork', async () => {

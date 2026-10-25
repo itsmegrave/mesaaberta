@@ -34,7 +34,7 @@ describe('notificationText', () => {
   it('names the badge that was earned, or says a new one arrived when it has no artwork yet', () => {
     expect(
       notificationText(shown({ type: 'badge_earned', metadata: { badgeId: 'first-table' } })),
-    ).toBe('Conquista nova: Primeira mesa.');
+    ).toBe('Você ganhou a conquista Primeira mesa.');
     expect(
       notificationText(shown({ type: 'badge_earned', metadata: { badgeId: 'not-yet' } })),
     ).toBe('Uma conquista nova chegou ao seu perfil.');

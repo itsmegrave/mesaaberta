@@ -226,7 +226,7 @@ describe('badge-notice-v1', () => {
         recipientId: p1,
         type: 'badge_earned',
         category: 'achievements',
-        link: '/u/jogadora',
+        link: '/u/jogadora#conquistas',
         metadata: { badgeId: 'first-table' },
       }),
     ]);
