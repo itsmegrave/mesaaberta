@@ -1,10 +1,10 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import type { Snippet } from 'svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
   import Icon from './Icon.svelte';
   import type { IconName } from '#lib/icons/names.js';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import type { FormMessage } from '#lib/forms/message.js';
   import { actionSchema } from '#lib/tables/registration.js';
   import { registrationError } from '#lib/tables/registration-errors.js';
@@ -16,7 +16,7 @@
     playerId?: string;
     next?: string;
     class?: string;
-    /** The button's text. With it, the form draws its own `SubmitButton`, busy while it posts. */
+    /** The button's text. With it, the form draws its own submit `Button`, busy while it posts. */
     label?: string;
     /** An icon before `label`. */
     icon?: IconName;
@@ -67,12 +67,14 @@
   {#if playerId}<input type="hidden" name="playerId" value={playerId} />{/if}
   {#if next}<input type="hidden" name="next" value={next} />{/if}
   {#if label}
-    <SubmitButton
+    <Button
+      type="submit"
+      size="custom"
       submitting={form.pending}
       delayed={form.delayed}
       timeout={form.timeout}
       class={buttonClass}
-      >{#if icon}<Icon name={icon} size={20} />{/if}{label}</SubmitButton
+      >{#if icon}<Icon name={icon} size={20} />{/if}{label}</Button
     >
   {:else}
     {@render children?.()}

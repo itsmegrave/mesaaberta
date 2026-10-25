@@ -1,11 +1,11 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import Form from '#lib/components/Form.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let {
@@ -121,10 +121,10 @@
             </a>
 
             <Form method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>
-              <SubmitButton submitting={signingOut} class={item}>
+              <Button type="submit" size="custom" submitting={signingOut} class={item}>
                 <Icon name="game-icons:exit-door" size={20} />
                 {m.nav_sign_out()}
-              </SubmitButton>
+              </Button>
             </Form>
           </nav>
         </Popover.Content>

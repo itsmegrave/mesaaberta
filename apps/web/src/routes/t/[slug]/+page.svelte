@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import { copyText } from '#lib/clipboard.js';
   import TextArea from '#lib/components/TextArea.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
@@ -6,7 +7,6 @@
   import RichText from '#lib/components/RichText.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { resolve } from '$app/paths';
@@ -482,14 +482,16 @@
         </div>
 
         <div>
-          <SubmitButton
+          <Button
+            type="submit"
+            size="custom"
             submitting={rating.pending}
             delayed={rating.delayed}
             timeout={rating.timeout}
             class="btn preset-filled-primary-500"
           >
             {m.rating_submit()}
-          </SubmitButton>
+          </Button>
         </div>
       </Form>
     </section>

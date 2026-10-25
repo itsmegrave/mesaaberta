@@ -2,14 +2,14 @@ import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import SubmitButton from './SubmitButton.svelte';
+import Button from './Button.svelte';
 
 const children = createRawSnippet(() => ({ render: () => '<span>Salvar</span>' }));
 const button = () => page.getByRole('button', { name: /Salvar|Ainda salvando/ });
 
-describe('SubmitButton', () => {
+describe('Button as a submit button', () => {
   it('is a plain submit button while nothing is pending', async () => {
-    render(SubmitButton, { children });
+    render(Button, { type: 'submit', children });
 
     await expect.element(button()).toHaveAttribute('type', 'submit');
     await expect.element(button()).not.toHaveAttribute('aria-disabled');
@@ -18,7 +18,7 @@ describe('SubmitButton', () => {
   });
 
   it('shows a spinner once the submit is slow, and says it is busy without losing focus', async () => {
-    render(SubmitButton, { children, delayed: true });
+    render(Button, { type: 'submit', children, delayed: true });
 
     await expect.element(button()).toHaveAttribute('aria-busy', 'true');
     // aria-disabled, not disabled: the button keeps its place in the tab order and its focus.
@@ -29,14 +29,14 @@ describe('SubmitButton', () => {
   });
 
   it('is aria-disabled and busy from the moment it is sending, never before the first attempt', async () => {
-    render(SubmitButton, { children, submitting: true });
+    render(Button, { type: 'submit', children, submitting: true });
 
     await expect.element(button()).toHaveAttribute('aria-disabled', 'true');
     await expect.element(button()).toHaveAttribute('aria-busy', 'true');
   });
 
   it('says it is still saving when the submit takes very long', async () => {
-    render(SubmitButton, { children, delayed: true, timeout: true });
+    render(Button, { type: 'submit', children, delayed: true, timeout: true });
 
     await expect.element(button()).toHaveTextContent('Ainda salvando…');
   });
@@ -48,7 +48,7 @@ describe('SubmitButton', () => {
       event.preventDefault();
       submits++;
     });
-    render(SubmitButton, { children, delayed: true });
+    render(Button, { type: 'submit', children, delayed: true });
     // Moved into a real form, so a click that got through would submit it.
     form.appendChild(button().element());
     document.body.appendChild(form);
@@ -67,7 +67,7 @@ describe('SubmitButton', () => {
       event.preventDefault();
       submits++;
     });
-    render(SubmitButton, { children, submitting: true });
+    render(Button, { type: 'submit', children, submitting: true });
     form.appendChild(button().element());
     document.body.appendChild(form);
 
@@ -81,7 +81,7 @@ describe('SubmitButton', () => {
   });
 
   it('takes the classes of the button it replaces', async () => {
-    render(SubmitButton, { children, class: 'btn h-12 preset-filled-primary-500' });
+    render(Button, { type: 'submit', children, class: 'btn h-12 preset-filled-primary-500' });
 
     await expect.element(button()).toHaveClass('btn', 'h-12', 'preset-filled-primary-500');
   });

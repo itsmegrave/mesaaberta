@@ -1,8 +1,8 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import type { Snippet } from 'svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { notificationActionSchema } from '#lib/notifications/actions.js';
 
   import { m } from '#lib/paraglide/messages.js';
@@ -34,11 +34,13 @@
 <Form action="/n?/{action}" onsubmit={form.submit} class={className}>
   {#if id}<input type="hidden" name="id" value={id} />{/if}
   <input type="hidden" name="next" value={next} />
-  <SubmitButton
+  <Button
+    type="submit"
+    size="custom"
     submitting={form.pending}
     delayed={form.delayed}
     timeout={form.timeout}
-    class={buttonClass}>{@render children()}</SubmitButton
+    class={buttonClass}>{@render children()}</Button
   >
   {#if Object.keys(form.errors).length}
     <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">

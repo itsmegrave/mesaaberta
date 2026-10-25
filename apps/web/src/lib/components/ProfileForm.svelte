@@ -9,7 +9,6 @@
   import { usernameAvailability } from '#lib/query/lookups.js';
   const client = queryClient();
   import { guardDraft } from '#lib/forms/guard.svelte.js';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { tick } from 'svelte';
   import {
     AGE_RANGES,
@@ -590,14 +589,16 @@
     </fieldset>{/if}
 
   <div class="flex flex-wrap items-center gap-5">
-    <SubmitButton
+    <Button
+      type="submit"
+      size="custom"
       submitting={controller.pending}
       delayed={controller.delayed}
       timeout={controller.timeout}
       class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
-    </SubmitButton>
+    </Button>
     {#if cancelHref}
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
       <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>

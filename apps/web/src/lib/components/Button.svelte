@@ -88,7 +88,7 @@
   aria-busy={busy || attributes['aria-busy'] || undefined}
   aria-disabled={busy || attributes['aria-disabled'] || undefined}
   onclick={click}
-  class="{buttonClass(variant, size)} {delayed ? 'gap-2' : ''} {className}"
+  class="{buttonClass(variant, size)} {type === 'submit' || delayed ? 'gap-2' : ''} {className}"
 >
   {#if delayed}
     <Spinner />

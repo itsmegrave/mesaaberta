@@ -14,7 +14,6 @@
   import RichText from '#lib/components/RichText.svelte';
   import RichTextField from '#lib/components/RichTextField.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { ANNOUNCEMENT_LIMITS, announcementSchema } from '#lib/notifications/announcement.js';
   import type { AnnouncementMessage } from '#lib/notifications/announcement-message.js';
   import {
@@ -353,12 +352,14 @@
         </div>
       {:else}
         <p>
-          <SubmitButton
+          <Button
+            type="submit"
+            size="custom"
             submitting={controller.pending}
             delayed={controller.delayed}
             timeout={controller.timeout}
             class="btn h-12 rounded-lg preset-filled-primary-500 px-6 font-semibold"
-            >{m.admin_announce_review()}</SubmitButton
+            >{m.admin_announce_review()}</Button
           >
         </p>
       {/if}

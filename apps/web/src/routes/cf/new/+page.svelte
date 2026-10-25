@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
   import DateTimeField from '#lib/components/DateTimeField.svelte';
@@ -7,7 +8,6 @@
   import FormBanner from '#lib/components/FormBanner.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import ImageUpload from '#lib/components/ImageUpload.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import {
     CROWDFUNDING_LIMITS,
@@ -293,12 +293,14 @@
       </section>
 
       <div class="flex flex-wrap items-center gap-5">
-        <SubmitButton
+        <Button
+          type="submit"
+          size="custom"
           submitting={controller.pending}
           delayed={controller.delayed}
           timeout={controller.timeout}
           class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-          >{m.crowdfunding_form_submit()}</SubmitButton
+          >{m.crowdfunding_form_submit()}</Button
         >
         <a href="/cf" class="link-underline font-semibold text-link">{m.form_cancel()}</a>
       </div>

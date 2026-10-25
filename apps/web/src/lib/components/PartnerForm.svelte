@@ -14,7 +14,6 @@
   import ImageUpload from '#lib/components/ImageUpload.svelte';
   import PartnerCard from '#lib/components/PartnerCard.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormResult } from '#lib/forms/contract.js';
@@ -508,12 +507,14 @@
     </section>
 
     <div class="flex flex-wrap items-center gap-5">
-      <SubmitButton
+      <Button
+        type="submit"
+        size="custom"
         submitting={controller.pending}
         delayed={controller.delayed}
         timeout={controller.timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-        >{editing ? m.partner_form_submit_edit() : m.partner_form_submit()}</SubmitButton
+        >{editing ? m.partner_form_submit_edit() : m.partner_form_submit()}</Button
       >
       <a href="/p" class="link-underline font-semibold text-link">{m.form_cancel()}</a>
     </div>

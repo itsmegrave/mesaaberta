@@ -1,8 +1,8 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   // Shown to the GM (or an admin) while a table is a draft: says nobody else sees it, and publishes it.
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { answerSchema } from '#lib/tables/confirmation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
@@ -53,12 +53,14 @@
 
     <Form {action} onsubmit={publish.submit} class="m-0 mt-5">
       <input type="hidden" name="next" value={next} />
-      <SubmitButton
+      <Button
+        type="submit"
+        size="custom"
         submitting={publish.pending}
         delayed={publish.delayed}
         timeout={publish.timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-        >{m.draft_publish()}</SubmitButton
+        >{m.draft_publish()}</Button
       >
       {#if error}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">{error}</p>

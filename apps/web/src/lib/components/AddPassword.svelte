@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   // "Criar uma senha": for an account that signs in with a provider only. Two steps on the profile
   // page, both done by the api: it e-mails a code to the account's address, then the code and the new
   // password go back together. Nothing typed is handed back by the server, not even the length.
@@ -7,7 +8,6 @@
   import FormBanner from '#lib/components/FormBanner.svelte';
   import Form from '#lib/components/Form.svelte';
   import FormField from '#lib/components/FormField.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
@@ -77,14 +77,16 @@
 
     {#if !sent}
       <Form action="?/passwordCode" onsubmit={asking.submit} class="mt-5">
-        <SubmitButton
+        <Button
+          type="submit"
+          size="custom"
           submitting={asking.pending}
           delayed={asking.delayed}
           timeout={asking.timeout}
           class="btn h-12 rounded-lg border-2 border-primary-500 px-5 font-semibold"
         >
           {m.password_add_send()}
-        </SubmitButton>
+        </Button>
       </Form>
     {:else}
       <p role="status" class="mt-3 text-sm font-semibold">{m.password_add_sent()}</p>
@@ -146,25 +148,29 @@
           />
         </FormField>
 
-        <SubmitButton
+        <Button
+          type="submit"
+          size="custom"
           submitting={setting.pending}
           delayed={setting.delayed}
           timeout={setting.timeout}
           class="btn h-12 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.password_add_submit()}
-        </SubmitButton>
+        </Button>
       </Form>
 
       <Form action="?/passwordCode" onsubmit={asking.submit} class="mt-3">
-        <SubmitButton
+        <Button
+          type="submit"
+          size="custom"
           submitting={asking.pending}
           delayed={asking.delayed}
           timeout={asking.timeout}
           class="btn h-12 rounded-lg px-0 link-underline font-semibold text-link"
         >
           {m.password_add_resend()}
-        </SubmitButton>
+        </Button>
       </Form>
     {/if}
   {/if}

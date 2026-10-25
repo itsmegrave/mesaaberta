@@ -1,9 +1,9 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   // A campaign or adventure that goes on: the GM lets players rate before it ends, or ends it.
   // Each player rates once, however many sessions the table has.
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import { answerSchema } from '#lib/tables/confirmation.js';
@@ -78,12 +78,14 @@
       {/if}
     </fieldset>
     {#if eligible.length > 0}
-      <SubmitButton
+      <Button
+        type="submit"
+        size="custom"
         submitting={allow.pending}
         delayed={allow.delayed}
         timeout={allow.timeout}
         class="mt-4 btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-        >{m.manage_going_rate_submit()}</SubmitButton
+        >{m.manage_going_rate_submit()}</Button
       >
     {/if}
     {#if allow.errors._errors?.[0]}

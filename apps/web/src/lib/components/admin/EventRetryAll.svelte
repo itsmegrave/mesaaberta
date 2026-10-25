@@ -1,8 +1,8 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { retryAllSchema } from '#lib/admin/event-filters.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
 
@@ -32,12 +32,14 @@
 </script>
 
 <Form action="?/retryAll" onsubmit={form.submit} class="flex flex-wrap items-center gap-3">
-  <SubmitButton
+  <Button
+    type="submit"
+    size="custom"
     submitting={form.pending}
     delayed={form.delayed}
     timeout={form.timeout}
     class="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-    >{m.admin_events_retry_all()}</SubmitButton
+    >{m.admin_events_retry_all()}</Button
   >
   <p class="text-sm text-muted">{m.admin_events_retry_all_hint({ max })}</p>
   {#if form.errors._errors?.[0]}

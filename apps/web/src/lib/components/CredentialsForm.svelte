@@ -1,6 +1,6 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import FormBanner from '#lib/components/FormBanner.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
   import TextInput from './TextInput.svelte';
@@ -69,13 +69,15 @@
   </FormField>
 
   <div>
-    <SubmitButton
+    <Button
+      type="submit"
+      size="custom"
       submitting={controller.pending}
       delayed={controller.delayed}
       timeout={controller.timeout}
       class="btn h-12 w-full rounded-lg preset-filled-primary-500 text-base font-semibold"
     >
       {mode === 'signup' ? m.signup_submit() : m.login_submit()}
-    </SubmitButton>
+    </Button>
   </div>
 </Form>

@@ -1,8 +1,8 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { forceSchema } from '#lib/admin/event-filters.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
 
@@ -34,13 +34,15 @@
 
 <Form action="?/force" onsubmit={form.submit}>
   <input type="hidden" name="id" value={id} />
-  <SubmitButton
+  <Button
+    type="submit"
+    size="custom"
     submitting={form.pending}
     delayed={form.delayed}
     timeout={form.timeout}
     class="btn h-11 rounded-lg preset-tonal-primary px-4 font-semibold"
     ><span aria-hidden="true">{m.admin_events_force()}</span>
-    <span class="sr-only">{m.admin_events_force_for({ type })}</span></SubmitButton
+    <span class="sr-only">{m.admin_events_force_for({ type })}</span></Button
   >
   {#if form.errors._errors?.[0] || form.errors.id?.[0]}
     <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">

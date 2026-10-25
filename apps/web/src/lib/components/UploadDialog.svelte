@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   // How a profile picture or cover is changed: a button opens a dialog with the drop zone, and the
   // picked image is framed in the same dialog. "Usar este recorte" sends it at once; the action
   // answers with a redirect, so the page (and the header) shows the new image. Until JavaScript runs
@@ -9,7 +10,6 @@
   import Form from '#lib/components/Form.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ImageCropper from '#lib/components/ImageCropper.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { isDecodable } from '#lib/forms/decodable.js';
   import type { IconName } from '#lib/icons/names.js';
@@ -193,7 +193,7 @@
       <p id="{id}-error" role="alert" class="text-sm font-semibold text-error-alert">{error}</p>
     {/if}
     <div>
-      <SubmitButton class={trigger}>{m.upload_send()}</SubmitButton>
+      <Button type="submit" size="custom" class={trigger}>{m.upload_send()}</Button>
     </div>
   </Form>
 {/if}

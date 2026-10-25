@@ -1,9 +1,9 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   // The GM's answer to "did the session happen?", once its date has passed: it happened (players are
   // asked to rate), it did not, or a new date (the table opens again until then).
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { answerSchema, heldSchema, postponeSchema } from '#lib/tables/confirmation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
@@ -149,12 +149,13 @@
           {/if}
         </fieldset>
       {/if}
-      <SubmitButton
+      <Button
+        type="submit"
+        size="custom"
         submitting={goesOn ? held.pending : happened.pending}
         delayed={goesOn ? held.delayed : happened.delayed}
         timeout={goesOn ? held.timeout : happened.timeout}
-        class={primary}
-        >{goesOn ? m.manage_confirm_held() : m.manage_confirm_happened()}</SubmitButton
+        class={primary}>{goesOn ? m.manage_confirm_held() : m.manage_confirm_happened()}</Button
       >
       {#if goesOn ? heldError : happened.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
@@ -164,11 +165,13 @@
     </Form>
     <Form action="?/notHeld" onsubmit={notHeld.submit} class="m-0">
       <input type="hidden" name="next" value={next} />
-      <SubmitButton
+      <Button
+        type="submit"
+        size="custom"
         submitting={notHeld.pending}
         delayed={notHeld.delayed}
         timeout={notHeld.timeout}
-        class={secondary}>{m.manage_confirm_not_held()}</SubmitButton
+        class={secondary}>{m.manage_confirm_not_held()}</Button
       >
       {#if notHeld.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
@@ -196,11 +199,13 @@
         class="input h-12 rounded-lg border-surface-200-800 px-3"
       />
     </label>
-    <SubmitButton
+    <Button
+      type="submit"
+      size="custom"
       submitting={postpone.pending}
       delayed={postpone.delayed}
       timeout={postpone.timeout}
-      class={secondary}>{m.manage_confirm_postpone()}</SubmitButton
+      class={secondary}>{m.manage_confirm_postpone()}</Button
     >
     {#if postponeError}
       <p role="alert" class="w-full text-sm font-semibold text-error-700-300">{postponeError}</p>

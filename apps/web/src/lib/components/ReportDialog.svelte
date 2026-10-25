@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
   // "Denunciar": a table, or someone the reporter shares it with. The server decides again who may
@@ -15,7 +16,6 @@
   import Form from '#lib/components/Form.svelte';
   import FormField from '#lib/components/FormField.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
@@ -183,12 +183,14 @@
                 class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
                 >{m.admin_dialog_cancel()}</Dialog.CloseTrigger
               >
-              <SubmitButton
+              <Button
+                type="submit"
+                size="custom"
                 submitting={form.pending}
                 delayed={form.delayed}
                 timeout={form.timeout}
                 class="btn h-12 rounded-lg preset-filled-error-500 px-4 font-semibold"
-                >{m.report_submit()}</SubmitButton
+                >{m.report_submit()}</Button
               >
             </div>
           </Form>

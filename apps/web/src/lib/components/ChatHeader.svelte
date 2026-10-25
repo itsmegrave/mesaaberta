@@ -6,7 +6,6 @@
   import Form from './Form.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { muteSchema } from '@mesaaberta/core/messages/schema';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -111,7 +110,9 @@
 
   <Form {action} onsubmit={controller.submit} class="m-0">
     <input type="hidden" name="muted" value={String(controller.values.muted)} />
-    <SubmitButton
+    <Button
+      type="submit"
+      size="custom"
       submitting={controller.pending}
       delayed={controller.delayed}
       timeout={controller.timeout}
@@ -124,6 +125,6 @@
       <span class="sr-only sm:hidden"
         >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
       >
-    </SubmitButton>
+    </Button>
   </Form>
 </header>

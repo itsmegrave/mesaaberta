@@ -1,7 +1,7 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   // The button that disconnects one provider from the account, and why the server refused if it did.
   import Form from '#lib/components/Form.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { disconnectSchema } from '#lib/profile/connections.js';
   import { toast } from '#lib/toaster.js';
@@ -29,14 +29,16 @@
 
 <Form action="?/disconnect" onsubmit={disconnecting.submit} class="grid justify-items-end gap-2">
   <input type="hidden" name="provider" value={provider} />
-  <SubmitButton
+  <Button
+    type="submit"
+    size="custom"
     submitting={disconnecting.pending}
     delayed={disconnecting.delayed}
     timeout={disconnecting.timeout}
     class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold hover:preset-tonal"
   >
     {m.account_connections_disconnect({ provider: label })}
-  </SubmitButton>
+  </Button>
   {#if code}
     <p role="alert" class="text-sm font-semibold text-error-700-300">
       {(errors[code] ?? m.account_connections_failed)()}

@@ -1,10 +1,10 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import CepLookup from './CepLookup.svelte';
   import FormBanner from '#lib/components/FormBanner.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
   import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from './Form.svelte';
@@ -577,20 +577,24 @@
       />
     </section>
     <div class="flex flex-wrap items-center gap-5">
-      <SubmitButton
+      <Button
+        type="submit"
+        size="custom"
         submitting={controller.pending}
         delayed={controller.delayed}
         timeout={controller.timeout}
         class="btn h-12 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-        >{submitLabel}</SubmitButton
+        >{submitLabel}</Button
       >
       {#if draftLabel}
-        <SubmitButton
+        <Button
+          type="submit"
+          size="custom"
           name="intent"
           value="draft"
           submitting={controller.pending}
           class="btn h-12 rounded-lg border-2 border-surface-200-800 px-5 font-semibold hover:preset-tonal"
-          >{draftLabel}</SubmitButton
+          >{draftLabel}</Button
         >
       {/if}
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
