@@ -5,13 +5,14 @@
   import PartnerCard from '#lib/components/PartnerCard.svelte';
   import PartnerFilters from '#lib/components/PartnerFilters.svelte';
   import PartnerHowItWorks from '#lib/components/PartnerHowItWorks.svelte';
-  import PartnerReportDialog from '#lib/components/PartnerReportDialog.svelte';
+  import EntityReportDialog from '#lib/components/EntityReportDialog.svelte';
   import Pager from '#lib/components/admin/Pager.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { partnerIdSchema } from '@mesaaberta/core/moderation/reports';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { Target } from '#lib/target.svelte.js';
 
   let { data } = $props();
 
@@ -24,8 +25,8 @@
 
   const anyFilter = $derived(data.filters.query !== '');
 
-  let reporting = $state<{ id: string; name: string } | null>(null);
-  let withdrawing = $state<{ id: string; name: string } | null>(null);
+  const reporting = new Target<{ id: string; name: string }>();
+  const withdrawing = new Target<{ id: string; name: string }>();
 </script>
 
 <svelte:head>
@@ -61,8 +62,8 @@
           <PartnerCard
             {partner}
             canEdit={partner.canEdit}
-            onreport={partner.canReport ? (picked) => (reporting = picked) : undefined}
-            onwithdraw={(picked) => (withdrawing = picked)}
+            onreport={partner.canReport ? (picked) => (reporting.current = picked) : undefined}
+            onwithdraw={(picked) => (withdrawing.current = picked)}
           />
         </li>
       {/each}
@@ -84,26 +85,23 @@
   {/if}
 </section>
 
-{#if reporting}
-  {#key reporting.id}
-    <PartnerReportDialog
-      partner={reporting}
-      bind:open={() => reporting !== null, (value) => !value && (reporting = null)}
-    />
+{#if reporting.current}
+  {#key reporting.current.id}
+    <EntityReportDialog kind="partner" entity={reporting.current} bind:open={reporting.open} />
   {/key}
 {/if}
 
-{#if withdrawing}
-  {#key withdrawing.id}
+{#if withdrawing.current}
+  {#key withdrawing.current.id}
     <ModerationDialog
-      bind:open={() => withdrawing !== null, (value) => !value && (withdrawing = null)}
+      bind:open={withdrawing.open}
       trigger={false}
       action="?/withdraw"
       schema={partnerIdSchema}
-      fields={{ id: withdrawing.id }}
+      fields={{ id: withdrawing.current.id }}
       danger
       label={m.partner_withdraw()}
-      title={m.partner_withdraw_title({ name: withdrawing.name })}
+      title={m.partner_withdraw_title({ name: withdrawing.current.name })}
       text={m.partner_withdraw_text()}
       confirm={m.partner_withdraw_confirm()}
       success={m.partner_withdraw_done()}

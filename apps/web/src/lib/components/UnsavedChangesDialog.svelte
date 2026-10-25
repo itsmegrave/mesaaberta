@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   // Mounted once, in the root layout. It opens when a form with unsaved changes calls
   // `confirmLeave` (the shared draft guard) and answers it.
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import { leaveGuard } from '#lib/forms/leave-guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -12,39 +12,22 @@
 <!-- Mounted only while a form is asking: Skeleton's Dialog opens on mount, and Escape or the
      backdrop answers "stay". -->
 {#if leaveGuard.pending}
-  <Dialog
+  <DialogShell
     defaultOpen
-    onOpenChange={(details) => {
-      if (!details.open) answer(false);
+    onOpenChange={(open) => {
+      if (!open) answer(false);
     }}
     role="alertdialog"
+    title={m.unsaved_title()}
+    description={m.unsaved_text()}
   >
-    <Portal>
-      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-      <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <Dialog.Content
-          class="w-full max-w-md card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
-        >
-          <Dialog.Title class="text-xl font-semibold">{m.unsaved_title()}</Dialog.Title>
-          <Dialog.Description class="mt-2 text-surface-700-300"
-            >{m.unsaved_text()}</Dialog.Description
-          >
-          <div class="mt-6 flex flex-wrap justify-end gap-3">
-            <Button
-              size="custom"
-              type="button"
-              class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-              onclick={() => answer(false)}>{m.unsaved_stay()}</Button
-            >
-            <Button
-              size="custom"
-              type="button"
-              class="btn h-12 rounded-lg preset-filled-error-500 px-4 font-semibold"
-              onclick={() => answer(true)}>{m.unsaved_leave()}</Button
-            >
-          </div>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Portal>
-  </Dialog>
+    <DialogActions
+      class="mt-6"
+      cancel={m.unsaved_stay()}
+      oncancel={() => answer(false)}
+      tone="danger"
+      confirm={m.unsaved_leave()}
+      onconfirm={() => answer(true)}
+    />
+  </DialogShell>
 {/if}

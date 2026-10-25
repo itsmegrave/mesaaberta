@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import Button from '#lib/components/Button.svelte';
-  import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from './Form.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import PostButton from '#lib/components/PostButton.svelte';
   import { muteSchema } from '@mesaaberta/core/messages/schema';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -34,23 +32,6 @@
   const picture = $derived(
     conversation.kind === 'table' ? conversation.table?.imageUrl : conversation.other?.avatarUrl,
   );
-
-  // svelte-ignore state_referenced_locally
-  const controller = actionForm({
-    initial: { muted: !conversation.muted },
-    schema: muteSchema,
-    refresh: action === '?/mute',
-    errorMessage: m.messages_error_generic,
-    onSuccess() {
-      conversation.muted = controller.values.muted;
-    },
-  });
-  // Only a change of `muted` should run this: `change` also reads and rewrites the form's errors,
-  // which would make the effect depend on (and retrigger) itself.
-  $effect(() => {
-    const next = !conversation.muted;
-    untrack(() => controller.change('muted', next));
-  });
 </script>
 
 <header class="flex items-center gap-3 border-b border-surface-200-800 pb-3">
@@ -108,23 +89,24 @@
     />
   {/if}
 
-  <Form {action} onsubmit={controller.submit} class="m-0">
-    <input type="hidden" name="muted" value={String(controller.values.muted)} />
-    <Button
-      type="submit"
-      size="custom"
-      submitting={controller.pending}
-      delayed={controller.delayed}
-      timeout={controller.timeout}
-      class="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+  <!-- Posts the opposite of the current state; the page's own action reloads, the drawer's does
+       not. -->
+  <PostButton
+    {action}
+    fields={{ muted: !conversation.muted }}
+    schema={muteSchema}
+    refresh={action === '?/mute'}
+    errorMessage={m.messages_error_generic}
+    onSuccess={(values) => (conversation.muted = values.muted as boolean)}
+    class="m-0"
+    buttonClass="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+  >
+    <Icon name={conversation.muted ? 'bell' : 'bell-off'} size={18} />
+    <span class="hidden sm:inline"
+      >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
     >
-      <Icon name={conversation.muted ? 'bell' : 'bell-off'} size={18} />
-      <span class="hidden sm:inline"
-        >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
-      >
-      <span class="sr-only sm:hidden"
-        >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
-      >
-    </Button>
-  </Form>
+    <span class="sr-only sm:hidden"
+      >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
+    >
+  </PostButton>
 </header>

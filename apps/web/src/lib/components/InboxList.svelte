@@ -17,9 +17,11 @@
   import UserText from '#lib/components/UserText.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import Avatar from '#lib/components/Avatar.svelte';
+  import { buttonClass } from '#lib/components/Button.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { shortTime } from '#lib/messages/format.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { plainClick } from '#lib/plain-click.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
@@ -53,8 +55,7 @@
       : body;
   };
   const pageHref = (target: number) => (target === 1 ? '/m' : `/m?page=${target}`);
-  const pageLink =
-    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal';
+  const pageLink = `${buttonClass('secondary', 'md')} text-sm font-semibold`;
 </script>
 
 {#if items.length === 0}
@@ -70,12 +71,7 @@
       >
         <a
           href={`/m/${item.id}`}
-          onclick={(event) => {
-            if (onselect && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-              event.preventDefault();
-              onselect(item.id);
-            }
-          }}
+          onclick={plainClick(onselect && (() => onselect(item.id)))}
           aria-current={item.id === currentId ? 'page' : undefined}
           aria-label={`${name(item)} ${preview(item)}${item.unread > 0 ? ` ${m.messages_unread()}` : ''}`}
           class="absolute inset-0 z-1 rounded-lg focus-visible:outline-2 focus-visible:outline-primary-500"
@@ -142,12 +138,7 @@
     {#if page > 1}
       <a
         href={pageHref(page - 1)}
-        onclick={(event) => {
-          if (onpage && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-            event.preventDefault();
-            onpage(page - 1);
-          }
-        }}
+        onclick={plainClick(onpage && (() => onpage(page - 1)))}
         class={pageLink}>{m.messages_page_previous()}</a
       >
     {:else}
@@ -157,12 +148,7 @@
     {#if page < pages}
       <a
         href={pageHref(page + 1)}
-        onclick={(event) => {
-          if (onpage && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-            event.preventDefault();
-            onpage(page + 1);
-          }
-        }}
+        onclick={plainClick(onpage && (() => onpage(page + 1)))}
         class={pageLink}>{m.messages_page_next()}</a
       >
     {/if}

@@ -1,8 +1,6 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   import type { Snippet } from 'svelte';
-  import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from '#lib/components/Form.svelte';
+  import PostButton from '#lib/components/PostButton.svelte';
   import { notificationActionSchema } from '#lib/notifications/actions.js';
 
   import { m } from '#lib/paraglide/messages.js';
@@ -20,31 +18,16 @@
   };
 
   let { action, id, next, class: className = 'm-0', buttonClass = '', children }: Props = $props();
-
-  // Each button owns its pending state; the feed and bell reload through the action redirect.
-  // svelte-ignore state_referenced_locally
-  const form = actionForm({
-    initial: { ...(id ? { id } : {}), next },
-    schema: notificationActionSchema,
-    onSuccess: () => {},
-    errorMessage: m.error_generic_text,
-  });
 </script>
 
-<Form action="/n?/{action}" onsubmit={form.submit} class={className}>
-  {#if id}<input type="hidden" name="id" value={id} />{/if}
-  <input type="hidden" name="next" value={next} />
-  <Button
-    type="submit"
-    size="custom"
-    submitting={form.pending}
-    delayed={form.delayed}
-    timeout={form.timeout}
-    class={buttonClass}>{@render children()}</Button
-  >
-  {#if Object.keys(form.errors).length}
-    <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
-      {m.error_generic_text()}
-    </p>
-  {/if}
-</Form>
+<!-- Each button owns its pending state; the feed and bell reload through the action redirect. -->
+<PostButton
+  action="/n?/{action}"
+  fields={{ id, next }}
+  schema={notificationActionSchema}
+  errorMessage={m.error_generic_text}
+  error={(errors) => (Object.keys(errors).length ? m.error_generic_text() : undefined)}
+  class={className}
+  {buttonClass}
+  {children}
+/>

@@ -75,6 +75,17 @@
   };
 </script>
 
+<!-- A read that failed: say so, offer to load it again and, in a thread, the way back to the list. -->
+{#snippet failed(retry: () => unknown, back?: () => void)}
+  <p role="alert">{m.messages_error_generic()}</p>
+  <Button size="custom" class="btn preset-tonal" onclick={() => retry()}
+    >{m.messages_retry_load()}</Button
+  >
+  {#if back}
+    <Button size="custom" class="btn preset-tonal" onclick={back}>{m.messages_title()}</Button>
+  {/if}
+{/snippet}
+
 {#if mounted}
   <Dialog
     {open}
@@ -131,13 +142,7 @@
             {#if open}
               {#if selected}
                 {#if thread.isError}
-                  <p role="alert">{m.messages_error_generic()}</p>
-                  <Button size="custom" class="btn preset-tonal" onclick={() => thread.refetch()}
-                    >{m.messages_retry_load()}</Button
-                  >
-                  <Button size="custom" class="btn preset-tonal" onclick={back}
-                    >{m.messages_title()}</Button
-                  >
+                  {@render failed(() => thread.refetch(), back)}
                 {:else if thread.data}
                   {#key selected}<ChatThread data={thread.data} drawer onback={back} />{/key}
                 {:else}<p role="status">{m.nav_loading()}</p>{/if}
@@ -167,12 +172,7 @@
                     <Tabs.Content {value} class="min-h-0 min-w-0 flex-1">
                       {#if tab === value}
                         {#if inbox.isError}
-                          <p role="alert">{m.messages_error_generic()}</p>
-                          <Button
-                            size="custom"
-                            class="btn preset-tonal"
-                            onclick={() => inbox.refetch()}>{m.messages_retry_load()}</Button
-                          >
+                          {@render failed(() => inbox.refetch())}
                         {:else if inbox.data}
                           <div class="h-full min-h-0 min-w-0 overflow-x-hidden overflow-y-auto">
                             <InboxList

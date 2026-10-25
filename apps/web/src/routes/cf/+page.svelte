@@ -3,13 +3,14 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
   import CrowdfundingFilters from '#lib/components/CrowdfundingFilters.svelte';
-  import CrowdfundingReportDialog from '#lib/components/CrowdfundingReportDialog.svelte';
+  import EntityReportDialog from '#lib/components/EntityReportDialog.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ListSkeleton from '#lib/components/ListSkeleton.svelte';
   import Pager from '#lib/components/admin/Pager.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { Target } from '#lib/target.svelte.js';
 
   let { data } = $props();
 
@@ -34,7 +35,7 @@
     return link(parts.length > 0 ? `?${parts.join('&')}` : '');
   };
 
-  let reporting = $state<{ id: string; name: string } | null>(null);
+  const reporting = new Target<{ id: string; name: string }>();
   const shown = $derived(
     data.filters.ended ? data.ended.length : data.running.length + data.upcoming.length,
   );
@@ -73,7 +74,7 @@
         <li>
           <CrowdfundingCard
             {campaign}
-            onreport={campaign.canReport ? (picked) => (reporting = picked) : undefined}
+            onreport={campaign.canReport ? (picked) => (reporting.current = picked) : undefined}
           />
         </li>
       {/each}
@@ -139,11 +140,8 @@
   {/if}
 </section>
 
-{#if reporting}
-  {#key reporting.id}
-    <CrowdfundingReportDialog
-      campaign={reporting}
-      bind:open={() => reporting !== null, (value) => !value && (reporting = null)}
-    />
+{#if reporting.current}
+  {#key reporting.current.id}
+    <EntityReportDialog kind="crowdfunding" entity={reporting.current} bind:open={reporting.open} />
   {/key}
 {/if}

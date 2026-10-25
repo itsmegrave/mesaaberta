@@ -1,8 +1,6 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
   // Mounted for one entry/mode; server loads never overwrite edited values.
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import {
     createSchema,
@@ -12,8 +10,11 @@
     type CatalogKind,
   } from '@mesaaberta/core/admin/catalog';
   import FormField from '#lib/components/FormField.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
   import Form from '#lib/components/Form.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { slugify } from '@mesaaberta/core/slug';
   import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
@@ -145,110 +146,79 @@
   const fieldId = `${mode}-${entry?.id ?? kind}-field`;
 </script>
 
-<Dialog
-  {open}
-  onOpenChange={(details) => {
-    open = details.open;
-    if (!details.open) onclose?.();
+<!-- Closed positioners must not cover the native approval forms before hydration or without JS. -->
+<DialogShell
+  bind:open
+  onOpenChange={(next) => {
+    if (!next) onclose?.();
   }}
   role={red ? 'alertdialog' : 'dialog'}
+  trigger={label ? triggerContent : undefined}
+  {triggerClass}
+  {triggerLabel}
+  {title}
+  description={text}
 >
-  {#if label}
-    <Dialog.Trigger class={triggerClass} aria-label={triggerLabel}>{label}</Dialog.Trigger>
-  {/if}
-  <!-- Closed positioners must not cover the native approval forms before hydration or without JS. -->
-  {#if open}
-    <Portal>
-      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-      <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <Dialog.Content
-          class="w-full max-w-md card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
-        >
-          <Dialog.Title class="text-xl font-semibold">{title}</Dialog.Title>
-          {#if text}
-            <Dialog.Description class="mt-2 text-surface-700-300">{text}</Dialog.Description>
+  <Form method="POST" action={action ?? `?/${mode}`} onsubmit={form.submit} class="mt-4 grid gap-4">
+    <input type="hidden" name="kind" value={data.kind} />
+    {#if mode !== 'create'}<input type="hidden" name="id" value={data.id} />{/if}
+
+    {#if mode === 'rename' || mode === 'create'}
+      <FormField
+        id={fieldId}
+        label={mode === 'rename' ? m.admin_dialog_rename_label() : m.admin_catalog_name()}
+        error={fieldError}
+      >
+        <TextInput
+          id={fieldId}
+          name="name"
+          type="text"
+          autocomplete="off"
+          maxlength={SUGGESTION_NAME.max}
+          value={data.name}
+          oninput={(event) => form.change('name', event.currentTarget.value)}
+          aria-invalid={fieldError ? 'true' : undefined}
+          aria-describedby="{fieldId}-hint{fieldError ? ` ${fieldId}-error` : ''}"
+        />
+        <p id="{fieldId}-hint" class="text-sm text-surface-700-300">
+          {m.admin_dialog_rename_hint({
+            min: SUGGESTION_NAME.min,
+            max: SUGGESTION_NAME.max,
+          })}
+          {#if data.name?.trim()}
+            {m.admin_dialog_rename_slug({ slug: slugify(data.name, { fallback: '…' }) })}
           {/if}
-          <Form
-            method="POST"
-            action={action ?? `?/${mode}`}
-            onsubmit={form.submit}
-            class="mt-4 grid gap-4"
-          >
-            <input type="hidden" name="kind" value={data.kind} />
-            {#if mode !== 'create'}<input type="hidden" name="id" value={data.id} />{/if}
+        </p>
+      </FormField>
+    {:else if mode === 'merge'}
+      <SearchSelect
+        id={fieldId}
+        name="into"
+        label={m.admin_dialog_merge_into()}
+        labelClass="label-text block font-semibold"
+        class="grid gap-1"
+        inDialog
+        invalid={!!fieldError}
+        items={candidates
+          .filter((candidate) => candidate.id !== entry?.id)
+          .map((candidate) => ({ name: candidate.name, slug: candidate.id }))}
+        value={data.into ? [data.into] : []}
+        placeholder={m.admin_dialog_merge_pick()}
+        onchange={(picked) => form.change('into', picked[0] ?? '')}
+      />
+    {/if}
+    {#if mode === 'merge'}<FieldError id={fieldId} message={fieldError} class="" />{/if}
+    {#if formError}
+      <p role="alert" class="text-sm font-semibold text-error-700-300">{formError}</p>
+    {/if}
 
-            {#if mode === 'rename' || mode === 'create'}
-              <FormField
-                id={fieldId}
-                label={mode === 'rename' ? m.admin_dialog_rename_label() : m.admin_catalog_name()}
-                error={fieldError}
-              >
-                <TextInput
-                  id={fieldId}
-                  name="name"
-                  type="text"
-                  autocomplete="off"
-                  maxlength={SUGGESTION_NAME.max}
-                  value={data.name}
-                  oninput={(event) => form.change('name', event.currentTarget.value)}
-                  aria-invalid={fieldError ? 'true' : undefined}
-                  aria-describedby="{fieldId}-hint{fieldError ? ` ${fieldId}-error` : ''}"
-                />
-                <p id="{fieldId}-hint" class="text-sm text-surface-700-300">
-                  {m.admin_dialog_rename_hint({
-                    min: SUGGESTION_NAME.min,
-                    max: SUGGESTION_NAME.max,
-                  })}
-                  {#if data.name?.trim()}
-                    {m.admin_dialog_rename_slug({ slug: slugify(data.name, { fallback: '…' }) })}
-                  {/if}
-                </p>
-              </FormField>
-            {:else if mode === 'merge'}
-              <SearchSelect
-                id={fieldId}
-                name="into"
-                label={m.admin_dialog_merge_into()}
-                labelClass="label-text block font-semibold"
-                class="grid gap-1"
-                inDialog
-                invalid={!!fieldError}
-                items={candidates
-                  .filter((candidate) => candidate.id !== entry?.id)
-                  .map((candidate) => ({ name: candidate.name, slug: candidate.id }))}
-                value={data.into ? [data.into] : []}
-                placeholder={m.admin_dialog_merge_pick()}
-                onchange={(picked) => form.change('into', picked[0] ?? '')}
-              />
-            {/if}
-            {#if fieldError && mode === 'merge'}
-              <p id="{fieldId}-error" role="alert" class="text-sm font-semibold text-error-700-300">
-                {fieldError}
-              </p>
-            {/if}
-            {#if formError}
-              <p role="alert" class="text-sm font-semibold text-error-700-300">{formError}</p>
-            {/if}
+    <DialogActions
+      cancel={m.admin_dialog_cancel()}
+      tone={red ? 'danger' : 'primary'}
+      controller={form}
+      {confirm}
+    />
+  </Form>
+</DialogShell>
 
-            <div class="mt-2 flex flex-wrap justify-end gap-3">
-              <Dialog.CloseTrigger
-                class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-                >{m.admin_dialog_cancel()}</Dialog.CloseTrigger
-              >
-              <Button
-                type="submit"
-                size="custom"
-                submitting={form.pending}
-                delayed={form.delayed}
-                timeout={form.timeout}
-                class="btn h-12 rounded-lg px-4 font-semibold {red
-                  ? 'preset-filled-error-500'
-                  : 'preset-filled-primary-500'}">{confirm}</Button
-              >
-            </div>
-          </Form>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Portal>
-  {/if}
-</Dialog>
+{#snippet triggerContent()}{label}{/snippet}

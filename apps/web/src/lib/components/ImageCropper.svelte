@@ -8,7 +8,8 @@
   // Loaded when the dialog opens: the library touches `HTMLElement` as it is imported, which does not
   // exist while the server renders a page that can open this dialog.
   import type Cropper from 'cropperjs';
-  import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import { onDestroy, onMount } from 'svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { encodeImage } from '#lib/forms/encode-image.js';
@@ -158,29 +159,24 @@
       {m.image_crop_failed()}
     </p>
   {/if}
-  <div class="mt-6 flex flex-wrap justify-end gap-3">
-    {#if onreplace}
-      <Button
-        size="custom"
-        type="button"
-        class="mr-auto btn h-12 rounded-lg px-4 font-semibold hover:preset-tonal"
-        onclick={onreplace}>{m.upload_replace()}</Button
-      >
-    {/if}
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-      onclick={oncancel}>{m.image_crop_cancel()}</Button
-    >
-    <Button
-      size="custom"
-      type="button"
-      class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-      disabled={busy}
-      onclick={confirm}>{m.image_crop_use()}</Button
-    >
-  </div>
+  <DialogActions
+    class="mt-6"
+    cancel={m.image_crop_cancel()}
+    {oncancel}
+    confirm={m.image_crop_use()}
+    disabled={busy}
+    onconfirm={confirm}
+  >
+    {#snippet before()}
+      {#if onreplace}
+        <Button
+          size="custom"
+          class="mr-auto btn h-12 rounded-lg px-4 font-semibold hover:preset-tonal"
+          onclick={onreplace}>{m.upload_replace()}</Button
+        >
+      {/if}
+    {/snippet}
+  </DialogActions>
 {/snippet}
 
 {#if bare}
@@ -189,25 +185,16 @@
     {@render controls()}
   </div>
 {:else}
-  <Dialog
+  <DialogShell
     defaultOpen
-    onOpenChange={(details) => {
-      if (!details.open) oncancel();
+    onOpenChange={(open) => {
+      if (!open) oncancel();
     }}
+    size="lg"
+    scroll
+    title={m.image_crop_title()}
+    description={m.image_crop_hint()}
   >
-    <Portal>
-      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-      <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <Dialog.Content
-          class="max-h-full w-full max-w-lg overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
-        >
-          <Dialog.Title class="text-xl font-semibold">{m.image_crop_title()}</Dialog.Title>
-          <Dialog.Description class="mt-2 text-surface-700-300"
-            >{m.image_crop_hint()}</Dialog.Description
-          >
-          {@render controls()}
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Portal>
-  </Dialog>
+    {@render controls()}
+  </DialogShell>
 {/if}

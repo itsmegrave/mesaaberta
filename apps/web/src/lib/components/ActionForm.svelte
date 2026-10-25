@@ -1,10 +1,8 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   import type { Snippet } from 'svelte';
-  import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from './Form.svelte';
   import Icon from './Icon.svelte';
   import type { IconName } from '#lib/icons/names.js';
+  import PostButton from '#lib/components/PostButton.svelte';
   import type { FormMessage } from '#lib/forms/message.js';
   import { actionSchema } from '#lib/tables/registration.js';
   import { registrationError } from '#lib/tables/registration-errors.js';
@@ -16,7 +14,7 @@
     playerId?: string;
     next?: string;
     class?: string;
-    /** The button's text. With it, the form draws its own submit `Button`, busy while it posts. */
+    /** The button's text. With it, the form draws its own submit button, busy while it posts. */
     label?: string;
     /** An icon before `label`. */
     icon?: IconName;
@@ -44,39 +42,25 @@
     onfail,
     children,
   }: Props = $props();
-
-  // svelte-ignore state_referenced_locally
-  const form = actionForm({
-    initial: { playerId, next },
-    schema: actionSchema,
-    domain: action.includes('Photo') ? 'account' : 'table',
-    errorMessage: () => registrationError('invalid'),
-    onSuccess() {
-      if (success) toast.success(success);
-      onsuccess?.();
-    },
-    onFailure(updated) {
-      const message = updated?.message ?? { code: 'invalid' };
-      toast.error(registrationError(message.code, message.retryAfter));
-      onfail?.(message);
-    },
-  });
 </script>
 
-<Form {action} onsubmit={form.submit} class={className}>
-  {#if playerId}<input type="hidden" name="playerId" value={playerId} />{/if}
-  {#if next}<input type="hidden" name="next" value={next} />{/if}
-  {#if label}
-    <Button
-      type="submit"
-      size="custom"
-      submitting={form.pending}
-      delayed={form.delayed}
-      timeout={form.timeout}
-      class={buttonClass}
-      >{#if icon}<Icon name={icon} size={20} />{/if}{label}</Button
-    >
-  {:else}
-    {@render children?.()}
-  {/if}
-</Form>
+<PostButton
+  {action}
+  fields={{ playerId, next }}
+  schema={actionSchema}
+  domain={action.includes('Photo') ? 'account' : 'table'}
+  errorMessage={() => registrationError('invalid')}
+  {success}
+  onSuccess={() => onsuccess?.()}
+  onFailure={(updated) => {
+    const message = updated?.message ?? { code: 'invalid' };
+    toast.error(registrationError(message.code, message.retryAfter));
+    onfail?.(message);
+  }}
+  class={className}
+  {buttonClass}
+  content={label ? undefined : (children ?? nothing)}
+  >{#if icon}<Icon name={icon} size={20} />{/if}{label}</PostButton
+>
+
+{#snippet nothing()}{/snippet}

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { invitationFormSchema } from '#lib/invitations/schema.js';
   import Form from './Form.svelte';
   import FormField from './FormField.svelte';
   import TextInput from './TextInput.svelte';
+  import Button from './Button.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { registrationError } from '#lib/tables/registration-errors.js';
   import { toast } from '#lib/toaster.js';
@@ -75,13 +75,7 @@
   <input type="hidden" name="enabled" value={String(enabled)} />
   <input type="hidden" name="blocked" value={String(blocked)} />
   <div>
-    <Button
-      type="submit"
-      size="custom"
-      submitting={form.pending}
-      delayed={form.delayed}
-      timeout={form.timeout}
-      class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+    <Button type="submit" variant="secondary" controller={form} class="font-semibold"
       >{label}</Button
     >
   </div>

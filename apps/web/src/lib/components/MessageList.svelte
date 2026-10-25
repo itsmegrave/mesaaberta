@@ -87,11 +87,10 @@
 >
   {#if hasMore}
     <Button
-      size="custom"
-      type="button"
+      variant="secondary"
       onclick={older}
       aria-disabled={loadingOlder || undefined}
-      class="mx-auto mb-2 btn h-12 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal"
+      class="mx-auto mb-2 text-sm font-semibold"
     >
       {loadingOlder ? m.nav_loading() : m.messages_load_older()}
     </Button>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   import TextArea from '#lib/components/TextArea.svelte';
   import { tick } from 'svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
@@ -7,6 +6,7 @@
   import Form from './Form.svelte';
   import EmojiPicker from '#lib/components/EmojiPicker.svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import Button from '#lib/components/Button.svelte';
   import {
     MESSAGE_MAX_LENGTH,
     messageSchema,
@@ -165,14 +165,7 @@
       aria-describedby={error || notice ? 'message-notice' : undefined}
       class="textarea field-sizing-content max-h-40 min-h-12 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-2 py-3 shadow-none focus:outline-none"
     ></TextArea>
-    <Button
-      type="submit"
-      size="custom"
-      submitting={controller.pending}
-      delayed={controller.delayed}
-      timeout={controller.timeout}
-      class="btn h-12 shrink-0 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-    >
+    <Button type="submit" variant="primary" {controller} class="shrink-0 font-semibold">
       <Icon name="send" size={18} />
       <span class="hidden sm:inline">{m.messages_send()}</span>
       <span class="sr-only sm:hidden">{m.messages_send()}</span>
