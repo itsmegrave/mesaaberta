@@ -6,8 +6,6 @@
 export const flagDefaults = {
   // Off: the site as usual. On: every visitor gets the maintenance screen; admins still get through.
   maintenance_mode: false,
-  // Off: text and QR artwork. On: include the table photo as its background.
-  use_table_image: false,
   // Off: an event's lease is a time only (today's dispatcher). On: each claim carries a token and
   // every update is conditional on it, so a dispatcher whose lease expired cannot finish or release
   // the new claim (ADR 0003). Target admins first: `isAdmin = true`.
@@ -178,11 +176,6 @@ export const flagDefaults = {
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
   // admin may have it: the flag is a kill switch.
   api_admin_announcements: false,
-  // Off: the admin's hand actions on Instagram posts (queue a table, reconcile an uncertain post, save the account the OAuth callback connected) run
-  // in the web Worker. On: the api Worker does them over the Service Binding; the render and the
-  // publish stay in the background after the web response. A call that cannot be made falls back to
-  // the web path. Needs the API binding. Every admin may have it: the flag is a kill switch.
-  api_admin_instagram: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

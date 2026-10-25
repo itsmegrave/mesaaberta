@@ -14,8 +14,8 @@ import {
   type InstagramEnv,
 } from './api';
 import { renderShareImage, shareFacts } from './image';
-import { createFlags } from '@mesaaberta/core/server/flags/flags';
-import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
+import { instagramFlags } from './flags';
+import { flagsFromEnv } from '@mesaaberta/core/server/flags/env';
 import { findTableBySlug } from '@mesaaberta/core/server/tables/queries';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 
@@ -89,17 +89,7 @@ export async function processPost(
   }
   if (!post.image) {
     const includePhoto =
-      useTableImage ??
-      (await createFlags(
-        env.GROWTHBOOK_API_HOST && env.GROWTHBOOK_CLIENT_KEY
-          ? growthBookPayload({
-              apiHost: env.GROWTHBOOK_API_HOST,
-              clientKey: env.GROWTHBOOK_CLIENT_KEY,
-              fetch,
-              waitUntil: () => {},
-            })
-          : async () => null,
-      ).isEnabled('use_table_image'));
+      useTableImage ?? (await flagsFromEnv(env, instagramFlags).isEnabled('use_table_image'));
     const image = await render(table, env, { useTableImage: includePhoto });
     const caption = shareFacts(table, env.APP_ORIGIN!).caption;
     if (caption.length > 2200) throw new InstagramError(400, false);

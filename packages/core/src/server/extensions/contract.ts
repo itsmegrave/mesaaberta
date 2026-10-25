@@ -52,6 +52,13 @@ export interface Extension {
    * that has shipped, and reserve it as a username, because a profile lives at `/u/<username>`.
    */
   readonly id: string;
+  /**
+   * The feature flags it owns, each with the value used when GrowthBook cannot answer (new flags
+   * default to `false`). The key in GrowthBook is the same name. The public registry never lists
+   * them, so a private flag's name stays out of the public code. `api_admin_<id>` is read for the
+   * admin hand actions to run in the api Worker.
+   */
+  readonly flags?: Readonly<Record<string, boolean>>;
   /** A social network that tables are announced on (ADR 0001/0007). */
   readonly social?: SocialPublisher;
   /** Event handlers of its own, besides its connector's. Names are stored in `handledBy`. */

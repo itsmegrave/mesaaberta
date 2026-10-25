@@ -2,8 +2,14 @@ import { logger, type Logger } from '../logger';
 import { GrowthBook, type Attributes, type FeatureApiResponse } from '@growthbook/growthbook';
 import { flagDefaults, isFlagName, killSwitches, type FlagName } from './registry';
 
+/**
+ * A flag of the app (`FlagName`) or one an extension declares (see `Extension.flags`). The
+ * extension names are open strings, so a typo in one reads as off rather than failing to compile.
+ */
+export type AnyFlagName = FlagName | (string & {});
+
 export type Flags = {
-  isEnabled(name: FlagName, attributes?: Attributes): Promise<boolean>;
+  isEnabled(name: AnyFlagName, attributes?: Attributes): Promise<boolean>;
 };
 
 type Options = {
@@ -12,6 +18,8 @@ type Options = {
   forceAll?: boolean;
   /** Fixed values that win over GrowthBook and the defaults; see `flagOverrides`. */
   overrides?: Partial<Record<FlagName, boolean>>;
+  /** The defaults extensions declare for their own flags; the app's own names win on a clash. */
+  extensionFlags?: Readonly<Record<string, boolean>>;
 };
 
 const localHostnames = new Set(['localhost', '127.0.0.1']);
@@ -57,9 +65,11 @@ export function flagOverrides(
  */
 export function createFlags(
   loadPayload: () => Promise<FeatureApiResponse | null>,
-  { forceAll = false, overrides = {}, log = logger }: Options = {},
+  { forceAll = false, overrides = {}, extensionFlags = {}, log = logger }: Options = {},
 ): Flags {
   let payload: Promise<FeatureApiResponse | null> | undefined;
+  const defaultFor = (name: AnyFlagName): boolean =>
+    isFlagName(name) ? flagDefaults[name] : (extensionFlags[name] ?? false);
 
   const load = () =>
     (payload ??= (async () => {
@@ -73,20 +83,20 @@ export function createFlags(
 
   return {
     async isEnabled(name, attributes = {}) {
-      const fixed = overrides[name];
+      const fixed = isFlagName(name) ? overrides[name] : undefined;
       if (fixed !== undefined) return fixed;
-      if (forceAll) return !killSwitches.has(name);
+      if (forceAll) return !(isFlagName(name) && killSwitches.has(name));
 
       const response = await load();
-      if (!response) return flagDefaults[name];
+      if (!response) return defaultFor(name);
 
       try {
         const growthbook = new GrowthBook({ attributes });
         await growthbook.setPayload(response);
-        return growthbook.getFeatureValue(name, flagDefaults[name]);
+        return growthbook.getFeatureValue(name, defaultFor(name));
       } catch (error) {
         log.warn('flags.evaluation.failed', { error });
-        return flagDefaults[name];
+        return defaultFor(name);
       }
     },
   };

@@ -1,4 +1,4 @@
-import { isFlagName } from '@mesaaberta/core/server/flags/registry';
+import { extensionById } from '@mesaaberta/core/server/extensions/index';
 import { callApiRaw } from '../api-client';
 
 /**
@@ -15,7 +15,10 @@ export async function extensionViaApi(
   data: Record<string, string>,
 ): Promise<{ invalid: true } | Record<string, unknown> | null> {
   const flag = `api_admin_${extensionId}`;
-  if (!isFlagName(flag) || !(await locals.flags.isEnabled(flag, { id: adminId, isAdmin: true })))
+  if (
+    extensionById(extensionId)?.flags?.[flag] === undefined ||
+    !(await locals.flags.isEnabled(flag, { id: adminId, isAdmin: true }))
+  )
     return null;
 
   const answer = await callApiRaw(

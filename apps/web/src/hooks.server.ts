@@ -5,6 +5,7 @@ import {
   flagOverrides,
   shouldForceAllFlags,
 } from '@mesaaberta/core/server/flags/flags';
+import { extensionFlagDefaults } from '@mesaaberta/core/server/extensions/index';
 import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
 import { handleCanonicalRoutes } from '#lib/server/canonical-routes.js';
 import { handleAuth } from '#lib/server/auth/handle-auth.js';
@@ -80,7 +81,7 @@ const handleFlags: Handle = ({ event, resolve }) => {
           waitUntil: (promise) => waitUntil?.(promise),
         })
       : async () => null,
-    { forceAll, overrides, log: event.locals.log },
+    { forceAll, overrides, extensionFlags: extensionFlagDefaults(), log: event.locals.log },
   );
 
   // Targeted at admins first (`isAdmin = true`). Read the first time an event is dispatched.
