@@ -7,6 +7,7 @@ import { notificationHandler } from './notifications';
 import { announcementHandler } from './announcements';
 import { moderationHandler } from './moderation';
 import { catalogHandler } from './catalog';
+import { badgeHandler, badgeNoticeHandler } from '../badges/handlers';
 import { banMailHandler } from './ban-mail';
 import {
   playerInvitationMailHandler,
@@ -24,6 +25,8 @@ export const bellHandlers: readonly Handler[] = [
   moderationHandler,
   catalogHandler,
   playerInvitationNotificationHandler,
+  badgeHandler,
+  badgeNoticeHandler,
 ];
 
 /**

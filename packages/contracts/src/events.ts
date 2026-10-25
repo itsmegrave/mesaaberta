@@ -117,6 +117,8 @@ export type DomainEvent =
   | { type: 'PartnerAdded'; payload: PartnerFact }
   | { type: 'PartnerUpdated'; payload: PartnerFact & { changes: Changes } }
   // An admin approved a partner: it is on the page. `submitterId` is who is told.
+  // A rule awarded a badge (never a backfill or a grant). The bell notice is written from this event.
+  | { type: 'BadgeEarned'; payload: { profileId: string; badgeId: string } }
   | { type: 'PartnerApproved'; payload: PartnerFact & { submitterId: string } }
   // An admin rejected or took a partner down, or its submitter withdrew it (then `submitterId`
   // is the actor, so nobody is told).

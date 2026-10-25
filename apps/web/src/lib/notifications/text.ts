@@ -68,6 +68,8 @@ export function notificationText(item: Shown): string {
       return m.notification_rating_received({ table });
     case 'rating_prompt':
       return m.notification_rating_prompt({ table });
+    case 'badge_earned':
+      return m.notification_badge_earned();
     case 'catalog_suggestion_approved':
       // A table that waited for its system can be published now.
       if (item.metadata.kind === 'system')

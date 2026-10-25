@@ -81,6 +81,7 @@ export const NOTIFICATION_KINDS = {
   player_removed: { category: 'registration', icon: 'user-minus' },
   rating_received: { category: 'rating', icon: 'star' },
   rating_prompt: { category: 'rating', icon: 'star' },
+  badge_earned: { category: 'achievements', icon: 'sparkles' },
   catalog_suggestion_approved: { category: 'catalog', icon: 'tag' },
   catalog_suggestion_merged: { category: 'catalog', icon: 'tag' },
   catalog_suggestion_rejected: { category: 'catalog', icon: 'tag' },
