@@ -29,7 +29,8 @@
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { formatHours } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
   import { onMount } from 'svelte';
 
   let { data: serverData, form: result } = $props();
@@ -350,7 +351,7 @@
           ><SeatDots {taken} capacity={table.capacity} />
         </p>
         {#if table.minPlayers}
-          <p class="mt-2 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
+          <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
         {/if}
         <ul class="mt-3">
           <RosterRow

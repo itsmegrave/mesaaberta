@@ -35,7 +35,8 @@
   import SummaryRow from './components/ui/SummaryRow.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -278,7 +279,7 @@
         <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
       </p>
       {#if table.minPlayers}
-        <p class="mt-3 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
+        <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-3" />
       {/if}
 
       {#if problem}

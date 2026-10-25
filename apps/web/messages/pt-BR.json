@@ -1451,27 +1451,18 @@
   "form_min_players_hint": "Quantas pessoas a mesa precisa para acontecer. Deixe em branco se não faz diferença.",
   "form_error_min_players_above": "O mínimo não pode ser maior que o número de vagas.",
   "form_error_min_players_invalid": "Use um número inteiro, de 1 até 30, ou deixe em branco.",
-  "table_min_players": [
-    {
-      "declarations": ["input count"],
-      "selectors": ["count"],
-      "match": {
-        "count=1": "Mínimo: 1 participante",
-        "count=*": "Mínimo: {count} participantes"
-      }
-    }
-  ],
-  "table_min_players_missing": [
-    {
-      "declarations": ["input count"],
-      "selectors": ["count"],
-      "match": {
-        "count=1": "Falta 1 para o mínimo",
-        "count=*": "Faltam {count} para o mínimo"
-      }
-    }
-  ],
   "table_min_players_met": "Mínimo atingido",
+  "table_min_players_needed": "Precisa de {count} para acontecer",
+  "table_min_players_left": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "falta 1",
+        "count=*": "faltam {count}"
+      }
+    }
+  ],
   "public_profile_description": "Conheça {username}, a nota da mestragem e as próximas mesas de RPG no Mesa Aberta.",
   "public_profile_social_links": "Redes sociais e site",
   "public_profile_social_link": "Abrir {network} em nova aba",
