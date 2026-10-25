@@ -9,7 +9,7 @@ import {
 } from '@mesaaberta/db/schema';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
-import { instagramRoutes } from './instagram';
+import { extensionRoutes } from './extensions';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const admin = '00000000-0000-4000-8000-000000000ca1';
@@ -46,10 +46,10 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-const app = () => instagramRoutes((() => ({ db: test.db, close: async () => {} })) as never);
-const post = (action: string, body: unknown, actor?: string) =>
+const app = () => extensionRoutes((() => ({ db: test.db, close: async () => {} })) as never);
+const post = (action: string, body: unknown, actor?: string, extension = 'instagram') =>
   app().request(
-    `/${action}`,
+    `/${extension}/${action}`,
     {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...(actor ? { [ACTOR_HEADER]: actor } : {}) },
@@ -58,7 +58,7 @@ const post = (action: string, body: unknown, actor?: string) =>
     env,
   );
 
-describe('api instagram routes over a database', () => {
+describe('api extension routes over a database (Instagram)', () => {
   it('answers that Instagram is unavailable when it is not configured, and queues nothing', async () => {
     const response = await post('queue', { tableId }, admin);
 
@@ -102,6 +102,11 @@ describe('api instagram routes over a database', () => {
     ).toBe(400);
     expect((await post('explode', {}, admin)).status).toBe(404);
     expect((await post('queue', { tableId })).status).toBe(401);
+  });
+
+  it('answers 404 for an extension nobody installed, or one with no admin actions', async () => {
+    expect((await post('queue', { tableId }, admin, 'patreon')).status).toBe(404);
+    expect((await post('queue', { tableId }, admin, 'toString')).status).toBe(404);
   });
 
   it('saves the connected account with its encrypted token, and connecting again replaces it', async () => {

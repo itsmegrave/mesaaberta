@@ -8,13 +8,16 @@
   let {
     route,
     counts,
+    connectionsPath,
   }: {
     /** The route id of the page, to mark its section. */
     route: string | null;
     counts: AdminCounts;
+    /** The connections page, when an installed extension has a panel on it. */
+    connectionsPath: string | null;
   } = $props();
 
-  const groups = $derived(adminGroups(counts));
+  const groups = $derived(adminGroups(counts, connectionsPath));
   const current = $derived(sectionOf(groups, route));
 </script>
 

@@ -8,14 +8,22 @@ export type AdminCounts = {
   events: number;
   partners: number;
 };
-export type AdminSection = { path: string; label: string; icon: IconName; count?: number };
+export type AdminSection = {
+  path: string;
+  /** The route id that marks this section, when it is not the path's own (a param route). */
+  routeId?: string;
+  label: string;
+  icon: IconName;
+  count?: number;
+};
 export type AdminGroup = { key: string; label: string; sections: AdminSection[] };
 
 /**
  * The admin's sections in their groups, with what waits on an admin counted beside them. One list
- * for the column on a desktop and the menu on a phone.
+ * for the column on a desktop and the menu on a phone. The connections page is there only when an
+ * installed extension has a panel on it: `connectionsPath` is the address of the first.
  */
-export function adminGroups(counts: AdminCounts): AdminGroup[] {
+export function adminGroups(counts: AdminCounts, connectionsPath: string | null): AdminGroup[] {
   return [
     {
       key: 'overview',
@@ -60,13 +68,17 @@ export function adminGroups(counts: AdminCounts): AdminGroup[] {
       label: m.admin_group_communication(),
       sections: [
         { path: '/admin/notifications', label: m.admin_nav_notifications(), icon: 'megaphone' },
-        // The path of the connections stays `/admin/instagram`: Meta's OAuth redirect URI points at its callback.
-        {
-          path: '/admin/instagram',
-          label: m.admin_nav_connections(),
-          icon: 'globe',
-          count: counts.connections,
-        },
+        ...(connectionsPath
+          ? [
+              {
+                path: connectionsPath,
+                routeId: '/admin/[ext]',
+                label: m.admin_nav_connections(),
+                icon: 'globe' as const,
+                count: counts.connections,
+              },
+            ]
+          : []),
       ],
     },
     {
@@ -89,6 +101,8 @@ export function adminGroups(counts: AdminCounts): AdminGroup[] {
 export function sectionOf(groups: AdminGroup[], route: string | null) {
   const all = groups.flatMap((group) => group.sections);
   return all.find((section) =>
-    section.path === '/admin' ? route === '/admin' : !!route?.startsWith(section.path),
+    section.path === '/admin'
+      ? route === '/admin'
+      : !!route?.startsWith(section.routeId ?? section.path),
   );
 }

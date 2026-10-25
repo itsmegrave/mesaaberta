@@ -2,6 +2,7 @@ import '../../layout.css';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import Panel from '#lib/extensions/instagram/Panel.svelte';
 import Page from './+page.svelte';
 
 const future = new Date(Date.now() + 30 * 24 * 3600 * 1000);
@@ -10,6 +11,7 @@ const past = new Date(Date.now() - 24 * 3600 * 1000);
 const show = (over: Record<string, unknown> = {}) =>
   render(Page, {
     data: {
+      Panel,
       site: { INSTAGRAM_HANDLE: 'mesaaberta.app' },
       account: null,
       configured: true,
