@@ -136,7 +136,7 @@ test.describe('a table where the GM approves each player', () => {
 
     await page.goto(`/t/${slug}`);
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
-    await page.getByLabel(/Mensagem para o mestre/).fill('Oi! Jogo há dois anos.');
+    await page.getByLabel(/Mensagem para quem mestra/).fill('Oi! Jogo há dois anos.');
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     await expect(
       page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),

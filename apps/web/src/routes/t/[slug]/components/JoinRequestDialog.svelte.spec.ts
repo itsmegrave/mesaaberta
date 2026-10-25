@@ -11,7 +11,7 @@ describe('JoinRequestDialog', () => {
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
 
     await expect.element(page.getByRole('dialog')).toBeVisible();
-    const message = page.getByRole('textbox', { name: /Mensagem para o mestre/ });
+    const message = page.getByRole('textbox', { name: /Mensagem para quem mestra/ });
     await expect.element(message).toBeVisible();
     await expect.element(message).not.toBeRequired();
     await expect.element(page.getByText('(opcional)')).toBeVisible();
@@ -22,7 +22,7 @@ describe('JoinRequestDialog', () => {
     render(JoinRequestDialog, {});
 
     await page.getByRole('button', { name: 'Pedir vaga' }).click();
-    const message = page.getByRole('textbox', { name: /Mensagem para o mestre/ });
+    const message = page.getByRole('textbox', { name: /Mensagem para quem mestra/ });
     await expect.element(page.getByText('500 restantes')).toBeVisible();
 
     await message.fill('Oi, mestre!');

@@ -45,7 +45,7 @@ test('anonymous direct entry renders identity, safe social links and cards witho
   await expect(breadcrumbs.getByText(`@${gm.username}`)).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('link', { name: /^Voltar/ })).toHaveCount(0);
   await expect(
-    page.getByRole('region', { name: 'Avaliação como mestre' }).getByText('Novo mestre'),
+    page.getByRole('region', { name: 'Nota da mestragem' }).getByText('Novo mestre'),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Editar perfil' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Abrir Instagram em nova aba' })).toHaveAttribute(

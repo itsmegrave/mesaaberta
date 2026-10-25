@@ -227,7 +227,7 @@
         </span>
       </div>
       <div>
-        <p class="text-sm font-semibold text-muted">Daggerheart · Mestre: @bruno-leal</p>
+        <p class="text-sm font-semibold text-muted">Daggerheart · @bruno-leal</p>
         <p class="mt-1 text-2xl leading-tight font-semibold">Os Sinos de Sablewood</p>
       </div>
       <p class="flex items-start gap-2 text-base leading-normal">
