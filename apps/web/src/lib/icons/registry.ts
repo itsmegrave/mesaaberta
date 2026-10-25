@@ -71,6 +71,7 @@ import GameShakingHandsIcon from '@iconify-svelte/game-icons/shaking-hands';
 import GameRoundTableIcon from '@iconify-svelte/game-icons/round-table';
 import GameSunriseIcon from '@iconify-svelte/game-icons/sunrise';
 import GameLaurelsIcon from '@iconify-svelte/game-icons/laurels';
+import GamePodiumIcon from '@iconify-svelte/game-icons/podium';
 import EyeOffIcon from '@iconify-svelte/reicon/eye-off';
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
 import PanelLeftOpenIcon from '@iconify-svelte/reicon/sidebar-left';
@@ -173,6 +174,7 @@ export const ICONS = {
   'game-icons:trade': GameTradeIcon,
   'game-icons:compass': GameCompassIcon,
   'game-icons:laurels': GameLaurelsIcon,
+  'game-icons:podium': GamePodiumIcon,
   'game-icons:wooden-chair': GameWoodenChairIcon,
   'game-icons:rolling-dices': GameRollingDicesIcon,
   'game-icons:quill-ink': GameQuillInkIcon,

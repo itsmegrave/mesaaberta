@@ -4,20 +4,29 @@
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { answerSchema, postponeSchema } from '#lib/tables/confirmation.js';
+  import { answerSchema, heldSchema, postponeSchema } from '#lib/tables/confirmation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
   import Avatar from '#lib/components/Avatar.svelte';
 
   // `players` are the confirmed seats. "It happened" also asks who showed up, everyone checked,
   // and whoever is left unchecked cannot rate the GM.
+  // `multi`: a campaign or adventure, whose table can go on after this session; an adventure has no
+  // repeat rule, so it needs the next date (`dateRequired`).
   let {
     next,
     players = [],
+    multi = false,
+    dateRequired = false,
   }: {
     next: string;
     players?: { playerId: string; username: string; avatarUrl: string | null }[];
+    multi?: boolean;
+    dateRequired?: boolean;
   } = $props();
+
+  let more = $state(true);
+  const goesOn = $derived(multi && more);
 
   const primary = 'btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const secondary =
@@ -32,6 +41,21 @@
     errorMessage: m.manage_confirm_error,
     onSuccess: () => toast.success(m.toast_table_concluded()),
   });
+  // svelte-ignore state_referenced_locally
+  const held = actionForm({
+    initial: { nextStartsAtLocal: '', next },
+    schema: heldSchema,
+    domain: 'table',
+    errorMessage: m.manage_confirm_error,
+    onSuccess: () => toast.success(m.toast_table_session_held()),
+  });
+  const heldError = $derived(
+    held.errors.nextStartsAtLocal?.[0] === 'in_the_past'
+      ? m.manage_confirm_in_the_past()
+      : held.errors.nextStartsAtLocal?.[0] === 'required'
+        ? m.manage_confirm_next_required()
+        : (held.errors.nextStartsAtLocal?.[0] ?? held.errors._errors?.[0]),
+  );
   const notHeld = actionForm({
     initial,
     schema: answerSchema,
@@ -64,8 +88,8 @@
 
   <div class="mt-5 flex flex-wrap gap-3">
     <Form
-      action="?/happened"
-      onsubmit={happened.submit}
+      action={goesOn ? '?/sessionHeld' : '?/happened'}
+      onsubmit={goesOn ? held.submit : happened.submit}
       class={players.length > 0 ? 'm-0 w-full' : 'm-0'}
     >
       <input type="hidden" name="next" value={next} />
@@ -93,15 +117,48 @@
           </ul>
         </fieldset>
       {/if}
+      {#if multi}
+        <fieldset class="mb-4 min-w-0">
+          <legend class="font-semibold">{m.manage_confirm_more_title()}</legend>
+          <div class="mt-2 flex flex-col gap-2">
+            <label class="flex items-center gap-3 font-semibold">
+              <input type="radio" class="radio" bind:group={more} value={true} />
+              {m.manage_confirm_more_yes()}
+            </label>
+            <label class="flex items-center gap-3 font-semibold">
+              <input type="radio" class="radio" bind:group={more} value={false} />
+              {m.manage_confirm_more_no()}
+            </label>
+          </div>
+          {#if more}
+            <label class="mt-3 flex flex-col gap-1 text-sm font-semibold">
+              {m.manage_confirm_next_label()}
+              <input
+                type="datetime-local"
+                name="nextStartsAtLocal"
+                required={dateRequired}
+                value={held.values.nextStartsAtLocal}
+                oninput={(event) => held.change('nextStartsAtLocal', event.currentTarget.value)}
+                aria-invalid={heldError ? 'true' : undefined}
+                class="input h-12 rounded-lg border-surface-200-800 px-3"
+              />
+              {#if !dateRequired}
+                <span class="font-normal text-muted">{m.manage_confirm_next_hint()}</span>
+              {/if}
+            </label>
+          {/if}
+        </fieldset>
+      {/if}
       <SubmitButton
-        submitting={happened.pending}
-        delayed={happened.delayed}
-        timeout={happened.timeout}
-        class={primary}>{m.manage_confirm_happened()}</SubmitButton
+        submitting={goesOn ? held.pending : happened.pending}
+        delayed={goesOn ? held.delayed : happened.delayed}
+        timeout={goesOn ? held.timeout : happened.timeout}
+        class={primary}
+        >{goesOn ? m.manage_confirm_held() : m.manage_confirm_happened()}</SubmitButton
       >
-      {#if happened.errors._errors?.[0]}
+      {#if goesOn ? heldError : happened.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
-          {happened.errors._errors[0]}
+          {goesOn ? heldError : happened.errors._errors?.[0]}
         </p>
       {/if}
     </Form>

@@ -14,7 +14,7 @@ describe('badge presentation', () => {
   });
 
   it('words what each rule asks and its progress, in step with the catalog goal', () => {
-    for (const rule of BADGES) {
+    for (const rule of BADGES.filter((badge) => !badge.unlisted)) {
       const look = presentationOf(rule.id)!;
       expect(look.goal?.(), rule.id).toBeTruthy();
       expect(look.progress?.({ current: 0 }), rule.id).toContain(`de ${rule.goal} `);

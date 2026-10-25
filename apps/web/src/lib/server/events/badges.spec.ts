@@ -203,6 +203,33 @@ describe('badges-v1', () => {
     expect(await held(p1)).toEqual(['partner']);
   });
 
+  it('gives the first 100 to who signed up among the first hundred, and not to the 101st', async () => {
+    const people = Array.from({ length: 101 }, (_, i) => ({
+      id: `00000000-0000-4000-8000-000000050${String(i).padStart(3, '0')}`,
+      username: `cedo${i}`,
+      createdAt: new Date(Date.UTC(2026, 0, 1, 0, i)),
+    }));
+    // The three profiles of the other tests joined later than all of them.
+    await test.db.update(profiles).set({ createdAt: new Date('2026-06-01T00:00:00Z') });
+    await test.db.insert(profiles).values(people);
+    const update = (profileId: string) =>
+      badgeHandler.handle(
+        stored({ type: 'ProfileUpdated', payload: { profileId, changes: {} } }),
+        test.db,
+      );
+
+    await update(people[99].id);
+    await update(people[100].id);
+
+    const held = async (profileId: string) =>
+      (await test.db.select().from(userBadges).where(eq(userBadges.profileId, profileId))).map(
+        (row) => row.badgeId,
+      );
+    expect(await held(people[99].id)).toEqual(['first-100']);
+    expect(await held(people[100].id)).toEqual([]);
+    await test.db.delete(profiles).where(eq(profiles.username, 'cedo0'));
+  });
+
   it('keeps the catalog ids valid and unique', () => {
     const ids = BADGES.map((badge) => badge.id);
     expect(new Set(ids).size).toBe(ids.length);

@@ -1,7 +1,7 @@
 import { routes } from '../../routes';
 import { and, eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, notifications, registrations } from '../db/schema';
+import { gameTables, notifications, ratings, registrations } from '../db/schema';
 import {
   NOTIFICATION_KINDS,
   type NotificationType,
@@ -18,6 +18,7 @@ type NotifyingEvent = Extract<
       | 'TableDisabled'
       | 'TableAwaitingConfirmation'
       | 'TableConcluded'
+      | 'RatingsOpened'
       | 'JoinRequested'
       | 'JoinApproved'
       | 'JoinDeclined'
@@ -63,14 +64,27 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
     case 'TableAwaitingConfirmation':
       return { to: [gmId], type: 'session_confirmation', link: manage };
     case 'TableConcluded': {
-      // Whoever the GM marked absent is not asked to rate.
+      // Whoever the GM marked absent is not asked to rate, nor whoever already did (a table that
+      // went on lets players rate before it ends).
       const absent = new Set(event.payload.absentPlayerIds ?? []);
+      const rated = new Set(
+        (
+          await db
+            .select({ id: ratings.playerId })
+            .from(ratings)
+            .where(eq(ratings.tableId, event.payload.tableId))
+        ).map((row) => row.id),
+      );
       return {
-        to: (await confirmedPlayers(db, event.payload.tableId)).filter((id) => !absent.has(id)),
+        to: (await confirmedPlayers(db, event.payload.tableId)).filter(
+          (id) => !absent.has(id) && !rated.has(id),
+        ),
         type: 'rating_prompt',
         link: page,
       };
     }
+    case 'RatingsOpened':
+      return { to: event.payload.playerIds, type: 'rating_prompt', link: page };
     case 'JoinRequested':
       return { to: [gmId], type: 'join_requested', link: manage };
     case 'PlayerJoined':
@@ -100,6 +114,7 @@ export const notificationHandler: Handler = {
     'TableDisabled',
     'TableAwaitingConfirmation',
     'TableConcluded',
+    'RatingsOpened',
     'JoinRequested',
     'JoinApproved',
     'JoinDeclined',

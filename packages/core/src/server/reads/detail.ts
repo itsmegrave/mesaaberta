@@ -42,7 +42,9 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
   // The score is public (it comes with the table); the comment goes to no one but its author.
   const mine = profile ? await ratingOf(db, id, profile.id) : null;
   const attended =
-    profile && myStatus === 'confirmed' ? await attendanceOf(db, id, profile.id) : null;
+    profile && myStatus === 'confirmed'
+      ? await attendanceOf(db, id, profile.id)
+      : { attended: null, ratingOpened: false };
   // A rating is final: once given there is nothing left to do, only to show it.
   const canRate =
     !mine &&
@@ -51,7 +53,8 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
       registration: myStatus,
       tableStatus: found.status,
       firstSessionEnded: firstSessionEnded(found, now),
-      attended,
+      attended: attended.attended,
+      ratingOpened: attended.ratingOpened,
     }) === null;
 
   const [gm] = await db
