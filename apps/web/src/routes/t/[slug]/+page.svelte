@@ -6,14 +6,13 @@
   import RichText from '#lib/components/RichText.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import Button from '#lib/components/Button.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
+  import { formatHours } from '@mesaaberta/core/tables/format';
   import { tableStatusLabel } from '#lib/tables/status.js';
   import type { FormMessage } from '#lib/forms/message.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -31,14 +30,10 @@
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import SeatDots from '#lib/components/SeatDots.svelte';
   import DraftNotice from '#lib/components/DraftNotice.svelte';
+  import SessionDate from '#lib/components/SessionDate.svelte';
+  import SummaryRow from '#lib/components/ui/SummaryRow.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import {
-    dateBox as dateBoxOf,
-    kindLabel,
-    minPlayersLabel,
-    scheduleLabel,
-    seatsLeftLabel,
-  } from '#lib/tables/format.js';
+  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -70,8 +65,6 @@
   });
   const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
 
-  // The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
-  const dateBox = $derived(dateBoxOf(table.startsAt, shownTimezone(table.timezone), locale));
   // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
   const stateLabel = $derived(tableStatusLabel(table.status));
 
@@ -241,59 +234,29 @@
       aria-label={m.table_next_session()}
       class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
     >
-      <div class="flex items-start gap-4">
-        <div
-          aria-hidden="true"
-          class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
-        >
-          <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-          <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
-          <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
-        </div>
-        <div>
-          <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
-          <p class="mt-1 text-xl leading-snug font-semibold">
-            {formatSession(table.startsAt, shownTimezone(table.timezone), locale)}
-          </p>
-          {#if stateLabel}
-            <p class="mt-1 text-sm font-semibold text-muted">{stateLabel}</p>
-          {/if}
-        </div>
-      </div>
+      <SessionDate startsAt={table.startsAt} timezone={table.timezone} {stateLabel} large />
 
       <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
-        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-          {m.table_modality()}
-        </dt>
-        <dd class="col-span-2 flex items-center gap-2 border-b border-surface-200-800 py-3">
+        <SummaryRow label={m.table_modality()} class="flex items-center gap-2">
           <Icon name={modalityIcon(table.modality)} size={18} />
           {table.modality === 'in_person'
             ? `${m.table_modality_in_person()} · ${table.locationArea}`
             : m.table_modality_online()}
-        </dd>
+        </SummaryRow>
         {#if table.platforms.length > 0}
-          <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-            {m.form_platforms()}
-          </dt>
-          <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
+          <SummaryRow label={m.form_platforms()} class="flex flex-wrap gap-1">
             {#each table.platforms as platform (platform.slug)}
               <span
                 class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                 >{platform.name}</span
               >
             {/each}
-          </dd>
+          </SummaryRow>
         {/if}
-        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-          {m.table_schedule()}
-        </dt>
-        <dd class="col-span-2 border-b border-surface-200-800 py-3">{recurrence}</dd>
-        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-          {m.table_duration()}
-        </dt>
-        <dd class="col-span-2 border-b border-surface-200-800 py-3">
+        <SummaryRow label={m.table_schedule()}>{recurrence}</SummaryRow>
+        <SummaryRow label={m.table_duration()}>
           {formatHours(table.durationMinutes, locale)}
-        </dd>
+        </SummaryRow>
       </dl>
 
       <div class="mt-5 flex items-baseline justify-between gap-3">
@@ -458,14 +421,14 @@
         </div>
 
         <div>
-          <SubmitButton
-            submitting={rating.pending}
-            delayed={rating.delayed}
-            timeout={rating.timeout}
-            class="btn preset-filled-primary-500"
+          <Button
+            type="submit"
+            size="custom"
+            controller={rating}
+            class="btn gap-2 preset-filled-primary-500"
           >
             {m.rating_submit()}
-          </SubmitButton>
+          </Button>
         </div>
       </Form>
     </section>

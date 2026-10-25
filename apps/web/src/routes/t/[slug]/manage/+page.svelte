@@ -9,28 +9,25 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import Avatar from '#lib/components/Avatar.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import { page } from '$app/state';
   import Chair from '#lib/components/Chair.svelte';
   import SeatDots from '#lib/components/SeatDots.svelte';
+  import RosterRow, { rosterRowClass } from '#lib/components/RosterRow.svelte';
   import SessionConfirmation from '#lib/components/SessionConfirmation.svelte';
+  import SessionDate from '#lib/components/SessionDate.svelte';
+  import SummaryRow from '#lib/components/ui/SummaryRow.svelte';
+  import { Target } from '#lib/target.svelte.js';
   import TableGoingOn from '#lib/components/TableGoingOn.svelte';
   import DraftNotice from '#lib/components/DraftNotice.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
-  import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
+  import { formatHours } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import {
-    dateBox as dateBoxOf,
-    kindLabel,
-    minPlayersLabel,
-    scheduleLabel,
-    seatsLeftLabel,
-  } from '#lib/tables/format.js';
+  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
   import { onMount } from 'svelte';
 
   let { data: serverData, form: result } = $props();
@@ -57,7 +54,7 @@
 
   // The "3 dots": beside the title for the table, on each player's row for that player.
   let disableOpen = $state(false);
-  let removing = $state<{ playerId: string; username: string | null } | null>(null);
+  const removing = new Target<{ playerId: string; username: string | null }>();
   function copyLink() {
     return copyText(new URL(tablePage, page.url.origin).href, m.toast_link_copied());
   }
@@ -107,7 +104,7 @@
       label: m.menu_remove_player(),
       icon: 'trash',
       destructive: true,
-      onselect: () => (removing = player),
+      onselect: () => (removing.current = player),
     },
   ];
 
@@ -125,7 +122,6 @@
       hourCycle: 'h23',
     }).format(date);
 
-  const dateBox = $derived(dateBoxOf(table.startsAt, zone, locale));
   const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
 
@@ -154,8 +150,6 @@
   };
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6';
-  const row =
-    'flex items-center justify-between gap-3 border-b border-surface-200-800 py-3 last:border-b-0';
   const secondary =
     'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
 </script>
@@ -299,39 +293,35 @@
         {#if data.requests.length > 0}
           <ul class="mt-3">
             {#each data.requests as request (request.playerId)}
-              <li class="{row} flex-wrap">
-                <span class="flex min-w-0 items-center gap-3">
-                  <Avatar src={request.avatarUrl} name={request.username} size={40} />
-                  <span class="min-w-0">
-                    <span class="block truncate font-semibold"
-                      ><UserLink username={request.username} /></span
-                    >
-                    <span class="block text-sm text-muted"
-                      >{m.manage_requested_at({ date: moment(request.since) })}</span
-                    >
+              <RosterRow
+                username={request.username}
+                avatarUrl={request.avatarUrl}
+                subline={m.manage_requested_at({ date: moment(request.since) })}
+                wrap
+              >
+                {#snippet actions()}
+                  <span class="flex gap-2">
+                    <ActionForm
+                      action="{tablePage}?/approve"
+                      playerId={request.playerId}
+                      next={here}
+                      label={m.table_approve()}
+                      buttonClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+                      success={m.toast_approved()}
+                    />
+                    <ConfirmAction
+                      action="{tablePage}?/decline"
+                      success={m.toast_declined()}
+                      playerId={request.playerId}
+                      next={here}
+                      label={m.table_decline()}
+                      title={m.confirm_decline_title({ player: atHandle(request.username) })}
+                      username={request.username}
+                      text={m.confirm_decline_text()}
+                      class={secondary}
+                    />
                   </span>
-                </span>
-                <span class="flex gap-2">
-                  <ActionForm
-                    action="{tablePage}?/approve"
-                    playerId={request.playerId}
-                    next={here}
-                    label={m.table_approve()}
-                    buttonClass="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-                    success={m.toast_approved()}
-                  />
-                  <ConfirmAction
-                    action="{tablePage}?/decline"
-                    success={m.toast_declined()}
-                    playerId={request.playerId}
-                    next={here}
-                    label={m.table_decline()}
-                    title={m.confirm_decline_title({ player: atHandle(request.username) })}
-                    username={request.username}
-                    text={m.confirm_decline_text()}
-                    class={secondary}
-                  />
-                </span>
+                {/snippet}
                 {#if request.message}
                   <p class="basis-full text-sm whitespace-pre-line text-surface-700-300">
                     <span class="sr-only"
@@ -339,7 +329,7 @@
                     </span>{request.message}
                   </p>
                 {/if}
-              </li>
+              </RosterRow>
             {/each}
           </ul>
         {:else if table.joinMode === 'approval'}
@@ -362,47 +352,39 @@
           <p class="mt-2 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
         {/if}
         <ul class="mt-3">
-          <li class={row}>
-            <span class="flex min-w-0 items-center gap-3">
-              <Avatar src={data.gm.avatarUrl} name={data.gm.username} size={40} />
-              <span class="min-w-0">
-                <span class="block truncate font-semibold"
-                  ><UserLink username={data.gm.username} /></span
-                >
-                <span class="block text-sm text-muted">{m.manage_you()}</span>
-              </span>
-            </span>
-            <span class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
-              >{m.manage_gm_badge()}</span
-            >
-          </li>
+          <RosterRow
+            username={data.gm.username}
+            avatarUrl={data.gm.avatarUrl}
+            subline={m.manage_you()}
+          >
+            {#snippet actions()}
+              <span class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
+                >{m.manage_gm_badge()}</span
+              >
+            {/snippet}
+          </RosterRow>
           {#each data.players as player (player.playerId)}
-            <li class={row}>
-              <span class="flex min-w-0 items-center gap-3">
-                <Avatar src={player.avatarUrl} name={player.username} size={40} />
-                <span class="min-w-0">
-                  <span class="block truncate font-semibold"
-                    ><UserLink username={player.username} /></span
-                  >
-                  <span class="block text-sm text-muted"
-                    >{m.manage_since({ date: day(player.since) })}</span
-                  >
-                </span>
-              </span>
-              <KebabMenu name={atHandle(player.username)} items={playerMenu(player)} />
-              <!-- Opened from the row's menu ("Mandar mensagem"). -->
-              <ActionForm action="?/message" playerId={player.playerId} class="hidden">
-                <button
-                  id="message-{player.playerId}"
-                  type="submit"
-                  tabindex="-1"
-                  aria-hidden="true"
-                ></button>
-              </ActionForm>
-            </li>
+            <RosterRow
+              username={player.username}
+              avatarUrl={player.avatarUrl}
+              subline={m.manage_since({ date: day(player.since) })}
+            >
+              {#snippet actions()}
+                <KebabMenu name={atHandle(player.username)} items={playerMenu(player)} />
+                <!-- Opened from the row's menu ("Mandar mensagem"). -->
+                <ActionForm action="?/message" playerId={player.playerId} class="hidden">
+                  <button
+                    id="message-{player.playerId}"
+                    type="submit"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  ></button>
+                </ActionForm>
+              {/snippet}
+            </RosterRow>
           {/each}
           {#each { length: table.seatsLeft }, i (i)}
-            <li class={row}>
+            <li class={rosterRowClass}>
               <span class="flex items-center gap-3">
                 <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-10 shrink-0">
                   <Chair colour="stroke-lamp" free />
@@ -478,22 +460,7 @@
         />
       {/if}
       <div class="p-6">
-        <div class="flex items-start gap-4">
-          <div
-            aria-hidden="true"
-            class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
-          >
-            <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-            <span class="mt-1 text-2xl font-bold">{dateBox.day}</span>
-            <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
-            <p class="mt-1 text-lg leading-snug font-semibold">
-              {formatSession(table.startsAt, zone, locale)}
-            </p>
-          </div>
-        </div>
+        <SessionDate startsAt={table.startsAt} timezone={table.timezone} />
 
         <div class="mt-5 flex items-baseline justify-between gap-3">
           <p class="font-semibold {table.seatsLeft === 0 ? 'text-muted' : 'text-lamp'}">{seats}</p>
@@ -504,42 +471,30 @@
 
         <dl class="mt-4 grid grid-cols-3 border-t border-surface-200-800 text-sm">
           {#if table.platforms.length > 0}
-            <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-              {m.form_platforms()}
-            </dt>
-            <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
+            <SummaryRow label={m.form_platforms()} class="flex flex-wrap gap-1">
               {#each table.platforms as platform (platform.slug)}
                 <span
                   class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                   >{platform.name}</span
                 >
               {/each}
-            </dd>
+            </SummaryRow>
           {/if}
           {#if table.tags.length > 0}
-            <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-              {m.form_tags()}
-            </dt>
-            <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
+            <SummaryRow label={m.form_tags()} class="flex flex-wrap gap-1">
               {#each table.tags as tag (tag.slug)}
                 <span class="chip h-7 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
                   >{tag.name}</span
                 >
               {/each}
-            </dd>
+            </SummaryRow>
           {/if}
-          <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-            {m.manage_entry()}
-          </dt>
-          <dd class="col-span-2 border-b border-surface-200-800 py-3">
+          <SummaryRow label={m.manage_entry()}>
             {table.joinMode === 'approval' ? m.manage_entry_approval() : m.manage_entry_auto()}
-          </dd>
-          <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-            {m.table_schedule()}
-          </dt>
-          <dd class="col-span-2 border-b border-surface-200-800 py-3">
+          </SummaryRow>
+          <SummaryRow label={m.table_schedule()}>
             {recurrence ? `${recurrence}, ` : ''}{formatHours(table.durationMinutes, locale)}
-          </dd>
+          </SummaryRow>
         </dl>
 
         <div class="mt-4">
@@ -572,15 +527,15 @@
     text={table.status === 'draft' ? m.table_delete_draft_text() : m.table_close_text()}
     success={table.status === 'draft' ? m.toast_table_deleted() : m.toast_table_closed()}
   />
-  {#if removing}
+  {#if removing.current}
     <ConfirmDialog
-      bind:open={() => removing !== null, (value) => !value && (removing = null)}
+      bind:open={removing.open}
       action="{tablePage}?/remove"
-      playerId={removing.playerId}
+      playerId={removing.current.playerId}
       next={here}
       label={m.table_remove()}
-      title={m.confirm_remove_title({ player: atHandle(removing.username) })}
-      username={removing.username}
+      title={m.confirm_remove_title({ player: atHandle(removing.current.username) })}
+      username={removing.current.username}
       text={m.confirm_remove_text()}
       success={m.toast_removed()}
     />
