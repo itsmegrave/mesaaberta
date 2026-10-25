@@ -75,7 +75,7 @@ describe('backfillBadges', () => {
     expect(summary.awarded).toEqual({ 'first-100': 3, 'first-table': 1, 'gm-first': 1 });
     expect(await held(player)).toEqual(['first-100', 'first-table']);
     expect(await held(gm)).toEqual(['first-100', 'gm-first']);
-    // Early members all get the Primeira centena; the absent one played nothing, so only that.
+    // Early members all get the 100!; the absent one played nothing, so only that.
     expect(await held(absent)).toEqual(['first-100']);
     expect(await held(closed)).toEqual([]);
     expect(await test.db.select().from(events)).toEqual([]);
