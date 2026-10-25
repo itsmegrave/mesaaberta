@@ -217,16 +217,18 @@
           error={err('title')}
           counter={{ count: $draft.title.length, max: TABLE_LIMITS.title.max }}
         >
-          <TextInput
-            id="title"
-            name="title"
-            required
-            minlength={3}
-            maxlength={80}
-            bind:value={$draft.title}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-            aria-invalid={invalid('title')}
-          />
+          {#snippet children(aria)}
+            <TextInput
+              id="title"
+              name="title"
+              required
+              minlength={3}
+              maxlength={80}
+              bind:value={$draft.title}
+              class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+              {...aria}
+            />
+          {/snippet}
         </FormField>
         {#each [{ field: 'platforms', label: m.form_platforms(), hint: m.form_platforms_hint(), items: catalog.platforms }, { field: 'tags', label: m.form_tags(), hint: m.form_tags_hint(), items: catalog.tags }] as const as group (group.field)}
           <div class="min-w-0">
@@ -442,34 +444,40 @@
           label={m.form_postal_code()}
           hint={m.form_postal_code_hint()}
           error={err('postalCode')}
-          ><TextInput
-            id="postalCode"
-            name="postalCode"
-            inputmode="numeric"
-            autocomplete="postal-code"
-            maxlength={10}
-            placeholder="00000-000"
-            bind:value={$draft.postalCode}
-            class="input h-12 max-w-48 rounded-lg border-surface-200-800 bg-panel px-3"
-            aria-invalid={invalid('postalCode')}
-          /></FormField
         >
+          {#snippet children(aria)}
+            <TextInput
+              id="postalCode"
+              name="postalCode"
+              inputmode="numeric"
+              autocomplete="postal-code"
+              maxlength={10}
+              placeholder="00000-000"
+              bind:value={$draft.postalCode}
+              class="input h-12 max-w-48 rounded-lg border-surface-200-800 bg-panel px-3"
+              {...aria}
+            />
+          {/snippet}
+        </FormField>
         <CepLookup value={$draft.postalCode} bind:area={$draft.locationArea} />
         <FormField
           id="locationArea"
           label={m.form_location_area()}
           hint={$draft.postalCode ? m.form_location_area_hint_cep() : m.form_location_area_hint()}
           error={err('locationArea')}
-          ><TextInput
-            id="locationArea"
-            name="locationArea"
-            maxlength={120}
-            autocomplete="off"
-            bind:value={$draft.locationArea}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
-            aria-invalid={invalid('locationArea')}
-          /></FormField
         >
+          {#snippet children(aria)}
+            <TextInput
+              id="locationArea"
+              name="locationArea"
+              maxlength={120}
+              autocomplete="off"
+              bind:value={$draft.locationArea}
+              class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+              {...aria}
+            />
+          {/snippet}
+        </FormField>
       {/if}
       <FormField
         id="joinDetails"
@@ -525,18 +533,20 @@
         optional
         hint={m.form_min_players_hint()}
         error={err('minPlayers')}
-        ><TextInput
-          id="minPlayers"
-          name="minPlayers"
-          inputmode="numeric"
-          autocomplete="off"
-          maxlength={2}
-          bind:value={$draft.minPlayers}
-          class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
-          aria-invalid={invalid('minPlayers')}
-          aria-describedby="minPlayers-hint{err('minPlayers') ? ' minPlayers-error' : ''}"
-        /></FormField
       >
+        {#snippet children(aria)}
+          <TextInput
+            id="minPlayers"
+            name="minPlayers"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength={2}
+            bind:value={$draft.minPlayers}
+            class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+            {...aria}
+          />
+        {/snippet}
+      </FormField>
       <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold sm:col-span-2">{m.form_join_mode()}</legend
         >{#each [['auto', m.form_join_auto()], ['approval', m.form_join_approval()]] as [value, label] (value)}<label

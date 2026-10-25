@@ -216,10 +216,6 @@
       (availability === 'taken' ? m.profile_error_taken() : undefined),
   );
 
-  const usernameDescription = $derived(
-    ['username-hint', usernameError ? 'username-error' : 'username-status'].join(' '),
-  );
-
   // Each invalid field, in the order the form asks for them, for the summary at the top.
   const summary = $derived(
     (
@@ -304,35 +300,39 @@
       hint={usernameLocked ? m.profile_username_locked_hint() : m.profile_username_hint()}
       error={usernameLocked ? undefined : usernameError}
     >
-      <TextInput
-        id="username"
-        name="username"
-        type="text"
-        aria-required="true"
-        maxlength={MAX_USERNAME_LENGTH}
-        autocomplete="username"
-        autocapitalize="none"
-        spellcheck="false"
-        bind:value={$draft.username}
-        readonly={usernameLocked}
-        class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
-        aria-invalid={usernameError ? 'true' : undefined}
-        aria-describedby={usernameDescription}
-      />
-      <!-- Announced politely as the check finishes; it never blocks the form. -->
-      <p
-        id="username-status"
-        role="status"
-        class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
-      >
-        {#if availability === 'checking'}
-          {m.profile_username_checking()}
-        {:else if availability === 'free'}
-          {m.profile_username_free()}
-        {:else if availability === 'failed'}
-          {m.profile_username_check_failed()}
-        {/if}
-      </p>
+      {#snippet children(aria)}
+        <TextInput
+          id="username"
+          name="username"
+          type="text"
+          aria-required="true"
+          maxlength={MAX_USERNAME_LENGTH}
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          bind:value={$draft.username}
+          readonly={usernameLocked}
+          class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
+          {...aria}
+          aria-describedby={aria['aria-invalid']
+            ? aria['aria-describedby']
+            : `${aria['aria-describedby']} username-status`}
+        />
+        <!-- Announced politely as the check finishes; it never blocks the form. -->
+        <p
+          id="username-status"
+          role="status"
+          class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
+        >
+          {#if availability === 'checking'}
+            {m.profile_username_checking()}
+          {:else if availability === 'free'}
+            {m.profile_username_free()}
+          {:else if availability === 'failed'}
+            {m.profile_username_check_failed()}
+          {/if}
+        </p>
+      {/snippet}
     </FormField>{/if}
 
   {#if shows('public')}
@@ -344,17 +344,18 @@
       counter={{ count: $draft.name.length, max: PROFILE_LIMITS.name }}
       error={errorText(controller.errors.name?.[0])}
     >
-      <TextInput
-        id="name"
-        name="name"
-        type="text"
-        maxlength={PROFILE_LIMITS.name}
-        autocomplete="name"
-        bind:value={$draft.name}
-        class={input}
-        aria-invalid={controller.errors.name ? 'true' : undefined}
-        aria-describedby="name-hint{controller.errors.name ? ' name-error' : ''}"
-      />
+      {#snippet children(aria)}
+        <TextInput
+          id="name"
+          name="name"
+          type="text"
+          maxlength={PROFILE_LIMITS.name}
+          autocomplete="name"
+          bind:value={$draft.name}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
     </FormField>
   {/if}
 
@@ -368,16 +369,17 @@
       counter={{ count: $draft.bio.length, max: PROFILE_LIMITS.bio }}
       error={errorText(controller.errors.bio?.[0])}
     >
-      <TextArea
-        id="bio"
-        name="bio"
-        rows={4}
-        maxlength={PROFILE_LIMITS.bio}
-        bind:value={$draft.bio}
-        class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
-        aria-invalid={controller.errors.bio ? 'true' : undefined}
-        aria-describedby="bio-hint{controller.errors.bio ? ' bio-error' : ''}"
-      />
+      {#snippet children(aria)}
+        <TextArea
+          id="bio"
+          name="bio"
+          rows={4}
+          maxlength={PROFILE_LIMITS.bio}
+          bind:value={$draft.bio}
+          class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
+          {...aria}
+        />
+      {/snippet}
     </FormField>
   {/if}
 
@@ -421,18 +423,17 @@
         hint={m.profile_gender_other_hint()}
         error={errorText(controller.errors.genderOther?.[0])}
       >
-        <TextInput
-          id="gender-other"
-          name="genderOther"
-          type="text"
-          maxlength={PROFILE_LIMITS.gender}
-          bind:value={$draft.genderOther}
-          class={input}
-          aria-invalid={controller.errors.genderOther ? 'true' : undefined}
-          aria-describedby="gender-other-hint{controller.errors.genderOther
-            ? ' gender-other-error'
-            : ''}"
-        />
+        {#snippet children(aria)}
+          <TextInput
+            id="gender-other"
+            name="genderOther"
+            type="text"
+            maxlength={PROFILE_LIMITS.gender}
+            bind:value={$draft.genderOther}
+            class={input}
+            {...aria}
+          />
+        {/snippet}
       </FormField>
     {/if}
 
@@ -442,17 +443,18 @@
       optional
       error={errorText(controller.errors.city?.[0])}
     >
-      <TextInput
-        id="city"
-        name="city"
-        type="text"
-        maxlength={PROFILE_LIMITS.city}
-        autocomplete="address-level2"
-        bind:value={$draft.city}
-        class={input}
-        aria-invalid={controller.errors.city ? 'true' : undefined}
-        aria-describedby="city-hint{controller.errors.city ? ' city-error' : ''}"
-      />
+      {#snippet children(aria)}
+        <TextInput
+          id="city"
+          name="city"
+          type="text"
+          maxlength={PROFILE_LIMITS.city}
+          autocomplete="address-level2"
+          bind:value={$draft.city}
+          class={input}
+          {...aria}
+        />
+      {/snippet}
     </FormField>
 
     <div class="min-w-0">

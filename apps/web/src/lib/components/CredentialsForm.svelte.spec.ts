@@ -40,6 +40,26 @@ describe('CredentialsForm', () => {
     await expect.element(page.getByRole('button', { name: 'Criar conta' })).toBeVisible();
   });
 
+  it('reads the password rules with the password field', async () => {
+    render(CredentialsFormHarness, { ...props, mode: 'signup' });
+
+    await expect
+      .element(page.getByLabelText('Senha'))
+      .toHaveAccessibleDescription('De 8 a 72 caracteres.');
+  });
+
+  it('reads each error with its field', async () => {
+    render(CredentialsFormHarness, {
+      ...props,
+      mode: 'login',
+      errors: { email: ['invalid_format'] },
+    });
+
+    await expect
+      .element(page.getByLabelText('Email'))
+      .toHaveAccessibleDescription('Confira o email.');
+  });
+
   it('enforces the same limits in the browser as on the server', async () => {
     render(CredentialsFormHarness, { ...props, mode: 'signup' });
 

@@ -59,20 +59,22 @@
         hint={m.auth_password_hint()}
         error={controller.errors.password ? m.auth_error_password() : undefined}
       >
-        <TextInput
-          id="password"
-          name="password"
-          type="password"
-          required
-          minlength={8}
-          maxlength={72}
-          autocomplete="new-password"
-          bind:value={
-            () => controller.values.password, (value) => controller.change('password', value)
-          }
-          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={controller.errors.password ? 'true' : undefined}
-        />
+        {#snippet children(aria)}
+          <TextInput
+            id="password"
+            name="password"
+            type="password"
+            required
+            minlength={8}
+            maxlength={72}
+            autocomplete="new-password"
+            bind:value={
+              () => controller.values.password, (value) => controller.change('password', value)
+            }
+            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
+            {...aria}
+          />
+        {/snippet}
       </FormField>
 
       <FormField
@@ -80,21 +82,23 @@
         label={m.reset_confirm()}
         error={controller.errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
       >
-        <TextInput
-          id="passwordConfirm"
-          name="passwordConfirm"
-          type="password"
-          required
-          minlength={8}
-          maxlength={72}
-          autocomplete="new-password"
-          bind:value={
-            () => controller.values.passwordConfirm,
-            (value) => controller.change('passwordConfirm', value)
-          }
-          class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-          aria-invalid={controller.errors.passwordConfirm ? 'true' : undefined}
-        />
+        {#snippet children(aria)}
+          <TextInput
+            id="passwordConfirm"
+            name="passwordConfirm"
+            type="password"
+            required
+            minlength={8}
+            maxlength={72}
+            autocomplete="new-password"
+            bind:value={
+              () => controller.values.passwordConfirm,
+              (value) => controller.change('passwordConfirm', value)
+            }
+            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
+            {...aria}
+          />
+        {/snippet}
       </FormField>
 
       <div>

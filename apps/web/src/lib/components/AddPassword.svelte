@@ -90,18 +90,20 @@
       <p role="status" class="mt-3 text-sm font-semibold">{m.password_add_sent()}</p>
       <Form action="?/addPassword" onsubmit={setting.submit} class="mt-5 grid max-w-sm gap-4">
         <FormField id="password-code" label={m.password_add_code()} error={fieldProblem('code')}>
-          <TextInput
-            id="password-code"
-            name="code"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            required
-            minlength={6}
-            maxlength={6}
-            bind:value={() => setting.values.code, (value) => setting.change('code', value)}
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            aria-invalid={setting.errors.code ? 'true' : undefined}
-          />
+          {#snippet children(aria)}
+            <TextInput
+              id="password-code"
+              name="code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              required
+              minlength={6}
+              maxlength={6}
+              bind:value={() => setting.values.code, (value) => setting.change('code', value)}
+              class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
+              {...aria}
+            />
+          {/snippet}
         </FormField>
 
         <FormField
@@ -110,18 +112,22 @@
           hint={m.auth_password_hint()}
           error={fieldProblem('password')}
         >
-          <TextInput
-            id="password-new"
-            name="password"
-            type="password"
-            required
-            minlength={8}
-            maxlength={72}
-            autocomplete="new-password"
-            bind:value={() => setting.values.password, (value) => setting.change('password', value)}
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            aria-invalid={setting.errors.password ? 'true' : undefined}
-          />
+          {#snippet children(aria)}
+            <TextInput
+              id="password-new"
+              name="password"
+              type="password"
+              required
+              minlength={8}
+              maxlength={72}
+              autocomplete="new-password"
+              bind:value={
+                () => setting.values.password, (value) => setting.change('password', value)
+              }
+              class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
+              {...aria}
+            />
+          {/snippet}
         </FormField>
 
         <FormField
@@ -129,21 +135,23 @@
           label={m.password_add_confirm()}
           error={setting.errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
         >
-          <TextInput
-            id="password-confirm"
-            name="passwordConfirm"
-            type="password"
-            required
-            minlength={8}
-            maxlength={72}
-            autocomplete="new-password"
-            bind:value={
-              () => setting.values.passwordConfirm,
-              (value) => setting.change('passwordConfirm', value)
-            }
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            aria-invalid={setting.errors.passwordConfirm ? 'true' : undefined}
-          />
+          {#snippet children(aria)}
+            <TextInput
+              id="password-confirm"
+              name="passwordConfirm"
+              type="password"
+              required
+              minlength={8}
+              maxlength={72}
+              autocomplete="new-password"
+              bind:value={
+                () => setting.values.passwordConfirm,
+                (value) => setting.change('passwordConfirm', value)
+              }
+              class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
+              {...aria}
+            />
+          {/snippet}
         </FormField>
 
         <SubmitButton
