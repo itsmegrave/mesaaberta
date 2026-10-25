@@ -4,6 +4,7 @@
   import { browser } from '$app/env';
   import { page } from '$app/state';
   import { apiRead } from '#lib/api/http.js';
+  import { loadWidget } from '#lib/extensions/load-widget.js';
   import { widgets } from '#lib/extensions/panels.js';
   import { showsWidgets } from '#lib/extensions/widget-routes.js';
   import { queryClient } from '#lib/query/context.js';
@@ -67,7 +68,7 @@
        the tab bar and stops short of the launcher (56px wide, 16px from the edge). -->
   <div class="fixed right-20 bottom-24 left-4 z-30 md:right-auto md:bottom-6 md:left-6 md:w-100">
     {#key widget.id}
-      {#await widgets[widget.kind]() then { default: Widget }}
+      {#await loadWidget(widget.kind) then Widget}
         <Widget
           {widget}
           mode="card"
