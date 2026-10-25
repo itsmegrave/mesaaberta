@@ -6,10 +6,11 @@
   import { m } from '#lib/paraglide/messages.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
-  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import ConfirmDialog from '#lib/components/ui/ConfirmDialog.svelte';
   import NextSession from '#lib/components/ui/NextSession.svelte';
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
 
   type Person = { playerId: string; username: string };
   type Item = {
@@ -39,6 +40,26 @@
   let endOpen = $state(false);
 
   const page = $derived(`/t/${item.slug}`);
+  // Secondary and destructive actions live in the "3 dots", as on Gerenciar mesa.
+  const menu = $derived<KebabItem[]>([
+    {
+      id: 'duplicate',
+      label: m.table_duplicate(),
+      icon: 'copy',
+      href: `/t/new?duplicate=${encodeURIComponent(item.slug)}`,
+    },
+    ...(['draft', 'active', 'awaiting_confirmation'].includes(item.tableStatus)
+      ? [
+          {
+            id: 'end',
+            label: item.tableStatus === 'draft' ? m.menu_delete_draft() : m.menu_close_table(),
+            icon: 'trash' as const,
+            destructive: true,
+            onselect: () => (endOpen = true),
+          },
+        ]
+      : []),
+  ]);
   const manage = $derived(`/t/${item.slug}/manage`);
 </script>
 
@@ -100,25 +121,15 @@
 
   <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 
-  <p class="mt-4 flex flex-wrap gap-3">
+  <div class="mt-4 flex flex-wrap items-center gap-3">
     <a href={`/t/${item.slug}/manage`} class="{buttonClass('primary')} font-semibold"
       >{m.dash_manage()}</a
     >
-    <a
-      href={`/t/${item.slug}/edit`}
-      class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold">{m.dash_edit()}</a
+    <a href={`/t/${item.slug}/edit`} class="{buttonClass('secondary')} font-semibold"
+      >{m.dash_edit()}</a
     >
-    <a
-      href={`/t/new?duplicate=${encodeURIComponent(item.slug)}`}
-      class="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold"
-      >{m.table_duplicate()}</a
-    >
-    {#if ['draft', 'active', 'awaiting_confirmation'].includes(item.tableStatus)}
-      <MAButton variant="secondary" class="text-error-alert" onclick={() => (endOpen = true)}>
-        {item.tableStatus === 'draft' ? m.table_delete_draft() : m.table_close()}
-      </MAButton>
-    {/if}
-  </p>
+    <KebabMenu name={item.title} items={menu} class="ml-auto" />
+  </div>
 
   <ConfirmDialog
     bind:open={endOpen}

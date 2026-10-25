@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { PNG, createTable, setFirstSession, signIn, soonSession, uniqueTitle } from './support/app';
+import {
+  PNG,
+  createTable,
+  pageMenu,
+  setFirstSession,
+  signIn,
+  soonSession,
+  uniqueTitle,
+} from './support/app';
 import { stack } from './support/stack';
 import { createUser, database } from './support/users';
 
@@ -18,7 +26,8 @@ test('duplicates a concluded owned table with its image, a new date and no inher
     await db`update game_tables set status = 'concluded', min_players = 3, ical_sequence = 8 where slug = ${originalSlug}`;
     await page.goto('/u/tables');
     const card = page.locator(`#mesa-${originalSlug}`);
-    await card.getByRole('link', { name: 'Duplicar mesa', exact: true }).click();
+    await card.getByRole('button', { name: /^Mais ações:/ }).click();
+    await page.getByRole('menuitem', { name: 'Duplicar mesa' }).click();
     await expect(page).toHaveURL(new RegExp(`duplicate=${originalSlug}`));
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Duplicar mesa');
     await expect(page.getByLabel('Título')).toHaveValue(title);
@@ -56,7 +65,8 @@ test('duplicates a concluded owned table with its image, a new date and no inher
       0,
     );
     await page.goto(`/t/${originalSlug}/manage`);
-    await expect(page.getByRole('link', { name: 'Duplicar mesa', exact: true })).toBeVisible();
+    await pageMenu(page).click();
+    await expect(page.getByRole('menuitem', { name: 'Duplicar mesa' })).toBeVisible();
   } finally {
     await db.end();
   }

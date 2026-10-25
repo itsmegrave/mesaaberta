@@ -1973,6 +1973,7 @@
   "admin_report_partner_gone": "Parceiro que não existe mais",
   "admin_reports_target_partner_option": "Parceiros",
   "table_duplicate": "Duplicar mesa",
+  "menu_edit_draft": "Editar rascunho",
   "table_duplicate_lede": "Reaproveite as informações de “{title}” e escolha uma nova data. A cópia começa sem participantes.",
   "form_error_schedule_conflict": "Esta sessão se sobrepõe à mesa de origem ou a uma cópia. Escolha outro horário ou ajuste a duração.",
   "table_delete_draft": "Excluir rascunho",

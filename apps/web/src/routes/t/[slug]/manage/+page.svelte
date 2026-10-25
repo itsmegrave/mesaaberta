@@ -64,10 +64,27 @@
   const tableMenu = $derived.by(() => {
     const items: KebabItem[] = [
       ...(data.canEdit
-        ? [{ id: 'edit', label: m.table_edit(), icon: 'square-pen' as const, href: editPage }]
+        ? [
+            {
+              id: 'edit',
+              label: table.status === 'draft' ? m.menu_edit_draft() : m.table_edit(),
+              icon: 'square-pen' as const,
+              href: editPage,
+            },
+          ]
+        : []),
+      ...(data.canDuplicate
+        ? [
+            {
+              id: 'duplicate',
+              label: m.table_duplicate(),
+              icon: 'copy' as const,
+              href: `/t/new?duplicate=${encodeURIComponent(table.slug)}`,
+            },
+          ]
         : []),
       { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
-      { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
+      { id: 'copy', label: m.menu_copy_link(), icon: 'link', onselect: copyLink },
     ];
     if (
       data.canEnd &&
@@ -220,13 +237,6 @@
           href={editPage}
           class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
           >{m.table_edit()}</a
-        >
-      {/if}
-      {#if data.canDuplicate}
-        <a
-          href={`/t/new?duplicate=${encodeURIComponent(table.slug)}`}
-          class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
-          >{m.table_duplicate()}</a
         >
       {/if}
     </nav>
