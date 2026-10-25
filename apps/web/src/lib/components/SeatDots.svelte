@@ -1,6 +1,6 @@
 <script lang="ts">
   // The seats of a table as the hero draws them: a chair in a seat colour for each one taken, a
-  // lamp-coloured chair with a dashed head for each one free. Decorative; the text next to it says
+  // lamp-coloured chair with an unfilled meeple for each one free. Decorative; the text next to it says
   // the same in words.
   import Chair from './Chair.svelte';
 
@@ -22,10 +22,7 @@
 <span aria-hidden="true" class="inline-flex flex-wrap items-center {gap}">
   {#each { length: capacity }, i (i)}
     <svg viewBox="-30 -36 60 60" class="block {seat}">
-      <Chair
-        colour={i < taken ? colours[i % colours.length] : 'fill-lamp-wash stroke-lamp'}
-        person={i >= taken ? 'dashed' : 'solid'}
-      />
+      <Chair colour={i < taken ? colours[i % colours.length] : 'stroke-lamp'} free={i >= taken} />
     </svg>
   {/each}
 </span>

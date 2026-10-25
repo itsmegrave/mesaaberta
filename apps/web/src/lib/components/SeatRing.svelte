@@ -1,7 +1,7 @@
 <script lang="ts">
   // A table seen from above with its chairs around it, drawn as the hero draws them. The first chair,
-  // at the top, is the GM's (white), so a table with 5 seats shows 6 chairs; then the taken seats
-  // clockwise in the seat colours, then the free ones in the lamp colours with a dashed head.
+  // at the top, is the GM's (white, with a thin outline around the meeple), so a table with 5 seats shows 6 chairs; then the taken seats
+  // clockwise in the seat colours, then the free ones as unfilled meeples in the light lamp colour.
   import Chair from './Chair.svelte';
 
   interface Props {
@@ -26,7 +26,7 @@
   const total = $derived(players + 1);
   // The hero's chair is 15 units of head on a 27-unit backrest; scaled so the ring fits the 100-unit box.
   const scale = $derived(((Math.min(9.5, Math.max(5, 75 / total)) / 15) * 0.75).toFixed(3));
-  const orbitRadius = 34;
+  const orbitRadius = 32;
 
   const seats = $derived(
     Array.from({ length: total }, (_, i) => {
@@ -39,7 +39,7 @@
           ? 'fill-primary-contrast-500 stroke-primary-contrast-500'
           : i <= occupied
             ? SEAT_COLOURS[(i - 1) % SEAT_COLOURS.length]
-            : 'fill-warning-500/15 stroke-warning-300';
+            : 'stroke-warning-300';
       return {
         transform: `translate(${x} ${y}) rotate(${degrees + 90}) scale(${scale})`,
         colour,
@@ -61,11 +61,6 @@
   <circle cx="50" cy="50" r="20" class="fill-surface-950/25" />
 
   {#each seats as seat, i (i)}
-    <Chair
-      transform={seat.transform}
-      colour={seat.colour}
-      person={seat.free ? 'dashed' : 'solid'}
-      gm={i === 0}
-    />
+    <Chair transform={seat.transform} colour={seat.colour} free={seat.free} gm={i === 0} />
   {/each}
 </svg>

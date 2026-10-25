@@ -18,12 +18,13 @@ describe('SeatDots', () => {
     expect(chairs[3].getAttribute('class')).toContain('stroke-lamp');
   });
 
-  it('dashes only the meeple of a free seat, not its backrest', () => {
+  it('draws a free seat as an unfilled meeple', () => {
     render(SeatDots, { taken: 0, capacity: 1 });
 
     const [backrest, meeple] = document.querySelectorAll('[data-chair="free"] path');
-    expect(backrest.hasAttribute('stroke-dasharray')).toBe(false);
-    expect(meeple.getAttribute('stroke-dasharray')).toBe('75 72');
+    expect(backrest.getAttribute('class')).toContain('fill-none');
+    expect(meeple.getAttribute('class')).toContain('fill-none');
+    expect(meeple.hasAttribute('stroke-dasharray')).toBe(false);
   });
 
   it("draws the person as the app's meeple icon", () => {

@@ -6,11 +6,11 @@ describe('SeatRing', () => {
   it('draws a chair per seat plus the GM, around the table', () => {
     render(SeatRing, { capacity: 5, seatsLeft: 2 });
 
-    // The GM and the 3 taken seats are solid; the 2 free ones have a dashed meeple.
+    // The GM and the 3 taken seats are filled; the 2 free ones are unfilled outlines.
     expect(document.querySelectorAll('[data-chair]').length).toBe(6);
     expect(document.querySelectorAll('[data-chair="taken"]').length).toBe(4);
     expect(document.querySelectorAll('[data-chair="free"]').length).toBe(2);
-    expect(document.querySelectorAll('[data-chair="free"] path[stroke-dasharray]').length).toBe(2);
+    expect(document.querySelectorAll('[data-chair="free"] path.fill-none').length).toBe(4);
 
     const svg = document.querySelector('svg');
     expect(svg?.getAttribute('aria-label')).toBe('3 de 5 vagas ocupadas');
@@ -21,12 +21,10 @@ describe('SeatRing', () => {
 
     const first = document.querySelector('[data-chair]');
     expect(first?.getAttribute('class')).toContain('fill-primary-contrast-500');
-    // The GM is the abbot meeple; the players are the plain one.
-    const [gm, player] = [...document.querySelectorAll('[data-chair]')].map((chair) =>
-      chair.querySelectorAll('path')[1].getAttribute('d'),
-    );
-    expect(gm).not.toBe(player);
-    expect(first?.getAttribute('transform')).toMatch(/^translate\(50\.0 16\.0\) rotate\(0\)/);
+    // The same meeple as the players, with a thin outline only on the GM's chair.
+    expect(document.querySelectorAll('[data-gm-chair]').length).toBe(1);
+    expect(first?.querySelector('[data-gm-chair]')?.getAttribute('stroke-width')).toBe('10');
+    expect(first?.getAttribute('transform')).toMatch(/^translate\(50\.0 18\.0\) rotate\(0\)/);
   });
 
   it('renders full table properly', () => {

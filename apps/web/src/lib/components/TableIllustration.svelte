@@ -17,28 +17,30 @@
     ...[170, 190, 210, 230].map((y) => `M140 ${y}H260`),
   ].join('');
 
-  // The chairs sit on a ring around the table, 60° apart, each turned to face it. The empty one is
-  // in the top-right, where the logo keeps its open seat too.
+  // Six chairs sit on a ring around the table, 60° apart, each turned to face it: the GM's at the
+  // top (as on the table cards), the empty one next to it in the top-right, where the logo keeps its
+  // open seat too, then four players.
   const orbit = 150;
+  const step = 360 / 6;
 
-  const at = (degrees: number) => {
+  const at = (slot: number) => {
+    const degrees = -90 + step * slot;
     const radians = (degrees * Math.PI) / 180;
     return {
       x: +(centre + orbit * Math.cos(radians)).toFixed(1),
       y: +(centre + orbit * Math.sin(radians)).toFixed(1),
-      turn: degrees + 90,
+      turn: +(degrees + 90).toFixed(1),
     };
   };
 
+  const gmSeat = at(0);
+  const emptySeat = at(1);
   const players = [
-    { angle: -90, colour: 'fill-success-500 stroke-success-500' },
-    { angle: 30, colour: 'fill-tertiary-400 stroke-tertiary-400' },
-    { angle: 90, colour: 'fill-secondary-300 stroke-secondary-300' },
-    { angle: 150, colour: 'fill-success-500 stroke-success-500' },
-    { angle: 210, colour: 'fill-tertiary-400 stroke-tertiary-400' },
-  ].map((player) => ({ ...player, ...at(player.angle) }));
-
-  const emptySeat = at(-30);
+    'fill-success-500 stroke-success-500',
+    'fill-tertiary-400 stroke-tertiary-400',
+    'fill-secondary-300 stroke-secondary-300',
+    'fill-success-500 stroke-success-500',
+  ].map((colour, i) => ({ colour, ...at(i + 2) }));
 </script>
 
 <svg
@@ -95,17 +97,28 @@
     >
   </g>
 
-  {#each players as player, i (player.angle)}
+  <g transform="translate({gmSeat.x} {gmSeat.y}) rotate({gmSeat.turn})">
+    <Chair
+      data-seat={0}
+      colour={onBrand
+        ? 'fill-primary-contrast-500 stroke-primary-contrast-500'
+        : 'fill-surface-950-50 stroke-surface-950-50'}
+      gm
+    />
+  </g>
+
+  {#each players as player, i (i)}
     <g transform="translate({player.x} {player.y}) rotate({player.turn})">
-      <Chair data-seat={i} colour={player.colour} />
+      <Chair data-seat={i + 1} colour={player.colour} />
     </g>
   {/each}
 
   <g transform="translate({emptySeat.x} {emptySeat.y}) rotate({emptySeat.turn})">
     <Chair
-      data-seat={players.length}
-      colour={onBrand ? 'stroke-warning-300 fill-warning-500/15' : 'stroke-lamp fill-lamp-wash'}
-      person="ring"
+      data-seat={players.length + 1}
+      data-empty-seat
+      colour={onBrand ? 'stroke-warning-300' : 'stroke-lamp'}
+      free
     />
   </g>
 </svg>
@@ -132,7 +145,7 @@
     }
 
     /* The seat number reaches the CSS through an attribute, not an inline `style`, because the
-		   Content-Security-Policy blocks inline styles. One rule per seat: five players and one empty. */
+		   Content-Security-Policy blocks inline styles. One rule per seat: the GM, four players and one empty. */
     svg :global([data-seat='0']) {
       --i: 0;
     }

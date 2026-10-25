@@ -6,7 +6,6 @@ import TadpoleIcon from '@iconify-svelte/svg-spinners/tadpole';
 import GameTabletopPlayersIcon from '@iconify-svelte/game-icons/tabletop-players';
 import GameDungeonGateIcon from '@iconify-svelte/game-icons/dungeon-gate';
 import GameMeepleIcon from '@iconify-svelte/game-icons/meeple';
-import GameAbbotMeepleIcon from '@iconify-svelte/game-icons/abbot-meeple';
 import GameScrollQuillIcon from '@iconify-svelte/game-icons/scroll-quill';
 import GameExitDoorIcon from '@iconify-svelte/game-icons/exit-door';
 import GameTavernSignIcon from '@iconify-svelte/game-icons/tavern-sign';
@@ -120,7 +119,6 @@ export const ICONS = {
   'game-icons:tabletop-players': GameTabletopPlayersIcon,
   'game-icons:dungeon-gate': GameDungeonGateIcon,
   'game-icons:meeple': GameMeepleIcon,
-  'game-icons:abbot-meeple': GameAbbotMeepleIcon,
   'game-icons:scroll-quill': GameScrollQuillIcon,
   'game-icons:exit-door': GameExitDoorIcon,
   'game-icons:house': GameHouseIcon,
