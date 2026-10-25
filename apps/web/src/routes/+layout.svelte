@@ -83,6 +83,7 @@
     '/t': 'cards',
     '/u/tables': 'columns',
     '/n': 'rows',
+    '/m': 'rows',
   };
   // A list page on its way from another page: its skeleton stands in for the page being left. Within
   // the same page (a filter), the page draws its own skeleton under the filters.
