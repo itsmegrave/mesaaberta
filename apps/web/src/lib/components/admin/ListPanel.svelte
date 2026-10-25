@@ -4,7 +4,7 @@
   // table (the events, the audit log).
   import type { Snippet } from 'svelte';
   import { page as current } from '$app/state';
-  import Pager from '#lib/components/admin/Pager.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
   import { listPath, listQuery, pageRange } from '@mesaaberta/core/admin/list';
   import { m } from '#lib/paraglide/messages.js';
 

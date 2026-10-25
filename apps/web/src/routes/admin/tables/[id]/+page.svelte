@@ -1,11 +1,11 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import AuditTimeline from '../../components/ui/AuditTimeline.svelte';
   import DetailList from '#lib/components/ui/DetailList.svelte';
   import DetailRow from '#lib/components/ui/DetailRow.svelte';
   import Panel from '#lib/components/ui/Panel.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import UserLink from '#lib/components/UserLink.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';

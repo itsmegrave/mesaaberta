@@ -5,7 +5,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { adminGroups, sectionOf } from '#lib/admin/sections.js';
   import { m } from '#lib/paraglide/messages.js';

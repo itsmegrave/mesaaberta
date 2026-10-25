@@ -1,18 +1,18 @@
 <script lang="ts">
   import { copyText } from '#lib/clipboard.js';
-  import UserLink from '#lib/components/UserLink.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
   import { page } from '$app/state';
-  import Avatar from '#lib/components/Avatar.svelte';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
-  import GmRating from '#lib/components/GmRating.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import BadgeIcons from '#lib/components/BadgeIcons.svelte';
-  import BadgeStrip from '#lib/components/BadgeStrip.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
+  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import BadgeIcons from './components/ui/BadgeIcons.svelte';
+  import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import TableCard from '#lib/components/TableCard.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import TableCard from '#lib/components/ui/TableCard.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
@@ -92,7 +92,7 @@
             ? '-mt-12 md:-mt-16'
             : ''}"
         >
-          <Avatar
+          <MAAvatar
             src={profile.avatarUrl}
             name={profile.username}
             size={96}

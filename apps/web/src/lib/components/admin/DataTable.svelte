@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
 
   export type DataColumn = {
     id: string;
@@ -33,13 +33,13 @@
     type ColumnDef,
     type RowData,
   } from '@tanstack/svelte-table';
-  import Icon from '#lib/components/Icon.svelte';
-  import KebabMenu from '#lib/components/KebabMenu.svelte';
-  import SearchSelect from '#lib/components/SearchSelect.svelte';
-  import FilterSheet from '#lib/components/admin/FilterSheet.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
+  import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
+  import FilterSheet from '#lib/components/admin/ui/FilterSheet.svelte';
   import ListSearch from '#lib/components/admin/ListSearch.svelte';
   import ListPanel from '#lib/components/admin/ListPanel.svelte';
-  import Spinner from '#lib/components/Spinner.svelte';
+  import Spinner from '#lib/components/ui/Spinner.svelte';
   import {
     nextSort,
     PAGE_SIZES,

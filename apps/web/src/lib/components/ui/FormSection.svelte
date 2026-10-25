@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import type { IconName } from '#lib/icons/names.js';
 
   // A part of a long form: a panel named by its heading, with the step's number before it when the

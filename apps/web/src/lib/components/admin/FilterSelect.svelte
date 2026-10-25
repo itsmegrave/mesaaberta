@@ -3,7 +3,7 @@
   // and keeping the other filters. The option the list opens on has no parameter.
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
 
   let {

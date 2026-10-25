@@ -1,7 +1,7 @@
 <script lang="ts" generics="V extends string">
   // One choice of a few, each a card with its radio. Native radios keep the arrow keys and a native
   // POST, and Skeleton has no standalone radio group. The checked card takes the primary border.
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import type { IconName } from '#lib/icons/names.js';
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import { navigating, page } from '$app/state';
-  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import NotificationAction from '#lib/components/NotificationAction.svelte';
-  import NotificationIcon from '#lib/components/NotificationIcon.svelte';
+  import NotificationIcon from '#lib/components/ui/NotificationIcon.svelte';
   import type { NotificationCategory } from '@mesaaberta/core/notifications/kinds';
   import { notificationIcon, notificationText } from '#lib/notifications/text.js';
   import { m } from '#lib/paraglide/messages.js';

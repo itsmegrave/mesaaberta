@@ -3,12 +3,12 @@
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import PageHead from '#lib/components/ui/PageHead.svelte';
-  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
-  import PartnerCard from '#lib/components/PartnerCard.svelte';
-  import PartnerFilters from '#lib/components/PartnerFilters.svelte';
-  import PartnerHowItWorks from '#lib/components/PartnerHowItWorks.svelte';
-  import EntityReportDialog from '#lib/components/EntityReportDialog.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
+  import PartnerCard from './components/PartnerCard.svelte';
+  import PartnerFilters from './components/PartnerFilters.svelte';
+  import PartnerHowItWorks from './components/PartnerHowItWorks.svelte';
+  import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { partnerIdSchema } from '@mesaaberta/core/moderation/reports';

@@ -3,7 +3,7 @@
   import ListPanel from '#lib/components/admin/ListPanel.svelte';
   import ListSearch from '#lib/components/admin/ListSearch.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import UserText from '#lib/components/UserText.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { AUDIT_KINDS, type AuditKind } from '@mesaaberta/core/admin/report-filters';
   import { atHandle } from '@mesaaberta/core/profile/handle';

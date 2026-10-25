@@ -1,18 +1,18 @@
 <script lang="ts">
   import { copyText } from '#lib/clipboard.js';
-  import TextArea from '#lib/components/TextArea.svelte';
-  import UserLink from '#lib/components/UserLink.svelte';
+  import MATextArea from '#lib/components/ui/MATextArea.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import RichText from '#lib/components/RichText.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
+  import RichText from '#lib/components/ui/RichText.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import Button, { buttonClass } from '#lib/components/Button.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import Form from '#lib/components/Form.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
   import { formatHours } from '@mesaaberta/core/tables/format';
   import { tableStatusLabel } from '#lib/tables/status.js';
   import type { FormMessage } from '#lib/forms/message.js';
@@ -20,19 +20,19 @@
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { ratingSchema } from '@mesaaberta/core/tables/rating';
   import { registrationError } from '#lib/tables/registration-errors.js';
-  import ReportDialog from '#lib/components/ReportDialog.svelte';
+  import ReportDialog from './components/ReportDialog.svelte';
   import { toast } from '#lib/toaster.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import JoinRequestDialog from '#lib/components/JoinRequestDialog.svelte';
-  import GmRating from '#lib/components/GmRating.svelte';
-  import StarRating from '#lib/components/StarRating.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
-  import SeatDots from '#lib/components/SeatDots.svelte';
-  import DraftNotice from '#lib/components/DraftNotice.svelte';
-  import SessionDate from '#lib/components/SessionDate.svelte';
-  import SummaryRow from '#lib/components/ui/SummaryRow.svelte';
+  import JoinRequestDialog from './components/JoinRequestDialog.svelte';
+  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import StarRating from '#lib/components/ui/StarRating.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import ConfirmDialog from '#lib/components/ui/ConfirmDialog.svelte';
+  import SeatDots from '#lib/components/ui/SeatDots.svelte';
+  import DraftNotice from './components/DraftNotice.svelte';
+  import SessionDate from './components/ui/SessionDate.svelte';
+  import SummaryRow from './components/ui/SummaryRow.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
 
@@ -388,7 +388,7 @@
       <h2 class="text-2xl font-semibold">{m.rating_title()}</h2>
       <p class="mt-2 max-w-prose">{m.rating_lede()}</p>
 
-      <Form action="?/rate" onsubmit={rating.submit} class="mt-4 grid gap-6">
+      <MAForm action="?/rate" onsubmit={rating.submit} class="mt-4 grid gap-6">
         {#each scoreFields as { name, label } (name)}
           <div>
             <StarRating
@@ -408,7 +408,7 @@
 
         <div>
           <label for="comment" class="label-text block font-semibold">{m.rating_comment()}</label>
-          <TextArea
+          <MATextArea
             id="comment"
             name="comment"
             rows={3}
@@ -419,16 +419,16 @@
         </div>
 
         <div>
-          <Button
+          <MAButton
             type="submit"
             size="custom"
             controller={rating}
             class="btn gap-2 preset-filled-primary-500"
           >
             {m.rating_submit()}
-          </Button>
+          </MAButton>
         </div>
-      </Form>
+      </MAForm>
     </section>
   {/if}
 

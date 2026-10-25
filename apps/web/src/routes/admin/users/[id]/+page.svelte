@@ -1,17 +1,17 @@
 <script lang="ts">
   import { copyText } from '#lib/clipboard.js';
-  import GmRating from '#lib/components/GmRating.svelte';
-  import UserLink from '#lib/components/UserLink.svelte';
-  import Avatar from '#lib/components/Avatar.svelte';
+  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import AuditTimeline from '#lib/components/admin/AuditTimeline.svelte';
+  import AuditTimeline from '../../components/ui/AuditTimeline.svelte';
   import DetailList from '#lib/components/ui/DetailList.svelte';
   import DetailRow from '#lib/components/ui/DetailRow.svelte';
   import Panel from '#lib/components/ui/Panel.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import { type KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge from '#lib/components/StatusBadge.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge from '#lib/components/ui/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import {
     accountSchema,
@@ -117,7 +117,7 @@
   {menu}
 >
   {#snippet lead()}
-    <Avatar
+    <MAAvatar
       src={data.avatar}
       name={data.user.name ?? data.user.username ?? m.admin_user_title()}
       size={72}

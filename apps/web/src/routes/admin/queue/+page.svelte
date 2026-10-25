@@ -1,8 +1,8 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import UserText from '#lib/components/UserText.svelte';
-  import CatalogApprove from '#lib/components/admin/CatalogApprove.svelte';
-  import CatalogDialog from '#lib/components/admin/CatalogDialog.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
+  import CatalogApprove from './components/CatalogApprove.svelte';
+  import CatalogDialog from '../components/CatalogDialog.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 

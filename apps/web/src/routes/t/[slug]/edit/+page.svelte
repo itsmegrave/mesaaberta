@@ -1,14 +1,14 @@
 <script lang="ts">
   import { copyText } from '#lib/clipboard.js';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult } from '#lib/forms/contract.js';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import { page } from '$app/state';
-  import TableForm from '#lib/components/TableForm.svelte';
+  import TableForm from '../../components/TableForm.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ChatThread from '#lib/components/ChatThread.svelte';
+  import ChatThread from '#lib/components/chat/ChatThread.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data } = $props();

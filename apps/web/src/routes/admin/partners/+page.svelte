@@ -4,13 +4,13 @@
   import { Target } from '#lib/target.svelte.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { approvePartnerSchema, removePartnerSchema } from '@mesaaberta/core/moderation/reports';
   import { removePartner } from '#lib/admin/moderation-presets.js';
   import { m } from '#lib/paraglide/messages.js';

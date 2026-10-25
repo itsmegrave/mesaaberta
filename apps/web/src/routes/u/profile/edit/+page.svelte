@@ -3,10 +3,10 @@
   // and save at once; the name, the bio and the links save with the form below.
   import { page } from '$app/state';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import Avatar from '#lib/components/Avatar.svelte';
-  import ProfileForm from '#lib/components/ProfileForm.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
-  import UploadDialog from '#lib/components/UploadDialog.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import ProfileForm from '../components/ProfileForm.svelte';
+  import SettingsSection from './components/ui/SettingsSection.svelte';
+  import UploadDialog from './components/UploadDialog.svelte';
   import { bannerSchema, photoSchema } from '#lib/profile/photo.js';
   import { toast } from '#lib/toaster.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -74,7 +74,7 @@
       </div>
     {/if}
     <div class="absolute bottom-0 left-4 rounded-full bg-panel p-1 md:left-6">
-      <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={96} />
+      <MAAvatar src={data.avatarUrl} name={data.form.data.name || data.username} size={96} />
     </div>
   </div>
 

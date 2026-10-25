@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import EventForce from '#lib/components/admin/EventForce.svelte';
-  import EventRetryAll from '#lib/components/admin/EventRetryAll.svelte';
+  import EventForce from './components/EventForce.svelte';
+  import EventRetryAll from './components/EventRetryAll.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
   import ListPanel from '#lib/components/admin/ListPanel.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';

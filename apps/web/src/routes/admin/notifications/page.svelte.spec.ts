@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-svelte';
 import { initialForm } from '#lib/forms/contract.js';
 import { ANNOUNCEMENT_DEFAULTS } from '#lib/notifications/announcement.js';
 import { ANNOUNCEMENT_ICONS, TONE_ICON } from '@mesaaberta/core/notifications/kinds';
-import Icon from '#lib/components/Icon.svelte';
+import Icon from '#lib/components/ui/Icon.svelte';
 import type { IconName } from '#lib/icons/names.js';
 import Page from './+page.svelte';
 

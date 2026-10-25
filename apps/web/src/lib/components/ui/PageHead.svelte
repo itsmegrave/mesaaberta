@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
 
   /**
    * The head of a public page: the breadcrumbs, the big title and its lede, with the page's actions

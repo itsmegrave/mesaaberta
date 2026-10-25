@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ReasonSelect from '#lib/components/ReasonSelect.svelte';
-  import TextArea from '#lib/components/TextArea.svelte';
-  import UserText from '#lib/components/UserText.svelte';
+  import ReasonSelect from '#lib/components/ui/ReasonSelect.svelte';
+  import MATextArea from '#lib/components/ui/MATextArea.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
   // One moderation decision behind a confirmation: accept, dismiss, close a table, ban or revoke a
   // ban. Mounted per action; the server authorizes it again.
   import type { ZodType } from 'zod';
@@ -13,8 +13,8 @@
     type ReportReason,
     type ReportTarget,
   } from '@mesaaberta/core/moderation/reports';
-  import Form from '#lib/components/Form.svelte';
-  import FormField from '#lib/components/FormField.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
+  import FormField from '#lib/components/ui/FormField.svelte';
   import DialogActions from '#lib/components/ui/DialogActions.svelte';
   import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -130,7 +130,7 @@
   description={text}
 >
   {#snippet title()}<UserText text={titleText} {username} />{/snippet}
-  <Form method="POST" {action} onsubmit={form.submit} class="mt-4 grid gap-4">
+  <MAForm method="POST" {action} onsubmit={form.submit} class="mt-4 grid gap-4">
     {#each Object.keys(fields) as name (name)}
       <input type="hidden" {name} value={data[name]} />
     {/each}
@@ -178,7 +178,7 @@
     {/if}
     {#if write}
       <FormField id="{id}-{write.name}" label={write.label} hint={write.hint} error={textError}>
-        <TextArea
+        <MATextArea
           id="{id}-{write.name}"
           name={write.name}
           rows={3}
@@ -189,7 +189,7 @@
           oninput={(event) => form.change(write.name, event.currentTarget.value)}
           aria-invalid={textError ? 'true' : undefined}
           aria-describedby="{id}-{write.name}-hint{textError ? ` ${id}-${write.name}-error` : ''}"
-        ></TextArea>
+        ></MATextArea>
       </FormField>
     {/if}
     {#if formError}
@@ -201,7 +201,7 @@
       controller={form}
       {confirm}
     />
-  </Form>
+  </MAForm>
 </DialogShell>
 
 {#snippet triggerContent()}{label}{/snippet}

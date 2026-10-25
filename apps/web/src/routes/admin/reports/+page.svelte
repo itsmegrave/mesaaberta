@@ -6,12 +6,12 @@
     type FilterPlace,
   } from '#lib/components/admin/DataTable.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import UserLink from '#lib/components/UserLink.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
+  import UserLink from '#lib/components/ui/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { REPORT_FILTERS, type ReportFilter } from '@mesaaberta/core/admin/report-filters';
   import { reasonLabel } from '#lib/moderation/labels.js';

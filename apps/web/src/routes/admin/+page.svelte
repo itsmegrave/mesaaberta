@@ -1,10 +1,10 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import RefreshButton from '#lib/components/admin/RefreshButton.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { adminCounts } from '#lib/admin/counts.svelte.js';
   import { dayLabel, shortDate, timeLabel } from '#lib/admin/format.js';
   import type { IconName } from '#lib/icons/names.js';

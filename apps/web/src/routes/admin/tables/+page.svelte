@@ -9,15 +9,15 @@
     type FilterPlace,
   } from '#lib/components/admin/DataTable.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
-  import Media from '#lib/components/admin/Media.svelte';
-  import PostStatus from '#lib/components/admin/PostStatus.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
+  import Media from '#lib/components/admin/ui/Media.svelte';
+  import PostStatus from './components/ui/PostStatus.svelte';
   import RefreshButton from '#lib/components/admin/RefreshButton.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
-  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { instagramStatus } from '#lib/admin/instagram-status.js';
   import { publishTable } from '#lib/admin/publish-table.js';

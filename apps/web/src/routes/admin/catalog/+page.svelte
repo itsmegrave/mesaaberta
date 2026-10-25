@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import CatalogDialog from '#lib/components/admin/CatalogDialog.svelte';
+  import CatalogDialog from '../components/CatalogDialog.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
-  import ListCard from '#lib/components/admin/ListCard.svelte';
+  import ListCard from '#lib/components/admin/ui/ListCard.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
-  import UserText from '#lib/components/UserText.svelte';
+  import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 

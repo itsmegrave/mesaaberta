@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import Icon from './Icon.svelte';
+  import Icon from './ui/Icon.svelte';
   import type { IconName } from '#lib/icons/names.js';
   import PostButton from '#lib/components/PostButton.svelte';
   import type { FormMessage } from '#lib/forms/message.js';

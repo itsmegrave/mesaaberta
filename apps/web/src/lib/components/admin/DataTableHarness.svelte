@@ -3,7 +3,7 @@
   // phone's filter sheet, for its spec.
   import DataTable from './DataTable.svelte';
   import FilterSelect from './FilterSelect.svelte';
-  import ListCard from './ListCard.svelte';
+  import ListCard from './ui/ListCard.svelte';
   import SegmentedFilter from './SegmentedFilter.svelte';
   import type { Snippet } from 'svelte';
 

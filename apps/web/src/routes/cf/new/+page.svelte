@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
-  import DateTimeField from '#lib/components/DateTimeField.svelte';
-  import EditorForm from '#lib/components/EditorForm.svelte';
-  import FormField from '#lib/components/FormField.svelte';
-  import ImageUpload from '#lib/components/ImageUpload.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import CrowdfundingCard from '../components/ui/CrowdfundingCard.svelte';
+  import DateTimeField from '#lib/components/ui/DateTimeField.svelte';
+  import EditorForm from '#lib/components/ui/EditorForm.svelte';
+  import FormField from '#lib/components/ui/FormField.svelte';
+  import ImageUpload from '#lib/components/ui/ImageUpload.svelte';
+  import TextInput from '#lib/components/ui/TextInput.svelte';
   import FormSection from '#lib/components/ui/FormSection.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import {
@@ -242,12 +242,12 @@
     </FormSection>
 
     {#snippet actions()}
-      <Button
+      <MAButton
         type="submit"
         size="custom"
         {controller}
         class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
-        >{m.crowdfunding_form_submit()}</Button
+        >{m.crowdfunding_form_submit()}</MAButton
       >
     {/snippet}
     {#snippet preview()}

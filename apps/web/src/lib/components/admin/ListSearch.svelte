@@ -4,7 +4,7 @@
   // is a plain GET that carries them along as hidden fields.
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
 
   let {

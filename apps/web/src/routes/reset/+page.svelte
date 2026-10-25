@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
-  import FormBanner from '#lib/components/FormBanner.svelte';
-  import AuthShell from '#lib/components/AuthShell.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import FormBanner from '#lib/components/ui/FormBanner.svelte';
+  import AuthShell from '#lib/components/ui/AuthShell.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult } from '#lib/forms/contract.js';
-  import Form from '#lib/components/Form.svelte';
-  import PasswordField from '#lib/components/PasswordField.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
+  import PasswordField from '#lib/components/ui/PasswordField.svelte';
   import { resolve } from '$app/paths';
   import { newPasswordSchema } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -47,7 +47,7 @@
       {m.reset_done_link()}
     </a>
   {:else}
-    <Form onsubmit={controller.submit} class="grid gap-4">
+    <MAForm onsubmit={controller.submit} class="grid gap-4">
       <FormBanner text={problem} />
 
       <PasswordField
@@ -75,16 +75,16 @@
       />
 
       <div>
-        <Button
+        <MAButton
           type="submit"
           size="custom"
           {controller}
           class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.reset_submit()}
-        </Button>
+        </MAButton>
       </div>
-    </Form>
+    </MAForm>
 
     <p class="mt-8">
       {m.forgot_remembered()}

@@ -3,9 +3,9 @@
   // may invite this person, and who is blocked from doing it.
   import { Switch } from '@skeletonlabs/skeleton-svelte';
   import { tick } from 'svelte';
-  import Form from '#lib/components/Form.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
-  import SettingsSection from '#lib/components/SettingsSection.svelte';
+  import SettingsSection from '../components/ui/SettingsSection.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
@@ -39,7 +39,7 @@
 
 <section aria-labelledby="direct-messages" class={card}>
   <h3 id="direct-messages" class={heading}>{m.messages_setting_title()}</h3>
-  <Form bind:element={messagingForm} action="?/messages" onsubmit={messaging.submit} class="mt-4">
+  <MAForm bind:element={messagingForm} action="?/messages" onsubmit={messaging.submit} class="mt-4">
     <Switch
       checked={messaging.values.enabled}
       disabled={messaging.pending}
@@ -56,7 +56,7 @@
       <Switch.HiddenInput />
       <input type="hidden" name="enabled" value={String(messaging.values.enabled)} />
     </Switch>
-  </Form>
+  </MAForm>
   <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
 </section>
 

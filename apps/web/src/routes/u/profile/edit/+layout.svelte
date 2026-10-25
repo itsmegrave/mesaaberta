@@ -1,8 +1,8 @@
 <script lang="ts">
   // "Editar perfil", in parts: the side menu (a "Seção" menu on a phone) and the part open now.
   import { page } from '$app/state';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import SettingsNav from '#lib/components/SettingsNav.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import SettingsNav from './components/SettingsNav.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '#lib/paraglide/messages.js';
 

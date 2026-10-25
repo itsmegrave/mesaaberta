@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
   import './layout.css';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
   import { createQueryClient } from '#lib/query/client.js';
@@ -13,19 +13,19 @@
   import { asset, resolve } from '$app/paths';
   import { refreshAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
-  import ChatDrawer from '#lib/components/ChatDrawer.svelte';
-  import ExtensionWidgets from '#lib/components/ExtensionWidgets.svelte';
-  import AccountMenu from '#lib/components/AccountMenu.svelte';
-  import BottomTabBar from '#lib/components/BottomTabBar.svelte';
-  import ListSkeleton, { type SkeletonKind } from '#lib/components/ListSkeleton.svelte';
-  import NotificationBell from '#lib/components/NotificationBell.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import SideNav from '#lib/components/SideNav.svelte';
-  import SiteFooter from '#lib/components/SiteFooter.svelte';
-  import TableLogo from '#lib/components/TableLogo.svelte';
-  import ThemeToggle from '#lib/components/ThemeToggle.svelte';
-  import Toaster from '#lib/components/Toaster.svelte';
-  import UnsavedChangesDialog from '#lib/components/UnsavedChangesDialog.svelte';
+  import ChatDrawer from '#lib/components/chat/ChatDrawer.svelte';
+  import ExtensionWidgets from '#lib/components/shell/ExtensionWidgets.svelte';
+  import AccountMenu from '#lib/components/shell/AccountMenu.svelte';
+  import BottomTabBar from '#lib/components/shell/BottomTabBar.svelte';
+  import ListSkeleton, { type SkeletonKind } from '#lib/components/ui/ListSkeleton.svelte';
+  import NotificationBell from '#lib/components/shell/NotificationBell.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import SideNav from '#lib/components/shell/SideNav.svelte';
+  import SiteFooter from '#lib/components/shell/SiteFooter.svelte';
+  import TableLogo from '#lib/components/ui/TableLogo.svelte';
+  import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
+  import MAToaster from '#lib/components/shell/MAToaster.svelte';
+  import UnsavedChangesDialog from '#lib/components/shell/UnsavedChangesDialog.svelte';
   import { Progress } from '@skeletonlabs/skeleton-svelte';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -185,13 +185,13 @@
           class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
         >
           <p>{m.version_update_available()}</p>
-          <Button
+          <MAButton
             size="custom"
             class="btn preset-filled-primary-500"
             onclick={() => location.reload()}
           >
             {m.version_update_refresh()}
-          </Button>
+          </MAButton>
         </aside>
       {/if}
 
@@ -204,7 +204,7 @@
         </Progress>
       {/if}
 
-      <Toaster />
+      <MAToaster />
       <UnsavedChangesDialog />
       {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/m')}
         {#key data.cacheIdentity}<ChatDrawer

@@ -3,12 +3,12 @@
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import PageHead from '#lib/components/ui/PageHead.svelte';
-  import CrowdfundingCard from '#lib/components/CrowdfundingCard.svelte';
-  import CrowdfundingFilters from '#lib/components/CrowdfundingFilters.svelte';
-  import EntityReportDialog from '#lib/components/EntityReportDialog.svelte';
-  import Icon from '#lib/components/Icon.svelte';
-  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
+  import CrowdfundingCard from './components/ui/CrowdfundingCard.svelte';
+  import CrowdfundingFilters from './components/CrowdfundingFilters.svelte';
+  import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';

@@ -3,10 +3,10 @@
   import { fromResult } from '#lib/forms/contract.js';
   import { resolve } from '$app/paths';
   import CredentialsForm from '#lib/components/CredentialsForm.svelte';
-  import LegalConsent from '#lib/components/LegalConsent.svelte';
-  import ProviderButtons from '#lib/components/ProviderButtons.svelte';
-  import AuthDivider from '#lib/components/AuthDivider.svelte';
-  import AuthShell from '#lib/components/AuthShell.svelte';
+  import LegalConsent from '#lib/components/ui/LegalConsent.svelte';
+  import ProviderButtons from '#lib/components/ui/ProviderButtons.svelte';
+  import AuthDivider from '#lib/components/ui/AuthDivider.svelte';
+  import AuthShell from '#lib/components/ui/AuthShell.svelte';
   import { credentialsSchema } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
 

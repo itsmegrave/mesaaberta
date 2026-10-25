@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LegalPage from '#lib/components/LegalPage.svelte';
+  import LegalPage from '#lib/components/ui/LegalPage.svelte';
   import { page } from '$app/state';
   import { controllerOf } from '#lib/legal.js';
   import { m } from '#lib/paraglide/messages.js';

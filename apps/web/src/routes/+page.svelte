@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Icon from '#lib/components/Icon.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import SeatDots from '#lib/components/SeatDots.svelte';
+  import SeatDots from '#lib/components/ui/SeatDots.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
-  import TableCard from '#lib/components/TableCard.svelte';
-  import TableIllustration from '#lib/components/TableIllustration.svelte';
+  import TableCard from '#lib/components/ui/TableCard.svelte';
+  import TableIllustration from '#lib/components/ui/TableIllustration.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data: serverData } = $props();

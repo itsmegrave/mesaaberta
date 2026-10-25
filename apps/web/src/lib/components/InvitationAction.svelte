@@ -1,10 +1,10 @@
 <script lang="ts">
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { invitationFormSchema } from '#lib/invitations/schema.js';
-  import Form from './Form.svelte';
-  import FormField from './FormField.svelte';
-  import TextInput from './TextInput.svelte';
-  import Button from './Button.svelte';
+  import MAForm from './ui/MAForm.svelte';
+  import FormField from './ui/FormField.svelte';
+  import TextInput from './ui/TextInput.svelte';
+  import MAButton from './ui/MAButton.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { registrationError } from '#lib/tables/registration-errors.js';
   import { toast } from '#lib/toaster.js';
@@ -49,7 +49,7 @@
   const { draft } = form;
 </script>
 
-<Form {action} onsubmit={form.submit} class="grid gap-3">
+<MAForm {action} onsubmit={form.submit} class="grid gap-3">
   {#if username}
     <FormField
       label={m.invitation_username()}
@@ -75,8 +75,8 @@
   <input type="hidden" name="enabled" value={String(enabled)} />
   <input type="hidden" name="blocked" value={String(blocked)} />
   <div>
-    <Button type="submit" variant="secondary" controller={form} class="font-semibold"
-      >{label}</Button
+    <MAButton type="submit" variant="secondary" controller={form} class="font-semibold"
+      >{label}</MAButton
     >
   </div>
-</Form>
+</MAForm>

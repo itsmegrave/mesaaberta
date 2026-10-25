@@ -1,14 +1,14 @@
 <script lang="ts">
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import AdminPersonLink from '#lib/components/admin/AdminPersonLink.svelte';
+  import AdminPersonLink from '#lib/components/admin/ui/AdminPersonLink.svelte';
   import DetailList from '#lib/components/ui/DetailList.svelte';
   import DetailRow from '#lib/components/ui/DetailRow.svelte';
   import Panel from '#lib/components/ui/Panel.svelte';
-  import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
+  import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import { periodLabel } from '#lib/crowdfunding/format.js';
   import { platformLabel, siteName, submissionLabel } from '#lib/crowdfunding/labels.js';
-  import Icon from '#lib/components/Icon.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { reasonLabel } from '#lib/moderation/labels.js';
   import {
     banFromReportSchema,

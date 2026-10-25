@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { Dialog } from '@skeletonlabs/skeleton-svelte';
-  import Button, { buttonClass } from '#lib/components/Button.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
 
   // A dialog's footer: the way out, then the answer. "Cancelar" is the dialog's close trigger, or a
   // plain button when `oncancel` decides what cancelling means (and outside a dialog). The answer is
@@ -43,8 +43,8 @@
 <div class="flex flex-wrap justify-end gap-3 {className}">
   {@render before?.()}
   {#if oncancel}
-    <Button variant="secondary" class="font-semibold" {...cancelAttributes} onclick={oncancel}
-      >{cancel}</Button
+    <MAButton variant="secondary" class="font-semibold" {...cancelAttributes} onclick={oncancel}
+      >{cancel}</MAButton
     >
   {:else}
     <Dialog.CloseTrigger {...cancelAttributes} class={cancelClass}>{cancel}</Dialog.CloseTrigger>
@@ -52,18 +52,18 @@
   {#if confirmButton}
     {@render confirmButton()}
   {:else if onconfirm}
-    <Button
+    <MAButton
       variant={tone === 'danger' ? 'danger' : 'primary'}
       class="font-semibold"
       {disabled}
-      onclick={onconfirm}>{confirm}</Button
+      onclick={onconfirm}>{confirm}</MAButton
     >
   {:else}
-    <Button
+    <MAButton
       type="submit"
       variant={tone === 'danger' ? 'danger' : 'primary'}
       {controller}
-      class="font-semibold">{confirm}</Button
+      class="font-semibold">{confirm}</MAButton
     >
   {/if}
 </div>

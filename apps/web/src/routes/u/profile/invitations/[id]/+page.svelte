@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';

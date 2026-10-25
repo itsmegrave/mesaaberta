@@ -1,17 +1,17 @@
 <script lang="ts">
   import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { flushSync, onMount, type Snippet } from 'svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import PlayingCard from '#lib/components/PlayingCard.svelte';
-  import RunningCard from '#lib/components/RunningCard.svelte';
+  import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
+  import PlayingCard from './components/PlayingCard.svelte';
+  import RunningCard from './components/RunningCard.svelte';
   import { page } from '$app/state';
   import { pageHref } from '#lib/admin/page-href.js';
-  import Icon from '#lib/components/Icon.svelte';
-  import KebabMenu from '#lib/components/KebabMenu.svelte';
-  import Pager from '#lib/components/admin/Pager.svelte';
-  import { buttonClass } from '#lib/components/Button.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
+  import Pager from '#lib/components/ui/Pager.svelte';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data: serverData } = $props();

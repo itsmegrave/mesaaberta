@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Icon from '#lib/components/Icon.svelte';
-  import QueryStatus from '#lib/components/QueryStatus.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import PageHead from '#lib/components/ui/PageHead.svelte';
   import { navigating, page } from '$app/state';
-  import ListSkeleton from '#lib/components/ListSkeleton.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
-  import TablesFilters from '#lib/components/TablesFilters.svelte';
-  import TableCard from '#lib/components/TableCard.svelte';
+  import TablesFilters from './components/TablesFilters.svelte';
+  import TableCard from '#lib/components/ui/TableCard.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data: serverData } = $props();

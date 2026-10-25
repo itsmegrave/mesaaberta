@@ -5,8 +5,11 @@
   import { untrack, type Snippet } from 'svelte';
   import type { ActionResult } from '$app/forms';
   import type { ZodType } from 'zod';
-  import Button, { type ButtonSize, type ButtonVariant } from '#lib/components/Button.svelte';
-  import Form from '#lib/components/Form.svelte';
+  import MAButton, {
+    type ButtonSize,
+    type ButtonVariant,
+  } from '#lib/components/ui/MAButton.svelte';
+  import MAForm from '#lib/components/ui/MAForm.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import type { FormErrors, FormResult } from '#lib/forms/contract.js';
   import type { afterWrite } from '#lib/query/invalidate.js';
@@ -99,7 +102,7 @@
   const message = $derived(error?.(form.errors));
 </script>
 
-<Form {action} onsubmit={form.submit} class={className || undefined}>
+<MAForm {action} onsubmit={form.submit} class={className || undefined}>
   {#each Object.entries(fields) as [name, value] (name)}
     {#if value !== undefined && value !== ''}
       <input type="hidden" {name} value={String(form.values[name])} />
@@ -108,16 +111,16 @@
   {#if content}
     {@render content()}
   {:else}
-    <Button
+    <MAButton
       type="submit"
       {variant}
       {size}
       controller={form}
-      class="{size === 'custom' ? 'gap-2' : ''} {buttonClass}">{@render children?.()}</Button
+      class="{size === 'custom' ? 'gap-2' : ''} {buttonClass}">{@render children?.()}</MAButton
     >
   {/if}
   {@render after?.()}
   {#if message}
     <p role="alert" class="{errorClass} text-sm font-semibold text-error-700-300">{message}</p>
   {/if}
-</Form>
+</MAForm>
