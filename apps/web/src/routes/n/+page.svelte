@@ -78,7 +78,7 @@
 
   <nav aria-label={m.notifications_filter_label()} class="mt-8">
     <ul class="flex flex-wrap gap-2">
-      {#each filters as filter (filter.category)}
+      {#each filters.filter((filter) => filter.category !== 'achievements' || data.withAchievements) as filter (filter.category)}
         <li>
           <a
             href={filter.category ? `/n?category=${filter.category}` : '/n'}

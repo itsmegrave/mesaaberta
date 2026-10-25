@@ -169,7 +169,9 @@
     </div>
   </header>
 
-  {#if data.badges}<BadgeStrip badges={data.badges} isOwner={data.isOwner} />{/if}
+  {#if data.badges}
+    <BadgeStrip badges={data.badges} progress={data.badgeProgress ?? []} isOwner={data.isOwner} />
+  {/if}
 
   <section aria-labelledby="upcoming-tables" class="mt-8">
     <h2 id="upcoming-tables" class="text-2xl leading-tight font-semibold tracking-tight">

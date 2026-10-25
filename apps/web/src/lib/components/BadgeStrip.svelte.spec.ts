@@ -18,8 +18,8 @@ describe('BadgeStrip', () => {
 
     await expect.element(page.getByRole('heading', { name: 'Conquistas' })).toBeVisible();
     await expect.element(page.getByText('Primeira mesa')).toBeVisible();
-    await expect.element(page.getByText('Concluiu a primeira mesa na Mesa Aberta.')).toBeVisible();
-    await expect.element(page.getByText(/^Em .*2026/)).toBeVisible();
+    await expect.element(page.getByText('Jogou a primeira sessão.')).toBeVisible();
+    await expect.element(page.getByText(/^Desde .*2026/)).toBeVisible();
   });
 
   it('says a backfilled badge came before the release instead of giving a date', async () => {
@@ -48,5 +48,47 @@ describe('BadgeStrip', () => {
     render(BadgeStrip, { badges: hiddenAndUnknown, isOwner: true });
 
     await expect.element(page.getByText('Primeira mesa')).toBeVisible();
+  });
+
+  it('gives the owner an eye on each earned badge, and the way back for a hidden one', async () => {
+    render(BadgeStrip, {
+      badges: [held('first-table'), held('partner', { hidden: true })],
+      isOwner: true,
+    });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Esconder do perfil' }))
+      .toHaveAttribute('aria-pressed', 'false');
+    await expect
+      .element(page.getByRole('button', { name: 'Mostrar no perfil' }))
+      .toHaveAttribute('aria-pressed', 'true');
+    await expect.element(page.getByText('Escondida do seu perfil')).toBeVisible();
+  });
+
+  it('shows the owner what is left to earn, with progress, and the badges only the team gives', async () => {
+    render(BadgeStrip, {
+      badges: [held('first-table')],
+      progress: [{ badgeId: 'regular-player-2', current: 14, goal: 25 }],
+      isOwner: true,
+    });
+
+    await expect.element(page.getByRole('heading', { name: 'A conquistar' })).toBeVisible();
+    await expect.element(page.getByText('Jogar 25 sessões.')).toBeVisible();
+    await expect.element(page.getByText('14 de 25 sessões')).toBeVisible();
+    await expect.element(page.getByText('Concedida pela equipe.')).toBeVisible();
+    await expect.element(page.getByText('0 de 1 concessão')).toBeVisible();
+    await expect
+      .element(page.getByRole('progressbar', { name: 'Presença constante II' }))
+      .toHaveAttribute('value', '14');
+  });
+
+  it('shows a visitor no eye and nothing left to earn', async () => {
+    render(BadgeStrip, {
+      badges: [held('first-table')],
+      progress: [{ badgeId: 'regular-player-2', current: 14, goal: 25 }],
+    });
+
+    expect(page.getByRole('button').elements()).toHaveLength(0);
+    expect(page.getByText('A conquistar').elements()).toHaveLength(0);
   });
 });

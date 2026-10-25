@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { profiles, userBadges } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { heldBadges } from '@mesaaberta/core/server/badges/reads';
+import { badgeProgress, heldBadges, setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import { publicProfile } from '@mesaaberta/core/server/profile/public';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -90,5 +90,53 @@ describe('publicProfile badges', () => {
       { id: ana, isAdmin: false },
       { id: admin, isAdmin: true },
     ]);
+  });
+});
+
+describe('badgeProgress', () => {
+  it('offers the next rung of each ladder and the single badges, never one already held or revoked', async () => {
+    await test.db.delete(userBadges);
+    await test.db.insert(userBadges).values([
+      { profileId: ana, badgeId: 'regular-player-1' },
+      { profileId: ana, badgeId: 'gm-first', revokedAt: new Date(), revokeReason: 'abuse' },
+    ]);
+
+    const progress = await badgeProgress(test.db, ana);
+    const ids = progress.map((entry) => entry.badgeId);
+
+    expect(ids).toContain('regular-player-2');
+    expect(ids).not.toContain('regular-player-1');
+    expect(ids).not.toContain('regular-player-3');
+    expect(ids).toContain('gm-master-1');
+    expect(ids).not.toContain('gm-master-2');
+    expect(ids).not.toContain('gm-first');
+    expect(progress.find((entry) => entry.badgeId === 'regular-player-2')).toEqual({
+      badgeId: 'regular-player-2',
+      current: 0,
+      goal: 25,
+    });
+  });
+
+  it('comes with the profile only for its owner', async () => {
+    const showBadges = async () => true;
+
+    expect((await publicProfile(test.db, 'ana', { showBadges }))!.badgeProgress).toBeNull();
+    expect(
+      (await publicProfile(test.db, 'ana', { showBadges, viewerId: ana }))!.badgeProgress,
+    ).not.toBeNull();
+  });
+});
+
+describe('setBadgeHidden', () => {
+  it('hides and shows a held badge, and refuses one the person does not hold', async () => {
+    await test.db.delete(userBadges);
+    await test.db.insert(userBadges).values({ profileId: ana, badgeId: 'first-table' });
+
+    expect(await setBadgeHidden(test.db, ana, 'first-table', true)).toBe(true);
+    expect(await heldBadges(test.db, ana)).toEqual([]);
+    expect(await setBadgeHidden(test.db, ana, 'first-table', false)).toBe(true);
+    expect(await heldBadges(test.db, ana)).toHaveLength(1);
+    expect(await setBadgeHidden(test.db, ana, 'partner', true)).toBe(false);
+    expect(await setBadgeHidden(test.db, admin, 'first-table', true)).toBe(false);
   });
 });

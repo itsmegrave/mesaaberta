@@ -4,7 +4,7 @@ import { gameTables, notifications, profiles, registrations, userBadges } from '
 import { routes } from '../../routes';
 import { recordEvent } from '../events/outbox';
 import type { Handler, StoredEvent } from '../events/types';
-import { BADGES, statsFor, type BadgeDefinition } from './catalog';
+import { BADGES, meets, statsFor, type BadgeDefinition } from './catalog';
 
 /** Who an event may have earned a badge for. */
 async function candidates(db: AnyDb, event: StoredEvent): Promise<string[]> {
@@ -57,7 +57,7 @@ export async function awardBadges(
     const stats = statsFor(executor, profileId);
     const earned: string[] = [];
     for (const rule of rules) {
-      if (held.has(rule.id) || !(await rule.check(stats))) continue;
+      if (held.has(rule.id) || !(await meets(rule, stats))) continue;
       const inserted = await executor
         .insert(userBadges)
         .values({

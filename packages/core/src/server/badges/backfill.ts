@@ -1,7 +1,7 @@
 import { and, asc, eq, gt, isNotNull } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { profiles, userBadges } from '../db/schema';
-import { BADGES, statsFor } from './catalog';
+import { BADGES, meets, statsFor } from './catalog';
 
 /** Given only by a backfill, to who joined before the feature was released. */
 export const PIONEER_BADGE = 'pioneer';
@@ -59,7 +59,7 @@ export async function backfillBadges(
       const stats = statsFor(db, member.id);
       const due: string[] = [];
       for (const rule of BADGES)
-        if (!held.has(rule.id) && (await rule.check(stats))) due.push(rule.id);
+        if (!held.has(rule.id) && (await meets(rule, stats))) due.push(rule.id);
       if (pioneerBefore && member.createdAt < pioneerBefore && !held.has(PIONEER_BADGE))
         due.push(PIONEER_BADGE);
 
