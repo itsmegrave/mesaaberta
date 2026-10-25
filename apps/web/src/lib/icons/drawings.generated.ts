@@ -97,6 +97,11 @@ export const DRAWINGS = {
     width: 512,
     height: 512,
   },
+  'game-icons:black-knight-helm': {
+    body: '<path fill="currentColor" d="M256 16c-36.446 0-73.264 13.433-139.97 40h279.94C329.263 29.433 292.445 16 256 16M95.344 72L64 448c56 28 112 31.5 168 31.938V240H112v-48h288v48H280v239.938C336 479.5 392 476 448 448L416.656 72zm64.875 88a8 8 0 0 1 7.78 8a8 8 0 0 1-16 0a8 8 0 0 1 8.22-8m48 0a8 8 0 0 1 7.78 8a8 8 0 0 1-16 0a8 8 0 0 1 8.22-8m48 0a8 8 0 0 1 7.78 8a8 8 0 0 1-16 0a8 8 0 0 1 8.22-8m48 0a8 8 0 0 1 7.78 8a8 8 0 0 1-16 0a8 8 0 0 1 8.22-8m48 0a8 8 0 0 1 7.78 8a8 8 0 0 1-16 0a8 8 0 0 1 8.22-8M248 240v240q4 .002 8 0c4-.002 5.333.002 8 0V240zm-120 48h16v16h-16zm32 0h16v16h-16zm32 0h16v16h-16zm112 0h16v16h-16zm32 0h16v16h-16zm32 0h16v16h-16zm-240 32h16v16h-16zm32 0h16v16h-16zm32 0h16v16h-16zm112 0h16v16h-16zm32 0h16v16h-16zm32 0h16v16h-16zm-240 32h16v16h-16zm32 0h16v16h-16zm32 0h16v16h-16zm112 0h16v16h-16zm32 0h16v16h-16zm32 0h16v16h-16z"/>',
+    width: 512,
+    height: 512,
+  },
   'square-pen': {
     body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M11 2H9C4 2 2 4 2 9v6c0 5 2 7 7 7h6c5 0 7-2 7-7v-2"/><path stroke-miterlimit="10" d="M16.04 3.02L8.16 10.9c-.3.3-.6.89-.66 1.32l-.43 3.01c-.16 1.09.61 1.85 1.7 1.7l3.01-.43c.42-.06 1.01-.36 1.32-.66l7.88-7.88c1.36-1.36 2-2.94 0-4.94s-3.58-1.36-4.94 0"/><path stroke-miterlimit="10" d="M14.91 4.15a7.14 7.14 0 0 0 4.94 4.94"/></g>',
     width: 24,

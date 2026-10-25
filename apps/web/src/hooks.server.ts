@@ -6,6 +6,7 @@ import {
   shouldForceAllFlags,
 } from '@mesaaberta/core/server/flags/flags';
 import { extensionFlagDefaults } from '@mesaaberta/core/server/extensions/index';
+import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
 import { handleCanonicalRoutes } from '#lib/server/canonical-routes.js';
 import { handleAuth } from '#lib/server/auth/handle-auth.js';
@@ -30,6 +31,7 @@ import { paraglideMiddleware } from '#lib/paraglide/server.js';
 // request in the isolate reports as before.
 setTelemetrySink(sentrySink);
 setAppName('web');
+logInstalled();
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {

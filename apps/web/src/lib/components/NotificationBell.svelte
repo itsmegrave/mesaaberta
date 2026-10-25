@@ -53,20 +53,24 @@
 >
   <Popover.Trigger
     aria-label={label}
-    class="relative btn flex items-center hover:preset-tonal {labelled
-      ? 'min-h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm'
-      : 'size-11 justify-center rounded-full p-0'}"
+    class="relative btn flex items-center {labelled
+      ? 'h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm hover:bg-surface-200-800'
+      : 'size-11 justify-center rounded-full border border-surface-200-800 bg-panel p-0 hover:preset-tonal'}"
   >
-    <Icon name="bell" size={labelled ? 20 : 22} />
-    {#if labelled}<span aria-hidden="true" class="font-semibold">{m.notifications_title()}</span
+    <span class="flex shrink-0 {labelled ? 'text-muted' : ''}">
+      <Icon name="bell" size={20} />
+    </span>
+    {#if labelled}<span aria-hidden="true" class="flex-1 text-left font-semibold"
+        >{m.notifications_title()}</span
       >{/if}
     {#if unread > 0}
+      <!-- Counts are warning, never danger: they mean "needs attention", not an error. -->
       <span
         data-testid="notification-count"
         aria-hidden="true"
-        class="badge h-5 min-w-5 rounded-full preset-filled-error-500 px-1 text-xs font-bold {labelled
-          ? 'ml-auto'
-          : 'absolute top-1 right-1'}"
+        class="badge rounded-full preset-filled-warning-500 text-xs font-bold {labelled
+          ? 'h-5.5 min-w-5.5 px-1.5'
+          : 'absolute top-0 right-0 h-4 min-w-4 px-1'}"
       >
         {unread > 9 ? '9+' : unread}
       </span>

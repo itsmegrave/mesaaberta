@@ -149,13 +149,15 @@
     {busy}
   >
     {#snippet selects()}
-      <FilterSelect
-        id="instagram-filter"
-        name="instagram"
-        label={m.admin_instagram_filter()}
-        options={instagramOptions}
-        value={tables.instagram}
-      />
+      {#if data.socialInstalled}
+        <FilterSelect
+          id="instagram-filter"
+          name="instagram"
+          label={m.admin_instagram_filter()}
+          options={instagramOptions}
+          value={tables.instagram}
+        />
+      {/if}
     {/snippet}
     {#snippet segments()}
       <SegmentedFilter
@@ -173,15 +175,17 @@
           options={statusOptions}
           value={tables.status}
         />
-        <FilterSelect
-          id="instagram-filter-sheet"
-          name="instagram"
-          label={m.admin_instagram_filter()}
-          options={instagramOptions}
-          value={tables.instagram}
-          class="w-full"
-          inDialog
-        />
+        {#if data.socialInstalled}
+          <FilterSelect
+            id="instagram-filter-sheet"
+            name="instagram"
+            label={m.admin_instagram_filter()}
+            options={instagramOptions}
+            value={tables.instagram}
+            class="w-full"
+            inDialog
+          />
+        {/if}
       </div>
     {/snippet}
     {#snippet cell(row: Row, id: string)}
@@ -204,7 +208,7 @@
       {:else if id === 'status'}
         <div class="grid justify-items-start gap-1">
           <StatusBadge status={`table:${row.status}` as Status} />
-          <PostStatus status={row.instagramStatus} />
+          {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
         </div>
       {:else if id === 'actions'}
         {#if publishing === row.id}<Spinner />{:else}
@@ -231,7 +235,7 @@
           <span class="text-sm text-muted"
             >{m.admin_tables_seats_phone({ taken: row.seats, capacity: row.capacity })}</span
           >
-          <PostStatus status={row.instagramStatus} />
+          {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
         {/snippet}
         {#snippet action()}
           <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />

@@ -28,11 +28,11 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
     expect(lit('/t')).toBe(false);
   });
 
-  it('lights Parceiros on the partners pages', () => {
-    location.pathname = '/p/new';
-    render(BottomTabBar);
+  it('lights Admin on the admin pages', () => {
+    location.pathname = '/admin/users';
+    render(BottomTabBar, { isAdmin: true });
 
-    expect(lit('/p')).toBe(true);
+    expect(lit('/admin')).toBe(true);
     expect(lit('/t')).toBe(false);
   });
 
@@ -42,7 +42,6 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
       location.pathname = pathname;
       render(BottomTabBar);
       expect(lit('/t')).toBe(false);
-      expect(lit('/p')).toBe(false);
       expect(lit('/cf')).toBe(false);
       expect(lit('/u/tables')).toBe(false);
     },
