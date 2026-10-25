@@ -1,6 +1,7 @@
 <script lang="ts">
   // The page numbers under a list: previous, the first, the last and the ones around the current
   // (with "…" where numbers are left out), next. Plain links, so every page has an address.
+  // `compact` is the member pages' shorter form: previous, "Página 2 de 5", next.
   import Icon from '#lib/components/Icon.svelte';
   import { pageWindow } from '@mesaaberta/core/admin/list';
   import { m } from '#lib/paraglide/messages.js';
@@ -9,21 +10,50 @@
     page,
     pages,
     href,
+    compact = false,
+    class: className = '',
   }: {
     page: number;
     pages: number;
     /** The address of a page, already canonical, keeping the list's filters. */
     href: (page: number) => string;
+    compact?: boolean;
+    /** The spacing around it. */
+    class?: string;
   } = $props();
 
   const numbers = $derived(pageWindow(page, pages));
   const box =
     'inline-flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums no-underline';
+  const step = 'btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50';
 </script>
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -- the hrefs arrive already canonical -->
-{#if pages > 1}
-  <nav aria-label={m.admin_pagination()} class="flex flex-wrap items-center gap-1">
+{#if pages > 1 && compact}
+  <nav
+    aria-label={m.admin_pagination()}
+    class="{className} flex flex-wrap items-center justify-center gap-3"
+  >
+    {#if page > 1}
+      <a
+        class={step}
+        href={href(page - 1)}
+        aria-label={m.admin_profile_previous()}
+        title={m.admin_profile_previous()}><Icon name="chevron-left" /></a
+      >
+    {/if}
+    <span class="font-semibold">{m.admin_profile_page({ page, pages })}</span>
+    {#if page < pages}
+      <a
+        class={step}
+        href={href(page + 1)}
+        aria-label={m.admin_profile_next()}
+        title={m.admin_profile_next()}><Icon name="chevron-right" /></a
+      >
+    {/if}
+  </nav>
+{:else if pages > 1}
+  <nav aria-label={m.admin_pagination()} class="{className} flex flex-wrap items-center gap-1">
     {#if page > 1}
       <a
         class="{box} hover:preset-tonal"

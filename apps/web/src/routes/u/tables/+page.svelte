@@ -10,6 +10,7 @@
   import { pageHref } from '#lib/admin/page-href.js';
   import Icon from '#lib/components/Icon.svelte';
   import KebabMenu from '#lib/components/KebabMenu.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data: serverData } = $props();
@@ -240,30 +241,11 @@
     </div>
   </Tabs>
 
-  {#if data.pages > 1}
-    <nav
-      aria-label={m.admin_pagination()}
-      class="mt-10 flex flex-wrap items-center justify-center gap-3"
-    >
-      {#if data.page > 1}
-        <a
-          class="btn size-12 rounded-lg border border-surface-200-800 p-0"
-          href={pageHref('/u/tables', page.url.searchParams, data.page - 1)}
-          aria-label={m.admin_profile_previous()}
-          title={m.admin_profile_previous()}><Icon name="chevron-left" /></a
-        >
-      {/if}
-      <span class="font-semibold"
-        >{m.admin_profile_page({ page: data.page, pages: data.pages })}</span
-      >
-      {#if data.page < data.pages}
-        <a
-          class="btn size-12 rounded-lg border border-surface-200-800 p-0"
-          href={pageHref('/u/tables', page.url.searchParams, data.page + 1)}
-          aria-label={m.admin_profile_next()}
-          title={m.admin_profile_next()}><Icon name="chevron-right" /></a
-        >
-      {/if}
-    </nav>
-  {/if}
+  <Pager
+    compact
+    class="mt-10"
+    page={data.page}
+    pages={data.pages}
+    href={(number) => pageHref('/u/tables', page.url.searchParams, number)}
+  />
 </section>
