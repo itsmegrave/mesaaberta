@@ -2058,6 +2058,8 @@
   "upload_lede": "Envie uma nova imagem e ajuste o enquadramento.",
   "upload_drop": "Arraste e solte ou clique para enviar uma imagem",
   "upload_formats": "PNG, JPEG ou WebP · até 2 MB",
+  "upload_recommended_photo": "Recomendado: 512 × 512 px (quadrada)",
+  "upload_recommended_cover": "Recomendado: 1600 × 400 px (proporção 4:1)",
   "upload_close": "Fechar",
   "upload_replace": "Trocar imagem",
   "upload_send": "Enviar imagem",
