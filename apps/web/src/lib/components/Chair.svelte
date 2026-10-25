@@ -5,6 +5,13 @@
 
   // The person is the app's meeple (game-icons:meeple), the same icon as every person elsewhere.
   const meeple = DRAWINGS['game-icons:meeple'].body.match(/ d="([^"]+)"/)?.[1] ?? '';
+
+  /** The taken seats' colours, in order around the table (SeatDots, SeatRing, TableIllustration). */
+  export const SEAT_COLOURS = [
+    'fill-success-500 stroke-success-500',
+    'fill-tertiary-400 stroke-tertiary-400',
+    'fill-secondary-300 stroke-secondary-300',
+  ];
 </script>
 
 <script lang="ts">

@@ -2,7 +2,8 @@
   // A table seen from above with its chairs around it, drawn as the hero draws them. The first chair,
   // at the top, is the GM's (the three seat colours at once, the meeple with a 1px ink border), so a table with 5 seats shows 6 chairs; then the taken seats
   // clockwise in the seat colours, then the free ones as unfilled meeples in the light lamp colour.
-  import Chair from './Chair.svelte';
+  import Chair, { SEAT_COLOURS } from './Chair.svelte';
+  import { m } from '#lib/paraglide/messages.js';
 
   interface Props {
     capacity: number;
@@ -13,12 +14,6 @@
   }
 
   let { capacity = 5, seatsLeft = 0, size = 64, label, class: className = '' }: Props = $props();
-
-  const SEAT_COLOURS = [
-    'fill-success-500 stroke-success-500',
-    'fill-tertiary-400 stroke-tertiary-400',
-    'fill-secondary-300 stroke-secondary-300',
-  ];
 
   const players = $derived(Math.max(1, capacity));
   const occupied = $derived(Math.max(0, players - Math.max(0, seatsLeft)));
@@ -54,7 +49,7 @@
   height={size}
   viewBox="0 0 100 100"
   role="img"
-  aria-label={label ?? `${occupied} de ${players} vagas ocupadas`}
+  aria-label={label ?? m.dash_seats_taken({ taken: occupied, capacity: players })}
   class="shrink-0 {className}"
 >
   <!-- Central table surface -->

@@ -264,7 +264,9 @@
       </p>
       <div class="flex items-center gap-3">
         <SeatDots taken={3} capacity={6} />
-        <span class="text-sm font-semibold text-muted">3 de 6 vagas ocupadas</span>
+        <span class="text-sm font-semibold text-muted"
+          >{m.dash_seats_taken({ taken: 3, capacity: 6 })}</span
+        >
       </div>
       <div class="flex items-center gap-3 rounded-lg bg-lamp-wash p-3">
         {@render stars(18)}
@@ -319,7 +321,9 @@
       </div>
       <div class="flex items-center gap-3">
         <SeatDots taken={3} capacity={5} />
-        <span class="text-sm font-semibold text-muted">3 de 5 vagas ocupadas</span>
+        <span class="text-sm font-semibold text-muted"
+          >{m.dash_seats_taken({ taken: 3, capacity: 5 })}</span
+        >
       </div>
       <div>
         <p class="mb-2 flex items-center gap-2 text-base font-semibold">
