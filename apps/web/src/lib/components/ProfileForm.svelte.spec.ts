@@ -19,6 +19,7 @@ const empty: ProfileInput = {
   gender: '',
   genderOther: '',
   city: '',
+  bio: '',
   timezone: '',
   linkNetwork: [],
   linkUrl: [],
@@ -49,7 +50,27 @@ const urls = () =>
     .elements()
     .map((el) => (el as HTMLInputElement).value);
 
+const fields = () =>
+  [...document.querySelectorAll<HTMLInputElement>('form [name]')].map((input) => input.name);
+
 describe('ProfileForm', () => {
+  it('shows only the fields of the part of "Editar perfil" it is for', async () => {
+    const form = initialForm({ ...empty, username: 'ana', bio: 'Horror cósmico.' });
+    render(ProfileForm, { form, section: 'public', checkUsername: vi.fn() });
+    expect(fields()).toEqual(expect.arrayContaining(['name', 'bio']));
+    expect(fields()).not.toEqual(expect.arrayContaining(['username']));
+    expect(fields()).not.toEqual(expect.arrayContaining(['city']));
+    await expect.element(page.getByLabelText(/^Bio/)).toHaveValue('Horror cósmico.');
+  });
+
+  it('shows the age, gender, city and timezone fields on "Sobre você"', async () => {
+    const form = initialForm({ ...empty, username: 'ana' });
+    render(ProfileForm, { form, section: 'about', checkUsername: vi.fn() });
+    expect(fields()).toEqual(expect.arrayContaining(['city', 'timezone']));
+    expect(fields()).not.toEqual(expect.arrayContaining(['name']));
+    expect(fields()).not.toEqual(expect.arrayContaining(['bio']));
+  });
+
   it('is a plain POST form where every field has a label and only the username is required', async () => {
     await setup();
 

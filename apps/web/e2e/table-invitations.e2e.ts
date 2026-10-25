@@ -83,13 +83,13 @@ test('profile opt-out and a GM block cancel pending reservations without revivin
   browser,
 }) => {
   const { host, guest, href } = await setup(browser);
-  await guest.page.goto('/u/profile/edit');
+  await guest.page.goto('/u/profile/edit/messages');
   await guest.page.getByRole('button', { name: 'Desativar convites', exact: true }).click();
   await expect(guest.page.getByText('Convites desativados', { exact: true })).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByText('Convite cancelado', { exact: true })).toBeVisible();
   await guest.page.getByRole('button', { name: 'Bloquear convites deste mestre' }).click();
-  await guest.page.goto('/u/profile/edit');
+  await guest.page.goto('/u/profile/edit/messages');
   await guest.page.getByRole('button', { name: 'Permitir convites', exact: true }).click();
   await expect(guest.page.getByRole('button', { name: 'Desbloquear convites' })).toBeVisible();
   await guest.page.getByRole('button', { name: 'Desbloquear convites' }).click();

@@ -344,6 +344,13 @@
       "when": 1792937615414,
       "tag": "0048_registration_rating_opened",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792944203979,
+      "tag": "0049_profile_banner_bio",
+      "breakpoints": true
     }
   ]
 }

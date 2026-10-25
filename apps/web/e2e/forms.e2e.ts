@@ -53,7 +53,7 @@ test('a profile that was only opened is left without asking, even when the form 
 }) => {
   // A new person has no timezone: the form offers the browser's, which is not an edit of theirs.
   const { page, context } = await asUser(browser, await createUser('Pessoa Nova'));
-  await page.goto('/u/profile/edit');
+  await page.goto('/u/profile/edit/about');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
   await homeLink(page).click();

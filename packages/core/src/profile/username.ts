@@ -41,6 +41,7 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'reset-password',
   'signup',
   'tables',
+  'widgets',
   // Words a profile URL or a page could want later, in both languages.
   'about',
   'ajuda',

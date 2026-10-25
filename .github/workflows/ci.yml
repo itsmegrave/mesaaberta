@@ -178,6 +178,10 @@ jobs:
       # tests sign up, confirm by email and reset passwords for real. It also runs the migrations.
       - run: bun run e2e:up
       - run: bun run test:e2e --shard=${{ matrix.shard }}
+      # The page snapshot of each failed test, in the log: the report artifact is not always at hand.
+      - name: Print the failure context
+        if: failure()
+        run: find apps/web/test-results -name error-context.md -print -exec cat {} \; || true
       - run: bun run supabase stop
         if: always()
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

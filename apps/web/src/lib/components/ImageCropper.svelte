@@ -19,8 +19,10 @@
     aspectRatio = 1,
     width = 512,
     round = false,
+    bare = false,
     onconfirm,
     oncancel,
+    onreplace,
     onunreadable,
   }: {
     /** The picture chosen, before any framing. */
@@ -31,8 +33,15 @@
     width?: number;
     /** Shows the preview as a circle, for pictures that are drawn round. */
     round?: boolean;
+    /**
+     * Drawn in place, without a dialog of its own: for a dialog that already holds the drop zone
+     * (UploadDialog), which gives the title.
+     */
+    bare?: boolean;
     onconfirm: (cropped: File) => void;
     oncancel: () => void;
+    /** Offers "Trocar imagem": back to picking another file. */
+    onreplace?: () => void;
     /** The file is not a picture the browser can draw: the form should send it as it is. */
     onunreadable?: () => void;
   } = $props();
@@ -116,72 +125,89 @@
   onDestroy(() => cropper?.element?.remove?.());
 </script>
 
-<Dialog
-  defaultOpen
-  onOpenChange={(details) => {
-    if (!details.open) oncancel();
-  }}
->
-  <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-    <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <Dialog.Content
-        class="max-h-full w-full max-w-lg overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
+{#snippet controls()}
+  <div bind:this={stage} class="mt-4 overflow-hidden rounded-lg">
+    <img bind:this={image} src={url} alt="" class="hidden" onerror={() => onunreadable?.()} />
+  </div>
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <Button
+      size="custom"
+      type="button"
+      class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
+      aria-label={m.image_crop_zoom_out()}
+      onclick={() => zoom(-0.1)}>−</Button
+    >
+    <Button
+      size="custom"
+      type="button"
+      class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
+      aria-label={m.image_crop_zoom_in()}
+      onclick={() => zoom(0.1)}><Icon name="plus" size={18} /></Button
+    >
+    <div class="ml-auto flex items-center gap-3">
+      <span class="text-sm text-muted">{m.image_crop_preview()}</span>
+      <div
+        bind:this={preview}
+        data-testid="crop-preview"
+        class="size-20 overflow-hidden bg-surface-200-800 {round ? 'rounded-full' : 'rounded-lg'}"
+      ></div>
+    </div>
+  </div>
+  {#if failed}
+    <p role="alert" class="mt-3 text-sm font-semibold text-error-700-300">
+      {m.image_crop_failed()}
+    </p>
+  {/if}
+  <div class="mt-6 flex flex-wrap justify-end gap-3">
+    {#if onreplace}
+      <Button
+        size="custom"
+        type="button"
+        class="mr-auto btn h-12 rounded-lg px-4 font-semibold hover:preset-tonal"
+        onclick={onreplace}>{m.upload_replace()}</Button
       >
-        <Dialog.Title class="text-xl font-semibold">{m.image_crop_title()}</Dialog.Title>
-        <Dialog.Description class="mt-2 text-surface-700-300"
-          >{m.image_crop_hint()}</Dialog.Description
+    {/if}
+    <Button
+      size="custom"
+      type="button"
+      class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+      onclick={oncancel}>{m.image_crop_cancel()}</Button
+    >
+    <Button
+      size="custom"
+      type="button"
+      class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+      disabled={busy}
+      onclick={confirm}>{m.image_crop_use()}</Button
+    >
+  </div>
+{/snippet}
+
+{#if bare}
+  <div>
+    <p class="text-sm text-surface-700-300">{m.image_crop_hint()}</p>
+    {@render controls()}
+  </div>
+{:else}
+  <Dialog
+    defaultOpen
+    onOpenChange={(details) => {
+      if (!details.open) oncancel();
+    }}
+  >
+    <Portal>
+      <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
+      <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <Dialog.Content
+          class="max-h-full w-full max-w-lg overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
         >
-        <div bind:this={stage} class="mt-4 overflow-hidden rounded-lg">
-          <img bind:this={image} src={url} alt="" class="hidden" onerror={() => onunreadable?.()} />
-        </div>
-        <div class="mt-4 flex flex-wrap items-center gap-3">
-          <Button
-            size="custom"
-            type="button"
-            class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
-            aria-label={m.image_crop_zoom_out()}
-            onclick={() => zoom(-0.1)}>−</Button
+          <Dialog.Title class="text-xl font-semibold">{m.image_crop_title()}</Dialog.Title>
+          <Dialog.Description class="mt-2 text-surface-700-300"
+            >{m.image_crop_hint()}</Dialog.Description
           >
-          <Button
-            size="custom"
-            type="button"
-            class="btn size-12 rounded-lg border-2 border-surface-200-800 hover:preset-tonal"
-            aria-label={m.image_crop_zoom_in()}
-            onclick={() => zoom(0.1)}><Icon name="plus" size={18} /></Button
-          >
-          <div class="ml-auto flex items-center gap-3">
-            <span class="text-sm text-muted">{m.image_crop_preview()}</span>
-            <div
-              bind:this={preview}
-              data-testid="crop-preview"
-              class="size-20 overflow-hidden bg-surface-200-800 {round
-                ? 'rounded-full'
-                : 'rounded-lg'}"
-            ></div>
-          </div>
-        </div>
-        {#if failed}
-          <p role="alert" class="mt-3 text-sm font-semibold text-error-700-300">
-            {m.image_crop_failed()}
-          </p>
-        {/if}
-        <div class="mt-6 flex flex-wrap justify-end gap-3">
-          <Button
-            size="custom"
-            type="button"
-            class="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-            onclick={oncancel}>{m.image_crop_cancel()}</Button
-          >
-          <Button
-            size="custom"
-            type="button"
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold"
-            disabled={busy}
-            onclick={confirm}>{m.image_crop_use()}</Button
-          >
-        </div>
-      </Dialog.Content>
-    </Dialog.Positioner>
-  </Portal>
-</Dialog>
+          {@render controls()}
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Portal>
+  </Dialog>
+{/if}

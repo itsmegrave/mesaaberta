@@ -37,6 +37,8 @@ beforeAll(async () => {
       directMessagesEnabled: false,
       avatarPath: 'uploaded.png',
       avatarUrl: 'https://cdn.discordapp.com/provider.png',
+      bannerPath: `${id(1)}/banners/capa.webp`,
+      bio: 'Mestro horror cósmico.\nSessão zero antes de tudo.',
       banReason: 'Private moderation',
     },
     { id: id(2), username: 'jogador-bia' },
@@ -138,6 +140,8 @@ describe('public profiles', () => {
     const data = (await read())!;
     expect(Object.keys(data.profile).sort()).toEqual([
       'avatarUrl',
+      'bannerUrl',
+      'bio',
       'links',
       'rating',
       'totals',
@@ -195,6 +199,17 @@ describe('public profiles', () => {
       'https://cdn.discordapp.com/provider.png',
     );
     expect((await read('sem-mesas'))?.profile.avatarUrl).toBeNull();
+  });
+
+  it('shows the cover and the bio the person wrote, and nothing when they wrote none', async () => {
+    const data = (await read())!;
+    expect(data.profile.bannerUrl).toBe(
+      `https://example.supabase.co/storage/v1/object/public/profile-avatars/${id(1)}/banners/capa.webp`,
+    );
+    expect(data.profile.bio).toBe('Mestro horror cósmico.\nSessão zero antes de tudo.');
+    const bare = (await read('sem-mesas'))!;
+    expect(bare.profile.bannerUrl).toBeNull();
+    expect(bare.profile.bio).toBeNull();
   });
 
   it('has an empty state for a person who has never run a table', async () => {

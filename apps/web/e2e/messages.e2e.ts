@@ -108,7 +108,7 @@ test('turning direct messages off hides "Mandar mensagem ao mestre"', async ({ b
   const gmSession = await asUser(browser, gm);
   const slug = await createTable(gmSession.page, { title: uniqueTitle('Mesa') });
 
-  await gmSession.page.goto('/u/profile/edit');
+  await gmSession.page.goto('/u/profile/edit/messages');
   await gmSession.page.getByText('Receber mensagens diretas', { exact: true }).click();
   await expect(gmSession.page.getByText('Preferência salva.')).toBeVisible();
 

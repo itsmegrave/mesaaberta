@@ -58,7 +58,7 @@ describe('startLink', () => {
     expect(supabase.auth.linkIdentity).toHaveBeenCalledWith({
       provider: 'discord',
       options: {
-        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/u/profile/edit?conta=conectada')}`,
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/u/profile/edit/account?conta=conectada')}`,
         skipBrowserRedirect: true,
       },
     });
