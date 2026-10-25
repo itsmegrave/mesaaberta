@@ -182,7 +182,11 @@
       <!-- Quem mestra: the picture, the label over the name, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
         <div class="flex min-w-0 items-center gap-4">
-          <MAAvatar src={data.gm?.avatarUrl ?? null} name={data.gm?.name ?? table.gmName} size={44} />
+          <MAAvatar
+            src={data.gm?.avatarUrl ?? null}
+            name={data.gm?.name ?? table.gmName}
+            size={44}
+          />
           <p class="min-w-0">
             <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
             {#if data.gmUsername}
@@ -345,7 +349,7 @@
         </a>
       {/if}
       {#if data.signedIn && !data.isGm && data.gmAcceptsDirect}
-        <!-- Opened from the title menu ("Mandar mensagem ao mestre"). -->
+        <!-- Opened from the title menu ("Mandar mensagem para quem mestra"). -->
         <ActionForm action="?/talk" class="hidden">
           <button id="talk-to-gm" type="submit" tabindex="-1" aria-hidden="true"></button>
         </ActionForm>

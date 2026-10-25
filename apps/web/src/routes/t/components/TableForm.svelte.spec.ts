@@ -136,7 +136,7 @@ describe('TableForm', () => {
       .element(page.getByLabelText(/Mínimo de participantes/))
       .toHaveAttribute('aria-invalid', 'true');
     await expect
-      .element(page.getByLabelText(/Mínimo de jogadores/))
+      .element(page.getByLabelText(/Mínimo de participantes/))
       .toHaveAttribute('aria-describedby', 'minPlayers-hint minPlayers-error');
   });
 
