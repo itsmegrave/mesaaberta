@@ -220,6 +220,14 @@ describe('table:rate', () => {
     expect(rateBlocker(member, facts)).toBe(reason);
   });
 
+  it('refuses a player the GM marked absent, but not one with no word on attendance', () => {
+    expect(rateBlocker(member, { ...ready, attended: false })).toBe('absent');
+    expect(can(member, 'table:rate', { ...ready, attended: false })).toBe(false);
+    expect(rateBlocker(member, { ...ready, attended: true })).toBeNull();
+    // Sessions confirmed before attendance existed have no word, and keep today's rule.
+    expect(rateBlocker(member, { ...ready, attended: null })).toBeNull();
+  });
+
   it('says nothing about the table to someone who may not rate anyway', () => {
     expect(rateBlocker(gm, { ...ready, firstSessionEnded: false })).toBe('forbidden');
     expect(rateBlocker(null, ready)).toBe('forbidden');

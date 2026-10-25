@@ -41,6 +41,7 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
       gmName: publicName(gm.username),
       systemName: systems.name,
       status: registrations.status,
+      attended: registrations.attended,
       gmScore: ratings.gmScore,
     })
     .from(registrations)
@@ -72,6 +73,7 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
           registration: row.status,
           tableStatus: row.tableStatus,
           firstSessionEnded: firstSessionEnded(row, now),
+          attended: row.attended,
         }) === null,
       rating: row.gmScore === null ? null : { gmScore: row.gmScore },
     })),

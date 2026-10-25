@@ -64,7 +64,12 @@ export type DomainEvent =
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
   // The GM confirmed the session happened, or that it did not.
-  | { type: 'TableConcluded'; payload: { tableId: string; slug: string; title: string } }
+  // `absentPlayerIds` are the confirmed players the GM said did not show up (they cannot rate the
+  // GM and are not asked to). Absent when attendance was not recorded.
+  | {
+      type: 'TableConcluded';
+      payload: { tableId: string; slug: string; title: string; absentPlayerIds?: string[] };
+    }
   | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
   // A player asked for a seat at a table that approves each one. Takes no seat.
   | { type: 'JoinRequested'; payload: Registration }

@@ -1,7 +1,7 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, playerInvitations } from '../db/schema';
+import { gameTables, playerInvitations, registrations } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Forbidden, Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
@@ -86,6 +86,7 @@ async function findAwaiting(db: AnyDb, actor: Actor | null, slug: string) {
 /**
  * Runs one answer to "did it happen?". The update takes the table only while it still waits for the
  * answer, so two answers at once (or a double click) cannot both win: the second one is refused.
+ * With `presentPlayerIds`, the confirmed players not in it are marked absent and the rest present.
  */
 async function answer(
   db: AnyDb,
@@ -97,6 +98,7 @@ async function answer(
   ) => Partial<typeof gameTables.$inferInsert>,
   event: 'TableConcluded' | 'TableNotHeld' | 'TableUpdated',
   changes?: Changes,
+  presentPlayerIds?: string[],
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
 
@@ -115,6 +117,9 @@ async function answer(
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
       .returning({ id: gameTables.id });
     if (!updated) throw new Forbidden('table:confirm');
+    const absentPlayerIds = presentPlayerIds
+      ? await markAttendance(tx as unknown as AnyDb, table.id, presentPlayerIds)
+      : undefined;
 
     await cancelPendingInvitations(
       tx as unknown as AnyDb,
@@ -129,6 +134,7 @@ async function answer(
         slug: table.slug,
         title: table.title,
         ...(changes ? { changes } : {}),
+        ...(absentPlayerIds ? { absentPlayerIds } : {}),
       },
     });
   });
@@ -136,9 +142,42 @@ async function answer(
   return { eventId };
 }
 
-/** The GM says the session happened: the table is concluded, and its players are asked to rate it. */
-export const concludeTable = (db: AnyDb, actor: Actor | null, slug: string) =>
-  answer(db, actor, slug, 'HAPPENED', () => ({}), 'TableConcluded');
+/**
+ * Records who showed up: the confirmed players in `presentPlayerIds` attended and every other
+ * confirmed player did not. Ids that hold no confirmed seat are ignored. Answers the absent ids.
+ */
+async function markAttendance(
+  tx: AnyDb,
+  tableId: string,
+  presentPlayerIds: string[],
+): Promise<string[]> {
+  const seated = await tx
+    .select({ id: registrations.playerId })
+    .from(registrations)
+    .where(and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed')));
+  const present = new Set(presentPlayerIds);
+  const absent = seated.map(({ id }) => id).filter((id) => !present.has(id));
+  const inTable = and(eq(registrations.tableId, tableId), eq(registrations.status, 'confirmed'));
+  await tx.update(registrations).set({ attended: true }).where(inTable);
+  if (absent.length > 0) {
+    await tx
+      .update(registrations)
+      .set({ attended: false })
+      .where(and(inTable, inArray(registrations.playerId, absent)));
+  }
+  return absent;
+}
+
+/**
+ * The GM says the session happened: the table is concluded, and its players are asked to rate it.
+ * With `presentPlayerIds` the GM also says who showed up; the absent ones are not asked and cannot rate.
+ */
+export const concludeTable = (
+  db: AnyDb,
+  actor: Actor | null,
+  slug: string,
+  presentPlayerIds?: string[],
+) => answer(db, actor, slug, 'HAPPENED', () => ({}), 'TableConcluded', undefined, presentPlayerIds);
 
 /** The GM says the session did not happen. Nobody is notified and nothing can be rated. */
 export const markTableNotHeld = (db: AnyDb, actor: Actor | null, slug: string) =>

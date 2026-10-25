@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
-import { events, gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
+import {
+  events,
+  gameTables,
+  profiles,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { findTableBySlug, listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
@@ -26,6 +32,8 @@ beforeAll(async () => {
   await test.db.insert(profiles).values([
     { id: id(1), username: 'mestra' },
     { id: id(2), username: 'curiosa' },
+    { id: id(3), username: 'sumida' },
+    { id: id(4), username: 'pedinte' },
   ]);
 });
 afterAll(() => test.close());
@@ -140,6 +148,48 @@ describe('answering', () => {
     expect(await eventsOf(table.id)).toEqual([
       expect.objectContaining({ id: eventId, type: 'TableConcluded', actorId: gm.id }),
     ]);
+  });
+
+  it('marks who showed up when the GM says who was present: the others are absent', async () => {
+    const table = await waiting();
+    await test.db.insert(registrations).values([
+      { tableId: table.id, playerId: id(2), status: 'confirmed' },
+      { tableId: table.id, playerId: id(3), status: 'confirmed' },
+      // A request with no seat is not part of the session.
+      { tableId: table.id, playerId: id(4), status: 'pending' },
+    ]);
+
+    await concludeTable(test.db, gm, table.slug, [id(2)]);
+
+    const attended = Object.fromEntries(
+      (await test.db.select().from(registrations).where(eq(registrations.tableId, table.id))).map(
+        (row) => [row.playerId, row.attended],
+      ),
+    );
+    expect(attended).toEqual({ [id(2)]: true, [id(3)]: false, [id(4)]: null });
+    expect(await eventsOf(table.id)).toEqual([
+      expect.objectContaining({
+        type: 'TableConcluded',
+        payload: expect.objectContaining({ absentPlayerIds: [id(3)] }),
+      }),
+    ]);
+  });
+
+  it('records no attendance when the GM is not asked, so nobody is blocked from rating', async () => {
+    const table = await waiting();
+    await test.db
+      .insert(registrations)
+      .values({ tableId: table.id, playerId: id(2), status: 'confirmed' });
+
+    await concludeTable(test.db, gm, table.slug);
+
+    const [seat] = await test.db
+      .select()
+      .from(registrations)
+      .where(eq(registrations.tableId, table.id));
+    expect(seat.attended).toBeNull();
+    const [event] = await eventsOf(table.id);
+    expect(event.payload).not.toHaveProperty('absentPlayerIds');
   });
 
   it('marks the table not held when the GM says it did not happen, which is not a cancellation', async () => {

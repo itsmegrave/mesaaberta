@@ -500,6 +500,8 @@
   "manage_confirm_title": "A data da mesa já passou",
   "manage_confirm_text": "A mesa aconteceu? Se sim, pedimos aos jogadores que avaliem o mestre. Se não, ela fica como não realizada. Você também pode adiar para uma nova data: a mesa volta a ficar aberta até lá.",
   "manage_confirm_happened": "Aconteceu",
+  "manage_attendance_title": "Quem compareceu?",
+  "manage_attendance_hint": "Desmarque quem faltou. Só quem compareceu é convidado a avaliar o mestre.",
   "manage_confirm_not_held": "Não aconteceu",
   "manage_confirm_postpone": "Adiar",
   "manage_confirm_postpone_label": "Nova data e horário",

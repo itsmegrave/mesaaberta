@@ -62,12 +62,15 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
       };
     case 'TableAwaitingConfirmation':
       return { to: [gmId], type: 'session_confirmation', link: manage };
-    case 'TableConcluded':
+    case 'TableConcluded': {
+      // Whoever the GM marked absent is not asked to rate.
+      const absent = new Set(event.payload.absentPlayerIds ?? []);
       return {
-        to: await confirmedPlayers(db, event.payload.tableId),
+        to: (await confirmedPlayers(db, event.payload.tableId)).filter((id) => !absent.has(id)),
         type: 'rating_prompt',
         link: page,
       };
+    }
     case 'JoinRequested':
       return { to: [gmId], type: 'join_requested', link: manage };
     case 'PlayerJoined':
