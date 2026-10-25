@@ -59,4 +59,18 @@ describe('the privy package boundary', () => {
       );
     expect(offenders).toEqual([]);
   });
+
+  it('keeps the installed extensions out of the code the browser bundles', () => {
+    // A private build installs extensions whose server code cannot run in a browser (Instagram's
+    // resvg .wasm). The web app's universal files (components, +page.ts, +layout.ts, #lib outside
+    // server/) are bundled for the browser too, so they must not import a module that loads the
+    // installed list: use observe-load.ts, not observe.ts.
+    const loadsInstalled =
+      /^@mesaaberta\/core\/server\/extensions(?:\/(?:index|installed|observe))?$/;
+    const offenders = sources(join(REPO, 'apps/web/src'))
+      .map((file) => relative(REPO, file))
+      .filter((file) => !/\.spec\.ts$|\.server\.ts$|\+server\.ts$|\/server\//.test(file))
+      .filter((file) => specifiers(join(REPO, file)).some((spec) => loadsInstalled.test(spec)));
+    expect(offenders).toEqual([]);
+  });
 });
