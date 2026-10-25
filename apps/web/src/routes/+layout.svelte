@@ -14,6 +14,7 @@
   import { refreshAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
   import ChatDrawer from '#lib/components/ChatDrawer.svelte';
+  import ExtensionWidgets from '#lib/components/ExtensionWidgets.svelte';
   import AccountMenu from '#lib/components/AccountMenu.svelte';
   import BottomTabBar from '#lib/components/BottomTabBar.svelte';
   import ListSkeleton, { type SkeletonKind } from '#lib/components/ListSkeleton.svelte';
@@ -208,6 +209,9 @@
             viewerId={data.cacheIdentity ?? 'anonymous'}
             unread={badges.data?.messages ?? data.account.messagesUnread}
           />{/key}
+      {/if}
+      {#if data.account && !data.maintenance}
+        {#key data.cacheIdentity}<ExtensionWidgets />{/key}
       {/if}
 
       <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
