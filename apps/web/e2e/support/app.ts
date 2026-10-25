@@ -216,3 +216,9 @@ export async function adminSection(page: Page, isMobile: boolean, name: string) 
   await page.getByRole('button', { name: /^Seção: / }).click();
   return page.getByRole('menuitem', { name, exact: true });
 }
+
+/** Opens a collapsible section (MAAccordion) when it is closed. On a wide screen a phone-only one is already open. */
+export async function openSection(page: Page, name: RegExp) {
+  const toggle = page.getByRole('button', { name, expanded: false });
+  if ((await toggle.count()) > 0) await toggle.first().click();
+}

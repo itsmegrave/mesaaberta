@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { asset } from '$app/paths';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
@@ -8,6 +8,8 @@
   import TableIllustration from '#lib/components/ui/TableIllustration.svelte';
   import StatusBadge from '#lib/components/ui/StatusBadge.svelte';
   import Pager from '#lib/components/ui/Pager.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import { kinds, releaseHref, type ChangeKind } from '#lib/changelog.js';
   import { copyText } from '#lib/clipboard.js';
   import { toast } from '#lib/toaster.js';
@@ -17,8 +19,19 @@
   let { data } = $props();
   let slide = $state(0);
   let hydrated = $state(false);
+  // On a phone only the newest month starts open, and the month a link points at (#2026-10-25). A
+  // new page or filter starts again from its newest month.
+  let openMonths = $derived(data.entries[0] ? [data.entries[0].date.slice(0, 7)] : []);
+  const openLinkedDay = async () => {
+    const day = decodeURIComponent(location.hash.slice(1));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || openMonths.includes(day.slice(0, 7))) return;
+    openMonths = [...openMonths, day.slice(0, 7)];
+    await tick();
+    document.getElementById(day)?.scrollIntoView();
+  };
   onMount(() => {
     hydrated = true;
+    void openLinkedDay();
   });
   const highlight = $derived(data.highlights[slide]);
   const preview = $derived(highlight.preview);
@@ -216,107 +229,115 @@
         {/each}
       </nav>
       {#if !data.entries.length}<p role="status">{m.changelog_empty()}</p>{/if}
-      {#each months as group (group.month)}
-        <section class="flex flex-col gap-4 md:gap-8" aria-labelledby="month-{group.month}">
-          <h2 id="month-{group.month}" class="text-2xl font-semibold tracking-tight md:text-3xl">
-            {capitalized(date(`${group.month}-01`, { month: 'long', year: 'numeric' }))}
-          </h2>
-          <ol class="flex flex-col gap-4 md:gap-0">
-            {#each group.entries as entry, index (entry.date)}
-              <li class="flex gap-6">
-                <div class="hidden w-18 shrink-0 flex-col items-center md:flex" aria-hidden="true">
-                  {@render dateBox(entry.date, 'w-18 bg-panel pt-2 pb-2.5 text-3xl')}
-                  {#if index < group.entries.length - 1}<span
-                      class="mt-2 w-0.5 flex-1 bg-surface-200-800"
-                    ></span>{/if}
-                </div>
-                <article
-                  id={entry.date}
-                  aria-labelledby="{entry.date}-title"
-                  class="min-w-0 flex-1 scroll-mt-4 rounded-lg border border-surface-200-800 bg-panel px-4 py-5 md:mb-8 md:scroll-mt-6 md:p-6"
-                >
-                  <div class="flex items-start gap-3.5 md:items-center md:justify-between">
-                    <div class="md:hidden" aria-hidden="true">
-                      {@render dateBox(entry.date, 'w-14 bg-surface-50-950 pt-1.5 pb-2 text-2xl')}
-                    </div>
-                    <div class="flex min-w-0 flex-col md:contents">
-                      {#if entry.date === data.highlights[0].date}<span
-                          class="mb-1.5 inline-flex h-6 items-center self-start rounded-full bg-surface-wash px-2.5 text-xs font-semibold md:hidden"
-                          >{m.changelog_latest()}</span
-                        >{/if}
-                      <h3
-                        id="{entry.date}-title"
-                        class="text-xl leading-tight font-semibold tracking-tight md:hidden"
+      <MAAccordion collapse="phone" bind:value={openMonths}>
+        {#each months as group (group.month)}
+          <MAAccordionItem
+            value={group.month}
+            title={capitalized(date(`${group.month}-01`, { month: 'long', year: 'numeric' }))}
+            summary={m.changelog_month_summary({ count: group.entries.length })}
+            titleClass="text-2xl font-semibold tracking-tight md:text-3xl"
+            class="md:mt-8"
+          >
+            <ol class="flex flex-col gap-4 md:gap-0">
+              {#each group.entries as entry, index (entry.date)}
+                <li class="flex gap-6">
+                  <div
+                    class="hidden w-18 shrink-0 flex-col items-center md:flex"
+                    aria-hidden="true"
+                  >
+                    {@render dateBox(entry.date, 'w-18 bg-panel pt-2 pb-2.5 text-3xl')}
+                    {#if index < group.entries.length - 1}<span
+                        class="mt-2 w-0.5 flex-1 bg-surface-200-800"
+                      ></span>{/if}
+                  </div>
+                  <article
+                    id={entry.date}
+                    aria-labelledby="{entry.date}-title"
+                    class="min-w-0 flex-1 scroll-mt-4 rounded-lg border border-surface-200-800 bg-panel px-4 py-5 md:mb-8 md:scroll-mt-6 md:p-6"
+                  >
+                    <div class="flex items-start gap-3.5 md:items-center md:justify-between">
+                      <div class="md:hidden" aria-hidden="true">
+                        {@render dateBox(entry.date, 'w-14 bg-surface-50-950 pt-1.5 pb-2 text-2xl')}
+                      </div>
+                      <div class="flex min-w-0 flex-col md:contents">
+                        {#if entry.date === data.highlights[0].date}<span
+                            class="mb-1.5 inline-flex h-6 items-center self-start rounded-full bg-surface-wash px-2.5 text-xs font-semibold md:hidden"
+                            >{m.changelog_latest()}</span
+                          >{/if}
+                        <h3
+                          id="{entry.date}-title"
+                          class="text-xl leading-tight font-semibold tracking-tight md:hidden"
+                        >
+                          {entry.title}
+                        </h3>
+                        <a
+                          href={releaseHref(entry.date)}
+                          class="mt-1 text-sm font-semibold text-muted hover:underline md:mt-0"
+                          ><time datetime={entry.date}
+                            >{capitalized(
+                              date(entry.date, {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              }),
+                            )}</time
+                          >
+                          · {m.changelog_count({ count: entry.changes.length })}</a
+                        >
+                      </div>
+                      <MAButton
+                        disabled={!hydrated}
+                        size="custom"
+                        class="-mt-1.5 -mr-2 ml-auto inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold text-muted md:-my-2 md:ml-0 md:w-auto md:px-3"
+                        aria-label={m.changelog_copy({ date: day(entry.date) })}
+                        title={m.changelog_copy_label()}
+                        onclick={() => copy(entry.date)}
+                        ><Icon name="copy" size={16} /><span class="hidden md:inline"
+                          >{m.changelog_copy_label()}</span
+                        ></MAButton
                       >
+                    </div>
+                    <div class="mt-2 hidden flex-wrap items-center gap-3 md:flex">
+                      <h3 class="text-2xl leading-tight font-semibold tracking-tight">
                         {entry.title}
                       </h3>
-                      <a
-                        href={releaseHref(entry.date)}
-                        class="mt-1 text-sm font-semibold text-muted hover:underline md:mt-0"
-                        ><time datetime={entry.date}
-                          >{capitalized(
-                            date(entry.date, {
-                              weekday: 'long',
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            }),
-                          )}</time
-                        >
-                        · {m.changelog_count({ count: entry.changes.length })}</a
-                      >
+                      {#if entry.date === data.highlights[0].date}<span
+                          class="inline-flex h-6 items-center rounded-full bg-surface-wash px-2.5 text-xs font-semibold"
+                          >{m.changelog_latest()}</span
+                        >{/if}
                     </div>
-                    <MAButton
-                      disabled={!hydrated}
-                      size="custom"
-                      class="-mt-1.5 -mr-2 ml-auto inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold text-muted md:-my-2 md:ml-0 md:w-auto md:px-3"
-                      aria-label={m.changelog_copy({ date: day(entry.date) })}
-                      title={m.changelog_copy_label()}
-                      onclick={() => copy(entry.date)}
-                      ><Icon name="copy" size={16} /><span class="hidden md:inline"
-                        >{m.changelog_copy_label()}</span
-                      ></MAButton
-                    >
-                  </div>
-                  <div class="mt-2 hidden flex-wrap items-center gap-3 md:flex">
-                    <h3 class="text-2xl leading-tight font-semibold tracking-tight">
-                      {entry.title}
-                    </h3>
-                    {#if entry.date === data.highlights[0].date}<span
-                        class="inline-flex h-6 items-center rounded-full bg-surface-wash px-2.5 text-xs font-semibold"
-                        >{m.changelog_latest()}</span
-                      >{/if}
-                  </div>
-                  <p class="mt-2 hidden leading-relaxed text-muted md:block">{entry.summary}</p>
-                  <ul class="mt-4 border-t border-surface-200-800 md:mt-5">
-                    {#each entry.changes as change (change.title)}
-                      <li class="border-b border-surface-200-800 py-3 md:flex md:gap-4 md:py-3.5">
-                        <div class="md:flex md:h-6.5 md:w-28 md:shrink-0 md:items-center">
-                          <StatusBadge
-                            status={`changelog:${change.kind}`}
-                            class="h-auto border-0 bg-transparent px-0 text-xs"
-                          />
-                        </div>
-                        <div class="min-w-0">
-                          <h4 class="mt-1.5 font-semibold md:mt-0">{change.title}</h4>
-                          <p class="mt-0.5 max-w-prose leading-relaxed text-muted">
-                            {change.description}
-                          </p>
-                          {#if change.href}<a
-                              class="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-link underline underline-offset-4 md:min-h-8"
-                              href={change.href}
-                              >{m.changelog_details()} <Icon name="arrow-right" size={14} /></a
-                            >{/if}
-                        </div>
-                      </li>
-                    {/each}
-                  </ul>
-                </article>
-              </li>
-            {/each}
-          </ol>
-        </section>
-      {/each}
+                    <p class="mt-2 hidden leading-relaxed text-muted md:block">{entry.summary}</p>
+                    <ul class="mt-4 border-t border-surface-200-800 md:mt-5">
+                      {#each entry.changes as change (change.title)}
+                        <li class="border-b border-surface-200-800 py-3 md:flex md:gap-4 md:py-3.5">
+                          <div class="md:flex md:h-6.5 md:w-28 md:shrink-0 md:items-center">
+                            <StatusBadge
+                              status={`changelog:${change.kind}`}
+                              class="h-auto border-0 bg-transparent px-0 text-xs"
+                            />
+                          </div>
+                          <div class="min-w-0">
+                            <h4 class="mt-1.5 font-semibold md:mt-0">{change.title}</h4>
+                            <p class="mt-0.5 max-w-prose leading-relaxed text-muted">
+                              {change.description}
+                            </p>
+                            {#if change.href}<a
+                                class="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-link underline underline-offset-4 md:min-h-8"
+                                href={change.href}
+                                >{m.changelog_details()} <Icon name="arrow-right" size={14} /></a
+                              >{/if}
+                          </div>
+                        </li>
+                      {/each}
+                    </ul>
+                  </article>
+                </li>
+              {/each}
+            </ol>
+          </MAAccordionItem>
+        {/each}
+      </MAAccordion>
       <Pager compact page={data.page} pages={data.pages} href={(page) => href(data.kind, page)} />
     </div>
     <aside class="flex flex-col gap-6 lg:w-96 lg:shrink-0" aria-label={m.changelog_guide()}>

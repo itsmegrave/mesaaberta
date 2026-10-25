@@ -7,6 +7,8 @@
   import AuditTimeline from '../../components/ui/AuditTimeline.svelte';
   import DetailList from '#lib/components/ui/DetailList.svelte';
   import DetailRow from '#lib/components/ui/DetailRow.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import Panel from '#lib/components/ui/Panel.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -215,26 +217,39 @@
       </DetailList>
     </Panel>
 
-    <Panel title={m.admin_user_activity()}>
-      <DetailList class="mt-3">
-        <DetailRow label={m.admin_user_playing()} class="text-sm tabular-nums"
-          >{activity.playing}</DetailRow
+    <Panel>
+      <MAAccordion collapse="phone" value={reported >= TABLE_REPORTS_WARNING ? ['activity'] : []}>
+        <MAAccordionItem
+          value="activity"
+          title={m.admin_user_activity()}
+          summary={m.admin_user_activity_summary({
+            playing: activity.playing,
+            running: activity.running,
+            reports: reported,
+          })}
         >
-        <DetailRow label={m.admin_user_running()} class="text-sm tabular-nums"
-          >{activity.running}</DetailRow
-        >
-        <DetailRow label={m.admin_user_rating()} class="text-sm"
-          ><GmRating rating={activity.rating} /></DetailRow
-        >
-        <DetailRow label={m.admin_user_reports()} class="text-sm tabular-nums">{reported}</DetailRow
-        >
-      </DetailList>
-      {#if reported >= TABLE_REPORTS_WARNING && !ban}
-        <p role="note" class="mt-3 flex items-start gap-2 text-sm font-semibold">
-          <Icon name="triangle-alert" size={18} class="mt-0.5 text-warning-700-300" />
-          {m.admin_table_reports_warning()}
-        </p>
-      {/if}
+          <DetailList>
+            <DetailRow label={m.admin_user_playing()} class="text-sm tabular-nums"
+              >{activity.playing}</DetailRow
+            >
+            <DetailRow label={m.admin_user_running()} class="text-sm tabular-nums"
+              >{activity.running}</DetailRow
+            >
+            <DetailRow label={m.admin_user_rating()} class="text-sm"
+              ><GmRating rating={activity.rating} /></DetailRow
+            >
+            <DetailRow label={m.admin_user_reports()} class="text-sm tabular-nums"
+              >{reported}</DetailRow
+            >
+          </DetailList>
+          {#if reported >= TABLE_REPORTS_WARNING && !ban}
+            <p role="note" class="mt-3 flex items-start gap-2 text-sm font-semibold">
+              <Icon name="triangle-alert" size={18} class="mt-0.5 text-warning-700-300" />
+              {m.admin_table_reports_warning()}
+            </p>
+          {/if}
+        </MAAccordionItem>
+      </MAAccordion>
     </Panel>
   </div>
 
