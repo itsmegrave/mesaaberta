@@ -35,8 +35,8 @@ Raw `<input>`, `<select>`, `<textarea>`, `<button>` and `<form>` appear only in 
 
 - **Wrappers.** `Form`, `ActionForm`, `TextInput`, `TextArea`, `SelectInput` and the test harnesses under `src/lib/forms` and `src/lib/query`.
 - **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and keep the form working without JavaScript.
-- **Radio groups and checkboxes** in `TableForm`, `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and no-JS submission, and Skeleton has no standalone radio group or checkbox.
-- **Native `<select>`** in `ProfileForm`, because a positioned popup needs inline styles, which the CSP forbids, and the `SearchSelect` no-JS fallback.
+- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and no-JS submission, and Skeleton has no standalone radio group or checkbox.
+- **No native `<select>`.** Pickers, including `ProfileForm`'s age range, gender and timezone, use `SearchSelect` (Skeleton's Combobox), which submits its picks as hidden inputs.
 
 Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui-migration-plan.md).
 
