@@ -1,4 +1,5 @@
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readTableFilters } from '#lib/tables/filters.js';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -47,7 +48,7 @@ export const read = async ({ locals, url }: RequestEvent) => {
           until: table.until ? new Date(table.until) : null,
         })),
       }
-    : await readTables(locals.db, filters, new Date());
+    : await readTables(locals.db, filters, publicReadNow());
 
   return {
     ...answer,

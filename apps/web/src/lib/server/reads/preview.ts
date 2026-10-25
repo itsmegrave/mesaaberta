@@ -1,4 +1,5 @@
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readViaApi } from '../api-read';
@@ -28,7 +29,7 @@ export const read = async ({ locals }: RequestEvent) => {
             until: table.until ? new Date(table.until) : null,
           })),
         }
-      : await readPreview(locals.db, new Date());
+      : await readPreview(locals.db, publicReadNow());
 
     return {
       tables: tables.map(({ imagePath, ...table }) => ({

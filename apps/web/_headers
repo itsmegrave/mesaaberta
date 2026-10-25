@@ -1,0 +1,16 @@
+# Cache lifetimes for the files in `static/`. adapter-cloudflare reads this file from here (not
+# from `static/`), copies it into the build and appends its own rule for `/_app/immutable/*`.
+# Without a rule these files answer `max-age=0, must-revalidate`, so every visit revalidates them.
+# None of them has a hash in its name: a replaced icon can take up to a day to show.
+/favicon.ico
+  Cache-Control: public, max-age=86400
+/favicon-*.png
+  Cache-Control: public, max-age=86400
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+/android-chrome-*.png
+  Cache-Control: public, max-age=86400
+/site.webmanifest
+  Cache-Control: public, max-age=86400
+/fonts/*
+  Cache-Control: public, max-age=604800
