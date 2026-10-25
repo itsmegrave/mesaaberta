@@ -3,20 +3,17 @@
   import SubmitButton from '#lib/components/SubmitButton.svelte';
   import AuthShell from '#lib/components/AuthShell.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fromResult } from '#lib/forms/contract.js';
   import Form from '#lib/components/Form.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import EmailField from '#lib/components/EmailField.svelte';
   import { resolve } from '$app/paths';
   import { emailSchema } from '#lib/auth/credentials.js';
-  import FormField from '#lib/components/FormField.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
   // svelte-ignore state_referenced_locally
-  const initial = result?.form ?? data.form;
   const controller = actionForm({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(result?.form ?? data.form),
     schema: emailSchema,
     domain: 'account',
     onSuccess: () => {},
@@ -52,24 +49,10 @@
           : null}
       />
 
-      <FormField
-        id="email"
-        label={m.auth_email()}
+      <EmailField
+        bind:value={() => controller.values.email, (value) => controller.change('email', value)}
         error={controller.errors.email ? m.auth_error_email() : undefined}
-      >
-        {#snippet children(aria)}
-          <TextInput
-            id="email"
-            name="email"
-            type="email"
-            required
-            autocomplete="email"
-            bind:value={() => controller.values.email, (value) => controller.change('email', value)}
-            class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-            {...aria}
-          />
-        {/snippet}
-      </FormField>
+      />
 
       <div>
         <SubmitButton

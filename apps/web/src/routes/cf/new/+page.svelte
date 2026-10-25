@@ -16,6 +16,7 @@
   import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
   import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
+  import { fromResult } from '#lib/forms/contract.js';
   import { fieldErrors, problem } from '#lib/forms/field-errors.js';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -34,11 +35,8 @@
     image?: File;
   };
   // svelte-ignore state_referenced_locally
-  const initial = form?.form ?? data.form;
   const controller = actionForm<Values>({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(form?.form ?? data.form),
     schema: crowdfundingFormSchema,
     onSuccess: () => toast.success(m.crowdfunding_form_published()),
     errorMessage: m.form_error_unavailable,

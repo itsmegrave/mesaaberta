@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createSchema, mergeSchema } from '@mesaaberta/core/admin/catalog';
 import { z } from 'zod';
-import { validateFormData, validateStringForm } from './contract';
+import { fromResult, validateFormData, validateStringForm } from './contract';
 
 const fields = ['kind', 'name', 'id', 'into'];
 const form = (values: Record<string, string>) => {
@@ -77,5 +77,22 @@ describe('compound native POST decoding', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.enabled).toEqual(['invalid']);
     expect(result.data.image).toEqual(image);
+  });
+});
+
+describe('fromResult', () => {
+  it("starts a form from a result's values, errors and message", () => {
+    expect(
+      fromResult({
+        valid: false,
+        data: { email: 'ana@example.com' },
+        errors: { email: ['invalid_format'] },
+        message: { code: 'rate_limited' },
+      }),
+    ).toEqual({
+      initial: { email: 'ana@example.com' },
+      initialErrors: { email: ['invalid_format'] },
+      initialMessage: { code: 'rate_limited' },
+    });
   });
 });

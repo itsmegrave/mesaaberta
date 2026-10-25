@@ -14,7 +14,7 @@
   import FormSection from '#lib/components/ui/FormSection.svelte';
   import TextInput from '#lib/components/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import type { FormResult } from '#lib/forms/contract.js';
+  import { fromResult, type FormResult } from '#lib/forms/contract.js';
   import { fieldErrors, problem } from '#lib/forms/field-errors.js';
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -64,9 +64,7 @@
 
   // svelte-ignore state_referenced_locally
   const controller = actionForm<Values>({
-    initial: initial.data,
-    initialErrors: initial.errors,
-    initialMessage: initial.message,
+    ...fromResult(initial),
     schema: mode === 'edit' ? editPartnerSchema : newPartnerSchema,
     onSuccess: () => toast.success(m.partner_form_sent()),
     errorMessage: m.form_error_unavailable,

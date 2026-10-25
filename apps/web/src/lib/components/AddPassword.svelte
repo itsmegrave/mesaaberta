@@ -6,9 +6,9 @@
   import { addPasswordFormSchema } from '@mesaaberta/core/auth/password-setup';
   import FormBanner from '#lib/components/FormBanner.svelte';
   import Form from '#lib/components/Form.svelte';
-  import FormField from '#lib/components/FormField.svelte';
+  import AuthField from '#lib/components/AuthField.svelte';
   import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
+  import PasswordField from '#lib/components/PasswordField.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -89,70 +89,40 @@
     {:else}
       <p role="status" class="mt-3 text-sm font-semibold">{m.password_add_sent()}</p>
       <Form action="?/addPassword" onsubmit={setting.submit} class="mt-5 grid max-w-sm gap-4">
-        <FormField id="password-code" label={m.password_add_code()} error={fieldProblem('code')}>
-          {#snippet children(aria)}
-            <TextInput
-              id="password-code"
-              name="code"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              required
-              minlength={6}
-              maxlength={6}
-              bind:value={() => setting.values.code, (value) => setting.change('code', value)}
-              class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
+        <AuthField
+          id="password-code"
+          name="code"
+          label={m.password_add_code()}
+          error={fieldProblem('code')}
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          required
+          minlength={6}
+          maxlength={6}
+          bind:value={() => setting.values.code, (value) => setting.change('code', value)}
+        />
 
-        <FormField
+        <PasswordField
           id="password-new"
+          name="password"
           label={m.password_add_password()}
           hint={m.auth_password_hint()}
           error={fieldProblem('password')}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="password-new"
-              name="password"
-              type="password"
-              required
-              minlength={8}
-              maxlength={72}
-              autocomplete="new-password"
-              bind:value={
-                () => setting.values.password, (value) => setting.change('password', value)
-              }
-              class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
+          autocomplete="new-password"
+          bind:value={() => setting.values.password, (value) => setting.change('password', value)}
+        />
 
-        <FormField
+        <PasswordField
           id="password-confirm"
+          name="passwordConfirm"
           label={m.password_add_confirm()}
           error={setting.errors.passwordConfirm ? m.auth_error_mismatch() : undefined}
-        >
-          {#snippet children(aria)}
-            <TextInput
-              id="password-confirm"
-              name="passwordConfirm"
-              type="password"
-              required
-              minlength={8}
-              maxlength={72}
-              autocomplete="new-password"
-              bind:value={
-                () => setting.values.passwordConfirm,
-                (value) => setting.change('passwordConfirm', value)
-              }
-              class="input h-12 w-full rounded-lg border-2 border-surface-600-400 bg-panel px-4 text-base"
-              {...aria}
-            />
-          {/snippet}
-        </FormField>
+          autocomplete="new-password"
+          bind:value={
+            () => setting.values.passwordConfirm,
+            (value) => setting.change('passwordConfirm', value)
+          }
+        />
 
         <SubmitButton
           submitting={setting.pending}
