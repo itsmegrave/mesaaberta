@@ -12,6 +12,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
   if (!locals.db) error(503);
   return {
     ...(await admin.load(locals.db, locals.env)),
+    section: admin.section ?? null,
     connected: url.searchParams.get('connected') === '1',
     connectionError: url.searchParams.has('connection_error'),
   };

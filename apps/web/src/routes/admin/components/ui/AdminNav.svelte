@@ -3,23 +3,34 @@
   // The admin's sections as a column beside the content, in groups, with what waits on an admin
   // counted beside them. Phones have no column: the page head holds the "Seção: …" menu instead.
   import Icon from '#lib/components/ui/Icon.svelte';
-  import { adminGroups, sectionOf, type AdminCounts } from '#lib/admin/sections.js';
+  import {
+    adminGroups,
+    sectionOf,
+    type AdminCounts,
+    type ExtensionSection,
+  } from '#lib/admin/sections.js';
   import { m } from '#lib/paraglide/messages.js';
 
   let {
     route,
+    path,
     counts,
     connectionsPath,
+    sections = [],
   }: {
     /** The route id of the page, to mark its section. */
     route: string | null;
+    /** The page's path, which tells apart the extensions' sections (they share one route). */
+    path?: string;
     counts: AdminCounts;
     /** The connections page, when an installed extension has a panel on it. */
     connectionsPath: string | null;
+    /** The installed extensions' own sections. */
+    sections?: readonly ExtensionSection[];
   } = $props();
 
-  const groups = $derived(adminGroups(counts, connectionsPath));
-  const current = $derived(sectionOf(groups, route));
+  const groups = $derived(adminGroups(counts, connectionsPath, sections));
+  const current = $derived(sectionOf(groups, route, path));
 </script>
 
 <!-- 236px wide (59 × 4px) and sticky at the top of the content. -->

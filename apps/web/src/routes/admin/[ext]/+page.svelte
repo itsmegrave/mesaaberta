@@ -5,12 +5,14 @@
 
   let { data }: { data: PageData } = $props();
   const { Panel } = $derived(data);
+  // An extension with a section of its own names it; the others are panels of the connections page.
+  const title = $derived(data.section?.label ?? m.admin_connections_title());
 </script>
 
 <AdminPage
-  title={m.admin_connections_title()}
-  tabTitle={`${m.admin_connections_title()} · Mesa Aberta`}
-  lede={m.admin_connections_description()}
+  {title}
+  tabTitle={`${title} · Mesa Aberta`}
+  lede={data.section?.lede ?? m.admin_connections_description()}
 >
   <Panel {data} />
 </AdminPage>

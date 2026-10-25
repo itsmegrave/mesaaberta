@@ -40,4 +40,23 @@ describe('AdminNav', () => {
     await expect.element(nav.getByRole('link', { name: 'Denúncias 3' })).toBeVisible();
     await expect.element(nav.getByRole('link', { name: /^Conexões/ })).not.toBeInTheDocument();
   });
+
+  it('lists an extension with a section of its own, told apart from the connections page', async () => {
+    const sections = [{ path: '/admin/widgets', label: 'Enquetes', icon: 'no-such-icon' }];
+    render(AdminNav, {
+      route: '/admin/[ext]',
+      path: '/admin/widgets',
+      counts,
+      connectionsPath: '/admin/instagram',
+      sections,
+    });
+
+    const nav = page.getByRole('navigation', { name: 'Seções da administração' });
+    const polls = nav.getByRole('link', { name: 'Enquetes' });
+    await expect.element(polls).toHaveAttribute('href', '/admin/widgets');
+    await expect.element(polls).toHaveAttribute('aria-current', 'page');
+    await expect
+      .element(nav.getByRole('link', { name: 'Conexões 1' }))
+      .not.toHaveAttribute('aria-current');
+  });
 });
