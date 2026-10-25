@@ -102,13 +102,14 @@
     {#each list.ids as id, index (id)}
       {@const problem = rowErrors(index)}
       <li class="grid gap-1 border-b border-surface-200-800 pb-3 last:border-0 sm:border-0 sm:pb-0">
+        <!-- On a phone the buttons share the network's line and the address takes the next one. -->
         <div class="flex flex-wrap items-center gap-2">
           <SearchSelect
             id="{idPrefix}-network-{id}"
             name="linkNetwork"
             label={labels.network(index + 1)}
             labelClass="sr-only"
-            class="grid w-full sm:w-44 sm:shrink-0"
+            class="grid min-w-0 flex-1 sm:w-44 sm:flex-none"
             {items}
             value={[networks[index]]}
             placeholder={labels.network(index + 1)}
@@ -125,11 +126,11 @@
             placeholder={placeholder(networks[index])}
             aria-label={labels.url(index + 1, networks[index])}
             bind:value={urls[index]}
-            class="{inputClass} w-full min-w-0 sm:w-auto sm:flex-1"
+            class="{inputClass} order-last w-full min-w-0 sm:order-0 sm:w-auto sm:flex-1"
             aria-invalid={problem.url ? 'true' : undefined}
             aria-describedby={problem.url ? `${urlId(id)}-error` : undefined}
           />
-          <div class="ml-auto flex gap-1">
+          <div class="flex gap-1 sm:order-last">
             {#if reorder}
               <MAButton
                 size="custom"

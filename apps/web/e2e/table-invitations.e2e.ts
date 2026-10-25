@@ -84,16 +84,16 @@ test('profile opt-out and a GM block cancel pending reservations without revivin
 }) => {
   const { host, guest, href } = await setup(browser);
   await guest.page.goto('/u/profile/edit/messages');
-  await guest.page.getByRole('button', { name: 'Desativar convites', exact: true }).click();
-  await expect(guest.page.getByText('Convites desativados', { exact: true })).toBeVisible();
+  await guest.page.getByRole('button', { name: 'Não receber convites', exact: true }).click();
+  await expect(guest.page.getByText('Você não recebe convites.', { exact: true })).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByText('Convite cancelado', { exact: true })).toBeVisible();
-  await guest.page.getByRole('button', { name: 'Bloquear convites deste mestre' }).click();
+  await guest.page.getByRole('button', { name: 'Bloquear convites desta pessoa' }).click();
   await guest.page.goto('/u/profile/edit/messages');
-  await guest.page.getByRole('button', { name: 'Permitir convites', exact: true }).click();
+  await guest.page.getByRole('button', { name: 'Receber convites', exact: true }).click();
   await expect(guest.page.getByRole('button', { name: 'Desbloquear convites' })).toBeVisible();
   await guest.page.getByRole('button', { name: 'Desbloquear convites' }).click();
-  await expect(guest.page.getByText('Você não bloqueou convites de nenhum mestre.')).toBeVisible();
+  await expect(guest.page.getByText('Você não bloqueou convites de ninguém.')).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByRole('button', { name: 'Aceitar convite' })).toHaveCount(0);
   await host.context.close();
