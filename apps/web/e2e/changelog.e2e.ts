@@ -19,7 +19,7 @@ test('the footer opens release history, which filters changes and links older da
   await expect(entries.getByText('Novo', { exact: true })).toHaveCount(0);
   await expect(entries.getByText('Melhoria', { exact: true })).toHaveCount(0);
   await page.goto(releaseHref(oldest.date));
-  await expect(page.locator(`li[id="${oldest.date}"]`)).toBeVisible();
+  await expect(page.locator(`article[id="${oldest.date}"]`)).toBeVisible();
   const response = await page.goto('/novidades?page=999');
   expect(response?.status()).toBe(404);
 });
@@ -38,7 +38,7 @@ test('copying a release day shares its canonical address', async ({ page, contex
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto(releaseHref(oldest.date));
   await page
-    .locator(`li[id="${oldest.date}"]`)
+    .locator(`article[id="${oldest.date}"]`)
     .getByRole('button', { name: /^Copiar link de / })
     .click();
   await expect

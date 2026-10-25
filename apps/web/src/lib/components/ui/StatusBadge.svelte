@@ -60,8 +60,8 @@
   type Look = { label: () => string; dot: string; text?: 'muted' | 'danger' };
   const LOOKS: Record<Status, Look> = {
     'changelog:new': { label: () => m.changelog_new(), dot: 'bg-success-500' },
-    'changelog:improved': { label: () => m.changelog_improved(), dot: 'bg-secondary-500' },
-    'changelog:fixed': { label: () => m.changelog_fixed(), dot: 'bg-error-500' },
+    'changelog:improved': { label: () => m.changelog_improved(), dot: 'bg-secondary-300' },
+    'changelog:fixed': { label: () => m.changelog_fixed(), dot: 'bg-tertiary-400' },
     'user:active': { label: () => m.status_user_active(), dot: 'bg-success-500' },
     'user:suspended': { label: () => m.status_user_suspended(), dot: 'bg-warning-500' },
     'user:banned': { label: () => m.status_user_banned(), dot: 'bg-error-500', text: 'danger' },

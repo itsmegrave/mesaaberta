@@ -71,6 +71,7 @@ describe('usernameProblem', () => {
       'maintenance',
       'instagram',
       'changelog',
+      'novidades',
     ]) {
       expect(RESERVED_USERNAMES.has(route), route).toBe(true);
     }

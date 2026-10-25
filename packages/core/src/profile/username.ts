@@ -37,6 +37,7 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'maintenance',
   'messages',
   'notifications',
+  'novidades',
   'onboarding',
   'reset-password',
   'signup',

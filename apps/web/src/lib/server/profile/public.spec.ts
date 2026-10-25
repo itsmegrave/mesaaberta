@@ -231,6 +231,7 @@ describe('public profiles', () => {
     'maintenance',
     'instagram',
     'changelog',
+    'novidades',
     'bad_name',
   ])('does not expose unavailable or reserved profile %s', async (username) => {
     expect(await read(username)).toBeNull();
