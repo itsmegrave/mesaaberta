@@ -2,7 +2,9 @@
   import Icon from '#lib/components/Icon.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import EmptyState from '#lib/components/ui/EmptyState.svelte';
+  import PageHead from '#lib/components/ui/PageHead.svelte';
   import { navigating, page } from '$app/state';
   import ListSkeleton from '#lib/components/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
@@ -39,25 +41,18 @@
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <section class="py-2 md:pt-12">
-  <Breadcrumbs class="mb-8" items={[{ label: m.nav_tables() }]} />
-  <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
-    <div>
-      <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-        {m.tables_title()}
-      </h1>
-      <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
-        {m.tables_lede()}
-      </p>
-    </div>
-    <!-- On a phone the bottom tab bar already offers this action. -->
-    <a
-      href="/t/new"
-      class="btn hidden h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex"
-    >
-      <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
-      {m.tables_open_cta()}
-    </a>
-  </div>
+  <PageHead crumbs={[{ label: m.nav_tables() }]} title={m.tables_title()} lede={m.tables_lede()}>
+    {#snippet actions()}
+      <!-- On a phone the bottom tab bar already offers this action. -->
+      <a
+        href="/t/new"
+        class="btn hidden h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex"
+      >
+        <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
+        {m.tables_open_cta()}
+      </a>
+    {/snippet}
+  </PageHead>
 
   <TablesFilters
     systems={data.systems}
@@ -77,19 +72,16 @@
     <p role="status" class="mt-6 text-sm font-semibold text-muted">
       {m.tables_found({ count })}
     </p>
-    <ul class="mt-5 grid grid-cols-1 gap-4 md:mt-3 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <CardGrid class="mt-5 md:mt-3">
       {#each data.tables as table (table.slug)}
         <li><TableCard {table} /></li>
       {/each}
-    </ul>
+    </CardGrid>
   {:else}
-    <div class="mt-10 max-w-sm" role="status">
-      <p class="text-lg">
-        {anyFilter ? m.tables_empty_filtered() : m.tables_empty()}
-      </p>
-      {#if anyFilter}
-        <a href={listHref} class="mt-3 inline-block anchor">{m.tables_filter_clear()}</a>
-      {/if}
-    </div>
+    <EmptyState
+      text={anyFilter ? m.tables_empty_filtered() : m.tables_empty()}
+      clearHref={anyFilter ? listHref : undefined}
+      clearLabel={m.tables_filter_clear()}
+    />
   {/if}
 </section>

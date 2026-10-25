@@ -3,6 +3,7 @@
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import SeatDots from '#lib/components/SeatDots.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
   import TableIllustration from '#lib/components/TableIllustration.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -112,12 +113,12 @@
   </div>
 
   {#if data.tables.length > 0}
-    <ul class="mt-4 grid grid-cols-1 gap-4 md:mt-7 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <CardGrid class="mt-4 md:mt-7">
       {#each data.tables as table, i (table.slug)}
         <!-- The phone layout previews two tables; the third waits on the full list. -->
         <li class={i >= 2 ? 'hidden lg:block' : ''}><TableCard {table} /></li>
       {/each}
-    </ul>
+    </CardGrid>
     <a
       href="/t"
       class="mt-4 btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold md:hidden"

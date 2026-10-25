@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import Avatar from '#lib/components/Avatar.svelte';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import BadgeIcons from '#lib/components/BadgeIcons.svelte';
@@ -199,9 +200,9 @@
     {#if data.tables.length === 0}
       <p class="mt-4 text-muted">{m.public_profile_no_tables()}</p>
     {:else}
-      <ul class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+      <CardGrid class="mt-5">
         {#each data.tables as table (table.slug)}<li><TableCard {table} /></li>{/each}
-      </ul>
+      </CardGrid>
     {/if}
     {#if data.pages > 1}
       <nav
