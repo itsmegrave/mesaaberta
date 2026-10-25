@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
@@ -6,7 +7,7 @@
   import Media from '#lib/components/admin/Media.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
   import Icon from '#lib/components/Icon.svelte';
@@ -32,7 +33,6 @@
     { id: 'status', header: m.admin_crowdfunding_col_status(), width: 'w-52' },
     { id: 'sender', header: m.crowdfunding_sent_by_label(), width: 'w-40' },
     { id: 'reports', header: m.admin_crowdfunding_col_reports(), align: 'right', width: 'w-28' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
 
   // The row menu only picks; the dialog is mounted next to the list, so closing the menu keeps it.
@@ -97,17 +97,13 @@
     filtered={!!list.query || list.status !== 'up'}
     empty={m.admin_crowdfunding_empty()}
     sizes={false}
+    sheet
+    menu={(row: Row) => ({
+      name: m.admin_crowdfunding_action_label({ name: row.name }),
+      items: items(row),
+    })}
   >
     {#snippet segments()}
-      <SegmentedFilter
-        name="status"
-        label={m.admin_profile_status()}
-        {options}
-        value={list.status}
-        fallback="up"
-      />
-    {/snippet}
-    {#snippet sheet()}
       <SegmentedFilter
         name="status"
         label={m.admin_profile_status()}
@@ -152,15 +148,10 @@
         {/if}
       {:else if id === 'reports'}
         {row.reports}
-      {:else if id === 'actions'}
-        <KebabMenu
-          name={m.admin_crowdfunding_action_label({ name: row.name })}
-          items={items(row)}
-        />
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media
             kind="cover"
             src={row.cover}
@@ -191,12 +182,6 @@
               >{m.admin_crowdfunding_reports_phone({ count: row.reports })}</span
             >
           {/if}
-        {/snippet}
-        {#snippet action()}
-          <KebabMenu
-            name={m.admin_crowdfunding_action_label({ name: row.name })}
-            items={items(row)}
-          />
         {/snippet}
       </ListCard>
     {/snippet}

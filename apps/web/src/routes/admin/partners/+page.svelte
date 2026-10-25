@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
@@ -7,7 +8,7 @@
   import Media from '#lib/components/admin/Media.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import {
     approvePartnerSchema,
@@ -34,7 +35,6 @@
     { id: 'backlink', header: m.admin_partners_col_backlink(), width: 'w-40' },
     { id: 'sender', header: m.admin_partners_col_sender(), width: 'w-40' },
     { id: 'reports', header: m.admin_partners_col_reports(), align: 'right', width: 'w-28' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
 
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.
@@ -150,24 +150,13 @@
     filtered={!!list.query || list.status !== 'pending' || list.backlink !== 'any'}
     empty={m.admin_partners_empty()}
     sizes={false}
+    sheet
+    menu={(row: Row) => ({
+      name: m.admin_partners_action_label({ name: row.name }),
+      items: items(row),
+    })}
   >
     {#snippet segments()}
-      <SegmentedFilter
-        name="status"
-        label={m.admin_partners_status()}
-        options={statusOptions}
-        value={list.status}
-        fallback="pending"
-      />
-      <SegmentedFilter
-        name="backlink"
-        label={m.admin_partners_col_backlink()}
-        options={backlinkOptions}
-        value={list.backlink}
-        fallback="any"
-      />
-    {/snippet}
-    {#snippet sheet()}
       <SegmentedFilter
         name="status"
         label={m.admin_partners_status()}
@@ -252,12 +241,10 @@
         {/if}
       {:else if id === 'reports'}
         {row.reports}
-      {:else if id === 'actions'}
-        <KebabMenu name={m.admin_partners_action_label({ name: row.name })} items={items(row)} />
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media kind="avatar" src={row.logo} name={row.name} />{/snippet}
         {#snippet title()}{row.name}{/snippet}
         {#snippet meta()}
@@ -277,9 +264,6 @@
               >{m.admin_partners_reports_phone({ count: row.reports })}</span
             >
           {/if}
-        {/snippet}
-        {#snippet action()}
-          <KebabMenu name={m.admin_partners_action_label({ name: row.name })} items={items(row)} />
         {/snippet}
       </ListCard>
     {/snippet}

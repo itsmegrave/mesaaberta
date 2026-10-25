@@ -1,8 +1,12 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import DataTable, {
+    type DataColumn,
+    type FilterPlace,
+  } from '#lib/components/admin/DataTable.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
   import ListCard from '#lib/components/admin/ListCard.svelte';
   import Media from '#lib/components/admin/Media.svelte';
@@ -11,7 +15,7 @@
   import Button from '#lib/components/Button.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import Spinner from '#lib/components/Spinner.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
@@ -38,7 +42,6 @@
     { id: 'next', header: m.admin_tables_date(), sortable: true, width: 'w-40' },
     { id: 'seats', header: m.admin_tables_col_seats(), align: 'right', width: 'w-24' },
     { id: 'status', header: m.admin_tables_col_status(), width: 'w-56' },
-    { id: 'actions', header: m.admin_tables_actions(), hideHeader: true, width: 'w-16' },
   ];
   // The sort order the list opens on has no parameter; "Mesa" orders by title.
   const sort = $derived(tables.sort.id === 'created' ? null : tables.sort);
@@ -142,15 +145,23 @@
     {filtered}
     empty={m.admin_tables_empty()}
     {busy}
+    sheet
+    menu={(row: Row) => ({
+      name: m.admin_tables_action_label({ title: row.title }),
+      items: items(row),
+      busy: publishing === row.id,
+    })}
   >
-    {#snippet selects()}
+    {#snippet selects({ inSheet }: FilterPlace)}
       {#if data.socialInstalled}
         <FilterSelect
-          id="instagram-filter"
+          id={inSheet ? 'instagram-filter-sheet' : 'instagram-filter'}
           name="instagram"
           label={m.admin_instagram_filter()}
           options={instagramOptions}
           value={tables.instagram}
+          class={inSheet ? 'w-full' : 'w-56'}
+          inDialog={inSheet}
         />
       {/if}
     {/snippet}
@@ -161,27 +172,6 @@
         options={statusOptions}
         value={tables.status}
       />
-    {/snippet}
-    {#snippet sheet()}
-      <div class="grid gap-4">
-        <SegmentedFilter
-          name="status"
-          label={m.admin_profile_status()}
-          options={statusOptions}
-          value={tables.status}
-        />
-        {#if data.socialInstalled}
-          <FilterSelect
-            id="instagram-filter-sheet"
-            name="instagram"
-            label={m.admin_instagram_filter()}
-            options={instagramOptions}
-            value={tables.instagram}
-            class="w-full"
-            inDialog
-          />
-        {/if}
-      </div>
     {/snippet}
     {#snippet cell(row: Row, id: string)}
       {#if id === 'title'}
@@ -205,14 +195,10 @@
           <StatusBadge status={`table:${row.status}` as Status} />
           {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
         </div>
-      {:else if id === 'actions'}
-        {#if publishing === row.id}<Spinner />{:else}
-          <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
-        {/if}
       {/if}
     {/snippet}
-    {#snippet card(row: Row)}
-      <ListCard>
+    {#snippet card(row: Row, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media kind="cover" src={row.cover} />{/snippet}
         {#snippet title()}<a class="link-underline" href={href(row)}>{row.title}</a>{/snippet}
         {#snippet meta()}
@@ -231,9 +217,6 @@
             >{m.admin_tables_seats_phone({ taken: row.seats, capacity: row.capacity })}</span
           >
           {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
-        {/snippet}
-        {#snippet action()}
-          <KebabMenu name={m.admin_tables_action_label({ title: row.title })} items={items(row)} />
         {/snippet}
       </ListCard>
     {/snippet}

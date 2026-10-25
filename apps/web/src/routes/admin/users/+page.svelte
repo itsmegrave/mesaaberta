@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { copyText } from '#lib/clipboard.js';
   import { navigating, page as current } from '$app/state';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
@@ -6,7 +7,7 @@
   import ListCard from '#lib/components/admin/ListCard.svelte';
   import Media from '#lib/components/admin/Media.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
@@ -29,7 +30,6 @@
     { id: 'tables', header: m.admin_profile_tables(), width: 'w-56' },
     { id: 'joined', header: m.admin_profile_joined(), sortable: true, width: 'w-36' },
     { id: 'status', header: m.admin_profile_status(), width: 'w-40' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
   const tablesOf = (row: Profile) => {
     const parts = [
@@ -92,6 +92,7 @@
     filtered={!!profiles.query || profiles.status !== 'all'}
     empty={m.admin_profile_empty()}
     busy={remote.isFetching || !!navigating.to}
+    menu={(row: Profile) => ({ name: nameOf(row), items: menuOf(row) })}
   >
     {#snippet segments()}
       <SegmentedFilter
@@ -121,12 +122,10 @@
         <span class="tabular-nums">{shortDate(row.createdAt, locale)}</span>
       {:else if id === 'status'}
         <StatusBadge status={badge(row)} />
-      {:else if id === 'actions'}
-        <KebabMenu name={nameOf(row)} items={menuOf(row)} />
       {/if}
     {/snippet}
-    {#snippet card(row: Profile)}
-      <ListCard>
+    {#snippet card(row: Profile, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media
             kind="avatar"
             src={row.avatar}
@@ -147,7 +146,6 @@
           <StatusBadge status={badge(row)} />
           <span class="text-sm text-muted">{shortDate(row.createdAt, locale)}</span>
         {/snippet}
-        {#snippet action()}<KebabMenu name={nameOf(row)} items={menuOf(row)} />{/snippet}
       </ListCard>
     {/snippet}
   </DataTable>

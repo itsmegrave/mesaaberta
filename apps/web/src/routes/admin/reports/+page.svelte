@@ -1,11 +1,15 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import DataTable, {
+    type DataColumn,
+    type FilterPlace,
+  } from '#lib/components/admin/DataTable.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
   import ListCard from '#lib/components/admin/ListCard.svelte';
   import Media from '#lib/components/admin/Media.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
-  import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
+  import type { KebabItem } from '#lib/components/KebabMenu.svelte';
   import StatusBadge, { type Status } from '#lib/components/StatusBadge.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
@@ -29,7 +33,6 @@
     { id: 'reporter', header: m.admin_reports_col_reporter(), width: 'w-40' },
     { id: 'filed', header: m.admin_reports_filed(), sortable: true, width: 'w-40' },
     { id: 'status', header: m.admin_profile_status(), width: 'w-36' },
-    { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
   ];
 
   const isTable = (row: Report) => row.targetType === 'table';
@@ -97,14 +100,21 @@
     filterKeys={['status', 'target', 'page']}
     filtered={reports.status !== 'waiting' || reports.target !== 'all'}
     empty={m.admin_reports_empty()}
+    sheet
+    menu={(row: Report) => ({
+      name: m.admin_reports_action_label({ target: targetOf(row) }),
+      items: menuOf(row),
+    })}
   >
-    {#snippet selects()}
+    {#snippet selects({ inSheet }: FilterPlace)}
       <FilterSelect
-        id="target-filter"
+        id={inSheet ? 'target-filter-sheet' : 'target-filter'}
         name="target"
         label={m.admin_reports_target_filter()}
         options={targets}
         value={reports.target}
+        class={inSheet ? 'w-full' : 'w-56'}
+        inDialog={inSheet}
       />
     {/snippet}
     {#snippet segments()}
@@ -115,26 +125,6 @@
         value={reports.status}
         fallback="waiting"
       />
-    {/snippet}
-    {#snippet sheet()}
-      <div class="grid gap-4">
-        <SegmentedFilter
-          name="status"
-          label={m.admin_reports_filter()}
-          {options}
-          value={reports.status}
-          fallback="waiting"
-        />
-        <FilterSelect
-          id="target-filter-sheet"
-          name="target"
-          label={m.admin_reports_target_filter()}
-          options={targets}
-          value={reports.target}
-          class="w-full"
-          inDialog
-        />
-      </div>
     {/snippet}
     {#snippet cell(row: Report, id: string)}
       {#if id === 'target'}
@@ -174,15 +164,10 @@
         <p class="text-muted">{timeLabel(row.createdAt, locale, zone)}</p>
       {:else if id === 'status'}
         <StatusBadge status={badge(row)} />
-      {:else if id === 'actions'}
-        <KebabMenu
-          name={m.admin_reports_action_label({ target: targetOf(row) })}
-          items={menuOf(row)}
-        />
       {/if}
     {/snippet}
-    {#snippet card(row: Report)}
-      <ListCard>
+    {#snippet card(row: Report, action: Snippet | undefined)}
+      <ListCard {action}>
         {#snippet media()}<Media kind="icon" icon={iconOf(row)} />{/snippet}
         {#snippet title()}<a class="link-underline" href={href(row)}>{targetOf(row)}</a>{/snippet}
         {#snippet meta()}
@@ -194,12 +179,6 @@
           <p>{dayLabel(row.createdAt, locale, zone)} · {timeLabel(row.createdAt, locale, zone)}</p>
         {/snippet}
         {#snippet badges()}<StatusBadge status={badge(row)} />{/snippet}
-        {#snippet action()}
-          <KebabMenu
-            name={m.admin_reports_action_label({ target: targetOf(row) })}
-            items={menuOf(row)}
-          />
-        {/snippet}
       </ListCard>
     {/snippet}
   </DataTable>
