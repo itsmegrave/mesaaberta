@@ -17,7 +17,7 @@ export const publishInstagramAction = async ({ locals, request }: RequestEvent) 
     // render and the publish run in the background after this response.
     const profile = await locals.getProfile();
     const remote = profile
-      ? await extensionViaApi(locals, 'instagram', profile.id, 'queue', { tableId })
+      ? await extensionViaApi(locals, social.name, profile.id, 'queue', { tableId })
       : null;
     if (remote && 'invalid' in remote) return fail(400, { publishError: 'invalid' });
     const result =
