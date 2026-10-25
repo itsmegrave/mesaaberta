@@ -102,13 +102,7 @@
   </g>
 
   <g transform="translate({gmSeat.x} {gmSeat.y}) rotate({gmSeat.turn})">
-    <Chair
-      data-seat={0}
-      colour={onBrand ? 'stroke-surface-950' : 'stroke-surface-950-50'}
-      border={onBrand
-        ? 'fill-surface-950 stroke-surface-50'
-        : 'fill-surface-950-50 stroke-surface-50-950'}
-    />
+    <Chair data-seat={0} gm />
   </g>
 
   {#each players as player, i (i)}
