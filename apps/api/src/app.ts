@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { seoRoutes } from './seo';
 import { logger } from '@mesaaberta/core/server/logger';
 import { accountRoutes } from './account';
 import { ACTOR_HEADER } from './admin-guard';
@@ -17,6 +16,7 @@ import { passwordRoutes } from './password';
 import { registrationRoutes } from './registrations';
 import { readRoutes } from './reads';
 import { reportRoutes } from './reports';
+import { seoRoutes } from './seo';
 import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
 
@@ -80,8 +80,10 @@ export function createApi() {
   app.route('/v1/account', accountRoutes());
 
   // The read side, one resource at a time (the catalog first), behind `api_reads_<resource>`.
-  app.route('/v1/seo', seoRoutes());
   app.route('/v1/reads', readRoutes());
+  // The public sitemap's identifiers (published tables, active profiles). New and anonymous, so no
+  // flag and no web fallback: web answers 503 when this read fails.
+  app.route('/v1/seo', seoRoutes());
   // The admin pages' data (overview, users, tables), behind `api_reads_admin*`.
   app.route('/v1/admin-reads', adminReadRoutes());
 
