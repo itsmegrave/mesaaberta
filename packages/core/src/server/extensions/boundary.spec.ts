@@ -42,7 +42,7 @@ describe('the privy package boundary', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('reaches the public code only through @mesaaberta/core and its own files', () => {
+  it('reaches the public code only through @mesaaberta/core, its own files and, in a panel, the web app #lib', () => {
     const own = join(REPO, 'packages/privy');
     const offenders = sources(own)
       .filter((file) => !file.endsWith('.spec.ts'))
@@ -50,7 +50,9 @@ describe('the privy package boundary', () => {
         specifiers(file)
           .filter(
             (spec) =>
-              /^[#$]|^@sveltejs\//.test(spec) ||
+              // A panel is the web app's own UI, so only a .svelte file may use its `#lib` alias.
+              (/^#/.test(spec) && !(file.endsWith('.svelte') && spec.startsWith('#lib/'))) ||
+              /^\$|^@sveltejs\//.test(spec) ||
               (spec.startsWith('.') && !resolve(dirname(file), spec).startsWith(own)),
           )
           .map((spec) => `${relative(REPO, file)} -> ${spec}`),

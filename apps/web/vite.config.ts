@@ -1,16 +1,25 @@
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { paraglideOptions } from './paraglide.config.ts';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
+import { formActionOrigins } from './src/lib/extensions/origins.ts';
 import { hostAdapter, hostBindingsPath, hostSentry } from './host.config.ts';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
   // `#host` is the one place the web app names its host (see host.config.ts).
-  resolve: { alias: { '#host': hostBindingsPath } },
+  // `#lib` is also an alias, because the private package's panels (outside this app's own
+  // `package.json` imports map) reach the app's components through it.
+  resolve: {
+    alias: {
+      '#host': hostBindingsPath,
+      '#lib': fileURLToPath(new URL('./src/lib', import.meta.url)),
+    },
+  },
   // The Svelte libraries ship `.svelte` files, which only Vite can compile: they must go through it
   // and into the server bundle. (A Worker has no node_modules at run time, and Wrangler cannot load a
   // `.svelte` file.) SvelteKit 3 no longer bundles dependencies for SSR on its own. Not everything:
@@ -90,7 +99,7 @@ export default defineConfig({
           ],
           'object-src': ['none'],
           'base-uri': ['self'],
-          'form-action': ['self', 'https://www.instagram.com'],
+          'form-action': ['self', ...formActionOrigins],
           'frame-ancestors': ['none'],
         },
       },
@@ -116,7 +125,10 @@ export default defineConfig({
             provider: playwright(),
             instances: [{ browser: 'chromium', headless: true }],
           },
-          include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+          include: [
+            'src/**/*.svelte.{test,spec}.{js,ts}',
+            '../../packages/privy/**/*.svelte.{test,spec}.{js,ts}',
+          ],
           exclude: ['src/lib/server/**'],
         },
       },
@@ -141,6 +153,7 @@ export default defineConfig({
           ],
           exclude: [
             'src/**/*.svelte.{test,spec}.{js,ts}',
+            '../../packages/**/*.svelte.{test,spec}.{js,ts}',
             'src/**/*.integration.spec.ts',
             '../../packages/**/*.integration.spec.ts',
             '**/node_modules/**',

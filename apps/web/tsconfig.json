@@ -17,6 +17,6 @@
       "#lib/*": ["./src/lib/*"]
     }
   },
-  "include": ["src", "e2e", "*"],
+  "include": ["src", "e2e", "*", "../../packages/privy/src/**/*.svelte"],
   "exclude": ["src/service-worker"]
 }
