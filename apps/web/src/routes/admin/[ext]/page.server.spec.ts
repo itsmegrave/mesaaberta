@@ -72,6 +72,7 @@ describe('an extension’s panel page', () => {
     expect(await run(load, event())).toEqual({
       account: null,
       secretFree: true,
+      section: null,
       connected: false,
       connectionError: false,
     });

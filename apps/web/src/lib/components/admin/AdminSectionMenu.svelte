@@ -12,8 +12,10 @@
 
   const live = adminCounts(() => page.data.adminCounts);
   const counts = $derived(live.current);
-  const groups = $derived(adminGroups(counts, page.data.adminConnections ?? null));
-  const current = $derived(sectionOf(groups, page.route.id));
+  const groups = $derived(
+    adminGroups(counts, page.data.adminConnections ?? null, page.data.adminSections ?? []),
+  );
+  const current = $derived(sectionOf(groups, page.route.id, page.url.pathname));
   const waiting = $derived(counts.reports + counts.queue + counts.connections + counts.partners);
 
   // The menu is built when it opens: a closed one would put an inline `style` on the page, which

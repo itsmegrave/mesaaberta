@@ -11,10 +11,14 @@ export const load: LayoutServerLoad = async ({ locals }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503, 'Database not configured');
 
-  // The connections page opens on the first installed extension that has a panel on it.
-  const panel = extensions.find((extension) => extension.admin);
+  // The connections page opens on the first installed extension that has a panel on it; an
+  // extension with a section of its own (the polls) gets its own entry instead.
+  const panel = extensions.find((extension) => extension.admin && !extension.admin.section);
   return {
     adminCounts: await adminCounts(locals.db),
     adminConnections: panel ? `/admin/${panel.id}` : null,
+    adminSections: extensions.flatMap(({ id, admin }) =>
+      admin?.section ? [{ path: `/admin/${id}`, ...admin.section }] : [],
+    ),
   };
 };

@@ -32,12 +32,24 @@ export type AdminAction = {
 /** A file the network fetches without cookies, such as the image of a post. */
 export type PublicAsset = { body: Uint8Array<ArrayBuffer>; type: string };
 
-/** What the admin's connections page shows for an extension, and counts beside the navigation. */
+/**
+ * An extension's own entry in the admin navigation (under Communication), for a panel that is not
+ * an account connection, such as the polls. `icon` is a name the web app's `<Icon>` knows; another
+ * name draws the globe.
+ */
+export type AdminSection = { label: string; lede: string; icon: string };
+
+/**
+ * What the admin shows for an extension at `/admin/<id>`: a panel on the connections page, or a
+ * section of its own when it has `section`. The connections page counts beside the navigation.
+ */
 export interface AdminSurface {
   /** How many things wait on an admin (the badge in the navigation). */
   count(db: AnyDb): Promise<number>;
   /** The data of its panel, merged into the page's data. Never a token or a secret. */
   load(db: AnyDb, env: object | undefined): Promise<Record<string, unknown>>;
+  /** Its own section in the navigation instead of the connections page. */
+  readonly section?: AdminSection;
 }
 
 /** The signed-in person a widget is chosen for, with the facts an audience rule reads. */

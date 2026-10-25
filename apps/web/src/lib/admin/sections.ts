@@ -1,4 +1,5 @@
 import type { IconName } from '#lib/icons/names.js';
+import { ICONS } from '#lib/icons/registry.js';
 import { m } from '#lib/paraglide/messages.js';
 
 export type AdminCounts = {
@@ -17,13 +18,23 @@ export type AdminSection = {
   count?: number;
 };
 export type AdminGroup = { key: string; label: string; sections: AdminSection[] };
+/** An installed extension's own section (the admin layout's `adminSections`). */
+export type ExtensionSection = { path: string; label: string; icon: string };
+
+const iconOf = (name: string): IconName =>
+  Object.hasOwn(ICONS, name) ? (name as IconName) : 'globe';
 
 /**
  * The admin's sections in their groups, with what waits on an admin counted beside them. One list
  * for the column on a desktop and the menu on a phone. The connections page is there only when an
- * installed extension has a panel on it: `connectionsPath` is the address of the first.
+ * installed extension has a panel on it: `connectionsPath` is the address of the first. An extension
+ * with a section of its own (`extensions`) is listed under Communication.
  */
-export function adminGroups(counts: AdminCounts, connectionsPath: string | null): AdminGroup[] {
+export function adminGroups(
+  counts: AdminCounts,
+  connectionsPath: string | null,
+  extensions: readonly ExtensionSection[] = [],
+): AdminGroup[] {
   return [
     {
       key: 'overview',
@@ -68,6 +79,12 @@ export function adminGroups(counts: AdminCounts, connectionsPath: string | null)
       label: m.admin_group_communication(),
       sections: [
         { path: '/admin/notifications', label: m.admin_nav_notifications(), icon: 'megaphone' },
+        ...extensions.map((section) => ({
+          path: section.path,
+          routeId: '/admin/[ext]',
+          label: section.label,
+          icon: iconOf(section.icon),
+        })),
         ...(connectionsPath
           ? [
               {
@@ -97,12 +114,18 @@ export function adminGroups(counts: AdminCounts, connectionsPath: string | null)
   ];
 }
 
-/** The section a route belongs to (the detail pages belong to the list they open from). */
-export function sectionOf(groups: AdminGroup[], route: string | null) {
+/**
+ * The section a route belongs to (the detail pages belong to the list they open from). Sections
+ * that share a param route (the extensions' `/admin/[ext]`) are told apart by the page's `path`.
+ */
+export function sectionOf(groups: AdminGroup[], route: string | null, path?: string) {
   const all = groups.flatMap((group) => group.sections);
+  const shared = (section: AdminSection) =>
+    all.filter((other) => other.routeId && other.routeId === section.routeId).length > 1;
   return all.find((section) =>
     section.path === '/admin'
       ? route === '/admin'
-      : !!route?.startsWith(section.routeId ?? section.path),
+      : !!route?.startsWith(section.routeId ?? section.path) &&
+        (!shared(section) || path === undefined || path.startsWith(section.path)),
   );
 }

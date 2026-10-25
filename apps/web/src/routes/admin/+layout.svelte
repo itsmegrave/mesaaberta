@@ -9,6 +9,12 @@
 
 <!-- The sections' column is 236px and the content sits 28px (gap-7) to its right. -->
 <div class="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[auto_minmax(0,1fr)] md:gap-7">
-  <AdminNav route={page.route.id} counts={counts.current} connectionsPath={data.adminConnections} />
+  <AdminNav
+    route={page.route.id}
+    path={page.url.pathname}
+    counts={counts.current}
+    connectionsPath={data.adminConnections}
+    sections={data.adminSections}
+  />
   <div class="min-w-0">{@render children()}</div>
 </div>

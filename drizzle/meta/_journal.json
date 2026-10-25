@@ -351,6 +351,13 @@
       "when": 1792944203979,
       "tag": "0049_profile_banner_bio",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792954599604,
+      "tag": "0050_poll_widgets",
+      "breakpoints": true
     }
   ]
 }

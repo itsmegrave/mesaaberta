@@ -1039,3 +1039,135 @@ export const gmInviteBlocks = pgTable(
     check('gm_invite_blocks_not_self', sql`${t.playerId} <> ${t.gmId}`),
   ],
 ).enableRLS();
+
+// Widgets an extension floats over the app's pages, a poll today (Trello #231). The tables live here,
+// not in the private package, so every deployment keeps one schema; a build without that extension
+// never reads them.
+export const widgetStatus = pgEnum('widget_status', ['draft', 'live', 'paused', 'closed']);
+
+export const widgets = pgTable(
+  'widgets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // Which component shows it (`poll`). Text, so a new kind needs no migration.
+    kind: text('kind').notNull(),
+    // The admin's own name for it; never shown to members.
+    title: text('title').notNull(),
+    status: widgetStatus('status').notNull().default('draft'),
+    // SvelteKit route ids it shows on (`/t/[slug]`), or `*` for every page.
+    placements: text('placements')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    // Who sees it: segments of `@mesaaberta/core/server/audience/segments`, any of `include` (all
+    // when empty) minus any of `exclude`.
+    audience: jsonb('audience')
+      .$type<{ include: string[]; exclude: string[] }>()
+      .notNull()
+      .default({ include: [], exclude: [] }),
+    startsAt: timestamp('starts_at', { withTimezone: true }),
+    endsAt: timestamp('ends_at', { withTimezone: true }),
+    // The highest shows first when several fit a page.
+    priority: integer('priority').notNull().default(0),
+    // How many people the audience reached when it went live, for the turnout.
+    publishedReach: integer('published_reach'),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdBy: uuid('created_by').references(() => profiles.id, { onDelete: 'set null' }),
+    ...timestamps,
+  },
+  (widget) => [
+    index('widgets_live_idx')
+      .on(widget.priority)
+      .where(sql`${widget.status} = 'live'`),
+    check('widgets_kind_format', sql`${widget.kind} ~ '^[a-z][a-z0-9-]*$'`),
+    check('widgets_title_length', sql`char_length(${widget.title}) BETWEEN 1 AND 120`),
+    check(
+      'widgets_window',
+      sql`${widget.startsAt} IS NULL OR ${widget.endsAt} IS NULL OR ${widget.endsAt} > ${widget.startsAt}`,
+    ),
+  ],
+).enableRLS();
+
+export const pollChoice = pgEnum('poll_choice', ['single', 'multiple']);
+// Who sees the results: admins only, each person after voting, or anyone (with a minimum of votes).
+export const pollResults = pgEnum('poll_results', ['admin', 'after_vote', 'public']);
+
+export const polls = pgTable(
+  'polls',
+  {
+    widgetId: uuid('widget_id')
+      .primaryKey()
+      .references(() => widgets.id, { onDelete: 'cascade' }),
+    question: text('question').notNull(),
+    description: text('description'),
+    choice: pollChoice('choice').notNull().default('single'),
+    // With `multiple`: at most this many options; null means any number.
+    maxChoices: smallint('max_choices'),
+    results: pollResults('results').notNull().default('admin'),
+    // Public results wait for this many votes, so a handful of answers cannot be traced to anyone.
+    publicMinVotes: smallint('public_min_votes').notNull().default(10),
+    allowChange: boolean('allow_change').notNull().default(false),
+  },
+  (poll) => [
+    check('polls_question_length', sql`char_length(${poll.question}) BETWEEN 1 AND 300`),
+    check('polls_description_length', sql`char_length(${poll.description}) <= 500`),
+    check('polls_max_choices', sql`${poll.maxChoices} IS NULL OR ${poll.maxChoices} >= 2`),
+    check('polls_public_min_votes', sql`${poll.publicMinVotes} >= 0`),
+  ],
+).enableRLS();
+
+export const pollOptions = pgTable(
+  'poll_options',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    pollId: uuid('poll_id')
+      .notNull()
+      .references(() => polls.widgetId, { onDelete: 'cascade' }),
+    label: text('label').notNull(),
+    position: smallint('position').notNull(),
+    // An option that has votes is hidden, never deleted, so the counts stay honest.
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }),
+  },
+  (option) => [
+    index('poll_options_poll_idx').on(option.pollId, option.position),
+    check('poll_options_label_length', sql`char_length(${option.label}) BETWEEN 1 AND 120`),
+  ],
+).enableRLS();
+
+// One row per option a person picked. Personal data: only counts ever leave the admin, and
+// closing an account deletes the person's rows (the extension's `onAccountClosed`).
+export const pollVotes = pgTable(
+  'poll_votes',
+  {
+    pollId: uuid('poll_id')
+      .notNull()
+      .references(() => polls.widgetId, { onDelete: 'cascade' }),
+    optionId: uuid('option_id')
+      .notNull()
+      .references(() => pollOptions.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (vote) => [
+    primaryKey({ columns: [vote.pollId, vote.profileId, vote.optionId] }),
+    index('poll_votes_option_idx').on(vote.pollId, vote.optionId),
+  ],
+).enableRLS();
+
+// "Agora não": hidden for a while the first time, for good the second (the extension decides).
+export const widgetDismissals = pgTable(
+  'widget_dismissals',
+  {
+    widgetId: uuid('widget_id')
+      .notNull()
+      .references(() => widgets.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true }).notNull().defaultNow(),
+    times: smallint('times').notNull().default(1),
+  },
+  (dismissal) => [primaryKey({ columns: [dismissal.widgetId, dismissal.profileId] })],
+).enableRLS();

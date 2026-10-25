@@ -17,9 +17,9 @@ export async function adminCounts(db: AnyDb): Promise<AdminCounts> {
     failedEventCount(db),
     pendingPartnerCount(db),
     // What waits on an admin in each extension's connection, such as an Instagram post to reconcile.
-    Promise.all(extensions.map((extension) => extension.admin?.count(db) ?? 0)).then((counts) =>
-      counts.reduce((total, waiting) => total + waiting, 0),
-    ),
+    Promise.all(
+      extensions.map(({ admin }) => (admin && !admin.section ? admin.count(db) : 0)),
+    ).then((counts) => counts.reduce((total, waiting) => total + waiting, 0)),
   ]);
   return { reports, queue, connections, events, partners };
 }

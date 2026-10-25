@@ -10,6 +10,7 @@ vi.mock('$app/navigation', async () =>
 vi.mock('$app/state', () => ({
   page: {
     route: { id: '/admin/users' },
+    url: new URL('http://localhost/admin/users'),
     data: {
       adminCounts: { reports: 3, queue: 0, connections: 1, events: 0, partners: 0 },
       adminConnections: '/admin/instagram',
