@@ -56,8 +56,8 @@
     }
   }
 
-  // The rail marks the section you are in, as the bottom tab bar does on phones. Parceiros lives in
-  // the footer, not here.
+  // The rail marks the section you are in, as the bottom tab bar does on phones. Parceiros has no
+  // link in the app chrome.
   const pathname = $derived(page.url.pathname);
   const links = $derived(
     [

@@ -101,7 +101,7 @@ describe('+layout.svelte', () => {
     for (const name of ['Mesas', 'Abrir uma mesa', 'Minhas mesas']) {
       await expect.element(nav.getByRole('link', { name })).toBeVisible();
     }
-    // Parceiros is linked from the footer only.
+    // Parceiros is not linked from the app chrome; /p is reached directly.
     await expect.element(nav.getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
     await expect.element(nav.getByText('Sua conta', { exact: true })).toBeVisible();
     // Mensagens lives in the account menu, not in the group.
@@ -157,13 +157,20 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('leaves Parceiros out of the footer', async () => {
+    render(Layout, { children, data: signedOut });
+
+    await expect
+      .element(page.getByRole('contentinfo').getByRole('link', { name: 'Parceiros' }))
+      .not.toBeInTheDocument();
+  });
+
   describe('footer links', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
       ['Lenindragons', 'https://linktr.ee/lenindragonsrpg'],
       ['GitHub', 'https://github.com/itsmegrave/mesaaberta'],
       ['Contato', 'mailto:contato@mesaaberta.app'],
-      ['Parceiros', '/p'],
       ['Instagram da Mesa Aberta, @mesaaberta.app', 'https://www.instagram.com/mesaaberta.app/'],
     ])('links %s to %s', async (name, href) => {
       render(Layout, { children, data: signedOut });
@@ -404,7 +411,7 @@ describe('+layout.svelte', () => {
         .toHaveAttribute('href', '/login');
     });
 
-    it('leaves Parceiros off the bar; the footer links it', async () => {
+    it('leaves Parceiros off the bar', async () => {
       render(Layout, { children, data: { ...signedOut, authEnabled: true } });
 
       await expect

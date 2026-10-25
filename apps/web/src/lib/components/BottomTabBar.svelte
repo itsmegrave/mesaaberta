@@ -18,7 +18,7 @@
     isAdmin = false,
     pendingSuggestionsCount = 0,
   }: {
-    /** Admins get a fifth tab; Parceiros is in the footer, not here. */
+    /** Admins get a fifth tab. Parceiros has no tab. */
     isAdmin?: boolean;
     /** Suggestions waiting for an admin, shown on the Admin tab. */
     pendingSuggestionsCount?: number;

@@ -21,6 +21,6 @@ for (const [name, path] of [
     await expect(
       footer.getByRole('link', { name: 'Instagram da Mesa Aberta, @mesaaberta.test' }),
     ).toHaveAttribute('href', 'https://www.instagram.com/mesaaberta.test/');
-    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveAttribute('href', '/p');
+    await expect(footer.getByRole('link', { name: 'Parceiros' })).toHaveCount(0);
   });
 }

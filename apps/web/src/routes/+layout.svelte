@@ -290,7 +290,6 @@
                 <a href="mailto:{data.site.CONTACT_EMAIL}" class={footerLink}
                   >{m.footer_contact()}</a
                 >
-                <a href="/p" class={footerLink}>{m.footer_partners_link()}</a>
               </nav>
             </div>
           </div>

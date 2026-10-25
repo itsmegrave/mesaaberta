@@ -28,7 +28,7 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(tab).toHaveTextContent('FCs');
   });
 
-  it('leaves Parceiros to the footer', async () => {
+  it('leaves Parceiros off the bar', async () => {
     render(BottomTabBar);
 
     await expect.element(nav().getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
