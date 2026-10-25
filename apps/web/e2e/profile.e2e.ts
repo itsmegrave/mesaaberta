@@ -30,13 +30,19 @@ test('the account menu leads to the profile, where the details are saved and the
   await sections.getByRole('link', { name: 'Sobre você' }).click();
   await expect(page).toHaveURL(/\/u\/profile\/edit\/about$/);
   await page.getByLabel('Cidade').fill('Recife');
+  // The toast of the first save may still be up, so wait for this save's own answer.
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' && response.url().includes('/u/profile/edit/about'),
+  );
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
-  await expect(page.getByText('Perfil salvo.')).toBeVisible();
+  await saved;
+  await expect(page.getByText('Perfil salvo.').first()).toBeVisible();
 
   await page.reload();
   await expect(page.getByLabel('Cidade')).toHaveValue('Recife');
   await sections.getByRole('link', { name: 'Conta e acesso' }).click();
-  await expect(page.getByLabel('Email')).toHaveValue(user.email);
+  await expect(page.getByRole('textbox', { name: 'Email' })).toHaveValue(user.email);
   await expect(page.getByLabel('Nome de usuário')).toHaveValue(user.username);
   await expect(page.getByLabel('Nome de usuário')).toHaveAttribute('readonly', '');
 
