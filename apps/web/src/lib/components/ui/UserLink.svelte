@@ -15,7 +15,7 @@
 {#if username && username !== NAMELESS}
   <a
     href={`/u/${encodeURIComponent(username)}`}
-    class="relative z-10 rounded-sm hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {className}"
+    class="relative z-10 rounded-sm hover:underline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {className}"
     >{label ?? atHandle(username)}</a
   >
 {:else}

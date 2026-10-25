@@ -22,7 +22,7 @@
   export function buttonClass(variant: ButtonVariant = 'ghost', size: ButtonSize = 'md'): string {
     return [
       size === 'custom' ? '' : 'btn',
-      'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-50',
+      'focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-50',
       sizes[size],
       variants[variant],
     ]

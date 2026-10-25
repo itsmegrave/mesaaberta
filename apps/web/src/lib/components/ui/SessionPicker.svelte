@@ -69,7 +69,7 @@
   });
 
   const segment =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 </script>
 
 <div class="grid gap-5">

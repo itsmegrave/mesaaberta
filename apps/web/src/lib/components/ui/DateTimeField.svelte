@@ -47,7 +47,7 @@
   const earliest = $derived(min ? safeParse(min) : undefined);
 
   const control =
-    'flex h-13 w-full items-center rounded-lg border-control border-ink-muted bg-panel focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-primary-500';
+    'flex h-13 w-full items-center rounded-lg border-control border-ink-muted bg-panel focus-within:outline-4 focus-within:outline-offset-2 focus-within:outline-primary-500';
 </script>
 
 {#if mounted}

@@ -141,10 +141,10 @@ body {
   }
 }
 
-/* Keyboard focus is always visible: a 3px primary ring on whatever takes it, unless the control draws its own. */
+/* Keyboard focus is always visible: a 4px primary ring on whatever takes it, unless the control draws its own. */
 @layer base {
   :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
-    outline: 3px solid var(--color-primary-500);
+    outline: 4px solid var(--color-primary-500);
     outline-offset: 2px;
   }
 }

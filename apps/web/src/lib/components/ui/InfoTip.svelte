@@ -10,7 +10,7 @@
 
 <Tip
   {label}
-  triggerClass="inline-flex size-6 shrink-0 cursor-help items-center justify-center rounded-full text-muted hover:text-surface-950-50 focus-visible:outline-3 focus-visible:outline-primary-500"
+  triggerClass="inline-flex size-6 shrink-0 cursor-help items-center justify-center rounded-full text-muted hover:text-surface-950-50 focus-visible:outline-4 focus-visible:outline-primary-500"
 >
   {#snippet trigger()}<Icon name="info" size={16} />{/snippet}
   {text}

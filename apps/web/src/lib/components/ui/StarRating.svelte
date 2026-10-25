@@ -48,7 +48,7 @@
         {#each rating().items as index (index)}
           <RatingGroup.Item
             {index}
-            class="flex size-11 items-center justify-center rounded-lg hover:preset-tonal focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+            class="flex size-11 items-center justify-center rounded-lg hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
           />
         {/each}
       {/snippet}
