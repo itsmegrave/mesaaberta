@@ -4,7 +4,15 @@ import { safeFields, scrubString, type AppName } from './privacy';
 // Type-only imports from the SDK's platform-neutral core: nothing is bundled by this file, and every
 // Sentry SDK (SvelteKit, Cloudflare, Node) takes these shapes, so each host shares one privacy policy.
 
-export function privateEvent(event: ErrorEvent): ErrorEvent {
+/**
+ * A request the app cancelled itself (TanStack Query aborting a refetch it replaced, a closed tab)
+ * surfaces as an `AbortError`. Nothing failed, so it is not reported.
+ */
+const cancelled = (event: ErrorEvent) =>
+  event.exception?.values?.some((exception) => exception.type === 'AbortError') ?? false;
+
+export function privateEvent(event: ErrorEvent): ErrorEvent | null {
+  if (cancelled(event)) return null;
   // Reconstruct rather than redact unknown SDK contexts. Keep code locations for diagnosis,
   // never exception messages, local variables, source context, breadcrumbs or request data.
   return {

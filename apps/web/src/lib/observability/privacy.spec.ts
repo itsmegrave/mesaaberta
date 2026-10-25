@@ -59,11 +59,11 @@ describe('telemetry privacy boundary', () => {
       },
     });
     expect(JSON.stringify(event)).not.toMatch(/secret|ana@example|1\.2\.3\.4|Ana/);
-    expect(event.exception?.values?.[0].stacktrace?.frames?.[0]).toMatchObject({
+    expect(event?.exception?.values?.[0].stacktrace?.frames?.[0]).toMatchObject({
       filename: '/app.js',
       lineno: 12,
     });
-    expect(event.tags).toEqual({ requestId: '0123456789abcdef-GRU' });
+    expect(event?.tags).toEqual({ requestId: '0123456789abcdef-GRU' });
   });
   it('drops automatic SDK logs and removes unknown attributes from application logs', () => {
     expect(privateLog({ level: 'info', message: 'raw console' })).toBeNull();
