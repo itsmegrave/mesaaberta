@@ -1,7 +1,11 @@
 import { Hono } from 'hono';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
-import { extensionById } from '@mesaaberta/core/server/extensions/index';
+import {
+  extensionById,
+  extensions,
+  type Extension,
+} from '@mesaaberta/core/server/extensions/index';
 import { adminGuard, type AdminVariables } from './admin-guard';
 
 type Open = typeof createDb;
@@ -14,7 +18,7 @@ type Open = typeof createDb;
  * `{ eventIds: [], ... }`, a 400 for data its schema refuses or a 404 for an extension or action
  * nobody installed.
  */
-export function extensionRoutes(open: Open = openDb) {
+export function extensionRoutes(open: Open = openDb, installed: readonly Extension[] = extensions) {
   const app = new Hono<{
     Bindings: DatabaseEnv & Record<string, unknown>;
     Variables: AdminVariables;
@@ -23,7 +27,7 @@ export function extensionRoutes(open: Open = openDb) {
   app.use('*', adminGuard(open));
 
   app.post('/:ext/:action', async (c) => {
-    const actions = extensionById(c.req.param('ext'))?.adminActions;
+    const actions = extensionById(c.req.param('ext'), installed)?.adminActions;
     const name = c.req.param('action');
     if (!actions || !Object.hasOwn(actions, name)) return c.json({ error: 'not_found' }, 404);
     const action = actions[name];

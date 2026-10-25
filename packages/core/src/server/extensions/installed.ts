@@ -1,9 +1,8 @@
-import { instagramExtension } from '@mesaaberta/privy/instagram';
 import type { Extension } from './contract';
 
 /**
- * The extensions this build carries. A private build replaces this one file to add its own, and
- * nothing else in the public code names an extension. Instagram is still here until it moves to
- * the private package (Trello #209-#212); after that the public default is an empty list.
+ * The extensions this build carries: none. A private build replaces this one file to add its own
+ * (`@mesaaberta/privy`, injected at build time), and nothing else in the public code names an
+ * extension, so this project builds and runs on its own with no connector (`SOCIAL_PROVIDER=none`).
  */
-export const extensions: readonly Extension[] = [instagramExtension];
+export const extensions: readonly Extension[] = [];

@@ -50,10 +50,11 @@ const row = (over = {}) => ({
   instagramStatus: 'published',
   ...over,
 });
-const show = (rows: unknown[], sort = { id: 'created', dir: 'desc' }) =>
+const show = (rows: unknown[], sort = { id: 'created', dir: 'desc' }, socialInstalled = true) =>
   render(Page, {
     data: {
       instagramAvailable: true,
+      socialInstalled,
       tables: {
         rows,
         total: rows.length,
@@ -94,6 +95,14 @@ describe('admin tables', () => {
     // Red only when it needs action.
     expect(page.getByText('Falhou').first().element().className).toContain('text-error');
     await expect.element(page.getByText('3/5').first()).toBeVisible();
+  });
+
+  it('has no post line or filter when no social connector is installed', async () => {
+    show([row()], undefined, false);
+
+    await expect.element(page.getByText('3/5').first()).toBeVisible();
+    await expect.element(page.getByText('Publicado')).not.toBeInTheDocument();
+    await expect.element(page.getByLabelText('Instagram')).not.toBeInTheDocument();
   });
 
   it('offers "Fechar a mesa…" only for an active table, and asks for a justification', async () => {

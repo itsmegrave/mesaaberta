@@ -15,18 +15,21 @@ const untouched = new Proxy(
 ) as unknown as AnyDb;
 
 describe('socialFor', () => {
-  it('is Instagram unless the deployment opts out', () => {
-    expect(socialFor(undefined).name).toBe('instagram');
-    expect(socialFor({}).name).toBe('instagram');
-    expect(socialFor({ SOCIAL_PROVIDER: 'instagram' }).name).toBe('instagram');
-    expect(socialFor({ SOCIAL_PROVIDER: 'none' }).name).toBe('none');
+  it('is none in the public build, which installs no connector', () => {
+    for (const env of [
+      undefined,
+      {},
+      { SOCIAL_PROVIDER: 'instagram' },
+      { SOCIAL_PROVIDER: 'none' },
+    ])
+      expect(socialFor(env).name).toBe('none');
   });
 
-  it('keeps registering the Instagram queue handler, whatever the credentials', () => {
+  it('registers no handler and reports itself unconfigured', () => {
     const social = socialFor({});
 
     expect(social.configured({})).toBe(false);
-    expect(social.handlers.map((handler) => handler.name)).toEqual(['instagram-queue']);
+    expect(social.handlers).toEqual([]);
   });
 });
 
