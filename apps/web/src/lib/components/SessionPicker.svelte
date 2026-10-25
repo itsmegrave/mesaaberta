@@ -8,6 +8,7 @@
   import CalendarDays from './CalendarDays.svelte';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import SearchSelect from '#lib/components/SearchSelect.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
   import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
 
   let {
@@ -136,7 +137,7 @@
     {#if other}
       <label class="grid gap-1">
         <span class="label-text">{m.session_duration_custom()}</span>
-        <input
+        <TextInput
           type="number"
           inputmode="decimal"
           min={TABLE_LIMITS.durationHours.min}

@@ -7,6 +7,7 @@
   import { m } from '#lib/paraglide/messages.js';
   import { DEFAULT_TIME, pickerTranslations, safeParse } from '#lib/forms/date.js';
   import CalendarDays from './CalendarDays.svelte';
+  import TextInput from '#lib/components/TextInput.svelte';
 
   let {
     id,
@@ -124,7 +125,7 @@
   <div class="grid gap-1">
     <label for={id} class="label-text font-semibold">{label}</label>
     {#if hint}<p id="{id}-hint" class="text-sm text-surface-700-300">{hint}</p>{/if}
-    <input
+    <TextInput
       {id}
       {name}
       type={withTime ? 'datetime-local' : 'date'}

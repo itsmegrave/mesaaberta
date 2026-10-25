@@ -5,7 +5,11 @@
     value = $bindable(''),
     element = $bindable(),
     ...attributes
-  }: Omit<HTMLInputAttributes, 'value'> & { value?: string; element?: HTMLInputElement } = $props();
+  }: Omit<HTMLInputAttributes, 'value'> & {
+    /** A number for `type="number"`, which the browser hands back as a number (null when empty). */
+    value?: string | number | null;
+    element?: HTMLInputElement;
+  } = $props();
 </script>
 
 <input bind:this={element} {...attributes} bind:value class={className} />
