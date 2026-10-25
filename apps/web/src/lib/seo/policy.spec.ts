@@ -47,6 +47,17 @@ describe('search indexing policy', () => {
     expect(policy('/changelog?page=2').index).toBe(false);
   });
 
+  it('removes ignored crowdfunding page numbers while preserving ended-campaign pagination', () => {
+    for (const path of ['/cf?page=2', '/cf?page=999', '/cf?status=running&page=999']) {
+      expect(policy(path)).toEqual({ canonical: `${origin}/cf`, index: true });
+    }
+    expect(policy('/cf?status=ended&page=2')).toEqual({
+      canonical: `${origin}/cf?status=ended&page=2`,
+      index: true,
+    });
+    expect(policy('/cf?q=dragons&page=999').canonical).toBe(`${origin}/cf?q=dragons`);
+  });
+
   it('keeps account flows, drafts, maintenance and errors out of search', () => {
     for (const path of [
       '/login',

@@ -11,6 +11,11 @@ test('SSR and client navigation retain one canonical and one metadata owner', as
   expect(html).toContain(`rel="canonical" href="${baseURL}/t"`);
   expect(html.match(/name="description"/g)).toHaveLength(1);
   expect(html.match(/property="og:title"/g)).toHaveLength(1);
+  for (const path of ['/cf?page=2', '/cf?page=999']) {
+    const crowdfunding = await request.get(path);
+    expect(crowdfunding.status()).toBe(200);
+    expect(await crowdfunding.text()).toContain(`rel="canonical" href="${baseURL}/cf"`);
+  }
   await page.goto('/t?system=fate&utm_source=seo-test');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(

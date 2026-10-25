@@ -56,7 +56,8 @@ export function indexingPolicy(
       index = false;
     }
   }
-  if (publicProfile || path === '/p' || path === '/cf' || path === '/changelog') {
+  const paginatedCrowdfunding = path === '/cf' && url.searchParams.get('status') === 'ended';
+  if (publicProfile || path === '/p' || paginatedCrowdfunding || path === '/changelog') {
     const page = url.searchParams.get('page');
     if (
       page &&
