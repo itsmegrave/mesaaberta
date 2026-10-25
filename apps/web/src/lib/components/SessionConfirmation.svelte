@@ -28,10 +28,6 @@
   let more = $state(true);
   const goesOn = $derived(multi && more);
 
-  const primary = 'btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold';
-  const secondary =
-    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
-
   // svelte-ignore state_referenced_locally
   const initial = { next };
   const happened = actionForm({
@@ -151,11 +147,10 @@
       {/if}
       <Button
         type="submit"
-        size="custom"
-        submitting={goesOn ? held.pending : happened.pending}
-        delayed={goesOn ? held.delayed : happened.delayed}
-        timeout={goesOn ? held.timeout : happened.timeout}
-        class={primary}>{goesOn ? m.manage_confirm_held() : m.manage_confirm_happened()}</Button
+        variant="primary"
+        controller={goesOn ? held : happened}
+        class="font-semibold"
+        >{goesOn ? m.manage_confirm_held() : m.manage_confirm_happened()}</Button
       >
       {#if goesOn ? heldError : happened.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
@@ -165,13 +160,8 @@
     </Form>
     <Form action="?/notHeld" onsubmit={notHeld.submit} class="m-0">
       <input type="hidden" name="next" value={next} />
-      <Button
-        type="submit"
-        size="custom"
-        submitting={notHeld.pending}
-        delayed={notHeld.delayed}
-        timeout={notHeld.timeout}
-        class={secondary}>{m.manage_confirm_not_held()}</Button
+      <Button type="submit" variant="secondary" controller={notHeld} class="font-semibold"
+        >{m.manage_confirm_not_held()}</Button
       >
       {#if notHeld.errors._errors?.[0]}
         <p role="alert" class="mt-1 text-sm font-semibold text-error-700-300">
@@ -199,13 +189,8 @@
         class="input h-12 rounded-lg border-surface-200-800 px-3"
       />
     </label>
-    <Button
-      type="submit"
-      size="custom"
-      submitting={postpone.pending}
-      delayed={postpone.delayed}
-      timeout={postpone.timeout}
-      class={secondary}>{m.manage_confirm_postpone()}</Button
+    <Button type="submit" variant="secondary" controller={postpone} class="font-semibold"
+      >{m.manage_confirm_postpone()}</Button
     >
     {#if postponeError}
       <p role="alert" class="w-full text-sm font-semibold text-error-700-300">{postponeError}</p>

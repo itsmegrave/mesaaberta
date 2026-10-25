@@ -2,12 +2,14 @@
   import UserLink from '#lib/components/UserLink.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
+  import { kindLabel, seatsLeftLabel } from '#lib/tables/format.js';
   import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import GmRating from './GmRating.svelte';
   import SeatRing from './SeatRing.svelte';
+  import { linkedCardClass } from './MediaCard.svelte';
 
   type PlatformItem = string | { name: string; slug?: string };
   type TagItem = string | { name: string; slug?: string };
@@ -37,10 +39,10 @@
   let { table }: { table: Table } = $props();
 
   const locale = getLocale();
-  const seats = $derived(
-    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
-  );
+  const seats = $derived(seatsLeftLabel(table.seatsLeft));
 
+  // With seats reserved for invitations, how many are confirmed, reserved and still free: the seat
+  // ring's label and the line under the footer's count.
   const seatSummary = $derived(
     table.reserved
       ? m.invitation_seats({
@@ -51,6 +53,8 @@
         })
       : undefined,
   );
+
+  const kind = $derived(kindLabel(table.kind));
 
   const cardDate = $derived(
     table.startsAt ? formatCardDate(table.startsAt, shownTimezone(table.timezone), locale) : null,
@@ -69,9 +73,7 @@
   const moreTagsCount = $derived(Math.max(0, tagNames.length - 1));
 </script>
 
-<article
-  class="group relative flex h-full min-h-96 flex-col overflow-hidden rounded-lg border border-surface-200-800 bg-panel transition-shadow focus-within:ring-2 focus-within:ring-warning-500 hover:shadow-md"
->
+<article class="{linkedCardClass} min-h-96">
   <!-- Top header tile: With cover image vs solid petrol tile without cover -->
   {#if table.imageUrl}
     <div class="relative h-36 shrink-0 overflow-hidden bg-primary-500">
@@ -86,11 +88,7 @@
       <!-- Kind pill -->
       <div class="absolute top-3 left-3">
         <span class="chip h-6 gap-1 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm">
-          {table.kind === 'campaign'
-            ? m.table_kind_campaign()
-            : table.kind === 'adventure'
-              ? m.table_kind_adventure()
-              : m.table_kind_one_shot()}
+          {kind}
         </span>
       </div>
       <!-- Date chip -->
@@ -124,11 +122,7 @@
         <span
           class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-primary-contrast-500/15 px-3 text-xs font-semibold"
         >
-          {table.kind === 'campaign'
-            ? m.table_kind_campaign()
-            : table.kind === 'adventure'
-              ? m.table_kind_adventure()
-              : m.table_kind_one_shot()}
+          {kind}
         </span>
         {#if table.startsAt && cardDate}
           <div>
@@ -236,35 +230,15 @@
     >
       <span class="text-base font-semibold {table.seatsLeft === 0 ? 'text-muted' : 'text-lamp'}">
         {seats}
-        {#if table.reserved}
-          <span class="mt-1 block text-xs font-normal text-muted"
-            >{m.invitation_seats({
-              confirmed:
-                table.taken ??
-                Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
-              reserved: table.reserved,
-              available: table.seatsLeft,
-            })}</span
-          >
+        {#if seatSummary}
+          <span class="mt-1 block text-xs font-normal text-muted">{seatSummary}</span>
         {/if}
       </span>
       <span
         aria-hidden="true"
         class="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-wash text-surface-950-50 transition-transform group-hover:translate-x-1"
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="shrink-0"
-        >
-          <path d="M5 12h14M13 6l6 6-6 6"></path>
-        </svg>
+        <Icon name="arrow-right" size={18} />
       </span>
     </div>
   </div>

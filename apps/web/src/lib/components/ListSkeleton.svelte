@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   /**
@@ -26,7 +27,7 @@
     {/if}
 
     {#if kind === 'cards'}
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+      <CardGrid as="div">
         {#each { length: 6 }, index (index)}
           <div
             data-skeleton-item
@@ -40,7 +41,7 @@
             </div>
           </div>
         {/each}
-      </div>
+      </CardGrid>
     {:else if kind === 'columns'}
       <div class="grid gap-10 lg:grid-cols-2 lg:gap-12">
         {#each { length: 2 }, column (column)}

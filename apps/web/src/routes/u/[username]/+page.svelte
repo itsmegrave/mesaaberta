@@ -4,6 +4,8 @@
   import { page } from '$app/state';
   import Avatar from '#lib/components/Avatar.svelte';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import BadgeIcons from '#lib/components/BadgeIcons.svelte';
@@ -199,33 +201,16 @@
     {#if data.tables.length === 0}
       <p class="mt-4 text-muted">{m.public_profile_no_tables()}</p>
     {:else}
-      <ul class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+      <CardGrid class="mt-5">
         {#each data.tables as table (table.slug)}<li><TableCard {table} /></li>{/each}
-      </ul>
+      </CardGrid>
     {/if}
-    {#if data.pages > 1}
-      <nav
-        aria-label={m.admin_pagination()}
-        class="mt-8 flex flex-wrap items-center justify-center gap-3"
-      >
-        {#if data.page > 1}
-          <a
-            class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50"
-            href={pageHref(path, page.url.searchParams, data.page - 1)}
-            aria-label={m.admin_profile_previous()}><Icon name="chevron-left" /></a
-          >
-        {/if}
-        <span class="font-semibold"
-          >{m.admin_profile_page({ page: data.page, pages: data.pages })}</span
-        >
-        {#if data.page < data.pages}
-          <a
-            class="btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50"
-            href={pageHref(path, page.url.searchParams, data.page + 1)}
-            aria-label={m.admin_profile_next()}><Icon name="chevron-right" /></a
-          >
-        {/if}
-      </nav>
-    {/if}
+    <Pager
+      compact
+      class="mt-8"
+      page={data.page}
+      pages={data.pages}
+      href={(number) => pageHref(path, page.url.searchParams, number)}
+    />
   </section>
 </section>

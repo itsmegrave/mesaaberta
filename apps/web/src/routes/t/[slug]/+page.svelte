@@ -1,19 +1,19 @@
 <script lang="ts">
-  import Button from '#lib/components/Button.svelte';
   import { copyText } from '#lib/clipboard.js';
   import TextArea from '#lib/components/TextArea.svelte';
   import UserLink from '#lib/components/UserLink.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import RichText from '#lib/components/RichText.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import { shownTimezone } from '#lib/time/shown-timezone.js';
+  import Button, { buttonClass } from '#lib/components/Button.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import Form from '#lib/components/Form.svelte';
-  import { formatHours, formatSession } from '@mesaaberta/core/tables/format';
+  import { formatHours } from '@mesaaberta/core/tables/format';
   import { tableStatusLabel } from '#lib/tables/status.js';
   import type { FormMessage } from '#lib/forms/message.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -31,7 +31,10 @@
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import SeatDots from '#lib/components/SeatDots.svelte';
   import DraftNotice from '#lib/components/DraftNotice.svelte';
+  import SessionDate from '#lib/components/SessionDate.svelte';
+  import SummaryRow from '#lib/components/ui/SummaryRow.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
+  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
 
   let { data: serverData, form } = $props();
   const remote = pageQuery(() => serverData);
@@ -47,17 +50,7 @@
   const table = $derived(data.table);
   const locale = getLocale();
 
-  const recurrence = $derived(
-    table.kind !== 'campaign'
-      ? table.kind === 'adventure'
-        ? m.table_adventure_schedule()
-        : m.table_recurrence_once()
-      : table.everyWeeks === 1
-        ? m.table_recurrence_weekly()
-        : table.everyWeeks
-          ? m.table_recurrence_weeks({ weeks: table.everyWeeks })
-          : null,
-  );
+  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
   // svelte-ignore state_referenced_locally
   const rating = actionForm({
     initial: data.ratingForm.data,
@@ -73,18 +66,6 @@
   });
   const scoreFields = $derived([{ name: 'gmScore', label: m.rating_the_gm() }] as const);
 
-  // The calendar tile next to the session: "SÁB / 26 / SET", in the viewer's timezone.
-  const dateBox = $derived.by(() => {
-    const part = (options: Intl.DateTimeFormatOptions) =>
-      new Intl.DateTimeFormat(locale, { timeZone: shownTimezone(table.timezone), ...options })
-        .format(table.startsAt)
-        .replace('.', '');
-    return {
-      weekday: part({ weekday: 'short' }),
-      day: part({ day: 'numeric' }),
-      month: part({ month: 'short' }),
-    };
-  });
   // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
   const stateLabel = $derived(tableStatusLabel(table.status));
 
@@ -144,9 +125,7 @@
   });
 
   const taken = $derived(table.taken);
-  const seats = $derived(
-    table.seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: table.seatsLeft }),
-  );
+  const seats = $derived(seatsLeftLabel(table.seatsLeft));
 </script>
 
 <svelte:head>
@@ -161,13 +140,7 @@
   <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-3 lg:gap-16">
     <div class="min-w-0 lg:col-span-2">
       <p class="flex flex-wrap items-center gap-3">
-        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold">
-          {table.kind === 'campaign'
-            ? m.table_kind_campaign()
-            : table.kind === 'adventure'
-              ? m.table_kind_adventure()
-              : m.table_kind_one_shot()}
-        </span>
+        <Pill>{kindLabel(table.kind)}</Pill>
         <a
           href="/t?system={encodeURIComponent(table.system.slug)}"
           class="font-semibold text-link underline decoration-2 underline-offset-4"
@@ -260,59 +233,29 @@
       aria-label={m.table_next_session()}
       class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
     >
-      <div class="flex items-start gap-4">
-        <div
-          aria-hidden="true"
-          class="flex w-16 shrink-0 flex-col items-center rounded-lg preset-filled-primary-500 py-2 leading-none"
-        >
-          <span class="text-xs font-bold tracking-wide uppercase">{dateBox.weekday}</span>
-          <span class="mt-1 text-3xl font-bold">{dateBox.day}</span>
-          <span class="mt-1 text-xs font-bold tracking-wide uppercase">{dateBox.month}</span>
-        </div>
-        <div>
-          <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
-          <p class="mt-1 text-xl leading-snug font-semibold">
-            {formatSession(table.startsAt, shownTimezone(table.timezone), locale)}
-          </p>
-          {#if stateLabel}
-            <p class="mt-1 text-sm font-semibold text-muted">{stateLabel}</p>
-          {/if}
-        </div>
-      </div>
+      <SessionDate startsAt={table.startsAt} timezone={table.timezone} {stateLabel} large />
 
       <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
-        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-          {m.table_modality()}
-        </dt>
-        <dd class="col-span-2 flex items-center gap-2 border-b border-surface-200-800 py-3">
+        <SummaryRow label={m.table_modality()} class="flex items-center gap-2">
           <Icon name={modalityIcon(table.modality)} size={18} />
           {table.modality === 'in_person'
             ? `${m.table_modality_in_person()} · ${table.locationArea}`
             : m.table_modality_online()}
-        </dd>
+        </SummaryRow>
         {#if table.platforms.length > 0}
-          <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-            {m.form_platforms()}
-          </dt>
-          <dd class="col-span-2 flex flex-wrap gap-1 border-b border-surface-200-800 py-3">
+          <SummaryRow label={m.form_platforms()} class="flex flex-wrap gap-1">
             {#each table.platforms as platform (platform.slug)}
               <span
                 class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                 >{platform.name}</span
               >
             {/each}
-          </dd>
+          </SummaryRow>
         {/if}
-        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-          {m.table_schedule()}
-        </dt>
-        <dd class="col-span-2 border-b border-surface-200-800 py-3">{recurrence}</dd>
-        <dt class="border-b border-surface-200-800 py-3 pr-6 font-semibold text-muted">
-          {m.table_duration()}
-        </dt>
-        <dd class="col-span-2 border-b border-surface-200-800 py-3">
+        <SummaryRow label={m.table_schedule()}>{recurrence}</SummaryRow>
+        <SummaryRow label={m.table_duration()}>
           {formatHours(table.durationMinutes, locale)}
-        </dd>
+        </SummaryRow>
       </dl>
 
       <div class="mt-5 flex items-baseline justify-between gap-3">
@@ -327,12 +270,7 @@
         <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
       </p>
       {#if table.minPlayers}
-        <p class="mt-3 text-sm text-muted">
-          {m.table_min_players({ count: table.minPlayers })} ·
-          {taken >= table.minPlayers
-            ? m.table_min_players_met()
-            : m.table_min_players_missing({ count: table.minPlayers - taken })}
-        </p>
+        <p class="mt-3 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
       {/if}
 
       {#if problem}
@@ -375,8 +313,7 @@
         {:else if data.invitation}
           <a
             href={`/u/profile/invitations/${data.invitation.id}`}
-            class="btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold"
-            >{m.invitation_review()}</a
+            class="{buttonClass('primary')} w-full font-semibold">{m.invitation_review()}</a
           >
         {:else if data.canJoin && table.joinMode === 'approval'}
           <JoinRequestDialog
@@ -485,10 +422,8 @@
           <Button
             type="submit"
             size="custom"
-            submitting={rating.pending}
-            delayed={rating.delayed}
-            timeout={rating.timeout}
-            class="btn preset-filled-primary-500"
+            controller={rating}
+            class="btn gap-2 preset-filled-primary-500"
           >
             {m.rating_submit()}
           </Button>

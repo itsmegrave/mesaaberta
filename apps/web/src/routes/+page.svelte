@@ -3,6 +3,8 @@
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import SeatDots from '#lib/components/SeatDots.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
   import TableIllustration from '#lib/components/TableIllustration.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -27,20 +29,7 @@
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 {#snippet arrow()}
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.8"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-    class="shrink-0"
-  >
-    <path d="M5 12h14M13 6l6 6-6 6" />
-  </svg>
+  <Icon name="arrow-right" size={18} />
 {/snippet}
 
 {#snippet stars(size: number)}
@@ -112,12 +101,12 @@
   </div>
 
   {#if data.tables.length > 0}
-    <ul class="mt-4 grid grid-cols-1 gap-4 md:mt-7 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <CardGrid class="mt-4 md:mt-7">
       {#each data.tables as table, i (table.slug)}
         <!-- The phone layout previews two tables; the third waits on the full list. -->
         <li class={i >= 2 ? 'hidden lg:block' : ''}><TableCard {table} /></li>
       {/each}
-    </ul>
+    </CardGrid>
     <a
       href="/t"
       class="mt-4 btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold md:hidden"
@@ -216,9 +205,7 @@
       class="mt-6 flex flex-col gap-3 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:mt-auto md:p-6"
     >
       <div class="flex items-center justify-between gap-3">
-        <span class="chip h-6 rounded-full preset-filled-primary-500 px-3 text-xs font-semibold"
-          >Você tem uma vaga</span
-        >
+        <Pill>Você tem uma vaga</Pill>
         <span
           class="chip h-6 gap-1 rounded-lg border border-surface-200-800 bg-panel px-2 text-xs font-semibold"
         >
@@ -244,27 +231,16 @@
         <p class="mt-1 text-2xl leading-tight font-semibold">Os Sinos de Sablewood</p>
       </div>
       <p class="flex items-start gap-2 text-base leading-normal">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="mt-1 shrink-0"
-        >
-          <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
-          <path d="M3.5 10h17M8 3v4M16 3v4" />
-        </svg>
+        <Icon name="calendar" size={20} class="mt-1" />
         <span
           ><strong class="font-semibold">Próxima sessão:</strong> domingo, 27 de setembro às 15:00</span
         >
       </p>
       <div class="flex items-center gap-3">
         <SeatDots taken={3} capacity={6} />
-        <span class="text-sm font-semibold text-muted">3 de 6 vagas ocupadas</span>
+        <span class="text-sm font-semibold text-muted"
+          >{m.dash_seats_taken({ taken: 3, capacity: 6 })}</span
+        >
       </div>
       <div class="flex items-center gap-3 rounded-lg bg-lamp-wash p-3">
         {@render stars(18)}
@@ -312,14 +288,13 @@
           <span class="block text-sm font-semibold text-muted">Urban Shadows 2e</span>
           <span class="text-lg font-semibold md:text-xl">Noites de Neon</span>
         </span>
-        <span
-          class="chip h-6 shrink-0 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
-          >Campanha</span
-        >
+        <Pill tone="outline" class="shrink-0">Campanha</Pill>
       </div>
       <div class="flex items-center gap-3">
         <SeatDots taken={3} capacity={5} />
-        <span class="text-sm font-semibold text-muted">3 de 5 vagas ocupadas</span>
+        <span class="text-sm font-semibold text-muted"
+          >{m.dash_seats_taken({ taken: 3, capacity: 5 })}</span
+        >
       </div>
       <div>
         <p class="mb-2 flex items-center gap-2 text-base font-semibold">

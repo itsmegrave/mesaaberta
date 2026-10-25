@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Chair from './Chair.svelte';
+  import Chair, { SEAT_COLOURS } from './Chair.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   // On the blue panel of the sign-in pages the tabletop is a shade instead of blue, the lamp's pool
@@ -35,12 +35,7 @@
 
   const gmSeat = at(0);
   const emptySeat = at(1);
-  const players = [
-    'fill-success-500 stroke-success-500',
-    'fill-tertiary-400 stroke-tertiary-400',
-    'fill-secondary-300 stroke-secondary-300',
-    'fill-success-500 stroke-success-500',
-  ].map((colour, i) => ({ colour, ...at(i + 2) }));
+  const players = [...SEAT_COLOURS, SEAT_COLOURS[0]].map((colour, i) => ({ colour, ...at(i + 2) }));
 </script>
 
 <svg

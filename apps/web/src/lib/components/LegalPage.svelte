@@ -1,13 +1,16 @@
 <script lang="ts">
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import type { Snippet } from 'svelte';
+  import { updated as effective } from '#lib/legal.js';
   import Prose from './Prose.svelte';
 
+  // The terms and the privacy policy: the title, the date they took effect (both share it, from
+  // `#lib/legal`) and the text.
   let {
     title,
-    updated,
+    updated = effective,
     children,
-  }: { title: string; updated: { iso: string; label: string }; children: Snippet } = $props();
+  }: { title: string; updated?: { iso: string; label: string }; children: Snippet } = $props();
 </script>
 
 <article class="mx-auto max-w-prose py-8 md:py-14">

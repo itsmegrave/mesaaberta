@@ -1,6 +1,8 @@
 <script lang="ts">
   import { navigating, page } from '$app/state';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import EmptyState from '#lib/components/ui/EmptyState.svelte';
+  import PageHead from '#lib/components/ui/PageHead.svelte';
   import ListSkeleton from '#lib/components/ListSkeleton.svelte';
   import PartnerCard from '#lib/components/PartnerCard.svelte';
   import PartnerFilters from '#lib/components/PartnerFilters.svelte';
@@ -35,13 +37,11 @@
 </svelte:head>
 
 <section class="py-2 md:pt-12">
-  <Breadcrumbs class="mb-8" items={[{ label: m.partner_nav_label() }]} />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-    {m.partner_title()}
-  </h1>
-  <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
-    {m.partner_lede()}
-  </p>
+  <PageHead
+    crumbs={[{ label: m.partner_nav_label() }]}
+    title={m.partner_title()}
+    lede={m.partner_lede()}
+  />
 
   {#if data.sent}
     <p role="status" class="mt-6 rounded-lg border border-success-500 bg-panel p-4 font-semibold">
@@ -56,7 +56,7 @@
   {#if filtering.current}
     <ListSkeleton kind="cards" />
   {:else if data.cards.length > 0}
-    <ul class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <CardGrid class="mt-6">
       {#each data.cards as partner (partner.id)}
         <li>
           <PartnerCard
@@ -67,7 +67,7 @@
           />
         </li>
       {/each}
-    </ul>
+    </CardGrid>
     <div class="mt-8">
       <Pager
         page={data.filters.page}
@@ -76,12 +76,11 @@
       />
     </div>
   {:else}
-    <div class="mt-10 max-w-sm" role="status">
-      <p class="text-lg">{anyFilter ? m.partner_empty_filtered() : m.partner_empty()}</p>
-      {#if anyFilter}
-        <a href="/p" class="mt-3 inline-block anchor">{m.partner_filter_clear()}</a>
-      {/if}
-    </div>
+    <EmptyState
+      text={anyFilter ? m.partner_empty_filtered() : m.partner_empty()}
+      clearHref={anyFilter ? '/p' : undefined}
+      clearLabel={m.partner_filter_clear()}
+    />
   {/if}
 </section>
 

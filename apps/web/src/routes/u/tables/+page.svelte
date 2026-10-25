@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Tabs } from '@skeletonlabs/skeleton-svelte';
-  import { flushSync, onMount } from 'svelte';
+  import { flushSync, onMount, type Snippet } from 'svelte';
   import QueryStatus from '#lib/components/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
@@ -10,6 +10,8 @@
   import { pageHref } from '#lib/admin/page-href.js';
   import Icon from '#lib/components/Icon.svelte';
   import KebabMenu from '#lib/components/KebabMenu.svelte';
+  import Pager from '#lib/components/admin/Pager.svelte';
+  import { buttonClass } from '#lib/components/Button.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data: serverData } = $props();
@@ -60,6 +62,50 @@
   // The tab's panel, which stays drawn from `lg` up whatever tab is selected.
   const panelClass = (value: Tab) => (tab === value ? '' : 'max-lg:hidden');
 </script>
+
+<!-- One of the two lists, a tab on a phone and a column from `lg` up. -->
+{#snippet column(
+  list: {
+    value: Tab;
+    title: string;
+    total: number;
+    shown: number;
+    empty: string;
+    href: string;
+    cta: string;
+  },
+  cards: Snippet,
+)}
+  <Tabs.Content value={list.value}>
+    {#snippet element(attributes)}
+      <div {...attributes} hidden={false} class={panelClass(list.value)}>
+        <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
+        <section aria-labelledby={list.value}>
+          <div class="flex items-baseline gap-3">
+            <h2 id={list.value} class="text-3xl font-semibold tracking-tight">
+              {list.title}
+            </h2>
+            <span class="text-sm font-semibold text-muted"
+              >{m.dash_count({ count: list.total })}</span
+            >
+          </div>
+          {#if list.shown === 0}
+            <p class="mt-3">
+              {list.empty}
+            </p>
+            <a href={list.href} class="mt-2 inline-block anchor">
+              {list.cta}
+            </a>
+          {:else}
+            <ul class="mt-5 grid gap-5">
+              {@render cards()}
+            </ul>
+          {/if}
+        </section>
+      </div>
+    {/snippet}
+  </Tabs.Content>
+{/snippet}
 
 <svelte:head>
   <title>{m.dash_title()}</title>
@@ -159,111 +205,61 @@
           <a
             href="{pageHref('/u/tables', page.url.searchParams, data.waiting.first.page)}#mesa-{data
               .waiting.first.slug}"
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
-            >{m.dash_banner_action()}</a
+            class="{buttonClass('primary')} font-semibold sm:ml-auto">{m.dash_banner_action()}</a
           >
         {:else}
           <a
             href="#mesa-{data.waiting?.first.slug}"
             onclick={showRunning}
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold sm:ml-auto"
-            >{m.dash_banner_action()}</a
+            class="{buttonClass('primary')} font-semibold sm:ml-auto">{m.dash_banner_action()}</a
           >
         {/if}
       </div>
     {/if}
 
     <div class="mt-6 grid gap-10 lg:mt-8 lg:grid-cols-2 lg:gap-12">
-      <Tabs.Content value="playing">
-        {#snippet element(attributes)}
-          <div {...attributes} hidden={false} class={panelClass('playing')}>
-            <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
-            <section aria-labelledby="playing">
-              <div class="flex items-baseline gap-3">
-                <h2 id="playing" class="text-3xl font-semibold tracking-tight">
-                  {m.dash_playing()}
-                </h2>
-                <span class="text-sm font-semibold text-muted"
-                  >{m.dash_count({ count: data.totals.playing })}</span
-                >
-              </div>
-              {#if data.playing.length === 0}
-                <p class="mt-3">
-                  {data.totals.playing === 0 ? m.dash_playing_empty() : m.dash_page_empty()}
-                </p>
-                <a href="/t" class="mt-2 inline-block anchor">
-                  {m.dash_find_table()}
-                </a>
-              {:else}
-                <ul class="mt-5 grid gap-5">
-                  {#each data.playing as item (item.slug)}
-                    <li><PlayingCard {item} {next} /></li>
-                  {/each}
-                </ul>
-              {/if}
-            </section>
-          </div>
-        {/snippet}
-      </Tabs.Content>
-
-      <Tabs.Content value="running">
-        {#snippet element(attributes)}
-          <div {...attributes} hidden={false} class={panelClass('running')}>
-            <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
-            <section aria-labelledby="running">
-              <div class="flex items-baseline gap-3">
-                <h2 id="running" class="text-3xl font-semibold tracking-tight">
-                  {m.dash_running()}
-                </h2>
-                <span class="text-sm font-semibold text-muted"
-                  >{m.dash_count({ count: data.totals.running })}</span
-                >
-              </div>
-              {#if data.running.length === 0}
-                <p class="mt-3">
-                  {data.totals.running === 0 ? m.dash_running_empty() : m.dash_page_empty()}
-                </p>
-                <a href="/t/new" class="mt-2 inline-block anchor">
-                  {m.tables_open_cta()}
-                </a>
-              {:else}
-                <ul class="mt-5 grid gap-5">
-                  {#each data.running as item, index (item.slug)}
-                    <li><RunningCard {item} {next} openPlayers={index === 0} /></li>
-                  {/each}
-                </ul>
-              {/if}
-            </section>
-          </div>
-        {/snippet}
-      </Tabs.Content>
+      {#snippet playingCards()}
+        {#each data.playing as item (item.slug)}
+          <li><PlayingCard {item} {next} /></li>
+        {/each}
+      {/snippet}
+      {#snippet runningCards()}
+        {#each data.running as item, index (item.slug)}
+          <li><RunningCard {item} {next} openPlayers={index === 0} /></li>
+        {/each}
+      {/snippet}
+      {@render column(
+        {
+          value: 'playing',
+          title: m.dash_playing(),
+          total: data.totals.playing,
+          shown: data.playing.length,
+          empty: data.totals.playing === 0 ? m.dash_playing_empty() : m.dash_page_empty(),
+          href: '/t',
+          cta: m.dash_find_table(),
+        },
+        playingCards,
+      )}
+      {@render column(
+        {
+          value: 'running',
+          title: m.dash_running(),
+          total: data.totals.running,
+          shown: data.running.length,
+          empty: data.totals.running === 0 ? m.dash_running_empty() : m.dash_page_empty(),
+          href: '/t/new',
+          cta: m.tables_open_cta(),
+        },
+        runningCards,
+      )}
     </div>
   </Tabs>
 
-  {#if data.pages > 1}
-    <nav
-      aria-label={m.admin_pagination()}
-      class="mt-10 flex flex-wrap items-center justify-center gap-3"
-    >
-      {#if data.page > 1}
-        <a
-          class="btn size-12 rounded-lg border border-surface-200-800 p-0"
-          href={pageHref('/u/tables', page.url.searchParams, data.page - 1)}
-          aria-label={m.admin_profile_previous()}
-          title={m.admin_profile_previous()}><Icon name="chevron-left" /></a
-        >
-      {/if}
-      <span class="font-semibold"
-        >{m.admin_profile_page({ page: data.page, pages: data.pages })}</span
-      >
-      {#if data.page < data.pages}
-        <a
-          class="btn size-12 rounded-lg border border-surface-200-800 p-0"
-          href={pageHref('/u/tables', page.url.searchParams, data.page + 1)}
-          aria-label={m.admin_profile_next()}
-          title={m.admin_profile_next()}><Icon name="chevron-right" /></a
-        >
-      {/if}
-    </nav>
-  {/if}
+  <Pager
+    compact
+    class="mt-10"
+    page={data.page}
+    pages={data.pages}
+    href={(number) => pageHref('/u/tables', page.url.searchParams, number)}
+  />
 </section>
