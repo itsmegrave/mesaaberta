@@ -13,14 +13,15 @@ const player = (n: number, over = {}) => ({
 });
 
 describe('TableGoingOn', () => {
-  it('offers rating to who is not absent and not already let, and says who was let', async () => {
+  it('offers rating only to who was marked present and not already let, and says who was let', async () => {
     render(TableGoingOn, {
       next: '/t/mesa/manage',
       tableManage: '/t/mesa/manage',
       players: [
-        player(1),
-        player(2, { attended: false }),
-        player(3, { ratingOpenedAt: new Date() }),
+        player(1, { attended: true }),
+        // Never marked present: not offered, like someone marked absent.
+        player(2),
+        player(3, { attended: true, ratingOpenedAt: new Date() }),
       ],
     });
 

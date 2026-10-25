@@ -5,6 +5,7 @@ import {
   events,
   gameTables,
   profiles,
+  ratings,
   registrations,
   systems,
 } from '@mesaaberta/core/server/db/schema';
@@ -20,6 +21,7 @@ import {
   markTableNotHeld,
   postponeTable,
   sessionEndedBy,
+  skipSession,
 } from '@mesaaberta/core/server/tables/lifecycle';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -372,6 +374,18 @@ describe('a campaign or adventure that goes on', () => {
     expect((await rowOf(table.id, 3)).attended).toBe(true);
   });
 
+  it('keeps a player who already rated present, even when the list leaves them out', async () => {
+    const table = await waitingCampaign();
+    await seat(table.id, 2, 3);
+    await test.db.insert(ratings).values({ tableId: table.id, playerId: id(3), gmScore: 5 });
+
+    await concludeTable(test.db, gm, table.slug, [id(2)]);
+
+    expect((await rowOf(table.id, 3)).attended).toBe(true);
+    const [event] = await eventsOf(table.id);
+    expect(event.payload).toMatchObject({ absentPlayerIds: [] });
+  });
+
   it('lets chosen players rate while it goes on, once each, never one marked absent', async () => {
     const table = await waitingCampaign();
     await seat(table.id, 2, 3);
@@ -384,6 +398,62 @@ describe('a campaign or adventure that goes on', () => {
     await expect(allowRatings(test.db, gm, table.slug, [id(2)], now)).rejects.toMatchObject({
       field: 'playerIds',
     });
+  });
+
+  it('never lets a player the GM did not mark present', async () => {
+    const table = await waitingCampaign({ status: 'active' });
+    await seat(table.id, 2);
+
+    await expect(allowRatings(test.db, gm, table.slug, [id(2)], now)).rejects.toMatchObject({
+      field: 'playerIds',
+    });
+    expect((await rowOf(table.id, 2)).ratingOpenedAt).toBeNull();
+  });
+
+  it('skips a session that did not happen: open again on the next date, attendance untouched', async () => {
+    const table = await waitingCampaign();
+    await seat(table.id, 2);
+
+    await skipSession(test.db, gm, table.slug, {}, now);
+
+    const [after] = await test.db.select().from(gameTables).where(eq(gameTables.id, table.id));
+    expect(after.status).toBe('active');
+    expect(after.startsAt).toEqual(new Date('2026-10-01T19:00:00Z'));
+    expect(after.icalSequence).toBe(table.icalSequence + 1);
+    expect((await rowOf(table.id, 2)).attended).toBeNull();
+    expect(await eventsOf(table.id)).toEqual([
+      expect.objectContaining({
+        type: 'TableUpdated',
+        payload: expect.objectContaining({
+          changes: expect.objectContaining({ startsAt: expect.anything() }),
+        }),
+      }),
+    ]);
+  });
+
+  it('skips an adventure session only to a future date the GM gives, and never a one-shot', async () => {
+    const adventure = await makeTable({ status: 'awaiting_confirmation', kind: 'adventure' });
+    await expect(skipSession(test.db, gm, adventure.slug, {}, now)).rejects.toMatchObject({
+      field: 'nextStartsAtLocal',
+    });
+    await expect(
+      skipSession(test.db, gm, adventure.slug, { nextStartsAtLocal: '2026-09-01T19:00' }, now),
+    ).rejects.toMatchObject({ field: 'nextStartsAtLocal' });
+    await skipSession(test.db, gm, adventure.slug, { nextStartsAtLocal: '2026-10-10T19:00' }, now);
+    expect(await statusOf(adventure.slug)).toBe('active');
+
+    const oneShot = await makeTable({ status: 'awaiting_confirmation' });
+    await expect(skipSession(test.db, gm, oneShot.slug, {}, now)).rejects.toMatchObject({
+      field: 'slug',
+    });
+  });
+
+  it('closes as not held when the GM ends it after a session that did not happen', async () => {
+    const table = await waitingCampaign();
+
+    await markTableNotHeld(test.db, gm, table.slug);
+
+    expect(await statusOf(table.slug)).toBe('not_held');
   });
 
   it('ends without another session: concluded, with the absent kept out of the rating prompt', async () => {

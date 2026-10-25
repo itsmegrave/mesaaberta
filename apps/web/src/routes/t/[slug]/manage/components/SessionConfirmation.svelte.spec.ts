@@ -30,6 +30,26 @@ describe('SessionConfirmation', () => {
     expect(new FormData(form).getAll('present')).toEqual([players[0].playerId]);
   });
 
+  it('locks a player who already rated as present, and still sends them', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players: [players[0], { ...players[1], rated: true }],
+      multi: true,
+    });
+
+    // The note is part of the label, so it is read with the name.
+    const bia = page.getByRole('checkbox', { name: /^bia/ });
+    await expect.element(bia).toBeChecked();
+    await expect.element(bia).toBeDisabled();
+    await expect
+      .element(page.getByText('Já avaliou a mesa, então conta como presente.'))
+      .toBeVisible();
+
+    await page.getByRole('checkbox', { name: 'ana' }).click();
+    const form = bia.element().closest('form')!;
+    expect(new FormData(form).getAll('present')).toEqual([players[1].playerId]);
+  });
+
   it('does not ask who showed up when no one has a seat', async () => {
     render(SessionConfirmation, { next: '/t/mesa/manage', players: [] });
 
@@ -51,6 +71,29 @@ describe('SessionConfirmation', () => {
     expect(form.getAttribute('action')).toBe('?/happened');
     await expect
       .element(page.getByRole('button', { name: 'Confirmar e concluir a mesa' }))
+      .toBeVisible();
+  });
+
+  it('for a campaign that did not happen, skips the session or closes the table', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      nextSession: '2026-10-08T19:00',
+    });
+
+    const skip = page.getByRole('button', { name: 'Não aconteceu, pular sessão' });
+    const form = skip.element().closest('form')!;
+    expect(form.getAttribute('action')).toBe('?/sessionSkipped');
+    expect(new FormData(form).get('nextStartsAtLocal')).toBe('2026-10-08T19:00');
+    // A campaign has no separate "Adiar": skipping is how it gets a new date.
+    await expect.element(page.getByRole('button', { name: 'Adiar' })).not.toBeInTheDocument();
+
+    await page.getByRole('radio', { name: /Encerrar a mesa/ }).click();
+
+    expect(form.getAttribute('action')).toBe('?/notHeld');
+    await expect
+      .element(page.getByRole('button', { name: 'Não aconteceu, encerrar a mesa' }))
       .toBeVisible();
   });
 

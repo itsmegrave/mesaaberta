@@ -18,6 +18,7 @@ import {
   holdSession,
   markTableNotHeld,
   postponeTable,
+  skipSession,
 } from '@mesaaberta/core/server/tables/lifecycle';
 import { publishTable } from '@mesaaberta/core/server/tables/write';
 import type { TableLifecycleActionName } from '@mesaaberta/core/server/tables/lifecycle-actions';
@@ -126,6 +127,17 @@ export const confirmationActions = {
         ...(present ? { presentPlayerIds: present } : {}),
         ...(nextStartsAtLocal ? { nextStartsAtLocal } : {}),
       }),
+    },
+  ),
+  // It did not happen and the campaign or adventure goes on: the table opens for the next session.
+  sessionSkipped: confirmationAction(
+    heldSchema,
+    ['nextStartsAtLocal', 'next'],
+    (db, actor, slug, { nextStartsAtLocal }) =>
+      skipSession(db, actor, slug, { nextStartsAtLocal: nextStartsAtLocal || undefined }),
+    {
+      action: 'sessionSkipped',
+      body: ({ nextStartsAtLocal }) => (nextStartsAtLocal ? { nextStartsAtLocal } : {}),
     },
   ),
   // The GM ends a campaign or adventure that went on.

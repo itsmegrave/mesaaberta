@@ -10,6 +10,7 @@ import {
   holdSession,
   markTableNotHeld,
   postponeTable,
+  skipSession,
 } from './lifecycle';
 import { publishTable } from './write';
 
@@ -49,6 +50,14 @@ export const tableLifecycleActions = {
       slug: string,
       data: { presentPlayerIds?: string[]; nextStartsAtLocal?: string },
     ) => holdSession(db, actor, slug, data),
+  },
+  // A session of a campaign or adventure did not happen and the table goes on to the next one.
+  sessionSkipped: {
+    schema: z.object({
+      nextStartsAtLocal: z.string().refine(isLocalDateTime, 'invalid').optional(),
+    }),
+    apply: (db: AnyDb, actor: Actor | null, slug: string, data: { nextStartsAtLocal?: string }) =>
+      skipSession(db, actor, slug, data),
   },
   finish: {
     schema: none,
