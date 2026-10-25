@@ -9,6 +9,7 @@ import {
   gmScores,
   messages,
   notifications,
+  userBadges,
   profileSocialLinks,
   profiles,
   ratings,
@@ -265,6 +266,7 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
       .where(or(eq(gmInviteBlocks.playerId, userId), eq(gmInviteBlocks.gmId, userId)));
     await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, userId));
     await tx.delete(notifications).where(eq(notifications.recipientId, userId));
+    await tx.delete(userBadges).where(eq(userBadges.profileId, userId));
     await tx
       .update(profiles)
       .set({

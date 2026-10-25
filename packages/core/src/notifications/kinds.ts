@@ -9,6 +9,7 @@ export const NOTIFICATION_CATEGORIES = [
   'moderation',
   'system',
   'messages',
+  'achievements',
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
