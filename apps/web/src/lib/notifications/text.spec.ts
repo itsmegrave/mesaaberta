@@ -31,6 +31,15 @@ describe('notificationText', () => {
     );
   });
 
+  it('names the badge that was earned, or says a new one arrived when it has no artwork yet', () => {
+    expect(
+      notificationText(shown({ type: 'badge_earned', metadata: { badgeId: 'first-table' } })),
+    ).toBe('Conquista nova: Primeira mesa.');
+    expect(
+      notificationText(shown({ type: 'badge_earned', metadata: { badgeId: 'not-yet' } })),
+    ).toBe('Uma conquista nova chegou ao seu perfil.');
+  });
+
   it('says someone when the account behind it is gone', () => {
     expect(notificationText(shown({ type: 'player_left' }))).toBe('Alguém saiu de Mesa do Dragão.');
   });

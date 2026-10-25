@@ -11,6 +11,8 @@ export type BadgeStats = {
   systemsPlayed(): Promise<number>;
   /** Concluded tables the person ran as GM. */
   tablesRun(): Promise<number>;
+  /** Concluded in-person tables the person ran, or played unless marked absent. */
+  inPersonTables(): Promise<number>;
   ratingsGiven(): Promise<number>;
   /** Whether a partner the person submitted is on the page. */
   hasApprovedPartner(): Promise<boolean>;
@@ -57,6 +59,32 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
         .from(gameTables)
         .where(and(eq(gameTables.gmId, profileId), eq(gameTables.status, 'concluded')));
       return row.total;
+    }),
+    inPersonTables: memo(async () => {
+      const [asPlayer] = await db
+        .select({ total: count() })
+        .from(registrations)
+        .innerJoin(gameTables, eq(gameTables.id, registrations.tableId))
+        .where(
+          and(
+            eq(registrations.playerId, profileId),
+            eq(registrations.status, 'confirmed'),
+            eq(gameTables.status, 'concluded'),
+            eq(gameTables.modality, 'in_person'),
+            or(isNull(registrations.attended), ne(registrations.attended, false)),
+          ),
+        );
+      const [asGm] = await db
+        .select({ total: count() })
+        .from(gameTables)
+        .where(
+          and(
+            eq(gameTables.gmId, profileId),
+            eq(gameTables.status, 'concluded'),
+            eq(gameTables.modality, 'in_person'),
+          ),
+        );
+      return asPlayer.total + asGm.total;
     }),
     ratingsGiven: memo(async () => {
       const [row] = await db
@@ -111,6 +139,11 @@ export const BADGES: readonly BadgeDefinition[] = [
     id: 'system-explorer',
     triggers: ATTENDANCE,
     check: async (stats) => (await stats.systemsPlayed()) >= 5,
+  },
+  {
+    id: 'in-person-table',
+    triggers: ATTENDANCE,
+    check: async (stats) => (await stats.inPersonTables()) >= 1,
   },
   {
     id: 'thoughtful-critic',
