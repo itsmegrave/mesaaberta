@@ -138,6 +138,10 @@ export const flagDefaults = {
   // back as the codes the form shows and a call that cannot be made falls back to the web path.
   // Needs the API binding. Admins first.
   api_ratings: false,
+  // Off: profiles show no badges and the bell words a new one generically. On: the "Conquistas" strip
+  // on the profile and the badge name in the bell. The badges are earned either way. Targeted by the
+  // profile's id, so everyone sees the same on a given profile; admins first, then 30%, then all.
+  api_badges: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

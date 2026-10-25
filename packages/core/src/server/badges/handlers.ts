@@ -115,7 +115,7 @@ export const badgeNoticeHandler: Handler = {
         eventId: event.id,
         category: 'achievements',
         type: 'badge_earned',
-        link: person.username ? routes.profile(person.username) : null,
+        link: person.username ? `${routes.profile(person.username)}#conquistas` : null,
         metadata: { badgeId: event.payload.badgeId },
         createdAt: event.createdAt,
       })

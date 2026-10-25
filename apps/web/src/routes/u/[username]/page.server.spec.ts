@@ -9,10 +9,11 @@ vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => ({
 }));
 
 const result = { profile: { username: 'ana' }, page: 1, pages: 1, isOwner: false };
+const isEnabled = vi.fn(async () => true);
 const run = (username = 'ana', query = '', db: object | null = {}) => {
   const setHeaders = vi.fn();
   const event = {
-    locals: { db, getUser: async () => null },
+    locals: { db, getUser: async () => null, flags: { isEnabled } },
     params: { username },
     platform: undefined,
     setHeaders,
@@ -40,6 +41,13 @@ describe('the public profile route', () => {
       'ana',
       expect.objectContaining({ viewerId: undefined, page: 1 }),
     );
+  });
+  it('asks the badge rollout about the profile being shown, not the visitor', async () => {
+    await run().promise;
+    const { showBadges } = vi.mocked(publicProfile).mock.calls[0][2]!;
+
+    await expect(showBadges!({ id: 'p1', isAdmin: false })).resolves.toBe(true);
+    expect(isEnabled).toHaveBeenCalledWith('api_badges', { id: 'p1', isAdmin: false });
   });
   it('shows the owner the page as a visitor sees it with ?as=visitor, and only the owner', async () => {
     const owned = { ...result, isOwner: true };

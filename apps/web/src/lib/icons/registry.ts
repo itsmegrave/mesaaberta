@@ -61,6 +61,15 @@ import ImportIcon from '@iconify-svelte/reicon/cloud-download';
 import MailIcon from '@iconify-svelte/reicon/sms';
 import GameDiceTwentyFacesTwentyIcon from '@iconify-svelte/game-icons/dice-twenty-faces-twenty';
 
+import GameCompassIcon from '@iconify-svelte/game-icons/compass';
+import GameWoodenChairIcon from '@iconify-svelte/game-icons/wooden-chair';
+import GameRollingDicesIcon from '@iconify-svelte/game-icons/rolling-dices';
+import GameQuillInkIcon from '@iconify-svelte/game-icons/quill-ink';
+import GameSpellBookIcon from '@iconify-svelte/game-icons/spell-book';
+import GameWizardStaffIcon from '@iconify-svelte/game-icons/wizard-staff';
+import GameShakingHandsIcon from '@iconify-svelte/game-icons/shaking-hands';
+import GameRoundTableIcon from '@iconify-svelte/game-icons/round-table';
+import GameSunriseIcon from '@iconify-svelte/game-icons/sunrise';
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
 import PanelLeftOpenIcon from '@iconify-svelte/reicon/sidebar-left';
 import PanelLeftCloseIcon from '@iconify-svelte/reicon/sidebar-left';
@@ -159,6 +168,15 @@ export const ICONS = {
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
   'game-icons:trade': GameTradeIcon,
+  'game-icons:compass': GameCompassIcon,
+  'game-icons:wooden-chair': GameWoodenChairIcon,
+  'game-icons:rolling-dices': GameRollingDicesIcon,
+  'game-icons:quill-ink': GameQuillInkIcon,
+  'game-icons:spell-book': GameSpellBookIcon,
+  'game-icons:wizard-staff': GameWizardStaffIcon,
+  'game-icons:shaking-hands': GameShakingHandsIcon,
+  'game-icons:round-table': GameRoundTableIcon,
+  'game-icons:sunrise': GameSunriseIcon,
   'panel-left-open': PanelLeftOpenIcon,
   'panel-left-close': PanelLeftCloseIcon,
   bold: BoldIcon,

@@ -53,7 +53,12 @@ const stored = (event: DomainEvent): StoredEvent => ({
 });
 
 /** A concluded table with its players; `absent` are marked as not having shown up. */
-async function concluded(players: string[], absent: string[] = [], system = systemIds[0]) {
+async function concluded(
+  players: string[],
+  absent: string[] = [],
+  system = systemIds[0],
+  inPerson = false,
+) {
   const slug = `badge-${++counter}`;
   const [table] = await test.db
     .insert(gameTables)
@@ -68,6 +73,7 @@ async function concluded(players: string[], absent: string[] = [], system = syst
       gmId: gm,
       systemId: system,
       status: 'concluded',
+      ...(inPerson ? { modality: 'in_person' as const, locationArea: 'Centro' } : {}),
     })
     .returning();
   if (players.length)
@@ -148,6 +154,20 @@ describe('badges-v1', () => {
     expect(await held(gm)).toEqual(['gm-first', 'gm-master-1']);
   });
 
+  it('awards the in-person badge to the GM and the players present, not to the absent', async () => {
+    await badgeHandler.handle(await concluded([p1, p2], [p2], systemIds[0], true), test.db);
+
+    expect(await held(p1)).toContain('in-person-table');
+    expect(await held(gm)).toContain('in-person-table');
+    expect(await held(p2)).toEqual([]);
+  });
+
+  it('gives no in-person badge for an online table', async () => {
+    await badgeHandler.handle(await concluded([p1]), test.db);
+
+    expect(await held(p1)).not.toContain('in-person-table');
+  });
+
   it('awards the critic on the tenth rating', async () => {
     for (let n = 0; n < 10; n += 1) {
       const event = await concluded([p1]);
@@ -206,7 +226,7 @@ describe('badge-notice-v1', () => {
         recipientId: p1,
         type: 'badge_earned',
         category: 'achievements',
-        link: '/u/jogadora',
+        link: '/u/jogadora#conquistas',
         metadata: { badgeId: 'first-table' },
       }),
     ]);

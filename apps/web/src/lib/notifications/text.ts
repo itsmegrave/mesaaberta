@@ -1,6 +1,7 @@
 import { reasonLabel } from '#lib/moderation/labels.js';
 import type { ReportReason } from '@mesaaberta/core/moderation/reports';
 import { m } from '#lib/paraglide/messages.js';
+import { presentationOf } from '#lib/badges/presentation.js';
 import { atHandle } from '@mesaaberta/core/profile/handle';
 import { toPlainText } from '@mesaaberta/core/text/rich';
 import {
@@ -68,8 +69,13 @@ export function notificationText(item: Shown): string {
       return m.notification_rating_received({ table });
     case 'rating_prompt':
       return m.notification_rating_prompt({ table });
-    case 'badge_earned':
-      return m.notification_badge_earned();
+    case 'badge_earned': {
+      // A badge without artwork yet still gets its notice, worded without the name.
+      const name = presentationOf(item.metadata.badgeId ?? '')?.name();
+      return name
+        ? m.notification_badge_earned_named({ badge: name })
+        : m.notification_badge_earned();
+    }
     case 'catalog_suggestion_approved':
       // A table that waited for its system can be published now.
       if (item.metadata.kind === 'system')

@@ -5,6 +5,7 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import GmRating from '#lib/components/GmRating.svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import BadgeStrip from '#lib/components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/KebabMenu.svelte';
   import TableCard from '#lib/components/TableCard.svelte';
@@ -167,6 +168,8 @@
       </section>
     </div>
   </header>
+
+  {#if data.badges}<BadgeStrip badges={data.badges} isOwner={data.isOwner} />{/if}
 
   <section aria-labelledby="upcoming-tables" class="mt-8">
     <h2 id="upcoming-tables" class="text-2xl leading-tight font-semibold tracking-tight">

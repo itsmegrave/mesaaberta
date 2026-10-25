@@ -7,6 +7,7 @@ import {
   registrations,
 } from '@mesaaberta/core/server/db/schema';
 import { pictureOf, imageUrl } from '@mesaaberta/core/server/images';
+import { heldBadges } from '@mesaaberta/core/server/badges/reads';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '../../profile/social-links';
@@ -46,11 +47,14 @@ export async function publicProfile(
     now = new Date(),
     supabaseUrl,
     viewerId = null,
+    showBadges,
   }: {
     page?: number;
     now?: Date;
     supabaseUrl?: string;
     viewerId?: string | null;
+    /** Whether this profile shows its badges (the `api_badges` rollout). Omitted: it does not. */
+    showBadges?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -60,6 +64,7 @@ export async function publicProfile(
       username: profiles.username,
       avatarPath: profiles.avatarPath,
       avatarUrl: profiles.avatarUrl,
+      role: profiles.role,
     })
     .from(profiles)
     .where(and(eq(profiles.username, normalizeUsername(username)), eq(profiles.status, 'active')))
@@ -81,7 +86,13 @@ export async function publicProfile(
     listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
   ]);
 
+  // Null: the rollout has not reached this profile, so the page shows no strip at all.
+  const badges = (await showBadges?.({ id: found.id, isAdmin: found.role === 'admin' }))
+    ? await heldBadges(db, found.id, { includeHidden: viewerId === found.id })
+    : null;
+
   return {
+    badges,
     profile: {
       username: found.username!,
       avatarUrl: pictureOf(supabaseUrl, found),
