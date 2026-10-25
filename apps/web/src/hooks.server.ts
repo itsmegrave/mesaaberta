@@ -136,6 +136,12 @@ const handleFlags: Handle = ({ event, resolve }) => {
   return resolve(event);
 };
 
+// Sign in as a local persona (`/dev/login?as=gm`). `import.meta.env.DEV` is false in every build, so
+// the module is not even in the bundle there; `scripts/check-no-dev-login.ts` fails CI if it is.
+const handleDevLogin: Handle = import.meta.env.DEV
+  ? async (input) => (await import('#lib/server/dev/dev-login.js')).handleDevLogin(input)
+  : ({ event, resolve }) => resolve(event);
+
 // Security headers go first so they wrap every response, including the ones later hooks produce.
 export const handle: Handle = sequence(
   // First, so the total covers every other hook.
@@ -151,6 +157,8 @@ export const handle: Handle = sequence(
   handleDatabase,
   handleAnalytics,
   handleAuth,
+  // Needs the Supabase client, before anything that reads the signed-in profile.
+  handleDevLogin,
   handleUserTag,
   handleSuspended,
   handleAdminAccess,
