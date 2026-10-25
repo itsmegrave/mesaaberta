@@ -186,6 +186,45 @@ describe('submitRating', () => {
     expect(await ratingOf(test.db, table.id, id(6))).not.toBeNull();
   });
 
+  it('lets a player the GM let rate a campaign that is still going, once', async () => {
+    const campaign = await makeTable({
+      kind: 'campaign',
+      recurrence: 'FREQ=WEEKLY',
+      status: 'active',
+    });
+    await seated(5, campaign.slug);
+    await seated(6, campaign.slug);
+    const letIn = (n: number) =>
+      test.db
+        .update(registrations)
+        .set({ ratingOpenedAt: after })
+        .where(and(eq(registrations.tableId, campaign.id), eq(registrations.playerId, id(n))));
+    // Its date moved to the next session, so the first-session check would say too early.
+    await test.db
+      .update(gameTables)
+      .set({ startsAt: new Date('2026-07-01T20:00:00Z') })
+      .where(eq(gameTables.id, campaign.id));
+
+    await expect(
+      submitRating(test.db, player(5), campaign.slug, input(), after),
+    ).rejects.toMatchObject({
+      name: 'TooEarly',
+    });
+    await letIn(5);
+    await submitRating(test.db, player(5), campaign.slug, input(), after);
+    await expect(
+      submitRating(test.db, player(5), campaign.slug, input(), after),
+    ).rejects.toMatchObject({
+      name: 'AlreadyRated',
+    });
+    // Another player the GM did not let still waits for the table to end.
+    await expect(
+      submitRating(test.db, player(6), campaign.slug, input(), after),
+    ).rejects.toMatchObject({
+      name: 'TooEarly',
+    });
+  });
+
   it('refuses a rating before the first session has ended, with TooEarly', async () => {
     const table = await makeTable();
     await seated(2, table.slug);

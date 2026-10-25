@@ -48,6 +48,22 @@ export function instantToLocal(instant: Date, timeZone: string): string {
   return zoned(instant, timeZone).toPlainDateTime().toString({ smallestUnit: 'minute' });
 }
 
+/**
+ * The next session of a weekly campaign after `after`: the first date `startsAt` plus a whole
+ * number of intervals that is still ahead, at the same wall-clock time in `timeZone`.
+ */
+export function nextWeeklySession(
+  startsAt: Date,
+  intervalWeeks: number,
+  timeZone: string,
+  after: Date,
+): Date {
+  let next = zoned(startsAt, timeZone);
+  do next = next.add({ weeks: intervalWeeks });
+  while (next.epochMilliseconds <= after.getTime());
+  return new Date(next.epochMilliseconds);
+}
+
 /** Half-open session intervals: exactly adjacent sessions do not overlap. */
 export function intervalsOverlap(
   a: { startsAt: Date; durationMinutes: number },

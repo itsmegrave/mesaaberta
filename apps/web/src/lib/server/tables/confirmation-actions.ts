@@ -1,7 +1,7 @@
 import { error, fail, redirect, type Action, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm } from '#lib/forms/contract.js';
-import { answerSchema, postponeSchema } from '#lib/tables/confirmation.js';
+import { answerSchema, heldSchema, postponeSchema } from '#lib/tables/confirmation.js';
 import { requireUser } from '../auth/guard';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
@@ -12,7 +12,10 @@ import { writeViaApi } from '../api-write';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import {
+  allowRatings,
   concludeTable,
+  finishTable,
+  holdSession,
   markTableNotHeld,
   postponeTable,
 } from '@mesaaberta/core/server/tables/lifecycle';
@@ -107,6 +110,37 @@ export const confirmationActions = {
       action: 'happened',
       body: (_data, present) => (present ? { presentPlayerIds: present } : {}),
     },
+  ),
+  // It happened and more sessions follow: the table stays open for the next one.
+  sessionHeld: confirmationAction(
+    heldSchema,
+    ['nextStartsAtLocal', 'next'],
+    (db, actor, slug, { nextStartsAtLocal }, present) =>
+      holdSession(db, actor, slug, {
+        presentPlayerIds: present,
+        nextStartsAtLocal: nextStartsAtLocal || undefined,
+      }),
+    {
+      action: 'sessionHeld',
+      body: ({ nextStartsAtLocal }, present) => ({
+        ...(present ? { presentPlayerIds: present } : {}),
+        ...(nextStartsAtLocal ? { nextStartsAtLocal } : {}),
+      }),
+    },
+  ),
+  // The GM ends a campaign or adventure that went on.
+  finish: confirmationAction(
+    answerSchema,
+    ['next'],
+    (db, actor, slug) => finishTable(db, actor, slug),
+    { action: 'finish' },
+  ),
+  // The GM lets the checked players rate while the table goes on.
+  allowRatings: confirmationAction(
+    answerSchema,
+    ['next'],
+    (db, actor, slug, _data, players) => allowRatings(db, actor, slug, players ?? []),
+    { action: 'allowRatings', body: (_data, players) => ({ playerIds: players ?? [] }) },
   ),
   notHeld: confirmationAction(
     answerSchema,

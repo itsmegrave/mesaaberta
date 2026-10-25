@@ -62,17 +62,21 @@ describe('backfillBadges', () => {
   it('only counts on a dry run', async () => {
     const summary = await backfillBadges(test.db, { apply: false });
 
-    expect(summary).toEqual({ members: 3, awarded: { 'first-table': 1, 'gm-first': 1 } });
+    expect(summary).toEqual({
+      members: 3,
+      awarded: { 'first-100': 3, 'first-table': 1, 'gm-first': 1 },
+    });
     expect(await test.db.select().from(userBadges)).toEqual([]);
   });
 
   it('awards from history, skipping the absent and closed accounts, and tells nobody', async () => {
     const summary = await backfillBadges(test.db, { apply: true });
 
-    expect(summary.awarded).toEqual({ 'first-table': 1, 'gm-first': 1 });
-    expect(await held(player)).toEqual(['first-table']);
-    expect(await held(gm)).toEqual(['gm-first']);
-    expect(await held(absent)).toEqual([]);
+    expect(summary.awarded).toEqual({ 'first-100': 3, 'first-table': 1, 'gm-first': 1 });
+    expect(await held(player)).toEqual(['first-100', 'first-table']);
+    expect(await held(gm)).toEqual(['first-100', 'gm-first']);
+    // Early members all get the Primeira centena; the absent one played nothing, so only that.
+    expect(await held(absent)).toEqual(['first-100']);
     expect(await held(closed)).toEqual([]);
     expect(await test.db.select().from(events)).toEqual([]);
     expect(await test.db.select().from(notifications)).toEqual([]);
@@ -83,9 +87,9 @@ describe('backfillBadges', () => {
   it('gives the Pioneiro to who joined before the date, and only when asked', async () => {
     await backfillBadges(test.db, { apply: true, pioneerBefore: new Date('2026-10-01T00:00:00Z') });
 
-    expect(await held(gm)).toEqual(['gm-first', 'pioneer']);
-    expect(await held(player)).toEqual(['first-table', 'pioneer']);
-    expect(await held(absent)).toEqual([]);
+    expect(await held(gm)).toEqual(['first-100', 'gm-first', 'pioneer']);
+    expect(await held(player)).toEqual(['first-100', 'first-table', 'pioneer']);
+    expect(await held(absent)).toEqual(['first-100']);
   });
 
   it('is safe to run again and leaves a revoked badge revoked', async () => {

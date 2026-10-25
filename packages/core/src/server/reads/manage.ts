@@ -17,6 +17,12 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
     // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
     canDuplicate: manage.canDuplicate,
     canEnd: can(actor, 'table:end', { gmId }),
+    // A campaign or adventure that goes on: the GM may end it, or let players rate meanwhile.
+    canFinish: can(actor, 'table:finish', {
+      gmId,
+      tableStatus: manage.table.status,
+      kind: manage.table.kind,
+    }),
     canInvite: actor?.id === gmId,
     canEdit: can(actor, 'table:edit', { gmId, tableStatus: manage.table.status }),
     systemWaiting: manage.systemWaiting,
