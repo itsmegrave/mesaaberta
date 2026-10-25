@@ -6,7 +6,7 @@ import type { AnyDb } from '../db/client';
 import { setDirectMessages } from '../messages/service';
 import { Invalid } from '../errors';
 import { loadProfileForm, saveProfile } from '../profile/service';
-import { setAvatarPath } from './service';
+import { setAvatarPath, setBannerPath } from './service';
 
 /**
  * What a signed-in person does to their own profile, by name: the form's own schema and the service
@@ -61,6 +61,25 @@ export const accountActions = {
       if (data.path !== null && !data.path.startsWith(`${actor.id}/`))
         throw new Invalid('photo', 'invalid');
       return { replaced: await setAvatarPath(db, actor.id, data.path) };
+    },
+  },
+  // The cover, the same way: a path the web Worker stored under `<id>/banners/`, or null.
+  banner: {
+    schema: z.object({
+      path: z
+        .string()
+        .max(300)
+        .regex(/^[A-Za-z0-9/_.-]+$/)
+        .nullable(),
+    }),
+    prepare: async (_db: AnyDb, _actor: Actor, body: Record<string, unknown>) => body,
+    apply: async (db: AnyDb, actor: Actor, data: { path: string | null }) => {
+      if (
+        data.path !== null &&
+        (!data.path.startsWith(`${actor.id}/banners/`) || data.path.includes('..'))
+      )
+        throw new Invalid('banner', 'invalid');
+      return { replaced: await setBannerPath(db, actor.id, data.path) };
     },
   },
 };

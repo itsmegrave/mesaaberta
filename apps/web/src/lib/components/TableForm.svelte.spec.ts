@@ -32,7 +32,7 @@ describe('TableForm', () => {
     await expect.element(page.getByText(/No seu fuso, America\/Sao Paulo \(GMT-3\)/)).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Mudar no perfil' }))
-      .toHaveAttribute('href', '/u/profile/edit');
+      .toHaveAttribute('href', '/u/profile/edit/about');
     await expect.element(page.getByLabelText('Fuso horário')).not.toBeInTheDocument();
   });
 

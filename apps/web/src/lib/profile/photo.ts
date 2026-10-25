@@ -6,3 +6,6 @@ import { requiredImageFile } from '@mesaaberta/core/forms/files';
  * type. The server still reads its bytes (`prepareImage`) before storing it.
  */
 export const photoSchema = z.object({ photo: requiredImageFile });
+
+/** The cover of the public profile: one image, checked the same way. */
+export const bannerSchema = z.object({ banner: requiredImageFile });

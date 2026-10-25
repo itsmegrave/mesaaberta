@@ -1,83 +1,21 @@
 <script lang="ts">
-  import InvitationAction from '#lib/components/InvitationAction.svelte';
-  import TextInput from '#lib/components/TextInput.svelte';
-  import { queryClient } from '#lib/query/context.js';
-  const client = queryClient();
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
-  import { goto } from '$app/navigation';
+  // "Perfil público": what everyone sees. The photo and the cover change through their own dialogs
+  // and save at once; the name, the bio and the links save with the form below.
   import { page } from '$app/state';
-  import { atHandle } from '@mesaaberta/core/profile/handle';
-  import Avatar from '#lib/components/Avatar.svelte';
-  import AddPassword from '#lib/components/AddPassword.svelte';
-  import ConnectedAccounts from '#lib/components/ConnectedAccounts.svelte';
-  import ImageUpload from '#lib/components/ImageUpload.svelte';
-  import ProfileForm from '#lib/components/ProfileForm.svelte';
-  import { m } from '#lib/paraglide/messages.js';
-
-  import { toast } from '#lib/toaster.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import SubmitButton from '#lib/components/SubmitButton.svelte';
-  import { photoSchema } from '#lib/profile/photo.js';
-  import { Switch } from '@skeletonlabs/skeleton-svelte';
-  import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
-  import { actionForm } from '#lib/forms/action-form.svelte.js';
-  import { deleteAccountSchema } from '#lib/profile/delete.js';
-  import { tick } from 'svelte';
-  import Form from '#lib/components/Form.svelte';
+  import Avatar from '#lib/components/Avatar.svelte';
+  import ProfileForm from '#lib/components/ProfileForm.svelte';
+  import SettingsSection from '#lib/components/SettingsSection.svelte';
+  import UploadDialog from '#lib/components/UploadDialog.svelte';
+  import { bannerSchema, photoSchema } from '#lib/profile/photo.js';
+  import { toast } from '#lib/toaster.js';
+  import { m } from '#lib/paraglide/messages.js';
+  import type { ProfileInput } from '@mesaaberta/core/profile/schema';
 
   let { data, form: result = null } = $props();
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
-  const heading = 'text-2xl leading-tight font-semibold tracking-tight';
-
-  const photoNotice = $derived(page.url.searchParams.get('foto'));
-
-  // svelte-ignore state_referenced_locally
-  const photo = actionForm({
-    initial: data.photoForm.data,
-    schema: photoSchema,
-    domain: 'account',
-    initialErrors: result?.form && 'photo' in result.form.data ? result.form.errors : {},
-    onSuccess: () => {},
-    errorMessage: m.account_photo_error_failed,
-  });
-  const photoError = $derived(photo.errors.photo?.[0]);
-
-  // The photo goes up as soon as it is picked (and cropped, see ImageUpload).
-  let photoForm = $state<HTMLFormElement>();
-  async function picked(files: File[]) {
-    photo.change('photo', files[0]);
-    if (!files[0]) return;
-    await tick();
-    photoForm?.requestSubmit();
-  }
-
-  // svelte-ignore state_referenced_locally
-  const closing = actionForm({
-    initial:
-      result?.form && 'confirm' in result.form.data ? result.form.data : data.deleteForm.data,
-    schema: deleteAccountSchema,
-    initialErrors: result?.form && 'confirm' in result.form.data ? result.form.errors : {},
-    onSuccess: () => client.clear(),
-    errorMessage: m.auth_error_failed,
-  });
-  const { draft: closingData } = closing;
-  let messagingForm = $state<HTMLFormElement>();
-  const restoreMessaging = () => {
-    messaging.change('enabled', !messaging.values.enabled);
-    toast.error(m.messages_setting_failed());
-  };
-  // svelte-ignore state_referenced_locally
-  const messaging = actionForm({
-    initial: data.messagesForm.data,
-    schema: directMessagesSchema,
-    refresh: false,
-    domain: 'account',
-    onSuccess: () => toast.success(m.messages_setting_saved()),
-    onFailure: restoreMessaging,
-    onError: restoreMessaging,
-    errorMessage: m.messages_setting_failed,
-  });
+  const removeButton = 'btn h-12 rounded-lg px-4 font-semibold text-error-alert hover:preset-tonal';
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,
@@ -85,280 +23,120 @@
     not_an_image: m.account_photo_error_type,
     upload_failed: m.account_photo_error_failed,
   };
+  const bannerErrors: Record<string, () => string> = {
+    empty: m.account_banner_error_empty,
+    too_big: m.account_banner_error_too_big,
+    not_an_image: m.account_banner_error_type,
+    upload_failed: m.account_banner_error_failed,
+  };
+  // The answer of a form sent without JavaScript, for the field it was about.
+  const returned = (field: string) =>
+    result?.form && field in result.form.data
+      ? (result.form.errors[field]?.[0] as string | undefined)
+      : undefined;
 
-  const check = 'M5 12.5l4.5 4.5L19 7.5';
-  const cross = 'M6 6l12 12M18 6L6 18';
+  const notices: Record<string, Record<string, () => string>> = {
+    foto: { salva: m.account_photo_saved, removida: m.account_photo_removed },
+    capa: { salva: m.account_banner_saved, removida: m.account_banner_removed },
+  };
+  const notice = $derived(
+    Object.entries(notices)
+      .map(([key, texts]) => texts[page.url.searchParams.get(key) ?? '']?.())
+      .find(Boolean),
+  );
 </script>
 
-<svelte:head>
-  <title>{m.account_profile_title()} · Mesa Aberta</title>
-  <meta name="robots" content="noindex" />
-</svelte:head>
+<SettingsSection title={m.profile_section_public()} lede={m.profile_section_public_lede()}>
+  {#snippet aside()}
+    {#if data.username}
+      <a href="/u/{data.username}" class="link-underline font-semibold text-link"
+        >{m.profile_view_public()}</a
+      >
+    {/if}
+  {/snippet}
+</SettingsSection>
 
-{#snippet mark(path: string)}
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.8"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-    class="mt-1 shrink-0"><path d={path} /></svg
-  >
-{/snippet}
-
-<section class="pt-2 pb-4 md:pt-12">
-  <Breadcrumbs
-    class="mb-8"
-    items={[
-      ...(data.username ? [{ label: atHandle(data.username), href: `/u/${data.username}` }] : []),
-      { label: m.nav_edit_profile() },
-    ]}
-  />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-    {m.account_profile_title()}
-  </h1>
-  <p class="mt-2 max-w-md text-base text-muted md:mt-3 md:max-w-xl md:text-xl">
-    {m.account_profile_lede()}
-  </p>
-
-  <div class="mt-8 grid gap-6 lg:grid-cols-3 lg:items-start">
-    <div class="grid gap-6 lg:col-span-2">
-      <section aria-labelledby="photo-heading" class={card}>
-        <h2 id="photo-heading" class={heading}>{m.account_photo()}</h2>
-        <div class="mt-5 grid gap-5">
-          <!-- The photo in use, and where it comes from. -->
-          <div class="flex items-center gap-4 rounded-lg border border-surface-200-800 p-3">
-            <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={80} />
-            <div class="min-w-0">
-              <p class="font-semibold">{m.account_photo_current()}</p>
-            </div>
-          </div>
-          <Form
-            bind:element={photoForm}
-            action="?/photo"
-            enctype="multipart/form-data"
-            onsubmit={photo.submit}
-          >
-            <ImageUpload
-              id="photo"
-              name="photo"
-              kind="avatar"
-              label={m.account_photo()}
-              hint={m.account_photo_hint()}
-              dropText={m.account_photo_drop()}
-              error={photoError
-                ? (photoErrors[photoError]?.() ?? m.account_photo_error_failed())
-                : undefined}
-              currentUrl={data.avatarUrl}
-              onpick={picked}
-            />
-          </Form>
-          {#if data.hasUploadedPhoto}
-            <ActionForm
-              action="?/removePhoto"
-              label={m.account_photo_remove()}
-              buttonClass="btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
-            />
-          {/if}
-          {#if photoNotice}
-            <p role="status" class="text-sm font-semibold">
-              {photoNotice === 'salva' ? m.account_photo_saved() : m.account_photo_removed()}
-            </p>
-          {/if}
-        </div>
-      </section>
-
-      <section aria-labelledby="details" class={card}>
-        <h2 id="details" class={heading}>{m.account_details()}</h2>
-        <div class="mt-6 grid max-w-xl gap-1">
-          <label for="email" class="label-text block font-semibold">{m.account_email()}</label>
-          <p id="email-hint" class="text-sm text-surface-700-300">{m.account_email_hint()}</p>
-          <TextInput
-            id="email"
-            type="email"
-            value={data.email}
-            readonly
-            aria-describedby="email-hint"
-            class="mt-1 input h-12 w-full rounded-lg border-surface-200-800 bg-surface-950-50/5 px-3 text-muted"
-          />
-        </div>
-        <div class="mt-6">
-          <ProfileForm
-            form={result?.form && 'username' in result.form.data
-              ? { ...result.form, data: result.form.data }
-              : data.form}
-            action="?/save"
-            usernameLocked
-            submitLabel={m.account_profile_save()}
-            cancelHref={data.username ? `/u/${data.username}` : undefined}
-            onsaved={() => {
-              toast.success(m.account_profile_saved());
-              // Saved: back to the page everyone else sees.
-              // After a tick, so the leave guard sees the draft as saved.
-              if (data.username) {
-                void tick().then(() => goto(`/u/${data.username}`));
-              }
-            }}
-          />
-        </div>
-      </section>
-
-      {#if data.connections}
-        <ConnectedAccounts connections={data.connections} class={card} />
-      {/if}
-
-      {#if data.canAddPassword}
-        <AddPassword class={card} />
-      {/if}
-
-      <section aria-labelledby="direct-messages" class={card}>
-        <h2 id="direct-messages" class={heading}>{m.messages_setting_title()}</h2>
-        <Form
-          bind:element={messagingForm}
-          action="?/messages"
-          onsubmit={messaging.submit}
-          class="mt-4"
-        >
-          <Switch
-            checked={messaging.values.enabled}
-            disabled={messaging.pending}
-            onCheckedChange={(event) => {
-              messaging.change('enabled', event.checked);
-              void tick().then(() => messagingForm?.requestSubmit());
-            }}
-            class="flex items-center justify-between gap-4"
-          >
-            <Switch.Label class="font-semibold">{m.messages_setting_label()}</Switch.Label>
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            <Switch.HiddenInput />
-            <input type="hidden" name="enabled" value={String(messaging.values.enabled)} />
-          </Switch>
-        </Form>
-        <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
-      </section>
-
-      <section aria-labelledby="invitation-settings" class={card}>
-        <h2 id="invitation-settings" class={heading}>{m.invitation_settings_title()}</h2>
-        <p class="mt-3 text-muted">{m.invitation_settings_help()}</p>
-        {#if result && ('error' in result || ('form' in result && 'invitationId' in result.form.data && !result.form.valid))}<p
-            role="alert"
-            class="mt-3 text-error-alert"
-          >
-            {m.invitation_unavailable()}
-          </p>{/if}
-        <p class="mt-3 font-semibold">
-          {data.invitationPreferences.enabled
-            ? m.invitation_settings_enabled()
-            : m.invitation_settings_disabled()}
-        </p>
-        <div class="mt-4">
-          <InvitationAction
-            action="?/invitations"
-            enabled={!data.invitationPreferences.enabled}
-            label={data.invitationPreferences.enabled
-              ? m.invitation_disable()
-              : m.invitation_enable()}
-          />
-        </div>
-        <h3 class="mt-6 text-lg font-semibold">{m.invitation_blocks_title()}</h3>
-        {#if data.invitationPreferences.blocks.length === 0}<p class="mt-2 text-muted">
-            {m.invitation_blocks_empty()}
-          </p>{:else}
-          <ul class="mt-3 divide-y divide-surface-200-800">
-            {#each data.invitationPreferences.blocks as block (block.gmId)}
-              <li class="flex flex-wrap items-center justify-between gap-3 py-3">
-                <span class="font-semibold">{atHandle(block.username || '')}</span><InvitationAction
-                  action="?/invitationBlock"
-                  gmId={block.gmId}
-                  blocked={false}
-                  label={m.invitation_unblock()}
-                />
-              </li>
-            {/each}
-          </ul>
-        {/if}
-      </section>
-      <section aria-labelledby="your-data" class={card}>
-        <h2 id="your-data" class={heading}>{m.account_data_title()}</h2>
-        <p class="mt-3 max-w-prose">
-          {m.account_data_text()}
-          <a href="/privacy" class="link-underline text-surface-950-50">{m.privacy_title()}</a>.
-        </p>
-        <a
-          href="/u/profile/export"
-          download
-          data-sveltekit-reload
-          class="mt-5 btn h-12 gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            class="shrink-0"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg
-          >
-          {m.account_export()}
-        </a>
-
-        <div class="mt-8 border-t border-surface-200-800 pt-6">
-          <h3 class="text-lg font-semibold">{m.account_delete_title()}</h3>
-          <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
-          <Form action="?/delete" onsubmit={closing.submit} class="mt-4 grid max-w-sm gap-3">
-            <label for="confirm" class="label-text font-semibold"
-              >{m.account_delete_confirm()}</label
-            >
-            <TextInput
-              id="confirm"
-              name="confirm"
-              type="text"
-              autocomplete="off"
-              autocapitalize="none"
-              spellcheck="false"
-              placeholder={data.username}
-              bind:value={$closingData.confirm}
-              aria-invalid={closing.errors.confirm ? 'true' : undefined}
-              aria-describedby={closing.errors.confirm ? 'confirm-error' : undefined}
-              class="input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3"
-            />
-            {#if closing.errors.confirm}
-              <p id="confirm-error" role="alert" class="text-sm font-semibold text-error-700-300">
-                {m.account_delete_error()}
-              </p>
-            {/if}
-            <div>
-              <SubmitButton
-                submitting={closing.pending}
-                delayed={closing.delayed}
-                timeout={closing.timeout}
-                class="btn h-12 rounded-lg border-2 border-surface-200-800 px-6 font-semibold text-error-alert hover:preset-tonal"
-              >
-                {m.account_delete_button()}
-              </SubmitButton>
-            </div>
-          </Form>
-        </div>
-      </section>
+<section aria-labelledby="images-heading" class={card}>
+  <h3 id="images-heading" class="sr-only">{m.account_images()}</h3>
+  <!-- The cover as the profile shows it (4:1), with the photo over its bottom-left corner. -->
+  <div class="relative pb-12">
+    {#if data.bannerUrl}
+      <img
+        src={data.bannerUrl}
+        alt=""
+        class="aspect-4/1 w-full rounded-lg border border-surface-200-800 object-cover"
+      />
+    {:else}
+      <div
+        class="flex aspect-4/1 w-full items-center justify-center rounded-lg border-2 border-dashed border-surface-200-800 bg-surface-wash text-sm text-muted"
+      >
+        {m.account_banner_none()}
+      </div>
+    {/if}
+    <div class="absolute bottom-0 left-4 rounded-full bg-panel p-1 md:left-6">
+      <Avatar src={data.avatarUrl} name={data.form.data.name || data.username} size={96} />
     </div>
-
-    <aside aria-labelledby="seen" class={card}>
-      <h2 id="seen" class="text-xl font-semibold">{m.account_seen_title()}</h2>
-      <ul class="mt-4 grid gap-3 text-sm">
-        <li class="flex gap-3">{@render mark(check)}{m.account_seen_username()}</li>
-        <li class="flex gap-3">{@render mark(check)}{m.account_seen_rating()}</li>
-        <li class="flex gap-3 text-muted">{@render mark(cross)}{m.account_seen_email()}</li>
-        <li class="flex gap-3 text-muted">{@render mark(cross)}{m.account_seen_comments()}</li>
-      </ul>
-    </aside>
   </div>
+
+  <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+    <UploadDialog
+      id="photo"
+      name="photo"
+      action="?/photo"
+      kind="avatar"
+      schema={photoSchema}
+      label={m.account_photo_change()}
+      title={m.upload_photo_title()}
+      icon="camera"
+      errors={photoErrors}
+      fallbackError={m.account_photo_error_failed}
+      initialError={returned('photo')}
+    />
+    <UploadDialog
+      id="banner"
+      name="banner"
+      action="?/banner"
+      kind="cover"
+      schema={bannerSchema}
+      label={m.account_banner_change()}
+      title={m.upload_banner_title()}
+      icon="image"
+      errors={bannerErrors}
+      fallbackError={m.account_banner_error_failed}
+      initialError={returned('banner')}
+    />
+  </div>
+  {#if data.hasUploadedPhoto || data.bannerUrl}
+    <div class="mt-3 flex flex-wrap gap-3">
+      {#if data.hasUploadedPhoto}
+        <ActionForm
+          action="?/removePhoto"
+          label={m.account_photo_remove()}
+          buttonClass={removeButton}
+        />
+      {/if}
+      {#if data.bannerUrl}
+        <ActionForm
+          action="?/removeBanner"
+          label={m.account_banner_remove()}
+          buttonClass={removeButton}
+        />
+      {/if}
+    </div>
+  {/if}
+  {#if notice}
+    <p role="status" class="mt-3 text-sm font-semibold">{notice}</p>
+  {/if}
+</section>
+
+<section aria-label={m.profile_section_public()} class={card}>
+  <ProfileForm
+    form={result?.form && 'username' in result.form.data
+      ? { ...result.form, data: result.form.data as ProfileInput }
+      : data.form}
+    action="?/save"
+    section="public"
+    submitLabel={m.account_profile_save()}
+    onsaved={() => toast.success(m.account_profile_saved())}
+  />
 </section>

@@ -22,16 +22,16 @@ describe('the auth callback', () => {
   beforeEach(() => finishLogin.mockReset().mockResolvedValue('/'));
 
   it('takes someone who was connecting an account back to their profile, saying why it failed', async () => {
-    const next = encodeURIComponent('/u/profile/edit?conta=conectada');
+    const next = encodeURIComponent('/u/profile/edit/account?conta=conectada');
 
     expect(
       await call(`error=server_error&error_code=identity_already_exists&next=${next}`),
     ).toMatchObject({
       status: 303,
-      location: '/u/profile/edit?conta=de_outra_pessoa',
+      location: '/u/profile/edit/account?conta=de_outra_pessoa',
     });
     expect(await call(`error=access_denied&next=${next}`)).toMatchObject({
-      location: '/u/profile/edit?conta=falhou',
+      location: '/u/profile/edit/account?conta=falhou',
     });
   });
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import TextInput from '#lib/components/TextInput.svelte';
+  import TextArea from '#lib/components/TextArea.svelte';
   import Button from '#lib/components/Button.svelte';
   import { browser } from '$app/env';
   import { page } from '$app/state';
@@ -28,6 +29,7 @@
   import { timezoneOptions } from '@mesaaberta/core/time/timezone';
   import { onMount } from 'svelte';
   import { m } from '#lib/paraglide/messages.js';
+  import type { ProfileSection } from '#lib/profile/sections.js';
   import {
     MAX_SOCIAL_LINKS,
     NETWORKS,
@@ -48,6 +50,11 @@
     action?: string;
     /** On the profile page the username is shown but cannot change: it was chosen at onboarding. */
     usernameLocked?: boolean;
+    /**
+     * Which fields it shows: all of them when the profile is first filled in, or one part of
+     * "Editar perfil" (the server keeps the stored value of every field a part doesn't send).
+     */
+    section?: 'all' | ProfileSection;
     submitLabel?: string;
     /** Where "Cancelar" goes: the page the person came from. Without it there is no Cancelar. */
     cancelHref?: string;
@@ -60,7 +67,8 @@
   let {
     form: initial,
     action,
-    usernameLocked = false,
+    usernameLocked: locked = false,
+    section = 'all',
     submitLabel,
     cancelHref,
     onsaved,
@@ -82,13 +90,17 @@
   const { draft } = controller;
   guardDraft(controller);
 
+  const shows = (part: ProfileSection) => section === 'all' || section === part;
+  // A part of "Editar perfil" never sends the username, so it is never checked there.
+  const usernameLocked = $derived(locked || section !== 'all');
+
   // Not picked yet: offer the browser's zone, so saving the form keeps it on the profile. It is an
   // offer, not an edit: untainted, so leaving the page does not ask about unsaved changes.
   // Set once JavaScript runs: until then every field is shown, "Outro"'s own words included.
   let mounted = $state(false);
   onMount(() => {
     mounted = true;
-    if ($draft.timezone) return;
+    if ($draft.timezone || !shows('about')) return;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     controller.reset({ ...controller.values, timezone }, { preserveErrors: true });
   });
@@ -214,6 +226,7 @@
       [
         ['username', m.profile_username(), usernameLocked ? undefined : usernameError],
         ['name', m.profile_name(), errorText(controller.errors.name?.[0])],
+        ['bio', m.profile_bio(), errorText(controller.errors.bio?.[0])],
 
         ['age-range', m.profile_age_range(), errorText(controller.errors.ageRange?.[0])],
 
@@ -285,267 +298,296 @@
 >
   <ErrorSummary errors={summary} />
 
-  <FormField
-    id="username"
-    label={m.profile_username()}
-    hint={usernameLocked ? m.profile_username_locked_hint() : m.profile_username_hint()}
-    error={usernameLocked ? undefined : usernameError}
-  >
-    <TextInput
+  {#if section === 'all'}<FormField
       id="username"
-      name="username"
-      type="text"
-      aria-required="true"
-      maxlength={MAX_USERNAME_LENGTH}
-      autocomplete="username"
-      autocapitalize="none"
-      spellcheck="false"
-      bind:value={$draft.username}
-      readonly={usernameLocked}
-      class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
-      aria-invalid={usernameError ? 'true' : undefined}
-      aria-describedby={usernameDescription}
-    />
-    <!-- Announced politely as the check finishes; it never blocks the form. -->
-    <p
-      id="username-status"
-      role="status"
-      class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
-    >
-      {#if availability === 'checking'}
-        {m.profile_username_checking()}
-      {:else if availability === 'free'}
-        {m.profile_username_free()}
-      {:else if availability === 'failed'}
-        {m.profile_username_check_failed()}
-      {/if}
-    </p>
-  </FormField>
-
-  <FormField
-    id="name"
-    label={m.profile_name()}
-    hint={m.profile_name_hint()}
-    optional
-    counter={{ count: $draft.name.length, max: PROFILE_LIMITS.name }}
-    error={errorText(controller.errors.name?.[0])}
-  >
-    <TextInput
-      id="name"
-      name="name"
-      type="text"
-      maxlength={PROFILE_LIMITS.name}
-      autocomplete="name"
-      bind:value={$draft.name}
-      class={input}
-      aria-invalid={controller.errors.name ? 'true' : undefined}
-      aria-describedby="name-hint{controller.errors.name ? ' name-error' : ''}"
-    />
-  </FormField>
-
-  <div class="grid gap-6 sm:grid-cols-2">
-    {#each [{ id: 'age-range', field: 'ageRange', label: m.profile_age_range(), none: m.profile_age_range_none(), items: ageItems }, { id: 'gender', field: 'gender', label: m.profile_gender(), none: m.profile_gender_none(), items: genderItems }] as const as picker (picker.id)}
-      <div class="min-w-0">
-        <!-- The same combobox as the timezone. "Prefiro não informar" clears it. -->
-        <SearchSelect
-          id={picker.id}
-          name={picker.field}
-          label="{picker.label} ({m.form_optional()})"
-          labelClass="label-text block font-semibold"
-          class="grid gap-1"
-          items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
-          value={$draft[picker.field] ? [$draft[picker.field]] : []}
-          placeholder={picker.none}
-          invalid={Boolean(controller.errors[picker.field])}
-          onchange={(picked) =>
-            ($draft[picker.field] = (
-              picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
-            ) as never)}
-        />
-        {#if controller.errors[picker.field]}<p
-            id="{picker.id}-error"
-            role="alert"
-            class="mt-1 text-sm font-semibold text-error-700-300"
-          >
-            {errorText(controller.errors[picker.field]?.[0])}
-          </p>{/if}
-      </div>
-    {/each}
-  </div>
-
-  <!-- Own words for "Outro". Without JavaScript the field is always there (the server keeps it
-       only with "Outro"); with it, the field shows once "Outro" is picked. -->
-  {#if !mounted || $draft.gender === 'other'}
-    <FormField
-      id="gender-other"
-      label={m.profile_gender_other_label()}
-      hint={m.profile_gender_other_hint()}
-      error={errorText(controller.errors.genderOther?.[0])}
+      label={m.profile_username()}
+      hint={usernameLocked ? m.profile_username_locked_hint() : m.profile_username_hint()}
+      error={usernameLocked ? undefined : usernameError}
     >
       <TextInput
-        id="gender-other"
-        name="genderOther"
+        id="username"
+        name="username"
         type="text"
-        maxlength={PROFILE_LIMITS.gender}
-        bind:value={$draft.genderOther}
+        aria-required="true"
+        maxlength={MAX_USERNAME_LENGTH}
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+        bind:value={$draft.username}
+        readonly={usernameLocked}
+        class="{input} {usernameLocked ? 'bg-surface-950-50/5 text-muted' : ''}"
+        aria-invalid={usernameError ? 'true' : undefined}
+        aria-describedby={usernameDescription}
+      />
+      <!-- Announced politely as the check finishes; it never blocks the form. -->
+      <p
+        id="username-status"
+        role="status"
+        class="mt-1 text-sm {usernameLocked ? 'sr-only' : 'min-h-6'}"
+      >
+        {#if availability === 'checking'}
+          {m.profile_username_checking()}
+        {:else if availability === 'free'}
+          {m.profile_username_free()}
+        {:else if availability === 'failed'}
+          {m.profile_username_check_failed()}
+        {/if}
+      </p>
+    </FormField>{/if}
+
+  {#if shows('public')}
+    <FormField
+      id="name"
+      label={m.profile_name()}
+      hint={m.profile_name_hint()}
+      optional
+      counter={{ count: $draft.name.length, max: PROFILE_LIMITS.name }}
+      error={errorText(controller.errors.name?.[0])}
+    >
+      <TextInput
+        id="name"
+        name="name"
+        type="text"
+        maxlength={PROFILE_LIMITS.name}
+        autocomplete="name"
+        bind:value={$draft.name}
         class={input}
-        aria-invalid={controller.errors.genderOther ? 'true' : undefined}
-        aria-describedby="gender-other-hint{controller.errors.genderOther
-          ? ' gender-other-error'
-          : ''}"
+        aria-invalid={controller.errors.name ? 'true' : undefined}
+        aria-describedby="name-hint{controller.errors.name ? ' name-error' : ''}"
       />
     </FormField>
   {/if}
 
-  <FormField
-    id="city"
-    label={m.profile_city()}
-    optional
-    error={errorText(controller.errors.city?.[0])}
-  >
-    <TextInput
-      id="city"
-      name="city"
-      type="text"
-      maxlength={PROFILE_LIMITS.city}
-      autocomplete="address-level2"
-      bind:value={$draft.city}
-      class={input}
-      aria-invalid={controller.errors.city ? 'true' : undefined}
-      aria-describedby="city-hint{controller.errors.city ? ' city-error' : ''}"
-    />
-  </FormField>
+  {#if section === 'public'}
+    <!-- Plain text: the public profile keeps its line breaks and nothing else. -->
+    <FormField
+      id="bio"
+      label={m.profile_bio()}
+      hint={m.profile_bio_hint()}
+      optional
+      counter={{ count: $draft.bio.length, max: PROFILE_LIMITS.bio }}
+      error={errorText(controller.errors.bio?.[0])}
+    >
+      <TextArea
+        id="bio"
+        name="bio"
+        rows={4}
+        maxlength={PROFILE_LIMITS.bio}
+        bind:value={$draft.bio}
+        class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
+        aria-invalid={controller.errors.bio ? 'true' : undefined}
+        aria-describedby="bio-hint{controller.errors.bio ? ' bio-error' : ''}"
+      />
+    </FormField>
+  {/if}
 
-  <div class="min-w-0">
-    <SearchSelect
-      id="timezone"
-      name="timezone"
-      label={m.profile_timezone()}
-      labelClass="label-text block font-semibold"
-      class="grid gap-1"
-      items={timezones}
-      value={$draft.timezone ? [$draft.timezone] : []}
-      placeholder={m.profile_timezone_placeholder()}
-      invalid={Boolean(controller.errors.timezone)}
-      onchange={(picked) => ($draft.timezone = picked[0] ?? '')}
-    />
-    <p id="timezone-hint" class="mt-1 text-sm text-surface-700-300">{m.profile_timezone_hint()}</p>
-    {#if controller.errors.timezone}<p
-        id="timezone-error"
-        role="alert"
-        class="mt-1 text-sm font-semibold text-error-700-300"
-      >
-        {errorText(controller.errors.timezone[0])}
-      </p>{/if}
-  </div>
-
-  <fieldset class="grid gap-3" aria-describedby="links-hint">
-    <legend class="font-semibold">{m.profile_links()}</legend>
-    <p id="links-hint" class="text-sm">{m.profile_links_hint()}</p>
-
-    {#if listError()}
-      <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
-    {/if}
-
-    {#if ids.length === 0}
-      <p class="text-sm">{m.profile_links_empty()}</p>
-    {/if}
-
-    <ul class="grid gap-4">
-      {#each ids as id, index (id)}
-        {@const urlError = itemError('linkUrl', index)}
-        {@const networkError = itemError('linkNetwork', index)}
-        <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
-          <div class="grid gap-2 sm:grid-cols-4">
-            <SearchSelect
-              id="link-network-{id}"
-              name="linkNetwork"
-              label={m.profile_link_network({ n: index + 1 })}
-              labelClass="sr-only"
-              class="grid"
-              items={NETWORKS.map((network) => ({
-                name: NETWORK_LABELS[network](),
-                slug: network,
-              }))}
-              value={[$draft.linkNetwork[index]]}
-              placeholder={m.profile_link_network({ n: index + 1 })}
-              invalid={!!networkError}
-              onchange={(picked) =>
-                ($draft.linkNetwork[index] = (picked[0] ?? 'instagram') as Network)}
-            />
-            <TextInput
-              id="link-url-{id}"
-              name="linkUrl"
-              type="text"
-              inputmode={takesHandle($draft.linkNetwork[index] as Network) ? 'text' : 'url'}
-              autocapitalize="none"
-              spellcheck="false"
-              placeholder={takesHandle($draft.linkNetwork[index] as Network)
-                ? m.profile_link_handle_placeholder()
-                : 'https://'}
-              aria-label={takesHandle($draft.linkNetwork[index] as Network)
-                ? m.profile_link_handle({ n: index + 1 })
-                : m.profile_link_url({ n: index + 1 })}
-              bind:value={$draft.linkUrl[index]}
-              class="{input} sm:col-span-3"
-              aria-invalid={urlError ? 'true' : undefined}
-              aria-describedby={urlError ? `link-error-${id}` : undefined}
-            />
-          </div>
-          {#if urlError || networkError}
-            <p id="link-error-{id}" role="alert" class="text-sm font-semibold text-error-700-300">
-              {urlError ?? networkError}
-            </p>
-          {/if}
-          <div class="flex flex-wrap gap-2">
-            <Button
-              size="custom"
-              type="button"
-              class={secondary}
-              disabled={index === 0}
-              aria-label={m.profile_link_up({ n: index + 1 })}
-              onclick={() => moveLink(index, -1)}
+  {#if shows('about')}
+    <div class="grid gap-6 sm:grid-cols-2">
+      {#each [{ id: 'age-range', field: 'ageRange', label: m.profile_age_range(), none: m.profile_age_range_none(), items: ageItems }, { id: 'gender', field: 'gender', label: m.profile_gender(), none: m.profile_gender_none(), items: genderItems }] as const as picker (picker.id)}
+        <div class="min-w-0">
+          <!-- The same combobox as the timezone. "Prefiro não informar" clears it. -->
+          <SearchSelect
+            id={picker.id}
+            name={picker.field}
+            label="{picker.label} ({m.form_optional()})"
+            labelClass="label-text block font-semibold"
+            class="grid gap-1"
+            items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
+            value={$draft[picker.field] ? [$draft[picker.field]] : []}
+            placeholder={picker.none}
+            invalid={Boolean(controller.errors[picker.field])}
+            onchange={(picked) =>
+              ($draft[picker.field] = (
+                picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
+              ) as never)}
+          />
+          {#if controller.errors[picker.field]}<p
+              id="{picker.id}-error"
+              role="alert"
+              class="mt-1 text-sm font-semibold text-error-700-300"
             >
-              <span aria-hidden="true">↑</span>
-            </Button>
-            <Button
-              size="custom"
-              type="button"
-              class={secondary}
-              disabled={index === ids.length - 1}
-              aria-label={m.profile_link_down({ n: index + 1 })}
-              onclick={() => moveLink(index, 1)}
-            >
-              <span aria-hidden="true">↓</span>
-            </Button>
-            <Button
-              size="custom"
-              type="button"
-              class={secondary}
-              aria-label={m.profile_link_remove({ n: index + 1 })}
-              onclick={() => removeLink(index)}
-            >
-              <span aria-hidden="true">×</span>
-            </Button>
-          </div>
-        </li>
+              {errorText(controller.errors[picker.field]?.[0])}
+            </p>{/if}
+        </div>
       {/each}
-    </ul>
-
-    <div>
-      <Button
-        size="custom"
-        type="button"
-        class={secondary}
-        disabled={!canAdd}
-        bind:element={addButton}
-        onclick={addLink}
-      >
-        {m.profile_link_add()}
-      </Button>
     </div>
-    <p class="sr-only" role="status">{announcement}</p>
-  </fieldset>
+
+    <!-- Own words for "Outro". Without JavaScript the field is always there (the server keeps it
+       only with "Outro"); with it, the field shows once "Outro" is picked. -->
+    {#if !mounted || $draft.gender === 'other'}
+      <FormField
+        id="gender-other"
+        label={m.profile_gender_other_label()}
+        hint={m.profile_gender_other_hint()}
+        error={errorText(controller.errors.genderOther?.[0])}
+      >
+        <TextInput
+          id="gender-other"
+          name="genderOther"
+          type="text"
+          maxlength={PROFILE_LIMITS.gender}
+          bind:value={$draft.genderOther}
+          class={input}
+          aria-invalid={controller.errors.genderOther ? 'true' : undefined}
+          aria-describedby="gender-other-hint{controller.errors.genderOther
+            ? ' gender-other-error'
+            : ''}"
+        />
+      </FormField>
+    {/if}
+
+    <FormField
+      id="city"
+      label={m.profile_city()}
+      optional
+      error={errorText(controller.errors.city?.[0])}
+    >
+      <TextInput
+        id="city"
+        name="city"
+        type="text"
+        maxlength={PROFILE_LIMITS.city}
+        autocomplete="address-level2"
+        bind:value={$draft.city}
+        class={input}
+        aria-invalid={controller.errors.city ? 'true' : undefined}
+        aria-describedby="city-hint{controller.errors.city ? ' city-error' : ''}"
+      />
+    </FormField>
+
+    <div class="min-w-0">
+      <SearchSelect
+        id="timezone"
+        name="timezone"
+        label={m.profile_timezone()}
+        labelClass="label-text block font-semibold"
+        class="grid gap-1"
+        items={timezones}
+        value={$draft.timezone ? [$draft.timezone] : []}
+        placeholder={m.profile_timezone_placeholder()}
+        invalid={Boolean(controller.errors.timezone)}
+        onchange={(picked) => ($draft.timezone = picked[0] ?? '')}
+      />
+      <p id="timezone-hint" class="mt-1 text-sm text-surface-700-300">
+        {m.profile_timezone_hint()}
+      </p>
+      {#if controller.errors.timezone}<p
+          id="timezone-error"
+          role="alert"
+          class="mt-1 text-sm font-semibold text-error-700-300"
+        >
+          {errorText(controller.errors.timezone[0])}
+        </p>{/if}
+    </div>
+  {/if}
+
+  {#if shows('public')}<fieldset class="grid gap-3" aria-describedby="links-hint">
+      <legend class="font-semibold">{m.profile_links()}</legend>
+      <p id="links-hint" class="text-sm">{m.profile_links_hint()}</p>
+
+      {#if listError()}
+        <p role="alert" class="text-sm font-semibold text-error-700-300">{listError()}</p>
+      {/if}
+
+      {#if ids.length === 0}
+        <p class="text-sm">{m.profile_links_empty()}</p>
+      {/if}
+
+      <ul class="grid gap-4">
+        {#each ids as id, index (id)}
+          {@const urlError = itemError('linkUrl', index)}
+          {@const networkError = itemError('linkNetwork', index)}
+          <li class="grid gap-2 rounded-lg border border-surface-200-800 p-3">
+            <div class="grid gap-2 sm:grid-cols-4">
+              <SearchSelect
+                id="link-network-{id}"
+                name="linkNetwork"
+                label={m.profile_link_network({ n: index + 1 })}
+                labelClass="sr-only"
+                class="grid"
+                items={NETWORKS.map((network) => ({
+                  name: NETWORK_LABELS[network](),
+                  slug: network,
+                }))}
+                value={[$draft.linkNetwork[index]]}
+                placeholder={m.profile_link_network({ n: index + 1 })}
+                invalid={!!networkError}
+                onchange={(picked) =>
+                  ($draft.linkNetwork[index] = (picked[0] ?? 'instagram') as Network)}
+              />
+              <TextInput
+                id="link-url-{id}"
+                name="linkUrl"
+                type="text"
+                inputmode={takesHandle($draft.linkNetwork[index] as Network) ? 'text' : 'url'}
+                autocapitalize="none"
+                spellcheck="false"
+                placeholder={takesHandle($draft.linkNetwork[index] as Network)
+                  ? m.profile_link_handle_placeholder()
+                  : 'https://'}
+                aria-label={takesHandle($draft.linkNetwork[index] as Network)
+                  ? m.profile_link_handle({ n: index + 1 })
+                  : m.profile_link_url({ n: index + 1 })}
+                bind:value={$draft.linkUrl[index]}
+                class="{input} sm:col-span-3"
+                aria-invalid={urlError ? 'true' : undefined}
+                aria-describedby={urlError ? `link-error-${id}` : undefined}
+              />
+            </div>
+            {#if urlError || networkError}
+              <p id="link-error-{id}" role="alert" class="text-sm font-semibold text-error-700-300">
+                {urlError ?? networkError}
+              </p>
+            {/if}
+            <div class="flex flex-wrap gap-2">
+              <Button
+                size="custom"
+                type="button"
+                class={secondary}
+                disabled={index === 0}
+                aria-label={m.profile_link_up({ n: index + 1 })}
+                onclick={() => moveLink(index, -1)}
+              >
+                <span aria-hidden="true">↑</span>
+              </Button>
+              <Button
+                size="custom"
+                type="button"
+                class={secondary}
+                disabled={index === ids.length - 1}
+                aria-label={m.profile_link_down({ n: index + 1 })}
+                onclick={() => moveLink(index, 1)}
+              >
+                <span aria-hidden="true">↓</span>
+              </Button>
+              <Button
+                size="custom"
+                type="button"
+                class={secondary}
+                aria-label={m.profile_link_remove({ n: index + 1 })}
+                onclick={() => removeLink(index)}
+              >
+                <span aria-hidden="true">×</span>
+              </Button>
+            </div>
+          </li>
+        {/each}
+      </ul>
+
+      <div>
+        <Button
+          size="custom"
+          type="button"
+          class={secondary}
+          disabled={!canAdd}
+          bind:element={addButton}
+          onclick={addLink}
+        >
+          {m.profile_link_add()}
+        </Button>
+      </div>
+      <p class="sr-only" role="status">{announcement}</p>
+    </fieldset>{/if}
 
   <div class="flex flex-wrap items-center gap-5">
     <SubmitButton

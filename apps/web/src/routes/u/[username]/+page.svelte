@@ -65,7 +65,10 @@
   />
   <meta property="og:url" content={data.canonical} />
   <meta property="og:type" content="profile" />
-  {#if profile.avatarUrl}<meta property="og:image" content={profile.avatarUrl} />{/if}
+  {#if profile.bannerUrl ?? profile.avatarUrl}<meta
+      property="og:image"
+      content={profile.bannerUrl ?? profile.avatarUrl}
+    />{/if}
 </svelte:head>
 
 <section class="pt-2 pb-4 md:pt-12">
@@ -78,96 +81,116 @@
     </p>
   {/if}
 
-  <header class="rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8">
-    <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-      <div class="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
-        <Avatar src={profile.avatarUrl} name={profile.username} size={80} />
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-3">
-            <h1
-              class="text-4xl leading-none font-semibold tracking-tight wrap-break-word md:text-6xl"
+  <header class="overflow-hidden rounded-lg border border-surface-200-800 bg-panel">
+    <!-- The cover the person picked (4:1, cut that way when it was sent), or a plain band. -->
+    {#if profile.bannerUrl}
+      <img
+        src={profile.bannerUrl}
+        alt={m.public_profile_cover({ username: atHandle(profile.username) })}
+        class="aspect-4/1 w-full object-cover"
+      />
+    {:else}
+      <div aria-hidden="true" class="h-24 bg-surface-wash md:h-32"></div>
+    {/if}
+    <div class="px-6 pb-6 md:px-8 md:pb-8">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <!-- The photo sits over the cover's bottom edge, in a ring of the card's colour. -->
+        <span class="-mt-12 inline-flex rounded-full bg-panel p-1 md:-mt-16">
+          <Avatar
+            src={profile.avatarUrl}
+            name={profile.username}
+            size={96}
+            class="md:size-32 md:text-5xl"
+          />
+        </span>
+        <div class="flex shrink-0 flex-wrap items-center gap-3 pt-3">
+          {#if data.isOwner}
+            <a
+              href="/u/profile/edit"
+              class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
+              >{m.public_profile_edit()}</a
             >
-              <UserLink username={profile.username} />
-            </h1>
-            {#if !data.isOwner}
-              <ActionForm action="?/message">
-                <button
-                  type="submit"
-                  class="btn size-11 rounded-lg preset-outlined-primary-500 p-0"
-                  aria-label={m.public_profile_message_to({ username: atHandle(profile.username) })}
-                  title={m.public_profile_message()}
-                >
-                  <Icon name="game-icons:scroll-quill" size={22} />
-                </button>
-              </ActionForm>
-            {/if}
-          </div>
-          {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
-          {#if profile.links.length > 0}
-            <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
-              {#each profile.links as link, index (`${link.network}-${index}`)}
-                <li>
-                  {#if link.href}
-                    <a
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={m.public_profile_social_link({
-                        network: networkLabels[link.network](),
-                      })}
-                      title={networkLabels[link.network]()}
-                      class="{chip} hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
-                    >
-                      <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
-                      <span class="truncate">{link.text}</span>
-                    </a>
-                  {:else}
-                    <span title={networkLabels[link.network]()} class={chip}>
-                      <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
-                      <span class="sr-only">{networkLabels[link.network]()}:</span>
-                      <span class="truncate">{link.text}</span>
-                    </span>
-                  {/if}
-                </li>
-              {/each}
-            </ul>
           {/if}
+          <KebabMenu name={atHandle(profile.username)} items={menu} />
         </div>
       </div>
-      <div class="flex shrink-0 flex-wrap items-center gap-3">
-        {#if data.isOwner}
-          <a
-            href="/u/profile/edit"
-            class="btn h-12 rounded-lg preset-outlined-primary-500 px-5 font-semibold"
-            >{m.public_profile_edit()}</a
+      <div class="mt-4 min-w-0">
+        <div class="flex flex-wrap items-center gap-3">
+          <h1
+            class="text-4xl leading-none font-semibold tracking-tight wrap-break-word md:text-6xl"
           >
+            <UserLink username={profile.username} />
+          </h1>
+          {#if !data.isOwner}
+            <ActionForm action="?/message">
+              <button
+                type="submit"
+                class="btn size-10 rounded-full preset-outlined-primary-500 p-0"
+                aria-label={m.public_profile_message_to({ username: atHandle(profile.username) })}
+                title={m.public_profile_message()}
+              >
+                <Icon name="game-icons:scroll-quill" size={20} />
+              </button>
+            </ActionForm>
+          {/if}
+        </div>
+        {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
+        {#if profile.bio}
+          <!-- Plain text in the person's own words: line breaks kept, nothing else. -->
+          <p class="mt-4 max-w-prose wrap-break-word whitespace-pre-line">{profile.bio}</p>
         {/if}
-        <KebabMenu name={atHandle(profile.username)} items={menu} />
+        {#if profile.links.length > 0}
+          <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
+            {#each profile.links as link, index (`${link.network}-${index}`)}
+              <li>
+                {#if link.href}
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={m.public_profile_social_link({
+                      network: networkLabels[link.network](),
+                    })}
+                    title={networkLabels[link.network]()}
+                    class="{chip} hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+                  >
+                    <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
+                    <span class="truncate">{link.text}</span>
+                  </a>
+                {:else}
+                  <span title={networkLabels[link.network]()} class={chip}>
+                    <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
+                    <span class="sr-only">{networkLabels[link.network]()}:</span>
+                    <span class="truncate">{link.text}</span>
+                  </span>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        {/if}
       </div>
-    </div>
 
-    <div class="mt-8 grid gap-6 border-t border-surface-200-800 pt-6 lg:grid-cols-2">
-      <div>
-        <dl class="grid grid-cols-2 gap-4">
-          <div>
-            <dt class="text-sm font-semibold text-muted">{m.public_profile_played()}</dt>
-            <dd class="mt-1 text-3xl font-semibold tabular-nums">
-              {number.format(profile.totals.played)}
-            </dd>
-          </div>
-          <div>
-            <dt class="text-sm font-semibold text-muted">{m.public_profile_hosted()}</dt>
-            <dd class="mt-1 text-3xl font-semibold tabular-nums">
-              {number.format(profile.totals.hosted)}
-            </dd>
-          </div>
-        </dl>
-        <p class="mt-3 max-w-prose text-sm text-muted">{m.public_profile_counts_hint()}</p>
+      <div class="mt-8 grid gap-6 border-t border-surface-200-800 pt-6 lg:grid-cols-2">
+        <div>
+          <dl class="grid grid-cols-2 gap-4">
+            {#each [{ label: m.public_profile_played(), value: profile.totals.played }, { label: m.public_profile_hosted(), value: profile.totals.hosted }] as stat (stat.label)}
+              <div class="rounded-lg border border-surface-200-800 p-4">
+                <dt class="flex items-center gap-2 text-sm font-semibold text-muted">
+                  <Icon name="game-icons:meeple" size={18} class="shrink-0" />{stat.label}
+                </dt>
+                <dd class="mt-1 text-3xl font-semibold tabular-nums">
+                  {number.format(stat.value)}
+                </dd>
+              </div>
+            {/each}
+          </dl>
+          <p class="mt-3 max-w-prose text-sm text-muted">{m.public_profile_counts_hint()}</p>
+        </div>
+        <section aria-labelledby="gm-rating">
+          <h2 id="gm-rating" class="text-lg font-semibold">{m.public_profile_rating()}</h2>
+          <GmRating rating={profile.rating} class="mt-3 text-2xl" />
+        </section>
       </div>
-      <section aria-labelledby="gm-rating">
-        <h2 id="gm-rating" class="text-lg font-semibold">{m.public_profile_rating()}</h2>
-        <GmRating rating={profile.rating} class="mt-3 text-2xl" />
-      </section>
     </div>
   </header>
 

@@ -97,6 +97,10 @@ export const imageUrl = (supabaseUrl: string | undefined, path: string | null) =
 export const partnerLogoUrl = (supabaseUrl: string | undefined, path: string | null) =>
   supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${path}` : null;
 
+/** The public URL of a profile's cover, which lives in the avatar bucket under `<id>/banners/`. */
+export const bannerUrl = (supabaseUrl: string | undefined, path: string | null) =>
+  supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${path}` : null;
+
 /** The picture a profile shows: the uploaded one, else the sign-in provider's, else none. */
 export const pictureOf = (
   supabaseUrl: string | undefined,

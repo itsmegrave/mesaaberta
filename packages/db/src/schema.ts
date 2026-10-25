@@ -96,6 +96,10 @@ export const profiles = pgTable(
     avatarUrl: text('avatar_url'),
     // A picture the person uploaded, in the profile-avatars bucket; it wins over the provider's.
     avatarPath: text('avatar_path'),
+    // The cover at the top of the public profile, in the same bucket (`<id>/banners/…`). Optional.
+    bannerPath: text('banner_path'),
+    // A few lines in the person's own words, shown as plain text on the public profile. Optional.
+    bio: text('bio'),
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
@@ -120,6 +124,8 @@ export const profiles = pgTable(
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
+    // Mirrors PROFILE_LIMITS.bio in packages/core/src/profile/schema.
+    check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
     // Expired temporary bans, for the sweep that lifts them.
     index('profiles_banned_until_idx')
       .on(profile.bannedUntil)

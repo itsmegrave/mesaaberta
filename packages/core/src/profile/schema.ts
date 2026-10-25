@@ -24,6 +24,8 @@ export const PROFILE_LIMITS = {
   /** The own words someone picks "Outro" to write. */
   gender: 40,
   city: 80,
+  /** The few lines on the public profile, as plain text. Mirrors the check on `profiles.bio`. */
+  bio: 300,
 } as const;
 
 /**
@@ -70,6 +72,12 @@ export const profileSchema = z
     gender: z.union([z.enum(GENDER_OPTIONS), z.literal('')], 'invalid').default(''),
     genderOther: z.string().trim().max(PROFILE_LIMITS.gender, 'too_long').default(''),
     city: z.string().trim().max(PROFILE_LIMITS.city, 'too_long').default(''),
+    // Line breaks are kept; carriage returns are not, so the count matches the textarea's.
+    bio: z
+      .string()
+      .transform((value) => value.replace(/\r\n?/g, '\n').trim())
+      .pipe(z.string().max(PROFILE_LIMITS.bio, 'too_long'))
+      .default(''),
     // An IANA zone, or empty for "not picked yet" (the browser's is used meanwhile).
     timezone: z
       .string()
@@ -158,6 +166,7 @@ export const PROFILE_DEFAULTS: ProfileInput = {
   gender: '',
   genderOther: '',
   city: '',
+  bio: '',
   timezone: '',
   linkNetwork: [],
   linkUrl: [],
