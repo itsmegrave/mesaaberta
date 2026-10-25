@@ -1,4 +1,5 @@
 import { analyticsHandlers, type AnalyticsEnv } from '../analytics';
+import { extensionHandlers } from '../extensions/index';
 import { socialFor, type SocialEnv } from '../social';
 import type { Handler } from './types';
 import { inviteHandler, type InviteEnv } from './invites';
@@ -54,6 +55,7 @@ export function handlersFor(
     ...(banMail ? [banMail] : []),
     ...(playerInvitations ? [playerInvitations] : []),
     ...bell,
+    ...extensionHandlers(),
     ...analyticsHandlers(env),
   ];
 }

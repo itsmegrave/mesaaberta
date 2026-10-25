@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { socialFor } from '@mesaaberta/core/server/social/index';
+import type { Extension } from '@mesaaberta/core/server/extensions/index';
+import { extensionHandlers } from '@mesaaberta/core/server/extensions/index';
+import { socialFor, type SocialPublisher } from '@mesaaberta/core/server/social/index';
 
 // A database that fails on any use, so a test can show an adapter never touches it.
 const untouched = new Proxy(
@@ -25,6 +27,37 @@ describe('socialFor', () => {
 
     expect(social.configured({})).toBe(false);
     expect(social.handlers.map((handler) => handler.name)).toEqual(['instagram-queue']);
+  });
+});
+
+describe('socialFor with other extensions installed', () => {
+  const connector = (name: string) => ({ name }) as SocialPublisher;
+  const installed: Extension[] = [
+    { id: 'patreon' },
+    { id: 'mastodon', social: connector('mastodon') },
+    { id: 'bluesky', social: connector('bluesky') },
+  ];
+
+  it('takes the first installed connector unless SOCIAL_PROVIDER names one', () => {
+    expect(socialFor({}, installed).name).toBe('mastodon');
+    expect(socialFor({ SOCIAL_PROVIDER: 'bluesky' }, installed).name).toBe('bluesky');
+    expect(socialFor({ SOCIAL_PROVIDER: 'none' }, installed).name).toBe('none');
+  });
+
+  it('is none when nothing is installed or the named connector is not', () => {
+    expect(socialFor({}, []).name).toBe('none');
+    expect(socialFor({ SOCIAL_PROVIDER: 'instagram' }, []).name).toBe('none');
+    expect(socialFor({ SOCIAL_PROVIDER: 'threads' }, installed).name).toBe('none');
+  });
+});
+
+describe('extensionHandlers', () => {
+  it('collects the handlers the extensions register beside their connectors', () => {
+    const handler = { name: 'patreon-sync', types: [], handle: async () => {} };
+    expect(extensionHandlers([{ id: 'patreon', handlers: [handler] }, { id: 'none' }])).toEqual([
+      handler,
+    ]);
+    expect(extensionHandlers()).toEqual([]);
   });
 });
 
