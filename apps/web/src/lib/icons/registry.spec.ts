@@ -18,6 +18,8 @@ describe('icon registry', () => {
       'minus',
       'arrow-left',
       'arrow-right',
+      'arrow-up',
+      'arrow-down',
       'arrow-up-right-square',
       'check',
       'xmark',
