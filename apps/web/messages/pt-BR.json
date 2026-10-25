@@ -31,7 +31,7 @@
   "messages_today": "Hoje",
   "messages_yesterday": "Ontem",
   "messages_talk_to_gm": "Falar com o mestre",
-  "messages_gm_dm_off": "O mestre não recebe mensagens diretas agora.",
+  "messages_gm_dm_off": "Quem mestra esta mesa não recebe mensagens diretas agora.",
   "messages_table_chat": "Chat da mesa",
   "messages_menu": "Mensagens",
   "messages_menu_unread": "Mensagens, {count} não lidas",
