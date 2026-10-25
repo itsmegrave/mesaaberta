@@ -126,7 +126,7 @@
             placeholder={placeholder(networks[index])}
             aria-label={labels.url(index + 1, networks[index])}
             bind:value={urls[index]}
-            class="{inputClass} order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1"
+            class="{inputClass} order-last w-full min-w-0 sm:order-0 sm:w-auto sm:flex-1"
             aria-invalid={problem.url ? 'true' : undefined}
             aria-describedby={problem.url ? `${urlId(id)}-error` : undefined}
           />
