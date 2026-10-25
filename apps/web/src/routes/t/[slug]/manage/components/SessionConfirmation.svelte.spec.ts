@@ -43,23 +43,30 @@ describe('SessionConfirmation', () => {
     const form = page.getByRole('checkbox', { name: 'ana' }).element().closest('form')!;
     expect(form.getAttribute('action')).toBe('?/sessionHeld');
     await expect
-      .element(page.getByRole('button', { name: 'Aconteceu, a mesa continua' }))
+      .element(page.getByRole('button', { name: 'Confirmar, a mesa continua' }))
       .toBeVisible();
 
-    await page.getByRole('radio', { name: 'Foi a última sessão' }).click();
+    await page.getByRole('radio', { name: /Foi a última sessão/ }).click();
 
     expect(form.getAttribute('action')).toBe('?/happened');
-    await expect.element(page.getByRole('button', { name: 'Aconteceu' })).toBeVisible();
+    await expect
+      .element(page.getByRole('button', { name: 'Confirmar e concluir a mesa' }))
+      .toBeVisible();
   });
 
-  it('requires the next date for an adventure, which has no repeat rule', async () => {
+  it('asks the next date with the calendar picker, and no duration', async () => {
     render(SessionConfirmation, {
       next: '/t/mesa/manage',
       players: [],
       multi: true,
-      dateRequired: true,
     });
 
-    await expect.element(page.getByLabelText('Próxima sessão')).toBeRequired();
+    // The day comes from the calendar, the same picker as the table form; the field posts the date.
+    const form = page
+      .getByRole('radio', { name: /Vêm mais sessões/ })
+      .element()
+      .closest('form')!;
+    expect(form.querySelector('input[name="nextStartsAtLocal"]')).not.toBeNull();
+    expect(form.querySelector('input[name="durationHours"]')).toBeNull();
   });
 });

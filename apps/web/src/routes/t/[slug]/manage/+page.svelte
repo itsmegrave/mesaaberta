@@ -185,7 +185,9 @@
       next={here}
       players={data.players}
       multi={table.kind !== 'one_shot'}
-      dateRequired={table.kind === 'adventure'}
+      nextSession={data.nextSession}
+      timezone={table.timezone}
+      durationHours={table.durationMinutes / 60}
     />
   {/if}
   {#if data.canFinish && table.status === 'active'}

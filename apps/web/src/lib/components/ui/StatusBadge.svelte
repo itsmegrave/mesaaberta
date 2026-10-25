@@ -7,6 +7,7 @@
     | 'table:active'
     | 'table:awaiting_confirmation'
     | 'table:concluded'
+    | 'table:going_on'
     | 'table:not_held'
     | 'table:draft'
     | 'table:disabled'
@@ -64,6 +65,8 @@
       label: () => m.status_table_awaiting_confirmation(),
       dot: 'bg-warning-500',
     },
+    // A campaign or adventure between sessions: open, taking players, not yet concluded.
+    'table:going_on': { label: () => m.manage_going_status(), dot: 'bg-success-500' },
     'table:concluded': { label: () => m.status_table_concluded(), dot: 'bg-primary-500' },
     // A hollow dot: it did not happen.
     'table:not_held': {
