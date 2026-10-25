@@ -2,9 +2,11 @@
   // A day picked on Skeleton's Date Picker and, with `withTime`, the hour typed next to it. The form
   // gets one value as the native fields would send it: `YYYY-MM-DDTHH:mm`, or `YYYY-MM-DD` without
   // the hour. Until JavaScript runs it is the native field, so the form works without it.
-  import { DatePicker, Portal, parseDate } from '@skeletonlabs/skeleton-svelte';
+  import { DatePicker, Portal } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
   import { m } from '#lib/paraglide/messages.js';
+  import { DEFAULT_TIME, pickerTranslations, safeParse } from '#lib/forms/date.js';
+  import CalendarDays from './CalendarDays.svelte';
 
   let {
     id,
@@ -32,9 +34,6 @@
     describedby?: string;
   } = $props();
 
-  // The hour offered once a day is picked, until one is typed: an evening, when most tables play.
-  const DEFAULT_TIME = '19:00';
-
   let mounted = $state(false);
   onMount(() => (mounted = true));
 
@@ -43,19 +42,11 @@
   const set = (nextDay: string, nextTime: string) =>
     (value = withTime ? (nextDay ? `${nextDay}T${nextTime}` : '') : nextDay);
 
-  const safeParse = (text: string) => {
-    try {
-      return text ? parseDate(text) : undefined;
-    } catch {
-      return undefined;
-    }
-  };
   const picked = $derived(safeParse(day));
   const earliest = $derived(min ? safeParse(min) : undefined);
 
   const control =
     'flex h-12 w-full items-center rounded-lg border-2 border-surface-200-800 bg-panel focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary-500';
-  const navButton = 'btn size-11 rounded-lg hover:preset-tonal';
 </script>
 
 {#if mounted}
@@ -66,23 +57,9 @@
       min={earliest}
       ids={{ input: () => id }}
       positioning={{ placement: 'bottom-start' }}
-      translations={{
-        // Its own words (buttons and days) default to English.
-        dayCell: (state) =>
-          state.unavailable || state.disabled
-            ? m.date_picker_day_unavailable({ date: state.valueText })
-            : m.date_picker_day({ date: state.valueText }),
-        nextTrigger: () => m.date_picker_next(),
-        prevTrigger: () => m.date_picker_prev(),
-        viewTrigger: () => m.date_picker_view(),
-        presetTrigger: () => '',
-        monthSelect: m.date_picker_month(),
-        yearSelect: m.date_picker_year(),
-        clearTrigger: m.date_picker_clear(),
-        trigger: (open) => (open ? m.date_picker_close() : m.date_picker_open({ label })),
-        content: m.date_picker_calendar(),
-        placeholder: () => ({ day: 'dd', month: 'mm', year: 'aaaa' }),
-      }}
+      translations={pickerTranslations((open) =>
+        open ? m.date_picker_close() : m.date_picker_open({ label }),
+      )}
       onValueChange={(details) =>
         // ISO (`2026-10-10`), not `valueAsString`, which is the date as the locale writes it.
         set(details.value[0]?.toString() ?? '', time || DEFAULT_TIME)}
@@ -136,66 +113,7 @@
           <DatePicker.Content
             class="w-80 card border border-surface-200-800 bg-surface-100-900 p-3 shadow-2xl"
           >
-            <DatePicker.View view="day">
-              <DatePicker.Context>
-                {#snippet children(picker)}
-                  <DatePicker.ViewControl class="mb-2 flex items-center justify-between gap-2">
-                    <DatePicker.PrevTrigger class={navButton} aria-label={m.date_picker_prev()}
-                      ><svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg
-                      ></DatePicker.PrevTrigger
-                    >
-                    <DatePicker.RangeText class="font-semibold capitalize" />
-                    <DatePicker.NextTrigger class={navButton} aria-label={m.date_picker_next()}
-                      ><svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg
-                      ></DatePicker.NextTrigger
-                    >
-                  </DatePicker.ViewControl>
-                  <DatePicker.Table class="w-full text-center text-sm">
-                    <DatePicker.TableHead>
-                      <DatePicker.TableRow>
-                        {#each picker().weekDays as weekDay (weekDay.long)}
-                          <DatePicker.TableHeader class="pb-1 text-xs font-semibold text-muted"
-                            >{weekDay.narrow}</DatePicker.TableHeader
-                          >
-                        {/each}
-                      </DatePicker.TableRow>
-                    </DatePicker.TableHead>
-                    <DatePicker.TableBody>
-                      {#each picker().weeks as week, row (row)}
-                        <DatePicker.TableRow>
-                          {#each week as date (date.toString())}
-                            <DatePicker.TableCell value={date}>
-                              <DatePicker.TableCellTrigger
-                                class="mx-auto flex size-11 items-center justify-center rounded-lg hover:preset-tonal data-disabled:opacity-40 data-outside-range:opacity-40 data-selected:preset-filled-primary-500 data-today:font-bold"
-                                >{date.day}</DatePicker.TableCellTrigger
-                              >
-                            </DatePicker.TableCell>
-                          {/each}
-                        </DatePicker.TableRow>
-                      {/each}
-                    </DatePicker.TableBody>
-                  </DatePicker.Table>
-                {/snippet}
-              </DatePicker.Context>
-            </DatePicker.View>
+            <CalendarDays />
           </DatePicker.Content>
         </DatePicker.Positioner>
       </Portal>
