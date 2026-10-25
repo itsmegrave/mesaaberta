@@ -30,6 +30,14 @@ export type AdminAction = {
 /** A file the network fetches without cookies, such as the image of a post. */
 export type PublicAsset = { body: Uint8Array<ArrayBuffer>; type: string };
 
+/** What the admin's connections page shows for an extension, and counts beside the navigation. */
+export interface AdminSurface {
+  /** How many things wait on an admin (the badge in the navigation). */
+  count(db: AnyDb): Promise<number>;
+  /** The data of its panel, merged into the page's data. Never a token or a secret. */
+  load(db: AnyDb, env: object | undefined): Promise<Record<string, unknown>>;
+}
+
 /**
  * A feature that plugs into Mesa Aberta from outside the public code: Instagram today, more later
  * (Trello #207, #208). An extension fills only the points it uses. The public code reads extensions
@@ -48,6 +56,8 @@ export interface Extension {
   readonly social?: SocialPublisher;
   /** Event handlers of its own, besides its connector's. Names are stored in `handledBy`. */
   readonly handlers?: readonly Handler[];
+  /** Its panel on the admin's connections page (`/admin/<id>`). */
+  readonly admin?: AdminSurface;
   /** Connecting its account from the admin. */
   readonly oauth?: OAuthConnection;
   /** Its admin hand actions, run by the web form and by the api Worker's route. */

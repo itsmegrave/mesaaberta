@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
+import { extensions } from '@mesaaberta/core/server/extensions/index';
 import { adminCounts } from '#lib/server/admin/counts.js';
 import type { LayoutServerLoad } from './$types';
 
@@ -10,5 +11,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
   if (!can(await locals.getProfile(), 'admin:access')) error(404);
   if (!locals.db) error(503, 'Database not configured');
 
-  return { adminCounts: await adminCounts(locals.db) };
+  // The connections page opens on the first installed extension that has a panel on it.
+  const panel = extensions.find((extension) => extension.admin);
+  return {
+    adminCounts: await adminCounts(locals.db),
+    adminConnections: panel ? `/admin/${panel.id}` : null,
+  };
 };

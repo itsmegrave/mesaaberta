@@ -12,7 +12,7 @@ describe('AdminNav', () => {
   });
 
   it('groups the sections, marks the one in use and counts what waits', async () => {
-    render(AdminNav, { route: '/admin/reports', counts });
+    render(AdminNav, { route: '/admin/reports', counts, connectionsPath: '/admin/instagram' });
 
     for (const group of ['Visão geral', 'Moderação', 'Conteúdo', 'Comunicação', 'Registro']) {
       await expect.element(page.getByText(group, { exact: true }).first()).toBeVisible();
@@ -28,5 +28,16 @@ describe('AdminNav', () => {
     await expect
       .element(nav.getByRole('link', { name: 'Mesas' }))
       .toHaveAttribute('href', '/admin/tables');
+    await expect
+      .element(nav.getByRole('link', { name: 'Conexões 1' }))
+      .toHaveAttribute('href', '/admin/instagram');
+  });
+
+  it('has no connections page when no installed extension has a panel on it', async () => {
+    render(AdminNav, { route: '/admin/reports', counts, connectionsPath: null });
+
+    const nav = page.getByRole('navigation', { name: 'Seções da administração' });
+    await expect.element(nav.getByRole('link', { name: 'Denúncias 3' })).toBeVisible();
+    await expect.element(nav.getByRole('link', { name: /^Conexões/ })).not.toBeInTheDocument();
   });
 });

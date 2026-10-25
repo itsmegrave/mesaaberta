@@ -1,6 +1,7 @@
 import type { Extension } from '../extensions/contract';
 import { instagramSocial } from '../social/instagram';
 import { instagramAdminActions } from './admin-actions';
+import { instagramAdmin } from './admin';
 import { instagramAsset } from './asset';
 import { instagramOAuth } from './oauth';
 
@@ -8,6 +9,7 @@ import { instagramOAuth } from './oauth';
 export const instagramExtension: Extension = {
   id: 'instagram',
   social: instagramSocial,
+  admin: instagramAdmin,
   oauth: instagramOAuth,
   adminActions: instagramAdminActions,
   asset: instagramAsset,
