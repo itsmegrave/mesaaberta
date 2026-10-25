@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { sitemapResponse } from './sitemap';
+import { GET as robots } from '../../routes/robots.txt/+server';
 const origin = 'https://mesaaberta.example';
 const locals = (fetch: (request: Request) => Promise<Response>) =>
   ({
@@ -24,6 +25,25 @@ describe('sitemap transport', () => {
     );
     expect(await page.text()).toContain('/t/a%26b</loc><lastmod>2026-10-20');
   });
+  it('keeps sitemap URLs on the configured origin when contact configuration is invalid', async () => {
+    const context = locals(async () => Response.json({ tables: 1, profiles: 1 }));
+    context.env = { ...context.env, CONTACT_EMAIL: 'invalid' } as unknown as App.Locals['env'];
+    for (const resource of ['index', 'pages', 'tables'] as const) {
+      if (resource === 'tables')
+        context.env = {
+          ...context.env,
+          API: { fetch: async () => Response.json({ entries: [{ slug: 'public-table' }] }) },
+        } as App.Locals['env'];
+      const response = await sitemapResponse(context, resource, 1);
+      expect(response.status).toBe(200);
+      const xml = await response.text();
+      expect(xml).toContain(origin);
+      expect(xml).not.toContain('localhost');
+    }
+    const response = await robots({ locals: context } as Parameters<typeof robots>[0]);
+    expect(await response.text()).toContain(`Sitemap: ${origin}/sitemap.xml`);
+  });
+
   it('answers unavailable rather than an empty successful sitemap on API failure', async () => {
     for (const fetch of [
       async () => Response.json({ error: 'failed' }, { status: 503 }),
