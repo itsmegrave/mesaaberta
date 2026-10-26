@@ -8,6 +8,7 @@ import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
 import { reportTargetsOf } from '../moderation/reports';
 import { systemWaitingOf } from '../systems';
+import { rosterBadges } from '../badges/reads';
 
 /**
  * Everything the table page shows one viewer (null for a visitor), or null when the table is
@@ -68,6 +69,7 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     .from(profiles)
     .where(eq(profiles.id, gmId));
   const gmActive = gm?.status === 'active';
+  const players = manage ? await listRegistrations(db, profile, slug) : null;
 
   return {
     gmUsername: gmActive ? gm.username : null,
@@ -89,7 +91,14 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     isGm: profile?.id === gmId,
     myStatus,
     canJoin,
-    registrations: manage ? await listRegistrations(db, profile, slug) : null,
+    registrations: players,
+    // The GM's strongest GM badge, and the confirmed players who are "Presença confiável" (only
+    // with the names, so only for the GM and the admins). The web drops it while `use_badges` is off.
+    badges: await rosterBadges(
+      db,
+      gmId,
+      (players ?? []).filter((row) => row.status === 'confirmed').map((row) => row.playerId),
+    ),
     // What "Denunciar" offers this visitor: the table, and the people they share it with.
     reportTargets: await reportTargetsOf(db, profile, { id, gmId }),
     // How to join is private: only the GM and the confirmed players get it.

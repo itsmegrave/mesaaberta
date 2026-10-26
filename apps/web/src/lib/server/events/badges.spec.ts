@@ -246,7 +246,8 @@ describe('badges-v1, phase 2', () => {
   async function table(
     players: string[],
     {
-      kind = 'one_shot' as 'one_shot' | 'adventure',
+      kind = 'one_shot' as 'one_shot' | 'adventure' | 'campaign',
+      from = null as string | null,
       capacity = 5,
       system = systemIds[0],
       status = 'concluded' as 'concluded' | 'not_held' | 'disabled',
@@ -267,6 +268,8 @@ describe('badges-v1, phase 2', () => {
         gmId: gm,
         systemId: system,
         status,
+        duplicatedFromTableId: from,
+        recurrence: kind === 'campaign' ? 'FREQ=WEEKLY' : null,
       })
       .returning();
     if (players.length)
@@ -290,6 +293,57 @@ describe('badges-v1, phase 2', () => {
 
     await badgeHandler.handle(await table([p1]), test.db);
     expect(await held(p1)).toContain('one-shot-adventurer');
+  });
+
+  it('keeps the reliable player away while a no-show or a removal is recent', async () => {
+    let last!: StoredEvent;
+    for (let n = 0; n < 10; n += 1) last = await table([p1, p2]);
+    const tableId = (last.payload as { tableId: string }).tableId;
+    await test.db.insert(reports).values({
+      reporterId: gm,
+      targetType: 'player',
+      targetId: p1,
+      tableId,
+      reason: 'no_show',
+      status: 'resolved',
+    } as never);
+    await test.db.insert(events).values({
+      type: 'PlayerLeft',
+      payload: { tableId, slug: 'x', playerId: p2, reason: 'left' },
+      processedAt: new Date(),
+    });
+    await badgeHandler.handle(last, test.db);
+    expect(await held(p1)).not.toContain('reliable-player');
+    expect(await held(p2)).toContain('reliable-player');
+
+    await test.db.delete(reports);
+    await test.db.delete(userBadges);
+    await test.db.insert(events).values({
+      type: 'PlayerLeft',
+      payload: { tableId, slug: 'x', playerId: p1, reason: 'removed' },
+      processedAt: new Date(),
+    });
+    await badgeHandler.handle({ ...last, id: id(93) }, test.db);
+    expect(await held(p1)).not.toContain('reliable-player');
+  });
+
+  it('counts the campaign veteran along one chain of sessions, not across campaigns', async () => {
+    const chain = async (sessions: number, players: string[]) => {
+      let previous: string | null = null;
+      let last!: StoredEvent;
+      for (let n = 0; n < sessions; n += 1) {
+        last = await table(players, { kind: 'campaign', from: previous });
+        previous = (last.payload as { tableId: string }).tableId;
+      }
+      return last;
+    };
+    await chain(6, [p1]);
+    const last = await chain(9, [p1, p2]);
+    await badgeHandler.handle(last, test.db);
+    expect(await held(p1)).not.toContain('campaign-veteran');
+
+    await badgeHandler.handle(await chain(10, [p2]), test.db);
+    expect(await held(p2)).toContain('campaign-veteran');
   });
 
   it('awards the full table to a GM with five tables that filled every seat', async () => {

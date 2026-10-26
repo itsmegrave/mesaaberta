@@ -174,6 +174,22 @@ export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
     goal: m.badge_word_kept_goal,
     progress: m.badge_word_kept_progress,
   },
+  'reliable-player': {
+    icon: 'game-icons:anchor',
+    tier: 0,
+    name: m.badge_reliable_player_name,
+    description: m.badge_reliable_player_description,
+    goal: m.badge_reliable_player_goal,
+    progress: m.badge_reliable_player_progress,
+  },
+  'campaign-veteran': {
+    icon: 'game-icons:campfire',
+    tier: 0,
+    name: m.badge_campaign_veteran_name,
+    description: m.badge_campaign_veteran_description,
+    goal: m.badge_campaign_veteran_goal,
+    progress: m.badge_campaign_veteran_progress,
+  },
   'table-guardian': {
     icon: 'game-icons:checked-shield',
     tier: 0,

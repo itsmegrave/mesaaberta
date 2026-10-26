@@ -36,6 +36,7 @@
   import DraftNotice from './components/DraftNotice.svelte';
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
+  import RosterBadge from './components/ui/RosterBadge.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
@@ -191,6 +192,9 @@
                 class="text-lg font-semibold text-surface-950-50 underline decoration-surface-200-800 underline-offset-3 hover:decoration-primary-500"
                 >{atHandle(table.gmName)}</a
               >
+              {#if data.badges?.gm}<span class="ml-1.5"
+                  ><RosterBadge badgeId={data.badges.gm} /></span
+                >{/if}
             {:else}
               <span class="text-lg font-semibold">{atHandle(table.gmName)}</span>
             {/if}
@@ -513,7 +517,12 @@
                 <li
                   class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
                 >
-                  <span><UserLink username={player.username} /></span>
+                  <span class="flex min-w-0 items-center gap-1.5">
+                    <UserLink username={player.username} />
+                    {#if data.badges?.reliable.includes(player.playerId)}
+                      <RosterBadge badgeId="reliable-player" />
+                    {/if}
+                  </span>
                   <ActionForm
                     action="?/remove"
                     playerId={player.playerId}

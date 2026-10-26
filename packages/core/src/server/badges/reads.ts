@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { userBadges } from '../db/schema';
 import { BADGES, statsFor } from './catalog';
@@ -101,4 +101,59 @@ export async function setBadgeHidden(
     )
     .returning({ id: userBadges.badgeId });
   return changed.length > 0;
+}
+
+/** The GM's badges the table page can show beside the handle, the strongest first. */
+export const GM_BADGE_ORDER = [
+  'beloved-gm',
+  'gm-master-3',
+  'word-kept',
+  'gm-master-2',
+  'full-table',
+  'open-door',
+  'wandering-gm',
+  'gm-master-1',
+  'gm-first',
+] as const;
+
+/**
+ * The badges on a table's roster: the GM's strongest GM badge (`GM_BADGE_ORDER`), and which of the
+ * given players hold "Presença confiável". Only what the holder shows: revoked and hidden ones are
+ * left out, as on the profile.
+ */
+export async function rosterBadges(
+  db: AnyDb,
+  gmId: string,
+  playerIds: readonly string[],
+): Promise<{ gm: string | null; reliable: string[] }> {
+  const shown = and(isNull(userBadges.revokedAt), eq(userBadges.hidden, false));
+  const [gmHeld, reliable] = await Promise.all([
+    db
+      .select({ badgeId: userBadges.badgeId })
+      .from(userBadges)
+      .where(
+        and(
+          eq(userBadges.profileId, gmId),
+          inArray(userBadges.badgeId, [...GM_BADGE_ORDER]),
+          shown,
+        ),
+      ),
+    playerIds.length
+      ? db
+          .select({ profileId: userBadges.profileId })
+          .from(userBadges)
+          .where(
+            and(
+              inArray(userBadges.profileId, [...playerIds]),
+              eq(userBadges.badgeId, 'reliable-player'),
+              shown,
+            ),
+          )
+      : [],
+  ]);
+  const held = new Set(gmHeld.map((row) => row.badgeId));
+  return {
+    gm: GM_BADGE_ORDER.find((badgeId) => held.has(badgeId)) ?? null,
+    reliable: reliable.map((row) => row.profileId),
+  };
 }

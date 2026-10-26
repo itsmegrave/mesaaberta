@@ -16,6 +16,7 @@ import {
 import type { AnyDb } from '../db/client';
 import {
   crowdfundings,
+  events,
   gameTables,
   partners,
   platforms,
@@ -64,6 +65,13 @@ export type BadgeStats = {
    * finished one until a table that did not happen or was cancelled.
    */
   tablesKeptInARow(): Promise<number>;
+  /**
+   * Whether the last `RELIABLE_MONTHS` hold anything against the person as a player: a no-show
+   * report an admin accepted, or a GM removing them from a table.
+   */
+  recentlyUnreliable(): Promise<boolean>;
+  /** The most concluded sessions the person played of one campaign (its chain of sessions). */
+  campaignSessions(): Promise<number>;
 };
 
 /** How many members the "100!" badge (once "Primeira centena") goes to. */
@@ -278,6 +286,62 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
       const broken = latest.findIndex((table) => table.status !== 'concluded');
       return broken === -1 ? latest.length : broken;
     }),
+    recentlyUnreliable: memo(async () => {
+      const since = new Date(Date.now() - RELIABLE_MONTHS * 30 * 24 * 60 * 60 * 1000);
+      const [noShow] = await db
+        .select({ total: count() })
+        .from(reports)
+        .where(
+          and(
+            eq(reports.targetType, 'player'),
+            eq(reports.targetId, profileId),
+            eq(reports.reason, 'no_show'),
+            eq(reports.status, 'resolved'),
+            sql`${reports.createdAt} >= ${since}`,
+          ),
+        );
+      const [removed] = await db
+        .select({ total: count() })
+        .from(events)
+        .where(
+          and(
+            eq(events.type, 'PlayerLeft'),
+            sql`${events.payload}->>'playerId' = ${profileId}`,
+            sql`${events.payload}->>'reason' = 'removed'`,
+            sql`${events.createdAt} >= ${since}`,
+          ),
+        );
+      return noShow.total > 0 || removed.total > 0;
+    }),
+    campaignSessions: memo(async () => {
+      // Walk up from each campaign session the person played to the first of its chain, then count
+      // the sessions per chain.
+      const rows = await db.execute<{ total: number }>(sql`
+        with recursive played as (
+          select ${gameTables.id} as start, ${gameTables.id} as id,
+            ${gameTables.duplicatedFromTableId} as parent
+          from ${registrations}
+          join ${gameTables} on ${gameTables.id} = ${registrations.tableId}
+          where ${registrations.playerId} = ${profileId}
+            and ${registrations.status} = 'confirmed'
+            and (${registrations.attended} is null or ${registrations.attended})
+            and ${gameTables.status} = 'concluded'
+            and ${gameTables.kind} = 'campaign'
+          union all
+          select played.start, source.id, source.duplicated_from_table_id
+          from played
+          join game_tables source on source.id = played.parent
+        )
+        select count(distinct start)::int as total
+        from played
+        where parent is null
+        group by id
+        order by total desc
+        limit 1
+      `);
+      const list = Array.isArray(rows) ? rows : (rows as { rows: { total: number }[] }).rows;
+      return Number(list[0]?.total ?? 0);
+    }),
     hasApprovedPartner: memo(async () => {
       const [row] = await db
         .select({ total: count() })
@@ -296,6 +360,8 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
 
 const ATTENDANCE: readonly EventType[] = ['TableConcluded'];
 
+/** How far back a no-show report keeps the "Presença confiável" away. */
+const RELIABLE_MONTHS = 6;
 /** How many tables in a row the "Palavra cumprida" asks. */
 const KEPT_IN_A_ROW = 10;
 /** The "Mestragem querida": a score of at least this, from at least `BELOVED_RATINGS` ratings. */
@@ -397,6 +463,22 @@ export const BADGES: readonly BadgeDefinition[] = [
     triggers: ['CrowdfundingAdded'],
     goal: 3,
     measure: (stats) => stats.campaignsAdded(),
+  },
+  {
+    id: 'reliable-player',
+    triggers: ATTENDANCE,
+    goal: 10,
+    // Short of the goal while anything recent stands against the person, whatever they played.
+    measure: async (stats) => {
+      const sessions = await stats.sessionsPlayed();
+      return (await stats.recentlyUnreliable()) ? Math.min(sessions, 9) : sessions;
+    },
+  },
+  {
+    id: 'campaign-veteran',
+    triggers: ATTENDANCE,
+    goal: 10,
+    measure: (stats) => stats.campaignSessions(),
   },
   {
     id: 'curator',
