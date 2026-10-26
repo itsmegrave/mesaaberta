@@ -7,6 +7,10 @@ vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({
   forceFailedEvents: (...args: unknown[]) => retry(...args),
 }));
 vi.mock('@mesaaberta/core/server/events/handlers', () => ({ handlersFor: () => [] }));
+const review = vi.fn();
+vi.mock('@mesaaberta/core/server/admin/event-queue', () => ({
+  reviewEvent: (...args: unknown[]) => review(...args),
+}));
 
 import { ACTOR_HEADER, eventRoutes } from './events';
 
@@ -29,6 +33,7 @@ describe('api admin event routes', () => {
   beforeEach(() => {
     force.mockReset().mockResolvedValue('processed');
     retry.mockReset().mockResolvedValue({ tried: 2, processed: 1, remaining: 1 });
+    review.mockReset().mockResolvedValue('reviewed');
   });
 
   it('answers 401 without an actor', async () => {
@@ -85,5 +90,23 @@ describe('api admin event routes', () => {
       expect.any(Date),
       expect.anything(),
     );
+  });
+
+  it('records the review an admin gives of a failed event', async () => {
+    const actor = { id: 'a', role: 'admin', status: 'active' };
+    const response = await post('/e1/review/ignored', 'a')(open(actor));
+
+    expect(await response.json()).toEqual({ outcome: 'reviewed' });
+    expect(review).toHaveBeenCalledWith(expect.anything(), actor, 'e1', 'ignored');
+  });
+
+  it('answers 400 to a review that is not one of the three', async () => {
+    const response = await post(
+      '/e1/review/deleted',
+      'a',
+    )(open({ id: 'a', role: 'admin', status: 'active' }));
+
+    expect(response.status).toBe(400);
+    expect(review).not.toHaveBeenCalled();
   });
 });

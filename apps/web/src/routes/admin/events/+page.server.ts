@@ -1,8 +1,8 @@
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
-import { forceSchema, retryAllSchema } from '#lib/admin/event-filters.js';
+import { forceSchema, retryAllSchema, reviewSchema } from '#lib/admin/event-filters.js';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '#lib/server/admin-access.js';
-import { eventQueue } from '#lib/server/admin/event-queue.js';
+import { eventQueue, reviewEvent } from '#lib/server/admin/event-queue.js';
 import { queueBacklog, type QueueBinding } from '@mesaaberta/events';
 import { callApi } from '#lib/server/api-client.js';
 import { requireUser } from '#lib/server/auth/guard.js';
@@ -73,6 +73,31 @@ export const actions: Actions = {
       adminId,
       new Date(),
       event.locals.log,
+    );
+    return { form, outcome };
+  },
+
+  // "Visto", "Ignorar", "Corrigido": an admin's word on a given-up event, with who and when.
+  review: async (event) => {
+    const { db, adminId } = await admin(event);
+    const form = validateStringForm(await event.request.formData(), reviewSchema, ['id', 'review']);
+    if (!form.valid) return fail(400, { form });
+
+    const viaApi = (await apiEnabled(event, adminId))
+      ? await callApi<{ outcome: Awaited<ReturnType<typeof reviewEvent>> }>(
+          event.locals.env,
+          `/v1/admin/events/${encodeURIComponent(form.data.id)}/review/${form.data.review}`,
+          adminId,
+          event.locals.log,
+        )
+      : null;
+    if (viaApi) return { form, outcome: viaApi.outcome };
+
+    const outcome = await reviewEvent(
+      db,
+      await event.locals.getProfile(),
+      form.data.id,
+      form.data.review,
     );
     return { form, outcome };
   },
