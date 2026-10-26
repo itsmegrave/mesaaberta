@@ -1362,6 +1362,8 @@
   "public_profile_review_played": "Jogou em",
   "public_profile_reviews_all": "{count, plural, =1 {Ver a avaliação} other {Ver todas as {count} avaliações}}",
   "public_profile_reviews_fewer": "Mostrar menos",
+  "public_profile_reviews_summary": "{count, plural, =1 {1 avaliação} other {{count} avaliações}}",
+  "public_profile_reviews_summary_score": "{score} · {count, plural, =1 {1 avaliação} other {{count} avaliações}}",
   "session_day": "Dia da primeira sessão",
   "session_hour": "Hora",
   "session_minute": "Minutos",
