@@ -38,6 +38,12 @@ export const load: PageServerLoad = async (event) => {
   const sourceSlug = url.searchParams.get('duplicate');
   const source = sourceSlug ? await duplicationSource(locals, sourceSlug) : null;
   const input = source?.input;
+  // "Abrir uma mesa deste sistema" (`?system=<slug>`, from a system's page) picks the system; only
+  // an approved one, anything else is ignored.
+  const wanted = url.searchParams.get('system');
+  const presetSystem = catalogRead.systems.find(
+    (system) => system.slug === wanted && !('pending' in system),
+  )?.slug;
   return {
     duplication: source
       ? {
@@ -69,7 +75,11 @@ export const load: PageServerLoad = async (event) => {
             joinDetails: input.joinDetails ?? '',
             postalCode: input.postalCode ?? '',
           }
-        : { ...NEW_TABLE_VALUES, timezone: await timezoneOf(locals, cookies) },
+        : {
+            ...NEW_TABLE_VALUES,
+            ...(presetSystem ? { systemSlug: presetSystem } : {}),
+            timezone: await timezoneOf(locals, cookies),
+          },
     ),
     systems: catalogRead.systems,
     catalog: catalogRead.catalog,

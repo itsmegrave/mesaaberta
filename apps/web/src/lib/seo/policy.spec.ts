@@ -96,4 +96,22 @@ describe('search indexing policy', () => {
     expect(policy('/', { maintenance: true }).index).toBe(false);
     expect(policy('/u/ana').index).toBe(true);
   });
+
+  it('indexes the systems directory and its pages, keeping the list and page but not the order', () => {
+    expect(policy('/systems?page=1&utm_source=x')).toEqual({
+      canonical: `${origin}/systems`,
+      index: true,
+    });
+    expect(policy('/systems?show=all&page=3')).toEqual({
+      canonical: `${origin}/systems?show=all&page=3`,
+      index: true,
+    });
+    expect(policy('/systems?sort=az').index).toBe(false);
+    expect(policy('/systems?q=cthulhu').index).toBe(false);
+    expect(policy('/s/tormenta-20?ref=x')).toEqual({
+      canonical: `${origin}/s/tormenta-20`,
+      index: true,
+    });
+    expect(policy('/s/tormenta-20', { status: 404 }).index).toBe(false);
+  });
 });

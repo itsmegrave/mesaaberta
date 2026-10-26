@@ -7,7 +7,13 @@ export const GET: RequestHandler = async (event) => {
   if (!resources.includes(event.params.resource as Resource)) error(404, 'Not found');
   const resource = event.params.resource as Resource;
   const slug = event.url.searchParams.get('slug');
-  if ((resource === 'detail' || resource === 'manage' || resource === 'editCatalog') && !slug)
+  if (
+    (resource === 'detail' ||
+      resource === 'manage' ||
+      resource === 'editCatalog' ||
+      resource === 'system') &&
+    !slug
+  )
     error(400, 'Missing slug');
   try {
     // All readers reuse server-side identity and policy; browser parameters never select a viewer.

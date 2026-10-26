@@ -14,7 +14,12 @@
     policy.canonical
       ? publicMetadata(
           page.url.pathname,
-          { table: page.data.table, profile: page.data.profile },
+          {
+            table: page.data.table,
+            profile: page.data.profile,
+            system: page.data.system,
+            facts: page.data.facts,
+          },
           origin,
         )
       : null,
