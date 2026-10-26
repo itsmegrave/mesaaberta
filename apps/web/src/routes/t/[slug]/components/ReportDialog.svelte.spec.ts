@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ReportDialog from './ReportDialog.svelte';
 
+// On a phone (the default viewport here) each list opens its own sheet over the dialog.
+
 const gm = { id: '00000000-0000-4000-8000-000000000001', username: 'ana' };
 const player = { id: '00000000-0000-4000-8000-000000000002', username: 'bruno' };
 
@@ -13,9 +15,9 @@ describe('ReportDialog', () => {
 
     await page.getByRole('button', { name: 'Denunciar' }).click();
 
-    const target = page.getByRole('combobox', { name: 'O que você quer denunciar' });
+    const target = page.getByRole('button', { name: /^O que você quer denunciar/ });
     await expect.element(target).toBeVisible();
-    await page.getByRole('button', { name: 'Abrir a lista: O que você quer denunciar' }).click();
+    await page.getByRole('button', { name: /^O que você quer denunciar/ }).click();
     await expect.element(page.getByRole('option', { name: '@ana' })).toBeInTheDocument();
     await expect.element(page.getByRole('option', { name: '@bruno' })).toBeInTheDocument();
   });
@@ -25,9 +27,9 @@ describe('ReportDialog', () => {
 
     await page.getByRole('button', { name: 'Denunciar' }).click();
 
-    await expect.element(page.getByRole('combobox', { name: 'Motivo' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: /^Motivo/ })).toBeVisible();
     expect(
-      page.getByRole('combobox', { name: 'O que você quer denunciar' }).elements(),
+      page.getByRole('button', { name: /^O que você quer denunciar/ }).elements(),
     ).toHaveLength(0);
   });
 
@@ -46,7 +48,7 @@ describe('ReportDialog', () => {
     render(ReportDialog, { targets: { table: true, people: [] } });
 
     await page.getByRole('button', { name: 'Denunciar' }).click();
-    await page.getByRole('button', { name: 'Abrir a lista: Motivo' }).click();
+    await page.getByRole('button', { name: /^Motivo/ }).click();
     await page.getByRole('option').first().click();
 
     await expect

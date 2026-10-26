@@ -52,13 +52,24 @@ test('the account menu leads to the profile, where the details are saved and the
   await expect(page.getByRole('main')).not.toContainText('Recife');
 });
 
-test("the timezone on the profile wins over the browser's, on every page", async ({ page }) => {
+test("the timezone on the profile wins over the browser's, on every page", async ({
+  page,
+  isMobile,
+}) => {
   const user = await createUser('Fuso Horario');
   await signIn(page, user, '/u/profile/edit/about');
 
   // Not picked yet: the field offers the browser's zone.
-  const field = page.getByRole('combobox', { name: 'Fuso horário' });
-  await expect(field).toHaveValue('America/Sao Paulo');
+  // A phone shows it on the button that opens the sheet; a wide screen, in the box to type into.
+  if (isMobile) {
+    await expect(page.getByRole('button', { name: /^Fuso horário/ })).toContainText(
+      'America/Sao Paulo',
+    );
+  } else {
+    await expect(page.getByRole('combobox', { name: 'Fuso horário' })).toHaveValue(
+      'America/Sao Paulo',
+    );
+  }
 
   await pickFromSearch(page, 'Fuso horário', 'Asia/Tokyo');
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();

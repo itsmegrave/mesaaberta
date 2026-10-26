@@ -199,6 +199,7 @@
       <SearchSelect
         id={fieldId}
         name="into"
+        search
         label={m.admin_dialog_merge_into()}
         labelClass="label-text block font-semibold"
         class="grid gap-1"

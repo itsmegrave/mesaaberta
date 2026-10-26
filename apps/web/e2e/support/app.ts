@@ -56,14 +56,33 @@ export type NewTable = {
   image?: { name: string; mimeType: string; buffer: Buffer };
 };
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
- * Picks an option in a SearchSelect (the searchable dropdown): types part of its name, then clicks
- * it. Waits for the combobox first, since the page shows a plain <select> until it hydrates.
+ * Opens a SearchSelect and returns its search box, if it has one. On a wide screen a long list is a
+ * combobox to type into; on a phone, and for a short list, the field is a button ("Hora 20") that
+ * opens the list, in a bottom sheet with a "Buscar: <label>" box when the list is long.
  */
+export async function openSelect(page: Page, label: string) {
+  const combobox = page.getByRole('combobox', { name: label }).filter({ visible: true });
+  const button = page
+    .getByRole('button', { name: new RegExp(`^${escapeRegExp(label)}( |$)`) })
+    .filter({ visible: true });
+  await expect(combobox.or(button).first()).toBeVisible();
+  if ((await combobox.count()) > 0) {
+    await combobox.first().click();
+    return combobox.first();
+  }
+  await button.first().click();
+  await expect(page.getByRole('option').first()).toBeVisible();
+  const search = page.getByRole('searchbox', { name: `Buscar: ${label}` });
+  return (await search.count()) > 0 ? search : null;
+}
+
+/** Picks an option in a SearchSelect: opens it, types part of the name if it has a search, clicks it. */
 export async function pickFromSearch(page: Page, label: string, option: string) {
-  const input = page.getByRole('combobox', { name: label });
-  await expect(input).toBeVisible();
-  await input.fill(option.slice(0, 6));
+  const search = await openSelect(page, label);
+  await search?.fill(option.slice(0, 6));
   await page.getByRole('option', { name: option, exact: true }).click();
 }
 

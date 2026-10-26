@@ -1,5 +1,5 @@
 import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { initialForm, issueErrors } from '#lib/forms/contract.js';
 import ProfileForm from './ProfileForm.svelte';
@@ -41,7 +41,7 @@ const setup = async (
 };
 
 const urlFields = () => page.getByLabelText(/^(Endereço|Usuário) do link/);
-// The networks sent, in row order: the combobox keeps each one in a hidden field.
+// The networks sent, in row order: the select keeps each one in a hidden field.
 const networks = () =>
   [...document.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="linkNetwork"]')].map(
     (input) => input.value,
@@ -55,6 +55,10 @@ const fields = () =>
   [...document.querySelectorAll<HTMLInputElement>('form [name]')].map((input) => input.name);
 
 describe('ProfileForm', () => {
+  beforeEach(async () => {
+    await page.viewport(1280, 900);
+  });
+
   it('shows only the fields of the part of "Editar perfil" it is for', async () => {
     const form = initialForm({ ...empty, username: 'ana', bio: 'Horror cósmico.' });
     render(ProfileForm, { form, section: 'public', checkUsername: vi.fn() });
@@ -105,9 +109,9 @@ describe('ProfileForm', () => {
     }
   });
 
-  // The age and the gender are the same combobox as the timezone: type to narrow, or open the list.
-  const openList = (label: RegExp | string) =>
-    page.getByRole('button', { name: new RegExp(`^Abrir a lista: ${label}`) }).click();
+  // The age and the gender are short lists: a button that opens them, with no search.
+  const field = (label: string) => page.getByRole('button', { name: new RegExp(`^${label}`) });
+  const openList = (label: string) => field(label).click();
   const sent = (name: string) =>
     document.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`)?.value;
 
@@ -115,9 +119,8 @@ describe('ProfileForm', () => {
     it('is a list of ranges, not an exact age, with no answer as the default', async () => {
       await setup();
 
-      const range = page.getByRole('combobox', { name: /^Faixa etária/ });
-      await expect.element(range).toHaveValue('');
-      await expect.element(range).toHaveAttribute('placeholder', 'Prefiro não informar');
+      await expect.element(field('Faixa etária')).toHaveTextContent('Prefiro não informar');
+      expect(sent('ageRange')).toBeUndefined();
       await openList('Faixa etária');
       await expect
         .poll(() =>
@@ -140,9 +143,7 @@ describe('ProfileForm', () => {
     it('shows the range the person saved, and sends it', async () => {
       await setup({ ageRange: '35_44' });
 
-      await expect
-        .element(page.getByRole('combobox', { name: /^Faixa etária/ }))
-        .toHaveValue('35 a 44 anos');
+      await expect.element(field('Faixa etária')).toHaveTextContent('35 a 44 anos');
       expect(sent('ageRange')).toBe('35_44');
     });
 
@@ -160,8 +161,8 @@ describe('ProfileForm', () => {
     it('is a list of options with no answer as the default', async () => {
       await setup();
 
-      const gender = page.getByRole('combobox', { name: /^Gênero/ });
-      await expect.element(gender).toHaveValue('');
+      await expect.element(field('Gênero')).toHaveTextContent('Prefiro não informar');
+      expect(sent('gender')).toBeUndefined();
       await openList('Gênero');
       await expect
         .poll(() =>
@@ -199,7 +200,7 @@ describe('ProfileForm', () => {
     it('shows what the person saved, own words included', async () => {
       await setup({ gender: 'other', genderOther: 'demigênero' });
 
-      await expect.element(page.getByRole('combobox', { name: /^Gênero/ })).toHaveValue('Outro');
+      await expect.element(field('Gênero')).toHaveTextContent('Outro');
       expect(sent('gender')).toBe('other');
       await expect
         .element(page.getByLabelText('Como você se identifica?'))

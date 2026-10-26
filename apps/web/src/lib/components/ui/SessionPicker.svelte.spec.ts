@@ -11,8 +11,8 @@ describe('SessionPicker.svelte', () => {
   it('shows the saved day, hour and length, and says them back in one sentence', async () => {
     render(SessionPicker, { ...base, startsAt: '2099-06-01T20:30', duration: 3 });
 
-    await expect.element(page.getByRole('combobox', { name: 'Hora' })).toHaveValue('20');
-    await expect.element(page.getByRole('combobox', { name: 'Minutos' })).toHaveValue('30');
+    await expect.element(page.getByRole('button', { name: 'Hora 20' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Minutos 30' })).toBeVisible();
     await expect.element(page.getByRole('radio', { name: '3 h' })).toBeChecked();
     await expect.element(page.getByRole('status')).toBeVisible();
     expect(page.getByRole('status').element().textContent).toContain('20:30, por 3 h');
@@ -26,9 +26,9 @@ describe('SessionPicker.svelte', () => {
     await page.getByRole('button', { name: /15/ }).first().click();
     await expect.poll(() => hidden('startsAtLocal')).toMatch(/^\d{4}-\d{2}-15T19:00$/);
 
-    await page.getByRole('button', { name: 'Abrir a lista: Hora' }).click();
+    await page.getByRole('button', { name: /^Hora/ }).click();
     await page.getByRole('option', { name: '21', exact: true }).click();
-    await page.getByRole('button', { name: 'Abrir a lista: Minutos' }).click();
+    await page.getByRole('button', { name: /^Minutos/ }).click();
     await page.getByRole('option', { name: '45', exact: true }).click();
     await expect.poll(() => hidden('startsAtLocal')).toMatch(/-15T21:45$/);
   });
@@ -39,7 +39,7 @@ describe('SessionPicker.svelte', () => {
     expect(page.getByRole('status').element().textContent).toContain(
       'Escolha o dia da primeira sessão.',
     );
-    await expect.element(page.getByRole('combobox', { name: 'Hora' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: /^Hora/ })).toBeDisabled();
   });
 
   it('chooses the length from the segments, or types another', async () => {

@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   chooseFromMenu,
   createTable,
+  openSelect,
   pickFromSearch,
   setFirstSession,
   soonSession,
@@ -46,7 +47,7 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
   await page.waitForLoadState('networkidle');
   // A desktop has a box for the platforms; a phone, the "Filtros" sheet with one.
   if (isMobile) await page.getByRole('button', { name: 'Filtros' }).click();
-  await page.getByRole('combobox', { name: 'Plataformas' }).last().click();
+  await openSelect(page, 'Plataformas');
   await page.getByRole('option', { name: 'Owlbear Rodeo' }).click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
   // Closed, so the list behind it is readable again: the box's list, then (on a phone) the sheet.
@@ -125,7 +126,7 @@ test('a GM suggests a tag the catalog lacks: it is on the table for them, not fo
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
   await setFirstSession(page, soonSession());
-  await page.getByRole('combobox', { name: 'Tags' }).fill(suggested);
+  await (await openSelect(page, 'Tags'))?.fill(suggested);
   await page.getByRole('option', { name: `Sugerir “${suggested}”` }).click();
   await page.keyboard.press('Escape');
   await expect(
