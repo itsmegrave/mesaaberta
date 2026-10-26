@@ -1,7 +1,7 @@
 <script lang="ts" generics="V extends string">
-  // One choice of up to four short options, all in sight: a row of pills. Native radios keep the
-  // arrow keys and a native POST; the checked pill takes the primary border. A longer list is a
-  // SearchSelect.
+  // One choice of up to four short options, all in sight: a segmented row of pills on the wash, as
+  // the boards draw it. Native radios keep the arrow keys and a native POST; the checked pill is
+  // filled with the primary colour. A longer list is a SearchSelect.
   let {
     id,
     name,
@@ -33,15 +33,19 @@
   } = $props();
 
   const pill = $derived(
-    `btn rounded-lg border-2 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500 has-disabled:cursor-not-allowed has-disabled:opacity-50 ${
-      size === 'sm' ? 'h-9 px-3 text-sm' : 'h-11 px-4'
-    } ${invalid ? 'border-error-500' : 'border-surface-200-800'}`,
+    `btn rounded-full text-sm font-semibold has-checked:preset-filled-primary-500 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500 has-disabled:cursor-not-allowed has-disabled:opacity-50 ${
+      size === 'sm' ? 'h-7 px-3' : 'h-9 px-3.5'
+    }`,
   );
 </script>
 
 <fieldset {id} class={rootClass} aria-describedby={describedby} {disabled}>
   <legend class={legendClass}>{legend}</legend>
-  <div class="flex flex-wrap gap-2">
+  <div
+    class="flex w-fit flex-wrap gap-1 rounded-3xl bg-surface-wash p-1 {invalid
+      ? 'outline-2 outline-error-500'
+      : ''}"
+  >
     {#each options as option (option.value)}
       <label class={pill}>
         <input

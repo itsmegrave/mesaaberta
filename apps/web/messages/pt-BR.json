@@ -1823,7 +1823,7 @@
   "admin_table_status": "Estado",
   "history_value_join_auto": "direto",
   "history_value_join_approval": "com aprovação",
-  "admin_nav_events": "Fila de eventos",
+  "admin_nav_events": "Eventos",
   "admin_events_title": "Fila de eventos",
   "admin_events_lede": "O que a plataforma registrou e ainda precisa processar: o que desistiu, o que espera nova tentativa e o que já rodou.",
   "admin_events_status": "Estado",

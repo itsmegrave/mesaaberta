@@ -86,11 +86,20 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
 /** The tables this person is the GM of, with who has a seat and who is waiting. */
 export async function listRunning(db: AnyDb, gmId: string, now: Date) {
   const rows = await db
-    .select({ table: gameTables, reserved: reservedSeatsSql(gameTables.id, now) })
+    .select({
+      table: gameTables,
+      systemName: systems.name,
+      reserved: reservedSeatsSql(gameTables.id, now),
+    })
     .from(gameTables)
+    .innerJoin(systems, eq(gameTables.systemId, systems.id))
     .where(eq(gameTables.gmId, gmId))
     .orderBy(asc(gameTables.startsAt));
-  const tables = rows.map(({ table, reserved }) => ({ ...table, reserved }));
+  const tables = rows.map(({ table, systemName, reserved }) => ({
+    ...table,
+    systemName,
+    reserved,
+  }));
   if (tables.length === 0) return [];
 
   const people = await db
@@ -123,6 +132,7 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
       return {
         slug: table.slug,
         title: table.title,
+        systemName: table.systemName,
         tableStatus: table.status,
         joinMode: table.joinMode,
         capacity: table.capacity,

@@ -84,8 +84,9 @@
     });
   });
 
+  // The durations are a segmented row of pills on the wash, like SegmentedChoice.
   const segment =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'btn h-9 rounded-full px-3.5 text-sm font-semibold has-checked:preset-filled-primary-500 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 </script>
 
 <div class="grid gap-5">
@@ -136,7 +137,7 @@
   {#if withDuration}
     <fieldset class="grid gap-2">
       <legend class="label-text font-semibold">{m.session_duration()}</legend>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex w-fit flex-wrap gap-1 rounded-3xl bg-surface-wash p-1">
         {#each PRESETS as preset (preset)}
           <label class={segment}>
             <input

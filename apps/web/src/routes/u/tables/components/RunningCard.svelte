@@ -17,6 +17,8 @@
   type Item = {
     slug: string;
     title: string;
+    /** "Shadow of the Weird Wizard", the eyebrow over the title. */
+    systemName?: string;
     tableStatus: TableStatus;
     capacity: number;
     reserved?: number;
@@ -72,6 +74,7 @@
     {#if item.tableStatus === 'draft'}
       <Pill tone="outline">{m.table_status_draft()}</Pill>
     {/if}
+    {#if item.systemName}<span>{item.systemName}</span>{/if}
     <span class="ml-auto"
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >
@@ -167,7 +170,11 @@
     </div>
   {/if}
 
-  <Collapsible open={playersOpen} onOpenChange={(details) => (playersOpen = details.open)}>
+  <Collapsible
+    class="block"
+    open={playersOpen}
+    onOpenChange={(details) => (playersOpen = details.open)}
+  >
     <!-- A heading on a wide screen, a button that folds the list on a phone. -->
     <h4 class="mt-5 font-semibold max-lg:hidden">{m.dash_players()}</h4>
     <Collapsible.Trigger
