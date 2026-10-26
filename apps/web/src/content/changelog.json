@@ -116,6 +116,12 @@
         "kind": "fixed",
         "title": "Menu da conta fecha ao navegar",
         "description": "O menu da conta fecha depois de abrir Perfil, Mensagens ou Admin."
+      },
+      {
+        "kind": "new",
+        "title": "Lembretes para fechar a sessão",
+        "description": "Quem mestra recebe um e-mail uma hora e sete dias depois do fim de uma sessão que ainda não foi confirmada. Passados dez dias, a Mesa Aberta fecha a sessão e chama quem jogou para avaliar.",
+        "href": "/u/tables"
       }
     ]
   },
