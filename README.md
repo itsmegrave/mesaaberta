@@ -486,6 +486,10 @@ unexpected SvelteKit errors produce Sentry issues with code locations and safe c
 The Sentry `beforeSend` callback reconstructs exceptions without messages, request data, user data,
 breadcrumbs, source context or local variables. `beforeSendLog` independently filters SDK-added
 attributes and rejects automatic console logs. Do not add console-capture integrations.
+Performance traces (`TRACES_SAMPLE_RATE` in `packages/core/src/observability/sentry-options.ts`,
+100% for now) pass `beforeSendTransaction` and `beforeSendSpan`, which keep the route, timings, Web
+Vitals and span operations, and drop request and user data, query strings, SQL literals and span
+attributes outside an allowlist.
 
 To investigate a failure, filter Sentry Logs by `requestId`, find the failed operation and error code,
 then find its issue with the same tag. To follow one action end to end (web, api, then the worker's
