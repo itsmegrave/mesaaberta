@@ -5,6 +5,7 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { disconnectSchema } from '#lib/profile/connections.js';
 import { addPasswordFormSchema } from '@mesaaberta/core/auth/password-setup';
+import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
 import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
@@ -28,7 +29,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (!locals.db) error(503, 'Database not configured');
 
   const profile = await locals.getProfile();
-  const connected = locals.supabase ? await connections(locals.supabase) : null;
+  const linked = locals.supabase ? await connections(locals.supabase) : null;
+  // A password set on a provider account adds no `email` identity, so `auth.users` says whether
+  // the e-mail and password way in is on. `total` stays the identities: it guards disconnecting.
+  const connected =
+    linked && !linked.email && (await hasPassword(locals.db, user.id))
+      ? { ...linked, email: true }
+      : linked;
   return {
     email: user.email ?? '',
     disconnectForm: initialForm({ provider: 'google' as const }),

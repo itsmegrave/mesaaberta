@@ -3,6 +3,8 @@
   // "Privacidade e dados": what everyone else sees of the profile, a download of everything the
   // account keeps, and closing the account (typing the @usuário to confirm).
   import MAForm from '#lib/components/ui/MAForm.svelte';
+  import DialogActions from '#lib/components/ui/DialogActions.svelte';
+  import DialogShell from '#lib/components/ui/DialogShell.svelte';
   import SettingsSection from '../components/ui/SettingsSection.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
@@ -28,6 +30,35 @@
     errorMessage: m.auth_error_failed,
   });
   const { draft: closingData } = closing;
+
+  // The typed @usuário is checked here first (the server checks it again), then a dialog asks once
+  // more before the form goes. Only "Apagar minha conta" in the dialog sends it.
+  let closingForm = $state<HTMLFormElement>();
+  let asking = $state(false);
+  let mismatch = $state(false);
+  let confirmed = false;
+  const typed = () =>
+    String($closingData.confirm ?? '')
+      .trim()
+      .toLowerCase();
+  function ask(event: SubmitEvent) {
+    if (confirmed) {
+      confirmed = false;
+      return closing.submit(event);
+    }
+    event.preventDefault();
+    if (closing.pending) return;
+    mismatch = typed() !== (data.username ?? '').toLowerCase();
+    if (mismatch) closingForm?.querySelector<HTMLElement>('#confirm')?.focus();
+    else asking = true;
+  }
+  function proceed() {
+    asking = false;
+    confirmed = true;
+    closingForm?.requestSubmit();
+  }
+  // Focus starts on "Cancelar": the safe answer.
+  const cancelFirst = () => document.querySelector<HTMLElement>('[data-confirm-cancel]');
 
   const check = 'M5 12.5l4.5 4.5L19 7.5';
   const cross = 'M6 6l12 12M18 6L6 18';
@@ -99,7 +130,12 @@
   <div class="mt-5">
     <h4 class="text-lg font-semibold">{m.account_delete_title()}</h4>
     <p class="mt-2 max-w-prose text-muted">{m.account_delete_text()}</p>
-    <MAForm action="?/delete" onsubmit={closing.submit} class="mt-4 grid max-w-sm gap-3">
+    <MAForm
+      action="?/delete"
+      bind:element={closingForm}
+      onsubmit={ask}
+      class="mt-4 grid max-w-sm gap-3"
+    >
       <label for="confirm" class="label-text font-semibold">{m.account_delete_confirm()}</label>
       <TextInput
         id="confirm"
@@ -110,26 +146,39 @@
         spellcheck="false"
         placeholder={data.username}
         bind:value={$closingData.confirm}
-        aria-invalid={closing.errors.confirm ? 'true' : undefined}
-        aria-describedby={closing.errors.confirm ? 'confirm-error' : undefined}
+        oninput={() => (mismatch = false)}
+        aria-invalid={mismatch || closing.errors.confirm ? 'true' : undefined}
+        aria-describedby={mismatch || closing.errors.confirm ? 'confirm-error' : undefined}
         class="input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3"
       />
       <FieldError
         id="confirm"
         class=""
-        message={closing.errors.confirm ? m.account_delete_error() : undefined}
+        message={mismatch || closing.errors.confirm ? m.account_delete_error() : undefined}
       />
       <div>
-        <MAButton
-          type="submit"
-          size="custom"
-          controller={closing}
-          variant="danger"
-          class="btn h-12 gap-2 rounded-lg px-6 font-semibold"
-        >
+        <MAButton type="submit" controller={closing} variant="danger" class="px-6 font-semibold">
           {m.account_delete_button()}
         </MAButton>
       </div>
     </MAForm>
   </div>
 </section>
+
+<DialogShell
+  bind:open={asking}
+  role="alertdialog"
+  sheet
+  initialFocusEl={cancelFirst}
+  title={m.account_delete_dialog_title()}
+  description={m.account_delete_dialog_text()}
+>
+  <DialogActions
+    class="mt-6"
+    cancel={m.confirm_cancel()}
+    cancelAttributes={{ 'data-confirm-cancel': '' }}
+    tone="danger"
+    confirm={m.account_delete_button()}
+    onconfirm={proceed}
+  />
+</DialogShell>
