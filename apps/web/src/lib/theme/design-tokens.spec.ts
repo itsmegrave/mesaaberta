@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { OUTPUT, render } from '../../../../../scripts/design-tokens';
 import { designTokens, type CssSources } from './design-tokens';
@@ -115,5 +116,33 @@ describe('designTokens', () => {
 describe('design/tokens.json', () => {
   it('is up to date: run `bun scripts/design-tokens.ts` after changing the theme or the map', () => {
     expect(readFileSync(OUTPUT, 'utf8')).toBe(render());
+  });
+});
+
+describe('the brand SVGs', () => {
+  // The PNG and ICO icons are rendered from these two files (scripts/brand-icons.sh), so keeping
+  // the SVGs on the tokens keeps every icon on them.
+  const tokens = JSON.parse(render()) as {
+    color: { tokens: { name: string; value: string | { light: string } }[] };
+  };
+  const token = (name: string) => {
+    const value = tokens.color.tokens.find((entry) => entry.name === name)!.value;
+    return typeof value === 'string' ? value : value.light;
+  };
+  const colours = (file: string) =>
+    new Set(
+      readFileSync(join(dirname(OUTPUT), '..', 'apps/web/static', file), 'utf8')
+        .match(/#[0-9a-f]{6}/gi)!
+        .map((hex) => hex.toLowerCase()),
+    );
+
+  it('paint the logo in the primary, seat and lamp colours of the tokens', () => {
+    expect(colours('logo.svg')).toEqual(
+      new Set(['primary', 'seat-1', 'seat-2', 'seat-3', 'warning'].map(token)),
+    );
+  });
+
+  it('paint the favicon monogram in the primary colour', () => {
+    expect(colours('favicon.svg')).toEqual(new Set([token('primary')]));
   });
 });
