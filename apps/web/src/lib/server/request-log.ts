@@ -18,6 +18,8 @@ const RESOURCE_TYPES: Record<string, string> = {
   messages: 'conversation',
   partners: 'partner',
   crowdfunding: 'crowdfunding',
+  // A game system's page, `/s/[slug]`.
+  s: 'system',
 };
 
 /**
