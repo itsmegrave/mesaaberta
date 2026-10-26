@@ -11,12 +11,12 @@
   // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
   let {
     site,
-    directories = { systems: false },
+    directories = { systems: false, gms: false },
     blogLive = false,
   }: {
     site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string };
     /** Which directories are on for the person: each one's link shows only then. */
-    directories?: { systems: boolean };
+    directories?: { systems: boolean; gms: boolean };
     /** Whether a blog post is out: the Blog link shows only then. */
     blogLive?: boolean;
   } = $props();
@@ -38,6 +38,7 @@
   const directoryLinks = $derived(
     [
       { path: '/systems' as const, label: m.directory_footer_systems, on: directories.systems },
+      { path: '/gamemasters' as const, label: m.directory_footer_gms, on: directories.gms },
     ].filter((item) => item.on),
   );
 

@@ -87,7 +87,13 @@
   </DirectorySection>
 
   {#if data.gms.length > 0}
-    <DirectorySection title={m.system_gms_title()} lede={m.system_gms_lede({ name: system.name })}>
+    <!-- Everyone who runs it, in Quem mestra, while that directory is on. -->
+    <DirectorySection
+      title={m.system_gms_title()}
+      lede={m.system_gms_lede({ name: system.name })}
+      moreHref={data.directories.gms ? `/gamemasters?system=${system.slug}` : undefined}
+      moreLabel={m.system_gms_all()}
+    >
       <ul class="grid grid-cols-1 gap-4 md:grid-cols-2">
         {#each data.gms as gm (gm.username)}
           <li><PersonRow person={gm} detail={m.system_gm_tables({ count: gm.tables })} /></li>

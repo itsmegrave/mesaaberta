@@ -96,7 +96,7 @@ describe('SiteFooter.svelte', () => {
       .not.toBeInTheDocument();
 
     location.pathname = '/systems';
-    render(SiteFooter, { site, directories: { systems: true } });
+    render(SiteFooter, { site, directories: { systems: true, gms: false } });
     const column = browserPage.getByRole('navigation', { name: 'Diretórios' });
     await expect
       .element(column.getByRole('link', { name: 'Sistemas' }))
