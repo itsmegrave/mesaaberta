@@ -162,6 +162,7 @@ describe('public profiles', () => {
       'name',
       'participantRating',
       'rating',
+      'tableRole',
       'totals',
       'username',
     ]);
@@ -367,5 +368,22 @@ describe('favorite systems on a public profile', () => {
       .where(eq(profiles.id, id(6)));
     const hidden = await publicProfile(test.db, 'sem-mesas', { now, showFavoriteSystems: on });
     expect(hidden!.profile.favoriteSystems).toBeNull();
+  });
+});
+
+describe('the role tag on a public profile', () => {
+  it('shows what the person does at the table only while Quem mestra is on', async () => {
+    await test.db
+      .update(profiles)
+      .set({ tableRole: 'both' })
+      .where(eq(profiles.id, id(9)));
+
+    const on = await publicProfile(test.db, 'nome-publico', { now, showTableRole: true });
+    expect(on!.profile.tableRole).toBe('both');
+    const off = await publicProfile(test.db, 'nome-publico', { now });
+    expect(off!.profile.tableRole).toBeNull();
+    // No answer, no tag.
+    const none = await publicProfile(test.db, 'sem-mesas', { now, showTableRole: true });
+    expect(none!.profile.tableRole).toBeNull();
   });
 });

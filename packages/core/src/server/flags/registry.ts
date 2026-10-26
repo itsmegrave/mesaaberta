@@ -188,6 +188,11 @@ export const flagDefaults = {
   // visitors included). Off: /systems and /s/:slug answer 404, the menus and the footer leave
   // Sistemas out and system names stay plain text. Targeted by the person's id.
   api_directory_systems: false,
+  // Quem mestra, the directory of people who run games, off until it is released (then on for
+  // everyone at once). Off: the "Na mesa, você…" field in Editar perfil, the role tag on the public
+  // profile and the note to people the backfill listed are hidden, and a save keeps what is stored.
+  // Targeted by the person's id.
+  api_directory_gms: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

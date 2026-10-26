@@ -23,7 +23,7 @@ const shell = {
   },
   maintenance: false,
   maintenanceBypass: false,
-  directories: { systems: false },
+  directories: { systems: false, gms: false },
   viewer,
   site: {
     APP_ORIGIN: 'https://mesaaberta.app',

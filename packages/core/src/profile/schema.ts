@@ -55,6 +55,19 @@ export const GENDER_OPTIONS = [
 
 export type Gender = (typeof GENDER_OPTIONS)[number];
 
+/**
+ * What the person does at the table: plays, runs games or both. Optional: no answer ("Prefiro não
+ * dizer") is the default. `gm` and `both` are listed in Quem mestra. Keep in step with the
+ * `table_role` enum in the database.
+ */
+export const TABLE_ROLES = ['player', 'gm', 'both'] as const;
+
+export type TableRole = (typeof TABLE_ROLES)[number];
+
+/** Whether the answer lists the person in Quem mestra. */
+export const runsGames = (role: TableRole | '' | null | undefined) =>
+  role === 'gm' || role === 'both';
+
 // The links travel as two parallel lists (`linkNetwork`, `linkUrl`) rather than a list of objects,
 // so a plain form post with JavaScript off carries them too.
 export const profileSchema = z
@@ -79,6 +92,8 @@ export const profileSchema = z
       .transform((value) => value.replace(/\r\n?/g, '\n').trim())
       .pipe(z.string().max(PROFILE_LIMITS.bio, 'too_long'))
       .default(''),
+    // Empty is "Prefiro não dizer". Left out (the field is not on the form): what is stored stays.
+    tableRole: z.union([z.enum(TABLE_ROLES), z.literal('')], 'invalid').optional(),
     // An IANA zone, or empty for "not picked yet" (the browser's is used meanwhile).
     timezone: z
       .string()
@@ -169,6 +184,7 @@ export const PROFILE_DEFAULTS: ProfileInput = {
   genderOther: '',
   city: '',
   bio: '',
+  tableRole: undefined,
   timezone: '',
   linkNetwork: [],
   linkUrl: [],
