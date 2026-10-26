@@ -24,6 +24,8 @@ export const reportActions = {
   closeTable: decide('report.closeTable', ['id', 'note']),
   removeCrowdfunding: decide('report.removeCrowdfunding', ['id', 'reason', 'note', 'reportId']),
   removePartner: decide('report.removePartner', ['id', 'reason', 'note', 'reportId']),
+  removePlace: decide('place.remove', ['id', 'reason', 'note', 'reportId']),
+  restorePlace: decide('place.restore', ['id', 'note', 'reportId']),
   ban: decide('report.ban', ['id', 'duration', 'reason']),
 };
 
@@ -55,6 +57,7 @@ export const partnerActions = {
 export const placeActions = {
   approve: decide('place.approve', ['id']),
   remove: decide('place.remove', ['id', 'reason', 'note']),
+  restore: decide('place.restore', ['id', 'note']),
 };
 
 /** Closing a table from the tables list, `/admin/tables`. */

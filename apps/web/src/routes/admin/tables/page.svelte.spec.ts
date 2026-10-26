@@ -19,7 +19,15 @@ vi.mock('$app/state', () => ({
     route: { id: '/admin/tables' },
     data: {
       viewer: { timezone: 'America/Sao_Paulo' },
-      adminCounts: { reports: 0, queue: 0, connections: 0, events: 0, partners: 0, places: 0 },
+      adminCounts: {
+        reports: 0,
+        queue: 0,
+        connections: 0,
+        events: 0,
+        partners: 0,
+        places: 0,
+        hiddenPlaces: 0,
+      },
     },
   },
 }));

@@ -91,6 +91,8 @@ export const NOTIFICATION_KINDS = {
   report_filed_admin: { category: 'moderation', icon: 'shield' },
   report_resolved: { category: 'moderation', icon: 'shield' },
   moderation_notice: { category: 'moderation', icon: 'shield' },
+  // Reports hid a place: a high alert for admins, pinned atop the bell until it is read.
+  place_hidden_alert: { category: 'moderation', icon: 'alert-triangle' },
   partner_invited: { category: 'system', icon: 'user-plus' },
   partner_invitation_accepted: { category: 'system', icon: 'user-check' },
   partner_invitation_declined: { category: 'system', icon: 'user-x' },

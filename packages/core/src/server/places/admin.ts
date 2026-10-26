@@ -2,6 +2,7 @@ import {
   and,
   asc,
   count,
+  desc,
   eq,
   exists,
   ilike,
@@ -32,6 +33,15 @@ export async function pendingPlaceCount(db: AnyDb): Promise<number> {
     .from(places)
     .where(and(isNull(places.approvedAt), isNull(places.removedAt)));
   return pending;
+}
+
+/** How many places reports hid and an admin has not decided on yet: the high alert on /admin. */
+export async function hiddenPlaceCount(db: AnyDb): Promise<number> {
+  const [{ hidden }] = await db
+    .select({ hidden: count() })
+    .from(places)
+    .where(and(isNotNull(places.hiddenAt), isNull(places.removedAt)));
+  return hidden;
 }
 
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
@@ -118,7 +128,12 @@ export async function listAdminPlaces(db: AnyDb, actor: Actor | null, params: UR
     .from(places)
     .leftJoin(profiles, eq(profiles.id, places.submitterId))
     .where(where)
-    .orderBy(asc(places.createdAt), asc(places.id))
+    // What reports hid comes first, whatever the filter: it is the high alert.
+    .orderBy(
+      desc(sql`${places.hiddenAt} is not null and ${places.removedAt} is null`),
+      asc(places.createdAt),
+      asc(places.id),
+    )
     .limit(filters.pageSize)
     .offset((filters.page - 1) * filters.pageSize);
 
@@ -268,6 +283,83 @@ export async function removePlace(
             submitterId: place.submitterId,
             reason,
             reportId: reportId || null,
+          },
+        },
+        { now },
+      ),
+    );
+    return eventIds;
+  });
+}
+
+/**
+ * An admin puts back a place its reports hid: the reports still waiting on it are dismissed with
+ * the note (each reporter hears it was looked at), it is listed again and its keepers are told
+ * (`PlaceRestored`). Refused for one that is not hidden (`not_hidden`), is down (`closed`) or is
+ * unknown (`not_found`). Returns the events to dispatch.
+ */
+export async function restorePlace(
+  db: AnyDb,
+  actor: Actor | null,
+  id: string,
+  { note }: { note: string },
+  { now = new Date() }: { now?: Date } = {},
+): Promise<string[]> {
+  authorize(actor, 'moderation:manage');
+  return db.transaction(async (tx) => {
+    const t = tx as unknown as AnyDb;
+    const [place] = await t.select().from(places).where(eq(places.id, id)).for('update');
+    if (!place) throw new Invalid('id', 'not_found');
+    if (place.removedAt) throw new Invalid('id', 'closed');
+    if (!place.hiddenAt) throw new Invalid('id', 'not_hidden');
+
+    await t.update(places).set({ hiddenAt: null, hiddenReason: null }).where(eq(places.id, id));
+    const waiting = await t
+      .select({ id: reports.id, reporterId: reports.reporterId })
+      .from(reports)
+      .where(
+        and(
+          eq(reports.targetType, 'place'),
+          eq(reports.targetId, id),
+          inArray(reports.status, [...OPEN_REPORT_STATUSES]),
+        ),
+      )
+      .for('update');
+    const eventIds: string[] = [];
+    for (const report of waiting) {
+      await t
+        .update(reports)
+        .set({
+          status: 'dismissed',
+          resolvedBy: actor!.id,
+          resolutionNote: note.trim() || null,
+          resolvedAt: now,
+        })
+        .where(eq(reports.id, report.id));
+      eventIds.push(
+        await recordEvent(
+          t,
+          {
+            type: 'ReportDismissed',
+            actorId: actor!.id,
+            payload: { reportId: report.id, reporterId: report.reporterId },
+          },
+          { now },
+        ),
+      );
+    }
+    eventIds.push(
+      await recordEvent(
+        t,
+        {
+          type: 'PlaceRestored',
+          actorId: actor!.id,
+          payload: {
+            placeId: id,
+            slug: place.slug,
+            name: place.name,
+            submitterId: place.submitterId,
+            ownerId: place.ownerId,
           },
         },
         { now },

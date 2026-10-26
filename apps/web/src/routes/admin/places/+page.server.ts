@@ -32,4 +32,5 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
 export const actions: Actions = {
   approve: placeActions.approve,
   remove: placeActions.remove,
+  restore: placeActions.restore,
 };

@@ -59,7 +59,12 @@
             >
               <Icon name={section.icon} size={20} class="shrink-0 text-muted" />
               <span class="min-w-0 flex-1 truncate">{section.label}</span>
-              <CountBadge count={section.count ?? 0} max={99} class="min-w-6 px-1" />
+              <CountBadge
+                count={section.count ?? 0}
+                max={99}
+                tone={section.alert ? 'error' : 'warning'}
+                class="min-w-6 px-1"
+              />
             </a>
             {#if here}
               <!-- The bar of the current section, on the left edge of its item. -->

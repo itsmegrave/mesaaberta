@@ -6,7 +6,12 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import NotificationAction from '#lib/components/NotificationAction.svelte';
   import NotificationIcon from '#lib/components/ui/NotificationIcon.svelte';
-  import { notificationIcon, notificationText, type Shown } from '#lib/notifications/text.js';
+  import {
+    isAlert,
+    notificationIcon,
+    notificationText,
+    type Shown,
+  } from '#lib/notifications/text.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
@@ -141,7 +146,10 @@
                   next={here}
                   buttonClass="btn flex h-auto w-full items-start justify-start gap-3 rounded-lg p-2 text-left font-normal whitespace-normal hover:preset-tonal"
                 >
-                  <NotificationIcon icon={notificationIcon(item)} class="mt-1 text-muted" />
+                  <NotificationIcon
+                    icon={notificationIcon(item)}
+                    class="mt-1 {isAlert(item) ? 'text-error-700-300' : 'text-muted'}"
+                  />
                   <span class="min-w-0 flex-1">
                     <span class="block text-sm {item.read ? '' : 'font-semibold'}"
                       >{notificationText(item, shownTimezone('America/Sao_Paulo'))}</span

@@ -38,30 +38,35 @@
   const isTable = (row: Report) => row.targetType === 'table';
   const isCampaign = (row: Report) => row.targetType === 'crowdfunding';
   const isPartner = (row: Report) => row.targetType === 'partner';
+  const isPlace = (row: Report) => row.targetType === 'place';
   const iconOf = (row: Report) =>
     isCampaign(row)
       ? ('game-icons:open-treasure-chest' as const)
       : isPartner(row)
         ? ('game-icons:trade' as const)
-        : isTable(row)
-          ? ('game-icons:tavern-sign' as const)
-          : row.targetType === 'message' || row.targetType === 'person'
-            ? ('game-icons:scroll-quill' as const)
-            : ('game-icons:meeple' as const);
+        : isPlace(row)
+          ? ('game-icons:position-marker' as const)
+          : isTable(row)
+            ? ('game-icons:tavern-sign' as const)
+            : row.targetType === 'message' || row.targetType === 'person'
+              ? ('game-icons:scroll-quill' as const)
+              : ('game-icons:meeple' as const);
   const targetOf = (row: Report) =>
     isCampaign(row)
       ? (row.crowdfunding ?? m.admin_report_crowdfunding())
       : isPartner(row)
         ? (row.partner ?? m.admin_report_partner())
-        : isTable(row)
-          ? m.admin_reports_target_table({ table: row.table ?? '' })
-          : row.targetType === 'message'
-            ? m.admin_reports_target_message({
-                name: row.player ? atHandle(row.player) : m.admin_profile_no_username(),
-              })
-            : row.player
-              ? atHandle(row.player)
-              : m.admin_profile_no_username();
+        : isPlace(row)
+          ? (row.place ?? m.admin_report_place())
+          : isTable(row)
+            ? m.admin_reports_target_table({ table: row.table ?? '' })
+            : row.targetType === 'message'
+              ? m.admin_reports_target_message({
+                  name: row.player ? atHandle(row.player) : m.admin_profile_no_username(),
+                })
+              : row.player
+                ? atHandle(row.player)
+                : m.admin_profile_no_username();
   const href = (row: Report) => `/admin/reports/${row.id}`;
   const badge = (row: Report) => `report:${row.status}` as Status;
   const menuOf = (row: Report): KebabItem[] => [
@@ -87,6 +92,7 @@
     { slug: 'player', name: m.admin_reports_target_player_option() },
     { slug: 'crowdfunding', name: m.admin_reports_target_crowdfunding_option() },
     { slug: 'partner', name: m.admin_reports_target_partner_option() },
+    { slug: 'place', name: m.admin_reports_target_place_option() },
     { slug: 'message', name: m.admin_reports_target_message_option() },
     { slug: 'person', name: m.admin_reports_target_person_option() },
   ];
@@ -144,6 +150,9 @@
             {:else if isPartner(row)}
               <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
               <p class="truncate text-muted">{m.admin_report_kind_partner()}</p>
+            {:else if isPlace(row)}
+              <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
+              <p class="truncate text-muted">{m.admin_report_kind_place()}</p>
             {:else if isTable(row)}
               <a class="block truncate link-underline" href={href(row)}>{targetOf(row)}</a>
               <p class="truncate text-muted">

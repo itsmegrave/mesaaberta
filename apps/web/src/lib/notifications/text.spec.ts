@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { notificationIcon, notificationText, type Shown } from './text';
+import { isAlert, notificationIcon, notificationText, type Shown } from './text';
 
 const shown = (over: Partial<Shown>): Shown => ({
   type: 'table_updated',
@@ -44,6 +44,20 @@ describe('notificationText', () => {
     );
     expect(notice({ placeRemoved: 'Taverna', reason: 'not_public', note: 'É uma casa' })).toMatch(
       /Recado: É uma casa$/,
+    );
+  });
+
+  it('raises the alert when reports hide a place, and tells its keepers neutrally', () => {
+    expect(
+      notificationText(shown({ type: 'place_hidden_alert', metadata: { place: 'Taverna' } })),
+    ).toBe('Alerta: “Taverna” recebeu muitas denúncias e foi ocultado. Restaure ou remova.');
+    expect(isAlert({ type: 'place_hidden_alert', read: false })).toBe(true);
+    expect(isAlert({ type: 'place_hidden_alert', read: true })).toBe(false);
+    const notice = (metadata: Record<string, string>) =>
+      notificationText(shown({ type: 'moderation_notice', metadata }));
+    expect(notice({ placeHidden: 'Taverna' })).toMatch(/temporariamente oculto/);
+    expect(notice({ placeRestored: 'Taverna' })).toBe(
+      'Seu lugar “Taverna” voltou para Onde jogar.',
     );
   });
 

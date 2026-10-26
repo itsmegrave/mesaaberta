@@ -2,7 +2,9 @@
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
+  import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import TableCard from '#lib/components/ui/TableCard.svelte';
@@ -20,6 +22,8 @@
   import { formatCep } from '@mesaaberta/core/location/cep';
   import { tagHref } from '@mesaaberta/core/places/filters';
   import type { Network } from '@mesaaberta/core/profile/social-links';
+
+  import { page } from '$app/state';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
@@ -44,9 +48,20 @@
     ...data.links,
   ]);
   const newTableHref = $derived(`/tables/new?place=${place.slug}`);
+  let reporting = $state(false);
 </script>
 
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
+
+{#if data.canReport && data.account}
+  {#key place.id}
+    <EntityReportDialog
+      kind="place"
+      entity={{ id: place.id, name: place.name }}
+      bind:open={reporting}
+    />
+  {/key}
+{/if}
 
 <section class="py-2 md:pt-12">
   <Breadcrumbs
@@ -225,6 +240,23 @@
       {/if}
 
       <p class="text-sm text-muted">{m.place_reviewed()}</p>
+      {#if data.canReport && !data.account}
+        <a
+          href="/login?next={encodeURIComponent(page.url.pathname)}"
+          class="{buttonClass(
+            'ghost',
+            'sm',
+          )} -ml-3 gap-2 self-start text-sm font-semibold text-muted no-underline"
+          ><Icon name="flag" size={16} />{m.place_report()}</a
+        >
+      {:else if data.canReport}
+        <MAButton
+          size="sm"
+          class="-ml-3 gap-2 self-start text-sm font-semibold text-muted hover:preset-tonal"
+          onclick={() => (reporting = true)}
+          ><Icon name="flag" size={16} />{m.place_report()}</MAButton
+        >
+      {/if}
     </aside>
   </div>
 

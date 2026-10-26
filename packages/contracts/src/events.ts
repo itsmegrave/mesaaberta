@@ -196,6 +196,11 @@ export type DomainEvent =
   | { type: 'PlaceApproved'; payload: PlaceFact & { submitterId: string } }
   // An admin rejected or took a place down, or its submitter withdrew it (then `reason` is null).
   | { type: 'PlaceRemoved'; payload: PlaceRemoval }
+  // The report that made more than PLACE_REPORTS_TO_HIDE - 1 open ones hid the place until an admin
+  // acts: every admin gets a high alert, its submitter and owner a neutral notice.
+  | { type: 'PlaceHidden'; payload: PlaceKeepers & { reportId: string } }
+  // An admin put a hidden place back, dismissing the reports that hid it. Its keepers are told.
+  | { type: 'PlaceRestored'; payload: PlaceKeepers }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -282,6 +287,9 @@ export type PartnerRemoval = PartnerFact & {
 };
 
 export type PlaceFact = { placeId: string; slug: string; name: string };
+
+// A place and who looks after it: whoever sent it, and the owner an admin accepted, if any.
+export type PlaceKeepers = PlaceFact & { submitterId: string; ownerId: string | null };
 
 // `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
 export type PlaceRemoval = PlaceFact & {
