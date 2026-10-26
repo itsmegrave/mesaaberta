@@ -6,21 +6,43 @@ import { invitationAction } from '#lib/server/invitations/actions.js';
 import { invitationPreferences } from '#lib/server/invitations/api.js';
 import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
 import { setDirectMessages } from '@mesaaberta/core/server/messages/service';
+import { blockSchema } from '@mesaaberta/core/messages/schema';
+import { listBlocked, setBlocked } from '@mesaaberta/core/server/blocks/service';
+import { supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { withPictures } from '@mesaaberta/core/server/messages/present';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
+import { behindSafetyFlag, messageSafetyEnabled } from '#lib/server/messages/safety.js';
 import type { Actions, PageServerLoad } from './$types';
 
-// "Mensagens e convites": direct messages, invitations to tables and the people blocked from them.
+// "Mensagens e convites": direct messages, the people this person blocked (`use_message_safety`),
+// invitations to tables and the people blocked from them.
 export const load: PageServerLoad = async ({ locals, url }) => {
   await requireUser(locals, url);
   const profile = await locals.getProfile();
+  const blocked =
+    locals.db && (await messageSafetyEnabled(locals, profile))
+      ? withPictures(supabaseUrlOf(locals.env), await listBlocked(locals.db, profile))
+      : null;
   return {
     invitationPreferences: await invitationPreferences(locals, profile),
     messagesForm: initialForm({ enabled: profile?.directMessagesEnabled ?? true }),
+    blocked,
   };
 };
 
 export const actions: Actions = {
   invitations: invitationAction('preference'),
   invitationBlock: invitationAction('block'),
+
+  // "Desbloquear" in "Pessoas bloqueadas" (`use_message_safety`).
+  block: moderationAction(
+    blockSchema,
+    ['profileId', 'blocked'],
+    behindSafetyFlag(
+      async (db, actor, data) =>
+        (await setBlocked(db, actor, data.profileId, data.blocked)).eventIds,
+    ),
+  ),
 
   // The switch for direct messages: it saves on its own.
   messages: async ({ request, locals, url }) => {

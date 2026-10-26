@@ -47,7 +47,7 @@
       id: 'duplicate',
       label: m.table_duplicate(),
       icon: 'copy',
-      href: `/t/new?duplicate=${encodeURIComponent(item.slug)}`,
+      href: `/tables/new?duplicate=${encodeURIComponent(item.slug)}`,
     },
     ...(['draft', 'active', 'awaiting_confirmation'].includes(item.tableStatus)
       ? [

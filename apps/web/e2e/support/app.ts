@@ -149,7 +149,7 @@ export const uniqueTitle = (prefix: string) =>
 
 /** Fills and submits the create form as the signed-in user. Returns the slug from the URL it lands on. */
 export async function createTable(page: Page, table: NewTable) {
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', table.system ?? 'Daggerheart');
   await page.getByLabel('Título').fill(table.title);
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
@@ -172,7 +172,7 @@ export async function createTable(page: Page, table: NewTable) {
   // more than the short UI assertion budget to establish its first database connection.
   const submitted = page.waitForResponse(
     (response) =>
-      response.request().method() === 'POST' && new URL(response.url()).pathname === '/t/new',
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/tables/new',
   );
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
   expect((await submitted).status()).toBeLessThan(400);
@@ -246,5 +246,17 @@ export async function openSection(page: Page, name: RegExp) {
   await expect(async () => {
     if ((await closed.count()) > 0) await closed.first().click({ timeout: 1_000 });
     await expect(closed).toHaveCount(0, { timeout: 1_000 });
+  }).toPass();
+}
+
+/**
+ * Opens the "Pedir vaga" dialog on a table page. The trigger only answers once the page has
+ * hydrated (before that the click lands on an inert button), so this clicks until the dialog is up.
+ */
+export async function openJoinRequest(page: Page) {
+  const send = page.getByRole('button', { name: 'Enviar pedido' });
+  await expect(async () => {
+    if (!(await send.isVisible())) await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await expect(send).toBeVisible({ timeout: 1_000 });
   }).toPass();
 }

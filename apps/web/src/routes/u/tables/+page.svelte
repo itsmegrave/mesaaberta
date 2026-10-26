@@ -165,11 +165,11 @@
       {m.dash_title()}
     </h1>
     <div class="flex flex-col gap-3 sm:flex-row">
-      <a href="/t" class="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+      <a href="/tables" class="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >{m.dash_find_table()}</a
       >
       <a
-        href="/t/new"
+        href="/tables/new"
         class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
@@ -258,7 +258,7 @@
           total: data.totals.playing,
           shown: data.playing.length,
           empty: data.totals.playing === 0 ? m.dash_playing_empty() : m.dash_page_empty(),
-          href: '/t',
+          href: '/tables',
           cta: m.dash_find_table(),
         },
         playingCards,
@@ -270,7 +270,7 @@
           total: data.totals.running,
           shown: data.running.length,
           empty: data.totals.running === 0 ? m.dash_running_empty() : m.dash_page_empty(),
-          href: '/t/new',
+          href: '/tables/new',
           cta: m.tables_open_cta(),
         },
         runningCards,

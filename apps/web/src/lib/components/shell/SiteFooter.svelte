@@ -11,13 +11,21 @@
   // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
   let { site }: { site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string } } = $props();
 
+  // `route` is the list's route id (its group included), `items` where the section's own pages
+  // live under its letter (`/t/<slug>`).
   const pages = [
-    { path: '/t', label: m.nav_tables },
-    { path: '/p', label: m.partner_nav_label },
-    { path: '/cf', label: m.nav_crowdfunding_label },
+    { route: '/(tables)/tables', path: '/tables', items: '/t', label: m.nav_tables },
+    { route: '/(partners)/partners', path: '/partners', items: '/p', label: m.partner_nav_label },
+    {
+      route: '/crowdfunding',
+      path: '/crowdfunding',
+      items: undefined,
+      label: m.nav_crowdfunding_label,
+    },
   ] as const;
 
-  const current = (path: string) => isUnder(page.url.pathname, path);
+  const current = (path: string, items?: string) =>
+    isUnder(page.url.pathname, path) || (!!items && isUnder(page.url.pathname, items));
 
   // Links inside sentences carry the primary underline; page links are quiet until hovered, and the
   // page you are on reads in ink with the same underline.
@@ -65,11 +73,12 @@
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_pages()}</h2>
         <ul class="flex flex-wrap gap-x-5 text-sm md:gap-x-4 md:gap-y-1">
           {#each pages as item (item.path)}
+            {@const here = current(item.path, item.items)}
             <li>
               <a
-                href={resolve(item.path)}
-                aria-current={current(item.path) ? 'page' : undefined}
-                class="inline-flex min-h-11 items-center md:min-h-0 {current(item.path)
+                href={resolve(item.route)}
+                aria-current={here ? 'page' : undefined}
+                class="inline-flex min-h-11 items-center md:min-h-0 {here
                   ? strong
                   : 'text-muted hover:text-surface-950-50'}">{item.label()}</a
               >

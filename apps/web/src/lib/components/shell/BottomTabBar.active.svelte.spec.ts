@@ -25,7 +25,7 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
     render(BottomTabBar);
 
     expect(lit('/u/tables')).toBe(true);
-    expect(lit('/t')).toBe(false);
+    expect(lit('/tables')).toBe(false);
   });
 
   it.each(['/terms', '/privacy', '/password', '/maintenance', '/u/tablespoon'])(
@@ -33,8 +33,8 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
     (pathname) => {
       location.pathname = pathname;
       render(BottomTabBar);
-      expect(lit('/t')).toBe(false);
-      expect(lit('/cf')).toBe(false);
+      expect(lit('/tables')).toBe(false);
+      expect(lit('/crowdfunding')).toBe(false);
       expect(lit('/u/tables')).toBe(false);
     },
   );
@@ -44,6 +44,6 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
     render(BottomTabBar);
 
     expect(lit('/u/tables')).toBe(false);
-    expect(lit('/t')).toBe(false);
+    expect(lit('/tables')).toBe(false);
   });
 });

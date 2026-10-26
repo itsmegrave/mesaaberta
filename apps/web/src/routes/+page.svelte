@@ -60,14 +60,14 @@
     </p>
     <div class="mt-6 flex w-full flex-col gap-2 md:mt-9 md:w-auto md:flex-row md:gap-3">
       <a
-        href="/t"
+        href="/tables"
         class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
         {@render arrow()}
       </a>
       <a
-        href="/t/new"
+        href="/tables/new"
         class="btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
         ><Icon name="game-icons:dice-twenty-faces-twenty" size={20} />{m.hero_open_cta()}</a
       >
@@ -87,7 +87,7 @@
       items={data.newTables}
       key={(table) => table.slug}
       itemClass="w-65 md:w-70"
-      moreHref="/t"
+      moreHref="/tables"
       moreCaption={m.home_carousel_more_caption()}
     >
       {#snippet card(table)}<NewTableCard {table} now={data.now} />{/snippet}
@@ -103,7 +103,7 @@
       items={data.tables}
       key={(table) => table.slug}
       itemClass="w-75 md:w-96"
-      moreHref="/t"
+      moreHref="/tables"
       moreCaption={m.home_carousel_more_caption()}
     >
       {#snippet card(table)}<TableCard {table} />{/snippet}
@@ -125,7 +125,7 @@
         <p class="mt-2 max-w-xs text-muted">{m.home_open_tables_empty_text()}</p>
       </div>
       <a
-        href="/t"
+        href="/tables"
         class="mt-5 btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:mt-0"
       >
         {m.home_open_tables_all()}
@@ -193,7 +193,7 @@
     <p class="mt-3 text-base md:mt-4 md:text-lg">{m.players_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
-        href="/t"
+        href="/tables"
         class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
@@ -272,7 +272,7 @@
     <p class="mt-3 text-base md:mt-4 md:text-lg">{m.gm_text()}</p>
     <div class="mt-6 md:mt-7">
       <a
-        href="/t/new"
+        href="/tables/new"
         class="btn h-12 w-full gap-2 rounded-lg bg-primary-contrast-500 px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />

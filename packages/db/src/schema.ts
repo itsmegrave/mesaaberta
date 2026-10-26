@@ -1,6 +1,7 @@
 import { TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
 import { EVENT_REVIEWS } from './event-review';
+import type { ReportExcerpt } from './report-excerpt';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -611,6 +612,33 @@ export const playerRatings = pgTable(
   ],
 ).enableRLS();
 
+// The e-mails that asked a GM to close a session they never answered for (`remindToClose`): one row
+// per table, session start and step, so a sweep sends each one once, and a session moved to another
+// date gets its own. `sentAt` of the `7d` row is when the last-chance notice went out: the table is
+// concluded for the GM no sooner than three days after it.
+export const sessionCloseReminders = pgTable(
+  'session_close_reminders',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    step: text('step').$type<'1h' | '7d'>().notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (reminder) => [
+    primaryKey({ columns: [reminder.tableId, reminder.startsAt, reminder.step] }),
+    check('session_close_reminders_step', sql`${reminder.step} IN ('1h', '7d')`),
+  ],
+).enableRLS();
+
+// An e-mail that went out, by its idempotency key. Resend forgets a key after 24 hours, so a handler
+// whose retry may come later (`sendOnce`) checks here first and records the key once it is sent.
+export const mailDeliveries = pgTable('mail_deliveries', {
+  key: text('key').primaryKey(),
+  sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();
+
 // A GM's score, worked out from their ratings and kept until it can change: when the month turns
 // (the weights age by months) or when a rating is added or removed (a trigger on `ratings` raises
 // `version`, even for a GM with no row yet). Read it through `gmRatings`, never by hand.
@@ -831,8 +859,36 @@ export const messages = pgTable(
   ],
 ).enableRLS();
 
+// One person blocking another: the blocked one can no longer write to them directly, invite them
+// or follow them, and their direct conversation leaves the blocker's inbox. Table chats they share
+// are left as they are. The blocked person is never told: to them it looks like direct messages off.
+export const profileBlocks = pgTable(
+  'profile_blocks',
+  {
+    blockerId: uuid('blocker_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    blockedId: uuid('blocked_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (block) => [
+    primaryKey({ columns: [block.blockerId, block.blockedId] }),
+    index('profile_blocks_blocked_idx').on(block.blockedId),
+    check('profile_blocks_not_self', sql`${block.blockerId} <> ${block.blockedId}`),
+  ],
+).enableRLS();
+
 // Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in apps/web/src/lib/moderation/reports.
-export const reportTarget = pgEnum('report_target', ['table', 'player', 'crowdfunding', 'partner']);
+export const reportTarget = pgEnum('report_target', [
+  'table',
+  'player',
+  'crowdfunding',
+  'partner',
+  'message',
+  'person',
+]);
 export const reportReason = pgEnum('report_reason', [
   'spam',
   'harassment',
@@ -869,6 +925,12 @@ export const reports = pgTable(
     resolvedBy: uuid('resolved_by'),
     resolutionNote: text('resolution_note'),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    // A `message` or `person` report: the profile it is about (the message's sender, or the
+    // person), so a ban from the report knows whom it hits even after the message is gone.
+    subjectId: uuid('subject_id').references(() => profiles.id, { onDelete: 'set null' }),
+    // A `message` or `person` report: a copy of the messages the reporter saw, taken when they
+    // reported (`ReportExcerpt`). An admin reads this, never the conversation itself.
+    excerpt: jsonb('excerpt').$type<ReportExcerpt>(),
     ...timestamps,
   },
   (report) => [

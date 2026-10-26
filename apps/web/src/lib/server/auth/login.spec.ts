@@ -17,14 +17,14 @@ describe('startLogin', () => {
     const url = await startLogin(client as never, {
       provider: 'google',
       origin,
-      next: '/t/new',
+      next: '/tables/new',
     });
 
     expect(url).toBe('https://accounts.google.com/x');
     expect(client.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo: `${origin}/auth/callback?next=%2Ft%2Fnew`,
+        redirectTo: `${origin}/auth/callback?next=%2Ftables%2Fnew`,
         skipBrowserRedirect: true,
       },
     });
@@ -79,7 +79,7 @@ describe('finishLogin', () => {
   it('exchanges the code, creates the profile, and sends the new person to finish it, then on to next', async () => {
     const { run, test } = await setup({ data: { user }, error: null });
 
-    expect(await run('abc', '/t/new')).toBe('/u/profile/setup?next=%2Ft%2Fnew');
+    expect(await run('abc', '/tables/new')).toBe('/u/profile/setup?next=%2Ftables%2Fnew');
     expect(await test.db.query.profiles.findFirst()).toMatchObject({
       id: user.id,
       name: 'Ana',
@@ -91,7 +91,7 @@ describe('finishLogin', () => {
   it('records the connection with the visitor IP, for the Marco Civil retention', async () => {
     const { run, test } = await setup({ data: { user }, error: null });
 
-    await run('abc', '/t/new');
+    await run('abc', '/tables/new');
 
     const [event] = await test.db.select().from(events).where(eq(events.actorId, user.id));
     expect(event).toMatchObject({ type: 'UserSignedIn', payload: { ip: '203.0.113.1' } });
@@ -101,7 +101,7 @@ describe('finishLogin', () => {
     const { run, test } = await setup({ data: { user }, error: null });
     await test.db.insert(profiles).values({ id: user.id, username: 'ana' });
 
-    expect(await run('abc', '/t/new')).toBe('/t/new');
+    expect(await run('abc', '/tables/new')).toBe('/tables/new');
   });
 
   it('sends a profile from before usernames to finish it too', async () => {
@@ -136,7 +136,7 @@ describe('finishLogin', () => {
     const { run, signOut, test } = await setup({ data: { user }, error: null });
     await test.db.insert(profiles).values({ id: user.id, username: 'ana', status: 'suspended' });
 
-    expect(await run('abc', '/t')).toBe('/login?error=suspended');
+    expect(await run('abc', '/tables')).toBe('/login?error=suspended');
     expect(signOut).toHaveBeenCalled();
   });
 
@@ -161,16 +161,16 @@ describe('finishLogin', () => {
 
     it('uses what the api answered, and leaves the database alone', async () => {
       const { test, supabase } = await setup({ data: { user, session }, error: null });
-      const remote = vi.fn().mockResolvedValue({ result: 'ok', target: '/t/new' });
+      const remote = vi.fn().mockResolvedValue({ result: 'ok', target: '/tables/new' });
       const log = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() };
 
       const target = await finishLogin(
         { supabase: supabase as never, db: test.db, log, ip: '203.0.113.1', remote },
-        { code: 'abc', next: '/t/new' },
+        { code: 'abc', next: '/tables/new' },
       );
 
-      expect(target).toBe('/t/new');
-      expect(remote).toHaveBeenCalledWith('jwt-a', '/t/new');
+      expect(target).toBe('/tables/new');
+      expect(remote).toHaveBeenCalledWith('jwt-a', '/tables/new');
       expect(await test.db.query.profiles.findFirst()).toBeUndefined();
     });
 

@@ -23,7 +23,7 @@
   {problems}
   {banner}
   {note}
-  cancelHref="/t"
+  cancelHref="/tables"
 >
   <FormSection id="first-part" step={1} title="Primeira parte">
     <label for="name">Nome</label><input id="name" name="name" />

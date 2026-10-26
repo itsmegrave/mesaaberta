@@ -39,7 +39,7 @@ describe('ChatHeader', () => {
       .toHaveAttribute('href', '/');
     await expect
       .element(trail().getByRole('link', { name: 'Mensagens' }))
-      .toHaveAttribute('href', '/m');
+      .toHaveAttribute('href', '/messages');
     await expect.element(trail().getByText('@bruno')).toHaveAttribute('aria-current', 'page');
   });
 
@@ -57,5 +57,32 @@ describe('ChatHeader', () => {
     await expect
       .element(trail().getByRole('link', { name: 'A Torre' }))
       .toHaveAttribute('href', '/t/a-torre');
+  });
+
+  it('offers reporting and blocking the person only when the thread passes them', async () => {
+    const onreport = vi.fn();
+    const onblock = vi.fn();
+    render(ChatHeader, { conversation: direct, onreport, onblock });
+
+    await page.getByRole('button', { name: 'Mais ações: @bruno' }).click();
+    await page.getByRole('menuitem', { name: 'Bloquear @bruno…' }).click();
+    expect(onblock).toHaveBeenCalledOnce();
+    expect(onreport).not.toHaveBeenCalled();
+  });
+
+  it('has no ⋮ without them', async () => {
+    render(ChatHeader, { conversation: direct });
+    expect(page.getByRole('button', { name: /Mais ações/ }).elements()).toHaveLength(0);
+  });
+
+  it('has no "Bloquear" for someone already blocked', async () => {
+    render(ChatHeader, {
+      conversation: { ...direct, blocked: true },
+      onreport: () => {},
+      onblock: () => {},
+    });
+    await page.getByRole('button', { name: 'Mais ações: @bruno' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Denunciar @bruno…' })).toBeVisible();
+    expect(page.getByRole('menuitem', { name: /Bloquear/ }).elements()).toHaveLength(0);
   });
 });

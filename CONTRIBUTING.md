@@ -56,6 +56,10 @@ Multiline text a person writes for others to read (a table's description, the we
 
 Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage.
 
+## Design tokens
+
+`design/tokens.json` lists the design system's tokens (colours in both themes, type, spacing, radius, sizes and shadows) as the app paints them. `bun scripts/design-tokens.ts` writes it from the Cerberus theme, Tailwind's theme and `layout.css`, through the map in `src/lib/theme/tokens.ts`, which names the variable, `@utility` or Tailwind class each token comes from. Run it after changing any of those; a unit spec fails while the file is stale. Compare it with the design system's `tokens.json` to find drift between the two.
+
 ## Icons
 
 Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`#lib/components/ui/Icon.svelte`).
@@ -83,6 +87,6 @@ Languages share the same stable URLs. Paraglide selects translated text from the
 
 ## Internal links
 
-Use plain canonical paths for internal links: `/t` (tables), `/p` (partners), `/cf` (crowdfunding), `/m` (messages), `/n` (notifications), `/u/tables` (dashboard), and `/u/profile/edit` (account settings). Public profiles remain `/u/:username`. Private export and provider linking use `/u/profile/export` and `/u/profile/connect/:provider`, within the already reserved `profile` namespace. Account onboarding is `/u/profile/setup`; password recovery uses `/forgot` and `/reset`.
+Use plain canonical paths for internal links. Lists and forms are words: `/tables` (and `/tables/new`), `/partners` (and `/partners/new`), `/crowdfunding` (and `/crowdfunding/new`), `/messages`, `/notifications`, `/u/tables` (dashboard) and `/u/profile/edit` (account settings). A single item keeps its letter: `/t/:slug` (with `/edit`, `/manage`), `/p/:id/edit`, `/m/:id`. Route groups (`routes/(tables)/`) keep a section's list and item pages under one folder with shared `components/`. The old addresses (`/t`, `/p`, `/cf`, `/m`, `/n`, `/tables/:slug`, …) answer with a permanent redirect from `packages/core/src/routes.ts`. Public profiles remain `/u/:username`. Private export and provider linking use `/u/profile/export` and `/u/profile/connect/:provider`, within the already reserved `profile` namespace. Account onboarding is `/u/profile/setup`; password recovery uses `/forgot` and `/reset`.
 
 `@mesaaberta/core/routes` centralizes legacy aliases and shared outbound URL builders (e-mail, calendar and notifications). Ordinary links do not need a locale or routing wrapper. Legacy GET/HEAD URLs redirect permanently with their search parameters; legacy mutations reroute to the same canonical action, preserving the method and body. Keep API, admin, authentication callback and internal probe paths compatible. Reserve new static `/u` namespaces in `profile/username.ts` before adding them, and put authentication checks on private leaves rather than on all `/u` routes.

@@ -79,7 +79,7 @@ test("the timezone on the profile wins over the browser's, on every page", async
   await expect(page.getByRole('main')).toContainText('GMT+9');
 
   // A table they open is typed in that zone too: 19:00 in Tokyo, shown back as 19:00 GMT+9.
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await expect(page.getByText(/No seu fuso, Asia\/Tokyo \(GMT\+9\)/)).toBeVisible();
   await createTable(page, { title: uniqueTitle('Mesa em Tóquio') });
   await expect(page.getByRole('main')).toContainText(/19:00 GMT\+9/);

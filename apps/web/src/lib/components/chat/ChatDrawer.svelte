@@ -124,7 +124,7 @@
                 >{m.messages_title()}</Dialog.Title
               >
               <a
-                href={selected ? `/m/${selected}` : '/m'}
+                href={selected ? `/m/${selected}` : '/messages'}
                 class="btn h-12 shrink-0 rounded-lg px-3 text-sm hover:preset-tonal"
                 aria-label={m.messages_full_page()}
                 ><Icon name="external-link" size={20} /><span class="sr-only"

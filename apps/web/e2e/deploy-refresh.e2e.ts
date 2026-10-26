@@ -53,7 +53,7 @@ test.describe('signed in', () => {
   }) => {
     const { page, context } = await asUser(browser, await createUser('Versão Nova'));
     await page.clock.install();
-    await page.goto('/n?unread=1');
+    await page.goto('/notifications?unread=1');
     await page.waitForLoadState('networkidle');
     await page.route('**/_app/version.json', (route) =>
       route.fulfill({ json: { version: 'a-newer-deploy' } }),

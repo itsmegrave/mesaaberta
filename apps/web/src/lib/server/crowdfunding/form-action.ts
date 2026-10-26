@@ -120,5 +120,5 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     throw error;
   }
 
-  redirect(303, '/cf');
+  redirect(303, '/crowdfunding');
 }
