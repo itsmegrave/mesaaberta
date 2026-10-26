@@ -76,8 +76,9 @@ minutes and still have not run. It needs no setting.
 What to do:
 
 - **Sweep missed** (no check-in): look at the Worker's Cron Triggers and recent deploys in the
-  Cloudflare dashboard, and at `/healthz` (`worker.lastRunAt`). A deploy that dropped
-  `triggers.crons` stops every job; redeploy the pinned release.
+  Cloudflare dashboard, and at `/healthz` with the `HEALTHZ_TOKEN` bearer token
+  (`worker.lastRunAt`; see Uptime in the root README). A deploy that dropped `triggers.crons` stops
+  every job; redeploy the pinned release.
 - **Sweep failed or timed out**: filter Sentry logs by the run's `requestId` to find the step that
   threw (database, a handler, pruning). A database outage resolves itself: due events wait in the
   outbox and the next run picks them up.

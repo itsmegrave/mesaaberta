@@ -516,6 +516,15 @@ The endpoint returns `{ "status": "ok", "database": "ok" }` when healthy and HTT
 configured database cannot answer. It disables caching. A deployment without a configured database
 returns `database: "not_configured"`; verify production reports `ok` when setting up the monitor.
 
+That is all anyone else sees. With `Authorization: Bearer <HEALTHZ_TOKEN>` (a Worker secret, kept in
+Infisical under `/runtime`) it also reports the build each app runs (`version`, `revision`), the
+api's state and latency and the background Worker's last sweep. The deploy gate sends it to check the
+served `revision`; without the secret configured, no request sees the details. After a release:
+
+```sh
+curl -s -H "authorization: Bearer $HEALTHZ_TOKEN" https://mesaaberta.app/healthz
+```
+
 ### Product analytics
 
 Cloudflare Web Analytics is already enabled through Cloudflare's automatic site integration.

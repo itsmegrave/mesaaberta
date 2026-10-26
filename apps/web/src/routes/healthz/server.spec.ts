@@ -14,7 +14,20 @@ import { checkDatabase } from '@mesaaberta/core/server/db/health';
 import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
 import { GET } from './+server';
 
-const call = (env?: Record<string, unknown>) => GET({ locals: { db: {}, log: {}, env } } as never);
+const TOKEN = 'health-s3cret';
+const asked = (authorization?: string) =>
+  new Request('https://mesaaberta.test/healthz', {
+    headers: authorization ? { authorization } : {},
+  });
+/** As the deploy gate asks: with the token configured and sent. */
+const call = (env?: Record<string, unknown>) =>
+  GET({
+    locals: { db: {}, log: {}, env: env && { HEALTHZ_TOKEN: TOKEN, ...env } },
+    request: asked(`Bearer ${TOKEN}`),
+  } as never);
+/** As anyone else asks. */
+const callPublic = (env: Record<string, unknown> | undefined, authorization?: string) =>
+  GET({ locals: { db: {}, log: {}, env }, request: asked(authorization) } as never);
 const apiAnswering = (answer: () => Promise<Response>) => ({ fetch: vi.fn(answer) });
 const healthy = () =>
   Promise.resolve(
@@ -22,6 +35,41 @@ const healthy = () =>
   );
 
 describe('GET /healthz', () => {
+  it('tells anyone only whether the app and its database are up', async () => {
+    const env = {
+      HEALTHZ_TOKEN: TOKEN,
+      DEPLOYMENT_SOURCE_SHA: 'abc',
+      DEPLOYMENT_VERSION: 'v0.61.0',
+      API: apiAnswering(healthy),
+    };
+    for (const authorization of [undefined, 'Bearer wrong', TOKEN, `Basic ${TOKEN}`]) {
+      vi.mocked(workerHealth).mockClear();
+      const response = await callPublic(env, authorization);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      expect(await response.json()).toEqual({ status: 'ok', database: 'ok' });
+      // Nothing beyond the database probe runs for an anonymous request.
+      expect(env.API.fetch).not.toHaveBeenCalled();
+      expect(workerHealth).not.toHaveBeenCalled();
+    }
+  });
+
+  it('never shows details when no token is configured', async () => {
+    for (const env of [{}, { HEALTHZ_TOKEN: '' }, { HEALTHZ_TOKEN: '  ' }, undefined]) {
+      expect(await (await callPublic(env, 'Bearer ')).json()).toEqual({
+        status: 'ok',
+        database: 'ok',
+      });
+    }
+  });
+
+  it('keeps answering 503 to anyone when the database is down', async () => {
+    vi.mocked(checkDatabase).mockResolvedValueOnce('down');
+    const response = await callPublic({ HEALTHZ_TOKEN: TOKEN });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ status: 'error', database: 'down' });
+  });
+
   it('reports each app with the build it runs when the pipeline sets it', async () => {
     const response = await call({
       DEPLOYMENT_SOURCE_SHA: ' 40a3e22771d658b31a8fbfdd8f222436b0a6efce ',
@@ -33,7 +81,7 @@ describe('GET /healthz', () => {
     expect(await response.json()).toEqual({
       status: 'ok',
       database: 'ok',
-      // Kept at the top for the deploy smoke and the uptime checks, for one release.
+      // The web one, where the deploy gate reads it.
       revision: '40a3e22771d658b31a8fbfdd8f222436b0a6efce',
       web: {
         status: 'ok',
@@ -57,7 +105,6 @@ describe('GET /healthz', () => {
       web: { status: 'ok', version: null, revision: null },
       api: { status: 'unbound' },
     });
-    expect(await (await call()).json()).toMatchObject({ status: 'ok', database: 'ok' });
   });
 
   it('reports a failing or refusing api as down, still answering 200', async () => {
