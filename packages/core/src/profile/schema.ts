@@ -68,6 +68,7 @@ export const profileSchema = z
         if (problem) ctx.addIssue({ code: 'custom', message: problem });
       }),
     name: z.string().trim().max(PROFILE_LIMITS.name, 'too_long').default(''),
+    showName: z.boolean().default(false),
     ageRange: z.union([z.enum(AGE_RANGES), z.literal('')], 'invalid').default(''),
     gender: z.union([z.enum(GENDER_OPTIONS), z.literal('')], 'invalid').default(''),
     genderOther: z.string().trim().max(PROFILE_LIMITS.gender, 'too_long').default(''),
@@ -162,6 +163,7 @@ export function profileLinks({
 export const PROFILE_DEFAULTS: ProfileInput = {
   username: '',
   name: '',
+  showName: false,
   ageRange: '',
   gender: '',
   genderOther: '',

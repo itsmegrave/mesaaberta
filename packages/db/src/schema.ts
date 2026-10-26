@@ -100,6 +100,9 @@ export const profiles = pgTable(
     bannerPath: text('banner_path'),
     // A few lines in the person's own words, shown as plain text on the public profile. Optional.
     bio: text('bio'),
+    // Off by default: `name` may have come from the sign-in provider, so it is public only once the
+    // person says so, as a line under the @usuário.
+    showName: boolean('show_name').notNull().default(false),
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
