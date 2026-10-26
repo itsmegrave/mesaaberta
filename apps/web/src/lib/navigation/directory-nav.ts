@@ -3,7 +3,7 @@ import { isUnder } from '#lib/navigation/main-nav.js';
 import { m } from '#lib/paraglide/messages.js';
 
 /** Which directories are on for the person reading (the layout's `directories`). */
-export type DirectorySwitches = { systems: boolean; gms: boolean };
+export type DirectorySwitches = { systems: boolean; gms: boolean; places: boolean };
 
 export interface DirectoryLink {
   href: `/${string}`;
@@ -18,7 +18,7 @@ export interface DirectoryLink {
   current: (pathname: string) => boolean;
 }
 
-// In the menus' order: Sistemas, Lugares, Quem mestra. Places join with their page.
+// In the menus' order: Sistemas, Onde jogar, Quem mestra.
 const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })[] = [
   {
     key: 'systems',
@@ -28,6 +28,15 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })
     shortLabel: m.nav_directory_systems_short,
     description: m.nav_directory_systems_description,
     current: (pathname) => isUnder(pathname, '/systems') || isUnder(pathname, '/s'),
+  },
+  {
+    key: 'places',
+    href: '/places',
+    icon: 'game-icons:position-marker',
+    label: m.nav_directory_places,
+    shortLabel: m.nav_directory_places,
+    description: m.nav_directory_places_description,
+    current: (pathname) => isUnder(pathname, '/places') || isUnder(pathname, '/pp'),
   },
   {
     key: 'gms',
