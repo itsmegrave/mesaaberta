@@ -66,6 +66,8 @@ To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([bro
 
 The site is written in Brazilian Portuguese (`pt-BR`, the base language), and only that language is served today. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components. English is planned in [#31](https://github.com/itsmegrave/mesaaberta/issues/31).
 
+Translations are managed on Crowdin: [`crowdin.yml`](crowdin.yml) points it at `messages/pt-BR.json`, and Crowdin opens a pull request with new and changed translations. Editing the JSON files directly still works.
+
 **Fix a message:** edit its value in `messages/pt-BR.json`. Keep the keys and any `{placeholders}` exactly as they are.
 
 Every value is an [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) string, read by `@inlang/plugin-icu1`, so translation platforms can edit the files directly. Plurals look like `{count, plural, =0 {Nenhuma mesa} =1 {1 mesa} other {{count} mesas}}`; inside a plural `#` and `{count}` mean the same number. A translation may use its own language's plural forms (`one`, `few`, `many`, `other`) instead of the exact `=0`/`=1` matches. To write a literal `{` or `}`, wrap it in apostrophes (`'{'`). Roles stay gender-neutral (quem mestra, quem joga, Participantes); a test fails on gendered roles in pt-BR such as "o mestre", "Mestre:" or "jogadores".

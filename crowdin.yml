@@ -1,0 +1,15 @@
+# Crowdin GitHub integration (https://support.crowdin.com/github-integration/).
+# Crowdin reads pt-BR, the base language, and opens a pull request from its l10n_ branch
+# with the other languages. Credentials live in the integration, never in this file.
+preserve_hierarchy: true
+files:
+  - source: /apps/web/messages/pt-BR.json
+    translation: /apps/web/messages/%locale%.json
+    # Paraglide locale names: plain language codes, pt-BR stays as it is.
+    languages_mapping:
+      locale:
+        en: en
+        es-ES: es
+        fr: fr
+        de: de
+        it: it
