@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import {
+  crowdfundings,
   events,
   gameTables,
   notifications,
@@ -8,7 +9,9 @@ import {
   profiles,
   ratings,
   registrations,
+  reports,
   systems,
+  tags,
   userBadges,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
@@ -151,7 +154,8 @@ describe('badges-v1', () => {
     await badgeHandler.handle(last, test.db);
 
     expect(await held(p1)).toEqual(['first-table', 'regular-player-1', 'system-explorer']);
-    expect(await held(gm)).toEqual(['gm-first', 'gm-master-1']);
+    // Five tables of five systems: the GM ran three or more.
+    expect(await held(gm)).toEqual(['gm-first', 'gm-master-1', 'wandering-gm']);
   });
 
   it('awards the in-person badge to the GM and the players present, not to the absent', async () => {
@@ -234,6 +238,206 @@ describe('badges-v1', () => {
     const ids = BADGES.map((badge) => badge.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const badgeId of ids) expect(badgeId).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+  });
+});
+
+describe('badges-v1, phase 2', () => {
+  /** A table run by the GM, with the given confirmed players, concluded unless `status` says. */
+  async function table(
+    players: string[],
+    {
+      kind = 'one_shot' as 'one_shot' | 'adventure',
+      capacity = 5,
+      system = systemIds[0],
+      status = 'concluded' as 'concluded' | 'not_held' | 'disabled',
+      startsAt = new Date(Date.UTC(2026, 8, 1 + counter)),
+    } = {},
+  ) {
+    const slug = `phase-${++counter}`;
+    const [row] = await test.db
+      .insert(gameTables)
+      .values({
+        slug,
+        title: slug,
+        kind,
+        capacity,
+        startsAt,
+        durationMinutes: 180,
+        timezone: 'America/Sao_Paulo',
+        gmId: gm,
+        systemId: system,
+        status,
+      })
+      .returning();
+    if (players.length)
+      await test.db
+        .insert(registrations)
+        .values(
+          players.map((playerId) => ({ tableId: row.id, playerId, status: 'confirmed' as const })),
+        );
+    return stored({
+      type: 'TableConcluded',
+      payload: { tableId: row.id, slug, title: slug, absentPlayerIds: [] },
+    });
+  }
+
+  it('awards the one-shot adventurer on the tenth one-shot, not counting adventures', async () => {
+    let last!: StoredEvent;
+    for (let n = 0; n < 9; n += 1) last = await table([p1]);
+    await table([p1], { kind: 'adventure' });
+    await badgeHandler.handle(last, test.db);
+    expect(await held(p1)).not.toContain('one-shot-adventurer');
+
+    await badgeHandler.handle(await table([p1]), test.db);
+    expect(await held(p1)).toContain('one-shot-adventurer');
+  });
+
+  it('awards the full table to a GM with five tables that filled every seat', async () => {
+    let last!: StoredEvent;
+    for (let n = 0; n < 4; n += 1) last = await table([p1, p2], { capacity: 2 });
+    await table([p1], { capacity: 2 });
+    await badgeHandler.handle(last, test.db);
+    expect(await held(gm)).not.toContain('full-table');
+
+    await badgeHandler.handle(await table([p1, p2], { capacity: 2 }), test.db);
+    expect(await held(gm)).toContain('full-table');
+  });
+
+  it('awards the open door at 25 different players, counted once each', async () => {
+    const guests = Array.from({ length: 25 }, (_, n) => ({
+      id: `00000000-0000-4000-8000-000000060${String(n).padStart(3, '0')}`,
+      username: `convidada${n}`,
+    }));
+    await test.db.insert(profiles).values(guests);
+    await table(guests.slice(0, 12).map((guest) => guest.id));
+    const repeat = await table(guests.slice(0, 12).map((guest) => guest.id));
+    await badgeHandler.handle(repeat, test.db);
+    expect(await held(gm)).not.toContain('open-door');
+
+    await badgeHandler.handle(await table(guests.slice(12).map((guest) => guest.id)), test.db);
+    expect(await held(gm)).toContain('open-door');
+    await test.db.delete(registrations);
+    for (const guest of guests) await test.db.delete(profiles).where(eq(profiles.id, guest.id));
+  });
+
+  it('awards the word kept after ten tables in a row, a cancelled one restarting the count', async () => {
+    for (let n = 0; n < 5; n += 1) await table([]);
+    await table([], { status: 'disabled' });
+    let last!: StoredEvent;
+    for (let n = 0; n < 9; n += 1) last = await table([]);
+    await badgeHandler.handle(last, test.db);
+    expect(await held(gm)).not.toContain('word-kept');
+
+    await badgeHandler.handle(await table([]), test.db);
+    expect(await held(gm)).toContain('word-kept');
+  });
+
+  it('awards the beloved GM from the rating, to the GM it is about', async () => {
+    const players = Array.from({ length: 10 }, (_, n) => ({
+      id: `00000000-0000-4000-8000-000000061${String(n).padStart(3, '0')}`,
+      username: `avaliadora${n}`,
+    }));
+    await test.db.insert(profiles).values(players);
+    let trigger!: StoredEvent;
+    for (const player of players) {
+      const event = await table([player.id]);
+      const tableId = (event.payload as { tableId: string }).tableId;
+      await test.db.insert(ratings).values({ tableId, playerId: player.id, gmScore: 5 } as never);
+      trigger = stored({
+        type: 'RatingSubmitted',
+        payload: { tableId, slug: 'x', playerId: player.id },
+      });
+    }
+
+    await badgeHandler.handle(trigger, test.db);
+
+    expect(await held(gm)).toContain('beloved-gm');
+    await test.db.delete(ratings);
+    await test.db.delete(registrations);
+    for (const player of players) await test.db.delete(profiles).where(eq(profiles.id, player.id));
+  });
+
+  it('awards the guardian on the third report an admin accepted', async () => {
+    const tableId = (
+      (await table([p1])).payload as {
+        tableId: string;
+      }
+    ).tableId;
+    const file = (status: 'resolved' | 'dismissed') =>
+      test.db
+        .insert(reports)
+        .values({
+          reporterId: p1,
+          targetType: 'table',
+          targetId: tableId,
+          tableId,
+          reason: 'other',
+          status,
+        } as never)
+        .returning({ id: reports.id });
+    await file('resolved');
+    await file('resolved');
+    const [dismissed] = await file('dismissed');
+    const resolved = (reportId: string) =>
+      stored({ type: 'ReportResolved', payload: { reportId, reporterId: p1 } });
+    await badgeHandler.handle(resolved(dismissed.id), test.db);
+    expect(await held(p1)).not.toContain('table-guardian');
+
+    const [third] = await file('resolved');
+    await badgeHandler.handle(resolved(third.id), test.db);
+    expect(await held(p1)).toContain('table-guardian');
+    await test.db.delete(reports);
+  });
+
+  it('awards the promoter to the member who added three campaigns still up', async () => {
+    const add = (n: number, removed = false) =>
+      test.db.insert(crowdfundings).values({
+        submitterId: p1,
+        url: `https://www.catarse.me/campanha-${n}`,
+        platform: 'catarse',
+        name: `Campanha ${n}`,
+        owner: 'Editora',
+        startsOn: '2026-10-01',
+        endsOn: '2026-11-01',
+        ...(removed ? { removedAt: new Date() } : {}),
+      } as never);
+    const added = {
+      ...stored({ type: 'CrowdfundingAdded', payload: { crowdfundingId: id(91), name: 'x' } }),
+      actorId: p1,
+    };
+    await add(1);
+    await add(2);
+    await add(3, true);
+    await badgeHandler.handle(added, test.db);
+    expect(await held(p1)).not.toContain('promoter');
+
+    await add(4);
+    await badgeHandler.handle({ ...added, id: id(92) }, test.db);
+    expect(await held(p1)).toContain('promoter');
+    await test.db.delete(crowdfundings);
+  });
+
+  it('awards the curator to whoever suggested the entry an admin approved', async () => {
+    const [tag] = await test.db
+      .insert(tags)
+      .values({
+        name: 'Horror cósmico',
+        slug: 'horror-cosmico-badge',
+        status: 'approved',
+        suggestedBy: p1,
+      })
+      .returning({ id: tags.id });
+
+    await badgeHandler.handle(
+      stored({
+        type: 'CatalogEntryApproved',
+        payload: { kind: 'tag', entryId: tag.id, name: 'Horror cósmico' },
+      }),
+      test.db,
+    );
+
+    expect(await held(p1)).toContain('curator');
+    await test.db.delete(tags).where(eq(tags.id, tag.id));
   });
 });
 
