@@ -7,9 +7,9 @@ const event = (getProfile: () => Promise<unknown>) => {
   return {
     log,
     event: {
-      route: { id: '/t' },
+      route: { id: '/tables' },
       cookies: { get: () => undefined },
-      url: new URL('https://x.test/t'),
+      url: new URL('https://x.test/tables'),
       params: {},
       locals: {
         env: {},

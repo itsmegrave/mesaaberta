@@ -39,7 +39,7 @@ describe('ChatHeader', () => {
       .toHaveAttribute('href', '/');
     await expect
       .element(trail().getByRole('link', { name: 'Mensagens' }))
-      .toHaveAttribute('href', '/m');
+      .toHaveAttribute('href', '/messages');
     await expect.element(trail().getByText('@bruno')).toHaveAttribute('aria-current', 'page');
   });
 

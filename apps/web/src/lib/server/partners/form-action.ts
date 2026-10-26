@@ -107,5 +107,5 @@ export async function handlePartnerForm(
     if (error) locals.log.warn('partner logo: could not delete the old file', { error });
   }
 
-  redirect(303, '/p?enviado=1');
+  redirect(303, '/partners?enviado=1');
 }

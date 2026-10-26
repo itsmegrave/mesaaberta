@@ -120,7 +120,7 @@ describe('notificationHandler', () => {
     ['JoinRequested', caio, gm, 'join_requested', '/t/mesa/manage'],
     ['PlayerJoined', ana, gm, 'player_joined', '/t/mesa/manage'],
     ['JoinApproved', gm, caio, 'join_approved', '/t/mesa'],
-    ['JoinDeclined', gm, caio, 'join_declined', '/t'],
+    ['JoinDeclined', gm, caio, 'join_declined', '/tables'],
   ] as const)('%s by %s tells %s', async (type, actor, recipient, kind, link) => {
     const player = actor === gm ? recipient : actor;
     await handle(stored({ type, payload: { ...seat, playerId: player } }, actor));
@@ -141,7 +141,7 @@ describe('notificationHandler', () => {
     expect(await written()).toEqual(
       expect.arrayContaining([
         { to: gm, type: 'player_left', category: 'registration', link: '/t/mesa/manage' },
-        { to: bia, type: 'player_removed', category: 'registration', link: '/t' },
+        { to: bia, type: 'player_removed', category: 'registration', link: '/tables' },
       ]),
     );
   });

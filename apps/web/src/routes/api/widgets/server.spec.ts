@@ -43,7 +43,7 @@ beforeEach(() => {
 
 describe('GET /api/widgets', () => {
   it('is for signed-in people only', async () => {
-    expect(await status(get('/t', null))).toBe(401);
+    expect(await status(get('/tables', null))).toBe(401);
   });
 
   it('asks each extension for this person and page, and names the extension of each widget', async () => {
@@ -57,7 +57,7 @@ describe('GET /api/widgets', () => {
     expect(await (await get('/admin')).json()).toEqual({ widgets: [] });
     expect(await (await get(null)).json()).toEqual({ widgets: [] });
     vi.mocked(widgetViewer).mockResolvedValue(null);
-    expect(await (await get('/t')).json()).toEqual({ widgets: [] });
+    expect(await (await get('/tables')).json()).toEqual({ widgets: [] });
     expect(forViewer).not.toHaveBeenCalled();
   });
 });

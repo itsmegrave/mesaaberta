@@ -42,7 +42,7 @@ describe('query cache boundaries', () => {
     b.clear();
   });
   it('deduplicates reordered multi-select filters without collapsing different single selections', () => {
-    const params = (s: string) => readParams('tables', new URL('https://x.test/t?' + s));
+    const params = (s: string) => readParams('tables', new URL('https://x.test/tables?' + s));
     expect(params('modality=online&modality=in_person')).toBe(params('modality=in_person'));
     expect(params('system=b&system=a&system=b')).toBe(params('system=a&system=b'));
     expect(params('modality=online&modality=in_person')).not.toBe(

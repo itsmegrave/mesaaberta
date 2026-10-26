@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, createTable, openSection, uniqueTitle } from './support/app';
+import { asUser, createTable, openSection, uniqueTitle, openJoinRequest } from './support/app';
 import { createUser, database } from './support/users';
 
 // Players and GMs, each in their own browser, against the local Supabase and its real Postgres.
@@ -136,7 +136,7 @@ test.describe('a table where the GM approves each player', () => {
     const { page, context } = await asUser(browser, players[0]);
 
     await page.goto(`/t/${slug}`);
-    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await openJoinRequest(page);
     await page.getByLabel(/Mensagem para quem mestra/).fill('Oi! Jogo há dois anos.');
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     await expect(
@@ -167,7 +167,7 @@ test.describe('a table where the GM approves each player', () => {
     const { gmPage, gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/t/${slug}`);
-    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await openJoinRequest(page);
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     // The request has to be recorded before the GM's dashboard can list it.
     await expect(
@@ -195,7 +195,7 @@ test.describe('a table where the GM approves each player', () => {
     const second = await asUser(browser, players[1]);
     for (const { page } of [first, second]) {
       await page.goto(`/t/${slug}`);
-      await page.getByRole('button', { name: 'Pedir vaga' }).click();
+      await openJoinRequest(page);
       await page.getByRole('button', { name: 'Enviar pedido' }).click();
       await expect(
         page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
@@ -290,7 +290,7 @@ test.describe('ratings', () => {
     const { gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/t/${slug}`);
-    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await openJoinRequest(page);
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
 
     const sql = database();

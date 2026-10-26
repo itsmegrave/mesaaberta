@@ -4,9 +4,9 @@ import { notificationActionSchema } from './actions';
 describe('notificationActionSchema', () => {
   it('takes a notification id and where to come back to', () => {
     const id = '0f8fad5b-d9cb-469f-a165-70867728950e';
-    expect(notificationActionSchema.parse({ id, next: '/t' })).toEqual({
+    expect(notificationActionSchema.parse({ id, next: '/tables' })).toEqual({
       id,
-      next: '/t',
+      next: '/tables',
     });
   });
 

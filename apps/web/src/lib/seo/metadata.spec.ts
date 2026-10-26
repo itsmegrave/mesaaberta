@@ -47,7 +47,7 @@ describe('public search metadata', () => {
   });
 
   it('shares branded listings, public handles and safe images', () => {
-    expect(publicMetadata('/t', {}, origin)?.title).toContain('Mesa Aberta');
+    expect(publicMetadata('/tables', {}, origin)?.title).toContain('Mesa Aberta');
     const profile = publicMetadata(
       '/u/ana',
       {

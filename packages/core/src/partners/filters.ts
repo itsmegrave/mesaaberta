@@ -18,7 +18,7 @@ export type PartnerFilters = {
 };
 
 /**
- * The filters in a `/p` address. A link can say anything, so what is not a filter the page
+ * The filters in a `/partners` address. A link can say anything, so what is not a filter the page
  * knows is dropped rather than refused: the list still shows, just without it.
  */
 export function readPartnerFilters(params: SearchParamsLike): PartnerFilters {

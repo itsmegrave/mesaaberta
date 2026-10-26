@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Pager from './Pager.svelte';
 
-const href = (number: number) => (number === 1 ? '/t' : `/t?page=${number}`);
+const href = (number: number) => (number === 1 ? '/tables' : `/tables?page=${number}`);
 const nav = () => page.getByRole('navigation', { name: 'Páginas' });
 
 describe('Pager', () => {
@@ -18,10 +18,10 @@ describe('Pager', () => {
     await render(Pager, { page: 2, pages: 3, href });
     await expect
       .element(nav().getByRole('link', { name: 'Página anterior' }))
-      .toHaveAttribute('href', '/t');
+      .toHaveAttribute('href', '/tables');
     await expect
       .element(nav().getByRole('link', { name: 'Próxima página' }))
-      .toHaveAttribute('href', '/t?page=3');
+      .toHaveAttribute('href', '/tables?page=3');
     expect(document.querySelector('[aria-current="page"]')?.textContent).toBe('2');
   });
 
@@ -32,7 +32,7 @@ describe('Pager', () => {
     expect(nav().getByRole('link').elements()).toHaveLength(1);
     await expect
       .element(nav().getByRole('link', { name: 'Próxima página' }))
-      .toHaveAttribute('href', '/t?page=2');
+      .toHaveAttribute('href', '/tables?page=2');
     expect(nav().element().classList.contains('mt-8')).toBe(true);
   });
 });

@@ -97,7 +97,7 @@
     {/if}
 
     <a
-      href="/m"
+      href="/messages"
       class={item}
       onclick={close}
       aria-label={messagesUnread > 0

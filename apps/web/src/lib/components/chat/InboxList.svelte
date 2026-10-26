@@ -54,7 +54,7 @@
       ? m.messages_preview_other({ sender: atHandle(item.preview.sender), body })
       : body;
   };
-  const pageHref = (target: number) => (target === 1 ? '/m' : `/m?page=${target}`);
+  const pageHref = (target: number) => (target === 1 ? '/messages' : `/messages?page=${target}`);
   const pageLink = `${buttonClass('secondary', 'md')} text-sm font-semibold`;
 </script>
 
