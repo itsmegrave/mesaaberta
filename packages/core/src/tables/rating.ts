@@ -12,3 +12,12 @@ export const ratingSchema = z.object({
 });
 
 export type RatingInput = { gmScore: number; comment: string | null };
+
+// The GM's rating of one player they marked present. The comment is the GM's own note.
+export const playerRatingSchema = z.object({
+  playerId: z.guid(),
+  score,
+  comment: z.string().trim().max(MAX_COMMENT_LENGTH).default(''),
+});
+
+export type PlayerRatingInput = { score: number; comment: string | null };

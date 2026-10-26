@@ -1490,7 +1490,6 @@
   "public_profile_played": "Mesas jogadas",
   "public_profile_hosted": "Mesas mestradas",
   "public_profile_counts_hint": "Mesas confirmadas como realizadas por quem mestrou. Mesas jogadas consideram as inscrições confirmadas atuais.",
-  "public_profile_rating": "Nota da mestragem",
   "public_profile_upcoming": "Próximas mesas",
   "public_profile_no_tables": "Nenhuma próxima mesa por aqui.",
   "session_day": "Dia da primeira sessão",
@@ -2136,5 +2135,36 @@
   "changelog_empty": "Ainda não há mudanças deste tipo.",
   "changelog_details": "Ver detalhes",
   "changelog_pagination": "Páginas de novidades",
-  "changelog_preview": "Captura da plataforma: {title}"
+  "changelog_preview": "Captura da plataforma: {title}",
+  "player_rating_title": "Avalie quem jogou",
+  "player_rating_title_going": "Avalie quem joga",
+  "player_rating_lede": "A nota entra na média pública de cada pessoa como participante, como acontece com a mestragem. O comentário fica só com você.",
+  "player_rating_lede_going": "Em campanhas e aventuras, avalie cada pessoa quando quiser, sem esperar o fim da mesa. A nota entra na média pública de cada pessoa como participante, como acontece com a mestragem. O comentário fica só com você.",
+  "player_rating_rule": "Só quem compareceu aparece aqui. Cada nota é final depois de enviada.",
+  "player_rating_for": "Nota para {name}",
+  "player_rating_submit": "Enviar nota",
+  "player_rating_submit_short": "Enviar",
+  "player_rating_add_comment": "Adicionar comentário",
+  "player_rating_comment": "Comentário",
+  "player_rating_comment_hint": "(opcional, só você vê)",
+  "player_rating_sent": "Nota enviada",
+  "player_rating_given": "Sua nota: {score} de 5",
+  "player_rating_pick": "Escolha uma nota de 1 a 5.",
+  "player_rating_already": "Você já avaliou esta pessoa. A nota não pode ser alterada.",
+  "toast_player_rated": "Nota enviada.",
+  "participant_rating": "Nota como participante",
+  "participant_rating_new": "Estreia como participante",
+  "participant_rating_as": "como participante",
+  "public_profile_scores_hint": "Sua nota como participante vem de quem mestrou as mesas em que você jogou. As duas notas aparecem depois de 3 avaliações.",
+  "player_rating_tables_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Primeira mesa",
+        "count=1": "Jogou 1 mesa",
+        "count=*": "Jogou {count} mesas"
+      }
+    }
+  ]
 }
