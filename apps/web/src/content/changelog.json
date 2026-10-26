@@ -46,6 +46,11 @@
       },
       {
         "kind": "improved",
+        "title": "Conquistas em medalhas",
+        "description": "Cada conquista aparece como uma medalha com fitas. E a Primeira centena agora se chama 100!"
+      },
+      {
+        "kind": "improved",
         "title": "Editar perfil em seções",
         "description": "Um menu separa perfil público, informações pessoais, acesso, mensagens e privacidade para você encontrar o que quer mudar.",
         "href": "/u/profile/edit"

@@ -369,8 +369,15 @@
     {
       "idx": 52,
       "version": "7",
-      "when": 1792961539105,
-      "tag": "0052_table_published_at",
+      "when": 1792961513983,
+      "tag": "0052_player_ratings",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1792973020233,
+      "tag": "0053_table_published_at",
       "breakpoints": true
     }
   ]

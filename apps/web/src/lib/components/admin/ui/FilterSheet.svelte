@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // The "Filtros" button of a phone list and the sheet it opens, with the filters the desktop toolbar
   // shows in a row. A pick applies at once (the list behind it reloads); "Ver N resultados" closes.
   import type { Snippet } from 'svelte';
@@ -54,7 +55,7 @@
           <footer class="flex items-center gap-3 border-t border-surface-200-800 p-4">
             {#if clearHref && active > 0}
               <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- already canonical -->
-              <a class="btn h-12 px-3 anchor font-semibold" href={clearHref}
+              <a class="{buttonClass('secondary', 'md')} font-semibold" href={clearHref}
                 >{m.admin_list_clear()}</a
               >
             {/if}

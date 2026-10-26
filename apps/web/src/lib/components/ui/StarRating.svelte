@@ -10,6 +10,8 @@
     value = 0,
     count = 5,
     invalid = false,
+    hideLabel = false,
+    readOnly = false,
     describedby,
     onchange,
   }: {
@@ -18,6 +20,10 @@
     value?: number;
     count?: number;
     invalid?: boolean;
+    /** Name the group for screen readers only, where the row already shows who it is about. */
+    hideLabel?: boolean;
+    /** A score already given: shown, not changed. */
+    readOnly?: boolean;
     describedby?: string;
     onchange?: (value: number) => void;
   } = $props();
@@ -31,15 +37,16 @@
   {name}
   value={current}
   allowHalf={false}
+  {readOnly}
   translations={{ ratingValueText: (index) => m.rating_score_label({ score: index }) }}
   onValueChange={(details) => {
     current = details.value;
     onchange?.(details.value);
   }}
 >
-  <RatingGroup.Label class="font-semibold">{label}</RatingGroup.Label>
+  <RatingGroup.Label class={hideLabel ? 'sr-only' : 'font-semibold'}>{label}</RatingGroup.Label>
   <RatingGroup.Control
-    class="mt-2 flex gap-1 text-primary-500"
+    class="{hideLabel ? '' : 'mt-2'} flex gap-1 text-primary-500"
     aria-invalid={invalid || undefined}
     aria-describedby={describedby}
   >

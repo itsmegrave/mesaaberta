@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -45,7 +46,9 @@
     <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-lamp-wash px-4 py-3">
       {#if item.rating}
         {m.dash_your_rating({ gm: item.rating.gmScore })}
-        <a href="{page}#avaliar" class="anchor">{m.dash_change_rating()}</a>
+        <a href="{page}#avaliar" class="{buttonClass('secondary', 'sm')} font-semibold"
+          >{m.dash_change_rating()}</a
+        >
       {:else}
         {m.dash_rate_prompt()}
         <a

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult } from '#lib/forms/contract.js';
   import { resolve } from '$app/paths';
@@ -39,7 +40,7 @@
       <p class="mt-3 text-lg">{m.signup_check_email_text()}</p>
       <a
         href="{resolve('login')}?next={encodeURIComponent(data.next)}"
-        class="mt-4 inline-block link-underline font-semibold text-link"
+        class="mt-4 {buttonClass('primary', 'md')} font-semibold"
       >
         {m.signup_sign_in()}
       </a>

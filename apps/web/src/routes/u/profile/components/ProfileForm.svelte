@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
@@ -467,7 +468,9 @@
     </MAButton>
     {#if cancelHref}
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
-      <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
+      <a href={cancelHref} class="{buttonClass('secondary', 'md')} font-semibold"
+        >{m.form_cancel()}</a
+      >
     {/if}
   </div>
 </MAForm>

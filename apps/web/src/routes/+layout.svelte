@@ -31,6 +31,7 @@
 
   import { isUnder } from '#lib/navigation/main-nav.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { reloadPage } from '#lib/forms/leave-guard.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
   import { onMount } from 'svelte';
 
@@ -191,7 +192,7 @@
           <MAButton
             size="custom"
             class="btn preset-filled-primary-500"
-            onclick={() => location.reload()}
+            onclick={() => void reloadPage()}
           >
             {m.version_update_refresh()}
           </MAButton>

@@ -51,6 +51,16 @@ type Resources = {
     /** The GM let this player rate before the table is concluded. */
     ratingOpened?: boolean;
   };
+  /**
+   * The GM rating a player of their table: only one the GM marked present (`markedPresent`), and
+   * only while a session that happened is behind them (`playerRatingOpen`).
+   */
+  'player:rate': {
+    gmId: string;
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure';
+    markedPresent: boolean;
+  };
   /** Approve or decline a request, or remove a player. */
   'registration:manage': { gmId: string };
   /** A player leaving their own registration. */
@@ -139,6 +149,19 @@ export function rateBlocker(
   return null;
 }
 
+/**
+ * Whether a table's GM can rate its players now. A one-shot once the GM said the session happened
+ * (concluded); a campaign or adventure also while it goes on, since a player marked present has
+ * played a session that happened. A table that did not happen, or was taken down, has nothing to rate.
+ */
+export const playerRatingOpen = (table: {
+  tableStatus: TableStatus;
+  kind: 'campaign' | 'one_shot' | 'adventure';
+}): boolean =>
+  table.tableStatus === 'concluded' ||
+  (table.kind !== 'one_shot' &&
+    (table.tableStatus === 'active' || table.tableStatus === 'awaiting_confirmation'));
+
 const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean } = {
   'admin:access': (actor) => actor.role === 'admin',
   // Any signed-in user can open a table and becomes its GM.
@@ -159,6 +182,12 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     isGmOrAdmin(actor, table),
   'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
   'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,
+  // Only the GM: an admin did not play with them.
+  'player:rate': (actor, facts) =>
+    facts !== undefined &&
+    actor.id === facts.gmId &&
+    facts.markedPresent &&
+    playerRatingOpen(facts),
   'registration:manage': isGmOrAdmin,
   'registration:leave': (actor, registration) =>
     registration !== undefined && actor.id === registration.playerId,

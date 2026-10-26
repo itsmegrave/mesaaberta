@@ -104,9 +104,7 @@
     aria-expanded={expanded}
     aria-label={expanded ? m.nav_collapse() : m.nav_expand()}
     title={expanded ? m.nav_collapse() : m.nav_expand()}
-    class="btn flex size-10 shrink-0 items-center justify-center rounded-lg p-0 text-muted hover:preset-tonal {expanded
-      ? 'border border-surface-200-800'
-      : ''}"
+    class="btn flex size-10 shrink-0 items-center justify-center rounded-lg border border-surface-200-800 p-0 text-muted hover:preset-tonal"
   >
     <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
   </MAButton>
@@ -119,9 +117,9 @@
 <Navigation
   layout={expanded ? 'sidebar' : 'rail'}
   aria-label={m.nav_main()}
-  class="flex h-full flex-col border-r border-surface-200-800 py-5 {expanded
-    ? 'w-60 items-stretch gap-6 bg-panel px-3'
-    : 'w-20 items-center gap-4 bg-transparent px-0'}"
+  class="flex h-full flex-col border-r border-surface-200-800 bg-panel py-5 {expanded
+    ? 'w-60 items-stretch gap-6 px-3'
+    : 'w-20 items-center gap-4 px-0'}"
 >
   {#snippet element(attributes)}
     <nav {...attributes as Record<string, unknown>}>
@@ -183,57 +181,78 @@
                 {/if}
               </Navigation.TriggerAnchor>
             {/each}
-            {#if account?.isAdmin && !expanded}
-              <!-- In the rail Admin follows the links; open, it sits under "Sua conta". -->
-              <a
-                href="/admin"
-                aria-label={m.nav_admin()}
-                aria-current={adminCurrent ? 'page' : undefined}
-                class="{column} {adminCurrent
-                  ? 'text-surface-950-50'
-                  : 'text-muted hover:text-surface-950-50'}"
-              >
-                <span
-                  class="{tile} {adminCurrent
-                    ? 'bg-surface-200-800'
-                    : 'group-hover:bg-surface-200-800'}"
-                >
-                  <Icon name="game-icons:black-knight-helm" size={20} />
-                </span>
-                {#if pending > 0}
-                  {@render count(
-                    pending,
-                    `${m.nav_admin()}: ${pending}`,
-                    'absolute top-0.5 right-2 h-4 min-w-4 px-1',
-                  )}
-                {/if}
-                <span class="w-full min-w-0">{m.nav_admin()}</span>
-              </a>
-            {/if}
           </Navigation.Menu>
         </Navigation.Group>
 
-        {#if expanded && account}
-          <Navigation.Group class="flex flex-col gap-1">
-            <Navigation.Label
-              class="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
-              >{m.nav_account_group()}</Navigation.Label
-            >
-            <NotificationBell {unread} {latest} {seenAt} placement="right-end" labelled />
-            {#if account.isAdmin}
-              <a
-                href="/admin"
-                aria-current={adminCurrent ? 'page' : undefined}
-                class="{row} text-surface-950-50 hover:bg-surface-200-800 aria-[current=page]:bg-surface-200-800"
+        {#if account}
+          <!-- The same group open and as a rail: the label becomes a short line when collapsed. -->
+          <Navigation.Group
+            aria-label={expanded ? undefined : m.nav_account_group()}
+            class="flex flex-col {expanded
+              ? 'gap-1 border-t border-surface-200-800 pt-4'
+              : 'items-center gap-2'}"
+          >
+            {#if expanded}
+              <Navigation.Label
+                class="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
+                >{m.nav_account_group()}</Navigation.Label
               >
-                <span class="flex shrink-0 text-muted">
-                  <Icon name="game-icons:black-knight-helm" size={20} />
-                </span>
-                <span class="min-w-0 flex-1">{m.nav_admin()}</span>
-                {#if pending > 0}
-                  {@render count(pending, `${m.nav_admin()}: ${pending}`, 'h-5.5 min-w-5.5 px-1.5')}
-                {/if}
-              </a>
+            {:else}
+              <span aria-hidden="true" class="mb-2 block h-px w-10 bg-surface-200-800"></span>
+            {/if}
+            <NotificationBell
+              {unread}
+              {latest}
+              {seenAt}
+              placement="right-end"
+              labelled={expanded}
+              rail={!expanded}
+            />
+            {#if account.isAdmin}
+              {#if expanded}
+                <a
+                  href="/admin"
+                  aria-current={adminCurrent ? 'page' : undefined}
+                  class="{row} text-surface-950-50 hover:bg-surface-200-800 aria-[current=page]:bg-surface-200-800"
+                >
+                  <span class="flex shrink-0 text-muted">
+                    <Icon name="game-icons:black-knight-helm" size={20} />
+                  </span>
+                  <span class="min-w-0 flex-1">{m.nav_admin()}</span>
+                  {#if pending > 0}
+                    {@render count(
+                      pending,
+                      `${m.nav_admin()}: ${pending}`,
+                      'h-5.5 min-w-5.5 px-1.5',
+                    )}
+                  {/if}
+                </a>
+              {:else}
+                <a
+                  href="/admin"
+                  aria-label={m.nav_admin()}
+                  aria-current={adminCurrent ? 'page' : undefined}
+                  class="{column} {adminCurrent
+                    ? 'text-surface-950-50'
+                    : 'text-muted hover:text-surface-950-50'}"
+                >
+                  <span
+                    class="{tile} {adminCurrent
+                      ? 'bg-surface-200-800'
+                      : 'group-hover:bg-surface-200-800'}"
+                  >
+                    <Icon name="game-icons:black-knight-helm" size={20} />
+                  </span>
+                  {#if pending > 0}
+                    {@render count(
+                      pending,
+                      `${m.nav_admin()}: ${pending}`,
+                      'absolute top-0.5 right-2 h-4 min-w-4 px-1',
+                    )}
+                  {/if}
+                  <span class="w-full min-w-0">{m.nav_admin()}</span>
+                </a>
+              {/if}
             {/if}
           </Navigation.Group>
         {/if}
@@ -241,10 +260,7 @@
         <Navigation.Group
           class="mt-auto flex flex-col {expanded ? 'items-stretch gap-2' : 'items-center gap-3'}"
         >
-          {#if account && !expanded}
-            <NotificationBell {unread} {latest} {seenAt} placement="right-end" />
-          {/if}
-          <ThemeToggle labelled={expanded} />
+          <ThemeToggle labelled={expanded} rail={!expanded} />
           {#if account}
             <AccountMenu
               name={account.displayName}

@@ -516,6 +516,31 @@ export const ratings = pgTable(
   ],
 ).enableRLS();
 
+// What the GM of a table thought of a player they marked present: the other side of `ratings`. The
+// score counts for the player's public score "como participante"; the comment is the GM's own note
+// and nobody else sees it. Made once per player and table, and final. It goes with its table, with
+// the rated player's account, and loses its comment with the GM's (see `closeAccount`).
+export const playerRatings = pgTable(
+  'player_ratings',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id),
+    score: smallint('score').notNull(),
+    comment: text('comment'),
+    ...timestamps,
+  },
+  (rating) => [
+    primaryKey({ columns: [rating.tableId, rating.playerId] }),
+    check('player_ratings_score_range', sql`${rating.score} BETWEEN 1 AND 5`),
+    check('player_ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
+    index('player_ratings_player_idx').on(rating.playerId),
+  ],
+).enableRLS();
+
 // A GM's score, worked out from their ratings and kept until it can change: when the month turns
 // (the weights age by months) or when a rating is added or removed (a trigger on `ratings` raises
 // `version`, even for a GM with no row yet). Read it through `gmRatings`, never by hand.

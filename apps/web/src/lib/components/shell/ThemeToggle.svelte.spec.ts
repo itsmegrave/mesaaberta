@@ -90,10 +90,40 @@ describe('ThemeToggle', () => {
     render(ThemeToggle);
 
     const button = page.getByRole('button', { name: 'Tema escuro' });
-    expect(button.element().querySelector('[data-icon="moon"]')).not.toBeNull();
+    const shown = () => button.element().querySelector('[data-shown="true"] [data-icon]');
+    expect(shown()?.getAttribute('data-icon')).toBe('moon');
     await button.click();
 
-    expect(button.element().querySelector('[data-icon="sun"]')).not.toBeNull();
-    expect(button.element().querySelector('[data-icon="moon"]')).toBeNull();
+    expect(shown()?.getAttribute('data-icon')).toBe('sun');
+    // The moon stays in place to fade out; it is hidden, not removed.
+    expect(
+      button.element().querySelector('[data-shown="false"] [data-icon="moon"]'),
+    ).not.toBeNull();
+  });
+
+  it('turns the icon only after a change, and never with reduced motion', async () => {
+    render(ThemeToggle);
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    const glyph = () => button.element().querySelector('[data-shown]') as HTMLElement;
+    expect(glyph().className).not.toContain('transition');
+    await button.click();
+
+    expect(glyph().className).toContain('transition');
+    expect(glyph().className).toContain('motion-reduce:transition-none');
+  });
+
+  it('draws the rail item: the same icon over "Tema", pressed while dark', async () => {
+    render(ThemeToggle, { rail: true });
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    await expect.element(button).toHaveTextContent('Tema');
+    await expect.element(button).toHaveAttribute('aria-pressed', 'false');
+    await button.click();
+
+    await expect.element(button).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      button.element().querySelector('[data-shown="true"] [data-icon]')?.getAttribute('data-icon'),
+    ).toBe('sun');
   });
 });

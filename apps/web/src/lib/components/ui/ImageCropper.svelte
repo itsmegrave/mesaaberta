@@ -51,6 +51,9 @@
   let image = $state<HTMLImageElement>();
   let preview = $state<HTMLDivElement>();
   let cropper: Cropper | undefined;
+  // Settles once the frame has been fitted inside the picture, so a quick "Usar este recorte" can't
+  // cut the library's first guess.
+  let fitted: Promise<void> = Promise.resolve();
   let url = $state('');
   let failed = $state(false);
   let busy = $state(false);
@@ -60,6 +63,10 @@
     'image/png': 'png',
     'image/jpeg': 'jpg',
   };
+
+  type Box = { x: number; y: number; width: number; height: number };
+  type CropperImage = NonNullable<ReturnType<Cropper['getCropperImage']>>;
+  type CropperSelection = NonNullable<ReturnType<Cropper['getCropperSelection']>>;
 
   onMount(() => {
     url = URL.createObjectURL(file);
@@ -82,19 +89,94 @@
     };
   });
 
+  // Where an element sits inside the cropper's canvas.
+  function place(element: Element, canvas: Element): Box {
+    const box = element.getBoundingClientRect();
+    const origin = canvas.getBoundingClientRect();
+    return {
+      x: box.left - origin.left,
+      y: box.top - origin.top,
+      width: box.width,
+      height: box.height,
+    };
+  }
+
+  // Half a pixel of slack for the browser's rounding of the picture's edges.
+  const within = (inner: Box, outer: Box) =>
+    inner.x >= outer.x - 0.5 &&
+    inner.y >= outer.y - 0.5 &&
+    inner.x + inner.width <= outer.x + outer.width + 0.5 &&
+    inner.y + inner.height <= outer.y + outer.height + 0.5;
+
+  // The largest frame of the ratio that fits in the picture, at 90%, in its middle.
+  function centred(picture: Box): Box {
+    let width = picture.width * 0.9;
+    let height = width / aspectRatio;
+    if (height > picture.height * 0.9) {
+      height = picture.height * 0.9;
+      width = height * aspectRatio;
+    }
+    return {
+      x: picture.x + (picture.width - width) / 2,
+      y: picture.y + (picture.height - height) / 2,
+      width,
+      height,
+    };
+  }
+
+  // The frame never leaves the picture: a move, resize or zoom that would put empty canvas in the
+  // cut is refused, so what is sent is all picture (no transparent or black bands at the edges).
+  function confine(canvas: HTMLElement, picture: CropperImage, selection: CropperSelection) {
+    let guarding = false;
+    selection.addEventListener('change', (event) => {
+      if (!guarding) return;
+      const next = (event as CustomEvent<Box>).detail;
+      if (!within(next, place(picture, canvas))) event.preventDefault();
+    });
+    picture.addEventListener('transform', (event) => {
+      if (!guarding) return;
+      const { matrix } = (event as CustomEvent<{ matrix: number[] }>).detail;
+      // Measured as the library itself does: try the new matrix, read the box, put the old one back.
+      const current = picture.style.transform;
+      picture.style.transform = `matrix(${matrix.join(', ')})`;
+      const next = place(picture, canvas);
+      picture.style.transform = current;
+      if (within(selection, next)) return;
+      event.preventDefault();
+      // The preview listens too and doesn't check for a refusal.
+      event.stopImmediatePropagation();
+    });
+    return picture
+      .$ready()
+      .then(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))))
+      .then(() => {
+        const { x, y, width, height } = centred(place(picture, canvas));
+        selection.$change(x, y, width, height);
+        guarding = true;
+      })
+      .catch(() => {});
+  }
+
   function frame(instance: Cropper, preview: HTMLDivElement) {
     cropper = instance;
     const canvas = instance.getCropperCanvas();
     const selection = instance.getCropperSelection();
-    if (!canvas || !selection) return;
-    canvas.classList.add('h-72', 'w-full');
+    const picture = instance.getCropperImage();
+    if (!canvas || !selection || !picture) return;
+    canvas.classList.add('h-48', 'w-full', 'sm:h-72');
     canvas.setAttribute('aria-label', m.image_crop_area());
+    // Turning and skewing have no control here, and a turned picture can't be kept inside the frame.
+    picture.rotatable = false;
+    picture.skewable = false;
     selection.aspectRatio = aspectRatio;
     selection.initialAspectRatio = aspectRatio;
     selection.initialCoverage = 0.9;
+    selection.precise = true;
     selection.keyboard = true;
     selection.setAttribute('tabindex', '0');
     selection.id = 'image-crop-selection';
+    // Before the preview is made, so the guard hears each change first.
+    fitted = confine(canvas, picture, selection);
     const viewer = document.createElement('cropper-viewer');
     viewer.setAttribute('selection', '#image-crop-selection');
     // Cropper.js's own preview element has to be placed by hand; Svelte doesn't know it.
@@ -109,6 +191,7 @@
     busy = true;
     failed = false;
     try {
+      await fitted;
       const canvas = await selection.$toCanvas({ width });
       const blob = await encodeImage(canvas);
       if (!blob) throw new Error('too big');
@@ -145,14 +228,26 @@
       aria-label={m.image_crop_zoom_in()}
       onclick={() => zoom(0.1)}><Icon name="plus" size={18} /></MAButton
     >
-    <div class="ml-auto flex items-center gap-3">
-      <span class="text-sm text-muted">{m.image_crop_preview()}</span>
-      <div
-        bind:this={preview}
-        data-testid="crop-preview"
-        class="size-20 overflow-hidden bg-surface-200-800 {round ? 'rounded-full' : 'rounded-lg'}"
-      ></div>
-    </div>
+    {#if onreplace}
+      <MAButton
+        size="custom"
+        type="button"
+        class="ml-auto btn h-12 rounded-lg btn-secondary px-4 font-semibold"
+        onclick={onreplace}>{m.upload_replace()}</MAButton
+      >
+    {/if}
+  </div>
+  <!-- The viewer takes its height from its width and the frame's ratio: a square box for a square
+       frame, a strip for a wide one. -->
+  <div class="mt-4 flex items-center gap-3">
+    <span class="text-sm text-muted">{m.image_crop_preview()}</span>
+    <div
+      bind:this={preview}
+      data-testid="crop-preview"
+      class="overflow-hidden bg-surface-200-800 {aspectRatio === 1 ? 'size-20' : 'w-40'} {round
+        ? 'rounded-full'
+        : 'rounded-lg'}"
+    ></div>
   </div>
   {#if failed}
     <p role="alert" class="mt-3 text-sm font-semibold text-error-700-300">
@@ -166,17 +261,7 @@
     confirm={m.image_crop_use()}
     disabled={busy}
     onconfirm={confirm}
-  >
-    {#snippet before()}
-      {#if onreplace}
-        <MAButton
-          size="custom"
-          class="mr-auto btn h-12 rounded-lg px-4 font-semibold hover:preset-tonal"
-          onclick={onreplace}>{m.upload_replace()}</MAButton
-        >
-      {/if}
-    {/snippet}
-  </DialogActions>
+  />
 {/snippet}
 
 {#if bare}
