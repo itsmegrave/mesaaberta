@@ -13,7 +13,7 @@
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
   import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
-  import BadgeStrip from './components/BadgeStrip.svelte';
+  import BadgeVisibility from './components/BadgeVisibility.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import FollowButton from '#lib/components/FollowButton.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
@@ -173,7 +173,16 @@
           <!-- The name, only when the person chose to show it under the @usuário. -->
           <p class="mt-2 text-xl wrap-break-word text-muted md:text-2xl">{profile.name}</p>
         {/if}
-        {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
+        {#if data.badges}
+          <BadgeIcons badges={data.badges} owner={data.isOwner}>
+            {#snippet action(badge)}
+              {#if data.isOwner}<BadgeVisibility
+                  badgeId={badge.badgeId}
+                  hidden={badge.hidden}
+                />{/if}
+            {/snippet}
+          </BadgeIcons>
+        {/if}
         {#if profile.bio}
           <!-- Plain text in the person's own words: line breaks kept, nothing else. -->
           <p class="mt-4 max-w-prose wrap-break-word whitespace-pre-line">{profile.bio}</p>
@@ -250,10 +259,6 @@
       </div>
     </div>
   </header>
-
-  {#if data.badges && data.isOwner}
-    <BadgeStrip badges={data.badges} progress={data.badgeProgress ?? []} />
-  {/if}
 
   <section aria-labelledby="upcoming-tables" class="mt-8">
     <h2 id="upcoming-tables" class="text-2xl leading-tight font-semibold tracking-tight">

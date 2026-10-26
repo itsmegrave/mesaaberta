@@ -16,14 +16,29 @@ export const withLook = (badges: readonly HeldBadge[]): ShownBadge[] =>
     return look ? [{ ...badge, look }] : [];
   });
 
-/** What a visitor sees: not what the owner hid, and only the highest rung held of a ladder. */
-export function publicBadges(badges: readonly HeldBadge[]): ShownBadge[] {
-  const shown = withLook(badges).filter((badge) => !badge.hidden);
-  return shown.filter(
+/** Only the highest rung held of each ladder. */
+const topRungs = (shown: ShownBadge[]) =>
+  shown.filter(
     (badge) =>
       !badge.look.ladder ||
       !shown.some(
         (other) => other.look.ladder === badge.look.ladder && other.look.tier > badge.look.tier,
       ),
   );
-}
+
+/** What a visitor sees: not what the owner hid, and only the highest rung held of a ladder. */
+export const publicBadges = (badges: readonly HeldBadge[]): ShownBadge[] =>
+  topRungs(withLook(badges).filter((badge) => !badge.hidden));
+
+/**
+ * What the owner sees in the same row: the visitor's badges plus the ones they hid, each ladder
+ * still at its highest rung among the shown and among the hidden.
+ */
+export const ownerBadges = (badges: readonly HeldBadge[]): ShownBadge[] => {
+  const all = withLook(badges);
+  const kept = new Set([
+    ...topRungs(all.filter((badge) => !badge.hidden)),
+    ...topRungs(all.filter((badge) => badge.hidden)),
+  ]);
+  return all.filter((badge) => kept.has(badge));
+};

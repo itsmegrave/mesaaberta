@@ -7,7 +7,7 @@ import {
   registrations,
 } from '@mesaaberta/core/server/db/schema';
 import { bannerUrl, pictureOf, imageUrl } from '@mesaaberta/core/server/images';
-import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
+import { heldBadges } from '@mesaaberta/core/server/badges/reads';
 import { gmRatingOf, publicGmReviews } from '@mesaaberta/core/server/ratings/service';
 import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
@@ -137,8 +137,6 @@ export async function publicProfile(
 
   return {
     badges,
-    // What the owner has yet to earn, for their own view only.
-    badgeProgress: badges && isOwnerView ? await badgeProgress(db, found.id) : null,
     profile: {
       username: found.username!,
       avatarUrl: pictureOf(supabaseUrl, found),
