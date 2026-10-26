@@ -195,7 +195,8 @@ jobs:
           retention-days: 7
 
   # The self-host path: build the three images and bring the whole compose stack up, then check the
-  # site answers through Caddy's TLS and that the web app reached the database and the worker.
+  # site answers through Caddy's TLS, that the web app reached the database and the worker, and that
+  # sign-up works with the bundled Auth and Mailpit (Trello #271).
   # Cloudflare is not involved; this is the Bun/Docker version people clone and run.
   docker:
     name: Docker compose
@@ -219,6 +220,21 @@ jobs:
           for target in web:3000 api:8788 worker:9464; do
             docker compose exec -T web bun -e "const r = await fetch('http://$target/metrics'); const t = await r.text(); if (!r.ok || !t.includes('# TYPE mesaaberta_')) process.exit(1)"
           done
+          # Auth and Storage answer on the Docker network with the buckets in place; the proxy forwards
+          # only the e-mail links and the public images.
+          docker compose exec -T web bun -e "const r = await fetch(process.env.SUPABASE_URL + '/auth/v1/health'); if (!r.ok) process.exit(1)"
+          docker compose exec -T web bun -e "const r = await fetch(process.env.SUPABASE_URL + '/storage/v1/bucket', { headers: { authorization: 'Bearer ' + process.env.SUPABASE_SECRET_KEY } }); const ids = (await r.json()).map((b) => b.id); if (!ids.includes('table-images') || !ids.includes('profile-avatars')) process.exit(1)"
+          test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/auth/v1/admin/users)" = 404
+          test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/storage/v1/bucket)" = 404
+          # Signing up sends the confirmation e-mail to Mailpit.
+          email="smoke-$(date +%s)@example.test"
+          docker compose exec -T -e EMAIL="$email" web bun -e "const r = await fetch(process.env.SUPABASE_URL + '/auth/v1/signup', { method: 'POST', headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY, 'content-type': 'application/json' }, body: JSON.stringify({ email: process.env.EMAIL, password: 'smoke-password' }) }); if (!r.ok) process.exit(1)"
+          for i in $(seq 1 20); do
+            curl -fsS "http://localhost:8025/api/v1/search?query=to:$email" | grep -q '"total":[1-9]' && break
+            test "$i" -lt 20; sleep 1
+          done
+          # LOCAL_ONLY: a setting that reaches outside keeps the service from starting.
+          if docker compose run --rm --no-deps -e RESEND_API_KEY=re_smoke api; then exit 1; fi
       - name: Compose logs
         if: failure()
         run: docker compose logs --no-color --tail 200
