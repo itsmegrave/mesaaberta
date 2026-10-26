@@ -15,7 +15,7 @@
   import { page } from '$app/state';
   import Chair from '#lib/components/ui/Chair.svelte';
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
-  import RosterRow, { rosterRowClass } from './components/ui/RosterRow.svelte';
+  import RosterRow, { rosterListClass, rosterRowClass } from './components/ui/RosterRow.svelte';
   import SessionConfirmation from './components/SessionConfirmation.svelte';
   import SessionDate from '../components/ui/SessionDate.svelte';
   import SummaryRow from '../components/ui/SummaryRow.svelte';
@@ -240,9 +240,11 @@
           </div>
         {/if}
         {#if reservations.length > 0}
-          <ul class="mt-4 divide-y divide-surface-200-800">
+          <ul class="mt-4 {rosterListClass}">
             {#each reservations as invitation (invitation.id)}
-              <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+              <li
+                class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-wash px-4 py-2"
+              >
                 <span
                   ><UserLink username={invitation.username} /><span class="block text-sm text-muted"
                     >{m.invitation_deadline({ date: moment(invitation.expiresAt) })}</span
@@ -258,7 +260,12 @@
           </ul>
         {/if}
       </section>
-      <section aria-labelledby="requests" class={card}>
+      <section
+        aria-labelledby="requests"
+        class={data.requests.length > 0
+          ? 'rounded-lg border border-lamp bg-lamp-wash p-5 md:p-6'
+          : card}
+      >
         <div class="flex items-center gap-3">
           <h2 id="requests" class="text-2xl font-semibold">{m.table_requests()}</h2>
           {#if data.requests.length > 0}
@@ -274,12 +281,13 @@
           <p class="mt-2 text-muted">{m.manage_requests_hint()}</p>
         {/if}
         {#if data.requests.length > 0}
-          <ul class="mt-3">
+          <ul class="mt-4 {rosterListClass}">
             {#each data.requests as request (request.playerId)}
               <RosterRow
                 username={request.username}
                 avatarUrl={request.avatarUrl}
                 subline={m.manage_requested_at({ date: moment(request.since) })}
+                panel
                 wrap
               >
                 {#snippet extra()}
@@ -346,7 +354,7 @@
             {#if table.minPlayers}
               <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
             {/if}
-            <ul class="mt-3">
+            <ul class="mt-4 {rosterListClass}">
               <RosterRow
                 username={data.gm.username}
                 avatarUrl={data.gm.avatarUrl}
@@ -382,7 +390,7 @@
               {#each { length: table.seatsLeft }, i (i)}
                 <li class={rosterRowClass}>
                   <span class="flex items-center gap-3">
-                    <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-10 shrink-0">
+                    <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-12 shrink-0">
                       <Chair colour="stroke-lamp" free />
                     </svg>
                     <span>
