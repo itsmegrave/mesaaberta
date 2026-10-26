@@ -21,8 +21,8 @@ describe('SeatDots', () => {
   it('draws a seat held by an invite as an unfilled primary meeple, between taken and free', () => {
     render(SeatDots, { taken: 2, capacity: 5, reserved: 1 });
 
-    const chairs = [...document.querySelectorAll('[data-seat]')];
-    expect(chairs.map((chair) => chair.getAttribute('data-seat'))).toEqual([
+    const chairs = [...document.querySelectorAll('[data-seat-state]')];
+    expect(chairs.map((chair) => chair.getAttribute('data-seat-state'))).toEqual([
       'taken',
       'taken',
       'reserved',

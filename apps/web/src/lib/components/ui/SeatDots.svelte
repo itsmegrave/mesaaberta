@@ -25,7 +25,7 @@
             ? 'stroke-primary-500'
             : 'stroke-lamp'}
         free={i >= taken}
-        data-seat={i < taken ? 'taken' : i < taken + reserved ? 'reserved' : 'free'}
+        data-seat-state={i < taken ? 'taken' : i < taken + reserved ? 'reserved' : 'free'}
       />
     </svg>
   {/each}
