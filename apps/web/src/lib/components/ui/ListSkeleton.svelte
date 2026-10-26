@@ -29,7 +29,7 @@
   <div aria-hidden="true">
     {#if heading && kind !== 'detail' && kind !== 'profile'}
       <div data-skeleton-heading class="mb-8 grid gap-3">
-        <div class="h-10 w-2/3 md:h-16 md:w-1/2 {shape}"></div>
+        <div class="h-9 w-2/3 md:h-12 md:w-1/2 {shape}"></div>
         <div class="h-6 w-5/6 md:w-1/3 {shape}"></div>
       </div>
     {/if}
@@ -39,13 +39,15 @@
         {#each { length: 6 }, index (index)}
           <div
             data-skeleton-item
-            class="flex min-h-96 flex-col overflow-hidden rounded-lg border border-surface-200-800"
+            class="flex flex-col overflow-hidden rounded-lg border border-surface-200-800"
           >
-            <div class="h-36 {pulse}"></div>
-            <div class="grid gap-3 p-5">
-              <div class="h-6 w-3/4 {shape}"></div>
+            <div class="h-28 {pulse}"></div>
+            <div class="grid gap-3 px-4 pt-4 pb-3">
+              <div class="h-7 w-3/4 {shape}"></div>
               <div class="h-4 w-full {shape}"></div>
               <div class="h-4 w-2/3 {shape}"></div>
+              <!-- The seats and the card's footer line. -->
+              <div class="mt-2 h-11 {shape}"></div>
             </div>
           </div>
         {/each}
@@ -65,7 +67,7 @@
       <div class="grid gap-8 lg:grid-cols-3 lg:gap-16">
         <div class="grid min-w-0 content-start gap-3 lg:col-span-2">
           <div class="h-4 w-1/4 {shape}"></div>
-          <div class="h-10 w-3/4 md:h-14 {shape}"></div>
+          <div class="h-9 w-3/4 md:h-12 {shape}"></div>
           <div class="h-5 w-1/2 {shape}"></div>
           <div data-skeleton-item class="mt-5 aspect-5/2 w-full {shape}"></div>
           <div class="mt-5 h-4 w-full {shape}"></div>
@@ -74,7 +76,7 @@
         </div>
         <div
           data-skeleton-item
-          class="grid content-start gap-4 self-start rounded-lg border border-surface-200-800 p-6"
+          class="grid content-start gap-4 self-start rounded-lg border border-surface-200-800 p-4 md:p-5"
         >
           <div class="h-6 w-2/3 {shape}"></div>
           <div class="h-16 {shape}"></div>
