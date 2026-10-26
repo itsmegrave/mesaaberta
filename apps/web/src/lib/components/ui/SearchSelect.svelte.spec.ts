@@ -165,6 +165,10 @@ describe('SearchSelect.svelte on a wide screen, a short list', () => {
     expect(onchange).toHaveBeenLastCalledWith(['ordem-paranormal']);
     await expect.element(page.getByRole('listbox')).not.toBeInTheDocument();
     await expect.element(field()).toHaveAccessibleName('Sistema Ordem Paranormal');
+
+    // Closed for good: the next click opens it again.
+    await field().click();
+    await expect.element(page.getByRole('listbox')).toBeVisible();
   });
 
   it('closes on Escape without changing the pick, back on the field', async () => {
@@ -178,6 +182,23 @@ describe('SearchSelect.svelte on a wide screen, a short list', () => {
     await expect.element(page.getByRole('listbox')).not.toBeInTheDocument();
     expect(hiddenValues()).toEqual(['daggerheart']);
     await vi.waitFor(() => expect(document.activeElement).toBe(field().element()));
+  });
+
+  it('closes when the option already picked is picked again, with Enter, Space or a click', async () => {
+    const onchange = vi.fn();
+    render(SearchSelect, { ...base, value: ['daggerheart'], onchange });
+
+    for (const key of ['{Enter}', ' ']) {
+      await field().click();
+      await expect.element(page.getByRole('listbox')).toBeVisible();
+      await userEvent.keyboard(key);
+      await expect.element(page.getByRole('listbox')).not.toBeInTheDocument();
+    }
+    await field().click();
+    await page.getByRole('option', { name: 'Daggerheart' }).click();
+    await expect.element(page.getByRole('listbox')).not.toBeInTheDocument();
+    expect(hiddenValues()).toEqual(['daggerheart']);
+    expect(onchange).not.toHaveBeenCalled();
   });
 });
 
@@ -219,6 +240,16 @@ describe('SearchSelect.svelte on a phone', () => {
     await expect.element(page.getByRole('option')).toHaveLength(1);
     await page.getByRole('searchbox', { name: 'Buscar: Sistema' }).fill('gurps');
     await expect.element(sheet().getByText('Nada encontrado com esse nome.').first()).toBeVisible();
+  });
+
+  it('closes when the option already picked is tapped again, keeping it', async () => {
+    render(SearchSelect, { ...base, value: ['daggerheart'] });
+
+    await field().click();
+    await page.getByRole('option', { name: 'Daggerheart' }).click();
+
+    await expect.element(sheet()).not.toBeInTheDocument();
+    expect(hiddenValues()).toEqual(['daggerheart']);
   });
 
   it('has no search box for a short list', async () => {

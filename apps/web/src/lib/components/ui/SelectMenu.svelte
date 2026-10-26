@@ -4,7 +4,13 @@
   // the next option that starts with them, Enter or Space picks, Escape closes back to the field.
   // The state (picks, names) is the field's SelectState.
   import type { Snippet } from 'svelte';
-  import { Listbox, Popover, Portal, useListCollection } from '@skeletonlabs/skeleton-svelte';
+  import {
+    Listbox,
+    Popover,
+    Portal,
+    useListCollection,
+    usePopover,
+  } from '@skeletonlabs/skeleton-svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import type { IconName } from '#lib/icons/names.js';
   import type { SelectState } from '#lib/components/ui/select.svelte.js';
@@ -57,11 +63,42 @@
   // Back on the field after a pick or Escape; the list that held the focus is gone by then.
   const refocus = () => requestAnimationFrame(() => document.getElementById(id)?.focus());
 
+  // Opened and closed through the popover itself: a closed `open` prop alone leaves it thinking it
+  // is open, and the next click on the field would close it instead.
+  const popoverId = $props.id();
+  const popover = usePopover(() => ({
+    id: popoverId,
+    ids: { trigger: id },
+    onOpenChange: (details) => (open = details.open),
+    onEscapeKeyDown: refocus,
+    initialFocusEl: () => list?.querySelector<HTMLElement>('[role="listbox"]') ?? null,
+    positioning: {
+      placement: 'bottom-start',
+      sameWidth: true,
+      fitViewport: true,
+      offset: { mainAxis: 4 },
+      strategy: inDialog ? 'fixed' : 'absolute',
+    },
+  }));
+  const close = () => {
+    popover().setOpen(false);
+    refocus();
+  };
+
+  // The list reports no change for the option already picked, so picking it again closes here.
+  const keep = (slug: string | null | undefined) => {
+    if (!multiple && slug && slug === select.value[0]) close();
+  };
+  const keepHighlighted = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const active = (event.currentTarget as HTMLElement).getAttribute('aria-activedescendant');
+    keep(active ? document.getElementById(active)?.dataset.value : null);
+  };
+
   const choose = (next: string[]) => {
     if (multiple) return select.commit(next);
     if (next[0] && next[0] !== select.value[0]) select.commit([next[0]]);
-    open = false;
-    refocus();
+    close();
   };
 
   const labelId = $derived(`${id}-label`);
@@ -70,20 +107,7 @@
 
 <div class={rootClass}>
   <span id={labelId} class={labelClass}>{label}</span>
-  <Popover
-    ids={{ trigger: id }}
-    {open}
-    onOpenChange={(details) => (open = details.open)}
-    onEscapeKeyDown={refocus}
-    initialFocusEl={() => list?.querySelector<HTMLElement>('[role="listbox"]') ?? null}
-    positioning={{
-      placement: 'bottom-start',
-      sameWidth: true,
-      fitViewport: true,
-      offset: { mainAxis: 4 },
-      strategy: inDialog ? 'fixed' : 'absolute',
-    }}
-  >
+  <Popover.Provider value={popover}>
     <Popover.Trigger
       class="{controlClass} cursor-pointer text-left disabled:cursor-not-allowed disabled:opacity-50"
       aria-haspopup="listbox"
@@ -93,7 +117,7 @@
       onkeydown={(event: KeyboardEvent) => {
         if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
         event.preventDefault();
-        open = true;
+        popover().setOpen(true);
       }}
     >
       {#if icon}<Icon name={icon} size={18} class="ml-3 shrink-0 text-muted" />{/if}
@@ -123,10 +147,14 @@
                 onValueChange={(details) => choose(details.value)}
               >
                 <Listbox.Label class="sr-only">{label}</Listbox.Label>
-                <Listbox.Content class="group focus-visible:outline-none">
+                <Listbox.Content
+                  class="group focus-visible:outline-none"
+                  onkeydown={keepHighlighted}
+                >
                   {#each select.options as item (item.slug)}
                     <Listbox.Item
                       {item}
+                      onclick={() => keep(item.slug)}
                       highlightOnHover
                       class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-2 text-sm data-highlighted:bg-surface-wash group-focus-visible:data-highlighted:outline-2 group-focus-visible:data-highlighted:-outline-offset-2 group-focus-visible:data-highlighted:outline-primary-500 data-selected:font-semibold"
                     >
@@ -151,6 +179,6 @@
       {/snippet}
       {#if inDialog}{@render content()}{:else}<Portal>{@render content()}</Portal>{/if}
     {/if}
-  </Popover>
+  </Popover.Provider>
   {@render extras()}
 </div>

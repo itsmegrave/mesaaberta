@@ -110,6 +110,16 @@
   });
   const close = () => dialog().setOpen(false);
 
+  // The list reports no change for the option already picked, so picking it again closes here.
+  const keep = (slug: string | null | undefined) => {
+    if (!multiple && slug && slug === select.value[0]) close();
+  };
+  const keepHighlighted = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const active = (event.currentTarget as HTMLElement).getAttribute('aria-activedescendant');
+    keep(active ? document.getElementById(active)?.dataset.value : null);
+  };
+
   const choose = (next: string[]) => {
     if (multiple) return select.commit(next);
     // Tapping the picked option again keeps it: a single pick is cleared by picking another.
@@ -167,6 +177,7 @@
     {/if}
     <!-- The list scrolls inside the sheet; the page behind it stays put. -->
     <Listbox.Content
+      onkeydown={keepHighlighted}
       class="group min-h-0 flex-1 overflow-y-auto p-2 pb-6 focus-visible:outline-none"
     >
       {#if picked.length > 0}
@@ -220,6 +231,7 @@
 {#snippet option(item: SelectItem)}
   <Listbox.Item
     {item}
+    onclick={() => keep(item.slug)}
     class="flex min-h-13 cursor-pointer items-center gap-3 rounded-lg px-3 text-base group-focus-visible:data-highlighted:outline-2 group-focus-visible:data-highlighted:-outline-offset-2 group-focus-visible:data-highlighted:outline-primary-500 data-selected:bg-surface-wash data-selected:font-semibold"
   >
     <Listbox.ItemText class="min-w-0 flex-1"
