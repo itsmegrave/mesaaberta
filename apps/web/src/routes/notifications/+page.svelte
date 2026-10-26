@@ -7,7 +7,7 @@
   import NotificationAction from '#lib/components/NotificationAction.svelte';
   import NotificationIcon from '#lib/components/ui/NotificationIcon.svelte';
   import type { NotificationCategory } from '@mesaaberta/core/notifications/kinds';
-  import { notificationIcon, notificationText } from '#lib/notifications/text.js';
+  import { isAlert, notificationIcon, notificationText } from '#lib/notifications/text.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
@@ -131,7 +131,11 @@
             aria-hidden="true"
             class="mt-2 size-2 shrink-0 rounded-full {item.read ? '' : 'bg-primary-500'}"
           ></span>
-          <NotificationIcon icon={notificationIcon(item)} size={22} class="mt-1 text-muted" />
+          <NotificationIcon
+            icon={notificationIcon(item)}
+            size={22}
+            class="mt-1 {isAlert(item) ? 'text-error-700-300' : 'text-muted'}"
+          />
           <div class="min-w-0 flex-1">
             {#if item.link}
               <NotificationAction

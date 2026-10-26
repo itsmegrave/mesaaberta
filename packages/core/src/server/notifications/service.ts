@@ -64,7 +64,12 @@ export async function listNotifications(
     .from(notifications)
     .leftJoin(profiles, eq(profiles.id, notifications.actorId))
     .where(feedWhere(recipientId, filter))
-    .orderBy(desc(notifications.createdAt), desc(notifications.id))
+    // A high alert (reports hid a place) stays on top until it is read.
+    .orderBy(
+      desc(sql`${notifications.type} = 'place_hidden_alert' and ${notifications.readAt} is null`),
+      desc(notifications.createdAt),
+      desc(notifications.id),
+    )
     .limit(limit)
     .offset(offset);
 

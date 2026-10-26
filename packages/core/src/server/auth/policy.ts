@@ -101,6 +101,8 @@ type Resources = {
    */
   'place:edit': { submitterId: string; ownerId: string | null };
   'place:withdraw': { submitterId: string; ownerId: string | null };
+  /** Reporting a listed place: any signed-in member but the ones who look after it. */
+  'place:report': { submitterId: string; ownerId: string | null };
   /** The report queue, its decisions and the audit log. */
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */
@@ -234,6 +236,8 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'place:edit': (actor, place) =>
     place !== undefined &&
     (actor.role === 'admin' || actor.id === place.submitterId || actor.id === place.ownerId),
+  'place:report': (actor, place) =>
+    place !== undefined && actor.id !== place.submitterId && actor.id !== place.ownerId,
   'place:withdraw': (actor, place) =>
     place !== undefined && (actor.id === place.submitterId || actor.id === place.ownerId),
   'moderation:manage': (actor) => actor.role === 'admin',

@@ -171,7 +171,13 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       });
     case 'partner_owner_removed':
       return m.notification_partner_owner_removed({ player, partner: item.metadata.partner ?? '' });
+    case 'place_hidden_alert':
+      return m.notification_place_hidden_alert({ place: item.metadata.place ?? '' });
     case 'moderation_notice':
+      if (item.metadata.placeHidden)
+        return m.notification_place_hidden({ place: item.metadata.placeHidden });
+      if (item.metadata.placeRestored)
+        return m.notification_place_restored({ place: item.metadata.placeRestored });
       if (item.metadata.partnerWithdrawn)
         return m.notification_partner_withdrawn({ partner: item.metadata.partnerWithdrawn });
       if (item.metadata.placeApproved)
@@ -227,6 +233,10 @@ const ICONS = new Set<string>([
 ]);
 
 /** The notification's own icon when it is one the bell can draw, else its type's. */
+/** A high alert still unread (reports hid a place): drawn in the danger tone, pinned atop the feed. */
+export const isAlert = (item: { type: string; read: boolean }) =>
+  !item.read && item.type === 'place_hidden_alert';
+
 export function notificationIcon(item: Pick<Shown, 'type' | 'icon'>): NotificationIcon {
   if (item.icon && ICONS.has(item.icon)) return item.icon as NotificationIcon;
   return isNotificationType(item.type) ? NOTIFICATION_KINDS[item.type].icon : 'megaphone';

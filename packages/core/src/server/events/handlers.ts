@@ -6,6 +6,7 @@ import { inviteHandler, type InviteEnv } from './invites';
 import { notificationHandler } from './notifications';
 import { announcementHandler } from './announcements';
 import { moderationHandler } from './moderation';
+import { placeAlertHandler } from './place-alerts';
 import { catalogHandler } from './catalog';
 import { badgeHandler, badgeNoticeHandler } from '../badges/handlers';
 import { banMailHandler } from './ban-mail';
@@ -26,6 +27,7 @@ export const bellHandlers: readonly Handler[] = [
   notificationHandler,
   announcementHandler,
   moderationHandler,
+  placeAlertHandler,
   catalogHandler,
   playerInvitationNotificationHandler,
   partnerOwnerNotificationHandler,

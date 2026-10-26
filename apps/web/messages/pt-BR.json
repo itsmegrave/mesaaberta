@@ -3153,5 +3153,46 @@
   "place_status_hidden": "Escondido por denúncias",
   "notification_place_approved": "Seu lugar “{place}” foi aprovado e já aparece em Onde jogar.",
   "notification_place_removed": "Seu lugar “{place}” não está em Onde jogar. Motivo: {reason}.",
-  "notification_place_removed_note": "Seu lugar “{place}” não está em Onde jogar. Motivo: {reason}. Recado: {note}"
+  "notification_place_removed_note": "Seu lugar “{place}” não está em Onde jogar. Motivo: {reason}. Recado: {note}",
+  "place_report": "Denunciar lugar",
+  "place_report_title": "Denunciar “{name}”",
+  "place_report_lede": "Conte o que está errado. Quem cuida do lugar não fica sabendo quem denunciou, e a equipe analisa cada denúncia.",
+  "admin_places_restore_menu": "Restaurar…",
+  "admin_places_restore": "Restaurar lugar",
+  "admin_places_restore_title": "Restaurar “{name}”?",
+  "admin_places_restore_text": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "O lugar volta para Onde jogar na hora e quem cuida dele recebe um aviso.",
+        "count=1": "O lugar volta para Onde jogar na hora, a denúncia é descartada e quem cuida dele recebe um aviso.",
+        "count=*": "O lugar volta para Onde jogar na hora, as {count} denúncias são descartadas e quem cuida dele recebe um aviso."
+      }
+    }
+  ],
+  "admin_places_restore_note": "Nota para a equipe (opcional)",
+  "admin_places_restore_note_hint": "Até {max} caracteres. Fica nas denúncias descartadas; quem denunciou não lê.",
+  "admin_places_restore_confirm": "Restaurar",
+  "admin_places_restore_done": "Lugar restaurado.",
+  "admin_places_high_priority": "Alta prioridade",
+  "admin_places_hidden_alert": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 lugar oculto por denúncias",
+        "count=*": "{count} lugares ocultos por denúncias"
+      }
+    }
+  ],
+  "admin_places_hidden_alert_detail": "Fica fora de Onde jogar até você restaurar ou remover.",
+  "notification_place_hidden_alert": "Alerta: “{place}” recebeu muitas denúncias e foi ocultado. Restaure ou remova.",
+  "notification_place_hidden": "Seu lugar “{place}” está temporariamente oculto enquanto a equipe analisa algumas denúncias.",
+  "notification_place_restored": "Seu lugar “{place}” voltou para Onde jogar.",
+  "admin_report_kind_place": "Denúncia de lugar",
+  "admin_report_place": "Lugar",
+  "admin_report_place_gone": "Lugar que não existe mais",
+  "admin_report_place_reports": "Denúncias abertas",
+  "admin_reports_target_place_option": "Lugares"
 }

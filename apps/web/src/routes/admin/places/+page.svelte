@@ -16,7 +16,12 @@
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { placeArea, placeKindIcons, placeKindLabels, placeTagLabel } from '#lib/places/labels.js';
   import { formatCep } from '@mesaaberta/core/location/cep';
-  import { approvePlaceSchema, removePlaceSchema } from '@mesaaberta/core/moderation/reports';
+  import {
+    approvePlaceSchema,
+    removePlaceSchema,
+    restorePlaceSchema,
+    RESOLUTION_NOTE_MAX,
+  } from '@mesaaberta/core/moderation/reports';
   import { PLACE_ADMIN_STATUSES } from '@mesaaberta/core/places/admin-filters';
   import { placeTags } from '@mesaaberta/core/places/tags';
   import type { AdminPlaces } from '@mesaaberta/core/server/places/admin';
@@ -36,6 +41,8 @@
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.
   const approving = new Target<Row>();
   const removing = new Target<Row>();
+  const restoring = new Target<Row>();
+  const hidden = (row: Row) => !!row.hiddenAt && !row.removedAt;
   const badge = (row: Row) =>
     (row.removedAt
       ? 'place:removed'
@@ -60,6 +67,16 @@
             label: m.admin_places_approve_menu(),
             icon: 'check' as const,
             onselect: () => (approving.current = row),
+          },
+        ]
+      : []),
+    ...(hidden(row)
+      ? [
+          {
+            id: 'restore',
+            label: m.admin_places_restore_menu(),
+            icon: 'refresh-cw' as const,
+            onselect: () => (restoring.current = row),
           },
         ]
       : []),
@@ -150,7 +167,14 @@
             <p class="truncate font-semibold">{row.name}</p>
             <p class="truncate text-muted">{placeArea(row)}</p>
             <p class="truncate text-sm text-muted">{street(row)}</p>
-            <div class="mt-1"><StatusBadge status={badge(row)} /></div>
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+              <StatusBadge status={badge(row)} />
+              {#if hidden(row)}
+                <span class="text-sm font-semibold text-error-700-300"
+                  >{m.admin_places_high_priority()}</span
+                >
+              {/if}
+            </div>
           </div>
         </div>
       {:else if id === 'kind'}
@@ -186,6 +210,11 @@
         {/snippet}
         {#snippet badges()}
           <StatusBadge status={badge(row)} />
+          {#if hidden(row)}
+            <span class="text-sm font-semibold text-error-700-300"
+              >{m.admin_places_high_priority()}</span
+            >
+          {/if}
           {#if row.reports > 0}
             <span class="text-sm text-muted"
               >{m.admin_partners_reports_phone({ count: row.reports })}</span
@@ -210,6 +239,28 @@
         text={m.admin_places_approve_text({ tags: tagsOf(row) })}
         confirm={m.admin_places_approve_confirm()}
         success={m.admin_places_approve_done()}
+      />
+    {/key}
+  {/if}
+  {#if restoring.current}
+    {@const row = restoring.current}
+    {#key row.id}
+      <ModerationDialog
+        bind:open={restoring.open}
+        trigger={false}
+        action="?/restore"
+        schema={restorePlaceSchema}
+        fields={{ id: row.id }}
+        write={{
+          name: 'note',
+          label: m.admin_places_restore_note(),
+          hint: m.admin_places_restore_note_hint({ max: RESOLUTION_NOTE_MAX }),
+        }}
+        label={m.admin_places_restore()}
+        title={m.admin_places_restore_title({ name: row.name })}
+        text={m.admin_places_restore_text({ count: row.reports })}
+        confirm={m.admin_places_restore_confirm()}
+        success={m.admin_places_restore_done()}
       />
     {/key}
   {/if}

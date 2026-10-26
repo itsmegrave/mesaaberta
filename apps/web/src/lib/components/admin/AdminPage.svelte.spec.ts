@@ -7,7 +7,15 @@ vi.mock('$app/state', () => ({
     url: new URL('http://localhost/admin/tables'),
     route: { id: '/admin/tables' },
     data: {
-      adminCounts: { reports: 0, queue: 0, connections: 0, events: 0, partners: 0, places: 0 },
+      adminCounts: {
+        reports: 0,
+        queue: 0,
+        connections: 0,
+        events: 0,
+        partners: 0,
+        places: 0,
+        hiddenPlaces: 0,
+      },
     },
   },
 }));

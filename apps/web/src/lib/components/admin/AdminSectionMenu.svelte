@@ -19,7 +19,12 @@
   );
   const current = $derived(sectionOf(groups, page.route.id, page.url.pathname));
   const waiting = $derived(
-    counts.reports + counts.queue + counts.connections + counts.partners + counts.places,
+    counts.reports +
+      counts.queue +
+      counts.connections +
+      counts.partners +
+      counts.places +
+      counts.hiddenPlaces,
   );
 
   // The menu is built when it opens: a closed one would put an inline `style` on the page, which
@@ -27,8 +32,8 @@
   let open = $state(false);
 </script>
 
-{#snippet badge(value: number | undefined)}
-  <CountBadge count={value ?? 0} max={99} class="min-w-6 px-1" />
+{#snippet badge(value: number | undefined, alert = false)}
+  <CountBadge count={value ?? 0} max={99} tone={alert ? 'error' : 'warning'} class="min-w-6 px-1" />
 {/snippet}
 
 <div class="md:hidden">
@@ -44,7 +49,7 @@
       <span class="min-w-0 flex-1 truncate text-left"
         >{m.admin_section({ name: current?.label ?? m.admin_nav_overview() })}</span
       >
-      {@render badge(waiting)}
+      {@render badge(waiting, counts.hiddenPlaces > 0)}
       <Icon name="chevron-down" size={18} />
     </Menu.Trigger>
     {#if open}<Portal>
@@ -65,7 +70,7 @@
                 >
                   <Icon name={section.icon} size={20} class="shrink-0 text-muted" />
                   <span class="min-w-0 flex-1 truncate">{section.label}</span>
-                  {@render badge(section.count)}
+                  {@render badge(section.count, section.alert)}
                 </Menu.Item>
               {/each}
             {/each}

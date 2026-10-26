@@ -15,6 +15,7 @@ import {
   removeCrowdfundingSchema,
   removePartnerSchema,
   removePlaceSchema,
+  restorePlaceSchema,
   reportIdSchema,
 } from '../../moderation/reports';
 import type { Actor } from '../auth/policy';
@@ -24,7 +25,7 @@ import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { Invalid } from '../errors';
 import { approvePartner, removePartner, setPartnerTypes } from '../partners/admin';
-import { approvePlace, removePlace } from '../places/admin';
+import { approvePlace, removePlace, restorePlace } from '../places/admin';
 import {
   banAccount,
   closeReport,
@@ -154,6 +155,10 @@ export const moderationDecisions = {
     schema: removePlaceSchema,
     apply: (db, actor, { id, reason, note, reportId }) =>
       removePlace(db, actor, id, { reason, note, reportId: reportId || null }),
+  }),
+  'place.restore': decision({
+    schema: restorePlaceSchema,
+    apply: (db, actor, { id, note }) => restorePlace(db, actor, id, { note }),
   }),
   // Closing a table from the tables list, `/admin/tables`.
   'table.close': decision({

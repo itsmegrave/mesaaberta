@@ -17,6 +17,7 @@ import {
   playerInvitations,
   partnerLinks,
   partners,
+  places,
   profiles,
   registrations,
   reports,
@@ -26,6 +27,7 @@ import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
 import { reportSubject } from './reports';
+import type { PlaceKind } from '../../places/types';
 export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
 import type { EventType } from '@mesaaberta/core/server/events/types';
 
@@ -86,6 +88,8 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       crowdfunding: crowdfundings.name,
       // The partner a partner report is about: it has no table either.
       partner: partners.name,
+      // The "Onde jogar" place a place report is about.
+      place: places.name,
       reporter: reporter.username,
     })
     .from(reports)
@@ -105,6 +109,7 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       and(eq(reports.targetType, 'crowdfunding'), eq(crowdfundings.id, reports.targetId)),
     )
     .leftJoin(partners, and(eq(reports.targetType, 'partner'), eq(partners.id, reports.targetId)))
+    .leftJoin(places, and(eq(reports.targetType, 'place'), eq(places.id, reports.targetId)))
     .where(where)
     .orderBy(direction(reports.createdAt), direction(reports.id))
     .limit(filters.pageSize)
@@ -201,6 +206,34 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
         .orderBy(partnerLinks.position)
     : [];
 
+  // The place a place report is about: where it is, who sent it (admins only), whether it is up or
+  // hidden, and how many reports still wait on it.
+  const [place] =
+    row.report.targetType === 'place'
+      ? await db
+          .select({
+            id: places.id,
+            slug: places.slug,
+            name: places.name,
+            kind: places.kind,
+            street: places.street,
+            neighbourhood: places.neighbourhood,
+            city: places.city,
+            state: places.state,
+            approvedAt: places.approvedAt,
+            hiddenAt: places.hiddenAt,
+            removedAt: places.removedAt,
+            submitter: { id: profiles.id, username: profiles.username },
+            openReports:
+              sql<number>`(select count(*) from ${reports} where ${reports.targetType} = 'place' and ${reports.targetId} = ${places.id} and ${inArray(reports.status, [...OPEN_REPORT_STATUSES])})`.mapWith(
+                Number,
+              ),
+          })
+          .from(places)
+          .leftJoin(profiles, eq(profiles.id, places.submitterId))
+          .where(eq(places.id, row.report.targetId))
+      : [];
+
   // The person a player, message or person report is about (`reportSubject`). A message or person
   // report may come from a direct conversation, with no table: then there is no seat.
   const subjectId = reportSubject(row.report);
@@ -236,12 +269,15 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
     player: player ?? null,
     crowdfunding: campaign ?? null,
     partner: partner ? { ...partner, links: partnerLinkRows } : null,
+    place: place ? { ...place, kind: place.kind as PlaceKind } : null,
     can: {
       review: row.report.status === 'open',
       close: open,
       closeTable: open && row.report.targetType === 'table' && row.table?.status === 'active',
       removeCrowdfunding: open && !!campaign && !campaign.removedAt,
       removePartner: open && !!partner && !partner.removedAt,
+      removePlace: open && !!place && !place.removedAt,
+      restorePlace: open && !!place && !!place.hiddenAt && !place.removedAt,
       ban:
         open &&
         !!subjectProfile &&

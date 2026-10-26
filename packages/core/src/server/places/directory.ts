@@ -211,12 +211,12 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
     hidden,
     /** The viewer sent it or owns it, or moderates: they may edit it. */
     canEdit: insider,
+    /** "Denunciar lugar" once it is listed: anyone but whoever sent it or owns it (a visitor signs in first). */
+    canReport: !mine && !pending && !hidden,
     /** The viewer is its owner: their edits publish at once. */
     owner: viewer !== null && viewer.id === place.ownerId,
     /** Nobody owns it yet, and it is up: "Este lugar é seu? Reivindicar". */
     claimable: !pending && !hidden && place.ownerId === null,
-    /** "Denunciar lugar": anyone but whoever sent it or owns it. */
-    canReport: !mine && !pending,
   };
 }
 

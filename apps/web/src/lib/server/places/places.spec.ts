@@ -19,10 +19,13 @@ import {
   listAdminPlaces,
   pendingPlaceCount,
   removePlace,
+  restorePlace,
 } from '@mesaaberta/core/server/places/admin';
+import { placeAlertHandler } from '@mesaaberta/core/server/events/place-alerts';
 import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
 import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 import {
+  filePlaceReport,
   findEditablePlace,
   PlaceDuplicate,
   submitPlace,
@@ -71,6 +74,8 @@ beforeAll(async () => {
     { id: id(1), username: 'ana' },
     { id: id(2), username: 'bruno' },
     { id: id(99), username: 'admin', role: 'admin' },
+    // Members who report, in the auto-hide tests.
+    ...[10, 11, 12, 13, 14, 15, 16].map((n) => ({ id: id(n), username: `membro${n}` })),
   ]);
   await test.db
     .insert(postalCodes)
@@ -315,12 +320,12 @@ describe('the admin list', () => {
 
   it('opens on the places that wait, oldest first, naming who sent each', async () => {
     const first = await send();
-    // Every place here is sent at the same `now`; the first one waited longest.
+    const second = await send({ name: 'Clube Ágora' }, bruno);
+    // Sent one after the other: the queue is worked oldest first.
     await test.db
       .update(places)
-      .set({ createdAt: new Date(now.getTime() - 60_000) })
-      .where(eq(places.id, first.id));
-    await send({ name: 'Clube Ágora' }, bruno);
+      .set({ createdAt: new Date(now.getTime() + 1000) })
+      .where(eq(places.id, second.id));
     const up = await send({ name: 'Bar da Rolagem' });
     await approvePlace(test.db, admin, up.id, { now });
 
@@ -407,5 +412,102 @@ describe('the bell', () => {
     const [event] = await test.db.select().from(events).where(eq(events.type, 'PlaceRemoved'));
     await moderationHandler.handle(await stored(event.id), test.db);
     expect(await bell()).toEqual([]);
+  });
+});
+
+describe('reports on a place', () => {
+  const reporters = [10, 11, 12, 13, 14, 15, 16].map(member);
+  const listed = async () => {
+    const { id: placeId } = await send();
+    await approvePlace(test.db, admin, placeId, { now });
+    return placeId;
+  };
+  const report = (placeId: string, actor: Actor) =>
+    filePlaceReport(test.db, actor, placeId, { reason: 'place_closed', details: '' }, { now });
+  const stored = async (eventId: string) => {
+    const [row] = await test.db.select().from(events).where(eq(events.id, eventId));
+    return { ...row, attempts: 0 } as unknown as StoredEvent;
+  };
+
+  it('is refused for whoever sent it, for a place not listed, and twice from one member', async () => {
+    const placeId = await listed();
+    await expect(report(placeId, ana)).rejects.toThrow(Forbidden);
+    await report(placeId, bruno);
+    await expect(report(placeId, bruno)).rejects.toMatchObject({ message: 'already_reported' });
+    const { id: waiting } = await send({ name: 'Outro' });
+    await expect(report(waiting, bruno)).rejects.toThrow(NotFound);
+  });
+
+  it('keeps the place public at five, and hides it once at the sixth', async () => {
+    const placeId = await listed();
+    for (const actor of reporters.slice(0, 5)) await report(placeId, actor);
+    expect((await placeAt(placeId)).hiddenAt).toBeNull();
+
+    const eventIds = await report(placeId, reporters[5]);
+    expect(await placeAt(placeId)).toMatchObject({ hiddenAt: now, hiddenReason: 'reports' });
+    const hidden = await test.db.select().from(events).where(eq(events.type, 'PlaceHidden'));
+    expect(hidden).toHaveLength(1);
+    expect(eventIds).toContain(hidden[0].id);
+    // Hidden, it takes no more reports, so it cannot alert twice.
+    await expect(report(placeId, reporters[6])).rejects.toThrow(NotFound);
+  });
+
+  it('hides it once when the last reports land together', async () => {
+    const placeId = await listed();
+    for (const actor of reporters.slice(0, 4)) await report(placeId, actor);
+    const settled = await Promise.allSettled(
+      reporters.slice(4).map((actor) => report(placeId, actor)),
+    );
+    expect(settled.filter((result) => result.status === 'fulfilled').length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(await test.db.select().from(events).where(eq(events.type, 'PlaceHidden'))).toHaveLength(
+      1,
+    );
+  });
+
+  it('does not count dismissed reports', async () => {
+    const placeId = await listed();
+    for (const actor of reporters.slice(0, 5)) await report(placeId, actor);
+    await test.db.update(reports).set({ status: 'dismissed' }).where(eq(reports.targetId, placeId));
+    await report(placeId, reporters[5]);
+    expect((await placeAt(placeId)).hiddenAt).toBeNull();
+  });
+
+  it('alerts every admin and tells the submitter, then restoring dismisses the reports and lists it again', async () => {
+    const placeId = await listed();
+    let eventIds: string[] = [];
+    for (const actor of reporters.slice(0, 6)) eventIds = await report(placeId, actor);
+    await placeAlertHandler.handle(await stored(eventIds.at(-1)!), test.db);
+    const bell = await test.db.select().from(notifications);
+    expect(
+      bell
+        .map(({ recipientId, type, link }) => ({ recipientId, type, link }))
+        .sort((a, b) => a.type.localeCompare(b.type)),
+    ).toEqual([
+      { recipientId: ana.id, type: 'moderation_notice', link: null },
+      { recipientId: admin.id, type: 'place_hidden_alert', link: '/admin/places?status=reported' },
+    ]);
+    expect(bell.every((row) => row.actorId === null)).toBe(true);
+    expect(
+      (await listAdminPlaces(test.db, admin, new URLSearchParams('status=reported')))!.rows[0],
+    ).toMatchObject({ id: placeId, reports: 6 });
+
+    await expect(restorePlace(test.db, ana, placeId, { note: '' })).rejects.toThrow(Forbidden);
+    const restored = await restorePlace(test.db, admin, placeId, { note: 'Está aberto' }, { now });
+    expect(await placeAt(placeId)).toMatchObject({ hiddenAt: null, hiddenReason: null });
+    const closed = await test.db.select().from(reports).where(eq(reports.targetId, placeId));
+    expect(
+      closed.every((row) => row.status === 'dismissed' && row.resolutionNote === 'Está aberto'),
+    ).toBe(true);
+    await placeAlertHandler.handle(await stored(restored.at(-1)!), test.db);
+    const [notice] = await test.db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.eventId, restored.at(-1)!));
+    expect(notice).toMatchObject({ recipientId: ana.id, link: '/pp/taverna-do-dado' });
+    await expect(restorePlace(test.db, admin, placeId, { note: '' })).rejects.toMatchObject({
+      message: 'not_hidden',
+    });
   });
 });
