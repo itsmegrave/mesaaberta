@@ -51,6 +51,12 @@ export const partnerActions = {
   setTypes: decide('partner.setTypes', ['id', 'types']),
 };
 
+/** Approving, rejecting and removing places from the "Onde jogar" queue, `/admin/places`. */
+export const placeActions = {
+  approve: decide('place.approve', ['id']),
+  remove: decide('place.remove', ['id', 'reason', 'note']),
+};
+
 /** Closing a table from the tables list, `/admin/tables`. */
 export const tableActions = {
   close: decide('table.close', ['tableId', 'note']),

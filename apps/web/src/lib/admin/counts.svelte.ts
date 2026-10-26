@@ -13,6 +13,7 @@ export const NO_COUNTS: AdminCounts = {
   connections: 0,
   events: 0,
   partners: 0,
+  places: 0,
 };
 
 const key = Symbol('admin-counts');

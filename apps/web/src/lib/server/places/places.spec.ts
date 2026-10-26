@@ -4,6 +4,7 @@ import type { PlaceInput } from '@mesaaberta/core/places/schema';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
   events,
+  notifications,
   placeLinks,
   places,
   placeTags,
@@ -13,7 +14,14 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
-import { approvePlace, pendingPlaceCount, removePlace } from '@mesaaberta/core/server/places/admin';
+import {
+  approvePlace,
+  listAdminPlaces,
+  pendingPlaceCount,
+  removePlace,
+} from '@mesaaberta/core/server/places/admin';
+import { moderationHandler } from '@mesaaberta/core/server/events/moderation';
+import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 import {
   findEditablePlace,
   PlaceDuplicate,
@@ -74,6 +82,7 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 beforeEach(async () => {
+  await test.db.delete(notifications);
   await test.db.delete(reports);
   await test.db.delete(places);
   await test.db.delete(events);
@@ -298,5 +307,105 @@ describe('taking a place off', () => {
     await expect(
       removePlace(test.db, admin, placeId, { reason: 'spam', note: '' }, { now }),
     ).rejects.toThrow(Invalid);
+  });
+});
+
+describe('the admin list', () => {
+  const list = (query = '') => listAdminPlaces(test.db, admin, new URLSearchParams(query));
+
+  it('opens on the places that wait, oldest first, naming who sent each', async () => {
+    const first = await send();
+    // Every place here is sent at the same `now`; the first one waited longest.
+    await test.db
+      .update(places)
+      .set({ createdAt: new Date(now.getTime() - 60_000) })
+      .where(eq(places.id, first.id));
+    await send({ name: 'Clube Ágora' }, bruno);
+    const up = await send({ name: 'Bar da Rolagem' });
+    await approvePlace(test.db, admin, up.id, { now });
+
+    const waiting = await list();
+    expect(waiting).toMatchObject({ status: 'pending', total: 2, pages: 1 });
+    expect(waiting!.rows.map((row) => [row.name, row.submitter])).toEqual([
+      ['Taverna do Dado', 'ana'],
+      ['Clube Ágora', 'bruno'],
+    ]);
+    expect(waiting!.rows[0]).toMatchObject({ id: first.id, city: 'Recife', reports: 0 });
+    expect((await list('status=up'))!.rows.map((row) => row.name)).toEqual(['Bar da Rolagem']);
+    expect((await list('status=all'))!.total).toBe(3);
+  });
+
+  it('finds a place by name, city or @ of who sent it, and lists the removed ones', async () => {
+    const first = await send();
+    await send({ name: 'Clube Ágora', postalCode: '01001-000' }, bruno);
+    expect((await list('q=paulo'))!.rows.map((row) => row.name)).toEqual(['Clube Ágora']);
+    expect((await list('q=@ana'))!.rows.map((row) => row.name)).toEqual(['Taverna do Dado']);
+    await removePlace(test.db, admin, first.id, { reason: 'spam', note: '' }, { now });
+    expect((await list('status=removed'))!.rows.map((row) => row.name)).toEqual([
+      'Taverna do Dado',
+    ]);
+  });
+
+  it('answers null past the last page, and is for admins only', async () => {
+    expect(await list('page=2')).toBeNull();
+    await expect(listAdminPlaces(test.db, ana, new URLSearchParams())).rejects.toThrow(Forbidden);
+  });
+});
+
+describe('the bell', () => {
+  const stored = async (eventId: string) => {
+    const [row] = await test.db.select().from(events).where(eq(events.id, eventId));
+    return { ...row, attempts: 0 } as unknown as StoredEvent;
+  };
+  const bell = async () =>
+    (await test.db.select().from(notifications)).map(({ recipientId, link, metadata }) => ({
+      recipientId,
+      link,
+      metadata,
+    }));
+
+  it('tells the submitter their place was approved, linked to its page', async () => {
+    const { id: placeId } = await send();
+    const eventIds = await approvePlace(test.db, admin, placeId, { now });
+    await moderationHandler.handle(await stored(eventIds.at(-1)!), test.db);
+    expect(await bell()).toEqual([
+      {
+        recipientId: ana.id,
+        link: '/pp/taverna-do-dado',
+        metadata: { placeId, placeApproved: 'Taverna do Dado' },
+      },
+    ]);
+  });
+
+  it('tells the submitter why it was turned down, with the note', async () => {
+    const { id: placeId } = await send();
+    const eventIds = await removePlace(
+      test.db,
+      admin,
+      placeId,
+      { reason: 'not_public', note: 'É uma casa' },
+      { now },
+    );
+    await moderationHandler.handle(await stored(eventIds.at(-1)!), test.db);
+    expect(await bell()).toEqual([
+      {
+        recipientId: ana.id,
+        link: null,
+        metadata: {
+          placeId,
+          placeRemoved: 'Taverna do Dado',
+          reason: 'not_public',
+          note: 'É uma casa',
+        },
+      },
+    ]);
+  });
+
+  it('tells nobody when the submitter withdrew it', async () => {
+    const { id: placeId } = await send();
+    await withdrawPlace(test.db, ana, placeId, { now });
+    const [event] = await test.db.select().from(events).where(eq(events.type, 'PlaceRemoved'));
+    await moderationHandler.handle(await stored(event.id), test.db);
+    expect(await bell()).toEqual([]);
   });
 });

@@ -24,7 +24,7 @@ vi.mock('$app/state', () => ({
     route: { id: '/admin' },
     data: {
       viewer: { timezone: 'America/Sao_Paulo' },
-      adminCounts: { reports: 3, queue: 2, connections: 1, events: 0, partners: 0 },
+      adminCounts: { reports: 3, queue: 2, connections: 1, events: 0, partners: 0, places: 0 },
     },
   },
 }));
@@ -252,7 +252,7 @@ describe('admin pages on a phone', () => {
             timezone: 'America/Sao_Paulo',
           },
         ],
-        adminCounts: { reports: 3, queue: 2, connections: 1, events: 0, partners: 0 },
+        adminCounts: { reports: 3, queue: 2, connections: 1, events: 0, partners: 0, places: 0 },
         updatedAt: new Date('2026-10-02T12:00:00Z'),
         viewer: { timezone: 'America/Sao_Paulo' },
       } as never,

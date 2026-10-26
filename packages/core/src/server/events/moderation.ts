@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { activeAdmins } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { crowdfundings, gameTables, notifications, partners, profiles } from '../db/schema';
+import { crowdfundings, gameTables, notifications, partners, places, profiles } from '../db/schema';
 import { ownersOf } from '../partners/owners';
 import { NOTIFICATION_KINDS, type NotificationType } from '../../notifications/kinds';
 import type { Handler, StoredEvent } from './types';
@@ -16,13 +16,18 @@ type ModerationEvent = Extract<
       | 'TableClosedByModeration'
       | 'CrowdfundingRemoved'
       | 'PartnerApproved'
-      | 'PartnerRemoved';
+      | 'PartnerRemoved'
+      | 'PlaceApproved'
+      | 'PlaceRemoved';
   }
 >;
 
 async function recipientsOf(db: AnyDb, event: ModerationEvent) {
   if (event.type === 'CrowdfundingRemoved')
     return event.payload.submitterId ? [event.payload.submitterId] : [];
+  // A place's decisions reach whoever sent it (a withdrawal is their own, so nobody is told).
+  if (event.type === 'PlaceApproved' || event.type === 'PlaceRemoved')
+    return [event.payload.submitterId];
   // Everyone who looks after the partner now, or the submitter when it is gone.
   if (event.type === 'PartnerApproved' || event.type === 'PartnerRemoved')
     return ownersOf(db, { id: event.payload.partnerId, submitterId: event.payload.submitterId });
@@ -56,6 +61,8 @@ export const moderationHandler: Handler = {
     'CrowdfundingRemoved',
     'PartnerApproved',
     'PartnerRemoved',
+    'PlaceApproved',
+    'PlaceRemoved',
   ],
   async handle(event, db) {
     const moderation = event as ModerationEvent;
@@ -65,7 +72,9 @@ export const moderationHandler: Handler = {
         : moderation.type === 'TableClosedByModeration' ||
             moderation.type === 'CrowdfundingRemoved' ||
             moderation.type === 'PartnerApproved' ||
-            moderation.type === 'PartnerRemoved'
+            moderation.type === 'PartnerRemoved' ||
+            moderation.type === 'PlaceApproved' ||
+            moderation.type === 'PlaceRemoved'
           ? 'moderation_notice'
           : 'report_resolved';
     const recipients = (await recipientsOf(db, moderation)).filter((id) => id !== event.actorId);
@@ -107,6 +116,22 @@ export const moderationHandler: Handler = {
         : { partnerId: moderation.payload.partnerId, partnerWithdrawn: moderation.payload.name };
     }
 
+    // A place that was approved (linked to its page), or turned down with the reason and the note.
+    if (moderation.type === 'PlaceApproved') {
+      removal = { placeId: moderation.payload.placeId, placeApproved: moderation.payload.name };
+    } else if (moderation.type === 'PlaceRemoved' && moderation.payload.reason) {
+      const [place] = await db
+        .select({ note: places.removalNote })
+        .from(places)
+        .where(eq(places.id, moderation.payload.placeId));
+      removal = {
+        placeId: moderation.payload.placeId,
+        placeRemoved: moderation.payload.name,
+        reason: moderation.payload.reason,
+        ...(place?.note ? { note: place.note } : {}),
+      };
+    }
+
     const reportId = 'reportId' in moderation.payload ? moderation.payload.reportId : null;
     await db
       .insert(notifications)
@@ -118,11 +143,18 @@ export const moderationHandler: Handler = {
           eventId: event.id,
           category: NOTIFICATION_KINDS[type].category,
           type,
-          link: type === 'report_filed_admin' ? `/admin/reports/${reportId}` : null,
+          link:
+            type === 'report_filed_admin'
+              ? `/admin/reports/${reportId}`
+              : moderation.type === 'PlaceApproved'
+                ? `/pp/${moderation.payload.slug}`
+                : null,
           metadata:
             moderation.type === 'CrowdfundingRemoved' ||
             moderation.type === 'PartnerApproved' ||
-            moderation.type === 'PartnerRemoved'
+            moderation.type === 'PartnerRemoved' ||
+            moderation.type === 'PlaceApproved' ||
+            moderation.type === 'PlaceRemoved'
               ? removal
               : moderation.type === 'TableClosedByModeration'
                 ? {

@@ -4,6 +4,7 @@ import { badgeDecisionSchema } from '../../badges/grants';
 import {
   accountSchema,
   approvePartnerSchema,
+  approvePlaceSchema,
   banEnd,
   banFromReportSchema,
   banSchema,
@@ -13,6 +14,7 @@ import {
   partnerTypesSchema,
   removeCrowdfundingSchema,
   removePartnerSchema,
+  removePlaceSchema,
   reportIdSchema,
 } from '../../moderation/reports';
 import type { Actor } from '../auth/policy';
@@ -22,6 +24,7 @@ import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { Invalid } from '../errors';
 import { approvePartner, removePartner, setPartnerTypes } from '../partners/admin';
+import { approvePlace, removePlace } from '../places/admin';
 import {
   banAccount,
   closeReport,
@@ -141,6 +144,16 @@ export const moderationDecisions = {
   'partner.setTypes': decision({
     schema: partnerTypesSchema,
     apply: (db, actor, { id, types }) => setPartnerTypes(db, actor, id, types),
+  }),
+  // Approving, rejecting and removing "Onde jogar" places from `/admin/places`.
+  'place.approve': decision({
+    schema: approvePlaceSchema,
+    apply: (db, actor, { id }) => approvePlace(db, actor, id),
+  }),
+  'place.remove': decision({
+    schema: removePlaceSchema,
+    apply: (db, actor, { id, reason, note, reportId }) =>
+      removePlace(db, actor, id, { reason, note, reportId: reportId || null }),
   }),
   // Closing a table from the tables list, `/admin/tables`.
   'table.close': decision({

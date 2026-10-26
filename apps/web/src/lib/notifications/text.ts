@@ -174,6 +174,15 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
     case 'moderation_notice':
       if (item.metadata.partnerWithdrawn)
         return m.notification_partner_withdrawn({ partner: item.metadata.partnerWithdrawn });
+      if (item.metadata.placeApproved)
+        return m.notification_place_approved({ place: item.metadata.placeApproved });
+      if (item.metadata.placeRemoved) {
+        const place = item.metadata.placeRemoved;
+        const reason = reasonLabel(item.metadata.reason as ReportReason, 'place');
+        return item.metadata.note
+          ? m.notification_place_removed_note({ place, reason, note: item.metadata.note })
+          : m.notification_place_removed({ place, reason });
+      }
       if (item.metadata.partnerApproved)
         return m.notification_partner_approved({ partner: item.metadata.partnerApproved });
       if (item.metadata.partnerRemoved) {
