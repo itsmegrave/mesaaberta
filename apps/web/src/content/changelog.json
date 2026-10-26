@@ -15,6 +15,12 @@
         "description": "Quando a Mesa Aberta ganha uma versão nova, o sino avisa e você atualiza a página sem perder o que estava escrevendo."
       },
       {
+        "kind": "new",
+        "title": "Seu nome no perfil público",
+        "description": "Se quiser, você mostra seu nome abaixo do @usuário no perfil público. Ele começa desligado.",
+        "href": "/u/profile/edit"
+      },
+      {
         "kind": "improved",
         "title": "Confirmar a sessão passo a passo",
         "description": "Quem mestra diz se a sessão aconteceu, marca quem compareceu e escolhe a próxima data em etapas, e quem já avaliou a mesa conta como presente."
@@ -23,6 +29,12 @@
         "kind": "improved",
         "title": "Calendário com a próxima sessão",
         "description": "Ao confirmar que vêm mais sessões, o convite do calendário muda para a nova data."
+      },
+      {
+        "kind": "improved",
+        "title": "Convites mais claros",
+        "description": "A tela de convites segue o novo desenho, e “Sim, aconteceu” em Minhas mesas abre direto a presença da sessão.",
+        "href": "/u/tables"
       },
       {
         "kind": "improved",
