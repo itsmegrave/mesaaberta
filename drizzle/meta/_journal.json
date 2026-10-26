@@ -484,6 +484,13 @@
       "when": 1793025018123,
       "tag": "0068_places",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1793032437871,
+      "tag": "0069_place_claims",
+      "breakpoints": true
     }
   ]
 }

@@ -58,6 +58,13 @@ export const placeActions = {
   approve: decide('place.approve', ['id']),
   remove: decide('place.remove', ['id', 'reason', 'note']),
   restore: decide('place.restore', ['id', 'note']),
+  removeOwner: decide('place.removeOwner', ['id']),
+};
+
+/** Approving and rejecting "Este lugar é seu?" claims, `/admin/places/claims`. */
+export const placeClaimActions = {
+  approve: decide('place.approveClaim', ['id']),
+  reject: decide('place.rejectClaim', ['id', 'note']),
 };
 
 /** Closing a table from the tables list, `/admin/tables`. */

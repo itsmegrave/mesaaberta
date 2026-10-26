@@ -1257,6 +1257,46 @@ export const placeTags = pgTable(
   ],
 ).enableRLS();
 
+// A member who says they speak for a place asks to manage it. An admin approves (the place gets its
+// owner, and the other claims waiting on it are rejected) or rejects with a note. One waiting claim
+// per member and place. The contact is for the admins only.
+export const placeClaims = pgTable(
+  'place_claims',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    claimantId: uuid('claimant_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    relation: text('relation', { enum: ['owner', 'staff', 'organizer'] }).notNull(),
+    contact: text('contact').notNull(),
+    note: text('note'),
+    status: text('status', { enum: ['pending', 'approved', 'rejected'] })
+      .notNull()
+      .default('pending'),
+    // The admin who decided. Not a foreign key, like `places.approved_by`.
+    decidedBy: uuid('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    ...timestamps,
+  },
+  (claim) => [
+    uniqueIndex('place_claims_one_pending')
+      .on(claim.placeId, claim.claimantId)
+      .where(sql`${claim.status} = 'pending'`),
+    index('place_claims_status_idx').on(claim.status, claim.createdAt),
+    check('place_claims_contact_length', sql`char_length(${claim.contact}) BETWEEN 3 AND 120`),
+    check('place_claims_note_length', sql`char_length(${claim.note}) <= 500`),
+    check('place_claims_decision_note_length', sql`char_length(${claim.decisionNote}) <= 1000`),
+    check(
+      'place_claims_decided',
+      sql`(${claim.status} = 'pending') = (${claim.decidedAt} IS NULL)`,
+    ),
+  ],
+).enableRLS();
+
 // Source identities survive moderation; no public Data API policies.
 export const crowdfundingImports = pgTable(
   'crowdfunding_imports',
