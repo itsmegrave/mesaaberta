@@ -84,9 +84,11 @@ test('profile opt-out and a GM block cancel pending reservations without revivin
 }) => {
   const { gm, host, guest, href } = await setup(browser);
   await guest.page.goto('/u/profile/edit/messages');
-  const receive = guest.page.getByRole('switch', { name: 'Receber convites' });
+  // Skeleton's Switch is a visually hidden checkbox inside its label: click the label.
+  const receive = guest.page.getByRole('checkbox', { name: 'Receber convites' });
+  const flip = () => guest.page.getByText('Receber convites', { exact: true }).click();
   await expect(receive).toBeChecked();
-  await receive.click();
+  await flip();
   await expect(guest.page.getByText('Convite atualizado.')).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByText('Convite cancelado', { exact: true })).toBeVisible();
@@ -98,8 +100,9 @@ test('profile opt-out and a GM block cancel pending reservations without revivin
   await expect(guest.page.getByRole('alertdialog')).toHaveCount(0);
   await guest.page.goto('/u/profile/edit/messages');
   await expect(receive).not.toBeChecked();
-  await receive.click();
+  await flip();
   await expect(receive).toBeChecked();
+  await expect(guest.page.getByText('Convite atualizado.')).toBeVisible();
   const unblock = guest.page.getByRole('button', { name: 'Desbloquear', exact: true });
   await expect(unblock).toBeVisible();
   await unblock.click();
