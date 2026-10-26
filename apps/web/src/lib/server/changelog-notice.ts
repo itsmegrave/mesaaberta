@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 import { announceChangelogDay } from '@mesaaberta/core/server/notifications/changelog';
 import { releaseHref, releases } from '#lib/changelog.js';
 import * as m from '#lib/paraglide/messages.js';
