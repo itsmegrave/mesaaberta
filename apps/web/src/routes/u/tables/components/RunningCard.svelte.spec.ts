@@ -35,6 +35,16 @@ describe('RunningCard', () => {
       .toHaveAttribute('href', '/t/cronicas/edit');
   });
 
+  it('sends "Sim, aconteceu" to the attendance step on Gerenciar mesa, and posts "Não aconteceu"', async () => {
+    render(RunningCard, props({ tableStatus: 'awaiting_confirmation' }));
+
+    await expect
+      .element(page.getByRole('link', { name: 'Sim, aconteceu' }))
+      .toHaveAttribute('href', '/t/cronicas/manage?etapa=presenca#session-confirmation');
+    expect(document.querySelector('form[action$="?/happened"]')).toBeNull();
+    expect(document.querySelector('form[action="/t/cronicas/manage?/notHeld"]')).not.toBeNull();
+  });
+
   it('lists the players, each with a remove button that posts to the table and returns here', async () => {
     render(RunningCard, props());
 

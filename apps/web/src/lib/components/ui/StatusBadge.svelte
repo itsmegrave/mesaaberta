@@ -16,6 +16,11 @@
     | 'table:disabled'
     | 'seat:pending'
     | 'seat:confirmed'
+    | 'invitation:pending'
+    | 'invitation:accepted'
+    | 'invitation:declined'
+    | 'invitation:expired'
+    | 'invitation:cancelled'
     | 'report:open'
     | 'report:reviewing'
     | 'report:resolved'
@@ -97,6 +102,24 @@
       dot: 'border-2 border-warning-500 bg-transparent',
     },
     'seat:confirmed': { label: () => m.status_seat_confirmed(), dot: 'bg-success-500' },
+    // An invite holds a seat while it waits; once answered or lapsed it holds nothing.
+    'invitation:pending': {
+      label: () => m.invitation_status_pending(),
+      dot: 'border-2 border-warning-500 bg-transparent',
+    },
+    'invitation:accepted': { label: () => m.invitation_status_accepted(), dot: 'bg-success-500' },
+    'invitation:declined': {
+      label: () => m.invitation_status_declined(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    'invitation:expired': {
+      label: () => m.invitation_status_expired(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    'invitation:cancelled': {
+      label: () => m.invitation_status_cancelled(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
     // Admin only: a report waits (open, in review), or it was decided (accepted, archived).
     'report:open': { label: () => m.report_status_open(), dot: 'bg-error-500' },
     'report:reviewing': { label: () => m.report_status_reviewing(), dot: 'bg-warning-500' },

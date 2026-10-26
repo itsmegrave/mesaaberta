@@ -405,7 +405,13 @@ const invitationView = {
   expiresAt: playerInvitations.expiresAt,
   createdAt: playerInvitations.createdAt,
   gmId: playerInvitations.gmId,
-  table: { title: gameTables.title, slug: gameTables.slug },
+  table: {
+    title: gameTables.title,
+    slug: gameTables.slug,
+    kind: gameTables.kind,
+    startsAt: gameTables.startsAt,
+    timezone: gameTables.timezone,
+  },
   gmUsername: profiles.username,
 };
 export async function loadInvitation(db: AnyDb, actor: Actor | null, id: string) {

@@ -12,7 +12,11 @@
   import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
   import Pager from '#lib/components/ui/Pager.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
+  import { formatSession } from '@mesaaberta/core/tables/format';
   import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
@@ -119,19 +123,38 @@
       aria-labelledby="received-invitations"
       class="mb-6 rounded-lg border border-surface-200-800 bg-panel p-6"
     >
-      <h2 id="received-invitations" class="text-2xl font-semibold">{m.invitation_received()}</h2>
-      <ul class="mt-4 grid gap-3">
+      <div class="flex items-center gap-3">
+        <h2 id="received-invitations" class="text-2xl font-semibold">
+          {m.invitation_received()}
+        </h2>
+        <Pill tone="warning"
+          ><span class="sr-only">{m.invitation_received_count({ count: invitations.length })}</span
+          ><span aria-hidden="true">{invitations.length}</span></Pill
+        >
+      </div>
+      <ul class="mt-3">
         {#each invitations as invitation (invitation.id)}
-          <li>
-            <a class="link-underline font-semibold" href={`/u/profile/invitations/${invitation.id}`}
-              >{invitation.table.title}</a
+          <li class="flex min-h-16 items-center gap-3 py-2">
+            <MAAvatar name={invitation.table.title} size={36} class="shrink-0" />
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="truncate font-semibold">{invitation.table.title}</span>
+              <span class="text-sm text-muted">
+                {m.invitation_row({
+                  gm: invitation.gmUsername || '',
+                  date: formatSession(
+                    new Date(invitation.expiresAt),
+                    invitation.table.timezone,
+                    getLocale(),
+                  ),
+                })}
+              </span>
+            </span>
+            <a
+              href="/u/profile/invitations/{invitation.id}"
+              class="{buttonClass('primary', 'sm')} shrink-0 font-semibold"
+              aria-label={m.invitation_respond_to({ title: invitation.table.title })}
+              >{m.invitation_respond()}</a
             >
-            <p class="text-sm text-muted">
-              {m.invitation_from({
-                gm: invitation.gmUsername || '',
-                title: invitation.table.title,
-              })}
-            </p>
           </li>
         {/each}
       </ul>
