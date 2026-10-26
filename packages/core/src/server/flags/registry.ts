@@ -178,6 +178,12 @@ export const flagDefaults = {
   // next weekly date. Either way the players are asked to rate it, in the bell and by e-mail. Off,
   // the table waits as before. Read by the sweeper, targeted by the GM's id (`isAdmin` too).
   use_session_close_reminders: false,
+  // The one switch for blocking and reporting in Mensagens, off for everyone until it is released
+  // (then on for everyone). Off hides Bloquear and Denunciar in a conversation and "Pessoas
+  // bloqueadas" in Editar perfil, and their actions refuse. Blocks already made keep working either
+  // way (the inbox, direct messages, invitations and follows read them). Targeted by the signed-in
+  // person's id.
+  use_message_safety: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

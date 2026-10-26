@@ -1,6 +1,6 @@
 import { and, asc, count, eq, gt, or, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { follows, gameTables, gmInviteBlocks, profiles } from '../db/schema';
+import { follows, gameTables, gmInviteBlocks, profileBlocks, profiles } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
@@ -12,6 +12,13 @@ const blockedBetween = (a: string, b: string) =>
   or(
     and(eq(gmInviteBlocks.playerId, a), eq(gmInviteBlocks.gmId, b)),
     and(eq(gmInviteBlocks.playerId, b), eq(gmInviteBlocks.gmId, a)),
+  );
+
+/** Whether either of the two blocked the other (`profile_blocks`). Mirrors `blockedBetween` in blocks/service. */
+const blockedEitherWay = (a: string, b: string) =>
+  or(
+    and(eq(profileBlocks.blockerId, a), eq(profileBlocks.blockedId, b)),
+    and(eq(profileBlocks.blockerId, b), eq(profileBlocks.blockedId, a)),
   );
 
 /**
@@ -37,10 +44,18 @@ export async function follow(
           .where(blockedBetween(actor.id, followeeId))
           .limit(1)
       : [];
+    // A block from Mensagens or a profile stops following too.
+    const [profileBlock] = actor
+      ? await t
+          .select({ blockerId: profileBlocks.blockerId })
+          .from(profileBlocks)
+          .where(blockedEitherWay(actor.id, followeeId))
+          .limit(1)
+      : [];
     authorize(actor, 'follow:create', {
       followeeId,
       followeeActive: followee.status === 'active' && followee.username !== null,
-      blocked: block !== undefined,
+      blocked: block !== undefined || profileBlock !== undefined,
     });
 
     const inserted = await t

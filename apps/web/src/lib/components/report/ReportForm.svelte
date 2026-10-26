@@ -26,6 +26,7 @@
     say = reportError,
     formError,
     head,
+    action = '?/report',
   }: {
     controller: {
       values: { reason: string; details: string };
@@ -47,13 +48,15 @@
     /** Why the server refused, when it was not about the reason or the details. */
     formError?: string;
     head?: Snippet;
+    /** Where it posts: the page's own `?/report`, or a conversation's from the chat drawer. */
+    action?: string;
   } = $props();
 
   const reasonError = $derived(say(controller.errors.reason?.[0]));
   const detailsError = $derived(say(controller.errors.details?.[0]));
 </script>
 
-<MAForm method="POST" action="?/report" onsubmit={controller.submit} class="mt-4 grid gap-4">
+<MAForm method="POST" {action} onsubmit={controller.submit} class="mt-4 grid gap-4">
   {#each Object.entries(hidden) as [name, value] (name)}
     <input type="hidden" {name} {value} />
   {/each}

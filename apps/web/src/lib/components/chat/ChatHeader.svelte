@@ -4,6 +4,7 @@
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import PostButton from '#lib/components/PostButton.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import { muteSchema } from '@mesaaberta/core/messages/schema';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -13,14 +14,21 @@
     conversation,
     action = '?/mute',
     onback,
+    onreport,
+    onblock,
   }: {
     action?: string;
     onback?: () => void;
+    /** "Denunciar @pessoa…" in a direct conversation (`use_message_safety`); none hides it. */
+    onreport?: () => void;
+    /** "Bloquear @pessoa…", likewise; hidden once the person is blocked. */
+    onblock?: () => void;
     conversation: {
       kind: 'table' | 'direct';
       table: { slug: string; title: string; imageUrl: string | null } | null;
       other: { username: string; avatarUrl: string | null } | null;
       muted: boolean;
+      blocked?: boolean;
     };
   } = $props();
 
@@ -29,6 +37,39 @@
       ? (conversation.table?.title ?? '')
       : atHandle(conversation.other?.username),
   );
+  // The ⋮ of a direct conversation: the person's profile, then reporting and blocking them.
+  const more = $derived.by((): KebabItem[] => {
+    const other = conversation.kind === 'direct' ? conversation.other : null;
+    if (!other || !(onreport || onblock)) return [];
+    const name = atHandle(other.username);
+    return [
+      {
+        id: 'profile',
+        label: m.messages_view_profile(),
+        href: `/u/${encodeURIComponent(other.username)}`,
+      },
+      ...(onreport
+        ? [
+            {
+              id: 'report',
+              label: m.messages_report_person({ name }),
+              destructive: true,
+              onselect: onreport,
+            },
+          ]
+        : []),
+      ...(onblock && !conversation.blocked
+        ? [
+            {
+              id: 'block',
+              label: m.messages_block_person({ name }),
+              destructive: true,
+              onselect: onblock,
+            },
+          ]
+        : []),
+    ];
+  });
   const picture = $derived(
     conversation.kind === 'table' ? conversation.table?.imageUrl : conversation.other?.avatarUrl,
   );
@@ -109,4 +150,7 @@
       >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
     >
   </PostButton>
+  {#if more.length > 0}
+    <KebabMenu name={title} items={more} />
+  {/if}
 </header>

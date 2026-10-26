@@ -231,9 +231,10 @@ export type TableClosure = {
 
 export type ReportFiled = {
   reportId: string;
-  targetType: 'table' | 'player' | 'crowdfunding' | 'partner';
+  targetType: 'table' | 'player' | 'crowdfunding' | 'partner' | 'message' | 'person';
   targetId: string;
-  // Null for a report about a crowdfunding campaign or a partner, which belong to no table.
+  // Null for a report about a crowdfunding campaign or a partner, which belong to no table, and
+  // for one made in a direct conversation.
   tableId: string | null;
   reason:
     | 'spam'

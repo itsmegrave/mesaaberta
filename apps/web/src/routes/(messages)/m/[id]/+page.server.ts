@@ -1,7 +1,12 @@
 import { error, fail } from '@sveltejs/kit';
 import { validateStringForm, validateFormData } from '#lib/forms/contract.js';
 import { formMessage } from '#lib/forms/server.js';
-import { messageSchema, muteSchema } from '@mesaaberta/core/messages/schema';
+import { blockSchema, messageSchema, muteSchema } from '@mesaaberta/core/messages/schema';
+import { messageReportSchema } from '@mesaaberta/core/moderation/reports';
+import { setBlocked } from '@mesaaberta/core/server/blocks/service';
+import { fileMessageReport } from '@mesaaberta/core/server/moderation/reports';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
+import { behindSafetyFlag } from '#lib/server/messages/safety.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { RateLimited } from '@mesaaberta/core/server/errors';
@@ -71,4 +76,25 @@ export const actions: Actions = {
     }
     return { form };
   },
+
+  // "Bloquear @x" and "Desbloquear" (`use_message_safety`). The events are the invitations a block
+  // cancels.
+  block: moderationAction(
+    blockSchema,
+    ['profileId', 'blocked'],
+    behindSafetyFlag(
+      async (db, actor, data) =>
+        (await setBlocked(db, actor, data.profileId, data.blocked)).eventIds,
+    ),
+  ),
+
+  // "Denunciar mensagem" and "Denunciar @x" (`use_message_safety`). Admins see it in the queue.
+  report: moderationAction(
+    messageReportSchema,
+    ['targetType', 'messageId', 'profileId', 'reason', 'details'],
+    behindSafetyFlag(
+      async (db, actor, data, event) =>
+        (await fileMessageReport(db, actor, event.params.id!, data)).eventId,
+    ),
+  ),
 };

@@ -5,6 +5,7 @@ import {
   gameTables,
   gmInviteBlocks,
   playerInvitations,
+  profileBlocks,
   profiles,
   registrations,
 } from '../db/schema';
@@ -87,13 +88,24 @@ async function canReceive(db: AnyDb, gmId: string, playerId: string) {
     .select()
     .from(gmInviteBlocks)
     .where(and(eq(gmInviteBlocks.playerId, playerId), eq(gmInviteBlocks.gmId, gmId)));
+  // A block either way (Mensagens or a profile) stops invitations too.
+  const [profileBlock] = await db
+    .select({ blockerId: profileBlocks.blockerId })
+    .from(profileBlocks)
+    .where(
+      or(
+        and(eq(profileBlocks.blockerId, playerId), eq(profileBlocks.blockedId, gmId)),
+        and(eq(profileBlocks.blockerId, gmId), eq(profileBlocks.blockedId, playerId)),
+      ),
+    );
   return !!(
     p?.status === 'active' &&
     p.username &&
     p.invitationsEnabled &&
     gm?.status === 'active' &&
     gm.username &&
-    !block
+    !block &&
+    !profileBlock
   );
 }
 

@@ -7,7 +7,14 @@ z.config({ jitless: true });
 // Shared by the report forms and the server. Keep in step with the `report_*` enums and checks in
 // src/lib/server/db/schema.ts.
 
-export const REPORT_TARGETS = ['table', 'player', 'crowdfunding', 'partner'] as const;
+export const REPORT_TARGETS = [
+  'table',
+  'player',
+  'crowdfunding',
+  'partner',
+  'message',
+  'person',
+] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
 export const REPORT_REASONS = [
@@ -52,6 +59,18 @@ export const PARTNER_REPORT_REASONS = [
   'other',
 ] as const satisfies readonly ReportReason[];
 
+/** What a member can give for a message, or for a person they talk to in Mensagens. */
+export const MESSAGE_REPORT_REASONS = [
+  'harassment',
+  'spam',
+  'scam',
+  'inappropriate_content',
+  'other',
+] as const satisfies readonly ReportReason[];
+
+/** How many messages a message or person report copies for the admin: the reported one and those before it. */
+export const REPORT_EXCERPT_SIZE = 6;
+
 // `open` and `reviewing` are still waiting on an admin; the other two are closed.
 export const REPORT_STATUSES = ['open', 'reviewing', 'resolved', 'dismissed'] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
@@ -84,6 +103,24 @@ export type CrowdfundingReportInput = z.output<typeof crowdfundingReportSchema>;
 
 /** The report form of a campaign's card: the campaign it is about, with the reason and details. */
 export const reportCrowdfundingSchema = z.object({ id: uuid, ...crowdfundingReportSchema.shape });
+
+/**
+ * What a member sends from a conversation: a message (`messageId`) or the person they talk to
+ * (`profileId`), with the reason and details. The conversation is the page's.
+ */
+export const messageReportSchema = z
+  .object({
+    targetType: z.enum(['message', 'person']),
+    messageId: z.union([z.literal(''), uuid]).default(''),
+    profileId: z.union([z.literal(''), uuid]).default(''),
+    reason: z.enum(MESSAGE_REPORT_REASONS),
+    details: z.string().trim().max(REPORT_DETAILS_MAX),
+  })
+  .refine((input) => (input.targetType === 'message' ? input.messageId : input.profileId), {
+    path: ['targetType'],
+    message: 'required',
+  });
+export type MessageReportInput = z.output<typeof messageReportSchema>;
 
 /** An admin closing a report: accepted (`resolved`) or dismissed, with an optional note. */
 export const closeReportSchema = z.object({
