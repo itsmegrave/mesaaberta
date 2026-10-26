@@ -35,11 +35,13 @@
     inDialog = false,
     icon,
     summary = false,
+    active,
     placeholder,
     required = false,
     invalid = false,
     labelClass = 'font-semibold',
     class: rootClass = '',
+    controlClass = '',
     onchange,
     suggestLabel,
     pendingLabel = '',
@@ -66,12 +68,19 @@
     icon?: IconName;
     /** Several picks, shown closed as the first one and "+N" ("Discord +1") instead of as chips. */
     summary?: boolean;
+    /**
+     * Whether the pick narrows the list, which a compact box shows with the primary border. By
+     * default any pick does; an order, or the "Todos" a list opens on, passes false.
+     */
+    active?: boolean;
     placeholder: string;
     required?: boolean;
     invalid?: boolean;
     labelClass?: string;
     /** On the wrapper of the label, the control and the picks, to lay them out. */
     class?: string;
+    /** On the box itself, to size it apart from its label ("Ordenar"). */
+    controlClass?: string;
     /** After a pick is added or removed, once the hidden inputs are updated. */
     onchange?: (value: string[]) => void;
     /** The option that picks a name the list lacks ("Sugerir “x”"). Without it, none is offered. */
@@ -124,19 +133,19 @@
 
   // One box, like the other inputs. Skeleton gives the Combobox input its own `input` look and the
   // trigger a tonal button pinned inside the control; both are undone below so only this box draws.
-  // A compact filter box with a pick takes the primary border; an empty one the quiet line. Form
-  // fields keep the muted-ink border of the other inputs.
+  // A compact filter box with a pick that narrows the list takes the primary border; an empty one, or
+  // an order, the quiet line. Form fields keep the muted-ink border of the other inputs.
   const border = $derived(
     invalid
       ? 'border-error-500'
-      : (compact || summary) && value.length > 0
+      : (compact || summary) && (active ?? value.length > 0)
         ? 'border-primary-500'
         : compact
           ? 'border-surface-200-800'
           : 'border-ink-muted',
   );
   const control = $derived(
-    `flex ${compact ? 'h-11' : 'h-13'} w-full items-center overflow-hidden rounded-lg border-control ${border} bg-panel focus-within:outline-4 focus-within:outline-offset-2 focus-within:outline-primary-500`,
+    `flex ${compact ? 'h-11' : 'h-13'} w-full items-center overflow-hidden rounded-lg border-control ${border} bg-panel focus-within:outline-4 focus-within:outline-offset-2 focus-within:outline-primary-500 ${controlClass}`,
   );
   const inputClass =
     'h-full min-w-0 flex-1 rounded-none! border-0! bg-transparent px-3 text-sm shadow-none! ring-0! outline-none focus:ring-0!';

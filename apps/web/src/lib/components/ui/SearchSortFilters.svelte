@@ -1,8 +1,9 @@
 <script lang="ts" generics="Sort extends string">
   // A list's search and order (Parceiros, Financiamentos), on one 44px line from `md` like the
   // directories' filters: no visible labels on the controls, "Ordenar" beside its select on the
-  // right. The search applies when it is sent (Enter), the order as soon as it is picked; an order that is not one of `sorts` falls back to
-  // `fallback`. The caller turns the change into the list's address. `children` holds the list's own
+  // right, its box as wide as the search's and on the same quiet line (an order narrows nothing).
+  // The search applies when it is sent (Enter), the order as soon as it is picked; an order that is
+  // not one of `sorts` falls back to `fallback`. The caller turns the change into the list's address. `children` holds the list's own
   // filters, drawn between the search and the order (the partners' "Tipo").
   import type { Snippet } from 'svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -72,8 +73,10 @@
     name="sort"
     label={sortLabel}
     labelClass="text-sm font-semibold text-muted"
-    class="flex w-full items-center gap-2 sm:w-72 md:ml-auto"
+    class="flex w-full items-center gap-2 sm:w-72 md:ml-auto md:w-auto"
+    controlClass="md:w-85"
     compact
+    active={false}
     items={[...sorts]}
     value={[sort]}
     placeholder={sortLabel}
