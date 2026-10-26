@@ -1,41 +1,26 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parse, type Token } from '@messageformat/parser';
 import { describe, expect, it } from 'vitest';
 
 const dir = join(process.cwd(), 'messages');
 const baseLocale = 'pt-BR';
 
-// Every message is an ICU MessageFormat string (plurals included), read by @inlang/plugin-icu1.
-const load = (locale: string): Record<string, string> =>
+// A message is a string, or a list of variants (plural forms) with the text of each in `match`.
+type Variant = { declarations?: string[]; selectors?: string[]; match: Record<string, string> };
+type Message = string | Variant[];
+const load = (locale: string): Record<string, Message> =>
   JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8'));
+const texts = (message: Message | undefined) =>
+  typeof message === 'string' || message === undefined
+    ? [message ?? '']
+    : message.flatMap((variant) => Object.values(variant.match));
 
-const messageKeys = (messages: Record<string, string>) =>
+const messageKeys = (messages: Record<string, Message>) =>
   Object.keys(messages)
     .filter((key) => !key.startsWith('$'))
     .sort();
 
-// Rejects broken syntax and plural keys the locale doesn't have (`few` in pt-BR, say).
-const tokens = (locale: string, text: string) =>
-  parse(text, { cardinal: new Intl.PluralRules(locale).resolvedOptions().pluralCategories });
-
-// The arguments a message reads, so `{count}` and `#` count as the same placeholder.
-const placeholders = (list: Token[], plural?: string): string[] =>
-  list.flatMap((token) => {
-    if (token.type === 'argument' || token.type === 'function') return [token.arg];
-    if (token.type === 'octothorpe') return plural ? [plural] : [];
-    if (token.type === 'content') return [];
-    return [token.arg, ...token.cases.flatMap((c) => placeholders(c.tokens, token.arg))];
-  });
-
-// Plain text of every branch, for the copy checks below.
-const texts = (list: Token[]): string[] =>
-  list.flatMap((token) => {
-    if (token.type === 'content') return [token.value];
-    if (token.type === 'plural' || token.type === 'select' || token.type === 'selectordinal')
-      return token.cases.flatMap((c) => texts(c.tokens));
-    return [];
-  });
+const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 const locales = readdirSync(dir)
   .filter((file) => file.endsWith('.json'))
@@ -45,13 +30,34 @@ describe.each(locales)('%s messages', (locale) => {
   const messages = load(locale);
 
   it('has no empty message', () => {
-    for (const key of messageKeys(messages)) expect(messages[key].trim(), key).not.toBe('');
+    for (const key of messageKeys(messages)) {
+      for (const text of texts(messages[key])) expect(text.trim(), key).not.toBe('');
+    }
   });
 
-  it('is valid ICU MessageFormat', () => {
+  // ICU syntax isn't read by plugin-message-format: it would show up as raw text.
+  it('writes plurals as variants, not ICU', () => {
     for (const key of messageKeys(messages)) {
-      expect(typeof messages[key], key).toBe('string');
-      expect(() => tokens(locale, messages[key]), key).not.toThrow();
+      for (const text of texts(messages[key])) {
+        expect(text, key).not.toMatch(/\{\w+,\s*(plural|select|selectordinal)\s*,/);
+      }
+    }
+  });
+
+  it('matches every variant on a declared input, with a catch-all', () => {
+    for (const key of messageKeys(messages)) {
+      const message = messages[key];
+      if (typeof message === 'string') continue;
+      for (const variant of message) {
+        const selectors = variant.selectors ?? [];
+        for (const selector of selectors) {
+          expect(variant.declarations, key).toContain(`input ${selector}`);
+        }
+        for (const condition of Object.keys(variant.match)) {
+          expect(selectors, key).toContain(condition.split('=')[0]);
+        }
+        expect(Object.keys(variant.match), key).toContainEqual(expect.stringMatching(/=\*$/));
+      }
     }
   });
 });
@@ -65,8 +71,7 @@ describe('pt-BR copy', () => {
 
   it('uses gender-neutral roles', () => {
     for (const key of messageKeys(messages)) {
-      const copy = texts(tokens(baseLocale, messages[key])).join(' ');
-      expect(copy, key).not.toMatch(gendered);
+      expect(texts(messages[key]).join(' '), key).not.toMatch(gendered);
     }
   });
 });
@@ -81,10 +86,11 @@ describe.each(locales.filter((locale) => locale !== baseLocale))('%s translation
   });
 
   it('uses the same placeholders as the base locale in every message', () => {
-    const all = (loc: string, text: string | undefined) =>
-      [...new Set(placeholders(tokens(loc, text ?? '')))].sort();
     for (const key of messageKeys(base)) {
-      expect(all(locale, translation[key]), key).toEqual(all(baseLocale, base[key]));
+      const all = (message: Message | undefined) => [
+        ...new Set(texts(message).flatMap((text) => placeholders(text))),
+      ];
+      expect(all(translation[key]).sort(), key).toEqual(all(base[key]).sort());
     }
   });
 });
