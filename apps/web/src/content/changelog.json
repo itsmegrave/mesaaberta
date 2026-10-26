@@ -98,6 +98,11 @@
         "description": "As listas de escolha se ajustam ao tamanho da tela e ao tamanho da lista, principalmente no celular."
       },
       {
+        "kind": "improved",
+        "title": "Início, perfis e chat mais leves",
+        "description": "A página inicial, os perfis e o chat carregam menos dados, e abrir a conversa não marca mais mensagens como lidas sozinho."
+      },
+      {
         "kind": "fixed",
         "title": "Conversa em tela cheia no celular",
         "description": "O campo de mensagem do chat fica acima da barra de abas e a conversa cabe na tela do celular."
