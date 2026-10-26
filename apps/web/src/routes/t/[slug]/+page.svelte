@@ -90,7 +90,7 @@
       });
     }
     // The players stay reachable once the table is frozen: that is where the GM sees the rating.
-    if (data.registrations) {
+    if (data.canManage) {
       items.push({
         id: 'players',
         label: m.menu_players(),

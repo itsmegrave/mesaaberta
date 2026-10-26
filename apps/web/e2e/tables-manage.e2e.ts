@@ -317,11 +317,16 @@ test.describe('editing and disabling', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nome novo');
   });
 
-  test('another member cannot edit it, and is not offered the link', async ({ page, browser }) => {
+  test('another member cannot edit or manage it, and is not offered the links', async ({
+    page,
+    browser,
+    baseURL,
+  }) => {
     const gm = await createUser('Mestre Igor');
     const other = await createUser('Jogadora Julia');
     await signIn(page, gm);
-    const slug = await createTable(page, { title: uniqueTitle('Só do Igor') });
+    const title = uniqueTitle('Só do Igor');
+    const slug = await createTable(page, { title });
 
     const context = await browser.newContext();
     const otherPage = await context.newPage();
@@ -329,13 +334,36 @@ test.describe('editing and disabling', () => {
     await otherPage.goto(`/t/${slug}`);
     await pageMenu(otherPage).click();
     await expect(otherPage.getByRole('menuitem', { name: 'Editar' })).toHaveCount(0);
+    await expect(otherPage.getByRole('menuitem', { name: 'Participantes e pedidos' })).toHaveCount(
+      0,
+    );
 
-    const response = await otherPage.goto(`/t/${slug}/edit`);
-    expect(response?.status()).toBe(403);
+    expect((await otherPage.goto(`/t/${slug}/edit`))?.status()).toBe(403);
+    expect((await otherPage.goto(`/t/${slug}/manage`))?.status()).toBe(403);
+
+    // Posting straight to the action, past the missing link, is refused and changes nothing.
+    const disable = await otherPage.request.post(`/t/${slug}/edit?/disable`, {
+      headers: { origin: baseURL!, accept: 'text/html' },
+      form: {},
+      maxRedirects: 0,
+    });
+    expect(disable.status()).toBe(403);
+    expect((await otherPage.goto(`/t/${slug}`))?.status()).toBe(200);
+    await expect(otherPage.getByRole('heading', { level: 1 })).toHaveText(title);
     await context.close();
   });
 
-  test('an admin can edit any table', async ({ page, browser }) => {
+  test('a visitor is sent to log in from the edit and manage pages', async ({ request }) => {
+    for (const page of ['edit', 'manage']) {
+      const response = await request.get(`/t/os-sinos-de-sablewood/${page}`, { maxRedirects: 0 });
+      expect(response.status()).toBe(303);
+      expect(response.headers()['location']).toBe(
+        `/login?next=%2Ft%2Fos-sinos-de-sablewood%2F${page}`,
+      );
+    }
+  });
+
+  test('an admin can edit and manage any table', async ({ page, browser }) => {
     const gm = await createUser('Mestra Kátia');
     const admin = await createUser('Admin Lucas', { role: 'admin' });
     await signIn(page, gm);
@@ -344,7 +372,14 @@ test.describe('editing and disabling', () => {
     const context = await browser.newContext();
     const adminPage = await context.newPage();
     await signIn(adminPage, admin);
+    // The players page is theirs too.
+    expect((await adminPage.goto(`/t/${slug}/manage`))?.status()).toBe(200);
     await adminPage.goto(`/t/${slug}`);
+    await pageMenu(adminPage).click();
+    await expect(
+      adminPage.getByRole('menuitem', { name: 'Participantes e pedidos' }),
+    ).toBeVisible();
+    await adminPage.keyboard.press('Escape');
     await chooseFromMenu(adminPage, 'Editar');
     await adminPage.getByLabel('Título').fill('Editada pelo admin');
     await adminPage.getByRole('button', { name: 'Salvar alterações' }).click();

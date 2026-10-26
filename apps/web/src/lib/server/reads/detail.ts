@@ -35,10 +35,12 @@ export const read = async ({ locals, params }: RequestEvent) => {
   if (!detail) error(404, 'Not found');
 
   const { imagePath, ...table } = detail.table;
-  // An api Worker from before the field answers without it; the page then shows the handle alone.
-  const { gmProfile = null, ...rest } = detail;
+  // An api Worker from before a field answers without it: the page then shows the handle alone,
+  // and offers the players' page to whoever got the registrations, as it did before `canManage`.
+  const { gmProfile = null, canManage = detail.registrations !== null, ...rest } = detail;
   return {
     ...rest,
+    canManage,
     gm: gmProfile && { avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile) },
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     signedIn,
