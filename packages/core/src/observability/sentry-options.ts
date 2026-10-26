@@ -21,6 +21,42 @@ const flagsOf = (event: ErrorEvent) => {
   return values?.length ? { flags: { values } } : undefined;
 };
 
+/** The contexts that survived, or none at all. */
+const optionalContexts = <T extends Record<string, unknown>>(contexts: T) => {
+  const kept = Object.fromEntries(Object.entries(contexts).filter(([, value]) => value));
+  return Object.keys(kept).length ? (kept as T) : undefined;
+};
+
+/**
+ * Where the event ran, never who sent it: the runtime's name and version and the cloud provider and
+ * region the SDK set. Workers expose no CPU, memory, OS or host name; the data center that served a
+ * request travels as the `colo` tag (`coloOf`).
+ */
+const hostContexts = (event: { contexts?: ErrorEvent['contexts'] }) => {
+  const runtime = event.contexts?.runtime;
+  const cloud = event.contexts?.cloud_resource;
+  const label = (value: unknown) =>
+    typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,64}$/.test(value) ? value : undefined;
+  const kept = {
+    runtime: runtime && { name: label(runtime.name), version: label(runtime.version) },
+    cloud_resource: cloud && {
+      'cloud.provider': label(cloud['cloud.provider']),
+      'cloud.region': label(cloud['cloud.region']),
+    },
+  };
+  return Object.fromEntries(Object.entries(kept).filter(([, value]) => value));
+};
+
+/**
+ * The Cloudflare data center (IATA code, e.g. `GRU`) that served a request: the runtime's
+ * `request.cf.colo`, else the suffix of the `cf-ray` header. Undefined off Cloudflare.
+ */
+export const coloOf = (request: Request): string | undefined => {
+  const colo = (request as { cf?: { colo?: unknown } }).cf?.colo;
+  if (typeof colo === 'string' && /^[A-Z]{3}$/.test(colo)) return colo;
+  return request.headers.get('cf-ray')?.match(/-([A-Z]{3})$/)?.[1];
+};
+
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
   if (cancelled(event)) return null;
   // Reconstruct rather than redact unknown SDK contexts. Keep code locations and the flags the
@@ -35,7 +71,7 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     release: event.release,
     environment: event.environment,
     tags: safeFields(event.tags),
-    contexts: flagsOf(event),
+    contexts: optionalContexts({ ...flagsOf(event), ...hostContexts(event) }),
     debug_meta: event.debug_meta && {
       images: event.debug_meta.images?.flatMap((image) =>
         image.type === 'sourcemap'
@@ -158,8 +194,9 @@ export function privateTransaction(event: TransactionEvent): TransactionEvent {
     transaction_info: event.transaction_info,
     tags: safeFields(event.tags),
     measurements: event.measurements,
-    contexts: trace && {
-      trace: {
+    contexts: optionalContexts({
+      ...hostContexts(event),
+      trace: trace && {
         trace_id: trace.trace_id,
         span_id: trace.span_id,
         parent_span_id: trace.parent_span_id,
@@ -174,7 +211,7 @@ export function privateTransaction(event: TransactionEvent): TransactionEvent {
           data: trace.data ?? {},
         }).data,
       },
-    },
+    }),
     spans: event.spans?.map(privateSpan),
   };
 }
