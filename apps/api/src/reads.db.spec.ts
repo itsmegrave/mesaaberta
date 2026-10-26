@@ -171,7 +171,7 @@ describe('GET /v1/reads/tables', () => {
     app.request(`/tables${query}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
 
   it('answers what the in-process reader builds for the same filters, and drops junk', async () => {
-    const filters = { systems: [], modality: null, platforms: [], tags: [] };
+    const filters = { systems: [], modality: null, platforms: [], tags: [], gm: null };
 
     const all = await getTables('?bogus=1&system=NOT%20A%20SLUG');
     expect(all.status).toBe(200);

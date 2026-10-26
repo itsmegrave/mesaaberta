@@ -1,7 +1,8 @@
 <script lang="ts">
   // A person in Quem mestra: the avatar, the name (or the @usuário) as the card's one link to the
   // profile, the role tag and the badges, the score, the bio in two lines, the systems they ran
-  // most, a line of facts, and a footer with the tables open now. Draws only what it is given.
+  // most, a line of facts, and a footer with the tables open now, a link to them on /tables.
+  // Draws only what it is given.
   import BadgeMedal from '#lib/components/ui/BadgeMedal.svelte';
   import GmRating from '#lib/components/ui/GmRating.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -81,9 +82,16 @@
   {/if}
   <p class="text-sm font-medium text-muted">{facts}</p>
   <div class="mt-auto flex items-center justify-between gap-3 border-t border-surface-200-800 pt-4">
-    <span class="font-semibold {gm.openTables > 0 ? 'text-lamp' : 'text-muted'}"
-      >{m.gms_open_now({ count: gm.openTables })}</span
-    >
+    {#if gm.openTables > 0}
+      <!-- Above the card's link: this one goes to the person's open tables. -->
+      <a
+        href="/tables?gm={gm.username}"
+        class="relative z-10 font-semibold text-lamp underline-offset-4 hover:underline"
+        >{m.gms_open_now({ count: gm.openTables })}</a
+      >
+    {:else}
+      <span class="font-semibold text-muted">{m.gms_open_now({ count: 0 })}</span>
+    {/if}
     <span
       aria-hidden="true"
       class="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-wash"

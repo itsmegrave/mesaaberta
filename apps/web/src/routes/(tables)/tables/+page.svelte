@@ -30,7 +30,8 @@
     data.pickedSystems.length > 0 ||
       data.pickedPlatforms.length > 0 ||
       data.pickedTags.length > 0 ||
-      !!data.modality,
+      !!data.modality ||
+      !!data.pickedGm,
   );
 </script>
 
@@ -58,6 +59,7 @@
       modality: data.modality,
       platforms: data.pickedPlatforms,
       tags: data.pickedTags,
+      gm: data.pickedGm,
     }}
     {count}
   />

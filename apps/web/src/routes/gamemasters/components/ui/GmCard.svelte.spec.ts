@@ -25,7 +25,6 @@ describe('GmCard', () => {
     await render(GmCard, { gm: gm(), facts: '5 mesas mestradas · Recife' });
     const link = page.getByRole('link', { name: 'Ana Lúcia' });
     await expect.element(link).toHaveAttribute('href', '/u/ana');
-    expect(page.getByRole('link').all()).toHaveLength(1);
     await expect.element(page.getByText('@ana')).toBeVisible();
     await expect.element(page.getByText('Mestra', { exact: true })).toBeVisible();
     const systems = page.getByRole('list', { name: 'Sistemas que mestra' }).getByRole('listitem');
@@ -33,9 +32,11 @@ describe('GmCard', () => {
       systems.all().map((item) => item.element().textContent?.replace(/\s+/g, ' ').trim()),
     ).toEqual(['Call of Cthulhu · 4', 'Vampiro · 1', '+3']);
     await expect.element(page.getByText('5 mesas mestradas · Recife')).toBeVisible();
-    expect(page.getByText('2 mesas abertas agora').element().classList.contains('text-lamp')).toBe(
-      true,
-    );
+    // The open tables are the one other link, to /tables filtered by the person.
+    const open = page.getByRole('link', { name: '2 mesas abertas agora' });
+    await expect.element(open).toHaveAttribute('href', '/tables?gm=ana');
+    expect(open.element().classList.contains('text-lamp')).toBe(true);
+    expect(page.getByRole('link').all()).toHaveLength(2);
   });
 
   it('names the card by the @usuário when the name is not public', async () => {
@@ -47,5 +48,6 @@ describe('GmCard', () => {
     expect(
       page.getByText('Nenhuma mesa aberta agora').element().classList.contains('text-muted'),
     ).toBe(true);
+    expect(page.getByRole('link').all()).toHaveLength(1);
   });
 });

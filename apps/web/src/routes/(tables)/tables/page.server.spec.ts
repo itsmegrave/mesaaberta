@@ -21,6 +21,7 @@ const table = (slug: string, systemSlug: string) =>
   ({
     slug,
     gmId: 'gm',
+    gmName: slug === 't2' ? 'ana' : 'bia',
     imagePath: null,
     system: { slug: systemSlug, name: '' },
     platforms: slug === 't3' ? [{ name: 'Discord', slug: 'discord' }] : [],
@@ -89,6 +90,12 @@ describe('the table list load', () => {
     expect(slugs((await run(event('?tag=terror&tag=humor'))).tables)).toEqual(['t1']);
     // Across groups, a table has to match both.
     expect(slugs((await run(event('?tag=terror&platform=discord'))).tables)).toEqual([]);
+  });
+
+  it("narrows the list to one person's tables, the link from Quem mestra", async () => {
+    const data = await run(event('?gm=%40Ana'));
+    expect(data.pickedGm).toBe('ana');
+    expect(slugs(data.tables)).toEqual(['t2']);
   });
 
   it('records a browse view for the signed-in viewer, with where they came from and no table text', async () => {

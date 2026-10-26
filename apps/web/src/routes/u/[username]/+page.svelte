@@ -175,8 +175,13 @@
           <p class="mt-2 text-xl wrap-break-word text-muted md:text-2xl">{profile.name}</p>
         {/if}
         {#if profile.tableRole}
-          <!-- Joga, Mestra or both, while Quem mestra is on. -->
-          <p class="mt-3"><TableRoleTag tableRole={profile.tableRole} /></p>
+          <!-- Joga, Mestra or both, while Quem mestra is on; who runs games is listed there. -->
+          <p class="mt-3">
+            <TableRoleTag
+              tableRole={profile.tableRole}
+              href={profile.tableRole === 'player' ? undefined : '/gamemasters'}
+            />
+          </p>
         {/if}
         {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
         {#if profile.bio}

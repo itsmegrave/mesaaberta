@@ -1652,6 +1652,7 @@
   ],
   "tables_filters_button": "Filtros",
   "tables_filters_active": "Filtros ativos",
+  "tables_filter_gm": "Quem mestra: @{username}",
   "tables_filter_remove": "Tirar o filtro {name}",
   "tables_filters_clear_all": "Limpar filtros",
   "tables_filters_clear_everything": "Limpar tudo",
