@@ -61,4 +61,15 @@ describe('api app', () => {
     expect(entry).toMatchObject({ method: 'GET', status: 404 });
     expect(JSON.stringify(entry)).not.toContain('ana@example.com');
   });
+
+  it('answers with the request id the web Worker sent, or one of its own', async () => {
+    const app = createApi();
+    const sent = await app.request('/healthz', {
+      headers: { 'x-request-id': '8a1b2c3d4e5f6789-GRU' },
+    });
+    const junk = await app.request('/healthz', { headers: { 'x-request-id': 'ana@example.com' } });
+
+    expect(sent.headers.get('x-request-id')).toBe('8a1b2c3d4e5f6789-GRU');
+    expect(junk.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
+  });
 });

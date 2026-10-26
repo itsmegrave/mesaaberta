@@ -3,6 +3,7 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { isHttpError, isRedirect } from '@sveltejs/kit';
 import * as Sentry from '@sentry/sveltekit';
 import type { Fields, Logger } from '@mesaaberta/core/server/logger';
+import { withRequestId } from '@mesaaberta/contracts';
 
 /** The record a route parameter names, by the path segment before it (`/t/[slug]`). */
 const RESOURCE_TYPES: Record<string, string> = {
@@ -78,7 +79,8 @@ export const handleRequestLog =
 
     let response: Response;
     try {
-      response = await resolve(event);
+      // Inside, the logger, the api client and the outbox all read the id from the request context.
+      response = await withRequestId(requestId, () => resolve(event));
     } catch (error) {
       if (isRedirect(error) || isHttpError(error)) {
         const status = error.status;

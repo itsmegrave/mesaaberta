@@ -1,4 +1,6 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setRequestContextStore, withRequestId } from '@mesaaberta/contracts';
 import { createLogger, setAppName, setTelemetrySink } from './logger';
 
 const capture = () => {
@@ -54,6 +56,22 @@ describe('logger', () => {
     log.info('outside');
     expect(lines[0]).toMatchObject({ requestId: '0123456789abcdef-GRU' });
     expect(lines[1]).not.toHaveProperty('requestId');
+  });
+  it('names the request it runs for, unless the line or a binding names one', () => {
+    const { lines, log } = capture();
+    setRequestContextStore(new AsyncLocalStorage());
+    try {
+      withRequestId('8a1b2c3d4e5f6789-GRU', () => {
+        log.info('inside');
+        log.child({ requestId: '0123456789abcdef-GRU' }).info('bound');
+      });
+      log.info('outside');
+    } finally {
+      setRequestContextStore(null);
+    }
+    expect(lines[0]).toMatchObject({ requestId: '8a1b2c3d4e5f6789-GRU' });
+    expect(lines[1]).toMatchObject({ requestId: '0123456789abcdef-GRU' });
+    expect(lines[2]).not.toHaveProperty('requestId');
   });
   it('drops free text, identities and nested secrets before any destination', () => {
     const { lines, log } = capture();

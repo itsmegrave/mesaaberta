@@ -1,4 +1,6 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { describe, expect, it, vi } from 'vitest';
+import { setRequestContextStore, withRequestId } from '@mesaaberta/contracts';
 import { callApi, callApiRaw } from './api-client';
 
 const log = { warn: vi.fn() } as never;
@@ -20,6 +22,20 @@ describe('callApi', () => {
     expect(request.method).toBe('POST');
     expect(request.headers.get('x-actor-id')).toBe('a');
     expect(new URL(request.url).pathname).toBe('/v1/admin/events/e1/force');
+  });
+
+  it('passes the request id on, so the api lines join the web request', async () => {
+    const fetch = vi.fn(async (_request: Request) => Response.json({}));
+    setRequestContextStore(new AsyncLocalStorage());
+    try {
+      await withRequestId('8a1b2c3d4e5f6789-GRU', () => callApi(envWith(fetch), '/v1/x', 'a', log));
+      await callApi(envWith(fetch), '/v1/x', 'a', log);
+    } finally {
+      setRequestContextStore(null);
+    }
+
+    expect(fetch.mock.calls[0][0].headers.get('x-request-id')).toBe('8a1b2c3d4e5f6789-GRU');
+    expect(fetch.mock.calls[1][0].headers.has('x-request-id')).toBe(false);
   });
 
   it('is null on a refusal or a network error, and never throws', async () => {

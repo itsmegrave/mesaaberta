@@ -1,3 +1,4 @@
+import { currentRequestId } from '@mesaaberta/contracts';
 import { safeFields, scrubString, type AppName } from '../observability/privacy';
 export { scrubString, type AppName } from '../observability/privacy';
 
@@ -72,8 +73,10 @@ export function createLogger(
   bindings: Fields = {},
 ): Logger {
   const log = (level: Level, msg: string, fields: Fields = {}) => {
+    // A line written for a request names it even through a logger that was not bound to it.
+    const requestId = currentRequestId();
     const line = {
-      ...safeFields({ ...fields, ...bindings }),
+      ...safeFields({ ...(requestId && { requestId }), ...fields, ...bindings }),
       ...safeError(fields.error),
       ...(app && { app }),
       service: 'mesaaberta',
@@ -95,7 +98,13 @@ export function createLogger(
       ) {
         sink?.capture(
           fields.error,
-          safeFields({ ...fields, ...bindings, ...safeError(fields.error), app }),
+          safeFields({
+            ...(requestId && { requestId }),
+            ...fields,
+            ...bindings,
+            ...safeError(fields.error),
+            app,
+          }),
         );
       }
     } catch {
