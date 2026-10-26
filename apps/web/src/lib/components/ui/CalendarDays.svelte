@@ -24,7 +24,7 @@
             aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg
           ></DatePicker.PrevTrigger
         >
-        <DatePicker.RangeText class="font-semibold capitalize" />
+        <DatePicker.RangeText class="block font-semibold first-letter:uppercase" />
         <DatePicker.NextTrigger class={navButton} aria-label={m.date_picker_next()}
           ><svg
             width="16"

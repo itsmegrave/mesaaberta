@@ -203,6 +203,8 @@
       next={here}
       players={data.players}
       multi={table.kind !== 'one_shot'}
+      startsAt={table.startsAt}
+      step={page.url.searchParams.get('etapa')}
       nextSession={data.nextSession}
       timezone={table.timezone}
       durationHours={table.durationMinutes / 60}

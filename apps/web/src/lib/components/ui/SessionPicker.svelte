@@ -20,6 +20,8 @@
     describedby,
     withDuration = true,
     name = 'startsAtLocal',
+    label = m.session_day(),
+    hint,
   }: {
     startsAt: string;
     /** Hours. */
@@ -33,7 +35,13 @@
     withDuration?: boolean;
     /** The form field that carries `startsAt`. */
     name?: string;
+    /** What the calendar picks: the table form's first session by default. */
+    label?: string;
+    /** A line under the label, read with the calendar. */
+    hint?: string;
   } = $props();
+
+  const hintId = $props.id();
 
   const PRESETS = [2, 3, 4];
   const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'));
@@ -54,12 +62,20 @@
   const other = $derived(custom || (!!length && !PRESETS.includes(length)));
 
   const summary = $derived.by(() => {
-    if (!day) return m.session_summary_empty();
+    if (!day) return withDuration ? m.session_summary_empty() : m.session_summary_at_empty();
     const date = new Intl.DateTimeFormat(getLocale(), {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     }).format(new Date(`${day}T12:00:00Z`));
+    // A date without its length (the next session of a table): the zone as its offset, "GMT-3".
+    if (!withDuration) {
+      const offset =
+        new Intl.DateTimeFormat('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' })
+          .formatToParts(new Date(`${day}T12:00:00Z`))
+          .find((part) => part.type === 'timeZoneName')?.value ?? timezone;
+      return m.session_summary_at({ date, time: `${hour}:${minute}`, offset });
+    }
     return m.session_summary({
       date,
       time: `${hour}:${minute}`,
@@ -79,15 +95,18 @@
       locale="pt-BR"
       value={picked ? [picked] : []}
       min={earliest}
-      translations={pickerTranslations(() => m.session_day())}
+      translations={pickerTranslations(() => label)}
       onValueChange={(details) => set(details.value[0]?.toString() ?? '', hour, minute)}
     >
-      <DatePicker.Label class="label-text font-semibold">{m.session_day()}</DatePicker.Label>
+      <DatePicker.Label class="label-text font-semibold">{label}</DatePicker.Label>
+      {#if hint}
+        <p id={hintId} class="text-sm text-muted">{hint}</p>
+      {/if}
       <DatePicker.Content
         class="w-full max-w-sm rounded-lg border-2 p-3 {invalid
           ? 'border-error-500'
           : 'border-surface-200-800'} bg-panel"
-        aria-describedby={describedby}
+        aria-describedby={[hint ? hintId : '', describedby ?? ''].join(' ').trim() || undefined}
       >
         <CalendarDays />
       </DatePicker.Content>
