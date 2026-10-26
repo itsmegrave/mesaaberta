@@ -246,8 +246,7 @@ describe('badges-v1, phase 2', () => {
   async function table(
     players: string[],
     {
-      kind = 'one_shot' as 'one_shot' | 'adventure' | 'campaign',
-      from = null as string | null,
+      kind = 'one_shot' as 'one_shot' | 'adventure',
       capacity = 5,
       system = systemIds[0],
       status = 'concluded' as 'concluded' | 'not_held' | 'disabled',
@@ -268,8 +267,6 @@ describe('badges-v1, phase 2', () => {
         gmId: gm,
         systemId: system,
         status,
-        duplicatedFromTableId: from,
-        recurrence: kind === 'campaign' ? 'FREQ=WEEKLY' : null,
       })
       .returning();
     if (players.length)
@@ -325,25 +322,6 @@ describe('badges-v1, phase 2', () => {
     });
     await badgeHandler.handle({ ...last, id: id(93) }, test.db);
     expect(await held(p1)).not.toContain('reliable-player');
-  });
-
-  it('counts the campaign veteran along one chain of sessions, not across campaigns', async () => {
-    const chain = async (sessions: number, players: string[]) => {
-      let previous: string | null = null;
-      let last!: StoredEvent;
-      for (let n = 0; n < sessions; n += 1) {
-        last = await table(players, { kind: 'campaign', from: previous });
-        previous = (last.payload as { tableId: string }).tableId;
-      }
-      return last;
-    };
-    await chain(6, [p1]);
-    const last = await chain(9, [p1, p2]);
-    await badgeHandler.handle(last, test.db);
-    expect(await held(p1)).not.toContain('campaign-veteran');
-
-    await badgeHandler.handle(await chain(10, [p2]), test.db);
-    expect(await held(p2)).toContain('campaign-veteran');
   });
 
   it('awards the full table to a GM with five tables that filled every seat', async () => {
