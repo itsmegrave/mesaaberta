@@ -42,9 +42,9 @@ describe('ListSkeleton', () => {
     expect(region().element().querySelector('.aspect-4\\/1')).not.toBeNull();
   });
 
-  it('draws the signed-in Início: dashboard blocks, Sua conta and a row of cards', async () => {
+  it('draws the signed-in Início: four folding cards and a row of cards', async () => {
     render(ListSkeleton, { kind: 'home' });
-    expect(shapes()).toHaveLength(6);
+    expect(shapes()).toHaveLength(7);
   });
 
   it('draws an Admin section as a table of rows, beside the real nav', async () => {
