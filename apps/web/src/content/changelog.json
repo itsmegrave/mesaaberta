@@ -36,6 +36,11 @@
       },
       {
         "kind": "improved",
+        "title": "Imagens em uma janela maior",
+        "description": "Enviar e ajustar a imagem de uma mesa, campanha ou parceria usa a mesma janela maior da foto e da capa do perfil."
+      },
+      {
+        "kind": "improved",
         "title": "Rodapé mais enxuto",
         "description": "O rodapé ficou menor, com os links em Páginas e Suporte."
       },
