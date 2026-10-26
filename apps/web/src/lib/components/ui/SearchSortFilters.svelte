@@ -1,7 +1,9 @@
 <script lang="ts" generics="Sort extends string">
   // A list's search and order (Parceiros, Financiamentos). The search applies when it is sent
   // (Enter), the order as soon as it is picked; an order that is not one of `sorts` falls back to
-  // `fallback`. The caller turns the change into the list's address.
+  // `fallback`. The caller turns the change into the list's address. `children` holds the list's own
+  // filters, drawn between the search and the order (the partners' "Tipo").
+  import type { Snippet } from 'svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
@@ -17,6 +19,7 @@
     sortLabel,
     onapply,
     class: className = '',
+    children,
   }: {
     /** Prefix of the fields' ids: `{id}-search` and `{id}-sort`. */
     id: string;
@@ -29,6 +32,7 @@
     sortLabel: string;
     onapply: (change: { query?: string; sort?: Sort }) => void;
     class?: string;
+    children?: Snippet;
   } = $props();
 
   let text = $derived(query);
@@ -63,6 +67,7 @@
       />
     </div>
   </form>
+  {@render children?.()}
   <div class="w-full md:w-60">
     <SearchSelect
       id="{id}-sort"

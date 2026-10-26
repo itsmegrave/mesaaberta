@@ -45,7 +45,7 @@ Raw `<input>`, `<select>`, `<textarea>`, `<button>` and `<form>` appear only in 
 
 - **Wrappers.** `MAForm`, `MAButton`, `ActionForm`, `PostButton`, `TextInput`, `MATextArea` and the test harnesses under `src/lib/forms` and `src/lib/query`.
 - **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and carry the value to the SvelteKit action.
-- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and native form values, and Skeleton has no standalone radio group or checkbox.
+- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ui/CheckboxPills` (a partner's kinds), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and native form values, and Skeleton has no standalone radio group or checkbox.
 - **No native `<select>`.** Pickers, including `ProfileForm`'s age range, gender and timezone, use `SearchSelect` (Skeleton's Combobox), which submits its picks as hidden inputs.
 
 Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui-migration-plan.md).
@@ -65,6 +65,8 @@ To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([bro
 ## Translations
 
 The site is written in Brazilian Portuguese (`pt-BR`, the base language), and only that language is served today. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components. English is planned in [#31](https://github.com/itsmegrave/mesaaberta/issues/31).
+
+Translations are managed on Crowdin: [`crowdin.yml`](crowdin.yml) points it at `messages/pt-BR.json`, and Crowdin opens a pull request with new and changed translations. Editing the JSON files directly still works.
 
 **Fix a message:** edit its value in `messages/pt-BR.json`. Keep the keys and any `{placeholders}` exactly as they are.
 

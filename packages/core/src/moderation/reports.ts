@@ -1,5 +1,6 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
+import { isPartnerType, MAX_PARTNER_TYPES, orderedTypes } from '../partners/types';
 
 z.config({ jitless: true });
 
@@ -153,6 +154,21 @@ export const reportPartnerSchema = z.object({ id: uuid, ...partnerReportSchema.s
 /** An action that names only the partner: an admin approving one, or its submitter withdrawing it. */
 export const partnerIdSchema = z.object({ id: uuid });
 export const approvePartnerSchema = partnerIdSchema;
+
+/**
+ * An admin correcting a partner's kinds ("Editar tipos…"): the slugs as one comma-separated text
+ * field, so the decision travels like the others; one to MAX_PARTNER_TYPES known kinds.
+ */
+export const partnerTypesSchema = z.object({
+  id: uuid,
+  types: z
+    .string()
+    .transform((value) => [...new Set(value.split(',').map((slug) => slug.trim()))].filter(Boolean))
+    .refine((types) => types.every(isPartnerType), 'invalid')
+    .refine((types) => types.length > 0, 'required')
+    .refine((types) => types.length <= MAX_PARTNER_TYPES, 'too_many_types')
+    .transform((types) => orderedTypes(types)),
+});
 
 /** An admin taking a partner down, or rejecting one that waits: the reason and a note the submitter reads. */
 export const removePartnerSchema = z.object({

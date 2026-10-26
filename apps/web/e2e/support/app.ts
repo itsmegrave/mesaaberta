@@ -216,3 +216,16 @@ export async function adminSection(page: Page, isMobile: boolean, name: string) 
   await page.getByRole('button', { name: /^Seção: / }).click();
   return page.getByRole('menuitem', { name, exact: true });
 }
+
+/**
+ * Opens a collapsible section (MAAccordion) when it is closed. On a wide screen a phone-only one is
+ * already open. The toggle only answers once the page has hydrated (before that, a wide screen still
+ * draws it, inert), so this clicks until no closed toggle is left.
+ */
+export async function openSection(page: Page, name: RegExp) {
+  const closed = page.getByRole('button', { name, expanded: false });
+  await expect(async () => {
+    if ((await closed.count()) > 0) await closed.first().click({ timeout: 1_000 });
+    await expect(closed).toHaveCount(0, { timeout: 1_000 });
+  }).toPass();
+}

@@ -1,5 +1,5 @@
 {
-  "id": "5b53e2e4-11dc-47a9-bcd9-a73bf4985f8a",
+  "id": "1a0e50d4-ee2e-4bca-8fd2-fa47763e22dd",
   "prevId": "8f3d865a-f631-4465-9ed8-b2357a28f350",
   "version": "7",
   "dialect": "postgresql",
@@ -1167,12 +1167,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "planned_sessions": {
-          "name": "planned_sessions",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "starts_at": {
           "name": "starts_at",
           "type": "timestamp with time zone",
@@ -1442,10 +1436,6 @@
         "game_tables_min_players_range": {
           "name": "game_tables_min_players_range",
           "value": "\"game_tables\".\"min_players\" IS NULL OR (\"game_tables\".\"min_players\" >= 1 AND \"game_tables\".\"min_players\" <= \"game_tables\".\"capacity\")"
-        },
-        "game_tables_planned_sessions_range": {
-          "name": "game_tables_planned_sessions_range",
-          "value": "\"game_tables\".\"planned_sessions\" IS NULL OR (\"game_tables\".\"kind\"::text = 'adventure' AND \"game_tables\".\"planned_sessions\" BETWEEN 2 AND 20)"
         },
         "game_tables_duration_positive": {
           "name": "game_tables_duration_positive",
@@ -2289,6 +2279,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "types": {
+          "name": "types",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
         "logo_path": {
           "name": "logo_path",
           "type": "text",
@@ -2445,6 +2442,14 @@
         "partners_description_length": {
           "name": "partners_description_length",
           "value": "char_length(\"partners\".\"description\") <= 140"
+        },
+        "partners_types_count": {
+          "name": "partners_types_count",
+          "value": "cardinality(\"partners\".\"types\") <= 3"
+        },
+        "partners_types_known": {
+          "name": "partners_types_known",
+          "value": "\"partners\".\"types\" <@ ARRAY['publisher', 'shop', 'content', 'podcast', 'collective', 'community', 'event', 'venue', 'art', 'translation', 'platform', 'other']::text[]"
         },
         "partners_coupon_code_length": {
           "name": "partners_coupon_code_length",

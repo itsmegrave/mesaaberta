@@ -45,7 +45,7 @@ export async function handlePartnerForm(
     data,
     id ? editPartnerSchema : newPartnerSchema,
     NEW_PARTNER_VALUES,
-    { arrays: ['linkNetwork', 'linkUrl'], files: ['logo'] },
+    { arrays: ['types', 'linkNetwork', 'linkUrl'], files: ['logo'] },
   );
   if (!form.valid) return fail(400, { form: responseForm(form) });
   if (!locals.db) return formMessage(form, { code: 'unavailable' }, { status: 503 });

@@ -12,6 +12,7 @@
   import NetworkLinksField from '#lib/components/ui/NetworkLinksField.svelte';
   import PartnerCard from './PartnerCard.svelte';
   import FormSection from '#lib/components/ui/FormSection.svelte';
+  import CheckboxPills from '#lib/components/ui/CheckboxPills.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult, type FormResult } from '#lib/forms/contract.js';
@@ -33,12 +34,15 @@
   } from '@mesaaberta/core/partners/schema';
   import type { Network } from '@mesaaberta/core/profile/social-links';
   import { networkLabels } from '#lib/profile/social-presentation.js';
+  import { partnerTypeOptions } from '#lib/partners/type-labels.js';
+  import { isPartnerType, orderedTypes } from '@mesaaberta/core/partners/types';
   import { errorText, formProblem } from '#lib/tables/form-values.js';
   import { toast } from '#lib/toaster.js';
 
   type Values = {
     name: string;
     description: string;
+    types: string[];
     contactEmail: string;
     siteUrl: string;
     backlinkUrl: string;
@@ -87,11 +91,15 @@
     too_many: () => m.partner_err_too_many({ max: MAX_PARTNER_LINKS }),
     need_a_link: m.partner_err_need_link,
     needs_code: m.partner_err_needs_code,
+    too_many_types: m.partner_err_too_many_types,
   };
   const say = (code: string | undefined, field = '') =>
     code ? (codes[code]?.() ?? errorText(code, field)) : undefined;
   const errors = fieldErrors<keyof Values>(controller, say);
   const { err } = errors;
+  const typesError = $derived(
+    controller.errors.types?.[0] === 'required' ? m.partner_err_types_required() : err('types'),
+  );
   const logoError = $derived(
     controller.errors.logo?.[0]
       ? controller.errors.logo[0] === 'empty' || controller.errors.logo[0] === 'required'
@@ -110,6 +118,7 @@
       [
         ['name', m.partner_form_name()],
         ['description', m.partner_form_description()],
+        ['types', m.partner_form_types()],
         ['contactEmail', m.partner_form_contact_email()],
         ['siteUrl', m.partner_form_site()],
         ['backlinkUrl', m.partner_form_backlink()],
@@ -142,6 +151,7 @@
     id: 'preview',
     name: $draft.name || m.partner_form_name(),
     description: $draft.description || null,
+    types: orderedTypes($draft.types).filter(isPartnerType),
     logoUrl: picked ?? logoUrl,
     siteUrl: $draft.siteUrl.trim() ? $draft.siteUrl.trim() : null,
     couponCode: $draft.couponCode.trim() || null,
@@ -215,6 +225,14 @@
         />
       {/snippet}
     </FormField>
+    <CheckboxPills
+      name="types"
+      legend={m.partner_form_types()}
+      hint={m.partner_form_types_hint()}
+      options={partnerTypeOptions()}
+      bind:group={$draft.types}
+      error={typesError}
+    />
     <FormField
       id="contactEmail"
       label={m.partner_form_contact_email()}

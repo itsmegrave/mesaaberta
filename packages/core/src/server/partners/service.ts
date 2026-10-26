@@ -1,6 +1,20 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import {
+  and,
+  arrayContains,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { PARTNER_PAGE_SIZE, type PartnerFilters } from '../../partners/filters';
 import { partnerLinks, type PartnerInput } from '../../partners/schema';
+import { orderedTypes, type PartnerType } from '../../partners/types';
 import type { PartnerReportInput } from '../../moderation/reports';
 import { parseSocialUrl, type Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
@@ -31,6 +45,7 @@ function columnsOf(input: PartnerInput) {
   return {
     name: input.name,
     description: textOrNull(input.description),
+    types: orderedTypes(input.types),
     contactEmail: textOrNull(input.contactEmail),
     siteUrl: addressOrNull(input.siteUrl),
     backlinkUrl: addressOrNull(input.backlinkUrl),
@@ -127,6 +142,12 @@ export async function updatePartner(
 
     const changes: Changes = {};
     for (const key of Object.keys(next) as (keyof typeof next)[]) {
+      if (key === 'types') {
+        if (next.types.join(',') !== current.types.join(',')) {
+          changes.types = { from: current.types.join(','), to: next.types.join(',') };
+        }
+        continue;
+      }
       if (next[key] === current[key]) continue;
       // An address is personal data: the audit event says it changed, never what it was.
       changes[key] =
@@ -213,6 +234,8 @@ export type PartnerCard = {
   id: string;
   name: string;
   description: string | null;
+  /** In PARTNER_TYPES order; empty for a partner sent before there were types. */
+  types: PartnerType[];
   logoPath: string;
   siteUrl: string | null;
   couponCode: string | null;
@@ -241,6 +264,8 @@ export async function listPartners(
       ? or(isNotNull(partners.approvedAt), eq(partners.submitterId, viewerId))
       : isNotNull(partners.approvedAt),
     needle ? or(ilike(partners.name, needle), ilike(partners.description, needle)) : undefined,
+    // A partner shows under every kind it picked.
+    filters.type ? arrayContains(partners.types, [filters.type]) : undefined,
   );
 
   const [{ total }] = await db.select({ total: count() }).from(partners).where(where);
@@ -252,6 +277,7 @@ export async function listPartners(
       id: partners.id,
       name: partners.name,
       description: partners.description,
+      types: partners.types,
       logoPath: partners.logoPath,
       siteUrl: partners.siteUrl,
       couponCode: partners.couponCode,
@@ -287,6 +313,7 @@ export async function listPartners(
 
   const cards: PartnerCard[] = rows.map((row) => ({
     ...row,
+    types: orderedTypes(row.types),
     links: links
       .filter((link) => link.partnerId === row.id)
       .map(({ network, url }) => ({ network: network as Exclude<Network, 'website'>, url })),

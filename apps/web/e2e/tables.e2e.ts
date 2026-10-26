@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { pageMenu } from './support/app';
+import { openSection, pageMenu } from './support/app';
 import { sidewaysOverflow } from './support/overflow';
 
 // These need the seeded database: `bun run db:up && bun run db:migrate && bun run db:seed` (CI does the same).
@@ -172,6 +172,7 @@ test.describe('table page', () => {
     page,
   }) => {
     await page.goto('/t/os-sinos-de-sablewood');
+    await openSection(page, /^Informações extras/);
 
     await expect(page.getByText('Traga dados e lápis.')).toBeVisible();
     await expect(page.locator('.rich-text strong', { hasText: 'lápis' })).toBeVisible();

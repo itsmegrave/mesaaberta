@@ -912,6 +912,12 @@ export const partners = pgTable(
       .references(() => profiles.id),
     name: text('name').notNull(),
     description: text('description'),
+    // What it is: one to three slugs of PARTNER_TYPES (`@mesaaberta/core/partners/types`), in that
+    // list's order. Empty only for a partner sent before there were types, until someone picks.
+    types: text('types')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     // A path in the profile-avatars bucket, under `partners/<submitter id>/`.
     logoPath: text('logo_path').notNull(),
     // The partner's own site, if any. The networks are in `partner_links`.
@@ -943,6 +949,12 @@ export const partners = pgTable(
     check('partners_name_length', sql`char_length(${partner.name}) BETWEEN 1 AND 60`),
     check('partners_contact_email_length', sql`char_length(${partner.contactEmail}) <= 254`),
     check('partners_description_length', sql`char_length(${partner.description}) <= 140`),
+    // Mirror MAX_PARTNER_TYPES and PARTNER_TYPES.
+    check('partners_types_count', sql`cardinality(${partner.types}) <= 3`),
+    check(
+      'partners_types_known',
+      sql`${partner.types} <@ ARRAY['publisher', 'shop', 'content', 'podcast', 'collective', 'community', 'event', 'venue', 'art', 'translation', 'platform', 'other']::text[]`,
+    ),
     check('partners_coupon_code_length', sql`char_length(${partner.couponCode}) BETWEEN 1 AND 32`),
     check(
       'partners_coupon_description_length',

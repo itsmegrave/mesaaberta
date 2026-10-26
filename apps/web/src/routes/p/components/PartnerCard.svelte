@@ -1,7 +1,7 @@
 <script lang="ts">
   import { copyText } from '#lib/clipboard.js';
   // One partner of the "Parceiros" page: the logo, the name, an optional line about them, the coupon
-  // they give Mesa Aberta members (if any) and one icon per link. Every icon is a link of its own
+  // they give Mesa Aberta members (if any) and one icon per link. Its kinds sit under the name. Every icon is a link of its own
   // that opens in a new tab and says so. The card does not say who sent it: only admins see that.
   import Icon from '#lib/components/ui/Icon.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
@@ -9,12 +9,17 @@
   import { m } from '#lib/paraglide/messages.js';
 
   import type { Network } from '@mesaaberta/core/profile/social-links';
+  import type { PartnerType } from '@mesaaberta/core/partners/types';
+  import Pill from '#lib/components/ui/Pill.svelte';
+  import { partnerTypeLabels } from '#lib/partners/type-labels.js';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
 
   type Partner = {
     id: string;
     name: string;
     description: string | null;
+    /** Its kinds, in the list's order; none for a partner sent before there were kinds. */
+    types: PartnerType[];
     logoUrl: string | null;
     siteUrl: string | null;
     couponCode: string | null;
@@ -110,6 +115,13 @@
   {/snippet}
 
   <h3 class="text-lg leading-snug font-semibold text-balance">{partner.name}</h3>
+  {#if partner.types.length > 0}
+    <ul class="flex flex-wrap gap-1.5" aria-label={m.partner_types_label({ name: partner.name })}>
+      {#each partner.types as type (type)}
+        <li><Pill tone="muted">{partnerTypeLabels[type]()}</Pill></li>
+      {/each}
+    </ul>
+  {/if}
   {#if partner.description}
     <p class="text-sm text-muted">{partner.description}</p>
   {/if}
