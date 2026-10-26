@@ -165,6 +165,55 @@ describe('remindToClose', () => {
     });
   });
 
+  /** A multi-session table whose 7d reminder went out four days ago, eleven days after its session. */
+  const overdue = async (over: Partial<typeof gameTables.$inferInsert>) => {
+    const table = await awaiting(11 * DAY, over);
+    await test.db.insert(sessionCloseReminders).values({
+      tableId: table.id,
+      startsAt: table.startsAt,
+      step: '7d',
+      sentAt: ago(4 * DAY),
+    });
+    return table;
+  };
+
+  it('keeps a campaign going: the session counts as held, the next weekly date, ratings open', async () => {
+    const table = await overdue({ kind: 'campaign', recurrence: 'FREQ=WEEKLY;INTERVAL=2' });
+    await test.db.insert(registrations).values([
+      { tableId: table.id, playerId: id(2), status: 'confirmed' },
+      { tableId: table.id, playerId: id(3), status: 'confirmed', attended: false },
+    ]);
+
+    await remindToClose(test.db, now, everyone);
+
+    const [after] = await test.db.select().from(gameTables).where(eq(gameTables.id, table.id));
+    expect(after.status).toBe('active');
+    // Every two weeks from the session that went unanswered: the first such date after now.
+    expect(after.startsAt).toEqual(new Date(table.startsAt.getTime() + 14 * DAY));
+    expect(after.icalSequence).toBe(table.icalSequence + 1);
+    const opened = await test.db
+      .select({ id: registrations.playerId, at: registrations.ratingOpenedAt })
+      .from(registrations)
+      .where(eq(registrations.tableId, table.id));
+    expect(opened.find((row) => row.id === id(2))?.at).toEqual(now);
+    expect(opened.find((row) => row.id === id(3))?.at).toBeNull();
+    expect((await eventsOf(table.id)).map((event) => [event.type, event.payload])).toEqual([
+      [
+        'TableSessionHeld',
+        expect.objectContaining({ nextStartsAt: after.startsAt.toISOString(), autoClosed: true }),
+      ],
+      ['RatingsOpened', expect.objectContaining({ playerIds: [id(2)], autoClosed: true })],
+    ]);
+  });
+
+  it('moves an adventure, which has no repeat, a week on', async () => {
+    const table = await overdue({ kind: 'adventure' });
+    await remindToClose(test.db, now, everyone);
+    const [after] = await test.db.select().from(gameTables).where(eq(gameTables.id, table.id));
+    expect(after.status).toBe('active');
+    expect(after.startsAt).toEqual(new Date(table.startsAt.getTime() + 14 * DAY));
+  });
+
   it('never closes a table the GM answered meanwhile', async () => {
     const table = await awaiting(11 * DAY);
     await test.db.insert(sessionCloseReminders).values({
@@ -276,6 +325,30 @@ describe('the close reminder e-mails', () => {
       expect.objectContaining({
         to: `${id(2)}@example.com`,
         text: expect.stringContaining(`https://mesaaberta.app/t/${table.slug}`),
+      }),
+    ]);
+  });
+
+  it('asks the players let rate a session held for its GM, saying the table goes on', async () => {
+    const table = await awaiting(2 * HOUR, { status: 'active', kind: 'adventure' });
+    await test.db.insert(registrations).values([
+      { tableId: table.id, playerId: id(2), status: 'confirmed' },
+      { tableId: table.id, playerId: id(3), status: 'confirmed', attended: false },
+    ]);
+    await handler().handle(
+      stored('RatingsOpened', {
+        tableId: table.id,
+        slug: table.slug,
+        title: table.title,
+        playerIds: [id(2)],
+        autoClosed: true,
+      }),
+      test.db,
+    );
+    expect(sent).toEqual([
+      expect.objectContaining({
+        to: `${id(2)}@example.com`,
+        text: expect.stringContaining('última sessão'),
       }),
     ]);
   });

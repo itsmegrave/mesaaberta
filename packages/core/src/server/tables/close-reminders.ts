@@ -1,12 +1,25 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, playerInvitations, profiles, sessionCloseReminders } from '../db/schema';
+import {
+  gameTables,
+  playerInvitations,
+  profiles,
+  registrations,
+  sessionCloseReminders,
+} from '../db/schema';
+import { Invalid } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { nextStatus } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { sessionEndedBy } from './lifecycle';
-import { lockTableRows } from './schedule-guard';
+import { nextWeeklySession, weeklyInterval } from './schedule';
+import {
+  assertTableSchedule,
+  lockTableFamily,
+  lockTableRows,
+  lockTableSchedule,
+} from './schedule-guard';
 
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
@@ -20,7 +33,7 @@ export type CloseReminderStep = '1h' | '7d';
 /** When the GM is first reminded, and when for the last time. */
 export const FIRST_REMINDER_AFTER = HOUR;
 export const LAST_REMINDER_AFTER = 7 * DAY;
-/** When a session nobody answered for is concluded, counted from its end. */
+/** When a session nobody answered for is settled for the GM, counted from its end. */
 export const AUTO_CLOSE_AFTER = 10 * DAY;
 /** The least time between the last reminder and the close, so a GM always gets a few days' warning. */
 export const AUTO_CLOSE_NOTICE = 3 * DAY;
@@ -62,8 +75,9 @@ export type CloseReminderTarget = { id: string; isAdmin: boolean };
 
 /**
  * Reminds the GMs of the tables awaiting confirmation to say whether the session happened, by
- * e-mail an hour after it ended and a week after, and concludes the table for them ten days after
- * it (`closeStepFor`). Only for the GMs `enabled` says yes to. Each step is one row in
+ * e-mail an hour after it ended and a week after, and settles it for them ten days after it
+ * (`closeStepFor`): a one-shot is concluded (`autoClose`), a campaign or adventure goes on to its
+ * next session (`autoHold`). Either way the players are asked to rate it. Only for the GMs `enabled` says yes to. Each step is one row in
  * `session_close_reminders`, written with its event in one transaction, so a second sweep finds it
  * done; the close takes the table only while it still waits. The e-mails go out from the events'
  * handlers. Returns the ids of the events, which are due at once.
@@ -80,6 +94,7 @@ export async function remindToClose(
       title: gameTables.title,
       startsAt: gameTables.startsAt,
       durationMinutes: gameTables.durationMinutes,
+      kind: gameTables.kind,
       gmId: gameTables.gmId,
       gmRole: profiles.role,
     })
@@ -119,8 +134,11 @@ export async function remindToClose(
     const step = closeStepFor(sessionEnd(table.startsAt, table.durationMinutes), now, sent);
     if (!step || !(await allowed(table.gmId, table.gmRole))) continue;
     if (step === 'close') {
-      const eventId = await autoClose(db, table, now);
-      if (eventId) closed.push(eventId);
+      const eventIds =
+        table.kind === 'one_shot'
+          ? [await autoClose(db, table, now)]
+          : await autoHold(db, table, now);
+      closed.push(...eventIds.filter((eventId): eventId is string => eventId !== null));
     } else {
       const eventId = await remind(db, table, step, now);
       if (eventId) reminded.push(eventId);
@@ -129,7 +147,7 @@ export async function remindToClose(
   return { reminded, closed };
 }
 
-type DueTable = { id: string; slug: string; title: string; startsAt: Date };
+type DueTable = { id: string; slug: string; title: string; startsAt: Date; gmId: string };
 
 async function remind(
   db: AnyDb,
@@ -191,5 +209,98 @@ async function autoClose(db: AnyDb, table: DueTable, now: Date): Promise<string 
       },
       { now },
     );
+  });
+}
+
+/** How many later dates `autoHold` tries when the next one clashes with another of the GM's tables. */
+const HOLD_ATTEMPTS = 8;
+
+/**
+ * Settles a campaign's or an adventure's session for its GM, as if they had said it happened and
+ * more follow, without saying who came: the table opens again for its next date (the next weekly
+ * one: a campaign's own interval, a week for an adventure, which has none; a date that clashes with
+ * another of the GM's tables is skipped) and every confirmed player not marked absent is let rate
+ * it. The GM can still move the date. A table with no free date in sight is left waiting.
+ */
+async function autoHold(db: AnyDb, table: DueTable, now: Date): Promise<string[]> {
+  return db.transaction(async (tx) => {
+    const executor = tx as unknown as AnyDb;
+    await lockTableSchedule(executor, table.gmId);
+    const { table: current, linked } = await lockTableFamily(executor, table.id);
+    if (
+      current.status !== 'awaiting_confirmation' ||
+      current.startsAt.getTime() !== table.startsAt.getTime()
+    )
+      return [];
+    const interval = weeklyInterval(current.recurrence) ?? 1;
+    let startsAt: Date | null = nextWeeklySession(
+      current.startsAt,
+      interval,
+      current.timezone,
+      now,
+    );
+    for (let attempt = 1; startsAt; attempt++) {
+      try {
+        assertTableSchedule(linked, { ...current, startsAt }, current.id);
+        break;
+      } catch (error) {
+        if (!(error instanceof Invalid)) throw error;
+        startsAt =
+          attempt < HOLD_ATTEMPTS
+            ? nextWeeklySession(startsAt, interval, current.timezone, startsAt)
+            : null;
+      }
+    }
+    if (!startsAt) return [];
+
+    const [updated] = await tx
+      .update(gameTables)
+      .set({
+        status: nextStatus('awaiting_confirmation', 'SESSION_HELD')!,
+        startsAt,
+        icalSequence: current.icalSequence + 1,
+      })
+      .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
+      .returning({ id: gameTables.id });
+    if (!updated) return [];
+    await cancelPendingInvitations(
+      executor,
+      eq(playerInvitations.tableId, table.id),
+      'table_changed',
+      now,
+    );
+    const opened = await tx
+      .update(registrations)
+      .set({ ratingOpenedAt: now })
+      .where(
+        and(
+          eq(registrations.tableId, table.id),
+          eq(registrations.status, 'confirmed'),
+          or(isNull(registrations.attended), eq(registrations.attended, true)),
+          isNull(registrations.ratingOpenedAt),
+        ),
+      )
+      .returning({ id: registrations.playerId });
+    const facts = { tableId: table.id, slug: table.slug, title: table.title };
+    const held = await recordEvent(
+      executor,
+      {
+        type: 'TableSessionHeld',
+        actorId: null,
+        payload: { ...facts, nextStartsAt: startsAt.toISOString(), autoClosed: true },
+      },
+      { now },
+    );
+    if (opened.length === 0) return [held];
+    const ratingsOpened = await recordEvent(
+      executor,
+      {
+        type: 'RatingsOpened',
+        actorId: null,
+        payload: { ...facts, playerIds: opened.map(({ id }) => id), autoClosed: true },
+      },
+      { now },
+    );
+    return [held, ratingsOpened];
   });
 }

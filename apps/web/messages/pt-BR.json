@@ -1480,6 +1480,8 @@
   "history_event_TableCloseReminder": "lembrou quem mestra, por e-mail, de dizer se a sessão aconteceu",
   "history_event_TableConcluded": "confirmou que a sessão aconteceu",
   "history_event_TableConcludedAutomatically": "concluiu a mesa porque quem mestra não respondeu em 10 dias, e pediu a avaliação de quem jogou",
+  "history_event_TableSessionHeld": "confirmou que a sessão aconteceu e a mesa seguiu para a próxima",
+  "history_event_TableSessionHeldAutomatically": "registrou a sessão como realizada porque quem mestra não respondeu em 10 dias, seguiu para a próxima data e pediu a avaliação de quem jogou",
   "history_event_TableNotHeld": "disse que a sessão não aconteceu",
   "history_event_TableClosedByModeration": "encerrou a mesa por moderação",
   "history_event_JoinRequested": "pediu uma vaga",

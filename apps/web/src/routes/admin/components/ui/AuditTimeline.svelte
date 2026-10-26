@@ -99,6 +99,10 @@
         return entry.autoClosed
           ? m.history_event_TableConcludedAutomatically()
           : m.history_event_TableConcluded();
+      case 'TableSessionHeld':
+        return entry.autoClosed
+          ? m.history_event_TableSessionHeldAutomatically()
+          : m.history_event_TableSessionHeld();
       case 'TableNotHeld':
         return m.history_event_TableNotHeld();
       case 'TableClosedByModeration':

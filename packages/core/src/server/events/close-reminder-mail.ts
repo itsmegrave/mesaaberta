@@ -23,16 +23,21 @@ type Config = {
 
 type ReminderEvent = Extract<StoredEvent, { type: 'TableCloseReminder' }>;
 type ConcludedEvent = Extract<StoredEvent, { type: 'TableConcluded' }>;
+type OpenedEvent = Extract<StoredEvent, { type: 'RatingsOpened' }>;
 
 const localFrom = 'Mesa Aberta <no-reply@mesaaberta.local>';
 
-/** The GM's reminder: did the session happen? The second one says when the table closes itself. */
+/**
+ * The GM's reminder: did the session happen? The second one says when it is settled for them: a
+ * one-shot is concluded, a table that goes on (`goesOn`) counts the session as held and moves on.
+ */
 export function closeReminderMail(input: {
   name: string;
   title: string;
   startsAt: string;
   url: string;
   closesAt?: string;
+  goesOn?: boolean;
 }) {
   return {
     subject: input.closesAt
@@ -47,7 +52,9 @@ export function closeReminderMail(input: {
       '',
       ...(input.closesAt
         ? [
-            `Se não houver resposta até ${input.closesAt}, a mesa será marcada como concluída e quem jogou será convidado a avaliar a sessão.`,
+            input.goesOn
+              ? `Se não houver resposta até ${input.closesAt}, a sessão será registrada como realizada, a mesa seguirá para a próxima data e quem jogou será convidado a avaliar a sessão.`
+              : `Se não houver resposta até ${input.closesAt}, a mesa será marcada como concluída e quem jogou será convidado a avaliar a sessão.`,
             '',
           ]
         : []),
@@ -56,14 +63,24 @@ export function closeReminderMail(input: {
   };
 }
 
-/** What a player of a table concluded for its GM is asked: to rate it. */
-export function ratingRequestMail(input: { name: string; title: string; url: string }) {
+/**
+ * What a player of a table settled for its GM is asked: to rate it. A table that goes on
+ * (`goesOn`) had a session, not its end.
+ */
+export function ratingRequestMail(input: {
+  name: string;
+  title: string;
+  url: string;
+  goesOn?: boolean;
+}) {
   return {
     subject: `Como foi “${input.title}”? Avalie a mesa`,
     text: [
       `Olá, ${input.name}.`,
       '',
-      `A mesa “${input.title}” foi concluída. Conte como foi a sessão e avalie quem mestrou:`,
+      input.goesOn
+        ? `A última sessão da mesa “${input.title}” foi registrada. Conte como foi e avalie quem mestra:`
+        : `A mesa “${input.title}” foi concluída. Conte como foi a sessão e avalie quem mestrou:`,
       input.url,
       '',
       'Sua avaliação ajuda outras pessoas a encontrar boas mesas.',
@@ -78,8 +95,9 @@ const nameOf = (profile: { name: string | null; username: string | null }) =>
 
 /**
  * E-mails the GM the reminders to close a session (`TableCloseReminder`), and, when the sweeper
- * concluded a table for its GM (`TableConcluded` with `autoClosed`), asks each confirmed player who
- * has not rated it yet to do so. Each e-mail goes out once (`sendOnce`), so a retry sends only what
+ * settled a session for its GM (`autoClosed`: a one-shot's `TableConcluded`, or the
+ * `RatingsOpened` of a table that goes on), asks each player it lets rate who has not rated yet.
+ * A concluded one-shot asks every confirmed player. Each e-mail goes out once (`sendOnce`), so a retry sends only what
  * is missing. A reminder for a table the GM answered meanwhile is not sent, nor anything to an
  * account that is not active.
  */
@@ -91,10 +109,14 @@ export function createCloseReminderMailHandler(
 ): Handler {
   return {
     name: 'close-reminder-mail-v1',
-    types: ['TableCloseReminder', 'TableConcluded'],
+    types: ['TableCloseReminder', 'TableConcluded', 'RatingsOpened'],
     async handle(event, db) {
-      if (event.type === 'TableConcluded' && !(event as ConcludedEvent).payload.autoClosed) return;
-      const { tableId } = (event as ReminderEvent | ConcludedEvent).payload;
+      if (
+        event.type !== 'TableCloseReminder' &&
+        !(event as ConcludedEvent | OpenedEvent).payload.autoClosed
+      )
+        return;
+      const { tableId } = (event as ReminderEvent | ConcludedEvent | OpenedEvent).payload;
       const [table] = await db
         .select({
           slug: gameTables.slug,
@@ -103,6 +125,7 @@ export function createCloseReminderMailHandler(
           startsAt: gameTables.startsAt,
           durationMinutes: gameTables.durationMinutes,
           timezone: gameTables.timezone,
+          kind: gameTables.kind,
           gmId: gameTables.gmId,
         })
         .from(gameTables)
@@ -122,6 +145,7 @@ export function createCloseReminderMailHandler(
           title: table.title,
           startsAt: formatSession(table.startsAt, table.timezone, 'pt-BR'),
           url: new URL(`${routes.table(table.slug)}/manage`, env.APP_ORIGIN).href,
+          goesOn: table.kind !== 'one_shot',
           ...(last
             ? {
                 closesAt: formatSession(
@@ -140,7 +164,9 @@ export function createCloseReminderMailHandler(
         return;
       }
 
-      if (table.status !== 'concluded') return;
+      const goesOn = event.type === 'RatingsOpened';
+      if (!goesOn && table.status !== 'concluded') return;
+      const letRate = goesOn ? new Set((event as OpenedEvent).payload.playerIds) : null;
       const players = await db
         .select({
           id: registrations.playerId,
@@ -161,11 +187,16 @@ export function createCloseReminderMailHandler(
       );
       const url = new URL(routes.table(table.slug), env.APP_ORIGIN).href;
       for (const player of players) {
-        if (player.status !== 'active' || rated.has(player.id) || player.id === table.gmId)
+        if (
+          player.status !== 'active' ||
+          rated.has(player.id) ||
+          player.id === table.gmId ||
+          (letRate && !letRate.has(player.id))
+        )
           continue;
         await sendOnce(db, mailer, {
           to: await emailOf(admin, player.id),
-          ...ratingRequestMail({ name: nameOf(player), title: table.title, url }),
+          ...ratingRequestMail({ name: nameOf(player), title: table.title, url, goesOn }),
           idempotencyKey: `rating-request-${event.id}-${player.id}`,
         });
       }
