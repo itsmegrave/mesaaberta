@@ -14,5 +14,6 @@
   type="email"
   required
   autocomplete="email"
+  placeholder={m.auth_email_placeholder()}
   bind:value
 />

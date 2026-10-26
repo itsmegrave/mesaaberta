@@ -57,7 +57,7 @@
       id="partner-type"
       name="type"
       label={m.partner_type_filter()}
-      labelClass="label-text block pb-1 font-semibold"
+      labelClass="sr-only"
       class="grid"
       compact
       items={types}
