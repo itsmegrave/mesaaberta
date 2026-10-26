@@ -18,6 +18,11 @@ MAILPIT_URL=http://127.0.0.1:54344
 # `bun run supabase status`. Both are public values, not secrets.
 # SUPABASE_URL=http://127.0.0.1:54321
 # SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+# Where browsers load stored images, when the server reaches Supabase at an address they cannot
+# (the Docker stack sets it to the site's origin). Unset: SUPABASE_URL.
+# SUPABASE_PUBLIC_URL=
+# true: refuse to start pointed at an outside service, and refuse any request to a public address.
+# LOCAL_ONLY=
 
 # Feature flags. Blank in wrangler.jsonc, so every flag returns its registry default. Set a
 # GrowthBook client key (read-only, not a secret) to load live values.

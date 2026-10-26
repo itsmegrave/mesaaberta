@@ -85,9 +85,17 @@ export async function storeImage(
   return image.path;
 }
 
-/** The project URL from the Worker settings. It is not in the generated `Env` type until it is configured. */
-export const supabaseUrlOf = (env: unknown) =>
-  (env as { SUPABASE_URL?: string } | undefined)?.SUPABASE_URL;
+/**
+ * Where browsers fetch stored images: the project URL from the Worker settings, or
+ * `SUPABASE_PUBLIC_URL` when the server reaches Supabase at a private address the browser cannot
+ * (the Docker stack, where Caddy serves the public bucket paths on the site's own origin). Neither
+ * is in the generated `Env` type until it is configured.
+ */
+export const supabaseUrlOf = (env: unknown) => {
+  const { SUPABASE_PUBLIC_URL, SUPABASE_URL } =
+    (env as { SUPABASE_PUBLIC_URL?: string; SUPABASE_URL?: string } | undefined) ?? {};
+  return SUPABASE_PUBLIC_URL || SUPABASE_URL;
+};
 
 /** The public URL of a stored image, or null when there is none or Supabase is not configured. */
 export const imageUrl = (supabaseUrl: string | undefined, path: string | null) =>
