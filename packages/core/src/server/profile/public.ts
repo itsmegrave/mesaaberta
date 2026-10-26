@@ -8,7 +8,7 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { bannerUrl, pictureOf, imageUrl } from '@mesaaberta/core/server/images';
 import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
-import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { gmRatingOf, publicGmReviews } from '@mesaaberta/core/server/ratings/service';
 import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '../../profile/social-links';
@@ -93,7 +93,7 @@ export async function publicProfile(
     .limit(1);
   if (!found) return null;
 
-  const [links, totals, rating, upcoming] = await Promise.all([
+  const [links, totals, rating, upcoming, reviews] = await Promise.all([
     db
       .select({
         network: profileSocialLinks.network,
@@ -106,6 +106,7 @@ export async function publicProfile(
     tableCounts(db, found.id),
     gmRatingOf(db, found.id),
     listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
+    publicGmReviews(db, found.id),
   ]);
 
   // Null: the rollout has not reached this profile, so the page shows no strip at all.
@@ -162,6 +163,15 @@ export async function publicProfile(
       platforms: table.platforms,
       tags: table.tags,
       gmRating: table.gmRating,
+    })),
+    // "Avaliações da mestragem": only the comments their authors chose to show here.
+    reviews: reviews.map((review) => ({
+      username: review.username!,
+      avatarUrl: pictureOf(supabaseUrl, review),
+      score: review.gmScore,
+      text: review.comment!,
+      createdAt: review.createdAt,
+      table: { title: review.tableTitle, slug: review.tableSlug },
     })),
     page,
     pages: Math.max(1, Math.ceil(upcoming.total / PUBLIC_PROFILE_PAGE_SIZE)),

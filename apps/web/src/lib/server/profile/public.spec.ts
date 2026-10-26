@@ -49,6 +49,7 @@ beforeAll(async () => {
     { id: id(7), username: 'foto-provedor', avatarUrl: 'https://cdn.discordapp.com/provider.png' },
     { id: id(8), username: null },
     { id: id(9), username: 'nome-publico', name: 'Bia Souza', showName: true },
+    { id: id(10), username: 'mestra-avaliada' },
   ]);
   await test.db.insert(profileSocialLinks).values([
     { profileId: id(1), network: 'website', url: 'https://example.com', position: 2 },
@@ -123,6 +124,18 @@ beforeAll(async () => {
     { tableId: done, playerId: id(2), gmScore: 5, comment: 'Private rating comment' },
     { tableId: done, playerId: id(6), gmScore: 3 },
   ]);
+  // "Avaliações da mestragem", on a GM of their own. The scores average 4, as above, so the
+  // site-wide mean the GM score leans on stays where it was.
+  const reviewed = await add('reviewed', { gmId: id(10), status: 'concluded' });
+  const removed = await add('removed-table', { gmId: id(10), status: 'disabled' });
+  await test.db.insert(ratings).values([
+    // Shown: the author chose to.
+    { tableId: reviewed, playerId: id(9), gmScore: 4, comment: 'Caprichada', commentPublic: true },
+    // Not shown: kept private, a suspended author, a table taken down.
+    { tableId: reviewed, playerId: id(2), gmScore: 5, comment: 'Só para mim' },
+    { tableId: reviewed, playerId: id(4), gmScore: 4, comment: 'Suspensa', commentPublic: true },
+    { tableId: removed, playerId: id(7), gmScore: 3, comment: 'Removida', commentPublic: true },
+  ]);
   for (const status of [
     'concluded',
     'not_held',
@@ -187,6 +200,21 @@ describe('public profiles', () => {
       'comment',
     ])
       expect(serialized).not.toContain(secret);
+  });
+
+  it('shows only the comments their authors chose to publish, from active people on public tables', async () => {
+    const { reviews } = (await read('mestra-avaliada'))!;
+    expect(reviews).toEqual([
+      {
+        username: 'nome-publico',
+        avatarUrl: null,
+        score: 4,
+        text: 'Caprichada',
+        createdAt: expect.any(Date),
+        table: { title: 'reviewed', slug: 'reviewed' },
+      },
+    ]);
+    expect((await read())!.reviews).toEqual([]);
   });
 
   it('reads only safe known social links in the saved order', async () => {

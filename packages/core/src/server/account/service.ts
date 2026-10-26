@@ -117,6 +117,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
         slug: gameTables.slug,
         gmScore: ratings.gmScore,
         comment: ratings.comment,
+        commentPublic: ratings.commentPublic,
         createdAt: ratings.createdAt,
       })
       .from(ratings)
