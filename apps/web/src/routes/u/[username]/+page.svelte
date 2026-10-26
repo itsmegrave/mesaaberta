@@ -10,6 +10,8 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import BadgeIcons from './components/ui/BadgeIcons.svelte';
   import ReviewCard from './components/ui/ReviewCard.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
@@ -48,6 +50,18 @@
   const REVIEWS_SHOWN = 3;
   let allReviews = $state(false);
   const reviews = $derived(allReviews ? data.reviews : data.reviews.slice(0, REVIEWS_SHOWN));
+  // The folded header's line: the average once there are enough ratings, then how many are listed.
+  const reviewsSummary = $derived(
+    profile.rating?.score != null && !profile.rating.isNew
+      ? m.public_profile_reviews_summary_score({
+          score: new Intl.NumberFormat(locale, {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          }).format(profile.rating.score),
+          count: data.reviews.length,
+        })
+      : m.public_profile_reviews_summary({ count: data.reviews.length }),
+  );
 
   // One social link: the network's icon with the handle beside it.
   const chip =
@@ -232,32 +246,38 @@
   </section>
 
   {#if data.reviews.length > 0}
-    <section aria-labelledby="gm-reviews" class="mt-12">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <h2 id="gm-reviews" class="text-2xl leading-tight font-semibold tracking-tight">
-          {m.public_profile_reviews()}
-        </h2>
-        {#if data.reviews.length > REVIEWS_SHOWN}
-          <MAButton
-            variant="secondary"
-            aria-expanded={allReviews}
-            aria-controls="gm-reviews-list"
-            onclick={() => (allReviews = !allReviews)}
-            >{allReviews
-              ? m.public_profile_reviews_fewer()
-              : m.public_profile_reviews_all({ count: data.reviews.length })}</MAButton
-          >
-        {/if}
-      </div>
-      <ul
-        id="gm-reviews-list"
-        aria-label={m.public_profile_reviews_of({ username: atHandle(profile.username) })}
-        class="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+    <!-- On a phone the comments fold under their header, which keeps the average and the count. -->
+    <MAAccordion collapse="phone" class="mt-12 border-y border-surface-200-800 md:border-0">
+      <MAAccordionItem
+        value="reviews"
+        title={m.public_profile_reviews()}
+        summary={reviewsSummary}
+        titleClass="text-xl leading-tight font-semibold tracking-tight md:text-2xl"
+        class="md:mt-5"
       >
-        {#each reviews as review (`${review.username}-${review.table.slug}`)}
-          <li><ReviewCard {review} /></li>
-        {/each}
-      </ul>
-    </section>
+        {#snippet aside()}
+          {#if data.reviews.length > REVIEWS_SHOWN}
+            <MAButton
+              variant="secondary"
+              aria-expanded={allReviews}
+              aria-controls="gm-reviews-list"
+              onclick={() => (allReviews = !allReviews)}
+              >{allReviews
+                ? m.public_profile_reviews_fewer()
+                : m.public_profile_reviews_all({ count: data.reviews.length })}</MAButton
+            >
+          {/if}
+        {/snippet}
+        <ul
+          id="gm-reviews-list"
+          aria-label={m.public_profile_reviews_of({ username: atHandle(profile.username) })}
+          class="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {#each reviews as review (`${review.username}-${review.table.slug}`)}
+            <li><ReviewCard {review} /></li>
+          {/each}
+        </ul>
+      </MAAccordionItem>
+    </MAAccordion>
   {/if}
 </section>

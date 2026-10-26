@@ -89,6 +89,10 @@ describe('public profile title', () => {
 });
 
 describe('public profile reviews', () => {
+  beforeEach(async () => {
+    await page.viewport(1024, 800);
+  });
+
   it('has no section while nobody chose to show a comment', async () => {
     show([]);
 
@@ -118,5 +122,23 @@ describe('public profile reviews', () => {
     await expect
       .element(page.getByRole('button', { name: 'Mostrar menos' }))
       .toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('folds the comments on a phone under a header that says how many there are', async () => {
+    await page.viewport(390, 800);
+    show([], undefined, [1, 2, 3, 4, 5].map(review));
+
+    const toggle = page.getByRole('button', { name: /^Avaliações da mestragem/ });
+    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText('5 avaliações')).toBeVisible();
+    // Hidden content is out of the accessibility tree.
+    const list = page.getByRole('list', { name: 'Avaliações de @ana' });
+    await expect.element(list).not.toBeInTheDocument();
+
+    await toggle.click();
+    await expect.element(page.getByText('“Comentário 1”')).toBeVisible();
+    await expect
+      .element(page.getByRole('button', { name: 'Ver todas as 5 avaliações' }))
+      .toBeVisible();
   });
 });
