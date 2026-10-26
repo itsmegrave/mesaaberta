@@ -34,6 +34,8 @@ How the pieces meet: the server reaches Auth and Storage on the Docker network t
 
 `LOCAL_ONLY=true` (the default here) keeps the stack on the machine: the web app, the api and the worker refuse to start when a setting points outside (a `*.supabase.co` URL, `RESEND_API_KEY`, `SENTRY_DSN` and the like), and any request they make to a public address fails. Set `LOCAL_ONLY=false` and pass the settings to the `web`, `api` and `worker` services to connect those integrations (see `.dev.vars.example` for the names).
 
+**Files in an S3-compatible store.** Uploads go to Supabase Storage by default. To keep them in Cloudflare R2, MinIO, AWS S3 or another S3-compatible store instead, set `STORAGE_PROVIDER=s3` with `S3_ENDPOINT` (the S3 API address, without the bucket), `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `S3_REGION` (`auto` for R2, the default) on the `web` and `worker` services, and `STORAGE_PUBLIC_URL` (where browsers read the bucket, such as `https://files.example.org`) on `web`, both when it runs and when it is built, so the Content Security Policy allows it. Everything lives in that one bucket, under `table-images/` and `profile-avatars/`, and the bucket must be publicly readable. The server writes with a signed `PUT` that never overwrites (`If-None-Match: *`) and deletes with `DELETE` (`packages/core/src/server/storage.ts`). Moving existing files is a copy of each object to the same key under its bucket's folder.
+
 ## Scripts
 
 | Script              | What it does                                                                                        |

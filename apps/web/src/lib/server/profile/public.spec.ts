@@ -20,7 +20,7 @@ const read = (username = 'mestre-ana', page = 1, viewerId: string | null = null)
     page,
     now,
     viewerId,
-    supabaseUrl: 'https://example.supabase.co',
+    supabaseUrl: 'https://example.supabase.co/storage/v1/object/public',
   });
 
 beforeAll(async () => {
