@@ -183,6 +183,16 @@
         "kind": "improved",
         "title": "Carregamento à vista",
         "description": "Enquanto uma página carrega, a barra no topo e um esboço da página aparecem no lugar, e o botão que você tocou mostra na hora que está enviando."
+      },
+      {
+        "kind": "improved",
+        "title": "Menu lateral recolhido só com ícones",
+        "description": "Com o menu fechado, passe o mouse ou foque um ícone para ver o nome dele ao lado."
+      },
+      {
+        "kind": "fixed",
+        "title": "Conta e acesso mais certos",
+        "description": "\"Criar uma senha\" só aparece para quem ainda não tem senha, e os botões vermelhos, como Apagar minha conta, voltaram a ter cor. Apagar a conta agora pede uma confirmação."
       }
     ]
   },
