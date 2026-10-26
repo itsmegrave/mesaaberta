@@ -74,7 +74,11 @@
         <HomeWaiting items={data.waiting.items} total={data.waiting.total} />
       {/if}
       {#if data.sessions.next.length > 0}
-        <HomeSessions sessions={data.sessions.next} now={data.now} />
+        <HomeSessions
+          sessions={data.sessions.next}
+          now={data.now}
+          open={data.sessions.thisWeek > 0}
+        />
       {/if}
     </div>
     <div class="flex min-w-0 flex-col gap-4 md:gap-6">

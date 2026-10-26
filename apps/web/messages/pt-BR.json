@@ -1830,7 +1830,7 @@
   "admin_events_lede": "O que a plataforma registrou e ainda precisa processar: o que desistiu, o que espera nova tentativa e o que já rodou.",
   "admin_events_status": "Estado",
   "admin_events_status_failed": "Falhou",
-  "admin_events_status_retrying": "Aguardando nova tentativa",
+  "admin_events_status_retrying": "Nova tentativa",
   "admin_events_status_pending": "Pendente",
   "admin_events_status_running": "Em execução",
   "admin_events_status_processed": "Processado",
@@ -2409,10 +2409,22 @@
   "home_waiting_invitation_cta": "Ver convite",
   "home_waiting_all": "Ver todas",
   "home_sessions_title": "Suas próximas sessões",
+  "home_sessions_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 sessão · {when}",
+        "count=*": "{count} sessões · a próxima {when}"
+      }
+    }
+  ],
   "home_sessions_role_player": "Você joga",
   "home_sessions_role_gm": "Você mestra",
   "home_sessions_timezone": "Horários em {zone}.",
   "home_account_title": "Sua conta",
+  "home_account_summary": "Mestragem {gm} · Participante {player}",
+  "home_account_summary_debut": "estreia",
   "home_account_profile": "Ver perfil",
   "home_account_gm_score": "Nota da mestragem",
   "home_account_player_score": "Nota como participante",
@@ -2429,6 +2441,16 @@
   "home_account_review_meta": "{when} · {table}",
   "home_account_badge": "Você ganhou a conquista {badge}.",
   "home_feed_title": "De quem você segue",
+  "home_feed_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 novidade · {when}",
+        "count=*": "{count} novidades · a última {when}"
+      }
+    }
+  ],
   "home_feed_table": "{person} abriu {table}",
   "home_feed_seat": "Abriu uma vaga em {table}, de {person}",
   "home_feed_badge": "{person} ganhou a conquista {badge}",

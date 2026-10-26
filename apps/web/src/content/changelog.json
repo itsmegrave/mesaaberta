@@ -218,6 +218,11 @@
         "kind": "improved",
         "title": "Telas mais compactas",
         "description": "Botões, campos, títulos, etiquetas e cartões ficaram menores e mais próximos, no celular e no computador. Dá para ver mais de cada página com menos rolagem."
+      },
+      {
+        "kind": "improved",
+        "title": "Início mais curto",
+        "description": "Suas próximas sessões, Sua conta e De quem você segue se recolhem e mostram um resumo quando não há nada para fazer agora. Toque no título para abrir."
       }
     ]
   },

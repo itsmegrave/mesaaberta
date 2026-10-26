@@ -80,13 +80,7 @@ describe('admin events page', () => {
     await expect
       .element(page.getByRole('heading', { name: 'Fila de eventos', level: 1 }))
       .toBeVisible();
-    for (const label of [
-      /Falhou/,
-      /Aguardando nova tentativa/,
-      /Pendente/,
-      /Em execução/,
-      /Processado/,
-    ]) {
+    for (const label of [/Falhou/, /Nova tentativa/, /Pendente/, /Em execução/, /Processado/]) {
       expect(page.getByRole('radio', { name: label }).elements()).toHaveLength(1);
     }
     expect(

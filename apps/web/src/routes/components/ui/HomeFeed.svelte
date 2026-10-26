@@ -1,5 +1,6 @@
 <script lang="ts">
-  // De quem você segue: the last two weeks of what people you follow did in public.
+  // De quem você segue: the last two weeks of what people you follow did in public. News, not
+  // something to do: it starts closed, its header counting the news and saying when the last was.
   import { presentationOf } from '#lib/badges/presentation.js';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { atHandle } from '@mesaaberta/core/profile/handle';
@@ -7,8 +8,15 @@
   import type { Home } from '@mesaaberta/core/server/reads/home';
   import { m } from '#lib/paraglide/messages.js';
   import { agoLabel } from '../home-format';
+  import HomePanel from './HomePanel.svelte';
 
   let { feed, now }: { feed: Home['feed']; now: Date } = $props();
+
+  const summary = $derived(
+    feed[0]
+      ? m.home_feed_summary({ count: feed.length, when: agoLabel(feed[0].at, now) })
+      : undefined,
+  );
 
   const text = (item: Home['feed'][number]) => {
     const person = atHandle(item.username);
@@ -19,15 +27,11 @@
   };
 </script>
 
-<section
-  aria-labelledby="home-feed"
-  class="rounded-lg border border-surface-200-800 bg-panel p-4 md:p-5"
->
-  <div class="flex items-baseline justify-between gap-3">
-    <h2 id="home-feed" class="text-lg font-semibold md:text-xl">{m.home_feed_title()}</h2>
+<HomePanel value="feed" title={m.home_feed_title()} {summary}>
+  {#snippet aside()}
     <a href="/u/profile/edit/following" class="text-sm font-semibold">{m.home_feed_manage()}</a>
-  </div>
-  <ul class="mt-4 flex flex-col gap-4">
+  {/snippet}
+  <ul class="flex flex-col gap-4">
     {#each feed as item (`${item.kind}-${item.username}-${item.at.getTime()}`)}
       <li class="flex items-start gap-3">
         <MAAvatar name={item.username} size={32} />
@@ -42,4 +46,4 @@
       </li>
     {/each}
   </ul>
-</section>
+</HomePanel>
