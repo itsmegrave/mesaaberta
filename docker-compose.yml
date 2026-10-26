@@ -64,7 +64,7 @@ services:
       GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
       GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://localhost:9999/health']
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:9999/health']
       interval: 2s
       timeout: 3s
       retries: 30
@@ -88,7 +88,8 @@ services:
     volumes:
       - storage-data:/var/lib/storage
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://localhost:5000/status']
+      # 127.0.0.1, not localhost: Storage listens on IPv4 only, and localhost may resolve to ::1.
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:5000/status']
       interval: 2s
       timeout: 3s
       retries: 30
