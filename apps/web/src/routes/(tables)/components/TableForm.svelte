@@ -303,7 +303,9 @@
             zone: $draft.timezone.replaceAll('_', ' '),
             offset: zoneOffset,
           })}
-          <a href="/u/profile/edit/about" class="anchor">{m.form_timezone_change()}</a>
+          <a href="/u/profile/edit/about" class="anchor underline underline-offset-4"
+            >{m.form_timezone_change()}</a
+          >
         </p>
         {#if calendarNote}<p class="mt-2 text-sm text-surface-700-300">
             {m.form_edit_calendar_note()}

@@ -16,6 +16,7 @@
     people,
     status,
     active = false,
+    level = 'h3',
   }: {
     href: string;
     name: string;
@@ -28,6 +29,8 @@
     status: string;
     /** Something is open now: the status reads in the lamp colour. */
     active?: boolean;
+    /** The name's heading level, one below the heading the card sits under. */
+    level?: 'h2' | 'h3';
   } = $props();
 </script>
 
@@ -35,12 +38,15 @@
   <div class="flex items-start gap-4">
     {@render mark()}
     <div class="min-w-0">
-      <h3 class="text-xl leading-tight font-semibold tracking-tight text-balance">
+      <svelte:element
+        this={level}
+        class="text-xl leading-tight font-semibold tracking-tight text-balance"
+      >
         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
         <a {href} class="no-underline after:absolute after:inset-0 focus-visible:outline-none"
           >{name}</a
         >
-      </h3>
+      </svelte:element>
       <p class="mt-1.5 text-sm font-medium text-muted">{facts}</p>
     </div>
   </div>

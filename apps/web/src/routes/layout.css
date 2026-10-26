@@ -40,6 +40,11 @@ body {
 /* Cerberus pairs primary-500 with primary-50 (about 3.6:1); white keeps text on the brand tiles readable. Other themes set their own. */
 [data-theme='cerberus'] {
   --color-primary-contrast-500: oklch(1 0 0);
+  /* Danger fills use error-700: white on it is 5.4:1, where Cerberus' error-500 pair is 2.7:1. */
+  --color-error-contrast-700: oklch(1 0 0);
+  /* Skeleton's `anchor` links: primary-500 and primary-400 sit at 4.47:1 on the page, just under AA. Same steps as `text-link`. */
+  --typo-anchor--color-light: var(--color-primary-600);
+  --typo-anchor--color-dark: var(--color-primary-300);
 }
 
 /* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
@@ -102,7 +107,7 @@ body {
 }
 
 @utility text-link {
-  color: light-dark(var(--color-primary-600), var(--color-primary-400));
+  color: light-dark(var(--color-primary-600), var(--color-primary-300));
 }
 
 /* Underlined link from the reference: body-coloured text over a thick primary underline. */

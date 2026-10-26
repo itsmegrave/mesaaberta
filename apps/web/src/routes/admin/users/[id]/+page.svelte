@@ -244,7 +244,7 @@
           </DetailList>
           {#if reported >= TABLE_REPORTS_WARNING && !ban}
             <p role="note" class="mt-3 flex items-start gap-2 text-sm font-semibold">
-              <Icon name="triangle-alert" size={18} class="mt-0.5 text-warning-700-300" />
+              <Icon name="triangle-alert" size={18} class="mt-0.5 text-lamp" />
               {m.admin_table_reports_warning()}
             </p>
           {/if}

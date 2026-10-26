@@ -70,7 +70,7 @@
     </p>
     <CardGrid class="mt-5 md:mt-3">
       {#each data.tables as table (table.slug)}
-        <li><TableCard {table} /></li>
+        <li><TableCard {table} level="h2" /></li>
       {/each}
     </CardGrid>
   {:else}

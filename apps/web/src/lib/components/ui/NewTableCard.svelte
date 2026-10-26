@@ -88,7 +88,8 @@
       </a>
     </h3>
     <div class="flex min-w-0 items-center gap-2 text-sm text-muted">
-      <span class="truncate"><UserLink username={table.gmName} /></span>
+      <!-- A 24px line keeps the handle a 24px target apart from the card's stretched link (WCAG 2.5.8). -->
+      <UserLink username={table.gmName} class="inline-block min-w-0 truncate leading-6" />
       {#if table.gmRating}<GmRating rating={table.gmRating} class="text-xs" />{/if}
     </div>
     <div

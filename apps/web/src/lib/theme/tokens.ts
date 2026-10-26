@@ -76,6 +76,12 @@ export const colorTokens: ColorToken[] = [
     usage: 'Destructive actions and errors: text, error borders, "Suspenso".',
   },
   {
+    name: 'danger-fill',
+    css: 'var(--color-error-700)',
+    usage:
+      'Fill of destructive buttons and error counts (`preset-filled-error-700`), with white text.',
+  },
+  {
     name: 'line',
     // `border-surface-200-800`, the dividers and card borders on most screens.
     css: 'light-dark(var(--color-surface-200), var(--color-surface-800))',
@@ -94,7 +100,7 @@ export const colorTokens: ColorToken[] = [
   {
     name: 'link',
     utility: 'text-link',
-    usage: 'Text links on `bg` and `surface`: primary-600 in light, primary-400 in dark.',
+    usage: 'Text links on `bg` and `surface`: primary-600 in light, primary-300 in dark.',
   },
   {
     name: 'seat-1',

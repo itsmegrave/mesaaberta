@@ -77,7 +77,7 @@
   </p>
   <p class="text-sm text-muted">{periodLabel(campaign.startsOn, campaign.endsOn, locale)}</p>
   <p
-    class="text-sm font-semibold {situation.warn ? 'text-warning-700-300' : ''}"
+    class="text-sm font-semibold {situation.warn ? 'text-lamp' : ''}"
     data-warn={situation.warn || undefined}
   >
     {situation.text}

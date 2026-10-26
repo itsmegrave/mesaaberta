@@ -11,7 +11,7 @@
   const variants: Record<ButtonVariant, string> = {
     primary: 'preset-filled-primary-500',
     secondary: 'btn-secondary',
-    danger: 'preset-filled-error-500',
+    danger: 'preset-filled-error-700',
     ghost: '',
   };
 
