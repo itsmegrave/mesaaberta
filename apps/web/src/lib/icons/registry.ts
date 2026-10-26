@@ -71,6 +71,14 @@ import GameDiceTwentyFacesTwentyIcon from '@iconify-svelte/game-icons/dice-twent
 
 import GameCompassIcon from '@iconify-svelte/game-icons/compass';
 import GameWoodenChairIcon from '@iconify-svelte/game-icons/wooden-chair';
+import GameLanternFlameIcon from '@iconify-svelte/game-icons/lantern-flame';
+import GameHeartsIcon from '@iconify-svelte/game-icons/hearts';
+import GameWalkingBootIcon from '@iconify-svelte/game-icons/walking-boot';
+import GameDoorIcon from '@iconify-svelte/game-icons/door';
+import GameCheckedShieldIcon from '@iconify-svelte/game-icons/checked-shield';
+import GameMegaphoneIcon from '@iconify-svelte/game-icons/megaphone';
+import GameBookPileIcon from '@iconify-svelte/game-icons/book-pile';
+import GameSandsOfTimeIcon from '@iconify-svelte/game-icons/sands-of-time';
 import GameRollingDicesIcon from '@iconify-svelte/game-icons/rolling-dices';
 import GameQuillInkIcon from '@iconify-svelte/game-icons/quill-ink';
 import GameSpellBookIcon from '@iconify-svelte/game-icons/spell-book';
@@ -200,6 +208,14 @@ export const ICONS = {
   'game-icons:laurels': GameLaurelsIcon,
   'game-icons:podium': GamePodiumIcon,
   'game-icons:wooden-chair': GameWoodenChairIcon,
+  'game-icons:lantern-flame': GameLanternFlameIcon,
+  'game-icons:hearts': GameHeartsIcon,
+  'game-icons:walking-boot': GameWalkingBootIcon,
+  'game-icons:door': GameDoorIcon,
+  'game-icons:checked-shield': GameCheckedShieldIcon,
+  'game-icons:megaphone': GameMegaphoneIcon,
+  'game-icons:book-pile': GameBookPileIcon,
+  'game-icons:sands-of-time': GameSandsOfTimeIcon,
   'game-icons:rolling-dices': GameRollingDicesIcon,
   'game-icons:quill-ink': GameQuillInkIcon,
   'game-icons:spell-book': GameSpellBookIcon,
