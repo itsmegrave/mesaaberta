@@ -268,6 +268,8 @@ export type SystemAnnouncement = {
   recipientId: string | null;
   /** How many were in the audience when it was sent: what the admin confirmed. */
   estimated: number;
+  /** Set when the platform announces a changelog day itself: that day's date, the key it is sent once by. */
+  changelogDate?: string;
 };
 
 export type EventType = DomainEvent['type'];
