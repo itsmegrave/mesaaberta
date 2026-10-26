@@ -5,8 +5,7 @@ DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
 # Remove this only for a deliberate, manual Resend smoke test.
 MAILPIT_URL=http://127.0.0.1:54344
 
-# Bearer token that makes /healthz show each app's build, the api and the worker. Unset: only
-# status and database.
+# Bearer token /healthz requires (`Authorization: Bearer <token>`). Unset: it answers 401.
 # HEALTHZ_TOKEN=
 
 # Set to true only while developing locally to return true for every feature flag. It only applies

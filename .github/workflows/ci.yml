@@ -206,12 +206,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker compose up --build --wait --wait-timeout 300
+        env:
+          HEALTHZ_TOKEN: ci-only
       - name: Smoke test through the TLS proxy
         run: |
           set -e
           # -k: Caddy's local CA is not in the runner's trust store.
           curl -fsSk https://localhost/ -o /dev/null
-          health=$(curl -fsSk https://localhost/healthz)
+          test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/healthz)" = 401
+          health=$(curl -fsSk -H 'authorization: Bearer ci-only' https://localhost/healthz)
           echo "$health"
           echo "$health" | grep -q '"database":"ok"'
           curl -fsS http://localhost:8025/api/v1/info -o /dev/null

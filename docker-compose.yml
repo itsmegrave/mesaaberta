@@ -123,7 +123,7 @@ services:
       MAILPIT_URL: http://mailpit:8025
       RESEND_FROM: Mesa Aberta <no-reply@mesaaberta.local>
       API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:-change-me}
-      # Unset: /healthz shows only status and database to everyone.
+      # The bearer token /healthz requires. Unset: it answers 401 to everyone.
       HEALTHZ_TOKEN: ${HEALTHZ_TOKEN:-}
       # The server talks to Auth and Storage on the Docker network; browsers load the images
       # from the site's own address, which Caddy forwards.
