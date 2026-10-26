@@ -22,6 +22,45 @@ describe('worker', () => {
     error.mockRestore();
   });
 
+  it('checks in each known job with its monitor once the monitors are on', async () => {
+    const run = vi.fn().mockResolvedValue(undefined);
+    const monitor = vi.fn((_job, work: () => Promise<unknown>) => work());
+    const worker = createWorker(run, undefined, monitor as never);
+
+    await worker.scheduled(controller, env);
+    expect(monitor).not.toHaveBeenCalled();
+
+    const on = { ...env, SENTRY_CRON_MONITORS: 'true' };
+    await worker.scheduled(controller, on);
+    await worker.scheduled({ cron: '0 4 * * *', scheduledTime: 0 }, on);
+    await worker.scheduled({ cron: '1 2 * * *', scheduledTime: 0 }, on);
+    expect(monitor.mock.calls.map(([job]) => job.slug)).toEqual([
+      'worker-event-sweep',
+      'worker-daily-import',
+    ]);
+    expect(run).toHaveBeenCalledTimes(4);
+  });
+
+  it('lets the monitor see a failed run before the failure is logged', async () => {
+    const run = vi.fn().mockRejectedValue(new Error('boom'));
+    const seen: unknown[] = [];
+    const monitor = vi.fn(async (_job, work: () => Promise<unknown>) => {
+      try {
+        return await work();
+      } catch (error) {
+        seen.push(error);
+        throw error;
+      }
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await createWorker(run, undefined, monitor as never).scheduled(controller, {
+      ...env,
+      SENTRY_CRON_MONITORS: 'true',
+    });
+    error.mockRestore();
+    expect(seen).toHaveLength(1);
+  });
+
   it('answers every request with an empty 404', async () => {
     const response = createWorker().fetch();
     expect(response.status).toBe(404);

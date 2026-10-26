@@ -19,6 +19,9 @@
     "RESEND_FROM": "Mesa Aberta <no-reply@example.invalid>",
     // A DSN only allows sending events, so it is not a secret. Blank, Sentry stays off.
     "SENTRY_DSN": "",
+    // "true" sends cron check-ins (missed run, failure and timeout alerts). Creates two monitors in
+    // Sentry on the first run, so it stays off until the user says so.
+    "SENTRY_CRON_MONITORS": "",
     "SUPABASE_URL": "",
     // "true" sweeps through the Postgres poller (ADR 0003). Off until the user says so.
     "EVENT_POLLER": "",
