@@ -2,10 +2,7 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN } from '$app/env/public';
 import { host as hostBindings } from '#host';
 import { sentryOptionsFor } from '#lib/observability/privacy.js';
-import {
-  sentryReleaseFor,
-  type ReleaseEnv,
-} from '@mesaaberta/core/observability/sentry-options';
+import { sentryReleaseFor, type ReleaseEnv } from '@mesaaberta/core/observability/sentry-options';
 import type { PayloadCache } from '@mesaaberta/core/server/flags/payload';
 import type { HostBindings } from './host/types';
 import { createHandleServerTiming } from './server-timing';
