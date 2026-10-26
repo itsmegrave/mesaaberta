@@ -1110,7 +1110,7 @@
   "admin_announce_field_title": "Título",
   "admin_announce_field_body": "Mensagem",
   "admin_announce_length_hint": "Até {max} caracteres.",
-  "admin_announce_body_hint": "Texto simples, até {max} caracteres.",
+  "admin_announce_body_hint": "Até {max} caracteres.",
   "admin_announce_field_icon": "Ícone",
   "admin_announce_icon_auto": "Padrão do tipo",
   "admin_announce_icon_megaphone": "Megafone",
