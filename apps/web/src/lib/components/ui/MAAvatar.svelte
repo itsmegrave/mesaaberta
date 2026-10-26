@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
-  type AvatarSize = 28 | 32 | 36 | 40 | 44 | 48 | 64 | 80 | 96 | 120 | 128;
+  type AvatarSize = 24 | 28 | 32 | 36 | 40 | 44 | 48 | 64 | 80 | 96 | 120 | 128;
 
   interface Props {
     src?: string | null;
@@ -31,6 +31,8 @@
 
   const sizeClass = $derived.by(() => {
     switch (size) {
+      case 24:
+        return 'size-6 text-xs';
       case 28:
         return 'size-7 text-xs';
       case 32:
