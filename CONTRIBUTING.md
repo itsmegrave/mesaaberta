@@ -21,7 +21,7 @@ Keep one entry per day. The page derives highlights, category counts and paginat
 
 ## Blog
 
-Posts are written in the private repository (`blog/` in `itsmegrave/mesaaberta-privy`), whose overlay copies them into `apps/web/src/content/blog/` before the build; the public folder holds none (git ignores `*.md` there), so locally `/blog` shows its empty state until you drop a post in. One Markdown file each, and the file name is the address (`por-que-um-blog.md` is `/blog/por-que-um-blog`). Each starts with a frontmatter block: `title`, `date` (YYYY-MM-DD), `summary` (one or two sentences for the list, search and RSS), `author` (the writer's username, without the @), optional `tags` (`[a, b]`) and optional `draft: true`. A post is out when it isn't a draft and its date has come, so a future date schedules it; admins see drafts and scheduled posts on the page, marked as such. Write the body from `##` down (the title is the page's only h1). It is shown through the same rich-text subset as table descriptions, so images, tables and raw HTML are dropped; site links such as `/t` work. A broken file fails the tests, naming the file and field.
+Posts are written in the private repository (`blog/` in `itsmegrave/mesaaberta-privy`), whose overlay copies them into `apps/web/src/content/blog/` before the build; the public folder holds none (git ignores `*.md` there), so locally `/blog` shows its empty state until you drop a post in. One Markdown file each, and the file name is the address (`por-que-um-blog.md` is `/blog/por-que-um-blog`). Each starts with a frontmatter block: `title`, `date` (YYYY-MM-DD), `summary` (one or two sentences for the list, search and RSS), `author` (the writer's username, without the @), optional `tags` (`[a, b]`) and optional `draft: true`. A post is out when it isn't a draft and its date has come, so a future date schedules it; admins see drafts and scheduled posts on the page, marked as such. Write the body from `##` down (the title is the page's only h1). It is shown through the same rich-text subset as table descriptions, so images, tables and raw HTML are dropped; site links such as `/tables` work. A broken file fails the tests, naming the file and field.
 
 ## Code style
 
@@ -60,6 +60,10 @@ Multiline text a person writes for others to read (a table's description, the we
 
 Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage.
 
+## Design tokens
+
+`design/tokens.json` lists the design system's tokens (colours in both themes, type, spacing, radius, sizes and shadows) as the app paints them. `bun scripts/design-tokens.ts` writes it from the Cerberus theme, Tailwind's theme and `layout.css`, through the map in `src/lib/theme/tokens.ts`, which names the variable, `@utility` or Tailwind class each token comes from. Run it after changing any of those; a unit spec fails while the file is stale. Compare it with the design system's `tokens.json` to find drift between the two.
+
 ## Icons
 
 Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`#lib/components/ui/Icon.svelte`).
@@ -70,23 +74,35 @@ To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([bro
 
 The site is written in Brazilian Portuguese (`pt-BR`, the base language), and only that language is served today. All user-facing text lives in `messages/<locale>.json`, one flat file per language, so translating never touches components. English is planned in [#31](https://github.com/itsmegrave/mesaaberta/issues/31).
 
-Translations are managed on Crowdin: [`crowdin.yml`](crowdin.yml) points it at `messages/pt-BR.json`, and Crowdin opens a pull request with new and changed translations. Editing the JSON files directly still works.
+**Without a code editor:** open the repository in [Fink](https://fink.inlang.com), the browser editor for Paraglide projects. Sign in with GitHub and edit any language side by side. Fink commits to a branch (or to your fork) and you open the pull request from there. Editing the JSON files directly works too.
 
 **Fix a message:** edit its value in `messages/pt-BR.json`. Keep the keys and any `{placeholders}` exactly as they are.
 
-Every value is an [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) string, read by `@inlang/plugin-icu1`, so translation platforms can edit the files directly. Plurals look like `{count, plural, =0 {Nenhuma mesa} =1 {1 mesa} other {{count} mesas}}`; inside a plural `#` and `{count}` mean the same number. A translation may use its own language's plural forms (`one`, `few`, `many`, `other`) instead of the exact `=0`/`=1` matches. To write a literal `{` or `}`, wrap it in apostrophes (`'{'`). Roles stay gender-neutral (quem mestra, quem joga, Participantes); a test fails on gendered roles in pt-BR such as "o mestre", "Mestre:" or "jogadores".
+Messages use Paraglide's [inlang message format](https://inlang.com/m/reootnfj/plugin-inlang-messageFormat). Most are plain strings; a plural is a list with one variant whose `match` maps each count to its text, with `count=*` as the catch-all:
+
+```json
+"tables_found": [
+  {
+    "declarations": ["input count"],
+    "selectors": ["count"],
+    "match": { "count=0": "Nenhuma mesa encontrada", "count=1": "1 mesa encontrada", "count=*": "{count} mesas encontradas" }
+  }
+]
+```
+
+Do not write ICU plurals (`{count, plural, …}`): this format shows them as raw text, and a test fails on them. Roles stay gender-neutral (quem mestra, quem joga, Participantes); a test fails on gendered roles in pt-BR such as "o mestre", "Mestre:" or "jogadores".
 
 **Add a language** (for example `en`):
 
 1. Copy `messages/pt-BR.json` to `messages/en.json` and translate every value.
 2. Add `"en"` to `locales` in `project.inlang/settings.json`.
-3. Run `bun run test`. A test fails if your file is missing a key, changes a placeholder, isn't valid ICU or uses a plural form the language doesn't have.
+3. Run `bun run test`. A test fails if your file is missing a key, changes a placeholder or writes a plural without a catch-all.
 4. There is no language switch yet, because only one language is served. It ships with the second language (see #31).
 
 Languages share the same stable URLs. Paraglide selects translated text from the language preference cookie and base locale; never add locale prefixes to resource paths. Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are.
 
 ## Internal links
 
-Use plain canonical paths for internal links: `/t` (tables), `/p` (partners), `/cf` (crowdfunding), `/m` (messages), `/n` (notifications), `/u/tables` (dashboard), and `/u/profile/edit` (account settings). Public profiles remain `/u/:username`. Private export and provider linking use `/u/profile/export` and `/u/profile/connect/:provider`, within the already reserved `profile` namespace. Account onboarding is `/u/profile/setup`; password recovery uses `/forgot` and `/reset`.
+Use plain canonical paths for internal links. Lists and forms are words: `/tables` (and `/tables/new`), `/partners` (and `/partners/new`), `/crowdfunding` (and `/crowdfunding/new`), `/messages`, `/notifications`, `/u/tables` (dashboard) and `/u/profile/edit` (account settings). A single item keeps its letter: `/t/:slug` (with `/edit`, `/manage`), `/p/:id/edit`, `/m/:id`. Route groups (`routes/(tables)/`) keep a section's list and item pages under one folder with shared `components/`. The old addresses (`/t`, `/p`, `/cf`, `/m`, `/n`, `/tables/:slug`, …) answer with a permanent redirect from `packages/core/src/routes.ts`. Public profiles remain `/u/:username`. Private export and provider linking use `/u/profile/export` and `/u/profile/connect/:provider`, within the already reserved `profile` namespace. Account onboarding is `/u/profile/setup`; password recovery uses `/forgot` and `/reset`.
 
 `@mesaaberta/core/routes` centralizes legacy aliases and shared outbound URL builders (e-mail, calendar and notifications). Ordinary links do not need a locale or routing wrapper. Legacy GET/HEAD URLs redirect permanently with their search parameters; legacy mutations reroute to the same canonical action, preserving the method and body. Keep API, admin, authentication callback and internal probe paths compatible. Reserve new static `/u` namespaces in `profile/username.ts` before adding them, and put authentication checks on private leaves rather than on all `/u` routes.

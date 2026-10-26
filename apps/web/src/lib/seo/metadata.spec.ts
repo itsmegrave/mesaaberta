@@ -47,7 +47,7 @@ describe('public search metadata', () => {
   });
 
   it('shares branded listings, public handles and safe images', () => {
-    expect(publicMetadata('/t', {}, origin)?.title).toContain('Mesa Aberta');
+    expect(publicMetadata('/tables', {}, origin)?.title).toContain('Mesa Aberta');
     const profile = publicMetadata(
       '/u/ana',
       {
@@ -64,5 +64,20 @@ describe('public search metadata', () => {
     expect(profile?.description).toContain('Gosto de histórias.');
     expect(profile?.image).toBe(`${origin}/android-chrome-512x512.png`);
     expect(publicMetadata('/login', {}, origin)).toBeNull();
+  });
+
+  it('describes a system page by its name and counts', () => {
+    const metadata = publicMetadata(
+      '/s/tormenta-20',
+      {
+        system: { name: 'Tormenta 20' },
+        facts: { openTables: 0, totalTables: 9, gmCount: 1 },
+      },
+      'https://mesaaberta.example',
+    );
+    expect(metadata?.title).toBe('Tormenta 20 · Sistemas de RPG · Mesa Aberta');
+    expect(metadata?.description).toContain(
+      'nenhuma mesa aberta, 9 mesas na Mesa Aberta, 1 pessoa mestra',
+    );
   });
 });

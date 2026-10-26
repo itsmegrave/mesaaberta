@@ -171,6 +171,23 @@ export const flagDefaults = {
   // "Seguindo" in Editar perfil (its page answers 404) and the owner's follower count. Targeted by
   // the signed-in person's id.
   use_follows: false,
+  // The one switch for reminding quem mestra to close a session (on for everyone in GrowthBook). On,
+  // a GM whose table still awaits confirmation is e-mailed an hour after the session ended and a
+  // week after, and ten days after it (at least three after the last e-mail) the session is settled
+  // for them: a one-shot is concluded, a campaign or adventure counts it as held and moves to its
+  // next weekly date. Either way the players are asked to rate it, in the bell and by e-mail. Off,
+  // the table waits as before. Read by the sweeper, targeted by the GM's id (`isAdmin` too).
+  use_session_close_reminders: false,
+  // The one switch for blocking and reporting in Mensagens, off for everyone until it is released
+  // (then on for everyone). Off hides Bloquear and Denunciar in a conversation and "Pessoas
+  // bloqueadas" in Editar perfil, and their actions refuse. Blocks already made keep working either
+  // way (the inbox, direct messages, invitations and follows read them). Targeted by the signed-in
+  // person's id.
+  use_message_safety: false,
+  // The game systems directory, off until it is released (a new feature: on for everyone at once,
+  // visitors included). Off: /systems and /s/:slug answer 404, the menus and the footer leave
+  // Sistemas out and system names stay plain text. Targeted by the person's id.
+  api_directory_systems: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

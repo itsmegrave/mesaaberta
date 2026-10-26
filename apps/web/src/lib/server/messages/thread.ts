@@ -6,6 +6,7 @@ import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { withPicture, withPictures } from '@mesaaberta/core/server/messages/present';
+import { messageSafetyEnabled } from './safety';
 import {
   listMessages,
   loadConversation,
@@ -50,6 +51,8 @@ export const loadChatThread = async (
       messages: withPictures(supabaseUrl, thread.messages),
       hasMore: thread.hasMore,
       context: conversation.kind === 'direct' ? (context ?? null) : null,
+      // Bloquear and Denunciar (`use_message_safety`).
+      safety: await messageSafetyEnabled(locals, actor),
       form: initialForm({ body: '', tableId: context?.id }),
     };
   } catch (cause) {

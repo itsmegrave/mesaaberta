@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
 import { and, eq, isNull } from 'drizzle-orm';
 import { todayIn } from '../../../crowdfunding/phase';
 import { connectionStringFrom, createDb, type DatabaseEnv } from '../../db/client';
 import { crowdfundings, crowdfundingImports } from '../../db/schema';
 import type { Logger } from '../../logger';
-import { IMAGE_BUCKET, type ImageStorage } from '../../images';
+import { IMAGE_BUCKET } from '../../images';
+import { serverStorage, type BucketStorage } from '../../storage';
 import { campaignImagePath } from '../image';
 import { sourceReader } from './source-fetch';
 import { sourceAdapters } from './sources';
@@ -79,27 +79,16 @@ export async function runDailyImports(
     const now = new Date(scheduledTime),
       runDate = todayIn(now),
       summaries: RunSummary[] = [];
-    const key = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
-    let storage:
-      | (ImageStorage & {
-          remove(paths: string[]): PromiseLike<{ error: { message: string } | null }>;
-        })
-      | undefined;
-    if (env.SUPABASE_URL && key) {
-      try {
-        storage = createClient(env.SUPABASE_URL, key, {
-          auth: { persistSession: false, autoRefreshToken: false },
-          global: {
-            fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(10_000) }),
-          },
-        }).storage.from(IMAGE_BUCKET);
-      } catch {
-        log.warn('crowdfunding image storage unavailable', { code: 'image_storage_invalid' });
-      }
+    let storage: BucketStorage | null | undefined;
+    try {
+      storage = serverStorage(env, IMAGE_BUCKET);
+    } catch {
+      log.warn('crowdfunding image storage unavailable', { code: 'image_storage_invalid' });
     }
     const saveImage =
       image ??
-      ((c: SourceCandidate) => campaignImagePath(storage, { pageImageUrl: c.imageUrl, log }));
+      ((c: SourceCandidate) =>
+        campaignImagePath(storage ?? undefined, { pageImageUrl: c.imageUrl, log }));
     const discardImage =
       removeImage ??
       (async (path: string) => {

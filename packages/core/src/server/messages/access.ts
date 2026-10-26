@@ -9,6 +9,7 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { firstSessionEnded } from '../ratings/service';
+import { blockState } from '../blocks/service';
 import type { TableStatus } from '../../tables/status-values';
 import { TABLE_CHAT_DAYS_AFTER_END } from '../../messages/schema';
 
@@ -105,19 +106,25 @@ export async function canSend(
   }
 
   const other = await otherDirectMember(db, conversation.id, actor.id);
-  return other !== undefined && other.enabled && other.status === 'active';
+  if (other === undefined || !other.enabled || other.status !== 'active') return false;
+  // An admin still reaches someone who blocked them: moderation must get through.
+  if (can(actor, 'moderation:manage')) return true;
+  const block = await blockState(db, actor.id, other.id);
+  return !block.mine && !block.theirs;
 }
 
 /**
  * Whether the actor may start a direct message to `recipientId`, and why not. A person may write to
  * the GM of an active table (before joining too), a GM may write to anyone with a request or a
- * seat at one of their tables, and an admin may write to anyone. Either way the recipient must take direct messages.
+ * seat at one of their tables, and an admin may write to anyone. Either way the recipient must take
+ * direct messages. Someone the recipient blocked reads `disabled`, as if direct messages were off;
+ * someone the actor blocked reads `blocked`, so the actor is offered to unblock them.
  */
 export async function directBlocker(
   db: AnyDb,
   actor: Actor | null,
   recipientId: string,
-): Promise<'forbidden' | 'disabled' | null> {
+): Promise<'forbidden' | 'disabled' | 'blocked' | null> {
   if (!actor || actor.status !== 'active' || actor.id === recipientId) return 'forbidden';
 
   const [recipient] = await db
@@ -146,5 +153,7 @@ export async function directBlocker(
   }
   if (!related) return 'forbidden';
 
-  return recipient.enabled ? null : 'disabled';
+  const block = await blockState(db, actor.id, recipientId);
+  if (block.mine) return 'blocked';
+  return recipient.enabled && !block.theirs ? null : 'disabled';
 }

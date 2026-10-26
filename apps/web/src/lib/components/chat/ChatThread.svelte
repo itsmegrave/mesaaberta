@@ -5,6 +5,12 @@
   import ChatHeader from '#lib/components/chat/ChatHeader.svelte';
   import Composer from '#lib/components/chat/Composer.svelte';
   import MessageList from '#lib/components/chat/ui/MessageList.svelte';
+  import BlockDialog from '#lib/components/chat/BlockDialog.svelte';
+  import MessageReportDialog, {
+    type MessageReportTarget,
+  } from '#lib/components/chat/MessageReportDialog.svelte';
+  import PostButton from '#lib/components/PostButton.svelte';
+  import { blockSchema } from '@mesaaberta/core/messages/schema';
   import { apiRead } from '#lib/api/http.js';
   import { mergeMessages, type ThreadItem } from '#lib/messages/group.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -136,6 +142,27 @@
   };
 
   const otherName = $derived(atHandle(data.conversation.other?.username));
+
+  // Bloquear and Denunciar (`use_message_safety`). One report dialog at a time, remounted for
+  // each target so its form starts empty.
+  const other = $derived(data.conversation.kind === 'direct' ? data.conversation.other : null);
+  let reporting = $state<MessageReportTarget | null>(null);
+  let reportOpen = $state(false);
+  let blockOpen = $state(false);
+  let reportKey = $state(0);
+  const report = (target: MessageReportTarget) => {
+    reportKey++;
+    reporting = target;
+    reportOpen = true;
+  };
+  // The thread is the page's data, or the drawer's own copy: either way it says what changed.
+  const blockChanged = (blocked: boolean) => {
+    data.conversation.blocked = blocked;
+    data.conversation.canSend = !blocked && (data.conversation.other?.acceptsDirect ?? false);
+    void invalidate('messages:inbox');
+    void client.invalidateQueries({ queryKey: ['messages-inbox', viewerId] });
+    void client.invalidateQueries({ queryKey: BADGES_KEY });
+  };
 </script>
 
 <svelte:document onvisibilitychange={syncVisibility} />
@@ -153,6 +180,10 @@
     conversation={data.conversation}
     {onback}
     action={drawer ? `/m/${conversationId}?/mute` : '?/mute'}
+    onreport={data.safety && other
+      ? () => report({ type: 'person', profileId: other.id, username: other.username })
+      : undefined}
+    onblock={data.safety && other ? () => (blockOpen = true) : undefined}
   />
 
   <MessageList
@@ -162,6 +193,15 @@
     {hasMore}
     onloadolder={loadOlder}
     {onretry}
+    onreport={data.safety
+      ? (message) =>
+          report({
+            type: 'message',
+            messageId: message.id,
+            username: message.sender,
+            body: message.body,
+          })
+      : undefined}
   />
 
   {#if data.conversation.canSend}
@@ -185,7 +225,31 @@
     />
   {:else}
     <p role="status" class="border-t border-surface-200-800 pt-3 text-muted">
-      {#if data.conversation.kind === 'direct'}
+      {#if data.conversation.kind === 'direct' && data.conversation.blocked && other}
+        <span class="flex flex-wrap items-center justify-between gap-3">
+          <span>
+            <UserText
+              text={m.messages_blocked_notice({ name: otherName })}
+              username={other.username}
+            />
+          </span>
+          <PostButton
+            action="/m/{conversationId}?/block"
+            fields={{ profileId: other.id, blocked: 'false' }}
+            schema={blockSchema}
+            domain="account"
+            refresh={!drawer}
+            variant="secondary"
+            size="md"
+            buttonClass="font-semibold"
+            errorMessage={m.messages_block_failed}
+            success={m.messages_unblocked_toast({ name: otherName })}
+            onSuccess={() => blockChanged(false)}
+          >
+            {m.messages_unblock()}
+          </PostButton>
+        </span>
+      {:else if data.conversation.kind === 'direct'}
         <UserText
           text={m.messages_dm_off_notice({ name: otherName })}
           username={data.conversation.other?.username}
@@ -198,3 +262,18 @@
     </p>
   {/if}
 </section>
+
+{#if data.safety && reporting}
+  {#key reportKey}
+    <MessageReportDialog {conversationId} target={reporting} bind:open={reportOpen} />
+  {/key}
+{/if}
+{#if data.safety && other}
+  <BlockDialog
+    {conversationId}
+    person={other}
+    bind:open={blockOpen}
+    refresh={!drawer}
+    onblocked={() => blockChanged(true)}
+  />
+{/if}

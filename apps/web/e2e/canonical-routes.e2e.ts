@@ -9,9 +9,13 @@ test.describe('canonical resource URLs', () => {
       '/t/dragon/manage?status=active&page=2&tag=a%2Fb',
     ],
     ['/partners/42/edit', '/p/42/edit'],
-    ['/crowdfunding/new', '/cf/new'],
+    ['/cf/new', '/crowdfunding/new'],
     ['/messages/42?page=2', '/m/42?page=2'],
-    ['/notifications?category=table', '/n?category=table'],
+    ['/n?category=table', '/notifications?category=table'],
+    ['/t?system=fate', '/tables?system=fate'],
+    ['/t/new', '/tables/new'],
+    ['/p', '/partners'],
+    ['/m', '/messages'],
     ['/account/tables/calendar', '/u/tables/calendar'],
     ['/account/profile', '/u/profile/edit'],
     ['/account/export', '/u/profile/export'],
@@ -38,7 +42,7 @@ test.describe('canonical resource URLs', () => {
     page,
   }) => {
     await page.goto('/en/partners?page=1#how-it-works');
-    await expect(page).toHaveURL(/\/p\?page=1#how-it-works$/);
+    await expect(page).toHaveURL(/\/partners\?page=1#how-it-works$/);
   });
 
   test('keeps profiles public while private account leaves require sign-in', async ({
@@ -68,9 +72,10 @@ test.describe('canonical resource URLs', () => {
   }) => {
     test.skip(isMobile, 'signed-in flows run on desktop only');
     const user = await createUser('Legacy Actions');
-    await signIn(page, user, '/t/new');
+    await signIn(page, user, '/tables/new');
     const headers = { origin: new URL(page.url()).origin, accept: 'text/html' };
-    const table = await page.request.post('/tables/new', {
+    // A form opened before lists took words still posts to `/t/new`.
+    const table = await page.request.post('/t/new', {
       headers,
       form: { title: 'Title from an old form' },
       maxRedirects: 0,

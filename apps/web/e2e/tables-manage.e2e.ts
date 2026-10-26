@@ -33,7 +33,7 @@ test.describe('rich text', () => {
       page.evaluate(() => (window as Window & { __violations?: string[] }).__violations ?? []);
     const gm = await createUser('Mestra Rich');
     await signIn(page, gm);
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Com formatação'));
     await setFirstSession(page, soonSession());
@@ -80,7 +80,7 @@ test.describe('creating a table', () => {
     const anon = await visitor.newPage();
     await anon.goto(`/t/${slug}`);
     await expect(anon.getByRole('heading', { level: 1 })).toHaveText(title);
-    await anon.goto('/t');
+    await anon.goto('/tables');
     await expect(anon.getByRole('link', { name: title })).toBeVisible();
     await visitor.close();
   });
@@ -102,7 +102,7 @@ test.describe('creating a table', () => {
     const gm = await createUser('Mestra Cris');
     await signIn(page, gm);
 
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill('ab');
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
@@ -115,14 +115,14 @@ test.describe('creating a table', () => {
     await expect(page.getByLabel('Título')).toHaveValue('ab');
     // A rich-text editor, not an input: its text, not a value.
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
-    await expect(page).toHaveURL(/t\/new$/);
+    await expect(page).toHaveURL(/tables\/new$/);
   });
 
   test('a first session in the past cannot be picked', async ({ page }) => {
     const gm = await createUser('Mestre Davi');
     await signIn(page, gm);
 
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Passada'));
     // The calendar starts at today: a day before it cannot be picked. (The server refuses one too:
@@ -138,7 +138,7 @@ test.describe('creating a table', () => {
   test('a campaign asks how often it repeats', async ({ page }) => {
     const gm = await createUser('Mestra Eva');
     await signIn(page, gm);
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
 
     await expect(page.getByRole('group', { name: 'Repete' })).toHaveCount(0);
     await page.getByLabel('Campanha (várias sessões)').check();
@@ -162,7 +162,7 @@ test.describe('the welcome message', () => {
   test('every new table starts with the friendly default, token and all', async ({ page }) => {
     const gm = await createUser('Mestra Lara');
     await signIn(page, gm);
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
 
     const field = page.getByLabel('Mensagem de boas-vindas');
     await expect(field).toHaveText(
@@ -205,7 +205,7 @@ test.describe('the welcome message', () => {
   test('is never shown on the public table page', async ({ page, browser }) => {
     const gm = await createUser('Mestra Nina');
     await signIn(page, gm);
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Privada'));
     await setFirstSession(page, soonSession());
@@ -223,7 +223,7 @@ test.describe('the welcome message', () => {
   test('a message over the limit is refused, and what was typed stays', async ({ page }) => {
     const gm = await createUser('Mestre Otto');
     await signIn(page, gm);
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
 
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(uniqueTitle('Longa'));
@@ -235,7 +235,7 @@ test.describe('the welcome message', () => {
 
     await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(field).toHaveText('x'.repeat(1001));
-    await expect(page).toHaveURL(/t\/new$/);
+    await expect(page).toHaveURL(/tables\/new$/);
   });
 });
 
@@ -275,7 +275,7 @@ test.describe('images', () => {
     const title = uniqueTitle('Falsa imagem');
     await signIn(page, gm);
 
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
     await setFirstSession(page, soonSession());

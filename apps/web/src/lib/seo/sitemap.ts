@@ -12,7 +12,16 @@ const escape = (value: string) =>
   );
 const document = (root: string, body: string) =>
   `<?xml version="1.0" encoding="UTF-8"?><${root} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</${root}>`;
-const staticPaths = ['/', '/t', '/p', '/cf', '/changelog', '/blog', '/privacy', '/terms'];
+const staticPaths = [
+  '/',
+  '/tables',
+  '/partners',
+  '/crowdfunding',
+  '/changelog',
+  '/blog',
+  '/privacy',
+  '/terms',
+];
 const unavailable = () =>
   new Response('Sitemap temporarily unavailable', {
     status: 503,

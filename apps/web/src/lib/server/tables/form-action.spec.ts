@@ -6,6 +6,12 @@ import { handleTableForm } from './form-action';
 import { createTable } from '@mesaaberta/core/server/tables/write';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
 
+// Uploads go through the server's own Storage client; each test hands it its `upload`.
+const storage = vi.hoisted(() => ({ upload: (() => {}) as unknown }));
+vi.mock('@mesaaberta/core/server/storage', () => ({
+  serverStorage: () => ({ upload: storage.upload }),
+}));
+
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = {
   id: '00000000-0000-4000-8000-000000000801',
@@ -42,10 +48,10 @@ const request = (over: Record<string, string | File> = {}) => {
 
 const setup = (options: { user?: boolean; upload?: ReturnType<typeof vi.fn> } = {}) => {
   const upload = options.upload ?? vi.fn().mockResolvedValue({ error: null });
+  storage.upload = upload;
   const locals = {
     getUser: async () => (options.user === false ? null : { id: ana.id }),
     getProfile: async () => (options.user === false ? null : ana),
-    supabase: { storage: { from: () => ({ upload }) } },
     db: test.db,
   } as unknown as App.Locals;
   const save = vi.fn(async (input: TableInput, imagePath?: string) =>
@@ -99,7 +105,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/login?next=%2Ft%2Fnew',
+      location: '/login?next=%2Ftables%2Fnew',
     });
     expect(s.save).not.toHaveBeenCalled();
   });
@@ -110,7 +116,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/u/profile/setup?next=%2Ft%2Fnew',
+      location: '/u/profile/setup?next=%2Ftables%2Fnew',
     });
     expect(s.save).not.toHaveBeenCalled();
   });

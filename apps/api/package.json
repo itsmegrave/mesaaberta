@@ -14,6 +14,7 @@
     "@sentry/core": "*",
     "@sindresorhus/slugify": "*",
     "@supabase/supabase-js": "*",
+    "aws4fetch": "*",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.13",
     "ical.js": "*",

@@ -21,7 +21,7 @@ export async function visiblePosts(locals: App.Locals, all: Post[] = posts) {
 
 /**
  * The post's Markdown as the rich-text subset that `RichText` shows. The page's title is the h1,
- * so `#` and `##` become h2 and anything deeper h3; site links (`/t`) become absolute, because the
+ * so `#` and `##` become h2 and anything deeper h3; site links (`/tables`) become absolute, because the
  * subset only keeps http, https and mailto addresses. Images and tables are not part of it yet.
  */
 export function renderPost(body: string, origin: string): string {

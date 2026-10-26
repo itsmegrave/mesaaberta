@@ -85,7 +85,7 @@ describe('answering a widget', () => {
       event({
         fields: [
           ['option', 'o2'],
-          ['next', '/t'],
+          ['next', '/tables'],
         ],
       }),
     );
@@ -95,10 +95,10 @@ describe('answering a widget', () => {
 
   it('goes back to the page when the form was sent without JavaScript, never off the site', async () => {
     expect(
-      await thrown(answer(event({ enhanced: false, fields: [['next', '/t?page=2']] }))),
+      await thrown(answer(event({ enhanced: false, fields: [['next', '/tables?page=2']] }))),
     ).toMatchObject({
       status: 303,
-      location: '/t?page=2',
+      location: '/tables?page=2',
     });
     expect(
       await thrown(answer(event({ enhanced: false, fields: [['next', 'https://evil.test']] }))),

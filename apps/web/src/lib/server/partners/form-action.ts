@@ -12,6 +12,7 @@ import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
+import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import { addPartner, updatePartner } from '@mesaaberta/core/server/partners/service';
 import { writeViaApi } from '../api-write';
 
@@ -59,7 +60,7 @@ export async function handlePartnerForm(
     let logoPath: string | null = null;
     if (logo && actor) {
       const prepared = await prepareImage(logo, `partners/${actor.id}`);
-      const storage = locals.supabase?.storage.from(AVATAR_BUCKET);
+      const storage = serverStorage(locals.env, AVATAR_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
       logoPath = await storeImage(storage, prepared, locals.log);
     }
@@ -100,11 +101,11 @@ export async function handlePartnerForm(
   }
 
   // The old logo is only deleted once the new one is saved. Best effort: a leftover file is harmless.
-  if (replacedLogo) {
+  if (replacedLogo && isInside(replacedLogo, 'partners')) {
     const { error } =
-      (await locals.supabase?.storage.from(AVATAR_BUCKET).remove([replacedLogo])) ?? {};
+      (await serverStorage(locals.env, AVATAR_BUCKET)?.remove([replacedLogo])) ?? {};
     if (error) locals.log.warn('partner logo: could not delete the old file', { error });
   }
 
-  redirect(303, '/p?enviado=1');
+  redirect(303, '/partners?enviado=1');
 }

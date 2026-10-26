@@ -13,7 +13,7 @@ test.beforeEach(async ({ request }) => {
 
 test.describe('table list', () => {
   test('shows a seeded table, and opens its own page', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Mesas abertas' })).toBeVisible();
     await page.getByRole('link', { name: 'Os Sinos de Sablewood' }).click();
@@ -25,7 +25,7 @@ test.describe('table list', () => {
   test("shows what a card needs: system, kind, seats and the session in the visitor's timezone", async ({
     page,
   }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
     const card = page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' });
 
     await expect(card).toContainText('Daggerheart');
@@ -37,7 +37,7 @@ test.describe('table list', () => {
   test('shows where an in-person table plays, and the Old Dragon one is listed too', async ({
     page,
   }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
 
     await expect(page.getByRole('article').filter({ hasText: 'Noites de Neon' })).toContainText(
       'Presencial · Boa Viagem, Recife - PE',
@@ -48,7 +48,7 @@ test.describe('table list', () => {
   });
 
   test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
     const cards = page.getByRole('article');
     const titles = await cards.evaluateAll((elements) =>
       elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim()),
@@ -64,7 +64,7 @@ test.describe('table list', () => {
   });
 
   test('never shows a disabled table, in the list or by its address', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
     await expect(page.getByText('A Última Estrada')).toHaveCount(0);
 
     const response = await page.goto('/t/a-ultima-estrada');
@@ -73,7 +73,7 @@ test.describe('table list', () => {
 
   test('filters by system, and says so when nothing matches', async ({ page, isMobile }) => {
     test.skip(isMobile, 'on a phone the system is picked in the filter sheet (see TablesFilters)');
-    await page.goto('/t');
+    await page.goto('/tables');
     const filter = page.getByRole('combobox', { name: 'Sistema' });
     await expect(filter).toBeVisible();
 
@@ -102,16 +102,16 @@ test.describe('table list', () => {
     await expect(page).toHaveURL(/\?system=daggerheart$/);
     await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toHaveCount(0);
 
-    await page.goto('/t?system=gurps');
+    await page.goto('/tables?system=gurps');
     await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta com esses filtros');
     await expect(page.getByRole('link', { name: 'Ver todas as mesas' })).toHaveAttribute(
       'href',
-      '/t',
+      '/tables',
     );
   });
 
   test('does not scroll sideways on a phone', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
 
     expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
   });
@@ -141,7 +141,7 @@ test.describe('table page', () => {
 
     await expect(page.getByRole('link', { name: /^Voltar/ })).toHaveCount(0);
     await expect(trail.getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
-    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/tables');
     await expect(trail.getByText('Os Sinos de Sablewood')).toHaveAttribute('aria-current', 'page');
   });
 
@@ -154,7 +154,7 @@ test.describe('table page', () => {
     await expect(page.getByText('@mestre-de-testes')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Daggerheart' })).toHaveAttribute(
       'href',
-      /\/t\?system=daggerheart$/,
+      /\/tables\?system=daggerheart$/,
     );
     await expect(page.getByText('Sessão única')).toBeVisible();
     await expect(page.getByText('4 horas')).toBeVisible();
@@ -233,7 +233,7 @@ test.describe('table page', () => {
       if (/content security policy/i.test(message.text())) violations.push(message.text());
     });
 
-    await page.goto('/t');
+    await page.goto('/tables');
     await page.goto('/t/os-sinos-de-sablewood');
     await page.waitForLoadState('networkidle');
 

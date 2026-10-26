@@ -1,7 +1,10 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { setRequestContextStore } from '@mesaaberta/contracts';
 import * as Sentry from '@sentry/cloudflare';
-import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import {
+  sentryOptionsForApp,
+  sentryReleaseFor,
+} from '@mesaaberta/core/observability/sentry-options';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import type { Monitor } from '@mesaaberta/core/server/events/monitors';
@@ -33,7 +36,9 @@ export default Sentry.withSentry(
     ...sentryOptionsForApp('worker'),
     dsn: env.SENTRY_DSN,
     environment: 'production',
-    release: env.CF_VERSION_METADATA?.id,
+    ...sentryReleaseFor('worker', env),
+    // Puts the flags the run read (`recordFlag`) on its issues.
+    integrations: [Sentry.featureFlagsIntegration()],
   }),
   createWorker(undefined, undefined, sentryMonitor),
 );

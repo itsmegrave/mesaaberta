@@ -52,8 +52,12 @@
         ? (partner?.name ?? m.admin_report_partner_gone())
         : isTable
           ? m.admin_reports_target_table({ table: report.table?.title ?? '' })
-          : handle(report.player?.username ?? null),
+          : kind === 'message'
+            ? m.admin_reports_target_message({ name: handle(report.player?.username ?? null) })
+            : handle(report.player?.username ?? null),
   );
+  // What a message or person report copied of the conversation, oldest first.
+  const excerpt = $derived(report.report.excerpt);
   const fields = $derived({ id: report.report.id });
   const note = {
     name: 'note' as const,
@@ -87,7 +91,11 @@
             ? m.admin_report_kind_partner()
             : isTable
               ? m.admin_report_kind_table()
-              : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
+              : kind === 'message'
+                ? m.admin_report_kind_message()
+                : kind === 'person'
+                  ? m.admin_report_kind_person()
+                  : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
       </span>
     </p>
   {/snippet}
@@ -258,6 +266,44 @@
           <p class="mt-4 text-sm text-muted">{m.admin_report_table_ban_hint()}</p>
         {/if}
       </Panel>
+
+      {#if excerpt}
+        <Panel title={m.admin_report_excerpt()}>
+          <p class="mt-2 text-sm text-muted">
+            {excerpt.kind === 'table'
+              ? m.admin_report_excerpt_table()
+              : m.admin_report_excerpt_direct()}
+          </p>
+          {#if excerpt.messages.length === 0}
+            <p class="mt-4 text-muted">{m.admin_report_excerpt_empty()}</p>
+          {:else}
+            <ol class="mt-4 grid gap-2">
+              {#each excerpt.messages as message (message.id)}
+                {@const reported = message.id === excerpt.messageId}
+                <li
+                  aria-current={reported ? 'true' : undefined}
+                  class="grid gap-1 rounded-lg px-3 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3 {reported
+                    ? 'border-2 border-error-500 bg-surface-wash'
+                    : ''}"
+                >
+                  <span class="text-sm text-muted">
+                    {message.username
+                      ? atHandle(message.username)
+                      : m.admin_report_excerpt_closed_account()}<br />{when(
+                      new Date(message.createdAt),
+                    )}
+                    {#if reported}<br /><strong class="text-error-700-300"
+                        >{m.admin_report_excerpt_reported()}</strong
+                      >{/if}
+                  </span>
+                  <!-- Text a member wrote: shown as text, never as markup. -->
+                  <span class="wrap-break-word whitespace-pre-wrap">{message.body}</span>
+                </li>
+              {/each}
+            </ol>
+          {/if}
+        </Panel>
+      {/if}
     </div>
 
     <Panel

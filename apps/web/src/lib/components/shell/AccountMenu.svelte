@@ -47,6 +47,13 @@
   // The desktop popover and the phone sheet can both be on the page; each labels its own theme control.
   const uid = $props.id();
   let sheetOpen = $state(false);
+  let popoverOpen = $state(false);
+  // Following a link closes the menu (the layout stays mounted, so it would stay open over the
+  // next page); picking a theme does not, so the change shows with the menu still there.
+  const close = () => {
+    sheetOpen = false;
+    popoverOpen = false;
+  };
   const pending = $derived(isAdmin ? adminPending : 0);
   // The button carries one count: unread conversations plus what waits in the admin area.
   const total = $derived(messagesUnread + pending);
@@ -83,15 +90,16 @@
 {#snippet menu()}
   <nav aria-label={m.nav_account_menu()} class="flex flex-col gap-1">
     {#if username}
-      <a href={`/u/${username}`} class={item}>
+      <a href={`/u/${username}`} class={item} onclick={close}>
         <Icon name="game-icons:meeple" size={20} />
         {m.nav_view_profile()}
       </a>
     {/if}
 
     <a
-      href="/m"
+      href="/messages"
       class={item}
+      onclick={close}
       aria-label={messagesUnread > 0
         ? m.messages_menu_unread({ count: messagesUnread })
         : undefined}
@@ -110,6 +118,7 @@
       <a
         href="/admin"
         class={item}
+        onclick={close}
         aria-label={pending > 0 ? `${m.nav_admin()}: ${pending}` : undefined}
       >
         <Icon name="game-icons:black-knight-helm" size={20} />
@@ -159,7 +168,11 @@
         class="hidden min-w-0 truncate text-sm font-semibold md:inline"
       />
     {/if}
-    <Popover positioning={{ placement, offset: { mainAxis: 8 } }}>
+    <Popover
+      open={popoverOpen}
+      onOpenChange={(details) => (popoverOpen = details.open)}
+      positioning={{ placement, offset: { mainAxis: 8 } }}
+    >
       <Popover.Trigger
         aria-label={triggerLabel}
         class="relative btn flex items-center border border-surface-200-800 bg-panel font-semibold hover:preset-tonal {wide

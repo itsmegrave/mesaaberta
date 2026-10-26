@@ -1,4 +1,5 @@
 {
+  "$schema": "https://inlang.com/schema/inlang-message-format",
   "messages_title": "Mensagens",
   "messages_lede": "Conversas diretas e os chats das suas mesas.",
   "messages_empty": "Você ainda não tem conversas. Fale com quem mestra uma mesa ou entre em uma para abrir o chat.",
@@ -25,6 +26,32 @@
   "messages_error_off": "Esta pessoa não recebe mensagens diretas agora.",
   "messages_error_rate_limited": "Você enviou muitas mensagens em pouco tempo. Tente de novo em instantes.",
   "messages_dm_off_notice": "{name} não recebe mais mensagens diretas. Você ainda pode reler a conversa.",
+  "messages_view_profile": "Ver perfil",
+  "messages_report_person": "Denunciar {name}…",
+  "messages_block_person": "Bloquear {name}…",
+  "messages_message_actions": "mensagem de {name}",
+  "messages_copy_text": "Copiar texto",
+  "messages_copied": "Texto copiado.",
+  "messages_report_message": "Denunciar mensagem…",
+  "messages_report_message_title": "Denunciar mensagem de {name}",
+  "messages_report_person_title": "Denunciar {name}",
+  "messages_report_message_lede": "Sua denúncia é anônima. A moderação recebe esta mensagem e as 5 anteriores da conversa, e nada além disso.",
+  "messages_report_person_lede": "Sua denúncia é anônima. A moderação recebe a última mensagem desta pessoa na conversa e as 5 anteriores, e nada além disso.",
+  "messages_block_title": "Bloquear {name}?",
+  "messages_block_effect_contact": "A pessoa não pode mais te mandar mensagens diretas, te convidar para mesas nem te seguir.",
+  "messages_block_effect_inbox": "Esta conversa sai da sua lista de Mensagens.",
+  "messages_block_effect_tables": "Chats de mesas que vocês dividem continuam iguais.",
+  "messages_block_effect_silent": "A pessoa não é avisada.",
+  "messages_block_undo": "Você pode desbloquear quando quiser em Editar perfil › Mensagens e convites.",
+  "messages_block_confirm": "Bloquear",
+  "messages_blocked_toast": "Você bloqueou {name}.",
+  "messages_blocked_notice": "Você bloqueou {name}. Ninguém aqui pode mandar mensagens.",
+  "messages_unblock": "Desbloquear",
+  "messages_unblocked_toast": "Você desbloqueou {name}.",
+  "messages_block_failed": "Não deu certo. Tente de novo.",
+  "messages_blocked_title": "Pessoas bloqueadas",
+  "messages_blocked_help": "Quem está aqui não pode te mandar mensagens diretas, te convidar nem te seguir, e não fica sabendo do bloqueio.",
+  "messages_blocked_empty": "Você não bloqueou ninguém.",
   "messages_read_only_table": "Esta mesa foi desativada, então o chat ficou só para leitura.",
   "messages_read_only_table_ended": "Esta mesa terminou há mais de {days} dias, então o chat ficou só para leitura.",
   "messages_today": "Hoje",
@@ -68,8 +95,28 @@
   "admin_profile_clear": "Limpar filtros",
   "admin_profile_no_username": "Ainda sem username",
   "admin_profile_empty": "Nenhum perfil encontrado.",
-  "admin_profile_total": "{count, plural, =0 {Nenhum usuário} =1 {1 usuário} other {{count} usuários}}",
-  "admin_tables_total": "{count, plural, =0 {Nenhuma mesa} =1 {1 mesa} other {{count} mesas}}",
+  "admin_profile_total": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum usuário",
+        "count=1": "1 usuário",
+        "count=*": "{count} usuários"
+      }
+    }
+  ],
+  "admin_tables_total": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa",
+        "count=1": "1 mesa",
+        "count=*": "{count} mesas"
+      }
+    }
+  ],
   "admin_profile_user": "Usuário",
   "admin_profile_tables": "Mesas",
   "admin_profile_joined": "Cadastro",
@@ -113,14 +160,44 @@
   "admin_user_updated": "Última atualização do perfil",
   "admin_user_unset": "Não informado",
   "admin_profiles": "Perfis cadastrados",
-  "admin_new_profiles": "{count, plural, =0 {Nenhum novo nos últimos 30 dias} =1 {1 novo nos últimos 30 dias} other {{count} novos nos últimos 30 dias}}",
+  "admin_new_profiles": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum novo nos últimos 30 dias",
+        "count=1": "1 novo nos últimos 30 dias",
+        "count=*": "{count} novos nos últimos 30 dias"
+      }
+    }
+  ],
   "admin_tables": "Mesas",
-  "admin_active_tables": "{count, plural, =0 {Nenhuma ativa} =1 {1 ativa} other {{count} ativas}}",
+  "admin_active_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma ativa",
+        "count=1": "1 ativa",
+        "count=*": "{count} ativas"
+      }
+    }
+  ],
   "admin_tables_all_active": "Todas ativas",
   "admin_gms": "Quem mestra",
   "admin_gms_scope": "Pessoas com pelo menos uma mesa criada",
   "admin_confirmed": "Vagas confirmadas",
-  "admin_pending_seats": "{count, plural, =0 {Nenhum pedido esperando resposta} =1 {1 pedido esperando resposta} other {{count} pedidos esperando resposta}}",
+  "admin_pending_seats": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum pedido esperando resposta",
+        "count=1": "1 pedido esperando resposta",
+        "count=*": "{count} pedidos esperando resposta"
+      }
+    }
+  ],
   "admin_community": "Comunidade",
   "admin_active_profiles": "Perfis ativos",
   "admin_suspended": "Perfis suspensos",
@@ -262,7 +339,16 @@
   "search_select_group_picked": "Sua escolha",
   "search_select_group_rest": "Outras opções",
   "search_select_clear": "Limpar",
-  "search_select_done": "{count, plural, =0 {Pronto} other {Pronto ({count})}}",
+  "search_select_done": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Pronto",
+        "count=*": "Pronto ({count})"
+      }
+    }
+  ],
   "tables_filter_search": "Buscar sistema",
   "form_modality": "Onde a mesa joga",
   "form_platforms": "Plataformas",
@@ -289,11 +375,31 @@
   "form_join_details_hint": "Só você e quem tem vaga confirmada veem.",
   "table_join_details": "Como entrar",
   "table_join_details_private": "Só você e quem tem vaga confirmada veem isto.",
-  "tables_count": "{count, plural, =0 {Nenhuma mesa com sessão marcada} =1 {1 mesa com sessão marcada} other {{count} mesas com sessão marcada}}",
+  "tables_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa com sessão marcada",
+        "count=1": "1 mesa com sessão marcada",
+        "count=*": "{count} mesas com sessão marcada"
+      }
+    }
+  ],
   "table_kind_campaign": "Campanha",
   "table_kind_one_shot": "One-shot",
   "table_kind_adventure": "Aventura",
-  "table_seats_left": "{count, plural, =0 {Nenhuma vaga restante} =1 {1 vaga restante} other {{count} vagas restantes}}",
+  "table_seats_left": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma vaga restante",
+        "count=1": "1 vaga restante",
+        "count=*": "{count} vagas restantes"
+      }
+    }
+  ],
   "table_full": "Mesa cheia",
   "table_opened_now": "Aberta agora",
   "table_opened_minutes": "Aberta há {count} min",
@@ -331,7 +437,16 @@
   "form_summary": "Corrija os campos marcados.",
   "form_optional": "opcional",
   "info_tip_label": "Mais informações",
-  "form_summary_title": "{count, plural, =1 {Corrija 1 campo para continuar} other {Corrija {count} campos para continuar}}",
+  "form_summary_title": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Corrija 1 campo para continuar",
+        "count=*": "Corrija {count} campos para continuar"
+      }
+    }
+  ],
   "form_system": "Sistema de RPG",
   "form_system_choose": "Escolha um sistema",
   "form_system_waiting_hint": "Um sistema novo precisa ser aprovado. Sua mesa fica como rascunho até lá, e avisamos você quando sair a resposta.",
@@ -358,9 +473,29 @@
   "date_picker_clear": "Limpar a data",
   "date_picker_close": "Fechar o calendário",
   "date_picker_calendar": "Calendário",
-  "form_capacity_taken": "{count, plural, =0 {Ninguém está na mesa ainda, então não há mínimo.} =1 {1 pessoa já está na mesa, então este é o mínimo.} other {{count} pessoas já estão na mesa, então este é o mínimo.}}",
+  "form_capacity_taken": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém está na mesa ainda, então não há mínimo.",
+        "count=1": "1 pessoa já está na mesa, então este é o mínimo.",
+        "count=*": "{count} pessoas já estão na mesa, então este é o mínimo."
+      }
+    }
+  ],
   "form_capacity_remove_players": "Remover pessoas da mesa",
-  "form_capacity_seats": "{count, plural, =0 {Nenhuma vaga} =1 {1 vaga} other {{count} vagas}}",
+  "form_capacity_seats": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma vaga",
+        "count=1": "1 vaga",
+        "count=*": "{count} vagas"
+      }
+    }
+  ],
   "form_starts_at": "Primeira sessão",
   "form_timezone": "Fuso horário",
   "form_timezone_note": "No seu fuso, {zone} ({offset}). Cada pessoa vê a hora no próprio fuso.",
@@ -426,7 +561,17 @@
   "table_cancel_request": "Cancelar pedido",
   "table_you_are_gm": "Você mestra esta mesa.",
   "table_players": "Participantes",
-  "table_players_summary": "{count, plural, =0 {Ninguém na mesa ainda} =1 {1 pessoa na mesa} other {{count} pessoas na mesa}}",
+  "table_players_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém na mesa ainda",
+        "count=1": "1 pessoa na mesa",
+        "count=*": "{count} pessoas na mesa"
+      }
+    }
+  ],
   "table_requests": "Pedidos de vaga",
   "table_no_players": "Ninguém entrou ainda.",
   "table_approve": "Aprovar",
@@ -474,7 +619,17 @@
   "manage_going_rate_title": "Liberar avaliação",
   "manage_going_rate_hint": "Quem você marcar poderá avaliar agora. Só aparece aqui quem você marcou como presente em uma sessão.",
   "manage_going_rate_none": "Ninguém para liberar agora.",
-  "manage_going_rate_summary": "{count, plural, =0 {Ninguém para liberar agora} =1 {1 pessoa para liberar} other {{count} pessoas para liberar}}",
+  "manage_going_rate_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém para liberar agora",
+        "count=1": "1 pessoa para liberar",
+        "count=*": "{count} pessoas para liberar"
+      }
+    }
+  ],
   "manage_going_rate_submit": "Liberar avaliação",
   "manage_going_rate_submit_count": "Liberar avaliação ({count})",
   "manage_going_rate_done": "Avaliação liberada.",
@@ -552,7 +707,17 @@
   "gm_rating_scored_label": "Nota da mestragem: {score}, em {votes}",
   "gm_rating_new_label": "Nota da mestragem: estreia, {votes}, ainda sem nota",
   "gm_rating_unrated_label": "Nota da mestragem: estreia, sem avaliações",
-  "rating_count": "{count, plural, =0 {Sem avaliações} =1 {1 avaliação} other {{count} avaliações}}",
+  "rating_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Sem avaliações",
+        "count=1": "1 avaliação",
+        "count=*": "{count} avaliações"
+      }
+    }
+  ],
   "rating_title": "Avalie a mestragem",
   "rating_lede": "Você jogou. Conte como foi: a nota entra na média pública de quem mestrou. O comentário fica só com você, a menos que escolha mostrar.",
   "rating_the_gm": "Sua nota para a mestragem",
@@ -592,8 +757,27 @@
   "dash_seats_taken": "{taken} de {capacity} vagas ocupadas",
   "dash_edit": "Editar mesa",
   "dash_manage": "Gerenciar mesa",
-  "dash_count": "{count, plural, =0 {nenhuma mesa} =1 {1 mesa} other {{count} mesas}}",
-  "dash_banner": "{count, plural, =1 {1 pedido de vaga esperando você em {title}} other {{count} pedidos de vaga esperando você em {title}}}",
+  "dash_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa",
+        "count=1": "1 mesa",
+        "count=*": "{count} mesas"
+      }
+    }
+  ],
+  "dash_banner": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pedido de vaga esperando você em {title}",
+        "count=*": "{count} pedidos de vaga esperando você em {title}"
+      }
+    }
+  ],
   "dash_banner_many": "{count} pedidos de vaga esperando você em {tables} mesas",
   "dash_banner_action": "Ver o pedido",
   "dash_players": "Participantes",
@@ -944,7 +1128,17 @@
   "admin_announce_audience_game_masters": "Quem já abriu uma mesa",
   "admin_announce_audience_active_players": "Quem tem vaga confirmada numa mesa",
   "admin_announce_audience_specific_user": "Uma pessoa",
-  "admin_announce_audience_size": "{count, plural, =0 {Nenhuma conta} =1 {1 conta} other {{count} contas}}",
+  "admin_announce_audience_size": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma conta",
+        "count=1": "1 conta",
+        "count=*": "{count} contas"
+      }
+    }
+  ],
   "admin_announce_field_recipient": "Nome de usuário ou ID",
   "admin_announce_recipient_hint": "Por exemplo, @bruno-leal.",
   "admin_announce_field_link": "Link (opcional)",
@@ -955,7 +1149,17 @@
   "admin_announce_review": "Revisar envio",
   "admin_announce_confirm_title": "Confirme o envio",
   "admin_announce_confirm_person": "Esta notificação vai para @{username}.",
-  "admin_announce_confirm": "{count, plural, =0 {Esta notificação não vai para nenhuma conta.} =1 {Esta notificação vai para 1 conta.} other {Esta notificação vai para {count} contas.}}",
+  "admin_announce_confirm": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Esta notificação não vai para nenhuma conta.",
+        "count=1": "Esta notificação vai para 1 conta.",
+        "count=*": "Esta notificação vai para {count} contas."
+      }
+    }
+  ],
   "admin_announce_confirm_send": "Enviar agora",
   "admin_announce_confirm_back": "Voltar e editar",
   "admin_announce_sent": "Notificação enviada.",
@@ -967,7 +1171,17 @@
   "admin_history_empty": "Nenhuma notificação enviada ainda.",
   "admin_history_by": "Por {author}",
   "admin_history_to_person": "Para {username}",
-  "admin_history_notified": "{count, plural, =0 {Não chegou a nenhuma conta} =1 {Chegou a 1 conta} other {Chegou a {count} contas}}",
+  "admin_history_notified": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Não chegou a nenhuma conta",
+        "count=1": "Chegou a 1 conta",
+        "count=*": "Chegou a {count} contas"
+      }
+    }
+  ],
   "admin_history_status_delivered": "Entregue",
   "admin_history_status_pending": "Na fila",
   "admin_history_status_failed": "Falhou",
@@ -1275,6 +1489,15 @@
   "admin_report_kind_table": "Denúncia de mesa",
   "admin_report_kind_player": "Denúncia de perfil",
   "admin_report_profile": "Perfil denunciado",
+  "admin_report_kind_message": "Denúncia de mensagem",
+  "admin_report_kind_person": "Denúncia de pessoa em Mensagens",
+  "admin_reports_target_message": "Mensagem de {name}",
+  "admin_report_excerpt": "Mensagens denunciadas",
+  "admin_report_excerpt_direct": "Conversa direta · cópia feita quando a denúncia foi enviada. A conversa em si não fica visível para a moderação.",
+  "admin_report_excerpt_table": "Chat da mesa · cópia feita quando a denúncia foi enviada. A conversa em si não fica visível para a moderação.",
+  "admin_report_excerpt_reported": "Denunciada",
+  "admin_report_excerpt_empty": "Nenhuma mensagem desta pessoa na conversa.",
+  "admin_report_excerpt_closed_account": "Conta encerrada",
   "admin_report_where": "Mesa em comum",
   "admin_report_table_ban_hint": "Denunciar uma mesa não bane quem mestra. Se as mesas dessa pessoa acumulam denúncias aceitas, o banimento é feito no perfil dela.",
   "admin_report_close_table": "Fechar a mesa",
@@ -1351,7 +1574,16 @@
   "form_error_planned_sessions_invalid": "Use um número inteiro, de 2 até 20.",
   "table_min_players_met": "Mínimo atingido",
   "table_min_players_needed": "Precisa de {count} para acontecer",
-  "table_min_players_left": "{count, plural, =1 {falta 1} other {faltam {count}}}",
+  "table_min_players_left": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "falta 1",
+        "count=*": "faltam {count}"
+      }
+    }
+  ],
   "public_profile_description": "Conheça {username}, a nota da mestragem e as próximas mesas de RPG no Mesa Aberta.",
   "public_profile_social_links": "Redes sociais e site",
   "public_profile_social_link": "Abrir {network} em nova aba",
@@ -1365,10 +1597,37 @@
   "public_profile_reviews": "Avaliações da mestragem",
   "public_profile_reviews_of": "Avaliações de {username}",
   "public_profile_review_played": "Jogou em",
-  "public_profile_reviews_all": "{count, plural, =1 {Ver a avaliação} other {Ver todas as {count} avaliações}}",
+  "public_profile_reviews_all": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Ver a avaliação",
+        "count=*": "Ver todas as {count} avaliações"
+      }
+    }
+  ],
   "public_profile_reviews_fewer": "Mostrar menos",
-  "public_profile_reviews_summary": "{count, plural, =1 {1 avaliação} other {{count} avaliações}}",
-  "public_profile_reviews_summary_score": "{score} · {count, plural, =1 {1 avaliação} other {{count} avaliações}}",
+  "public_profile_reviews_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 avaliação",
+        "count=*": "{count} avaliações"
+      }
+    }
+  ],
+  "public_profile_reviews_summary_score": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "{score} · 1 avaliação",
+        "count=*": "{score} · {count} avaliações"
+      }
+    }
+  ],
   "session_day": "Dia da primeira sessão",
   "session_hour": "Hora",
   "session_minute": "Minutos",
@@ -1380,14 +1639,34 @@
   "session_summary_empty": "Escolha o dia da primeira sessão.",
   "session_summary_at": "{date}, às {time} · No seu fuso ({offset})",
   "session_summary_at_empty": "Escolha o dia e o horário.",
-  "tables_filter_show": "{count, plural, =0 {Nenhuma mesa} =1 {Mostrar 1 mesa} other {Mostrar {count} mesas}}",
+  "tables_filter_show": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa",
+        "count=1": "Mostrar 1 mesa",
+        "count=*": "Mostrar {count} mesas"
+      }
+    }
+  ],
   "tables_filters_button": "Filtros",
   "tables_filters_active": "Filtros ativos",
   "tables_filter_remove": "Tirar o filtro {name}",
   "tables_filters_clear_all": "Limpar filtros",
   "tables_filters_clear_everything": "Limpar tudo",
   "tables_filters_title": "Filtros",
-  "tables_found": "{count, plural, =0 {Nenhuma mesa encontrada} =1 {1 mesa encontrada} other {{count} mesas encontradas}}",
+  "tables_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa encontrada",
+        "count=1": "1 mesa encontrada",
+        "count=*": "{count} mesas encontradas"
+      }
+    }
+  ],
   "public_profile_message": "Mandar mensagem",
   "public_profile_message_to": "Mandar mensagem para {username}",
   "menu_view_as_visitor": "Ver como visitante",
@@ -1421,6 +1700,8 @@
   "admin_reports_target_all": "Todos os tipos",
   "admin_reports_target_table_option": "Mesas",
   "admin_reports_target_player_option": "Perfis",
+  "admin_reports_target_message_option": "Mensagens",
+  "admin_reports_target_person_option": "Pessoas em Mensagens",
   "admin_reports_gm_context": "Mesa de {gm}",
   "admin_reports_open": "Abrir denúncia",
   "admin_reports_action_label": "Ações da denúncia: {target}",
@@ -1477,7 +1758,11 @@
   "history_event_TableEdited": "editou a mesa (sem aviso aos participantes)",
   "history_event_TableDisabled": "desativou a mesa",
   "history_event_TableAwaitingConfirmation": "A sessão terminou e quem mestra recebeu a pergunta se ela aconteceu",
+  "history_event_TableCloseReminder": "lembrou quem mestra, por e-mail, de dizer se a sessão aconteceu",
   "history_event_TableConcluded": "confirmou que a sessão aconteceu",
+  "history_event_TableConcludedAutomatically": "concluiu a mesa porque quem mestra não respondeu em 10 dias, e pediu a avaliação de quem jogou",
+  "history_event_TableSessionHeld": "confirmou que a sessão aconteceu e a mesa seguiu para a próxima",
+  "history_event_TableSessionHeldAutomatically": "registrou a sessão como realizada porque quem mestra não respondeu em 10 dias, seguiu para a próxima data e pediu a avaliação de quem jogou",
   "history_event_TableNotHeld": "disse que a sessão não aconteceu",
   "history_event_TableClosedByModeration": "encerrou a mesa por moderação",
   "history_event_JoinRequested": "pediu uma vaga",
@@ -1615,15 +1900,51 @@
   "crowdfunding_sort_ending": "Termina primeiro",
   "crowdfunding_sort_newest": "Adicionados por último",
   "crowdfunding_sort_name": "Nome (A–Z)",
-  "crowdfunding_found": "{count, plural, =1 {1 financiamento} other {{count} financiamentos}}",
+  "crowdfunding_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 financiamento",
+        "count=*": "{count} financiamentos"
+      }
+    }
+  ],
   "crowdfunding_status_upcoming": "Em breve",
   "crowdfunding_status_running": "Em andamento",
   "crowdfunding_status_ended": "Encerrado",
   "crowdfunding_status_removed": "Removido",
   "crowdfunding_ends_today": "Termina hoje",
-  "crowdfunding_ends_in": "{count, plural, =1 {Termina em 1 dia} other {Termina em {count} dias}}",
-  "crowdfunding_last_days": "{count, plural, =1 {Último dia} other {Últimos {count} dias}}",
-  "crowdfunding_starts_in": "{count, plural, =1 {Começa amanhã} other {Começa em {count} dias}}",
+  "crowdfunding_ends_in": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Termina em 1 dia",
+        "count=*": "Termina em {count} dias"
+      }
+    }
+  ],
+  "crowdfunding_last_days": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Último dia",
+        "count=*": "Últimos {count} dias"
+      }
+    }
+  ],
+  "crowdfunding_starts_in": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Começa amanhã",
+        "count=*": "Começa em {count} dias"
+      }
+    }
+  ],
   "crowdfunding_ended_on": "Encerrou em {date}",
   "crowdfunding_owner_label": "Quem está financiando",
   "crowdfunding_sent_by_label": "Enviado por",
@@ -1868,7 +2189,16 @@
   "admin_partners_col_links": "Links",
   "admin_partners_col_backlink": "Nosso link",
   "admin_partners_col_sender": "Quem cuida",
-  "admin_partners_pending_invites": "{count, plural, =1 {+1 convite pendente} other {+{count} convites pendentes}}",
+  "admin_partners_pending_invites": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "+1 convite pendente",
+        "count=*": "+{count} convites pendentes"
+      }
+    }
+  ],
   "admin_partners_col_reports": "Denúncias",
   "admin_partners_check": "Conferir ↗",
   "admin_partners_not_informed": "Não informado",
@@ -1923,7 +2253,16 @@
   "invitation_decline": "Recusar convite",
   "invitation_review": "Revisar meu convite",
   "invitation_received": "Convites recebidos",
-  "invitation_received_count": "{count, plural, =1 {1 convite aguardando resposta} other {{count} convites aguardando resposta}}",
+  "invitation_received_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 convite aguardando resposta",
+        "count=*": "{count} convites aguardando resposta"
+      }
+    }
+  ],
   "invitation_row": "@{gm} convidou você · reserva até {date}",
   "invitation_respond": "Responder",
   "invitation_respond_to": "Responder ao convite para {title}",
@@ -1944,9 +2283,36 @@
   "invitation_reserved_until": "Sua vaga está reservada até {date}. Aceitar confirma sua participação e libera o chat e as instruções da mesa. Recusar libera a vaga e impede novos convites para esta mesa.",
   "invitation_accepted_text": "Você está na mesa.",
   "invitation_block_help": "Bloquear cancela os convites pendentes dessa pessoa. Você continua podendo entrar nas mesas que ela mestra por conta própria.",
-  "seats_confirmed": "{count, plural, =1 {1 confirmada} other {{count} confirmadas}}",
-  "seats_reserved": "{count, plural, =1 {1 reservada} other {{count} reservadas}}",
-  "seats_free": "{count, plural, =1 {1 livre} other {{count} livres}}",
+  "seats_confirmed": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 confirmada",
+        "count=*": "{count} confirmadas"
+      }
+    }
+  ],
+  "seats_reserved": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 reservada",
+        "count=*": "{count} reservadas"
+      }
+    }
+  ],
+  "seats_free": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 livre",
+        "count=*": "{count} livres"
+      }
+    }
+  ],
   "invitation_settings_title": "Convites para mesas",
   "invitation_settings_help": "Desativar cancela os convites pendentes e libera as reservas. Suas participações confirmadas continuam.",
   "invitation_enable": "Receber convites",
@@ -1997,11 +2363,41 @@
   "follow_stop_person": "Seguindo {username}. Deixar de seguir",
   "follow_stop": "Deixar de seguir",
   "follow_failed": "Não deu para mudar isso agora. Tente de novo.",
-  "follow_followers_count": "{count, plural, =0 {Ninguém segue você ainda} =1 {1 pessoa segue você} other {{count} pessoas seguem você}}",
-  "follow_following_count": "{count, plural, =0 {Você não segue ninguém} =1 {Você segue 1 pessoa} other {Você segue {count} pessoas}}",
+  "follow_followers_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém segue você ainda",
+        "count=1": "1 pessoa segue você",
+        "count=*": "{count} pessoas seguem você"
+      }
+    }
+  ],
+  "follow_following_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Você não segue ninguém",
+        "count=1": "Você segue 1 pessoa",
+        "count=*": "Você segue {count} pessoas"
+      }
+    }
+  ],
   "follow_following_label": "Pessoas que você segue",
   "follow_following_empty": "Siga quem mestra ou joga com você, no perfil da pessoa ou na página de uma mesa, para ver as mesas dela no seu Início.",
-  "follow_open_tables": "{count, plural, =0 {nenhuma mesa aberta} =1 {1 mesa aberta} other {{count} mesas abertas}}",
+  "follow_open_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa aberta",
+        "count=1": "1 mesa aberta",
+        "count=*": "{count} mesas abertas"
+      }
+    }
+  ],
   "follow_notices_title": "Me avise no sininho quando alguém que eu sigo",
   "follow_notices_tables": "abrir uma mesa",
   "follow_notices_seats": "abrir vaga numa mesa que estava cheia",
@@ -2062,7 +2458,16 @@
   "changelog_improvements": "Melhorias",
   "changelog_fixes": "Correções",
   "changelog_latest": "Mais recente",
-  "changelog_count": "{count, plural, =1 {1 mudança} other {{count} mudanças}}",
+  "changelog_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mudança",
+        "count=*": "{count} mudanças"
+      }
+    }
+  ],
   "changelog_copy": "Copiar link de {date}",
   "changelog_copy_label": "Copiar link",
   "changelog_copied": "Link de {date} copiado.",
@@ -2105,9 +2510,153 @@
   "participant_rating_new": "Estreia como participante",
   "participant_rating_as": "como participante",
   "public_profile_scores_hint": "Sua nota como participante vem de quem mestrou as mesas em que você jogou. As duas notas aparecem depois de 3 avaliações.",
-  "player_rating_tables_played": "{count, plural, =0 {Primeira mesa} =1 {Jogou 1 mesa} other {Jogou {count} mesas}}",
-  "changelog_month_summary": "{count, plural, =0 {Nenhuma versão} =1 {1 versão} other {{count} versões}}",
+  "player_rating_tables_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Primeira mesa",
+        "count=1": "Jogou 1 mesa",
+        "count=*": "Jogou {count} mesas"
+      }
+    }
+  ],
+  "changelog_month_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma versão",
+        "count=1": "1 versão",
+        "count=*": "{count} versões"
+      }
+    }
+  ],
   "changelog_notice_title": "Novidades: {title}",
+  "directory_show_label": "Mostrar",
+  "directory_sort_label": "Ordenar",
+  "directory_gms_label": "Quem mestra",
+  "directory_people_more": "+{count}",
+  "directory_open_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa aberta",
+        "count=1": "1 mesa aberta",
+        "count=*": "{count} mesas abertas"
+      }
+    }
+  ],
+  "systems_crumb": "Sistemas",
+  "systems_title": "Sistemas de RPG",
+  "systems_lede": "Veja o que a comunidade joga, quantas mesas estão abertas em cada sistema e quem mestra.",
+  "systems_open_cta": "Abrir uma mesa",
+  "systems_search_label": "Buscar sistema",
+  "systems_show_open": "Com mesa aberta",
+  "systems_show_all": "Todos",
+  "systems_sort_open": "Mais mesas abertas",
+  "systems_sort_played": "Mais jogados",
+  "systems_sort_az": "A a Z",
+  "systems_found_open": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum sistema com mesa aberta",
+        "count=1": "1 sistema com mesa aberta",
+        "count=*": "{count} sistemas com mesa aberta"
+      }
+    }
+  ],
+  "systems_found_all": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum sistema",
+        "count=1": "1 sistema",
+        "count=*": "{count} sistemas"
+      }
+    }
+  ],
+  "systems_tables_here": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa na Mesa Aberta",
+        "count=1": "1 mesa na Mesa Aberta",
+        "count=*": "{count} mesas na Mesa Aberta"
+      }
+    }
+  ],
+  "systems_gm_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém mestra ainda",
+        "count=1": "1 pessoa mestra",
+        "count=*": "{count} pessoas mestram"
+      }
+    }
+  ],
+  "systems_never_played": "Ainda sem mesas na Mesa Aberta",
+  "systems_first_gm": "Seja a primeira pessoa a mestrar",
+  "systems_none_open": "Nenhuma mesa aberta agora",
+  "systems_empty_search": "Nenhum sistema encontrado para “{query}”.",
+  "systems_empty_hint": "Confira a grafia. Se o sistema não está na lista, sugira ele quando abrir uma mesa: quem cuida do catálogo aprova.",
+  "systems_empty_open": "Nenhum sistema tem mesa aberta agora.",
+  "systems_show_all_link": "Ver todos os sistemas",
+  "systems_description": "Veja o que a comunidade joga na Mesa Aberta: quantas mesas estão abertas em cada sistema de RPG e quem mestra.",
+  "seo_systems_title": "Sistemas de RPG · Mesa Aberta",
+  "seo_system_title": "{name} · Sistemas de RPG · Mesa Aberta",
+  "seo_system_description": "{name} na Mesa Aberta: {facts}. Veja as mesas abertas e quem mestra este sistema.",
+  "system_about": "Sobre o sistema",
+  "system_modality_online": "Online",
+  "system_modality_in_person": "Presencial",
+  "system_modality_both": "Online e presencial",
+  "system_see_open": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Ver a mesa aberta",
+        "count=*": "Ver as {count} mesas abertas"
+      }
+    }
+  ],
+  "system_new_table": "Abrir uma mesa deste sistema",
+  "system_open_title": "Mesas abertas",
+  "system_open_all": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Ver a mesa",
+        "count=*": "Ver todas as {count} mesas"
+      }
+    }
+  ],
+  "system_open_empty": "Nenhuma mesa aberta de {name} agora.",
+  "system_open_empty_hint": "Quem mestra este sistema aparece logo abaixo. Ou abra a próxima mesa você.",
+  "system_gms_title": "Quem mestra este sistema",
+  "system_gms_lede": "Pessoas que já abriram mesas de {name} aqui, de quem mestrou mais para quem mestrou menos.",
+  "system_gm_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mesa deste sistema",
+        "count=*": "{count} mesas deste sistema"
+      }
+    }
+  ],
+  "system_ended_title": "Mesas que já aconteceram",
+  "system_ended_line": "Quem mestra: {gm} · encerrada em {date}",
+  "directory_footer_title": "Diretórios",
+  "directory_footer_systems": "Sistemas",
   "blog_title": "Blog",
   "blog_lede": "Histórias, bastidores e ideias para a sua mesa, escritas por quem faz a Mesa Aberta.",
   "blog_description": "Histórias, bastidores e ideias sobre RPG de mesa e a comunidade da Mesa Aberta.",

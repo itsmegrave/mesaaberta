@@ -6,6 +6,12 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Sistemas de RPG",
+        "description": "Uma página para cada sistema, com as mesas abertas, quem mestra e as mesas que já aconteceram. A lista mostra quantas mesas cada sistema tem.",
+        "href": "/systems"
+      },
+      {
+        "kind": "new",
         "title": "Lembretes de sessão",
         "description": "Quem joga e quem mestra recebe um aviso um dia e uma hora antes da sessão."
       },
@@ -29,12 +35,18 @@
         "kind": "new",
         "title": "Tipos de parceiro",
         "description": "Parceiros escolhem de um a três tipos, como Editora, Loja ou Podcast, e a lista de parceiros pode ser filtrada por tipo.",
-        "href": "/p"
+        "href": "/partners"
       },
       {
         "kind": "new",
         "title": "Aventuras com número de sessões",
         "description": "Ao abrir uma aventura, quem mestra diz quantas sessões ela terá, de 2 a 20. O número aparece no card e na confirmação de cada sessão."
+      },
+      {
+        "kind": "improved",
+        "title": "Endereços por extenso",
+        "description": "As listas ganharam endereços com nomes por extenso, como /tables e /partners. Links antigos continuam funcionando.",
+        "href": "/tables"
       },
       {
         "kind": "improved",
@@ -111,6 +123,22 @@
         "kind": "fixed",
         "title": "Avaliações no celular",
         "description": "As linhas de avaliação de jogadores cabem na tela do celular, e o menu da mesa mostra “Participantes e pedidos” só para quem gerencia."
+      },
+      {
+        "kind": "fixed",
+        "title": "Menu da conta fecha ao navegar",
+        "description": "O menu da conta fecha depois de abrir Perfil, Mensagens ou Admin."
+      },
+      {
+        "kind": "new",
+        "title": "Lembretes para fechar a sessão",
+        "description": "Quem mestra recebe um e-mail uma hora e sete dias depois do fim de uma sessão que ainda não foi confirmada. Passados dez dias, a Mesa Aberta fecha a sessão e chama quem jogou para avaliar.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Endereços em palavras",
+        "description": "As listas agora têm endereços legíveis, como /tables, /partners e /messages. Os links antigos continuam funcionando."
       }
     ]
   },
@@ -201,7 +229,7 @@
         "kind": "improved",
         "title": "Chat aberto por 30 dias",
         "description": "Depois que a sessão termina, o chat aceita mensagens por mais 30 dias e então fica só para leitura; em mesas canceladas ou desativadas, ele fecha na hora.",
-        "href": "/m"
+        "href": "/messages"
       },
       {
         "kind": "fixed",
@@ -262,7 +290,7 @@
         "kind": "new",
         "title": "Mínimo de participantes",
         "description": "Quem mestra pode definir de uma pessoa até o total de vagas como mínimo, sem cancelar a mesa nem bloquear inscrições se ele não for atingido.",
-        "href": "/t/new"
+        "href": "/tables/new"
       },
       {
         "kind": "new",
@@ -302,13 +330,13 @@
         "kind": "new",
         "title": "Mesas de aventura",
         "description": "Abra uma aventura com várias sessões e informe só a primeira data; o grupo combina as próximas sem uma recorrência fixa.",
-        "href": "/t/new"
+        "href": "/tables/new"
       },
       {
         "kind": "new",
         "title": "Mensagens na plataforma",
         "description": "Converse no chat da mesa ou mande uma mensagem direta a quem mestra antes de pedir uma vaga.",
-        "href": "/m"
+        "href": "/messages"
       },
       {
         "kind": "new",
@@ -357,7 +385,7 @@
         "kind": "new",
         "title": "Abra uma mesa ou pegue uma vaga",
         "description": "Encontre uma mesa de RPG para jogar ou abra a sua para reunir o grupo.",
-        "href": "/t"
+        "href": "/tables"
       }
     ]
   }

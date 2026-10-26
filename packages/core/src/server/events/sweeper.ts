@@ -5,6 +5,10 @@ import type { Logger } from '../logger';
 import { closeElapsedTables } from '../tables/lifecycle';
 import { pruneNotifications } from '../notifications/service';
 import { sendSessionReminders } from '../notifications/reminders';
+import { CLOSE_REMINDERS_FLAG, remindToClose } from '../tables/close-reminders';
+import { pruneMailDeliveries } from '../mail/once';
+import { pruneAuthAttempts } from '../auth/attempt-limit';
+import { flagsFromEnv } from '../flags/env';
 import { pruneTableChats } from '../messages/retention';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
@@ -20,10 +24,15 @@ import type { Handler } from './types';
  * ADR 0003) instead of calling the dispatcher directly. It claims, runs and records the same way, so
  * the default stays the direct path until the poller has run clean beside it.
  */
-type PollerEnv = { EVENT_POLLER?: string } & SocialEnv & BuildEnv;
+type PollerEnv = { EVENT_POLLER?: string } & SocialEnv & BuildEnv & FlagsEnv;
+
+/** The GrowthBook settings the sweeper reads its own flags with (`use_session_close_reminders`). */
+type FlagsEnv = { GROWTHBOOK_API_HOST?: string; GROWTHBOOK_CLIENT_KEY?: string };
 
 type Deps = {
   open?: typeof createDb;
+  /** Whether a GM gets the reminders to close a session; GrowthBook by default. */
+  closeReminders?: (gm: { id: string; isAdmin: boolean }) => Promise<boolean>;
   handlers: readonly Handler[];
   log: Logger;
 };
@@ -33,15 +42,21 @@ type Deps = {
  * that are due (retries after backoff, and any whose first dispatch never happened), and always
  * closes the connection. Before that it asks the GM of every table whose session is over whether it
  * happened (`closeElapsedTables`), lifts the temporary bans that ended and sends the session reminders
- * that are due (`sendSessionReminders`). It also deletes the events and notifications past their retention period,
- * and table chats past their retention period. Does nothing without a database. Returns how many events it tried.
+ * that are due (`sendSessionReminders`) and the e-mails that ask a GM to answer, or the close in their
+ * place (`remindToClose`). It also deletes the events, notifications and table chats past their
+ * retention period, and the sign-in attempts older than a day. Does nothing without a database.
+ * Returns how many events it tried.
  */
 export async function runSweeper(
   env: DatabaseEnv & PollerEnv,
-  { open = createDb, handlers, log }: Deps,
+  { open = createDb, handlers, log, closeReminders }: Deps,
 ): Promise<number> {
   const connectionString = connectionStringFrom(env);
   if (!connectionString) return 0;
+  const flags = closeReminders ? null : flagsFromEnv(env, {});
+  const remindGm =
+    closeReminders ??
+    ((gm: { id: string; isAdmin: boolean }) => flags!.isEnabled(CLOSE_REMINDERS_FLAG, gm));
 
   const { db, close } = open(connectionString);
   try {
@@ -59,6 +74,14 @@ export async function runSweeper(
       if (reminded > 0) log.info('session reminders', { reminded });
     } catch (error) {
       log.warn('session reminders failed', { code: 'session_reminders_failed', error });
+    }
+    // Isolated too, and before the sweep so its e-mails and the close's notices go out in this run.
+    try {
+      const { reminded, closed } = await remindToClose(db, now, remindGm);
+      if (reminded.length > 0 || closed.length > 0)
+        log.info('close reminders', { reminded: reminded.length, closed: closed.length });
+    } catch (error) {
+      log.warn('close reminders failed', { code: 'close_reminders_failed', error });
     }
     const swept =
       env.EVENT_POLLER === 'true'
@@ -80,6 +103,10 @@ export async function runSweeper(
     if (expired > 0) log.info('notification prune', { expired });
     const chats = await pruneTableChats(db);
     if (chats > 0) log.info('table chat prune', { chats });
+    const deliveries = await pruneMailDeliveries(db);
+    if (deliveries > 0) log.info('mail delivery prune', { deliveries });
+    const attempts = await pruneAuthAttempts(db);
+    if (attempts > 0) log.info('auth attempt prune', { attempts });
     // Last, so a run that threw before this point does not look alive to /healthz.
     await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log, buildInfoOf(env));
     return swept;

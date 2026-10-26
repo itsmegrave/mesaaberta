@@ -7,14 +7,18 @@ import { withStoredFields, type ProfileSection } from '#lib/profile/sections.js'
 import { setAvatarPath, setBannerPath } from '@mesaaberta/core/server/account/service';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
+import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import { loadProfileForm, saveProfile } from '@mesaaberta/core/server/profile/service';
 import { profileSchema, PROFILE_DEFAULTS } from '@mesaaberta/core/profile/schema';
 import type { ZodType } from 'zod';
 
-/** Deletes a replaced picture. Best effort: a leftover file is harmless, a failed save is not. */
-export async function removePicture(locals: App.Locals, path: string | null) {
-  if (!path) return;
-  const { error } = (await locals.supabase?.storage.from(AVATAR_BUCKET).remove([path])) ?? {};
+/**
+ * Deletes a replaced picture or cover, only ever inside the person's own folder. Best effort: a
+ * leftover file is harmless, a failed save is not.
+ */
+export async function removePicture(locals: App.Locals, userId: string, path: string | null) {
+  if (!path || !isInside(path, userId)) return;
+  const { error } = (await serverStorage(locals.env, AVATAR_BUCKET)?.remove([path])) ?? {};
   if (error) locals.log.warn('profile picture: could not delete the old file', { error });
 }
 
@@ -56,7 +60,7 @@ const images = {
 
 /**
  * Points the profile at a stored picture or cover (or at none) and answers the file it replaced,
- * for the caller to delete with the person's session. Through the api Worker when `api_account` is
+ * for the caller to delete. Through the api Worker when `api_account` is
  * on for this person.
  */
 async function setImage(
@@ -97,10 +101,10 @@ export function uploadImage(
 
     try {
       const prepared = await prepareImage(form.data[field] as File, images[field].folder(user.id));
-      const storage = locals.supabase?.storage.from(AVATAR_BUCKET);
+      const storage = serverStorage(locals.env, AVATAR_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
       const path = await storeImage(storage, prepared, locals.log);
-      await removePicture(locals, await setImage(locals, user.id, field, path));
+      await removePicture(locals, user.id, await setImage(locals, user.id, field, path));
     } catch (e) {
       if (e instanceof Invalid) return refuse(form, 400, e.message, field);
       throw e;
@@ -116,7 +120,7 @@ export function removeImage(field: keyof typeof images, notice: string) {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
-    await removePicture(locals, await setImage(locals, user.id, field, null));
+    await removePicture(locals, user.id, await setImage(locals, user.id, field, null));
     redirect(303, `${url.pathname}?${notice}`);
   };
 }

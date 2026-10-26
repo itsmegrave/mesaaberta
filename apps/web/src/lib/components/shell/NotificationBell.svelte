@@ -38,7 +38,7 @@
   let open = $state(false);
 
   const locale = getLocale();
-  const feed = '/n';
+  const feed = '/notifications';
   // Every form comes back to the page it was sent from.
   const here = $derived(page.url.pathname + page.url.search);
   const when = (date: Date) =>

@@ -21,7 +21,7 @@ test.describe('rate limits', () => {
     for (let i = 1; i <= 5; i++) await createTable(page, { title: uniqueTitle(`Mesa ${i}`) });
 
     const title = uniqueTitle('Mesa demais');
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');
@@ -32,7 +32,7 @@ test.describe('rate limits', () => {
       /Você fez isso muitas vezes em pouco tempo\. Tente de novo em (\d+ min|1 h)\./,
     );
     // Nothing was lost or half done: the form is still filled and no sixth table exists.
-    await expect(page).toHaveURL(/t\/new$/);
+    await expect(page).toHaveURL(/tables\/new$/);
     await expect(page.getByLabel('Título')).toHaveValue(title);
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
     const sql = database();

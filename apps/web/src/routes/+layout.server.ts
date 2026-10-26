@@ -3,6 +3,7 @@ import { loadRead } from '#lib/server/reads/load.js';
 import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
+import { NO_DIRECTORIES, directoryFlags } from '#lib/server/directories/flags.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import {
@@ -44,6 +45,7 @@ export const load: LayoutServerLoad = async (event) => {
       account: null,
       cacheIdentity: 'anonymous',
       accountRead: null,
+      directories: NO_DIRECTORIES,
     };
   }
   // An admin still uses the site while it is down, with a banner saying so.
@@ -70,6 +72,8 @@ export const load: LayoutServerLoad = async (event) => {
       blogLive,
       cacheIdentity,
       accountRead,
+      // Which directories the menus and the footer link to.
+      directories: await directoryFlags(locals),
       maintenance: false,
       maintenanceBypass,
       // Every time on the site is shown in this zone.
@@ -101,6 +105,7 @@ export const load: LayoutServerLoad = async (event) => {
       account: null,
       cacheIdentity: 'anonymous',
       accountRead: null,
+      directories: NO_DIRECTORIES,
     };
   }
 };
