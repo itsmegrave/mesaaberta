@@ -68,8 +68,8 @@
     </div>
   </header>
 
-  <div class="grid gap-4 md:grid-cols-3 md:gap-6">
-    <div class="flex flex-col gap-4 md:col-span-2 md:gap-6">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+    <div class="flex min-w-0 flex-col gap-4 md:col-span-2 md:gap-6">
       {#if data.waiting.total > 0}
         <HomeWaiting items={data.waiting.items} total={data.waiting.total} />
       {/if}
@@ -77,7 +77,7 @@
         <HomeSessions sessions={data.sessions.next} now={data.now} />
       {/if}
     </div>
-    <div class="flex flex-col gap-4 md:gap-6">
+    <div class="flex min-w-0 flex-col gap-4 md:gap-6">
       <HomeAccount
         account={data.account}
         following={data.following}

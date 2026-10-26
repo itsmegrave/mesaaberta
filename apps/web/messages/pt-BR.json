@@ -2352,8 +2352,8 @@
       "declarations": ["input sessions", "input waiting"],
       "selectors": ["sessions", "waiting"],
       "match": {
-        "sessions=0, waiting=1": "Você tem nenhuma sessão esta semana e 1 coisa esperando você.",
-        "sessions=0, waiting=*": "Você tem nenhuma sessão esta semana e {waiting} coisas esperando você.",
+        "sessions=0, waiting=1": "Você não tem nenhuma sessão esta semana e 1 coisa esperando você.",
+        "sessions=0, waiting=*": "Você não tem nenhuma sessão esta semana e {waiting} coisas esperando você.",
         "sessions=1, waiting=1": "Você tem 1 sessão esta semana e 1 coisa esperando você.",
         "sessions=1, waiting=*": "Você tem 1 sessão esta semana e {waiting} coisas esperando você.",
         "sessions=*, waiting=1": "Você tem {sessions} sessões esta semana e 1 coisa esperando você.",
@@ -2615,6 +2615,7 @@
   "seo_table_title": "{title} — {system} · Mesa Aberta",
   "seo_table_description": "Mesa de {system}. {description}",
   "seo_profile_title": "{username} · Mesa Aberta",
+  "player_rating_summary": "{rated} de {total} avaliadas",
   "player_rating_title": "Avalie quem jogou",
   "player_rating_title_going": "Avalie quem joga",
   "player_rating_lede": "A nota entra na média pública de cada pessoa como participante, como acontece com a mestragem. O comentário fica só com você.",

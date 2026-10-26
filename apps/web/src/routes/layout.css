@@ -153,3 +153,19 @@ body {
     outline-offset: 2px;
   }
 }
+
+/* Anything that can be pressed shows the pointer (Tailwind 4 no longer sets it on buttons). */
+@layer base {
+  :where(button, [role='button'], summary, select, label[for]):not(
+    :disabled,
+    [aria-disabled='true']
+  ) {
+    cursor: pointer;
+  }
+}
+
+/* Filled buttons lighten on hover in both themes. Skeleton's `btn` darkens them in the dark theme,
+ * which read as pressed on the red and blue fills. Unlayered so it wins over the utility. */
+.btn:not(:disabled):hover {
+  filter: brightness(115%);
+}
