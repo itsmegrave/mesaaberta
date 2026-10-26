@@ -1,7 +1,8 @@
 # Local Postgres for development (`docker compose up -d db`), or the whole app for self-hosting
-# (`docker compose up`): Postgres, the migrations, the web app, the api, the background worker, a
-# mail inbox (Mailpit, http://localhost:8025) and Caddy for TLS (https://localhost). Copy
-# .env.example to .env to change the address or the shared secret.
+# (`docker compose up`): Postgres, Supabase Auth and Storage, the migrations, the web app, the api,
+# the background worker, a mail inbox (Mailpit, http://localhost:8025) and Caddy for TLS
+# (https://localhost). Nothing needs an outside account, and LOCAL_ONLY keeps every request on the
+# machine. Copy .env.example to .env to change the address, the shared secret or the Auth keys.
 # Supabase runs Postgres too, so this matches production closely.
 services:
   db:
@@ -20,6 +21,99 @@ services:
       timeout: 3s
       retries: 20
 
+  # What Supabase Auth and Storage expect of a Supabase Postgres (the `auth` schema and the roles).
+  db-init:
+    image: postgres:17-alpine
+    command: psql -v ON_ERROR_STOP=1 -q -f /sql/roles.sql postgres://mesaaberta:mesaaberta@db:5432/mesaaberta
+    volumes:
+      - ./docker/supabase/roles.sql:/sql/roles.sql:ro
+    depends_on:
+      db: { condition: service_healthy }
+
+  # Supabase Auth: sign-up and sign-in with e-mail and password or a magic link, e-mails through
+  # Mailpit. Google and Discord need their own apps, so they are off here.
+  auth:
+    image: supabase/gotrue:v2.197.0
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: '9999'
+      # The links in its e-mails open here, through Caddy.
+      API_EXTERNAL_URL: ${APP_ORIGIN:-https://localhost}/auth/v1
+      GOTRUE_SITE_URL: ${APP_ORIGIN:-https://localhost}
+      GOTRUE_URI_ALLOW_LIST: ${APP_ORIGIN:-https://localhost}/**
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://mesaaberta:mesaaberta@db:5432/mesaaberta?search_path=auth
+      GOTRUE_JWT_SECRET: &jwt-secret ${SUPABASE_JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
+      GOTRUE_JWT_EXP: '3600'
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_DISABLE_SIGNUP: 'false'
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: 'true'
+      # As in production: sign-up sends a link that has to be opened (it lands in Mailpit).
+      GOTRUE_MAILER_AUTOCONFIRM: 'false'
+      GOTRUE_PASSWORD_MIN_LENGTH: '8'
+      GOTRUE_SECURITY_MANUAL_LINKING_ENABLED: 'true'
+      GOTRUE_SMTP_HOST: mailpit
+      GOTRUE_SMTP_PORT: '1025'
+      GOTRUE_SMTP_ADMIN_EMAIL: no-reply@mesaaberta.local
+      GOTRUE_SMTP_SENDER_NAME: Mesa Aberta
+      # The links go to the site's origin plus these paths, not to API_EXTERNAL_URL's path.
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:9999/health']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      db-init: { condition: service_completed_successfully }
+      mailpit: { condition: service_started }
+
+  # Supabase Storage, keeping the files in a volume (no S3).
+  storage:
+    image: supabase/storage-api:v1.84.23
+    environment:
+      DATABASE_URL: postgres://mesaaberta:mesaaberta@db:5432/mesaaberta
+      AUTH_JWT_SECRET: *jwt-secret
+      ANON_KEY: &anon-key ${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SERVICE_KEY: &service-key ${SUPABASE_SERVICE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: local
+      GLOBAL_S3_BUCKET: stub
+    volumes:
+      - storage-data:/var/lib/storage
+    healthcheck:
+      # 127.0.0.1, not localhost: Storage listens on IPv4 only, and localhost may resolve to ::1.
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:5000/status']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      db-init: { condition: service_completed_successfully }
+
+  # The API roles' grants and the buckets the uploads go to, once Storage has created its tables.
+  storage-init:
+    image: postgres:17-alpine
+    command: psql -v ON_ERROR_STOP=1 -q -f /sql/storage.sql postgres://mesaaberta:mesaaberta@db:5432/mesaaberta
+    volumes:
+      - ./docker/supabase/storage.sql:/sql/storage.sql:ro
+    depends_on:
+      storage: { condition: service_healthy }
+
+  # Auth and Storage at one address, the way supabase-js expects a project (see its Caddyfile).
+  supabase:
+    image: caddy:2-alpine
+    volumes:
+      - ./docker/supabase/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      auth: { condition: service_healthy }
+      storage: { condition: service_healthy }
+
   migrate:
     build: { context: ., dockerfile: apps/web/Dockerfile, target: migrate }
     environment: &app-env
@@ -29,8 +123,18 @@ services:
       MAILPIT_URL: http://mailpit:8025
       RESEND_FROM: Mesa Aberta <no-reply@mesaaberta.local>
       API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:-change-me}
+      # The server talks to Auth and Storage on the Docker network; browsers load the images
+      # from the site's own address, which Caddy forwards.
+      SUPABASE_URL: http://supabase:8000
+      SUPABASE_PUBLIC_URL: ${APP_ORIGIN:-https://localhost}
+      SUPABASE_PUBLISHABLE_KEY: *anon-key
+      SUPABASE_SECRET_KEY: *service-key
+      # Refuses to start pointed at an outside service, and keeps every request on the machine.
+      LOCAL_ONLY: ${LOCAL_ONLY:-true}
     depends_on:
-      db: { condition: service_healthy }
+      # The upload policies in the migrations need Auth's and Storage's tables first.
+      auth: { condition: service_healthy }
+      storage-init: { condition: service_completed_successfully }
 
   mailpit:
     image: axllent/mailpit:v1.27
@@ -42,6 +146,7 @@ services:
     environment: *app-env
     depends_on:
       migrate: { condition: service_completed_successfully }
+      supabase: { condition: service_started }
 
   web:
     build: { context: ., dockerfile: apps/web/Dockerfile }
@@ -53,6 +158,7 @@ services:
       HOST_HEADER: x-forwarded-host
     depends_on:
       migrate: { condition: service_completed_successfully }
+      supabase: { condition: service_started }
       api: { condition: service_healthy }
 
   worker:
@@ -60,6 +166,7 @@ services:
     environment: *app-env
     depends_on:
       migrate: { condition: service_completed_successfully }
+      supabase: { condition: service_started }
 
   proxy:
     image: caddy:2-alpine
@@ -73,7 +180,9 @@ services:
       - caddy-data:/data
     depends_on:
       - web
+      - supabase
 
 volumes:
   db-data:
+  storage-data:
   caddy-data:

@@ -94,7 +94,11 @@ export type DomainEvent =
   | { type: 'JoinDeclined'; payload: Registration }
   // A seat was confirmed by an automatic join. An approval records `JoinApproved` alone, so a player is never told twice.
   | { type: 'PlayerJoined'; payload: Registration }
-  | { type: 'PlayerLeft'; payload: Registration & { reason: 'left' | 'removed' } }
+  // `wasFull`: the table had no seat left before this one was given up (followers of its GM hear of it).
+  | {
+      type: 'PlayerLeft';
+      payload: Registration & { reason: 'left' | 'removed'; wasFull?: true };
+    }
   // A player rated the table and its GM (or changed their rating). Scores and comments are not in the payload.
   | { type: 'RatingSubmitted'; payload: Registration }
   // The GM rated a player they marked present (the actor is the GM). No score or comment either.
@@ -264,6 +268,8 @@ export type SystemAnnouncement = {
   recipientId: string | null;
   /** How many were in the audience when it was sent: what the admin confirmed. */
   estimated: number;
+  /** Set when the platform announces a changelog day itself: that day's date, the key it is sent once by. */
+  changelogDate?: string;
 };
 
 export type EventType = DomainEvent['type'];

@@ -144,6 +144,11 @@ export const flagDefaults = {
   // unread count of those notices. Badges are still earned and stored quietly, so turning it on
   // starts with the history already in place. Targeted by the person's id (profile and bell agree).
   use_badges: false,
+  // Off: a new changelog day reaches nobody's bell. On: the first request after a release that
+  // carries a changelog day dated within the last three days records one announcement for every
+  // active account, linking to that day on /changelog (once per day: the date is the key). Not a
+  // ramp: it is one notice. Turning it off stops new days; bells already written stay.
+  use_changelog_notices: false,
   // The one switch for quem mestra rating the players they marked present, off for everyone until
   // it is released (a new feature, no percentage ramp). Off hides all of it: the "Avalie quem
   // jogou" card on the manage page (and its action refuses), the score "como participante" on join

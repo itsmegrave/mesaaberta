@@ -21,6 +21,18 @@ describe('notificationText', () => {
     );
   });
 
+  it('words the follow notices with the GM or the new follower', () => {
+    expect(notificationText(shown({ type: 'followed_table_opened', actor: 'mestre' }))).toBe(
+      '@mestre abriu uma mesa nova: Mesa do Dragão.',
+    );
+    expect(notificationText(shown({ type: 'followed_seat_opened', actor: 'mestre' }))).toBe(
+      'Abriu uma vaga em Mesa do Dragão, de @mestre.',
+    );
+    expect(notificationText(shown({ type: 'follow_started', actor: 'ana', metadata: {} }))).toBe(
+      '@ana começou a seguir você.',
+    );
+  });
+
   it('names the suggestion an admin decided on, and where a merge sent it', () => {
     const metadata = { kind: 'tag', name: 'Gore', into: 'Terror' };
     expect(notificationText(shown({ type: 'catalog_suggestion_rejected', metadata }))).toBe(

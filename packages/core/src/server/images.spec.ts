@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { detectImageType, MAX_IMAGE_BYTES, pictureOf, prepareImage, storeImage } from './images';
+import {
+  detectImageType,
+  MAX_IMAGE_BYTES,
+  pictureOf,
+  prepareImage,
+  storeImage,
+  supabaseUrlOf,
+} from './images';
 
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG = [0xff, 0xd8, 0xff, 0xe0];
@@ -156,5 +163,25 @@ describe('pictureOf', () => {
     expect(pictureOf(undefined, { avatarPath: 'u/a.png', avatarUrl: 'https://g/p.jpg' })).toBe(
       'https://g/p.jpg',
     );
+  });
+});
+
+describe('supabaseUrlOf', () => {
+  it('is the project URL', () => {
+    expect(supabaseUrlOf({ SUPABASE_URL: 'https://x.supabase.co' })).toBe('https://x.supabase.co');
+  });
+
+  it('prefers the public URL when the server reaches Supabase privately', () => {
+    expect(
+      supabaseUrlOf({
+        SUPABASE_URL: 'http://supabase:8000',
+        SUPABASE_PUBLIC_URL: 'https://localhost',
+      }),
+    ).toBe('https://localhost');
+  });
+
+  it('is undefined when nothing is configured', () => {
+    expect(supabaseUrlOf(undefined)).toBeUndefined();
+    expect(supabaseUrlOf({ SUPABASE_PUBLIC_URL: '' })).toBeUndefined();
   });
 });

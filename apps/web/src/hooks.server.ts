@@ -24,6 +24,7 @@ import { createTracker } from '@mesaaberta/core/server/analytics/track';
 import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { MAIL_HANDLER_NAMES, bellHandlers } from '@mesaaberta/core/server/events/handlers';
 import { handleMaintenance } from '#lib/server/maintenance.js';
+import { handleChangelogNotice } from '#lib/server/changelog-notice.js';
 import { handleAdminAccess } from '#lib/server/admin-access.js';
 import { handleSecurityHeaders } from '#lib/server/security-headers.js';
 import { getTextDirection } from '#lib/paraglide/runtime.js';
@@ -171,6 +172,8 @@ export const handle: Handle = sequence(
   handleFlags,
   // Needs the flags and the signed-in profile, so it comes after both.
   handleMaintenance,
+  // After the response it sends the newest changelog day to the bell, if it has not gone out.
+  handleChangelogNotice,
 );
 
 // Replaces SvelteKit's default console output so an unexpected error carries the request id.

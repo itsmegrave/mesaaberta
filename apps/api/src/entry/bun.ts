@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName } from '@mesaaberta/core/server/logger';
+import { enforceLocalOnly } from '@mesaaberta/core/server/local-only';
 import { createHttpMetrics } from '@mesaaberta/core/server/metrics';
 import { createApi } from '../app';
 import { internalToken } from '../internal-token';
@@ -10,6 +11,7 @@ import { internalToken } from '../internal-token';
 // shared secret (`API_INTERNAL_TOKEN`), because over HTTP the actor header is only a claim.
 setAppName('api');
 logInstalled();
+enforceLocalOnly(process.env);
 
 const token = process.env.API_INTERNAL_TOKEN ?? '';
 if (!token) {
