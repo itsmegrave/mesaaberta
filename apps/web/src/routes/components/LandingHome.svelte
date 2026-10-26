@@ -329,7 +329,7 @@
               >Aprovar</span
             >
             <span
-              class="flex h-10 items-center rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold text-error-alert"
+              class="flex h-10 items-center rounded-lg border-2 border-surface-200-800 bg-panel px-4 text-sm font-semibold text-error-alert"
               >Recusar</span
             >
           </span>

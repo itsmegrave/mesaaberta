@@ -32,7 +32,9 @@ const minimal = (layout = ''): CssSources => ({
     --color-warning-contrast-500: oklch(0.52 0.13 51.44);
     --color-warning-400: oklch(0.85 0.12 75); --color-warning-500: oklch(0.82 0.14 72);
     --color-warning-950: oklch(0.52 0.13 51.44);
-    --color-error-300: oklch(0.72 0.14 25); --color-error-800: oklch(0.51 0.19 28.72);
+    --color-error-300: oklch(0.72 0.14 25); --color-error-700: oklch(0.55 0.2 28.58);
+    --color-error-800: oklch(0.51 0.19 28.72);
+    --color-primary-300: oklch(0.7 0.15 254.36);
     --color-success-500: #56e3c2; --color-tertiary-400: #fc2a97; --color-secondary-300: #a06adb;
   }`,
   layout,

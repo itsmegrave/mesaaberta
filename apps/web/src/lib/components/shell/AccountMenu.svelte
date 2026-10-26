@@ -201,6 +201,7 @@
       <Portal>
         <Popover.Positioner class="z-50!">
           <Popover.Content
+            aria-label={m.nav_account_menu()}
             class="w-72 card border border-surface-200-800 bg-surface-100-900 p-2 shadow-2xl"
           >
             {@render menu()}

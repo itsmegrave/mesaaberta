@@ -38,7 +38,8 @@
     tags?: TagItem[];
   };
 
-  let { table }: { table: Table } = $props();
+  /** `level`: the title's heading level, one below the heading the card sits under. */
+  let { table, level = 'h3' }: { table: Table; level?: 'h2' | 'h3' } = $props();
 
   const locale = getLocale();
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
@@ -100,7 +101,7 @@
           <div class="font-sans text-xl leading-none font-bold tracking-tight">
             {cardDate.dayMonth}
           </div>
-          <div class="mt-1 font-sans text-xs leading-tight font-medium opacity-90">
+          <div class="mt-1 font-sans text-xs leading-tight font-medium">
             {cardDate.weekdayTime}
           </div>
         </div>
@@ -121,7 +122,7 @@
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span
-          class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-primary-contrast-500/15 px-3 text-xs font-semibold"
+          class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-surface-950/25 px-3 text-xs font-semibold"
         >
           {kind}
         </span>
@@ -130,7 +131,7 @@
             <div class="font-sans text-4xl leading-none font-bold tracking-tight">
               {cardDate.dayMonth}
             </div>
-            <div class="mt-1 font-sans text-sm leading-snug font-medium opacity-90">
+            <div class="mt-1 font-sans text-sm leading-snug font-medium">
               {cardDate.weekdayTime}
             </div>
           </div>
@@ -160,14 +161,14 @@
       {table.system.name}
     </div>
 
-    <h3 class="mt-1 text-2xl leading-tight font-semibold tracking-tight">
+    <svelte:element this={level} class="mt-1 text-2xl leading-tight font-semibold tracking-tight">
       <a
         href={`/t/${table.slug}`}
         class="after:absolute after:inset-0 after:content-[''] hover:underline"
       >
         {table.title}
       </a>
-    </h3>
+    </svelte:element>
 
     <!-- Who runs it and the rating, with no "Mestre:" prefix; the label is for screen readers. -->
     <div class="mt-2 flex flex-wrap items-center gap-x-2 text-sm leading-normal">

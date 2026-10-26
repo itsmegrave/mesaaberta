@@ -111,6 +111,7 @@
             facts={facts(system)}
             status={status(system)}
             active={system.openTables > 0}
+            level="h2"
           >
             {#snippet mark()}<DirectoryMark name={system.name} />{/snippet}
             {#snippet people()}

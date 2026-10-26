@@ -179,7 +179,7 @@
                 >
                 <!-- eslint-enable svelte/no-navigation-without-resolve -->
               {:else}
-                <span class="text-warning-700-300">{m.admin_partners_not_informed()}</span>
+                <span class="text-lamp">{m.admin_partners_not_informed()}</span>
               {/if}
             </DetailRow>
             <DetailRow label={m.partner_sent_by_label()} class="flex flex-wrap items-center gap-2">

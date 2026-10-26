@@ -11,7 +11,7 @@
     status === 'failed'
       ? 'text-error-700-300'
       : status === 'uncertain'
-        ? 'text-warning-700-300'
+        ? 'text-lamp'
         : 'text-muted',
   );
 </script>
