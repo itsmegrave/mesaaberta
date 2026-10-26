@@ -172,8 +172,10 @@ describe('public profiles', () => {
     expect(data.profile.favoriteSystems).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
+      'gmAvatar',
       'gmName',
       'gmRating',
+      'gmShownName',
       'imageUrl',
       'kind',
       'locationArea',

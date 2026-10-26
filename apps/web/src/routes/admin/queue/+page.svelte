@@ -35,11 +35,11 @@
     }
   };
 
-  const ghost = 'btn h-12 rounded-lg btn-secondary px-4 font-semibold';
-  const primary = 'btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold';
-  const tonal = 'btn h-12 rounded-lg preset-tonal px-4 font-semibold';
+  const ghost = 'btn h-11 rounded-lg btn-secondary px-4 font-semibold';
+  const primary = 'btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold';
+  const tonal = 'btn h-11 rounded-lg preset-tonal px-4 font-semibold';
   const danger =
-    'btn h-12 rounded-lg px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
+    'btn h-11 rounded-lg px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
 <AdminPage title={m.admin_queue_title()} lede={m.admin_queue_lede()}>
@@ -54,14 +54,13 @@
           {#each data.queue as entry (entry.id)}
             {@const candidates = data.approved[entry.kind]}
             <li class="rounded-lg border border-surface-200-800 bg-panel p-5">
-              <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 class="text-lg font-semibold">{entry.name}</h2>
-                <span
-                  class="rounded-full border border-surface-200-800 px-2 py-0.5 text-xs font-semibold text-muted"
-                  >{kindLabel(entry.kind)}</span
-                >
-              </div>
-              <p class="mt-1 text-sm text-muted">
+              <!-- As on the AdminQueue board: the kind as a pill, then the suggested name itself. -->
+              <span
+                class="chip h-6 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
+                >{kindLabel(entry.kind)}</span
+              >
+              <h2 class="mt-3 text-2xl font-semibold">{entry.name}</h2>
+              <p class="mt-2 text-sm text-muted">
                 {#if entry.suggestedBy}<UserText
                     text={m.admin_queue_suggested_by({ username: entry.suggestedBy })}
                     username={entry.suggestedBy}

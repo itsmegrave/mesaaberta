@@ -60,6 +60,7 @@
       labelClass="sr-only"
       class="grid"
       compact
+      active={picked.type != null}
       items={types}
       value={[picked.type ?? ALL]}
       placeholder={m.partner_type_all()}

@@ -178,23 +178,30 @@
   {/snippet}
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-  <section aria-labelledby="attention-title" class="mt-8">
-    <h2 id="attention-title" class="text-lg font-semibold">{m.admin_attention_title()}</h2>
+  <!-- As on the AdminOverview board: the heading and how much waits sit inside the card. -->
+  <section
+    aria-labelledby="attention-title"
+    class="mt-8 rounded-lg border border-surface-200-800 bg-panel"
+  >
+    <div class="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
+      <h2 id="attention-title" class="text-xl font-semibold">{m.admin_attention_title()}</h2>
+      {#if attention.length > 0}
+        <span class="text-sm text-muted">{m.home_waiting_count({ count: attention.length })}</span>
+      {/if}
+    </div>
     {#if attention.length === 0}
-      <p class="mt-3 rounded-lg border border-surface-200-800 bg-panel p-5 text-muted">
+      <p class="border-t border-surface-200-800 px-5 py-4 text-muted">
         {m.admin_attention_none()}
       </p>
     {:else}
-      <ul
-        class="mt-3 divide-y divide-surface-200-800 rounded-lg border border-surface-200-800 bg-panel"
-      >
+      <ul class="divide-y divide-surface-200-800 border-t border-surface-200-800">
         {#each attention as item (item.id)}
           <li>
             <a
               href={href(item.href)}
-              class="flex min-h-17 items-center gap-3 px-4 py-3 hover:bg-surface-wash"
+              class="flex min-h-17 items-center gap-3 px-5 py-3 hover:bg-surface-wash"
             >
-              <Media kind="icon" icon={item.icon} />
+              <Media kind="icon" icon={item.icon} tone="lamp" />
               <span class="min-w-0 flex-1">
                 <span class="block font-semibold">{item.title}</span>
                 <span class="block truncate text-sm text-muted">{item.detail}</span>

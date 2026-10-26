@@ -92,8 +92,10 @@
   // Modalidade is a pill track on the wash: 44px tall with a 4px inset, so each segment is 36px.
   const segment =
     'inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap no-underline';
+  // The phone's way into the filters, as on the MobileTables board: a full 48px row with the
+  // primary line, the name on the left and how many filters are on at the right.
   const trigger =
-    'btn min-h-11 gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold hover:preset-tonal';
+    'btn h-12 w-full justify-between rounded-lg border-control border-primary-500 bg-panel px-4 font-semibold hover:preset-tonal';
 </script>
 
 {#snippet modality()}
@@ -166,9 +168,17 @@
         </div>
       {/if}
     {/each}
-    <button type="button" class="{trigger} md:hidden" onclick={() => (sheetOpen = true)}>
-      {m.tables_filters_button()}
-      {#if chips.length > 0}<span class="badge rounded-full preset-filled-primary-500 px-2"
+    <button
+      type="button"
+      class="{trigger} md:hidden"
+      aria-haspopup="dialog"
+      onclick={() => (sheetOpen = true)}
+    >
+      <span class="inline-flex items-center gap-2"
+        ><Icon name="filter" size={18} />{m.tables_filters_button()}</span
+      >
+      {#if chips.length > 0}<span
+          class="chip h-6 min-w-6 rounded-full preset-filled-primary-500 px-2 text-xs font-bold"
           >{chips.length}</span
         >{/if}
     </button>

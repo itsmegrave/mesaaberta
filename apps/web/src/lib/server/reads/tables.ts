@@ -1,4 +1,5 @@
-import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { cardPictures } from './card-pictures';
+import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readTableFilters } from '#lib/tables/filters.js';
@@ -54,9 +55,6 @@ export const read = async ({ locals, url }: RequestEvent) => {
 
   return {
     ...answer,
-    tables: answer.tables.map(({ imagePath, ...table }) => ({
-      ...table,
-      imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
-    })),
+    tables: answer.tables.map(cardPictures(supabaseUrlOf(locals.env))),
   };
 };

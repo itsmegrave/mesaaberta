@@ -170,6 +170,11 @@ export async function publicProfile(
       kind: table.kind,
       system: table.system,
       gmName: table.gmName,
+      gmShownName: table.gmShownName,
+      gmAvatar: pictureOf(supabaseUrl, {
+        avatarPath: table.gmAvatarPath,
+        avatarUrl: table.gmAvatarUrl,
+      }),
       seatsLeft: table.seatsLeft,
       taken: table.taken,
       reserved: table.reserved,

@@ -91,8 +91,10 @@
     name="sort"
     label={sort.label}
     labelClass="text-sm font-semibold text-muted"
-    class="flex w-full items-center gap-2 sm:w-72"
+    class="flex w-full items-center gap-2 sm:w-72 md:w-auto"
+    controlClass="md:w-85"
     compact
+    active={false}
     items={[...sort.options]}
     value={[sort.value]}
     placeholder={sort.label}

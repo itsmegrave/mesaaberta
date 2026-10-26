@@ -1,5 +1,6 @@
+import { cardPictures } from './card-pictures';
 import { error, redirect } from '@sveltejs/kit';
-import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { readSystemPage } from '@mesaaberta/core/server/systems/directory';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
@@ -20,10 +21,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
   const supabase = supabaseUrlOf(locals.env);
   return {
     ...found,
-    openTables: found.openTables.map(({ imagePath, ...table }) => ({
-      ...table,
-      imageUrl: imageUrl(supabase, imagePath),
-    })),
+    openTables: found.openTables.map(cardPictures(supabase)),
     gms: found.gms.map(({ avatarPath, avatarUrl, ...gm }) => ({
       ...gm,
       avatarUrl: pictureOf(supabase, { avatarPath, avatarUrl }),

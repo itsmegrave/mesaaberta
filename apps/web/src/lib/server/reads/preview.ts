@@ -1,4 +1,5 @@
-import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { cardPictures } from './card-pictures';
+import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -36,10 +37,7 @@ export const read = async ({ locals }: RequestEvent) => {
         }
       : await readPreview(locals.db, now);
 
-    const withImage = ({ imagePath, ...table }: PreviewTable) => ({
-      ...table,
-      imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
-    });
+    const withImage = (table: PreviewTable) => cardPictures(supabaseUrlOf(locals.env))(table);
     return {
       tables: preview.tables.map(withImage),
       newTables: preview.newTables.map(withImage),

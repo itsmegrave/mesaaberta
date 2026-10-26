@@ -52,6 +52,7 @@
     labelClass="sr-only"
     class="grid"
     compact
+    active={value !== fallback}
     {inDialog}
     items={options}
     value={[value]}

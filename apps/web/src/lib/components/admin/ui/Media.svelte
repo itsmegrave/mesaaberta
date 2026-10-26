@@ -11,12 +11,15 @@
     name = null,
     icon = 'game-icons:tavern-sign',
     size = 36,
+    tone = 'quiet',
   }: {
     kind: 'cover' | 'avatar' | 'icon';
     src?: string | null;
     name?: string | null;
     icon?: IconName;
     size?: 36 | 40;
+    /** An icon tile that marks something waiting takes the lamp. */
+    tone?: 'quiet' | 'lamp';
   } = $props();
 </script>
 
@@ -36,9 +39,9 @@
 {:else}
   <span
     aria-hidden="true"
-    class="flex shrink-0 items-center justify-center rounded-lg bg-surface-wash text-muted {size ===
-    40
-      ? 'size-10'
-      : 'size-9'}"><Icon name={icon} size={20} /></span
+    class="flex shrink-0 items-center justify-center rounded-lg {tone === 'lamp'
+      ? 'bg-lamp-wash text-lamp'
+      : 'bg-surface-wash text-muted'} {size === 40 ? 'size-10' : 'size-9'}"
+    ><Icon name={icon} size={20} /></span
   >
 {/if}

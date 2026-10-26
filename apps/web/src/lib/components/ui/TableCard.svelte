@@ -8,6 +8,7 @@
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import GmRating from './GmRating.svelte';
+  import MAAvatar from './MAAvatar.svelte';
   import SeatRing from './SeatRing.svelte';
   import { linkedCardClass } from './MediaCard.svelte';
 
@@ -22,6 +23,10 @@
     plannedSessions?: number | null;
     system: { name: string };
     gmName: string;
+    /** The GM's name, only when they chose to show it; the @handle stands in otherwise. */
+    gmShownName?: string | null;
+    /** The GM's picture; without one the avatar draws their initial. */
+    gmAvatar?: string | null;
     /** The GM's score. Absent where there is nothing to show yet, such as the form's preview. */
     gmRating?: { score: number | null; count: number; isNew: boolean };
     seatsLeft: number;
@@ -170,11 +175,19 @@
       </a>
     </svelte:element>
 
-    <!-- Who runs it and the rating, with no "Mestre:" prefix; the label is for screen readers. -->
-    <div class="mt-2 flex flex-wrap items-center gap-x-2 text-sm leading-normal">
-      <span class="font-semibold"
-        ><span class="sr-only">{m.table_gm()}: </span><UserLink username={table.gmName} /></span
-      >
+    <!-- Who runs it, with their picture and the rating, as on the layout: no "Mestre:" prefix;
+         the label is for screen readers. -->
+    <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal">
+      <span class="flex min-w-0 items-center gap-2 font-semibold">
+        <MAAvatar src={table.gmAvatar ?? null} name={table.gmShownName ?? table.gmName} size={24} />
+        <span class="min-w-0 truncate"
+          ><span class="sr-only">{m.table_gm()}: </span><UserLink
+            username={table.gmName}
+            label={table.gmShownName ?? undefined}
+            class="underline underline-offset-2"
+          /></span
+        >
+      </span>
       {#if table.gmRating}<GmRating rating={table.gmRating} variant="short" />{/if}
     </div>
 
