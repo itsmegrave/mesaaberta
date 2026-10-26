@@ -140,10 +140,10 @@ test.describe('creating a table', () => {
     await signIn(page, gm);
     await page.goto('/t/new');
 
-    await expect(page.getByRole('combobox', { name: 'Repete' })).toHaveCount(0);
+    await expect(page.getByRole('group', { name: 'Repete' })).toHaveCount(0);
     await page.getByLabel('Campanha (várias sessões)').check();
 
-    await expect(page.getByRole('combobox', { name: 'Repete' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Repete' })).toBeVisible();
     await expect(page.getByLabel('Última sessão até', { exact: true })).toBeVisible();
   });
 });

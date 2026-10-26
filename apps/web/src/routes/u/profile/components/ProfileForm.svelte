@@ -357,7 +357,7 @@
     <div class="grid gap-6 sm:grid-cols-2">
       {#each [{ id: 'age-range', field: 'ageRange', label: m.profile_age_range(), none: m.profile_age_range_none(), items: ageItems }, { id: 'gender', field: 'gender', label: m.profile_gender(), none: m.profile_gender_none(), items: genderItems }] as const as picker (picker.id)}
         <div class="min-w-0">
-          <!-- The same combobox as the timezone. "Prefiro não informar" clears it. -->
+          <!-- The same picker as the timezone. "Prefiro não informar" clears it. -->
           <SearchSelect
             id={picker.id}
             name={picker.field}
@@ -365,13 +365,15 @@
             labelClass="label-text block font-semibold"
             class="grid gap-1"
             items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
-            value={$draft[picker.field] ? [$draft[picker.field]] : []}
+            bind:value={
+              (): string[] => ($draft[picker.field] ? [$draft[picker.field]] : []),
+              (picked) =>
+                ($draft[picker.field] = (
+                  picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
+                ) as never)
+            }
             placeholder={picker.none}
             invalid={!!errors.invalid(picker.field)}
-            onchange={(picked) =>
-              ($draft[picker.field] = (
-                picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
-              ) as never)}
           />
           <FieldError id={picker.id} message={err(picker.field)} />
         </div>
@@ -419,6 +421,7 @@
     <div class="min-w-0">
       <SearchSelect
         id="timezone"
+        search
         name="timezone"
         label={m.profile_timezone()}
         labelClass="label-text block font-semibold"

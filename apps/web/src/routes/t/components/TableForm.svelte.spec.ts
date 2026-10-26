@@ -14,12 +14,12 @@ describe('TableForm', () => {
   it('offers every system in a searchable list, and asks for one', async () => {
     render(TableFormHarness, props);
 
-    const input = page.getByRole('combobox', { name: 'Sistema de RPG' });
-    await expect.element(input).toBeVisible();
-    await expect.element(input).toHaveAttribute('placeholder', 'Escolha um sistema');
-    await expect.element(input).toBeRequired();
+    // On a phone (the default viewport here) the field opens a sheet with the search.
+    const field = page.getByRole('button', { name: /^Sistema de RPG/ });
+    await expect.element(field).toHaveTextContent('Escolha um sistema');
 
-    await input.fill('tormenta');
+    await field.click();
+    await page.getByRole('searchbox', { name: 'Buscar: Sistema de RPG' }).fill('tormenta');
     await expect
       .element(page.getByRole('option', { name: 'Tormenta 20 (T20)' }))
       .toBeInTheDocument();
@@ -53,11 +53,14 @@ describe('TableForm', () => {
   it('starts as a one-shot without the repeat fields, and shows them for a campaign', async () => {
     render(TableFormHarness, props);
 
-    await expect.element(page.getByLabelText('Repete')).not.toBeInTheDocument();
+    await expect.element(page.getByRole('group', { name: 'Repete' })).not.toBeInTheDocument();
 
     await page.getByLabelText('Campanha (várias sessões)').click();
 
-    await expect.element(page.getByLabelText('Repete')).toBeVisible();
+    // Two short options are pills, both in sight; weekly comes picked.
+    await expect.element(page.getByRole('radio', { name: 'Toda semana' })).toBeChecked();
+    await page.getByRole('radio', { name: 'A cada 2 semanas' }).click();
+    await expect.element(page.getByRole('radio', { name: 'A cada 2 semanas' })).toBeChecked();
     await expect.element(page.getByLabelText('Última sessão até')).toBeVisible();
   });
 
@@ -69,7 +72,8 @@ describe('TableForm', () => {
     }
 
     await page.getByLabelText('Título').fill('A Cripta do Rei Afogado');
-    await page.getByRole('combobox', { name: 'Sistema de RPG' }).fill('dagger');
+    await page.getByRole('button', { name: /^Sistema de RPG/ }).click();
+    await page.getByRole('searchbox', { name: 'Buscar: Sistema de RPG' }).fill('dagger');
     await page.getByRole('option', { name: 'Daggerheart' }).click();
     // The slider moves a seat at a time with the arrow keys.
     const seats = page.getByRole('slider', { name: 'Vagas' });

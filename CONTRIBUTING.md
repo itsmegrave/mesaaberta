@@ -45,8 +45,8 @@ Raw `<input>`, `<select>`, `<textarea>`, `<button>` and `<form>` appear only in 
 
 - **Wrappers.** `MAForm`, `MAButton`, `ActionForm`, `PostButton`, `TextInput`, `MATextArea` and the test harnesses under `src/lib/forms` and `src/lib/query`.
 - **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and carry the value to the SvelteKit action.
-- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ui/CheckboxPills` (a partner's kinds), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and native form values, and Skeleton has no standalone radio group or checkbox.
-- **No native `<select>`.** Pickers, including `ProfileForm`'s age range, gender and timezone, use `SearchSelect` (Skeleton's Combobox), which submits its picks as hidden inputs.
+- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ui/CheckboxPills` (a partner's kinds), `ui/SegmentedChoice` (Repete, Por página), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and native form values, and Skeleton has no standalone radio group or checkbox.
+- **No native `<select>`.** Pickers, including `ProfileForm`'s age range, gender and timezone, use `SearchSelect`, which submits its picks as hidden inputs and picks its control by the number of options: 11 or more (or a "Sugerir" option) get a search, fewer are a list to scroll or type-ahead (`search` overrides it). On a wide screen a long list is Skeleton's Combobox and a short one a button with a list under it (`SelectMenu`); on a phone the field is a button that opens a bottom sheet (`SelectSheet`). Up to four short options all in sight are `SegmentedChoice` pills (native radios) instead.
 
 Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui-migration-plan.md).
 

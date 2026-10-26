@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, homeLink, pickImage } from './support/app';
+import { asUser, homeLink, openSelect, pickImage } from './support/app';
 import { createUser } from './support/users';
 
 test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
@@ -101,7 +101,7 @@ test('the table form drags the seats, takes an image and a suggestion without a 
   await expect(page.locator('input[name="startsAtLocal"]')).toHaveValue(/^\d{4}-\d{2}-15T19:00$/);
   await page.screenshot({ path: 'test-results/date-picker.png' }).catch(() => {});
 
-  await page.getByRole('combobox', { name: 'Tags' }).fill('Mesa de teste');
+  await (await openSelect(page, 'Tags'))?.fill('Mesa de teste');
   await expect(page.getByRole('option', { name: 'Sugerir “Mesa de teste”' })).toBeVisible();
 
   const reported = await page.evaluate(

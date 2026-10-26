@@ -36,7 +36,7 @@
   } from '@tanstack/svelte-table';
   import Icon from '#lib/components/ui/Icon.svelte';
   import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
-  import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
+  import SegmentedChoice from '#lib/components/ui/SegmentedChoice.svelte';
   import FilterSheet from '#lib/components/admin/ui/FilterSheet.svelte';
   import ListSearch from '#lib/components/admin/ListSearch.svelte';
   import ListPanel from '#lib/components/admin/ListPanel.svelte';
@@ -184,25 +184,20 @@
 {/snippet}
 
 {#snippet sizeChoice()}
-  <div class="w-44">
-    <SearchSelect
-      id="page-size"
-      name="size"
-      label={m.admin_profile_size()}
-      labelClass="text-sm"
-      class="flex items-center gap-2"
-      compact
-      items={PAGE_SIZES.map((size) => ({ name: String(size), slug: String(size) }))}
-      value={[String(pageSize)]}
-      placeholder={String(pageSize)}
-      disabled={busy}
-      onchange={(picked) => {
-        // The select also reports the size the page already has; only a new size starts over.
-        const size = Number(picked[0] ?? pageSize);
-        if (size !== pageSize) void go({ size: size === PAGE_SIZES[0] ? null : size });
-      }}
-    />
-  </div>
+  <SegmentedChoice
+    name="size"
+    legend={m.admin_profile_size()}
+    legendClass="float-left mr-2 flex h-9 items-center text-sm"
+    class=""
+    size="sm"
+    options={PAGE_SIZES.map((size) => ({ value: String(size), label: String(size) }))}
+    value={String(pageSize)}
+    disabled={busy}
+    onchange={(picked) => {
+      const size = Number(picked);
+      if (size !== pageSize) void go({ size: size === PAGE_SIZES[0] ? null : size });
+    }}
+  />
 {/snippet}
 
 <section aria-label={caption} aria-busy={busy} class="mt-6">

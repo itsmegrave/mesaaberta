@@ -123,6 +123,7 @@
           labelClass="label-text block font-semibold"
           class="grid gap-1"
           items={field.options.map((option) => ({ name: option, slug: option }))}
+          search={false}
           value={[field.current]}
           placeholder={field.current}
           disabled={!day}

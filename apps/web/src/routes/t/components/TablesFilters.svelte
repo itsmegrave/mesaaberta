@@ -114,6 +114,7 @@
       <div class="hidden w-full max-w-85 min-w-0 flex-1 md:block">
         <SearchSelect
           id="system-filter"
+          search
           name="system"
           label={m.tables_filter_label()}
           labelClass="sr-only"
@@ -135,6 +136,7 @@
         <div class="hidden w-58 shrink-0 md:block">
           <SearchSelect
             id="{group.kind}-filter"
+            search
             name={group.kind}
             label={group.label}
             labelClass="sr-only"
@@ -203,6 +205,7 @@
             {#if systems.length > 0}
               <SearchSelect
                 id="system-filter-sheet"
+                search
                 name="system"
                 label={m.tables_filter_label()}
                 labelClass="label-text block pb-1 font-semibold"
@@ -219,6 +222,7 @@
               {#if group.items.length > 0}
                 <SearchSelect
                   id="{group.kind}-filter-sheet"
+                  search
                   name={group.kind}
                   label={group.label}
                   labelClass="label-text block pb-1 font-semibold"

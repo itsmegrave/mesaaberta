@@ -15,6 +15,7 @@
   import FormField from '#lib/components/ui/FormField.svelte';
   import RichTextField from '#lib/components/ui/RichTextField.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
+  import SegmentedChoice from '#lib/components/ui/SegmentedChoice.svelte';
   import SeatSlider from '#lib/components/ui/SeatSlider.svelte';
   import DateTimeField from '#lib/components/ui/DateTimeField.svelte';
   import SessionPicker from '#lib/components/ui/SessionPicker.svelte';
@@ -148,6 +149,7 @@
     <div class="min-w-0">
       <SearchSelect
         id="systemSlug"
+        search
         name="systemSlug"
         label={m.form_system()}
         labelClass="label-text block font-semibold"
@@ -189,6 +191,7 @@
       <div class="min-w-0">
         <SearchSelect
           id={group.field}
+          search
           name={group.field}
           label={group.label}
           labelClass="label-text block font-semibold"
@@ -301,21 +304,18 @@
     {#if $draft.kind === 'campaign'}
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="min-w-0">
-          <SearchSelect
+          <SegmentedChoice
             id="repeat"
             name="repeat"
-            label={m.form_repeat()}
-            labelClass="label-text block font-semibold"
-            class="grid gap-1"
-            items={[
-              { name: m.form_repeat_weekly(), slug: 'weekly' },
-              { name: m.form_repeat_biweekly(), slug: 'biweekly' },
+            legend={m.form_repeat()}
+            options={[
+              { value: 'weekly', label: m.form_repeat_weekly() },
+              { value: 'biweekly', label: m.form_repeat_biweekly() },
             ]}
-            value={[$draft.repeat]}
-            placeholder={m.form_repeat()}
+            value={$draft.repeat === 'biweekly' ? 'biweekly' : 'weekly'}
             invalid={!!invalid('repeat')}
-            onchange={(picked) =>
-              ($draft.repeat = picked[0] === 'biweekly' ? 'biweekly' : 'weekly')}
+            describedby={err('repeat') ? 'repeat-error' : undefined}
+            onchange={(picked) => ($draft.repeat = picked)}
           />
           <FieldError id="repeat" message={err('repeat')} />
         </div>
