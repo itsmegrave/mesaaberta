@@ -178,7 +178,7 @@
   const choice =
     'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10';
   const focus = 'has-focus-visible:outline-4 has-focus-visible:outline-primary-500';
-  const pill = `btn h-9 cursor-pointer rounded-full px-3.5 text-sm font-semibold has-checked:preset-filled-primary-500 ${focus}`;
+  const pill = `btn h-9 cursor-pointer rounded-full px-4 text-sm font-semibold has-checked:preset-filled-primary-500 ${focus}`;
   const square = `flex h-11 cursor-pointer items-center justify-center rounded-lg border-2 border-surface-200-800 has-checked:border-primary-500 has-checked:bg-primary-500/10 ${focus}`;
 </script>
 
@@ -297,7 +297,7 @@
               bind:group={$draft.audience}
               class="mt-1"
             />
-            <span class="grid gap-0.5">
+            <span class="grid gap-1">
               {AUDIENCE_LABELS[audience]}
               {#if size(audience)}<span class="text-sm font-normal text-muted"
                   >{size(audience)}</span

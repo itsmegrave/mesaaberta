@@ -55,7 +55,7 @@
 
   // Round filter pills, as on the layout: the picked one is filled.
   const chip =
-    'btn h-9 shrink-0 rounded-full border border-surface-200-800 px-3.5 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-filled-primary-500';
+    'btn h-9 shrink-0 rounded-full border border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-filled-primary-500';
 </script>
 
 <svelte:head>
@@ -129,7 +129,7 @@
         <li class="flex items-start gap-3 p-4">
           <span
             aria-hidden="true"
-            class="mt-2.5 size-2 shrink-0 rounded-full {item.read ? '' : 'bg-primary-500'}"
+            class="mt-2 size-2 shrink-0 rounded-full {item.read ? '' : 'bg-primary-500'}"
           ></span>
           <NotificationIcon icon={notificationIcon(item)} size={22} class="mt-1 text-muted" />
           <div class="min-w-0 flex-1">
