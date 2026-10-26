@@ -13,7 +13,7 @@ const held = (badgeId: string, over: Record<string, unknown> = {}) => ({
 });
 
 describe('BadgeIcons (under the user handle)', () => {
-  it('shows only the icons, each named for a screen reader, and no details yet', async () => {
+  it('shows only the medals, each named for a screen reader, and no details yet', async () => {
     render(BadgeIcons, { badges: [held('first-table'), held('partner')] });
 
     await expect.element(page.getByRole('button', { name: 'Primeira mesa' })).toBeVisible();
@@ -21,15 +21,24 @@ describe('BadgeIcons (under the user handle)', () => {
     expect(page.getByText('Jogou a primeira sessão.').elements()).toHaveLength(0);
   });
 
-  it('opens the details on a tap and closes them on Esc', async () => {
+  it('opens the details on a tap and closes them with the X', async () => {
     render(BadgeIcons, { badges: [held('first-table')] });
 
     await page.getByRole('button', { name: 'Primeira mesa' }).click();
     await expect.element(page.getByText('Jogou a primeira sessão.')).toBeVisible();
     await expect.element(page.getByText(/^Conquistada em .*2026/)).toBeVisible();
 
-    // The card can draw before the tooltip listens for keys (seen on a busy CI runner, where a single
-    // Esc was lost), so Esc is pressed again until the card is gone.
+    await page.getByRole('button', { name: 'Fechar os detalhes' }).click();
+    await expect.poll(() => page.getByText('Jogou a primeira sessão.').elements().length).toBe(0);
+  });
+
+  it('closes the details on Esc', async () => {
+    render(BadgeIcons, { badges: [held('first-table')] });
+
+    await page.getByRole('button', { name: 'Primeira mesa' }).click();
+    await expect.element(page.getByText('Jogou a primeira sessão.')).toBeVisible();
+    // The card can draw before the popover listens for keys (seen on a busy CI runner, where a
+    // single Esc was lost), so Esc is pressed again until the card is gone.
     await expect
       .poll(async () => {
         await userEvent.keyboard('{Escape}');
@@ -38,7 +47,14 @@ describe('BadgeIcons (under the user handle)', () => {
       .toBe(0);
   });
 
-  it('shows no icon for what the owner hid, a badge without artwork, or a lower rung', async () => {
+  it('says the rung of a ladder', async () => {
+    render(BadgeIcons, { badges: [held('regular-player-2')] });
+
+    await page.getByRole('button', { name: 'Presença constante II' }).click();
+    await expect.element(page.getByText('Nível 2 de 3')).toBeVisible();
+  });
+
+  it('shows a visitor no medal for what the owner hid, a badge without artwork, or a lower rung', async () => {
     render(BadgeIcons, {
       badges: [
         held('partner', { hidden: true }),
@@ -50,6 +66,19 @@ describe('BadgeIcons (under the user handle)', () => {
 
     await expect.element(page.getByRole('button', { name: 'Presença constante II' })).toBeVisible();
     expect(page.getByRole('button').elements()).toHaveLength(1);
+  });
+
+  it('keeps the hidden badges in the owner’s row, named and marked as only theirs', async () => {
+    render(BadgeIcons, {
+      badges: [held('first-table'), held('partner', { hidden: true })],
+      owner: true,
+    });
+
+    await expect.element(page.getByRole('button', { name: 'Primeira mesa' })).toBeVisible();
+    const hidden = page.getByRole('button', { name: 'Parceria (escondida do seu perfil)' });
+    await expect.element(hidden).toBeVisible();
+    await hidden.click();
+    await expect.element(page.getByText('Escondida: só você vê.')).toBeVisible();
   });
 
   it('draws nothing when there is nothing to show', async () => {

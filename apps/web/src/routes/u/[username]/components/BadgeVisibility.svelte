@@ -1,5 +1,6 @@
 <script lang="ts">
-  // The eye on one of the owner's earned badges: hides it from their public profile, or shows it again.
+  // "Esconder do perfil", a toggle in the details of one of the owner's badges: pressed, the badge is
+  // hidden from their public profile; pressing it again shows it.
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -24,16 +25,16 @@
   <input type="hidden" name="badgeId" value={badgeId} />
   <!-- The value is what the click does: hiding a shown badge sends 1, showing a hidden one sends 0. -->
   <input type="hidden" name="hidden" value={hidden ? '0' : '1'} />
-  <!-- Busy at once while it saves; the spinner takes the eye's place if it is slow. -->
   <MAButton
     type="submit"
-    size="custom"
+    size="sm"
+    variant="secondary"
     controller={form}
-    class="btn size-10 shrink-0 rounded-lg p-0 hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
     aria-pressed={hidden}
-    aria-label={hidden ? m.badges_show() : m.badges_hide()}
-    title={hidden ? m.badges_show() : m.badges_hide()}
+    class="w-full gap-2 {hidden ? 'preset-tonal' : ''}"
   >
+    <!-- Busy at once while it saves; the spinner takes the eye's place if it is slow. -->
     {#if !form.delayed}<Icon name={hidden ? 'eye-off' : 'eye'} size={20} />{/if}
+    {m.badges_hide()}
   </MAButton>
 </MAForm>
