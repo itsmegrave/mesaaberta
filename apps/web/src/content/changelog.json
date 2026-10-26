@@ -168,6 +168,16 @@
         "title": "Bloquear e denunciar em Mensagens",
         "description": "Você pode bloquear uma pessoa para parar de trocar mensagens diretas, desbloquear em Editar perfil e denunciar uma mensagem, numa conversa direta ou no chat da mesa, para a moderação analisar.",
         "href": "/messages"
+      },
+      {
+        "kind": "improved",
+        "title": "Mais contraste e leitura",
+        "description": "Textos, links e botões de perigo ganharam mais contraste, e a ordem dos títulos e o tamanho de alguns alvos de toque foram ajustados."
+      },
+      {
+        "kind": "improved",
+        "title": "Telas mais fiéis ao desenho",
+        "description": "Entrada, filtros de lista, abas da mesa, menu da conta e o sino ficaram alinhados ao design, e o logo e o ícone usam as cores do tema."
       }
     ]
   },
