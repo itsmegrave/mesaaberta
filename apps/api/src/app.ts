@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { REQUEST_ID_HEADER, requestIdFrom, withRequestId } from '@mesaaberta/contracts';
 import { logger } from '@mesaaberta/core/server/logger';
 import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
 import { accountRoutes } from './account';
@@ -29,6 +30,14 @@ import { tableWriteRoutes } from './table-writes';
  */
 export function createApi() {
   const app = new Hono();
+
+  // The web Worker's request id when it sent one (the only caller), else one of its own: every
+  // line and every event the request records carries it, and the answer names it back.
+  app.use('*', async (c, next) => {
+    const requestId = requestIdFrom(c.req.header(REQUEST_ID_HEADER)) ?? crypto.randomUUID();
+    await withRequestId(requestId, next);
+    c.header(REQUEST_ID_HEADER, requestId);
+  });
 
   // Which build answers, so the web /healthz can show a mismatch after a one-app rollback.
   app.get('/healthz', (c) =>

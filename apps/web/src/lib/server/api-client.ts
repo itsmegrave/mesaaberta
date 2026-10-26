@@ -1,3 +1,4 @@
+import { currentRequestId, REQUEST_ID_HEADER } from '@mesaaberta/contracts';
 import { logger, type Logger } from '@mesaaberta/core/server/logger';
 
 /** The Service Binding to the api Worker (`env.API`); absent until the api is deployed and bound. */
@@ -46,6 +47,7 @@ export async function callApiRaw(
   const binding = settings?.API;
   const remote = !binding && settings?.API_URL && settings.API_INTERNAL_TOKEN ? settings : null;
   if (!binding && !remote) return null;
+  const requestId = currentRequestId();
   try {
     // With a Service Binding the host is never resolved: it routes by binding, not by name.
     const send = binding ? binding.fetch.bind(binding) : (request: Request) => fetch(request);
@@ -57,6 +59,8 @@ export async function callApiRaw(
           ...headers,
           ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
           ...(actorId ? { 'x-actor-id': actorId } : {}),
+          // The same request id on both sides, so the api's lines join the web request's.
+          ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
           ...(json === undefined ? {} : { 'content-type': 'application/json' }),
         },
         ...(json === undefined ? {} : { body: JSON.stringify(json) }),

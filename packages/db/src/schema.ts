@@ -467,6 +467,9 @@ export const events = pgTable(
     reviewStatus: eventReview('review_status'),
     reviewedBy: uuid('reviewed_by'),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    // The `requestId` of the request (or worker run) that recorded the event (Trello #278). Null
+    // for events recorded outside one, and for every event written before it was kept.
+    actionId: text('action_id'),
   },
   (event) => [
     // What the sweeper looks for: events not yet done and not given up on.

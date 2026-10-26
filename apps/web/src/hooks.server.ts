@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { setRequestContextStore } from '@mesaaberta/contracts';
 import * as Sentry from '@sentry/sveltekit';
 import { sequence, type Handle, type HandleServerError } from '@sveltejs/kit/hooks';
 import {
@@ -31,6 +33,8 @@ import { paraglideMiddleware } from '#lib/paraglide/server.js';
 // request in the isolate reports as before.
 setTelemetrySink(sentrySink);
 setAppName('web');
+// Carries the request id to every log line and outbox write of the request (Trello #278).
+setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
 
 const handleParaglide: Handle = ({ event, resolve }) =>

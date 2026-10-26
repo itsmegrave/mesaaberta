@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { setRequestContextStore } from '@mesaaberta/contracts';
 import * as Sentry from '@sentry/cloudflare';
 import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
@@ -10,6 +12,8 @@ import { sentrySink } from './sentry-sink';
 // the SDK stays off and the logger still writes to the console.
 setTelemetrySink(sentrySink);
 setAppName('worker');
+// Carries the request id to every log line and outbox write of a run (Trello #278).
+setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
 
 export default Sentry.withSentry(

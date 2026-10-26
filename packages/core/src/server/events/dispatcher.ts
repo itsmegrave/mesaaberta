@@ -177,6 +177,8 @@ export async function dispatchEvent(
       eventType: event.type,
       handler: handler.name,
       attempt: row.attempts + 1,
+      // The request that recorded the event: its lines on the web and api carry it as `requestId`.
+      ...(row.actionId && { actionId: row.actionId }),
     };
     try {
       await handler.handle(event, db);
@@ -242,6 +244,7 @@ export async function dispatchEvent(
     {
       eventId: id,
       eventType: event.type,
+      ...(row.actionId && { actionId: row.actionId }),
       attempt: attempts,
       outcome: attempts >= MAX_ATTEMPTS ? 'exhausted' : 'retry',
       ...(attempts >= MAX_ATTEMPTS && { error: failures[0] }),
