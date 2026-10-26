@@ -74,6 +74,22 @@
     void client.invalidateQueries({ queryKey: BADGES_KEY });
   });
 
+  // Seen: while the thread is in front, the newest message from someone else counts as read. The
+  // page load already marked what it showed; a poll in the background marks nothing.
+  // svelte-ignore state_referenced_locally
+  let lastMarked = data.messages.at(-1)?.id;
+  $effect(() => {
+    const latest = thread.data?.messages.at(-1);
+    if (!visible || !focused || !latest || latest.own || latest.id === lastMarked) return;
+    lastMarked = latest.id;
+    void fetch(`/api/messages/${conversationId}/read`, {
+      method: 'POST',
+      credentials: 'same-origin',
+    }).then((response) => {
+      if (response.ok) void client.invalidateQueries({ queryKey: BADGES_KEY });
+    });
+  });
+
   async function loadOlder() {
     const oldest = saved[0];
     if (!oldest) return;
