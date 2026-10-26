@@ -400,6 +400,13 @@
       "when": 1792979318250,
       "tag": "0056_partner_types",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1792982985206,
+      "tag": "0057_adventure_planned_sessions",
+      "breakpoints": true
     }
   ]
 }

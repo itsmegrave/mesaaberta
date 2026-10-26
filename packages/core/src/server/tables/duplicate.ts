@@ -58,6 +58,7 @@ export async function loadTableForDuplication(
       kind: source.kind,
       capacity: source.capacity,
       minPlayers: source.minPlayers,
+      plannedSessions: source.plannedSessions,
       startsAtLocal: '',
       timezone: source.timezone,
       durationMinutes: source.durationMinutes,

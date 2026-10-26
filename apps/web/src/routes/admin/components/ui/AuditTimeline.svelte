@@ -27,6 +27,7 @@
     kind: m.history_field_kind,
     capacity: m.history_field_capacity,
     minPlayers: m.history_field_minPlayers,
+    plannedSessions: m.history_field_plannedSessions,
     startsAt: m.history_field_startsAt,
     durationMinutes: m.history_field_durationMinutes,
     timezone: m.history_field_timezone,

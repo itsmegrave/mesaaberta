@@ -55,7 +55,7 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
     avatarPath: profiles.avatarPath,
   };
 
-  const [[source], rows, [gm], rating, recent, given] = await Promise.all([
+  const [[source], rows, [gm], rating, recent, given, [held]] = await Promise.all([
     db
       .select({ moderatedAt: gameTables.moderatedAt })
       .from(gameTables)
@@ -98,6 +98,13 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
       .orderBy(desc(events.createdAt))
       .limit(ACTIVITY_SHOWN),
     playerRatingsAt(db, table.id),
+    // The sessions the GM confirmed so far, each one a `TableSessionHeld`.
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(events)
+      .where(
+        and(eq(events.type, 'TableSessionHeld'), sql`${events.payload}->>'tableId' = ${table.id}`),
+      ),
   ]);
   const requests = rows.filter((row) => row.status === 'pending');
   // What the GM weighs a request by: the asker's public score as a participant.
@@ -145,6 +152,8 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
     systemWaiting: table.status === 'draft' ? await systemWaitingOf(db, table.system.slug) : null,
     gm: gm as Person,
     gmRating: rating,
+    // Which session the current date is: "sessão 3 (de 4)". A one-shot has only the one.
+    session: table.kind === 'one_shot' ? null : (held?.count ?? 0) + 1,
     requests: requests.map((row) => ({
       ...row,
       participantRating: scores.get(row.playerId)!,

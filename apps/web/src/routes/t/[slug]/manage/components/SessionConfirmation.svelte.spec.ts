@@ -139,6 +139,58 @@ describe('SessionConfirmation', () => {
     await expect.element(page.getByText('Escolha o dia e o horário.')).toBeVisible();
   });
 
+  it('names the kind and which session it was, out of an adventure’s planned count', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      kind: 'adventure',
+      session: 3,
+      plannedSessions: 4,
+      startsAt,
+    });
+
+    await expect
+      .element(page.getByText('Aventura · sessão 3 de 4 · sábado, 26 de setembro, 19:00'))
+      .toBeVisible();
+  });
+
+  it('starts on "Foi a última sessão" at an adventure’s last planned session', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      kind: 'adventure',
+      session: 4,
+      plannedSessions: 4,
+      startsAt,
+      step: 'presenca',
+    });
+
+    await expect
+      .element(page.getByText('Aventura · sessão 4 de 4', { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByRole('radio', { name: /Foi a última sessão/ })).toBeChecked();
+    await expect
+      .element(page.getByRole('button', { name: 'Confirmar e concluir a mesa' }))
+      .toBeVisible();
+  });
+
+  it('counts a campaign’s sessions without a total', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      kind: 'campaign',
+      session: 5,
+      startsAt,
+    });
+
+    await expect
+      .element(page.getByText('Campanha · sessão 5 · sábado, 26 de setembro, 19:00'))
+      .toBeVisible();
+  });
+
   it('for a campaign that did not happen, skips the session or closes the table', async () => {
     render(SessionConfirmation, {
       next: '/t/mesa/manage',

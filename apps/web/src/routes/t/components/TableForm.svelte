@@ -90,11 +90,19 @@
     systems.find((system) => system.slug === $draft.systemSlug)?.name ?? m.form_system(),
   );
 
+  // The adventure's count as typed, once it is one the form takes.
+  const plannedCount = $derived(
+    $draft.kind === 'adventure' && /^\d{1,2}$/.test($draft.plannedSessions)
+      ? Number($draft.plannedSessions)
+      : null,
+  );
+
   // The card the list will show, from what is typed so far.
   const card = $derived({
     slug: 'preview',
     title: $draft.title || m.form_preview_title(),
     kind: $draft.kind,
+    plannedSessions: plannedCount,
     system: { name: previewSystem },
     gmName,
     capacity: Number($draft.capacity) || 1,
@@ -127,6 +135,7 @@
         ['durationHours', m.session_duration()],
         ['repeat', m.form_repeat()],
         ['until', m.form_until()],
+        ['plannedSessions', m.form_planned_sessions()],
         ['postalCode', m.form_postal_code()],
         ['locationArea', m.form_location_area()],
         ['joinDetails', m.form_join_details_link()],
@@ -333,6 +342,27 @@
           <FieldError id="until" message={err('until')} />
         </div>
       </div>
+    {:else if $draft.kind === 'adventure'}
+      <FormField
+        id="plannedSessions"
+        label={m.form_planned_sessions()}
+        hint={m.form_planned_sessions_hint()}
+        error={err('plannedSessions')}
+      >
+        {#snippet children(aria)}
+          <TextInput
+            id="plannedSessions"
+            name="plannedSessions"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength={2}
+            required
+            bind:value={$draft.plannedSessions}
+            class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
+            {...aria}
+          />
+        {/snippet}
+      </FormField>
     {/if}
   </FormSection>
 
@@ -515,7 +545,9 @@
             ? m.form_repeat_biweekly()
             : m.form_repeat_weekly()
           : $draft.kind === 'adventure'
-            ? m.form_schedule_adventure()
+            ? plannedCount
+              ? m.form_schedule_sessions({ count: plannedCount })
+              : m.form_schedule_adventure()
             : m.table_recurrence_once()}, {formatHours(
           (Number($draft.durationHours) || 0) * 60,
           getLocale(),

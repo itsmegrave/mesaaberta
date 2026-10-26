@@ -14,6 +14,7 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import SessionPicker from '#lib/components/ui/SessionPicker.svelte';
+  import { kindLabel, type TableKind } from '#lib/tables/format.js';
 
   export type ConfirmationStep = 'pergunta' | 'presenca' | 'adiar' | 'nao';
 
@@ -27,6 +28,9 @@
     next,
     players = [],
     multi = false,
+    kind = null,
+    session = null,
+    plannedSessions = null,
     startsAt = null,
     nextSession = null,
     timezone = 'America/Sao_Paulo',
@@ -36,6 +40,12 @@
     next: string;
     players?: { playerId: string; username: string; avatarUrl: string | null; rated?: boolean }[];
     multi?: boolean;
+    /** Named above the question on a campaign or adventure: "Aventura · sessão 2 de 4 · …". */
+    kind?: TableKind | null;
+    /** Which session this one was (the ones held before it, plus one). */
+    session?: number | null;
+    /** An adventure's planned sessions: at the last one, "Foi a última sessão" starts picked. */
+    plannedSessions?: number | null;
     /** When the session that passed started, shown above the question. */
     startsAt?: Date | string | null;
     /** A weekly campaign's next date (`YYYY-MM-DDTHH:mm`, the table's zone): the picker starts on it. */
@@ -74,6 +84,19 @@
           .replace(' às ', ', ')
       : null,
   );
+  const heading = $derived(
+    [
+      multi && kind ? kindLabel(kind) : null,
+      multi && session
+        ? plannedSessions
+          ? m.manage_confirm_session_of({ session, total: plannedSessions })
+          : m.manage_confirm_session({ session })
+        : null,
+      sessionLabel,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  );
   const weekday = $derived(
     when
       ? new Intl.DateTimeFormat(getLocale(), { timeZone: timezone, weekday: 'long' }).format(when)
@@ -98,7 +121,8 @@
   // svelte-ignore state_referenced_locally
   let nextAt = $state(nextSession ?? '');
 
-  let more = $state(true);
+  // svelte-ignore state_referenced_locally
+  let more = $state(!(plannedSessions && session && session >= plannedSessions));
   const goesOn = $derived(multi && more);
 
   // svelte-ignore state_referenced_locally
@@ -188,14 +212,14 @@
   aria-labelledby="session-confirmation"
   class="mt-8 rounded-lg border-2 border-primary-500 bg-panel p-5 md:p-7"
 >
-  {#if sessionLabel}
+  {#if heading}
     <p class="flex items-center gap-2.5 text-sm font-semibold text-muted">
-      <Icon name="calendar" size={16} />{sessionLabel}
+      <Icon name="calendar" size={16} />{heading}
     </p>
   {/if}
   <h2
     id="session-confirmation"
-    class="scroll-mt-6 text-2xl leading-tight font-semibold tracking-tight text-balance {sessionLabel
+    class="scroll-mt-6 text-2xl leading-tight font-semibold tracking-tight text-balance {heading
       ? 'mt-2'
       : ''}"
   >

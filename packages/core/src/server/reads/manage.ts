@@ -39,6 +39,7 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
     }),
     // A weekly campaign's next date after this session, in the table's zone, to prefill the answer.
     nextSession: nextSessionOf(manage.table, now),
+    session: manage.session,
     canInvite: actor?.id === gmId,
     // The GM may rate the players they marked present (an admin looking on may not).
     canRatePlayers:
