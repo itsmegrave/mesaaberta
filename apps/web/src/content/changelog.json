@@ -139,6 +139,12 @@
         "kind": "improved",
         "title": "Endereços em palavras",
         "description": "As listas agora têm endereços legíveis, como /tables, /partners e /messages. Os links antigos continuam funcionando."
+      },
+      {
+        "kind": "new",
+        "title": "Bloquear e denunciar em Mensagens",
+        "description": "Você pode bloquear uma pessoa para parar de trocar mensagens diretas, desbloquear em Editar perfil e denunciar uma mensagem, numa conversa direta ou no chat da mesa, para a moderação analisar.",
+        "href": "/messages"
       }
     ]
   },
