@@ -193,6 +193,16 @@
         "kind": "fixed",
         "title": "Conta e acesso mais certos",
         "description": "\"Criar uma senha\" só aparece para quem ainda não tem senha, e os botões vermelhos, como Apagar minha conta, voltaram a ter cor. Apagar a conta agora pede uma confirmação."
+      },
+      {
+        "kind": "improved",
+        "title": "Detalhes das conquistas em um cartão",
+        "description": "Toque ou passe o mouse numa medalha do perfil para ver o nível, como e quando ela foi conquistada. Você vê e pode esconder as suas medalhas escondidas na mesma fileira."
+      },
+      {
+        "kind": "improved",
+        "title": "Mesas mais fáceis no celular",
+        "description": "No celular, as vagas e o botão de pedir vaga, sair ou avaliar ficam numa barra acima do menu. O cartão da mesa mostra quem mestra com foto, e Gerenciar tem linhas mais claras."
       }
     ]
   },
