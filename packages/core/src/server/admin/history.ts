@@ -30,8 +30,11 @@ export type HistoryEntry = {
 /** `retentionDays`: events are deleted after it, so a history reaches back only that far. */
 export type History = { entries: HistoryEntry[]; more: boolean; retentionDays: number };
 
-/** Sign-ins carry an address: they are the connection log, kept for the law, not a history to browse. */
-const NOT_SHOWN: EventType[] = ['UserSignedIn'];
+/**
+ * Sign-ins carry an address: they are the connection log, kept for the law, not a history to browse.
+ * An admin's visits to the admin area are in the audit log instead.
+ */
+const NOT_SHOWN: EventType[] = ['UserSignedIn', 'AdminAreaEntered'];
 
 async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
   const actor = alias(profiles, 'actor');
