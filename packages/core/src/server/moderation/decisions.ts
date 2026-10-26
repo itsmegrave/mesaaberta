@@ -28,6 +28,7 @@ import {
   revokeBan,
   startReview,
 } from './admin';
+import { reportSubject } from './reports';
 
 type Decision<Schema extends ZodType> = {
   schema: Schema;
@@ -35,14 +36,19 @@ type Decision<Schema extends ZodType> = {
 };
 const decision = <Schema extends ZodType>(d: Decision<Schema>) => d;
 
-/** The player a report is about: the only profile a ban from that report can hit. */
+/** The person a report is about (`reportSubject`): the only profile a ban from that report can hit. */
 async function reportedPlayer(db: AnyDb, id: string) {
   const [row] = await db
-    .select({ targetType: reports.targetType, targetId: reports.targetId })
+    .select({
+      targetType: reports.targetType,
+      targetId: reports.targetId,
+      subjectId: reports.subjectId,
+    })
     .from(reports)
     .where(eq(reports.id, id));
-  if (!row || row.targetType !== 'player') throw new Invalid('id', 'not_found');
-  return row.targetId;
+  const subject = row ? reportSubject(row) : null;
+  if (!subject) throw new Invalid('id', 'not_found');
+  return subject;
 }
 
 /**

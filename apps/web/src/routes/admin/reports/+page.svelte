@@ -45,7 +45,9 @@
         ? ('game-icons:trade' as const)
         : isTable(row)
           ? ('game-icons:tavern-sign' as const)
-          : ('game-icons:meeple' as const);
+          : row.targetType === 'message' || row.targetType === 'person'
+            ? ('game-icons:scroll-quill' as const)
+            : ('game-icons:meeple' as const);
   const targetOf = (row: Report) =>
     isCampaign(row)
       ? (row.crowdfunding ?? m.admin_report_crowdfunding())
@@ -53,9 +55,13 @@
         ? (row.partner ?? m.admin_report_partner())
         : isTable(row)
           ? m.admin_reports_target_table({ table: row.table ?? '' })
-          : row.player
-            ? atHandle(row.player)
-            : m.admin_profile_no_username();
+          : row.targetType === 'message'
+            ? m.admin_reports_target_message({
+                name: row.player ? atHandle(row.player) : m.admin_profile_no_username(),
+              })
+            : row.player
+              ? atHandle(row.player)
+              : m.admin_profile_no_username();
   const href = (row: Report) => `/admin/reports/${row.id}`;
   const badge = (row: Report) => `report:${row.status}` as Status;
   const menuOf = (row: Report): KebabItem[] => [
@@ -81,6 +87,8 @@
     { slug: 'player', name: m.admin_reports_target_player_option() },
     { slug: 'crowdfunding', name: m.admin_reports_target_crowdfunding_option() },
     { slug: 'partner', name: m.admin_reports_target_partner_option() },
+    { slug: 'message', name: m.admin_reports_target_message_option() },
+    { slug: 'person', name: m.admin_reports_target_person_option() },
   ];
 </script>
 

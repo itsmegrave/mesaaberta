@@ -5,6 +5,9 @@
   import { tick } from 'svelte';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
+  import PostButton from '#lib/components/PostButton.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import { blockSchema } from '@mesaaberta/core/messages/schema';
   import SettingsSection from '../components/ui/SettingsSection.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
@@ -83,6 +86,39 @@
   </MAForm>
   <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
 </section>
+
+{#if data.blocked}
+  <!-- "Pessoas bloqueadas" (`use_message_safety`): each row unblocks on its own. -->
+  <section aria-labelledby="blocked-people" class={card}>
+    <h3 id="blocked-people" class={heading}>{m.messages_blocked_title()}</h3>
+    <p class="mt-3 max-w-prose text-muted">{m.messages_blocked_help()}</p>
+    {#if data.blocked.length === 0}
+      <p class="mt-3 text-muted">{m.messages_blocked_empty()}</p>
+    {:else}
+      <ul class="mt-2 divide-y divide-surface-200-800">
+        {#each data.blocked as person (person.id)}
+          <li class="flex flex-wrap items-center gap-3 py-3.5">
+            <MAAvatar src={person.avatarUrl} name={person.username} size={44} />
+            <span class="min-w-0 flex-1 truncate font-semibold">{atHandle(person.username)}</span>
+            <PostButton
+              action="?/block"
+              fields={{ profileId: person.id, blocked: 'false' }}
+              schema={blockSchema}
+              domain="account"
+              variant="secondary"
+              size="sm"
+              buttonClass="font-semibold"
+              errorMessage={m.messages_block_failed}
+              success={m.messages_unblocked_toast({ name: atHandle(person.username) })}
+            >
+              {m.messages_unblock()}
+            </PostButton>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+{/if}
 
 <section aria-labelledby="invitation-settings" class={card}>
   <h3 id="invitation-settings" class={heading}>{m.invitation_settings_title()}</h3>

@@ -9,7 +9,8 @@
     "./client": "./src/client.ts",
     "./table-status": "./src/table-status.ts",
     "./profile-status": "./src/profile-status.ts",
-    "./event-review": "./src/event-review.ts"
+    "./event-review": "./src/event-review.ts",
+    "./report-excerpt": "./src/report-excerpt.ts"
   },
   "peerDependencies": {
     "drizzle-orm": "*",

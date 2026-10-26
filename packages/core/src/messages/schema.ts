@@ -22,6 +22,12 @@ export const messageSchema = z.object({
 /** The mute switch on a conversation. */
 export const muteSchema = z.object({ muted: z.boolean() });
 
+/** Bloquear or Desbloquear someone, from a conversation or the blocked list. */
+export const blockSchema = z.object({
+  profileId: z.string().uuid(),
+  blocked: z.enum(['true', 'false']).transform((value) => value === 'true'),
+});
+
 /** The profile switch for direct messages. */
 export const directMessagesSchema = z.object({ enabled: z.boolean() });
 
