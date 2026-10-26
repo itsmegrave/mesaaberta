@@ -88,7 +88,9 @@
   // An action on its way shows the same bar, so one sent from a menu item is not silent either.
   const acting = new Slow(() => (inFlight.count > 0 ? true : null), 150);
   // A list or item page on its way gets its skeleton in place of the page being left.
-  const arriving = $derived(arrivingSkeleton(page.url, loading.current));
+  const arriving = $derived(
+    arrivingSkeleton(page.url, loading.current, { signedIn: !!layoutData.account }),
+  );
 </script>
 
 <svelte:head>
@@ -228,7 +230,7 @@
 
       <main id="main" class="mx-auto w-full max-w-7xl px-4 pb-8 md:px-8 md:pb-10">
         {#if arriving}
-          <ListSkeleton kind={arriving} heading />
+          <ListSkeleton kind={arriving.kind} nav={arriving.nav} heading />
         {:else}
           {@render children()}
         {/if}
