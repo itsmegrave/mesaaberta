@@ -12,6 +12,7 @@
     invalid = false,
     hideLabel = false,
     readOnly = false,
+    compact = false,
     describedby,
     onchange,
   }: {
@@ -24,6 +25,8 @@
     hideLabel?: boolean;
     /** A score already given: shown, not changed. */
     readOnly?: boolean;
+    /** 36px stars on a phone and 40px from `sm`, close together: a row that also holds a name and a button. */
+    compact?: boolean;
     describedby?: string;
     onchange?: (value: number) => void;
   } = $props();
@@ -46,7 +49,7 @@
 >
   <RatingGroup.Label class={hideLabel ? 'sr-only' : 'font-semibold'}>{label}</RatingGroup.Label>
   <RatingGroup.Control
-    class="{hideLabel ? '' : 'mt-2'} flex gap-1 text-primary-500"
+    class="{hideLabel ? '' : 'mt-2'} flex {compact ? '' : 'gap-1'} text-primary-500"
     aria-invalid={invalid || undefined}
     aria-describedby={describedby}
   >
@@ -55,7 +58,9 @@
         {#each rating().items as index (index)}
           <RatingGroup.Item
             {index}
-            class="flex size-11 items-center justify-center rounded-lg hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+            class="flex {compact
+              ? 'size-9 sm:size-10'
+              : 'size-11'} items-center justify-center rounded-lg hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
           />
         {/each}
       {/snippet}
