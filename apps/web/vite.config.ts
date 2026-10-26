@@ -40,6 +40,7 @@ export default defineConfig({
         !!process.env.SENTRY_AUTH_TOKEN || existsSync('.env.sentry-build-plugin'),
       sourcemaps: {
         assets: hostSentry.sourcemapAssets,
+        ignore: hostSentry.sourcemapIgnore,
       },
     }),
     tailwindcss(),

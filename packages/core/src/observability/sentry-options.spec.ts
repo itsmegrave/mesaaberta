@@ -5,6 +5,7 @@ import {
   privateLog,
   privateSentryOptions,
   sentryOptionsForApp,
+  sentryReleaseFor,
 } from './sentry-options';
 
 describe('sentry options', () => {
@@ -64,5 +65,18 @@ describe('sentry options', () => {
       privateLog({ level: 'info', message: 'x', attributes: { service: 'mesaaberta', app: 'api' } })
         ?.attributes,
     ).toEqual({ service: 'mesaaberta', app: 'api' });
+  });
+
+  it('names the release tag and the app, as the deploy uploads the source maps', () => {
+    const env = { DEPLOYMENT_VERSION: 'v0.70.0', CF_VERSION_METADATA: { id: 'cf-version' } };
+    expect(sentryReleaseFor('web', env)).toEqual({ release: '0.70.0', dist: 'web' });
+    expect(sentryReleaseFor('worker', env)).toEqual({ release: '0.70.0', dist: 'worker' });
+  });
+
+  it('keeps the Worker version id as the release without a tag', () => {
+    expect(sentryReleaseFor('api', { CF_VERSION_METADATA: { id: 'cf-version' } })).toEqual({
+      release: 'cf-version',
+    });
+    expect(sentryReleaseFor('api', undefined)).toEqual({ release: undefined });
   });
 });

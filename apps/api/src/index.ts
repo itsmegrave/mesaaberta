@@ -1,7 +1,11 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { setRequestContextStore } from '@mesaaberta/contracts';
 import * as Sentry from '@sentry/cloudflare';
-import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import {
+  sentryOptionsForApp,
+  sentryReleaseFor,
+  type ReleaseEnv,
+} from '@mesaaberta/core/observability/sentry-options';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createApi } from './app';
@@ -19,11 +23,11 @@ logInstalled();
 const api = createApi();
 
 export default Sentry.withSentry(
-  (env: { SENTRY_DSN?: string; CF_VERSION_METADATA?: { id?: string } }) => ({
+  (env: { SENTRY_DSN?: string } & ReleaseEnv) => ({
     ...sentryOptionsForApp('api'),
     dsn: env.SENTRY_DSN,
     environment: 'production',
-    release: env.CF_VERSION_METADATA?.id,
+    ...sentryReleaseFor('api', env),
   }),
   { fetch: api.fetch },
 );

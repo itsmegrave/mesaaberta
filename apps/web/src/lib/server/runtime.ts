@@ -2,6 +2,10 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN } from '$app/env/public';
 import { host as hostBindings } from '#host';
 import { sentryOptionsFor } from '#lib/observability/privacy.js';
+import {
+  sentryReleaseFor,
+  type ReleaseEnv,
+} from '@mesaaberta/core/observability/sentry-options';
 import type { PayloadCache } from '@mesaaberta/core/server/flags/payload';
 import type { HostBindings } from './host/types';
 import { createHandleServerTiming } from './server-timing';
@@ -42,10 +46,11 @@ export const handleServerTiming = createHandleServerTiming(backend);
  * the `telemetry` of its `#host`; `Sentry.sentryHandle()` and the rest of the hooks stay as they are.
  */
 export const handleHostTelemetry: Handle = (input) =>
-  hostBindings.telemetry(
-    sentryOptionsFor(
+  hostBindings.telemetry({
+    ...sentryOptionsFor(
       { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN },
       input.event.url.origin,
       import.meta.env.PROD,
     ),
-  )(input);
+    ...sentryReleaseFor('web', hostBindings.env() as ReleaseEnv | undefined),
+  })(input);
