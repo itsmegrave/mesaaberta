@@ -163,7 +163,10 @@ export type DomainEvent =
   | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
-  | { type: 'EventForced'; payload: { eventId: string; eventType: string } };
+  | { type: 'EventForced'; payload: { eventId: string; eventType: string } }
+  // An admin opened a section of the admin area (`/admin/users`), at most once per section in
+  // half an hour: who looked at what, for the audit log.
+  | { type: 'AdminAreaEntered'; payload: { section: string } };
 
 /** What an edit changed, per field. A hidden field says that it changed, never the value. */
 export type FieldChange =

@@ -22,6 +22,7 @@
       tables: m.admin_audit_kind_tables,
       catalog: m.admin_audit_kind_catalog,
       announcements: m.admin_audit_kind_announcements,
+      access: m.admin_audit_kind_access,
     })[kind]();
   const kinds = AUDIT_KINDS.map((value) => ({ value, label: kindLabel(value) }));
   // The log is newest first, so the day headings follow the rows in order.
@@ -79,6 +80,8 @@
         return m.audit_catalog_disabled({ name });
       case 'EventForced':
         return m.audit_event_forced({ type: entry.eventType ?? '' });
+      case 'AdminAreaEntered':
+        return m.audit_admin_entered({ section: entry.section ?? '/admin' });
       default:
         return entry.type;
     }

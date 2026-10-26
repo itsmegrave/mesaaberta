@@ -627,6 +627,8 @@ const AUDIT_KIND_TYPES: Record<Exclude<AuditKind, 'all'>, readonly EventType[]> 
     'CatalogEntryDisabled',
   ],
   announcements: ['SystemAnnouncementSent'],
+  // Who opened which section. Not a decision, so only under its own kind and never in `all`.
+  access: ['AdminAreaEntered'],
 };
 
 /**
@@ -651,7 +653,9 @@ export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearch
   const search = filters.query.replace(/^@/, '').replace(/[\\%_]/g, '\\$&');
   const kinds = filters.kind === 'all' ? null : AUDIT_KIND_TYPES[filters.kind];
   const where = and(
-    or(inArray(events.type, [...AUDIT_EVENT_TYPES]), byOther),
+    filters.kind === 'access'
+      ? undefined
+      : or(inArray(events.type, [...AUDIT_EVENT_TYPES]), byOther),
     kinds ? inArray(events.type, [...kinds]) : undefined,
     search
       ? or(
@@ -723,6 +727,7 @@ export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearch
         title: typeof facts.title === 'string' ? facts.title : null,
         reportId: typeof facts.reportId === 'string' ? facts.reportId : null,
         eventType: typeof facts.eventType === 'string' ? facts.eventType : null,
+        section: typeof facts.section === 'string' ? facts.section : null,
       };
     }),
     total,
