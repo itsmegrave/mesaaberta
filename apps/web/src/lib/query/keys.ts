@@ -5,6 +5,7 @@ import {
   systemDirectoryQuery,
 } from '@mesaaberta/core/systems/directory-filters';
 import { gmDirectoryQuery, readGmDirectoryFilters } from '@mesaaberta/core/gms/directory-filters';
+import { placeDirectoryQuery, readPlaceFilters } from '@mesaaberta/core/places/filters';
 
 export const resources = [
   'preview',
@@ -22,6 +23,8 @@ export const resources = [
   'systems',
   'system',
   'gamemasters',
+  'places',
+  'place',
 ] as const;
 export type Resource = (typeof resources)[number];
 export type ReadSeed = {
@@ -42,6 +45,8 @@ export const privateResources = new Set<Resource>([
   'admin',
   'adminUsers',
   'adminTables',
+  // A place that waits for review opens for its submitter alone, so each viewer has their own entry.
+  'place',
 ]);
 export function readKey(seed: Pick<ReadSeed, 'resource' | 'viewer' | 'params'>) {
   return [
@@ -79,6 +84,12 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
     const filters = readGmDirectoryFilters(url.searchParams);
     for (const [key, value] of new URLSearchParams(gmDirectoryQuery(filters, filters.page)))
       params.set(key, value);
+  }
+  // Onde jogar: the same, with `placeDirectoryQuery`.
+  if (resource === 'places') {
+    const filters = readPlaceFilters(url.searchParams);
+    for (const [key, value] of new URLSearchParams(placeDirectoryQuery(filters, filters.page)))
+      params.append(key, value);
   }
   if (resource === 'adminUsers' || resource === 'adminTables') {
     const filters =

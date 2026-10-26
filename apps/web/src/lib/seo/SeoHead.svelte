@@ -7,7 +7,11 @@
     indexingPolicy(page.url, origin, {
       status: page.status,
       maintenance: !!page.data.maintenance,
-      draft: page.data.table?.status === 'draft' || page.data.post?.unpublished,
+      // A place still waiting for review, or hidden after reports, is not listed yet.
+      draft:
+        page.data.table?.status === 'draft' ||
+        page.data.post?.unpublished ||
+        (!!page.data.place && (page.data.pending || page.data.hidden)),
     }),
   );
   const metadata = $derived(
@@ -18,6 +22,7 @@
             table: page.data.table,
             profile: page.data.profile,
             system: page.data.system,
+            place: page.data.place,
             facts: page.data.facts,
             post: page.data.post,
           },

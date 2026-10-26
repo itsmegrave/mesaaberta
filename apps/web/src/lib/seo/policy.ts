@@ -16,6 +16,7 @@ export function indexingPolicy(
       '/crowdfunding',
       '/systems',
       '/gamemasters',
+      '/places',
       '/changelog',
       '/blog',
       '/privacy',
@@ -24,6 +25,7 @@ export function indexingPolicy(
     /^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     /^\/t\/(?!new$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     /^\/s\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
+    /^\/pp\/(?!new$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     publicProfile;
   if (!publicPath || (options.status ?? 200) >= 400 || options.maintenance)
     return { canonical: null, index: false };
@@ -49,7 +51,8 @@ export function indexingPolicy(
     path === '/partners' ||
     path === '/crowdfunding' ||
     path === '/systems' ||
-    path === '/gamemasters'
+    path === '/gamemasters' ||
+    path === '/places'
   ) {
     const q = url.searchParams.get('q')?.trim();
     if (q) {
@@ -82,6 +85,12 @@ export function indexingPolicy(
     ['system', 'modality', 'open', 'sort'].some((key) => url.searchParams.get(key))
   )
     index = false;
+  // Onde jogar: the same, for a state, city, kind, amenity or another order.
+  if (
+    path === '/places' &&
+    ['state', 'city', 'kind', 'amenity', 'sort'].some((key) => url.searchParams.get(key))
+  )
+    index = false;
   if (path === '/changelog') {
     const kind = url.searchParams.get('tipo');
     if (kind && ['new', 'improved', 'fixed'].includes(kind)) {
@@ -96,6 +105,7 @@ export function indexingPolicy(
     path === '/partners' ||
     path === '/systems' ||
     path === '/gamemasters' ||
+    path === '/places' ||
     paginatedCrowdfunding ||
     path === '/changelog' ||
     path === '/blog'

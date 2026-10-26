@@ -107,17 +107,18 @@ const shape = (row: Row) => {
 
 /**
  * Active tables that have not started yet, soonest first. A table leaves the list the moment its
- * session begins. `systemSlug` narrows the list to one system.
+ * session begins. `systemSlug` narrows the list to one system, `placeId` to one "Onde jogar" place.
  */
 export async function listUpcomingTables(
   db: AnyDb,
   now: Date,
-  { systemSlug, limit }: { systemSlug?: string; limit?: number } = {},
+  { systemSlug, placeId, limit }: { systemSlug?: string; placeId?: string; limit?: number } = {},
 ): Promise<TableView[]> {
   const where = and(
     eq(gameTables.status, 'active'),
     gt(gameTables.startsAt, now),
     systemSlug ? eq(systems.slug, systemSlug) : undefined,
+    placeId ? eq(gameTables.placeId, placeId) : undefined,
   );
   const rows = await (limit === undefined
     ? query(db, where, now)

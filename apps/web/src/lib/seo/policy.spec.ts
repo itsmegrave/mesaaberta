@@ -113,6 +113,28 @@ describe('search indexing policy', () => {
       expect(policy(`/gamemasters?${query}`).index).toBe(false);
   });
 
+  it('indexes Onde jogar, its places and its pages, but not a filtered list or the new place form', () => {
+    expect(policy('/places?page=2&utm_source=x')).toEqual({
+      canonical: `${origin}/places?page=2`,
+      index: true,
+    });
+    for (const query of [
+      'q=taverna',
+      'state=pe',
+      'city=pe-recife',
+      'kind=bar',
+      'amenity=accessible',
+      'sort=name',
+    ])
+      expect(policy(`/places?${query}`).index).toBe(false);
+    expect(policy('/pp/taverna-do-dado')).toEqual({
+      canonical: `${origin}/pp/taverna-do-dado`,
+      index: true,
+    });
+    expect(policy('/pp/taverna-do-dado', { draft: true }).index).toBe(false);
+    expect(policy('/pp/new')).toEqual({ canonical: null, index: false });
+  });
+
   it('indexes the systems directory and its pages, keeping the list and page but not the order', () => {
     expect(policy('/systems?page=1&utm_source=x')).toEqual({
       canonical: `${origin}/systems`,
