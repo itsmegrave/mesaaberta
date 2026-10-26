@@ -163,7 +163,7 @@
     const selection = instance.getCropperSelection();
     const picture = instance.getCropperImage();
     if (!canvas || !selection || !picture) return;
-    canvas.classList.add('h-48', 'w-full', 'sm:h-72');
+    canvas.classList.add('h-48', 'w-full', 'sm:h-84');
     canvas.setAttribute('aria-label', m.image_crop_area());
     // Turning and skewing have no control here, and a turned picture can't be kept inside the frame.
     picture.rotatable = false;
