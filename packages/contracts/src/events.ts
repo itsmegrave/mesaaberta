@@ -63,12 +63,26 @@ export type DomainEvent =
     }
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
+  // The GM still has not answered: the sweeper e-mails them an hour after the session ended (`1h`)
+  // and again a week after (`7d`), the last notice before the table is concluded for them.
+  | {
+      type: 'TableCloseReminder';
+      payload: { tableId: string; slug: string; title: string; step: '1h' | '7d' };
+    }
   // The GM confirmed the session happened, or that it did not.
   // `absentPlayerIds` are the confirmed players the GM said did not show up (they cannot rate the
   // GM and are not asked to). Absent when attendance was not recorded.
+  // `autoClosed`: nobody answered in ten days, so the sweeper concluded it (no actor), and every
+  // confirmed player is asked to rate by e-mail as well as in the bell.
   | {
       type: 'TableConcluded';
-      payload: { tableId: string; slug: string; title: string; absentPlayerIds?: string[] };
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        absentPlayerIds?: string[];
+        autoClosed?: true;
+      };
     }
   // A session of a campaign or adventure happened and more follow: the table stays open for the next
   // one (`nextStartsAt`, ISO). `absentPlayerIds` as in `TableConcluded`.
