@@ -248,3 +248,15 @@ export async function openSection(page: Page, name: RegExp) {
     await expect(closed).toHaveCount(0, { timeout: 1_000 });
   }).toPass();
 }
+
+/**
+ * Opens the "Pedir vaga" dialog on a table page. The trigger only answers once the page has
+ * hydrated (before that the click lands on an inert button), so this clicks until the dialog is up.
+ */
+export async function openJoinRequest(page: Page) {
+  const send = page.getByRole('button', { name: 'Enviar pedido' });
+  await expect(async () => {
+    if (!(await send.isVisible())) await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await expect(send).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+}

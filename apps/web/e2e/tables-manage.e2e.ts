@@ -115,7 +115,7 @@ test.describe('creating a table', () => {
     await expect(page.getByLabel('Título')).toHaveValue('ab');
     // A rich-text editor, not an input: its text, not a value.
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
-    await expect(page).toHaveURL(/t\/new$/);
+    await expect(page).toHaveURL(/tables\/new$/);
   });
 
   test('a first session in the past cannot be picked', async ({ page }) => {
@@ -235,7 +235,7 @@ test.describe('the welcome message', () => {
 
     await expect(page.getByText(/Corrija \d+ campos? para continuar/)).toBeVisible();
     await expect(field).toHaveText('x'.repeat(1001));
-    await expect(page).toHaveURL(/t\/new$/);
+    await expect(page).toHaveURL(/tables\/new$/);
   });
 });
 
