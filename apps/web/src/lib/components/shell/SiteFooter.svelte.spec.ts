@@ -88,4 +88,21 @@ describe('SiteFooter.svelte', () => {
       .element(browserPage.getByRole('link', { name: 'Lenindragons' }))
       .not.toBeInTheDocument();
   });
+
+  it('shows the "Diretórios" column only with a directory on, linking each one that is', async () => {
+    render(SiteFooter, { site });
+    await expect
+      .element(browserPage.getByRole('navigation', { name: 'Diretórios' }))
+      .not.toBeInTheDocument();
+
+    location.pathname = '/systems';
+    render(SiteFooter, { site, directories: { systems: true } });
+    const column = browserPage.getByRole('navigation', { name: 'Diretórios' });
+    await expect
+      .element(column.getByRole('link', { name: 'Sistemas' }))
+      .toHaveAttribute('aria-current', 'page');
+    await expect
+      .element(column.getByRole('link', { name: 'Sistemas' }))
+      .toHaveAttribute('href', '/systems');
+  });
 });
