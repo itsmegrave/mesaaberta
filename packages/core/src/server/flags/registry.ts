@@ -184,9 +184,9 @@ export const flagDefaults = {
   // way (the inbox, direct messages, invitations and follows read them). Targeted by the signed-in
   // person's id.
   use_message_safety: false,
-  // The game systems directory, off for everyone until it is released (admins + 30% first, then
-  // everyone). Off: /systems and /s/:slug answer 404, the menus and the footer leave Sistemas out
-  // and system names stay plain text. Targeted by the person's id; visitors only see it at 100%.
+  // The game systems directory, off until it is released (a new feature: on for everyone at once,
+  // visitors included). Off: /systems and /s/:slug answer 404, the menus and the footer leave
+  // Sistemas out and system names stay plain text. Targeted by the person's id.
   api_directory_systems: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that

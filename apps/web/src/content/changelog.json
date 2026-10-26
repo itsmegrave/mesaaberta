@@ -6,6 +6,12 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Sistemas de RPG",
+        "description": "Uma página para cada sistema, com as mesas abertas, quem mestra e as mesas que já aconteceram. A lista mostra quantas mesas cada sistema tem.",
+        "href": "/systems"
+      },
+      {
+        "kind": "new",
         "title": "Lembretes de sessão",
         "description": "Quem joga e quem mestra recebe um aviso um dia e uma hora antes da sessão."
       },
