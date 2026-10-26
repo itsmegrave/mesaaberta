@@ -168,11 +168,6 @@
         "title": "Bloquear e denunciar em Mensagens",
         "description": "Você pode bloquear uma pessoa para parar de trocar mensagens diretas, desbloquear em Editar perfil e denunciar uma mensagem, numa conversa direta ou no chat da mesa, para a moderação analisar.",
         "href": "/messages"
-      },
-      {
-        "kind": "improved",
-        "title": "Sino ao lado da sua conta",
-        "description": "No computador, as notificações ficam no fim do menu lateral, logo acima do seu avatar."
       }
     ]
   },
