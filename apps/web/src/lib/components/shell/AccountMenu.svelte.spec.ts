@@ -1,3 +1,4 @@
+import '../../../routes/layout.css';
 import { render } from 'vitest-browser-svelte';
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
@@ -67,15 +68,35 @@ describe('AccountMenu.svelte', () => {
     await expect.element(page.getByTestId('messages-count')).toHaveTextContent('3');
   });
 
-  it('does not duplicate the Admin link in the profile menu', async () => {
+  it('links admins to the admin area, with what waits there on the item and the avatar', async () => {
     render(AccountMenu, {
       name: 'Admin User',
       avatarUrl: null,
+      isAdmin: true,
+      adminPending: 4,
+      messagesUnread: 2,
     });
 
-    await trigger('Admin User').click();
+    const button = page.getByRole('button', {
+      name: 'Menu da conta: Admin User, 2 mensagens não lidas, Admin: 4',
+    });
+    expect(button.element().querySelector('.preset-filled-warning-500')?.textContent?.trim()).toBe(
+      '6',
+    );
+    await button.click();
 
-    await expect.element(menu().getByRole('link', { name: /Admin/i })).not.toBeInTheDocument();
+    await expect
+      .element(menu().getByRole('link', { name: 'Admin: 4' }))
+      .toHaveAttribute('href', '/admin');
+    await expect.element(page.getByTestId('admin-count')).toHaveTextContent('4');
+  });
+
+  it('does not count the admin area for a member', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null, adminPending: 4 });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Menu da conta: Marina Alves' }))
+      .toBeVisible();
   });
 
   it('links "Perfil" to the public page, without an @ in the address', async () => {
@@ -96,8 +117,13 @@ describe('AccountMenu.svelte', () => {
     await expect.element(menu().getByRole('link', { name: 'Perfil' })).not.toBeInTheDocument();
   });
 
-  it('is Perfil, Mensagens and Sair: Admin lives in the nav', async () => {
-    render(AccountMenu, { name: 'Marina Alves', username: 'marina', avatarUrl: null });
+  it('is Perfil, Mensagens, Admin, Tema and Sair', async () => {
+    render(AccountMenu, {
+      name: 'Marina Alves',
+      username: 'marina',
+      avatarUrl: null,
+      isAdmin: true,
+    });
 
     await trigger().click();
 
@@ -106,8 +132,33 @@ describe('AccountMenu.svelte', () => {
         .getByRole('link')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Perfil', 'Mensagens']);
+    ).toEqual(['Perfil', 'Mensagens', 'Admin']);
+    await expect.element(menu().getByRole('radiogroup', { name: 'Tema' })).toBeVisible();
     await expect.element(menu().getByRole('button', { name: 'Sair' })).toBeVisible();
+  });
+
+  it('switches the theme with Claro | Escuro and keeps the menu open', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null });
+
+    await trigger().click();
+    await menu().getByRole('radio', { name: 'Escuro' }).click();
+
+    await expect.element(menu().getByRole('radio', { name: 'Escuro' })).toBeChecked();
+    await expect.element(menu().getByRole('radio', { name: 'Claro' })).not.toBeChecked();
+    expect(document.documentElement.dataset.mode).toBe('dark');
+
+    await menu().getByRole('radio', { name: 'Claro' }).click();
+    await expect.element(menu().getByRole('radio', { name: 'Claro' })).toBeChecked();
+  });
+
+  it('opens as a sheet on the phone, with the same items', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null, isAdmin: true, sheet: true });
+
+    await trigger().click();
+
+    await expect.element(page.getByRole('dialog', { name: 'Menu da conta' })).toBeVisible();
+    await expect.element(menu().getByRole('link', { name: 'Admin' })).toBeVisible();
+    await expect.element(menu().getByRole('radiogroup', { name: 'Tema' })).toBeVisible();
   });
 
   it('shows the unread messages on the avatar, in warning, and says it in the name', async () => {

@@ -10,14 +10,14 @@ export function isUnder(pathname: string, base: string, except: readonly string[
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
-/** Who a link is for: everyone, signed-in members, or admins. */
-export type Audience = 'everyone' | 'members' | 'admins';
+/** Who a link is for: everyone or signed-in members. Admin lives in the account menu. */
+export type Audience = 'everyone' | 'members';
 
 /** Where the main navigation is drawn: the desktop sidebar (open or as a rail) or the phone tab bar. */
 export type Surface = 'sidebar' | 'tabs';
 
 export interface MainNavLink {
-  href: '/t' | '/cf' | '/t/new' | '/u/tables' | '/admin';
+  href: '/t' | '/cf' | '/t/new' | '/u/tables';
   icon: IconName;
   /** The open sidebar's label. */
   label: () => string;
@@ -77,34 +77,14 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     current: (pathname) => isUnder(pathname, '/u/tables'),
     audience: 'members',
   },
-  {
-    href: '/admin',
-    icon: 'game-icons:black-knight-helm',
-    label: m.nav_admin,
-    railLabel: m.nav_admin,
-    tabLabel: m.nav_admin,
-    current: (pathname) => isUnder(pathname, '/admin'),
-    audience: 'admins',
-  },
 ];
 
 /**
- * The admin link, which the sidebar places itself: after the links in the rail, under the account
- * when open.
- */
-export const ADMIN_LINK = MAIN_NAV.find((link) => link.audience === 'admins')!;
-
-/**
  * The links a surface lists in order. The sidebar hides the members' links from visitors; the tab
- * bar always shows them (they lead to sign-in). Admin is a tab for admins and never part of the
- * sidebar's list, which places it apart.
+ * bar always shows them (they lead to sign-in). Admin is never listed: it is in the account menu.
  */
-export function mainNav(
-  surface: Surface,
-  viewer: { signedIn: boolean; isAdmin: boolean },
-): MainNavLink[] {
+export function mainNav(surface: Surface, viewer: { signedIn: boolean }): MainNavLink[] {
   return MAIN_NAV.filter((link) => {
-    if (link.audience === 'admins') return surface === 'tabs' && viewer.isAdmin;
     if (link.audience === 'members') return surface === 'tabs' || viewer.signedIn;
     return true;
   });

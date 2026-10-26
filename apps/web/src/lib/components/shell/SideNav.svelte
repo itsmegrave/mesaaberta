@@ -1,5 +1,4 @@
 <script lang="ts">
-  import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
@@ -10,7 +9,7 @@
   import NotificationBell from '#lib/components/shell/NotificationBell.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
-  import { ADMIN_LINK, mainNav } from '#lib/navigation/main-nav.js';
+  import { mainNav } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
   type Account = {
@@ -63,7 +62,7 @@
   // link in the app chrome.
   const pathname = $derived(page.url.pathname);
   const links = $derived(
-    mainNav('sidebar', { signedIn: !!account, isAdmin: !!account?.isAdmin }).map((link) => ({
+    mainNav('sidebar', { signedIn: !!account }).map((link) => ({
       href: link.href,
       label: expanded ? link.label() : link.railLabel(),
       icon: link.icon,
@@ -72,8 +71,6 @@
     })),
   );
 
-  const pending = $derived(account?.pendingSuggestionsCount ?? 0);
-  const adminCurrent = $derived(ADMIN_LINK.current(pathname));
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
   // Open: a 44px row. Rail: a 64px column with the icon on a 40px tile over the label.
   const row =
@@ -108,10 +105,6 @@
   >
     <Icon name={expanded ? 'panel-left-close' : 'panel-left-open'} size={20} />
   </MAButton>
-{/snippet}
-
-{#snippet count(value: number, label: string, placed: string)}
-  <CountBadge count={value} aria-label={label} class={placed} />
 {/snippet}
 
 <Navigation
@@ -208,65 +201,24 @@
               labelled={expanded}
               rail={!expanded}
             />
-            {#if account.isAdmin}
-              {#if expanded}
-                <a
-                  href="/admin"
-                  aria-current={adminCurrent ? 'page' : undefined}
-                  class="{row} text-surface-950-50 hover:bg-surface-200-800 aria-[current=page]:bg-surface-200-800"
-                >
-                  <span class="flex shrink-0 text-muted">
-                    <Icon name="game-icons:black-knight-helm" size={20} />
-                  </span>
-                  <span class="min-w-0 flex-1">{m.nav_admin()}</span>
-                  {#if pending > 0}
-                    {@render count(
-                      pending,
-                      `${m.nav_admin()}: ${pending}`,
-                      'h-5.5 min-w-5.5 px-1.5',
-                    )}
-                  {/if}
-                </a>
-              {:else}
-                <a
-                  href="/admin"
-                  aria-label={m.nav_admin()}
-                  aria-current={adminCurrent ? 'page' : undefined}
-                  class="{column} {adminCurrent
-                    ? 'text-surface-950-50'
-                    : 'text-muted hover:text-surface-950-50'}"
-                >
-                  <span
-                    class="{tile} {adminCurrent
-                      ? 'bg-surface-200-800'
-                      : 'group-hover:bg-surface-200-800'}"
-                  >
-                    <Icon name="game-icons:black-knight-helm" size={20} />
-                  </span>
-                  {#if pending > 0}
-                    {@render count(
-                      pending,
-                      `${m.nav_admin()}: ${pending}`,
-                      'absolute top-0.5 right-2 h-4 min-w-4 px-1',
-                    )}
-                  {/if}
-                  <span class="w-full min-w-0">{m.nav_admin()}</span>
-                </a>
-              {/if}
-            {/if}
           </Navigation.Group>
         {/if}
 
         <Navigation.Group
           class="mt-auto flex flex-col {expanded ? 'items-stretch gap-2' : 'items-center gap-3'}"
         >
-          <ThemeToggle labelled={expanded} rail={!expanded} />
+          <!-- Members pick the theme in the account menu; visitors have none, so it stays here. -->
+          {#if !account}
+            <ThemeToggle labelled={expanded} rail={!expanded} />
+          {/if}
           {#if account}
             <AccountMenu
               name={account.displayName}
               username={account.username}
               avatarUrl={account.avatarUrl}
               {messagesUnread}
+              isAdmin={account.isAdmin}
+              adminPending={account.pendingSuggestionsCount}
               placement={expanded ? 'top-start' : 'right-end'}
               compact={!expanded}
               wide={expanded}
