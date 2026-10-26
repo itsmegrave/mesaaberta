@@ -127,3 +127,29 @@ test('turning direct messages off hides "Mandar mensagem para quem mestra"', asy
   await playerSession.context.close();
   await gmSession.context.close();
 });
+
+test('on a phone the conversation fits the screen, with the composer above the tab bar', async ({
+  browser,
+}) => {
+  const gm = await createUser('Mestra Eva');
+  const gmSession = await asUser(browser, gm);
+  const slug = await createTable(gmSession.page, { title: uniqueTitle('Mesa') });
+
+  const player = await createUser('Fábio');
+  const { page, context } = await asUser(browser, player);
+  await page.goto(`/t/${slug}`);
+  await expect(page.getByRole('button', { name: 'Abrir chat' })).toBeVisible();
+  await chooseFromMenu(page, 'Mandar mensagem para quem mestra');
+  await expect(page).toHaveURL(/\/m\/[0-9a-f-]+/);
+
+  for (const height of [640, 844]) {
+    await page.setViewportSize({ width: 390, height });
+    const composer = await page.getByRole('textbox', { name: 'Mensagem' }).boundingBox();
+    // The tab bar is 80px tall at the bottom of the screen; nothing has scrolled.
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    expect(composer!.y + composer!.height).toBeLessThanOrEqual(height - 80);
+  }
+
+  await context.close();
+  await gmSession.context.close();
+});

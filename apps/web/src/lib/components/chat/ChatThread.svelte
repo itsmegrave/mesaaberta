@@ -125,7 +125,14 @@
 <svelte:document onvisibilitychange={syncVisibility} />
 <svelte:window onfocus={syncVisibility} onblur={syncVisibility} />
 
-<section class="flex min-h-0 flex-col {drawer ? 'min-w-0 flex-1' : 'h-128 md:h-176'}">
+<!-- On a phone the page's thread takes the screen that is left: 100dvh less the header (4rem), the
+     inbox column's padding (1.5rem), the page's bottom padding (2rem) and the tab bar (5rem), so the
+     composer always sits above the tab bar. -->
+<section
+  class="flex min-h-0 flex-col {drawer
+    ? 'min-w-0 flex-1'
+    : 'h-[calc(100dvh-12.5rem)] min-h-80 md:h-176 md:min-h-0'}"
+>
   <ChatHeader
     conversation={data.conversation}
     {onback}
