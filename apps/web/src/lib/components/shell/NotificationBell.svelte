@@ -66,7 +66,7 @@
   <Popover.Trigger
     aria-label={label}
     class="relative btn flex items-center {rail
-      ? 'group min-h-14 w-16 flex-col justify-center gap-1 bg-transparent p-1 text-xs leading-tight whitespace-normal text-muted hover:bg-transparent hover:text-surface-950-50'
+      ? 'group size-12 justify-center bg-transparent p-0 text-muted hover:bg-transparent hover:text-surface-950-50'
       : labelled
         ? 'h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm hover:bg-surface-200-800'
         : 'size-11 justify-center rounded-full border border-surface-200-800 bg-panel p-0 hover:preset-tonal'}"
@@ -82,8 +82,6 @@
     </span>
     {#if labelled}<span aria-hidden="true" class="flex-1 text-left font-semibold"
         >{m.notifications_title()}</span
-      >{:else if rail}<span aria-hidden="true" class="w-full min-w-0 font-semibold"
-        >{m.nav_notifications_rail()}</span
       >{/if}
     {#if unread > 0}
       <!-- Counts are warning, never danger: they mean "needs attention", not an error. -->
@@ -94,7 +92,7 @@
         class={labelled
           ? 'h-5.5 min-w-5.5 px-1.5'
           : rail
-            ? 'absolute top-0.5 right-2 h-4 min-w-4 px-1'
+            ? 'absolute top-0 right-0 h-4 min-w-4 px-1'
             : 'absolute top-0 right-0 h-4 min-w-4 px-1'}
       />
     {:else if updated.current}

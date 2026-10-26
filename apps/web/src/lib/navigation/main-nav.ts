@@ -21,8 +21,6 @@ export interface MainNavLink {
   icon: IconName;
   /** The open sidebar's label. */
   label: () => string;
-  /** The rail's label, which may be shorter or break the word. */
-  railLabel: () => string;
   /** The tab bar's label. */
   tabLabel: () => string;
   /** What the tab is announced as when its label is a short form. */
@@ -40,7 +38,6 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     href: '/tables',
     icon: 'game-icons:tavern-sign',
     label: m.nav_tables,
-    railLabel: m.nav_tables,
     tabLabel: m.nav_tables,
     // The list and every table's own page (`/t/<slug>`), but not the form that opens one.
     current: (pathname) => isUnder(pathname, '/tables', ['/tables/new']) || isUnder(pathname, '/t'),
@@ -50,8 +47,6 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     href: '/crowdfunding',
     icon: 'game-icons:open-treasure-chest',
     label: m.nav_crowdfunding,
-    // The rail is narrow, so it breaks the word where it can (a soft hyphen in the message).
-    railLabel: m.nav_crowdfunding_rail,
     // The short label fits the bar, the full name is what is announced.
     tabLabel: m.nav_crowdfunding_short,
     tabAriaLabel: m.nav_crowdfunding_label,
@@ -62,7 +57,6 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     href: '/tables/new',
     icon: 'game-icons:dice-twenty-faces-twenty',
     label: m.nav_open_table,
-    railLabel: m.nav_open_table_short,
     tabLabel: m.nav_open_table_short,
     current: (pathname) => pathname === '/tables/new',
     audience: 'members',
@@ -72,7 +66,6 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     href: '/u/tables',
     icon: 'game-icons:tabletop-players',
     label: m.nav_my_tables,
-    railLabel: m.nav_my_tables,
     tabLabel: m.nav_my_tables,
     // Only the tables' own pages: the profile and the rest of the account are not "Minhas mesas".
     current: (pathname) => isUnder(pathname, '/u/tables'),

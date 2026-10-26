@@ -113,11 +113,12 @@ describe('ThemeToggle', () => {
     expect(glyph().className).toContain('motion-reduce:transition-none');
   });
 
-  it('draws the rail item: the same icon over "Tema", pressed while dark', async () => {
+  it('draws the rail item: the same icon and no label, pressed while dark', async () => {
     render(ThemeToggle, { rail: true });
 
     const button = page.getByRole('button', { name: 'Tema escuro' });
-    await expect.element(button).toHaveTextContent('Tema');
+    // Icons only on the rail: the tooltip names it.
+    expect(button.element().textContent?.trim()).toBe('');
     await expect.element(button).toHaveAttribute('aria-pressed', 'false');
     await button.click();
 

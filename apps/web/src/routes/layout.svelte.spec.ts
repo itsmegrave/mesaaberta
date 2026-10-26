@@ -1,5 +1,5 @@
 import { createRawSnippet } from 'svelte';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { toast } from '#lib/toaster.js';
@@ -143,22 +143,44 @@ describe('+layout.svelte', () => {
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
     // Notificações sits in the bottom group, right above the account, as when open.
     await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
-    expect(bell.parentElement?.contains(account)).toBe(true);
+    // Each rail item sits in its tooltip's wrapper, so the group is one level further up.
+    expect(bell.parentElement?.parentElement?.contains(account)).toBe(true);
     // Admin and the theme are in the account menu, not on the rail.
     expect(nav.getByRole('link', { name: 'Admin' }).elements()).toHaveLength(0);
     expect(nav.getByRole('button', { name: 'Tema escuro' }).elements()).toHaveLength(0);
     // The width animates, so wait for it to settle.
     await expect.poll(() => nav.element().getBoundingClientRect().width).toBe(80);
-    const label = nav.getByRole('link', { name: 'Minhas mesas' }).element()
-      .lastElementChild as HTMLElement;
-    expect(getComputedStyle(label).whiteSpace).toBe('normal');
-    expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+    // Icons only: the name is the accessible name and the tooltip, not text under the icon.
+    expect(nav.getByRole('link', { name: 'Minhas mesas' }).element().textContent?.trim()).toBe('');
+    expect(bell.textContent?.trim()).toBe('');
     // The test runner's pane splitter overlaps the left edge of the scaled test frame, where the
     // 80px rail's button sits, so a pointer click lands on the splitter; click the element itself.
     (nav.getByRole('button', { name: 'Expandir menu' }).element() as HTMLElement).click();
     await expect
       .element(nav.getByRole('button', { name: 'Recolher menu' }))
       .toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('names a rail item in a tooltip on hover and on keyboard focus', async () => {
+    render(Layout, { children, data: { ...signedOut, account: adminAccount } });
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+    // The pane splitter overlaps the rail (see above), so click and hover the elements themselves.
+    (nav.getByRole('button', { name: 'Recolher menu' }).element() as HTMLElement).click();
+    await expect.poll(() => nav.element().getBoundingClientRect().width).toBe(80);
+
+    const myTables = nav.getByRole('link', { name: 'Minhas mesas' }).element();
+    myTables.parentElement!.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse' }),
+    );
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Minhas mesas');
+    await userEvent.keyboard('{Escape}');
+    await expect.element(page.getByRole('tooltip')).not.toBeInTheDocument();
+
+    (nav.getByRole('button', { name: 'Expandir menu' }).element() as HTMLElement).focus();
+    await userEvent.tab();
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Mesas');
+    await userEvent.tab();
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Financiamentos');
   });
 
   describe('directories in the menu', () => {
@@ -174,12 +196,12 @@ describe('+layout.svelte', () => {
         .toHaveAttribute('href', '/systems');
     });
 
-    it('shows the short name under a divider on the rail', async () => {
+    it('shows the icon under a divider on the rail, named by its long name', async () => {
       render(Layout, { children, data: withSystems });
       await nav().getByRole('button', { name: 'Recolher menu' }).click();
 
       await expect
-        .element(nav().getByRole('link', { name: 'Sistemas', exact: true }))
+        .element(nav().getByRole('link', { name: 'Sistemas de RPG', exact: true }))
         .toHaveAttribute('href', '/systems');
       await expect.element(nav().getByText('Explorar', { exact: true })).not.toBeInTheDocument();
     });
