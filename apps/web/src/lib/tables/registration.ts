@@ -1,6 +1,7 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
 import { next } from '#lib/forms/next.js';
+import { playerRatingSchema } from '@mesaaberta/core/tables/rating';
 
 /** Every button-only action: which player it is about (when it is about one), and where to come back to. */
 export const actionSchema = z.object({ playerId: z.guid().optional(), next });
@@ -18,3 +19,6 @@ export const JOIN_MESSAGE_MAX = 500;
 export const joinSchema = tableActionSchema.extend({
   message: z.string().trim().max(JOIN_MESSAGE_MAX).default(''),
 });
+
+/** The GM's rating of a player, from the manage page: who, the stars, the GM's own note. */
+export const playerRatingFormSchema = playerRatingSchema.extend({ next });

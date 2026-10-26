@@ -4,6 +4,7 @@ import { connectionStringFrom, createDb, type DatabaseEnv } from '../db/client';
 import type { Logger } from '../logger';
 import { closeElapsedTables } from '../tables/lifecycle';
 import { pruneNotifications } from '../notifications/service';
+import { sendSessionReminders } from '../notifications/reminders';
 import { pruneTableChats } from '../messages/retention';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
@@ -29,7 +30,8 @@ type Deps = {
  * One run of the sweeper, called by the Cron Trigger: opens the database, dispatches the events
  * that are due (retries after backoff, and any whose first dispatch never happened), and always
  * closes the connection. Before that it asks the GM of every table whose session is over whether it
- * happened (`closeElapsedTables`) and lifts the temporary bans that ended. It also deletes the events and notifications past their retention period,
+ * happened (`closeElapsedTables`), lifts the temporary bans that ended and sends the session reminders
+ * that are due (`sendSessionReminders`). It also deletes the events and notifications past their retention period,
  * and table chats past their retention period. Does nothing without a database. Returns how many events it tried.
  */
 export async function runSweeper(
@@ -49,6 +51,13 @@ export async function runSweeper(
     // Temporary bans whose time is up; their events go out in this run too.
     const lifted = await liftExpiredBans(db, now);
     if (lifted.length > 0) log.info('bans lifted', { lifted: lifted.length });
+    // Isolated like the social publish: a failed reminder must not hold up the sweep.
+    try {
+      const reminded = await sendSessionReminders(db, now);
+      if (reminded > 0) log.info('session reminders', { reminded });
+    } catch (error) {
+      log.warn('session reminders failed', { code: 'session_reminders_failed', error });
+    }
     const swept =
       env.EVENT_POLLER === 'true'
         ? await sweepThroughPoller(db, handlers, now, log)

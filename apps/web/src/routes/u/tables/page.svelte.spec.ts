@@ -38,7 +38,7 @@ type Invitation = {
   status: 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
   expiresAt: Date;
   gmUsername: string;
-  table: { slug: string; title: string };
+  table: { slug: string; title: string; timezone: string };
 };
 type Data = {
   playing: (typeof playing)[];
@@ -74,7 +74,8 @@ const panel = (name: string) => page.getByText(name, { exact: true });
 describe('Minhas mesas', () => {
   it('offers permanent deletion for a draft and explains the irreversible action before posting', async () => {
     show({ playing: [], running: [{ ...running, tableStatus: 'draft' }] });
-    await page.getByRole('button', { name: 'Excluir rascunho', exact: true }).click();
+    await page.getByRole('button', { name: `Mais ações: ${running.title}` }).click();
+    await page.getByRole('menuitem', { name: 'Excluir rascunho…' }).click();
     const dialog = page.getByRole('alertdialog');
     await expect.element(dialog.getByText(/não pode ser desfeita/)).toBeVisible();
     await expect.element(dialog.getByRole('button', { name: 'Cancelar' })).toHaveFocus();
@@ -90,7 +91,8 @@ describe('Minhas mesas', () => {
   });
   it('offers closing a published table while explaining that its history is preserved', async () => {
     show({ playing: [], running: [running] });
-    await page.getByRole('button', { name: 'Encerrar mesa', exact: true }).click();
+    await page.getByRole('button', { name: `Mais ações: ${running.title}` }).click();
+    await page.getByRole('menuitem', { name: 'Encerrar mesa…' }).click();
     const dialog = page.getByRole('alertdialog');
     await expect.element(dialog.getByText(/histórico será preservado/)).toBeVisible();
     expect(
@@ -101,13 +103,13 @@ describe('Minhas mesas', () => {
         ?.getAttribute('action'),
     ).toBe('/t/cronicas/manage?/close');
   });
-  it('links only pending, unexpired invitations for the player to review', async () => {
+  it('lists only pending, unexpired invitations, with a count and "Responder" for each', async () => {
     const pending: Invitation = {
       id: '00000000-0000-4000-8000-000000000001',
       status: 'pending',
       expiresAt: new Date(Date.now() + 3600000),
       gmUsername: 'ana',
-      table: { slug: 'convite-atual', title: 'Convite atual' },
+      table: { slug: 'convite-atual', title: 'Convite atual', timezone: 'America/Sao_Paulo' },
     };
     show({
       playing: [],
@@ -118,21 +120,22 @@ describe('Minhas mesas', () => {
           ...pending,
           id: 'expired',
           expiresAt: new Date(0),
-          table: { slug: 'expired', title: 'Expirado' },
+          table: { ...pending.table, slug: 'expired', title: 'Expirado' },
         },
         {
           ...pending,
           id: 'accepted',
           status: 'accepted',
-          table: { slug: 'accepted', title: 'Aceito' },
+          table: { ...pending.table, slug: 'accepted', title: 'Aceito' },
         },
       ],
     });
     await expect
-      .element(page.getByRole('link', { name: 'Convite atual' }))
+      .element(page.getByRole('link', { name: 'Responder ao convite para Convite atual' }))
       .toHaveAttribute('href', '/u/profile/invitations/00000000-0000-4000-8000-000000000001');
-    await expect.element(page.getByRole('link', { name: 'Expirado' })).not.toBeInTheDocument();
-    await expect.element(page.getByRole('link', { name: 'Aceito' })).not.toBeInTheDocument();
+    await expect.element(page.getByText('1 convite aguardando resposta')).toBeInTheDocument();
+    await expect.element(page.getByText('@ana convidou você', { exact: false })).toBeVisible();
+    expect(page.getByRole('link', { name: /Responder/ }).elements()).toHaveLength(1);
   });
 
   // The banner's link leaves `#mesa-...` in the address, and that hash opens the GM's tab: clear it
@@ -223,17 +226,16 @@ describe('Minhas mesas', () => {
   describe('a session whose date has passed', () => {
     const awaiting = { ...running, tableStatus: 'awaiting_confirmation' as TableStatus };
 
-    it('asks the GM whether it happened, posting to the table’s manage page and coming back here', async () => {
+    it('asks the GM whether it happened: yes opens the attendance step, no posts and comes back', async () => {
       await page.viewport(1280, 800);
       show({ playing: [], running: [awaiting] });
 
       const prompt = page.getByRole('group', { name: 'A sessão de Crônicas de Arton aconteceu?' });
       await expect.element(prompt).toBeVisible();
-      const yes = prompt.getByRole('button', { name: 'Sim, aconteceu' });
       const no = prompt.getByRole('button', { name: 'Não aconteceu' });
-      expect(yes.element().closest('form')?.getAttribute('action')).toBe(
-        '/t/cronicas/manage?/happened',
-      );
+      await expect
+        .element(prompt.getByRole('link', { name: 'Sim, aconteceu' }))
+        .toHaveAttribute('href', '/t/cronicas/manage?etapa=presenca#session-confirmation');
       expect(no.element().closest('form')?.getAttribute('action')).toBe(
         '/t/cronicas/manage?/notHeld',
       );

@@ -8,17 +8,32 @@ vi.mock('$app/state', () => ({
   page: { url: new URL('http://localhost/u/ana'), params: { username: 'ana' } },
 }));
 
-const show = (links: { network: string; text: string; href: string | null }[]) =>
+const review = (n: number) => ({
+  username: `jogadora-${n}`,
+  avatarUrl: null,
+  score: 5,
+  text: `Comentário ${n}`,
+  createdAt: new Date('2026-10-01T12:00:00Z'),
+  table: { title: `Mesa ${n}`, slug: `mesa-${n}` },
+});
+
+const show = (
+  links: { network: string; text: string; href: string | null }[],
+  name?: string,
+  reviews: ReturnType<typeof review>[] = [],
+) =>
   render(Page, {
     data: {
       profile: {
         username: 'ana',
+        name: name ?? null,
         avatarUrl: null,
         links,
         totals: { played: 0, hosted: 0 },
         rating: { score: null, count: 0, isNew: true },
       },
       tables: [],
+      reviews,
       page: 1,
       pages: 1,
       total: 0,
@@ -54,5 +69,54 @@ describe('public profile social links', () => {
     await expect
       .element(page.getByRole('link', { name: 'Abrir Discord em nova aba' }))
       .not.toBeInTheDocument();
+  });
+});
+
+describe('public profile title', () => {
+  it('is the @usuário, with the name under it only when there is one to show', async () => {
+    show([], 'Ana Souza');
+
+    await expect.element(page.getByRole('heading', { level: 1 })).toHaveTextContent('@ana');
+    await expect.element(page.getByText('Ana Souza')).toBeVisible();
+  });
+
+  it('has no name line when the person keeps the name private', async () => {
+    show([]);
+
+    await expect.element(page.getByRole('heading', { level: 1 })).toHaveTextContent('@ana');
+    await expect.element(page.getByText('Ana Souza')).not.toBeInTheDocument();
+  });
+});
+
+describe('public profile reviews', () => {
+  it('has no section while nobody chose to show a comment', async () => {
+    show([]);
+
+    await expect
+      .element(page.getByRole('heading', { name: 'Avaliações da mestragem' }))
+      .not.toBeInTheDocument();
+  });
+
+  it('shows three comments, and the button grows the list in place', async () => {
+    show([], undefined, [1, 2, 3, 4, 5].map(review));
+
+    const list = page.getByRole('list', { name: 'Avaliações de @ana' });
+    await expect.element(list).toBeVisible();
+    expect(list.getByRole('listitem').all()).toHaveLength(3);
+    await expect.element(page.getByText('“Comentário 1”')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Mesa 1' }))
+      .toHaveAttribute('href', '/t/mesa-1');
+    await expect.element(page.getByRole('link', { name: '@jogadora-1' })).toBeVisible();
+    await expect.element(list.getByText('5 de 5').first()).toBeInTheDocument();
+
+    const more = page.getByRole('button', { name: 'Ver todas as 5 avaliações' });
+    await expect.element(more).toHaveAttribute('aria-expanded', 'false');
+    await more.click();
+    await expect.element(page.getByText('“Comentário 5”')).toBeVisible();
+    expect(list.getByRole('listitem').all()).toHaveLength(5);
+    await expect
+      .element(page.getByRole('button', { name: 'Mostrar menos' }))
+      .toHaveAttribute('aria-expanded', 'true');
   });
 });

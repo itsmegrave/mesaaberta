@@ -1,9 +1,90 @@
 [
   {
+    "date": "2026-10-26",
+    "title": "Lembretes de sessão e um menu mais claro",
+    "summary": "A mesa avisa antes da sessão, a confirmação de presença ficou passo a passo e o menu lateral é o mesmo aberto ou fechado.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Lembretes de sessão",
+        "description": "Quem joga e quem mestra recebe um aviso um dia e uma hora antes da sessão."
+      },
+      {
+        "kind": "new",
+        "title": "Aviso de nova versão",
+        "description": "Quando a Mesa Aberta ganha uma versão nova, o sino avisa e você atualiza a página sem perder o que estava escrevendo."
+      },
+      {
+        "kind": "new",
+        "title": "Seu nome no perfil público",
+        "description": "Se quiser, você mostra seu nome abaixo do @usuário no perfil público. Ele começa desligado.",
+        "href": "/u/profile/edit"
+      },
+      {
+        "kind": "improved",
+        "title": "Confirmar a sessão passo a passo",
+        "description": "Quem mestra diz se a sessão aconteceu, marca quem compareceu e escolhe a próxima data em etapas, e quem já avaliou a mesa conta como presente."
+      },
+      {
+        "kind": "improved",
+        "title": "Calendário com a próxima sessão",
+        "description": "Ao confirmar que vêm mais sessões, o convite do calendário muda para a nova data."
+      },
+      {
+        "kind": "improved",
+        "title": "Convites mais claros",
+        "description": "A tela de convites segue o novo desenho, e “Sim, aconteceu” em Minhas mesas abre direto a presença da sessão.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Notificações em páginas",
+        "description": "A lista de notificações abre por páginas, e “marcar todas como lidas” mantém as mais novas como não lidas."
+      },
+      {
+        "kind": "improved",
+        "title": "Menu lateral aberto e fechado",
+        "description": "O menu tem os mesmos grupos nos dois estados, o ícone de tema gira entre lua e sol e as ações aparecem como botões."
+      },
+      {
+        "kind": "improved",
+        "title": "Imagens em uma janela maior",
+        "description": "Enviar e ajustar a imagem de uma mesa, campanha ou parceria usa a mesma janela maior da foto e da capa do perfil."
+      },
+      {
+        "kind": "improved",
+        "title": "Rodapé mais enxuto",
+        "description": "O rodapé ficou menor, com os links em Páginas e Suporte."
+      },
+      {
+        "kind": "fixed",
+        "title": "Recorte da capa",
+        "description": "O recorte da capa do perfil fica dentro da imagem e a janela de recorte ficou mais clara."
+      },
+      {
+        "kind": "fixed",
+        "title": "Novidades no celular",
+        "description": "A ilustração dos destaques em Novidades não cobre mais o título no celular."
+      }
+    ]
+  },
+  {
     "date": "2026-10-25",
     "title": "Um perfil mais seu, uma mesa que continua",
     "summary": "Escolha uma capa, conte um pouco sobre você e siga com o grupo depois da sessão.",
     "changes": [
+      {
+        "kind": "new",
+        "title": "Novas mesas no Início",
+        "description": "O Início mostra as mesas que acabaram de abrir, as mais recentes primeiro, com quanto tempo faz que cada uma abriu.",
+        "href": "/"
+      },
+      {
+        "kind": "improved",
+        "title": "Mesas em carrossel",
+        "description": "Novas mesas e Mesas abertas passam de lado no Início, até dez de cada vez, e o último cartão leva à lista completa.",
+        "href": "/"
+      },
       {
         "kind": "new",
         "title": "Conquistas no perfil",
@@ -34,6 +115,11 @@
       },
       {
         "kind": "improved",
+        "title": "Conquistas em medalhas",
+        "description": "Cada conquista aparece como uma medalha com fitas. E a Primeira centena agora se chama 100!"
+      },
+      {
+        "kind": "improved",
         "title": "Editar perfil em seções",
         "description": "Um menu separa perfil público, informações pessoais, acesso, mensagens e privacidade para você encontrar o que quer mudar.",
         "href": "/u/profile/edit"
@@ -52,6 +138,11 @@
         "kind": "improved",
         "title": "Listas mais rápidas",
         "description": "As listas de mesas, parceiros e financiamentos reaproveitam os resultados recentes para abrir mais rápido."
+      },
+      {
+        "kind": "improved",
+        "title": "Links mais claros na busca e ao compartilhar",
+        "description": "As páginas de mesas e perfis mostram títulos e descrições mais claros nos resultados de busca e nos links compartilhados."
       }
     ]
   },

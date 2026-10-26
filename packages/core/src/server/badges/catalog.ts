@@ -20,7 +20,7 @@ export type BadgeStats = {
   joinedEarly(): Promise<boolean>;
 };
 
-/** How many members the "Primeira centena" badge goes to. */
+/** How many members the "100!" badge (once "Primeira centena") goes to. */
 export const FIRST_MEMBERS = 100;
 
 export type BadgeDefinition = {

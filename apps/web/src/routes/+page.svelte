@@ -3,9 +3,10 @@
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
-  import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
+  import NewTableCard from '#lib/components/ui/NewTableCard.svelte';
   import TableCard from '#lib/components/ui/TableCard.svelte';
+  import TableCarousel from '#lib/components/ui/TableCarousel.svelte';
   import TableIllustration from '#lib/components/ui/TableIllustration.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -22,10 +23,6 @@
   const star = 'M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.6l-5.9 3.2 1.2-6.5L2.5 9.7l6.6-.9z';
 </script>
 
-<svelte:head>
-  <title>{m.home_title()}</title>
-  <meta name="description" content={m.home_description()} />
-</svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 {#snippet arrow()}
@@ -81,40 +78,45 @@
   </div>
 </section>
 
-<section aria-labelledby="open-tables" class="pt-7 pb-2 md:pt-8 md:pb-14">
-  <div class="flex items-end justify-between gap-4">
+{#if data.newTables.length > 0}
+  <div class="pt-7 md:pt-8">
+    <TableCarousel
+      id="new-tables"
+      title={m.home_new_tables_title()}
+      lede={m.home_new_tables_lede()}
+      items={data.newTables}
+      key={(table) => table.slug}
+      itemClass="w-65 md:w-70"
+      moreHref="/t"
+      moreCaption={m.home_carousel_more_caption()}
+    >
+      {#snippet card(table)}<NewTableCard {table} now={data.now} />{/snippet}
+    </TableCarousel>
+  </div>
+{/if}
+
+{#if data.tables.length > 0}
+  <div class="pt-7 pb-2 md:pt-8 md:pb-14">
+    <TableCarousel
+      id="open-tables"
+      title={m.home_open_tables_title()}
+      items={data.tables}
+      key={(table) => table.slug}
+      itemClass="w-75 md:w-96"
+      moreHref="/t"
+      moreCaption={m.home_carousel_more_caption()}
+    >
+      {#snippet card(table)}<TableCard {table} />{/snippet}
+    </TableCarousel>
+  </div>
+{:else}
+  <section aria-labelledby="open-tables" class="pt-7 pb-2 md:pt-8 md:pb-14">
     <h2
       id="open-tables"
       class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl"
     >
       {m.home_open_tables_title()}
     </h2>
-    {#if data.tables.length > 0}
-      <a
-        href="/t"
-        class="btn hidden h-12 gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold md:inline-flex"
-      >
-        {m.home_open_tables_all()}
-        {@render arrow()}
-      </a>
-    {/if}
-  </div>
-
-  {#if data.tables.length > 0}
-    <CardGrid class="mt-4 md:mt-7">
-      {#each data.tables as table, i (table.slug)}
-        <!-- The phone layout previews two tables; the third waits on the full list. -->
-        <li class={i >= 2 ? 'hidden lg:block' : ''}><TableCard {table} /></li>
-      {/each}
-    </CardGrid>
-    <a
-      href="/t"
-      class="mt-4 btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold md:hidden"
-    >
-      {m.home_open_tables_all()}
-      {@render arrow()}
-    </a>
-  {:else}
     <div
       class="mt-7 rounded-lg border border-surface-200-800 bg-panel p-6 md:flex md:items-center md:justify-between md:gap-8"
     >
@@ -130,8 +132,8 @@
         {@render arrow()}
       </a>
     </div>
-  {/if}
-</section>
+  </section>
+{/if}
 
 <!-- The band runs edge to edge; its background is a pseudo-element so the content keeps the page column. -->
 <section
@@ -227,7 +229,7 @@
         </span>
       </div>
       <div>
-        <p class="text-sm font-semibold text-muted">Daggerheart · Mestre: @bruno-leal</p>
+        <p class="text-sm font-semibold text-muted">Daggerheart · @bruno-leal</p>
         <p class="mt-1 text-2xl leading-tight font-semibold">Os Sinos de Sablewood</p>
       </div>
       <p class="flex items-start gap-2 text-base leading-normal">

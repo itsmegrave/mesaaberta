@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { m } from '#lib/paraglide/messages.js';
-import { dateBox, kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from './format';
+import { dateBox, kindLabel, openedLabel, scheduleLabel, seatsLeftLabel } from './format';
 
 describe('kindLabel', () => {
   it('names each kind', () => {
@@ -34,19 +34,27 @@ describe('seatsLeftLabel', () => {
   });
 });
 
-describe('minPlayersLabel', () => {
-  it('says whether the confirmed seats reach the minimum', () => {
-    expect(minPlayersLabel(3, 3)).toBe(`${m.table_min_players({ count: 3 })} · Mínimo atingido`);
-    expect(minPlayersLabel(3, 1)).toBe(
-      `${m.table_min_players({ count: 3 })} · ${m.table_min_players_missing({ count: 2 })}`,
-    );
-  });
-});
-
 describe('dateBox', () => {
   it('splits the date in the given zone, without abbreviation dots', () => {
     // 02:00 UTC on Sunday is still Saturday in São Paulo.
     const box = dateBox(new Date('2026-09-27T02:00:00Z'), 'America/Sao_Paulo', 'pt-BR');
     expect(box).toEqual({ weekday: 'sáb', day: '26', month: 'set' });
+  });
+});
+
+describe('openedLabel', () => {
+  const now = new Date('2026-10-01T12:00:00Z');
+  const ago = (minutes: number) => new Date(now.getTime() - minutes * 60 * 1000);
+
+  it('counts from when the table was published', () => {
+    expect(openedLabel(ago(0), now)).toBe('Aberta agora');
+    expect(openedLabel(ago(12), now)).toBe('Aberta há 12 min');
+    expect(openedLabel(ago(5 * 60 + 10), now)).toBe('Aberta há 5 h');
+    expect(openedLabel(ago(30 * 60), now)).toBe('Aberta ontem');
+    expect(openedLabel(ago(3 * 24 * 60), now)).toBe('Aberta há 3 dias');
+  });
+
+  it('reads a date a little ahead of the clock as now', () => {
+    expect(openedLabel(ago(-1), now)).toBe('Aberta agora');
   });
 });

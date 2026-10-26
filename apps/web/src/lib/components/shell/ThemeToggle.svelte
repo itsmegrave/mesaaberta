@@ -7,12 +7,21 @@
 
   let {
     labelled = false,
+    rail = false,
   }: {
     /** A "Tema escuro" row with a switch, for the open side nav. */
     labelled?: boolean;
+    /** The collapsed side nav's item: the icon on a 40px tile over "Tema". */
+    rail?: boolean;
   } = $props();
 
   let isDark = $state(false);
+  // The icon only turns when the theme changes while the page is open, never on the first paint.
+  let animate = $state(false);
+  const glyphs = $derived([
+    { name: 'moon', shown: !isDark, hidden: '-rotate-90' },
+    { name: 'sun', shown: isDark, hidden: 'rotate-90' },
+  ] as const);
   let activeChoice = $state<ThemeChoice>('system');
 
   onMount(() => {
@@ -30,6 +39,7 @@
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     const onChange = (e: MediaQueryListEvent) => {
       if (activeChoice === 'system') {
+        animate = true;
         isDark = e.matches;
         applyChoice('system');
       }
@@ -39,11 +49,31 @@
   });
 
   function handlePressedChange(pressed: boolean) {
+    animate = true;
     isDark = pressed;
     activeChoice = pressed ? 'dark' : 'light';
     applyChoice(activeChoice);
   }
 </script>
+
+<!-- The moon in the light theme, the sun in the dark one: the same icon open, in the rail and in the
+     header. On a change one turns and fades into the other; reduced motion swaps them in place. -->
+{#snippet themeIcon()}
+  <span aria-hidden="true" class="grid size-5 shrink-0 place-items-center">
+    {#each glyphs as glyph (glyph.name)}
+      <span
+        data-shown={glyph.shown}
+        class="col-start-1 row-start-1 flex {animate
+          ? 'transition duration-300 ease-out motion-reduce:transition-none'
+          : ''} {glyph.shown
+          ? 'scale-100 rotate-0 opacity-100'
+          : `scale-50 opacity-0 ${glyph.hidden}`}"
+      >
+        <Icon name={glyph.name} size={20} />
+      </span>
+    {/each}
+  </span>
+{/snippet}
 
 {#if labelled}
   <!-- A plain switch button: Skeleton's Switch draws its hidden input with an inline style, which the
@@ -56,7 +86,7 @@
     onclick={() => handlePressedChange(!isDark)}
     class="flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold hover:bg-surface-200-800"
   >
-    <span class="flex shrink-0 text-muted"><Icon name="moon" size={20} /></span>
+    <span class="flex shrink-0 text-muted">{@render themeIcon()}</span>
     <span class="flex-1">{m.theme_dark_mode()}</span>
     <span
       aria-hidden="true"
@@ -71,6 +101,22 @@
       ></span>
     </span>
   </button>
+{:else if rail}
+  <button
+    type="button"
+    aria-label={m.theme_dark_mode()}
+    aria-pressed={isDark}
+    title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
+    onclick={() => handlePressedChange(!isDark)}
+    class="group relative flex min-h-14 w-16 flex-col items-center justify-center gap-1 py-1 text-center text-xs leading-tight font-semibold text-muted hover:text-surface-950-50"
+  >
+    <span
+      class="flex size-10 shrink-0 items-center justify-center rounded-lg group-hover:bg-surface-200-800"
+    >
+      {@render themeIcon()}
+    </span>
+    <span aria-hidden="true" class="w-full min-w-0">{m.nav_theme_rail()}</span>
+  </button>
 {:else}
   <MAButton
     size="custom"
@@ -81,7 +127,6 @@
     onclick={() => handlePressedChange(!isDark)}
     class="btn-icon size-11 shrink-0 rounded-full border border-surface-200-800 hover:preset-tonal"
   >
-    <!-- The sun when dark (switches to light), the moon when light (switches to dark). -->
-    <Icon name={isDark ? 'sun' : 'moon'} size={20} />
+    {@render themeIcon()}
   </MAButton>
 {/if}

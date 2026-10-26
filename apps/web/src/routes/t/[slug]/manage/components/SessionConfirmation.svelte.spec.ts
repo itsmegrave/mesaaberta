@@ -7,26 +7,63 @@ const players = [
   { playerId: '00000000-0000-4000-8000-000000000001', username: 'ana', avatarUrl: null },
   { playerId: '00000000-0000-4000-8000-000000000002', username: 'bia', avatarUrl: null },
 ];
+// The step links only change the step: follow one as a script would, by its click handler. (The
+// unstyled links sit at the frame's edge, where a pointer click can miss them.)
+const follow = (name: string) =>
+  (page.getByRole('link', { name }).element() as HTMLElement).click();
+// Saturday 26 September 2026, 19:00 in São Paulo.
+const startsAt = new Date('2026-09-26T22:00:00Z');
 
 describe('SessionConfirmation', () => {
-  it('lists the confirmed players, all checked, inside the "it happened" form', async () => {
-    render(SessionConfirmation, { next: '/t/mesa/manage', players });
+  it('asks first whether the session happened, with its date', async () => {
+    render(SessionConfirmation, { next: '/t/mesa/manage', players, startsAt });
 
-    const ana = page.getByRole('checkbox', { name: 'ana' });
-    const bia = page.getByRole('checkbox', { name: 'bia' });
-    await expect.element(ana).toBeChecked();
-    await expect.element(bia).toBeChecked();
-    expect(ana.element().closest('form')?.getAttribute('action')).toBe('?/happened');
-    // Without this marker the server cannot tell an empty list from a form that never asked.
-    expect(ana.element().closest('form')?.querySelector('input[name="attendance"]')).not.toBeNull();
+    await expect
+      .element(page.getByRole('heading', { name: 'A sessão de sábado aconteceu?' }))
+      .toBeVisible();
+    await expect.element(page.getByText('sábado, 26 de setembro, 19:00')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Sim, aconteceu' }))
+      .toHaveAttribute('href', '/t/mesa/manage?etapa=presenca');
+    await expect
+      .element(page.getByRole('button', { name: 'Não aconteceu' }))
+      .toHaveAttribute('type', 'submit');
+    await expect
+      .element(page.getByRole('link', { name: 'Adiar sessão' }))
+      .toHaveAttribute('href', '/t/mesa/manage?etapa=adiar');
+    await expect.element(page.getByRole('checkbox')).not.toBeInTheDocument();
   });
 
-  it('sends only the players left checked', async () => {
-    render(SessionConfirmation, { next: '/t/mesa/manage', players });
+  it('lists the confirmed players, all checked, in the presence step, and counts them', async () => {
+    render(SessionConfirmation, { next: '/t/mesa/manage', players, startsAt });
 
-    await page.getByRole('checkbox', { name: 'bia' }).click();
+    follow('Sim, aconteceu');
 
-    const form = page.getByRole('checkbox', { name: 'ana' }).element().closest('form')!;
+    await expect.element(page.getByRole('heading', { name: 'Marque a presença' })).toBeVisible();
+    const ana = page.getByRole('checkbox', { name: /^ana/ });
+    await expect.element(ana).toBeChecked();
+    await expect.element(page.getByRole('checkbox', { name: /^bia/ })).toBeChecked();
+    await expect.element(page.getByText('2 de 2 presentes')).toBeVisible();
+    const form = ana.element().closest('form')!;
+    expect(form.getAttribute('action')).toBe('?/happened');
+    // Without this marker the server cannot tell an empty list from a form that never asked.
+    expect(form.querySelector('input[name="attendance"]')).not.toBeNull();
+    await expect.element(page.getByRole('button', { name: 'Confirmar presença' })).toBeVisible();
+
+    follow('Voltar');
+    await expect
+      .element(page.getByRole('heading', { name: 'A sessão de sábado aconteceu?' }))
+      .toBeVisible();
+  });
+
+  it('sends only the players left checked, and marks the others absent', async () => {
+    render(SessionConfirmation, { next: '/t/mesa/manage', players, step: 'presenca' });
+
+    await page.getByRole('checkbox', { name: /^bia/ }).click();
+
+    await expect.element(page.getByText('Ausente', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('1 de 2 presentes')).toBeVisible();
+    const form = page.getByRole('checkbox', { name: /^ana/ }).element().closest('form')!;
     expect(new FormData(form).getAll('present')).toEqual([players[0].playerId]);
   });
 
@@ -35,6 +72,7 @@ describe('SessionConfirmation', () => {
       next: '/t/mesa/manage',
       players: [players[0], { ...players[1], rated: true }],
       multi: true,
+      step: 'presenca',
     });
 
     // The note is part of the label, so it is read with the name.
@@ -45,23 +83,36 @@ describe('SessionConfirmation', () => {
       .element(page.getByText('Já avaliou a mesa, então conta como presente.'))
       .toBeVisible();
 
-    await page.getByRole('checkbox', { name: 'ana' }).click();
+    await page.getByRole('checkbox', { name: /^ana/ }).click();
     const form = bia.element().closest('form')!;
     expect(new FormData(form).getAll('present')).toEqual([players[1].playerId]);
   });
 
-  it('does not ask who showed up when no one has a seat', async () => {
+  it('confirms straight away when no one has a seat', async () => {
     render(SessionConfirmation, { next: '/t/mesa/manage', players: [] });
 
-    await expect.element(page.getByRole('button', { name: 'Aconteceu' })).toBeVisible();
-    await expect.element(page.getByRole('checkbox')).not.toBeInTheDocument();
+    const yes = page.getByRole('button', { name: 'Sim, aconteceu' });
+    await expect.element(yes).toHaveAttribute('type', 'submit');
+    expect(yes.element().closest('form')?.getAttribute('action')).toBe('?/happened');
   });
 
   it('for a campaign, asks if more sessions come and posts to the session-held action', async () => {
-    render(SessionConfirmation, { next: '/t/mesa/manage', players, multi: true });
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      nextSession: '2026-10-03T19:00',
+      step: 'presenca',
+    });
 
-    const form = page.getByRole('checkbox', { name: 'ana' }).element().closest('form')!;
+    const form = page.getByRole('checkbox', { name: /^ana/ }).element().closest('form')!;
     expect(form.getAttribute('action')).toBe('?/sessionHeld');
+    // The next date comes from the calendar picker, prefilled, with no duration.
+    expect(new FormData(form).get('nextStartsAtLocal')).toBe('2026-10-03T19:00');
+    expect(form.querySelector('input[name="durationHours"]')).toBeNull();
+    await expect
+      .element(page.getByText('sábado, 3 de outubro, às 19:00 · No seu fuso (GMT-3)'))
+      .toBeVisible();
     await expect
       .element(page.getByRole('button', { name: 'Confirmar, a mesa continua' }))
       .toBeVisible();
@@ -74,6 +125,20 @@ describe('SessionConfirmation', () => {
       .toBeVisible();
   });
 
+  it('for an adventure, asks for the next date with nothing prefilled', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players: [],
+      multi: true,
+      step: 'presenca',
+    });
+
+    await expect
+      .element(page.getByText('Aventuras não têm repetição: diga quando é a próxima sessão.'))
+      .toBeVisible();
+    await expect.element(page.getByText('Escolha o dia e o horário.')).toBeVisible();
+  });
+
   it('for a campaign that did not happen, skips the session or closes the table', async () => {
     render(SessionConfirmation, {
       next: '/t/mesa/manage',
@@ -82,12 +147,13 @@ describe('SessionConfirmation', () => {
       nextSession: '2026-10-08T19:00',
     });
 
+    follow('Não aconteceu');
+
     const skip = page.getByRole('button', { name: 'Não aconteceu, pular sessão' });
+    await expect.element(skip).toBeVisible();
     const form = skip.element().closest('form')!;
     expect(form.getAttribute('action')).toBe('?/sessionSkipped');
     expect(new FormData(form).get('nextStartsAtLocal')).toBe('2026-10-08T19:00');
-    // A campaign has no separate "Adiar": skipping is how it gets a new date.
-    await expect.element(page.getByRole('button', { name: 'Adiar' })).not.toBeInTheDocument();
 
     await page.getByRole('radio', { name: /Encerrar a mesa/ }).click();
 
@@ -97,19 +163,21 @@ describe('SessionConfirmation', () => {
       .toBeVisible();
   });
 
-  it('asks the next date with the calendar picker, and no duration', async () => {
-    render(SessionConfirmation, {
-      next: '/t/mesa/manage',
-      players: [],
-      multi: true,
-    });
+  it('postpones with the calendar picker, not a native date field', async () => {
+    render(SessionConfirmation, { next: '/t/mesa/manage', players, step: 'adiar' });
 
-    // The day comes from the calendar, the same picker as the table form; the field posts the date.
-    const form = page
-      .getByRole('radio', { name: /Vêm mais sessões/ })
-      .element()
-      .closest('form')!;
-    expect(form.querySelector('input[name="nextStartsAtLocal"]')).not.toBeNull();
-    expect(form.querySelector('input[name="durationHours"]')).toBeNull();
+    await expect.element(page.getByRole('heading', { name: 'Adiar a sessão' })).toBeVisible();
+    const submit = page.getByRole('button', { name: 'Adiar sessão' });
+    const form = submit.element().closest('form')!;
+    expect(form.getAttribute('action')).toBe('?/postpone');
+    expect(form.querySelector('input[type="datetime-local"]')).toBeNull();
+    expect(form.querySelector('input[name="startsAtLocal"]')).not.toBeNull();
+    await expect
+      .element(
+        page.getByText(
+          'Quem joga recebe um aviso com a nova data e o convite do calendário é atualizado.',
+        ),
+      )
+      .toBeVisible();
   });
 });

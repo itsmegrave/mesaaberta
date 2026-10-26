@@ -38,7 +38,11 @@ export const load: PageServerLoad = async (event) => {
     ...data,
     ratingForm: {
       valid: false,
-      data: { gmScore: data.myRating?.gmScore ?? 0, comment: data.myRating?.comment ?? '' },
+      data: {
+        gmScore: data.myRating?.gmScore ?? 0,
+        comment: data.myRating?.comment ?? '',
+        commentPublic: false,
+      },
       errors: {},
     },
   };
@@ -46,7 +50,7 @@ export const load: PageServerLoad = async (event) => {
 
 // Each action runs a registration operation as the signed-in player (see runRegistrationAction).
 export const actions: Actions = {
-  // "Falar com o mestre": opens the direct conversation with the GM, about this table.
+  // "Falar com quem mestra": opens the direct conversation with the GM, about this table.
   talk: async ({ locals, url, params }) => {
     await requireUser(locals, new URL(url.pathname, url));
     if (!locals.db) error(503, 'Database not configured');
@@ -129,11 +133,12 @@ export const actions: Actions = {
         submitRating(db, actor, event.params.slug, {
           gmScore: data.gmScore,
           comment: data.comment || null,
+          commentPublic: data.commentPublic,
         }),
       (data) => ({
         action: 'rate',
         slug: event.params.slug,
-        body: { gmScore: data.gmScore, comment: data.comment },
+        body: { gmScore: data.gmScore, comment: data.comment, commentPublic: data.commentPublic },
         flag: 'api_ratings',
       }),
     ),

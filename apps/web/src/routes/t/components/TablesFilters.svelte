@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // The list's filters. On a desktop one row: the system, the modality, a multi-select box each for
   // the platforms and the tags. On a phone the modality and a "Filtros (N)" button that opens a
   // full-screen sheet with all of them. A change applies at once (the list reloads on the new
@@ -76,8 +77,9 @@
 
   let sheetOpen = $state(false);
 
+  // Modalidade is a pill track on the wash: 44px tall with a 4px inset, so each segment is 36px.
   const segment =
-    'inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold no-underline hover:preset-tonal';
+    'inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap no-underline';
   const trigger =
     'btn min-h-11 gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold hover:preset-tonal';
 </script>
@@ -86,13 +88,15 @@
   <div
     role="group"
     aria-label={m.tables_filter_modality()}
-    class="inline-flex gap-1 rounded-lg border-2 border-surface-200-800 bg-panel p-1"
+    class="inline-flex h-11 shrink-0 gap-1 rounded-full bg-surface-wash p-1"
   >
     {#each modalities as option (option.value)}
       <button
         type="button"
         aria-pressed={option.value === picked.modality}
-        class="{segment} {option.value === picked.modality ? 'preset-filled-primary-500' : ''}"
+        class="{segment} {option.value === picked.modality
+          ? 'preset-filled-primary-500'
+          : 'hover:bg-surface-200-800'}"
         onclick={() => apply({ modality: option.value })}
         >{#if option.value}<Icon
             name={modalityIcon(option.value)}
@@ -104,15 +108,18 @@
 {/snippet}
 
 <div class="mt-5 grid gap-4 md:mt-8">
-  <div class="flex flex-wrap items-end gap-3">
+  <!-- One line of 44px controls, centred, with no visible labels: each field names itself. -->
+  <div class="flex flex-wrap items-center gap-3">
     {#if systems.length > 0}
-      <div class="hidden w-72 md:block">
+      <div class="hidden w-full max-w-85 min-w-0 flex-1 md:block">
         <SearchSelect
           id="system-filter"
           name="system"
           label={m.tables_filter_label()}
-          labelClass="label-text block pb-1 font-semibold"
+          labelClass="sr-only"
           class="grid"
+          compact
+          icon="search"
           items={systems}
           value={picked.systems}
           placeholder={m.tables_filter_search()}
@@ -125,7 +132,7 @@
     {@render modality()}
     {#each [{ kind: 'platforms', icon: 'category', label: m.form_platforms(), items: catalog.platforms }, { kind: 'tags', icon: 'tag', label: m.form_tags(), items: allTags }] as const as group (group.kind)}
       {#if group.items.length > 0}
-        <div class="hidden w-60 md:block">
+        <div class="hidden w-58 shrink-0 md:block">
           <SearchSelect
             id="{group.kind}-filter"
             name={group.kind}
@@ -168,8 +175,10 @@
         </li>
       {/each}
       <li>
-        <button type="button" class="btn min-h-11 px-2 anchor font-semibold" onclick={clearAll}
-          >{m.tables_filters_clear_all()}</button
+        <button
+          type="button"
+          class="{buttonClass('secondary', 'sm')} font-semibold"
+          onclick={clearAll}>{m.tables_filters_clear_all()}</button
         >
       </li>
     </ul>
@@ -228,8 +237,10 @@
           <footer
             class="flex items-center justify-between gap-3 border-t border-surface-200-800 px-5 py-3"
           >
-            <button type="button" class="btn min-h-11 px-0 anchor font-semibold" onclick={clearAll}
-              >{m.tables_filters_clear_everything()}</button
+            <button
+              type="button"
+              class="{buttonClass('secondary', 'sm')} font-semibold"
+              onclick={clearAll}>{m.tables_filters_clear_everything()}</button
             >
             <Dialog.CloseTrigger
               class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"

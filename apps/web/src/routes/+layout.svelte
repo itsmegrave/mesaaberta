@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SeoHead from '#lib/seo/SeoHead.svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import './layout.css';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
@@ -31,6 +32,7 @@
 
   import { isUnder } from '#lib/navigation/main-nav.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { reloadPage } from '#lib/forms/leave-guard.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
   import { onMount } from 'svelte';
 
@@ -104,11 +106,9 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href={asset('favicon.svg')} />
 
   <link rel="manifest" href={asset('site.webmanifest')} />
-
-  {#if data.maintenance}
-    <meta name="robots" content="noindex" />
-  {/if}
 </svelte:head>
+
+<SeoHead />
 
 <QueryClientProvider {client}>
   <a
@@ -191,7 +191,7 @@
           <MAButton
             size="custom"
             class="btn preset-filled-primary-500"
-            onclick={() => location.reload()}
+            onclick={() => void reloadPage()}
           >
             {m.version_update_refresh()}
           </MAButton>

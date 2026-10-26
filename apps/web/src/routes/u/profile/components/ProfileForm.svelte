@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
@@ -136,9 +137,9 @@
     slug: option,
   }));
 
-  const input = 'input h-12 w-full rounded-lg border-surface-200-800 bg-panel px-3';
+  const input = 'input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
   const secondary =
-    'btn h-12 min-w-11 rounded-lg border-2 border-surface-200-800 px-3 font-semibold hover:preset-tonal disabled:opacity-50';
+    'btn h-12 min-w-11 rounded-lg btn-secondary px-3 font-semibold disabled:opacity-50';
 
   const ERRORS: Record<string, () => string> = {
     required: m.profile_error_required,
@@ -313,6 +314,19 @@
         />
       {/snippet}
     </FormField>
+    {#if section === 'public'}
+      <!-- Off until the person turns it on: the name may have come from Google or Discord. -->
+      <label class="-mt-2 flex min-h-11 items-center gap-3 text-sm">
+        <input
+          type="checkbox"
+          name="showName"
+          value="true"
+          bind:checked={$draft.showName}
+          class="checkbox"
+        />
+        {m.profile_show_name()}
+      </label>
+    {/if}
   {/if}
 
   {#if section === 'public'}
@@ -332,7 +346,7 @@
           rows={4}
           maxlength={PROFILE_LIMITS.bio}
           bind:value={$draft.bio}
-          class="textarea w-full rounded-lg border-surface-200-800 bg-panel p-3"
+          class="textarea w-full rounded-lg border-control border-ink-muted bg-panel p-3"
           {...aria}
         />
       {/snippet}
@@ -467,7 +481,9 @@
     </MAButton>
     {#if cancelHref}
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
-      <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
+      <a href={cancelHref} class="{buttonClass('secondary', 'md')} font-semibold"
+        >{m.form_cancel()}</a
+      >
     {/if}
   </div>
 </MAForm>

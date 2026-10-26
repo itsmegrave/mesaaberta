@@ -1,36 +1,72 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { parse, type Token } from '@messageformat/parser';
 import { describe, expect, it } from 'vitest';
 
 const dir = join(process.cwd(), 'messages');
 const baseLocale = 'pt-BR';
 
-// A message is a string, or a list of variants (plural forms) with the text of each in `match`.
-type Message = string | { match: Record<string, string> }[];
-const load = (locale: string): Record<string, Message> =>
+// Every message is an ICU MessageFormat string (plurals included), read by @inlang/plugin-icu1.
+const load = (locale: string): Record<string, string> =>
   JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8'));
-const texts = (message: Message | undefined) =>
-  typeof message === 'string' || message === undefined
-    ? [message ?? '']
-    : message.flatMap((variant) => Object.values(variant.match));
 
-const messageKeys = (messages: Record<string, Message>) =>
+const messageKeys = (messages: Record<string, string>) =>
   Object.keys(messages)
     .filter((key) => !key.startsWith('$'))
     .sort();
 
-const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+// Rejects broken syntax and plural keys the locale doesn't have (`few` in pt-BR, say).
+const tokens = (locale: string, text: string) =>
+  parse(text, { cardinal: new Intl.PluralRules(locale).resolvedOptions().pluralCategories });
+
+// The arguments a message reads, so `{count}` and `#` count as the same placeholder.
+const placeholders = (list: Token[], plural?: string): string[] =>
+  list.flatMap((token) => {
+    if (token.type === 'argument' || token.type === 'function') return [token.arg];
+    if (token.type === 'octothorpe') return plural ? [plural] : [];
+    if (token.type === 'content') return [];
+    return [token.arg, ...token.cases.flatMap((c) => placeholders(c.tokens, token.arg))];
+  });
+
+// Plain text of every branch, for the copy checks below.
+const texts = (list: Token[]): string[] =>
+  list.flatMap((token) => {
+    if (token.type === 'content') return [token.value];
+    if (token.type === 'plural' || token.type === 'select' || token.type === 'selectordinal')
+      return token.cases.flatMap((c) => texts(c.tokens));
+    return [];
+  });
 
 const locales = readdirSync(dir)
   .filter((file) => file.endsWith('.json'))
   .map((file) => file.replace(/\.json$/, ''));
 
 describe.each(locales)('%s messages', (locale) => {
-  it('has no empty message', () => {
-    const messages = load(locale);
+  const messages = load(locale);
 
+  it('has no empty message', () => {
+    for (const key of messageKeys(messages)) expect(messages[key].trim(), key).not.toBe('');
+  });
+
+  it('is valid ICU MessageFormat', () => {
     for (const key of messageKeys(messages)) {
-      for (const text of texts(messages[key])) expect(text.trim(), key).not.toBe('');
+      expect(typeof messages[key], key).toBe('string');
+      expect(() => tokens(locale, messages[key]), key).not.toThrow();
+    }
+  });
+});
+
+// The gender-neutral copy rule: quem mestra, quem joga, Participantes.
+describe('pt-BR copy', () => {
+  const messages = load(baseLocale);
+  // "Mestre" alone may stay (#103); the article, a "Mestre:" label or "jogador" marks gender.
+  const gendered =
+    /\b(?:o|os|do|dos|ao|aos|pelo|pelos|um|uns|seu|seus)\s+mestres?\b|\bmestres?:|\bjogador(?:a|es|as)?\b/i;
+
+  it('uses gender-neutral roles', () => {
+    for (const key of messageKeys(messages)) {
+      const copy = texts(tokens(baseLocale, messages[key])).join(' ');
+      expect(copy, key).not.toMatch(gendered);
     }
   });
 });
@@ -45,11 +81,10 @@ describe.each(locales.filter((locale) => locale !== baseLocale))('%s translation
   });
 
   it('uses the same placeholders as the base locale in every message', () => {
+    const all = (loc: string, text: string | undefined) =>
+      [...new Set(placeholders(tokens(loc, text ?? '')))].sort();
     for (const key of messageKeys(base)) {
-      const all = (message: Message | undefined) => [
-        ...new Set(texts(message).flatMap((text) => placeholders(text))),
-      ];
-      expect(all(translation[key]), key).toEqual(all(base[key]));
+      expect(all(locale, translation[key]), key).toEqual(all(baseLocale, base[key]));
     }
   });
 });

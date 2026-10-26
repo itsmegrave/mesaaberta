@@ -115,7 +115,7 @@ describe('TableForm', () => {
   it('asks for a minimum of players as an optional field, blank by default', async () => {
     render(TableFormHarness, props);
 
-    const field = page.getByLabelText(/Mínimo de jogadores/);
+    const field = page.getByLabelText(/Mínimo de participantes/);
     await expect.element(field).toHaveValue('');
     await expect.element(page.getByText(/Deixe em branco se não faz diferença\./)).toBeVisible();
     await field.fill('3');
@@ -133,10 +133,10 @@ describe('TableForm', () => {
       .element(page.getByText('O mínimo não pode ser maior que o número de vagas.'))
       .toBeVisible();
     await expect
-      .element(page.getByLabelText(/Mínimo de jogadores/))
+      .element(page.getByLabelText(/Mínimo de participantes/))
       .toHaveAttribute('aria-invalid', 'true');
     await expect
-      .element(page.getByLabelText(/Mínimo de jogadores/))
+      .element(page.getByLabelText(/Mínimo de participantes/))
       .toHaveAttribute('aria-describedby', 'minPlayers-hint minPlayers-error');
   });
 

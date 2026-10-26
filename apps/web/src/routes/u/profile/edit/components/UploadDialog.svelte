@@ -4,12 +4,13 @@
   // picked image is framed in the same dialog. "Usar este recorte" sends it at once; the action
   // answers with a redirect, so the page (and the header) shows the new image. Until JavaScript runs
   // it is a plain file field with its own button, so the form works without it.
-  import { Dialog, FileUpload, Portal } from '@skeletonlabs/skeleton-svelte';
+  import { FileUpload } from '@skeletonlabs/skeleton-svelte';
   import { onMount, tick } from 'svelte';
   import type { ZodType } from 'zod';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import ImageCropper from '#lib/components/ui/ImageCropper.svelte';
+  import ImageDialog from '#lib/components/ui/ImageDialog.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { isDecodable } from '#lib/forms/decodable.js';
   import type { IconName } from '#lib/icons/names.js';
@@ -86,96 +87,67 @@
 
   const accept = IMAGE_TYPES.join(',');
   const avatar = $derived(kind === 'avatar');
-  const trigger =
-    'btn h-12 w-full gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold hover:preset-tonal sm:w-auto';
+  // The size that is sent, so a picture of that shape needs no cutting.
+  const recommended = $derived(avatar ? m.upload_recommended_photo : m.upload_recommended_cover);
 </script>
 
 {#if mounted}
-  <Dialog
-    {open}
-    onOpenChange={(details) => {
-      open = details.open;
-      if (!open) finish([]);
-    }}
-  >
-    <Dialog.Trigger class={trigger}><Icon name={icon} size={20} />{label}</Dialog.Trigger>
-    <!-- Built when it opens: a closed dialog would put an inline `style` on the page. -->
-    {#if open}<Portal>
-        <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-950/50" />
-        <Dialog.Positioner
-          class="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4"
+  <ImageDialog bind:open onclose={() => finish([])} {title} {label} {icon}>
+    <MAForm
+      bind:element
+      {action}
+      enctype="multipart/form-data"
+      onsubmit={upload.submit}
+      class="mt-5"
+    >
+      <FileUpload
+        {name}
+        maxFiles={1}
+        transformFiles={frame}
+        ids={{ hiddenInput: id }}
+        onFileChange={(details) => void picked(details.acceptedFiles)}
+      >
+        <FileUpload.Label class="sr-only">{label}</FileUpload.Label>
+        <FileUpload.Dropzone
+          class="flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-primary-500 bg-surface-950-50/5 px-6 py-10 text-center data-dragging:bg-primary-500/10 {framing
+            ? 'hidden'
+            : ''}"
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby="{id}-formats{error ? ` ${id}-error` : ''}"
         >
-          <Dialog.Content
-            class="max-h-full w-full max-w-lg overflow-y-auto card rounded-b-none border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl md:rounded-b-lg"
-          >
-            <div class="flex items-start gap-4">
-              <div class="min-w-0 flex-1">
-                <Dialog.Title class="text-xl font-semibold">{title}</Dialog.Title>
-                <Dialog.Description class="mt-1 text-surface-700-300"
-                  >{m.upload_lede()}</Dialog.Description
-                >
-              </div>
-              <Dialog.CloseTrigger
-                class="btn size-11 shrink-0 rounded-full p-0 hover:preset-tonal"
-                aria-label={m.upload_close()}><Icon name="xmark" size={20} /></Dialog.CloseTrigger
-              >
-            </div>
-            <MAForm
-              bind:element
-              {action}
-              enctype="multipart/form-data"
-              onsubmit={upload.submit}
-              class="mt-5"
-            >
-              <FileUpload
-                {name}
-                maxFiles={1}
-                transformFiles={frame}
-                ids={{ hiddenInput: id }}
-                onFileChange={(details) => void picked(details.acceptedFiles)}
-              >
-                <FileUpload.Label class="sr-only">{label}</FileUpload.Label>
-                <FileUpload.Dropzone
-                  class="flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-primary-500 bg-surface-950-50/5 px-6 py-10 text-center data-dragging:bg-primary-500/10 {framing
-                    ? 'hidden'
-                    : ''}"
-                  aria-invalid={error ? 'true' : undefined}
-                  aria-describedby="{id}-formats{error ? ` ${id}-error` : ''}"
-                >
-                  <Icon name="cloud-upload" size={32} class="text-primary-500" />
-                  <p class="font-semibold">{m.upload_drop()}</p>
-                </FileUpload.Dropzone>
-                <!-- `accept` here only narrows the picker; the schema decides what is refused. -->
-                <FileUpload.HiddenInput {accept} />
-              </FileUpload>
-              {#if framing}
-                <ImageCropper
-                  bare
-                  file={framing.file}
-                  aspectRatio={avatar ? 1 : 4}
-                  width={avatar ? 512 : 1600}
-                  round={avatar}
-                  onconfirm={(cropped) => finish([cropped])}
-                  onreplace={() => finish([])}
-                  oncancel={() => (open = false)}
-                  onunreadable={() => finish([framing!.file])}
-                />
-              {:else}
-                <p id="{id}-formats" class="mt-3 text-sm text-muted">{m.upload_formats()}</p>
-              {/if}
-              {#if upload.pending}
-                <p role="status" class="mt-3 text-sm font-semibold">{m.upload_sending()}</p>
-              {/if}
-              {#if error}
-                <p id="{id}-error" role="alert" class="mt-3 text-sm font-semibold text-error-alert">
-                  {error}
-                </p>
-              {/if}
-            </MAForm>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>{/if}
-  </Dialog>
+          <Icon name="cloud-upload" size={32} class="text-primary-500" />
+          <p class="font-semibold">{m.upload_drop()}</p>
+        </FileUpload.Dropzone>
+        <!-- `accept` here only narrows the picker; the schema decides what is refused. -->
+        <FileUpload.HiddenInput {accept} />
+      </FileUpload>
+      {#if framing}
+        <ImageCropper
+          bare
+          file={framing.file}
+          aspectRatio={avatar ? 1 : 4}
+          width={avatar ? 512 : 1600}
+          round={avatar}
+          onconfirm={(cropped) => finish([cropped])}
+          onreplace={() => finish([])}
+          oncancel={() => (open = false)}
+          onunreadable={() => finish([framing!.file])}
+        />
+      {:else}
+        <p id="{id}-formats" class="mt-3 text-sm text-muted">
+          {m.upload_formats()}<br />{recommended()}
+        </p>
+      {/if}
+      {#if upload.pending}
+        <p role="status" class="mt-3 text-sm font-semibold">{m.upload_sending()}</p>
+      {/if}
+      {#if error}
+        <p id="{id}-error" role="alert" class="mt-3 text-sm font-semibold text-error-alert">
+          {error}
+        </p>
+      {/if}
+    </MAForm>
+  </ImageDialog>
 {:else}
   <MAForm {action} enctype="multipart/form-data" class="grid gap-2">
     <label for={id} class="label-text font-semibold">{label}</label>
@@ -188,7 +160,9 @@
       aria-invalid={error ? 'true' : undefined}
       class="block w-full text-sm file:mr-3 file:h-12 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
     />
-    <p id="{id}-formats" class="text-sm text-muted">{m.upload_formats()}</p>
+    <p id="{id}-formats" class="text-sm text-muted">
+      {m.upload_formats()}<br />{recommended()}
+    </p>
     {#if error}
       <p id="{id}-error" role="alert" class="text-sm font-semibold text-error-alert">{error}</p>
     {/if}

@@ -136,7 +136,7 @@
       action="?/message"
       label={m.admin_user_message()}
       icon="game-icons:scroll-quill"
-      buttonClass="btn h-11 gap-2 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal"
+      buttonClass="btn h-11 gap-2 rounded-lg btn-secondary px-4 font-semibold"
     />
   {/snippet}
 

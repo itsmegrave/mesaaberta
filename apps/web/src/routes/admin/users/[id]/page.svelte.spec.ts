@@ -87,14 +87,14 @@ describe('admin user page', () => {
     const activity = page.getByRole('region', { name: 'Atividade' });
     await expect.element(activity.getByText('Jogando')).toBeVisible();
     await expect.element(activity.getByText('Mestrando')).toBeVisible();
-    await expect.element(activity.getByText('4,5 · 3 avaliações')).toBeVisible();
+    await expect.element(activity.getByText('(3 avaliações)')).toBeVisible();
     await expect.element(activity.getByText('Denúncias aceitas')).toBeVisible();
   });
 
-  it('says "Novo mestre" for someone nobody rated', async () => {
+  it('says "Estreia na mestragem" for someone nobody rated', async () => {
     show({ activity: { playing: 0, running: 0, rating: { score: null, count: 0, isNew: true } } });
 
-    await expect.element(page.getByText('Novo mestre')).toBeVisible();
+    await expect.element(page.getByText('Estreia na mestragem')).toBeVisible();
   });
 
   it('has a "Mandar mensagem" button and puts the rest in the title’s 3 dots', async () => {

@@ -35,8 +35,7 @@
     }
   };
 
-  const ghost =
-    'btn h-12 rounded-lg border-2 border-surface-200-800 px-4 font-semibold hover:preset-tonal';
+  const ghost = 'btn h-12 rounded-lg btn-secondary px-4 font-semibold';
   const primary = 'btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const tonal = 'btn h-12 rounded-lg preset-tonal px-4 font-semibold';
   const danger =

@@ -24,13 +24,16 @@
   import TableGoingOn from './components/TableGoingOn.svelte';
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
   import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
+  import PlayerRatings from './components/PlayerRatings.svelte';
+  import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import DraftNotice from '../components/DraftNotice.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { formatHours } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import { kindLabel, minPlayersLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, scheduleLabel, seatSummary, seatsLeftLabel } from '#lib/tables/format.js';
+  import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
   let { data: serverData, form: result } = $props();
   const remote = pageQuery(() => serverData);
@@ -58,10 +61,27 @@
   const tableMenu = $derived.by(() => {
     const items: KebabItem[] = [
       ...(data.canEdit
-        ? [{ id: 'edit', label: m.table_edit(), icon: 'square-pen' as const, href: editPage }]
+        ? [
+            {
+              id: 'edit',
+              label: table.status === 'draft' ? m.menu_edit_draft() : m.table_edit(),
+              icon: 'square-pen' as const,
+              href: editPage,
+            },
+          ]
+        : []),
+      ...(data.canDuplicate
+        ? [
+            {
+              id: 'duplicate',
+              label: m.table_duplicate(),
+              icon: 'copy' as const,
+              href: `/t/new?duplicate=${encodeURIComponent(table.slug)}`,
+            },
+          ]
         : []),
       { id: 'view', label: m.menu_view_table(), icon: 'eye', href: tablePage },
-      { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: copyLink },
+      { id: 'copy', label: m.menu_copy_link(), icon: 'link', onselect: copyLink },
     ];
     if (
       data.canEnd &&
@@ -180,6 +200,8 @@
       next={here}
       players={data.players}
       multi={table.kind !== 'one_shot'}
+      startsAt={table.startsAt}
+      step={page.url.searchParams.get('etapa')}
       nextSession={data.nextSession}
       timezone={table.timezone}
       durationHours={table.durationMinutes / 60}
@@ -216,13 +238,6 @@
           >{m.table_edit()}</a
         >
       {/if}
-      {#if data.canDuplicate}
-        <a
-          href={`/t/new?duplicate=${encodeURIComponent(table.slug)}`}
-          class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
-          >{m.table_duplicate()}</a
-        >
-      {/if}
     </nav>
     <a href={tablePage} class="hidden link-underline font-semibold sm:inline"
       >{m.manage_view_page()}</a
@@ -241,11 +256,7 @@
             {m.invitation_unavailable()}
           </p>{/if}
         <p class="mt-3 font-semibold">
-          {m.invitation_seats({
-            confirmed: taken,
-            reserved: table.reserved,
-            available: table.seatsLeft,
-          })}
+          {seatSummary(taken, table.reserved, table.seatsLeft)}
         </p>
         {#if data.canInvite && table.status === 'active' && table.startsAt > new Date()}
           <div class="mt-4 max-w-md">
@@ -295,6 +306,16 @@
                 subline={m.manage_requested_at({ date: moment(request.since) })}
                 wrap
               >
+                {#snippet extra()}
+                  {#if data.playerRatings}
+                    <ScoreLine
+                      rating={request.participantRating}
+                      label={m.participant_rating()}
+                      debut={m.participant_rating_new()}
+                      suffix={m.participant_rating_as()}
+                    />
+                  {/if}
+                {/snippet}
                 {#snippet actions()}
                   <span class="flex gap-2">
                     <ActionForm
@@ -344,10 +365,10 @@
           >
             <p>
               <span class="sr-only">{m.table_seats_taken({ taken, total: table.capacity })}</span
-              ><SeatDots {taken} capacity={table.capacity} />
+              ><SeatDots {taken} capacity={table.capacity} reserved={table.reserved} />
             </p>
             {#if table.minPlayers}
-              <p class="mt-2 text-sm text-muted">{minPlayersLabel(table.minPlayers, taken)}</p>
+              <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
             {/if}
             <ul class="mt-3">
               <RosterRow
@@ -399,6 +420,10 @@
           </MAAccordionItem>
         </MAAccordion>
       </section>
+
+      {#if data.canRatePlayers}
+        <PlayerRatings next={here} goingOn={table.status !== 'concluded'} players={data.players} />
+      {/if}
 
       <section class={card}>
         <MAAccordion>

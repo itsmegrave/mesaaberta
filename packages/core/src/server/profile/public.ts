@@ -1,4 +1,4 @@
-import { and, asc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   gameTables,
@@ -8,34 +8,49 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { bannerUrl, pictureOf, imageUrl } from '@mesaaberta/core/server/images';
 import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
-import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { gmRatingOf, publicGmReviews } from '@mesaaberta/core/server/ratings/service';
+import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '../../profile/social-links';
 import { normalizeUsername, usernameProblem } from '../../profile/username';
 
 export const PUBLIC_PROFILE_PAGE_SIZE = 12;
 
+/**
+ * The "Mesas jogadas" total of these people: concluded tables where they had a confirmed seat (and
+ * were not the GM), each once. Everyone asked for is in the map, with 0 when they played none.
+ */
+export async function tablesPlayed(db: AnyDb, profileIds: string[]): Promise<Map<string, number>> {
+  const wanted = [...new Set(profileIds)];
+  const found = new Map(wanted.map((id) => [id, 0]));
+  if (wanted.length === 0) return found;
+  const rows = await db
+    .select({ playerId: registrations.playerId, count: sql<number>`count(*)::int` })
+    .from(registrations)
+    .innerJoin(gameTables, eq(registrations.tableId, gameTables.id))
+    .where(
+      and(
+        inArray(registrations.playerId, wanted),
+        eq(registrations.status, 'confirmed'),
+        ne(gameTables.gmId, registrations.playerId),
+        eq(gameTables.status, 'concluded'),
+      ),
+    )
+    .groupBy(registrations.playerId);
+  for (const row of rows) found.set(row.playerId, row.count);
+  return found;
+}
+
 /** Public totals describe concluded tables, once each; they never expose a player's history. */
 async function tableCounts(db: AnyDb, profileId: string) {
-  const [played, hosted] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(registrations)
-      .innerJoin(gameTables, eq(registrations.tableId, gameTables.id))
-      .where(
-        and(
-          eq(registrations.playerId, profileId),
-          eq(registrations.status, 'confirmed'),
-          ne(gameTables.gmId, profileId),
-          eq(gameTables.status, 'concluded'),
-        ),
-      ),
+  const [played, [hosted]] = await Promise.all([
+    tablesPlayed(db, [profileId]),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(gameTables)
       .where(and(eq(gameTables.gmId, profileId), eq(gameTables.status, 'concluded'))),
   ]);
-  return { played: played[0].count, hosted: hosted[0].count };
+  return { played: played.get(profileId)!, hosted: hosted.count };
 }
 
 /** Allowlisted public projection. Neither a full profile nor registrations leave this module. */
@@ -48,6 +63,7 @@ export async function publicProfile(
     supabaseUrl,
     viewerId = null,
     showBadges,
+    showParticipantRating,
   }: {
     page?: number;
     now?: Date;
@@ -55,6 +71,8 @@ export async function publicProfile(
     viewerId?: string | null;
     /** Whether this profile shows its badges (the `use_badges` rollout). Omitted: it does not. */
     showBadges?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
+    /** Whether this profile shows its score as a participant (`use_player_ratings`). Omitted: no. */
+    showParticipantRating?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -66,6 +84,8 @@ export async function publicProfile(
       avatarUrl: profiles.avatarUrl,
       bannerPath: profiles.bannerPath,
       bio: profiles.bio,
+      name: profiles.name,
+      showName: profiles.showName,
       role: profiles.role,
     })
     .from(profiles)
@@ -73,7 +93,7 @@ export async function publicProfile(
     .limit(1);
   if (!found) return null;
 
-  const [links, totals, rating, upcoming] = await Promise.all([
+  const [links, totals, rating, upcoming, reviews] = await Promise.all([
     db
       .select({
         network: profileSocialLinks.network,
@@ -86,12 +106,21 @@ export async function publicProfile(
     tableCounts(db, found.id),
     gmRatingOf(db, found.id),
     listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
+    publicGmReviews(db, found.id),
   ]);
 
   // Null: the rollout has not reached this profile, so the page shows no strip at all.
   const isOwnerView = viewerId === found.id;
   const badges = (await showBadges?.({ id: found.id, isAdmin: found.role === 'admin' }))
     ? await heldBadges(db, found.id, { includeHidden: isOwnerView })
+    : null;
+
+  // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
+  const participantRating = (await showParticipantRating?.({
+    id: found.id,
+    isAdmin: found.role === 'admin',
+  }))
+    ? await participantRatingOf(db, found.id, now)
     : null;
 
   return {
@@ -104,6 +133,8 @@ export async function publicProfile(
       bannerUrl: bannerUrl(supabaseUrl, found.bannerPath),
       // Plain text in the person's own words; the page keeps its line breaks and escapes it.
       bio: found.bio,
+      // Under the @usuário, only when the person chose to show it.
+      name: (found.showName && found.name) || null,
       // `text` is shown next to the icon; `href` is null where there is nothing to open (Discord).
       links: links.flatMap((link) => {
         if (!isNetwork(link.network)) return [];
@@ -112,6 +143,7 @@ export async function publicProfile(
       }),
       totals,
       rating,
+      participantRating,
     },
     tables: upcoming.tables.map((table) => ({
       slug: table.slug,
@@ -131,6 +163,15 @@ export async function publicProfile(
       platforms: table.platforms,
       tags: table.tags,
       gmRating: table.gmRating,
+    })),
+    // "Avaliações da mestragem": only the comments their authors chose to show here.
+    reviews: reviews.map((review) => ({
+      username: review.username!,
+      avatarUrl: pictureOf(supabaseUrl, review),
+      score: review.gmScore,
+      text: review.comment!,
+      createdAt: review.createdAt,
+      table: { title: review.tableTitle, slug: review.tableSlug },
     })),
     page,
     pages: Math.max(1, Math.ceil(upcoming.total / PUBLIC_PROFILE_PAGE_SIZE)),

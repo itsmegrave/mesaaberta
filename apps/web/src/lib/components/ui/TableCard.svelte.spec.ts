@@ -29,7 +29,9 @@ describe('TableCard', () => {
 
     await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
     await expect.element(page.getByText('One-shot')).toBeVisible();
-    await expect.element(page.getByText('Mestre: @Mestre Ana')).toBeVisible();
+    // No "Mestre:" prefix: the handle stands alone, named for screen readers.
+    await expect.element(page.getByText('@Mestre Ana')).toBeVisible();
+    await expect.element(page.getByText('Mestre:')).not.toBeInTheDocument();
     await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeInTheDocument();
   });
 
@@ -124,10 +126,8 @@ describe('TableCard', () => {
 
 it('distinguishes confirmed players from reserved invitations in the public seat count', async () => {
   render(TableCard, { table: { ...base, seatsLeft: 0, taken: 2, reserved: 3 } });
+  await expect.element(page.getByText('2 confirmadas · 3 reservadas · 0 livres')).toBeVisible();
   await expect
-    .element(page.getByText('2 confirmados · 3 reservadas · 0 disponíveis'))
-    .toBeVisible();
-  await expect
-    .element(page.getByRole('img', { name: '2 confirmados · 3 reservadas · 0 disponíveis' }))
+    .element(page.getByRole('img', { name: '2 confirmadas · 3 reservadas · 0 livres' }))
     .toBeVisible();
 });

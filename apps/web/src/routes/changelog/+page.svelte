@@ -85,12 +85,6 @@
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -- release links and reviewed content use canonical paths, including their query and fragment. -->
 
-<svelte:head>
-  <title>{m.changelog_title()} · Mesa Aberta</title>
-  <meta name="description" content={m.changelog_description()} />
-  {#if data.page > 1 || data.kind}<meta name="robots" content="noindex, follow" />{/if}
-</svelte:head>
-
 {#snippet controls()}
   <div
     class="mt-3 flex items-center justify-center gap-3 md:col-start-2 md:row-start-1 md:mt-0 md:justify-self-end"
@@ -184,7 +178,9 @@
             class="hidden size-full rounded-lg object-contain dark:block"
           />
         {:else}
-          <div class="h-full max-w-sm"><TableIllustration /></div>
+          <!-- Square and as tall as the panel: the drawing takes its width, so a wider box would
+               draw it taller than the phone's 180px panel, over the text below. -->
+          <div class="aspect-square h-full"><TableIllustration /></div>
         {/if}
       </div>
       <div class="flex flex-col justify-center gap-1 px-4 pt-4 pb-2 md:col-span-2 md:gap-2 md:p-8">

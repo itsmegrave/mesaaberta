@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
   import { m } from '#lib/paraglide/messages.js';
@@ -35,7 +36,9 @@
   <h3 class="mt-3 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
-  <p class="mt-1 text-sm text-muted">{m.table_gm()}: <UserLink username={item.gmName} /></p>
+  <p class="mt-1 text-sm font-semibold">
+    <span class="sr-only">{m.table_gm()}: </span><UserLink username={item.gmName} />
+  </p>
 
   <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 
@@ -43,7 +46,9 @@
     <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-lamp-wash px-4 py-3">
       {#if item.rating}
         {m.dash_your_rating({ gm: item.rating.gmScore })}
-        <a href="{page}#avaliar" class="anchor">{m.dash_change_rating()}</a>
+        <a href="{page}#avaliar" class="{buttonClass('secondary', 'sm')} font-semibold"
+          >{m.dash_change_rating()}</a
+        >
       {:else}
         {m.dash_rate_prompt()}
         <a

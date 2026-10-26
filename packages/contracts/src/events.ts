@@ -97,6 +97,8 @@ export type DomainEvent =
   | { type: 'PlayerLeft'; payload: Registration & { reason: 'left' | 'removed' } }
   // A player rated the table and its GM (or changed their rating). Scores and comments are not in the payload.
   | { type: 'RatingSubmitted'; payload: Registration }
+  // The GM rated a player they marked present (the actor is the GM). No score or comment either.
+  | { type: 'PlayerRated'; payload: Registration }
   // A session started (OAuth or email/password). This is the connection record Marco Civil da
   // Internet (art. 15) requires kept for 6 months — longer than other events, see CONNECTION_RETENTION_DAYS.
   | { type: 'UserSignedIn'; payload: { ip: string | null } }

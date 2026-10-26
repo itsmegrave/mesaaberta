@@ -1,7 +1,7 @@
 <script lang="ts">
   // The badges under the user handle: only the icons. Hover or focus shows the details on a desktop;
   // a tap opens them on a phone, and Esc closes them.
-  import Icon from '#lib/components/ui/Icon.svelte';
+  import BadgeMedal from '#lib/components/ui/BadgeMedal.svelte';
   import Tip from '#lib/components/ui/Tip.svelte';
   import { publicBadges, type HeldBadge } from '#lib/badges/shown.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -34,9 +34,13 @@
           }
           placement="bottom"
           label={badge.look.name()}
-          triggerClass="flex size-10 items-center justify-center rounded-full bg-primary-500 text-primary-contrast-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 sm:size-9"
+          triggerClass="flex size-10 items-center justify-center rounded-full focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
         >
-          {#snippet trigger()}<Icon name={badge.look.icon} size={22} />{/snippet}
+          {#snippet trigger()}<BadgeMedal
+              icon={badge.look.icon}
+              mark={badge.look.mark}
+              size={40}
+            />{/snippet}
           <p class="font-semibold">{badge.look.name()}</p>
           <p class="text-muted">{badge.look.description()}</p>
           <p class="mt-1 text-muted">

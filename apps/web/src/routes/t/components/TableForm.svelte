@@ -180,7 +180,7 @@
           minlength={3}
           maxlength={80}
           bind:value={$draft.title}
-          class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+          class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
           {...aria}
         />
       {/snippet}
@@ -366,7 +366,7 @@
             maxlength={10}
             placeholder="00000-000"
             bind:value={$draft.postalCode}
-            class="input h-12 max-w-48 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 max-w-48 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -385,7 +385,7 @@
             maxlength={120}
             autocomplete="off"
             bind:value={$draft.locationArea}
-            class="input h-12 rounded-lg border-surface-200-800 bg-panel px-3"
+            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -448,7 +448,7 @@
           autocomplete="off"
           maxlength={2}
           bind:value={$draft.minPlayers}
-          class="input h-12 max-w-32 rounded-lg border-surface-200-800 bg-panel px-3"
+          class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
           {...aria}
         />
       {/snippet}
@@ -494,8 +494,7 @@
         name="intent"
         value="draft"
         submitting={controller.pending}
-        class="btn h-12 gap-2 rounded-lg border-2 border-surface-200-800 px-5 font-semibold hover:preset-tonal"
-        >{draftLabel}</MAButton
+        class="btn h-12 gap-2 rounded-lg btn-secondary px-5 font-semibold">{draftLabel}</MAButton
       >
     {/if}
   {/snippet}
@@ -515,7 +514,9 @@
           ? $draft.repeat === 'biweekly'
             ? m.form_repeat_biweekly()
             : m.form_repeat_weekly()
-          : m.table_recurrence_once()}, {formatHours(
+          : $draft.kind === 'adventure'
+            ? m.form_schedule_adventure()
+            : m.table_recurrence_once()}, {formatHours(
           (Number($draft.durationHours) || 0) * 60,
           getLocale(),
         )}

@@ -24,6 +24,7 @@ afterAll(() => test.close());
 const input = (over: Partial<ProfileInput> = {}): ProfileInput => ({
   username: 'ana',
   name: '',
+  showName: false,
   ageRange: '',
   gender: '',
   genderOther: '',
@@ -72,6 +73,7 @@ describe('saveProfile', () => {
     expect(await loadProfileForm(test.db, id(2))).toEqual({
       username: 'carla',
       name: 'Carla Dias',
+      showName: false,
       ageRange: '25_34',
       gender: 'woman',
       genderOther: '',

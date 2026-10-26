@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { authorize, can, joinBlocker, rateBlocker, type Actor } from './policy';
+import { authorize, can, joinBlocker, playerRatingOpen, rateBlocker, type Actor } from './policy';
+import type { TableStatus } from '../../tables/status-values';
 
 const member: Actor = { id: 'member', role: 'member', status: 'active' };
 const otherMember: Actor = { id: 'other', role: 'member', status: 'active' };
@@ -321,5 +322,53 @@ describe('account:ban', () => {
     ['a suspended admin', suspendedAdmin, member, false],
   ])('%s: %s', (_case, who, target, allowed) => {
     expect(can(who, 'account:ban', target)).toBe(allowed);
+  });
+});
+
+describe('player:rate', () => {
+  const facts = (
+    over: Partial<{
+      tableStatus: TableStatus;
+      kind: 'campaign' | 'one_shot' | 'adventure';
+      markedPresent: boolean;
+    }> = {},
+  ) => ({
+    gmId: 'gm',
+    tableStatus: 'concluded' as TableStatus,
+    kind: 'one_shot' as const,
+    markedPresent: true,
+    ...over,
+  });
+
+  it.each([
+    ['the GM, a present player of a concluded one-shot', gm, facts(), true],
+    ['an admin', admin, facts(), false],
+    ['someone else', member, facts(), false],
+    ['a suspended GM', suspendedGm, facts(), false],
+    ['a player not marked present', gm, facts({ markedPresent: false }), false],
+    ['a one-shot not yet confirmed', gm, facts({ tableStatus: 'awaiting_confirmation' }), false],
+    ['a campaign that goes on', gm, facts({ kind: 'campaign', tableStatus: 'active' }), true],
+    [
+      'an adventure waiting for its next answer',
+      gm,
+      facts({ kind: 'adventure', tableStatus: 'awaiting_confirmation' }),
+      true,
+    ],
+    [
+      'a session that did not happen',
+      gm,
+      facts({ kind: 'campaign', tableStatus: 'not_held' }),
+      false,
+    ],
+    ['a table taken down', gm, facts({ tableStatus: 'disabled' }), false],
+  ])('%s: %s', (_case, who, resource, allowed) => {
+    expect(can(who, 'player:rate', resource)).toBe(allowed);
+  });
+
+  it('opens the same way without a player in mind', () => {
+    expect(playerRatingOpen({ tableStatus: 'concluded', kind: 'one_shot' })).toBe(true);
+    expect(playerRatingOpen({ tableStatus: 'active', kind: 'one_shot' })).toBe(false);
+    expect(playerRatingOpen({ tableStatus: 'active', kind: 'campaign' })).toBe(true);
+    expect(playerRatingOpen({ tableStatus: 'draft', kind: 'campaign' })).toBe(false);
   });
 });

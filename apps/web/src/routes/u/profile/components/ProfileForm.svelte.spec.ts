@@ -15,6 +15,7 @@ vi.mock('$app/forms', async (original) => ({
 const empty: ProfileInput = {
   username: '',
   name: '',
+  showName: false,
   ageRange: '',
   gender: '',
   genderOther: '',

@@ -35,6 +35,8 @@ When you must disable an ESLint rule, say why on the same line: `// eslint-disab
 
 Prefer Skeleton primitives and the shared `MAForm`, `FormField`, `TextInput` and `MAButton` components (`src/lib/components/ui/`). A submit button is `<MAButton type="submit" controller={form}>`: it is busy, `aria-disabled` and spinner-bearing while the form sends, never disabled before the first attempt. Use `MATextArea` for plain multiline text. Basic controls use semantic HTML inside their wrappers because Skeleton does not provide standalone Button, TextInput or Form components; a wrapper named like an HTML element or a Skeleton component takes the MA prefix. Use theme tokens and Tailwind's 4px spacing grid; document calculated layout exceptions.
 
+The app requires JavaScript. Do not build no-JS fallbacks: no `<noscript>` buttons, no native inputs shown before mount, and filters can apply on change. What stays is the server side: forms still submit to SvelteKit actions through `MAForm` and the shared actionForm, and server authorization and validation remain authoritative.
+
 New form migrations use TanStack Form for values/validation and TanStack Query for mutations/cache. The catalog, approval queue and notification actions are migrated flows. `src/lib/forms/action-form.svelte.ts` supplies a single submit handler, validation errors, pending/delayed/timeout states and failure-safe drafts. Pass the affected cache domain explicitly for Query-backed reads; route-only data such as notifications reloads through SvelteKit. Pair it with `MAForm` and the existing SvelteKit action; do not add a second enhancement handler or automatic write retries. Server authorization and Zod validation remain authoritative.
 
 ### Native form elements that stay
@@ -42,8 +44,8 @@ New form migrations use TanStack Form for values/validation and TanStack Query f
 Raw `<input>`, `<select>`, `<textarea>`, `<button>` and `<form>` appear only in these cases; anything else should use the shared controls:
 
 - **Wrappers.** `MAForm`, `MAButton`, `ActionForm`, `PostButton`, `TextInput`, `MATextArea` and the test harnesses under `src/lib/forms` and `src/lib/query`.
-- **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and keep the form working without JavaScript.
-- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and no-JS submission, and Skeleton has no standalone radio group or checkbox.
+- **Hidden inputs** that carry ids or `next` values for a native POST (catalog, moderation, report, notification, session and admin Instagram actions) and the serialized value of rich controls (`RichTextField`, `SearchSelect`, `DateTimeField`, `ChatHeader`, `ProfileForm`). They have no visual and carry the value to the SvelteKit action.
+- **Radio groups and checkboxes** in `ui/RadioCards` (`TableForm`'s choices), `ImageUpload`, `SessionConfirmation` (who showed up) and `/admin/notifications`: native radios and checkboxes keep keyboard behavior and native form values, and Skeleton has no standalone radio group or checkbox.
 - **No native `<select>`.** Pickers, including `ProfileForm`'s age range, gender and timezone, use `SearchSelect` (Skeleton's Combobox), which submits its picks as hidden inputs.
 
 Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui-migration-plan.md).
@@ -52,13 +54,13 @@ Plan and status: [docs/tanstack-form-ui-migration-plan.md](docs/tanstack-form-ui
 
 Multiline text a person writes for others to read (a table's description, the welcome message, an announcement) uses `RichTextField` and is shown with `RichText`. It is stored as the small HTML subset of `src/lib/text/rich.ts` (paragraphs, headings, bold, italic, underline, strikethrough, lists, quotes, code, dividers and http/https/mailto links; no images, colours or alignment, because the CSP blocks inline `style`). Validate it with `richText(max)` from `#lib/text/rich-schema`, whose limit counts what a reader sees, and show it only through `RichText`, the one place `{@html}` is allowed. Calendar, Instagram and the plain-text e-mail copy use `toPlainText`. Chat messages and rating comments use the plain-text `MATextArea` wrapper.
 
-Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage. Approval retains a native POST fallback; catalog dialogs still require JavaScript.
+Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage.
 
 ## Icons
 
 Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`#lib/components/ui/Icon.svelte`).
 
-To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Reicon](https://icon-sets.iconify.design/reicon/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). UI glyphs use Reicon's default line weight (the plain names, never the `-filled` ones); the solid Game Icons are for navigation, roles and messaging. Game Icons names carry the `game-icons:` prefix, and navigation, roles and messaging use them: `tavern-sign` (Mesas), `dice-twenty-faces-twenty` (Abrir mesa), `tabletop-players` (Minhas mesas), `black-knight-helm` (Admin), `meeple` (people), `dungeon-gate` (Entrar only), `bar-stool` (Pedir vaga), `exit-door` (Sair), `scroll-quill` (every messaging icon, no speech bubbles) and `house` (Início in breadcrumbs). Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `bun run icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
+To add one, import it in `src/lib/icons/registry.ts` and add it to `ICONS` ([browse Reicon](https://icon-sets.iconify.design/reicon/), [Game Icons](https://icon-sets.iconify.design/game-icons/)). UI glyphs use Reicon's Filled weight (the `-filled` names), so they sit with the solid Game Icons; line-only glyphs (arrows, `xmark`, `check`, chevrons, `add`, `minus` and the rich-text toolbar) keep the plain names. The Game Icons are for navigation, roles and messaging. Game Icons names carry the `game-icons:` prefix, and navigation, roles and messaging use them: `tavern-sign` (Mesas), `dice-twenty-faces-twenty` (Abrir mesa), `tabletop-players` (Minhas mesas), `black-knight-helm` (Admin), `meeple` (people), `dungeon-gate` (Entrar only), `bar-stool` (Pedir vaga), `exit-door` (Sair), `scroll-quill` (every messaging icon, no speech bubbles) and `house` (Início in breadcrumbs). Loading states use the shared `Spinner` (`svg-spinners:tadpole`), with reduced-motion support. Run `bun run icons` after changing the registry or upgrading icon packages. It embeds their SVG geometry so rendering works without CSS path support or external requests.
 
 ## Translations
 
@@ -66,11 +68,13 @@ The site is written in Brazilian Portuguese (`pt-BR`, the base language), and on
 
 **Fix a message:** edit its value in `messages/pt-BR.json`. Keep the keys and any `{placeholders}` exactly as they are.
 
+Every value is an [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) string, read by `@inlang/plugin-icu1`, so translation platforms can edit the files directly. Plurals look like `{count, plural, =0 {Nenhuma mesa} =1 {1 mesa} other {{count} mesas}}`; inside a plural `#` and `{count}` mean the same number. A translation may use its own language's plural forms (`one`, `few`, `many`, `other`) instead of the exact `=0`/`=1` matches. To write a literal `{` or `}`, wrap it in apostrophes (`'{'`). Roles stay gender-neutral (quem mestra, quem joga, Participantes); a test fails on gendered roles in pt-BR such as "o mestre", "Mestre:" or "jogadores".
+
 **Add a language** (for example `en`):
 
 1. Copy `messages/pt-BR.json` to `messages/en.json` and translate every value.
 2. Add `"en"` to `locales` in `project.inlang/settings.json`.
-3. Run `bun run test`. A test fails if your file is missing a key or changes a placeholder.
+3. Run `bun run test`. A test fails if your file is missing a key, changes a placeholder, isn't valid ICU or uses a plural form the language doesn't have.
 4. There is no language switch yet, because only one language is served. It ships with the second language (see #31).
 
 Languages share the same stable URLs. Paraglide selects translated text from the language preference cookie and base locale; never add locale prefixes to resource paths. Proper nouns (Mesa Aberta, Lenindragons, GitHub) stay as they are.

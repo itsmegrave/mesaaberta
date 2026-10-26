@@ -18,6 +18,21 @@ describe('SeatDots', () => {
     expect(chairs[3].getAttribute('class')).toContain('stroke-lamp');
   });
 
+  it('draws a seat held by an invite as an unfilled primary meeple, between taken and free', () => {
+    render(SeatDots, { taken: 2, capacity: 5, reserved: 1 });
+
+    const chairs = [...document.querySelectorAll('[data-seat-state]')];
+    expect(chairs.map((chair) => chair.getAttribute('data-seat-state'))).toEqual([
+      'taken',
+      'taken',
+      'reserved',
+      'free',
+      'free',
+    ]);
+    expect(chairs[2].getAttribute('class')).toContain('stroke-primary-500');
+    expect(chairs[2].getAttribute('data-chair')).toBe('free');
+  });
+
   it('draws a free seat as an unfilled meeple', () => {
     render(SeatDots, { taken: 0, capacity: 1 });
 

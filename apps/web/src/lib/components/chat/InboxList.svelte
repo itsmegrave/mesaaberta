@@ -74,7 +74,7 @@
           onclick={plainClick(onselect && (() => onselect(item.id)))}
           aria-current={item.id === currentId ? 'page' : undefined}
           aria-label={`${name(item)} ${preview(item)}${item.unread > 0 ? ` ${m.messages_unread()}` : ''}`}
-          class="absolute inset-0 z-1 rounded-lg focus-visible:outline-2 focus-visible:outline-primary-500"
+          class="absolute inset-0 z-1 rounded-lg focus-visible:outline-4 focus-visible:outline-primary-500"
         ></a>
         <span class="relative shrink-0">
           <MAAvatar

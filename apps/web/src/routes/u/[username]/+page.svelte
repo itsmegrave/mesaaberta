@@ -6,9 +6,11 @@
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import Pager from '#lib/components/ui/Pager.svelte';
-  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import BadgeIcons from './components/ui/BadgeIcons.svelte';
+  import ReviewCard from './components/ui/ReviewCard.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
@@ -24,6 +26,28 @@
   const profile = $derived(data.profile);
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const path = $derived(`/u/${profile.username}`);
+  const stats = $derived([
+    {
+      label: m.public_profile_played(),
+      value: profile.totals.played,
+      // Null while `use_player_ratings` has not reached this profile.
+      rating: profile.participantRating,
+      ratingLabel: m.participant_rating(),
+      debut: m.participant_rating_new(),
+    },
+    {
+      label: m.public_profile_hosted(),
+      value: profile.totals.hosted,
+      rating: profile.rating,
+      ratingLabel: m.rating_gm_average(),
+      debut: m.gm_rating_new(),
+    },
+  ]);
+
+  // "Avaliações da mestragem": three at first; the button shows the rest in place.
+  const REVIEWS_SHOWN = 3;
+  let allReviews = $state(false);
+  const reviews = $derived(allReviews ? data.reviews : data.reviews.slice(0, REVIEWS_SHOWN));
 
   // One social link: the network's icon with the handle beside it.
   const chip =
@@ -48,30 +72,15 @@
   });
 </script>
 
-<svelte:head>
-  <title>{atHandle(profile.username)} · Mesa Aberta</title>
-  <meta
-    name="description"
-    content={m.public_profile_description({ username: atHandle(profile.username) })}
-  />
-  <link rel="canonical" href={data.canonical} />
-  <meta property="og:title" content={`${atHandle(profile.username)} · Mesa Aberta`} />
-  <meta
-    property="og:description"
-    content={m.public_profile_description({ username: atHandle(profile.username) })}
-  />
-  <meta property="og:url" content={data.canonical} />
-  <meta property="og:type" content="profile" />
-  {#if profile.avatarUrl}<meta property="og:image" content={profile.avatarUrl} />{/if}
-</svelte:head>
-
 <section class="pt-2 pb-4 md:pt-12">
   <Breadcrumbs class="mb-6 md:mb-8" items={[{ label: atHandle(profile.username) }]} />
 
   {#if data.previewing}
     <p role="status" class="mb-4 flex flex-wrap items-center gap-3 font-semibold">
       {m.public_profile_previewing()}
-      <a href={path} class="anchor">{m.public_profile_stop_previewing()}</a>
+      <a href={path} class="{buttonClass('secondary', 'sm')} font-semibold"
+        >{m.public_profile_stop_previewing()}</a
+      >
     </p>
   {/if}
 
@@ -130,6 +139,10 @@
             </ActionForm>
           {/if}
         </div>
+        {#if profile.name}
+          <!-- The name, only when the person chose to show it under the @usuário. -->
+          <p class="mt-2 text-xl wrap-break-word text-muted md:text-2xl">{profile.name}</p>
+        {/if}
         {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
         {#if profile.bio}
           <!-- Plain text in the person's own words: line breaks kept, nothing else. -->
@@ -148,7 +161,7 @@
                       network: networkLabels[link.network](),
                     })}
                     title={networkLabels[link.network]()}
-                    class="{chip} hover:preset-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+                    class="{chip} hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                   >
                     <Icon name={networkIcons[link.network]} size={20} class="shrink-0" />
                     <span class="truncate">{link.text}</span>
@@ -166,26 +179,30 @@
         {/if}
       </div>
 
-      <div class="mt-8 grid gap-6 border-t border-surface-200-800 pt-6 lg:grid-cols-2">
-        <div>
-          <dl class="grid grid-cols-2 gap-4">
-            {#each [{ label: m.public_profile_played(), value: profile.totals.played }, { label: m.public_profile_hosted(), value: profile.totals.hosted }] as stat (stat.label)}
-              <div class="rounded-lg border border-surface-200-800 p-4">
-                <dt class="flex items-center gap-2 text-sm font-semibold text-muted">
-                  <Icon name="game-icons:meeple" size={18} class="shrink-0" />{stat.label}
-                </dt>
-                <dd class="mt-1 text-3xl font-semibold tabular-nums">
-                  {number.format(stat.value)}
+      <div class="mt-8 border-t border-surface-200-800 pt-6">
+        <!-- Each score sits in its tile: as a participant under "Mesas jogadas", the GM's under
+             "Mesas mestradas". -->
+        <dl class="grid max-w-xl grid-cols-2 gap-4">
+          {#each stats as stat (stat.label)}
+            <div class="rounded-lg border border-surface-200-800 p-4">
+              <dt class="flex items-center gap-2 text-sm font-semibold text-muted">
+                <Icon name="game-icons:meeple" size={18} class="shrink-0" />{stat.label}
+              </dt>
+              <dd class="mt-1 text-3xl font-semibold tabular-nums">
+                {number.format(stat.value)}
+              </dd>
+              {#if stat.rating}
+                <dd class="mt-3 border-t border-surface-200-800 pt-3">
+                  <ScoreLine rating={stat.rating} label={stat.ratingLabel} debut={stat.debut} />
                 </dd>
-              </div>
-            {/each}
-          </dl>
-          <p class="mt-3 max-w-prose text-sm text-muted">{m.public_profile_counts_hint()}</p>
-        </div>
-        <section aria-labelledby="gm-rating">
-          <h2 id="gm-rating" class="text-lg font-semibold">{m.public_profile_rating()}</h2>
-          <GmRating rating={profile.rating} class="mt-3 text-2xl" />
-        </section>
+              {/if}
+            </div>
+          {/each}
+        </dl>
+        <p class="mt-3 max-w-prose text-sm text-muted">{m.public_profile_counts_hint()}</p>
+        {#if data.isOwner && profile.participantRating}
+          <p class="mt-1 max-w-prose text-sm text-muted">{m.public_profile_scores_hint()}</p>
+        {/if}
       </div>
     </div>
   </header>
@@ -213,4 +230,34 @@
       href={(number) => pageHref(path, page.url.searchParams, number)}
     />
   </section>
+
+  {#if data.reviews.length > 0}
+    <section aria-labelledby="gm-reviews" class="mt-12">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 id="gm-reviews" class="text-2xl leading-tight font-semibold tracking-tight">
+          {m.public_profile_reviews()}
+        </h2>
+        {#if data.reviews.length > REVIEWS_SHOWN}
+          <MAButton
+            variant="secondary"
+            aria-expanded={allReviews}
+            aria-controls="gm-reviews-list"
+            onclick={() => (allReviews = !allReviews)}
+            >{allReviews
+              ? m.public_profile_reviews_fewer()
+              : m.public_profile_reviews_all({ count: data.reviews.length })}</MAButton
+          >
+        {/if}
+      </div>
+      <ul
+        id="gm-reviews-list"
+        aria-label={m.public_profile_reviews_of({ username: atHandle(profile.username) })}
+        class="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+      >
+        {#each reviews as review (`${review.username}-${review.table.slug}`)}
+          <li><ReviewCard {review} /></li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 </section>
