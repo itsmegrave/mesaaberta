@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { healthToken } from './e2e/support/health';
 import { stack } from './e2e/support/stack';
 
 const port = 4173;
@@ -14,6 +15,7 @@ const serverVars = [
   `--var APP_ORIGIN:http://localhost:${port}`,
   `--var API_URL:http://127.0.0.1:${apiPort}`,
   `--var API_INTERNAL_TOKEN:${apiToken}`,
+  `--var HEALTHZ_TOKEN:${healthToken}`,
   `--var SUPABASE_URL:${supabase.API_URL}`,
   `--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`,
   // The local stack's secret key: account deletion removes the Auth user through the Admin API.
@@ -83,7 +85,7 @@ export default defineConfig({
       // Playwright starts both servers at once, so this one waits for the first, which builds.
       cwd: '../..',
       command: [
-        `until curl -sf -o /dev/null http://localhost:${port}/healthz; do sleep 1; done &&`,
+        `until curl -sf -o /dev/null -H 'authorization: Bearer ${healthToken}' http://localhost:${port}/healthz; do sleep 1; done &&`,
         `bun run wrangler dev apps/web/.svelte-kit/cloudflare/_worker.js --port ${maintenancePort}`,
         '--persist-to .wrangler/state-maintenance',
         ...serverVars,

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { signIn } from './support/app';
+import { getHealth } from './support/health';
 import { PASSWORD, createUser } from './support/users';
 
 // Runs against the second server, started with the `maintenance_mode` flag on (playwright.config.ts).
@@ -34,7 +35,7 @@ test.describe('maintenance mode', () => {
   });
 
   test('the uptime check still answers', async ({ request }) => {
-    expect((await request.get('/healthz')).status()).toBe(200);
+    expect((await getHealth(request)).status()).toBe(200);
   });
 
   test('a member who signs in still gets the screen', async ({ page }) => {

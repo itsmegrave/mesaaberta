@@ -140,7 +140,7 @@ When Storage refuses an upload, only saving with an image fails, with a message 
 
 **Row level security is on for every table, with no policies** (`.enableRLS()` in `schema.ts`, and a test that fails for any table in `public` without it). Supabase serves `public` over its REST API to anyone holding the publishable key, which is public, so RLS with no policy leaves that API nothing to read or write. The app is not affected: it connects as the database owner (Hyperdrive, or the Docker Postgres), which RLS does not apply to. A new table needs `.enableRLS()`; add a policy only for one that must be reachable through the Supabase API. After deploying a migration like this, run `bun run db:migrate` against Supabase (step 4 below).
 
-Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
+Server code reads the database from `locals.db`, which is `null` when none is configured, so the site still runs without one. `GET /healthz` (with its bearer token, see Uptime) reports `database: ok | down | not_configured` and answers 503 when a configured database does not respond.
 
 **The deployed Worker** reaches Supabase through Hyperdrive: the `HYPERDRIVE` binding in `wrangler.jsonc` holds the Hyperdrive config id (not a secret). To set it up from scratch:
 
@@ -507,14 +507,22 @@ applies to telemetry. The Sentry project does not receive account identities.
 ### Uptime
 
 The Sentry Uptime Monitor has been configured in `mesa-aberta-app` for **GET
-`https://mesaaberta.app/healthz`**, expecting HTTP 200, with no authentication, request body or
-custom headers. Use the project's free monitor allocation and set an alert recipient in Sentry.
-The monitor was created through the Sentry interface; the wizard token is restricted to build
-operations and does not grant monitor administration.
+`https://mesaaberta.app/healthz`**, expecting HTTP 200, with the header `Authorization: Bearer
+<HEALTHZ_TOKEN>` and no request body. Use the project's free monitor allocation and set an alert
+recipient in Sentry. The monitor was created through the Sentry interface; the wizard token is
+restricted to build operations and does not grant monitor administration.
 
-The endpoint returns `{ "status": "ok", "database": "ok" }` when healthy and HTTP 503 when the
-configured database cannot answer. It disables caching. A deployment without a configured database
-returns `database: "not_configured"`; verify production reports `ok` when setting up the monitor.
+`/healthz` answers only to that bearer token (`HEALTHZ_TOKEN`, a Worker secret kept in Infisical
+under `/runtime`; the deploy gate sends it too). Anyone else gets a 401 that touches neither the
+database nor the api, and with no token configured nobody gets in. With the token it returns
+`status` and `database`, HTTP 503 when the configured database cannot answer, the build each app
+runs (`version`, `revision`), the api's state and latency and the background Worker's last sweep. It
+disables caching. A deployment without a configured database returns `database: "not_configured"`;
+verify production reports `ok` when setting up the monitor. After a release:
+
+```sh
+curl -s -H "authorization: Bearer $HEALTHZ_TOKEN" https://mesaaberta.app/healthz
+```
 
 ### Product analytics
 
@@ -625,7 +633,7 @@ ORDER BY type;
 
 Because inline styles are blocked, do not write `style="..."` in markup: use a class, or a `data-` attribute that CSS selects on. `e2e/security.e2e.ts` fails on any CSP violation, so a blocked style or script shows up in CI.
 
-`GET /healthz` reports application and database health for uptime checks (see Observability).
+`GET /healthz` reports application and database health for uptime checks, to holders of its bearer token only (see Observability).
 
 ## TypeScript 7
 
