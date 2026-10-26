@@ -193,6 +193,11 @@ export const flagDefaults = {
   // profile and the note to people the backfill listed are hidden, and a save keeps what is stored.
   // Targeted by the person's id.
   api_directory_gms: false,
+  // Onde jogar, the directory of places to play in person, off until it is released (then on for
+  // everyone at once). Off: /places and /pp/:slug answer 404, the menus, the footer and the table
+  // form leave places out and a table page hides its place. The admin screens stay open to admins,
+  // so places can be sent and approved before the release. Targeted by the person's id.
+  api_directory_places: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

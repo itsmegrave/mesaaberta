@@ -14,6 +14,7 @@ export const REPORT_TARGETS = [
   'partner',
   'message',
   'person',
+  'place',
 ] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
@@ -27,6 +28,9 @@ export const REPORT_REASONS = [
   'scam',
   'off_topic',
   'no_backlink',
+  'place_closed',
+  'wrong_address',
+  'not_public',
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
@@ -54,6 +58,16 @@ export const PARTNER_REPORT_REASONS = [
   'no_backlink',
   'broken_link',
   'scam',
+  'spam',
+  'inappropriate_content',
+  'other',
+] as const satisfies readonly ReportReason[];
+
+/** What a member can give for an "Onde jogar" place, and what an admin can reject or remove one for. */
+export const PLACE_REPORT_REASONS = [
+  'place_closed',
+  'wrong_address',
+  'not_public',
   'spam',
   'inappropriate_content',
   'other',

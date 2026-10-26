@@ -184,6 +184,14 @@ export type DomainEvent =
   // An account stopped looking after a partner: taken off by another owner (who tells them), or
   // it left (the actor is `profileId`, so nobody is told).
   | { type: 'PartnerOwnerRemoved'; payload: PartnerFact & { profileId: string } }
+  // A member sent an "Onde jogar" place, or its submitter edited it (which clears its approval):
+  // it waits for an admin. An admin's edit keeps it up. Nobody is told.
+  | { type: 'PlaceSubmitted'; payload: PlaceFact }
+  | { type: 'PlaceUpdated'; payload: PlaceFact & { changes: Changes } }
+  // An admin approved a place: it is on /places and its tags were rebuilt. The submitter is told.
+  | { type: 'PlaceApproved'; payload: PlaceFact & { submitterId: string } }
+  // An admin rejected or took a place down, or its submitter withdrew it (then `reason` is null).
+  | { type: 'PlaceRemoved'; payload: PlaceRemoval }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -231,7 +239,7 @@ export type TableClosure = {
 
 export type ReportFiled = {
   reportId: string;
-  targetType: 'table' | 'player' | 'crowdfunding' | 'partner' | 'message' | 'person';
+  targetType: 'table' | 'player' | 'crowdfunding' | 'partner' | 'message' | 'person' | 'place';
   targetId: string;
   // Null for a report about a crowdfunding campaign or a partner, which belong to no table, and
   // for one made in a direct conversation.
@@ -245,7 +253,10 @@ export type ReportFiled = {
     | 'broken_link'
     | 'scam'
     | 'off_topic'
-    | 'no_backlink';
+    | 'no_backlink'
+    | 'place_closed'
+    | 'wrong_address'
+    | 'not_public';
 };
 
 export type CrowdfundingFact = { crowdfundingId: string; name: string };
@@ -261,6 +272,15 @@ export type PartnerFact = { partnerId: string; name: string };
 
 // `reason` is null when an owner withdrew it. `reportId` is null with no report behind it.
 export type PartnerRemoval = PartnerFact & {
+  submitterId: string;
+  reason: ReportFiled['reason'] | null;
+  reportId: string | null;
+};
+
+export type PlaceFact = { placeId: string; slug: string; name: string };
+
+// `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
+export type PlaceRemoval = PlaceFact & {
   submitterId: string;
   reason: ReportFiled['reason'] | null;
   reportId: string | null;
