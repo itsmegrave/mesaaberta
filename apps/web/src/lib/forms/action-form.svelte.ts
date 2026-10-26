@@ -9,6 +9,7 @@ import { toStore } from 'svelte/store';
 import { queryClient } from '#lib/query/context.js';
 import { afterWrite } from '#lib/query/invalidate.js';
 import { postAction } from './action';
+import { inFlight } from './in-flight.svelte';
 import { issueErrors, type FormErrors, type FormResult } from './contract';
 
 /** A single submit path, with native POST when JavaScript is unavailable. */
@@ -34,6 +35,8 @@ export function actionForm<T extends Record<string, unknown>>(options: {
   onSending?: (data: FormData) => void;
   onError?: () => void;
   refresh?: boolean;
+  /** True when the page already shows the write as it goes (a chat message): no top bar for it. */
+  quiet?: boolean;
   onFailure?: (form: FormResult<T> | undefined) => void;
   /** Return true when the component owns result handling (for example chat). */
   onResult?: (result: ActionResult) => boolean | void | Promise<boolean | void>;
@@ -197,9 +200,11 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       sentValues = snapshot(currentValues());
       submission = { action: element.action, data: new FormData(element, event.submitter) };
       pending = true;
+      const finish = options.quiet ? () => {} : inFlight.start();
+      // The spinner joins the label after 300 ms; the button is dimmed and busy before that.
       const slow = setTimeout(() => {
         delayed = true;
-      }, 500);
+      }, 300);
       const verySlow = setTimeout(() => {
         timeout = true;
       }, 8_000);
@@ -211,6 +216,7 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       } finally {
         clearTimeout(slow);
         clearTimeout(verySlow);
+        finish();
         pending = delayed = timeout = false;
         submission = undefined;
         await tick();

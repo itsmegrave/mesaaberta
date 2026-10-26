@@ -30,6 +30,23 @@ describe('ListSkeleton', () => {
     expect(shapes()).toHaveLength(5);
   });
 
+  it('draws an item page: the cover and the side panel', async () => {
+    render(ListSkeleton, { kind: 'detail' });
+    expect(shapes()).toHaveLength(2);
+    expect(region().element().querySelector('.aspect-5\\/2')).not.toBeNull();
+  });
+
+  it('draws a profile: the 4:1 cover and three stat tiles', async () => {
+    render(ListSkeleton, { kind: 'profile' });
+    expect(shapes()).toHaveLength(4);
+    expect(region().element().querySelector('.aspect-4\\/1')).not.toBeNull();
+  });
+
+  it('draws no extra title over an item page, which has its own', async () => {
+    render(ListSkeleton, { kind: 'detail', heading: true });
+    expect(region().element().querySelector('[data-skeleton-heading]')).toBeNull();
+  });
+
   it('draws a title placeholder only when asked (a whole page loading, not a filter)', async () => {
     render(ListSkeleton, { kind: 'rows', heading: true });
     expect(region().element().querySelector('[data-skeleton-heading]')).not.toBeNull();

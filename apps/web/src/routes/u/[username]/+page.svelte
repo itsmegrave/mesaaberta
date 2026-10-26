@@ -151,14 +151,18 @@
           </h1>
           {#if !data.isOwner}
             <ActionForm action="?/message">
-              <button
-                type="submit"
-                class="btn size-10 rounded-full preset-outlined-primary-500 p-0"
-                aria-label={m.public_profile_message_to({ username: atHandle(profile.username) })}
-                title={m.public_profile_message()}
-              >
-                <Icon name="game-icons:scroll-quill" size={20} />
-              </button>
+              {#snippet children(state)}
+                <MAButton
+                  type="submit"
+                  size="custom"
+                  controller={state}
+                  class="btn size-10 rounded-full preset-outlined-primary-500 p-0"
+                  aria-label={m.public_profile_message_to({ username: atHandle(profile.username) })}
+                  title={m.public_profile_message()}
+                >
+                  {#if !state.delayed}<Icon name="game-icons:scroll-quill" size={20} />{/if}
+                </MAButton>
+              {/snippet}
             </ActionForm>
           {/if}
         </div>
