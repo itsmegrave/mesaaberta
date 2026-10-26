@@ -21,14 +21,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (!list) error(404, 'Not found');
 
   const supabase = supabaseUrlOf(locals.env);
-  // Who sent a partner is for admins only: the page learns whether the viewer is that person, and
-  // the submitter's id stays on the server.
-  const cards = list.cards.map(({ logoPath, submitterId, ...card }) => ({
+  // Who looks after a partner is for admins and those accounts only: the page learns whether the
+  // viewer is one of them, and the ids stay on the server.
+  const cards = list.cards.map(({ logoPath, ownerIds, ...card }) => ({
     ...card,
     logoUrl: partnerLogoUrl(supabase, logoPath),
-    canEdit: !!profile && profile.id === submitterId,
-    // Only a member can report, and not their own; a card that waits for review is not reported.
-    canReport: !card.pending && can(profile, 'partner:report', { submitterId }),
+    canEdit: !!profile && ownerIds.includes(profile.id),
+    // Only a member can report, and not one they look after; a card waiting for review is not.
+    canReport: !card.pending && can(profile, 'partner:report', { ownerIds }),
   }));
   return {
     filters,

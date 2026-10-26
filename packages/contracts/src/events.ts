@@ -139,13 +139,24 @@ export type DomainEvent =
   // Nobody is told.
   | { type: 'PartnerAdded'; payload: PartnerFact }
   | { type: 'PartnerUpdated'; payload: PartnerFact & { changes: Changes } }
-  // An admin approved a partner: it is on the page. `submitterId` is who is told.
+  // An admin approved a partner: it is on the page. Every account that looks after it is told
+  // (`submitterId` alone for a partner with no `partner_owners` row).
   // A rule awarded a badge (never a backfill or a grant). The bell notice is written from this event.
   | { type: 'BadgeEarned'; payload: { profileId: string; badgeId: string } }
   | { type: 'PartnerApproved'; payload: PartnerFact & { submitterId: string } }
-  // An admin rejected or took a partner down, or its submitter withdrew it (then `submitterId`
-  // is the actor, so nobody is told).
+  // An admin rejected or took a partner down, or one of its owners withdrew it (then `reason` is
+  // null and the other owners are told). Who is told as for `PartnerApproved`.
   | { type: 'PartnerRemoved'; payload: PartnerRemoval }
+  // An owner of a partner invited another account to look after it, and how that ended. The
+  // invitee hears of the invite, the inviter of the answer; a cancelled or lapsed one tells nobody.
+  | { type: 'PartnerOwnerInvited'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationAccepted'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationDeclined'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationCancelled'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationExpired'; payload: PartnerInvitationFact }
+  // An account stopped looking after a partner: taken off by another owner (who tells them), or
+  // it left (the actor is `profileId`, so nobody is told).
+  | { type: 'PartnerOwnerRemoved'; payload: PartnerFact & { profileId: string } }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -217,11 +228,17 @@ export type CrowdfundingRemoval = CrowdfundingFact & {
 
 export type PartnerFact = { partnerId: string; name: string };
 
-// `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
+// `reason` is null when an owner withdrew it. `reportId` is null with no report behind it.
 export type PartnerRemoval = PartnerFact & {
   submitterId: string;
   reason: ReportFiled['reason'] | null;
   reportId: string | null;
+};
+
+export type PartnerInvitationFact = PartnerFact & {
+  inviterId: string;
+  inviteeId: string;
+  invitationId: string;
 };
 
 export type ReportClosure = { reportId: string; reporterId: string };

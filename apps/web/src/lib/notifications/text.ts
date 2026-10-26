@@ -151,7 +151,23 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return m.notification_report_filed_admin();
     case 'report_resolved':
       return m.notification_report_resolved();
+    case 'partner_invited':
+      return m.notification_partner_invited({ player, partner: item.metadata.partner ?? '' });
+    case 'partner_invitation_accepted':
+      return m.notification_partner_invitation_accepted({
+        player,
+        partner: item.metadata.partner ?? '',
+      });
+    case 'partner_invitation_declined':
+      return m.notification_partner_invitation_declined({
+        player,
+        partner: item.metadata.partner ?? '',
+      });
+    case 'partner_owner_removed':
+      return m.notification_partner_owner_removed({ player, partner: item.metadata.partner ?? '' });
     case 'moderation_notice':
+      if (item.metadata.partnerWithdrawn)
+        return m.notification_partner_withdrawn({ partner: item.metadata.partnerWithdrawn });
       if (item.metadata.partnerApproved)
         return m.notification_partner_approved({ partner: item.metadata.partnerApproved });
       if (item.metadata.partnerRemoved) {

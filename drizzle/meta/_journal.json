@@ -414,6 +414,13 @@
       "when": 1792984755324,
       "tag": "0058_favorite_systems_follows",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1792989207090,
+      "tag": "0059_partner_owners",
+      "breakpoints": true
     }
   ]
 }

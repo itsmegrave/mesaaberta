@@ -947,8 +947,9 @@ export const crowdfundings = pgTable(
 
 // A community, shop, podcast or event that links to Mesa Aberta and is listed on /partners in return
 // (a link exchange). A member sends it, an admin approves it (`approvedAt`), members report it and an
-// admin removes it (`removedAt`). The submitter is shown to admins only. Any edit by the submitter
-// clears the approval, so the card leaves the page until an admin approves it again.
+// admin removes it (`removedAt`). Who looks after it (`partner_owners`) is shown to admins and to
+// those accounts only. Any edit by an owner clears the approval, so the card leaves the page until
+// an admin approves it again.
 export const partners = pgTable(
   'partners',
   {
@@ -1140,6 +1141,61 @@ export const gmInviteBlocks = pgTable(
   (t) => [
     primaryKey({ columns: [t.playerId, t.gmId] }),
     check('gm_invite_blocks_not_self', sql`${t.playerId} <> ${t.gmId}`),
+  ],
+).enableRLS();
+
+// The member accounts that look after a partner (at most MAX_PARTNER_OWNERS): they edit it, invite
+// other accounts, take accounts off and hear from moderation. All are equal. The submitter is the
+// first row; `partners.submitter_id` only says who sent it. A partner sent before this table, or
+// in the minutes between this migration and the deploy, may have no row: then its submitter is
+// its one owner (`ownersOf`).
+export const partnerOwners = pgTable(
+  'partner_owners',
+  {
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    // Who invited them; null for the submitter. Not a foreign key: the inviter may leave.
+    invitedBy: uuid('invited_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.partnerId, t.profileId] }),
+    index('partner_owners_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
+// An owner asks another account to look after the partner too. It counts only once accepted. A
+// pending one past `expires_at` has lapsed even before anything marks it.
+export const partnerInvitations = pgTable(
+  'partner_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    inviterId: uuid('inviter_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: invitationStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('partner_invitations_pending_unique')
+      .on(t.partnerId, t.inviteeId)
+      .where(sql`${t.status} = 'pending'`),
+    index('partner_invitations_partner_idx').on(t.partnerId, t.status),
+    index('partner_invitations_invitee_idx').on(t.inviteeId, t.status),
+    check('partner_invitations_not_self', sql`${t.inviterId} <> ${t.inviteeId}`),
+    check('partner_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
   ],
 ).enableRLS();
 
