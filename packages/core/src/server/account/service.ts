@@ -12,6 +12,7 @@ import {
   userBadges,
   profileSocialLinks,
   profiles,
+  playerRatings,
   ratings,
   registrations,
   systems,
@@ -58,6 +59,8 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     notificationsReceived,
     messagesSent,
     badges,
+    playerRatingsGiven,
+    playerRatingsReceived,
   ] = await Promise.all([
     db
       .select({
@@ -114,6 +117,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
         slug: gameTables.slug,
         gmScore: ratings.gmScore,
         comment: ratings.comment,
+        commentPublic: ratings.commentPublic,
         createdAt: ratings.createdAt,
       })
       .from(ratings)
@@ -160,6 +164,32 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       .from(userBadges)
       .where(eq(userBadges.profileId, userId))
       .orderBy(asc(userBadges.awardedAt), asc(userBadges.badgeId)),
+    // The players the person rated as a GM, with their own note.
+    db
+      .select({
+        table: gameTables.title,
+        slug: gameTables.slug,
+        playerId: playerRatings.playerId,
+        score: playerRatings.score,
+        comment: playerRatings.comment,
+        createdAt: playerRatings.createdAt,
+      })
+      .from(playerRatings)
+      .innerJoin(gameTables, eq(playerRatings.tableId, gameTables.id))
+      .where(eq(gameTables.gmId, userId))
+      .orderBy(asc(playerRatings.createdAt)),
+    // What GMs gave the person as a participant. The comment is that GM's own note, so it stays out.
+    db
+      .select({
+        table: gameTables.title,
+        slug: gameTables.slug,
+        score: playerRatings.score,
+        createdAt: playerRatings.createdAt,
+      })
+      .from(playerRatings)
+      .innerJoin(gameTables, eq(playerRatings.tableId, gameTables.id))
+      .where(eq(playerRatings.playerId, userId))
+      .orderBy(asc(playerRatings.createdAt)),
   ]);
 
   const [invitationsReceived, invitationsSent, invitationBlocks] = await Promise.all([
@@ -205,14 +235,17 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     notifications: notificationsReceived,
     messagesSent,
     badges,
+    playerRatingsGiven,
+    playerRatingsReceived,
   };
 }
 
 /**
  * The database side of deleting an account, in one transaction: the person's active tables are
  * disabled (each with a `TableDisabled` event, so the players get the calendar cancellation), their
- * seats go, and so do the ratings of the tables they ran, with the cached score. The ratings they gave
- * stay, final, and count for those GMs; only the comments go, with their other texts. A finished
+ * seats go, and so do the ratings of the tables they ran, with the cached score, and their score as a
+ * participant. The ratings they gave, of GMs and of players, stay, final, and count for those people;
+ * only the comments go, with their other texts. A finished
  * table stays as it was. Returns the events to dispatch. Run it before the Auth user is deleted:
  * the cancellation mail looks up the GM's address.
  */
@@ -274,6 +307,18 @@ export async function closeAccount(
       );
     await t.delete(gmScores).where(eq(gmScores.gmId, userId));
     await t.update(ratings).set({ comment: null }).where(eq(ratings.playerId, userId));
+    // The other way round: their score as a participant goes; what they gave as a GM stays, final,
+    // and counts for those players, without the notes.
+    await t.delete(playerRatings).where(eq(playerRatings.playerId, userId));
+    await t
+      .update(playerRatings)
+      .set({ comment: null })
+      .where(
+        inArray(
+          playerRatings.tableId,
+          t.select({ id: gameTables.id }).from(gameTables).where(eq(gameTables.gmId, userId)),
+        ),
+      );
     await eraseMessagesOf(t, userId);
     // What extensions keep about the person (a poll's votes): the profile row stays, so no cascade.
     for (const extension of installed) await extension.onAccountClosed?.(t, userId);

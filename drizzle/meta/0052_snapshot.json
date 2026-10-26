@@ -1,5 +1,5 @@
 {
-  "id": "838b963b-6dbd-4371-9a83-164d1bf50776",
+  "id": "9c8e9bfd-f3c4-46fb-8236-db3b959b3375",
   "prevId": "da0f8c1b-cffd-4a56-8354-f37b7c49105f",
   "version": "7",
   "dialect": "postgresql",
@@ -1167,12 +1167,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "planned_sessions": {
-          "name": "planned_sessions",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "starts_at": {
           "name": "starts_at",
           "type": "timestamp with time zone",
@@ -1415,10 +1409,6 @@
         "game_tables_min_players_range": {
           "name": "game_tables_min_players_range",
           "value": "\"game_tables\".\"min_players\" IS NULL OR (\"game_tables\".\"min_players\" >= 1 AND \"game_tables\".\"min_players\" <= \"game_tables\".\"capacity\")"
-        },
-        "game_tables_planned_sessions_range": {
-          "name": "game_tables_planned_sessions_range",
-          "value": "\"game_tables\".\"planned_sessions\" IS NULL OR (\"game_tables\".\"kind\"::text = 'adventure' AND \"game_tables\".\"planned_sessions\" BETWEEN 2 AND 20)"
         },
         "game_tables_duration_positive": {
           "name": "game_tables_duration_positive",
@@ -2838,6 +2828,117 @@
         "player_invitations_expiry": {
           "name": "player_invitations_expiry",
           "value": "\"player_invitations\".\"expires_at\" > \"player_invitations\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.player_ratings": {
+      "name": "player_ratings",
+      "schema": "",
+      "columns": {
+        "table_id": {
+          "name": "table_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "player_ratings_player_idx": {
+          "name": "player_ratings_player_idx",
+          "columns": [
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "player_ratings_table_id_game_tables_id_fk": {
+          "name": "player_ratings_table_id_game_tables_id_fk",
+          "tableFrom": "player_ratings",
+          "tableTo": "game_tables",
+          "columnsFrom": [
+            "table_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "player_ratings_player_id_profiles_id_fk": {
+          "name": "player_ratings_player_id_profiles_id_fk",
+          "tableFrom": "player_ratings",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "player_ratings_table_id_player_id_pk": {
+          "name": "player_ratings_table_id_player_id_pk",
+          "columns": [
+            "table_id",
+            "player_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "player_ratings_score_range": {
+          "name": "player_ratings_score_range",
+          "value": "\"player_ratings\".\"score\" BETWEEN 1 AND 5"
+        },
+        "player_ratings_comment_length": {
+          "name": "player_ratings_comment_length",
+          "value": "char_length(\"player_ratings\".\"comment\") <= 1000"
         }
       },
       "isRLSEnabled": true

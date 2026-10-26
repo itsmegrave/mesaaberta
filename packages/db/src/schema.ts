@@ -100,6 +100,9 @@ export const profiles = pgTable(
     bannerPath: text('banner_path'),
     // A few lines in the person's own words, shown as plain text on the public profile. Optional.
     bio: text('bio'),
+    // Off by default: `name` may have come from the sign-in provider, so it is public only once the
+    // person says so, as a line under the @usuário.
+    showName: boolean('show_name').notNull().default(false),
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
@@ -284,6 +287,9 @@ export const gameTables = pgTable(
     recurrence: text('recurrence'),
     until: timestamp('until', { withTimezone: true }),
     status: tableStatus('status').notNull().default('active'),
+    // When the table went public: set on creation for an active table and when a draft is published,
+    // so "Novas mesas" counts a draft from its publication, not from when it was written.
+    publishedAt: timestamp('published_at', { withTimezone: true }),
     // Incremented on every edit so calendar clients replace the invite instead of adding one.
     icalSequence: integer('ical_sequence').notNull().default(0),
     // Set when an admin closed the table over a report (it is `disabled` too). The justification is
@@ -304,6 +310,7 @@ export const gameTables = pgTable(
       table.duplicationRequestKey,
     ),
     index('game_tables_system_id_idx').on(table.systemId),
+    index('game_tables_status_published_idx').on(table.status, table.publishedAt),
     index('game_tables_location_idx').on(table.locationState, table.locationCity),
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(
@@ -509,6 +516,9 @@ export const ratings = pgTable(
       .references(() => profiles.id),
     gmScore: smallint('gm_score').notNull(),
     comment: text('comment'),
+    // The player chose to show the comment on the GM's public profile, with their @usuário and the
+    // score. Off by default: a comment written before this choice existed stays private.
+    commentPublic: boolean('comment_public').notNull().default(false),
     ...timestamps,
   },
   (rating) => [
@@ -516,6 +526,31 @@ export const ratings = pgTable(
     check('ratings_gm_score_range', sql`${rating.gmScore} BETWEEN 1 AND 5`),
     check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
     index('ratings_table_idx').on(rating.tableId),
+  ],
+).enableRLS();
+
+// What the GM of a table thought of a player they marked present: the other side of `ratings`. The
+// score counts for the player's public score "como participante"; the comment is the GM's own note
+// and nobody else sees it. Made once per player and table, and final. It goes with its table, with
+// the rated player's account, and loses its comment with the GM's (see `closeAccount`).
+export const playerRatings = pgTable(
+  'player_ratings',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id),
+    score: smallint('score').notNull(),
+    comment: text('comment'),
+    ...timestamps,
+  },
+  (rating) => [
+    primaryKey({ columns: [rating.tableId, rating.playerId] }),
+    check('player_ratings_score_range', sql`${rating.score} BETWEEN 1 AND 5`),
+    check('player_ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
+    index('player_ratings_player_idx').on(rating.playerId),
   ],
 ).enableRLS();
 

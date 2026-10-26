@@ -16,6 +16,7 @@ import { passwordRoutes } from './password';
 import { registrationRoutes } from './registrations';
 import { readRoutes } from './reads';
 import { reportRoutes } from './reports';
+import { seoRoutes } from './seo';
 import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
 
@@ -80,6 +81,9 @@ export function createApi() {
 
   // The read side, one resource at a time (the catalog first), behind `api_reads_<resource>`.
   app.route('/v1/reads', readRoutes());
+  // The public sitemap's identifiers (published tables, active profiles). New and anonymous, so no
+  // flag and no web fallback: web answers 503 when this read fails.
+  app.route('/v1/seo', seoRoutes());
   // The admin pages' data (overview, users, tables), behind `api_reads_admin*`.
   app.route('/v1/admin-reads', adminReadRoutes());
 

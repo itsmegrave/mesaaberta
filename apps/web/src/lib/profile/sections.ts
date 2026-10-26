@@ -16,7 +16,7 @@ export const profileSections = (): { path: string; label: string; icon: IconName
 
 /** The profile fields each form of a section sends. Everything else keeps what is stored. */
 export const PROFILE_SECTION_FIELDS = {
-  public: ['name', 'bio', 'linkNetwork', 'linkUrl'],
+  public: ['name', 'showName', 'bio', 'linkNetwork', 'linkUrl'],
   about: ['ageRange', 'gender', 'genderOther', 'city', 'timezone'],
 } as const satisfies Record<string, readonly (keyof ProfileInput)[]>;
 

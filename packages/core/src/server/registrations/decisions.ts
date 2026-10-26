@@ -56,8 +56,12 @@ export const registrationActions = {
       db: AnyDb,
       actor: Actor | null,
       slug: string,
-      { gmScore, comment }: { gmScore: number; comment: string },
-    ) => submitRating(db, actor, slug, { gmScore, comment: comment || null }),
+      {
+        gmScore,
+        comment,
+        commentPublic,
+      }: { gmScore: number; comment: string; commentPublic: boolean },
+    ) => submitRating(db, actor, slug, { gmScore, comment: comment || null, commentPublic }),
   },
 };
 

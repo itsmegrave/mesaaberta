@@ -1,6 +1,6 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, notInArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, gmScores, ratings, registrations } from '../db/schema';
+import { gameTables, gmScores, profiles, ratings, registrations } from '../db/schema';
 import { rateBlocker, type Actor } from '../auth/policy';
 import { AlreadyRated, Forbidden, NotFound, TooEarly } from '../errors';
 import { recordEvent } from '../events/outbox';
@@ -58,6 +58,8 @@ export async function submitRating(
         playerId: actor!.id,
         gmScore: input.gmScore,
         comment: input.comment,
+        // Only a comment can be shown; a bare score is public through the average anyway.
+        commentPublic: !!input.comment && (input.commentPublic ?? false),
       })
       .onConflictDoNothing()
       .returning({ tableId: ratings.tableId });
@@ -71,6 +73,42 @@ export async function submitRating(
     });
     return { eventIds: [eventId] };
   });
+}
+
+/** How many comments the public profile loads at most; "Ver todas" shows these in place. */
+export const PUBLIC_REVIEWS_LIMIT = 60;
+
+/**
+ * The comments players chose to show on this GM's profile, newest first, with who wrote them, the
+ * score and the table. Only from active people about tables that are public (not drafts, not taken
+ * down), so a removed table or a closed account takes its comment along.
+ */
+export async function publicGmReviews(db: AnyDb, gmId: string, limit = PUBLIC_REVIEWS_LIMIT) {
+  return db
+    .select({
+      username: profiles.username,
+      avatarPath: profiles.avatarPath,
+      avatarUrl: profiles.avatarUrl,
+      gmScore: ratings.gmScore,
+      comment: ratings.comment,
+      createdAt: ratings.createdAt,
+      tableTitle: gameTables.title,
+      tableSlug: gameTables.slug,
+    })
+    .from(ratings)
+    .innerJoin(gameTables, eq(ratings.tableId, gameTables.id))
+    .innerJoin(profiles, eq(ratings.playerId, profiles.id))
+    .where(
+      and(
+        eq(gameTables.gmId, gmId),
+        eq(ratings.commentPublic, true),
+        isNotNull(ratings.comment),
+        eq(profiles.status, 'active'),
+        notInArray(gameTables.status, ['draft', 'disabled']),
+      ),
+    )
+    .orderBy(desc(ratings.createdAt))
+    .limit(limit);
 }
 
 /** A player's own rating of a table, or null. */

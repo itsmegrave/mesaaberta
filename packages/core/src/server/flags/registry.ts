@@ -144,6 +144,12 @@ export const flagDefaults = {
   // unread count of those notices. Badges are still earned and stored quietly, so turning it on
   // starts with the history already in place. Targeted by the person's id (profile and bell agree).
   use_badges: false,
+  // The one switch for quem mestra rating the players they marked present, off for everyone until
+  // it is released (a new feature, no percentage ramp). Off hides all of it: the "Avalie quem
+  // jogou" card on the manage page (and its action refuses), the score "como participante" on join
+  // requests and in the profile's "Mesas jogadas" tile. Targeted by the person's id: the GM on the
+  // manage page, the profile's owner on a profile.
+  use_player_ratings: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

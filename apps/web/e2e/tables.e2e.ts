@@ -236,7 +236,7 @@ test.describe('table page', () => {
     await page.goto('/t/os-sinos-de-sablewood');
     await page.waitForLoadState('networkidle');
 
-    await expect(page).toHaveTitle('Os Sinos de Sablewood');
+    await expect(page).toHaveTitle(/Os Sinos de Sablewood.*Daggerheart.*Mesa Aberta/);
     expect(violations).toEqual([]);
   });
 });

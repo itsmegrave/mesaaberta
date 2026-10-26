@@ -207,7 +207,7 @@ export async function createTable(
             slug,
             gmId: actor!.id,
             systemId: system.id,
-            ...(asDraft ? { status: 'draft' as const } : {}),
+            ...(asDraft ? { status: 'draft' as const } : { publishedAt: now }),
           })
           .returning({ id: gameTables.id });
         await setTableCatalog(tx as unknown as AnyDb, created.id, {
@@ -532,7 +532,7 @@ export async function publishTable(
     await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
     const published = await tx
       .update(gameTables)
-      .set({ status: 'active' })
+      .set({ status: 'active', publishedAt: now })
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'draft')))
       .returning({ id: gameTables.id });
     if (!published.length) throw new Invalid('slug', 'not_a_draft');

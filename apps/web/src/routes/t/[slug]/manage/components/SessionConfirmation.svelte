@@ -219,7 +219,9 @@
   {/if}
   <h2
     id="session-confirmation"
-    class="text-2xl leading-tight font-semibold tracking-tight text-balance {heading ? 'mt-2' : ''}"
+    class="scroll-mt-6 text-2xl leading-tight font-semibold tracking-tight text-balance {heading
+      ? 'mt-2'
+      : ''}"
   >
     {title}
   </h2>

@@ -1,4 +1,4 @@
-import { and, eq, gt, ne, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, ne, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
@@ -36,6 +36,7 @@ const columns = {
   gmName: publicName(profiles.username),
   gmId: gameTables.gmId,
   status: gameTables.status,
+  publishedAt: gameTables.publishedAt,
 };
 
 export type TableView = ReturnType<typeof shape> & {
@@ -45,15 +46,18 @@ export type TableView = ReturnType<typeof shape> & {
   gmRating: GmRating;
 };
 
-const query = (db: AnyDb, where: SQL | undefined, now: Date) =>
+const query = (db: AnyDb, where: SQL | undefined, now: Date, newestFirst = false) =>
   db
     .select({ ...columns, reserved: reservedSeatsSql(gameTables.id, now) })
     .from(gameTables)
     .innerJoin(systems, eq(gameTables.systemId, systems.id))
     .innerJoin(profiles, eq(gameTables.gmId, profiles.id))
     .where(where)
-    // Soonest first; the slug keeps tables that start together in a steady order.
-    .orderBy(gameTables.startsAt, gameTables.slug);
+    // Soonest first, or most recently published first; the slug keeps ties in a steady order.
+    .orderBy(
+      ...(newestFirst ? [desc(gameTables.publishedAt)] : [gameTables.startsAt]),
+      gameTables.slug,
+    );
 
 type Row = Awaited<ReturnType<typeof query>>[number];
 
@@ -94,6 +98,32 @@ export async function listUpcomingTables(
   );
 
   return withExtras(db, rows.map(shape), now);
+}
+
+// How far back "Novas mesas" looks.
+export const NEW_TABLE_DAYS = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Tables published in the last `NEW_TABLE_DAYS` that have not started and still have a seat,
+ * most recently published first, at most `limit`. The window starts from `now`, so a caller
+ * that rounds `now` (see `publicReadNow`) keeps the query's parameters stable for caching.
+ */
+export async function listNewTables(db: AnyDb, now: Date, limit: number): Promise<TableView[]> {
+  const since = new Date(now.getTime() - NEW_TABLE_DAYS * DAY_MS);
+  const rows = await query(
+    db,
+    and(
+      eq(gameTables.status, 'active'),
+      gt(gameTables.startsAt, now),
+      gte(gameTables.publishedAt, since),
+    ),
+    now,
+    true,
+  );
+  const open = rows.map(shape).filter((table) => table.seatsLeft > 0);
+
+  return withExtras(db, open.slice(0, limit), now);
 }
 
 /** A master's public upcoming tables, soonest first, one page of them and the total. */

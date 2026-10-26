@@ -130,10 +130,6 @@
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
 </script>
 
-<svelte:head>
-  <title>{table.title}</title>
-  <meta name="description" content="{table.system.name}. {seats}." />
-</svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <article class="pt-2 pb-8 md:pt-6">
@@ -421,6 +417,22 @@
             bind:value={() => rating.values.comment, (value) => rating.change('comment', value)}
             class="mt-1 textarea"
           />
+          <!-- Off by default: the comment stays with the player unless they choose to show it. -->
+          <label class="mt-3 flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              name="commentPublic"
+              value="true"
+              aria-describedby="comment-public-hint"
+              checked={rating.values.commentPublic}
+              onchange={(event) => rating.change('commentPublic', event.currentTarget.checked)}
+              class="checkbox"
+            />
+            {m.rating_comment_public()}
+          </label>
+          <p id="comment-public-hint" class="ml-8 text-sm text-muted">
+            {m.rating_comment_public_hint()}
+          </p>
         </div>
 
         <div>

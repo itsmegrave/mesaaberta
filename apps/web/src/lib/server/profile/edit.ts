@@ -31,6 +31,7 @@ export function saveSection(section: ProfileSection) {
     const values = withStoredFields(await request.formData(), stored, section);
     const form = validateFormData(values, profileSchema, PROFILE_DEFAULTS, {
       arrays: ['linkNetwork', 'linkUrl'],
+      booleans: ['showName'],
     });
     if (!form.valid) return fail(400, { form });
 

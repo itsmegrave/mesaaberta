@@ -123,6 +123,8 @@ describe('submitRating', () => {
     expect(await ratingOf(test.db, table.id, id(2))).toMatchObject({
       gmScore: 4,
       comment: 'Ótima.',
+      // Private unless the player ticks the box.
+      commentPublic: false,
     });
     const [event] = (await test.db.select().from(events)).filter((e) => e.id === eventIds[0]);
     expect(event).toMatchObject({
@@ -131,6 +133,23 @@ describe('submitRating', () => {
       payload: { slug: table.slug, playerId: id(2) },
     });
     expect(JSON.stringify(event.payload)).not.toContain('Ótima');
+  });
+
+  it('shows the comment on the profile only when the player chose to and wrote one', async () => {
+    const table = await makeTable();
+    await seated(2, table.slug);
+    await seated(3, table.slug);
+    await submitRating(
+      test.db,
+      player(2),
+      table.slug,
+      input({ comment: 'Pode mostrar.', commentPublic: true }),
+      after,
+    );
+    await submitRating(test.db, player(3), table.slug, input({ commentPublic: true }), after);
+
+    expect(await ratingOf(test.db, table.id, id(2))).toMatchObject({ commentPublic: true });
+    expect(await ratingOf(test.db, table.id, id(3))).toMatchObject({ commentPublic: false });
   });
 
   it('is final: a second rating is refused with AlreadyRated and changes nothing', async () => {

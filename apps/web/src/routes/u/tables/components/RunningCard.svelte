@@ -4,6 +4,7 @@
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import type { TableStatus } from '#lib/tables/status.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { seatSummary } from '#lib/tables/format.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
@@ -77,12 +78,11 @@
   </p>
   {#if item.reserved}
     <p class="mt-2 text-sm text-muted">
-      {m.invitation_seats({
-        confirmed: item.players.length,
-        reserved: item.reserved,
-        available:
-          item.seatsLeft ?? Math.max(0, item.capacity - item.players.length - item.reserved),
-      })}
+      {seatSummary(
+        item.players.length,
+        item.reserved,
+        item.seatsLeft ?? Math.max(0, item.capacity - item.players.length - item.reserved),
+      )}
     </p>
   {/if}
 
@@ -96,13 +96,11 @@
       <p class="font-semibold">{m.dash_session_prompt({ title: item.title })}</p>
       <p class="mt-1 text-sm text-muted">{m.dash_session_prompt_text()}</p>
       <div class="mt-3 flex flex-wrap gap-3">
-        <ActionForm
-          action="{manage}?/happened"
-          {next}
-          label={m.dash_session_yes()}
-          buttonClass="{buttonClass('primary')} font-semibold"
-          success={m.toast_table_concluded()}
-        />
+        <!-- "It happened" opens the attendance step on Gerenciar mesa: only who showed up rates and earns badges. -->
+        <a
+          href="{manage}?etapa=presenca#session-confirmation"
+          class="{buttonClass('primary')} font-semibold">{m.dash_session_yes()}</a
+        >
         <ActionForm
           action="{manage}?/notHeld"
           {next}
@@ -117,7 +115,9 @@
   <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
-  <p class="mt-3"><SeatDots taken={item.players.length} capacity={item.capacity} /></p>
+  <p class="mt-3">
+    <SeatDots taken={item.players.length} capacity={item.capacity} reserved={item.reserved} />
+  </p>
 
   <NextSession startsAt={item.startsAt} timezone={item.timezone} />
 

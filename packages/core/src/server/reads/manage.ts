@@ -1,5 +1,5 @@
 import type { AnyDb } from '../db/client';
-import { can, type Actor } from '../auth/policy';
+import { can, playerRatingOpen, type Actor } from '../auth/policy';
 import { loadManage } from '../tables/manage';
 import { instantToLocal, nextWeeklySession, weeklyInterval } from '../tables/schedule';
 
@@ -41,6 +41,13 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
     nextSession: nextSessionOf(manage.table, now),
     session: manage.session,
     canInvite: actor?.id === gmId,
+    // The GM may rate the players they marked present (an admin looking on may not).
+    canRatePlayers:
+      actor?.id === gmId &&
+      playerRatingOpen({
+        tableStatus: manage.table.status,
+        kind: manage.table.kind,
+      }),
     canEdit: can(actor, 'table:edit', { gmId, tableStatus: manage.table.status }),
     systemWaiting: manage.systemWaiting,
     gm: manage.gm,

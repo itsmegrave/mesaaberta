@@ -11,8 +11,11 @@ import {
 import { authorize, can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { participantRatings, playerRatingsAt } from '@mesaaberta/core/server/ratings/players';
 import { findTableBySlug } from '@mesaaberta/core/server/tables/queries';
 import { systemWaitingOf } from '../systems';
+import { markedPresent } from './attendance';
+import { tablesPlayed } from '../profile/public';
 
 /** The events a GM sees in "Atividade recente": what people did at the table, newest first. */
 export const ACTIVITY_TYPES = [
@@ -52,7 +55,7 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
     avatarPath: profiles.avatarPath,
   };
 
-  const [[source], rows, [gm], rating, recent, [held]] = await Promise.all([
+  const [[source], rows, [gm], rating, recent, given, [held]] = await Promise.all([
     db
       .select({ moderatedAt: gameTables.moderatedAt })
       .from(gameTables)
@@ -94,6 +97,7 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
       )
       .orderBy(desc(events.createdAt))
       .limit(ACTIVITY_SHOWN),
+    playerRatingsAt(db, table.id),
     // The sessions the GM confirmed so far, each one a `TableSessionHeld`.
     db
       .select({ count: sql<number>`count(*)::int` })
@@ -101,6 +105,21 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
       .where(
         and(eq(events.type, 'TableSessionHeld'), sql`${events.payload}->>'tableId' = ${table.id}`),
       ),
+  ]);
+  const requests = rows.filter((row) => row.status === 'pending');
+  // What the GM weighs a request by: the asker's public score as a participant.
+  const confirmed = rows.filter((row) => row.status === 'confirmed');
+  const [scores, played] = await Promise.all([
+    participantRatings(
+      db,
+      requests.map((row) => row.playerId),
+      now,
+    ),
+    // "Jogou N mesas" on the rating rows: the same total as the profile's "Mesas jogadas".
+    tablesPlayed(
+      db,
+      confirmed.map((row) => row.playerId),
+    ),
   ]);
 
   // The players the activity names, by id: one query, whoever they are.
@@ -135,8 +154,17 @@ export async function loadManage(db: AnyDb, actor: Actor | null, slug: string, n
     gmRating: rating,
     // Which session the current date is: "sessão 3 (de 4)". A one-shot has only the one.
     session: table.kind === 'one_shot' ? null : (held?.count ?? 0) + 1,
-    requests: rows.filter((row) => row.status === 'pending'),
-    players: rows.filter((row) => row.status === 'confirmed'),
+    requests: requests.map((row) => ({
+      ...row,
+      participantRating: scores.get(row.playerId)!,
+    })),
+    // `markedPresent`: the GM can rate them; `playerRating`: the score the GM gave them here, or null.
+    players: confirmed.map((row) => ({
+      ...row,
+      tablesPlayed: played.get(row.playerId)!,
+      markedPresent: markedPresent(row),
+      playerRating: given.get(row.playerId) ?? null,
+    })),
     activity: recent.map((event) => {
       const payload = event.payload as { playerId?: string; reason?: 'left' | 'removed' };
       return {

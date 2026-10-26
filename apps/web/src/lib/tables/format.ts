@@ -33,6 +33,14 @@ export function scheduleLabel(
   return everyWeeks ? m.table_recurrence_weeks({ weeks: everyWeeks }) : null;
 }
 
+/** The seats in words, when invites hold some: "2 confirmadas · 1 reservada · 2 livres". */
+export const seatSummary = (confirmed: number, reserved: number, free: number): string =>
+  [
+    m.seats_confirmed({ count: confirmed }),
+    m.seats_reserved({ count: reserved }),
+    m.seats_free({ count: free }),
+  ].join(' · ');
+
 /** "Mesa cheia" or how many seats are left. */
 export const seatsLeftLabel = (seatsLeft: number): string =>
   seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: seatsLeft });
@@ -46,4 +54,20 @@ export function dateBox(startsAt: Date, timeZone: string, locale: string) {
     day: part({ day: 'numeric' }),
     month: part({ month: 'short' }),
   };
+}
+
+const MINUTE_MS = 60_000;
+
+/**
+ * How long ago a table was published, against `now` (the instant its list was read): "Aberta
+ * agora", "há 25 min", "há 3 h", "ontem", "há 6 dias".
+ */
+export function openedLabel(publishedAt: Date, now: Date): string {
+  const minutes = Math.max(0, Math.floor((now.getTime() - publishedAt.getTime()) / MINUTE_MS));
+  if (minutes < 1) return m.table_opened_now();
+  if (minutes < 60) return m.table_opened_minutes({ count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return m.table_opened_hours({ count: hours });
+  const days = Math.floor(hours / 24);
+  return days === 1 ? m.table_opened_yesterday() : m.table_opened_days({ count: days });
 }

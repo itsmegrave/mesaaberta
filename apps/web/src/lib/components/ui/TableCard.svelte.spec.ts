@@ -126,10 +126,8 @@ describe('TableCard', () => {
 
 it('distinguishes confirmed players from reserved invitations in the public seat count', async () => {
   render(TableCard, { table: { ...base, seatsLeft: 0, taken: 2, reserved: 3 } });
+  await expect.element(page.getByText('2 confirmadas · 3 reservadas · 0 livres')).toBeVisible();
   await expect
-    .element(page.getByText('2 confirmados · 3 reservadas · 0 disponíveis'))
-    .toBeVisible();
-  await expect
-    .element(page.getByRole('img', { name: '2 confirmados · 3 reservadas · 0 disponíveis' }))
+    .element(page.getByRole('img', { name: '2 confirmadas · 3 reservadas · 0 livres' }))
     .toBeVisible();
 });

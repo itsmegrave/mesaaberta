@@ -34,10 +34,6 @@
   );
 </script>
 
-<svelte:head>
-  <title>{m.tables_title()}</title>
-  <meta name="description" content={m.tables_description()} />
-</svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <section class="py-2 md:pt-12">

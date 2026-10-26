@@ -11,12 +11,13 @@
 
   // A person on a table's roster (a request, the GM, a player): the photo, the name and a line
   // under it, then what can be done about them. `children` follows on a line of its own (a
-  // request's message, with `wrap`).
+  // request's message, with `wrap`). `extra` goes under the line (a request's score).
   let {
     username,
     avatarUrl,
     subline,
     wrap = false,
+    extra,
     actions,
     children,
   }: {
@@ -24,6 +25,7 @@
     avatarUrl: string | null;
     subline: string;
     wrap?: boolean;
+    extra?: Snippet;
     actions?: Snippet;
     children?: Snippet;
   } = $props();
@@ -35,6 +37,7 @@
     <span class="min-w-0">
       <span class="block truncate font-semibold"><UserLink {username} /></span>
       <span class="block text-sm text-muted">{subline}</span>
+      {#if extra}<span class="mt-1 block">{@render extra()}</span>{/if}
     </span>
   </span>
   {@render actions?.()}

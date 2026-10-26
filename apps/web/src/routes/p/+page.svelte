@@ -31,11 +31,6 @@
   const withdrawing = new Target<{ id: string; name: string }>();
 </script>
 
-<svelte:head>
-  <title>{m.partner_title()}</title>
-  <meta name="description" content={m.partner_description()} />
-</svelte:head>
-
 <section class="py-2 md:pt-12">
   <PageHead
     crumbs={[{ label: m.partner_nav_label() }]}

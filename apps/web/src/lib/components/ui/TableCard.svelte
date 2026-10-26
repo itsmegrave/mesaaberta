@@ -2,7 +2,7 @@
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import { kindLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, seatSummary as seatsInWords, seatsLeftLabel } from '#lib/tables/format.js';
   import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -47,12 +47,11 @@
   // ring's label and the line under the footer's count.
   const seatSummary = $derived(
     table.reserved
-      ? m.invitation_seats({
-          confirmed:
-            table.taken ?? Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
-          reserved: table.reserved,
-          available: table.seatsLeft,
-        })
+      ? seatsInWords(
+          table.taken ?? Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
+          table.reserved,
+          table.seatsLeft,
+        )
       : undefined,
   );
 
