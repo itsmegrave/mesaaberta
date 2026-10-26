@@ -17,7 +17,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Continuar editando' }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page).toHaveURL(/\/t\/new$/);
+  await expect(page).toHaveURL(/\/tables\/new$/);
   await expect(page.getByLabel('Título')).toHaveValue('Uma mesa pela metade');
 
   await homeLink(page).click();

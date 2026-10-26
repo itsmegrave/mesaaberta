@@ -34,7 +34,7 @@ test.describe('an incomplete profile', () => {
     await page.getByLabel('Nome de usuário').fill(`legado-${unique()}`);
     await page.getByRole('button', { name: 'Salvar e continuar' }).click();
 
-    await expect(page).toHaveURL(/\/t\/new$/);
+    await expect(page).toHaveURL(/\/tables\/new$/);
     await expect(page.getByRole('heading', { name: 'Abrir uma mesa' })).toBeVisible();
   });
 
