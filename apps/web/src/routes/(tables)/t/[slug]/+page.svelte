@@ -135,7 +135,7 @@
 
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<article class="pt-2 pb-8 md:pt-6">
+<article class="pt-2 pb-16 md:pt-6 md:pb-8">
   <Breadcrumbs items={[{ label: m.nav_tables(), href: '/tables' }, { label: table.title }]} />
 
   <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-3 lg:gap-16">
@@ -282,78 +282,98 @@
         </SummaryRow>
       </dl>
 
-      <div class="mt-5 flex items-baseline justify-between gap-3">
-        <p class="text-xl font-semibold {table.seatsLeft === 0 ? 'text-muted' : 'text-lamp'}">
-          {seats}
-        </p>
-        <p class="text-sm font-semibold text-muted">
-          {m.table_seats_taken({ taken: table.capacity - table.seatsLeft, total: table.capacity })}
-        </p>
-      </div>
-      <p class="mt-3">
-        <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
-      </p>
       {#if table.minPlayers}
-        <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-3" />
+        <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-5 md:hidden" />
       {/if}
 
-      {#if problem}
-        <p role="alert" class="mt-5 font-semibold text-error-700-300">
-          {registrationError(problem.code, problem.retryAfter)}
+      <!-- On a phone the seats and what this visitor can do stay in a bar above the tab bar, as on
+           the layout; from md they are the end of this card. -->
+      <div
+        class="max-md:fixed max-md:inset-x-0 max-md:bottom-20 max-md:z-30 max-md:border-t max-md:border-surface-200-800 max-md:bg-panel max-md:px-4 max-md:pt-3 max-md:pb-4"
+      >
+        <div class="flex items-center justify-between gap-3 md:mt-5 md:items-baseline">
+          <p
+            class="text-lg font-bold md:text-xl md:font-semibold {table.seatsLeft === 0
+              ? 'text-muted'
+              : 'text-lamp'}"
+          >
+            {seats}
+          </p>
+          <p class="text-sm font-semibold text-muted max-md:hidden">
+            {m.table_seats_taken({
+              taken: table.capacity - table.seatsLeft,
+              total: table.capacity,
+            })}
+          </p>
+          <span class="md:hidden">
+            <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} />
+          </span>
+        </div>
+        <p class="mt-3 max-md:hidden">
+          <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
         </p>
-      {/if}
-
-      <!-- What this visitor can do about a seat. The server checks it again on every action. -->
-      <div class="mt-5">
-        {#if data.isGm}
-          <p class="font-semibold">{m.table_you_are_gm()}</p>
-        {:else if !data.signedIn}
-          <a
-            href="{resolve('login')}?next={encodeURIComponent(`/t/${table.slug}`)}"
-            class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
-          >
-            {m.table_sign_in_to_join()}
-          </a>
-        {:else if data.myStatus === 'confirmed'}
-          <p class="font-semibold">{m.table_you_are_in()}</p>
-          <ActionForm
-            action="?/leave"
-            class="mt-3"
-            label={m.table_leave()}
-            buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
-            success={m.toast_left()}
-            onfail={(message) => (failed = message)}
-          />
-        {:else if data.myStatus === 'pending'}
-          <p class="font-semibold">{m.table_request_pending()}</p>
-          <ActionForm
-            action="?/leave"
-            class="mt-3"
-            label={m.table_cancel_request()}
-            buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
-            success={m.toast_request_withdrawn()}
-            onfail={(message) => (failed = message)}
-          />
-        {:else if data.invitation}
-          <a
-            href={`/u/profile/invitations/${data.invitation.id}`}
-            class="{buttonClass('primary')} w-full font-semibold">{m.invitation_review()}</a
-          >
-        {:else if data.canJoin && table.joinMode === 'approval'}
-          <JoinRequestDialog
-            onfail={(message) => (failed = message)}
-            triggerClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
-          />
-        {:else if data.canJoin}
-          <ActionForm
-            action="?/join"
-            onfail={(message) => (failed = message)}
-            onsuccess={() => toast.success(m.toast_confirmed())}
-            label={m.table_join_now()}
-            icon="game-icons:bar-stool"
-            buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
-          />
+        {#if table.minPlayers}
+          <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-3 max-md:hidden" />
         {/if}
+
+        {#if problem}
+          <p role="alert" class="mt-5 font-semibold text-error-700-300">
+            {registrationError(problem.code, problem.retryAfter)}
+          </p>
+        {/if}
+
+        <!-- What this visitor can do about a seat. The server checks it again on every action. -->
+        <div class="mt-3 md:mt-5">
+          {#if data.isGm}
+            <p class="font-semibold">{m.table_you_are_gm()}</p>
+          {:else if !data.signedIn}
+            <a
+              href="{resolve('login')}?next={encodeURIComponent(`/t/${table.slug}`)}"
+              class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+            >
+              {m.table_sign_in_to_join()}
+            </a>
+          {:else if data.myStatus === 'confirmed'}
+            <p class="font-semibold">{m.table_you_are_in()}</p>
+            <ActionForm
+              action="?/leave"
+              class="mt-3"
+              label={m.table_leave()}
+              buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
+              success={m.toast_left()}
+              onfail={(message) => (failed = message)}
+            />
+          {:else if data.myStatus === 'pending'}
+            <p class="font-semibold">{m.table_request_pending()}</p>
+            <ActionForm
+              action="?/leave"
+              class="mt-3"
+              label={m.table_cancel_request()}
+              buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
+              success={m.toast_request_withdrawn()}
+              onfail={(message) => (failed = message)}
+            />
+          {:else if data.invitation}
+            <a
+              href={`/u/profile/invitations/${data.invitation.id}`}
+              class="{buttonClass('primary')} w-full font-semibold">{m.invitation_review()}</a
+            >
+          {:else if data.canJoin && table.joinMode === 'approval'}
+            <JoinRequestDialog
+              onfail={(message) => (failed = message)}
+              triggerClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+            />
+          {:else if data.canJoin}
+            <ActionForm
+              action="?/join"
+              onfail={(message) => (failed = message)}
+              onsuccess={() => toast.success(m.toast_confirmed())}
+              label={m.table_join_now()}
+              icon="game-icons:bar-stool"
+              buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+            />
+          {/if}
+        </div>
       </div>
       {#if data.isGm || data.myStatus === 'confirmed'}
         <a
