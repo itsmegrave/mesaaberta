@@ -199,17 +199,21 @@ describe('sentry options', () => {
     expect(safeFields({ colo: 'GRU' })).toEqual({ colo: 'GRU' });
   });
 
-  it('keeps the runtime and cloud contexts on a transaction', () => {
+  it('keeps the runtime, cloud and browser family contexts on a transaction', () => {
     const event = {
       type: 'transaction',
       contexts: {
         runtime: { name: 'cloudflare' },
         cloud_resource: { 'cloud.provider': 'cloudflare' },
-        os: { name: 'Android' },
+        os: { name: 'Android', version: '14', kernel_version: 'x' },
+        browser: { name: 'Chrome', version: '130' },
+        device: { model: 'Pixel 9' },
       },
     } as unknown as TransactionEvent;
     expect(privateTransaction(event).contexts).toEqual({
       runtime: { name: 'cloudflare', version: undefined },
+      browser: { name: 'Chrome' },
+      os: { name: 'Android' },
       cloud_resource: { 'cloud.provider': 'cloudflare', 'cloud.region': undefined },
     });
   });

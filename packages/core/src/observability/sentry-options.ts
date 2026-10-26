@@ -28,8 +28,8 @@ const optionalContexts = <T extends Record<string, unknown>>(contexts: T) => {
 };
 
 /**
- * Where the event ran, never who sent it: the runtime's name and version and the cloud provider and
- * region the SDK set. Workers expose no CPU, memory, OS or host name; the data center that served a
+ * Where the event ran, never who sent it: the runtime's name and version, the cloud provider and
+ * region the SDK set and, from the browser, the browser and OS families (names only). Workers expose no CPU, memory, OS or host name; the data center that served a
  * request travels as the `colo` tag (`coloOf`).
  */
 const hostContexts = (event: { contexts?: ErrorEvent['contexts'] }) => {
@@ -37,8 +37,13 @@ const hostContexts = (event: { contexts?: ErrorEvent['contexts'] }) => {
   const cloud = event.contexts?.cloud_resource;
   const label = (value: unknown) =>
     typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,64}$/.test(value) ? value : undefined;
+  // The browser sets only family names (apps/web/src/lib/observability/client-family.ts).
+  const family = (context: { name?: unknown } | undefined) =>
+    context && label(context.name) && { name: label(context.name) };
   const kept = {
     runtime: runtime && { name: label(runtime.name), version: label(runtime.version) },
+    browser: family(event.contexts?.browser),
+    os: family(event.contexts?.os),
     cloud_resource: cloud && {
       'cloud.provider': label(cloud['cloud.provider']),
       'cloud.region': label(cloud['cloud.region']),
