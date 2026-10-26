@@ -30,6 +30,7 @@
   import { m } from '#lib/paraglide/messages.js';
 
   import { isUnder } from '#lib/navigation/main-nav.js';
+  import { directoryNav } from '#lib/navigation/directory-nav.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { reloadPage } from '#lib/forms/leave-guard.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
@@ -41,6 +42,8 @@
     ...layoutData,
     account: layoutData.account && { ...layoutData.account, ...(accountQuery.data?.summary ?? {}) },
   });
+  // The directories whose flag is on, for the sidebar and the phone's Explorar.
+  const directories = $derived(directoryNav(data.directories));
   // The bell and the messages link count what is unread. The count is read again every 30 seconds
   // while the tab is visible and when it comes back into focus (a background tab does not poll).
   const badges = createQuery(
@@ -133,6 +136,7 @@
           latest={data.account?.notifications.latest ?? []}
           seenAt={data.account?.notifications.seenAt}
           messagesUnread={badges.data?.messages ?? data.account?.messagesUnread ?? 0}
+          {directories}
         />
       </div>
     {/if}
@@ -235,7 +239,7 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar />
+        <BottomTabBar {directories} />
       {/if}
 
       {#if !data.maintenance}

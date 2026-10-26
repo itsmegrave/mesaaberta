@@ -9,8 +9,10 @@
   import NotificationBell from '#lib/components/shell/NotificationBell.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
+  import type { DirectoryLink } from '#lib/navigation/directory-nav.js';
   import { mainNav } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
+  import type { IconName } from '#lib/icons/names.js';
 
   type Account = {
     displayName: string;
@@ -27,6 +29,7 @@
     latest,
     seenAt,
     messagesUnread,
+    directories = [],
   }: {
     account: Account | null;
     authEnabled: boolean;
@@ -34,6 +37,8 @@
     latest: NonNullable<Parameters<typeof NotificationBell>[1]>['latest'];
     seenAt?: string;
     messagesUnread: number;
+    /** The directories that are on, drawn as their own group after the destinations. */
+    directories?: DirectoryLink[];
   } = $props();
 
   const STORAGE_KEY = 'nav-expanded';
@@ -70,6 +75,16 @@
       primary: !!link.primary,
     })),
   );
+  // Sistemas, Lugares and Quem mestra: the long names open, the short ones on the rail.
+  const explore = $derived(
+    directories.map((link) => ({
+      href: link.href,
+      label: expanded ? link.label() : link.shortLabel(),
+      icon: link.icon,
+      current: link.current(pathname),
+      primary: false,
+    })),
+  );
 
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
   // Open: a 44px row. Rail: a 64px column with the icon on a 40px tile over the label.
@@ -92,6 +107,46 @@
     return `${row} justify-start! gap-3! px-3! py-0! ${fill}`;
   }
 </script>
+
+{#snippet navLink(link: {
+  href: string;
+  label: string;
+  icon: IconName;
+  current: boolean;
+  primary: boolean;
+})}
+  {@const primary = link.primary}
+  <Navigation.TriggerAnchor
+    href={link.href}
+    aria-current={link.current ? 'page' : undefined}
+    aria-label={expanded ? undefined : link.label}
+    class="{linkClass(link.current, primary)} whitespace-normal!"
+  >
+    {#if expanded}
+      {#if link.current}
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-2.5 -left-3 w-0.75 rounded-full bg-primary-500"
+        ></span>
+      {/if}
+      <span class="flex shrink-0 {primary || link.current ? '' : 'text-muted'}">
+        <Icon name={link.icon} size={20} />
+      </span>
+      <span class="min-w-0 flex-1">{link.label}</span>
+    {:else}
+      <span
+        class="{tile} {primary
+          ? 'preset-filled-primary-500'
+          : link.current
+            ? 'bg-surface-200-800'
+            : 'group-hover:bg-surface-200-800'}"
+      >
+        <Icon name={link.icon} size={20} />
+      </span>
+      <span class="w-full min-w-0">{link.label}</span>
+    {/if}
+  </Navigation.TriggerAnchor>
+{/snippet}
 
 {#snippet collapseButton()}
   <MAButton
@@ -142,40 +197,36 @@
             class="flex flex-col {expanded ? 'gap-1' : 'flex-none justify-start gap-2'}"
           >
             {#each links as link (link.href)}
-              {@const primary = link.primary}
-              <Navigation.TriggerAnchor
-                href={link.href}
-                aria-current={link.current ? 'page' : undefined}
-                aria-label={expanded ? undefined : link.label}
-                class="{linkClass(link.current, primary)} whitespace-normal!"
-              >
-                {#if expanded}
-                  {#if link.current}
-                    <span
-                      aria-hidden="true"
-                      class="absolute inset-y-2.5 -left-3 w-0.75 rounded-full bg-primary-500"
-                    ></span>
-                  {/if}
-                  <span class="flex shrink-0 {primary || link.current ? '' : 'text-muted'}">
-                    <Icon name={link.icon} size={20} />
-                  </span>
-                  <span class="min-w-0 flex-1">{link.label}</span>
-                {:else}
-                  <span
-                    class="{tile} {primary
-                      ? 'preset-filled-primary-500'
-                      : link.current
-                        ? 'bg-surface-200-800'
-                        : 'group-hover:bg-surface-200-800'}"
-                  >
-                    <Icon name={link.icon} size={20} />
-                  </span>
-                  <span class="w-full min-w-0">{link.label}</span>
-                {/if}
-              </Navigation.TriggerAnchor>
+              {@render navLink(link)}
             {/each}
           </Navigation.Menu>
         </Navigation.Group>
+
+        {#if explore.length > 0}
+          <!-- The directories: a labelled group open, a divider then their icons as a rail. -->
+          <Navigation.Group
+            aria-label={expanded ? undefined : m.nav_explore()}
+            class="flex flex-col {expanded
+              ? 'gap-1 border-t border-surface-200-800 pt-4'
+              : 'items-center gap-2'}"
+          >
+            {#if expanded}
+              <Navigation.Label
+                class="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
+                >{m.nav_explore()}</Navigation.Label
+              >
+            {:else}
+              <span aria-hidden="true" class="mb-2 block h-px w-10 bg-surface-200-800"></span>
+            {/if}
+            <Navigation.Menu
+              class="flex flex-col {expanded ? 'gap-1' : 'flex-none justify-start gap-2'}"
+            >
+              {#each explore as link (link.href)}
+                {@render navLink(link)}
+              {/each}
+            </Navigation.Menu>
+          </Navigation.Group>
+        {/if}
 
         {#if account}
           <!-- The same group open and as a rail: the label becomes a short line when collapsed. -->
