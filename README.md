@@ -463,8 +463,11 @@ locals.log.info('event.handler.succeeded', {
 Every console line has `schemaVersion`, `time` (UTC ISO timestamp), `level`, `msg` and `service`.
 Request logs add the Cloudflare `cf-ray` as `requestId` (a UUID locally), `environment`, Worker
 version `release`, method, **route template** (for example `/t/[slug]`), status, outcome and
-duration. Raw paths and query strings are not recorded. Dispatcher logs add event ID/type, handler,
-attempt and duration. Failed handlers produce `event.handler.failed`, followed by
+duration. Raw paths and query strings are not recorded. The web Worker passes its `requestId` to
+the api in `x-request-id`, so the api's lines carry the same id, and each worker run (cron or queue
+delivery) has its own. Field names are camelCase: `requestId` for the request or run a line belongs
+to, `actionId` for the request that recorded an event. Dispatcher logs add event ID/type, the
+event's `actionId`, handler, attempt and duration. Failed handlers produce `event.handler.failed`, followed by
 `event.retry.scheduled` with `retryInSeconds`, or `event.exhausted` after eight attempts.
 
 **Privacy boundary:** `src/lib/observability/privacy.ts` defines the allowed operational fields.
@@ -477,7 +480,8 @@ breadcrumbs, source context or local variables. `beforeSendLog` independently fi
 attributes and rejects automatic console logs. Do not add console-capture integrations.
 
 To investigate a failure, filter Sentry Logs by `requestId`, find the failed operation and error code,
-then find its issue with the same tag. For background work, filter by `eventId`: find the failed
+then find its issue with the same tag. To follow one action end to end (web, api, then the worker's
+handlers), filter by `requestId` or `actionId` being that id. For background work, filter by `eventId`: find the failed
 handler, its next retry and eventual success/exhaustion. Use `release` to identify the deployed
 Worker. The console transport uses the same IDs. Telemetry failure never changes the application's
 result; SDK flushing runs under the Worker's execution context.

@@ -99,6 +99,10 @@ export type DomainEvent =
   | { type: 'RatingSubmitted'; payload: Registration }
   // The GM rated a player they marked present (the actor is the GM). No score or comment either.
   | { type: 'PlayerRated'; payload: Registration }
+  // Someone followed a person (the actor is the follower). Unfollowing records nothing.
+  | { type: 'FollowStarted'; payload: { followeeId: string } }
+  // A person saved their favorite systems: the ids as saved, in no order.
+  | { type: 'FavoriteSystemsChanged'; payload: { systemIds: string[] } }
   // A session started (OAuth or email/password). This is the connection record Marco Civil da
   // Internet (art. 15) requires kept for 6 months — longer than other events, see CONNECTION_RETENTION_DAYS.
   | { type: 'UserSignedIn'; payload: { ip: string | null } }
@@ -135,13 +139,24 @@ export type DomainEvent =
   // Nobody is told.
   | { type: 'PartnerAdded'; payload: PartnerFact }
   | { type: 'PartnerUpdated'; payload: PartnerFact & { changes: Changes } }
-  // An admin approved a partner: it is on the page. `submitterId` is who is told.
+  // An admin approved a partner: it is on the page. Every account that looks after it is told
+  // (`submitterId` alone for a partner with no `partner_owners` row).
   // A rule awarded a badge (never a backfill or a grant). The bell notice is written from this event.
   | { type: 'BadgeEarned'; payload: { profileId: string; badgeId: string } }
   | { type: 'PartnerApproved'; payload: PartnerFact & { submitterId: string } }
-  // An admin rejected or took a partner down, or its submitter withdrew it (then `submitterId`
-  // is the actor, so nobody is told).
+  // An admin rejected or took a partner down, or one of its owners withdrew it (then `reason` is
+  // null and the other owners are told). Who is told as for `PartnerApproved`.
   | { type: 'PartnerRemoved'; payload: PartnerRemoval }
+  // An owner of a partner invited another account to look after it, and how that ended. The
+  // invitee hears of the invite, the inviter of the answer; a cancelled or lapsed one tells nobody.
+  | { type: 'PartnerOwnerInvited'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationAccepted'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationDeclined'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationCancelled'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationExpired'; payload: PartnerInvitationFact }
+  // An account stopped looking after a partner: taken off by another owner (who tells them), or
+  // it left (the actor is `profileId`, so nobody is told).
+  | { type: 'PartnerOwnerRemoved'; payload: PartnerFact & { profileId: string } }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -159,7 +174,10 @@ export type DomainEvent =
   | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
-  | { type: 'EventForced'; payload: { eventId: string; eventType: string } };
+  | { type: 'EventForced'; payload: { eventId: string; eventType: string } }
+  // An admin opened a section of the admin area (`/admin/users`), at most once per section in
+  // half an hour: who looked at what, for the audit log.
+  | { type: 'AdminAreaEntered'; payload: { section: string } };
 
 /** What an edit changed, per field. A hidden field says that it changed, never the value. */
 export type FieldChange =
@@ -213,11 +231,17 @@ export type CrowdfundingRemoval = CrowdfundingFact & {
 
 export type PartnerFact = { partnerId: string; name: string };
 
-// `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
+// `reason` is null when an owner withdrew it. `reportId` is null with no report behind it.
 export type PartnerRemoval = PartnerFact & {
   submitterId: string;
   reason: ReportFiled['reason'] | null;
   reportId: string | null;
+};
+
+export type PartnerInvitationFact = PartnerFact & {
+  inviterId: string;
+  inviteeId: string;
+  invitationId: string;
 };
 
 export type ReportClosure = { reportId: string; reporterId: string };

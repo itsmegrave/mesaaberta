@@ -1,5 +1,6 @@
 import { TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
+import { EVENT_REVIEWS } from './event-review';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -103,6 +104,13 @@ export const profiles = pgTable(
     // Off by default: `name` may have come from the sign-in provider, so it is public only once the
     // person says so, as a line under the @usuário.
     showName: boolean('show_name').notNull().default(false),
+    // On: the favorite systems show as pills on the public profile. They still shape the person's
+    // own Início either way.
+    showFavoriteSystems: boolean('show_favorite_systems').notNull().default(true),
+    // Whether a notice arrives when someone this person follows opens a table, or a seat opens on a
+    // full table of theirs.
+    followNotifyTables: boolean('follow_notify_tables').notNull().default(true),
+    followNotifySeats: boolean('follow_notify_seats').notNull().default(true),
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
@@ -188,6 +196,45 @@ export const systems = pgTable(
   (system) => [
     uniqueIndex('systems_slug_unique').on(system.slug),
     uniqueIndex('systems_name_unique').on(system.name),
+  ],
+).enableRLS();
+
+// The systems a person likes to play, which shape their Início. At most
+// FAVORITE_SYSTEMS_MAX each, held by the service, not the database.
+export const profileFavoriteSystems = pgTable(
+  'profile_favorite_systems',
+  {
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    systemId: uuid('system_id')
+      .notNull()
+      .references(() => systems.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (favorite) => [
+    primaryKey({ columns: [favorite.profileId, favorite.systemId] }),
+    index('profile_favorite_systems_system_idx').on(favorite.systemId),
+  ],
+).enableRLS();
+
+// Who follows whom: anyone, quem mestra or quem joga. Only the followed person sees how many
+// follow them.
+export const follows = pgTable(
+  'follows',
+  {
+    followerId: uuid('follower_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    followeeId: uuid('followee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (follow) => [
+    primaryKey({ columns: [follow.followerId, follow.followeeId] }),
+    index('follows_followee_idx').on(follow.followeeId),
+    check('follows_not_self', sql`${follow.followerId} <> ${follow.followeeId}`),
   ],
 ).enableRLS();
 
@@ -277,6 +324,9 @@ export const gameTables = pgTable(
     // The fewest confirmed players the GM wants before the table goes ahead. Optional: null says it
     // makes no difference. Never more than `capacity`.
     minPlayers: integer('min_players'),
+    // How many sessions an adventure plans, so the table can say "sessão 2 de 4". Only adventures
+    // have one; null on the others, and on adventures made before the field existed.
+    plannedSessions: integer('planned_sessions'),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     durationMinutes: integer('duration_minutes').notNull(),
     timezone: text('timezone').notNull(),
@@ -318,6 +368,10 @@ export const gameTables = pgTable(
     check(
       'game_tables_min_players_range',
       sql`${table.minPlayers} IS NULL OR (${table.minPlayers} >= 1 AND ${table.minPlayers} <= ${table.capacity})`,
+    ),
+    check(
+      'game_tables_planned_sessions_range',
+      sql`${table.plannedSessions} IS NULL OR (${table.kind}::text = 'adventure' AND ${table.plannedSessions} BETWEEN 2 AND 20)`,
     ),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
     check(
@@ -373,6 +427,8 @@ export const gameTableTags = pgTable(
 // as the change it describes, then dispatched to handlers after the commit; a sweeper retries what
 // did not finish. Rows are the record of who did what, and when; a finished one is deleted after
 // RETENTION_DAYS (see pruneEvents).
+export const eventReview = pgEnum('event_review', EVENT_REVIEWS);
+
 export const events = pgTable(
   'events',
   {
@@ -406,6 +462,14 @@ export const events = pgTable(
     // Set once a bus adapter (Cloudflare Queues) has accepted the event. Null while the event only
     // lives in the outbox, and for every event written before the bus existed.
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    // An admin's word on a given-up event (`EVENT_REVIEWS`), who said it and when. Not a foreign
+    // key, like `actorId`. Cleared when the event runs again.
+    reviewStatus: eventReview('review_status'),
+    reviewedBy: uuid('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    // The `requestId` of the request (or worker run) that recorded the event (Trello #278). Null
+    // for events recorded outside one, and for every event written before it was kept.
+    actionId: text('action_id'),
   },
   (event) => [
     // What the sweeper looks for: events not yet done and not given up on.
@@ -894,8 +958,9 @@ export const crowdfundings = pgTable(
 
 // A community, shop, podcast or event that links to Mesa Aberta and is listed on /partners in return
 // (a link exchange). A member sends it, an admin approves it (`approvedAt`), members report it and an
-// admin removes it (`removedAt`). The submitter is shown to admins only. Any edit by the submitter
-// clears the approval, so the card leaves the page until an admin approves it again.
+// admin removes it (`removedAt`). Who looks after it (`partner_owners`) is shown to admins and to
+// those accounts only. Any edit by an owner clears the approval, so the card leaves the page until
+// an admin approves it again.
 export const partners = pgTable(
   'partners',
   {
@@ -1031,6 +1096,9 @@ export const crowdfundingImportRuns = pgTable(
 export const workerHeartbeats = pgTable('worker_heartbeats', {
   name: text('name').primaryKey(),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }).notNull(),
+  // The build that ran it (`buildInfoOf`); null before a run on code that records it.
+  version: text('version'),
+  revision: text('revision'),
 }).enableRLS();
 
 // Consent-based invitations are not registrations; pending rows reserve seats without membership.
@@ -1087,6 +1155,61 @@ export const gmInviteBlocks = pgTable(
   (t) => [
     primaryKey({ columns: [t.playerId, t.gmId] }),
     check('gm_invite_blocks_not_self', sql`${t.playerId} <> ${t.gmId}`),
+  ],
+).enableRLS();
+
+// The member accounts that look after a partner (at most MAX_PARTNER_OWNERS): they edit it, invite
+// other accounts, take accounts off and hear from moderation. All are equal. The submitter is the
+// first row; `partners.submitter_id` only says who sent it. A partner sent before this table, or
+// in the minutes between this migration and the deploy, may have no row: then its submitter is
+// its one owner (`ownersOf`).
+export const partnerOwners = pgTable(
+  'partner_owners',
+  {
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    // Who invited them; null for the submitter. Not a foreign key: the inviter may leave.
+    invitedBy: uuid('invited_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.partnerId, t.profileId] }),
+    index('partner_owners_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
+// An owner asks another account to look after the partner too. It counts only once accepted. A
+// pending one past `expires_at` has lapsed even before anything marks it.
+export const partnerInvitations = pgTable(
+  'partner_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    inviterId: uuid('inviter_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: invitationStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('partner_invitations_pending_unique')
+      .on(t.partnerId, t.inviteeId)
+      .where(sql`${t.status} = 'pending'`),
+    index('partner_invitations_partner_idx').on(t.partnerId, t.status),
+    index('partner_invitations_invitee_idx').on(t.inviteeId, t.status),
+    check('partner_invitations_not_self', sql`${t.inviterId} <> ${t.inviteeId}`),
+    check('partner_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
   ],
 ).enableRLS();
 

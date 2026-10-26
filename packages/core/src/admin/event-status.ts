@@ -4,3 +4,6 @@
  */
 export const EVENT_STATUSES = ['failed', 'retrying', 'pending', 'running', 'processed'] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
+
+// What an admin said about an event that was given up on (the values live with the schema).
+export { EVENT_REVIEWS, type EventReview } from '@mesaaberta/db/event-review';

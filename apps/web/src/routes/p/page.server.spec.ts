@@ -10,6 +10,7 @@ vi.mock('@mesaaberta/core/server/partners/service', () => ({
 }));
 
 const SUBMITTER = '00000000-0000-4000-8000-0000000000aa';
+const CO_OWNER = '00000000-0000-4000-8000-0000000000bb';
 const card = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Taverna do Dado',
@@ -19,7 +20,7 @@ const card = {
   couponCode: null,
   couponDescription: null,
   pending: false,
-  submitterId: SUBMITTER,
+  ownerIds: [SUBMITTER, CO_OWNER],
   links: [],
 };
 
@@ -34,17 +35,20 @@ const visit = (profile: { id: string; role: string; status: string } | null, sea
 const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
 
 describe('the partners page load', () => {
-  it("never sends the submitter's account id to the browser", async () => {
+  it("never sends the owners' account ids to the browser", async () => {
     vi.mocked(listPartners).mockResolvedValue({ cards: [card], total: 1, pages: 1 } as never);
     const data = await run(visit(null));
     expect(JSON.stringify(data)).not.toContain(SUBMITTER);
+    expect(JSON.stringify(data)).not.toContain(CO_OWNER);
     expect(data.cards[0]).toMatchObject({ canEdit: false, canReport: false });
   });
 
-  it('lets the submitter edit their card but not report it, and others report but not edit', async () => {
+  it('lets every owner edit the card but not report it, and others report but not edit', async () => {
     vi.mocked(listPartners).mockResolvedValue({ cards: [card], total: 1, pages: 1 } as never);
-    const own = await run(visit({ id: SUBMITTER, role: 'member', status: 'active' }));
-    expect(own.cards[0]).toMatchObject({ canEdit: true, canReport: false });
+    for (const id of [SUBMITTER, CO_OWNER]) {
+      const own = await run(visit({ id, role: 'member', status: 'active' }));
+      expect(own.cards[0]).toMatchObject({ canEdit: true, canReport: false });
+    }
     const other = await run(visit({ id: 'other', role: 'member', status: 'active' }));
     expect(other.cards[0]).toMatchObject({ canEdit: false, canReport: true });
   });

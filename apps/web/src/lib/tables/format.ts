@@ -4,12 +4,14 @@ import { m } from '#lib/paraglide/messages.js';
 
 export type TableKind = 'campaign' | 'one_shot' | 'adventure';
 
-/** "Campanha", "Aventura", "One-shot". */
-export const kindLabel = (kind: TableKind): string =>
+/** "Campanha", "Aventura", "One-shot"; "Aventura · 4 sessões" with an adventure's planned count. */
+export const kindLabel = (kind: TableKind, plannedSessions: number | null = null): string =>
   kind === 'campaign'
     ? m.table_kind_campaign()
     : kind === 'adventure'
-      ? m.table_kind_adventure()
+      ? plannedSessions
+        ? m.table_kind_adventure_sessions({ count: plannedSessions })
+        : m.table_kind_adventure()
       : m.table_kind_one_shot();
 
 /**
@@ -17,8 +19,15 @@ export const kindLabel = (kind: TableKind): string =>
  * the form only writes weekly ones; `everyWeeks` is null when the rule is not one the platform reads
  * (`weeklyInterval`), and then nothing is said rather than guessing "weekly".
  */
-export function scheduleLabel(kind: TableKind, everyWeeks: number | null): string | null {
-  if (kind === 'adventure') return m.table_adventure_schedule();
+export function scheduleLabel(
+  kind: TableKind,
+  everyWeeks: number | null,
+  plannedSessions: number | null = null,
+): string | null {
+  if (kind === 'adventure')
+    return plannedSessions
+      ? m.table_adventure_schedule_count({ count: plannedSessions })
+      : m.table_adventure_schedule();
   if (kind !== 'campaign') return m.table_recurrence_once();
   if (everyWeeks === 1) return m.table_recurrence_weekly();
   return everyWeeks ? m.table_recurrence_weeks({ weeks: everyWeeks }) : null;

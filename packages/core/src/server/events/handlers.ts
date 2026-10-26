@@ -13,6 +13,7 @@ import {
   playerInvitationMailHandler,
   playerInvitationNotificationHandler,
 } from './player-invitations';
+import { partnerInvitationMailHandler, partnerOwnerNotificationHandler } from './partner-owners';
 
 /**
  * The handlers that write the bell's notifications from table, announcement, moderation and
@@ -25,6 +26,7 @@ export const bellHandlers: readonly Handler[] = [
   moderationHandler,
   catalogHandler,
   playerInvitationNotificationHandler,
+  partnerOwnerNotificationHandler,
   badgeHandler,
   badgeNoticeHandler,
 ];
@@ -38,6 +40,7 @@ export const MAIL_HANDLER_NAMES = [
   'calendar-invites-v1',
   'ban-mail-v1',
   'player-invitation-mail-v1',
+  'partner-invitation-mail-v1',
 ] as const;
 
 /**
@@ -53,12 +56,14 @@ export function handlersFor(
   const bell = [...bellHandlers, ...socialFor(env).handlers];
   const banMail = banMailHandler(env);
   const playerInvitations = playerInvitationMailHandler(env);
+  const partnerInvitations = partnerInvitationMailHandler(env);
   // The bell first: a slow or failing mail provider must not hold up the in-app notice.
   return [
     ...bell,
     ...(handler ? [handler] : []),
     ...(banMail ? [banMail] : []),
     ...(playerInvitations ? [playerInvitations] : []),
+    ...(partnerInvitations ? [partnerInvitations] : []),
     ...extensionHandlers(),
     ...analyticsHandlers(env),
   ];

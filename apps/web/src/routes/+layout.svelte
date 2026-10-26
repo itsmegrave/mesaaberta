@@ -14,7 +14,6 @@
   import { asset, resolve } from '$app/paths';
   import { refreshAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
-  import ChatDrawer from '#lib/components/chat/ChatDrawer.svelte';
   import ExtensionWidgets from '#lib/components/shell/ExtensionWidgets.svelte';
   import AccountMenu from '#lib/components/shell/AccountMenu.svelte';
   import BottomTabBar from '#lib/components/shell/BottomTabBar.svelte';
@@ -155,8 +154,6 @@
 
         {#if !data.maintenance}
           <div class="flex items-center gap-2">
-            <ThemeToggle />
-
             {#if data.account}
               <NotificationBell
                 unread={badges.data?.unread ?? data.account.notifications.unread}
@@ -168,8 +165,15 @@
                 username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
+                isAdmin={data.account.isAdmin}
+                adminPending={data.account.pendingSuggestionsCount}
+                sheet
               />
-            {:else if data.authEnabled}
+            {:else}
+              <!-- Members pick the theme in the account menu; visitors have none. -->
+              <ThemeToggle />
+            {/if}
+            {#if !data.account && data.authEnabled}
               <a
                 href={resolve('login')}
                 class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
@@ -210,10 +214,13 @@
       <MAToaster />
       <UnsavedChangesDialog />
       {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/m')}
-        {#key data.cacheIdentity}<ChatDrawer
-            viewerId={data.cacheIdentity ?? 'anonymous'}
-            unread={badges.data?.messages ?? data.account.messagesUnread}
-          />{/key}
+        <!-- Its own chunk: the chat (thread, composer, emoji picker) loads only for the signed-in. -->
+        {#await import('#lib/components/chat/ChatDrawer.svelte') then { default: ChatDrawer }}
+          {#key data.cacheIdentity}<ChatDrawer
+              viewerId={data.cacheIdentity ?? 'anonymous'}
+              unread={badges.data?.messages ?? data.account.messagesUnread}
+            />{/key}
+        {/await}
       {/if}
       {#if data.account && !data.maintenance}
         {#key data.cacheIdentity}<ExtensionWidgets />{/key}
@@ -228,10 +235,7 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar
-          isAdmin={data.account?.isAdmin ?? false}
-          pendingSuggestionsCount={data.account?.pendingSuggestionsCount ?? 0}
-        />
+        <BottomTabBar />
       {/if}
 
       {#if !data.maintenance}

@@ -7,6 +7,7 @@
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import StarRating from '#lib/components/ui/StarRating.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { toast } from '#lib/toaster.js';
   import { registrationError } from '#lib/tables/registration-errors.js';
@@ -47,51 +48,68 @@
   });
 </script>
 
-<li class="flex flex-col gap-3 border-t border-surface-200-800 py-4 first:border-t-0">
+<!-- On a phone: who on the first line, the stars and the button on the second. From `sm` one line. -->
+{#snippet who()}
+  <span class="flex min-w-0 flex-1 items-center gap-3">
+    <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
+    <span class="flex min-w-0 flex-col">
+      <span class="truncate font-semibold">{player.username}</span>
+      <span class="text-sm text-muted"
+        >{m.player_rating_tables_played({ count: player.tablesPlayed })}</span
+      >
+    </span>
+  </span>
+{/snippet}
+
+<li class="flex flex-col gap-2 border-t border-surface-200-800 py-3 first:border-t-0">
   {#if player.playerRating !== null}
-    <div class="flex flex-wrap items-center gap-3">
-      <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
-      <span class="flex min-w-0 flex-1 flex-col">
-        <span class="truncate font-semibold">{player.username}</span>
-        <span class="text-sm text-muted"
-          >{m.player_rating_tables_played({ count: player.tablesPlayed })}</span
-        >
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+      {@render who()}
+      <span class="flex items-center justify-between gap-3">
+        <StarRating
+          name="score-{player.playerId}"
+          label={m.player_rating_for({ name: player.username })}
+          value={player.playerRating}
+          hideLabel
+          readOnly
+          compact
+        />
+        <span class="text-sm font-semibold text-muted">{m.player_rating_sent()}</span>
       </span>
-      <StarRating
-        name="score-{player.playerId}"
-        label={m.player_rating_for({ name: player.username })}
-        value={player.playerRating}
-        hideLabel
-        readOnly
-      />
-      <span class="text-sm font-semibold text-muted">{m.player_rating_sent()}</span>
     </div>
   {:else}
-    <MAForm action="?/ratePlayer" onsubmit={rating.submit} class="flex flex-col gap-3">
+    <MAForm action="?/ratePlayer" onsubmit={rating.submit} class="flex flex-col gap-2">
       <input type="hidden" name="playerId" value={player.playerId} />
       <input type="hidden" name="next" value={next} />
-      <div class="flex flex-wrap items-center gap-3">
-        <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
-        <span class="flex min-w-0 flex-1 flex-col">
-          <span class="truncate font-semibold">{player.username}</span>
-          <span class="text-sm text-muted"
-            >{m.player_rating_tables_played({ count: player.tablesPlayed })}</span
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        {@render who()}
+        <span class="flex items-center justify-between gap-3">
+          <StarRating
+            name="score"
+            label={m.player_rating_for({ name: player.username })}
+            value={Number(rating.values.score)}
+            invalid={!!rating.errors.score}
+            hideLabel
+            compact
+            onchange={(score) => rating.change('score', score)}
+          />
+          <MAButton
+            type="submit"
+            variant="primary"
+            size="sm"
+            controller={rating}
+            class="shrink-0 font-semibold"
+            ><span class="sm:hidden">{m.player_rating_submit_short()}</span><span
+              class="hidden sm:inline">{m.player_rating_submit()}</span
+            ></MAButton
           >
         </span>
-        <StarRating
-          name="score"
-          label={m.player_rating_for({ name: player.username })}
-          value={Number(rating.values.score)}
-          invalid={!!rating.errors.score}
-          hideLabel
-          onchange={(score) => rating.change('score', score)}
-        />
-        <MAButton type="submit" variant="primary" controller={rating} class="font-semibold"
-          ><span class="sm:hidden">{m.player_rating_submit_short()}</span><span
-            class="hidden sm:inline">{m.player_rating_submit()}</span
-          ></MAButton
-        >
       </div>
+      {#if rating.errors.score}
+        <p role="alert" class="text-sm font-semibold text-error-700-300">
+          {m.player_rating_pick()}
+        </p>
+      {/if}
       {#if commenting}
         <div>
           <label for={commentId} class="label-text block font-semibold"
@@ -108,16 +126,14 @@
           />
         </div>
       {:else}
-        <button
+        <MAButton
           type="button"
-          class="self-start text-sm link-underline font-semibold"
-          onclick={() => (commenting = true)}>{m.player_rating_add_comment()}</button
+          variant="ghost"
+          size="sm"
+          class="self-start font-semibold"
+          onclick={() => (commenting = true)}
+          ><Icon name="plus" size={18} />{m.player_rating_add_comment()}</MAButton
         >
-      {/if}
-      {#if rating.errors.score}
-        <p role="alert" class="text-sm font-semibold text-error-700-300">
-          {m.player_rating_pick()}
-        </p>
       {/if}
     </MAForm>
   {/if}

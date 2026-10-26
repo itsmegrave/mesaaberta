@@ -139,7 +139,7 @@
       hourCycle: 'h23',
     }).format(date);
 
-  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
+  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks, table.plannedSessions));
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
 
   const activityText = (item: (typeof data.activity)[number]) => {
@@ -200,6 +200,9 @@
       next={here}
       players={data.players}
       multi={table.kind !== 'one_shot'}
+      kind={table.kind}
+      session={data.session}
+      plannedSessions={table.plannedSessions}
       startsAt={table.startsAt}
       step={page.url.searchParams.get('etapa')}
       nextSession={data.nextSession}

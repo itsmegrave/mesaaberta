@@ -270,8 +270,16 @@
           <span class="text-warning-700-300">{m.admin_partners_not_informed()}</span>
         {/if}
       {:else if id === 'sender'}
-        {#if row.submitter}
-          <a class="anchor" href={`/u/${row.submitter}`}>@{row.submitter}</a>
+        {#if row.owners.length > 0}
+          <p class="wrap-break-word">
+            {#each row.owners as owner, index (owner)}{#if index > 0},
+              {/if}<a class="anchor" href={`/u/${owner}`}>@{owner}</a>{/each}
+          </p>
+        {/if}
+        {#if row.pendingInvites > 0}
+          <p class="text-sm text-muted">
+            {m.admin_partners_pending_invites({ count: row.pendingInvites })}
+          </p>
         {/if}
         {#if row.contactEmail}
           <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
@@ -301,7 +309,7 @@
               : m.admin_partners_no_type()}
           </p>
           <p>
-            {row.submitter ? `@${row.submitter}` : ''}{row.contactEmail
+            {row.owners.map((owner) => `@${owner}`).join(', ')}{row.contactEmail
               ? ` · ${row.contactEmail}`
               : ''} · {row.backlinkUrl
               ? m.admin_partners_backlink_given()

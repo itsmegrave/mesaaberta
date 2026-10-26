@@ -1,6 +1,9 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { can } from '@mesaaberta/core/server/auth/policy';
+import { adminSectionOf, recordAdminEntry } from '@mesaaberta/core/server/admin/entries';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
 export const isAdminPath = (pathname: string) =>
   pathname === '/admin' || pathname.startsWith('/admin/');
@@ -37,9 +40,33 @@ export async function requireAdmin(locals: App.Locals) {
   if (!(await isAdmin(locals))) error(404, 'Not found');
 }
 
+/**
+ * Records, after the response, that an admin opened a section of the area: a page or its data on
+ * a client navigation, never an action or an endpoint. `recordAdminEntry` keeps it to one entry per
+ * section in half an hour. A failure is logged and never reaches the admin.
+ */
+async function noteEntry(event: RequestEvent) {
+  const { locals, route, request } = event;
+  if (request.method !== 'GET' || !route.id) return;
+  if (!event.isDataRequest && !request.headers.get('accept')?.includes('text/html')) return;
+  const profile = await locals.getProfile().catch(() => null);
+  if (!profile) return;
+  const section = adminSectionOf(route.id);
+  locals.afterResponse(async (db) => {
+    try {
+      const eventId = await recordAdminEntry(db, { actorId: profile.id, section });
+      if (eventId)
+        await dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log);
+    } catch (error) {
+      locals.log.warn('admin entry not recorded', { error, section });
+    }
+  });
+}
+
 /** Hide the entire admin surface, including data requests and actions, from non-admins. */
 export const handleAdminAccess: Handle = async ({ event, resolve }) => {
   if (!isAdminRequest(event)) return resolve(event);
   await requireAdmin(event.locals);
+  await noteEntry(event);
   return resolve(event);
 };

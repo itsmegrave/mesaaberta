@@ -32,6 +32,11 @@
         "href": "/p"
       },
       {
+        "kind": "new",
+        "title": "Aventuras com número de sessões",
+        "description": "Ao abrir uma aventura, quem mestra diz quantas sessões ela terá, de 2 a 20. O número aparece no card e na confirmação de cada sessão."
+      },
+      {
         "kind": "improved",
         "title": "Confirmar a sessão passo a passo",
         "description": "Quem mestra diz se a sessão aconteceu, marca quem compareceu e escolhe a próxima data em etapas, e quem já avaliou a mesa conta como presente."
@@ -81,6 +86,26 @@
         "kind": "improved",
         "title": "Seções que dobram no celular",
         "description": "Textos longos de mesas, novidades e gerenciamento se organizam em seções que abrem e fecham no celular."
+      },
+      {
+        "kind": "improved",
+        "title": "Admin e tema no menu da conta",
+        "description": "O acesso ao Admin e a troca de tema agora ficam no menu da sua conta."
+      },
+      {
+        "kind": "improved",
+        "title": "Seletores que cabem na tela",
+        "description": "As listas de escolha se ajustam ao tamanho da tela e ao tamanho da lista, principalmente no celular."
+      },
+      {
+        "kind": "fixed",
+        "title": "Conversa em tela cheia no celular",
+        "description": "O campo de mensagem do chat fica acima da barra de abas e a conversa cabe na tela do celular."
+      },
+      {
+        "kind": "fixed",
+        "title": "Avaliações no celular",
+        "description": "As linhas de avaliação de jogadores cabem na tela do celular, e o menu da mesa mostra “Participantes e pedidos” só para quem gerencia."
       }
     ]
   },

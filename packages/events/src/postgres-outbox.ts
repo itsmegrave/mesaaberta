@@ -1,3 +1,4 @@
+import { currentRequestId } from '@mesaaberta/contracts';
 import { events, type AnyDb } from '@mesaaberta/db';
 import type { EventOutbox } from './outbox';
 
@@ -15,6 +16,8 @@ export function postgresOutbox(db: AnyDb): EventOutbox {
           type: event.type,
           actorId: event.actorId,
           payload: event.payload,
+          // The request that recorded it, so its handlers' lines can be matched to that request.
+          actionId: currentRequestId() ?? null,
           ...(now ? { createdAt: now, nextAttemptAt: now } : {}),
         })
         .returning({ id: events.id });

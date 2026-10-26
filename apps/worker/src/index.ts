@@ -2,8 +2,10 @@ import type { ImportEnv } from '@mesaaberta/core/server/crowdfunding/import/runn
 import { connectionStringFrom, createDb } from '@mesaaberta/core/server/db/client';
 import { createEventExecutor } from '@mesaaberta/core/server/events/executor';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { CRON_MONITORS, unmonitored, type Monitor } from '@mesaaberta/core/server/events/monitors';
 import { runScheduled } from '@mesaaberta/core/server/events/scheduled';
 import type { SocialEnv } from '@mesaaberta/core/server/social/port';
+import { withRequestId } from '@mesaaberta/contracts';
 import { logger } from '@mesaaberta/core/server/logger';
 import { createDeadLetterConsumer, createQueueConsumer, type QueueBatch } from '@mesaaberta/events';
 
@@ -19,6 +21,8 @@ export type WorkerEnv = ImportEnv &
      */
     QUEUE_LIVE_HANDLERS?: string;
     SENTRY_DSN?: string;
+    /** "true" sends cron check-ins to Sentry, which creates the monitors on the first one. */
+    SENTRY_CRON_MONITORS?: string;
     CF_VERSION_METADATA?: { id?: string };
   };
 
@@ -36,16 +40,22 @@ const liveHandlers = (env: WorkerEnv | undefined) =>
 export const createWorker = (
   run: typeof runScheduled = runScheduled,
   open: typeof createDb = createDb,
+  monitor: Monitor = unmonitored,
 ) => ({
   /** Never throws: a failed run is logged and the next trigger retries what is still due. */
   async scheduled(controller: Controller, env: WorkerEnv) {
+    // A run's id, on its lines and as the `actionId` of the events it records (Trello #278).
+    const requestId = crypto.randomUUID();
     const log = logger.child({
-      requestId: crypto.randomUUID(),
+      requestId,
       environment: 'production',
       release: env.CF_VERSION_METADATA?.id,
     });
-    await run(controller, env, { log }).catch((error) =>
-      log.error('scheduled job failed', { error }),
+    const job = CRON_MONITORS[controller.cron];
+    const work = () => withRequestId(requestId, () => run(controller, env, { log }));
+    // The monitor sees the failure (an error check-in) before it is logged and swallowed here.
+    await (job && env.SENTRY_CRON_MONITORS === 'true' ? monitor(job, work) : work()).catch(
+      (error) => log.error('scheduled job failed', { error }),
     );
   },
   /**
@@ -54,61 +64,72 @@ export const createWorker = (
    * those handlers, and only those, for each referenced event; the rest of the event stays with the
    * dispatcher that committed it and with the sweeper, which also covers a message that never comes.
    */
-  async queue(batch: QueueBatch, env?: WorkerEnv) {
-    const log = logger.child({
-      requestId: crypto.randomUUID(),
-      environment: 'production',
-      release: env?.CF_VERSION_METADATA?.id,
-    });
-    if (batch.queue === DEAD_LETTER_QUEUE) {
-      // Only a reference travels, so ids are all there is to log. The outbox row is still due and
-      // the sweeper runs it; this makes sure someone sees that the queue gave up.
-      const dead = createDeadLetterConsumer({
-        onDead: (ref, attempts) =>
-          log.error('queue dead letter', {
-            event: 'queue.dead_letter',
-            eventId: ref?.eventId,
-            resourceType: 'event',
-            resourceId: ref?.eventId,
-            type: ref?.type,
-            attempts,
-          }),
-      });
-      await dead(batch);
-      return;
-    }
-    const only = liveHandlers(env);
-    const connectionString = only.length > 0 ? connectionStringFrom(env) : undefined;
-    const onFailed = (_ref: unknown, reason: string) =>
-      log.warn('queue message rejected', { reason });
-    if (!connectionString) {
-      const consume = createQueueConsumer({ executor: async () => ({ status: 'done' }), onFailed });
-      const { done, failed } = await consume(batch);
-      log.info('queue shadow', { received: batch.messages.length, acknowledged: done, failed });
-      return;
-    }
-    const { db, close } = open(connectionString);
-    try {
-      const consume = createQueueConsumer({
-        // Fenced: a delivery that outlives its lease must not finish someone else's claim.
-        executor: createEventExecutor(db, handlersFor(env), {
-          log,
-          options: { only, fenced: true },
-        }),
-        onFailed,
-      });
-      const { done, retried, failed } = await consume(batch);
-      log.info('queue live', { received: batch.messages.length, done, retried, failed });
-    } catch (error) {
-      // Unsettled messages are redelivered by the queue; the outbox rows are untouched.
-      log.error('queue consumer failed', { error });
-      throw error;
-    } finally {
-      await close();
-    }
+  queue(batch: QueueBatch, env?: WorkerEnv) {
+    const requestId = crypto.randomUUID();
+    return withRequestId(requestId, () => deliver(batch, env, requestId, open));
   },
   /** There is no public surface; a probe or a stray request gets an empty 404. */
   fetch: () => new Response(null, { status: 404 }),
 });
+
+/** One delivery of the queue, as the run `requestId`. */
+async function deliver(
+  batch: QueueBatch,
+  env: WorkerEnv | undefined,
+  requestId: string,
+  open: typeof createDb,
+) {
+  const log = logger.child({
+    requestId,
+    environment: 'production',
+    release: env?.CF_VERSION_METADATA?.id,
+  });
+  if (batch.queue === DEAD_LETTER_QUEUE) {
+    // Only a reference travels, so ids are all there is to log. The outbox row is still due and
+    // the sweeper runs it; this makes sure someone sees that the queue gave up.
+    const dead = createDeadLetterConsumer({
+      onDead: (ref, attempts) =>
+        log.error('queue dead letter', {
+          event: 'queue.dead_letter',
+          eventId: ref?.eventId,
+          resourceType: 'event',
+          resourceId: ref?.eventId,
+          type: ref?.type,
+          attempts,
+        }),
+    });
+    await dead(batch);
+    return;
+  }
+  const only = liveHandlers(env);
+  const connectionString = only.length > 0 ? connectionStringFrom(env) : undefined;
+  const onFailed = (_ref: unknown, reason: string) =>
+    log.warn('queue message rejected', { reason });
+  if (!connectionString) {
+    const consume = createQueueConsumer({ executor: async () => ({ status: 'done' }), onFailed });
+    const { done, failed } = await consume(batch);
+    log.info('queue shadow', { received: batch.messages.length, acknowledged: done, failed });
+    return;
+  }
+  const { db, close } = open(connectionString);
+  try {
+    const consume = createQueueConsumer({
+      // Fenced: a delivery that outlives its lease must not finish someone else's claim.
+      executor: createEventExecutor(db, handlersFor(env), {
+        log,
+        options: { only, fenced: true },
+      }),
+      onFailed,
+    });
+    const { done, retried, failed } = await consume(batch);
+    log.info('queue live', { received: batch.messages.length, done, retried, failed });
+  } catch (error) {
+    // Unsettled messages are redelivered by the queue; the outbox rows are untouched.
+    log.error('queue consumer failed', { error });
+    throw error;
+  } finally {
+    await close();
+  }
+}
 
 export default createWorker();

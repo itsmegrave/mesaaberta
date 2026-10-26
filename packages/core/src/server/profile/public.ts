@@ -11,6 +11,7 @@ import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads'
 import { gmRatingOf, publicGmReviews } from '@mesaaberta/core/server/ratings/service';
 import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
+import { readFavoriteSystems } from '@mesaaberta/core/server/profile/favorite-systems';
 import { isNetwork, socialTarget } from '../../profile/social-links';
 import { normalizeUsername, usernameProblem } from '../../profile/username';
 
@@ -64,6 +65,7 @@ export async function publicProfile(
     viewerId = null,
     showBadges,
     showParticipantRating,
+    showFavoriteSystems,
   }: {
     page?: number;
     now?: Date;
@@ -73,6 +75,8 @@ export async function publicProfile(
     showBadges?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
     /** Whether this profile shows its score as a participant (`use_player_ratings`). Omitted: no. */
     showParticipantRating?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
+    /** Whether favorite systems are on for this profile (`use_signed_in_home`). Omitted: no. */
+    showFavoriteSystems?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -86,6 +90,7 @@ export async function publicProfile(
       bio: profiles.bio,
       name: profiles.name,
       showName: profiles.showName,
+      showFavoriteSystems: profiles.showFavoriteSystems,
       role: profiles.role,
     })
     .from(profiles)
@@ -123,6 +128,13 @@ export async function publicProfile(
     ? await participantRatingOf(db, found.id, now)
     : null;
 
+  // Null: the rollout has not reached this profile, or its owner hid them. Pills under the bio.
+  const favoriteSystems =
+    found.showFavoriteSystems &&
+    (await showFavoriteSystems?.({ id: found.id, isAdmin: found.role === 'admin' }))
+      ? await readFavoriteSystems(db, found.id)
+      : null;
+
   return {
     badges,
     // What the owner has yet to earn, for their own view only.
@@ -144,6 +156,7 @@ export async function publicProfile(
       totals,
       rating,
       participantRating,
+      favoriteSystems,
     },
     tables: upcoming.tables.map((table) => ({
       slug: table.slug,

@@ -25,6 +25,7 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import JoinRequestDialog from './components/JoinRequestDialog.svelte';
   import GmRating from '#lib/components/ui/GmRating.svelte';
+  import FollowButton from '#lib/components/FollowButton.svelte';
   import StarRating from '#lib/components/ui/StarRating.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
@@ -54,7 +55,7 @@
   const table = $derived(data.table);
   const locale = getLocale();
 
-  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
+  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks, table.plannedSessions));
   // svelte-ignore state_referenced_locally
   const rating = actionForm({
     initial: data.ratingForm.data,
@@ -90,7 +91,7 @@
       });
     }
     // The players stay reachable once the table is frozen: that is where the GM sees the rating.
-    if (data.registrations) {
+    if (data.canManage) {
       items.push({
         id: 'players',
         label: m.menu_players(),
@@ -196,6 +197,15 @@
           </p>
         </div>
         <GmRating rating={table.gmRating} variant="pill" class="ml-2" />
+        {#if data.follow && data.gmUsername}
+          <FollowButton
+            size="sm"
+            profileId={data.follow.profileId}
+            username={data.gmUsername}
+            following={data.follow.following}
+            signedIn={data.follow.signedIn}
+          />
+        {/if}
       </div>
 
       {#if table.imageUrl}

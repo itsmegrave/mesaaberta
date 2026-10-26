@@ -13,6 +13,8 @@ const follow = (name: string) =>
   (page.getByRole('link', { name }).element() as HTMLElement).click();
 // Saturday 26 September 2026, 19:00 in São Paulo.
 const startsAt = new Date('2026-09-26T22:00:00Z');
+// The test frame is phone sized, where the list of who showed up starts folded.
+const openAttendance = () => page.getByRole('button', { name: /^Quem compareceu\?/ }).click();
 
 describe('SessionConfirmation', () => {
   it('asks first whether the session happened, with its date', async () => {
@@ -40,10 +42,11 @@ describe('SessionConfirmation', () => {
     follow('Sim, aconteceu');
 
     await expect.element(page.getByRole('heading', { name: 'Marque a presença' })).toBeVisible();
+    await openAttendance();
     const ana = page.getByRole('checkbox', { name: /^ana/ });
     await expect.element(ana).toBeChecked();
     await expect.element(page.getByRole('checkbox', { name: /^bia/ })).toBeChecked();
-    await expect.element(page.getByText('2 de 2 presentes')).toBeVisible();
+    await expect.element(page.getByText('2 de 2 presentes').first()).toBeVisible();
     const form = ana.element().closest('form')!;
     expect(form.getAttribute('action')).toBe('?/happened');
     // Without this marker the server cannot tell an empty list from a form that never asked.
@@ -56,13 +59,30 @@ describe('SessionConfirmation', () => {
       .toBeVisible();
   });
 
+  it('folds who showed up on a phone, keeps the count in its header and still sends everyone', async () => {
+    render(SessionConfirmation, { next: '/t/mesa/manage', players, step: 'presenca' });
+
+    const toggle = page.getByRole('button', { name: /^Quem compareceu\?/ });
+    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText('2 de 2 presentes').first()).toBeVisible();
+    // Hidden content is out of the accessibility tree, but its boxes still post.
+    await expect.element(page.getByRole('checkbox', { name: /^ana/ })).not.toBeInTheDocument();
+    const form = toggle.element().closest('form')!;
+    expect(new FormData(form).getAll('present')).toEqual(players.map((p) => p.playerId));
+
+    await toggle.click();
+    await page.getByRole('checkbox', { name: /^bia/ }).click();
+    await expect.element(page.getByText('1 de 2 presentes').first()).toBeVisible();
+  });
+
   it('sends only the players left checked, and marks the others absent', async () => {
     render(SessionConfirmation, { next: '/t/mesa/manage', players, step: 'presenca' });
+    await openAttendance();
 
     await page.getByRole('checkbox', { name: /^bia/ }).click();
 
     await expect.element(page.getByText('Ausente', { exact: true })).toBeVisible();
-    await expect.element(page.getByText('1 de 2 presentes')).toBeVisible();
+    await expect.element(page.getByText('1 de 2 presentes').first()).toBeVisible();
     const form = page.getByRole('checkbox', { name: /^ana/ }).element().closest('form')!;
     expect(new FormData(form).getAll('present')).toEqual([players[0].playerId]);
   });
@@ -74,6 +94,7 @@ describe('SessionConfirmation', () => {
       multi: true,
       step: 'presenca',
     });
+    await openAttendance();
 
     // The note is part of the label, so it is read with the name.
     const bia = page.getByRole('checkbox', { name: /^bia/ });
@@ -104,6 +125,7 @@ describe('SessionConfirmation', () => {
       nextSession: '2026-10-03T19:00',
       step: 'presenca',
     });
+    await openAttendance();
 
     const form = page.getByRole('checkbox', { name: /^ana/ }).element().closest('form')!;
     expect(form.getAttribute('action')).toBe('?/sessionHeld');
@@ -137,6 +159,58 @@ describe('SessionConfirmation', () => {
       .element(page.getByText('Aventuras não têm repetição: diga quando é a próxima sessão.'))
       .toBeVisible();
     await expect.element(page.getByText('Escolha o dia e o horário.')).toBeVisible();
+  });
+
+  it('names the kind and which session it was, out of an adventure’s planned count', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      kind: 'adventure',
+      session: 3,
+      plannedSessions: 4,
+      startsAt,
+    });
+
+    await expect
+      .element(page.getByText('Aventura · sessão 3 de 4 · sábado, 26 de setembro, 19:00'))
+      .toBeVisible();
+  });
+
+  it('starts on "Foi a última sessão" at an adventure’s last planned session', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      kind: 'adventure',
+      session: 4,
+      plannedSessions: 4,
+      startsAt,
+      step: 'presenca',
+    });
+
+    await expect
+      .element(page.getByText('Aventura · sessão 4 de 4', { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByRole('radio', { name: /Foi a última sessão/ })).toBeChecked();
+    await expect
+      .element(page.getByRole('button', { name: 'Confirmar e concluir a mesa' }))
+      .toBeVisible();
+  });
+
+  it('counts a campaign’s sessions without a total', async () => {
+    render(SessionConfirmation, {
+      next: '/t/mesa/manage',
+      players,
+      multi: true,
+      kind: 'campaign',
+      session: 5,
+      startsAt,
+    });
+
+    await expect
+      .element(page.getByText('Campanha · sessão 5 · sábado, 26 de setembro, 19:00'))
+      .toBeVisible();
   });
 
   it('for a campaign that did not happen, skips the session or closes the table', async () => {

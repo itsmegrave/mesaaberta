@@ -1,7 +1,10 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { setRequestContextStore } from '@mesaaberta/contracts';
 import * as Sentry from '@sentry/cloudflare';
 import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
+import type { Monitor } from '@mesaaberta/core/server/events/monitors';
 import { createWorker, type WorkerEnv } from './index';
 import { sentrySink } from './sentry-sink';
 
@@ -10,7 +13,20 @@ import { sentrySink } from './sentry-sink';
 // the SDK stays off and the logger still writes to the console.
 setTelemetrySink(sentrySink);
 setAppName('worker');
+// Carries the request id to every log line and outbox write of a run (Trello #278).
+setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
+
+// A check-in in progress, then ok or error; Sentry creates or updates the monitor from this config.
+const sentryMonitor: Monitor = (job, run) =>
+  Sentry.withMonitor(job.slug, run, {
+    schedule: { type: 'crontab', value: job.schedule },
+    checkinMargin: job.checkinMargin,
+    maxRuntime: job.maxRuntime,
+    timezone: 'Etc/UTC',
+    failureIssueThreshold: 1,
+    recoveryThreshold: 1,
+  });
 
 export default Sentry.withSentry(
   (env: WorkerEnv) => ({
@@ -19,5 +35,5 @@ export default Sentry.withSentry(
     environment: 'production',
     release: env.CF_VERSION_METADATA?.id,
   }),
-  createWorker(),
+  createWorker(undefined, undefined, sentryMonitor),
 );

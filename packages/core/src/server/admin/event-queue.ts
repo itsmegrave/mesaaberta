@@ -5,7 +5,7 @@ import type { AnyDb } from '../db/client';
 import { events, profiles } from '../db/schema';
 import { MAX_ATTEMPTS } from '../events/dispatcher';
 import type { EventType, Handler } from '../events/types';
-import { EVENT_STATUSES, type EventStatus } from '../../admin/event-status';
+import { EVENT_STATUSES, type EventReview, type EventStatus } from '../../admin/event-status';
 
 /** What each tab of the queue is made of. `now` tells a lease that is held from one that ran out. */
 function whereStatus(status: EventStatus, now: Date): SQL | undefined {
@@ -66,6 +66,7 @@ export async function eventQueue(
   if (filters.page > pages) return null;
 
   const actorProfile = alias(profiles, 'actor');
+  const reviewer = alias(profiles, 'reviewer');
   const rows = await db
     .select({
       id: events.id,
@@ -79,9 +80,13 @@ export async function eventQueue(
       failedAt: events.failedAt,
       processedAt: events.processedAt,
       actor: actorProfile.username,
+      reviewStatus: events.reviewStatus,
+      reviewedAt: events.reviewedAt,
+      reviewedBy: reviewer.username,
     })
     .from(events)
     .leftJoin(actorProfile, eq(actorProfile.id, events.actorId))
+    .leftJoin(reviewer, eq(reviewer.id, events.reviewedBy))
     .where(and(whereStatus(filters.status, now), ofType))
     // The oldest stuck event first; a finished one, the latest.
     .orderBy(
@@ -115,11 +120,36 @@ export async function eventQueue(
 }
 export type EventQueue = NonNullable<Awaited<ReturnType<typeof eventQueue>>>;
 
-/** How many events are given up on: the count beside the section in the navigation. */
+/**
+ * How many given-up events no admin has looked at yet: the count beside the section in the
+ * navigation. One marked seen, ignored or fixed has had its look.
+ */
 export async function failedEventCount(db: AnyDb) {
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)`.mapWith(Number) })
     .from(events)
-    .where(and(isNull(events.processedAt), isNotNull(events.failedAt)));
+    .where(
+      and(isNull(events.processedAt), isNotNull(events.failedAt), isNull(events.reviewStatus)),
+    );
   return total;
+}
+
+/**
+ * An admin's word on a given-up event: `seen`, `ignored` or `fixed`, with who and when. Only an
+ * event that is still given up on takes one; anything else answers `not_failed`.
+ */
+export async function reviewEvent(
+  db: AnyDb,
+  actor: Actor | null,
+  id: string,
+  review: EventReview,
+  now = new Date(),
+): Promise<'reviewed' | 'not_failed'> {
+  authorize(actor, 'moderation:manage');
+  const updated = await db
+    .update(events)
+    .set({ reviewStatus: review, reviewedBy: actor!.id, reviewedAt: now })
+    .where(and(eq(events.id, id), isNull(events.processedAt), isNotNull(events.failedAt)))
+    .returning({ id: events.id });
+  return updated.length > 0 ? 'reviewed' : 'not_failed';
 }

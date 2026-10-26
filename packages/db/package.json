@@ -8,7 +8,8 @@
     "./schema": "./src/schema.ts",
     "./client": "./src/client.ts",
     "./table-status": "./src/table-status.ts",
-    "./profile-status": "./src/profile-status.ts"
+    "./profile-status": "./src/profile-status.ts",
+    "./event-review": "./src/event-review.ts"
   },
   "peerDependencies": {
     "drizzle-orm": "*",

@@ -17,6 +17,7 @@
     titleClass = 'text-lg font-semibold',
     summaryOnWide = false,
     class: className = '',
+    aside,
     children,
   }: {
     value: string;
@@ -33,6 +34,10 @@
     summaryOnWide?: boolean;
     /** Classes for the content. */
     class?: string;
+    /** A control for the whole section ("Ver todas"): beside the title when the section renders
+     * open on a wide screen, at the top of the content when it can fold (a button cannot sit inside
+     * the header button). */
+    aside?: Snippet;
     children: Snippet;
   } = $props();
 
@@ -50,6 +55,7 @@
       {#if summary && summaryOnWide}
         <span class="font-semibold text-muted">{summary}</span>
       {/if}
+      {@render aside?.()}
     </div>
     <div class="mt-3 {className}">{@render children()}</div>
   </section>
@@ -83,6 +89,7 @@
       </Accordion.ItemTrigger>
     </svelte:element>
     <Accordion.ItemContent class="pb-4 {mode.collapse === 'phone' ? 'md:block!' : ''} {className}">
+      {#if aside}<div class="mb-4">{@render aside()}</div>{/if}
       {@render children()}
     </Accordion.ItemContent>
   </Accordion.Item>

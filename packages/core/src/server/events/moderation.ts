@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { activeAdmins } from '../auth/policy';
 import type { AnyDb } from '../db/client';
 import { crowdfundings, gameTables, notifications, partners, profiles } from '../db/schema';
+import { ownersOf } from '../partners/owners';
 import { NOTIFICATION_KINDS, type NotificationType } from '../../notifications/kinds';
 import type { Handler, StoredEvent } from './types';
 
@@ -22,8 +23,9 @@ type ModerationEvent = Extract<
 async function recipientsOf(db: AnyDb, event: ModerationEvent) {
   if (event.type === 'CrowdfundingRemoved')
     return event.payload.submitterId ? [event.payload.submitterId] : [];
+  // Everyone who looks after the partner now, or the submitter when it is gone.
   if (event.type === 'PartnerApproved' || event.type === 'PartnerRemoved')
-    return [event.payload.submitterId];
+    return ownersOf(db, { id: event.payload.partnerId, submitterId: event.payload.submitterId });
   if (event.type === 'TableClosedByModeration') {
     const [table] = await db
       .select({ gmId: gameTables.gmId })
@@ -40,7 +42,8 @@ async function recipientsOf(db: AnyDb, event: ModerationEvent) {
  * The bell for moderation: a new report reaches every active admin (linked to it in the queue), the
  * reporter hears when it is closed (never what was done or by whom), and a GM whose table an admin
  * closed is told, with no link: a disabled table is a 404, and so is the submitter of a campaign an
- * admin removed, told why. One row per event and
+ * admin removed, told why. A partner's decisions reach every account that looks after it, and when
+ * one of them withdrew it the others hear that instead of a reason. One row per event and
  * recipient, so a retry adds nothing. Nobody is told about what they did themselves.
  */
 export const moderationHandler: Handler = {
@@ -94,12 +97,14 @@ export const moderationHandler: Handler = {
         .select({ note: partners.removalNote })
         .from(partners)
         .where(eq(partners.id, moderation.payload.partnerId));
-      removal = {
-        partnerId: moderation.payload.partnerId,
-        partnerRemoved: moderation.payload.name,
-        ...(moderation.payload.reason ? { reason: moderation.payload.reason } : {}),
-        ...(partner?.note ? { note: partner.note } : {}),
-      };
+      removal = moderation.payload.reason
+        ? {
+            partnerId: moderation.payload.partnerId,
+            partnerRemoved: moderation.payload.name,
+            reason: moderation.payload.reason,
+            ...(partner?.note ? { note: partner.note } : {}),
+          }
+        : { partnerId: moderation.payload.partnerId, partnerWithdrawn: moderation.payload.name };
     }
 
     const reportId = 'reportId' in moderation.payload ? moderation.payload.reportId : null;

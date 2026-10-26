@@ -30,7 +30,11 @@
   </p>
 
   <div class="mt-6 grid gap-6 md:mt-8 md:flex md:items-start md:gap-7">
-    <SettingsNav path={page.url.pathname} />
+    <SettingsNav
+      path={page.url.pathname}
+      systems={data.systemsSection}
+      following={data.followingSection}
+    />
     <div class="grid min-w-0 flex-1 gap-6">
       {@render children()}
     </div>

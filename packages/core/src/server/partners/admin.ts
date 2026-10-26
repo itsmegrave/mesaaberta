@@ -18,14 +18,21 @@ import { OPEN_REPORT_STATUSES, type ReportReason } from '../../moderation/report
 import type { Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { publicName } from '@mesaaberta/core/server/db/public-name';
-import { partnerLinks, partners, profiles, reports } from '@mesaaberta/core/server/db/schema';
+import { NAMELESS, publicName } from '@mesaaberta/core/server/db/public-name';
+import {
+  partnerInvitations,
+  partnerLinks,
+  partnerOwners,
+  partners,
+  profiles,
+  reports,
+} from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 // The admin side of the partners: what waits for review, what is up and what was taken down, and
 // approving, rejecting and removing. Every function authorizes the actor itself; the routes check
-// again before calling. The submitter is shown here and nowhere else.
+// again before calling. Who looks after a partner is shown here, and to those accounts only.
 
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
 
@@ -124,8 +131,16 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       removedAt: partners.removedAt,
       removedBy: partners.removedBy,
       removalReason: partners.removalReason,
-      submitterId: partners.submitterId,
       submitter: sql<string | null>`${publicName(profiles.username)}`,
+      // Who looks after it, in the order they joined (the submitter first). Empty for a partner
+      // with no row yet: then it is the submitter alone.
+      owners: sql<
+        string[]
+      >`array(select coalesce(owner.username, ${NAMELESS}) from ${partnerOwners} join ${profiles} owner on owner.id = ${partnerOwners.profileId} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt})`,
+      pendingInvites:
+        sql<number>`(select count(*) from ${partnerInvitations} where ${partnerInvitations.partnerId} = ${partners.id} and ${partnerInvitations.status} = 'pending' and ${partnerInvitations.expiresAt} > now())`.mapWith(
+          Number,
+        ),
       reports: sql<number>`coalesce(${waiting.waiting}, 0)`.mapWith(Number),
     })
     .from(partners)
@@ -154,11 +169,12 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
     : [];
 
   return {
-    rows: rows.map(({ submitterId, ...row }) => ({
+    rows: rows.map((row) => ({
       ...row,
       types: orderedTypes(row.types),
-      // "Removido pelo autor": the submitter took it off themself.
-      withdrawn: row.removedAt !== null && row.removedBy === submitterId,
+      owners: row.owners.length ? row.owners : row.submitter ? [row.submitter] : [],
+      // "Removido por quem cuida": an owner took it off, so there is no reason (an admin gives one).
+      withdrawn: row.removedAt !== null && row.removalReason === null,
       links: links
         .filter((link) => link.partnerId === row.id)
         .map(({ network, url }) => ({ network: network as Exclude<Network, 'website'>, url })),

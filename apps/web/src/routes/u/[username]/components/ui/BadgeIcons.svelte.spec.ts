@@ -28,8 +28,14 @@ describe('BadgeIcons (under the user handle)', () => {
     await expect.element(page.getByText('Jogou a primeira sessão.')).toBeVisible();
     await expect.element(page.getByText(/^Conquistada em .*2026/)).toBeVisible();
 
-    await userEvent.keyboard('{Escape}');
-    await expect.poll(() => page.getByText('Jogou a primeira sessão.').elements().length).toBe(0);
+    // The card can draw before the tooltip listens for keys (seen on a busy CI runner, where a single
+    // Esc was lost), so Esc is pressed again until the card is gone.
+    await expect
+      .poll(async () => {
+        await userEvent.keyboard('{Escape}');
+        return page.getByText('Jogou a primeira sessão.').elements().length;
+      })
+      .toBe(0);
   });
 
   it('shows no icon for what the owner hid, a badge without artwork, or a lower rung', async () => {

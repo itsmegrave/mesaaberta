@@ -80,14 +80,22 @@ type Resources = {
   'crowdfunding:report': { submitterId: string | null };
   /** Sending a partner: any signed-in member. An admin approves it before it is listed. */
   'partner:add': undefined;
-  /** Editing or withdrawing a partner: only the member who sent it. */
-  'partner:edit': { submitterId: string };
-  /** Reporting a partner. Not one's own: its submitter would be reporting themselves. */
-  'partner:report': { submitterId: string };
+  /**
+   * Editing or withdrawing a partner, and choosing who looks after it: only those accounts
+   * (`ownersOf`: the submitter alone until someone accepts an invite).
+   */
+  'partner:edit': { ownerIds: readonly string[] };
+  /** Reporting a partner. Not one's own: an owner would be reporting themselves. */
+  'partner:report': { ownerIds: readonly string[] };
   /** The report queue, its decisions and the audit log. */
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */
   'account:ban': Pick<Actor, 'id' | 'role'>;
+  /**
+   * Following someone: any active profile with an @, never oneself, and not across a block (either
+   * of the two blocked the other from invitations).
+   */
+  'follow:create': { followeeId: string; followeeActive: boolean; blocked: boolean };
 };
 
 export type Action = keyof Resources;
@@ -203,14 +211,17 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'crowdfunding:report': (actor, campaign) =>
     campaign !== undefined && actor.id !== campaign.submitterId,
   'partner:add': () => true,
-  'partner:edit': (actor, partner) => partner !== undefined && actor.id === partner.submitterId,
-  'partner:report': (actor, partner) => partner !== undefined && actor.id !== partner.submitterId,
+  'partner:edit': (actor, partner) => partner !== undefined && partner.ownerIds.includes(actor.id),
+  'partner:report': (actor, partner) =>
+    partner !== undefined && !partner.ownerIds.includes(actor.id),
   'moderation:manage': (actor) => actor.role === 'admin',
   'account:ban': (actor, target) =>
     target !== undefined &&
     actor.role === 'admin' &&
     target.id !== actor.id &&
     target.role !== 'admin',
+  'follow:create': (actor, facts) =>
+    facts !== undefined && facts.followeeId !== actor.id && facts.followeeActive && !facts.blocked,
 };
 
 export function can<A extends Action>(

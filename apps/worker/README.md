@@ -54,6 +54,41 @@ find nothing left to run. To stop: turn the flag off. Pending rows need no clean
 web app. The privacy policy (`privateSentryOptions`) is shared through `@mesaaberta/core`. `SENTRY_DSN`
 is a Worker var; unset, Sentry stays off and logs still reach the console.
 
+## Alerts and runbook
+
+**Cron monitors.** With `SENTRY_CRON_MONITORS=true` each run of the two crons sends Sentry a check-in
+when it starts and when it ends (`Sentry.withMonitor`). Sentry creates the monitors from the config in
+`packages/core/src/server/events/monitors.ts` on the first check-in and opens an issue on the first
+failed, missed or too-long run:
+
+| Monitor               | Cron          | Missed after | Timeout |
+| --------------------- | ------------- | ------------ | ------- |
+| `worker-event-sweep`  | `*/5 * * * *` | 2 min        | 5 min   |
+| `worker-daily-import` | `0 4 * * *`   | 15 min       | 30 min  |
+
+Off by default, since turning it on creates two monitors in the Sentry project. The self-hosted
+scheduler (`src/entry/bun.ts`) does not check in.
+
+**Outbox delay.** After each sweep, `reportDelay` raises `event.backlog.delayed` (code
+`outbox_delayed`, with `delayed` and `delaySeconds`) when events have been due for more than 15
+minutes and still have not run. It needs no setting.
+
+What to do:
+
+- **Sweep missed** (no check-in): look at the Worker's Cron Triggers and recent deploys in the
+  Cloudflare dashboard, and at `/healthz` (`worker.lastRunAt`). A deploy that dropped
+  `triggers.crons` stops every job; redeploy the pinned release.
+- **Sweep failed or timed out**: filter Sentry logs by the run's `requestId` to find the step that
+  threw (database, a handler, pruning). A database outage resolves itself: due events wait in the
+  outbox and the next run picks them up.
+- **Outbox delayed**: open `/admin/events` on the pending and retrying tabs. Many events of one type
+  point at one handler; its `event.handler.failed` lines say why. A backlog of every type with no
+  failures means the sweep (50 per run) is not keeping up.
+- **Daily import failed or missed**: each source writes `crowdfunding source import` (or `...
+failed`, with its `code`) and a row in `crowdfunding_import_runs`. A source that fails is recorded
+  there and does not fail the run, so the monitor only sees a run that could not start or finish.
+  A missed run waits for the next day's trigger.
+
 ## Self-hosting (Bun / Docker)
 
 `src/entry/bun.ts` runs the same handler with an in-process scheduler (`src/scheduler.ts`) instead of

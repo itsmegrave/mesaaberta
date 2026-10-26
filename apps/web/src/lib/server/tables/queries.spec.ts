@@ -104,6 +104,12 @@ describe('listUpcomingTables', () => {
     expect(list.map((t) => t.slug)).toEqual(['weekly']);
   });
 
+  it('reads only the first ones when given a limit, in the same order', async () => {
+    const list = await listUpcomingTables(test.db, now, { limit: 2 });
+
+    expect(list.map((t) => t.slug)).toEqual(['weekly', 'sooner']);
+  });
+
   it('is empty for a system nobody plays, or one that does not exist', async () => {
     expect(await listUpcomingTables(test.db, now, { systemSlug: 'gurps' })).toEqual([]);
     expect(await listUpcomingTables(test.db, now, { systemSlug: 'nao-existe' })).toEqual([]);

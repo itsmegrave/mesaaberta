@@ -21,6 +21,8 @@ export const TABLE_LIMITS = {
   // Platforms or tags a table can pick, each.
   catalogPicks: 12,
   joinDetails: 1000,
+  // An adventure's planned sessions (game_tables.planned_sessions).
+  plannedSessions: { min: 2, max: 20 },
   // Typed in hours, in half-hour steps; stored in minutes (game_tables.duration_minutes).
   durationHours: { min: 0.5, max: 24, step: 0.5 },
 } as const;
@@ -42,6 +44,13 @@ const isLocalDate = (value: string) =>
 const isMinPlayers = (value: string) =>
   value === '' ||
   (/^\d{1,3}$/.test(value) && Number(value) >= 1 && Number(value) <= TABLE_LIMITS.capacity.max);
+
+/** Blank, or a whole number of sessions an adventure can plan. */
+const isPlannedSessions = (value: string) =>
+  value === '' ||
+  (/^\d{1,2}$/.test(value) &&
+    Number(value) >= TABLE_LIMITS.plannedSessions.min &&
+    Number(value) <= TABLE_LIMITS.plannedSessions.max);
 
 const text = (max: number) => z.string().trim().max(max);
 const whole = (min: number, max: number) => z.coerce.number().int().min(min).max(max);
@@ -66,6 +75,8 @@ export const tableFormSchema = z
     capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
     // Optional: blank means the table has no minimum. A text field, like the CEP, so "empty" is not 0.
     minPlayers: z.string().trim().refine(isMinPlayers, 'invalid').default(''),
+    // Required on an adventure, ignored on the other kinds. Text, like `minPlayers`.
+    plannedSessions: z.string().trim().refine(isPlannedSessions, 'invalid').default(''),
     startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
     timezone: z.string().refine(isTimeZone, 'invalid'),
     durationHours: z.coerce
@@ -99,6 +110,9 @@ export const tableFormSchema = z
     if (value.minPlayers !== '' && Number(value.minPlayers) > value.capacity) {
       ctx.addIssue({ code: 'custom', message: 'above_capacity', path: ['minPlayers'] });
     }
+    if (value.kind === 'adventure' && value.plannedSessions === '') {
+      ctx.addIssue({ code: 'custom', message: 'required', path: ['plannedSessions'] });
+    }
     if (value.kind !== 'campaign') return;
 
     if (!(value.repeat in RULES)) {
@@ -121,6 +135,8 @@ export type TableInput = {
   capacity: number;
   /** The fewest players the GM wants, or null for no minimum. */
   minPlayers: number | null;
+  /** How many sessions an adventure plans; null for the other kinds. */
+  plannedSessions: number | null;
   /** Wall-clock time in `timezone`, e.g. `2026-10-10T19:00`. */
   startsAtLocal: string;
   timezone: string;
@@ -162,6 +178,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     joinDetails,
     postalCode,
     minPlayers,
+    plannedSessions,
     ...rest
   } = values;
   const campaign = rest.kind === 'campaign';
@@ -170,6 +187,8 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
   return {
     ...rest,
     minPlayers: minPlayers === '' ? null : Number(minPlayers),
+    plannedSessions:
+      rest.kind === 'adventure' && plannedSessions !== '' ? Number(plannedSessions) : null,
     durationMinutes: Math.round(durationHours * 60),
     locationArea: inPerson ? locationArea || null : null,
     postalCode: inPerson ? normalizeCep(postalCode) : null,
@@ -200,6 +219,14 @@ export const tableInputSchema = z.object({
   kind: z.enum(['campaign', 'one_shot', 'adventure']),
   capacity: z.number().int().min(TABLE_LIMITS.capacity.min).max(TABLE_LIMITS.capacity.max),
   minPlayers: z.number().int().min(1).max(TABLE_LIMITS.capacity.max).nullable(),
+  // Defaults to null so a web Worker that does not send it yet still passes.
+  plannedSessions: z
+    .number()
+    .int()
+    .min(TABLE_LIMITS.plannedSessions.min)
+    .max(TABLE_LIMITS.plannedSessions.max)
+    .nullable()
+    .default(null),
   startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
   timezone: z.string().refine(isTimeZone, 'invalid'),
   durationMinutes: z

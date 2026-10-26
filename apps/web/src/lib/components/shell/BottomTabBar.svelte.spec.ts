@@ -34,16 +34,8 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(nav().getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
   });
 
-  it('adds an Admin tab for admins, with the pending count', async () => {
-    render(BottomTabBar, { isAdmin: true, pendingSuggestionsCount: 3 });
-
-    await expect
-      .element(nav().getByRole('link', { name: 'Admin: 3' }))
-      .toHaveAttribute('href', '/admin');
-    expect(nav().getByRole('link').elements()).toHaveLength(5);
-  });
-
-  it('has four tabs for everyone else', async () => {
+  // Admin moved to the account menu, so admins get the same four tabs.
+  it('has four tabs for everyone', async () => {
     render(BottomTabBar);
 
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();

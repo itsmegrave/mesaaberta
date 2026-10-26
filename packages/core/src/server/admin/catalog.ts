@@ -9,6 +9,7 @@ import {
   gameTableTags,
   gameTables,
   platforms,
+  profileFavoriteSystems,
   profiles,
   systems,
   tags,
@@ -458,6 +459,18 @@ export async function mergeEntry(
     if (kind === 'system') {
       // Each table has exactly one system: its tables simply take the target.
       await tx.update(gameTables).set({ systemId: toId }).where(eq(gameTables.systemId, fromId));
+      // Favorites follow too, once: whoever had both keeps one.
+      const fans = await tx
+        .select({ profileId: profileFavoriteSystems.profileId })
+        .from(profileFavoriteSystems)
+        .where(eq(profileFavoriteSystems.systemId, fromId));
+      await tx.delete(profileFavoriteSystems).where(eq(profileFavoriteSystems.systemId, fromId));
+      if (fans.length > 0) {
+        await tx
+          .insert(profileFavoriteSystems)
+          .values(fans.map(({ profileId }) => ({ profileId, systemId: toId })))
+          .onConflictDoNothing();
+      }
     } else {
       const link = linkOf(kind);
       const column = linkColumn(kind);

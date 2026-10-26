@@ -15,6 +15,8 @@ import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicProfile } from '@mesaaberta/core/server/profile/public';
 import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import { badgeVisibilitySchema } from '#lib/badges/visibility.js';
+import { followAction } from '#lib/server/follows/action.js';
+import { profileFollow } from '#lib/server/follows/state.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) => {
@@ -28,14 +30,19 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     // The rollout is by the profile, so everyone sees the same strip on a given profile.
     showBadges: (target) => locals.flags.isEnabled('use_badges', target),
     showParticipantRating: (target) => locals.flags.isEnabled('use_player_ratings', target),
+    showFavoriteSystems: (target) => locals.flags.isEnabled('use_signed_in_home', target),
   });
   if (!data || data.page > data.pages) error(404, 'Not found');
   const path = routes.profile(data.profile.username);
   if (params.username !== data.profile.username) redirect(308, `${path}${url.search}`);
   // "Ver como visitante": the owner sees the page as anyone else does.
   const previewing = data.isOwner && url.searchParams.get('as') === 'visitor';
+  // Seguir for anyone else; for the owner, how many follow them (shown to nobody else).
+  const { follow, followers } = await profileFollow(locals, data.profile.username, data.isOwner);
   return {
     ...data,
+    follow,
+    followers: previewing ? null : followers,
     isOwner: data.isOwner && !previewing,
     previewing,
     canonical: indexingPolicy(url, siteOf(locals.env, locals.log).APP_ORIGIN).canonical!,
@@ -43,6 +50,9 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
 };
 
 export const actions: Actions = {
+  // Seguir / Seguindo.
+  follow: followAction,
+
   // The eye on an earned badge: the owner hides it from their profile, or shows it again.
   badgeVisibility: async ({ locals, params, request, url }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));

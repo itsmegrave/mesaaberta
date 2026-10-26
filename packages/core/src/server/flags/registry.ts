@@ -150,6 +150,22 @@ export const flagDefaults = {
   // requests and in the profile's "Mesas jogadas" tile. Targeted by the person's id: the GM on the
   // manage page, the profile's owner on a profile.
   use_player_ratings: false,
+  // The one switch for more than one account looking after a partner, off for everyone until it is
+  // released (a new feature, no percentage ramp). Off hides "Quem cuida do parceiro" on the edit
+  // page and its invite refuses; invites already sent can still be answered. The rest works the
+  // same either way: with nobody invited, a partner's one owner is its submitter. Targeted by the
+  // person's id.
+  use_partner_owners: false,
+  // The one switch for the signed-in Início and what feeds it, off for everyone until it is
+  // released (admins + 30% first, then everyone). Off hides "Sistemas favoritos" in Editar perfil
+  // (the page answers 404) and the favorite systems on public profiles. Targeted by the person's id:
+  // the signed-in person in Editar perfil, the profile's owner on a profile.
+  use_signed_in_home: false,
+  // The one switch for following people, off for everyone until it is released (admins + 30%
+  // first). Off hides the Seguir button on profiles and on a table's GM row (the action refuses),
+  // "Seguindo" in Editar perfil (its page answers 404) and the owner's follower count. Targeted by
+  // the signed-in person's id.
+  use_follows: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

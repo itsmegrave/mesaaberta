@@ -37,6 +37,8 @@ const COUNTS = new Set([
   'done',
   'retried',
   'failed',
+  'delayed',
+  'delaySeconds',
 ]);
 const LABELS = new Set([
   'event',
@@ -56,7 +58,7 @@ const LABELS = new Set([
   'reason',
   'resourceType',
 ]);
-const IDS = new Set(['requestId', 'eventId', 'tableId', 'registrationId', 'userId']);
+const IDS = new Set(['requestId', 'actionId', 'eventId', 'tableId', 'registrationId', 'userId']);
 // A resource is named by its uuid or by its public handle (a table's slug, a profile's @username).
 const RESOURCE_ID = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$/;
 

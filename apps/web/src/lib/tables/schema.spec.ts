@@ -51,6 +51,7 @@ describe('parseTableForm', () => {
         kind: 'one_shot',
         capacity: 5,
         minPlayers: null,
+        plannedSessions: null,
         startsAtLocal: '2026-10-10T19:00',
         timezone: 'America/Sao_Paulo',
         durationMinutes: 240,
@@ -146,6 +147,18 @@ describe('parseTableForm', () => {
     });
   });
 
+  it('asks an adventure how many sessions it plans, and keeps the count only on adventures', () => {
+    expect(errorsOf({ kind: 'adventure' }).plannedSessions).toBe('required');
+    expect(parseTableForm(form({ kind: 'adventure', plannedSessions: '4' }))).toMatchObject({
+      ok: true,
+      data: { kind: 'adventure', plannedSessions: 4 },
+    });
+    // A GM who typed a count and then picked another kind does not keep it.
+    expect(
+      parseTableForm(form({ kind: 'campaign', repeat: 'weekly', plannedSessions: '4' })),
+    ).toMatchObject({ ok: true, data: { plannedSessions: null } });
+  });
+
   it('accepts a minimum equal to the seats, and says a larger one is above the capacity', () => {
     expect(parseTableForm(form({ capacity: '4', minPlayers: '4' }))).toMatchObject({ ok: true });
     expect(errorsOf({ capacity: '4', minPlayers: '5' }).minPlayers).toBe('above_capacity');
@@ -167,6 +180,9 @@ describe('parseTableForm', () => {
     ['minPlayers', { minPlayers: '2.5' }],
     ['minPlayers', { minPlayers: 'alguns' }],
     ['minPlayers', { capacity: '4', minPlayers: '5' }],
+    ['plannedSessions', { kind: 'adventure', plannedSessions: '1' }],
+    ['plannedSessions', { kind: 'adventure', plannedSessions: '21' }],
+    ['plannedSessions', { kind: 'adventure', plannedSessions: 'umas' }],
     ['durationHours', { durationHours: '0' }],
     ['durationHours', { durationHours: '24.5' }],
     ['durationHours', { durationHours: '1.25' }],

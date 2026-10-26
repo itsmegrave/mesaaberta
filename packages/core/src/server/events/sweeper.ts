@@ -8,8 +8,10 @@ import { sendSessionReminders } from '../notifications/reminders';
 import { pruneTableChats } from '../messages/retention';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
+import { reportDelay } from './delay';
 import { createEventExecutor } from './executor';
 import { recordHeartbeat, SWEEPER_HEARTBEAT } from './heartbeat';
+import { buildInfoOf, type BuildEnv } from '../build-info';
 import { liftExpiredBans } from '../moderation/bans';
 import type { Handler } from './types';
 
@@ -18,7 +20,7 @@ import type { Handler } from './types';
  * ADR 0003) instead of calling the dispatcher directly. It claims, runs and records the same way, so
  * the default stays the direct path until the poller has run clean beside it.
  */
-type PollerEnv = { EVENT_POLLER?: string } & SocialEnv;
+type PollerEnv = { EVENT_POLLER?: string } & SocialEnv & BuildEnv;
 
 type Deps = {
   open?: typeof createDb;
@@ -63,6 +65,8 @@ export async function runSweeper(
         ? await sweepThroughPoller(db, handlers, now, log)
         : await sweepEvents(db, handlers, now, 50, log, { clock: () => new Date() });
     if (swept > 0) log.info('event sweep', { swept });
+    // After the sweep: whatever is still late after it ran is worth a person's look.
+    await reportDelay(db, new Date(), log);
     // Isolated: an unreadable Instagram token (a rotated INSTAGRAM_TOKEN_KEY) or a Meta outage must
     // not stop the retention pruning below or keep the heartbeat from being recorded.
     try {
@@ -77,7 +81,7 @@ export async function runSweeper(
     const chats = await pruneTableChats(db);
     if (chats > 0) log.info('table chat prune', { chats });
     // Last, so a run that threw before this point does not look alive to /healthz.
-    await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log);
+    await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log, buildInfoOf(env));
     return swept;
   } finally {
     await close();

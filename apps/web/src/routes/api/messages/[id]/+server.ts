@@ -2,13 +2,13 @@ import { error } from '@sveltejs/kit';
 import { stringify } from 'devalue';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { NotFound } from '@mesaaberta/core/server/errors';
-import { listMessages, markConversationRead } from '@mesaaberta/core/server/messages/service';
+import { listMessages } from '@mesaaberta/core/server/messages/service';
 import { withPictures } from '@mesaaberta/core/server/messages/present';
 import type { RequestHandler } from './$types';
 
 /**
  * A conversation's newest messages, for the open thread to poll, or the ones before `before` (an
- * ISO time) for "see older". Reading the latest page counts as reading the conversation.
+ * ISO time) for "see older". Reading never writes: the thread says what was seen with `POST read`.
  */
 export const GET: RequestHandler = async ({ locals, params, url }) => {
   const user = await locals.getUser();
@@ -22,7 +22,6 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 
   try {
     const thread = await listMessages(locals.db, actor, params.id, { before });
-    if (!before) await markConversationRead(locals.db, actor, params.id);
     const supabaseUrl = supabaseUrlOf(locals.env);
     return new Response(
       stringify({ ...thread, messages: withPictures(supabaseUrl, thread.messages) }),

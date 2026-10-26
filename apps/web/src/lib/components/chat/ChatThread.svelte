@@ -74,6 +74,22 @@
     void client.invalidateQueries({ queryKey: BADGES_KEY });
   });
 
+  // Seen: while the thread is in front, the newest message from someone else counts as read. The
+  // page load already marked what it showed; a poll in the background marks nothing.
+  // svelte-ignore state_referenced_locally
+  let lastMarked = data.messages.at(-1)?.id;
+  $effect(() => {
+    const latest = thread.data?.messages.at(-1);
+    if (!visible || !focused || !latest || latest.own || latest.id === lastMarked) return;
+    lastMarked = latest.id;
+    void fetch(`/api/messages/${conversationId}/read`, {
+      method: 'POST',
+      credentials: 'same-origin',
+    }).then((response) => {
+      if (response.ok) void client.invalidateQueries({ queryKey: BADGES_KEY });
+    });
+  });
+
   async function loadOlder() {
     const oldest = saved[0];
     if (!oldest) return;
@@ -125,7 +141,14 @@
 <svelte:document onvisibilitychange={syncVisibility} />
 <svelte:window onfocus={syncVisibility} onblur={syncVisibility} />
 
-<section class="flex min-h-0 flex-col {drawer ? 'min-w-0 flex-1' : 'h-128 md:h-176'}">
+<!-- On a phone the page's thread takes the screen that is left: 100dvh less the header (4rem), the
+     inbox column's padding (1.5rem), the page's bottom padding (2rem) and the tab bar (5rem), so the
+     composer always sits above the tab bar. -->
+<section
+  class="flex min-h-0 flex-col {drawer
+    ? 'min-w-0 flex-1'
+    : 'h-[calc(100dvh-12.5rem)] min-h-80 md:h-176 md:min-h-0'}"
+>
   <ChatHeader
     conversation={data.conversation}
     {onback}

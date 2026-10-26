@@ -176,6 +176,7 @@
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its
      own words, and show validation in the same translated messages as the server. -->
 <EditorForm
+  action={editing ? '?/save' : undefined}
   {controller}
   {problems}
   banner={formError}
