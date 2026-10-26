@@ -57,7 +57,8 @@ is a Worker var; unset, Sentry stays off and logs still reach the console.
 ## Alerts and runbook
 
 **Cron monitors.** With `SENTRY_CRON_MONITORS=true` each run of the two crons sends Sentry a check-in
-when it starts and when it ends (`Sentry.withMonitor`). Sentry creates the monitors from the config in
+when it starts and when it ends (`checkInMonitor` in `src/sentry-monitor.ts`, which flushes the opening
+check-in before the run so the closing one cannot overtake it). Sentry creates the monitors from the config in
 `packages/core/src/server/events/monitors.ts` on the first check-in and opens an issue on the first
 failed, missed or too-long run:
 
