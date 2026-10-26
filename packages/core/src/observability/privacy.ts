@@ -37,6 +37,8 @@ const COUNTS = new Set([
   'done',
   'retried',
   'failed',
+  'delayed',
+  'delaySeconds',
 ]);
 const LABELS = new Set([
   'event',

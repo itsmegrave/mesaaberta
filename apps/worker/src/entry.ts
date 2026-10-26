@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/cloudflare';
 import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
+import type { Monitor } from '@mesaaberta/core/server/events/monitors';
 import { createWorker, type WorkerEnv } from './index';
 import { sentrySink } from './sentry-sink';
 
@@ -16,6 +17,17 @@ setAppName('worker');
 setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
 
+// A check-in in progress, then ok or error; Sentry creates or updates the monitor from this config.
+const sentryMonitor: Monitor = (job, run) =>
+  Sentry.withMonitor(job.slug, run, {
+    schedule: { type: 'crontab', value: job.schedule },
+    checkinMargin: job.checkinMargin,
+    maxRuntime: job.maxRuntime,
+    timezone: 'Etc/UTC',
+    failureIssueThreshold: 1,
+    recoveryThreshold: 1,
+  });
+
 export default Sentry.withSentry(
   (env: WorkerEnv) => ({
     ...sentryOptionsForApp('worker'),
@@ -23,5 +35,5 @@ export default Sentry.withSentry(
     environment: 'production',
     release: env.CF_VERSION_METADATA?.id,
   }),
-  createWorker(),
+  createWorker(undefined, undefined, sentryMonitor),
 );

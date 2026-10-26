@@ -8,6 +8,7 @@ import { sendSessionReminders } from '../notifications/reminders';
 import { pruneTableChats } from '../messages/retention';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
+import { reportDelay } from './delay';
 import { createEventExecutor } from './executor';
 import { recordHeartbeat, SWEEPER_HEARTBEAT } from './heartbeat';
 import { buildInfoOf, type BuildEnv } from '../build-info';
@@ -64,6 +65,8 @@ export async function runSweeper(
         ? await sweepThroughPoller(db, handlers, now, log)
         : await sweepEvents(db, handlers, now, 50, log, { clock: () => new Date() });
     if (swept > 0) log.info('event sweep', { swept });
+    // After the sweep: whatever is still late after it ran is worth a person's look.
+    await reportDelay(db, new Date(), log);
     // Isolated: an unreadable Instagram token (a rotated INSTAGRAM_TOKEN_KEY) or a Meta outage must
     // not stop the retention pruning below or keep the heartbeat from being recorded.
     try {

@@ -2,6 +2,7 @@ import type { ImportEnv } from '@mesaaberta/core/server/crowdfunding/import/runn
 import { connectionStringFrom, createDb } from '@mesaaberta/core/server/db/client';
 import { createEventExecutor } from '@mesaaberta/core/server/events/executor';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { CRON_MONITORS, unmonitored, type Monitor } from '@mesaaberta/core/server/events/monitors';
 import { runScheduled } from '@mesaaberta/core/server/events/scheduled';
 import type { SocialEnv } from '@mesaaberta/core/server/social/port';
 import { withRequestId } from '@mesaaberta/contracts';
@@ -20,6 +21,8 @@ export type WorkerEnv = ImportEnv &
      */
     QUEUE_LIVE_HANDLERS?: string;
     SENTRY_DSN?: string;
+    /** "true" sends cron check-ins to Sentry, which creates the monitors on the first one. */
+    SENTRY_CRON_MONITORS?: string;
     CF_VERSION_METADATA?: { id?: string };
   };
 
@@ -37,6 +40,7 @@ const liveHandlers = (env: WorkerEnv | undefined) =>
 export const createWorker = (
   run: typeof runScheduled = runScheduled,
   open: typeof createDb = createDb,
+  monitor: Monitor = unmonitored,
 ) => ({
   /** Never throws: a failed run is logged and the next trigger retries what is still due. */
   async scheduled(controller: Controller, env: WorkerEnv) {
@@ -47,8 +51,11 @@ export const createWorker = (
       environment: 'production',
       release: env.CF_VERSION_METADATA?.id,
     });
-    await withRequestId(requestId, () => run(controller, env, { log })).catch((error) =>
-      log.error('scheduled job failed', { error }),
+    const job = CRON_MONITORS[controller.cron];
+    const work = () => withRequestId(requestId, () => run(controller, env, { log }));
+    // The monitor sees the failure (an error check-in) before it is logged and swallowed here.
+    await (job && env.SENTRY_CRON_MONITORS === 'true' ? monitor(job, work) : work()).catch(
+      (error) => log.error('scheduled job failed', { error }),
     );
   },
   /**
