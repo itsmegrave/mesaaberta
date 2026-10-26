@@ -4,9 +4,18 @@
   import { createQuery } from '@tanstack/svelte-query';
   import { queryClient } from '#lib/query/context.js';
   import { cepLookup } from '#lib/query/lookups.js';
-  import { areaOf, normalizeCep } from '@mesaaberta/core/location/cep';
+  import { areaOf, normalizeCep, type CepPlace } from '@mesaaberta/core/location/cep';
   import { m } from '#lib/paraglide/messages.js';
-  let { value, area = $bindable('') }: { value: string; area?: string } = $props();
+  let {
+    value,
+    area = $bindable(''),
+    place = $bindable(null),
+  }: {
+    value: string;
+    area?: string;
+    /** The neighbourhood, city and state the CEP is in, once found (null until then). */
+    place?: CepPlace | null;
+  } = $props();
   const client = queryClient();
   let debounced = $state<string | null>(null);
   let filled = $state<string | null>(null);
@@ -38,6 +47,15 @@
     }),
     () => client,
   );
+  $effect(() => {
+    const found =
+      cep && debounced === cep && lookup.data?.cep === cep && lookup.data.status === 'found'
+        ? lookup.data.place
+        : null;
+    untrack(() => {
+      if (place !== found) place = found;
+    });
+  });
   $effect(() => {
     if (!cep || debounced !== cep || lookup.data?.cep !== cep || lookup.data.status !== 'found')
       return;

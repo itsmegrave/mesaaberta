@@ -209,7 +209,7 @@ export async function updatePlace(
     now = new Date(),
     request = fetch,
   }: { imagePath?: string | null; now?: Date; request?: typeof fetch } = {},
-): Promise<{ eventId: string; replacedImage: string | null; pending: boolean }> {
+): Promise<{ eventId: string; slug: string; replacedImage: string | null; pending: boolean }> {
   const [found] = await db
     .select()
     .from(places)
@@ -285,6 +285,7 @@ export async function updatePlace(
     );
     return {
       eventId,
+      slug: current.slug,
       replacedImage: imagePath || dropImage ? current.imagePath : null,
       pending,
     };
