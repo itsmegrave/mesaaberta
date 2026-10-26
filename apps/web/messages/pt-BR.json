@@ -1340,16 +1340,7 @@
   "public_profile_reviews": "Avaliações da mestragem",
   "public_profile_reviews_of": "Avaliações de {username}",
   "public_profile_review_played": "Jogou em",
-  "public_profile_reviews_all": [
-    {
-      "declarations": ["input count"],
-      "selectors": ["count"],
-      "match": {
-        "count=1": "Ver a avaliação",
-        "count=*": "Ver todas as {count} avaliações"
-      }
-    }
-  ],
+  "public_profile_reviews_all": "{count, plural, =1 {Ver a avaliação} other {Ver todas as {count} avaliações}}",
   "public_profile_reviews_fewer": "Mostrar menos",
   "session_day": "Dia da primeira sessão",
   "session_hour": "Hora",
