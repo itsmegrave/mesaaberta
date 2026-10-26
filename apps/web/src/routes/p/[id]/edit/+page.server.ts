@@ -7,14 +7,33 @@ import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { handlePartnerForm } from '#lib/server/partners/form-action.js';
 
 import { findOwnPartner } from '@mesaaberta/core/server/partners/service';
+import {
+  partnerInvitationIdSchema,
+  partnerInviteSchema,
+  partnerOwnerSchema,
+} from '@mesaaberta/core/partners/owners';
+import {
+  cancelPartnerInvitation,
+  invitePartnerOwner,
+  listPartnerOwners,
+  removePartnerOwner,
+} from '@mesaaberta/core/server/partners/owners';
+import { ownerAction, partnerOwnersEnabled } from '#lib/server/partners/owner-actions.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url, params }) => {
   await requireUser(locals, url);
   if (!locals.db) error(503, 'Database not configured');
   try {
-    const partner = await findOwnPartner(locals.db, await locals.getProfile(), params.id);
+    const profile = await locals.getProfile();
+    const partner = await findOwnPartner(locals.db, profile, params.id);
+    // "Quem cuida do parceiro", while `use_partner_owners` is on for this person.
+    const owners =
+      profile && (await partnerOwnersEnabled(locals, profile))
+        ? { ...(await listPartnerOwners(locals.db, profile, partner.id)), you: profile.id }
+        : null;
     return {
+      owners,
       id: partner.id,
       logoUrl: partnerLogoUrl(supabaseUrlOf(locals.env), partner.logoPath),
       approved: partner.approvedAt !== null,
@@ -42,8 +61,25 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
 };
 
 export const actions: Actions = {
-  default: async (event) => {
+  save: async (event) => {
     await requireUser(event.locals, event.url);
     return handlePartnerForm(event, { id: event.params.id });
   },
+  // "Quem cuida do parceiro": every owner may invite, cancel an invite and take an account off.
+  invite: ownerAction(partnerInviteSchema, ['username'], (db, actor, { username }, params) =>
+    invitePartnerOwner(db, actor, params.id, username),
+  ),
+  cancelInvite: ownerAction(partnerInvitationIdSchema, ['invitationId'], (db, actor, data) =>
+    cancelPartnerInvitation(db, actor, data.invitationId),
+  ),
+  // Their own row is "Deixar de cuidar…": they no longer reach this page, so it sends them to /p.
+  removeOwner: ownerAction(partnerOwnerSchema, ['profileId'], (db, actor, { profileId }, params) =>
+    removePartnerOwner(db, actor, params.id, profileId),
+  ),
+  leave: ownerAction(
+    partnerOwnerSchema,
+    ['profileId'],
+    (db, actor, _data, params) => removePartnerOwner(db, actor, params.id, actor.id),
+    { flagged: false, then: () => '/p' },
+  ),
 };

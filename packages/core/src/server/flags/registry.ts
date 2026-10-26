@@ -150,6 +150,12 @@ export const flagDefaults = {
   // requests and in the profile's "Mesas jogadas" tile. Targeted by the person's id: the GM on the
   // manage page, the profile's owner on a profile.
   use_player_ratings: false,
+  // The one switch for more than one account looking after a partner, off for everyone until it is
+  // released (a new feature, no percentage ramp). Off hides "Quem cuida do parceiro" on the edit
+  // page and its invite refuses; invites already sent can still be answered. The rest works the
+  // same either way: with nobody invited, a partner's one owner is its submitter. Targeted by the
+  // person's id.
+  use_partner_owners: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

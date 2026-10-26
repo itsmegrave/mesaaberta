@@ -58,6 +58,7 @@ describe('the bell on the queue', () => {
       'moderation-notifications-v1',
       'catalog-notifications-v1',
       'player-invitation-notifications-v1',
+      'partner-owner-notifications-v1',
       'badges-v1',
       'badge-notice-v1',
     ]);
