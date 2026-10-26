@@ -81,6 +81,8 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     },
     table,
     canEdit: can(profile, 'table:edit', { gmId, tableStatus: found.status }),
+    // "Participantes" in the menu: the GM and the administrators, the same rule as the manage page.
+    canManage: manage,
     systemWaiting: found.status === 'draft' ? await systemWaitingOf(db, found.system.slug) : null,
     // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.
     gmAcceptsDirect: gm?.enabled ?? false,
