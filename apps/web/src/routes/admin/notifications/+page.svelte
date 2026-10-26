@@ -264,8 +264,10 @@
       <fieldset>
         <legend class="mb-2 font-semibold">{m.admin_announce_field_icon()}</legend>
         <div class="flex flex-wrap gap-2">
-          <label class="{square} px-3 text-sm font-semibold">
+          <!-- The default shows the icon the kind picks for it. -->
+          <label class="{square} gap-2 px-3 text-sm font-semibold">
             <input type="radio" name="icon" value="" bind:group={$draft.icon} class="sr-only" />
+            <NotificationIcon icon={TONE_ICON[$draft.tone]} size={18} class="text-muted" />
             {m.admin_announce_icon_auto()}
           </label>
           {#each ANNOUNCEMENT_ICONS as icon (icon)}
