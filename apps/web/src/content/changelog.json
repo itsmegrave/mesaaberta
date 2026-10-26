@@ -128,6 +128,11 @@
         "title": "Lembretes para fechar a sessão",
         "description": "Quem mestra recebe um e-mail uma hora e sete dias depois do fim de uma sessão que ainda não foi confirmada. Passados dez dias, a Mesa Aberta fecha a sessão e chama quem jogou para avaliar.",
         "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Endereços em palavras",
+        "description": "As listas agora têm endereços legíveis, como /tables, /partners e /messages. Os links antigos continuam funcionando."
       }
     ]
   },
