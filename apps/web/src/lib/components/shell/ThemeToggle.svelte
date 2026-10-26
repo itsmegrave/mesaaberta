@@ -8,11 +8,17 @@
   let {
     labelled = false,
     rail = false,
+    segmented = false,
+    labelledby,
   }: {
     /** A "Tema escuro" row with a switch, for the open side nav. */
     labelled?: boolean;
     /** The collapsed side nav's item: the icon on a 40px tile over "Tema". */
     rail?: boolean;
+    /** Claro | Escuro as two segments, for the account menu. */
+    segmented?: boolean;
+    /** The id of the text that names the segmented control. */
+    labelledby?: string;
   } = $props();
 
   let isDark = $state(false);
@@ -75,7 +81,44 @@
   </span>
 {/snippet}
 
-{#if labelled}
+{#snippet segment(dark: boolean, icon: 'sun' | 'moon', label: string)}
+  {@const checked = isDark === dark}
+  <button
+    type="button"
+    role="radio"
+    aria-checked={checked}
+    tabindex={checked ? 0 : -1}
+    onclick={() => handlePressedChange(dark)}
+    onkeydown={(event) => {
+      // Arrow keys move between the two segments, as in a native radio group.
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        handlePressedChange(!dark);
+        const group = (event.currentTarget as HTMLElement).parentElement;
+        group?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+      }
+    }}
+    class="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold {checked
+      ? 'preset-filled-primary-500'
+      : 'text-surface-950-50 hover:bg-surface-200-800'}"
+  >
+    <Icon name={icon} size={16} />
+    {label}
+  </button>
+{/snippet}
+
+{#if segmented}
+  <!-- Choosing keeps the account menu open, so the change is seen where it was made. -->
+  <div
+    role="radiogroup"
+    aria-labelledby={labelledby}
+    aria-label={labelledby ? undefined : m.theme_label()}
+    class="flex gap-1 rounded-full bg-surface-200-800 p-1"
+  >
+    {@render segment(false, 'sun', m.theme_light())}
+    {@render segment(true, 'moon', m.theme_dark())}
+  </div>
+{:else if labelled}
   <!-- A plain switch button: Skeleton's Switch draws its hidden input with an inline style, which the
        CSP blocks in server-rendered HTML. -->
   <button

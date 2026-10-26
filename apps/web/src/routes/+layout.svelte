@@ -155,8 +155,6 @@
 
         {#if !data.maintenance}
           <div class="flex items-center gap-2">
-            <ThemeToggle />
-
             {#if data.account}
               <NotificationBell
                 unread={badges.data?.unread ?? data.account.notifications.unread}
@@ -168,8 +166,15 @@
                 username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
+                isAdmin={data.account.isAdmin}
+                adminPending={data.account.pendingSuggestionsCount}
+                sheet
               />
-            {:else if data.authEnabled}
+            {:else}
+              <!-- Members pick the theme in the account menu; visitors have none. -->
+              <ThemeToggle />
+            {/if}
+            {#if !data.account && data.authEnabled}
               <a
                 href={resolve('login')}
                 class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
@@ -228,10 +233,7 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar
-          isAdmin={data.account?.isAdmin ?? false}
-          pendingSuggestionsCount={data.account?.pendingSuggestionsCount ?? 0}
-        />
+        <BottomTabBar />
       {/if}
 
       {#if !data.maintenance}

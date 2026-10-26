@@ -113,25 +113,22 @@ describe('+layout.svelte', () => {
     await expect
       .element(nav.getByRole('button', { name: 'Notificações: 4 sem ler' }))
       .toBeVisible();
-    await expect.element(nav.getByRole('link', { name: /Admin/ })).toBeVisible();
-    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    // Admin and the theme live in the account menu, which is last.
+    expect(nav.getByRole('link', { name: /Admin/ }).elements()).toHaveLength(0);
+    expect(nav.getByRole('switch', { name: 'Tema escuro' }).elements()).toHaveLength(0);
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
     expect(nav.element().contains(account)).toBe(true);
-    // The theme switch comes before the account block, which is last.
-    expect(
-      account.compareDocumentPosition(nav.getByRole('switch', { name: 'Tema escuro' }).element()),
-    ).toBe(Node.DOCUMENT_POSITION_PRECEDING);
   });
 
   it('draws the open side nav without an inline style, which the CSP blocks', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
 
-    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    await expect.element(nav.getByRole('button', { name: /Mestre Silva/i })).toBeVisible();
     expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
   });
 
-  it('collapses to an 80px rail with the same groups as the open nav: Sua conta, then the theme and account', async () => {
+  it('collapses to an 80px rail with the same groups as the open nav: Sua conta, then the account', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     await nav.getByRole('button', { name: 'Recolher menu' }).click();
@@ -139,20 +136,16 @@ describe('+layout.svelte', () => {
     await expect
       .element(nav.getByRole('button', { name: 'Expandir menu' }))
       .toHaveAttribute('aria-expanded', 'false');
-    const theme = nav.getByRole('button', { name: 'Tema escuro' }).element();
     const bell = nav.getByRole('button', { name: 'Notificações', exact: true }).element();
-    const admin = nav.getByRole('link', { name: 'Admin' }).element();
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
-    // Notificações and Admin share the "Sua conta" group, as when open; its label is hidden.
-    expect(bell.parentElement).toBe(admin.parentElement);
+    // Notificações keeps the "Sua conta" group, as when open; its label is hidden.
     await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
-    expect(theme.parentElement?.contains(account)).toBe(true);
-    expect(theme.parentElement?.contains(bell)).toBe(false);
+    expect(bell.parentElement?.contains(account)).toBe(false);
+    // Admin and the theme are in the account menu, not on the rail.
+    expect(nav.getByRole('link', { name: 'Admin' }).elements()).toHaveLength(0);
+    expect(nav.getByRole('button', { name: 'Tema escuro' }).elements()).toHaveLength(0);
     // The width animates, so wait for it to settle.
     await expect.poll(() => nav.element().getBoundingClientRect().width).toBe(80);
-    await expect
-      .element(nav.getByRole('link', { name: 'Admin' }))
-      .toHaveAttribute('href', '/admin');
     const label = nav.getByRole('link', { name: 'Minhas mesas' }).element()
       .lastElementChild as HTMLElement;
     expect(getComputedStyle(label).whiteSpace).toBe('normal');
@@ -265,7 +258,7 @@ describe('+layout.svelte', () => {
         .not.toBeInTheDocument();
     });
 
-    it('shows admin link and suggestion count badge for admins', async () => {
+    it('shows the admin link and the suggestion count in the account menu for admins', async () => {
       render(Layout, {
         children,
         data: {
@@ -278,11 +271,10 @@ describe('+layout.svelte', () => {
         .getByRole('button', { name: /Mestre Silva/i })
         .click();
 
-      const adminLink = navigation().getByRole('link', { name: /Admin/i });
+      const adminLink = accountMenu().getByRole('link', { name: 'Admin: 3' });
       await expect.element(adminLink).toBeVisible();
       await expect.element(adminLink).toHaveAttribute('href', '/admin');
-      await expect.element(adminLink.getByText('Admin', { exact: true })).toBeVisible();
-      await expect.element(adminLink.getByLabelText('Admin: 3')).toHaveTextContent('3');
+      await expect.element(adminLink.getByTestId('admin-count')).toHaveTextContent('3');
     });
 
     it('signs out with a POST to /logout, never a link', async () => {
@@ -424,7 +416,7 @@ describe('+layout.svelte', () => {
         .not.toBeInTheDocument();
     });
 
-    it('puts Admin on the tab bar on mobile, not in the account menu', async () => {
+    it('puts Admin and the theme in the phone account sheet, not on the tab bar', async () => {
       render(Layout, {
         children,
         data: {
@@ -435,21 +427,24 @@ describe('+layout.svelte', () => {
       });
 
       const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
-      await expect
-        .element(bar.getByRole('link', { name: 'Admin: 3' }))
-        .toHaveAttribute('href', '/admin');
+      expect(bar.getByRole('link', { name: /Admin/ }).elements()).toHaveLength(0);
+      const banner = page.getByRole('banner');
+      expect(banner.getByRole('button', { name: 'Tema escuro' }).elements()).toHaveLength(0);
 
-      await page
-        .getByRole('banner')
-        .getByRole('button', { name: /Mestre Silva/i })
-        .click();
+      await banner.getByRole('button', { name: /Mestre Silva/i }).click();
+      const sheet = page.getByRole('dialog', { name: 'Menu da conta' });
       await expect
-        .element(
-          page
-            .getByRole('navigation', { name: 'Menu da conta' })
-            .getByRole('link', { name: /Admin/ }),
-        )
-        .not.toBeInTheDocument();
+        .element(sheet.getByRole('link', { name: 'Admin: 3' }))
+        .toHaveAttribute('href', '/admin');
+      await expect.element(sheet.getByRole('radiogroup', { name: 'Tema' })).toBeVisible();
+    });
+
+    it('keeps the theme button in the phone header for visitors', async () => {
+      render(Layout, { children, data: { ...signedOut, authEnabled: true } });
+
+      await expect
+        .element(page.getByRole('banner').getByRole('button', { name: 'Tema escuro' }))
+        .toBeInTheDocument();
     });
   });
 

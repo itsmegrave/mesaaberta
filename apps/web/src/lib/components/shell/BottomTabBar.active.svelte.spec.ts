@@ -28,14 +28,6 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
     expect(lit('/t')).toBe(false);
   });
 
-  it('lights Admin on the admin pages', () => {
-    location.pathname = '/admin/users';
-    render(BottomTabBar, { isAdmin: true });
-
-    expect(lit('/admin')).toBe(true);
-    expect(lit('/t')).toBe(false);
-  });
-
   it.each(['/terms', '/privacy', '/password', '/maintenance', '/u/tablespoon'])(
     'does not select a resource tab for the unrelated route %s',
     (pathname) => {
