@@ -9,7 +9,8 @@
    * "Veja mais" tile the size of a card that links to the full list. The row runs into the page
    * gutter so the next card peeks in; the page column already clips sideways overflow, so the row
    * needs no width of its own. On a wide screen two buttons move it a page at a time; on a phone it
-   * is swiped. It never moves by itself.
+   * is swiped. It never moves by itself. Every card fills its slot: the same width (`itemClass`) and,
+   * since the row stretches its items, the height of the tallest card.
    */
   let {
     id,
@@ -116,7 +117,8 @@
     class="-mx-5 flex snap-x snap-mandatory scroll-px-5 scrollbar-none gap-3 overflow-x-auto overscroll-x-contain px-5 pt-1 pb-2 md:-mx-8 md:scroll-px-8 md:gap-6 md:px-8 [&::-webkit-scrollbar]:hidden"
   >
     {#each items as item (key(item))}
-      <li class="flex shrink-0 snap-start {itemClass}">{@render card(item)}</li>
+      <!-- *:w-full: a card sizes to its content in a flex row, so a short title would draw a narrow card. -->
+      <li class="flex shrink-0 snap-start *:w-full {itemClass}">{@render card(item)}</li>
     {/each}
     {#if moreHref}
       <li class="flex shrink-0 snap-start {itemClass}">
