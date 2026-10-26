@@ -111,6 +111,11 @@
         "kind": "fixed",
         "title": "Avaliações no celular",
         "description": "As linhas de avaliação de jogadores cabem na tela do celular, e o menu da mesa mostra “Participantes e pedidos” só para quem gerencia."
+      },
+      {
+        "kind": "fixed",
+        "title": "Menu da conta fecha ao navegar",
+        "description": "O menu da conta fecha depois de abrir Perfil, Mensagens ou Admin."
       }
     ]
   },
