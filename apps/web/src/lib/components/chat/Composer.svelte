@@ -53,6 +53,8 @@
     initial: initial.data,
     schema: messageSchema,
     errorMessage: m.messages_error_generic,
+    // The thread shows the message as it goes.
+    quiet: true,
     onSuccess: () => {},
     onSending(data) {
       const body = String(data.get('body') ?? '').trim();
