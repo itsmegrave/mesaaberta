@@ -3,7 +3,8 @@ import { cleanRichHtml } from '@mesaaberta/core/text/rich';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { isPublished, loadPosts, type Post } from '#lib/blog.js';
 
-// The posts are read at build time, so the Markdown never reaches the browser bundle.
+// The posts are read at build time, so the Markdown never reaches the browser bundle. They come from
+// the private repository, whose overlay copies them into this folder; the public repo ships none.
 const files = import.meta.glob<string>('../../content/blog/*.md', {
   query: '?raw',
   import: 'default',
