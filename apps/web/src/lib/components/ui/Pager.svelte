@@ -23,9 +23,11 @@
   } = $props();
 
   const numbers = $derived(pageWindow(page, pages));
+  // As on the admin boards: each page is its own 44px box with the quiet line.
   const box =
-    'inline-flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums no-underline';
-  const step = 'btn size-12 rounded-lg border border-surface-200-800 p-0 text-surface-950-50';
+    'inline-flex h-11 min-w-11 items-center justify-center rounded-lg border-control border-surface-200-800 px-2 font-semibold tabular-nums no-underline';
+  const step =
+    'btn size-11 rounded-lg border-control border-surface-200-800 p-0 text-surface-950-50';
 </script>
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -- the hrefs arrive already canonical -->
@@ -53,7 +55,7 @@
     {/if}
   </nav>
 {:else if pages > 1}
-  <nav aria-label={m.admin_pagination()} class="{className} flex flex-wrap items-center gap-1">
+  <nav aria-label={m.admin_pagination()} class="{className} flex flex-wrap items-center gap-1.5">
     {#if page > 1}
       <a
         class="{box} hover:preset-tonal"
@@ -68,10 +70,12 @@
     {/if}
     {#each numbers as number, index (number ?? `gap-${index}`)}
       {#if number === null}
-        <span class="{box} text-muted" aria-hidden="true">…</span>
+        <span class="{box} border-transparent text-muted" aria-hidden="true">…</span>
       {:else}
         <a
-          class="{box} {number === page ? 'preset-filled-primary-500' : 'hover:preset-tonal'}"
+          class="{box} {number === page
+            ? 'border-primary-500 preset-filled-primary-500'
+            : 'hover:preset-tonal'}"
           href={href(number)}
           aria-current={number === page ? 'page' : undefined}
           aria-label={m.admin_pager_page({ page: number })}>{number}</a
