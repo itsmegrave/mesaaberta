@@ -3,7 +3,7 @@
   import FormField from '#lib/components/ui/FormField.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
 
-  // A field of the sign-in, sign-up and password forms: a FormField around a 52px input with the
+  // A field of the sign-in, sign-up and password forms: a FormField around a 44px input with the
   // fields' 1.5px border, which takes the hint and the error by aria.
   let {
     id,
@@ -27,7 +27,7 @@
       {id}
       {...attributes}
       bind:value
-      class="input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-4 text-base"
+      class="input h-11 w-full rounded-lg border-control border-ink-muted bg-panel px-4 text-base"
       {...aria}
     />
   {/snippet}

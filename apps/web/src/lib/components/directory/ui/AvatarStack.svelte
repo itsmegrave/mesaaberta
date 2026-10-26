@@ -24,12 +24,12 @@
   <div class="flex items-center gap-2">
     <span class="flex items-center" aria-hidden="true">
       {#each people as person, index (person.username)}
-        <span class="flex rounded-full border-2 border-surface-50-950 {index > 0 ? '-ml-1.5' : ''}">
+        <span class="flex rounded-full border-2 border-surface-50-950 {index > 0 ? '-ml-2' : ''}">
           <MAAvatar src={person.avatarUrl} name={person.username} size={24} />
         </span>
       {/each}
       {#if more > 0}
-        <span class="ml-1.5 text-xs font-semibold text-muted"
+        <span class="ml-2 text-xs font-semibold text-muted"
           >{m.directory_people_more({ count: more })}</span
         >
       {/if}

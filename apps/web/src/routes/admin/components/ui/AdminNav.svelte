@@ -36,10 +36,11 @@
   const current = $derived(sectionOf(groups, route, path));
 </script>
 
-<!-- 236px wide (59 × 4px) and sticky at the top of the content. -->
+<!-- 236px wide (59 × 4px) and sticky at the top of the content. The 20px above it centres
+     "Visão geral" on the breadcrumbs row of the page beside it. -->
 <nav
   aria-label={m.admin_nav_label()}
-  class="sticky top-6 hidden w-59 shrink-0 gap-5 self-start md:grid"
+  class="sticky top-5 mt-5 hidden w-59 shrink-0 gap-5 self-start md:grid"
 >
   {#each groups as group (group.key)}
     <div class="grid gap-1">

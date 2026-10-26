@@ -86,7 +86,7 @@
         <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
         <section aria-labelledby={list.value}>
           <div class="flex items-baseline gap-3">
-            <h2 id={list.value} class="text-3xl font-semibold tracking-tight">
+            <h2 id={list.value} class="text-2xl font-semibold tracking-tight">
               {list.title}
             </h2>
             <span class="text-sm font-semibold text-muted"
@@ -116,7 +116,7 @@
 </svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs class="mb-8" items={[{ label: m.nav_my_tables() }]} />
   {#if invitations.length > 0}
     <section
@@ -161,16 +161,16 @@
     </section>
   {/if}
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-    <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+    <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
       {m.dash_title()}
     </h1>
     <div class="flex flex-col gap-3 sm:flex-row">
-      <a href="/tables" class="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+      <a href="/tables" class="btn h-11 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >{m.dash_find_table()}</a
       >
       <a
         href="/tables/new"
-        class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+        class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.tables_open_cta()}
@@ -199,7 +199,7 @@
       {#each tabs as [value, label] (value)}
         <Tabs.Trigger
           {value}
-          class="btn h-12 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
+          class="btn h-11 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
           >{label}</Tabs.Trigger
         >
       {/each}
@@ -240,7 +240,7 @@
       </div>
     {/if}
 
-    <div class="mt-6 grid gap-10 lg:mt-8 lg:grid-cols-2 lg:gap-12">
+    <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-2 lg:gap-12">
       {#snippet playingCards()}
         {#each data.playing as item (item.slug)}
           <li><PlayingCard {item} {next} /></li>

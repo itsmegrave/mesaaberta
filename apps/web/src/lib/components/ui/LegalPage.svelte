@@ -15,7 +15,7 @@
 
 <article class="mx-auto max-w-prose py-8 md:py-14">
   <Breadcrumbs items={[{ label: title }]} class="mb-6" />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+  <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {title}
   </h1>
   <p class="mt-3 text-muted">

@@ -23,7 +23,7 @@
 <div
   role="status"
   aria-busy="true"
-  class={heading || kind === 'detail' || kind === 'profile' ? 'pt-2 pb-4 md:pt-12' : 'mt-8'}
+  class={heading || kind === 'detail' || kind === 'profile' ? 'pt-2 pb-4 md:pt-8' : 'mt-8'}
 >
   <span class="sr-only">{m.nav_loading()}</span>
   <div aria-hidden="true">
@@ -51,7 +51,7 @@
         {/each}
       </CardGrid>
     {:else if kind === 'columns'}
-      <div class="grid gap-10 lg:grid-cols-2 lg:gap-12">
+      <div class="grid gap-8 lg:grid-cols-2 lg:gap-12">
         {#each { length: 2 }, column (column)}
           <div class="grid gap-5">
             <div class="h-9 w-1/2 {shape}"></div>
@@ -78,7 +78,7 @@
         >
           <div class="h-6 w-2/3 {shape}"></div>
           <div class="h-16 {shape}"></div>
-          <div class="h-12 {shape}"></div>
+          <div class="h-11 {shape}"></div>
         </div>
       </div>
     {:else if kind === 'profile'}

@@ -9,7 +9,7 @@
   <ul class="flex flex-wrap gap-2 {className}" aria-label={m.blog_tags()}>
     {#each tags as tag (tag)}
       <li
-        class="inline-flex h-6 items-center rounded-full bg-surface-wash px-2.5 text-xs font-semibold"
+        class="inline-flex h-6 items-center rounded-full bg-surface-wash px-2 text-xs font-semibold"
       >
         {tag}
       </li>

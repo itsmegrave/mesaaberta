@@ -35,6 +35,18 @@ body {
   --font-brand: 'Cinzel Variable', Georgia, serif;
   /* Discord brand colour; no native equivalent */
   --color-discord: #5865f2;
+  /* Display sizes on the 4px grid (Tailwind's 30, 36, 60 and 72px are off it, and too big for the
+     density we want). Line heights land on the grid too. */
+  --text-3xl: 1.75rem;
+  --text-3xl--line-height: calc(2.25 / 1.75);
+  --text-4xl: 2rem;
+  --text-4xl--line-height: calc(2.5 / 2);
+  --text-5xl: 2.5rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3rem;
+  --text-6xl--line-height: 1;
+  --text-7xl: 3.5rem;
+  --text-7xl--line-height: 1;
 }
 
 /* Cerberus pairs primary-500 with primary-50 (about 3.6:1); white keeps text on the brand tiles readable. Other themes set their own. */
@@ -130,9 +142,9 @@ body {
   grid-template-columns: calc(var(--spacing) * 20) minmax(0, var(--container-md));
 }
 
-/* Field and secondary-button outlines are 1.5px in the design system, between Tailwind's 1px and 2px steps. */
+/* Field and secondary-button outlines: 1px of muted ink, which keeps 3:1 against the page. */
 @utility border-control {
-  border-width: 1.5px;
+  border-width: 1px;
 }
 
 /* Input borders use the muted ink, which keeps 3:1 against the page in both modes. */
@@ -142,7 +154,7 @@ body {
 
 /* Secondary button: transparent with a primary outline and body-coloured text; hover is the wash. */
 @utility btn-secondary {
-  border-width: 1.5px;
+  border-width: 1px;
   border-style: solid;
   border-color: var(--color-primary-500);
   background-color: transparent;

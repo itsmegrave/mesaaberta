@@ -132,10 +132,10 @@
   </div>
 {/snippet}
 
-<div class="mx-auto max-w-7xl py-6 md:py-12">
+<div class="mx-auto max-w-7xl py-6 md:py-8">
   <Breadcrumbs class="mb-2 md:mb-10" items={[{ label: m.changelog_title() }]} />
   <header>
-    <h1 class="text-4xl leading-tight font-semibold tracking-tight text-balance md:text-6xl">
+    <h1 class="text-3xl leading-tight font-semibold tracking-tight text-balance md:text-5xl">
       {m.changelog_title()}
     </h1>
     <p class="mt-3 max-w-2xl leading-relaxed text-muted md:text-lg">{m.changelog_lede()}</p>
@@ -212,7 +212,7 @@
           <a
             href={href(filter.kind)}
             aria-current={data.kind === filter.kind ? 'true' : undefined}
-            class="flex h-12 flex-col items-center justify-center rounded-full px-1 text-sm leading-4 font-semibold md:h-11 md:flex-row md:gap-2 md:px-4 {data.kind ===
+            class="flex h-11 flex-col items-center justify-center rounded-full px-1 text-sm leading-4 font-semibold md:h-11 md:flex-row md:gap-2 md:px-4 {data.kind ===
             filter.kind
               ? 'preset-filled-primary-500'
               : 'hover:bg-surface-wash'}"
@@ -241,7 +241,7 @@
                     class="hidden w-18 shrink-0 flex-col items-center md:flex"
                     aria-hidden="true"
                   >
-                    {@render dateBox(entry.date, 'w-18 bg-panel pt-2 pb-2.5 text-3xl')}
+                    {@render dateBox(entry.date, 'w-18 bg-panel pt-2 pb-2 text-3xl')}
                     {#if index < group.entries.length - 1}<span
                         class="mt-2 w-0.5 flex-1 bg-surface-200-800"
                       ></span>{/if}
@@ -251,13 +251,13 @@
                     aria-labelledby="{entry.date}-title"
                     class="min-w-0 flex-1 scroll-mt-4 rounded-lg border border-surface-200-800 bg-panel px-4 py-5 md:mb-8 md:scroll-mt-6 md:p-6"
                   >
-                    <div class="flex items-start gap-3.5 md:items-center md:justify-between">
+                    <div class="flex items-start gap-3 md:items-center md:justify-between">
                       <div class="md:hidden" aria-hidden="true">
-                        {@render dateBox(entry.date, 'w-14 bg-surface-50-950 pt-1.5 pb-2 text-2xl')}
+                        {@render dateBox(entry.date, 'w-14 bg-surface-50-950 pt-2 pb-2 text-2xl')}
                       </div>
                       <div class="flex min-w-0 flex-col md:contents">
                         {#if entry.date === data.highlights[0].date}<span
-                            class="mb-1.5 inline-flex h-6 items-center self-start rounded-full bg-surface-wash px-2.5 text-xs font-semibold md:hidden"
+                            class="mb-2 inline-flex h-6 items-center self-start rounded-full bg-surface-wash px-2 text-xs font-semibold md:hidden"
                             >{m.changelog_latest()}</span
                           >{/if}
                         <h3
@@ -285,7 +285,7 @@
                       <MAButton
                         disabled={!hydrated}
                         size="custom"
-                        class="-mt-1.5 -mr-2 ml-auto inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold text-muted md:-my-2 md:ml-0 md:w-auto md:px-3"
+                        class="-mt-2 -mr-2 ml-auto inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold text-muted md:-my-2 md:ml-0 md:w-auto md:px-3"
                         aria-label={m.changelog_copy({ date: day(entry.date) })}
                         title={m.changelog_copy_label()}
                         onclick={() => copy(entry.date)}
@@ -299,22 +299,22 @@
                         {entry.title}
                       </h3>
                       {#if entry.date === data.highlights[0].date}<span
-                          class="inline-flex h-6 items-center rounded-full bg-surface-wash px-2.5 text-xs font-semibold"
+                          class="inline-flex h-6 items-center rounded-full bg-surface-wash px-2 text-xs font-semibold"
                           >{m.changelog_latest()}</span
                         >{/if}
                     </div>
                     <p class="mt-2 hidden leading-relaxed text-muted md:block">{entry.summary}</p>
                     <ul class="mt-4 border-t border-surface-200-800 md:mt-5">
                       {#each entry.changes as change (change.title)}
-                        <li class="border-b border-surface-200-800 py-3 md:flex md:gap-4 md:py-3.5">
-                          <div class="md:flex md:h-6.5 md:w-28 md:shrink-0 md:items-center">
+                        <li class="border-b border-surface-200-800 py-3 md:flex md:gap-4 md:py-3">
+                          <div class="md:flex md:h-6 md:w-28 md:shrink-0 md:items-center">
                             <StatusBadge
                               status={`changelog:${change.kind}`}
                               class="h-auto border-0 bg-transparent px-0 text-xs"
                             />
                           </div>
                           <div class="min-w-0">
-                            <h4 class="mt-1.5 font-semibold md:mt-0">{change.title}</h4>
+                            <h4 class="mt-2 font-semibold md:mt-0">{change.title}</h4>
                             <p class="mt-0.5 max-w-prose leading-relaxed text-muted">
                               {change.description}
                             </p>
@@ -342,7 +342,7 @@
         aria-labelledby="guide-title"
       >
         <h2 id="guide-title" class="text-xl font-semibold">{m.changelog_guide()}</h2>
-        <dl class="mt-4 flex flex-col gap-3.5">
+        <dl class="mt-4 flex flex-col gap-3">
           {#each kinds as kind (kind)}
             <div>
               <dt>

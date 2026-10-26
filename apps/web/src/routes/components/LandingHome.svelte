@@ -40,7 +40,7 @@
 {/snippet}
 
 <section
-  class="flex flex-col gap-7 pt-5 pb-3 md:min-h-160 md:flex-row md:items-center md:gap-12 md:py-0"
+  class="flex flex-col gap-7 pt-5 pb-3 md:min-h-160 md:flex-row md:items-center md:gap-8 md:py-0"
 >
   <div class="flex max-w-2xl flex-col items-start md:flex-1">
     <p
@@ -50,7 +50,7 @@
       Mesas de RPG com vagas abertas
     </p>
     <h1
-      class="mt-4 text-5xl leading-none font-semibold tracking-tight text-balance md:mt-5 md:text-6xl md:leading-none lg:text-7xl"
+      class="mt-4 text-4xl leading-none font-semibold tracking-tight text-balance md:mt-4 md:text-5xl md:leading-none lg:text-6xl"
     >
       {m.hero_title_before()} <span class="text-lamp">{m.hero_title_accent()}</span>
       {m.hero_title_after()}
@@ -61,14 +61,14 @@
     <div class="mt-6 flex w-full flex-col gap-2 md:mt-9 md:w-auto md:flex-row md:gap-3">
       <a
         href="/tables"
-        class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-12 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
         {@render arrow()}
       </a>
       <a
         href="/tables/new"
-        class="btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-11 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-12 md:w-auto md:px-7"
         ><Icon name="game-icons:dice-twenty-faces-twenty" size={20} />{m.hero_open_cta()}</a
       >
     </div>
@@ -113,7 +113,7 @@
   <section aria-labelledby="open-tables" class="pt-7 pb-2 md:pt-8 md:pb-14">
     <h2
       id="open-tables"
-      class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl"
+      class="text-xl leading-tight font-semibold tracking-tight text-balance md:text-2xl"
     >
       {m.home_open_tables_title()}
     </h2>
@@ -126,7 +126,7 @@
       </div>
       <a
         href="/tables"
-        class="mt-5 btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:mt-0"
+        class="mt-5 btn h-11 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:mt-0"
       >
         {m.home_open_tables_all()}
         {@render arrow()}
@@ -142,7 +142,7 @@
 >
   <h2
     id="how-it-works"
-    class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl"
+    class="text-xl leading-tight font-semibold tracking-tight text-balance md:text-2xl"
   >
     {m.how_title()}
   </h2>
@@ -151,7 +151,7 @@
       aria-hidden="true"
       class="absolute top-9 right-30 left-9 hidden border-t-2 border-dashed border-surface-200-800 md:block"
     ></span>
-    <ol class="relative flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-12">
+    <ol class="relative flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-8">
       {#each steps as step, i (step.title)}
         <li class="flex gap-4 md:flex-col md:items-start md:gap-0">
           <span
@@ -186,7 +186,7 @@
   >
     <h2
       id="for-players"
-      class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-5xl"
+      class="text-2xl leading-tight font-semibold tracking-tight text-balance md:text-3xl"
     >
       {m.players_title()}
     </h2>
@@ -194,7 +194,7 @@
     <div class="mt-6 md:mt-7">
       <a
         href="/tables"
-        class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+        class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-12 md:w-auto md:px-7"
       >
         {m.hero_browse_cta()}
         {@render arrow()}
@@ -204,7 +204,7 @@
     <!-- A sample of the player's view; decorative, so it stays out of the accessibility tree. -->
     <div
       aria-hidden="true"
-      class="mt-6 flex flex-col gap-3 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:mt-auto md:p-6"
+      class="mt-6 flex flex-col gap-3 rounded-lg border border-surface-200-800 bg-surface-50-950 p-4 md:mt-auto md:p-5"
     >
       <div class="flex items-center justify-between gap-3">
         <Pill>Você tem uma vaga</Pill>
@@ -265,7 +265,7 @@
     ></span>
     <h2
       id="for-game-masters"
-      class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-5xl"
+      class="text-2xl leading-tight font-semibold tracking-tight text-balance md:text-3xl"
     >
       {m.gm_title()}
     </h2>
@@ -273,7 +273,7 @@
     <div class="mt-6 md:mt-7">
       <a
         href="/tables/new"
-        class="btn h-12 w-full gap-2 rounded-lg bg-primary-contrast-500 px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
+        class="btn h-11 w-full gap-2 rounded-lg bg-primary-contrast-500 px-6 text-base font-semibold text-primary-500 md:h-12 md:w-auto md:px-7"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.hero_open_cta()}
@@ -283,7 +283,7 @@
     <!-- A sample of the game master's view; decorative, so it stays out of the accessibility tree. -->
     <div
       aria-hidden="true"
-      class="mt-6 flex flex-col gap-4 rounded-lg bg-panel p-5 text-surface-950-50 md:mt-auto md:p-6"
+      class="mt-6 flex flex-col gap-4 rounded-lg bg-panel p-4 text-surface-950-50 md:mt-auto md:p-5"
     >
       <div class="flex items-center justify-between gap-3">
         <span>

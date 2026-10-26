@@ -85,8 +85,8 @@ describe('admin tables', () => {
     show([row(), row({ id: '2', slug: 'b', instagramStatus: 'failed' })]);
 
     const status = page.getByText('Ativa').first().element();
-    // The design system's StatusBadge: a 28px pill with a hairline border.
-    expect(status.className).toMatch(/\bh-7\b/);
+    // The design system's StatusBadge: a 24px pill with a hairline border.
+    expect(status.className).toMatch(/\bh-6\b/);
     expect(status.className).toContain('rounded-full');
     expect(status.className).toContain('border');
     const post = page.getByText('Publicado').first().element();

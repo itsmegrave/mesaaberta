@@ -195,7 +195,7 @@
 </script>
 
 <span
-  class="inline-flex h-7 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-3 text-sm font-[650] whitespace-nowrap {look.text ===
+  class="inline-flex h-6 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-2 text-xs font-[650] whitespace-nowrap {look.text ===
   'danger'
     ? 'text-error-700-300'
     : look.text === 'muted'

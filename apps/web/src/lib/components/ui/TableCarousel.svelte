@@ -74,7 +74,7 @@
 <section aria-labelledby={id} class="flex flex-col gap-4 md:gap-6">
   <div class="flex items-end justify-between gap-4">
     <div class="flex flex-col gap-2">
-      <h2 {id} class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl">
+      <h2 {id} class="text-xl leading-tight font-semibold tracking-tight text-balance md:text-2xl">
         {title}
       </h2>
       {#if lede}<p class="text-muted">{lede}</p>{/if}

@@ -32,7 +32,7 @@
   const withdrawing = new Target<{ id: string; name: string }>();
 </script>
 
-<section class="py-2 md:pt-12">
+<section class="py-2 md:pt-8">
   <PageHead
     crumbs={[{ label: m.partner_nav_label() }]}
     title={m.partner_title()}

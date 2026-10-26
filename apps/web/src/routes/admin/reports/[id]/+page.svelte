@@ -65,10 +65,10 @@
     hint: m.moderation_note_hint({ max: RESOLUTION_NOTE_MAX }),
   };
 
-  const ghost = 'btn h-12 w-full rounded-lg btn-secondary px-4 font-semibold';
-  const primary = 'btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
+  const ghost = 'btn h-11 w-full rounded-lg btn-secondary px-4 font-semibold';
+  const primary = 'btn h-11 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const danger =
-    'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
+    'btn h-11 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
 <AdminPage
@@ -191,7 +191,7 @@
               <DetailRow label={m.admin_partners_contact_email()}>
                 <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
                 <a
-                  class="inline-flex items-center gap-1.5 anchor"
+                  class="inline-flex items-center gap-2 anchor"
                   href="mailto:{partner.contactEmail}"
                   ><Icon name="mail" size={18} class="shrink-0" />{partner.contactEmail}</a
                 >
@@ -234,7 +234,7 @@
               {#if campaign.submitter}
                 <AdminPersonLink person={campaign.submitter} />
               {:else}
-                <span class="inline-flex items-center gap-1.5">
+                <span class="inline-flex items-center gap-2">
                   <Icon name="import" size={18} class="shrink-0 text-muted" />
                   {submissionLabel(null, campaign.importSource)}
                 </span>

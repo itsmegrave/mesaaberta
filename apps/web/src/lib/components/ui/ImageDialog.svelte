@@ -15,7 +15,7 @@
     title,
     label,
     icon,
-    triggerClass = 'btn h-12 w-full gap-2 rounded-lg btn-secondary px-4 font-semibold sm:w-auto',
+    triggerClass = 'btn h-11 w-full gap-2 rounded-lg btn-secondary px-4 font-semibold sm:w-auto',
     triggerAttributes = {},
     children,
   }: {

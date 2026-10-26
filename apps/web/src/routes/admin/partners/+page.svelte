@@ -229,7 +229,7 @@
         </div>
       {:else if id === 'types'}
         {#if row.types.length > 0}
-          <ul class="flex flex-wrap gap-1.5" aria-label={m.partner_types_label({ name: row.name })}>
+          <ul class="flex flex-wrap gap-2" aria-label={m.partner_types_label({ name: row.name })}>
             {#each row.types as type (type)}
               <li><Pill tone="muted">{partnerTypeLabels[type]()}</Pill></li>
             {/each}

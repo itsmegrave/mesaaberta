@@ -54,7 +54,7 @@
 
 <section
   aria-labelledby="going-on"
-  class="mt-8 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:p-6"
+  class="mt-8 rounded-lg border border-surface-200-800 bg-surface-50-950 p-4 md:p-5"
 >
   <div class="flex flex-wrap items-center gap-3">
     <h2 id="going-on" class="text-xl font-semibold">{m.manage_going_title()}</h2>

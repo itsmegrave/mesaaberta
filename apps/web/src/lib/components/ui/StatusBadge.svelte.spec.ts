@@ -33,7 +33,7 @@ describe('StatusBadge', () => {
     const { container } = await render(StatusBadge, { status: 'seat:pending' });
 
     const pill = container.firstElementChild as HTMLElement;
-    expect(pill.className).toMatch(/\bh-7\b/);
+    expect(pill.className).toMatch(/\bh-6\b/);
     expect(pill.className).toContain('rounded-full');
     expect(pill.className).toContain('border');
     expect(pill.querySelector('span[aria-hidden="true"]')?.className).toContain('bg-transparent');

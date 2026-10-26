@@ -43,7 +43,7 @@
   );
 </script>
 
-<section class="py-2 md:pt-12">
+<section class="py-2 md:pt-8">
   <PageHead
     crumbs={[{ label: m.nav_crowdfunding_label() }]}
     title={m.crowdfunding_title()}
@@ -52,7 +52,7 @@
     {#snippet actions()}
       <a
         href="/crowdfunding/new"
-        class="btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+        class="btn h-11 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
       >
         <Icon name="plus" size={20} />
         {m.crowdfunding_add_cta()}

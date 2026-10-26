@@ -53,7 +53,7 @@
     <Icon
       name="search"
       size={16}
-      class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
+      class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
     />
     <TextInput
       id="{id}-search"

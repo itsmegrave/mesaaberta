@@ -80,7 +80,7 @@
           type="submit"
           size="custom"
           {controller}
-          class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
+          class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.reset_submit()}
         </MAButton>

@@ -1,9 +1,11 @@
 <script lang="ts">
-  // Suas próximas sessões: up to three, as quem joga or quem mestra, soonest first.
+  // Suas próximas sessões: up to three, as quem joga or quem mestra, soonest first. Open when one
+  // is this week; closed, its header names the next one.
   import { routes } from '@mesaaberta/core/routes';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { sessionTile, zoneLabel } from '../home-format';
+  import { shortWhen, sessionTile, zoneLabel } from '../home-format';
+  import HomePanel from './HomePanel.svelte';
 
   type Session = {
     slug: string;
@@ -13,21 +15,31 @@
     /** As its GM; otherwise with a seat. */
     running: boolean;
   };
-  let { sessions, now }: { sessions: Session[]; now: Date } = $props();
+  let {
+    sessions,
+    now,
+    open = false,
+  }: { sessions: Session[]; now: Date; /** A session this week. */ open?: boolean } = $props();
 
   const zone = $derived(shownTimezone(sessions[0]?.timezone ?? 'America/Sao_Paulo'));
+  const summary = $derived(
+    sessions[0]
+      ? m.home_sessions_summary({
+          count: sessions.length,
+          when: shortWhen(sessions[0].startsAt, zone),
+        })
+      : undefined,
+  );
 </script>
 
-<section
-  aria-labelledby="home-sessions"
-  class="rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6"
->
-  <div class="flex items-baseline justify-between gap-3">
-    <h2 id="home-sessions" class="text-xl font-semibold">{m.home_sessions_title()}</h2>
-    <a href={routes.myTables} class="text-sm font-semibold">{m.nav_my_tables()}</a>
-  </div>
-  <p class="mt-1 text-sm text-muted">{m.home_sessions_timezone({ zone: zoneLabel(zone, now) })}</p>
-  <ul class="mt-4 flex flex-col gap-3">
+<HomePanel value="sessions" title={m.home_sessions_title()} {summary} {open}>
+  {#snippet aside()}
+    <p class="flex flex-wrap items-baseline justify-between gap-3 text-sm">
+      <span class="text-muted">{m.home_sessions_timezone({ zone: zoneLabel(zone, now) })}</span>
+      <a href={routes.myTables} class="font-semibold">{m.nav_my_tables()}</a>
+    </p>
+  {/snippet}
+  <ul class="flex flex-col gap-3">
     {#each sessions as session (`${session.running}-${session.slug}`)}
       {@const tile = sessionTile(session.startsAt, zone)}
       <li>
@@ -49,4 +61,4 @@
       </li>
     {/each}
   </ul>
-</section>
+</HomePanel>

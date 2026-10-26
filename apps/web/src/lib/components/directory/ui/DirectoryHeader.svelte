@@ -28,11 +28,11 @@
 </script>
 
 <Breadcrumbs class="mb-8" items={crumbs} />
-<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
+<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-8">
   <div class="flex min-w-0 flex-col gap-4 md:flex-row md:items-center md:gap-7">
     {@render mark()}
     <div class="min-w-0">
-      <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+      <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
         {name}
       </h1>
       {#if facts.length > 0}

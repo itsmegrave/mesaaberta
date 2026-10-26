@@ -98,7 +98,7 @@
     {:else}
       <ul class="mt-2 divide-y divide-surface-200-800">
         {#each data.blocked as person (person.id)}
-          <li class="flex flex-wrap items-center gap-3 py-3.5">
+          <li class="flex flex-wrap items-center gap-3 py-3">
             <MAAvatar src={person.avatarUrl} name={person.username} size={44} />
             <span class="min-w-0 flex-1 truncate font-semibold">{atHandle(person.username)}</span>
             <PostButton

@@ -83,7 +83,7 @@
     {situation.text}
   </p>
   {#snippet footer()}
-    <p class="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+    <p class="flex min-w-0 items-center gap-2 text-sm text-muted">
       {#if !campaign.submitter}
         <Icon name="import" size={16} class="shrink-0" />
       {/if}

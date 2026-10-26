@@ -67,7 +67,7 @@
         >
         <button
           type="button"
-          class="btn h-11 shrink-0 gap-2 rounded-lg btn-secondary px-3.5 text-sm font-semibold"
+          class="btn h-11 shrink-0 gap-2 rounded-lg btn-secondary px-3 text-sm font-semibold"
           onclick={() => void copy()}
         >
           <Icon name="copy" size={16} />{m.partner_copy()}

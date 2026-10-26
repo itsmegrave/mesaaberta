@@ -14,18 +14,18 @@
 
 <svelte:head><title>{m.partner_edit_title()}</title></svelte:head>
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs
     class="mb-8"
     items={[{ label: m.partner_nav_label(), href: '/partners' }, { label: m.partner_edit_title() }]}
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+  <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {m.partner_edit_title()}
   </h1>
   <PartnerForm {initial} mode="edit" logoUrl={data.logoUrl} />
   {#if data.owners}
     <!-- Its own forms, so after the edit form rather than inside it. As wide as the form's fields:
-         two of its three columns and the gap between them (gap-12 = 3rem). -->
+         two of its three columns and the gap between them (gap-8 = 3rem). -->
     <div class="mt-8 lg:w-[calc((200%-3rem)/3)]">
       <PartnerOwners
         partner={initial.data.name}

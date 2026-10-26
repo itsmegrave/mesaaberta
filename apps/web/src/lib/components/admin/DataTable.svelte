@@ -366,7 +366,7 @@
     {/if}
     {#if moreHref}
       <a
-        class="btn h-12 rounded-lg btn-secondary px-4 font-semibold"
+        class="btn h-11 rounded-lg btn-secondary px-4 font-semibold"
         href={moreHref}
         data-sveltekit-noscroll
         >{more ? m.admin_list_more({ count: more.more }) : m.admin_list_next_page()}</a

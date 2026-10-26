@@ -3,9 +3,9 @@
   export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
   const sizes: Record<ButtonSize, string> = {
-    md: 'h-12 rounded-lg px-4',
-    sm: 'h-11 rounded-lg px-3',
-    icon: 'size-12 rounded-lg p-0',
+    md: 'h-11 rounded-lg px-4',
+    sm: 'h-11 rounded-lg px-3 md:h-9',
+    icon: 'size-11 rounded-lg p-0',
     custom: '',
   };
   const variants: Record<ButtonVariant, string> = {

@@ -140,7 +140,7 @@
     errorMessage={m.messages_error_generic}
     onSuccess={(values) => (conversation.muted = values.muted as boolean)}
     class="m-0"
-    buttonClass="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+    buttonClass="btn h-11 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
   >
     <Icon name={conversation.muted ? 'bell' : 'bell-off'} size={18} />
     <span class="hidden sm:inline"
