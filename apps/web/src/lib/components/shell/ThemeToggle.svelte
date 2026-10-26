@@ -2,6 +2,7 @@
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import { onMount } from 'svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
+  import RailTip from '#lib/components/shell/RailTip.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { applyChoice, readChoice, type ThemeChoice } from '#lib/theme/theme.js';
 
@@ -145,21 +146,21 @@
     </span>
   </button>
 {:else if rail}
-  <button
-    type="button"
-    aria-label={m.theme_dark_mode()}
-    aria-pressed={isDark}
-    title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
-    onclick={() => handlePressedChange(!isDark)}
-    class="group relative flex min-h-14 w-16 flex-col items-center justify-center gap-1 py-1 text-center text-xs leading-tight font-semibold text-muted hover:text-surface-950-50"
-  >
-    <span
-      class="flex size-10 shrink-0 items-center justify-center rounded-lg group-hover:bg-surface-200-800"
+  <RailTip label={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}>
+    <button
+      type="button"
+      aria-label={m.theme_dark_mode()}
+      aria-pressed={isDark}
+      onclick={() => handlePressedChange(!isDark)}
+      class="group relative flex size-12 items-center justify-center text-muted hover:text-surface-950-50"
     >
-      {@render themeIcon()}
-    </span>
-    <span aria-hidden="true" class="w-full min-w-0">{m.nav_theme_rail()}</span>
-  </button>
+      <span
+        class="flex size-10 shrink-0 items-center justify-center rounded-lg group-hover:bg-surface-200-800"
+      >
+        {@render themeIcon()}
+      </span>
+    </button>
+  </RailTip>
 {:else}
   <MAButton
     size="custom"

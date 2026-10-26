@@ -7,6 +7,7 @@
   import AccountMenu from '#lib/components/shell/AccountMenu.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import NotificationBell from '#lib/components/shell/NotificationBell.svelte';
+  import RailTip from '#lib/components/shell/RailTip.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
   import type { DirectoryLink } from '#lib/navigation/directory-nav.js';
@@ -63,23 +64,24 @@
     }
   }
 
-  // The rail marks the section you are in, as the bottom tab bar does on phones. Parceiros has no
-  // link in the app chrome.
+  // The rail marks the section you are in, as the bottom tab bar does on phones. It shows icons
+  // only, so every item carries its full name, in the tooltip and as its accessible name.
+  // Parceiros has no link in the app chrome.
   const pathname = $derived(page.url.pathname);
   const links = $derived(
     mainNav('sidebar', { signedIn: !!account }).map((link) => ({
       href: link.href,
-      label: expanded ? link.label() : link.railLabel(),
+      label: link.label(),
       icon: link.icon,
       current: link.current(pathname),
       primary: !!link.primary,
     })),
   );
-  // Sistemas, Lugares and Quem mestra: the long names open, the short ones on the rail.
+  // Sistemas, Lugares and Quem mestra, by their long names.
   const explore = $derived(
     directories.map((link) => ({
       href: link.href,
-      label: expanded ? link.label() : link.shortLabel(),
+      label: link.label(),
       icon: link.icon,
       current: link.current(pathname),
       primary: false,
@@ -87,17 +89,16 @@
   );
 
   const tile = 'flex size-10 shrink-0 items-center justify-center rounded-lg';
-  // Open: a 44px row. Rail: a 64px column with the icon on a 40px tile over the label.
+  // Open: a 44px row. Rail: a 48px target with the icon on a 40px tile, and no label.
   const row =
     'relative flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold no-underline';
-  const column =
-    'group relative flex min-h-14 w-16 flex-col items-center justify-center gap-1 py-1 text-center text-xs leading-tight font-semibold no-underline';
+  const column = 'group relative flex size-12 items-center justify-center no-underline';
   // Skeleton's trigger is a `btn` with a square rail tile and a tonal hover, hence the `!` overrides.
   function linkClass(current: boolean, primary: boolean) {
     if (!expanded) {
       const ink =
         current || primary ? 'text-surface-950-50' : 'text-muted hover:text-surface-950-50';
-      return `${column} aspect-auto! w-16! gap-1! bg-transparent! p-1! hover:bg-transparent! ${ink}`;
+      return `${column} aspect-auto! size-12! bg-transparent! p-0! hover:bg-transparent! ${ink}`;
     }
     const fill = primary
       ? 'preset-filled-primary-500 hover:preset-filled-primary-500!'
@@ -116,36 +117,37 @@
   primary: boolean;
 })}
   {@const primary = link.primary}
-  <Navigation.TriggerAnchor
-    href={link.href}
-    aria-current={link.current ? 'page' : undefined}
-    aria-label={expanded ? undefined : link.label}
-    class="{linkClass(link.current, primary)} whitespace-normal!"
-  >
-    {#if expanded}
-      {#if link.current}
+  <RailTip label={link.label} enabled={!expanded}>
+    <Navigation.TriggerAnchor
+      href={link.href}
+      aria-current={link.current ? 'page' : undefined}
+      aria-label={expanded ? undefined : link.label}
+      class="{linkClass(link.current, primary)} whitespace-normal!"
+    >
+      {#if expanded}
+        {#if link.current}
+          <span
+            aria-hidden="true"
+            class="absolute inset-y-2.5 -left-3 w-0.75 rounded-full bg-primary-500"
+          ></span>
+        {/if}
+        <span class="flex shrink-0 {primary || link.current ? '' : 'text-muted'}">
+          <Icon name={link.icon} size={20} />
+        </span>
+        <span class="min-w-0 flex-1">{link.label}</span>
+      {:else}
         <span
-          aria-hidden="true"
-          class="absolute inset-y-2.5 -left-3 w-0.75 rounded-full bg-primary-500"
-        ></span>
+          class="{tile} {primary
+            ? 'preset-filled-primary-500'
+            : link.current
+              ? 'bg-surface-200-800'
+              : 'group-hover:bg-surface-200-800'}"
+        >
+          <Icon name={link.icon} size={20} />
+        </span>
       {/if}
-      <span class="flex shrink-0 {primary || link.current ? '' : 'text-muted'}">
-        <Icon name={link.icon} size={20} />
-      </span>
-      <span class="min-w-0 flex-1">{link.label}</span>
-    {:else}
-      <span
-        class="{tile} {primary
-          ? 'preset-filled-primary-500'
-          : link.current
-            ? 'bg-surface-200-800'
-            : 'group-hover:bg-surface-200-800'}"
-      >
-        <Icon name={link.icon} size={20} />
-      </span>
-      <span class="w-full min-w-0">{link.label}</span>
-    {/if}
-  </Navigation.TriggerAnchor>
+    </Navigation.TriggerAnchor>
+  </RailTip>
 {/snippet}
 
 {#snippet collapseButton()}
@@ -237,35 +239,42 @@
           {/if}
           {#if account}
             <!-- The bell sits right above the account block, with no group label of its own. -->
-            <NotificationBell
-              {unread}
-              {latest}
-              {seenAt}
-              placement="right-end"
-              labelled={expanded}
-              rail={!expanded}
-            />
-            <AccountMenu
-              name={account.displayName}
-              username={account.username}
-              avatarUrl={account.avatarUrl}
-              {messagesUnread}
-              isAdmin={account.isAdmin}
-              adminPending={account.pendingSuggestionsCount}
-              placement={expanded ? 'top-start' : 'right-end'}
-              compact={!expanded}
-              wide={expanded}
-            />
+            <RailTip label={m.notifications_title()} enabled={!expanded}>
+              <NotificationBell
+                {unread}
+                {latest}
+                {seenAt}
+                placement="right-end"
+                labelled={expanded}
+                rail={!expanded}
+              />
+            </RailTip>
+            <RailTip label={account.displayName} enabled={!expanded}>
+              <AccountMenu
+                name={account.displayName}
+                username={account.username}
+                avatarUrl={account.avatarUrl}
+                {messagesUnread}
+                isAdmin={account.isAdmin}
+                adminPending={account.pendingSuggestionsCount}
+                placement={expanded ? 'top-start' : 'right-end'}
+                compact={!expanded}
+                wide={expanded}
+              />
+            </RailTip>
           {:else if authEnabled}
-            <a
-              href={resolve('login')}
-              class="btn flex items-center rounded-lg p-2 text-sm font-semibold whitespace-normal hover:preset-tonal {expanded
-                ? 'w-full justify-start gap-3'
-                : 'w-16 flex-col gap-1 text-xs'}"
-            >
-              <Icon name="game-icons:dungeon-gate" size={20} />
-              {m.nav_sign_in()}
-            </a>
+            <RailTip label={m.nav_sign_in()} enabled={!expanded}>
+              <a
+                href={resolve('login')}
+                aria-label={expanded ? undefined : m.nav_sign_in()}
+                class="btn flex items-center rounded-lg text-sm font-semibold whitespace-normal hover:preset-tonal {expanded
+                  ? 'w-full justify-start gap-3 p-2'
+                  : 'size-12 justify-center p-0'}"
+              >
+                <Icon name="game-icons:dungeon-gate" size={20} />
+                {#if expanded}{m.nav_sign_in()}{/if}
+              </a>
+            </RailTip>
           {/if}
         </Navigation.Group>
       </Navigation.Content>
