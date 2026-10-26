@@ -9,6 +9,7 @@ import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/serv
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
+import { serverStorage } from '@mesaaberta/core/server/storage';
 import { CROWDFUNDING_LIMIT, checkRateLimit } from '@mesaaberta/core/server/rate-limit';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
@@ -79,11 +80,14 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
         if (!(error instanceof RateLimited)) throw error;
       }
     }
-    const imagePath = await campaignImagePath(locals.supabase?.storage.from(IMAGE_BUCKET), {
-      upload,
-      pageImageUrl,
-      log: locals.log,
-    });
+    const imagePath = await campaignImagePath(
+      serverStorage(locals.env, IMAGE_BUCKET) ?? undefined,
+      {
+        upload,
+        pageImageUrl,
+        log: locals.log,
+      },
+    );
 
     const { image: _image, ...input } = form.data;
     // Through the api Worker when `api_submissions` is on for this person; here otherwise.
