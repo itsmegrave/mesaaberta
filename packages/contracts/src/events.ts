@@ -170,6 +170,10 @@ export type DomainEvent =
   // (`submitterId` alone for a partner with no `partner_owners` row).
   // A rule awarded a badge (never a backfill or a grant). The bell notice is written from this event.
   | { type: 'BadgeEarned'; payload: { profileId: string; badgeId: string } }
+  // An admin gave a badge by hand (a manual one, or one revoked earlier given back), or took one
+  // away. `reason` is the admin's note for the audit log; the person is told of a grant only.
+  | { type: 'BadgeGranted'; payload: { profileId: string; badgeId: string; reason: string } }
+  | { type: 'BadgeRevoked'; payload: { profileId: string; badgeId: string; reason: string } }
   | { type: 'PartnerApproved'; payload: PartnerFact & { submitterId: string } }
   // An admin rejected or took a partner down, or one of its owners withdrew it (then `reason` is
   // null and the other owners are told). Who is told as for `PartnerApproved`.

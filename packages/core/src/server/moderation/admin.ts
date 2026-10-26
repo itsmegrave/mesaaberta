@@ -615,6 +615,8 @@ export const AUDIT_EVENT_TYPES = [
   'AccountBanned',
   'AccountReinstated',
   'AccountBanLifted',
+  'BadgeGranted',
+  'BadgeRevoked',
   'TableClosedByModeration',
   'CatalogEntryCreated',
   'CatalogEntryApproved',
@@ -633,7 +635,14 @@ export const AUDIT_EVENT_TYPES = [
 /** The events each kind of decision is made of; `all` is every decision the log keeps. */
 const AUDIT_KIND_TYPES: Record<Exclude<AuditKind, 'all'>, readonly EventType[]> = {
   reports: ['ReportReviewing', 'ReportResolved', 'ReportDismissed'],
-  accounts: ['AccountBanned', 'AccountReinstated', 'AccountBanLifted', 'PlayerLeft'],
+  accounts: [
+    'AccountBanned',
+    'AccountReinstated',
+    'AccountBanLifted',
+    'PlayerLeft',
+    'BadgeGranted',
+    'BadgeRevoked',
+  ],
   tables: ['TableClosedByModeration', 'TableDisabled', 'TableUpdated', 'TableEdited'],
   catalog: [
     'CatalogEntryCreated',
@@ -745,6 +754,7 @@ export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearch
         reportId: typeof facts.reportId === 'string' ? facts.reportId : null,
         eventType: typeof facts.eventType === 'string' ? facts.eventType : null,
         section: typeof facts.section === 'string' ? facts.section : null,
+        badgeId: typeof facts.badgeId === 'string' ? facts.badgeId : null,
       };
     }),
     total,

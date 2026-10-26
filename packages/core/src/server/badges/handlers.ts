@@ -98,12 +98,15 @@ export const badgeHandler: Handler = {
   },
 };
 
-/** The bell notice for a badge a rule awarded. A backfill records no event, so it tells nobody. */
+/**
+ * The bell notice for a badge a rule awarded or an admin granted. A backfill records no event, so it
+ * tells nobody.
+ */
 export const badgeNoticeHandler: Handler = {
   name: 'badge-notice-v1',
-  types: ['BadgeEarned'],
+  types: ['BadgeEarned', 'BadgeGranted'],
   async handle(event, db) {
-    if (event.type !== 'BadgeEarned') return;
+    if (event.type !== 'BadgeEarned' && event.type !== 'BadgeGranted') return;
     const [person] = await db
       .select({ username: profiles.username })
       .from(profiles)

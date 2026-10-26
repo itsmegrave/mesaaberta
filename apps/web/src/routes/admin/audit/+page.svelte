@@ -8,6 +8,7 @@
   import { AUDIT_KINDS, type AuditKind } from '@mesaaberta/core/admin/report-filters';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AuditLog } from '@mesaaberta/core/server/moderation/admin';
+  import { presentationOf } from '#lib/badges/presentation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -40,6 +41,9 @@
   const handle = (username: string | null) =>
     username ? atHandle(username) : m.admin_profile_no_username();
 
+  const badgeName = (badgeId: string | null) =>
+    badgeId ? (presentationOf(badgeId)?.name() ?? badgeId) : '';
+
   /** One line per decision, worded from the event: ids only in the record, names looked up. */
   function entryText(entry: AuditLog['rows'][number]) {
     const user = handle(entry.subject);
@@ -58,6 +62,10 @@
         return m.audit_account_reinstated({ user });
       case 'AccountBanLifted':
         return m.audit_account_ban_lifted({ user });
+      case 'BadgeGranted':
+        return m.audit_badge_granted({ user, badge: badgeName(entry.badgeId) });
+      case 'BadgeRevoked':
+        return m.audit_badge_revoked({ user, badge: badgeName(entry.badgeId) });
       case 'TableClosedByModeration':
         return m.audit_table_closed({ table });
       case 'TableDisabled':

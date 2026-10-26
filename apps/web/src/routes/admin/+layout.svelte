@@ -15,6 +15,7 @@
     counts={counts.current}
     connectionsPath={data.adminConnections}
     sections={data.adminSections}
+    badges={data.adminBadges}
   />
   <div class="min-w-0">{@render children()}</div>
 </div>

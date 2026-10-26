@@ -3,6 +3,7 @@
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { History, HistoryEntry } from '@mesaaberta/core/server/admin/history';
+  import { presentationOf } from '#lib/badges/presentation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -75,6 +76,9 @@
     return WORDS[field]?.[String(value)]?.() ?? String(value);
   }
 
+  const badgeName = (badgeId: string | null) =>
+    badgeId ? (presentationOf(badgeId)?.name() ?? badgeId) : '';
+
   /** What the person did, without who did it: that is shown in front, as a link. */
   function whatHappened(entry: HistoryEntry) {
     const user = atHandle(entry.subject);
@@ -129,6 +133,12 @@
         return m.history_event_AccountReinstated({ user });
       case 'AccountBanLifted':
         return m.history_event_AccountBanLifted({ user });
+      case 'BadgeEarned':
+        return m.history_event_BadgeEarned({ user, badge: badgeName(entry.badgeId) });
+      case 'BadgeGranted':
+        return m.history_event_BadgeGranted({ user, badge: badgeName(entry.badgeId) });
+      case 'BadgeRevoked':
+        return m.history_event_BadgeRevoked({ user, badge: badgeName(entry.badgeId) });
       case 'ReportFiled':
         return m.history_event_ReportFiled();
       case 'ReportReviewing':

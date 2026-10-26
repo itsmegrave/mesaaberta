@@ -13,7 +13,9 @@
   const live = adminCounts(() => page.data.adminCounts);
   const counts = $derived(live.current);
   const groups = $derived(
-    adminGroups(counts, page.data.adminConnections ?? null, page.data.adminSections ?? []),
+    adminGroups(counts, page.data.adminConnections ?? null, page.data.adminSections ?? [], {
+      badges: page.data.adminBadges ?? false,
+    }),
   );
   const current = $derived(sectionOf(groups, page.route.id, page.url.pathname));
   const waiting = $derived(counts.reports + counts.queue + counts.connections + counts.partners);

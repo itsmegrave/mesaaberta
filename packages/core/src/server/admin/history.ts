@@ -27,6 +27,8 @@ export type HistoryEntry = {
   /** A table concluded by the sweeper because its GM never answered (`autoClosed`). */
   autoClosed: boolean;
   changes: Changes | null;
+  /** The badge a grant or a revocation is about. */
+  badgeId: string | null;
 };
 
 /** `retentionDays`: events are deleted after it, so a history reaches back only that far. */
@@ -92,6 +94,7 @@ async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
         title?: string;
         changes?: Changes;
         autoClosed?: boolean;
+        badgeId?: string;
       };
       const subjectId = payload.profileId ?? payload.playerId;
       return {
@@ -105,6 +108,7 @@ async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
         removed: payload.reason === 'removed',
         autoClosed: payload.autoClosed === true,
         changes: payload.changes ?? null,
+        badgeId: payload.badgeId ?? null,
       };
     }),
   };
