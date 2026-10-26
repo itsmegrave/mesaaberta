@@ -99,6 +99,8 @@
     not_open: m.moderation_err_changed,
     closed: m.moderation_err_changed,
     already_approved: m.moderation_err_changed,
+    place_already_owned: m.moderation_err_changed,
+    not_owned: m.moderation_err_changed,
     not_found: m.moderation_err_changed,
     banned: m.moderation_err_banned,
     forbidden: m.moderation_err_forbidden,

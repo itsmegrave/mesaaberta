@@ -23,7 +23,9 @@
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
   import { PLACE_ADMIN_STATUSES } from '@mesaaberta/core/places/admin-filters';
+  import { placeOwnerSchema } from '@mesaaberta/core/places/claims';
   import { placeTags } from '@mesaaberta/core/places/tags';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import type { AdminPlaces } from '@mesaaberta/core/server/places/admin';
 
   type Row = AdminPlaces['rows'][number] & { image: string | null };
@@ -42,6 +44,7 @@
   const approving = new Target<Row>();
   const removing = new Target<Row>();
   const restoring = new Target<Row>();
+  const unowning = new Target<Row>();
   const hidden = (row: Row) => !!row.hiddenAt && !row.removedAt;
   const badge = (row: Row) =>
     (row.removedAt
@@ -103,6 +106,17 @@
       href: '/admin/reports?target=place',
     },
     { id: 'copy', label: m.admin_menu_copy_id(), icon: 'copy', onselect: () => void copyId(row) },
+    ...(row.owned && !row.removedAt
+      ? [
+          {
+            id: 'remove-owner',
+            label: m.admin_places_remove_owner_menu(),
+            icon: 'circle-x' as const,
+            destructive: true,
+            onselect: () => (unowning.current = row),
+          },
+        ]
+      : []),
     ...(row.removedAt
       ? []
       : [
@@ -131,6 +145,11 @@
 </script>
 
 <AdminPage title={m.admin_nav_places()} lede={m.admin_places_lede()}>
+  {#snippet actions()}
+    <a href="/admin/places/claims" class="{buttonClass('secondary', 'sm')} font-semibold"
+      >{m.admin_claims_title()}</a
+    >
+  {/snippet}
   <DataTable
     rows={list.rows}
     {columns}
@@ -261,6 +280,24 @@
         text={m.admin_places_restore_text({ count: row.reports })}
         confirm={m.admin_places_restore_confirm()}
         success={m.admin_places_restore_done()}
+      />
+    {/key}
+  {/if}
+  {#if unowning.current}
+    {@const row = unowning.current}
+    {#key row.id}
+      <ModerationDialog
+        bind:open={unowning.open}
+        trigger={false}
+        action="?/removeOwner"
+        schema={placeOwnerSchema}
+        fields={{ id: row.id }}
+        danger
+        label={m.admin_places_remove_owner()}
+        title={m.admin_places_remove_owner_title({ name: row.name })}
+        text={m.admin_places_remove_owner_text()}
+        confirm={m.admin_places_remove_owner_confirm()}
+        success={m.admin_places_remove_owner_done()}
       />
     {/key}
   {/if}

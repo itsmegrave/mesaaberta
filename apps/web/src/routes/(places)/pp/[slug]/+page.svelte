@@ -3,6 +3,7 @@
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
   import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
+  import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
@@ -21,6 +22,7 @@
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import { formatCep } from '@mesaaberta/core/location/cep';
+  import { placeOwnerSchema } from '@mesaaberta/core/places/claims';
   import { tagHref } from '@mesaaberta/core/places/filters';
   import type { Network } from '@mesaaberta/core/profile/social-links';
 
@@ -175,6 +177,28 @@
             href="/pp/{place.slug}/edit"
             class="mt-4 {buttonClass('secondary', 'sm')} w-full font-semibold"
             >{m.place_edit_place()}</a
+          >
+          <ModerationDialog
+            action="?/release"
+            schema={placeOwnerSchema}
+            fields={{ id: place.id }}
+            danger
+            label={m.place_release()}
+            title={m.place_release_title({ name: place.name })}
+            text={m.place_release_text()}
+            confirm={m.place_release_confirm()}
+            success={m.place_release_done()}
+            triggerClass="mt-2 {buttonClass('ghost', 'sm')} w-full font-semibold text-muted"
+          />
+        </section>
+      {:else if data.claimable}
+        <section class="rounded-lg border border-surface-200-800 bg-panel p-5">
+          <h2 class="font-semibold">{m.place_claim_title()}</h2>
+          <p class="mt-1 text-sm text-muted">{m.place_claim_text()}</p>
+          <a
+            href="/pp/{place.slug}/claim"
+            class="mt-4 {buttonClass('secondary', 'sm')} w-full font-semibold"
+            >{m.place_claim_cta()}</a
           >
         </section>
       {/if}

@@ -37,6 +37,9 @@
     | 'place:up'
     | 'place:hidden'
     | 'place:removed'
+    | 'claim:pending'
+    | 'claim:approved'
+    | 'claim:rejected'
     | 'catalog:approved'
     | 'catalog:pending'
     | 'catalog:disabled'
@@ -172,6 +175,14 @@
       label: () => m.partner_status_removed(),
       dot: 'bg-error-500',
       text: 'danger',
+    },
+    // A claim on a place waits for an admin, or was approved or turned down.
+    'claim:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'claim:approved': { label: () => m.admin_claims_status_approved(), dot: 'bg-success-500' },
+    'claim:rejected': {
+      label: () => m.admin_claims_status_rejected(),
+      dot: 'bg-surface-500',
+      text: 'muted',
     },
     'catalog:approved': { label: () => m.admin_catalog_status_approved(), dot: 'bg-success-500' },
     'catalog:pending': { label: () => m.admin_catalog_status_pending(), dot: 'bg-warning-500' },

@@ -33,4 +33,5 @@ export const actions: Actions = {
   approve: placeActions.approve,
   remove: placeActions.remove,
   restore: placeActions.restore,
+  removeOwner: placeActions.removeOwner,
 };

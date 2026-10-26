@@ -101,6 +101,10 @@ type Resources = {
    */
   'place:edit': { submitterId: string; ownerId: string | null };
   'place:withdraw': { submitterId: string; ownerId: string | null };
+  /** Claiming a listed place nobody owns: any signed-in member. */
+  'place:claim': undefined;
+  /** Taking the owner off a place: the owner themself, or an admin. */
+  'place:release': { ownerId: string | null };
   /** Reporting a listed place: any signed-in member but the ones who look after it. */
   'place:report': { submitterId: string; ownerId: string | null };
   /** The report queue, its decisions and the audit log. */
@@ -236,6 +240,9 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'place:edit': (actor, place) =>
     place !== undefined &&
     (actor.role === 'admin' || actor.id === place.submitterId || actor.id === place.ownerId),
+  'place:claim': () => true,
+  'place:release': (actor, place) =>
+    place !== undefined && (actor.role === 'admin' || actor.id === place.ownerId),
   'place:report': (actor, place) =>
     place !== undefined && actor.id !== place.submitterId && actor.id !== place.ownerId,
   'place:withdraw': (actor, place) =>

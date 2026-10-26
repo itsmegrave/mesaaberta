@@ -201,6 +201,14 @@ export type DomainEvent =
   | { type: 'PlaceHidden'; payload: PlaceKeepers & { reportId: string } }
   // An admin put a hidden place back, dismissing the reports that hid it. Its keepers are told.
   | { type: 'PlaceRestored'; payload: PlaceKeepers }
+  // A member asked to manage a place; an admin approved (they own it now) or rejected the claim.
+  // The claimant hears the decision. The contact they gave is never in the log.
+  | { type: 'PlaceClaimed'; payload: PlaceClaimFact }
+  | { type: 'PlaceClaimApproved'; payload: PlaceClaimFact }
+  | { type: 'PlaceClaimRejected'; payload: PlaceClaimFact }
+  // A place lost its owner: they handed it back (`actorId` is `profileId`), or an admin took them
+  // off (then they are told).
+  | { type: 'PlaceOwnerRemoved'; payload: PlaceFact & { profileId: string } }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -287,6 +295,9 @@ export type PartnerRemoval = PartnerFact & {
 };
 
 export type PlaceFact = { placeId: string; slug: string; name: string };
+
+// A claim on a place, and who made it.
+export type PlaceClaimFact = PlaceFact & { claimId: string; claimantId: string };
 
 // A place and who looks after it: whoever sent it, and the owner an admin accepted, if any.
 export type PlaceKeepers = PlaceFact & { submitterId: string; ownerId: string | null };

@@ -26,6 +26,8 @@ import { reports } from '../db/schema';
 import { Invalid } from '../errors';
 import { approvePartner, removePartner, setPartnerTypes } from '../partners/admin';
 import { approvePlace, removePlace, restorePlace } from '../places/admin';
+import { approveClaim, rejectClaim, removePlaceOwner } from '../places/claims';
+import { approveClaimSchema, placeOwnerSchema, rejectClaimSchema } from '../../places/claims';
 import {
   banAccount,
   closeReport,
@@ -155,6 +157,19 @@ export const moderationDecisions = {
     schema: removePlaceSchema,
     apply: (db, actor, { id, reason, note, reportId }) =>
       removePlace(db, actor, id, { reason, note, reportId: reportId || null }),
+  }),
+  // Claims from `/admin/places/claims`, and taking an owner off from `/admin/places`.
+  'place.approveClaim': decision({
+    schema: approveClaimSchema,
+    apply: (db, actor, { id }) => approveClaim(db, actor, id),
+  }),
+  'place.rejectClaim': decision({
+    schema: rejectClaimSchema,
+    apply: (db, actor, { id, note }) => rejectClaim(db, actor, id, { note }),
+  }),
+  'place.removeOwner': decision({
+    schema: placeOwnerSchema,
+    apply: (db, actor, { id }) => removePlaceOwner(db, actor, id),
   }),
   'place.restore': decision({
     schema: restorePlaceSchema,
