@@ -27,6 +27,7 @@ import { handleMaintenance } from '#lib/server/maintenance.js';
 import { handleChangelogNotice } from '#lib/server/changelog-notice.js';
 import { handleAdminAccess } from '#lib/server/admin-access.js';
 import { handleSecurityHeaders } from '#lib/server/security-headers.js';
+import { handleBodyLimit } from '#lib/server/body-limit.js';
 import { getTextDirection } from '#lib/paraglide/runtime.js';
 import { paraglideMiddleware } from '#lib/paraglide/server.js';
 
@@ -159,6 +160,8 @@ export const handle: Handle = sequence(
   // Before anything that reads configuration.
   handleRuntime,
   handleRequestLog(logger),
+  // Before the database and the actions: an oversized body is refused before anything reads it.
+  handleBodyLimit,
   handleDatabase,
   handleAnalytics,
   handleAuth,

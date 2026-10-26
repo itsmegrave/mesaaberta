@@ -7,6 +7,7 @@ import { pruneNotifications } from '../notifications/service';
 import { sendSessionReminders } from '../notifications/reminders';
 import { CLOSE_REMINDERS_FLAG, remindToClose } from '../tables/close-reminders';
 import { pruneMailDeliveries } from '../mail/once';
+import { pruneAuthAttempts } from '../auth/attempt-limit';
 import { flagsFromEnv } from '../flags/env';
 import { pruneTableChats } from '../messages/retention';
 import { pollOutbox } from '@mesaaberta/events';
@@ -42,8 +43,9 @@ type Deps = {
  * closes the connection. Before that it asks the GM of every table whose session is over whether it
  * happened (`closeElapsedTables`), lifts the temporary bans that ended and sends the session reminders
  * that are due (`sendSessionReminders`) and the e-mails that ask a GM to answer, or the close in their
- * place (`remindToClose`). It also deletes the events and notifications past their retention period,
- * and table chats past their retention period. Does nothing without a database. Returns how many events it tried.
+ * place (`remindToClose`). It also deletes the events, notifications and table chats past their
+ * retention period, and the sign-in attempts older than a day. Does nothing without a database.
+ * Returns how many events it tried.
  */
 export async function runSweeper(
   env: DatabaseEnv & PollerEnv,
@@ -103,6 +105,8 @@ export async function runSweeper(
     if (chats > 0) log.info('table chat prune', { chats });
     const deliveries = await pruneMailDeliveries(db);
     if (deliveries > 0) log.info('mail delivery prune', { deliveries });
+    const attempts = await pruneAuthAttempts(db);
+    if (attempts > 0) log.info('auth attempt prune', { attempts });
     // Last, so a run that threw before this point does not look alive to /healthz.
     await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log, buildInfoOf(env));
     return swept;
