@@ -1,7 +1,8 @@
 import { render } from 'vitest-browser-svelte';
 import { describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import BottomTabBar from './BottomTabBar.svelte';
+import type { DirectoryLink } from '#lib/navigation/directory-nav.js';
 
 describe('BottomTabBar.svelte', () => {
   const nav = () => page.getByRole('navigation', { name: 'Navegação móvel' });
@@ -56,5 +57,52 @@ describe('BottomTabBar.svelte', () => {
       expect(svg?.getAttribute('viewBox')).toBe('0 0 512 512');
       expect(svg?.querySelector('path')?.getBBox().width).toBeGreaterThan(0);
     }
+  });
+
+  describe('Explorar', () => {
+    const directory = (href: `/${string}`, label: string): DirectoryLink => ({
+      href,
+      icon: 'game-icons:book-cover',
+      label: () => label,
+      shortLabel: () => label.split(' ')[0],
+      description: () => `Sobre ${label}`,
+      current: () => false,
+    });
+    const two = [
+      directory('/systems', 'Sistemas de RPG'),
+      directory('/places', 'Lugares para jogar'),
+    ];
+
+    it('is not on the bar while every directory is off', async () => {
+      render(BottomTabBar, { directories: [] });
+
+      await expect.element(nav().getByRole('button', { name: 'Explorar' })).not.toBeInTheDocument();
+    });
+
+    it('opens a sheet with every directory, its name and a line about it, and closes with Esc', async () => {
+      render(BottomTabBar, { directories: two });
+
+      const trigger = nav().getByRole('button', { name: 'Explorar' });
+      await expect.element(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+      await trigger.click();
+      const sheet = page.getByRole('dialog', { name: 'Explorar' });
+      await expect.element(sheet).toBeVisible();
+      await expect
+        .element(sheet.getByRole('link', { name: /Lugares para jogar/ }))
+        .toHaveAttribute('href', '/places');
+      await expect.element(sheet.getByText('Sobre Sistemas de RPG')).toBeVisible();
+
+      await userEvent.keyboard('{Escape}');
+      await expect.element(sheet).not.toBeInTheDocument();
+      await expect.element(trigger).toHaveFocus();
+    });
+
+    it('closes the sheet with its X', async () => {
+      render(BottomTabBar, { directories: two });
+
+      await nav().getByRole('button', { name: 'Explorar' }).click();
+      await page.getByRole('button', { name: 'Fechar' }).click();
+      await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 });

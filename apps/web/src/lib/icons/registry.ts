@@ -81,6 +81,10 @@ import GameLaurelsIcon from '@iconify-svelte/game-icons/laurels';
 import GamePodiumIcon from '@iconify-svelte/game-icons/podium';
 import EyeOffIcon from '@iconify-svelte/reicon/eye-off-filled';
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
+import GameBookCoverIcon from '@iconify-svelte/game-icons/book-cover';
+import GamePositionMarkerIcon from '@iconify-svelte/game-icons/position-marker';
+import GamePointyHatIcon from '@iconify-svelte/game-icons/pointy-hat';
+import GameTreasureMapIcon from '@iconify-svelte/game-icons/treasure-map';
 import PanelLeftOpenIcon from '@iconify-svelte/reicon/sidebar-left-filled';
 import PanelLeftCloseIcon from '@iconify-svelte/reicon/sidebar-left-filled';
 import BoldIcon from '@iconify-svelte/reicon/text-bold';
@@ -185,6 +189,10 @@ export const ICONS = {
   mail: MailIcon,
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
+  'game-icons:book-cover': GameBookCoverIcon,
+  'game-icons:position-marker': GamePositionMarkerIcon,
+  'game-icons:pointy-hat': GamePointyHatIcon,
+  'game-icons:treasure-map': GameTreasureMapIcon,
   'game-icons:trade': GameTradeIcon,
   'game-icons:compass': GameCompassIcon,
   'game-icons:laurels': GameLaurelsIcon,

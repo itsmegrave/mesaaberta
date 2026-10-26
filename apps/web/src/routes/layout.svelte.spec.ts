@@ -159,6 +159,52 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'true');
   });
 
+  describe('directories in the menu', () => {
+    const withSystems = { ...signedOut, directories: { systems: true } };
+    const nav = () => page.getByRole('navigation', { name: 'Navegação principal' });
+
+    it('adds an Explorar group after the destinations, with the long name, when a directory is on', async () => {
+      render(Layout, { children, data: withSystems });
+
+      await expect.element(nav().getByText('Explorar', { exact: true })).toBeVisible();
+      await expect
+        .element(nav().getByRole('link', { name: 'Sistemas de RPG' }))
+        .toHaveAttribute('href', '/systems');
+    });
+
+    it('shows the short name under a divider on the rail', async () => {
+      render(Layout, { children, data: withSystems });
+      await nav().getByRole('button', { name: 'Recolher menu' }).click();
+
+      await expect
+        .element(nav().getByRole('link', { name: 'Sistemas', exact: true }))
+        .toHaveAttribute('href', '/systems');
+      await expect.element(nav().getByText('Explorar', { exact: true })).not.toBeInTheDocument();
+    });
+
+    it('has no group, divider or link while every directory is off', async () => {
+      render(Layout, { children, data: signedOut });
+
+      await expect.element(nav().getByText('Explorar', { exact: true })).not.toBeInTheDocument();
+      expect(
+        nav()
+          .getByRole('link', { name: /Sistemas/ })
+          .elements(),
+      ).toHaveLength(0);
+    });
+
+    it('links the only directory that is on straight from the phone bar', async () => {
+      await page.viewport(390, 844);
+      render(Layout, { children, data: withSystems });
+      const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
+
+      await expect
+        .element(bar.getByRole('link', { name: 'Sistemas' }))
+        .toHaveAttribute('href', '/systems');
+      expect(bar.getByRole('link').elements()).toHaveLength(5);
+    });
+  });
+
   describe('footer links', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
