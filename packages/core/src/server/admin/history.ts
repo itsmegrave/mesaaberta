@@ -24,6 +24,8 @@ export type HistoryEntry = {
   /** The table the event names, for a person's history. */
   table: string | null;
   removed: boolean;
+  /** A table concluded by the sweeper because its GM never answered (`autoClosed`). */
+  autoClosed: boolean;
   changes: Changes | null;
 };
 
@@ -89,6 +91,7 @@ async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
         reason?: string;
         title?: string;
         changes?: Changes;
+        autoClosed?: boolean;
       };
       const subjectId = payload.profileId ?? payload.playerId;
       return {
@@ -100,6 +103,7 @@ async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
         subject: subjectId && subjectId !== row.actorId ? (names.get(subjectId) ?? null) : null,
         table: row.table ?? payload.title ?? null,
         removed: payload.reason === 'removed',
+        autoClosed: payload.autoClosed === true,
         changes: payload.changes ?? null,
       };
     }),

@@ -171,6 +171,13 @@ export const flagDefaults = {
   // "Seguindo" in Editar perfil (its page answers 404) and the owner's follower count. Targeted by
   // the signed-in person's id.
   use_follows: false,
+  // The one switch for reminding quem mestra to close a session (on for everyone in GrowthBook). On,
+  // a GM whose table still awaits confirmation is e-mailed an hour after the session ended and a
+  // week after, and ten days after it (at least three after the last e-mail) the session is settled
+  // for them: a one-shot is concluded, a campaign or adventure counts it as held and moves to its
+  // next weekly date. Either way the players are asked to rate it, in the bell and by e-mail. Off,
+  // the table waits as before. Read by the sweeper, targeted by the GM's id (`isAdmin` too).
+  use_session_close_reminders: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:
