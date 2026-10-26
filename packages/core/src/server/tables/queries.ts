@@ -54,6 +54,13 @@ const columns = {
   // Seats taken: confirmed registrations only. A pending request takes none.
   taken: sql<number>`(select count(*)::int from ${registrations} where ${registrations.tableId} = ${gameTables.id} and ${registrations.status} = 'confirmed')`,
   gmName: publicName(profiles.username),
+  // The GM's picture (still a storage path or the provider's URL: the caller makes it a URL) and
+  // their name, only when they chose to show it, for the card's byline.
+  gmAvatarPath: profiles.avatarPath,
+  gmAvatarUrl: profiles.avatarUrl,
+  gmShownName: sql<
+    string | null
+  >`case when ${profiles.showName} then nullif(${profiles.name}, '') end`,
   gmId: gameTables.gmId,
   status: gameTables.status,
   publishedAt: gameTables.publishedAt,

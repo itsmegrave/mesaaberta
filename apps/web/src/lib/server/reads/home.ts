@@ -1,8 +1,9 @@
+import { cardPictures } from './card-pictures';
 import { error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { followsEnabled } from '#lib/server/follows/state.js';
-import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import { readHome, type Home } from '@mesaaberta/core/server/reads/home';
 
@@ -26,10 +27,7 @@ export const read = async ({ locals, url }: RequestEvent) => {
   if (!home) error(404, 'Not found');
 
   const supabaseUrl = supabaseUrlOf(locals.env);
-  const withImage = ({ imagePath, ...table }: HomeTable) => ({
-    ...table,
-    imageUrl: imageUrl(supabaseUrl, imagePath),
-  });
+  const withImage = (table: HomeTable) => cardPictures(supabaseUrl)(table);
   return {
     ...home,
     signedInHome: true as const,
