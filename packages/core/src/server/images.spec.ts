@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   detectImageType,
+  imageUrl,
   MAX_IMAGE_BYTES,
   pictureOf,
   prepareImage,
+  storageUrlOf,
   storeImage,
   supabaseUrlOf,
 } from './images';
@@ -147,7 +149,7 @@ describe('prepareImage in a folder', () => {
 });
 
 describe('pictureOf', () => {
-  const base = 'https://x.supabase.co';
+  const base = 'https://x.supabase.co/storage/v1/object/public';
 
   it('prefers an uploaded picture, then the one from the sign-in provider', () => {
     expect(pictureOf(base, { avatarPath: 'u/a.png', avatarUrl: 'https://google/p.jpg' })).toBe(
@@ -159,29 +161,43 @@ describe('pictureOf', () => {
     expect(pictureOf(base, { avatarPath: null, avatarUrl: null })).toBeNull();
   });
 
-  it('falls back to the provider picture when Supabase is not configured', () => {
+  it('falls back to the provider picture when storage is not configured', () => {
     expect(pictureOf(undefined, { avatarPath: 'u/a.png', avatarUrl: 'https://g/p.jpg' })).toBe(
       'https://g/p.jpg',
     );
   });
 });
 
-describe('supabaseUrlOf', () => {
-  it('is the project URL', () => {
-    expect(supabaseUrlOf({ SUPABASE_URL: 'https://x.supabase.co' })).toBe('https://x.supabase.co');
+describe('storageUrlOf', () => {
+  it("is the project's public object path", () => {
+    expect(storageUrlOf({ SUPABASE_URL: 'https://x.supabase.co' })).toBe(
+      'https://x.supabase.co/storage/v1/object/public',
+    );
   });
 
   it('prefers the public URL when the server reaches Supabase privately', () => {
     expect(
-      supabaseUrlOf({
+      storageUrlOf({
         SUPABASE_URL: 'http://supabase:8000',
-        SUPABASE_PUBLIC_URL: 'https://localhost',
+        SUPABASE_PUBLIC_URL: 'https://localhost/',
       }),
-    ).toBe('https://localhost');
+    ).toBe('https://localhost/storage/v1/object/public');
+  });
+
+  it("is the S3-compatible store's public domain when one is set", () => {
+    const env = { SUPABASE_URL: 'https://x.supabase.co', STORAGE_PUBLIC_URL: 'https://files.x/' };
+    expect(storageUrlOf(env)).toBe('https://files.x');
+    expect(imageUrl(storageUrlOf(env), 'tables/a.png')).toBe(
+      'https://files.x/table-images/tables/a.png',
+    );
   });
 
   it('is undefined when nothing is configured', () => {
-    expect(supabaseUrlOf(undefined)).toBeUndefined();
-    expect(supabaseUrlOf({ SUPABASE_PUBLIC_URL: '' })).toBeUndefined();
+    expect(storageUrlOf(undefined)).toBeUndefined();
+    expect(storageUrlOf({ SUPABASE_PUBLIC_URL: '' })).toBeUndefined();
+  });
+
+  it('keeps its old name', () => {
+    expect(supabaseUrlOf).toBe(storageUrlOf);
   });
 });

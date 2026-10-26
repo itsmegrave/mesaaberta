@@ -12,6 +12,7 @@
     "@sentry/core": "*",
     "@sindresorhus/slugify": "*",
     "@supabase/supabase-js": "*",
+    "aws4fetch": "*",
     "drizzle-orm": "*",
     "ical.js": "*",
     "jpeg-js": "*",

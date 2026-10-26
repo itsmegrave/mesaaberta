@@ -84,6 +84,11 @@ export default defineConfig({
             'https://*.supabase.co',
             // The crop step shows the picked file from a blob URL until it is cut and sent.
             'blob:',
+            // Files in an S3-compatible store (STORAGE_PROVIDER=s3) are read from its public domain,
+            // which the build must know too.
+            ...(process.env.STORAGE_PUBLIC_URL
+              ? [new URL(process.env.STORAGE_PUBLIC_URL).origin as `https://${string}.${string}`]
+              : []),
             // The e2e build adds the local Supabase (see playwright.config.ts). Never set in production.
             ...(process.env.CSP_EXTRA_IMG_SRC
               ? [process.env.CSP_EXTRA_IMG_SRC as `http://${string}.${string}`]

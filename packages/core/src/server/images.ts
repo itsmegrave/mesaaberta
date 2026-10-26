@@ -86,34 +86,43 @@ export async function storeImage(
 }
 
 /**
- * Where browsers fetch stored images: the project URL from the Worker settings, or
- * `SUPABASE_PUBLIC_URL` when the server reaches Supabase at a private address the browser cannot
- * (the Docker stack, where Caddy serves the public bucket paths on the site's own origin). Neither
- * is in the generated `Env` type until it is configured.
+ * Where browsers fetch stored images, up to the bucket name: `STORAGE_PUBLIC_URL` when files live in
+ * an S3-compatible store (`STORAGE_PROVIDER=s3`, served from its public domain), else Supabase's
+ * public object path on the project URL, or on `SUPABASE_PUBLIC_URL` when the server reaches
+ * Supabase at a private address the browser cannot (the Docker stack, where Caddy serves the public
+ * bucket paths on the site's own origin). None of these is in the generated `Env` type until it is
+ * configured.
  */
-export const supabaseUrlOf = (env: unknown) => {
-  const { SUPABASE_PUBLIC_URL, SUPABASE_URL } =
-    (env as { SUPABASE_PUBLIC_URL?: string; SUPABASE_URL?: string } | undefined) ?? {};
-  return SUPABASE_PUBLIC_URL || SUPABASE_URL;
+export const storageUrlOf = (env: unknown) => {
+  const { STORAGE_PUBLIC_URL, SUPABASE_PUBLIC_URL, SUPABASE_URL } =
+    (env as
+      | { STORAGE_PUBLIC_URL?: string; SUPABASE_PUBLIC_URL?: string; SUPABASE_URL?: string }
+      | undefined) ?? {};
+  if (STORAGE_PUBLIC_URL) return STORAGE_PUBLIC_URL.replace(/\/+$/, '');
+  const supabase = SUPABASE_PUBLIC_URL || SUPABASE_URL;
+  return supabase ? `${supabase.replace(/\/+$/, '')}/storage/v1/object/public` : undefined;
 };
 
-/** The public URL of a stored image, or null when there is none or Supabase is not configured. */
-export const imageUrl = (supabaseUrl: string | undefined, path: string | null) =>
-  supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${IMAGE_BUCKET}/${path}` : null;
+/** The old name of `storageUrlOf`, kept so the reads need not change with it. */
+export const supabaseUrlOf = storageUrlOf;
+
+const objectUrl = (storageUrl: string | undefined, bucket: string, path: string | null) =>
+  storageUrl && path ? `${storageUrl}/${bucket}/${path}` : null;
+
+/** The public URL of a stored image, or null when there is none or storage is not configured. */
+export const imageUrl = (storageUrl: string | undefined, path: string | null) =>
+  objectUrl(storageUrl, IMAGE_BUCKET, path);
 
 /** The public URL of a partner's logo, which lives in the avatar bucket under `partners/<id>/`. */
-export const partnerLogoUrl = (supabaseUrl: string | undefined, path: string | null) =>
-  supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${path}` : null;
+export const partnerLogoUrl = (storageUrl: string | undefined, path: string | null) =>
+  objectUrl(storageUrl, AVATAR_BUCKET, path);
 
 /** The public URL of a profile's cover, which lives in the avatar bucket under `<id>/banners/`. */
-export const bannerUrl = (supabaseUrl: string | undefined, path: string | null) =>
-  supabaseUrl && path ? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${path}` : null;
+export const bannerUrl = (storageUrl: string | undefined, path: string | null) =>
+  objectUrl(storageUrl, AVATAR_BUCKET, path);
 
 /** The picture a profile shows: the uploaded one, else the sign-in provider's, else none. */
 export const pictureOf = (
-  supabaseUrl: string | undefined,
+  storageUrl: string | undefined,
   profile: { avatarPath: string | null; avatarUrl: string | null },
-) =>
-  supabaseUrl && profile.avatarPath
-    ? `${supabaseUrl}/storage/v1/object/public/${AVATAR_BUCKET}/${profile.avatarPath}`
-    : profile.avatarUrl;
+) => objectUrl(storageUrl, AVATAR_BUCKET, profile.avatarPath) ?? profile.avatarUrl;
