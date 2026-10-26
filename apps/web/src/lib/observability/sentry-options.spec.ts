@@ -28,6 +28,6 @@ describe('sentryOptionsFor', () => {
 
   it('keeps the privacy policy', () => {
     const options = sentryOptionsFor({ PUBLIC_SENTRY_DSN: dsn }, 'https://app.example.test', true);
-    expect(options).toMatchObject({ sendDefaultPii: false, tracesSampleRate: 0 });
+    expect(options).toMatchObject({ sendDefaultPii: false, tracesSampleRate: 1 });
   });
 });

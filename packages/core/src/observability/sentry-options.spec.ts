@@ -1,9 +1,11 @@
-import type { ErrorEvent } from '@sentry/core';
+import type { ErrorEvent, TransactionEvent } from '@sentry/core';
 import { describe, expect, it } from 'vitest';
 import {
   privateEvent,
   privateLog,
   privateSentryOptions,
+  privateSpan,
+  privateTransaction,
   sentryOptionsForApp,
   sentryReleaseFor,
 } from './sentry-options';
@@ -49,11 +51,114 @@ describe('sentry options', () => {
     expect(kept?.message).toBe('sent to [redacted]');
   });
 
-  it('drops transactions, metrics and breadcrumbs and sends no PII', () => {
+  it('drops metrics and breadcrumbs, sends no PII and traces every request', () => {
     expect(privateSentryOptions.sendDefaultPii).toBe(false);
-    expect(privateSentryOptions.beforeSendTransaction()).toBeNull();
+    expect(privateSentryOptions.tracesSampleRate).toBe(1);
+    expect(privateSentryOptions.traceLifecycle).toBe('static');
     expect(privateSentryOptions.beforeSendMetric()).toBeNull();
     expect(privateSentryOptions.beforeBreadcrumb()).toBeNull();
+  });
+
+  it("keeps a transaction's timings and route, never its request, user or payloads", () => {
+    const event = {
+      type: 'transaction',
+      event_id: 't1',
+      timestamp: 2,
+      start_timestamp: 1,
+      release: 'v1.0.0',
+      dist: 'web',
+      environment: 'production',
+      transaction: 'GET /t/[slug]?token=abc',
+      transaction_info: { source: 'route' },
+      tags: { route: '/t/[slug]', email: 'ana@example.com' },
+      measurements: { lcp: { value: 1200, unit: 'millisecond' } },
+      request: { url: 'https://mesaaberta.app/t/x?q=ana', headers: { cookie: 'sid=1' } },
+      user: { id: 'u1', email: 'ana@example.com' },
+      breadcrumbs: [{ message: 'clicked' }],
+      extra: { body: 'secret' },
+      contexts: {
+        trace: {
+          trace_id: 'a'.repeat(32),
+          span_id: 'b'.repeat(16),
+          op: 'http.server',
+          status: 'ok',
+          data: { 'http.response.status_code': 200, 'url.full': 'https://x/y?q=1' },
+        },
+        runtime: { name: 'workerd' },
+      },
+      spans: [
+        {
+          span_id: 'c'.repeat(16),
+          trace_id: 'a'.repeat(32),
+          start_timestamp: 1,
+          timestamp: 1.5,
+          status: 'ok',
+          op: 'http.client',
+          description: 'GET https://db.example.test/rest/v1/tables?select=*&email=eq.ana',
+          data: {
+            'http.request.method': 'GET',
+            'url.full': 'https://x?q=1',
+            'http.response.status_code': 200,
+          },
+        },
+        {
+          span_id: 'd'.repeat(16),
+          trace_id: 'a'.repeat(32),
+          start_timestamp: 1,
+          status: 'ok',
+          op: 'db.query',
+          description: "select * from profiles where email = 'ana@example.com' and age > 30",
+          data: { 'db.statement': 'select 1' },
+        },
+      ],
+    } as unknown as TransactionEvent;
+    const kept = privateTransaction(event);
+    expect(kept).not.toHaveProperty('request');
+    expect(kept).not.toHaveProperty('user');
+    expect(kept).not.toHaveProperty('breadcrumbs');
+    expect(kept).not.toHaveProperty('extra');
+    expect(kept).toMatchObject({
+      type: 'transaction',
+      transaction: 'GET /t/[slug]',
+      transaction_info: { source: 'route' },
+      tags: { route: '/t/[slug]' },
+      measurements: { lcp: { value: 1200, unit: 'millisecond' } },
+      release: 'v1.0.0',
+      dist: 'web',
+    });
+    expect(kept.contexts).toEqual({
+      trace: expect.objectContaining({
+        op: 'http.server',
+        data: { 'http.response.status_code': 200 },
+      }),
+    });
+    expect(kept.spans?.[0]).toMatchObject({
+      description: 'GET https://db.example.test/rest/v1/tables',
+      data: { 'http.request.method': 'GET', 'http.response.status_code': 200 },
+    });
+    expect(kept.spans?.[0]?.data).not.toHaveProperty('url.full');
+    expect(kept.spans?.[1]?.description).toBe('select * from profiles where email = ? and age > ?');
+    expect(kept.spans?.[1]?.data).toEqual({});
+  });
+
+  it('scrubs standalone spans the same way', () => {
+    const span = privateSpan({
+      span_id: 'c'.repeat(16),
+      trace_id: 'a'.repeat(32),
+      start_timestamp: 1,
+      status: 'ok',
+      op: 'ui.interaction.click',
+      description: 'body > button.ana@example.com',
+      data: { 'sentry.op': 'ui.interaction.click', 'user_agent.original': 'Mozilla' },
+    });
+    expect(span.description).toBe('body > [redacted]');
+    expect(span.data).toEqual({ 'sentry.op': 'ui.interaction.click' });
+  });
+
+  it('tags every transaction with the app that sent it', () => {
+    const options = sentryOptionsForApp('worker');
+    const event = { type: 'transaction', tags: { app: 'web' } } as unknown as TransactionEvent;
+    expect(options.beforeSendTransaction(event).tags).toEqual({ app: 'worker' });
   });
 
   it('tags every event with the app that raised it', () => {
