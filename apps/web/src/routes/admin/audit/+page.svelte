@@ -62,6 +62,10 @@
         return m.audit_table_closed({ table });
       case 'TableDisabled':
         return m.audit_table_disabled({ table });
+      case 'TableUpdated':
+        return m.audit_table_updated({ table });
+      case 'TableEdited':
+        return m.audit_table_edited({ table });
       case 'PlayerLeft':
         return m.audit_player_removed({ user, table });
       case 'SystemAnnouncementSent':

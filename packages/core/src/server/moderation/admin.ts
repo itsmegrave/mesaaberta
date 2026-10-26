@@ -611,13 +611,17 @@ export const AUDIT_EVENT_TYPES = [
   'CatalogEntryDisabled',
   'SystemAnnouncementSent',
   'EventForced',
+  // A GM's edits, so a dispute over what a table said can be checked. Private fields say only
+  // that they changed (see `TableChange`).
+  'TableUpdated',
+  'TableEdited',
 ] as const satisfies readonly EventType[];
 
 /** The events each kind of decision is made of; `all` is every decision the log keeps. */
 const AUDIT_KIND_TYPES: Record<Exclude<AuditKind, 'all'>, readonly EventType[]> = {
   reports: ['ReportReviewing', 'ReportResolved', 'ReportDismissed'],
   accounts: ['AccountBanned', 'AccountReinstated', 'AccountBanLifted', 'PlayerLeft'],
-  tables: ['TableClosedByModeration', 'TableDisabled'],
+  tables: ['TableClosedByModeration', 'TableDisabled', 'TableUpdated', 'TableEdited'],
   catalog: [
     'CatalogEntryCreated',
     'CatalogEntryApproved',
