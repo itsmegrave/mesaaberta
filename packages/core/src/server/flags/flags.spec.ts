@@ -1,5 +1,6 @@
 import type { FeatureApiResponse } from '@growthbook/growthbook';
 import { describe, expect, it, vi } from 'vitest';
+import { setTelemetrySink } from '../logger';
 import { createFlags, flagOverrides, shouldForceAllFlags } from './flags';
 
 const payload = (features: FeatureApiResponse['features']): FeatureApiResponse => ({
@@ -10,6 +11,23 @@ const payload = (features: FeatureApiResponse['features']): FeatureApiResponse =
 const serving = (features: FeatureApiResponse['features']) => async () => payload(features);
 
 describe('createFlags', () => {
+  it('hands every evaluation to the telemetry sink', async () => {
+    const flag = vi.fn();
+    setTelemetrySink({ log: vi.fn(), capture: vi.fn(), flag });
+    try {
+      const flags = createFlags(serving({ api_inbox: { defaultValue: true } }));
+      await flags.isEnabled('api_inbox');
+      await flags.isEnabled('maintenance_mode');
+    } finally {
+      setTelemetrySink(null);
+    }
+
+    expect(flag.mock.calls).toEqual([
+      ['api_inbox', true],
+      ['maintenance_mode', false],
+    ]);
+  });
+
   it('reads the defaults an extension declares, and off for a name nobody declared', async () => {
     const flags = createFlags(async () => null, { extensionFlags: { private_perk: true } });
 

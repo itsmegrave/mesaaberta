@@ -12,10 +12,19 @@ import { buildInfoOf, type BuildEnv } from '../server/build-info';
 const cancelled = (event: ErrorEvent) =>
   event.exception?.values?.some((exception) => exception.type === 'AbortError') ?? false;
 
+/** Flag evaluations the request recorded (`recordFlag`): only flag-shaped names and booleans. */
+const flagsOf = (event: ErrorEvent) => {
+  const values = event.contexts?.flags?.values?.filter(
+    ({ flag, result }) => /^[a-z][a-z0-9_]*$/.test(flag) && typeof result === 'boolean',
+  );
+  return values?.length ? { flags: { values } } : undefined;
+};
+
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
   if (cancelled(event)) return null;
-  // Reconstruct rather than redact unknown SDK contexts. Keep code locations for diagnosis,
-  // never exception messages, local variables, source context, breadcrumbs or request data.
+  // Reconstruct rather than redact unknown SDK contexts. Keep code locations and the flags the
+  // request read for diagnosis, never exception messages, local variables, source context,
+  // breadcrumbs or request data.
   return {
     type: undefined,
     event_id: event.event_id,
@@ -25,6 +34,7 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     release: event.release,
     environment: event.environment,
     tags: safeFields(event.tags),
+    contexts: flagsOf(event),
     debug_meta: event.debug_meta && {
       images: event.debug_meta.images?.flatMap((image) =>
         image.type === 'sourcemap'

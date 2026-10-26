@@ -79,4 +79,24 @@ describe('sentry options', () => {
     });
     expect(sentryReleaseFor('api', undefined)).toEqual({ release: undefined });
   });
+
+  it('keeps the flags the request read, and nothing else from the contexts', () => {
+    const event = {
+      contexts: {
+        flags: {
+          values: [
+            { flag: 'api_inbox', result: true },
+            { flag: 'ana@example.com', result: true },
+            { flag: 'use_badges', result: 'yes' },
+          ],
+        },
+        cloud_resource: { 'cloud.provider': 'cloudflare' },
+      },
+    } as unknown as ErrorEvent;
+
+    expect(privateEvent(event)?.contexts).toEqual({
+      flags: { values: [{ flag: 'api_inbox', result: true }] },
+    });
+    expect(privateEvent({ type: undefined })?.contexts).toBeUndefined();
+  });
 });

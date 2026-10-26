@@ -28,6 +28,8 @@ export default Sentry.withSentry(
     dsn: env.SENTRY_DSN,
     environment: 'production',
     ...sentryReleaseFor('api', env),
+    // Puts the flags the request read (`recordFlag`) on its issues.
+    integrations: [Sentry.featureFlagsIntegration()],
   }),
   { fetch: api.fetch },
 );

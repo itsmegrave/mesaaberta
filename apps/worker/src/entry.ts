@@ -37,6 +37,8 @@ export default Sentry.withSentry(
     dsn: env.SENTRY_DSN,
     environment: 'production',
     ...sentryReleaseFor('worker', env),
+    // Puts the flags the run read (`recordFlag`) on its issues.
+    integrations: [Sentry.featureFlagsIntegration()],
   }),
   createWorker(undefined, undefined, sentryMonitor),
 );

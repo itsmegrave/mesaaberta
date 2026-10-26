@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit/hooks';
+import { featureFlagsIntegration } from '@sentry/core';
 import { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN } from '$app/env/public';
 import { host as hostBindings } from '#host';
 import { sentryOptionsFor } from '#lib/observability/privacy.js';
@@ -50,4 +51,6 @@ export const handleHostTelemetry: Handle = (input) =>
       import.meta.env.PROD,
     ),
     ...sentryReleaseFor('web', hostBindings.env() as ReleaseEnv | undefined),
+    // Puts the flags the request read (`recordFlag`) on its issues.
+    integrations: [featureFlagsIntegration()],
   })(input);
