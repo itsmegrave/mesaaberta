@@ -21,7 +21,9 @@ describe('PlayerRatings', () => {
       players: [player(1), player(2, { markedPresent: false }), player(3, { playerRating: 4 })],
     });
 
-    await expect.element(page.getByRole('heading', { name: 'Avalie quem jogou' })).toBeVisible();
+    await expect
+      .element(page.getByRole('heading', { name: /^Avalie quem jogou 1 de 2 avaliadas/ }))
+      .toBeVisible();
     await expect.element(page.getByText('Nota para ana')).toBeInTheDocument();
     await expect.element(page.getByText('bia')).not.toBeInTheDocument();
     // "Enviar nota", or "Enviar" on a phone.
@@ -34,7 +36,9 @@ describe('PlayerRatings', () => {
   it('opens the comment only when asked, and says it stays with the GM', async () => {
     render(PlayerRatings, { next: '/t/mesa/manage', goingOn: true, players: [player(1)] });
 
-    await expect.element(page.getByRole('heading', { name: 'Avalie quem joga' })).toBeVisible();
+    await expect
+      .element(page.getByRole('heading', { name: /^Avalie quem joga 0 de 1 avaliadas/ }))
+      .toBeVisible();
     await expect.element(page.getByRole('textbox')).not.toBeInTheDocument();
     await page.getByRole('button', { name: 'Adicionar comentário' }).click();
     await expect

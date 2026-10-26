@@ -12,6 +12,17 @@ import { postAction } from './action';
 import { issueErrors, type FormErrors, type FormResult } from './contract';
 
 /** A single submit path, with native POST when JavaScript is unavailable. */
+/** Whether a redirect leads back to the page the form is on (same path and query). */
+function samePage(location: string) {
+  const here = new URL(window.location.href);
+  const target = new URL(location, here);
+  return (
+    target.origin === here.origin &&
+    target.pathname === here.pathname &&
+    target.search === here.search
+  );
+}
+
 export function actionForm<T extends Record<string, unknown>>(options: {
   initial: T;
   initialErrors?: FormErrors;
@@ -82,6 +93,12 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       if (result.type === 'redirect') {
         options.onSuccess();
         if (options.domain) await Promise.allSettled([afterWrite(client, options.domain)]);
+        // Back to this same page (a form's `next`): refresh it in place, so the person keeps their
+        // scroll position and focus instead of landing at the top of a fresh navigation.
+        if (samePage(result.location)) {
+          if (options.refresh !== false) await Promise.allSettled([refreshAll()]);
+          return;
+        }
       }
       await applyAction(result);
     },
