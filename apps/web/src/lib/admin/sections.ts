@@ -8,6 +8,7 @@ export type AdminCounts = {
   connections: number;
   events: number;
   partners: number;
+  places: number;
 };
 export type AdminSection = {
   path: string;
@@ -70,6 +71,12 @@ export function adminGroups(
           label: m.admin_nav_partners(),
           icon: 'game-icons:trade',
           count: counts.partners,
+        },
+        {
+          path: '/admin/places',
+          label: m.admin_nav_places(),
+          icon: 'game-icons:position-marker',
+          count: counts.places,
         },
         { path: '/admin/users', label: m.admin_profile_list(), icon: 'game-icons:meeple' },
         { path: '/admin/catalog', label: m.admin_nav_catalog(), icon: 'tag' },

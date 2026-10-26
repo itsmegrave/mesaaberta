@@ -18,7 +18,9 @@
     }),
   );
   const current = $derived(sectionOf(groups, page.route.id, page.url.pathname));
-  const waiting = $derived(counts.reports + counts.queue + counts.connections + counts.partners);
+  const waiting = $derived(
+    counts.reports + counts.queue + counts.connections + counts.partners + counts.places,
+  );
 
   // The menu is built when it opens: a closed one would put an inline `style` on the page, which
   // the CSP refuses.

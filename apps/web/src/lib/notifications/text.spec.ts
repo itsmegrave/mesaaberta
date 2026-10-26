@@ -33,6 +33,20 @@ describe('notificationText', () => {
     );
   });
 
+  it('tells the submitter an admin approved or turned down their place, and why', () => {
+    const notice = (metadata: Record<string, string>) =>
+      notificationText(shown({ type: 'moderation_notice', metadata }));
+    expect(notice({ placeApproved: 'Taverna do Dado' })).toBe(
+      'Seu lugar “Taverna do Dado” foi aprovado e já aparece em Onde jogar.',
+    );
+    expect(notice({ placeRemoved: 'Taverna do Dado', reason: 'place_closed' })).toBe(
+      'Seu lugar “Taverna do Dado” não está em Onde jogar. Motivo: O lugar fechou.',
+    );
+    expect(notice({ placeRemoved: 'Taverna', reason: 'not_public', note: 'É uma casa' })).toMatch(
+      /Recado: É uma casa$/,
+    );
+  });
+
   it('names the suggestion an admin decided on, and where a merge sent it', () => {
     const metadata = { kind: 'tag', name: 'Gore', into: 'Terror' };
     expect(notificationText(shown({ type: 'catalog_suggestion_rejected', metadata }))).toBe(

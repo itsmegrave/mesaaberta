@@ -4,6 +4,7 @@ import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { extensions } from '@mesaaberta/core/server/extensions/index';
 import { pendingPartnerCount } from '@mesaaberta/core/server/partners/admin';
+import { pendingPlaceCount } from '@mesaaberta/core/server/places/admin';
 import { waitingReports } from '@mesaaberta/core/server/moderation/admin';
 
 /**
@@ -11,15 +12,16 @@ import { waitingReports } from '@mesaaberta/core/server/moderation/admin';
  * `/api/admin/counts` for the page to poll. Callers check the admin first.
  */
 export async function adminCounts(db: AnyDb): Promise<AdminCounts> {
-  const [reports, queue, events, partners, connections] = await Promise.all([
+  const [reports, queue, events, partners, places, connections] = await Promise.all([
     waitingReports(db),
     pendingCount(db),
     failedEventCount(db),
     pendingPartnerCount(db),
+    pendingPlaceCount(db),
     // What waits on an admin in each extension's connection, such as an Instagram post to reconcile.
     Promise.all(
       extensions.map(({ admin }) => (admin && !admin.section ? admin.count(db) : 0)),
     ).then((counts) => counts.reduce((total, waiting) => total + waiting, 0)),
   ]);
-  return { reports, queue, connections, events, partners };
+  return { reports, queue, connections, events, partners, places };
 }

@@ -221,6 +221,18 @@ export const partnerTypesSchema = z.object({
     .transform((types) => orderedTypes(types)),
 });
 
+/** An admin approving an "Onde jogar" place that waits for review. */
+export const approvePlaceSchema = z.object({ id: uuid });
+
+/** An admin rejecting a place that waits, or taking one down: the reason and a note the submitter reads. */
+export const removePlaceSchema = z.object({
+  id: uuid,
+  reason: z.enum(PLACE_REPORT_REASONS),
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  // The report the admin decided it from, when they did (it is accepted with the others about it).
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});
+
 /** An admin taking a partner down, or rejecting one that waits: the reason and a note the submitter reads. */
 export const removePartnerSchema = z.object({
   id: uuid,
