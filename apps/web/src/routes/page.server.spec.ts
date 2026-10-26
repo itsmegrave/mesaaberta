@@ -49,10 +49,12 @@ describe('the home page load', () => {
   });
 
   it('previews the ten soonest tables, keeping the GM id on the server', async () => {
-    listed.mockResolvedValue(Array.from({ length: 12 }, (_, i) => table(i + 1)));
+    listed.mockResolvedValue(Array.from({ length: 10 }, (_, i) => table(i + 1)));
 
     const { tables } = await run(event());
 
+    // The query reads only the ten it shows; it no longer loads every upcoming table to slice.
+    expect(listed).toHaveBeenCalledWith(expect.anything(), expect.any(Date), { limit: 10 });
     expect(tables).toHaveLength(10);
     expect(tables[9].slug).toBe('mesa-10');
     expect(tables[0]).not.toHaveProperty('gmId');

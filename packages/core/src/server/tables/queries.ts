@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, gte, ne, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gt, gte, ne, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
@@ -85,17 +85,16 @@ const shape = (row: Row) => {
 export async function listUpcomingTables(
   db: AnyDb,
   now: Date,
-  { systemSlug }: { systemSlug?: string } = {},
+  { systemSlug, limit }: { systemSlug?: string; limit?: number } = {},
 ): Promise<TableView[]> {
-  const rows = await query(
-    db,
-    and(
-      eq(gameTables.status, 'active'),
-      gt(gameTables.startsAt, now),
-      systemSlug ? eq(systems.slug, systemSlug) : undefined,
-    ),
-    now,
+  const where = and(
+    eq(gameTables.status, 'active'),
+    gt(gameTables.startsAt, now),
+    systemSlug ? eq(systems.slug, systemSlug) : undefined,
   );
+  const rows = await (limit === undefined
+    ? query(db, where, now)
+    : query(db, where, now).limit(limit));
 
   return withExtras(db, rows.map(shape), now);
 }
@@ -134,16 +133,19 @@ export async function listUpcomingTablesByGm(
   page: number,
   pageSize: number,
 ) {
-  const rows = await query(
-    db,
-    and(eq(gameTables.gmId, gmId), eq(gameTables.status, 'active'), gt(gameTables.startsAt, now)),
-    now,
+  const where = and(
+    eq(gameTables.gmId, gmId),
+    eq(gameTables.status, 'active'),
+    gt(gameTables.startsAt, now),
   );
-  const upcoming = rows.map(shape);
-  return {
-    total: upcoming.length,
-    tables: await withExtras(db, upcoming.slice((page - 1) * pageSize, page * pageSize), now),
-  };
+  // Only the page is read; the total is counted on its own.
+  const [rows, [{ total }]] = await Promise.all([
+    query(db, where, now)
+      .limit(pageSize)
+      .offset((page - 1) * pageSize),
+    db.select({ total: count() }).from(gameTables).where(where),
+  ]);
+  return { total, tables: await withExtras(db, rows.map(shape), now) };
 }
 
 /**

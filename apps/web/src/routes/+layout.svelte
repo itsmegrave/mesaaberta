@@ -14,7 +14,6 @@
   import { asset, resolve } from '$app/paths';
   import { refreshAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
-  import ChatDrawer from '#lib/components/chat/ChatDrawer.svelte';
   import ExtensionWidgets from '#lib/components/shell/ExtensionWidgets.svelte';
   import AccountMenu from '#lib/components/shell/AccountMenu.svelte';
   import BottomTabBar from '#lib/components/shell/BottomTabBar.svelte';
@@ -215,10 +214,13 @@
       <MAToaster />
       <UnsavedChangesDialog />
       {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/m')}
-        {#key data.cacheIdentity}<ChatDrawer
-            viewerId={data.cacheIdentity ?? 'anonymous'}
-            unread={badges.data?.messages ?? data.account.messagesUnread}
-          />{/key}
+        <!-- Its own chunk: the chat (thread, composer, emoji picker) loads only for the signed-in. -->
+        {#await import('#lib/components/chat/ChatDrawer.svelte') then { default: ChatDrawer }}
+          {#key data.cacheIdentity}<ChatDrawer
+              viewerId={data.cacheIdentity ?? 'anonymous'}
+              unread={badges.data?.messages ?? data.account.messagesUnread}
+            />{/key}
+        {/await}
       {/if}
       {#if data.account && !data.maintenance}
         {#key data.cacheIdentity}<ExtensionWidgets />{/key}

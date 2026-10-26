@@ -12,12 +12,12 @@ export const PREVIEW_COUNT = 10;
  */
 export async function readPreview(db: AnyDb, now: Date) {
   const [upcoming, fresh] = await Promise.all([
-    listUpcomingTables(db, now),
+    listUpcomingTables(db, now, { limit: PREVIEW_COUNT }),
     listNewTables(db, now, PREVIEW_COUNT),
   ]);
   const publicView = ({ gmId, ...table }: (typeof upcoming)[number]) => table;
   return {
-    tables: upcoming.slice(0, PREVIEW_COUNT).map(publicView),
+    tables: upcoming.map(publicView),
     newTables: fresh.map(publicView),
   };
 }
