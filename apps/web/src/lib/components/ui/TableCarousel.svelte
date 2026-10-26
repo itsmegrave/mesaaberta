@@ -21,6 +21,7 @@
     itemClass,
     moreHref,
     moreCaption,
+    action,
   }: {
     /** The heading's id; the section and the list are labelled by it. */
     id: string;
@@ -31,8 +32,11 @@
     card: Snippet<[T]>;
     /** The width of each card (and of the "Veja mais" tile), as classes. */
     itemClass: string;
-    moreHref: string;
-    moreCaption: string;
+    /** The "Veja mais" tile; without it the row is the whole list. */
+    moreHref?: string;
+    moreCaption?: string;
+    /** A link beside the title ("Editar sistemas"). */
+    action?: Snippet;
   } = $props();
 
   let track = $state<HTMLUListElement>();
@@ -74,6 +78,7 @@
       </h2>
       {#if lede}<p class="text-muted">{lede}</p>{/if}
     </div>
+    {#if action}<div class="ml-auto shrink-0">{@render action()}</div>{/if}
     {#if overflows}
       <div class="hidden shrink-0 gap-2 md:flex">
         <MAButton
@@ -113,22 +118,24 @@
     {#each items as item (key(item))}
       <li class="flex shrink-0 snap-start {itemClass}">{@render card(item)}</li>
     {/each}
-    <li class="flex shrink-0 snap-start {itemClass}">
-      <a
-        href={moreHref}
-        class="flex w-full flex-col items-center justify-center gap-3 rounded-lg border border-surface-200-800 bg-surface-wash p-6 text-center no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
-      >
-        <span
-          aria-hidden="true"
-          class="flex size-14 items-center justify-center rounded-full preset-filled-primary-500"
+    {#if moreHref}
+      <li class="flex shrink-0 snap-start {itemClass}">
+        <a
+          href={moreHref}
+          class="flex w-full flex-col items-center justify-center gap-3 rounded-lg border border-surface-200-800 bg-surface-wash p-6 text-center no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
         >
-          <Icon name="arrow-right" size={20} />
-        </span>
-        <span class="text-2xl leading-tight font-semibold tracking-tight"
-          >{m.home_carousel_more()}</span
-        >
-        <span class="text-sm font-semibold text-muted">{moreCaption}</span>
-      </a>
-    </li>
+          <span
+            aria-hidden="true"
+            class="flex size-14 items-center justify-center rounded-full preset-filled-primary-500"
+          >
+            <Icon name="arrow-right" size={20} />
+          </span>
+          <span class="text-2xl leading-tight font-semibold tracking-tight"
+            >{m.home_carousel_more()}</span
+          >
+          <span class="text-sm font-semibold text-muted">{moreCaption}</span>
+        </a>
+      </li>
+    {/if}
   </ul>
 </section>

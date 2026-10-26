@@ -1,7 +1,10 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listNewTables, listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
+import { readHome } from '@mesaaberta/core/server/reads/home';
 import { load } from './+page.server';
+
+vi.mock('@mesaaberta/core/server/reads/home', () => ({ readHome: vi.fn() }));
 
 vi.mock('@mesaaberta/core/server/tables/queries', () => ({
   listUpcomingTables: vi.fn(),
@@ -82,5 +85,34 @@ describe('the home page load', () => {
       readSeed: { resource: 'preview', viewer: 'public', fields: ['tables', 'newTables', 'now'] },
     });
     expect(error).toHaveBeenCalledOnce();
+  });
+
+  it('gives a member with use_signed_in_home their Início instead of the landing page', async () => {
+    vi.mocked(readHome).mockResolvedValue({
+      rows: { followed: null, systems: [], fresh: [] },
+      account: { newestReview: null },
+      suggestions: [],
+    } as never);
+    const member = {
+      params: {},
+      url: new URL('https://x.test/'),
+      locals: {
+        db: {},
+        log: { error },
+        env: {},
+        flags: { isEnabled: async (name: string) => name === 'use_signed_in_home' },
+        getUser: async () => ({ id: 'me' }),
+        getProfile: async () => ({ id: 'me', username: 'eu', name: null, role: 'member' }),
+      },
+      platform: undefined,
+    } as unknown as RequestEvent;
+
+    const data = await run(member);
+
+    expect(data).toMatchObject({ signedInHome: true, name: 'eu', readSeed: { resource: 'home' } });
+    expect(readHome).toHaveBeenCalledWith(expect.anything(), 'me', expect.any(Date), {
+      follows: false,
+    });
+    expect(listed).not.toHaveBeenCalled();
   });
 });

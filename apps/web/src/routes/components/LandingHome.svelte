@@ -1,0 +1,350 @@
+<script lang="ts">
+  // Início for visitors (and members without the signed-in Início): what Mesa Aberta is, the new
+  // and the upcoming tables, how it works, and what it offers players and GMs.
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import SeatDots from '#lib/components/ui/SeatDots.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
+  import NewTableCard from '#lib/components/ui/NewTableCard.svelte';
+  import TableCard from '#lib/components/ui/TableCard.svelte';
+  import TableCarousel from '#lib/components/ui/TableCarousel.svelte';
+  import TableIllustration from '#lib/components/ui/TableIllustration.svelte';
+  import { m } from '#lib/paraglide/messages.js';
+  import type { ComponentProps } from 'svelte';
+
+  type Table = ComponentProps<typeof TableCard>['table'] &
+    ComponentProps<typeof NewTableCard>['table'] & { slug: string };
+
+  let { data }: { data: { tables: Table[]; newTables: Table[]; now: Date } } = $props();
+
+  const steps = [
+    { title: m.how_step_1_title, text: m.how_step_1_text, colour: 'bg-success-500' },
+    { title: m.how_step_2_title, text: m.how_step_2_text, colour: 'bg-tertiary-400' },
+    { title: m.how_step_3_title, text: m.how_step_3_text, colour: 'bg-secondary-300' },
+  ];
+
+  const star = 'M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.6l-5.9 3.2 1.2-6.5L2.5 9.7l6.6-.9z';
+</script>
+
+{#snippet arrow()}
+  <Icon name="arrow-right" size={18} />
+{/snippet}
+
+{#snippet stars(size: number)}
+  <span class="flex shrink-0 gap-1">
+    {#each { length: 5 }, i (i)}
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" class="fill-lamp">
+        <path d={star} />
+      </svg>
+    {/each}
+  </span>
+{/snippet}
+
+<section
+  class="flex flex-col gap-7 pt-5 pb-3 md:min-h-160 md:flex-row md:items-center md:gap-12 md:py-0"
+>
+  <div class="flex max-w-2xl flex-col items-start md:flex-1">
+    <p
+      class="inline-flex items-center gap-2 rounded-full bg-lamp-wash py-1 pr-3 pl-2 text-sm leading-tight font-semibold text-lamp"
+    >
+      <span aria-hidden="true" class="block size-3 rounded-full border-2 border-lamp"></span>
+      Mesas de RPG com vagas abertas
+    </p>
+    <h1
+      class="mt-4 text-5xl leading-none font-semibold tracking-tight text-balance md:mt-5 md:text-6xl md:leading-none lg:text-7xl"
+    >
+      {m.hero_title_before()} <span class="text-lamp">{m.hero_title_accent()}</span>
+      {m.hero_title_after()}
+    </h1>
+    <p class="mt-4 max-w-xs text-lg leading-normal md:mt-7 md:max-w-sm md:text-xl">
+      {m.hero_lede()}
+    </p>
+    <div class="mt-6 flex w-full flex-col gap-2 md:mt-9 md:w-auto md:flex-row md:gap-3">
+      <a
+        href="/tables"
+        class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+      >
+        {m.hero_browse_cta()}
+        {@render arrow()}
+      </a>
+      <a
+        href="/tables/new"
+        class="btn h-12 w-full gap-2 rounded-lg border-2 border-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+        ><Icon name="game-icons:dice-twenty-faces-twenty" size={20} />{m.hero_open_cta()}</a
+      >
+    </div>
+  </div>
+  <div class="mx-auto w-full max-w-xs md:mx-0 md:w-5/12 md:max-w-lg md:shrink-0">
+    <TableIllustration />
+  </div>
+</section>
+
+{#if data.newTables.length > 0}
+  <div class="pt-7 md:pt-8">
+    <TableCarousel
+      id="new-tables"
+      title={m.home_new_tables_title()}
+      lede={m.home_new_tables_lede()}
+      items={data.newTables}
+      key={(table) => table.slug}
+      itemClass="w-65 md:w-70"
+      moreHref="/tables"
+      moreCaption={m.home_carousel_more_caption()}
+    >
+      {#snippet card(table)}<NewTableCard {table} now={data.now} />{/snippet}
+    </TableCarousel>
+  </div>
+{/if}
+
+{#if data.tables.length > 0}
+  <div class="pt-7 pb-2 md:pt-8 md:pb-14">
+    <TableCarousel
+      id="open-tables"
+      title={m.home_open_tables_title()}
+      items={data.tables}
+      key={(table) => table.slug}
+      itemClass="w-75 md:w-96"
+      moreHref="/tables"
+      moreCaption={m.home_carousel_more_caption()}
+    >
+      {#snippet card(table)}<TableCard {table} />{/snippet}
+    </TableCarousel>
+  </div>
+{:else}
+  <section aria-labelledby="open-tables" class="pt-7 pb-2 md:pt-8 md:pb-14">
+    <h2
+      id="open-tables"
+      class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl"
+    >
+      {m.home_open_tables_title()}
+    </h2>
+    <div
+      class="mt-7 rounded-lg border border-surface-200-800 bg-panel p-6 md:flex md:items-center md:justify-between md:gap-8"
+    >
+      <div>
+        <p class="text-xl font-semibold">{m.home_open_tables_empty_title()}</p>
+        <p class="mt-2 max-w-xs text-muted">{m.home_open_tables_empty_text()}</p>
+      </div>
+      <a
+        href="/tables"
+        class="mt-5 btn h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:mt-0"
+      >
+        {m.home_open_tables_all()}
+        {@render arrow()}
+      </a>
+    </div>
+  </section>
+{/if}
+
+<!-- The band runs edge to edge; its background is a pseudo-element so the content keeps the page column. -->
+<section
+  aria-labelledby="how-it-works"
+  class="relative isolate mt-7 py-9 before:absolute before:inset-y-0 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 before:border-y before:border-surface-200-800 before:bg-panel md:mt-0 md:pt-16 md:pb-24"
+>
+  <h2
+    id="how-it-works"
+    class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl"
+  >
+    {m.how_title()}
+  </h2>
+  <div class="relative mt-6 md:mt-11">
+    <span
+      aria-hidden="true"
+      class="absolute top-9 right-30 left-9 hidden border-t-2 border-dashed border-surface-200-800 md:block"
+    ></span>
+    <ol class="relative flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-12">
+      {#each steps as step, i (step.title)}
+        <li class="flex gap-4 md:flex-col md:items-start md:gap-0">
+          <span
+            class="flex size-12 shrink-0 items-center justify-center rounded-full text-2xl font-bold text-surface-950 md:size-16 md:text-4xl {step.colour}"
+          >
+            {i + 1}
+          </span>
+          <div>
+            <h3
+              class="text-xl leading-none font-semibold tracking-tight text-balance md:mt-5 md:text-2xl"
+            >
+              {step.title()}
+            </h3>
+            <p class="mt-1 max-w-xs text-base text-muted md:mt-2">
+              {step.text()}
+            </p>
+          </div>
+        </li>
+      {/each}
+    </ol>
+  </div>
+  <p class="mt-7 flex items-center gap-2 md:mt-11 md:gap-3 md:text-lg">
+    {@render stars(20)}
+    {m.how_after_session()}
+  </p>
+</section>
+
+<div class="flex flex-col gap-4 pt-7 md:flex-row md:gap-6 md:pt-10">
+  <section
+    aria-labelledby="for-players"
+    class="flex flex-col rounded-lg border border-surface-200-800 bg-panel px-6 py-8 md:min-h-192 md:flex-1 md:p-11"
+  >
+    <h2
+      id="for-players"
+      class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-5xl"
+    >
+      {m.players_title()}
+    </h2>
+    <p class="mt-3 text-base md:mt-4 md:text-lg">{m.players_text()}</p>
+    <div class="mt-6 md:mt-7">
+      <a
+        href="/tables"
+        class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 text-base font-semibold md:h-14 md:w-auto md:px-7"
+      >
+        {m.hero_browse_cta()}
+        {@render arrow()}
+      </a>
+    </div>
+
+    <!-- A sample of the player's view; decorative, so it stays out of the accessibility tree. -->
+    <div
+      aria-hidden="true"
+      class="mt-6 flex flex-col gap-3 rounded-lg border border-surface-200-800 bg-surface-50-950 p-5 md:mt-auto md:p-6"
+    >
+      <div class="flex items-center justify-between gap-3">
+        <Pill>Você tem uma vaga</Pill>
+        <span
+          class="chip h-6 gap-1 rounded-lg border border-surface-200-800 bg-panel px-2 text-xs font-semibold"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="shrink-0"
+          >
+            <rect x="3" y="4.5" width="18" height="12" rx="2.5" />
+            <path d="M8.5 20h7M12 16.5V20" />
+          </svg>
+          Foundry VTT
+        </span>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-muted">Daggerheart · @bruno-leal</p>
+        <p class="mt-1 text-2xl leading-tight font-semibold">Os Sinos de Sablewood</p>
+      </div>
+      <p class="flex items-start gap-2 text-base leading-normal">
+        <Icon name="calendar" size={20} class="mt-1" />
+        <span
+          ><strong class="font-semibold">Próxima sessão:</strong> domingo, 27 de setembro às 15:00</span
+        >
+      </p>
+      <div class="flex items-center gap-3">
+        <SeatDots taken={3} capacity={6} />
+        <span class="text-sm font-semibold text-muted"
+          >{m.dash_seats_taken({ taken: 3, capacity: 6 })}</span
+        >
+      </div>
+      <div class="flex items-center gap-3 rounded-lg bg-lamp-wash p-3">
+        {@render stars(18)}
+        <span class="leading-snug">Depois da sessão, avalie a mestragem.</span>
+      </div>
+    </div>
+  </section>
+
+  <section
+    aria-labelledby="for-game-masters"
+    class="relative isolate flex flex-col overflow-hidden rounded-lg preset-filled-primary-500 px-6 py-8 md:min-h-192 md:flex-1 md:p-11"
+  >
+    <span
+      aria-hidden="true"
+      class="absolute -top-36 -right-40 -z-10 size-96 rounded-full bg-primary-contrast-500/5"
+    ></span>
+    <span
+      aria-hidden="true"
+      class="absolute -bottom-48 -left-30 -z-10 size-96 rounded-full bg-primary-contrast-500/5"
+    ></span>
+    <h2
+      id="for-game-masters"
+      class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-5xl"
+    >
+      {m.gm_title()}
+    </h2>
+    <p class="mt-3 text-base md:mt-4 md:text-lg">{m.gm_text()}</p>
+    <div class="mt-6 md:mt-7">
+      <a
+        href="/tables/new"
+        class="btn h-12 w-full gap-2 rounded-lg bg-primary-contrast-500 px-6 text-base font-semibold text-primary-500 md:h-14 md:w-auto md:px-7"
+      >
+        <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
+        {m.hero_open_cta()}
+      </a>
+    </div>
+
+    <!-- A sample of the game master's view; decorative, so it stays out of the accessibility tree. -->
+    <div
+      aria-hidden="true"
+      class="mt-6 flex flex-col gap-4 rounded-lg bg-panel p-5 text-surface-950-50 md:mt-auto md:p-6"
+    >
+      <div class="flex items-center justify-between gap-3">
+        <span>
+          <span class="block text-sm font-semibold text-muted">Urban Shadows 2e</span>
+          <span class="text-lg font-semibold md:text-xl">Noites de Neon</span>
+        </span>
+        <Pill tone="outline" class="shrink-0">Campanha</Pill>
+      </div>
+      <div class="flex items-center gap-3">
+        <SeatDots taken={3} capacity={5} />
+        <span class="text-sm font-semibold text-muted"
+          >{m.dash_seats_taken({ taken: 3, capacity: 5 })}</span
+        >
+      </div>
+      <div>
+        <p class="mb-2 flex items-center gap-2 text-base font-semibold">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="shrink-0"
+          >
+            <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15L6 16.5zM10 20.5a2 2 0 0 0 4 0" />
+          </svg>
+          Pedidos de vaga (1)
+        </p>
+        <div class="flex items-center justify-between gap-3 rounded-lg bg-lamp-wash px-3 py-2">
+          <span class="flex min-w-0 items-center gap-3 text-base">
+            <span
+              class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tertiary-400 text-sm font-bold text-surface-950"
+              >L</span
+            >
+            @lucas-ferreira
+          </span>
+          <span class="hidden items-center gap-2 md:flex">
+            <span
+              class="flex h-11 items-center rounded-lg preset-filled-primary-500 px-4 text-sm font-semibold"
+              >Aprovar</span
+            >
+            <span
+              class="flex h-10 items-center rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold text-error-alert"
+              >Recusar</span
+            >
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-3 border-t border-surface-200-800 pt-3">
+        <span class="text-sm font-semibold text-muted">Sua nota de mestragem</span>
+        <span class="inline-flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" class="shrink-0 fill-lamp">
+            <path d={star} />
+          </svg>
+          <span class="text-xl leading-none font-bold">4,8</span>
+          <span class="text-sm font-medium text-muted">(12 avaliações)</span>
+        </span>
+      </div>
+    </div>
+  </section>
+</div>

@@ -7,6 +7,7 @@ import {
 
 export const resources = [
   'preview',
+  'home',
   'tables',
   'detail',
   'dashboard',
@@ -29,6 +30,7 @@ export type ReadSeed = {
   fields: string[];
 };
 export const privateResources = new Set<Resource>([
+  'home',
   'detail',
   'dashboard',
   'manage',

@@ -8,6 +8,7 @@ import {
   type ReadSeed,
 } from '#lib/query/keys.js';
 import { read as preview } from './preview';
+import { read as home } from './home';
 import { read as tables } from './tables';
 import { read as detail } from './detail';
 import { read as dashboard } from './dashboard';
@@ -22,6 +23,7 @@ import { read as systems } from './systems';
 import { read as system } from './system';
 export const readers = {
   preview,
+  home,
   tables,
   detail,
   dashboard,

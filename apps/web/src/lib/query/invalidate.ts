@@ -3,15 +3,16 @@ import type { QueryClient } from '@tanstack/svelte-query';
 export async function afterWrite(client: QueryClient, domain: 'table' | 'account' | 'catalog') {
   const resources =
     domain === 'catalog'
-      ? ['catalog', 'editCatalog', 'tables', 'detail', 'preview', 'manage', 'dashboard']
+      ? ['catalog', 'editCatalog', 'tables', 'detail', 'preview', 'home', 'manage', 'dashboard']
       : domain === 'table'
-        ? ['tables', 'preview', 'detail', 'dashboard', 'manage', 'catalog', 'editCatalog']
+        ? ['tables', 'preview', 'home', 'detail', 'dashboard', 'manage', 'catalog', 'editCatalog']
         : [
             'account',
             'detail',
             'manage',
             'dashboard',
             'preview',
+            'home',
             'tables',
             'username',
             'catalog',
