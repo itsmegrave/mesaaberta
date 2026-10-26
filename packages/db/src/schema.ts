@@ -103,6 +103,13 @@ export const profiles = pgTable(
     // Off by default: `name` may have come from the sign-in provider, so it is public only once the
     // person says so, as a line under the @usuário.
     showName: boolean('show_name').notNull().default(false),
+    // On: the favorite systems show as pills on the public profile. They still shape the person's
+    // own Início either way.
+    showFavoriteSystems: boolean('show_favorite_systems').notNull().default(true),
+    // Whether a notice arrives when someone this person follows opens a table, or a seat opens on a
+    // full table of theirs.
+    followNotifyTables: boolean('follow_notify_tables').notNull().default(true),
+    followNotifySeats: boolean('follow_notify_seats').notNull().default(true),
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
@@ -188,6 +195,45 @@ export const systems = pgTable(
   (system) => [
     uniqueIndex('systems_slug_unique').on(system.slug),
     uniqueIndex('systems_name_unique').on(system.name),
+  ],
+).enableRLS();
+
+// The systems a person likes to play, which shape their Início. At most
+// FAVORITE_SYSTEMS_MAX each, held by the service, not the database.
+export const profileFavoriteSystems = pgTable(
+  'profile_favorite_systems',
+  {
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    systemId: uuid('system_id')
+      .notNull()
+      .references(() => systems.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (favorite) => [
+    primaryKey({ columns: [favorite.profileId, favorite.systemId] }),
+    index('profile_favorite_systems_system_idx').on(favorite.systemId),
+  ],
+).enableRLS();
+
+// Who follows whom: anyone, quem mestra or quem joga. Only the followed person sees how many
+// follow them.
+export const follows = pgTable(
+  'follows',
+  {
+    followerId: uuid('follower_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    followeeId: uuid('followee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (follow) => [
+    primaryKey({ columns: [follow.followerId, follow.followeeId] }),
+    index('follows_followee_idx').on(follow.followeeId),
+    check('follows_not_self', sql`${follow.followerId} <> ${follow.followeeId}`),
   ],
 ).enableRLS();
 

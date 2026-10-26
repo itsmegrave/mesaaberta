@@ -99,6 +99,10 @@ export type DomainEvent =
   | { type: 'RatingSubmitted'; payload: Registration }
   // The GM rated a player they marked present (the actor is the GM). No score or comment either.
   | { type: 'PlayerRated'; payload: Registration }
+  // Someone followed a person (the actor is the follower). Unfollowing records nothing.
+  | { type: 'FollowStarted'; payload: { followeeId: string } }
+  // A person saved their favorite systems: the ids as saved, in no order.
+  | { type: 'FavoriteSystemsChanged'; payload: { systemIds: string[] } }
   // A session started (OAuth or email/password). This is the connection record Marco Civil da
   // Internet (art. 15) requires kept for 6 months — longer than other events, see CONNECTION_RETENTION_DAYS.
   | { type: 'UserSignedIn'; payload: { ip: string | null } }
