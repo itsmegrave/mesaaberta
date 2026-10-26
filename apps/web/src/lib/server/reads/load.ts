@@ -22,6 +22,8 @@ import { read as adminTables } from './admin-tables';
 import { read as systems } from './systems';
 import { read as system } from './system';
 import { read as gamemasters } from './gamemasters';
+import { read as places } from './places';
+import { read as place } from './place';
 export const readers = {
   preview,
   home,
@@ -38,6 +40,8 @@ export const readers = {
   systems,
   system,
   gamemasters,
+  places,
+  place,
 };
 export type ReadData<R extends Resource> = Awaited<ReturnType<(typeof readers)[R]>>;
 export async function loadRead<R extends Resource>(

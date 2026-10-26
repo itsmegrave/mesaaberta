@@ -1,5 +1,7 @@
 import { m } from '#lib/paraglide/messages.js';
 import { toPlainText } from '@mesaaberta/core/text/rich';
+import { isPlaceKind } from '@mesaaberta/core/places/types';
+import { placeArea, placeKindLabels } from '#lib/places/labels.js';
 
 const text = (value: string, limit = 160) => {
   const clean = value.replace(/\s+/g, ' ').trim();
@@ -33,6 +35,16 @@ type PublicData = {
     name: string;
     [key: string]: unknown;
   };
+  place?: {
+    name: string;
+    kind: string;
+    description: string | null;
+    neighbourhood: string | null;
+    city: string;
+    state: string;
+    imageUrl?: string | null;
+    [key: string]: unknown;
+  };
   facts?: { openTables: number; totalTables: number; gmCount: number };
   post?: { title: string; summary: string };
   profile?: {
@@ -51,6 +63,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     '/crowdfunding': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
     '/systems': [m.seo_systems_title(), m.systems_description()],
     '/gamemasters': [m.seo_gms_title(), m.gms_description()],
+    '/places': [m.seo_places_title(), m.places_description()],
     '/changelog': [`${m.changelog_title()} · Mesa Aberta`, m.changelog_description()],
     '/blog': [m.blog_feed_title(), m.blog_description()],
     '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],
@@ -88,6 +101,22 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
       title: m.seo_system_title({ name }),
       description: text(m.seo_system_description({ name, facts })),
       image: fallback,
+      type: 'website',
+    };
+  }
+  const place = data.place;
+  if (/^\/pp\/[^/]+$/.test(path) && place) {
+    const kind = isPlaceKind(place.kind) ? placeKindLabels[place.kind]() : '';
+    return {
+      title: m.seo_place_title({ name: text(place.name, 80) }),
+      description: text(
+        m.seo_place_description({
+          kind,
+          area: placeArea(place),
+          description: place.description ?? '',
+        }),
+      ),
+      image: imageUrl(place.imageUrl, fallback),
       type: 'website',
     };
   }

@@ -23,7 +23,7 @@ const shell = {
   },
   maintenance: false,
   maintenanceBypass: false,
-  directories: { systems: false, gms: false },
+  directories: { systems: false, gms: false, places: false },
   viewer,
   site: {
     APP_ORIGIN: 'https://mesaaberta.app',
@@ -184,7 +184,7 @@ describe('+layout.svelte', () => {
   });
 
   describe('directories in the menu', () => {
-    const withSystems = { ...signedOut, directories: { systems: true, gms: false } };
+    const withSystems = { ...signedOut, directories: { systems: true, gms: false, places: false } };
     const nav = () => page.getByRole('navigation', { name: 'Navegação principal' });
 
     it('adds an Explorar group after the destinations, with the long name, when a directory is on', async () => {
