@@ -2340,6 +2340,125 @@
   "profile_section_systems": "Sistemas favoritos",
   "profile_section_systems_lede": "O Início mostra as próximas mesas desses sistemas. Escolha até {max}.",
   "favorite_systems_yours": "Seus sistemas",
+  "home_greeting": "Olá, {name}",
+  "home_summary_week": [
+    {
+      "declarations": ["input sessions", "input waiting"],
+      "selectors": ["sessions", "waiting"],
+      "match": {
+        "sessions=0, waiting=1": "Você tem nenhuma sessão esta semana e 1 coisa esperando você.",
+        "sessions=0, waiting=*": "Você tem nenhuma sessão esta semana e {waiting} coisas esperando você.",
+        "sessions=1, waiting=1": "Você tem 1 sessão esta semana e 1 coisa esperando você.",
+        "sessions=1, waiting=*": "Você tem 1 sessão esta semana e {waiting} coisas esperando você.",
+        "sessions=*, waiting=1": "Você tem {sessions} sessões esta semana e 1 coisa esperando você.",
+        "sessions=*, waiting=*": "Você tem {sessions} sessões esta semana e {waiting} coisas esperando você."
+      }
+    }
+  ],
+  "home_summary_idle_next": "Nada esperando você. Sua próxima sessão é {when}.",
+  "home_summary_idle": "Nada esperando você.",
+  "home_browse": "Procurar mesas",
+  "home_open_table": "Abrir mesa",
+  "home_waiting_title": "Esperando você",
+  "home_waiting_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 item",
+        "count=*": "{count} itens"
+      }
+    }
+  ],
+  "home_waiting_requests": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pedido de vaga em {table}",
+        "count=*": "{count} pedidos de vaga em {table}"
+      }
+    }
+  ],
+  "home_waiting_requests_cta": "Ver pedidos",
+  "home_waiting_confirm": "A sessão de {table} aconteceu? Confirme e marque quem compareceu.",
+  "home_waiting_confirm_cta": "Confirmar sessão",
+  "home_waiting_rate_gm": "Avalie a mestragem em {table}.",
+  "home_waiting_rate_gm_cta": "Avaliar",
+  "home_waiting_rate_players": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pessoa para avaliar em {table}.",
+        "count=*": "{count} pessoas para avaliar em {table}."
+      }
+    }
+  ],
+  "home_waiting_rate_players_cta": "Avaliar quem jogou",
+  "home_waiting_invitation": "Você recebeu um convite para {table}. A vaga fica reservada até {when}.",
+  "home_waiting_invitation_cta": "Ver convite",
+  "home_waiting_all": "Ver todas",
+  "home_sessions_title": "Suas próximas sessões",
+  "home_sessions_role_player": "Você joga",
+  "home_sessions_role_gm": "Você mestra",
+  "home_sessions_timezone": "Horários em {zone}.",
+  "home_account_title": "Sua conta",
+  "home_account_profile": "Ver perfil",
+  "home_account_gm_score": "Nota da mestragem",
+  "home_account_player_score": "Nota como participante",
+  "home_account_unread": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 nova avaliação",
+        "count=*": "{count} novas avaliações"
+      }
+    }
+  ],
+  "home_account_review_meta": "{when} · {table}",
+  "home_account_badge": "Você ganhou a conquista {badge}.",
+  "home_feed_title": "De quem você segue",
+  "home_feed_table": "{person} abriu {table}",
+  "home_feed_seat": "Abriu uma vaga em {table}, de {person}",
+  "home_feed_badge": "{person} ganhou a conquista {badge}",
+  "home_feed_badge_unnamed": "{person} ganhou uma conquista",
+  "home_feed_manage": "Quem você segue",
+  "home_row_systems": "Dos seus sistemas",
+  "home_row_systems_edit": "Editar sistemas",
+  "home_row_systems_more": "Todas as mesas desses sistemas",
+  "home_row_systems_empty": "Nenhuma mesa dos seus sistemas com vaga agora. Quando abrir uma, ela aparece aqui.",
+  "home_row_systems_all": "Ver todas as mesas",
+  "home_row_followed": "Mesas de quem você segue",
+  "home_row_followed_empty": "Ninguém que você segue tem mesa com vaga agora. Você recebe um aviso quando abrirem uma.",
+  "home_picker_title": "Quais sistemas você joga?",
+  "home_picker_lede": "Escolha até {max}. As próximas mesas deles aparecem aqui, e você muda quando quiser em Editar perfil.",
+  "home_picker_legend": "Mais jogados na Mesa Aberta",
+  "home_picker_count": "{count} de {max} escolhidos",
+  "home_suggest_lede": "Siga quem mestra ou joga com você para ver as mesas dessas pessoas aqui e receber um aviso quando abrirem uma.",
+  "home_suggest_title": "Você já jogou com",
+  "home_suggest_ran": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "mestrou 1 mesa para você",
+        "count=*": "mestrou {count} mesas para você"
+      }
+    }
+  ],
+  "home_suggest_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "jogou 1 mesa com você",
+        "count=*": "jogou {count} mesas com você"
+      }
+    }
+  ],
+  "home_suggest_none": "Quando você jogar ou mestrar uma mesa, quem estava nela aparece aqui para você seguir.",
   "favorite_systems_count": "{count} de {max}",
   "favorite_systems_empty": "Nenhum sistema escolhido ainda.",
   "favorite_systems_remove": "Tirar {name}",

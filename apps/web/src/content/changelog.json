@@ -12,6 +12,29 @@
       },
       {
         "kind": "new",
+        "title": "Um Início para quem entrou",
+        "description": "Com a conta aberta, o Início mostra o que espera por você, suas próximas sessões, sua conta e mesas de quem você segue e dos seus sistemas favoritos.",
+        "href": "/"
+      },
+      {
+        "kind": "new",
+        "title": "Sistemas favoritos",
+        "description": "Escolha até dez sistemas em Editar perfil. Eles aparecem no seu perfil público, se você quiser, e trazem as mesas desses sistemas para o Início.",
+        "href": "/u/profile/edit/systems"
+      },
+      {
+        "kind": "new",
+        "title": "Seguir quem mestra e quem joga",
+        "description": "Siga pessoas pelo perfil ou pela mesa e veja quem você segue em Editar perfil › Seguindo. Só você vê quantas pessoas seguem você.",
+        "href": "/u/profile/edit/following"
+      },
+      {
+        "kind": "new",
+        "title": "Avisos de quem você segue",
+        "description": "O sino avisa quando alguém que você segue abre uma mesa ou quando abre vaga numa mesa dessa pessoa que estava cheia. Dá para desligar cada aviso."
+      },
+      {
+        "kind": "new",
         "title": "Lembretes de sessão",
         "description": "Quem joga e quem mestra recebe um aviso um dia e uma hora antes da sessão."
       },
