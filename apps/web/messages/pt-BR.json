@@ -1258,6 +1258,8 @@
   "audit_report_dismissed": "Denúncia arquivada",
   "audit_account_reinstated": "{user} reativado",
   "audit_table_disabled": "Mesa \"{table}\" desativada",
+  "audit_table_updated": "Mesa \"{table}\" editada",
+  "audit_table_edited": "Mesa \"{table}\" editada (sem aviso aos participantes)",
   "audit_player_removed": "{user} removido de \"{table}\"",
   "audit_announcement": "Aviso enviado: \"{title}\"",
   "audit_catalog_created": "\"{name}\" criado no catálogo",
