@@ -3,6 +3,9 @@ import { load } from './+page.server';
 import { publicProfile } from '@mesaaberta/core/server/profile/public';
 
 vi.mock('@mesaaberta/core/server/profile/public', () => ({ publicProfile: vi.fn() }));
+vi.mock('#lib/server/follows/state.js', () => ({
+  profileFollow: vi.fn(async () => ({ follow: null, followers: null })),
+}));
 vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('#lib/paraglide/runtime.js')>()),
   getLocale: () => 'pt-BR',

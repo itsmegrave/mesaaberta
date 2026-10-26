@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gt, inArray, lte, or, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
+import { unfollowBothWays } from '../follows/service';
 import {
   gameTables,
   gmInviteBlocks,
@@ -336,12 +337,14 @@ export async function setGmInviteBlock(
     const t = tx as unknown as AnyDb;
     const found = await lockInvitationProfiles(t, [actor.id, gmId]);
     if (!found.some((p) => p.id === gmId)) throw new NotFound();
-    if (blocked)
+    if (blocked) {
       await t
         .insert(gmInviteBlocks)
         .values({ playerId: actor.id, gmId, createdAt: now })
         .onConflictDoNothing();
-    else
+      // A block also undoes following, both ways (`follow:create` refuses a new one).
+      await unfollowBothWays(t, actor.id, gmId);
+    } else
       await t
         .delete(gmInviteBlocks)
         .where(and(eq(gmInviteBlocks.playerId, actor.id), eq(gmInviteBlocks.gmId, gmId)));

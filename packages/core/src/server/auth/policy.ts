@@ -91,6 +91,11 @@ type Resources = {
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */
   'account:ban': Pick<Actor, 'id' | 'role'>;
+  /**
+   * Following someone: any active profile with an @, never oneself, and not across a block (either
+   * of the two blocked the other from invitations).
+   */
+  'follow:create': { followeeId: string; followeeActive: boolean; blocked: boolean };
 };
 
 export type Action = keyof Resources;
@@ -215,6 +220,8 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     actor.role === 'admin' &&
     target.id !== actor.id &&
     target.role !== 'admin',
+  'follow:create': (actor, facts) =>
+    facts !== undefined && facts.followeeId !== actor.id && facts.followeeActive && !facts.blocked,
 };
 
 export function can<A extends Action>(

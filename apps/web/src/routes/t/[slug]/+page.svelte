@@ -25,6 +25,7 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import JoinRequestDialog from './components/JoinRequestDialog.svelte';
   import GmRating from '#lib/components/ui/GmRating.svelte';
+  import FollowButton from '#lib/components/FollowButton.svelte';
   import StarRating from '#lib/components/ui/StarRating.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
@@ -196,6 +197,15 @@
           </p>
         </div>
         <GmRating rating={table.gmRating} variant="pill" class="ml-2" />
+        {#if data.follow && data.gmUsername}
+          <FollowButton
+            size="sm"
+            profileId={data.follow.profileId}
+            username={data.gmUsername}
+            following={data.follow.following}
+            signedIn={data.follow.signedIn}
+          />
+        {/if}
       </div>
 
       {#if table.imageUrl}

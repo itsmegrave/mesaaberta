@@ -15,6 +15,7 @@
   import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
+  import FollowButton from '#lib/components/FollowButton.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import TableCard from '#lib/components/ui/TableCard.svelte';
   import { pageHref } from '#lib/admin/page-href.js';
@@ -129,6 +130,13 @@
               class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
               >{m.public_profile_edit()}</a
             >
+          {:else if data.follow}
+            <FollowButton
+              profileId={data.follow.profileId}
+              username={profile.username}
+              following={data.follow.following}
+              signedIn={data.follow.signedIn}
+            />
           {/if}
           <KebabMenu name={atHandle(profile.username)} items={menu} />
         </div>
@@ -153,6 +161,14 @@
             </ActionForm>
           {/if}
         </div>
+        {#if data.followers !== null && data.followers !== undefined}
+          <!-- Only the owner sees how many follow them. -->
+          <a
+            href="/u/profile/edit/following"
+            class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-muted underline decoration-surface-200-800 underline-offset-3 hover:decoration-primary-500"
+            >{m.follow_followers_count({ count: data.followers })}</a
+          >
+        {/if}
         {#if profile.name}
           <!-- The name, only when the person chose to show it under the @usuário. -->
           <p class="mt-2 text-xl wrap-break-word text-muted md:text-2xl">{profile.name}</p>
