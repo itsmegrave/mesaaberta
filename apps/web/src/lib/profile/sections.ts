@@ -5,9 +5,13 @@ import { m } from '#lib/paraglide/messages.js';
 /**
  * The parts of "Editar perfil", in the order of the side menu. Each is its own page with its own
  * form, so a save never carries the fields of another part. "Sistemas favoritos" comes second, for
- * the people `use_signed_in_home` reaches (`systems`).
+ * the people `use_signed_in_home` reaches (`systems`), and "Seguindo" third, for those `use_follows`
+ * reaches (`following`).
  */
-export const profileSections = ({ systems = false }: { systems?: boolean } = {}): {
+export const profileSections = ({
+  systems = false,
+  following = false,
+}: { systems?: boolean; following?: boolean } = {}): {
   path: string;
   label: string;
   icon: IconName;
@@ -19,6 +23,15 @@ export const profileSections = ({ systems = false }: { systems?: boolean } = {})
           path: '/u/profile/edit/systems',
           label: m.profile_section_systems(),
           icon: 'game-icons:spell-book' as const,
+        },
+      ]
+    : []),
+  ...(following
+    ? [
+        {
+          path: '/u/profile/edit/following',
+          label: m.profile_section_following(),
+          icon: 'game-icons:shaking-hands' as const,
         },
       ]
     : []),

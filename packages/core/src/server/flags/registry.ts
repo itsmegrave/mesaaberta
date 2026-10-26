@@ -161,6 +161,11 @@ export const flagDefaults = {
   // (the page answers 404) and the favorite systems on public profiles. Targeted by the person's id:
   // the signed-in person in Editar perfil, the profile's owner on a profile.
   use_signed_in_home: false,
+  // The one switch for following people, off for everyone until it is released (admins + 30%
+  // first). Off hides the Seguir button on profiles and on a table's GM row (the action refuses),
+  // "Seguindo" in Editar perfil (its page answers 404) and the owner's follower count. Targeted by
+  // the signed-in person's id.
+  use_follows: false,
   // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
   // the api Worker does them over the Service Binding, with the same per-network limit; a call that
   // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:

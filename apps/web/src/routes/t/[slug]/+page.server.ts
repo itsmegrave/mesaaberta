@@ -21,6 +21,8 @@ import {
 import { reportSchema } from '@mesaaberta/core/moderation/reports';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
 import { fileReport } from '@mesaaberta/core/server/moderation/reports';
+import { followAction } from '#lib/server/follows/action.js';
+import { followState } from '#lib/server/follows/state.js';
 import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
   const data = await loadRead(event, 'detail');
@@ -34,8 +36,16 @@ export const load: PageServerLoad = async (event) => {
       ? { mesa_id: table.id, gm_user_id: table.gmId, seat_availability: data.table.seatsLeft }
       : null;
   });
+  // Seguir on the GM row, for anyone but the GM.
+  const [gm] = locals.db
+    ? await locals.db
+        .select({ gmId: gameTables.gmId })
+        .from(gameTables)
+        .where(eq(gameTables.slug, params.slug))
+    : [];
   return {
     ...data,
+    follow: gm && data.gmUsername ? await followState(locals, gm.gmId) : null,
     ratingForm: {
       valid: false,
       data: {
@@ -50,6 +60,9 @@ export const load: PageServerLoad = async (event) => {
 
 // Each action runs a registration operation as the signed-in player (see runRegistrationAction).
 export const actions: Actions = {
+  // Seguir / Seguindo on the GM row.
+  follow: followAction,
+
   // "Falar com quem mestra": opens the direct conversation with the GM, about this table.
   talk: async ({ locals, url, params }) => {
     await requireUser(locals, new URL(url.pathname, url));

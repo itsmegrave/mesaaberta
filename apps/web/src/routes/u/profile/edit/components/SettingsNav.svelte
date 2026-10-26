@@ -11,14 +11,17 @@
   let {
     path,
     systems = false,
+    following = false,
   }: {
     /** The page's path, to mark its section. */
     path: string;
     /** Whether "Sistemas favoritos" is on for this person (`use_signed_in_home`). */
     systems?: boolean;
+    /** Whether "Seguindo" is on for this person (`use_follows`). */
+    following?: boolean;
   } = $props();
 
-  const sections = $derived(profileSections({ systems }));
+  const sections = $derived(profileSections({ systems, following }));
   const current = $derived(
     sections.find((section) => section.path === path.replace(/\/$/, '')) ?? sections[0],
   );
