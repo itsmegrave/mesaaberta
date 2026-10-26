@@ -139,6 +139,12 @@
         "kind": "improved",
         "title": "Endereços em palavras",
         "description": "As listas agora têm endereços legíveis, como /tables, /partners e /messages. Os links antigos continuam funcionando."
+      },
+      {
+        "kind": "new",
+        "title": "Diretório de sistemas",
+        "description": "Cada sistema ganha uma página com mesas abertas, quem mestra e mesas encerradas, e a lista de sistemas pode ser buscada e ordenada.",
+        "href": "/systems"
       }
     ]
   },
