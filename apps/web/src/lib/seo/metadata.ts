@@ -50,6 +50,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     '/partners': [m.seo_partners_title(), m.partner_description()],
     '/crowdfunding': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
     '/systems': [m.seo_systems_title(), m.systems_description()],
+    '/gamemasters': [m.seo_gms_title(), m.gms_description()],
     '/changelog': [`${m.changelog_title()} · Mesa Aberta`, m.changelog_description()],
     '/blog': [m.blog_feed_title(), m.blog_description()],
     '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],

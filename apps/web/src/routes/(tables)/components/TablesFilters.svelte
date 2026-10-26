@@ -168,18 +168,18 @@
         <li>
           <button
             type="button"
-            class="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-primary-500 px-4 text-sm font-semibold hover:preset-tonal"
+            class="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-primary-500 bg-surface-wash pr-2 pl-3 text-sm font-semibold whitespace-nowrap hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
             aria-label={m.tables_filter_remove({ name: chip.name })}
             onclick={chip.remove}
           >
-            {chip.name}<Icon name="xmark" size={16} />
+            <span class="truncate">{chip.name}</span><Icon name="xmark" size={14} />
           </button>
         </li>
       {/each}
       <li>
         <button
           type="button"
-          class="{buttonClass('secondary', 'sm')} font-semibold"
+          class="h-8 px-2 text-sm font-semibold text-link underline underline-offset-4 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
           onclick={clearAll}>{m.tables_filters_clear_all()}</button
         >
       </li>

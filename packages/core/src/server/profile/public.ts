@@ -66,6 +66,7 @@ export async function publicProfile(
     showBadges,
     showParticipantRating,
     showFavoriteSystems,
+    showTableRole = false,
   }: {
     page?: number;
     now?: Date;
@@ -77,6 +78,8 @@ export async function publicProfile(
     showParticipantRating?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
     /** Whether favorite systems are on for this profile (`use_signed_in_home`). Omitted: no. */
     showFavoriteSystems?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
+    /** Whether Quem mestra is on for the viewer (`api_directory_gms`), so the role tag shows. */
+    showTableRole?: boolean;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -91,6 +94,7 @@ export async function publicProfile(
       name: profiles.name,
       showName: profiles.showName,
       showFavoriteSystems: profiles.showFavoriteSystems,
+      tableRole: profiles.tableRole,
       role: profiles.role,
     })
     .from(profiles)
@@ -145,6 +149,8 @@ export async function publicProfile(
       bio: found.bio,
       // Under the @usuário, only when the person chose to show it.
       name: (found.showName && found.name) || null,
+      // "Joga", "Mestra" or both, beside the badges; null for no answer or while Quem mestra is off.
+      tableRole: showTableRole ? found.tableRole : null,
       // `text` is shown next to the icon; `href` is null where there is nothing to open (Discord).
       links: links.flatMap((link) => {
         if (!isNetwork(link.network)) return [];

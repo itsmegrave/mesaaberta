@@ -3,7 +3,7 @@ import { isUnder } from '#lib/navigation/main-nav.js';
 import { m } from '#lib/paraglide/messages.js';
 
 /** Which directories are on for the person reading (the layout's `directories`). */
-export type DirectorySwitches = { systems: boolean };
+export type DirectorySwitches = { systems: boolean; gms: boolean };
 
 export interface DirectoryLink {
   href: `/${string}`;
@@ -18,7 +18,7 @@ export interface DirectoryLink {
   current: (pathname: string) => boolean;
 }
 
-// In the menus' order: Sistemas, Lugares, Quem mestra. Places and quem mestra join with their pages.
+// In the menus' order: Sistemas, Lugares, Quem mestra. Places join with their page.
 const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })[] = [
   {
     key: 'systems',
@@ -28,6 +28,16 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })
     shortLabel: m.nav_directory_systems_short,
     description: m.nav_directory_systems_description,
     current: (pathname) => isUnder(pathname, '/systems') || isUnder(pathname, '/s'),
+  },
+  {
+    key: 'gms',
+    href: '/gamemasters',
+    icon: 'game-icons:pointy-hat',
+    label: m.nav_directory_gms,
+    shortLabel: m.nav_directory_gms,
+    description: m.nav_directory_gms_description,
+    // A profile is anyone's, not only a person who runs games: only the list is this directory.
+    current: (pathname) => isUnder(pathname, '/gamemasters'),
   },
 ];
 

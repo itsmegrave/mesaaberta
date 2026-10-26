@@ -16,6 +16,7 @@ import { publicProfile } from '@mesaaberta/core/server/profile/public';
 import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import { badgeVisibilitySchema } from '#lib/badges/visibility.js';
 import { followAction } from '#lib/server/follows/action.js';
+import { directoryEnabled } from '#lib/server/directories/flags.js';
 import { profileFollow } from '#lib/server/follows/state.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -31,6 +32,8 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     showBadges: (target) => locals.flags.isEnabled('use_badges', target),
     showParticipantRating: (target) => locals.flags.isEnabled('use_player_ratings', target),
     showFavoriteSystems: (target) => locals.flags.isEnabled('use_signed_in_home', target),
+    // The role tag shows to whoever Quem mestra is on for.
+    showTableRole: await directoryEnabled(locals, 'gms'),
   });
   if (!data || data.page > data.pages) error(404, 'Not found');
   const path = routes.profile(data.profile.username);

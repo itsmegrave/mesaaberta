@@ -68,6 +68,53 @@ describe('ProfileForm', () => {
     await expect.element(page.getByLabelText(/^Bio/)).toHaveValue('Horror cósmico.');
   });
 
+  describe('"Na mesa, você…"', () => {
+    const answer = () =>
+      document.querySelector<HTMLInputElement>('input[name="tableRole"]:checked')?.value;
+
+    it('is not on the form while Quem mestra is off', async () => {
+      render(ProfileForm, {
+        form: initialForm({ ...empty, username: 'ana', tableRole: 'gm' as const }),
+        section: 'public',
+        checkUsername: vi.fn(),
+      });
+      expect(fields()).not.toContain('tableRole');
+    });
+
+    it('asks after the bio, with "Prefiro não dizer" for no answer, and picks with the keyboard', async () => {
+      render(ProfileForm, {
+        form: initialForm({ ...empty, username: 'ana', tableRole: '' as const }),
+        section: 'public',
+        showTableRole: true,
+        checkUsername: vi.fn(),
+      });
+      const group = page.getByRole('group', { name: /Na mesa, você/ });
+      await expect.element(group).toBeVisible();
+      await expect
+        .element(group)
+        .toHaveAccessibleDescription(/seu perfil entra na lista de quem mestra/);
+      expect(answer()).toBe('');
+      await expect.element(page.getByRole('radio', { name: 'Prefiro não dizer' })).toBeChecked();
+
+      await page.getByRole('radio', { name: 'Mestra', exact: true }).click();
+      expect(answer()).toBe('gm');
+      await userEvent.keyboard('{ArrowRight}');
+      await expect.poll(answer).toBe('both');
+    });
+
+    it('tells someone the backfill listed why they are in Quem mestra', async () => {
+      render(ProfileForm, {
+        form: initialForm({ ...empty, username: 'ana', tableRole: 'gm' as const }),
+        section: 'public',
+        showTableRole: true,
+        tableRoleInferred: true,
+        checkUsername: vi.fn(),
+      });
+      await expect.element(page.getByRole('radio', { name: 'Mestra', exact: true })).toBeChecked();
+      await expect.element(page.getByText(/porque já mestrou uma mesa/)).toBeVisible();
+    });
+  });
+
   it('shows the age, gender, city and timezone fields on "Sobre você"', async () => {
     const form = initialForm({ ...empty, username: 'ana' });
     render(ProfileForm, { form, section: 'about', checkUsername: vi.fn() });

@@ -2,7 +2,9 @@
   // A directory's filters, on one 44px line from `md` (stacked on a phone): the search, sent with
   // Enter, and up to one choice of a few pills, applied when picked; then the result line, with the
   // count announced on the left and "Ordenar" on the right. No visible labels on the first line:
-  // each control carries its own. The caller turns a change into the list's address.
+  // each control carries its own. `controls` adds the directory's own filters to that line, and
+  // `note` a line under the count. The caller turns a change into the list's address.
+  import type { Snippet } from 'svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import SegmentedChoice from '#lib/components/ui/SegmentedChoice.svelte';
@@ -15,6 +17,8 @@
     show,
     sort,
     result,
+    controls,
+    note,
     onapply,
   }: {
     /** Prefix of the fields' ids. */
@@ -25,6 +29,10 @@
     sort: { label: string; value: Sort; options: readonly { slug: Sort; name: string }[] };
     /** The count line ("48 sistemas com mesa aberta"). */
     result: string;
+    /** More filters, after the search and the pills. */
+    controls?: Snippet;
+    /** A quiet line under the count ("Aparece aqui quem…"). */
+    note?: string;
     onapply: (change: { query?: string; show?: Show; sort?: Sort }) => void;
   } = $props();
 
@@ -33,7 +41,7 @@
     sort.options.some((option) => option.slug === value);
 </script>
 
-<div class="mt-6 flex flex-col gap-3 md:mt-8 md:flex-row md:items-center">
+<div class="mt-6 flex flex-col gap-3 md:mt-8 md:flex-row md:flex-wrap md:items-center">
   <form
     role="search"
     class="relative w-full md:w-85"
@@ -70,10 +78,14 @@
       onchange={(value) => onapply({ show: value })}
     />
   {/if}
+  {@render controls?.()}
 </div>
 
 <div class="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-4">
-  <p role="status" class="text-sm font-semibold text-muted">{result}</p>
+  <div>
+    <p role="status" class="text-sm font-semibold text-muted">{result}</p>
+    {#if note}<p class="mt-0.5 text-sm text-muted">{note}</p>{/if}
+  </div>
   <SearchSelect
     id="{id}-sort"
     name="sort"

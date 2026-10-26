@@ -177,6 +177,9 @@
   const input = 'input h-13 rounded-lg border-control border-ink-muted bg-panel px-3';
   const choice =
     'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10';
+  const focus = 'has-focus-visible:outline-4 has-focus-visible:outline-primary-500';
+  const pill = `btn h-9 cursor-pointer rounded-full px-4 text-sm font-semibold has-checked:preset-filled-primary-500 ${focus}`;
+  const square = `flex h-11 cursor-pointer items-center justify-center rounded-lg border-2 border-surface-200-800 has-checked:border-primary-500 has-checked:bg-primary-500/10 ${focus}`;
 </script>
 
 <AdminPage
@@ -238,41 +241,68 @@
         />
       </FormField>
 
-      <fieldset class="grid gap-3 sm:grid-cols-3">
-        <legend class="mb-2 font-semibold sm:col-span-3">{m.admin_announce_field_tone()}</legend>
-        {#each ANNOUNCEMENT_TONES as tone (tone)}
-          <label class={choice}>
-            <input type="radio" name="tone" value={tone} bind:group={$draft.tone} />
-            {TONE_LABELS[tone]}
-          </label>
-        {/each}
+      <!-- As on the layout: the kind is a segmented row, the icon a row of square buttons that
+           name the icon to a screen reader and on hover, and the audience two columns of cards. -->
+      <fieldset>
+        <legend class="mb-2 font-semibold">{m.admin_announce_field_tone()}</legend>
+        <div class="flex w-fit flex-wrap gap-1 rounded-3xl bg-surface-wash p-1">
+          {#each ANNOUNCEMENT_TONES as tone (tone)}
+            <label class={pill}>
+              <input
+                type="radio"
+                name="tone"
+                value={tone}
+                bind:group={$draft.tone}
+                class="sr-only"
+              />
+              {TONE_LABELS[tone]}
+            </label>
+          {/each}
+        </div>
       </fieldset>
 
-      <fieldset class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <legend class="mb-2 font-semibold sm:col-span-4">{m.admin_announce_field_icon()}</legend>
-        <label class={choice}>
-          <input type="radio" name="icon" value="" bind:group={$draft.icon} />
-          <NotificationIcon icon={TONE_ICON[$draft.tone]} class="text-muted" />
-          {m.admin_announce_icon_auto()}
-        </label>
-        {#each ANNOUNCEMENT_ICONS as icon (icon)}
-          <label class={choice}>
-            <input type="radio" name="icon" value={icon} bind:group={$draft.icon} />
-            <NotificationIcon {icon} />
-            {ICON_LABELS[icon]}
+      <fieldset>
+        <legend class="mb-2 font-semibold">{m.admin_announce_field_icon()}</legend>
+        <div class="flex flex-wrap gap-2">
+          <!-- The default shows the icon the kind picks for it. -->
+          <label class="{square} gap-2 px-3 text-sm font-semibold">
+            <input type="radio" name="icon" value="" bind:group={$draft.icon} class="sr-only" />
+            <NotificationIcon icon={TONE_ICON[$draft.tone]} size={18} class="text-muted" />
+            {m.admin_announce_icon_auto()}
           </label>
-        {/each}
+          {#each ANNOUNCEMENT_ICONS as icon (icon)}
+            <label class="{square} w-11" title={ICON_LABELS[icon]}>
+              <input
+                type="radio"
+                name="icon"
+                value={icon}
+                bind:group={$draft.icon}
+                class="sr-only"
+              />
+              <NotificationIcon {icon} size={18} />
+              <span class="sr-only">{ICON_LABELS[icon]}</span>
+            </label>
+          {/each}
+        </div>
       </fieldset>
 
-      <fieldset class="grid gap-3">
+      <fieldset class="grid gap-3 sm:grid-cols-2">
         <legend class="mb-2 font-semibold">{m.admin_announce_field_audience()}</legend>
         {#each ANNOUNCEMENT_AUDIENCES as audience (audience)}
-          <label class="{choice} justify-between">
-            <span class="flex items-center gap-3">
-              <input type="radio" name="audience" value={audience} bind:group={$draft.audience} />
+          <label class="{choice} items-start">
+            <input
+              type="radio"
+              name="audience"
+              value={audience}
+              bind:group={$draft.audience}
+              class="mt-1"
+            />
+            <span class="grid gap-1">
               {AUDIENCE_LABELS[audience]}
+              {#if size(audience)}<span class="text-sm font-normal text-muted"
+                  >{size(audience)}</span
+                >{/if}
             </span>
-            {#if size(audience)}<span class="text-sm text-muted">{size(audience)}</span>{/if}
           </label>
         {/each}
       </fieldset>

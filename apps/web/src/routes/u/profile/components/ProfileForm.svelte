@@ -26,6 +26,7 @@
   import { fieldErrors, problem, type Problem } from '#lib/forms/field-errors.js';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import FormField from '#lib/components/ui/FormField.svelte';
+  import RadioGroup from '#lib/components/ui/RadioGroup.svelte';
   import ErrorSummary from '#lib/components/ui/ErrorSummary.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import { timezoneOptions } from '@mesaaberta/core/time/timezone';
@@ -64,6 +65,10 @@
     onsaved?: () => void;
     /** Asks the server if a (well formed) username is free. Replaced in tests. */
     checkUsername?: (username: string, signal: AbortSignal) => Promise<Availability>;
+    /** "Na mesa, você…" in Perfil público, while Quem mestra (`api_directory_gms`) is on. */
+    showTableRole?: boolean;
+    /** The backfill listed this person in Quem mestra: a line under the question says why. */
+    tableRoleInferred?: boolean;
   };
 
   let {
@@ -75,6 +80,8 @@
     cancelHref,
     onsaved,
     checkUsername = usernameAvailability,
+    showTableRole = false,
+    tableRoleInferred = false,
   }: Props = $props();
 
   // svelte-ignore state_referenced_locally
@@ -136,6 +143,13 @@
     name: GENDER_LABELS[option](),
     slug: option,
   }));
+
+  const TABLE_ROLE_OPTIONS = [
+    { value: 'player', label: m.profile_table_role_player() },
+    { value: 'gm', label: m.profile_table_role_gm() },
+    { value: 'both', label: m.profile_table_role_both() },
+    { value: '', label: m.profile_table_role_none() },
+  ] as const;
 
   const input = 'input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
   const secondary =
@@ -231,6 +245,7 @@
       ...errors.summary([
         ['name', m.profile_name()],
         ['bio', m.profile_bio()],
+        ['tableRole', m.profile_table_role(), 'table-role'],
         ['ageRange', m.profile_age_range(), 'age-range'],
         ['gender', m.profile_gender()],
         ['genderOther', m.profile_gender_other_label(), 'gender-other'],
@@ -351,6 +366,26 @@
         />
       {/snippet}
     </FormField>
+
+    {#if showTableRole}
+      <div>
+        <RadioGroup
+          id="table-role"
+          name="tableRole"
+          legend={m.profile_table_role()}
+          hint={m.profile_table_role_hint()}
+          optional
+          options={TABLE_ROLE_OPTIONS}
+          bind:value={() => $draft.tableRole ?? '', (role) => ($draft.tableRole = role)}
+          error={err('tableRole')}
+        />
+        {#if tableRoleInferred}
+          <p class="mt-2 rounded-lg bg-lamp-wash px-3 py-2 text-sm">
+            {m.profile_table_role_inferred()}
+          </p>
+        {/if}
+      </div>
+    {/if}
   {/if}
 
   {#if shows('about')}

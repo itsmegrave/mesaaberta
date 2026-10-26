@@ -48,6 +48,9 @@ export const ageRange = pgEnum('age_range', [
   '45_54',
   '55_plus',
 ]);
+// What the person does at the table, in their own words on the profile. `gm` and `both` list them in
+// Quem mestra. Keep in step with TABLE_ROLES in packages/core/src/profile/schema.
+export const tableRole = pgEnum('table_role', ['player', 'gm', 'both']);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
 export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure']);
 // `active` is open; `disabled` is the GM cancelling before the session; after the session the GM
@@ -102,6 +105,11 @@ export const profiles = pgTable(
     bannerPath: text('banner_path'),
     // A few lines in the person's own words, shown as plain text on the public profile. Optional.
     bio: text('bio'),
+    // Joga, mestra or both. Null: the person would rather not say (and is not in Quem mestra).
+    tableRole: tableRole('table_role'),
+    // Set by the one-time backfill that put people who already ran a table in Quem mestra, so
+    // Editar perfil can tell them why; cleared once they pick an answer themselves.
+    tableRoleInferred: boolean('table_role_inferred').notNull().default(false),
     // Off by default: `name` may have come from the sign-in provider, so it is public only once the
     // person says so, as a line under the @usuário.
     showName: boolean('show_name').notNull().default(false),

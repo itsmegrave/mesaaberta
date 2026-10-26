@@ -4,6 +4,7 @@ import {
   readSystemDirectoryFilters,
   systemDirectoryQuery,
 } from '@mesaaberta/core/systems/directory-filters';
+import { gmDirectoryQuery, readGmDirectoryFilters } from '@mesaaberta/core/gms/directory-filters';
 
 export const resources = [
   'preview',
@@ -20,6 +21,7 @@ export const resources = [
   'adminTables',
   'systems',
   'system',
+  'gamemasters',
 ] as const;
 export type Resource = (typeof resources)[number];
 export type ReadSeed = {
@@ -68,6 +70,12 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
   if (resource === 'systems') {
     const filters = readSystemDirectoryFilters(url.searchParams);
     for (const [key, value] of new URLSearchParams(systemDirectoryQuery(filters, filters.page)))
+      params.set(key, value);
+  }
+  // Quem mestra: the same, with `gmDirectoryQuery`.
+  if (resource === 'gamemasters') {
+    const filters = readGmDirectoryFilters(url.searchParams);
+    for (const [key, value] of new URLSearchParams(gmDirectoryQuery(filters, filters.page)))
       params.set(key, value);
   }
   if (resource === 'adminUsers' || resource === 'adminTables') {

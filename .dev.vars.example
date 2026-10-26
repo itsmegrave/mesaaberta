@@ -5,6 +5,9 @@ DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta
 # Remove this only for a deliberate, manual Resend smoke test.
 MAILPIT_URL=http://127.0.0.1:54344
 
+# Bearer token /healthz requires (`Authorization: Bearer <token>`). Unset: it answers 401.
+# HEALTHZ_TOKEN=
+
 # Set to true only while developing locally to return true for every feature flag. It only applies
 # to requests for localhost or 127.0.0.1, so it does nothing on preview or production hosts.
 # IGNORE_FEATURE_FLAGS_IN_LOCALHOST=true

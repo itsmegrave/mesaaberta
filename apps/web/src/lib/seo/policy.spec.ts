@@ -104,6 +104,15 @@ describe('search indexing policy', () => {
     expect(policy('/u/ana').index).toBe(true);
   });
 
+  it('indexes Quem mestra and its pages, but not a filtered or reordered list', () => {
+    expect(policy('/gamemasters?page=2&utm_source=x')).toEqual({
+      canonical: `${origin}/gamemasters?page=2`,
+      index: true,
+    });
+    for (const query of ['q=ana', 'system=dnd', 'modality=online', 'open=1', 'sort=score'])
+      expect(policy(`/gamemasters?${query}`).index).toBe(false);
+  });
+
   it('indexes the systems directory and its pages, keeping the list and page but not the order', () => {
     expect(policy('/systems?page=1&utm_source=x')).toEqual({
       canonical: `${origin}/systems`,

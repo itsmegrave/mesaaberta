@@ -40,7 +40,10 @@
 >
   {#each groups as group (group.key)}
     <div class="grid gap-1">
-      <p class="px-3 text-xs font-semibold tracking-wide text-muted uppercase">{group.label}</p>
+      <!-- "Visão geral" is its own only section: the layout shows the link, not a heading over it. -->
+      {#if group.sections.length > 1 || group.sections[0]?.label !== group.label}
+        <p class="px-3 text-xs font-semibold tracking-wide text-muted uppercase">{group.label}</p>
+      {/if}
       <ul class="grid gap-1">
         {#each group.sections as section (section.path)}
           {@const here = current?.path === section.path}

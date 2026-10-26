@@ -9,7 +9,11 @@ import { Invalid } from '@mesaaberta/core/server/errors';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import { loadProfileForm, saveProfile } from '@mesaaberta/core/server/profile/service';
-import { profileSchema, PROFILE_DEFAULTS } from '@mesaaberta/core/profile/schema';
+import {
+  profileSchema,
+  PROFILE_DEFAULTS,
+  type ProfileInput,
+} from '@mesaaberta/core/profile/schema';
 import type { ZodType } from 'zod';
 
 /**
@@ -26,13 +30,18 @@ export async function removePicture(locals: App.Locals, userId: string, path: st
  * The save of one part of "Editar perfil": what it sent, plus what is stored for the fields it
  * doesn't own (the username always), checked and saved as the whole profile, as before.
  */
-export function saveSection(section: ProfileSection) {
+export function saveSection(
+  section: ProfileSection,
+  { hidden }: { hidden?: (locals: App.Locals) => Promise<readonly (keyof ProfileInput)[]> } = {},
+) {
   return async ({ request, locals, url }: RequestEvent) => {
     const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
     const stored = (await loadProfileForm(locals.db, user.id))!;
-    const values = withStoredFields(await request.formData(), stored, section);
+    const values = withStoredFields(await request.formData(), stored, section, {
+      hidden: (await hidden?.(locals)) ?? [],
+    });
     const form = validateFormData(values, profileSchema, PROFILE_DEFAULTS, {
       arrays: ['linkNetwork', 'linkUrl'],
       booleans: ['showName'],
