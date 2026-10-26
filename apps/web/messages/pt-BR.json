@@ -2682,6 +2682,86 @@
       }
     }
   ],
+  "gms_crumb": "Quem mestra",
+  "gms_title": "Quem mestra",
+  "gms_lede": "Conheça quem conduz as mesas da comunidade: a nota da mestragem, os sistemas e as mesas abertas agora.",
+  "gms_cta": "Você mestra? Apareça aqui",
+  "gms_search_label": "Buscar por nome ou @usuário",
+  "gms_system_label": "Sistema",
+  "gms_system_any": "Todos os sistemas",
+  "gms_modality_label": "Modalidade",
+  "gms_modality_all": "Todas",
+  "gms_modality_online": "Online",
+  "gms_modality_in_person": "Presencial",
+  "gms_open_only": "Com mesa aberta",
+  "gms_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma pessoa encontrada",
+        "count=1": "1 pessoa encontrada",
+        "count=*": "{count} pessoas encontradas"
+      }
+    }
+  ],
+  "gms_found_hint": "Aparece aqui quem marcou no perfil que mestra.",
+  "gms_sort_recent": "Atividade recente",
+  "gms_sort_score": "Melhor nota",
+  "gms_sort_tables": "Mais mesas mestradas",
+  "gms_sort_name": "Nome (A–Z)",
+  "gms_tables_run": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa mestrada ainda",
+        "count=1": "1 mesa mestrada",
+        "count=*": "{count} mesas mestradas"
+      }
+    }
+  ],
+  "gms_last_run_days": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "última hoje",
+        "count=1": "última ontem",
+        "count=*": "última há {count} dias"
+      }
+    }
+  ],
+  "gms_last_run_months": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "última há 1 mês",
+        "count=*": "última há {count} meses"
+      }
+    }
+  ],
+  "gms_systems_label": "Sistemas que mestra",
+  "gms_open_now": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa aberta agora",
+        "count=1": "1 mesa aberta agora",
+        "count=*": "{count} mesas abertas agora"
+      }
+    }
+  ],
+  "gms_empty_filtered": "Ninguém com esses filtros",
+  "gms_empty_filtered_hint": "Tente outro sistema, tire o “Com mesa aberta” ou busque por outro nome.",
+  "gms_clear_filters": "Limpar filtros",
+  "gms_empty": "Ainda ninguém por aqui",
+  "gms_empty_hint": "Você mestra? Diga isso no seu perfil e apareça na lista.",
+  "gms_empty_action": "Editar meu perfil",
+  "gms_description": "Conheça quem mestra RPG na Mesa Aberta: a nota da mestragem, os sistemas que cada pessoa conduz e as mesas abertas agora.",
+  "seo_gms_title": "Quem mestra · Mesa Aberta",
   "systems_crumb": "Sistemas",
   "systems_title": "Sistemas de RPG",
   "systems_lede": "Veja o que a comunidade joga, quantas mesas estão abertas em cada sistema e quem mestra.",

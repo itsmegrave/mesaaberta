@@ -15,6 +15,7 @@ export function indexingPolicy(
       '/partners',
       '/crowdfunding',
       '/systems',
+      '/gamemasters',
       '/changelog',
       '/blog',
       '/privacy',
@@ -44,7 +45,12 @@ export function indexingPolicy(
     }
     if (canonical.search) index = false;
   }
-  if (path === '/partners' || path === '/crowdfunding' || path === '/systems') {
+  if (
+    path === '/partners' ||
+    path === '/crowdfunding' ||
+    path === '/systems' ||
+    path === '/gamemasters'
+  ) {
     const q = url.searchParams.get('q')?.trim();
     if (q) {
       canonical.searchParams.set('q', q.slice(0, 100));
@@ -70,6 +76,12 @@ export function indexingPolicy(
       index = false;
     }
   }
+  // Quem mestra: a filtered or reordered list is the same people, so only the plain list is indexed.
+  if (
+    path === '/gamemasters' &&
+    ['system', 'modality', 'open', 'sort'].some((key) => url.searchParams.get(key))
+  )
+    index = false;
   if (path === '/changelog') {
     const kind = url.searchParams.get('tipo');
     if (kind && ['new', 'improved', 'fixed'].includes(kind)) {
@@ -83,6 +95,7 @@ export function indexingPolicy(
     publicProfile ||
     path === '/partners' ||
     path === '/systems' ||
+    path === '/gamemasters' ||
     paginatedCrowdfunding ||
     path === '/changelog' ||
     path === '/blog'
