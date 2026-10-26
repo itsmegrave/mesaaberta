@@ -27,6 +27,8 @@
   import GmRating from '#lib/components/ui/GmRating.svelte';
   import StarRating from '#lib/components/ui/StarRating.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import ConfirmDialog from '#lib/components/ui/ConfirmDialog.svelte';
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
@@ -214,8 +216,19 @@
       {/if}
 
       {#if table.extraInfo}
-        <h2 class="mt-10 text-3xl font-semibold tracking-tight">{m.table_extra_info()}</h2>
-        <RichText html={table.extraInfo} class="mt-2 max-w-prose" />
+        <MAAccordion
+          collapse="phone"
+          class="mt-10 max-w-prose border-y border-surface-200-800 md:border-0"
+        >
+          <MAAccordionItem
+            value="extra"
+            title={m.table_extra_info()}
+            summary={m.table_extra_info_summary()}
+            titleClass="text-xl font-semibold tracking-tight md:text-3xl"
+          >
+            <RichText html={table.extraInfo} />
+          </MAAccordionItem>
+        </MAAccordion>
       {/if}
 
       {#if data.joinDetails}
@@ -455,28 +468,36 @@
     {@const requests = data.registrations.filter((r) => r.status === 'pending')}
 
     <section class="mt-12 max-w-2xl">
-      <h2 class="text-2xl font-semibold">{m.table_players()}</h2>
-      {#if players.length === 0}
-        <p class="mt-2">{m.table_no_players()}</p>
-      {:else}
-        <ul class="mt-3 grid gap-2">
-          {#each players as player (player.playerId)}
-            <li
-              class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
-            >
-              <span><UserLink username={player.username} /></span>
-              <ActionForm
-                action="?/remove"
-                playerId={player.playerId}
-                label={m.table_remove()}
-                buttonClass="btn preset-tonal-error btn-sm"
-                success={m.toast_removed()}
-                onfail={(message) => (failed = message)}
-              />
-            </li>
-          {/each}
-        </ul>
-      {/if}
+      <MAAccordion collapse="phone" class="border-y border-surface-200-800 md:border-0">
+        <MAAccordionItem
+          value="players"
+          title={m.table_players()}
+          summary={m.table_players_summary({ count: players.length })}
+          titleClass="text-xl font-semibold md:text-2xl"
+        >
+          {#if players.length === 0}
+            <p>{m.table_no_players()}</p>
+          {:else}
+            <ul class="grid gap-2">
+              {#each players as player (player.playerId)}
+                <li
+                  class="flex items-center justify-between gap-4 rounded-lg border border-surface-200-800 bg-panel p-3"
+                >
+                  <span><UserLink username={player.username} /></span>
+                  <ActionForm
+                    action="?/remove"
+                    playerId={player.playerId}
+                    label={m.table_remove()}
+                    buttonClass="btn preset-tonal-error btn-sm"
+                    success={m.toast_removed()}
+                    onfail={(message) => (failed = message)}
+                  />
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </MAAccordionItem>
+      </MAAccordion>
 
       {#if requests.length > 0}
         <h2 class="mt-8 text-2xl font-semibold">{m.table_requests()}</h2>

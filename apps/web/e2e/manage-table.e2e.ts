@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, createTable, uniqueTitle } from './support/app';
+import { asUser, createTable, openSection, uniqueTitle } from './support/app';
 import { createUser } from './support/users';
 
 // The GM's manage page: requests, players and recent activity, each person in their own browser.
@@ -41,6 +41,8 @@ test('the GM approves a request and removes a player from the manage page, after
   await expect(requests.getByText('Sou o Bruno, nunca joguei Tormenta.')).toBeVisible();
   await requests.getByRole('button', { name: 'Aprovar' }).click();
 
+  await openSection(gmPage, /^Participantes/);
+  await openSection(gmPage, /^Atividade recente/);
   const players = gmPage.getByRole('region', { name: 'Participantes' });
   await expect(players.getByText(`@${bruno.username}`)).toBeVisible();
   await expect(players.getByText(/Na mesa desde/)).toBeVisible();

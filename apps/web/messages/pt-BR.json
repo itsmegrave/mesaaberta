@@ -89,6 +89,7 @@
   "admin_user_title": "Perfil do usuário",
   "admin_user_data": "Dados",
   "admin_user_activity": "Atividade",
+  "admin_user_activity_summary": "Jogando {playing} · mestrando {running} · denúncias {reports}",
   "admin_user_playing": "Jogando",
   "admin_user_running": "Mestrando",
   "admin_user_rating": "Nota da mestragem",
@@ -295,6 +296,7 @@
   "table_schedule": "Horário",
   "table_duration": "Duração",
   "table_extra_info": "Informações extras",
+  "table_extra_info_summary": "O que quem mestra pede para a mesa.",
   "table_recurrence_once": "Sessão única",
   "table_adventure_schedule": "Aventura com várias sessões; as próximas datas serão combinadas pelo grupo.",
   "table_recurrence_weekly": "Toda semana",
@@ -412,6 +414,7 @@
   "table_cancel_request": "Cancelar pedido",
   "table_you_are_gm": "Você mestra esta mesa.",
   "table_players": "Participantes",
+  "table_players_summary": "{count, plural, =0 {Ninguém na mesa ainda} =1 {1 pessoa na mesa} other {{count} pessoas na mesa}}",
   "table_requests": "Pedidos de vaga",
   "table_no_players": "Ninguém entrou ainda.",
   "table_approve": "Aprovar",
@@ -457,6 +460,7 @@
   "manage_going_rate_title": "Liberar avaliação",
   "manage_going_rate_hint": "Quem você marcar poderá avaliar agora. Só aparece aqui quem você marcou como presente em uma sessão.",
   "manage_going_rate_none": "Ninguém para liberar agora.",
+  "manage_going_rate_summary": "{count, plural, =0 {Ninguém para liberar agora} =1 {1 pessoa para liberar} other {{count} pessoas para liberar}}",
   "manage_going_rate_submit": "Liberar avaliação",
   "manage_going_rate_submit_count": "Liberar avaliação ({count})",
   "manage_going_rate_done": "Avaliação liberada.",
@@ -503,6 +507,7 @@
   "manage_free_seat": "Vaga livre",
   "manage_free_seat_hint": "Aparece na lista de mesas abertas",
   "manage_activity": "Atividade recente",
+  "manage_activity_summary": "Última mudança: {when}",
   "manage_activity_none": "Nada por aqui ainda.",
   "manage_activity_table_created": "Você abriu a mesa",
   "manage_activity_table_drafted": "Você salvou a mesa como rascunho",
@@ -1987,5 +1992,6 @@
   "participant_rating_new": "Estreia como participante",
   "participant_rating_as": "como participante",
   "public_profile_scores_hint": "Sua nota como participante vem de quem mestrou as mesas em que você jogou. As duas notas aparecem depois de 3 avaliações.",
-  "player_rating_tables_played": "{count, plural, =0 {Primeira mesa} =1 {Jogou 1 mesa} other {Jogou {count} mesas}}"
+  "player_rating_tables_played": "{count, plural, =0 {Primeira mesa} =1 {Jogou 1 mesa} other {Jogou {count} mesas}}",
+  "changelog_month_summary": "{count, plural, =0 {Nenhuma versão} =1 {1 versão} other {{count} versões}}"
 }

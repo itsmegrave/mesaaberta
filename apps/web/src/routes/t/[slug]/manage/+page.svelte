@@ -8,7 +8,6 @@
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
-  import { Collapsible } from '@skeletonlabs/skeleton-svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
@@ -23,6 +22,8 @@
   import SummaryRow from '../components/ui/SummaryRow.svelte';
   import { Target } from '#lib/target.svelte.js';
   import TableGoingOn from './components/TableGoingOn.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import PlayerRatings from './components/PlayerRatings.svelte';
   import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import DraftNotice from '../components/DraftNotice.svelte';
@@ -33,16 +34,10 @@
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { kindLabel, scheduleLabel, seatSummary, seatsLeftLabel } from '#lib/tables/format.js';
   import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
-  import { onMount } from 'svelte';
 
   let { data: serverData, form: result } = $props();
   const remote = pageQuery(() => serverData);
   const data = $derived({ ...serverData, ...remote.data });
-
-  // Recent activity is open on a wide screen and folded under the rest on a phone. Open until then,
-  // so it is there without JavaScript.
-  let activityOpen = $state(true);
-  onMount(() => (activityOpen = matchMedia('(min-width: 1024px)').matches));
 
   const locale = getLocale();
   const table = $derived(data.table);
@@ -359,95 +354,87 @@
         {/if}
       </section>
 
-      <section aria-labelledby="players" class={card}>
-        <div class="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="players" class="text-2xl font-semibold">{m.table_players()}</h2>
-          <span class="font-semibold text-muted"
-            >{m.manage_seats_of({ taken, total: table.capacity })}</span
+      <section class={card}>
+        <MAAccordion collapse="phone">
+          <MAAccordionItem
+            value="players"
+            title={m.table_players()}
+            summary={m.manage_seats_of({ taken, total: table.capacity })}
+            summaryOnWide
+            titleClass="text-xl font-semibold md:text-2xl"
           >
-        </div>
-        <p class="mt-3">
-          <span class="sr-only">{m.table_seats_taken({ taken, total: table.capacity })}</span
-          ><SeatDots {taken} capacity={table.capacity} reserved={table.reserved} />
-        </p>
-        {#if table.minPlayers}
-          <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
-        {/if}
-        <ul class="mt-3">
-          <RosterRow
-            username={data.gm.username}
-            avatarUrl={data.gm.avatarUrl}
-            subline={m.manage_you()}
-          >
-            {#snippet actions()}
-              <span class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
-                >{m.manage_gm_badge()}</span
+            <p>
+              <span class="sr-only">{m.table_seats_taken({ taken, total: table.capacity })}</span
+              ><SeatDots {taken} capacity={table.capacity} reserved={table.reserved} />
+            </p>
+            {#if table.minPlayers}
+              <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
+            {/if}
+            <ul class="mt-3">
+              <RosterRow
+                username={data.gm.username}
+                avatarUrl={data.gm.avatarUrl}
+                subline={m.manage_you()}
               >
-            {/snippet}
-          </RosterRow>
-          {#each data.players as player (player.playerId)}
-            <RosterRow
-              username={player.username}
-              avatarUrl={player.avatarUrl}
-              subline={m.manage_since({ date: day(player.since) })}
-            >
-              {#snippet actions()}
-                <KebabMenu name={atHandle(player.username)} items={playerMenu(player)} />
-                <!-- Opened from the row's menu ("Mandar mensagem"). -->
-                <ActionForm action="?/message" playerId={player.playerId} class="hidden">
-                  <button
-                    id="message-{player.playerId}"
-                    type="submit"
-                    tabindex="-1"
-                    aria-hidden="true"
-                  ></button>
-                </ActionForm>
-              {/snippet}
-            </RosterRow>
-          {/each}
-          {#each { length: table.seatsLeft }, i (i)}
-            <li class={rosterRowClass}>
-              <span class="flex items-center gap-3">
-                <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-10 shrink-0">
-                  <Chair colour="stroke-lamp" free />
-                </svg>
-                <span>
-                  <span class="block font-semibold">{m.manage_free_seat()}</span>
-                  <span class="block text-sm text-muted">{m.manage_free_seat_hint()}</span>
-                </span>
-              </span>
-            </li>
-          {/each}
-        </ul>
+                {#snippet actions()}
+                  <span
+                    class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
+                    >{m.manage_gm_badge()}</span
+                  >
+                {/snippet}
+              </RosterRow>
+              {#each data.players as player (player.playerId)}
+                <RosterRow
+                  username={player.username}
+                  avatarUrl={player.avatarUrl}
+                  subline={m.manage_since({ date: day(player.since) })}
+                >
+                  {#snippet actions()}
+                    <KebabMenu name={atHandle(player.username)} items={playerMenu(player)} />
+                    <!-- Opened from the row's menu ("Mandar mensagem"). -->
+                    <ActionForm action="?/message" playerId={player.playerId} class="hidden">
+                      <button
+                        id="message-{player.playerId}"
+                        type="submit"
+                        tabindex="-1"
+                        aria-hidden="true"
+                      ></button>
+                    </ActionForm>
+                  {/snippet}
+                </RosterRow>
+              {/each}
+              {#each { length: table.seatsLeft }, i (i)}
+                <li class={rosterRowClass}>
+                  <span class="flex items-center gap-3">
+                    <svg aria-hidden="true" viewBox="-30 -36 60 60" class="block size-10 shrink-0">
+                      <Chair colour="stroke-lamp" free />
+                    </svg>
+                    <span>
+                      <span class="block font-semibold">{m.manage_free_seat()}</span>
+                      <span class="block text-sm text-muted">{m.manage_free_seat_hint()}</span>
+                    </span>
+                  </span>
+                </li>
+              {/each}
+            </ul>
+          </MAAccordionItem>
+        </MAAccordion>
       </section>
 
       {#if data.canRatePlayers}
         <PlayerRatings next={here} goingOn={table.status !== 'concluded'} players={data.players} />
       {/if}
 
-      <section aria-labelledby="activity" class={card}>
-        <Collapsible
-          open={activityOpen}
-          onOpenChange={(details) => (activityOpen = details.open)}
-          class="grid"
-        >
-          <Collapsible.Trigger class="flex w-full items-center justify-between gap-3 text-left">
-            <h2 id="activity" class="text-2xl font-semibold">{m.manage_activity()}</h2>
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="shrink-0 transition-transform {activityOpen ? 'rotate-180' : ''}"
-              ><path d="M6 9l6 6 6-6" /></svg
-            >
-          </Collapsible.Trigger>
-          <Collapsible.Content>
+      <section class={card}>
+        <MAAccordion>
+          <MAAccordionItem
+            value="activity"
+            title={m.manage_activity()}
+            summary={data.activity[0]
+              ? m.manage_activity_summary({ when: moment(data.activity[0].at) })
+              : m.manage_activity_none()}
+            titleClass="text-xl font-semibold md:text-2xl"
+          >
             {#if data.activity.length === 0}
               <p class="mt-3 text-muted">{m.manage_activity_none()}</p>
             {:else}
@@ -468,8 +455,8 @@
                 {/each}
               </ul>
             {/if}
-          </Collapsible.Content>
-        </Collapsible>
+          </MAAccordionItem>
+        </MAAccordion>
       </section>
     </div>
 

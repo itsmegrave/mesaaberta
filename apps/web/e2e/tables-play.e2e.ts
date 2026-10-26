@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, createTable, uniqueTitle } from './support/app';
+import { asUser, createTable, openSection, uniqueTitle } from './support/app';
 import { createUser, database } from './support/users';
 
 // Players and GMs, each in their own browser, against the local Supabase and its real Postgres.
@@ -38,6 +38,7 @@ test.describe('joining a table that takes players at once', () => {
     // The GM sees who sat down (names are only shown to the GM).
     await gmPage.goto(`/t/${slug}`);
     await expect(gmPage.getByRole('heading', { name: 'Participantes' })).toBeVisible();
+    await openSection(gmPage, /^Participantes/);
     await expect(gmPage.getByRole('main').getByText(players[0].username)).toBeVisible();
 
     await page.getByRole('button', { name: 'Sair da mesa' }).click();
