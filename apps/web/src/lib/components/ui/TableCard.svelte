@@ -39,6 +39,8 @@
     imageUrl?: string | null;
     modality?: 'online' | 'in_person';
     locationArea?: string | null;
+    /** The "Onde jogar" place an in-person table happens at, named instead of the area. */
+    placeName?: string | null;
     platforms?: PlatformItem[];
     tags?: TagItem[];
   };
@@ -195,7 +197,7 @@
       <div class="mt-1 flex items-center gap-2 text-sm leading-normal text-muted">
         <Icon name={modalityIcon(table.modality)} size={16} />
         {table.modality === 'in_person'
-          ? `${m.table_modality_in_person()} · ${table.locationArea ?? ''}`
+          ? `${m.table_modality_in_person()} · ${table.placeName ?? table.locationArea ?? ''}`
           : m.table_modality_online()}
       </div>
     {/if}

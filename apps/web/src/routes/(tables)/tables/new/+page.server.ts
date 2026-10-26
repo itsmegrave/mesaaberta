@@ -20,6 +20,8 @@ import {
   checkRateLimit,
 } from '@mesaaberta/core/server/rate-limit';
 import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
+import { directoryEnabled } from '#lib/server/directories/flags.js';
+import { placeOptions } from '@mesaaberta/core/server/places/picker';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -44,6 +46,10 @@ export const load: PageServerLoad = async (event) => {
   const presetSystem = catalogRead.systems.find(
     (system) => system.slug === wanted && !('pending' in system),
   )?.slug;
+  // "Abrir mesa aqui" on a place's page (`?place=<slug>`) picks that place, in person; only a
+  // listed one, and only while the places are on.
+  const places = (await directoryEnabled(locals, 'places')) ? await placeOptions(locals.db) : null;
+  const presetPlace = places?.find((place) => place.slug === url.searchParams.get('place'))?.slug;
   return {
     duplication: source
       ? {
@@ -74,16 +80,19 @@ export const load: PageServerLoad = async (event) => {
             locationArea: input.locationArea ?? '',
             joinDetails: input.joinDetails ?? '',
             postalCode: input.postalCode ?? '',
+            placeSlug: source.placeSlug,
           }
         : {
             ...NEW_TABLE_VALUES,
             ...(presetSystem ? { systemSlug: presetSystem } : {}),
+            ...(presetPlace ? { modality: 'in_person' as const, placeSlug: presetPlace } : {}),
             timezone: await timezoneOf(locals, cookies),
           },
     ),
     systems: catalogRead.systems,
     catalog: catalogRead.catalog,
     catalogRead,
+    places,
   };
 };
 

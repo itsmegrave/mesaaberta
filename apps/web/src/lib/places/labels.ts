@@ -1,4 +1,5 @@
 import { m } from '#lib/paraglide/messages.js';
+import { formatCep } from '@mesaaberta/core/location/cep';
 import type { IconName } from '#lib/icons/names.js';
 import {
   PLACE_AMENITIES,
@@ -58,3 +59,17 @@ export function placeTagLabel(tag: { kind: string; label: string }): string {
   if (tag.kind === 'amenity' && isPlaceAmenity(tag.label)) return placeAmenityLabels[tag.label]();
   return tag.label;
 }
+
+/**
+ * OpenStreetMap searching the address: no embedded map (the CSP keeps third-party tiles out), so
+ * "Ver no mapa" opens it apart.
+ */
+export const placeMapHref = (place: {
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}) =>
+  `https://www.openstreetmap.org/search?query=${encodeURIComponent(
+    `${place.street}, ${place.city} - ${place.state}, ${formatCep(place.postalCode)}`,
+  )}`;

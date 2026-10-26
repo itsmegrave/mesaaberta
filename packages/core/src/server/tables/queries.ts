@@ -16,6 +16,7 @@ import type { AnyDb } from '../db/client';
 import {
   follows,
   gameTables,
+  places,
   profileFavoriteSystems,
   profiles,
   registrations,
@@ -49,6 +50,11 @@ const columns = {
   joinMode: gameTables.joinMode,
   modality: gameTables.modality,
   locationArea: gameTables.locationArea,
+  // The "Onde jogar" place it happens at, while that place is listed; its name for the card.
+  placeId: gameTables.placeId,
+  placeName: sql<
+    string | null
+  >`(select ${places.name} from ${places} where ${places.id} = ${gameTables.placeId} and ${places.approvedAt} is not null and ${places.removedAt} is null and ${places.hiddenAt} is null)`,
   systemName: systems.name,
   systemSlug: systems.slug,
   // Seats taken: confirmed registrations only. A pending request takes none.

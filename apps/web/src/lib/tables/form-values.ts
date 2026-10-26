@@ -28,6 +28,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
   locationArea: '',
   joinDetails: '',
   postalCode: '',
+  placeSlug: '',
   platforms: [],
   tags: [],
   removeImage: false,
@@ -51,6 +52,7 @@ export function errorText(code: string, field = ''): string {
     return m.form_error_min_players_invalid();
   if (field === 'plannedSessions' && code !== 'required')
     return m.form_error_planned_sessions_invalid();
+  if (field === 'placeSlug') return m.table_form_place_not_found();
   if (field === 'postalCode') {
     if (code === 'not_found') return m.form_error_cep_not_found();
     if (code === 'unavailable') return m.form_error_cep_unavailable();

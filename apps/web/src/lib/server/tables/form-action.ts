@@ -15,6 +15,8 @@ import {
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { serverStorage } from '@mesaaberta/core/server/storage';
 import { withLocation } from '@mesaaberta/core/server/location/cep';
+import { withPlace } from '@mesaaberta/core/server/places/picker';
+import { directoryEnabled } from '../directories/flags';
 import { timezoneOf } from '../time';
 import { tableFormSchema, toTableInput, type TableInput } from '@mesaaberta/core/tables/schema';
 
@@ -84,9 +86,15 @@ export async function handleTableForm(
       imagePath = await storeImage(storage, prepared, locals.log);
     }
 
-    const input = locals.db
-      ? await withLocation(locals.db, toTableInput(form.data))
-      : toTableInput(form.data);
+    // An "Onde jogar" place, when one was picked and the places are on: it brings its CEP and area.
+    // Otherwise the CEP the GM typed is looked up, as before there were places.
+    const placeSlug =
+      form.data.placeSlug && (await directoryEnabled(locals, 'places')) ? form.data.placeSlug : '';
+    const input = !locals.db
+      ? toTableInput(form.data)
+      : placeSlug && form.data.modality === 'in_person'
+        ? await withPlace(locals.db, toTableInput(form.data), placeSlug)
+        : await withLocation(locals.db, toTableInput(form.data));
     const saved = await save(input, imagePath, draft);
     slug = saved.slug;
     // A table whose system is a suggestion is saved as a draft whatever button was pressed.

@@ -3194,5 +3194,14 @@
   "admin_report_place": "Lugar",
   "admin_report_place_gone": "Lugar que não existe mais",
   "admin_report_place_reports": "Denúncias abertas",
-  "admin_reports_target_place_option": "Lugares"
+  "admin_reports_target_place_option": "Lugares",
+  "table_form_where": "Onde vai ser",
+  "table_form_where_place": "Num lugar do Onde jogar",
+  "table_form_where_other": "Outro lugar",
+  "table_form_place": "Lugar",
+  "table_form_place_choose": "Busque pelo nome, bairro ou cidade",
+  "table_form_place_missing": "Não achou o lugar?",
+  "table_form_place_register": "Cadastre o lugar",
+  "table_form_place_not_found": "Esse lugar não está mais em Onde jogar. Escolha outro ou use Outro lugar.",
+  "table_place_title": "Onde"
 }

@@ -95,5 +95,6 @@
     manageHref={`/t/${data.slug}/manage`}
     calendarNote
     suggestSystem={data.status === 'draft'}
+    places={data.places}
   />
 </section>

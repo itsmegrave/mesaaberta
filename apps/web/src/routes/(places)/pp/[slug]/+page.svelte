@@ -15,6 +15,7 @@
     placeArea,
     placeKindIcons,
     placeKindLabels,
+    placeMapHref,
     placeTagLabel,
   } from '#lib/places/labels.js';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
@@ -32,12 +33,7 @@
 
   const area = $derived(placeArea(place));
   const street = $derived([place.street, place.complement].filter(Boolean).join(', '));
-  // No embedded map (the CSP keeps third-party tiles out): OpenStreetMap opens on the address.
-  const mapHref = $derived(
-    `https://www.openstreetmap.org/search?query=${encodeURIComponent(
-      `${place.street}, ${place.city} - ${place.state}, ${formatCep(place.postalCode)}`,
-    )}`,
-  );
+  const mapHref = $derived(placeMapHref(place));
   const facts = $derived(
     [area, place.openingHours, m.directory_open_tables({ count: data.openTables })].filter(
       (fact): fact is string => !!fact,
