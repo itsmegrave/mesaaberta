@@ -61,6 +61,21 @@ describe('TableForm', () => {
     await expect.element(page.getByLabelText('Última sessão até')).toBeVisible();
   });
 
+  it('asks an adventure how many sessions it plans, and previews the count', async () => {
+    render(TableFormHarness, props);
+
+    await expect.element(page.getByLabelText('Quantas sessões?')).not.toBeInTheDocument();
+
+    await page.getByLabelText(/^Aventura \(várias sessões/).click();
+
+    const field = page.getByLabelText('Quantas sessões?');
+    await expect.element(field).toBeRequired();
+    await expect.element(page.getByText('De 2 a 20.', { exact: false })).toBeVisible();
+    await field.fill('4');
+    await expect.element(page.getByText('Aventura · 4 sessões')).toBeVisible();
+    await expect.element(page.getByText(/^4 sessões,/)).toBeVisible();
+  });
+
   it('groups the form into the four numbered steps and keeps the preview in sync', async () => {
     render(TableFormHarness, props);
 

@@ -18,6 +18,8 @@
     slug: string;
     title: string;
     kind: 'campaign' | 'one_shot' | 'adventure';
+    /** An adventure's planned sessions, shown with its kind. */
+    plannedSessions?: number | null;
     system: { name: string };
     gmName: string;
     /** The GM's score. Absent where there is nothing to show yet, such as the form's preview. */
@@ -54,7 +56,7 @@
       : undefined,
   );
 
-  const kind = $derived(kindLabel(table.kind));
+  const kind = $derived(kindLabel(table.kind, table.plannedSessions));
 
   const cardDate = $derived(
     table.startsAt ? formatCardDate(table.startsAt, shownTimezone(table.timezone), locale) : null,

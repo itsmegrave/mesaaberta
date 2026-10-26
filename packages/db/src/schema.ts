@@ -274,6 +274,9 @@ export const gameTables = pgTable(
     // The fewest confirmed players the GM wants before the table goes ahead. Optional: null says it
     // makes no difference. Never more than `capacity`.
     minPlayers: integer('min_players'),
+    // How many sessions an adventure plans, so the table can say "sessão 2 de 4". Only adventures
+    // have one; null on the others, and on adventures made before the field existed.
+    plannedSessions: integer('planned_sessions'),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     durationMinutes: integer('duration_minutes').notNull(),
     timezone: text('timezone').notNull(),
@@ -311,6 +314,10 @@ export const gameTables = pgTable(
     check(
       'game_tables_min_players_range',
       sql`${table.minPlayers} IS NULL OR (${table.minPlayers} >= 1 AND ${table.minPlayers} <= ${table.capacity})`,
+    ),
+    check(
+      'game_tables_planned_sessions_range',
+      sql`${table.plannedSessions} IS NULL OR (${table.kind}::text = 'adventure' AND ${table.plannedSessions} BETWEEN 2 AND 20)`,
     ),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
     check(

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, profiles, ratings, systems } from '@mesaaberta/core/server/db/schema';
+import { eq } from 'drizzle-orm';
+import { events, gameTables, profiles, ratings, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
@@ -81,6 +82,34 @@ describe('loadManage', () => {
     expect(activity[0]).toMatchObject({ type: 'PlayerLeft', player: 'davi', removed: true });
     expect(activity.map((a) => a.type)).toContain('JoinDeclined');
     expect(activity.length).toBeLessThanOrEqual(8);
+  });
+
+  it('counts which session a campaign or adventure is on from the sessions confirmed', async () => {
+    expect((await loadManage(test.db, gm, 'mesa', now)).session).toBeNull();
+
+    const [table] = await test.db
+      .update(gameTables)
+      .set({ kind: 'adventure', plannedSessions: 4 })
+      .where(eq(gameTables.slug, 'mesa'))
+      .returning();
+    expect((await loadManage(test.db, gm, 'mesa', now)).session).toBe(1);
+
+    const held = { tableId: table.id, slug: 'mesa', title: 'Mesa', nextStartsAt: '' };
+    await test.db.insert(events).values([
+      { type: 'TableSessionHeld', payload: held, processedAt: now },
+      { type: 'TableSessionHeld', payload: held, processedAt: now },
+      // Another table's sessions do not count.
+      { type: 'TableSessionHeld', payload: { ...held, tableId: id(99) }, processedAt: now },
+    ]);
+    const manage = await loadManage(test.db, gm, 'mesa', now);
+    expect(manage.session).toBe(3);
+    expect(manage.table.plannedSessions).toBe(4);
+
+    await test.db.delete(events).where(eq(events.type, 'TableSessionHeld'));
+    await test.db
+      .update(gameTables)
+      .set({ kind: 'one_shot', plannedSessions: null })
+      .where(eq(gameTables.slug, 'mesa'));
   });
 
   it('opens for the GM and an admin only', async () => {

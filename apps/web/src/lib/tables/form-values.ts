@@ -17,6 +17,7 @@ export const NEW_TABLE_VALUES: TableFormValues = {
   kind: 'one_shot',
   capacity: 5,
   minPlayers: '',
+  plannedSessions: '',
   startsAtLocal: '',
   timezone: 'America/Sao_Paulo',
   durationHours: 4,
@@ -48,6 +49,8 @@ export function errorText(code: string, field = ''): string {
   if (field === 'image' && code === 'too_big') return m.form_error_image_too_big();
   if (field === 'minPlayers' && code !== 'above_capacity')
     return m.form_error_min_players_invalid();
+  if (field === 'plannedSessions' && code !== 'required')
+    return m.form_error_planned_sessions_invalid();
   if (field === 'postalCode') {
     if (code === 'not_found') return m.form_error_cep_not_found();
     if (code === 'unavailable') return m.form_error_cep_unavailable();

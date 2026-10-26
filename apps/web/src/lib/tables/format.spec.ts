@@ -8,12 +8,20 @@ describe('kindLabel', () => {
     expect(kindLabel('adventure')).toBe('Aventura');
     expect(kindLabel('one_shot')).toBe('One-shot');
   });
+
+  it('adds an adventure’s planned sessions', () => {
+    expect(kindLabel('adventure', 4)).toBe('Aventura · 4 sessões');
+    expect(kindLabel('campaign', 4)).toBe('Campanha');
+  });
 });
 
 describe('scheduleLabel', () => {
   it('says a one-shot meets once and an adventure agrees its dates', () => {
     expect(scheduleLabel('one_shot', null)).toBe('Sessão única');
     expect(scheduleLabel('adventure', null)).toBe(m.table_adventure_schedule());
+    expect(scheduleLabel('adventure', null, 4)).toBe(
+      'Aventura de 4 sessões; as próximas datas serão combinadas pelo grupo.',
+    );
   });
 
   it('reads a campaign’s weekly rule', () => {

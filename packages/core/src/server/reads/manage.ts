@@ -39,6 +39,7 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
     }),
     // A weekly campaign's next date after this session, in the table's zone, to prefill the answer.
     nextSession: nextSessionOf(manage.table, now),
+    session: manage.session,
     canInvite: actor?.id === gmId,
     canEdit: can(actor, 'table:edit', { gmId, tableStatus: manage.table.status }),
     systemWaiting: manage.systemWaiting,

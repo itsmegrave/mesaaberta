@@ -20,6 +20,7 @@ const columns = {
   imagePath: gameTables.imagePath,
   capacity: gameTables.capacity,
   minPlayers: gameTables.minPlayers,
+  plannedSessions: gameTables.plannedSessions,
   startsAt: gameTables.startsAt,
   durationMinutes: gameTables.durationMinutes,
   timezone: gameTables.timezone,

@@ -56,6 +56,7 @@ export const load: PageServerLoad = async (event) => {
             extraInfo: input.extraInfo ?? '',
             welcomeMessage: input.welcomeMessage ?? '',
             minPlayers: input.minPlayers === null ? '' : String(input.minPlayers),
+            plannedSessions: input.plannedSessions === null ? '' : String(input.plannedSessions),
             durationHours: minutesToHours(input.durationMinutes),
             repeat:
               input.recurrence === 'FREQ=WEEKLY;INTERVAL=2'

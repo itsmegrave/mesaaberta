@@ -52,7 +52,7 @@
   const table = $derived(data.table);
   const locale = getLocale();
 
-  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks));
+  const recurrence = $derived(scheduleLabel(table.kind, table.everyWeeks, table.plannedSessions));
   // svelte-ignore state_referenced_locally
   const rating = actionForm({
     initial: data.ratingForm.data,

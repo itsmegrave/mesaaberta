@@ -365,6 +365,13 @@
       "when": 1792960173021,
       "tag": "0051_notifications_written_at",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792972921161,
+      "tag": "0052_adventure_planned_sessions",
+      "breakpoints": true
     }
   ]
 }
