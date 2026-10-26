@@ -82,7 +82,7 @@ test('capitalization redirects to the canonical username and static routes remai
   const response = await request.get(`/u/${gm.username.toUpperCase()}`, { maxRedirects: 0 });
   expect(response.status()).toBe(308);
   expect(new URL(response.headers().location, response.url()).pathname).toBe(`/u/${gm.username}`);
-  for (const path of ['/t', '/privacy', '/terms', '/favicon.ico'])
+  for (const path of ['/tables', '/privacy', '/terms', '/favicon.ico'])
     expect((await request.get(path)).status()).toBe(200);
   expect((await request.get(`/u/${gm.username}?page=99`)).status()).toBe(404);
   expect((await request.get('/u/no-such-public-profile')).status()).toBe(404);

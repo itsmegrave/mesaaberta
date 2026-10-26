@@ -1,5 +1,6 @@
 import type { ErrorEvent, Log } from '@sentry/core';
 import { safeFields, scrubString, type AppName } from './privacy';
+import { buildInfoOf, type BuildEnv } from '../server/build-info';
 
 // Type-only imports from the SDK's platform-neutral core: nothing is bundled by this file, and every
 // Sentry SDK (SvelteKit, Cloudflare, Node) takes these shapes, so each host shares one privacy policy.
@@ -11,10 +12,19 @@ import { safeFields, scrubString, type AppName } from './privacy';
 const cancelled = (event: ErrorEvent) =>
   event.exception?.values?.some((exception) => exception.type === 'AbortError') ?? false;
 
+/** Flag evaluations the request recorded (`recordFlag`): only flag-shaped names and booleans. */
+const flagsOf = (event: ErrorEvent) => {
+  const values = event.contexts?.flags?.values?.filter(
+    ({ flag, result }) => /^[a-z][a-z0-9_]*$/.test(flag) && typeof result === 'boolean',
+  );
+  return values?.length ? { flags: { values } } : undefined;
+};
+
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
   if (cancelled(event)) return null;
-  // Reconstruct rather than redact unknown SDK contexts. Keep code locations for diagnosis,
-  // never exception messages, local variables, source context, breadcrumbs or request data.
+  // Reconstruct rather than redact unknown SDK contexts. Keep code locations and the flags the
+  // request read for diagnosis, never exception messages, local variables, source context,
+  // breadcrumbs or request data.
   return {
     type: undefined,
     event_id: event.event_id,
@@ -24,6 +34,7 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     release: event.release,
     environment: event.environment,
     tags: safeFields(event.tags),
+    contexts: flagsOf(event),
     debug_meta: event.debug_meta && {
       images: event.debug_meta.images?.flatMap((image) =>
         image.type === 'sourcemap'
@@ -102,3 +113,16 @@ export const sentryOptionsForApp = (app: AppName) => ({
   initialScope: { tags: { app } },
   beforeSend: (event: ErrorEvent) => privateEvent({ ...event, tags: { ...event.tags, app } }),
 });
+
+export type ReleaseEnv = BuildEnv & { CF_VERSION_METADATA?: { id?: string } };
+
+/**
+ * The `release` and `dist` an app's server events carry. The deploy uploads each Worker's bundled
+ * source maps under the release tag (`DEPLOYMENT_VERSION`) with the app as the dist, so events must
+ * name the same pair for Sentry to map `app:///_worker.js` frames. Without a tag (local and
+ * self-hosted runs) the Worker version id stays the release, as before.
+ */
+export const sentryReleaseFor = (app: AppName, env: ReleaseEnv | undefined) => {
+  const { version } = buildInfoOf(env);
+  return version ? { release: version, dist: app } : { release: env?.CF_VERSION_METADATA?.id };
+};

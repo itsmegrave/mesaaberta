@@ -64,7 +64,7 @@ describe('AccountMenu.svelte', () => {
     await trigger().click();
 
     const link = menu().getByRole('link', { name: 'Mensagens, 3 não lidas' });
-    await expect.element(link).toHaveAttribute('href', '/m');
+    await expect.element(link).toHaveAttribute('href', '/messages');
     await expect.element(page.getByTestId('messages-count')).toHaveTextContent('3');
   });
 
@@ -179,5 +179,60 @@ describe('AccountMenu.svelte', () => {
     await trigger().click();
 
     await expect.element(menu().getByRole('link', { name: /Admin/ })).not.toBeInTheDocument();
+  });
+
+  // The test page must stay put, so the links' default navigation is cancelled.
+  const stayOnPage = (e: Event) => e.preventDefault();
+
+  it.each(['Perfil', 'Mensagens', 'Admin'])(
+    'closes the phone sheet after "%s" is followed',
+    async (name) => {
+      document.addEventListener('click', stayOnPage);
+      try {
+        render(AccountMenu, {
+          name: 'Marina Alves',
+          username: 'marina',
+          avatarUrl: null,
+          isAdmin: true,
+          sheet: true,
+        });
+
+        await trigger().click();
+        await menu().getByRole('link', { name }).click();
+
+        await expect
+          .element(page.getByRole('dialog', { name: 'Menu da conta' }))
+          .not.toBeInTheDocument();
+      } finally {
+        document.removeEventListener('click', stayOnPage);
+      }
+    },
+  );
+
+  it('closes the popover after a link is followed', async () => {
+    document.addEventListener('click', stayOnPage);
+    try {
+      render(AccountMenu, { name: 'Marina Alves', username: 'marina', avatarUrl: null });
+
+      await trigger().click();
+      await menu().getByRole('link', { name: 'Mensagens' }).click();
+
+      // A closed popover keeps its content in the page, hidden.
+      await expect
+        .poll(() => document.querySelector('[data-part="content"]')?.getAttribute('data-state'))
+        .toBe('closed');
+    } finally {
+      document.removeEventListener('click', stayOnPage);
+    }
+  });
+
+  it('keeps the phone sheet open while the theme changes', async () => {
+    render(AccountMenu, { name: 'Marina Alves', avatarUrl: null, sheet: true });
+
+    await trigger().click();
+    await menu().getByRole('radio', { name: 'Escuro' }).click();
+
+    await expect.element(page.getByRole('dialog', { name: 'Menu da conta' })).toBeVisible();
+    await menu().getByRole('radio', { name: 'Claro' }).click();
   });
 });

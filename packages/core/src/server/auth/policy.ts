@@ -74,6 +74,12 @@ type Resources = {
     reporterSeated: boolean;
     target: { type: 'table' } | { type: 'player'; playerId: string; playerSeated: boolean };
   };
+  /**
+   * Reporting a message, or a person, from a conversation: the reporter is in it and the subject
+   * (the message's sender, or the person) is someone else. `subjectId` is null for a message whose
+   * sender closed their account.
+   */
+  'message:report': { member: boolean; subjectId: string | null };
   /** Adding a crowdfunding campaign: any signed-in member, public at once. */
   'crowdfunding:add': undefined;
   /** Reporting a campaign. Not one's own: its submitter would be reporting themselves. */
@@ -207,6 +213,8 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     const playerShares = playerId === facts.gmId || playerSeated;
     return playerId !== actor.id && reporterShares && playerShares;
   },
+  'message:report': (actor, facts) =>
+    facts !== undefined && facts.member && facts.subjectId !== null && facts.subjectId !== actor.id,
   'crowdfunding:add': () => true,
   'crowdfunding:report': (actor, campaign) =>
     campaign !== undefined && actor.id !== campaign.submitterId,

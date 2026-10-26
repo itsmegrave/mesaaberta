@@ -25,6 +25,7 @@ import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
+import { reportSubject } from './reports';
 export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
 import type { EventType } from '@mesaaberta/core/server/events/types';
 
@@ -92,7 +93,13 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
     .leftJoin(gameTables, eq(gameTables.id, reports.tableId))
     .leftJoin(gm, eq(gm.id, gameTables.gmId))
     .innerJoin(reporter, eq(reporter.id, reports.reporterId))
-    .leftJoin(reported, and(eq(reports.targetType, 'player'), eq(reported.id, reports.targetId)))
+    .leftJoin(
+      reported,
+      or(
+        and(eq(reports.targetType, 'player'), eq(reported.id, reports.targetId)),
+        eq(reported.id, reports.subjectId),
+      ),
+    )
     .leftJoin(
       crowdfundings,
       and(eq(reports.targetType, 'crowdfunding'), eq(crowdfundings.id, reports.targetId)),
@@ -194,8 +201,11 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
         .orderBy(partnerLinks.position)
     : [];
 
+  // The person a player, message or person report is about (`reportSubject`). A message or person
+  // report may come from a direct conversation, with no table: then there is no seat.
+  const subjectId = reportSubject(row.report);
   const [player] =
-    row.report.targetType === 'player' && row.table
+    subjectId && (row.table || row.report.targetType !== 'player')
       ? await db
           .select({
             id: reported.id,
@@ -206,9 +216,12 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
           .from(reported)
           .leftJoin(
             registrations,
-            and(eq(registrations.playerId, reported.id), eq(registrations.tableId, row.table.id)),
+            and(
+              eq(registrations.playerId, reported.id),
+              eq(registrations.tableId, row.table?.id ?? sql`null`),
+            ),
           )
-          .where(eq(reported.id, row.report.targetId))
+          .where(eq(reported.id, subjectId))
       : [];
 
   // Who a ban from this report would hit: the reported player. A table report bans no one from
@@ -249,6 +262,7 @@ async function reportForDecision(db: AnyDb, id: string) {
       targetType: reports.targetType,
       targetId: reports.targetId,
       tableId: reports.tableId,
+      subjectId: reports.subjectId,
     })
     .from(reports)
     .where(eq(reports.id, id));
@@ -518,8 +532,7 @@ export async function banAccount(
 
     if (reportId) {
       const report = await reportForDecision(t, reportId);
-      if (report.targetType !== 'player' || report.targetId !== profileId)
-        throw new Invalid('id', 'not_found');
+      if (reportSubject(report) !== profileId) throw new Invalid('id', 'not_found');
       eventIds.push(await settle(t, actor!, report, 'resolved', reason, now));
     }
     eventIds.push(

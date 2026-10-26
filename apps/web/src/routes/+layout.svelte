@@ -81,10 +81,10 @@
   // Loading shows only after 150 ms, so a quick navigation does not flash the bar or a skeleton.
   const loading = new Slow(() => navigating.to, 150);
   const SKELETONS: Record<string, SkeletonKind> = {
-    '/t': 'cards',
+    '/(tables)/tables': 'cards',
     '/u/tables': 'columns',
-    '/n': 'rows',
-    '/m': 'rows',
+    '/notifications': 'rows',
+    '/(messages)/messages': 'rows',
   };
   // A list page on its way from another page: its skeleton stands in for the page being left. Within
   // the same page (a filter), the page draws its own skeleton under the filters.
@@ -213,7 +213,7 @@
 
       <MAToaster />
       <UnsavedChangesDialog />
-      {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/m')}
+      {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/messages') && !isUnder(page.url.pathname, '/m')}
         <!-- Its own chunk: the chat (thread, composer, emoji picker) loads only for the signed-in. -->
         {#await import('#lib/components/chat/ChatDrawer.svelte') then { default: ChatDrawer }}
           {#key data.cacheIdentity}<ChatDrawer
@@ -239,7 +239,7 @@
       {/if}
 
       {#if !data.maintenance}
-        <SiteFooter site={data.site} />
+        <SiteFooter site={data.site} directories={data.directories} />
       {/if}
     </div>
   </div>

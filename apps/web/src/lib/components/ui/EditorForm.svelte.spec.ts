@@ -46,7 +46,7 @@ describe('EditorForm', () => {
 
     await expect
       .element(page.getByRole('link', { name: 'Cancelar' }))
-      .toHaveAttribute('href', '/t');
+      .toHaveAttribute('href', '/tables');
     await expect.element(page.getByText('Um admin aprova antes.')).toBeVisible();
   });
 

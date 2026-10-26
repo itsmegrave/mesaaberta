@@ -18,7 +18,7 @@ describe('PageHead', () => {
   });
 
   it('puts the actions next to the title only when there are some', async () => {
-    const actions = createRawSnippet(() => ({ render: () => '<a href="/t/new">Abrir</a>' }));
+    const actions = createRawSnippet(() => ({ render: () => '<a href="/tables/new">Abrir</a>' }));
     render(PageHead, { title: 'Mesas', actions });
 
     const link = page.getByRole('link', { name: 'Abrir' }).element();
@@ -52,7 +52,9 @@ describe('EmptyState', () => {
   });
 
   it('links back to the whole list', async () => {
-    await render(EmptyState, { text: 'Nada aqui.', clearHref: '/t', clearLabel: 'Limpar' });
-    await expect.element(page.getByRole('link', { name: 'Limpar' })).toHaveAttribute('href', '/t');
+    await render(EmptyState, { text: 'Nada aqui.', clearHref: '/tables', clearLabel: 'Limpar' });
+    await expect
+      .element(page.getByRole('link', { name: 'Limpar' }))
+      .toHaveAttribute('href', '/tables');
   });
 });

@@ -35,7 +35,7 @@ test('an in-person table shows its area to everyone and its address only to the 
   await expect(visitor.getByText('Presencial · Boa Viagem, Recife')).toBeVisible();
   await expect(visitor.getByText('Rua das Flores')).toHaveCount(0);
 
-  await visitor.goto('/t?modality=in_person');
+  await visitor.goto('/tables?modality=in_person');
   await expect(
     visitor.getByRole('group', { name: 'Modalidade' }).getByRole('button', { name: 'Presencial' }),
   ).toHaveAttribute('aria-pressed', 'true');
@@ -43,13 +43,13 @@ test('an in-person table shows its area to everyone and its address only to the 
     'Presencial · Boa Viagem, Recife',
   );
 
-  await visitor.goto('/t?modality=online');
+  await visitor.goto('/tables?modality=online');
   await expect(visitor.getByRole('article').filter({ hasText: title })).toHaveCount(0);
 });
 
 test('an in-person table needs the neighbourhood and city', async ({ page }) => {
   await signIn(page, await createUser('Mestre Sem Bairro'));
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await page.getByLabel('Presencial', { exact: true }).check();
   await expect(page.getByLabel('Bairro e cidade')).toBeVisible();
   await page.getByLabel('Online', { exact: true }).check();
@@ -68,7 +68,7 @@ test('a CEP fills the neighbourhood and city in, from the local cache, and never
   }
 
   await signIn(page, await createUser('Mestre Com Cep'));
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   await page.getByLabel('Título').fill(uniqueTitle('Com CEP'));
   await setSeats(page, 4);
@@ -84,7 +84,7 @@ test('a CEP fills the neighbourhood and city in, from the local cache, and never
 
 test('a CEP in the wrong shape is refused next to the field', async ({ page }) => {
   await signIn(page, await createUser('Mestre Cep Errado'));
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   await page.getByLabel('Título').fill(uniqueTitle('CEP ruim'));
   await setFirstSession(page, soonSession());

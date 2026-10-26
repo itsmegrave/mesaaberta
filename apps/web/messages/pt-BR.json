@@ -26,6 +26,32 @@
   "messages_error_off": "Esta pessoa não recebe mensagens diretas agora.",
   "messages_error_rate_limited": "Você enviou muitas mensagens em pouco tempo. Tente de novo em instantes.",
   "messages_dm_off_notice": "{name} não recebe mais mensagens diretas. Você ainda pode reler a conversa.",
+  "messages_view_profile": "Ver perfil",
+  "messages_report_person": "Denunciar {name}…",
+  "messages_block_person": "Bloquear {name}…",
+  "messages_message_actions": "mensagem de {name}",
+  "messages_copy_text": "Copiar texto",
+  "messages_copied": "Texto copiado.",
+  "messages_report_message": "Denunciar mensagem…",
+  "messages_report_message_title": "Denunciar mensagem de {name}",
+  "messages_report_person_title": "Denunciar {name}",
+  "messages_report_message_lede": "Sua denúncia é anônima. A moderação recebe esta mensagem e as 5 anteriores da conversa, e nada além disso.",
+  "messages_report_person_lede": "Sua denúncia é anônima. A moderação recebe a última mensagem desta pessoa na conversa e as 5 anteriores, e nada além disso.",
+  "messages_block_title": "Bloquear {name}?",
+  "messages_block_effect_contact": "A pessoa não pode mais te mandar mensagens diretas, te convidar para mesas nem te seguir.",
+  "messages_block_effect_inbox": "Esta conversa sai da sua lista de Mensagens.",
+  "messages_block_effect_tables": "Chats de mesas que vocês dividem continuam iguais.",
+  "messages_block_effect_silent": "A pessoa não é avisada.",
+  "messages_block_undo": "Você pode desbloquear quando quiser em Editar perfil › Mensagens e convites.",
+  "messages_block_confirm": "Bloquear",
+  "messages_blocked_toast": "Você bloqueou {name}.",
+  "messages_blocked_notice": "Você bloqueou {name}. Ninguém aqui pode mandar mensagens.",
+  "messages_unblock": "Desbloquear",
+  "messages_unblocked_toast": "Você desbloqueou {name}.",
+  "messages_block_failed": "Não deu certo. Tente de novo.",
+  "messages_blocked_title": "Pessoas bloqueadas",
+  "messages_blocked_help": "Quem está aqui não pode te mandar mensagens diretas, te convidar nem te seguir, e não fica sabendo do bloqueio.",
+  "messages_blocked_empty": "Você não bloqueou ninguém.",
   "messages_read_only_table": "Esta mesa foi desativada, então o chat ficou só para leitura.",
   "messages_read_only_table_ended": "Esta mesa terminou há mais de {days} dias, então o chat ficou só para leitura.",
   "messages_today": "Hoje",
@@ -1463,6 +1489,15 @@
   "admin_report_kind_table": "Denúncia de mesa",
   "admin_report_kind_player": "Denúncia de perfil",
   "admin_report_profile": "Perfil denunciado",
+  "admin_report_kind_message": "Denúncia de mensagem",
+  "admin_report_kind_person": "Denúncia de pessoa em Mensagens",
+  "admin_reports_target_message": "Mensagem de {name}",
+  "admin_report_excerpt": "Mensagens denunciadas",
+  "admin_report_excerpt_direct": "Conversa direta · cópia feita quando a denúncia foi enviada. A conversa em si não fica visível para a moderação.",
+  "admin_report_excerpt_table": "Chat da mesa · cópia feita quando a denúncia foi enviada. A conversa em si não fica visível para a moderação.",
+  "admin_report_excerpt_reported": "Denunciada",
+  "admin_report_excerpt_empty": "Nenhuma mensagem desta pessoa na conversa.",
+  "admin_report_excerpt_closed_account": "Conta encerrada",
   "admin_report_where": "Mesa em comum",
   "admin_report_table_ban_hint": "Denunciar uma mesa não bane quem mestra. Se as mesas dessa pessoa acumulam denúncias aceitas, o banimento é feito no perfil dela.",
   "admin_report_close_table": "Fechar a mesa",
@@ -1665,6 +1700,8 @@
   "admin_reports_target_all": "Todos os tipos",
   "admin_reports_target_table_option": "Mesas",
   "admin_reports_target_player_option": "Perfis",
+  "admin_reports_target_message_option": "Mensagens",
+  "admin_reports_target_person_option": "Pessoas em Mensagens",
   "admin_reports_gm_context": "Mesa de {gm}",
   "admin_reports_open": "Abrir denúncia",
   "admin_reports_action_label": "Ações da denúncia: {target}",
@@ -1721,7 +1758,11 @@
   "history_event_TableEdited": "editou a mesa (sem aviso aos participantes)",
   "history_event_TableDisabled": "desativou a mesa",
   "history_event_TableAwaitingConfirmation": "A sessão terminou e quem mestra recebeu a pergunta se ela aconteceu",
+  "history_event_TableCloseReminder": "lembrou quem mestra, por e-mail, de dizer se a sessão aconteceu",
   "history_event_TableConcluded": "confirmou que a sessão aconteceu",
+  "history_event_TableConcludedAutomatically": "concluiu a mesa porque quem mestra não respondeu em 10 dias, e pediu a avaliação de quem jogou",
+  "history_event_TableSessionHeld": "confirmou que a sessão aconteceu e a mesa seguiu para a próxima",
+  "history_event_TableSessionHeldAutomatically": "registrou a sessão como realizada porque quem mestra não respondeu em 10 dias, seguiu para a próxima data e pediu a avaliação de quem jogou",
   "history_event_TableNotHeld": "disse que a sessão não aconteceu",
   "history_event_TableClosedByModeration": "encerrou a mesa por moderação",
   "history_event_JoinRequested": "pediu uma vaga",
@@ -2491,5 +2532,129 @@
       }
     }
   ],
-  "changelog_notice_title": "Novidades: {title}"
+  "changelog_notice_title": "Novidades: {title}",
+  "directory_show_label": "Mostrar",
+  "directory_sort_label": "Ordenar",
+  "directory_gms_label": "Quem mestra",
+  "directory_people_more": "+{count}",
+  "directory_open_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa aberta",
+        "count=1": "1 mesa aberta",
+        "count=*": "{count} mesas abertas"
+      }
+    }
+  ],
+  "systems_crumb": "Sistemas",
+  "systems_title": "Sistemas de RPG",
+  "systems_lede": "Veja o que a comunidade joga, quantas mesas estão abertas em cada sistema e quem mestra.",
+  "systems_open_cta": "Abrir uma mesa",
+  "systems_search_label": "Buscar sistema",
+  "systems_show_open": "Com mesa aberta",
+  "systems_show_all": "Todos",
+  "systems_sort_open": "Mais mesas abertas",
+  "systems_sort_played": "Mais jogados",
+  "systems_sort_az": "A a Z",
+  "systems_found_open": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum sistema com mesa aberta",
+        "count=1": "1 sistema com mesa aberta",
+        "count=*": "{count} sistemas com mesa aberta"
+      }
+    }
+  ],
+  "systems_found_all": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhum sistema",
+        "count=1": "1 sistema",
+        "count=*": "{count} sistemas"
+      }
+    }
+  ],
+  "systems_tables_here": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa na Mesa Aberta",
+        "count=1": "1 mesa na Mesa Aberta",
+        "count=*": "{count} mesas na Mesa Aberta"
+      }
+    }
+  ],
+  "systems_gm_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém mestra ainda",
+        "count=1": "1 pessoa mestra",
+        "count=*": "{count} pessoas mestram"
+      }
+    }
+  ],
+  "systems_never_played": "Ainda sem mesas na Mesa Aberta",
+  "systems_first_gm": "Seja a primeira pessoa a mestrar",
+  "systems_none_open": "Nenhuma mesa aberta agora",
+  "systems_empty_search": "Nenhum sistema encontrado para “{query}”.",
+  "systems_empty_hint": "Confira a grafia. Se o sistema não está na lista, sugira ele quando abrir uma mesa: quem cuida do catálogo aprova.",
+  "systems_empty_open": "Nenhum sistema tem mesa aberta agora.",
+  "systems_show_all_link": "Ver todos os sistemas",
+  "systems_description": "Veja o que a comunidade joga na Mesa Aberta: quantas mesas estão abertas em cada sistema de RPG e quem mestra.",
+  "seo_systems_title": "Sistemas de RPG · Mesa Aberta",
+  "seo_system_title": "{name} · Sistemas de RPG · Mesa Aberta",
+  "seo_system_description": "{name} na Mesa Aberta: {facts}. Veja as mesas abertas e quem mestra este sistema.",
+  "system_about": "Sobre o sistema",
+  "system_modality_online": "Online",
+  "system_modality_in_person": "Presencial",
+  "system_modality_both": "Online e presencial",
+  "system_see_open": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Ver a mesa aberta",
+        "count=*": "Ver as {count} mesas abertas"
+      }
+    }
+  ],
+  "system_new_table": "Abrir uma mesa deste sistema",
+  "system_open_title": "Mesas abertas",
+  "system_open_all": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Ver a mesa",
+        "count=*": "Ver todas as {count} mesas"
+      }
+    }
+  ],
+  "system_open_empty": "Nenhuma mesa aberta de {name} agora.",
+  "system_open_empty_hint": "Quem mestra este sistema aparece logo abaixo. Ou abra a próxima mesa você.",
+  "system_gms_title": "Quem mestra este sistema",
+  "system_gms_lede": "Pessoas que já abriram mesas de {name} aqui, de quem mestrou mais para quem mestrou menos.",
+  "system_gm_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mesa deste sistema",
+        "count=*": "{count} mesas deste sistema"
+      }
+    }
+  ],
+  "system_ended_title": "Mesas que já aconteceram",
+  "system_ended_line": "Quem mestra: {gm} · encerrada em {date}",
+  "directory_footer_title": "Diretórios",
+  "directory_footer_systems": "Sistemas"
 }

@@ -63,12 +63,26 @@ export type DomainEvent =
     }
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
+  // The GM still has not answered: the sweeper e-mails them an hour after the session ended (`1h`)
+  // and again a week after (`7d`), the last notice before the session is settled for them.
+  | {
+      type: 'TableCloseReminder';
+      payload: { tableId: string; slug: string; title: string; step: '1h' | '7d' };
+    }
   // The GM confirmed the session happened, or that it did not.
   // `absentPlayerIds` are the confirmed players the GM said did not show up (they cannot rate the
   // GM and are not asked to). Absent when attendance was not recorded.
+  // `autoClosed`: nobody answered in ten days, so the sweeper concluded the one-shot (no actor), and
+  // every confirmed player is asked to rate by e-mail as well as in the bell.
   | {
       type: 'TableConcluded';
-      payload: { tableId: string; slug: string; title: string; absentPlayerIds?: string[] };
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        absentPlayerIds?: string[];
+        autoClosed?: true;
+      };
     }
   // A session of a campaign or adventure happened and more follow: the table stays open for the next
   // one (`nextStartsAt`, ISO). `absentPlayerIds` as in `TableConcluded`.
@@ -80,12 +94,21 @@ export type DomainEvent =
         title: string;
         nextStartsAt: string;
         absentPlayerIds?: string[];
+        // Nobody answered in ten days, so the sweeper held it (no actor) and moved to the next date.
+        autoClosed?: true;
       };
     }
   // The GM let these players rate a table that is still going. Each rates once, whatever the sessions.
+  // `autoClosed`: the sweeper did, with the session it held for the GM; the players are e-mailed too.
   | {
       type: 'RatingsOpened';
-      payload: { tableId: string; slug: string; title: string; playerIds: string[] };
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        playerIds: string[];
+        autoClosed?: true;
+      };
     }
   | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
   // A player asked for a seat at a table that approves each one. Takes no seat.
@@ -208,9 +231,10 @@ export type TableClosure = {
 
 export type ReportFiled = {
   reportId: string;
-  targetType: 'table' | 'player' | 'crowdfunding' | 'partner';
+  targetType: 'table' | 'player' | 'crowdfunding' | 'partner' | 'message' | 'person';
   targetId: string;
-  // Null for a report about a crowdfunding campaign or a partner, which belong to no table.
+  // Null for a report about a crowdfunding campaign or a partner, which belong to no table, and
+  // for one made in a direct conversation.
   tableId: string | null;
   reason:
     | 'spam'

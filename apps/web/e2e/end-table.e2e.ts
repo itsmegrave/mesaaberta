@@ -8,7 +8,7 @@ test('the owner permanently deletes a draft after confirming and cancellation le
 }) => {
   const gm = await createUser('Mestre Rascunho');
   await signIn(page, gm);
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
   const title = uniqueTitle('Rascunho descartado');
   await page.getByLabel('Título').fill(title);

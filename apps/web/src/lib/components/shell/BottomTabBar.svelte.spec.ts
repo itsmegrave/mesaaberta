@@ -10,10 +10,12 @@ describe('BottomTabBar.svelte', () => {
     render(BottomTabBar);
 
     await expect.element(nav()).toBeVisible();
-    await expect.element(nav().getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+    await expect
+      .element(nav().getByRole('link', { name: 'Mesas' }))
+      .toHaveAttribute('href', '/tables');
     await expect
       .element(nav().getByRole('link', { name: 'Abrir mesa' }))
-      .toHaveAttribute('href', '/t/new');
+      .toHaveAttribute('href', '/tables/new');
     await expect
       .element(nav().getByRole('link', { name: 'Minhas mesas' }))
       .toHaveAttribute('href', '/u/tables');
@@ -24,7 +26,7 @@ describe('BottomTabBar.svelte', () => {
     render(BottomTabBar);
 
     const tab = nav().getByRole('link', { name: 'Financiamentos coletivos' });
-    await expect.element(tab).toHaveAttribute('href', '/cf');
+    await expect.element(tab).toHaveAttribute('href', '/crowdfunding');
     await expect.element(tab).toHaveTextContent('FCs');
   });
 
@@ -44,8 +46,8 @@ describe('BottomTabBar.svelte', () => {
   it('uses the new game artwork for every mobile tab', async () => {
     render(BottomTabBar);
     const expected = {
-      '/t': 'game-icons:tavern-sign',
-      '/t/new': 'game-icons:dice-twenty-faces-twenty',
+      '/tables': 'game-icons:tavern-sign',
+      '/tables/new': 'game-icons:dice-twenty-faces-twenty',
       '/u/tables': 'game-icons:tabletop-players',
     };
     for (const [href, icon] of Object.entries(expected)) {

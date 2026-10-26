@@ -9,6 +9,7 @@ import { moderationHandler } from './moderation';
 import { catalogHandler } from './catalog';
 import { badgeHandler, badgeNoticeHandler } from '../badges/handlers';
 import { banMailHandler } from './ban-mail';
+import { closeReminderMailHandler } from './close-reminder-mail';
 import { followsHandler } from './follows';
 import {
   playerInvitationMailHandler,
@@ -34,7 +35,8 @@ export const bellHandlers: readonly Handler[] = [
 ];
 
 /**
- * The handlers that send e-mail: calendar invites and the notice of a ban. The third class the
+ * The handlers that send e-mail: calendar invites, the notice of a ban, the invitations and the
+ * reminders to close a session (with the rating request that follows). The third class the
  * queue can deliver (`api_events_queue_mail`, ADR 0003 stage 3). By name, because each handler
  * exists only where its mail settings are configured.
  */
@@ -43,6 +45,7 @@ export const MAIL_HANDLER_NAMES = [
   'ban-mail-v1',
   'player-invitation-mail-v1',
   'partner-invitation-mail-v1',
+  'close-reminder-mail-v1',
 ] as const;
 
 /**
@@ -59,6 +62,7 @@ export function handlersFor(
   const banMail = banMailHandler(env);
   const playerInvitations = playerInvitationMailHandler(env);
   const partnerInvitations = partnerInvitationMailHandler(env);
+  const closeReminders = closeReminderMailHandler(env);
   // The bell first: a slow or failing mail provider must not hold up the in-app notice.
   return [
     ...bell,
@@ -66,6 +70,7 @@ export function handlersFor(
     ...(banMail ? [banMail] : []),
     ...(playerInvitations ? [playerInvitations] : []),
     ...(partnerInvitations ? [partnerInvitations] : []),
+    ...(closeReminders ? [closeReminders] : []),
     ...extensionHandlers(),
     ...analyticsHandlers(env),
   ];

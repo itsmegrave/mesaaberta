@@ -34,7 +34,7 @@ test('a player asks the GM a question before joining, the GM answers, and the ta
 
   // The GM sees it on the bell and in the inbox, and answers.
   const gmPage = gmSession.page;
-  await gmPage.goto('/m');
+  await gmPage.goto('/messages');
   await expect(gmPage.getByRole('main').getByText(/Ainda tem vaga\?/)).toBeVisible();
   await gmPage.getByRole('link', { name: new RegExp(`${player.username} Ainda tem vaga`) }).click();
   await gmPage.getByRole('textbox', { name: 'Mensagem' }).fill('Tem, sim. Pode pedir!');

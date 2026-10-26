@@ -13,7 +13,10 @@ vi.mock('@mesaaberta/core/server/moderation/bans', () => ({
 
 const session = [{ name: 'sb-project-auth-token', value: 'x' }];
 
-function setup(status: 'active' | 'suspended' | null, { cookies = session, path = '/t' } = {}) {
+function setup(
+  status: 'active' | 'suspended' | null,
+  { cookies = session, path = '/tables' } = {},
+) {
   const signOut = vi.fn();
   const getProfile = vi.fn().mockResolvedValue(status && { id: 'u', status, bannedUntil: null });
   const resolve = vi.fn().mockResolvedValue(new Response('ok'));

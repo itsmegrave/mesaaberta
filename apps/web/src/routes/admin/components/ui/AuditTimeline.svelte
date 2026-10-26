@@ -93,8 +93,16 @@
         return m.history_event_TableDisabled();
       case 'TableAwaitingConfirmation':
         return m.history_event_TableAwaitingConfirmation();
+      case 'TableCloseReminder':
+        return m.history_event_TableCloseReminder();
       case 'TableConcluded':
-        return m.history_event_TableConcluded();
+        return entry.autoClosed
+          ? m.history_event_TableConcludedAutomatically()
+          : m.history_event_TableConcluded();
+      case 'TableSessionHeld':
+        return entry.autoClosed
+          ? m.history_event_TableSessionHeldAutomatically()
+          : m.history_event_TableSessionHeld();
       case 'TableNotHeld':
         return m.history_event_TableNotHeld();
       case 'TableClosedByModeration':

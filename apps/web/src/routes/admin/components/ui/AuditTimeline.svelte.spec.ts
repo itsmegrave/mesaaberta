@@ -13,6 +13,7 @@ const entry = (over: Partial<HistoryEntry> = {}): HistoryEntry => ({
   subject: null,
   table: 'Mesa A',
   removed: false,
+  autoClosed: false,
   changes: null,
   ...over,
 });
@@ -41,6 +42,12 @@ describe('AuditTimeline', () => {
   it('names the system when nobody did it', async () => {
     show([entry({ type: 'TableAwaitingConfirmation', actor: null })]);
     await expect.element(page.getByText('Sistema')).toBeVisible();
+  });
+
+  it('tells a table the system concluded apart from one its GM confirmed', async () => {
+    show([entry({ type: 'TableConcluded', actor: null, autoClosed: true })]);
+    await expect.element(page.getByText(/não respondeu em 10 dias/)).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/confirmou que a sessão aconteceu/);
   });
 
   it('shows what an edit changed, from and to, and hides what is private', async () => {

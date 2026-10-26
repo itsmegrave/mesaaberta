@@ -5,22 +5,22 @@ test('SSR and client navigation retain one canonical and one metadata owner', as
   request,
   baseURL,
 }) => {
-  const response = await request.get('/t?page=999&utm_source=seo-test');
+  const response = await request.get('/tables?page=999&utm_source=seo-test');
   expect(response.status()).toBe(200);
   const html = await response.text();
-  expect(html).toContain(`rel="canonical" href="${baseURL}/t"`);
+  expect(html).toContain(`rel="canonical" href="${baseURL}/tables"`);
   expect(html.match(/name="description"/g)).toHaveLength(1);
   expect(html.match(/property="og:title"/g)).toHaveLength(1);
-  for (const path of ['/cf?page=2', '/cf?page=999']) {
+  for (const path of ['/crowdfunding?page=2', '/crowdfunding?page=999']) {
     const crowdfunding = await request.get(path);
     expect(crowdfunding.status()).toBe(200);
-    expect(await crowdfunding.text()).toContain(`rel="canonical" href="${baseURL}/cf"`);
+    expect(await crowdfunding.text()).toContain(`rel="canonical" href="${baseURL}/crowdfunding"`);
   }
-  await page.goto('/t?system=fate&utm_source=seo-test');
+  await page.goto('/tables?system=fate&utm_source=seo-test');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
-    `${baseURL}/t?system=fate`,
+    `${baseURL}/tables?system=fate`,
   );
   await page.getByRole('contentinfo').getByRole('link', { name: 'Novidades', exact: true }).click();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(

@@ -27,13 +27,15 @@ describe('SiteFooter.svelte', () => {
     render(SiteFooter, { site });
 
     const footer = browserPage.getByRole('contentinfo');
-    await expect.element(footer.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+    await expect
+      .element(footer.getByRole('link', { name: 'Mesas' }))
+      .toHaveAttribute('href', '/tables');
     await expect
       .element(footer.getByRole('link', { name: 'Parceiros' }))
-      .toHaveAttribute('href', '/p');
+      .toHaveAttribute('href', '/partners');
     await expect
       .element(footer.getByRole('link', { name: 'Financiamentos coletivos' }))
-      .toHaveAttribute('href', '/cf');
+      .toHaveAttribute('href', '/crowdfunding');
     await expect
       .element(footer.getByRole('link', { name: 'oi@example.test' }))
       .toHaveAttribute('href', 'mailto:oi@example.test');
@@ -44,7 +46,7 @@ describe('SiteFooter.svelte', () => {
   });
 
   it('marks the page you are on', async () => {
-    location.pathname = '/cf/new';
+    location.pathname = '/crowdfunding/new';
     render(SiteFooter, { site });
 
     await expect
@@ -85,5 +87,22 @@ describe('SiteFooter.svelte', () => {
     await expect
       .element(browserPage.getByRole('link', { name: 'Lenindragons' }))
       .not.toBeInTheDocument();
+  });
+
+  it('shows the "Diretórios" column only with a directory on, linking each one that is', async () => {
+    render(SiteFooter, { site });
+    await expect
+      .element(browserPage.getByRole('navigation', { name: 'Diretórios' }))
+      .not.toBeInTheDocument();
+
+    location.pathname = '/systems';
+    render(SiteFooter, { site, directories: { systems: true } });
+    const column = browserPage.getByRole('navigation', { name: 'Diretórios' });
+    await expect
+      .element(column.getByRole('link', { name: 'Sistemas' }))
+      .toHaveAttribute('aria-current', 'page');
+    await expect
+      .element(column.getByRole('link', { name: 'Sistemas' }))
+      .toHaveAttribute('href', '/systems');
   });
 });

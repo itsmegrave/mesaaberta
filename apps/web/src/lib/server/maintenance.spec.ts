@@ -11,7 +11,7 @@ const SCREEN = '<h1>Voltamos em breve</h1>';
 
 function setup({
   on = true,
-  path = '/t',
+  path = '/tables',
   method = 'GET',
   accept = 'text/html,application/xhtml+xml',
   profile = null as Profile | null | Error,
@@ -128,7 +128,7 @@ describe('isExempt', () => {
 
   it.each([
     '/',
-    '/t',
+    '/tables',
     '/signup',
     '/u/profile/setup',
     '/u/profile/export',

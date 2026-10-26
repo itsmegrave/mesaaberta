@@ -38,7 +38,7 @@ describe('ChatDrawer', () => {
     await page.getByRole('button', { name: 'Abrir chat' }).click();
     await expect
       .element(page.getByRole('link', { name: 'Abrir página de mensagens' }))
-      .toHaveAttribute('href', '/m');
+      .toHaveAttribute('href', '/messages');
   });
 
   it('has a tab for direct messages and one for the tables, each saying how many are unread', async () => {

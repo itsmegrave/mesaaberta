@@ -1,5 +1,9 @@
 import { tableFilters } from '@mesaaberta/core/admin/table-filters';
 import { profileFilters } from '@mesaaberta/core/admin/profile-filters';
+import {
+  readSystemDirectoryFilters,
+  systemDirectoryQuery,
+} from '@mesaaberta/core/systems/directory-filters';
 
 export const resources = [
   'preview',
@@ -13,6 +17,8 @@ export const resources = [
   'admin',
   'adminUsers',
   'adminTables',
+  'systems',
+  'system',
 ] as const;
 export type Resource = (typeof resources)[number];
 export type ReadSeed = {
@@ -56,6 +62,12 @@ export function readParams(resource: Resource, url: URL, slug?: string) {
   // A page of "Minhas mesas" is its own cache entry; the first page has no parameter.
   if (resource === 'dashboard' && url.searchParams.has('page'))
     params.set('page', url.searchParams.get('page')!);
+  // The systems directory: one entry per filtered page, defaults left out (`systemDirectoryQuery`).
+  if (resource === 'systems') {
+    const filters = readSystemDirectoryFilters(url.searchParams);
+    for (const [key, value] of new URLSearchParams(systemDirectoryQuery(filters, filters.page)))
+      params.set(key, value);
+  }
   if (resource === 'adminUsers' || resource === 'adminTables') {
     const filters =
       resource === 'adminTables'
