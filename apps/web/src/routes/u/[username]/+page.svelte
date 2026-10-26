@@ -66,23 +66,6 @@
   });
 </script>
 
-<svelte:head>
-  <title>{atHandle(profile.username)} · Mesa Aberta</title>
-  <meta
-    name="description"
-    content={m.public_profile_description({ username: atHandle(profile.username) })}
-  />
-  <link rel="canonical" href={data.canonical} />
-  <meta property="og:title" content={`${atHandle(profile.username)} · Mesa Aberta`} />
-  <meta
-    property="og:description"
-    content={m.public_profile_description({ username: atHandle(profile.username) })}
-  />
-  <meta property="og:url" content={data.canonical} />
-  <meta property="og:type" content="profile" />
-  {#if profile.avatarUrl}<meta property="og:image" content={profile.avatarUrl} />{/if}
-</svelte:head>
-
 <section class="pt-2 pb-4 md:pt-12">
   <Breadcrumbs class="mb-6 md:mb-8" items={[{ label: atHandle(profile.username) }]} />
 

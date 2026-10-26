@@ -130,10 +130,6 @@
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
 </script>
 
-<svelte:head>
-  <title>{table.title}</title>
-  <meta name="description" content="{table.system.name}. {seats}." />
-</svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
 <article class="pt-2 pb-8 md:pt-6">

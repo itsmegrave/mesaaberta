@@ -72,12 +72,6 @@
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -- release links and reviewed content use canonical paths, including their query and fragment. -->
 
-<svelte:head>
-  <title>{m.changelog_title()} · Mesa Aberta</title>
-  <meta name="description" content={m.changelog_description()} />
-  {#if data.page > 1 || data.kind}<meta name="robots" content="noindex, follow" />{/if}
-</svelte:head>
-
 {#snippet controls()}
   <div
     class="mt-3 flex items-center justify-center gap-3 md:col-start-2 md:row-start-1 md:mt-0 md:justify-self-end"

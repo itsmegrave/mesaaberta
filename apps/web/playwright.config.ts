@@ -11,6 +11,7 @@ const apiToken = 'mesaaberta-e2e-only';
 const supabase = stack();
 
 const serverVars = [
+  `--var APP_ORIGIN:http://localhost:${port}`,
   `--var API_URL:http://127.0.0.1:${apiPort}`,
   `--var API_INTERNAL_TOKEN:${apiToken}`,
   `--var SUPABASE_URL:${supabase.API_URL}`,

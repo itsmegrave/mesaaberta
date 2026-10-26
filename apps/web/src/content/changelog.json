@@ -126,6 +126,11 @@
         "kind": "improved",
         "title": "Listas mais rápidas",
         "description": "As listas de mesas, parceiros e financiamentos reaproveitam os resultados recentes para abrir mais rápido."
+      },
+      {
+        "kind": "improved",
+        "title": "Links mais claros na busca e ao compartilhar",
+        "description": "As páginas de mesas e perfis mostram títulos e descrições mais claros nos resultados de busca e nos links compartilhados."
       }
     ]
   },

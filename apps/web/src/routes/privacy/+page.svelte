@@ -7,11 +7,6 @@
   const controller = $derived(controllerOf(page.data.site));
 </script>
 
-<svelte:head>
-  <title>{m.privacy_title()} · Mesa Aberta</title>
-  <meta name="description" content={m.privacy_description()} />
-</svelte:head>
-
 <LegalPage title={m.privacy_title()}>
   <p>
     Esta política explica quais dados pessoais a Mesa Aberta trata, para quê, com quem eles são

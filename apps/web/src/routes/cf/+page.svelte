@@ -43,11 +43,6 @@
   );
 </script>
 
-<svelte:head>
-  <title>{m.crowdfunding_title()}</title>
-  <meta name="description" content={m.crowdfunding_description()} />
-</svelte:head>
-
 <section class="py-2 md:pt-12">
   <PageHead
     crumbs={[{ label: m.nav_crowdfunding_label() }]}
