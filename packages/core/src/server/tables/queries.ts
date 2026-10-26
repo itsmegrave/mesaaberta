@@ -1,6 +1,26 @@
-import { and, count, desc, eq, gt, gte, ne, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  ne,
+  notExists,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, profiles, registrations, systems } from '../db/schema';
+import {
+  follows,
+  gameTables,
+  profileFavoriteSystems,
+  profiles,
+  registrations,
+  systems,
+} from '../db/schema';
 import { publicName } from '../db/public-name';
 import { reservedSeatsSql } from '../invitations/seats';
 import { weeklyInterval } from './schedule';
@@ -125,6 +145,53 @@ export async function listNewTables(db: AnyDb, now: Date, limit: number): Promis
   return withExtras(db, open.slice(0, limit), now);
 }
 
+/**
+ * The candidates for the three table rows of a signed-in Início in one query: open tables that
+ * have not started, by someone the person follows, in one of their favorite systems, or published
+ * in the last `NEW_TABLE_DAYS`. Their own tables and the ones they already joined or asked to join
+ * are left out, and so are tables with no seat left. Soonest first, without the platforms, tags and
+ * GM score: the caller sorts them into rows and adds those (`withExtras`) only for what it shows.
+ */
+export async function listHomeCandidates(
+  db: AnyDb,
+  personId: string,
+  now: Date,
+  { follows: withFollows }: { follows: boolean },
+) {
+  const since = new Date(now.getTime() - NEW_TABLE_DAYS * DAY_MS);
+  const followed = db
+    .select({ id: follows.followeeId })
+    .from(follows)
+    .where(eq(follows.followerId, personId));
+  const favorites = db
+    .select({ id: profileFavoriteSystems.systemId })
+    .from(profileFavoriteSystems)
+    .where(eq(profileFavoriteSystems.profileId, personId));
+  const rows = await query(
+    db,
+    and(
+      eq(gameTables.status, 'active'),
+      gt(gameTables.startsAt, now),
+      ne(gameTables.gmId, personId),
+      notExists(
+        db
+          .select({ one: sql`1` })
+          .from(registrations)
+          .where(
+            and(eq(registrations.tableId, gameTables.id), eq(registrations.playerId, personId)),
+          ),
+      ),
+      or(
+        withFollows ? inArray(gameTables.gmId, followed) : undefined,
+        inArray(gameTables.systemId, favorites),
+        gte(gameTables.publishedAt, since),
+      ),
+    ),
+    now,
+  );
+  return { since, tables: rows.map(shape).filter((table) => table.seatsLeft > 0) };
+}
+
 /** A master's public upcoming tables, soonest first, one page of them and the total. */
 export async function listUpcomingTablesByGm(
   db: AnyDb,
@@ -152,7 +219,11 @@ export async function listUpcomingTablesByGm(
  * Adds each table's approved platforms and tags, and its GM's score: one query for the catalogue
  * and one for all the GMs on the page, so a list does not cost a query per table.
  */
-async function withExtras<T extends { id: string; gmId: string }>(db: AnyDb, list: T[], now: Date) {
+export async function withExtras<T extends { id: string; gmId: string }>(
+  db: AnyDb,
+  list: T[],
+  now: Date,
+) {
   const [catalog, scores] = await Promise.all([
     catalogOf(
       db,
