@@ -48,7 +48,7 @@
     }
     event.preventDefault();
     if (closing.pending) return;
-    mismatch =typed() !== (data.username ?? '').toLowerCase();
+    mismatch = typed() !== (data.username ?? '').toLowerCase();
     if (mismatch) closingForm?.querySelector<HTMLElement>('#confirm')?.focus();
     else asking = true;
   }
