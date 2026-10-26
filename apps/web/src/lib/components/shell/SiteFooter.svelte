@@ -22,8 +22,8 @@
   } = $props();
 
   // `route` is the list's route id (its group included), `items` where the section's own pages
-  // live under its letter (`/t/<slug>`).
-  const pages = [
+  // live under its letter (`/t/<slug>`). The directories follow, each while it is on.
+  const sections = [
     { route: '/(tables)/tables', path: '/tables', items: '/t', label: m.nav_tables },
     { route: '/(partners)/partners', path: '/partners', items: '/p', label: m.partner_nav_label },
     {
@@ -34,13 +34,29 @@
     },
   ] as const;
 
-  // The "Diretórios" column: one link per directory that is on, none and the column goes.
-  const directoryLinks = $derived(
-    [
-      { path: '/systems' as const, label: m.directory_footer_systems, on: directories.systems },
-      { path: '/gamemasters' as const, label: m.directory_footer_gms, on: directories.gms },
-    ].filter((item) => item.on),
-  );
+  const pages = $derived([
+    ...sections,
+    ...(directories.systems
+      ? [
+          {
+            route: '/systems',
+            path: '/systems',
+            items: '/s',
+            label: m.directory_footer_systems,
+          } as const,
+        ]
+      : []),
+    ...(directories.gms
+      ? [
+          {
+            route: '/gamemasters',
+            path: '/gamemasters',
+            items: undefined,
+            label: m.directory_footer_gms,
+          } as const,
+        ]
+      : []),
+  ]);
 
   const current = (path: string, items?: string) =>
     isUnder(page.url.pathname, path) || (!!items && isUnder(page.url.pathname, items));
@@ -55,11 +71,7 @@
     <div
       class="grid grid-cols-1 gap-4 pt-6 pb-3 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:pt-8 md:pb-5"
     >
-      <div
-        class="flex flex-col gap-1 sm:col-span-2 md:gap-2 {directoryLinks.length > 0
-          ? 'md:col-span-4'
-          : 'md:col-span-6'}"
-      >
+      <div class="flex flex-col gap-1 sm:col-span-2 md:col-span-6 md:gap-2">
         <p class="flex items-center gap-3 text-surface-950-50">
           <TableLogo size={32} />
           <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
@@ -90,30 +102,6 @@
           <!-- eslint-enable svelte/no-navigation-without-resolve -->
         {/if}
       </div>
-
-      {#if directoryLinks.length > 0}
-        <nav
-          aria-labelledby="footer-directories"
-          class="flex flex-col gap-0 md:col-span-2 md:gap-2"
-        >
-          <h2 id="footer-directories" class="text-sm font-semibold text-surface-950-50">
-            {m.directory_footer_title()}
-          </h2>
-          <ul class="flex flex-wrap gap-x-5 text-sm md:flex-col md:gap-y-1">
-            {#each directoryLinks as item (item.path)}
-              <li>
-                <a
-                  href={resolve(item.path)}
-                  aria-current={current(item.path) ? 'page' : undefined}
-                  class="inline-flex min-h-11 items-center md:min-h-0 {current(item.path)
-                    ? strong
-                    : 'text-muted hover:text-surface-950-50'}">{item.label()}</a
-                >
-              </li>
-            {/each}
-          </ul>
-        </nav>
-      {/if}
 
       <div class="flex flex-col gap-0 md:col-span-3 md:gap-2">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_pages()}</h2>

@@ -89,20 +89,31 @@ describe('SiteFooter.svelte', () => {
       .not.toBeInTheDocument();
   });
 
-  it('shows the "Diretórios" column only with a directory on, linking each one that is', async () => {
+  it('lists each directory that is on under "Páginas", after the other pages', async () => {
     render(SiteFooter, { site });
     await expect
-      .element(browserPage.getByRole('navigation', { name: 'Diretórios' }))
+      .element(browserPage.getByRole('link', { name: 'Sistemas' }))
       .not.toBeInTheDocument();
 
-    location.pathname = '/systems';
-    render(SiteFooter, { site, directories: { systems: true, gms: false } });
-    const column = browserPage.getByRole('navigation', { name: 'Diretórios' });
+    location.pathname = '/s/tormenta-20';
+    render(SiteFooter, { site, directories: { systems: true, gms: true } });
+    const heading = browserPage.getByRole('heading', { name: 'Páginas' }).last().element();
+    const names = [...heading.parentElement!.querySelectorAll('a')].map((link) =>
+      link.textContent?.trim(),
+    );
+    expect(names).toEqual([
+      'Mesas',
+      'Parceiros',
+      'Financiamentos coletivos',
+      'Sistemas',
+      'Quem mestra',
+    ]);
+    // A system's page is part of the systems directory.
     await expect
-      .element(column.getByRole('link', { name: 'Sistemas' }))
+      .element(browserPage.getByRole('link', { name: 'Sistemas' }).last())
       .toHaveAttribute('aria-current', 'page');
     await expect
-      .element(column.getByRole('link', { name: 'Sistemas' }))
-      .toHaveAttribute('href', '/systems');
+      .element(browserPage.getByRole('link', { name: 'Quem mestra' }))
+      .toHaveAttribute('href', '/gamemasters');
   });
 });
