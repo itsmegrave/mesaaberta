@@ -421,6 +421,13 @@
       "when": 1792989207090,
       "tag": "0059_partner_owners",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1792992221516,
+      "tag": "0060_worker_heartbeat_build",
+      "breakpoints": true
     }
   ]
 }

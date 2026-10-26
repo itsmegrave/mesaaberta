@@ -27,7 +27,12 @@ beforeEach(async () => {
 
 describe('the worker heartbeat', () => {
   it('is unknown until a run has been recorded', async () => {
-    expect(await workerHealth(test.db, t0)).toEqual({ status: 'unknown', lastRunAt: null });
+    expect(await workerHealth(test.db, t0)).toEqual({
+      status: 'unknown',
+      lastRunAt: null,
+      version: null,
+      revision: null,
+    });
   });
 
   it('is ok right after a run and keeps one row per job', async () => {
@@ -38,6 +43,8 @@ describe('the worker heartbeat', () => {
     expect(await workerHealth(test.db, new Date(t0.getTime() + 120_000))).toEqual({
       status: 'ok',
       lastRunAt: '2026-10-11T12:01:00.000Z',
+      version: null,
+      revision: null,
     });
   });
 
@@ -60,7 +67,7 @@ describe('the worker heartbeat', () => {
     } as never;
     const logger = log();
 
-    expect(await workerHealth(broken, t0)).toEqual({ status: 'unknown', lastRunAt: null });
+    expect(await workerHealth(broken, t0)).toMatchObject({ status: 'unknown', lastRunAt: null });
     await expect(
       recordHeartbeat(broken, SWEEPER_HEARTBEAT, t0, logger as never),
     ).resolves.toBeUndefined();
@@ -72,12 +79,20 @@ describe('the worker heartbeat', () => {
 
   it('is written by a finished sweep, and not by one that threw', async () => {
     const close = vi.fn();
-    await runSweeper({ DATABASE_URL: 'postgres://x' } as never, {
-      open: () => ({ db: test.db, close }) as never,
-      handlers: [],
-      log: log() as never,
+    await runSweeper(
+      {
+        DATABASE_URL: 'postgres://x',
+        DEPLOYMENT_VERSION: 'v0.61.0',
+        DEPLOYMENT_SOURCE_SHA: 'abc123',
+      } as never,
+      { open: () => ({ db: test.db, close }) as never, handlers: [], log: log() as never },
+    );
+    // The build that ran it comes along, for /healthz to compare with the web and the api.
+    expect(await workerHealth(test.db)).toMatchObject({
+      status: 'ok',
+      version: '0.61.0',
+      revision: 'abc123',
     });
-    expect((await workerHealth(test.db)).status).toBe('ok');
 
     await test.db.delete(workerHeartbeats);
     const failing = {

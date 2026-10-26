@@ -1085,6 +1085,9 @@ export const crowdfundingImportRuns = pgTable(
 export const workerHeartbeats = pgTable('worker_heartbeats', {
   name: text('name').primaryKey(),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }).notNull(),
+  // The build that ran it (`buildInfoOf`); null before a run on code that records it.
+  version: text('version'),
+  revision: text('revision'),
 }).enableRLS();
 
 // Consent-based invitations are not registrations; pending rows reserve seats without membership.

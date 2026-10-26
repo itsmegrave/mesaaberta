@@ -6,7 +6,25 @@ describe('api app', () => {
     const response = await createApi().request('/healthz');
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ status: 'ok', service: 'api' });
+    expect(await response.json()).toEqual({
+      status: 'ok',
+      service: 'api',
+      version: null,
+      revision: null,
+    });
+  });
+
+  it('says which build answers the health probe', async () => {
+    const response = await createApi().request(
+      '/healthz',
+      {},
+      {
+        DEPLOYMENT_VERSION: 'v0.61.0',
+        DEPLOYMENT_SOURCE_SHA: 'abc123',
+      },
+    );
+
+    expect(await response.json()).toMatchObject({ version: '0.61.0', revision: 'abc123' });
   });
 
   it('answers an unknown path with JSON, not HTML', async () => {
