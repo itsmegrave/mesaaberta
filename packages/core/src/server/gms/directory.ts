@@ -235,3 +235,23 @@ async function badgesOf(db: AnyDb, gmIds: string[]) {
     ]);
   return found;
 }
+
+/** The systems someone in Quem mestra ran, for the Sistema filter: most people first. */
+export async function gmDirectorySystems(db: AnyDb) {
+  return db
+    .select({ name: systems.name, slug: systems.slug })
+    .from(gameTables)
+    .innerJoin(systems, eq(systems.id, gameTables.systemId))
+    .innerJoin(profiles, eq(profiles.id, gameTables.gmId))
+    .where(
+      and(
+        published,
+        eq(systems.status, 'approved'),
+        eq(profiles.status, 'active'),
+        isNotNull(profiles.username),
+        inArray(profiles.tableRole, ['gm', 'both']),
+      ),
+    )
+    .groupBy(systems.name, systems.slug)
+    .orderBy(desc(sql`count(distinct ${gameTables.gmId})`), asc(systems.name));
+}

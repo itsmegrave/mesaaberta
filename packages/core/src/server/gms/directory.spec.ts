@@ -9,7 +9,7 @@ import {
 import { createTestDb } from '../../../../../apps/web/src/lib/server/db/test-db';
 import { readGmDirectoryFilters } from '../../gms/directory-filters';
 import { monthStart } from '../../ratings/gm-score';
-import { listGmDirectory } from './directory';
+import { gmDirectorySystems, listGmDirectory } from './directory';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000052${String(n).padStart(2, '0')}`;
@@ -150,5 +150,16 @@ describe('listGmDirectory', () => {
   it('answers null past the last page, and one empty page when nobody matches', async () => {
     expect(await list('page=2')).toBeNull();
     expect(await list('q=ninguem')).toEqual({ total: 0, pages: 1, people: [] });
+  });
+});
+
+describe('gmDirectorySystems', () => {
+  it('offers the systems someone listed ran, most people first', async () => {
+    expect((await gmDirectorySystems(test.db)).map((system) => system.slug)).toEqual([
+      'vampiro-gm',
+      'cthulhu-gm',
+      'dnd-gm',
+      'tormenta-gm',
+    ]);
   });
 });
