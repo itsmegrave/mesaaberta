@@ -109,7 +109,8 @@ describe('+layout.svelte', () => {
     }
     // Parceiros is not linked from the app chrome; /p is reached directly.
     await expect.element(nav.getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
-    await expect.element(nav.getByText('Sua conta', { exact: true })).toBeVisible();
+    // The bell sits right above the account block, with no "Sua conta" group label.
+    await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
     // Mensagens lives in the account menu, not in the group.
     expect(nav.getByRole('link', { name: /^Mensagens/ }).elements()).toHaveLength(0);
     await expect
@@ -130,7 +131,7 @@ describe('+layout.svelte', () => {
     expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
   });
 
-  it('collapses to an 80px rail with the same groups as the open nav: Sua conta, then the account', async () => {
+  it('collapses to an 80px rail with the same groups as the open nav, the bell next to the account', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     await nav.getByRole('button', { name: 'Recolher menu' }).click();
@@ -140,9 +141,9 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'false');
     const bell = nav.getByRole('button', { name: 'Notificações', exact: true }).element();
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
-    // Notificações keeps the "Sua conta" group, as when open; its label is hidden.
+    // Notificações sits in the bottom group, right above the account, as when open.
     await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
-    expect(bell.parentElement?.contains(account)).toBe(false);
+    expect(bell.parentElement?.contains(account)).toBe(true);
     // Admin and the theme are in the account menu, not on the rail.
     expect(nav.getByRole('link', { name: 'Admin' }).elements()).toHaveLength(0);
     expect(nav.getByRole('button', { name: 'Tema escuro' }).elements()).toHaveLength(0);

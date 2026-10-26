@@ -228,33 +228,6 @@
           </Navigation.Group>
         {/if}
 
-        {#if account}
-          <!-- The same group open and as a rail: the label becomes a short line when collapsed. -->
-          <Navigation.Group
-            aria-label={expanded ? undefined : m.nav_account_group()}
-            class="flex flex-col {expanded
-              ? 'gap-1 border-t border-surface-200-800 pt-4'
-              : 'items-center gap-2'}"
-          >
-            {#if expanded}
-              <Navigation.Label
-                class="px-3 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
-                >{m.nav_account_group()}</Navigation.Label
-              >
-            {:else}
-              <span aria-hidden="true" class="mb-2 block h-px w-10 bg-surface-200-800"></span>
-            {/if}
-            <NotificationBell
-              {unread}
-              {latest}
-              {seenAt}
-              placement="right-end"
-              labelled={expanded}
-              rail={!expanded}
-            />
-          </Navigation.Group>
-        {/if}
-
         <Navigation.Group
           class="mt-auto flex flex-col {expanded ? 'items-stretch gap-2' : 'items-center gap-3'}"
         >
@@ -263,6 +236,15 @@
             <ThemeToggle labelled={expanded} rail={!expanded} />
           {/if}
           {#if account}
+            <!-- The bell sits right above the account block, with no group label of its own. -->
+            <NotificationBell
+              {unread}
+              {latest}
+              {seenAt}
+              placement="right-end"
+              labelled={expanded}
+              rail={!expanded}
+            />
             <AccountMenu
               name={account.displayName}
               username={account.username}
