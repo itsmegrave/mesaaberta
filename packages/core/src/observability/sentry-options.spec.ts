@@ -144,6 +144,25 @@ describe('sentry options', () => {
     expect(kept.spans?.[1]?.data).toEqual({});
   });
 
+  it('names a request by its route template when the path was used', () => {
+    const event = {
+      type: 'transaction',
+      transaction: 'GET /u/ana',
+      transaction_info: { source: 'url' },
+      tags: { route: '/u/[username]' },
+    } as unknown as TransactionEvent;
+    expect(privateTransaction(event)).toMatchObject({
+      transaction: 'GET /u/[username]',
+      transaction_info: { source: 'route' },
+    });
+    const cron = {
+      type: 'transaction',
+      transaction: 'Scheduled Cron */5 * * * *',
+      transaction_info: { source: 'task' },
+    } as unknown as TransactionEvent;
+    expect(privateTransaction(cron).transaction).toBe('Scheduled Cron */5 * * * *');
+  });
+
   it('scrubs standalone spans the same way', () => {
     const span = privateSpan({
       span_id: 'c'.repeat(16),

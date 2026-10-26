@@ -181,6 +181,22 @@ export function privateSpan(span: SpanJSON): SpanJSON {
 }
 
 /**
+ * A request's transaction named by its route template (`GET /u/[username]`) rather than the path it
+ * served (`GET /u/ana`), when the request hook tagged the `route`: on Workers the SDK names the root
+ * span before SvelteKit has matched a route, so every profile and table would be its own row.
+ */
+const transactionName = (
+  event: TransactionEvent,
+): Pick<TransactionEvent, 'transaction' | 'transaction_info'> => {
+  const name = event.transaction && scrubString(withoutQuery(event.transaction));
+  const route = safeFields(event.tags).route;
+  const method = name?.match(/^([A-Z]+) \//)?.[1];
+  if (typeof route === 'string' && method && event.transaction_info?.source !== 'route')
+    return { transaction: `${method} ${route}`, transaction_info: { source: 'route' } };
+  return { transaction: name, transaction_info: event.transaction_info };
+};
+
+/**
  * A transaction rebuilt from the parts that measure performance: its route, timings, Web Vitals and
  * spans. No request, user, breadcrumbs or extra data; tags pass the same allowlist as errors.
  */
@@ -195,8 +211,7 @@ export function privateTransaction(event: TransactionEvent): TransactionEvent {
     release: event.release,
     dist: event.dist,
     environment: event.environment,
-    transaction: event.transaction && scrubString(withoutQuery(event.transaction)),
-    transaction_info: event.transaction_info,
+    ...transactionName(event),
     tags: safeFields(event.tags),
     measurements: event.measurements,
     contexts: optionalContexts({
