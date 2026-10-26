@@ -3290,5 +3290,46 @@
   "admin_places_remove_owner_done": "Dono removido.",
   "nav_directory_places": "Onde jogar",
   "nav_directory_places_description": "Lojas, luderias e clubes para jogar RPG presencial.",
-  "directory_footer_places": "Onde jogar"
+  "directory_footer_places": "Onde jogar",
+  "directory_summary_more": "{names} e mais {count}",
+  "system_gms_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pessoa · {names}",
+        "count=*": "{count} pessoas · {names}"
+      }
+    }
+  ],
+  "system_ended_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mesa encerrada",
+        "count=*": "{count} mesas encerradas"
+      }
+    }
+  ],
+  "place_amenities_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 comodidade · {names}",
+        "count=*": "{count} comodidades · {names}"
+      }
+    }
+  ],
+  "place_tags_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 tag, gerada a partir do endereço, do tipo e das comodidades",
+        "count=*": "{count} tags, geradas a partir do endereço, do tipo e das comodidades"
+      }
+    }
+  ]
 }
