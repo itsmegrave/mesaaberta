@@ -18,6 +18,8 @@
     modality: string | null;
     platforms: string[];
     tags: string[];
+    /** One person's tables (`?gm=`), set only by a link from Quem mestra. */
+    gm?: string | null;
   };
 
   let {
@@ -39,6 +41,7 @@
       next.modality ? `modality=${next.modality}` : '',
       ...next.platforms.map((slug) => `platform=${encodeURIComponent(slug)}`),
       ...next.tags.map((slug) => `tag=${encodeURIComponent(slug)}`),
+      next.gm ? `gm=${encodeURIComponent(next.gm)}` : '',
     ].filter(Boolean);
     return parts.length > 0 ? `?${parts.join('&')}` : '';
   };
@@ -72,8 +75,17 @@
       name: named(allTags, slug),
       remove: () => apply({ tags: picked.tags.filter((value) => value !== slug) }),
     })),
+    ...(picked.gm
+      ? [
+          {
+            key: `gm:${picked.gm}`,
+            name: m.tables_filter_gm({ username: picked.gm }),
+            remove: () => apply({ gm: null }),
+          },
+        ]
+      : []),
   ]);
-  const clearAll = () => apply({ systems: [], modality: null, platforms: [], tags: [] });
+  const clearAll = () => apply({ systems: [], modality: null, platforms: [], tags: [], gm: null });
 
   let sheetOpen = $state(false);
 

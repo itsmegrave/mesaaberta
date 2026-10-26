@@ -19,6 +19,7 @@ export const read = async ({ locals, url }: RequestEvent) => {
       catalog: { platforms: [], tags: [], moreTags: [] },
       pickedPlatforms: filters.platforms,
       pickedTags: filters.tags,
+      pickedGm: filters.gm,
     };
   }
 
@@ -30,6 +31,7 @@ export const read = async ({ locals, url }: RequestEvent) => {
   for (const slug of filters.platforms) query.append('platform', slug);
   for (const slug of filters.tags) query.append('tag', slug);
   if (filters.modality) query.set('modality', filters.modality);
+  if (filters.gm) query.set('gm', filters.gm);
   const remote = profile
     ? await readViaApi<Awaited<ReturnType<typeof readTables>>>(
         locals,

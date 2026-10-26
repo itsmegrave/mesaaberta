@@ -5,7 +5,13 @@ const read = (search: string) => readTableFilters(new URL(`https://x.test/t${sea
 
 describe('readTableFilters', () => {
   it('reads nothing ticked as no filter', async () => {
-    expect(await read('')).toEqual({ systems: [], modality: null, platforms: [], tags: [] });
+    expect(await read('')).toEqual({
+      systems: [],
+      modality: null,
+      platforms: [],
+      tags: [],
+      gm: null,
+    });
   });
 
   it('takes each key as often as it repeats, as slugs', async () => {
@@ -18,6 +24,7 @@ describe('readTableFilters', () => {
       modality: 'online',
       platforms: ['discord'],
       tags: ['terror', 'humor'],
+      gm: null,
     });
   });
 
@@ -27,7 +34,14 @@ describe('readTableFilters', () => {
       modality: null,
       platforms: [],
       tags: ['terror'],
+      gm: null,
     });
+  });
+
+  it("reads one person's tables by @usuário, and drops what cannot be a username", async () => {
+    expect(await read('?gm=%40Ana-Souza')).toMatchObject({ gm: 'ana-souza' });
+    expect(await read('?gm=ana%20souza')).toMatchObject({ gm: null });
+    expect(await read(`?gm=${'a'.repeat(31)}`)).toMatchObject({ gm: null });
   });
 
   it('ignores keys that are not filters', async () => {
