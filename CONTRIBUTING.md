@@ -56,6 +56,10 @@ Multiline text a person writes for others to read (a table's description, the we
 
 Review migrated controls for accessibility and mobile/desktop and light/dark visual coverage.
 
+## Design tokens
+
+`design/tokens.json` lists the design system's tokens (colours in both themes, type, spacing, radius, sizes and shadows) as the app paints them. `bun scripts/design-tokens.ts` writes it from the Cerberus theme, Tailwind's theme and `layout.css`, through the map in `src/lib/theme/tokens.ts`, which names the variable, `@utility` or Tailwind class each token comes from. Run it after changing any of those; a unit spec fails while the file is stale. Compare it with the design system's `tokens.json` to find drift between the two.
+
 ## Icons
 
 Icons come from [Iconify](https://iconify.design) as one Svelte component per icon, following the [SVG + CSS for Svelte](https://iconify.design/docs/usage/svg-css/svelte/) docs: Reicon (`@iconify-svelte/reicon`) and Game Icons (`@iconify-svelte/game-icons`). Use them by name: `<Icon name="wrench" />` (`#lib/components/ui/Icon.svelte`).
