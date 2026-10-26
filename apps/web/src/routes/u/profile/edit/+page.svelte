@@ -16,7 +16,7 @@
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
   const heading = 'text-2xl leading-tight font-semibold tracking-tight';
-  const removeButton = 'btn h-12 rounded-lg px-4 font-semibold text-error-alert hover:preset-tonal';
+  const removeButton = 'btn h-11 rounded-lg px-4 font-semibold text-error-alert hover:preset-tonal';
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,

@@ -86,7 +86,7 @@
 
   // The durations are a segmented row of pills on the wash, like SegmentedChoice.
   const segment =
-    'btn h-9 rounded-full px-3.5 text-sm font-semibold has-checked:preset-filled-primary-500 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'btn h-9 rounded-full px-3 text-sm font-semibold has-checked:preset-filled-primary-500 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 </script>
 
 <div class="grid gap-5">
@@ -172,7 +172,7 @@
             max={TABLE_LIMITS.durationHours.max}
             step={TABLE_LIMITS.durationHours.step}
             bind:value={duration}
-            class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
           />
         </label>
       {/if}

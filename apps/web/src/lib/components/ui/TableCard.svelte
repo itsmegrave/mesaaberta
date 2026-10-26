@@ -80,7 +80,7 @@
   const moreTagsCount = $derived(Math.max(0, tagNames.length - 1));
 </script>
 
-<article class="{linkedCardClass} min-h-96">
+<article class={linkedCardClass}>
   <!-- Top header tile: With cover image vs solid petrol tile without cover -->
   {#if table.imageUrl}
     <div class="relative h-36 shrink-0 overflow-hidden bg-primary-500">
@@ -123,7 +123,7 @@
     </div>
   {:else}
     <div
-      class="flex h-36 shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-5 py-4"
+      class="flex h-28 shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-4 py-3"
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span
@@ -133,7 +133,7 @@
         </span>
         {#if table.startsAt && cardDate}
           <div>
-            <div class="font-sans text-4xl leading-none font-bold tracking-tight">
+            <div class="font-sans text-3xl leading-none font-bold tracking-tight">
               {cardDate.dayMonth}
             </div>
             <div class="mt-1 font-sans text-sm leading-snug font-medium">
@@ -146,7 +146,7 @@
         <SeatRing
           capacity={table.capacity ?? 5}
           seatsLeft={table.seatsLeft}
-          size={112}
+          size={88}
           label={seatSummary}
         />
       </div>
@@ -161,12 +161,12 @@
   {/if}
 
   <!-- Card body -->
-  <div class="flex grow flex-col px-5 pt-5 pb-4">
+  <div class="flex grow flex-col px-4 pt-4 pb-3">
     <div class="text-sm leading-snug font-semibold text-muted">
       {table.system.name}
     </div>
 
-    <svelte:element this={level} class="mt-1 text-2xl leading-tight font-semibold tracking-tight">
+    <svelte:element this={level} class="mt-1 text-xl leading-tight font-semibold tracking-tight">
       <a
         href={`/t/${table.slug}`}
         class="after:absolute after:inset-0 after:content-[''] hover:underline"
@@ -192,7 +192,7 @@
     </div>
 
     {#if table.modality}
-      <div class="mt-1 flex items-center gap-1.5 text-sm leading-normal text-muted">
+      <div class="mt-1 flex items-center gap-2 text-sm leading-normal text-muted">
         <Icon name={modalityIcon(table.modality)} size={16} />
         {table.modality === 'in_person'
           ? `${m.table_modality_in_person()} · ${table.locationArea ?? ''}`

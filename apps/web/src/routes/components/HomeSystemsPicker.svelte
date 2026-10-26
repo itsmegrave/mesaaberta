@@ -47,9 +47,9 @@
 
 <section
   aria-labelledby="home-picker"
-  class="rounded-lg border border-surface-200-800 bg-panel p-5 md:p-8"
+  class="rounded-lg border border-surface-200-800 bg-panel p-4 md:p-6"
 >
-  <h2 id="home-picker" class="text-2xl font-semibold tracking-tight md:text-3xl">
+  <h2 id="home-picker" class="text-xl font-semibold tracking-tight md:text-2xl">
     {m.home_picker_title()}
   </h2>
   <p class="mt-2 max-w-xl text-muted">{m.home_picker_lede({ max })}</p>

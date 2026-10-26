@@ -20,10 +20,10 @@
 
 <section
   aria-labelledby="home-sessions"
-  class="rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6"
+  class="rounded-lg border border-surface-200-800 bg-panel p-4 md:p-5"
 >
   <div class="flex items-baseline justify-between gap-3">
-    <h2 id="home-sessions" class="text-xl font-semibold">{m.home_sessions_title()}</h2>
+    <h2 id="home-sessions" class="text-lg font-semibold md:text-xl">{m.home_sessions_title()}</h2>
     <a href={routes.myTables} class="text-sm font-semibold">{m.nav_my_tables()}</a>
   </div>
   <p class="mt-1 text-sm text-muted">{m.home_sessions_timezone({ zone: zoneLabel(zone, now) })}</p>

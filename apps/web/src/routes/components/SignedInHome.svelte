@@ -38,11 +38,11 @@
 
 {#snippet emptyRow(id: string, title: string, text: string, href: string, label: string)}
   <section aria-labelledby={id} class="flex flex-col gap-4">
-    <h2 {id} class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-4xl">
+    <h2 {id} class="text-xl leading-tight font-semibold tracking-tight text-balance md:text-2xl">
       {title}
     </h2>
     <div
-      class="flex flex-col gap-4 rounded-lg border border-surface-200-800 bg-panel p-5 md:flex-row md:items-center md:justify-between md:p-6"
+      class="flex flex-col gap-4 rounded-lg border border-surface-200-800 bg-panel p-4 md:flex-row md:items-center md:justify-between md:p-5"
     >
       <p class="max-w-xl">{text}</p>
       <a {href} class="{buttonClass('secondary', 'sm')} shrink-0 font-semibold">{label}</a>
@@ -50,15 +50,15 @@
   </section>
 {/snippet}
 
-<div class="flex flex-col gap-8 pt-5 pb-10 md:gap-12 md:pt-8 md:pb-14">
+<div class="flex flex-col gap-6 pt-4 pb-8 md:gap-8 md:pt-6 md:pb-10">
   <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
     <div>
-      <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
+      <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
         {m.home_greeting({ name: data.name })}
       </h1>
-      <p class="mt-3 text-lg text-muted">{summary}</p>
+      <p class="mt-2 text-base text-muted">{summary}</p>
     </div>
-    <div class="flex flex-col gap-2 sm:flex-row sm:gap-3">
+    <div class="grid grid-cols-2 gap-2 md:flex md:gap-3">
       <a href={routes.tables} class="{buttonClass('secondary')} gap-2 font-semibold">
         {m.home_browse()}
       </a>

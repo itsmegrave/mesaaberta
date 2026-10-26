@@ -55,18 +55,18 @@
 
   // Round filter pills, as on the layout: the picked one is filled.
   const chip =
-    'btn h-9 shrink-0 rounded-full border border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-filled-primary-500';
+    'btn h-8 shrink-0 rounded-full border border-surface-200-800 px-3 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-filled-primary-500';
 </script>
 
 <svelte:head>
   <title>{m.notifications_title()}</title>
 </svelte:head>
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs class="mb-8" items={[{ label: m.notifications_title() }]} />
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
     <div>
-      <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+      <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
         {m.notifications_title()}
       </h1>
       <p class="mt-2 max-w-md text-base text-muted md:mt-3 md:text-xl">
@@ -78,7 +78,7 @@
         action="readAll"
         next={here}
         until={data.seenAt}
-        buttonClass="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+        buttonClass="btn h-11 rounded-lg border-2 border-primary-500 px-6 font-semibold"
       >
         {m.notifications_mark_all()}
       </NotificationAction>
@@ -155,7 +155,7 @@
               id={item.id}
               next={here}
               class="m-0 shrink-0"
-              buttonClass="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+              buttonClass="btn h-11 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
             >
               {m.notifications_mark_read()}
             </NotificationAction>

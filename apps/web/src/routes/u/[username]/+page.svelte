@@ -88,7 +88,7 @@
   });
 </script>
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs class="mb-6 md:mb-8" items={[{ label: atHandle(profile.username) }]} />
 
   {#if data.previewing}
@@ -128,7 +128,7 @@
           {#if data.isOwner}
             <a
               href="/u/profile/edit"
-              class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
+              class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold"
               >{m.public_profile_edit()}</a
             >
           {:else if data.follow}
@@ -145,7 +145,7 @@
       <div class="mt-4 min-w-0">
         <div class="flex flex-wrap items-center gap-3">
           <h1
-            class="text-4xl leading-none font-semibold tracking-tight wrap-break-word md:text-6xl"
+            class="text-3xl leading-none font-semibold tracking-tight wrap-break-word md:text-5xl"
           >
             <UserLink username={profile.username} />
           </h1>

@@ -138,7 +138,7 @@
         {#if row.submitter}
           <a class="anchor" href={`/u/${row.submitter}`}>@{row.submitter}</a>
         {:else}
-          <span class="inline-flex items-center gap-1.5 text-muted">
+          <span class="inline-flex items-center gap-2 text-muted">
             <Icon name="import" size={18} class="shrink-0" />
             {submissionLabel(null, row.importSource)}
           </span>

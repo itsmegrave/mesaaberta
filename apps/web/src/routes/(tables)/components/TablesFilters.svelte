@@ -91,11 +91,11 @@
 
   // Modalidade is a pill track on the wash: 44px tall with a 4px inset, so each segment is 36px.
   const segment =
-    'inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap no-underline';
+    'inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm font-semibold whitespace-nowrap no-underline';
   // The phone's way into the filters, as on the MobileTables board: a full 48px row with the
   // primary line, the name on the left and how many filters are on at the right.
   const trigger =
-    'btn h-12 w-full justify-between rounded-lg border-control border-primary-500 bg-panel px-4 font-semibold hover:preset-tonal';
+    'btn h-11 w-full justify-between rounded-lg border-control border-primary-500 bg-panel px-4 font-semibold hover:preset-tonal';
 </script>
 
 {#snippet modality()}
@@ -190,7 +190,7 @@
         <li>
           <button
             type="button"
-            class="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-primary-500 bg-surface-wash pr-2 pl-3 text-sm font-semibold whitespace-nowrap hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+            class="inline-flex h-8 max-w-full items-center gap-2 rounded-full border border-primary-500 bg-surface-wash pr-2 pl-3 text-sm font-semibold whitespace-nowrap hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
             aria-label={m.tables_filter_remove({ name: chip.name })}
             onclick={chip.remove}
           >
@@ -269,7 +269,7 @@
               onclick={clearAll}>{m.tables_filters_clear_everything()}</button
             >
             <Dialog.CloseTrigger
-              class="btn h-12 rounded-lg preset-filled-primary-500 px-5 font-semibold"
+              class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold"
               >{m.tables_filter_show({ count })}</Dialog.CloseTrigger
             >
           </footer>

@@ -145,7 +145,7 @@
           : 'border-ink-muted',
   );
   const control = $derived(
-    `flex ${compact ? 'h-11' : 'h-13'} w-full items-center overflow-hidden rounded-lg border-control ${border} bg-panel focus-within:outline-4 focus-within:outline-offset-2 focus-within:outline-primary-500 ${controlClass}`,
+    `flex ${compact ? 'h-11' : 'h-11'} w-full items-center overflow-hidden rounded-lg border-control ${border} bg-panel focus-within:outline-4 focus-within:outline-offset-2 focus-within:outline-primary-500 ${controlClass}`,
   );
   const inputClass =
     'h-full min-w-0 flex-1 rounded-none! border-0! bg-transparent px-3 text-sm shadow-none! ring-0! outline-none focus:ring-0!';

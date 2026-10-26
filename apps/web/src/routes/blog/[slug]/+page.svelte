@@ -22,7 +22,7 @@
   <meta property="article:published_time" content={post.date} />
 </svelte:head>
 
-<article class="mx-auto max-w-prose py-6 md:py-12" aria-labelledby="post-title">
+<article class="mx-auto max-w-prose py-6 md:py-8" aria-labelledby="post-title">
   <Breadcrumbs
     class="mb-6 md:mb-10"
     items={[{ label: m.blog_title(), href: resolve('/blog') }, { label: post.title }]}
@@ -30,7 +30,7 @@
   <header>
     <h1
       id="post-title"
-      class="text-4xl leading-tight font-semibold tracking-tight text-balance md:text-5xl"
+      class="text-3xl leading-tight font-semibold tracking-tight text-balance md:text-5xl"
     >
       {post.title}
     </h1>

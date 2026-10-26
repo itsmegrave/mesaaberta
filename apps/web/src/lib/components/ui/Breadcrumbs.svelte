@@ -57,11 +57,11 @@
         {:else if crumb.href}
           <a
             href={crumb.href}
-            class="block max-w-37.5 truncate font-semibold text-muted no-underline hover:underline focus-visible:underline"
+            class="block max-w-36 truncate font-semibold text-muted no-underline hover:underline focus-visible:underline"
             >{crumb.label}</a
           >
         {:else}
-          <span class="block max-w-37.5 truncate">{crumb.label}</span>
+          <span class="block max-w-36 truncate">{crumb.label}</span>
         {/if}
       </li>
       {#if folds && index === 0}

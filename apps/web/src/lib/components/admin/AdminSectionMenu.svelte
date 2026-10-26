@@ -37,7 +37,7 @@
     onSelect={({ value }) => void goto(value)}
   >
     <Menu.Trigger
-      class="btn flex h-12 w-full items-center justify-between gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold"
+      class="btn flex h-11 w-full items-center justify-between gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold"
     >
       <span class="min-w-0 flex-1 truncate text-left"
         >{m.admin_section({ name: current?.label ?? m.admin_nav_overview() })}</span

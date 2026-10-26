@@ -60,7 +60,7 @@
     role={variant === 'pill' ? 'group' : undefined}
     aria-label={variant === 'pill' ? reading : undefined}
     class="inline-flex items-center gap-2 whitespace-nowrap {variant === 'pill'
-      ? 'rounded-lg border border-surface-200-800 bg-panel px-3.5 py-2'
+      ? 'rounded-lg border border-surface-200-800 bg-panel px-3 py-2'
       : ''} {className}"
   >
     {#if variant !== 'pill'}<span class="sr-only">{m.rating_gm_average()}:</span>{/if}

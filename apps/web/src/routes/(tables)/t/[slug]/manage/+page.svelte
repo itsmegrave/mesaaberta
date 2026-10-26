@@ -167,7 +167,7 @@
     }
   };
 
-  const card = 'rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6';
+  const card = 'rounded-lg border border-surface-200-800 bg-panel p-4 md:p-5';
   const secondary = `${buttonClass('secondary')} font-semibold`;
 </script>
 
@@ -362,7 +362,7 @@
               >
                 {#snippet actions()}
                   <span
-                    class="chip h-7 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
+                    class="chip h-6 shrink-0 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
                     >{m.manage_gm_badge()}</span
                   >
                 {/snippet}
@@ -471,7 +471,7 @@
             <SummaryRow label={m.form_platforms()} class="flex flex-wrap gap-1">
               {#each table.platforms as platform (platform.slug)}
                 <span
-                  class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+                  class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                   >{platform.name}</span
                 >
               {/each}
@@ -480,7 +480,7 @@
           {#if table.tags.length > 0}
             <SummaryRow label={m.form_tags()} class="flex flex-wrap gap-1">
               {#each table.tags as tag (tag.slug)}
-                <span class="chip h-7 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
+                <span class="chip h-6 rounded-lg bg-surface-wash px-2 text-xs font-semibold"
                   >{tag.name}</span
                 >
               {/each}
@@ -503,12 +503,12 @@
           {#if data.canEdit}
             <a
               href={editPage}
-              class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+              class="btn h-11 w-full rounded-lg preset-filled-primary-500 font-semibold"
               >{m.table_edit()}</a
             >
           {/if}
-          <a href={tablePage} class="{secondary} h-12 w-full">{m.manage_view_page()}</a>
-          <a href={`/t/${table.slug}/chat`} class="{secondary} h-12 w-full"
+          <a href={tablePage} class="{secondary} h-11 w-full">{m.manage_view_page()}</a>
+          <a href={`/t/${table.slug}/chat`} class="{secondary} h-11 w-full"
             >{m.messages_table_chat()}</a
           >
         </div>

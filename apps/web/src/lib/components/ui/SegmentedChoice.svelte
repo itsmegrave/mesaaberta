@@ -34,7 +34,7 @@
 
   const pill = $derived(
     `btn rounded-full text-sm font-semibold has-checked:preset-filled-primary-500 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500 has-disabled:cursor-not-allowed has-disabled:opacity-50 ${
-      size === 'sm' ? 'h-7 px-3' : 'h-9 px-3.5'
+      size === 'sm' ? 'h-7 px-3' : 'h-8 px-3'
     }`,
   );
 </script>

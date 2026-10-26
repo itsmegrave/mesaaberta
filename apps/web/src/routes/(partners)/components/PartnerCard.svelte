@@ -116,7 +116,7 @@
 
   <h3 class="text-lg leading-snug font-semibold text-balance">{partner.name}</h3>
   {#if partner.types.length > 0}
-    <ul class="flex flex-wrap gap-1.5" aria-label={m.partner_types_label({ name: partner.name })}>
+    <ul class="flex flex-wrap gap-2" aria-label={m.partner_types_label({ name: partner.name })}>
       {#each partner.types as type (type)}
         <li><Pill tone="muted">{partnerTypeLabels[type]()}</Pill></li>
       {/each}

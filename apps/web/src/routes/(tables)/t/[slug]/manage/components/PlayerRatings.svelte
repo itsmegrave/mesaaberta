@@ -33,7 +33,7 @@
 </script>
 
 {#if present.length > 0}
-  <section class="rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6">
+  <section class="rounded-lg border border-surface-200-800 bg-panel p-4 md:p-5">
     <MAAccordion collapse="phone" bind:value={open}>
       <MAAccordionItem
         value="player-ratings"

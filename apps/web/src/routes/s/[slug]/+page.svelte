@@ -43,7 +43,7 @@
 
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<section class="py-2 md:pt-12">
+<section class="py-2 md:pt-8">
   <DirectoryHeader
     crumbs={[{ label: m.systems_crumb(), href: '/systems' }, { label: system.name }]}
     name={system.name}

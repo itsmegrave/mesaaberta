@@ -125,7 +125,7 @@
               >
               <a
                 href={selected ? `/m/${selected}` : '/messages'}
-                class="btn h-12 shrink-0 rounded-lg px-3 text-sm hover:preset-tonal"
+                class="btn h-11 shrink-0 rounded-lg px-3 text-sm hover:preset-tonal"
                 aria-label={m.messages_full_page()}
                 ><Icon name="external-link" size={20} /><span class="sr-only"
                   >{m.messages_full_page()}</span
@@ -159,7 +159,7 @@
                       <Tabs.Trigger
                         {value}
                         aria-label={count > 0 ? withCount({ count }) : undefined}
-                        class="btn h-12 gap-2 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
+                        class="btn h-11 gap-2 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
                       >
                         {label}
                         <CountBadge {count} tone="error" aria-hidden="true" class="min-w-6 px-1" />

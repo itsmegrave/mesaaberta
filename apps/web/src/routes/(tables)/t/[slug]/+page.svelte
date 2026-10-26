@@ -152,7 +152,7 @@
       </p>
 
       <div class="mt-3 flex items-start justify-between gap-3">
-        <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+        <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
           {table.title}
         </h1>
         <KebabMenu name={table.title} items={menu} />
@@ -172,7 +172,7 @@
             <li>
               <a
                 href="/tables?tag={encodeURIComponent(tag.slug)}"
-                class="chip h-8 rounded-lg bg-surface-wash px-3 text-sm font-semibold hover:preset-tonal"
+                class="chip h-7 rounded-lg bg-surface-wash px-2 text-xs font-semibold hover:preset-tonal"
                 >{tag.name}</a
               >
             </li>
@@ -274,7 +274,7 @@
           <SummaryRow label={m.form_platforms()} class="flex flex-wrap gap-1">
             {#each table.platforms as platform (platform.slug)}
               <span
-                class="chip h-7 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+                class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                 >{platform.name}</span
               >
             {/each}
@@ -333,7 +333,7 @@
           {:else if !data.signedIn}
             <a
               href="{resolve('login')}?next={encodeURIComponent(`/t/${table.slug}`)}"
-              class="btn h-12 w-full rounded-lg preset-filled-primary-500 font-semibold"
+              class="btn h-11 w-full rounded-lg preset-filled-primary-500 font-semibold"
             >
               {m.table_sign_in_to_join()}
             </a>
@@ -343,7 +343,7 @@
               action="?/leave"
               class="mt-3"
               label={m.table_leave()}
-              buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
+              buttonClass="btn h-11 w-full rounded-lg btn-secondary font-semibold"
               success={m.toast_left()}
               onfail={(message) => (failed = message)}
             />
@@ -353,7 +353,7 @@
               action="?/leave"
               class="mt-3"
               label={m.table_cancel_request()}
-              buttonClass="btn h-12 w-full rounded-lg btn-secondary font-semibold"
+              buttonClass="btn h-11 w-full rounded-lg btn-secondary font-semibold"
               success={m.toast_request_withdrawn()}
               onfail={(message) => (failed = message)}
             />
@@ -365,7 +365,7 @@
           {:else if data.canJoin && table.joinMode === 'approval'}
             <JoinRequestDialog
               onfail={(message) => (failed = message)}
-              triggerClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+              triggerClass="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
             />
           {:else if data.canJoin}
             <ActionForm
@@ -374,7 +374,7 @@
               onsuccess={() => toast.success(m.toast_confirmed())}
               label={m.table_join_now()}
               icon="game-icons:bar-stool"
-              buttonClass="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+              buttonClass="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
             />
           {/if}
         </div>
@@ -382,7 +382,7 @@
       {#if data.isGm || data.myStatus === 'confirmed'}
         <a
           href={`/t/${table.slug}/chat`}
-          class="mt-3 btn h-12 w-full gap-2 rounded-lg btn-secondary font-semibold"
+          class="mt-3 btn h-11 w-full gap-2 rounded-lg btn-secondary font-semibold"
         >
           <Icon name="game-icons:scroll-quill" size={18} />
           {m.messages_table_chat()}

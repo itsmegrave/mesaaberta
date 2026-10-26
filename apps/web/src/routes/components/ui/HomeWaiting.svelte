@@ -58,10 +58,10 @@
 
 <section
   aria-labelledby="home-waiting"
-  class="rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6"
+  class="rounded-lg border border-surface-200-800 bg-panel p-4 md:p-5"
 >
   <div class="flex items-baseline justify-between gap-3">
-    <h2 id="home-waiting" class="text-xl font-semibold">{m.home_waiting_title()}</h2>
+    <h2 id="home-waiting" class="text-lg font-semibold md:text-xl">{m.home_waiting_title()}</h2>
     <span class="text-sm font-semibold text-muted">{m.home_waiting_count({ count: total })}</span>
   </div>
   <ul class="mt-4 flex flex-col divide-y divide-surface-200-800">

@@ -31,10 +31,10 @@
 
 <section
   aria-labelledby="home-account"
-  class="flex flex-col gap-4 rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6"
+  class="flex flex-col gap-3 rounded-lg border border-surface-200-800 bg-panel p-4 md:gap-4 md:p-5"
 >
   <div class="flex items-center justify-between gap-3">
-    <h2 id="home-account" class="text-xl font-semibold">{m.home_account_title()}</h2>
+    <h2 id="home-account" class="text-lg font-semibold md:text-xl">{m.home_account_title()}</h2>
     {#if username}
       <a href={routes.profile(username)} class="{buttonClass('secondary', 'sm')} font-semibold"
         >{m.home_account_profile()}</a
@@ -43,8 +43,8 @@
   </div>
 
   <!-- The two scores side by side, each on its own tile. -->
-  <dl class="grid grid-cols-2 gap-3">
-    <div class="min-w-0 rounded-lg bg-surface-wash p-4">
+  <dl class="grid grid-cols-2 gap-2 md:gap-3">
+    <div class="min-w-0 rounded-lg bg-surface-wash p-3 md:p-4">
       <dt class="text-sm font-semibold text-muted">{m.home_account_gm_score()}</dt>
       <dd class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
         <ScoreLine
@@ -60,7 +60,7 @@
         {/if}
       </dd>
     </div>
-    <div class="min-w-0 rounded-lg bg-surface-wash p-4">
+    <div class="min-w-0 rounded-lg bg-surface-wash p-3 md:p-4">
       <dt class="text-sm font-semibold text-muted">{m.home_account_player_score()}</dt>
       <dd class="mt-1">
         <ScoreLine

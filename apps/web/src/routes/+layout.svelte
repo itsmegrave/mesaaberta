@@ -138,7 +138,7 @@
     <div class="min-w-0 flex-1 overflow-x-clip">
       <!-- On desktop the side rail carries the links and account; the header is the phone's. -->
       <header
-        class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 {data.maintenance
+        class="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 {data.maintenance
           ? 'md:h-20 md:px-8'
           : 'md:hidden'}"
       >
@@ -173,7 +173,7 @@
             {#if !data.account && data.authEnabled}
               <a
                 href={resolve('login')}
-                class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
+                class="btn h-11 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
               >
                 <Icon name="game-icons:dungeon-gate" size={20} />
                 {m.nav_sign_in()}
@@ -186,7 +186,7 @@
       {#if updated.current}
         <aside
           role="status"
-          class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
+          class="mx-auto mt-2 flex w-[calc(100%-2rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
         >
           <p>{m.version_update_available()}</p>
           <MAButton
@@ -226,7 +226,7 @@
         {#key data.cacheIdentity}<ExtensionWidgets />{/key}
       {/if}
 
-      <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
+      <main id="main" class="mx-auto w-full max-w-7xl px-4 pb-8 md:px-8 md:pb-10">
         {#if arriving}
           <ListSkeleton kind={arriving} heading />
         {:else}

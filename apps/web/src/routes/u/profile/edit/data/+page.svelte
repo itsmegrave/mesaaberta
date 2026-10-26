@@ -101,7 +101,7 @@
     href="/u/profile/export"
     download
     data-sveltekit-reload
-    class="mt-5 btn h-12 gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+    class="mt-5 btn h-11 gap-2 rounded-lg border-2 border-primary-500 px-6 font-semibold"
   >
     <svg
       width="18"
@@ -149,7 +149,7 @@
         oninput={() => (mismatch = false)}
         aria-invalid={mismatch || closing.errors.confirm ? 'true' : undefined}
         aria-describedby={mismatch || closing.errors.confirm ? 'confirm-error' : undefined}
-        class="input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3"
+        class="input h-11 w-full rounded-lg border-control border-ink-muted bg-panel px-3"
       />
       <FieldError
         id="confirm"

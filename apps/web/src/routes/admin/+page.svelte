@@ -207,7 +207,7 @@
                 <span class="block truncate text-sm text-muted">{item.detail}</span>
               </span>
               <span
-                class="chip rounded-full preset-filled-warning-500 px-2.5 font-semibold tabular-nums"
+                class="chip rounded-full preset-filled-warning-500 px-2 font-semibold tabular-nums"
                 >{number(item.count)}</span
               >
               <Icon name="chevron-right" size={18} />

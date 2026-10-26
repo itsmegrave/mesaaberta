@@ -22,7 +22,7 @@
   <span class="font-semibold text-muted">{detail}</span>
 </p>
 <div class="mt-3 flex items-center gap-4">
-  <h1 class="min-w-0 text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+  <h1 class="min-w-0 text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {title}
   </h1>
   <KebabMenu name={title} items={menu} />

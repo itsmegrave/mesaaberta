@@ -174,7 +174,7 @@
       hourCycle: 'h23',
     }).format(date);
 
-  const input = 'input h-13 rounded-lg border-control border-ink-muted bg-panel px-3';
+  const input = 'input h-11 rounded-lg border-control border-ink-muted bg-panel px-3';
   const choice =
     'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-surface-200-800 p-3 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10';
   const focus = 'has-focus-visible:outline-4 has-focus-visible:outline-primary-500';
@@ -386,7 +386,7 @@
             submitting={controller.pending}
             delayed={controller.delayed}
             timeout={controller.timeout}
-            class="btn h-12 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+            class="btn h-11 rounded-lg preset-filled-primary-500 px-6 font-semibold"
             >{m.admin_announce_review()}</MAButton
           >
         </p>

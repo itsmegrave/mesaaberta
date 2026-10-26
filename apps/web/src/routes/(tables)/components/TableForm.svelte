@@ -191,7 +191,7 @@
           minlength={3}
           maxlength={80}
           bind:value={$draft.title}
-          class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
+          class="input h-11 rounded-lg border-control border-ink-muted bg-panel px-3"
           {...aria}
         />
       {/snippet}
@@ -360,7 +360,7 @@
             maxlength={2}
             required
             bind:value={$draft.plannedSessions}
-            class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -398,7 +398,7 @@
             maxlength={10}
             placeholder="00000-000"
             bind:value={$draft.postalCode}
-            class="input h-13 max-w-48 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 max-w-48 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -417,7 +417,7 @@
             maxlength={120}
             autocomplete="off"
             bind:value={$draft.locationArea}
-            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -480,7 +480,7 @@
           autocomplete="off"
           maxlength={2}
           bind:value={$draft.minPlayers}
-          class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
+          class="input h-11 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
           {...aria}
         />
       {/snippet}
@@ -516,7 +516,7 @@
       type="submit"
       size="custom"
       {controller}
-      class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+      class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
       >{submitLabel}</MAButton
     >
     {#if draftLabel}
@@ -526,7 +526,7 @@
         name="intent"
         value="draft"
         submitting={controller.pending}
-        class="btn h-12 gap-2 rounded-lg btn-secondary px-5 font-semibold">{draftLabel}</MAButton
+        class="btn h-11 gap-2 rounded-lg btn-secondary px-5 font-semibold">{draftLabel}</MAButton
       >
     {/if}
   {/snippet}

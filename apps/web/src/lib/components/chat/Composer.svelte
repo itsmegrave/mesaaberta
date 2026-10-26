@@ -165,7 +165,7 @@
       placeholder={m.messages_composer_placeholder()}
       aria-invalid={error ? 'true' : undefined}
       aria-describedby={error || notice ? 'message-notice' : undefined}
-      class="textarea field-sizing-content max-h-40 min-h-12 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-2 py-3 shadow-none focus:outline-none"
+      class="textarea field-sizing-content max-h-40 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-2 py-3 shadow-none focus:outline-none"
     ></MATextArea>
     <MAButton type="submit" variant="primary" {controller} class="shrink-0 font-semibold">
       <Icon name="send" size={18} />

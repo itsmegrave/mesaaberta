@@ -66,7 +66,7 @@
       </span>
     {/if}
     <span
-      class="absolute bottom-3 left-3 rounded-lg preset-filled-primary-500 px-3 py-1.5 leading-none shadow-sm"
+      class="absolute bottom-3 left-3 rounded-lg preset-filled-primary-500 px-3 py-2 leading-none shadow-sm"
     >
       <span class="text-base font-bold tracking-tight">{cardDate.dayMonth}</span>
       <span class="text-xs font-medium"> · {cardDate.weekdayTime}</span>

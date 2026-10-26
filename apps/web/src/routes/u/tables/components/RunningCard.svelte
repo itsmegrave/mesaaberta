@@ -178,7 +178,7 @@
     <!-- A heading on a wide screen, a button that folds the list on a phone. -->
     <h4 class="mt-5 font-semibold max-lg:hidden">{m.dash_players()}</h4>
     <Collapsible.Trigger
-      class="mt-3 flex min-h-12 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
+      class="mt-3 flex min-h-11 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
     >
       {m.dash_players_count({ count: item.players.length })}
       <Icon name="chevron-down" class="transition-transform {playersOpen ? 'rotate-180' : ''}" />

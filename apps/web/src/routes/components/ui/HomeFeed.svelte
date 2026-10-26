@@ -21,10 +21,10 @@
 
 <section
   aria-labelledby="home-feed"
-  class="rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6"
+  class="rounded-lg border border-surface-200-800 bg-panel p-4 md:p-5"
 >
   <div class="flex items-baseline justify-between gap-3">
-    <h2 id="home-feed" class="text-xl font-semibold">{m.home_feed_title()}</h2>
+    <h2 id="home-feed" class="text-lg font-semibold md:text-xl">{m.home_feed_title()}</h2>
     <a href="/u/profile/edit/following" class="text-sm font-semibold">{m.home_feed_manage()}</a>
   </div>
   <ul class="mt-4 flex flex-col gap-4">

@@ -47,7 +47,7 @@
           >{name}</a
         >
       </svelte:element>
-      <p class="mt-1.5 text-sm font-medium text-muted">{facts}</p>
+      <p class="mt-2 text-sm font-medium text-muted">{facts}</p>
     </div>
   </div>
   {@render people?.()}

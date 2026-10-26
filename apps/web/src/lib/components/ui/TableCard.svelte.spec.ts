@@ -90,7 +90,7 @@ describe('TableCard', () => {
 
     const svg = document.querySelector('svg[aria-label="2 de 5 vagas ocupadas"]');
     expect(svg).not.toBeNull();
-    expect(svg?.getAttribute('width')).toBe('112');
+    expect(svg?.getAttribute('width')).toBe('88');
   });
 
   it('renders chips line with first platform ("Discord +1") and first tag with "+N"', async () => {
