@@ -3,6 +3,7 @@ import { eraseMessagesOf } from '@mesaaberta/core/server/messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversations,
+  follows,
   gmInviteBlocks,
   playerInvitations,
   gameTables,
@@ -10,6 +11,7 @@ import {
   messages,
   notifications,
   userBadges,
+  profileFavoriteSystems,
   profileSocialLinks,
   profiles,
   playerRatings,
@@ -46,6 +48,9 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       avatarPath: profiles.avatarPath,
       bannerPath: profiles.bannerPath,
       bio: profiles.bio,
+      showFavoriteSystems: profiles.showFavoriteSystems,
+      followNotifyTables: profiles.followNotifyTables,
+      followNotifySeats: profiles.followNotifySeats,
       createdAt: profiles.createdAt,
     })
     .from(profiles)
@@ -192,35 +197,49 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       .orderBy(asc(playerRatings.createdAt)),
   ]);
 
-  const [invitationsReceived, invitationsSent, invitationBlocks] = await Promise.all([
-    db
-      .select({
-        id: playerInvitations.id,
-        tableId: playerInvitations.tableId,
-        gmId: playerInvitations.gmId,
-        status: playerInvitations.status,
-        createdAt: playerInvitations.createdAt,
-        expiresAt: playerInvitations.expiresAt,
-        respondedAt: playerInvitations.respondedAt,
-        cancellationReason: playerInvitations.cancellationReason,
-      })
-      .from(playerInvitations)
-      .where(eq(playerInvitations.playerId, userId)),
-    db
-      .select({
-        id: playerInvitations.id,
-        tableId: playerInvitations.tableId,
-        status: playerInvitations.status,
-        createdAt: playerInvitations.createdAt,
-        expiresAt: playerInvitations.expiresAt,
-      })
-      .from(playerInvitations)
-      .where(eq(playerInvitations.gmId, userId)),
-    db
-      .select({ gmId: gmInviteBlocks.gmId, createdAt: gmInviteBlocks.createdAt })
-      .from(gmInviteBlocks)
-      .where(eq(gmInviteBlocks.playerId, userId)),
-  ]);
+  const [invitationsReceived, invitationsSent, invitationBlocks, favoriteSystems, following] =
+    await Promise.all([
+      db
+        .select({
+          id: playerInvitations.id,
+          tableId: playerInvitations.tableId,
+          gmId: playerInvitations.gmId,
+          status: playerInvitations.status,
+          createdAt: playerInvitations.createdAt,
+          expiresAt: playerInvitations.expiresAt,
+          respondedAt: playerInvitations.respondedAt,
+          cancellationReason: playerInvitations.cancellationReason,
+        })
+        .from(playerInvitations)
+        .where(eq(playerInvitations.playerId, userId)),
+      db
+        .select({
+          id: playerInvitations.id,
+          tableId: playerInvitations.tableId,
+          status: playerInvitations.status,
+          createdAt: playerInvitations.createdAt,
+          expiresAt: playerInvitations.expiresAt,
+        })
+        .from(playerInvitations)
+        .where(eq(playerInvitations.gmId, userId)),
+      db
+        .select({ gmId: gmInviteBlocks.gmId, createdAt: gmInviteBlocks.createdAt })
+        .from(gmInviteBlocks)
+        .where(eq(gmInviteBlocks.playerId, userId)),
+      db
+        .select({ system: systems.name, createdAt: profileFavoriteSystems.createdAt })
+        .from(profileFavoriteSystems)
+        .innerJoin(systems, eq(profileFavoriteSystems.systemId, systems.id))
+        .where(eq(profileFavoriteSystems.profileId, userId))
+        .orderBy(asc(systems.position), asc(systems.name)),
+      // Who the person follows, by their public @. Who follows them is those people's data.
+      db
+        .select({ username: profiles.username, createdAt: follows.createdAt })
+        .from(follows)
+        .innerJoin(profiles, eq(follows.followeeId, profiles.id))
+        .where(eq(follows.followerId, userId))
+        .orderBy(asc(follows.createdAt)),
+    ]);
   return {
     invitationsReceived,
     invitationsSent,
@@ -237,6 +256,8 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     badges,
     playerRatingsGiven,
     playerRatingsReceived,
+    favoriteSystems,
+    following,
   };
 }
 
@@ -329,7 +350,7 @@ export async function closeAccount(
 }
 
 /**
- * Clears every personal field of a closed account and its links and notifications. The row itself stays, empty, because
+ * Clears every personal field of a closed account, its links, favorite systems, follows and notifications. The row itself stays, empty, because
  * the disabled tables still point at it; it is suspended so nothing can act through it.
  */
 export async function anonymiseProfile(db: AnyDb, userId: string) {
@@ -342,6 +363,11 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
       .delete(gmInviteBlocks)
       .where(or(eq(gmInviteBlocks.playerId, userId), eq(gmInviteBlocks.gmId, userId)));
     await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, userId));
+    await tx.delete(profileFavoriteSystems).where(eq(profileFavoriteSystems.profileId, userId));
+    // Both ways: nobody keeps following an empty account, and it follows nobody.
+    await tx
+      .delete(follows)
+      .where(or(eq(follows.followerId, userId), eq(follows.followeeId, userId)));
     await tx.delete(notifications).where(eq(notifications.recipientId, userId));
     await tx.delete(userBadges).where(eq(userBadges.profileId, userId));
     await tx

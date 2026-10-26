@@ -407,6 +407,13 @@
       "when": 1792982985206,
       "tag": "0057_adventure_planned_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792984755324,
+      "tag": "0058_favorite_systems_follows",
+      "breakpoints": true
     }
   ]
 }
