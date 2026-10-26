@@ -16,6 +16,9 @@ export const reasonLabel = (reason: ReportReason, target: ReportTarget = 'table'
     scam: m.report_reason_scam,
     off_topic: m.report_reason_off_topic,
     no_backlink: m.report_reason_no_backlink,
+    place_closed: m.report_reason_place_closed,
+    wrong_address: m.report_reason_wrong_address,
+    not_public: m.report_reason_not_public,
   })[reason]();
 
 export const reportStatusLabel = (status: ReportStatus) =>

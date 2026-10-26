@@ -329,6 +329,9 @@ export const gameTables = pgTable(
     locationNeighbourhood: text('location_neighbourhood'),
     locationCity: text('location_city'),
     locationState: text('location_state'),
+    // The "Onde jogar" place an in-person table happens at, when the GM picked one. The CEP and area
+    // above are still copied from it, so the filters and a removed place never break the table.
+    placeId: uuid('place_id').references((): AnyPgColumn => places.id, { onDelete: 'set null' }),
     capacity: integer('capacity').notNull(),
     // The fewest confirmed players the GM wants before the table goes ahead. Optional: null says it
     // makes no difference. Never more than `capacity`.
@@ -368,6 +371,7 @@ export const gameTables = pgTable(
     index('game_tables_system_id_idx').on(table.systemId),
     index('game_tables_status_published_idx').on(table.status, table.publishedAt),
     index('game_tables_location_idx').on(table.locationState, table.locationCity),
+    index('game_tables_place_idx').on(table.placeId),
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(
       'game_tables_recurrence_matches_kind',
@@ -896,6 +900,7 @@ export const reportTarget = pgEnum('report_target', [
   'partner',
   'message',
   'person',
+  'place',
 ]);
 export const reportReason = pgEnum('report_reason', [
   'spam',
@@ -907,6 +912,9 @@ export const reportReason = pgEnum('report_reason', [
   'scam',
   'off_topic',
   'no_backlink',
+  'place_closed',
+  'wrong_address',
+  'not_public',
 ]);
 // `open` and `reviewing` wait on an admin; `resolved` and `dismissed` are closed.
 export const reportStatus = pgEnum('report_status', ['open', 'reviewing', 'resolved', 'dismissed']);
@@ -1113,6 +1121,139 @@ export const partnerLinks = pgTable(
   (link) => [
     index('partner_links_partner_idx').on(link.partnerId, link.position),
     check('partner_links_network', sql`${link.network} <> 'website'`),
+  ],
+).enableRLS();
+
+// What an "Onde jogar" place is. Mirror PLACE_KINDS in `@mesaaberta/core/places/types`.
+export const placeKind = pgEnum('place_kind', [
+  'store',
+  'game_cafe',
+  'club',
+  'bar',
+  'cultural_space',
+  'other',
+]);
+
+// A place to play RPG in person (a store, a game café, a club...), listed on /places and shown at
+// /pp/<slug>. A member sends it, an admin approves it (`approvedAt`), anyone reports it and an admin
+// removes it (`removedAt`). The address is public: places are businesses or public spaces. An edit
+// by the submitter clears the approval; an admin's or the owner's does not. Who sent it is shown to
+// admins only.
+export const places = pgTable(
+  'places',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // Made from the name when it is sent, and kept: it is the public URL (`/pp/<slug>`).
+    slug: text('slug').notNull(),
+    submitterId: uuid('submitter_id')
+      .notNull()
+      .references(() => profiles.id),
+    name: text('name').notNull(),
+    kind: placeKind('kind').notNull(),
+    description: text('description'),
+    // 8 digits, resolved through `postal_codes` into the neighbourhood, city and state below.
+    postalCode: text('postal_code').notNull(),
+    // Street and number. Public, like the rest of a place's address.
+    street: text('street').notNull(),
+    complement: text('complement'),
+    neighbourhood: text('neighbourhood'),
+    city: text('city').notNull(),
+    state: text('state').notNull(),
+    openingHours: text('opening_hours'),
+    // Slugs of PLACE_AMENITIES, in that list's order.
+    amenities: text('amenities')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    siteUrl: text('site_url'),
+    // A path in the table images bucket, or null.
+    imagePath: text('image_path'),
+    // Null while it waits for an admin (or after the submitter edits it).
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    // The admin who approved it. Not a foreign key, like `partners.approved_by`.
+    approvedBy: uuid('approved_by'),
+    // The member who claimed the place and an admin accepted: their edits publish at once.
+    ownerId: uuid('owner_id').references(() => profiles.id, { onDelete: 'set null' }),
+    ownerSince: timestamp('owner_since', { withTimezone: true }),
+    // Taken off the public pages for a while (too many reports), until an admin restores or removes it.
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }),
+    hiddenReason: text('hidden_reason', { enum: ['reports'] }),
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    // The admin who removed or rejected it, or the submitter themself (then there is no reason).
+    removedBy: uuid('removed_by'),
+    removalReason: reportReason('removal_reason'),
+    removalNote: text('removal_note'),
+    ...timestamps,
+  },
+  (place) => [
+    uniqueIndex('places_slug_unique').on(place.slug),
+    // One place per name and CEP while it is up: a repeat points at the existing one.
+    uniqueIndex('places_name_cep_unique')
+      .on(sql`lower(${place.name})`, place.postalCode)
+      .where(sql`${place.removedAt} IS NULL`),
+    index('places_submitter_idx').on(place.submitterId),
+    index('places_owner_idx').on(place.ownerId),
+    index('places_location_idx').on(place.state, place.city),
+    // The public list and the admin's waiting list.
+    index('places_approved_idx').on(place.approvedAt, place.removedAt),
+    check('places_slug_format', sql`${place.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check('places_postal_code_format', sql`${place.postalCode} ~ '^[0-9]{8}$'`),
+    check('places_state_format', sql`${place.state} ~ '^[A-Z]{2}$'`),
+    // Mirror PLACE_LIMITS in `@mesaaberta/core/places/types`.
+    check('places_name_length', sql`char_length(${place.name}) BETWEEN 1 AND 80`),
+    check('places_description_length', sql`char_length(${place.description}) <= 280`),
+    check('places_street_length', sql`char_length(${place.street}) BETWEEN 1 AND 120`),
+    check('places_complement_length', sql`char_length(${place.complement}) <= 60`),
+    check('places_opening_hours_length', sql`char_length(${place.openingHours}) <= 120`),
+    // Mirror PLACE_AMENITIES.
+    check(
+      'places_amenities_known',
+      sql`${place.amenities} <@ ARRAY['accessible', 'lends_games', 'bookable_tables', 'free_to_play', 'sells_food', 'open_late']::text[]`,
+    ),
+    check('places_owner_since', sql`(${place.ownerId} IS NULL) = (${place.ownerSince} IS NULL)`),
+    check(
+      'places_hidden_reason',
+      sql`(${place.hiddenAt} IS NULL) = (${place.hiddenReason} IS NULL)`,
+    ),
+    check('places_removal_note_length', sql`char_length(${place.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
+// One link of a place: a social network, in the order the member put them, like `partner_links`.
+// The site is `places.site_url`, so `network` is never `website` here.
+export const placeLinks = pgTable(
+  'place_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    network: text('network').notNull(),
+    url: text('url').notNull(),
+    position: integer('position').notNull(),
+  },
+  (link) => [
+    index('place_links_place_idx').on(link.placeId, link.position),
+    check('place_links_network', sql`${link.network} <> 'website'`),
+  ],
+).enableRLS();
+
+// The tags of an approved place, made from its own fields every time it is approved (nobody types
+// them): its state, city and neighbourhood (`label` as written), its kind and each amenity (`label`
+// is the slug; the page names them). The list filters on (`kind`, `slug`).
+export const placeTags = pgTable(
+  'place_tags',
+  {
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: ['state', 'city', 'neighbourhood', 'kind', 'amenity'] }).notNull(),
+    label: text('label').notNull(),
+    slug: text('slug').notNull(),
+  },
+  (tag) => [
+    primaryKey({ columns: [tag.placeId, tag.kind, tag.slug] }),
+    index('place_tags_filter_idx').on(tag.kind, tag.slug),
   ],
 ).enableRLS();
 

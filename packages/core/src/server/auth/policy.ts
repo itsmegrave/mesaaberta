@@ -93,6 +93,14 @@ type Resources = {
   'partner:edit': { ownerIds: readonly string[] };
   /** Reporting a partner. Not one's own: an owner would be reporting themselves. */
   'partner:report': { ownerIds: readonly string[] };
+  /** Sending an "Onde jogar" place: any signed-in member. An admin approves it before it is listed. */
+  'place:submit': undefined;
+  /**
+   * Editing a place: its submitter (the edit sends it back to review), the member an admin made its
+   * owner, or an admin. Withdrawing it: its submitter or its owner.
+   */
+  'place:edit': { submitterId: string; ownerId: string | null };
+  'place:withdraw': { submitterId: string; ownerId: string | null };
   /** The report queue, its decisions and the audit log. */
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */
@@ -222,6 +230,12 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'partner:edit': (actor, partner) => partner !== undefined && partner.ownerIds.includes(actor.id),
   'partner:report': (actor, partner) =>
     partner !== undefined && !partner.ownerIds.includes(actor.id),
+  'place:submit': () => true,
+  'place:edit': (actor, place) =>
+    place !== undefined &&
+    (actor.role === 'admin' || actor.id === place.submitterId || actor.id === place.ownerId),
+  'place:withdraw': (actor, place) =>
+    place !== undefined && (actor.id === place.submitterId || actor.id === place.ownerId),
   'moderation:manage': (actor) => actor.role === 'admin',
   'account:ban': (actor, target) =>
     target !== undefined &&
