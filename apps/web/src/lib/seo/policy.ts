@@ -9,7 +9,8 @@ export function indexingPolicy(
   const profile = /^\/u\/([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(path);
   const publicProfile = profile && !RESERVED_USERNAMES.has(profile[1]);
   const publicPath =
-    ['/', '/t', '/p', '/cf', '/changelog', '/privacy', '/terms'].includes(path) ||
+    ['/', '/t', '/p', '/cf', '/changelog', '/blog', '/privacy', '/terms'].includes(path) ||
+    /^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     /^\/t\/(?!new$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     publicProfile;
   if (!publicPath || (options.status ?? 200) >= 400 || options.maintenance)
@@ -57,7 +58,13 @@ export function indexingPolicy(
     }
   }
   const paginatedCrowdfunding = path === '/cf' && url.searchParams.get('status') === 'ended';
-  if (publicProfile || path === '/p' || paginatedCrowdfunding || path === '/changelog') {
+  if (
+    publicProfile ||
+    path === '/p' ||
+    paginatedCrowdfunding ||
+    path === '/changelog' ||
+    path === '/blog'
+  ) {
     const page = url.searchParams.get('page');
     if (
       page &&
@@ -66,7 +73,7 @@ export function indexingPolicy(
       Number(page) > 1
     ) {
       canonical.searchParams.set('page', page);
-      if (path === '/changelog') index = false;
+      if (path === '/changelog' || path === '/blog') index = false;
     }
   }
   return { canonical: canonical.href, index };

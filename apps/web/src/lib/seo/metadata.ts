@@ -29,6 +29,7 @@ type PublicData = {
     status?: string;
     [key: string]: unknown;
   };
+  post?: { title: string; summary: string };
   profile?: {
     username: string | null;
     bio?: string | null;
@@ -44,6 +45,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     '/p': [m.seo_partners_title(), m.partner_description()],
     '/cf': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
     '/changelog': [`${m.changelog_title()} · Mesa Aberta`, m.changelog_description()],
+    '/blog': [m.blog_feed_title(), m.blog_description()],
     '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],
     '/terms': [`${m.terms_title()} · Mesa Aberta`, m.terms_description()],
   };
@@ -64,6 +66,14 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
       }),
     );
     return { title, description, image: imageUrl(table.imageUrl, fallback), type: 'website' };
+  }
+  if (/^\/blog\/[^/]+$/.test(path) && data.post) {
+    return {
+      title: `${text(data.post.title, 100)} · Mesa Aberta`,
+      description: text(data.post.summary),
+      image: fallback,
+      type: 'article',
+    };
   }
   if (/^\/u\/[^/]+$/.test(path) && data.profile?.username) {
     const profile = data.profile;

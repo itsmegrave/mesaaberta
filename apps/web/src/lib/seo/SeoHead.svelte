@@ -7,14 +7,14 @@
     indexingPolicy(page.url, origin, {
       status: page.status,
       maintenance: !!page.data.maintenance,
-      draft: page.data.table?.status === 'draft',
+      draft: page.data.table?.status === 'draft' || page.data.post?.unpublished,
     }),
   );
   const metadata = $derived(
     policy.canonical
       ? publicMetadata(
           page.url.pathname,
-          { table: page.data.table, profile: page.data.profile },
+          { table: page.data.table, profile: page.data.profile, post: page.data.post },
           origin,
         )
       : null,

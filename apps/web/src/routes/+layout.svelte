@@ -239,7 +239,7 @@
       {/if}
 
       {#if !data.maintenance}
-        <SiteFooter site={data.site} />
+        <SiteFooter site={data.site} blogLive={data.blogLive} />
       {/if}
     </div>
   </div>

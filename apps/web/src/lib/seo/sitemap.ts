@@ -1,6 +1,8 @@
 import { sitemapIndexSchema, sitemapPageSchema } from '@mesaaberta/core/seo/sitemap';
 import { siteOf } from '@mesaaberta/core/server/site';
 import { callApiRaw } from '#lib/server/api-client.js';
+import { isPublished } from '#lib/blog.js';
+import { posts } from '#lib/server/blog.js';
 
 type Resource = 'index' | 'pages' | 'tables' | 'profiles';
 const escape = (value: string) =>
@@ -10,7 +12,7 @@ const escape = (value: string) =>
   );
 const document = (root: string, body: string) =>
   `<?xml version="1.0" encoding="UTF-8"?><${root} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</${root}>`;
-const staticPaths = ['/', '/t', '/p', '/cf', '/changelog', '/privacy', '/terms'];
+const staticPaths = ['/', '/t', '/p', '/cf', '/changelog', '/blog', '/privacy', '/terms'];
 const unavailable = () =>
   new Response('Sitemap temporarily unavailable', {
     status: 503,
@@ -43,9 +45,15 @@ export async function sitemapResponse(
     if (page !== 1) return new Response('Not found', { status: 404 });
     body = document(
       'urlset',
-      staticPaths
-        .map((path) => `<url><loc>${escape(new URL(path, origin).href)}</loc></url>`)
-        .join(''),
+      [
+        ...staticPaths.map((path) => `<url><loc>${escape(new URL(path, origin).href)}</loc></url>`),
+        ...posts
+          .filter((post) => isPublished(post))
+          .map(
+            (post) =>
+              `<url><loc>${escape(new URL(`/blog/${post.slug}`, origin).href)}</loc><lastmod>${post.date}</lastmod></url>`,
+          ),
+      ].join(''),
     );
   } else {
     const path =

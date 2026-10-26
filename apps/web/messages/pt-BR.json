@@ -2107,5 +2107,16 @@
   "public_profile_scores_hint": "Sua nota como participante vem de quem mestrou as mesas em que você jogou. As duas notas aparecem depois de 3 avaliações.",
   "player_rating_tables_played": "{count, plural, =0 {Primeira mesa} =1 {Jogou 1 mesa} other {Jogou {count} mesas}}",
   "changelog_month_summary": "{count, plural, =0 {Nenhuma versão} =1 {1 versão} other {{count} versões}}",
-  "changelog_notice_title": "Novidades: {title}"
+  "changelog_notice_title": "Novidades: {title}",
+  "blog_title": "Blog",
+  "blog_lede": "Histórias, bastidores e ideias para a sua mesa, escritas por quem faz a Mesa Aberta.",
+  "blog_description": "Histórias, bastidores e ideias sobre RPG de mesa e a comunidade da Mesa Aberta.",
+  "blog_feed": "Assinar por RSS",
+  "blog_feed_title": "Blog da Mesa Aberta",
+  "blog_empty": "Ainda não há posts por aqui. Volte em breve.",
+  "blog_tags": "Assuntos",
+  "blog_draft": "Rascunho",
+  "blog_scheduled": "Agendado",
+  "blog_minutes": "{minutes} min de leitura",
+  "blog_back": "Todos os posts"
 }

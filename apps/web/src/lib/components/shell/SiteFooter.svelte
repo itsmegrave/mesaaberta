@@ -9,7 +9,10 @@
 
   // The site footer: the brand with the community sentence (and any notes a private build adds),
   // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
-  let { site }: { site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string } } = $props();
+  let {
+    site,
+    blogLive = false,
+  }: { site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string }; blogLive?: boolean } = $props();
 
   const pages = [
     { path: '/t', label: m.nav_tables },
@@ -86,6 +89,12 @@
           class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
           >{m.changelog_title()}</a
         >
+        {#if blogLive}<a
+            href={resolve('/blog')}
+            aria-current={current('/blog') ? 'page' : undefined}
+            class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
+            >{m.blog_title()}</a
+          >{/if}
         <p class="text-sm leading-relaxed text-muted">
           {m.footer_help()}
           <a href="mailto:{site.CONTACT_EMAIL}" class="{strong} whitespace-nowrap"
