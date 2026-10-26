@@ -39,6 +39,7 @@
   import RosterBadge from './components/ui/RosterBadge.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
+  import { placeArea, placeKindLabels, placeMapHref } from '#lib/places/labels.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
   import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
@@ -284,6 +285,28 @@
           {formatHours(table.durationMinutes, locale)}
         </SummaryRow>
       </dl>
+
+      {#if data.place}
+        {@const place = data.place}
+        <section aria-labelledby="table-place" class="mt-5 flex flex-col gap-1 text-sm">
+          <h2 id="table-place" class="font-semibold text-muted">{m.table_place_title()}</h2>
+          <a class="anchor text-base font-semibold" href="/pp/{place.slug}">{place.name}</a>
+          <p>
+            {placeKindLabels[place.kind]()} · {[place.street, place.complement]
+              .filter(Boolean)
+              .join(', ')}
+          </p>
+          <p class="text-muted">{placeArea(place)}</p>
+          <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- OpenStreetMap, not an app route -->
+          <a
+            href={placeMapHref(place)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 font-semibold text-link underline underline-offset-4"
+            >{m.place_map()}<Icon name="external-link" size={16} /></a
+          >
+        </section>
+      {/if}
 
       {#if table.minPlayers}
         <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-5 md:hidden" />

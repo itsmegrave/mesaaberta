@@ -26,6 +26,8 @@
   import { formatHours, zonedToDate } from '@mesaaberta/core/tables/format';
   import { TABLE_LIMITS } from '@mesaaberta/core/tables/schema';
   import { pickName } from '@mesaaberta/core/tables/catalog';
+  import { placeArea } from '#lib/places/labels.js';
+  import type { PlaceOption } from '@mesaaberta/core/server/places/picker';
 
   type CatalogPick = { name: string; slug: string; pending?: true };
   import TableCard from '#lib/components/ui/TableCard.svelte';
@@ -53,6 +55,8 @@
     manageHref?: string;
     /** Editing: say that saving sends the updated calendar invite. */
     calendarNote?: boolean;
+    /** The "Onde jogar" places an in-person table can pick; null while the places are off. */
+    places?: PlaceOption[] | null;
   };
 
   let {
@@ -70,6 +74,7 @@
     minCapacity = TABLE_LIMITS.capacity.min,
     manageHref,
     calendarNote = false,
+    places = null,
   }: Props = $props();
   // svelte-ignore state_referenced_locally
   const { draft } = controller;
@@ -89,6 +94,25 @@
   const previewSystem = $derived(
     systems.find((system) => system.slug === $draft.systemSlug)?.name ?? m.form_system(),
   );
+
+  // "Onde vai ser": a listed place (its CEP and area come with it) or another one, typed as before.
+  // svelte-ignore state_referenced_locally
+  let where = $state<'place' | 'other'>(
+    !places || (!$draft.placeSlug && ($draft.postalCode || $draft.locationArea))
+      ? 'other'
+      : 'place',
+  );
+  const placeItems = $derived(
+    (places ?? []).map((place) => ({
+      slug: place.slug,
+      name: `${place.name} · ${placeArea(place)}`,
+    })),
+  );
+  const picked = $derived(places?.find((place) => place.slug === $draft.placeSlug) ?? null);
+  function chooseWhere(choice: string) {
+    where = choice === 'place' ? 'place' : 'other';
+    if (where === 'other') $draft.placeSlug = '';
+  }
 
   // The adventure's count as typed, once it is one the form takes.
   const plannedCount = $derived(
@@ -111,7 +135,8 @@
     startsAt: zonedToDate($draft.startsAtLocal, $draft.timezone),
     imageUrl,
     modality: $draft.modality,
-    locationArea: $draft.locationArea || null,
+    locationArea: picked ? placeArea(picked) : $draft.locationArea || null,
+    placeName: picked?.name ?? null,
     platforms: $draft.platforms.map((pick) => pickName(catalog.platforms, pick)),
     tags: $draft.tags.map((pick) => pickName(catalog.tags, pick)),
   });
@@ -136,6 +161,7 @@
         ['repeat', m.form_repeat()],
         ['until', m.form_until()],
         ['plannedSessions', m.form_planned_sessions()],
+        ['placeSlug', m.table_form_place()],
         ['postalCode', m.form_postal_code()],
         ['locationArea', m.form_location_area()],
         ['joinDetails', m.form_join_details_link()],
@@ -382,7 +408,44 @@
       ]}
       bind:group={$draft.modality}
     />
-    {#if $draft.modality === 'in_person'}
+    {#if $draft.modality === 'in_person' && places}
+      <div>
+        <SegmentedChoice
+          id="where"
+          name="where"
+          legend={m.table_form_where()}
+          options={[
+            { value: 'place', label: m.table_form_where_place() },
+            { value: 'other', label: m.table_form_where_other() },
+          ]}
+          value={where}
+          onchange={chooseWhere}
+        />
+      </div>
+    {/if}
+    {#if $draft.modality === 'in_person' && places && where === 'place'}
+      <div>
+        <SearchSelect
+          id="placeSlug"
+          search
+          name="placeSlug"
+          label={m.table_form_place()}
+          labelClass="label-text block font-semibold"
+          class="grid gap-1"
+          items={placeItems}
+          value={$draft.placeSlug ? [$draft.placeSlug] : []}
+          placeholder={m.table_form_place_choose()}
+          required
+          invalid={!!invalid('placeSlug')}
+          onchange={(chosen) => ($draft.placeSlug = chosen[0] ?? '')}
+        />
+        <FieldError id="placeSlug" message={err('placeSlug')} />
+        <p class="mt-2 text-sm text-muted">
+          {m.table_form_place_missing()}
+          <a class="anchor" href="/pp/new">{m.table_form_place_register()}</a>
+        </p>
+      </div>
+    {:else if $draft.modality === 'in_person'}
       <FormField
         id="postalCode"
         label={m.form_postal_code()}

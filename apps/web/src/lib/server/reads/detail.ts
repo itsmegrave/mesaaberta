@@ -2,8 +2,10 @@ import { error, type RequestEvent } from '@sveltejs/kit';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
+import { tablePlace } from '@mesaaberta/core/server/places/picker';
 import { readViaApi } from '../api-read';
 import { badgesEnabled } from '../badges/enabled';
+import { directoryEnabled } from '../directories/flags';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const signedIn = (await locals.getUser()) !== null;
@@ -53,5 +55,10 @@ export const read = async ({ locals, params }: RequestEvent) => {
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     signedIn,
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
+    // The "Onde jogar" place it happens at, while the places are on and that place is listed.
+    place:
+      table.placeId && (await directoryEnabled(locals, 'places'))
+        ? await tablePlace(locals.db, table.placeId)
+        : null,
   };
 };

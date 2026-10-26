@@ -10,6 +10,8 @@ import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
+import { directoryEnabled } from '#lib/server/directories/flags.js';
+import { placeOptions } from '@mesaaberta/core/server/places/picker';
 import { disableTable, loadTableForEdit, updateTable } from '@mesaaberta/core/server/tables/write';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -41,6 +43,8 @@ export const load: PageServerLoad = async (event) => {
       catalog: catalogRead.catalog,
       catalogRead,
       seatsTaken,
+      // The "Onde jogar" picker, while the places are on.
+      places: (await directoryEnabled(locals, 'places')) ? await placeOptions(locals.db) : null,
     };
   } catch (e) {
     // Someone else's table is a 403; one that is not there is a 404. A concluded one says why.

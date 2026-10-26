@@ -76,5 +76,6 @@
     duplicationRequestKey={requestKey}
     cancelHref={data.duplication ? `/t/${data.duplication.sourceSlug}/manage` : '/tables'}
     gmName={data.account?.username ?? undefined}
+    places={data.places}
   />
 </section>

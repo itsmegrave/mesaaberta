@@ -19,6 +19,7 @@ import { cancelPendingInvitations } from '../invitations/service';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
+import { checkTablePlace, placeSlugOf } from '../places/picker';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
@@ -124,6 +125,7 @@ function columnsOf(input: TableInput) {
     locationNeighbourhood: input.locationNeighbourhood,
     locationCity: input.locationCity,
     locationState: input.locationState,
+    placeId: input.placeId ?? null,
   };
 }
 
@@ -161,6 +163,7 @@ export async function createTable(
 
   const columns = { ...columnsOf(input), imagePath };
   if (columns.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
+  await checkTablePlace(db, input.placeId ?? null, null);
 
   const base = slugify(input.title, { fallback: 'mesa' });
 
@@ -310,6 +313,7 @@ export async function loadTableForEdit(
     locationArea: table.locationArea ?? '',
     joinDetails: table.joinDetails ?? '',
     postalCode: table.postalCode ? formatCep(table.postalCode) : '',
+    placeSlug: await placeSlugOf(db, table.placeId),
     platforms: catalog.platforms.map((p) => p.slug),
     tags: catalog.tags.map((t) => t.slug),
     imagePath: table.imagePath,
@@ -360,6 +364,7 @@ const AUDITED = [
   'locationNeighbourhood',
   'locationCity',
   'locationState',
+  'placeId',
 ] as const;
 const PRIVATE_FIELDS = [
   'welcomeMessage',
@@ -403,6 +408,7 @@ export async function updateTable(
 ): Promise<{ eventId: string | null }> {
   const table = await findForWrite(db, slug);
   authorizeEdit(actor, table);
+  await checkTablePlace(db, input.placeId ?? null, table.placeId);
 
   const columns = columnsOf(input);
   // Invites and notifications go out only for a change players would see.

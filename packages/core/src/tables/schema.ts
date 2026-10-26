@@ -98,12 +98,19 @@ export const tableFormSchema = z
       .trim()
       .refine((value) => value === '' || normalizeCep(value) !== null, 'invalid')
       .default(''),
+    // An "Onde jogar" place picked for an in-person table (its slug), or blank for "Outro lugar".
+    placeSlug: z.string().trim().max(200).default(''),
     // Editing: take the current image off (a new image wins over it).
     removeImage: z.boolean().default(false),
   })
   .superRefine((value, ctx) => {
     // With a CEP the server fills the area in; without one, the person types it.
-    if (value.modality === 'in_person' && !value.locationArea && !value.postalCode) {
+    if (
+      value.modality === 'in_person' &&
+      !value.placeSlug &&
+      !value.locationArea &&
+      !value.postalCode
+    ) {
       ctx.addIssue({ code: 'custom', message: 'required', path: ['locationArea'] });
     }
     // The minimum cannot be more than the seats there are.
@@ -160,6 +167,11 @@ export type TableInput = {
   locationNeighbourhood: string | null;
   locationCity: string | null;
   locationState: string | null;
+  /**
+   * The "Onde jogar" place an in-person table happens at (see `withPlace`), whose CEP and area it
+   * copies; null for "Outro lugar" and online.
+   */
+  placeId?: string | null;
   /** Editing: take the current image off, unless a new one is sent. */
   removeImage: boolean;
 };
@@ -179,6 +191,8 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     postalCode,
     minPlayers,
     plannedSessions,
+    // Resolved to `placeId` on the server (`withPlace`), never stored as such.
+    placeSlug: _placeSlug,
     ...rest
   } = values;
   const campaign = rest.kind === 'campaign';
@@ -195,6 +209,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     locationNeighbourhood: null,
     locationCity: null,
     locationState: null,
+    placeId: null,
     joinDetails: joinDetails || null,
     extraInfo: extraInfo || null,
     welcomeMessage: welcomeMessage || null,
@@ -246,5 +261,7 @@ export const tableInputSchema = z.object({
   locationNeighbourhood: nullable(200),
   locationCity: nullable(200),
   locationState: nullable(100),
+  // Defaults to null so a web Worker that does not send it yet still passes.
+  placeId: z.uuid().nullable().default(null),
   removeImage: z.boolean(),
 }) satisfies z.ZodType<TableInput>;
