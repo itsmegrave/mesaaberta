@@ -3,11 +3,12 @@
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import EventForce from './components/EventForce.svelte';
   import EventRetryAll from './components/EventRetryAll.svelte';
+  import EventReviewButtons from './components/EventReview.svelte';
   import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
   import ListPanel from '#lib/components/admin/ListPanel.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
-  import { EVENT_STATUSES, type EventStatus } from '#lib/admin/event-filters.js';
+  import { EVENT_STATUSES, type EventReview, type EventStatus } from '#lib/admin/event-filters.js';
   import { listPath, listQuery } from '@mesaaberta/core/admin/list';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { m } from '#lib/paraglide/messages.js';
@@ -47,6 +48,12 @@
   const list = (handlers: string[]) =>
     handlers.length ? handlers.join(', ') : m.admin_events_no_handlers();
   const canForce = (status: EventStatus) => status !== 'processed' && status !== 'running';
+  const reviewLabel = (review: EventReview) =>
+    ({
+      seen: m.admin_events_review_seen,
+      ignored: m.admin_events_review_ignored,
+      fixed: m.admin_events_review_fixed,
+    })[review]();
 </script>
 
 <AdminPage title={m.admin_events_title()} lede={m.admin_events_lede()}>
@@ -124,6 +131,18 @@
               · {m.admin_events_next({ date: when(row.nextAttemptAt) })}
             {/if}
           </p>
+          {#if row.reviewStatus && row.reviewedAt}
+            <p class="text-sm wrap-break-word">
+              {m.admin_events_reviewed({
+                review: reviewLabel(row.reviewStatus),
+                who: row.reviewedBy ? atHandle(row.reviewedBy) : m.history_system(),
+                date: when(row.reviewedAt),
+              })}
+            </p>
+          {/if}
+          {#if queue.status === 'failed'}
+            <EventReviewButtons id={row.id} type={row.type} current={row.reviewStatus} />
+          {/if}
           {#if row.lastError && !row.processedAt}
             <p class="text-sm wrap-break-word">
               <span class="font-semibold">{m.admin_events_last_error()}:</span>

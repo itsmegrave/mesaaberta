@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { createDb, type DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { forceEvent, forceFailedEvents } from '@mesaaberta/core/server/events/dispatcher';
+import { reviewEvent } from '@mesaaberta/core/server/admin/event-queue';
+import { EVENT_REVIEWS, type EventReview } from '@mesaaberta/core/admin/event-status';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { logger } from '@mesaaberta/core/server/logger';
 import { adminGuard, type AdminVariables } from './admin-guard';
@@ -32,6 +34,13 @@ export function eventRoutes(open: Open = createDb) {
       new Date(),
       logger,
     );
+    return c.json({ outcome });
+  });
+
+  app.post('/:id/review/:review', async (c) => {
+    const review = c.req.param('review') as EventReview;
+    if (!EVENT_REVIEWS.includes(review)) return c.json({ error: 'invalid_review' }, 400);
+    const outcome = await reviewEvent(c.get('db'), c.get('actor'), c.req.param('id'), review);
     return c.json({ outcome });
   });
 

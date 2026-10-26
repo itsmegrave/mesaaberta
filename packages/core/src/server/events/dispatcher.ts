@@ -307,6 +307,10 @@ export async function forceEvent(
       attempts: sql`CASE WHEN ${events.failedAt} IS NOT NULL THEN 0 ELSE ${events.attempts} END`,
       failedAt: null,
       nextAttemptAt: now,
+      // A new run, a new outcome: the admin's earlier word on it no longer applies.
+      reviewStatus: null,
+      reviewedBy: null,
+      reviewedAt: null,
     })
     .where(
       and(
@@ -342,6 +346,13 @@ export async function forceEvent(
   return after?.processedAt ? 'processed' : 'failed';
 }
 
+/** The given-up events "run them all" takes: all but the ones an admin chose to leave (`ignored`). */
+const retryable = and(
+  isNull(events.processedAt),
+  isNotNull(events.failedAt),
+  or(isNull(events.reviewStatus), ne(events.reviewStatus, 'ignored')),
+);
+
 /** How many given-up events one "run them all" takes up: a bound, so one request stays short. */
 export const RETRY_ALL_LIMIT = 25;
 
@@ -361,7 +372,7 @@ export async function forceFailedEvents(
   const rows = await db
     .select({ id: events.id })
     .from(events)
-    .where(and(isNull(events.processedAt), isNotNull(events.failedAt)))
+    .where(retryable)
     .orderBy(asc(events.createdAt))
     .limit(RETRY_ALL_LIMIT);
 
@@ -373,7 +384,7 @@ export async function forceFailedEvents(
   const [{ remaining }] = await db
     .select({ remaining: sql<number>`count(*)`.mapWith(Number) })
     .from(events)
-    .where(and(isNull(events.processedAt), isNotNull(events.failedAt)));
+    .where(retryable);
 
   return { tried: rows.length, processed, remaining };
 }

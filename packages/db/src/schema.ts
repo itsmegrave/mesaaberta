@@ -1,5 +1,6 @@
 import { TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
+import { EVENT_REVIEWS } from './event-review';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -426,6 +427,8 @@ export const gameTableTags = pgTable(
 // as the change it describes, then dispatched to handlers after the commit; a sweeper retries what
 // did not finish. Rows are the record of who did what, and when; a finished one is deleted after
 // RETENTION_DAYS (see pruneEvents).
+export const eventReview = pgEnum('event_review', EVENT_REVIEWS);
+
 export const events = pgTable(
   'events',
   {
@@ -459,6 +462,11 @@ export const events = pgTable(
     // Set once a bus adapter (Cloudflare Queues) has accepted the event. Null while the event only
     // lives in the outbox, and for every event written before the bus existed.
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    // An admin's word on a given-up event (`EVENT_REVIEWS`), who said it and when. Not a foreign
+    // key, like `actorId`. Cleared when the event runs again.
+    reviewStatus: eventReview('review_status'),
+    reviewedBy: uuid('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
   },
   (event) => [
     // What the sweeper looks for: events not yet done and not given up on.
