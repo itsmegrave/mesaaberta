@@ -75,7 +75,7 @@
     lede={m.systems_lede()}
   >
     {#snippet actions()}
-      <a href="/t/new" class="{buttonClass('primary')} shrink-0 gap-2 px-6 font-semibold">
+      <a href="/tables/new" class="{buttonClass('primary')} shrink-0 gap-2 px-6 font-semibold">
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.systems_open_cta()}
       </a>
@@ -137,7 +137,7 @@
       class="mt-2"
       title={m.systems_empty_search({ query: filters.query })}
       hint={m.systems_empty_hint()}
-      href="/t/new"
+      href="/tables/new"
       action={m.systems_open_cta()}
     />
   {:else}

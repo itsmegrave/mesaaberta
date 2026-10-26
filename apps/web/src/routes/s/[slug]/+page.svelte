@@ -17,8 +17,8 @@
   const system = $derived(data.system);
   const facts = $derived(data.facts);
 
-  const tablesHref = $derived(`/t?system=${system.slug}`);
-  const newHref = $derived(`/t/new?system=${system.slug}`);
+  const tablesHref = $derived(`/tables?system=${system.slug}`);
+  const newHref = $derived(`/tables/new?system=${system.slug}`);
 
   const modality: string | null = $derived(
     data.modalities.length > 1
