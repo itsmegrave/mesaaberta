@@ -4,7 +4,6 @@
   import GmRating from '#lib/components/ui/GmRating.svelte';
   import UserText from '#lib/components/ui/UserText.svelte';
   import UserLink from '#lib/components/ui/UserLink.svelte';
-  import Pill from '#lib/components/ui/Pill.svelte';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
@@ -22,6 +21,8 @@
   import SummaryRow from '../components/ui/SummaryRow.svelte';
   import { Target } from '#lib/target.svelte.js';
   import TableGoingOn from './components/TableGoingOn.svelte';
+  import TableHead from '../components/ui/TableHead.svelte';
+  import TableTabs from '../components/ui/TableTabs.svelte';
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
   import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import PlayerRatings from './components/PlayerRatings.svelte';
@@ -184,16 +185,11 @@
     ]}
   />
 
-  <p class="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
-    <Pill>{m.manage_you_are_gm()}</Pill>
-    <span class="font-semibold text-muted">{table.system.name} · {kindLabel(table.kind)}</span>
-  </p>
-  <div class="mt-3 flex items-start justify-between gap-3">
-    <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
-      {table.title}
-    </h1>
-    <KebabMenu name={table.title} items={tableMenu} />
-  </div>
+  <TableHead
+    title={table.title}
+    detail="{table.system.name} · {kindLabel(table.kind)}"
+    menu={tableMenu}
+  />
 
   {#if table.status === 'awaiting_confirmation'}
     <SessionConfirmation
@@ -217,35 +213,12 @@
     <DraftNotice action="?/publish" next={here} waiting={data.systemWaiting} />
   {/if}
 
-  <div
-    class="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-surface-200-800"
-  >
-    <nav aria-label={m.manage_sections()} class="flex gap-6">
-      <a
-        href={here}
-        aria-current="page"
-        class="-mb-px inline-flex h-12 items-center gap-2 border-b-2 border-primary-500 font-semibold no-underline"
-      >
-        {m.manage_tab_players()}
-        {#if data.requests.length > 0}
-          <span
-            class="chip h-6 min-w-6 rounded-full preset-filled-primary-500 px-2 text-xs font-bold"
-            >{data.requests.length}</span
-          >
-        {/if}
-      </a>
-      {#if data.canEdit}
-        <a
-          href={editPage}
-          class="-mb-px inline-flex h-12 items-center border-b-2 border-transparent font-semibold text-muted no-underline hover:text-surface-950-50"
-          >{m.table_edit()}</a
-        >
-      {/if}
-    </nav>
-    <a href={tablePage} class="hidden link-underline font-semibold sm:inline"
-      >{m.manage_view_page()}</a
-    >
-  </div>
+  <TableTabs
+    slug={table.slug}
+    current="players"
+    requests={data.requests.length}
+    canEdit={data.canEdit}
+  />
 
   <div class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12">
     <div class="grid min-w-0 content-start gap-8 lg:col-span-2">

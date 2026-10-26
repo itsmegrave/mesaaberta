@@ -6,9 +6,12 @@
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult } from '#lib/forms/contract.js';
-  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import { page } from '$app/state';
   import TableForm from '../../../components/TableForm.svelte';
+  import TableHead from '../components/ui/TableHead.svelte';
+  import TableTabs from '../components/ui/TableTabs.svelte';
+  import { kindLabel } from '#lib/tables/format.js';
   import { m } from '#lib/paraglide/messages.js';
 
   import { tableFormSchema } from '@mesaaberta/core/tables/schema';
@@ -30,6 +33,16 @@
   guardDraft(controller);
 
   const tablePage = $derived(`/t/${data.slug}`);
+  const systems = $derived(options.data?.systems ?? data.systems);
+  // The saved system and kind, like the title: the form's own may be mid-edit.
+  const detail = $derived(
+    [
+      systems.find((system) => system.slug === data.form.data.systemSlug)?.name,
+      kindLabel(data.form.data.kind),
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  );
   function copyLink() {
     return copyText(new URL(tablePage, page.url.origin).href, m.toast_link_copied());
   }
@@ -62,12 +75,8 @@
       { label: m.form_edit_title() },
     ]}
   />
-  <div class="mt-6 flex items-start justify-between gap-3">
-    <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
-      {m.form_edit_title()}
-    </h1>
-    <KebabMenu name={data.title} items={menu} />
-  </div>
+  <TableHead title={data.title} {detail} {menu} />
+  <TableTabs slug={data.slug} current="edit" />
 
   {#if data.status === 'disabled'}
     <p role="status" class="mt-4 max-w-sm font-semibold">{m.form_edit_disabled()}</p>
@@ -75,7 +84,7 @@
 
   <TableForm
     {controller}
-    systems={options.data?.systems ?? data.systems}
+    {systems}
     catalog={options.data?.catalog ?? data.catalog}
     imageUrl={data.imageUrl}
     action="?/save"
