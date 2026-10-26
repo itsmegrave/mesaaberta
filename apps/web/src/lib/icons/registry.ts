@@ -79,6 +79,8 @@ import GameCheckedShieldIcon from '@iconify-svelte/game-icons/checked-shield';
 import GameMegaphoneIcon from '@iconify-svelte/game-icons/megaphone';
 import GameBookPileIcon from '@iconify-svelte/game-icons/book-pile';
 import GameSandsOfTimeIcon from '@iconify-svelte/game-icons/sands-of-time';
+import GameAnchorIcon from '@iconify-svelte/game-icons/anchor';
+import GameCampfireIcon from '@iconify-svelte/game-icons/campfire';
 import GameRollingDicesIcon from '@iconify-svelte/game-icons/rolling-dices';
 import GameQuillInkIcon from '@iconify-svelte/game-icons/quill-ink';
 import GameSpellBookIcon from '@iconify-svelte/game-icons/spell-book';
@@ -216,6 +218,8 @@ export const ICONS = {
   'game-icons:megaphone': GameMegaphoneIcon,
   'game-icons:book-pile': GameBookPileIcon,
   'game-icons:sands-of-time': GameSandsOfTimeIcon,
+  'game-icons:anchor': GameAnchorIcon,
+  'game-icons:campfire': GameCampfireIcon,
   'game-icons:rolling-dices': GameRollingDicesIcon,
   'game-icons:quill-ink': GameQuillInkIcon,
   'game-icons:spell-book': GameSpellBookIcon,

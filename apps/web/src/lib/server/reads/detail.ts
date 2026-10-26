@@ -3,6 +3,7 @@ import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/imag
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readViaApi } from '../api-read';
+import { badgesEnabled } from '../badges/enabled';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const signedIn = (await locals.getUser()) !== null;
@@ -37,10 +38,17 @@ export const read = async ({ locals, params }: RequestEvent) => {
   const { imagePath, ...table } = detail.table;
   // An api Worker from before a field answers without it: the page then shows the handle alone,
   // and offers the players' page to whoever got the registrations, as it did before `canManage`.
-  const { gmProfile = null, canManage = detail.registrations !== null, ...rest } = detail;
+  const {
+    gmProfile = null,
+    canManage = detail.registrations !== null,
+    badges = null,
+    ...rest
+  } = detail;
   return {
     ...rest,
     canManage,
+    // Signed-in people only, like the rest of the badge system (`use_badges` targets a person).
+    badges: badges && profile && (await badgesEnabled(locals, profile)) ? badges : null,
     gm: gmProfile && { avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile) },
     table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
     signedIn,

@@ -7,6 +7,7 @@ import {
   registrations,
   systems,
   tags,
+  userBadges,
 } from '@mesaaberta/db/schema';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
@@ -224,6 +225,12 @@ describe('GET /v1/reads/detail/:slug', () => {
     await test.db
       .insert(registrations)
       .values({ tableId: table.id, playerId: bia, status: 'confirmed' } as never);
+    await test.db.insert(userBadges).values([
+      { profileId: ana, badgeId: 'gm-first' },
+      { profileId: ana, badgeId: 'gm-master-1' },
+      { profileId: ana, badgeId: 'beloved-gm', hidden: true },
+      { profileId: bia, badgeId: 'reliable-player' },
+    ]);
 
     for (const who of [ana, bia]) {
       const answer = await getDetail('mesa-detalhe', who);
@@ -245,6 +252,20 @@ describe('GET /v1/reads/detail/:slug', () => {
       ((await (await getDetail('mesa-detalhe', bia)).json()) as { registrations: unknown })
         .registrations,
     ).toBeNull();
+    // The roster's badges: the GM's strongest one shown, and reliable players for the GM only.
+    expect(
+      ((await (await getDetail('mesa-detalhe', ana)).json()) as { badges: unknown }).badges,
+    ).toEqual({
+      gm: 'gm-master-1',
+      reliable: [bia],
+    });
+    expect(
+      ((await (await getDetail('mesa-detalhe', bia)).json()) as { badges: unknown }).badges,
+    ).toEqual({
+      gm: 'gm-master-1',
+      reliable: [],
+    });
+    await test.db.delete(userBadges);
   });
 
   it('keeps someone else’s draft and unknown tables a 404', async () => {
