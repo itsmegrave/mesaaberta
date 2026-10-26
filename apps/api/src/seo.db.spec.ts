@@ -67,7 +67,17 @@ describe('public sitemap reads', () => {
     expect(await (await get('/sitemap/profiles')).json()).toEqual({
       entries: [{ slug: 'ana-player' }],
     });
-    expect(await (await get('/sitemap')).json()).toEqual({ tables: 1, profiles: 1 });
+    // The test database comes with the seeded catalogue, so systems fill more than one page.
+    expect(await (await get('/sitemap')).json()).toEqual({ tables: 1, profiles: 1, systems: 2 });
+    // Approved systems only: the directory's pages.
+    const systemSlugs = [
+      ...((await (await get('/sitemap/systems')).json()) as { entries: { slug: string }[] })
+        .entries,
+      ...((await (await get('/sitemap/systems?page=2')).json()) as { entries: { slug: string }[] })
+        .entries,
+    ].map((entry) => entry.slug);
+    expect(systemSlugs).toContain('approved');
+    expect(systemSlugs).not.toContain('pending');
   });
   it('serves XML through the required transport using the real API read', async () => {
     const locals = {
@@ -83,6 +93,7 @@ describe('public sitemap reads', () => {
         },
       },
       host: {},
+      flags: { isEnabled: async () => false },
     } as unknown as App.Locals;
     const response = await sitemapResponse(locals, 'tables', 1);
     expect(response.status).toBe(200);
@@ -92,6 +103,41 @@ describe('public sitemap reads', () => {
     expect(xml).not.toContain('PRIVATE');
     expect(xml).not.toContain('a-draft');
   });
+  it('lists the systems directory and its pages only while it is on for visitors', async () => {
+    const flags = { isEnabled: async (_flag: string, target: object) => on && !('id' in target) };
+    let on = true;
+    const locals = {
+      env: {
+        APP_ORIGIN: 'https://mesaaberta.example',
+        API: {
+          fetch: (request: Request) =>
+            app.request(
+              new URL(request.url).pathname.replace('/v1/seo', '') + new URL(request.url).search,
+              {},
+              env,
+            ),
+        },
+      },
+      host: {},
+      flags,
+    } as unknown as App.Locals;
+    const index = await (await sitemapResponse(locals, 'index', 1)).text();
+    expect(index).toContain('https://mesaaberta.example/sitemap-systems.xml');
+    expect(await (await sitemapResponse(locals, 'pages', 1)).text()).toContain(
+      'https://mesaaberta.example/systems</loc>',
+    );
+    const systemsXml =
+      (await (await sitemapResponse(locals, 'systems', 1)).text()) +
+      (await (await sitemapResponse(locals, 'systems', 2)).text());
+    expect(systemsXml).toContain('https://mesaaberta.example/s/approved');
+    expect(systemsXml).not.toContain('/s/pending<');
+
+    on = false;
+    expect(await (await sitemapResponse(locals, 'index', 1)).text()).not.toContain('systems');
+    expect(await (await sitemapResponse(locals, 'pages', 1)).text()).not.toContain('/systems');
+    expect((await sitemapResponse(locals, 'systems', 1)).status).toBe(404);
+  });
+
   it('rejects invalid pages and unavailable databases', async () => {
     for (const path of [
       '/sitemap/unknown',
@@ -116,6 +162,6 @@ describe('public sitemap reads', () => {
     expect(first.entries).toHaveLength(500);
     expect(second.entries).toHaveLength(2);
     expect(new Set([...first.entries, ...second.entries].map((row) => row.slug)).size).toBe(502);
-    expect(await (await get('/sitemap')).json()).toEqual({ tables: 1, profiles: 2 });
+    expect(await (await get('/sitemap')).json()).toEqual({ tables: 1, profiles: 2, systems: 2 });
   });
 });
