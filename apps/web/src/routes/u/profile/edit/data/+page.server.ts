@@ -33,11 +33,10 @@ export const actions: Actions = {
     if (!form.valid || form.data.confirm !== username)
       return refuse(form, 400, 'confirm', 'confirm');
 
-    // The picture and the cover go first, with the person's own session: after the Auth user is
-    // gone it cannot.
+    // The picture and the cover go first, while the profile still says which files are theirs.
     const profile = await locals.getProfile();
-    await removePicture(locals, profile?.avatarPath ?? null);
-    await removePicture(locals, profile?.bannerPath ?? null);
+    await removePicture(locals, user.id, profile?.avatarPath ?? null);
+    await removePicture(locals, user.id, profile?.bannerPath ?? null);
     // Through the api Worker when `api_account` is on for this person; here otherwise.
     try {
       const remote = profile

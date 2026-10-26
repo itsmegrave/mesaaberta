@@ -13,6 +13,7 @@ import {
   TableConcluded,
 } from '@mesaaberta/core/server/errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
+import { serverStorage } from '@mesaaberta/core/server/storage';
 import { withLocation } from '@mesaaberta/core/server/location/cep';
 import { timezoneOf } from '../time';
 import { tableFormSchema, toTableInput, type TableInput } from '@mesaaberta/core/tables/schema';
@@ -78,7 +79,7 @@ export async function handleTableForm(
 
     if (image instanceof File && image.size > 0) {
       const prepared = await prepareImage(image);
-      const storage = locals.supabase?.storage.from(IMAGE_BUCKET);
+      const storage = serverStorage(locals.env, IMAGE_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
       imagePath = await storeImage(storage, prepared, locals.log);
     }
