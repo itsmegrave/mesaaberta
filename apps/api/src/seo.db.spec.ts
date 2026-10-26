@@ -104,7 +104,10 @@ describe('public sitemap reads', () => {
     expect(xml).not.toContain('a-draft');
   });
   it('lists the systems directory and its pages only while it is on for visitors', async () => {
-    const flags = { isEnabled: async (_flag: string, target: object) => on && !('id' in target) };
+    const flags = {
+      isEnabled: async (flag: string, target: object) =>
+        on && flag === 'api_directory_systems' && !('id' in target),
+    };
     let on = true;
     const locals = {
       env: {
@@ -123,9 +126,10 @@ describe('public sitemap reads', () => {
     } as unknown as App.Locals;
     const index = await (await sitemapResponse(locals, 'index', 1)).text();
     expect(index).toContain('https://mesaaberta.example/sitemap-systems.xml');
-    expect(await (await sitemapResponse(locals, 'pages', 1)).text()).toContain(
-      'https://mesaaberta.example/systems</loc>',
-    );
+    const pagesXml = await (await sitemapResponse(locals, 'pages', 1)).text();
+    expect(pagesXml).toContain('https://mesaaberta.example/systems</loc>');
+    // Quem mestra is off here.
+    expect(pagesXml).not.toContain('/gamemasters');
     const systemsXml =
       (await (await sitemapResponse(locals, 'systems', 1)).text()) +
       (await (await sitemapResponse(locals, 'systems', 2)).text());

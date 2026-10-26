@@ -82,6 +82,15 @@ describe('the Quem mestra load', () => {
     );
   });
 
+  it('is a public page: a visitor sees it, the flag read for nobody in particular', async () => {
+    const visitor = event();
+    Object.assign(visitor.locals, { getUser: async () => null, getProfile: async () => null });
+    const data = await run(visitor);
+    expect(data.people).toHaveLength(1);
+    expect(flagged).toHaveBeenCalledWith('api_directory_gms', {});
+    expect(flagged).toHaveBeenCalledWith('use_badges', {});
+  });
+
   it('answers 404 for a page past the last one', async () => {
     vi.mocked(listGmDirectory).mockResolvedValue(null);
     await expect(run(event('?page=9'))).rejects.toMatchObject({ status: 404 });

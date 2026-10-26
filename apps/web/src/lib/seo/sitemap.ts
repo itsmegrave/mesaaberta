@@ -25,6 +25,8 @@ const staticPaths = [
 // The public directories, each listed while its flag is on for visitors (no one signed in).
 const directories = [
   { flag: 'api_directory_systems', path: '/systems', items: 'systems' },
+  // Quem mestra's people are already in the profiles sitemap.
+  { flag: 'api_directory_gms', path: '/gamemasters', items: null },
 ] as const;
 const PREFIX = { tables: 't', profiles: 'u', systems: 's' } as const;
 const unavailable = () =>
@@ -51,7 +53,7 @@ export async function sitemapResponse(
     return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
   const cache = locals.host?.cache;
   // Which directories are on is part of the answer: a flag change must not serve the old one.
-  const key = `${origin}/__seo/v1/${resource}?page=${page}&d=${shown.map((d) => d.items).join(',')}`;
+  const key = `${origin}/__seo/v1/${resource}?page=${page}&d=${shown.map((d) => d.path).join(',')}`;
   const success = (body: string) =>
     new Response(body, {
       headers: {
@@ -93,7 +95,11 @@ export async function sitemapResponse(
       const result = sitemapIndexSchema.safeParse(answer.body);
       if (!result.success) return unavailable();
       const locations = [`${origin}/sitemap-pages.xml`];
-      const kinds = ['tables', 'profiles', ...shown.map((directory) => directory.items)] as const;
+      const kinds = [
+        'tables',
+        'profiles',
+        ...shown.flatMap((directory) => (directory.items ? [directory.items] : [])),
+      ] as const;
       for (const kind of kinds) {
         for (let n = 1; n <= result.data[kind]; n++)
           locations.push(`${origin}/sitemap-${kind}.xml${n > 1 ? `?page=${n}` : ''}`);
