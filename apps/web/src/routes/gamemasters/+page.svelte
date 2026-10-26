@@ -74,7 +74,10 @@
 <section class="py-2 md:pt-12">
   <PageHead crumbs={[{ label: m.gms_crumb() }]} title={m.gms_title()} lede={m.gms_lede()}>
     {#snippet actions()}
-      <a href="/u/profile/edit" class="{buttonClass('secondary')} shrink-0 gap-2 px-6 font-semibold">
+      <a
+        href="/u/profile/edit"
+        class="{buttonClass('secondary')} shrink-0 gap-2 px-6 font-semibold"
+      >
         <Icon name="game-icons:pointy-hat" size={20} />
         {m.gms_cta()}
       </a>
