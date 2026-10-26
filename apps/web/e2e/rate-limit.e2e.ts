@@ -32,7 +32,7 @@ test.describe('rate limits', () => {
       /Você fez isso muitas vezes em pouco tempo\. Tente de novo em (\d+ min|1 h)\./,
     );
     // Nothing was lost or half done: the form is still filled and no sixth table exists.
-    await expect(page).toHaveURL(/t\/new$/);
+    await expect(page).toHaveURL(/tables\/new$/);
     await expect(page.getByLabel('Título')).toHaveValue(title);
     await expect(page.getByLabel('Descrição')).toHaveText('Isto deve continuar aqui.');
     const sql = database();
