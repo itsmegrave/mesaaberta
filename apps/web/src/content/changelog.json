@@ -96,6 +96,16 @@
         "kind": "improved",
         "title": "Seletores que cabem na tela",
         "description": "As listas de escolha se ajustam ao tamanho da tela e ao tamanho da lista, principalmente no celular."
+      },
+      {
+        "kind": "fixed",
+        "title": "Conversa em tela cheia no celular",
+        "description": "O campo de mensagem do chat fica acima da barra de abas e a conversa cabe na tela do celular."
+      },
+      {
+        "kind": "fixed",
+        "title": "Avaliações no celular",
+        "description": "As linhas de avaliação de jogadores cabem na tela do celular, e o menu da mesa mostra “Participantes e pedidos” só para quem gerencia."
       }
     ]
   },
