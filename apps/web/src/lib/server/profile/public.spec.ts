@@ -48,6 +48,7 @@ beforeAll(async () => {
     { id: id(6), username: 'sem-mesas' },
     { id: id(7), username: 'foto-provedor', avatarUrl: 'https://cdn.discordapp.com/provider.png' },
     { id: id(8), username: null },
+    { id: id(9), username: 'nome-publico', name: 'Bia Souza', showName: true },
   ]);
   await test.db.insert(profileSocialLinks).values([
     { profileId: id(1), network: 'website', url: 'https://example.com', position: 2 },
@@ -143,6 +144,7 @@ describe('public profiles', () => {
       'bannerUrl',
       'bio',
       'links',
+      'name',
       'participantRating',
       'rating',
       'totals',
@@ -213,6 +215,11 @@ describe('public profiles', () => {
     const bare = (await read('sem-mesas'))!;
     expect(bare.profile.bannerUrl).toBeNull();
     expect(bare.profile.bio).toBeNull();
+  });
+
+  it('shows the name under the @usuário only when the person chose to', async () => {
+    expect((await read())?.profile.name).toBeNull();
+    expect((await read('nome-publico'))?.profile.name).toBe('Bia Souza');
   });
 
   it('has an empty state for a person who has never run a table', async () => {

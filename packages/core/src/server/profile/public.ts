@@ -84,6 +84,8 @@ export async function publicProfile(
       avatarUrl: profiles.avatarUrl,
       bannerPath: profiles.bannerPath,
       bio: profiles.bio,
+      name: profiles.name,
+      showName: profiles.showName,
       role: profiles.role,
     })
     .from(profiles)
@@ -130,6 +132,8 @@ export async function publicProfile(
       bannerUrl: bannerUrl(supabaseUrl, found.bannerPath),
       // Plain text in the person's own words; the page keeps its line breaks and escapes it.
       bio: found.bio,
+      // Under the @usuário, only when the person chose to show it.
+      name: (found.showName && found.name) || null,
       // `text` is shown next to the icon; `href` is null where there is nothing to open (Discord).
       links: links.flatMap((link) => {
         if (!isNetwork(link.network)) return [];

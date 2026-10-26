@@ -8,11 +8,12 @@ vi.mock('$app/state', () => ({
   page: { url: new URL('http://localhost/u/ana'), params: { username: 'ana' } },
 }));
 
-const show = (links: { network: string; text: string; href: string | null }[]) =>
+const show = (links: { network: string; text: string; href: string | null }[], name?: string) =>
   render(Page, {
     data: {
       profile: {
         username: 'ana',
+        name: name ?? null,
         avatarUrl: null,
         links,
         totals: { played: 0, hosted: 0 },
@@ -54,5 +55,21 @@ describe('public profile social links', () => {
     await expect
       .element(page.getByRole('link', { name: 'Abrir Discord em nova aba' }))
       .not.toBeInTheDocument();
+  });
+});
+
+describe('public profile title', () => {
+  it('is the @usuário, with the name under it only when there is one to show', async () => {
+    show([], 'Ana Souza');
+
+    await expect.element(page.getByRole('heading', { level: 1 })).toHaveTextContent('@ana');
+    await expect.element(page.getByText('Ana Souza')).toBeVisible();
+  });
+
+  it('has no name line when the person keeps the name private', async () => {
+    show([]);
+
+    await expect.element(page.getByRole('heading', { level: 1 })).toHaveTextContent('@ana');
+    await expect.element(page.getByText('Ana Souza')).not.toBeInTheDocument();
   });
 });

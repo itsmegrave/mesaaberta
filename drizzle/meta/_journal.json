@@ -379,6 +379,13 @@
       "when": 1792973020233,
       "tag": "0053_table_published_at",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1792974896438,
+      "tag": "0054_profile_show_name",
+      "breakpoints": true
     }
   ]
 }

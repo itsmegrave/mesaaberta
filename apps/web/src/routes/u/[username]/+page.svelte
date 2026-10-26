@@ -150,6 +150,10 @@
             </ActionForm>
           {/if}
         </div>
+        {#if profile.name}
+          <!-- The name, only when the person chose to show it under the @usuário. -->
+          <p class="mt-2 text-xl wrap-break-word text-muted md:text-2xl">{profile.name}</p>
+        {/if}
         {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
         {#if profile.bio}
           <!-- Plain text in the person's own words: line breaks kept, nothing else. -->
