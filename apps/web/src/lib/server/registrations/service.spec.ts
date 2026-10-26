@@ -379,6 +379,20 @@ describe('leaveTable', () => {
     expect((await joinTable(test.db, player(3), table.slug)).status).toBe('confirmed');
   });
 
+  it('says whether the table was full before the seat was given up', async () => {
+    const payloadOf = async (eventId: string) =>
+      (await test.db.select().from(events)).find((e) => e.id === eventId)?.payload;
+    const table = await makeTable({ capacity: 2 });
+    await joinTable(test.db, player(2), table.slug);
+    await joinTable(test.db, player(3), table.slug);
+
+    const full = await leaveTable(test.db, player(2), table.slug);
+    const notFull = await leaveTable(test.db, player(3), table.slug);
+
+    expect(await payloadOf(full.eventIds[0])).toMatchObject({ wasFull: true });
+    expect(await payloadOf(notFull.eventIds[0])).not.toHaveProperty('wasFull');
+  });
+
   it('withdraws a pending request without an event, since no seat was involved', async () => {
     const table = await makeTable({ joinMode: 'approval' });
     await joinTable(test.db, player(2), table.slug);

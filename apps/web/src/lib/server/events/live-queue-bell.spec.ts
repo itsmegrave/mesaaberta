@@ -61,6 +61,7 @@ describe('the bell on the queue', () => {
       'partner-owner-notifications-v1',
       'badges-v1',
       'badge-notice-v1',
+      'follows-v1',
     ]);
   });
 

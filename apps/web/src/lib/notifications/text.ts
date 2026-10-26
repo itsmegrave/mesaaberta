@@ -133,6 +133,12 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
         ? m.notification_badge_earned_named({ badge: name })
         : m.notification_badge_earned();
     }
+    case 'followed_table_opened':
+      return m.notification_followed_table_opened({ gm: player, table });
+    case 'followed_seat_opened':
+      return m.notification_followed_seat_opened({ gm: player, table });
+    case 'follow_started':
+      return m.notification_follow_started({ player });
     case 'catalog_suggestion_approved':
       // A table that waited for its system can be published now.
       if (item.metadata.kind === 'system')
