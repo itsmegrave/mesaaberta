@@ -43,26 +43,35 @@ export const profileSections = ({
 
 /** The profile fields each form of a section sends. Everything else keeps what is stored. */
 export const PROFILE_SECTION_FIELDS = {
-  public: ['name', 'showName', 'bio', 'linkNetwork', 'linkUrl'],
+  public: ['name', 'showName', 'bio', 'tableRole', 'linkNetwork', 'linkUrl'],
   about: ['ageRange', 'gender', 'genderOther', 'city', 'timezone'],
 } as const satisfies Record<string, readonly (keyof ProfileInput)[]>;
 
 export type ProfileSection = keyof typeof PROFILE_SECTION_FIELDS;
 
 /**
+ * Fields the save leaves as stored when they are not sent at all, so they are never filled in for
+ * another section: "Na mesa, você…" counts as the person's own answer only when its form sent it.
+ */
+const KEPT_WHEN_ABSENT = new Set<string>(['tableRole']);
+
+/**
  * The posted form of one section, completed with the stored values of every field it doesn't own,
  * so the whole profile can be checked and saved as before. A field the section owns is taken as
  * sent, even when it was sent empty (all links removed, say). The username is never a section's.
+ * A `hidden` field (its flag is off, so the form did not draw it) is not the section's this time.
  */
 export function withStoredFields(
   data: FormData,
   stored: ProfileInput,
   section: ProfileSection,
+  { hidden = [] }: { hidden?: readonly (keyof ProfileInput)[] } = {},
 ): FormData {
-  const own = new Set<string>(PROFILE_SECTION_FIELDS[section]);
+  const own = new Set<string>(PROFILE_SECTION_FIELDS[section].filter((f) => !hidden.includes(f)));
   for (const [field, value] of Object.entries(stored)) {
     if (own.has(field)) continue;
     data.delete(field);
+    if (KEPT_WHEN_ABSENT.has(field)) continue;
     for (const item of Array.isArray(value) ? value : [value]) data.append(field, String(item));
   }
   return data;

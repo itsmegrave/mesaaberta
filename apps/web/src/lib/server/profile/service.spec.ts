@@ -79,6 +79,7 @@ describe('saveProfile', () => {
       genderOther: '',
       city: 'Recife',
       bio: '',
+      tableRole: '',
       timezone: 'America/Recife',
       linkNetwork: ['instagram', 'x'],
       linkUrl: ['carla', 'carla'],
@@ -268,5 +269,56 @@ describe('loadProfileForm', () => {
       ageRange: '',
       linkNetwork: [],
     });
+  });
+});
+
+describe('"Na mesa, você…"', () => {
+  const role = async (n: number) =>
+    (
+      await test.db
+        .select({ tableRole: profiles.tableRole, inferred: profiles.tableRoleInferred })
+        .from(profiles)
+        .where(eq(profiles.id, id(n)))
+    )[0];
+
+  beforeAll(async () => {
+    await test.db.insert(profiles).values([
+      { id: id(10), username: 'clara' },
+      { id: id(11), username: 'dani', tableRole: 'gm', tableRoleInferred: true },
+    ]);
+  });
+
+  it('stores the answer, "Prefiro não dizer" as nothing, and loads it back for the form', async () => {
+    await saveProfile(test.db, id(10), input({ username: 'clara', tableRole: 'both' }));
+    expect(await role(10)).toEqual({ tableRole: 'both', inferred: false });
+    expect(await loadProfileForm(test.db, id(10))).toMatchObject({ tableRole: 'both' });
+
+    await saveProfile(test.db, id(10), input({ username: 'clara', tableRole: '' }));
+    expect(await role(10)).toEqual({ tableRole: null, inferred: false });
+    expect(await loadProfileForm(test.db, id(10))).toMatchObject({ tableRole: '' });
+  });
+
+  it('keeps what is stored, inferred mark included, when the form did not send the field', async () => {
+    await saveProfile(test.db, id(11), input({ username: 'dani', bio: 'Oi' }));
+    expect(await role(11)).toEqual({ tableRole: 'gm', inferred: true });
+  });
+
+  it('takes an answer sent by the person as their own, no longer inferred', async () => {
+    await saveProfile(test.db, id(11), input({ username: 'dani', tableRole: 'gm' }));
+    expect(await role(11)).toEqual({ tableRole: 'gm', inferred: false });
+  });
+
+  it('records the change in the history, in the open: it is shown on the public profile', async () => {
+    await saveProfile(test.db, id(10), input({ username: 'clara', tableRole: 'player' }));
+    const rows = await test.db
+      .select({ payload: events.payload })
+      .from(events)
+      .where(eq(events.actorId, id(10)));
+    const changes = rows.map(
+      (row) => (row.payload as { changes: Record<string, unknown> }).changes,
+    );
+    expect(changes).toContainEqual(
+      expect.objectContaining({ tableRole: { from: null, to: 'player' } }),
+    );
   });
 });

@@ -20,6 +20,7 @@ const run = (username = 'ana', query = '', db: object | null = {}) => {
       db,
       env: { APP_ORIGIN: 'https://mesaaberta.app' },
       getUser: async () => null,
+      getProfile: async () => null,
       flags: { isEnabled },
     },
     params: { username },

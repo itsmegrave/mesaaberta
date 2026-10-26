@@ -143,6 +143,8 @@
       : data.form}
     action="?/save"
     section="public"
+    showTableRole={data.gmDirectory}
+    tableRoleInferred={data.tableRoleInferred}
     submitLabel={m.account_profile_save()}
     onsaved={() => toast.success(m.account_profile_saved())}
   />

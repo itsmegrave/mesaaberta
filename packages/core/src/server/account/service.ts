@@ -48,6 +48,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       avatarPath: profiles.avatarPath,
       bannerPath: profiles.bannerPath,
       bio: profiles.bio,
+      tableRole: profiles.tableRole,
       showFavoriteSystems: profiles.showFavoriteSystems,
       followNotifyTables: profiles.followNotifyTables,
       followNotifySeats: profiles.followNotifySeats,
@@ -384,6 +385,8 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
         avatarPath: null,
         bannerPath: null,
         bio: null,
+        tableRole: null,
+        tableRoleInferred: false,
         status: 'suspended',
         invitationsEnabled: false,
       })

@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, inArray, isNull, notInArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
+import { activeGm, escapeLike, folded, openSql, published } from '../directories/sql';
 import { gmRatings, type GmRating } from '../ratings/service';
 import { listUpcomingTables } from '../tables/queries';
 import {
@@ -9,24 +10,6 @@ import {
   foldText,
   type SystemDirectoryFilters,
 } from '../../systems/directory-filters';
-
-// What the database folds before comparing, the same letters `foldText` strips in JS.
-const ACCENTED = 'áàâãäåéèêëíìîïóòôõöúùûüçñý';
-const PLAIN = 'aaaaaaeeeeiiiiooooouuuucny';
-const folded = (column: unknown) => sql`translate(lower(${column}), ${ACCENTED}, ${PLAIN})`;
-const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
-
-// A table counts once it is public: never a draft, and never one closed or taken down by the
-// moderation (`disabled`).
-const published = and(
-  notInArray(gameTables.status, ['draft', 'disabled']),
-  isNull(gameTables.moderatedAt),
-);
-// Open is what /tables lists: active and not started yet.
-const openSql = (now: Date) =>
-  sql`${gameTables.status} = 'active' and ${gameTables.startsAt} > ${now.toISOString()}::timestamptz`;
-// Quem mestra counts people who can still be found: a banned account is left out.
-const activeGm = sql`${profiles.status} = 'active'`;
 
 /** The counts of every system with a public table, one row per system. */
 const statsOf = (db: AnyDb, now: Date) =>

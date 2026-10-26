@@ -32,7 +32,14 @@ let counter = 0;
 beforeAll(async () => {
   test = await createTestDb();
   await test.db.insert(profiles).values([
-    { id: me, username: 'ana', name: 'Ana Souza', ageRange: '25_34', city: 'Recife' },
+    {
+      id: me,
+      username: 'ana',
+      name: 'Ana Souza',
+      ageRange: '25_34',
+      city: 'Recife',
+      tableRole: 'both',
+    },
     { id: other, username: 'bruno' },
   ]);
   await test.db
@@ -95,6 +102,7 @@ describe('exportAccount', () => {
       name: 'Ana Souza',
       ageRange: '25_34',
       city: 'Recife',
+      tableRole: 'both',
     });
     expect(data.socialLinks).toEqual([
       { network: 'github', handle: null, url: 'https://github.com/ana' },
@@ -276,6 +284,8 @@ describe('anonymiseProfile', () => {
       city: 'Natal',
       avatarUrl: 'https://example.com/a.png',
       avatarPath: 'person/a.png',
+      tableRole: 'gm',
+      tableRoleInferred: true,
     });
     await test.db
       .insert(profileSocialLinks)
@@ -306,6 +316,8 @@ describe('anonymiseProfile', () => {
       city: null,
       avatarUrl: null,
       avatarPath: null,
+      tableRole: null,
+      tableRoleInferred: false,
       status: 'suspended',
     });
     expect(

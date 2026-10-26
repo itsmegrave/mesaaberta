@@ -2,14 +2,15 @@ import { error } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 
-/** The public directories and the flag that releases each. Places and quem mestra join later. */
+/** The public directories and the flag that releases each. Places join later. */
 export const DIRECTORY_FLAGS = {
   systems: 'api_directory_systems',
+  gms: 'api_directory_gms',
 } as const satisfies Record<string, FlagName>;
 export type Directory = keyof typeof DIRECTORY_FLAGS;
 export type DirectoryFlags = Record<Directory, boolean>;
 /** Every directory off: the maintenance screen, and a layout that could not read the flags. */
-export const NO_DIRECTORIES: DirectoryFlags = { systems: false };
+export const NO_DIRECTORIES: DirectoryFlags = { systems: false, gms: false };
 
 /** Whether a directory is on for the person reading (targeted by id), or for visitors. */
 export async function directoryEnabled(

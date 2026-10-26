@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
-  type AvatarSize = 24 | 28 | 32 | 36 | 40 | 44 | 48 | 64 | 80 | 96 | 120 | 128;
+  type AvatarSize = 24 | 28 | 32 | 36 | 40 | 44 | 48 | 56 | 64 | 80 | 96 | 120 | 128;
 
   interface Props {
     src?: string | null;
@@ -45,6 +45,8 @@
         return 'size-11 text-lg';
       case 48:
         return 'size-12 text-xl';
+      case 56:
+        return 'size-14 text-2xl';
       case 64:
         return 'size-16 text-2xl';
       case 80:

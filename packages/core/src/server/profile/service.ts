@@ -2,7 +2,7 @@ import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
-import { diffFields, hasChanges } from '@mesaaberta/core/server/events/changes';
+import { diffFields, hasChanges, type Fact } from '@mesaaberta/core/server/events/changes';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { normalizeUsername } from '../../profile/username';
 import { profileLinks, type ProfileInput } from '../../profile/schema';
@@ -66,6 +66,7 @@ export async function loadProfileForm(
     genderOther: profile.genderOther ?? '',
     city: profile.city ?? '',
     bio: profile.bio ?? '',
+    tableRole: profile.tableRole ?? '',
     timezone: profile.timezone ?? '',
     linkNetwork: links.map((link) => link.network),
     // What the person typed: the handle of a network, the address of a website.
@@ -95,6 +96,11 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
     bio: input.bio || null,
     timezone: input.timezone || null,
   };
+  // Only when the form had the field: then the answer is the person's own, no longer inferred.
+  const role =
+    input.tableRole === undefined
+      ? null
+      : { tableRole: input.tableRole || null, tableRoleInferred: false };
 
   try {
     await db.transaction(async (tx) => {
@@ -110,7 +116,10 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
         .where(eq(profileSocialLinks.profileId, profileId))
         .orderBy(asc(profileSocialLinks.position));
 
-      await tx.update(profiles).set(values).where(eq(profiles.id, profileId));
+      await tx
+        .update(profiles)
+        .set({ ...values, ...role })
+        .where(eq(profiles.id, profileId));
       await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, profileId));
       if (links.length > 0) {
         await tx
@@ -122,11 +131,11 @@ export async function saveProfile(db: AnyDb, profileId: string, input: ProfileIn
       // city, bio) is personal data, so it says that it changed and what it became is not kept.
       const linkText = (rows: { network: string; handle?: string | null; url: string | null }[]) =>
         rows.map((link) => `${link.network}: ${link.handle ?? link.url}`);
-      const changes = diffFields(
-        { ...before, links: linkText(linksBefore) },
-        { ...values, links: linkText(links) },
-        { hidden: ['name', 'ageRange', 'gender', 'genderOther', 'city', 'bio'] },
-      );
+      const after: Record<string, Fact> = { ...values, links: linkText(links) };
+      if (role) after.tableRole = role.tableRole;
+      const changes = diffFields({ ...before, links: linkText(linksBefore) }, after, {
+        hidden: ['name', 'ageRange', 'gender', 'genderOther', 'city', 'bio'],
+      });
       if (hasChanges(changes))
         await recordEvent(tx as unknown as AnyDb, {
           type: 'ProfileUpdated',

@@ -1882,6 +1882,8 @@
   "nav_directory_systems": "Sistemas de RPG",
   "nav_directory_systems_short": "Sistemas",
   "nav_directory_systems_description": "Os sistemas jogados aqui e quem mestra cada um.",
+  "nav_directory_gms": "Quem mestra",
+  "nav_directory_gms_description": "Quem conduz as mesas, com a nota e os sistemas de cada pessoa.",
   "crowdfunding_title": "Financiamentos coletivos",
   "crowdfunding_description": "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais.",
   "crowdfunding_lede": "Campanhas de RPG e jogos de mesa abertas para apoio, enviadas pela comunidade. Cada card abre a campanha no site dela.",
@@ -2560,6 +2562,16 @@
   "account_images_hint": "A foto aparece em círculo; sem ela, vale a da sua conta Google ou Discord, ou a inicial do seu nome. A capa fica no alto do seu perfil público.",
   "account_public_fields": "Nome, bio e links",
   "account_public_fields_lede": "Aparecem no seu perfil público, para quem mestra e quem joga.",
+  "profile_table_role": "Na mesa, você…",
+  "profile_table_role_hint": "Com “Mestra” ou “Joga e mestra”, seu perfil entra na lista de quem mestra.",
+  "profile_table_role_player": "Joga",
+  "profile_table_role_gm": "Mestra",
+  "profile_table_role_both": "Joga e mestra",
+  "profile_table_role_none": "Prefiro não dizer",
+  "profile_table_role_inferred": "Você aparece em Quem mestra porque já mestrou uma mesa. Mude aqui quando quiser.",
+  "profile_role_tag_player": "Joga",
+  "profile_role_tag_gm": "Mestra",
+  "profile_role_tag_both": "Mestra e joga",
   "account_about_private": "Só você vê estes dados. O fuso define em que horário você vê as mesas.",
   "account_about_save": "Salvar",
   "account_danger_zone": "Zona de perigo",
@@ -2673,6 +2685,86 @@
       }
     }
   ],
+  "gms_crumb": "Quem mestra",
+  "gms_title": "Quem mestra",
+  "gms_lede": "Conheça quem conduz as mesas da comunidade: a nota da mestragem, os sistemas e as mesas abertas agora.",
+  "gms_cta": "Você mestra? Apareça aqui",
+  "gms_search_label": "Buscar por nome ou @usuário",
+  "gms_system_label": "Sistema",
+  "gms_system_any": "Todos os sistemas",
+  "gms_modality_label": "Modalidade",
+  "gms_modality_all": "Todas",
+  "gms_modality_online": "Online",
+  "gms_modality_in_person": "Presencial",
+  "gms_open_only": "Com mesa aberta",
+  "gms_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma pessoa encontrada",
+        "count=1": "1 pessoa encontrada",
+        "count=*": "{count} pessoas encontradas"
+      }
+    }
+  ],
+  "gms_found_hint": "Aparece aqui quem marcou no perfil que mestra.",
+  "gms_sort_recent": "Atividade recente",
+  "gms_sort_score": "Melhor nota",
+  "gms_sort_tables": "Mais mesas mestradas",
+  "gms_sort_name": "Nome (A–Z)",
+  "gms_tables_run": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa mestrada ainda",
+        "count=1": "1 mesa mestrada",
+        "count=*": "{count} mesas mestradas"
+      }
+    }
+  ],
+  "gms_last_run_days": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "última hoje",
+        "count=1": "última ontem",
+        "count=*": "última há {count} dias"
+      }
+    }
+  ],
+  "gms_last_run_months": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "última há 1 mês",
+        "count=*": "última há {count} meses"
+      }
+    }
+  ],
+  "gms_systems_label": "Sistemas que mestra",
+  "gms_open_now": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma mesa aberta agora",
+        "count=1": "1 mesa aberta agora",
+        "count=*": "{count} mesas abertas agora"
+      }
+    }
+  ],
+  "gms_empty_filtered": "Ninguém com esses filtros",
+  "gms_empty_filtered_hint": "Tente outro sistema, tire o “Com mesa aberta” ou busque por outro nome.",
+  "gms_clear_filters": "Limpar filtros",
+  "gms_empty": "Ainda ninguém por aqui",
+  "gms_empty_hint": "Você mestra? Diga isso no seu perfil e apareça na lista.",
+  "gms_empty_action": "Editar meu perfil",
+  "gms_description": "Conheça quem mestra RPG na Mesa Aberta: a nota da mestragem, os sistemas que cada pessoa conduz e as mesas abertas agora.",
+  "seo_gms_title": "Quem mestra · Mesa Aberta",
   "systems_crumb": "Sistemas",
   "systems_title": "Sistemas de RPG",
   "systems_lede": "Veja o que a comunidade joga, quantas mesas estão abertas em cada sistema e quem mestra.",
@@ -2766,6 +2858,7 @@
   ],
   "system_open_empty": "Nenhuma mesa aberta de {name} agora.",
   "system_open_empty_hint": "Quem mestra este sistema aparece logo abaixo. Ou abra a próxima mesa você.",
+  "system_gms_all": "Ver todas as pessoas",
   "system_gms_title": "Quem mestra este sistema",
   "system_gms_lede": "Pessoas que já abriram mesas de {name} aqui, de quem mestrou mais para quem mestrou menos.",
   "system_gm_tables": [
@@ -2780,7 +2873,6 @@
   ],
   "system_ended_title": "Mesas que já aconteceram",
   "system_ended_line": "Quem mestra: {gm} · encerrada em {date}",
-  "directory_footer_title": "Diretórios",
   "directory_footer_systems": "Sistemas",
   "blog_title": "Blog",
   "blog_lede": "Histórias, bastidores e ideias para a sua mesa, escritas por quem faz a Mesa Aberta.",
@@ -2792,5 +2884,6 @@
   "blog_draft": "Rascunho",
   "blog_scheduled": "Agendado",
   "blog_minutes": "{minutes} min de leitura",
-  "blog_back": "Todos os posts"
+  "blog_back": "Todos os posts",
+  "directory_footer_gms": "Quem mestra"
 }

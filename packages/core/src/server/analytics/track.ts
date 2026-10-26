@@ -10,7 +10,8 @@ export type RequestEventName =
   | 'player_mesa_detail_viewed'
   | 'player_seat_claim_initiated'
   | 'gm_onboarding_started'
-  | 'systems_directory_viewed';
+  | 'systems_directory_viewed'
+  | 'gm_directory_viewed';
 
 export type RequestEventProperties = Record<string, string | number>;
 

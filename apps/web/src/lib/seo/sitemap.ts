@@ -4,7 +4,7 @@ import { callApiRaw } from '#lib/server/api-client.js';
 import { isPublished } from '#lib/blog.js';
 import { posts } from '#lib/server/blog.js';
 
-type Resource = 'index' | 'pages' | 'tables' | 'profiles';
+type Resource = 'index' | 'pages' | 'tables' | 'profiles' | 'systems';
 const escape = (value: string) =>
   value.replace(
     /[<>&"']/g,
@@ -22,6 +22,13 @@ const staticPaths = [
   '/privacy',
   '/terms',
 ];
+// The public directories, each listed while its flag is on for visitors (no one signed in).
+const directories = [
+  { flag: 'api_directory_systems', path: '/systems', items: 'systems' },
+  // Quem mestra's people are already in the profiles sitemap.
+  { flag: 'api_directory_gms', path: '/gamemasters', items: null },
+] as const;
+const PREFIX = { tables: 't', profiles: 'u', systems: 's' } as const;
 const unavailable = () =>
   new Response('Sitemap temporarily unavailable', {
     status: 503,
@@ -34,8 +41,19 @@ export async function sitemapResponse(
   page: number,
 ): Promise<Response> {
   const origin = siteOf(locals.env, locals.log).APP_ORIGIN;
+  const shown = (
+    await Promise.all(
+      directories.map(async (directory) =>
+        (await locals.flags?.isEnabled(directory.flag, {})) ? directory : null,
+      ),
+    )
+  ).filter((directory) => directory !== null);
+  // A directory that is off has no sitemap of its items.
+  if (resource === 'systems' && !shown.some((directory) => directory.items === 'systems'))
+    return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
   const cache = locals.host?.cache;
-  const key = `${origin}/__seo/v1/${resource}?page=${page}`;
+  // Which directories are on is part of the answer: a flag change must not serve the old one.
+  const key = `${origin}/__seo/v1/${resource}?page=${page}&d=${shown.map((d) => d.path).join(',')}`;
   const success = (body: string) =>
     new Response(body, {
       headers: {
@@ -55,7 +73,9 @@ export async function sitemapResponse(
     body = document(
       'urlset',
       [
-        ...staticPaths.map((path) => `<url><loc>${escape(new URL(path, origin).href)}</loc></url>`),
+        ...[...staticPaths, ...shown.map((directory) => directory.path)].map(
+          (path) => `<url><loc>${escape(new URL(path, origin).href)}</loc></url>`,
+        ),
         ...posts
           .filter((post) => isPublished(post))
           .map(
@@ -75,7 +95,12 @@ export async function sitemapResponse(
       const result = sitemapIndexSchema.safeParse(answer.body);
       if (!result.success) return unavailable();
       const locations = [`${origin}/sitemap-pages.xml`];
-      for (const kind of ['tables', 'profiles'] as const) {
+      const kinds = [
+        'tables',
+        'profiles',
+        ...shown.flatMap((directory) => (directory.items ? [directory.items] : [])),
+      ] as const;
+      for (const kind of kinds) {
         for (let n = 1; n <= result.data[kind]; n++)
           locations.push(`${origin}/sitemap-${kind}.xml${n > 1 ? `?page=${n}` : ''}`);
       }
@@ -91,7 +116,7 @@ export async function sitemapResponse(
         result.data.entries
           .map(
             ({ slug, lastmod }) =>
-              `<url><loc>${escape(`${origin}/${resource === 'tables' ? 't' : 'u'}/${encodeURIComponent(slug)}`)}</loc>${lastmod ? `<lastmod>${escape(lastmod)}</lastmod>` : ''}</url>`,
+              `<url><loc>${escape(`${origin}/${PREFIX[resource]}/${encodeURIComponent(slug)}`)}</loc>${lastmod ? `<lastmod>${escape(lastmod)}</lastmod>` : ''}</url>`,
           )
           .join(''),
       );

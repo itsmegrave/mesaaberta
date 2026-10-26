@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TableRoleTag from '#lib/components/ui/TableRoleTag.svelte';
   import { copyText } from '#lib/clipboard.js';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import { page } from '$app/state';
@@ -172,6 +173,10 @@
         {#if profile.name}
           <!-- The name, only when the person chose to show it under the @usuário. -->
           <p class="mt-2 text-xl wrap-break-word text-muted md:text-2xl">{profile.name}</p>
+        {/if}
+        {#if profile.tableRole}
+          <!-- Joga, Mestra or both, while Quem mestra is on. -->
+          <p class="mt-3"><TableRoleTag tableRole={profile.tableRole} /></p>
         {/if}
         {#if data.badges}<BadgeIcons badges={data.badges} anchor={!data.isOwner} />{/if}
         {#if profile.bio}
