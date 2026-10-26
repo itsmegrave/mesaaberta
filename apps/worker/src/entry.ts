@@ -7,8 +7,8 @@ import {
 } from '@mesaaberta/core/observability/sentry-options';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
-import type { Monitor } from '@mesaaberta/core/server/events/monitors';
 import { createWorker, type WorkerEnv } from './index';
+import { checkInMonitor } from './sentry-monitor';
 import { sentrySink } from './sentry-sink';
 
 // What wrangler runs: the worker wrapped with Sentry. Kept apart from index.ts so the handler
@@ -20,17 +20,6 @@ setAppName('worker');
 setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
 
-// A check-in in progress, then ok or error; Sentry creates or updates the monitor from this config.
-const sentryMonitor: Monitor = (job, run) =>
-  Sentry.withMonitor(job.slug, run, {
-    schedule: { type: 'crontab', value: job.schedule },
-    checkinMargin: job.checkinMargin,
-    maxRuntime: job.maxRuntime,
-    timezone: 'Etc/UTC',
-    failureIssueThreshold: 1,
-    recoveryThreshold: 1,
-  });
-
 export default Sentry.withSentry(
   (env: WorkerEnv) => ({
     ...sentryOptionsForApp('worker'),
@@ -40,5 +29,5 @@ export default Sentry.withSentry(
     // Puts the flags the run read (`recordFlag`) on its issues.
     integrations: [Sentry.featureFlagsIntegration()],
   }),
-  createWorker(undefined, undefined, sentryMonitor),
+  createWorker(undefined, undefined, checkInMonitor(Sentry)),
 );
