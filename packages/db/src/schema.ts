@@ -611,6 +611,33 @@ export const playerRatings = pgTable(
   ],
 ).enableRLS();
 
+// The e-mails that asked a GM to close a session they never answered for (`remindToClose`): one row
+// per table, session start and step, so a sweep sends each one once, and a session moved to another
+// date gets its own. `sentAt` of the `7d` row is when the last-chance notice went out: the table is
+// concluded for the GM no sooner than three days after it.
+export const sessionCloseReminders = pgTable(
+  'session_close_reminders',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    step: text('step').$type<'1h' | '7d'>().notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (reminder) => [
+    primaryKey({ columns: [reminder.tableId, reminder.startsAt, reminder.step] }),
+    check('session_close_reminders_step', sql`${reminder.step} IN ('1h', '7d')`),
+  ],
+).enableRLS();
+
+// An e-mail that went out, by its idempotency key. Resend forgets a key after 24 hours, so a handler
+// whose retry may come later (`sendOnce`) checks here first and records the key once it is sent.
+export const mailDeliveries = pgTable('mail_deliveries', {
+  key: text('key').primaryKey(),
+  sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();
+
 // A GM's score, worked out from their ratings and kept until it can change: when the month turns
 // (the weights age by months) or when a rating is added or removed (a trigger on `ratings` raises
 // `version`, even for a GM with no row yet). Read it through `gmRatings`, never by hand.
