@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import {
   gameTables,
+  profileFavoriteSystems,
   profiles,
   profileSocialLinks,
   ratings,
@@ -156,6 +157,7 @@ describe('public profiles', () => {
       'avatarUrl',
       'bannerUrl',
       'bio',
+      'favoriteSystems',
       'links',
       'name',
       'participantRating',
@@ -165,6 +167,8 @@ describe('public profiles', () => {
     ]);
     // Off unless the `use_player_ratings` rollout reaches the profile.
     expect(data.profile.participantRating).toBeNull();
+    // Off unless the `use_signed_in_home` rollout reaches the profile.
+    expect(data.profile.favoriteSystems).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
       'gmName',
@@ -345,5 +349,23 @@ describe('public profiles', () => {
       .set({ status: 'suspended' })
       .where(eq(profiles.id, id(7)));
     expect(await read('novo-username')).toBeNull();
+  });
+});
+
+describe('favorite systems on a public profile', () => {
+  it('shows them when the rollout reaches the profile and its owner did not hide them', async () => {
+    const [system] = await test.db.select().from(systems).limit(1);
+    await test.db.insert(profileFavoriteSystems).values({ profileId: id(6), systemId: system.id });
+    const on = async () => true;
+
+    const shown = await publicProfile(test.db, 'sem-mesas', { now, showFavoriteSystems: on });
+    expect(shown!.profile.favoriteSystems).toEqual([{ name: system.name, slug: system.slug }]);
+
+    await test.db
+      .update(profiles)
+      .set({ showFavoriteSystems: false })
+      .where(eq(profiles.id, id(6)));
+    const hidden = await publicProfile(test.db, 'sem-mesas', { now, showFavoriteSystems: on });
+    expect(hidden!.profile.favoriteSystems).toBeNull();
   });
 });

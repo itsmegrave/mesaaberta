@@ -162,6 +162,20 @@
           <!-- Plain text in the person's own words: line breaks kept, nothing else. -->
           <p class="mt-4 max-w-prose wrap-break-word whitespace-pre-line">{profile.bio}</p>
         {/if}
+        {#if profile.favoriteSystems?.length}
+          <!-- Each leads to the open tables of that system. -->
+          <ul aria-label={m.public_profile_favorite_systems()} class="mt-4 flex flex-wrap gap-2">
+            {#each profile.favoriteSystems as system (system.slug)}
+              <li>
+                <a
+                  href="/t?system={encodeURIComponent(system.slug)}"
+                  class="inline-flex h-9 items-center rounded-full bg-surface-wash px-4 text-sm font-semibold text-surface-950-50 no-underline hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+                  >{system.name}</a
+                >
+              </li>
+            {/each}
+          </ul>
+        {/if}
         {#if profile.links.length > 0}
           <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
             {#each profile.links as link, index (`${link.network}-${index}`)}
