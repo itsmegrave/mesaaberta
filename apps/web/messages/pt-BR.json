@@ -3126,7 +3126,7 @@
   "admin_places_col_sender": "Quem enviou",
   "admin_places_col_reports": "Denúncias",
   "admin_places_no_sender": "Conta apagada",
-  "admin_places_action_label": "Mais ações: {name}",
+  "admin_places_action_label": "{name}",
   "admin_places_approve_menu": "Aprovar",
   "admin_places_open": "Ver página",
   "admin_places_edit": "Editar",
@@ -3260,7 +3260,7 @@
     }
   ],
   "admin_claims_empty": "Nenhum pedido aqui.",
-  "admin_claims_action_label": "Ações do pedido para {name}",
+  "admin_claims_action_label": "pedido para {name}",
   "admin_claims_filter_pending": "Aguardando",
   "admin_claims_filter_approved": "Aprovados",
   "admin_claims_filter_rejected": "Recusados",
@@ -3287,5 +3287,49 @@
   "admin_places_remove_owner_title": "Remover o dono de {name}?",
   "admin_places_remove_owner_text": "A página perde o selo Verificado e as edições voltam a passar pela fila. Quem gerenciava recebe um aviso.",
   "admin_places_remove_owner_confirm": "Remover dono",
-  "admin_places_remove_owner_done": "Dono removido."
+  "admin_places_remove_owner_done": "Dono removido.",
+  "nav_directory_places": "Onde jogar",
+  "nav_directory_places_description": "Lojas, luderias e clubes para jogar RPG presencial.",
+  "directory_footer_places": "Onde jogar",
+  "directory_summary_more": "{names} e mais {count}",
+  "system_gms_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pessoa · {names}",
+        "count=*": "{count} pessoas · {names}"
+      }
+    }
+  ],
+  "system_ended_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mesa encerrada",
+        "count=*": "{count} mesas encerradas"
+      }
+    }
+  ],
+  "place_amenities_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 comodidade · {names}",
+        "count=*": "{count} comodidades · {names}"
+      }
+    }
+  ],
+  "place_tags_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 tag, gerada a partir do endereço, do tipo e das comodidades",
+        "count=*": "{count} tags, geradas a partir do endereço, do tipo e das comodidades"
+      }
+    }
+  ]
 }

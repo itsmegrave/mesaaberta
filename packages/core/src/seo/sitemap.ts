@@ -3,12 +3,14 @@ import { z } from 'zod';
 export const SITEMAP_PAGE_SIZE = 500;
 // The resource families plus the static pages stay within the sitemap index's 50,000 URL limit.
 export const SITEMAP_MAX_PAGES = 20_000;
-export const sitemapResource = z.enum(['tables', 'profiles', 'systems']);
+export const sitemapResource = z.enum(['tables', 'profiles', 'systems', 'places']);
 export const sitemapIndexSchema = z.object({
   tables: z.number().int().min(0).max(SITEMAP_MAX_PAGES),
   profiles: z.number().int().min(0).max(SITEMAP_MAX_PAGES),
   // The systems directory (`/s/[slug]`); an api from before it answers without the field.
   systems: z.number().int().min(0).max(SITEMAP_MAX_PAGES).default(0),
+  // The places directory (`/pp/[slug]`), the same way.
+  places: z.number().int().min(0).max(SITEMAP_MAX_PAGES).default(0),
 });
 export const sitemapPageSchema = z.object({
   entries: z

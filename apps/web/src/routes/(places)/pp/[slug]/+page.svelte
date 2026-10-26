@@ -2,6 +2,7 @@
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
+  import { namesSummary } from '#lib/components/directory/summary.js';
   import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -137,7 +138,13 @@
       {/if}
 
       {#if place.amenities.length > 0}
-        <DirectorySection title={m.place_amenities()}>
+        <DirectorySection
+          title={m.place_amenities()}
+          summary={m.place_amenities_summary({
+            count: place.amenities.length,
+            names: namesSummary(place.amenities.map((amenity) => placeAmenityLabels[amenity]())),
+          })}
+        >
           <ul class="flex flex-wrap gap-2">
             {#each place.amenities as amenity (amenity)}
               <li
@@ -151,7 +158,11 @@
       {/if}
 
       {#if data.tags.length > 0}
-        <DirectorySection title={m.place_tags()} lede={m.place_tags_hint()}>
+        <DirectorySection
+          title={m.place_tags()}
+          lede={m.place_tags_hint()}
+          summary={m.place_tags_summary({ count: data.tags.length })}
+        >
           <ul class="flex flex-wrap gap-2">
             {#each data.tags as tag (tag.kind + tag.slug)}
               <li>

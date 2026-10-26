@@ -96,7 +96,7 @@ describe('SiteFooter.svelte', () => {
       .not.toBeInTheDocument();
 
     location.pathname = '/s/tormenta-20';
-    render(SiteFooter, { site, directories: { systems: true, gms: true } });
+    render(SiteFooter, { site, directories: { systems: true, gms: true, places: true } });
     const heading = browserPage.getByRole('heading', { name: 'Páginas' }).last().element();
     const names = [...heading.parentElement!.querySelectorAll('a')].map((link) =>
       link.textContent?.trim(),
@@ -106,6 +106,7 @@ describe('SiteFooter.svelte', () => {
       'Parceiros',
       'Financiamentos coletivos',
       'Sistemas',
+      'Onde jogar',
       'Quem mestra',
     ]);
     // A system's page is part of the systems directory.
