@@ -146,12 +146,17 @@ describe('GET /v1/reads/preview', () => {
       timezone: 'UTC',
       gmId: ana,
       systemId: system.id,
+      publishedAt: new Date(Date.now() - 60 * 60 * 1000),
     });
     const answer = await app.request('/preview', { headers: { [ACTOR_HEADER]: ana } }, env);
 
     expect(answer.status).toBe(200);
-    const body = (await answer.json()) as { tables: { slug: string }[] };
+    const body = (await answer.json()) as {
+      tables: { slug: string }[];
+      newTables: { slug: string }[];
+    };
     expect(body.tables.map((t) => t.slug)).toContain('mesa-publica');
+    expect(body.newTables.map((t) => t.slug)).toContain('mesa-publica');
     expect(JSON.stringify(body)).not.toContain('gmId');
     expect(body).toEqual(JSON.parse(JSON.stringify(await readPreview(test.db, new Date()))));
   });

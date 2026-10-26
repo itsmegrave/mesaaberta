@@ -1,11 +1,15 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
+import { listNewTables, listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { load } from './+page.server';
 
-vi.mock('@mesaaberta/core/server/tables/queries', () => ({ listUpcomingTables: vi.fn() }));
+vi.mock('@mesaaberta/core/server/tables/queries', () => ({
+  listUpcomingTables: vi.fn(),
+  listNewTables: vi.fn(),
+}));
 
 const listed = vi.mocked(listUpcomingTables);
+const fresh = vi.mocked(listNewTables);
 
 const table = (n: number) =>
   ({
@@ -30,25 +34,41 @@ const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
 describe('the home page load', () => {
   beforeEach(() => {
     listed.mockReset();
+    fresh.mockReset();
+    fresh.mockResolvedValue([]);
     error.mockReset();
   });
 
   it('lists nothing when there is no database yet', async () => {
     expect(await run(event(null))).toMatchObject({
       tables: [],
-      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables'] },
+      newTables: [],
+      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables', 'newTables', 'now'] },
     });
     expect(listed).not.toHaveBeenCalled();
   });
 
-  it('previews the three soonest tables, keeping the GM id on the server', async () => {
-    listed.mockResolvedValue([1, 2, 3, 4].map(table));
+  it('previews the ten soonest tables, keeping the GM id on the server', async () => {
+    listed.mockResolvedValue(Array.from({ length: 12 }, (_, i) => table(i + 1)));
 
     const { tables } = await run(event());
 
-    expect(tables.map((t: { slug: string }) => t.slug)).toEqual(['mesa-1', 'mesa-2', 'mesa-3']);
+    expect(tables).toHaveLength(10);
+    expect(tables[9].slug).toBe('mesa-10');
     expect(tables[0]).not.toHaveProperty('gmId');
     expect(tables[0]).not.toHaveProperty('imagePath');
+  });
+
+  it('lists the new tables apart, with the instant they were read at', async () => {
+    listed.mockResolvedValue([table(1)]);
+    fresh.mockResolvedValue([table(1), table(2)]);
+
+    const { newTables, now } = await run(event());
+
+    expect(newTables.map((t: { slug: string }) => t.slug)).toEqual(['mesa-1', 'mesa-2']);
+    expect(newTables[0]).not.toHaveProperty('gmId');
+    expect(now).toBeInstanceOf(Date);
+    expect(fresh).toHaveBeenCalledWith(expect.anything(), now, 10);
   });
 
   it('still renders, without the preview, when the tables cannot be listed', async () => {
@@ -56,7 +76,8 @@ describe('the home page load', () => {
 
     expect(await run(event())).toMatchObject({
       tables: [],
-      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables'] },
+      newTables: [],
+      readSeed: { resource: 'preview', viewer: 'public', fields: ['tables', 'newTables', 'now'] },
     });
     expect(error).toHaveBeenCalledOnce();
   });

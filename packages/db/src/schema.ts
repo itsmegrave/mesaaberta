@@ -281,6 +281,9 @@ export const gameTables = pgTable(
     recurrence: text('recurrence'),
     until: timestamp('until', { withTimezone: true }),
     status: tableStatus('status').notNull().default('active'),
+    // When the table went public: set on creation for an active table and when a draft is published,
+    // so "Novas mesas" counts a draft from its publication, not from when it was written.
+    publishedAt: timestamp('published_at', { withTimezone: true }),
     // Incremented on every edit so calendar clients replace the invite instead of adding one.
     icalSequence: integer('ical_sequence').notNull().default(0),
     // Set when an admin closed the table over a report (it is `disabled` too). The justification is
@@ -301,6 +304,7 @@ export const gameTables = pgTable(
       table.duplicationRequestKey,
     ),
     index('game_tables_system_id_idx').on(table.systemId),
+    index('game_tables_status_published_idx').on(table.status, table.publishedAt),
     index('game_tables_location_idx').on(table.locationState, table.locationCity),
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(

@@ -63,6 +63,18 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Novas mesas no Início",
+        "description": "O Início mostra as mesas que acabaram de abrir, as mais recentes primeiro, com quanto tempo faz que cada uma abriu.",
+        "href": "/"
+      },
+      {
+        "kind": "improved",
+        "title": "Mesas em carrossel",
+        "description": "Novas mesas e Mesas abertas passam de lado no Início, até dez de cada vez, e o último cartão leva à lista completa.",
+        "href": "/"
+      },
+      {
+        "kind": "new",
         "title": "Conquistas no perfil",
         "description": "Você ganha conquistas por mesas jogadas e mestradas, e elas aparecem como ícones no seu perfil, com os detalhes ao passar o mouse ou tocar."
       },

@@ -38,3 +38,19 @@ export function dateBox(startsAt: Date, timeZone: string, locale: string) {
     month: part({ month: 'short' }),
   };
 }
+
+const MINUTE_MS = 60_000;
+
+/**
+ * How long ago a table was published, against `now` (the instant its list was read): "Aberta
+ * agora", "há 25 min", "há 3 h", "ontem", "há 6 dias".
+ */
+export function openedLabel(publishedAt: Date, now: Date): string {
+  const minutes = Math.max(0, Math.floor((now.getTime() - publishedAt.getTime()) / MINUTE_MS));
+  if (minutes < 1) return m.table_opened_now();
+  if (minutes < 60) return m.table_opened_minutes({ count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return m.table_opened_hours({ count: hours });
+  const days = Math.floor(hours / 24);
+  return days === 1 ? m.table_opened_yesterday() : m.table_opened_days({ count: days });
+}

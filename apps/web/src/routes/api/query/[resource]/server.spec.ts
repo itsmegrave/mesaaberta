@@ -20,11 +20,15 @@ describe('query endpoint and loader', () => {
     const e = event('preview');
     const loaded = await loadRead(e, 'preview');
     const response = await GET(e as Parameters<typeof GET>[0]);
-    expect(parse(await response.text())).toEqual({ tables: [] });
+    expect(parse(await response.text())).toEqual({
+      tables: [],
+      newTables: [],
+      now: expect.any(Date),
+    });
     expect(loaded.readSeed).toMatchObject({
       resource: 'preview',
       viewer: 'public',
-      fields: ['tables'],
+      fields: ['tables', 'newTables', 'now'],
     });
     expect(response.headers.get('cache-control')).toBe('private, no-store');
   });
