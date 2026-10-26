@@ -118,6 +118,10 @@ export async function joinTable(
   });
 }
 
+/** Whether the table had no seat left before a player gives theirs up: who follows its GM hears of the vaga. */
+const fullBefore = async (tx: Tx, tableId: string) =>
+  (await seatAvailability(asDb(tx), tableId, new Date())).available === 0;
+
 /** A player gives up their place, or withdraws a request. A pending request took no seat, so it leaves no event. */
 export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
   return db.transaction(async (tx) => {
@@ -127,6 +131,7 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
 
     const registration = await registrationOf(tx, table.id, actor!.id);
     if (!registration) throw new NotFound('no registration');
+    const wasFull = registration.status === 'confirmed' && (await fullBefore(tx, table.id));
 
     await tx
       .delete(registrations)
@@ -138,7 +143,13 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
     const eventId = await recordEvent(asDb(tx), {
       type: 'PlayerLeft',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, playerId: actor!.id, reason: 'left' },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        playerId: actor!.id,
+        reason: 'left',
+        ...(wasFull ? { wasFull: true as const } : {}),
+      },
     });
     return { eventIds: [eventId] };
   });
@@ -205,6 +216,7 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
 
     const registration = await registrationOf(tx, table.id, playerId);
     if (registration?.status !== 'confirmed') throw new NotFound('that player has no seat');
+    const wasFull = await fullBefore(tx, table.id);
 
     await tx
       .delete(registrations)
@@ -214,7 +226,13 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
     const eventId = await recordEvent(asDb(tx), {
       type: 'PlayerLeft',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, playerId, reason: 'removed' },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        playerId,
+        reason: 'removed',
+        ...(wasFull ? { wasFull: true as const } : {}),
+      },
     });
     return { eventIds: [eventId] };
   });
