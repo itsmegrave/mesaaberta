@@ -59,7 +59,9 @@ describe.each(locales)('%s messages', (locale) => {
 // The gender-neutral copy rule: quem mestra, quem joga, Participantes.
 describe('pt-BR copy', () => {
   const messages = load(baseLocale);
-  const gendered = /\b(mestres?|jogador(?:a|es|as)?)\b/i;
+  // "Mestre" alone may stay (#103); the article, a "Mestre:" label or "jogador" marks gender.
+  const gendered =
+    /\b(?:o|os|do|dos|ao|aos|pelo|pelos|um|uns|seu|seus)\s+mestres?\b|\bmestres?:|\bjogador(?:a|es|as)?\b/i;
 
   it('uses gender-neutral roles', () => {
     for (const key of messageKeys(messages)) {
