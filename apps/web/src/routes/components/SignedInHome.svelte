@@ -59,10 +59,10 @@
       <p class="mt-3 text-lg text-muted">{summary}</p>
     </div>
     <div class="flex flex-col gap-2 sm:flex-row sm:gap-3">
-      <a href={routes.tables} class="{buttonClass('primary')} gap-2 font-semibold">
-        <Icon name="search" size={18} />{m.home_browse()}
+      <a href={routes.tables} class="{buttonClass('secondary')} gap-2 font-semibold">
+        {m.home_browse()}
       </a>
-      <a href={routes.newTable} class="{buttonClass('secondary')} gap-2 font-semibold">
+      <a href={routes.newTable} class="{buttonClass('primary')} gap-2 font-semibold">
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />{m.home_open_table()}
       </a>
     </div>

@@ -23,47 +23,61 @@
 
 <section
   aria-labelledby="partner-how"
-  class="mt-8 grid gap-6 rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8 lg:grid-cols-3 lg:gap-10"
+  class="mt-8 flex flex-col gap-6 rounded-lg border border-surface-200-800 bg-panel p-5 md:p-7 lg:flex-row lg:gap-8"
 >
-  <div class="grid gap-4 lg:col-span-2">
-    <div>
-      <h2 id="partner-how" class="text-2xl font-semibold tracking-tight">
-        {m.partner_how_title()}
-      </h2>
-      <p class="mt-1 text-muted">{m.partner_how_lede()}</p>
+  <div class="flex min-w-0 flex-1 flex-col gap-5">
+    <div class="flex items-center gap-3">
+      <span
+        class="flex size-11 shrink-0 items-center justify-center rounded-lg preset-filled-primary-500"
+        aria-hidden="true"><Icon name="game-icons:shaking-hands" size={24} /></span
+      >
+      <div>
+        <h2 id="partner-how" class="text-2xl leading-tight font-semibold tracking-tight">
+          {m.partner_how_title()}
+        </h2>
+        <p class="mt-0.5 text-muted">{m.partner_how_lede()}</p>
+      </div>
     </div>
-    <ol class="grid gap-4 sm:grid-cols-3">
+    <ol class="grid gap-4 md:grid-cols-3 md:gap-6">
       {#each steps as step, index (step.title)}
-        <li class="grid gap-1">
+        <li class="flex items-start gap-3">
           <span
-            class="flex size-8 items-center justify-center rounded-full preset-filled-primary-500 text-sm font-bold"
+            class="flex size-8 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-sm font-bold"
             aria-hidden="true">{index + 1}</span
           >
-          <p class="font-semibold">{step.title}</p>
-          <p class="text-sm text-muted">{step.text}</p>
+          <span>
+            <span class="block leading-snug font-semibold">{step.title}</span>
+            <span class="mt-0.5 block text-sm text-muted">{step.text}</span>
+          </span>
         </li>
       {/each}
     </ol>
-    <p class="text-sm text-muted">{m.partner_how_note()}</p>
+    <p class="text-xs text-muted">{m.partner_how_note()}</p>
   </div>
 
-  <div class="grid content-start gap-4 rounded-lg bg-surface-wash p-4">
-    <div class="grid gap-1">
-      <p class="label-text font-semibold">{m.partner_our_link()}</p>
-      <div class="flex items-center justify-between gap-2">
-        <code class="min-w-0 truncate font-mono text-sm">{ourLink}</code>
+  <div
+    class="flex shrink-0 flex-col justify-between gap-4 border-surface-200-800 max-lg:border-t max-lg:pt-6 lg:w-90 lg:border-l lg:pl-8"
+  >
+    <div class="grid gap-2">
+      <p class="text-sm font-semibold">{m.partner_our_link()}</p>
+      <div class="flex items-center gap-2">
+        <code
+          class="flex h-11 min-w-0 flex-1 items-center truncate rounded-lg border border-surface-200-800 bg-panel px-3 font-mono text-sm"
+          >{ourLink}</code
+        >
         <button
           type="button"
-          class="btn h-11 shrink-0 gap-2 rounded-lg btn-secondary px-3 font-semibold"
+          class="btn h-11 shrink-0 gap-2 rounded-lg btn-secondary px-3.5 text-sm font-semibold"
           onclick={() => void copy()}
         >
-          <Icon name="copy" size={18} />{m.partner_copy()}
+          <Icon name="copy" size={16} />{m.partner_copy()}
         </button>
       </div>
+      <p class="text-xs text-muted">{m.partner_our_link_hint()}</p>
     </div>
     <a
       href="/partners/new"
-      class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+      class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
     >
       <Icon name="plus" size={20} />
       {m.partner_add_cta()}

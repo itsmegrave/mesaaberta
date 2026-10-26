@@ -1,7 +1,8 @@
 <script lang="ts">
   // Sua conta: both scores, the newest public review, the latest badge and who follows you.
   // "Novas" are the rating notices not read yet; opening Início does not mark them read.
-  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { presentationOf } from '#lib/badges/presentation.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
@@ -32,19 +33,26 @@
   aria-labelledby="home-account"
   class="flex flex-col gap-4 rounded-lg border border-surface-200-800 bg-panel p-5 md:p-6"
 >
-  <div class="flex items-baseline justify-between gap-3">
+  <div class="flex items-center justify-between gap-3">
     <h2 id="home-account" class="text-xl font-semibold">{m.home_account_title()}</h2>
     {#if username}
-      <a href={routes.profile(username)} class="text-sm font-semibold">{m.home_account_profile()}</a
+      <a href={routes.profile(username)} class="{buttonClass('secondary', 'sm')} font-semibold"
+        >{m.home_account_profile()}</a
       >
     {/if}
   </div>
 
-  <dl class="grid gap-3">
-    <div>
+  <!-- The two scores side by side, each on its own tile. -->
+  <dl class="grid grid-cols-2 gap-3">
+    <div class="min-w-0 rounded-lg bg-surface-wash p-4">
       <dt class="text-sm font-semibold text-muted">{m.home_account_gm_score()}</dt>
       <dd class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <GmRating rating={account.gm} />
+        <ScoreLine
+          rating={account.gm}
+          label={m.rating_gm_average()}
+          debut={m.gm_rating_new()}
+          class="text-base text-surface-950-50"
+        />
         {#if account.unreadRatings > 0}
           <a href={routes.notifications} class="text-sm font-semibold"
             >{m.home_account_unread({ count: account.unreadRatings })}</a
@@ -52,9 +60,16 @@
         {/if}
       </dd>
     </div>
-    <div>
+    <div class="min-w-0 rounded-lg bg-surface-wash p-4">
       <dt class="text-sm font-semibold text-muted">{m.home_account_player_score()}</dt>
-      <dd class="mt-1"><GmRating rating={account.player} /></dd>
+      <dd class="mt-1">
+        <ScoreLine
+          rating={account.player}
+          label={m.participant_rating()}
+          debut={m.participant_rating_new()}
+          class="text-base text-surface-950-50"
+        />
+      </dd>
     </div>
   </dl>
 
