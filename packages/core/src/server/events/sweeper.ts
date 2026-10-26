@@ -10,6 +10,7 @@ import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
 import { createEventExecutor } from './executor';
 import { recordHeartbeat, SWEEPER_HEARTBEAT } from './heartbeat';
+import { buildInfoOf, type BuildEnv } from '../build-info';
 import { liftExpiredBans } from '../moderation/bans';
 import type { Handler } from './types';
 
@@ -18,7 +19,7 @@ import type { Handler } from './types';
  * ADR 0003) instead of calling the dispatcher directly. It claims, runs and records the same way, so
  * the default stays the direct path until the poller has run clean beside it.
  */
-type PollerEnv = { EVENT_POLLER?: string } & SocialEnv;
+type PollerEnv = { EVENT_POLLER?: string } & SocialEnv & BuildEnv;
 
 type Deps = {
   open?: typeof createDb;
@@ -77,7 +78,7 @@ export async function runSweeper(
     const chats = await pruneTableChats(db);
     if (chats > 0) log.info('table chat prune', { chats });
     // Last, so a run that threw before this point does not look alive to /healthz.
-    await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log);
+    await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log, buildInfoOf(env));
     return swept;
   } finally {
     await close();

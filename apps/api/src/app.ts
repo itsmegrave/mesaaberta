@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { logger } from '@mesaaberta/core/server/logger';
+import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
 import { accountRoutes } from './account';
 import { ACTOR_HEADER } from './admin-guard';
 import { adminReadRoutes } from './admin-reads';
@@ -29,7 +30,10 @@ import { tableWriteRoutes } from './table-writes';
 export function createApi() {
   const app = new Hono();
 
-  app.get('/healthz', (c) => c.json({ status: 'ok', service: 'api' }));
+  // Which build answers, so the web /healthz can show a mismatch after a one-app rollback.
+  app.get('/healthz', (c) =>
+    c.json({ status: 'ok', service: 'api', ...buildInfoOf(c.env as BuildEnv | undefined) }),
+  );
 
   // One line per request, so a rollout can be read in Sentry: which route, what answer, how long.
   // The route template, the method, the status, the duration and who asked (the actor the web
