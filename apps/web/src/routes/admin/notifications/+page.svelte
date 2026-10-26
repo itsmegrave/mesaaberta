@@ -312,7 +312,7 @@
           id="link"
           name="link"
           maxlength={ANNOUNCEMENT_LIMITS.link}
-          placeholder="/t"
+          placeholder="/tables"
           bind:value={$draft.link}
           aria-invalid={controller.errors.link ? 'true' : undefined}
           aria-describedby="link-hint{controller.errors.link ? ' link-error' : ''}"

@@ -32,7 +32,7 @@
 
 <!-- Each button owns its pending state; the feed and bell reload through the action redirect. -->
 <PostButton
-  action="/n?/{action}"
+  action="/notifications?/{action}"
   fields={{ id, next, until }}
   schema={notificationActionSchema}
   errorMessage={m.error_generic_text}

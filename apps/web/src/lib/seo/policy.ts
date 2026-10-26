@@ -9,7 +9,9 @@ export function indexingPolicy(
   const profile = /^\/u\/([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(path);
   const publicProfile = profile && !RESERVED_USERNAMES.has(profile[1]);
   const publicPath =
-    ['/', '/t', '/p', '/cf', '/changelog', '/privacy', '/terms'].includes(path) ||
+    ['/', '/tables', '/partners', '/crowdfunding', '/changelog', '/privacy', '/terms'].includes(
+      path,
+    ) ||
     /^\/t\/(?!new$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     publicProfile;
   if (!publicPath || (options.status ?? 200) >= 400 || options.maintenance)
@@ -19,7 +21,7 @@ export function indexingPolicy(
   const copy = (key: string, values: string[]) => {
     for (const value of [...new Set(values)].sort()) canonical.searchParams.append(key, value);
   };
-  if (path === '/t') {
+  if (path === '/tables') {
     for (const key of ['system', 'modality', 'platform', 'tag']) {
       const values = (
         key === 'modality' ? [url.searchParams.get(key) ?? ''] : url.searchParams.getAll(key)
@@ -32,20 +34,20 @@ export function indexingPolicy(
     }
     if (canonical.search) index = false;
   }
-  if (path === '/p' || path === '/cf') {
+  if (path === '/partners' || path === '/crowdfunding') {
     const q = url.searchParams.get('q')?.trim();
     if (q) {
       canonical.searchParams.set('q', q.slice(0, 100));
       index = false;
     }
   }
-  if (path === '/cf' && url.searchParams.get('status') === 'ended')
+  if (path === '/crowdfunding' && url.searchParams.get('status') === 'ended')
     canonical.searchParams.set('status', 'ended');
-  if (path === '/cf' && ['newest', 'name'].includes(url.searchParams.get('sort') ?? '')) {
+  if (path === '/crowdfunding' && ['newest', 'name'].includes(url.searchParams.get('sort') ?? '')) {
     canonical.searchParams.set('sort', url.searchParams.get('sort')!);
     index = false;
   }
-  if (path === '/p' && url.searchParams.get('sort') === 'name') {
+  if (path === '/partners' && url.searchParams.get('sort') === 'name') {
     canonical.searchParams.set('sort', 'name');
     index = false;
   }
@@ -56,8 +58,9 @@ export function indexingPolicy(
       index = false;
     }
   }
-  const paginatedCrowdfunding = path === '/cf' && url.searchParams.get('status') === 'ended';
-  if (publicProfile || path === '/p' || paginatedCrowdfunding || path === '/changelog') {
+  const paginatedCrowdfunding =
+    path === '/crowdfunding' && url.searchParams.get('status') === 'ended';
+  if (publicProfile || path === '/partners' || paginatedCrowdfunding || path === '/changelog') {
     const page = url.searchParams.get('page');
     if (
       page &&

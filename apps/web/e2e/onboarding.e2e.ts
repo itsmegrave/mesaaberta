@@ -25,8 +25,8 @@ test.describe('an incomplete profile', () => {
     page,
   }) => {
     const user = await createUser('Legado Antigo', { incomplete: true });
-    await signInIncomplete(page, user, '/t/new');
-    await expect(page).toHaveURL(/\/u\/profile\/setup\?next=%2Ft%2Fnew$/);
+    await signInIncomplete(page, user, '/tables/new');
+    await expect(page).toHaveURL(/\/u\/profile\/setup\?next=%2Ftables%2Fnew$/);
     await expect(page.getByRole('heading', { name: 'Complete seu perfil' })).toBeVisible();
 
     // The name from the account is already there; only the username is missing.
@@ -42,14 +42,14 @@ test.describe('an incomplete profile', () => {
     const user = await createUser('Sem Nome', { incomplete: true });
     await signInIncomplete(page, user);
 
-    for (const path of ['/t/new', '/u/tables']) {
+    for (const path of ['/tables/new', '/u/tables']) {
       await page.goto(path);
       await expect(page).toHaveURL(
         new RegExp(`/u/profile/setup\\?next=${encodeURIComponent(path)}$`),
       );
     }
-    await page.goto('/t');
-    await expect(page).toHaveURL(/\/t$/);
+    await page.goto('/tables');
+    await expect(page).toHaveURL(/\/tables$/);
     await page.goto('/');
     await expect(page).toHaveURL(/localhost:\d+\/$/);
   });
@@ -61,7 +61,7 @@ test.describe('an incomplete profile', () => {
     await signOut(page, 'Sem nome');
 
     // Signed out: an authenticated page asks to log in again.
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await expect(page).toHaveURL(/\/login/);
   });
 });
@@ -154,13 +154,13 @@ test.describe('the onboarding form', () => {
     const done = await createUser('Ja Completo');
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto(`/login?next=${encodeURIComponent('/t')}`);
+    await page.goto(`/login?next=${encodeURIComponent('/tables')}`);
     await page.getByLabel('Email').fill(done.email);
     await page.getByLabel('Senha').fill(PASSWORD);
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-    await expect(page).toHaveURL(/\/t$/);
-    await page.goto('/u/profile/setup?next=/t');
-    await expect(page).toHaveURL(/\/t$/);
+    await expect(page).toHaveURL(/\/tables$/);
+    await page.goto('/u/profile/setup?next=/tables');
+    await expect(page).toHaveURL(/\/tables$/);
     await context.close();
 
     // Without JavaScript the form is a plain POST, so nobody is locked out by the gate.

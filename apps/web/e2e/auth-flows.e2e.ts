@@ -121,8 +121,8 @@ test.describe('sign in and out', () => {
   }) => {
     const user = await createUser('Ana Souza');
 
-    await signIn(page, user, '/t');
-    await expect(page).toHaveURL(/\/t$/);
+    await signIn(page, user, '/tables');
+    await expect(page).toHaveURL(/\/tables$/);
 
     await signOut(page, user.username);
     await expect(page.getByRole('banner').getByText(user.username)).toHaveCount(0);
@@ -152,9 +152,9 @@ test.describe('sign in and out', () => {
     const user = await createUser('Caio Reis');
     await signIn(page, user);
 
-    await page.goto('/login?next=%2Ft');
+    await page.goto('/login?next=%2Ftables');
 
-    await expect(page).toHaveURL(/\/t$/);
+    await expect(page).toHaveURL(/\/tables$/);
   });
 
   test('a protected page sends an anonymous visitor to log in and back afterwards', async ({

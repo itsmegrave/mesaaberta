@@ -21,7 +21,7 @@ test.describe('rate limits', () => {
     for (let i = 1; i <= 5; i++) await createTable(page, { title: uniqueTitle(`Mesa ${i}`) });
 
     const title = uniqueTitle('Mesa demais');
-    await page.goto('/t/new');
+    await page.goto('/tables/new');
     await pickFromSearch(page, 'Sistema de RPG', 'Daggerheart');
     await page.getByLabel('Título').fill(title);
     await page.getByLabel('Descrição').fill('Isto deve continuar aqui.');

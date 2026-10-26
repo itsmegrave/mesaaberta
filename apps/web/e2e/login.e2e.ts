@@ -50,7 +50,7 @@ test.describe('the login page', () => {
         .getByRole('navigation')
         .getByRole('link', { name: 'Mesas', exact: true })
         .filter({ visible: true }),
-    ).toHaveAttribute('href', '/t');
+    ).toHaveAttribute('href', '/tables');
   });
 
   for (const [provider, host, clientId] of [
@@ -60,14 +60,16 @@ test.describe('the login page', () => {
     test(`${provider}: our app hands off to Auth, and Auth to the provider, coming back to our callback`, async ({
       request,
     }) => {
-      const ours = await request.get(`/login/${provider}?next=%2Ft%2Fnew`, {
+      const ours = await request.get(`/login/${provider}?next=%2Ftables%2Fnew`, {
         maxRedirects: 0,
       });
       expect(ours.status()).toBe(303);
       const auth = new URL(ours.headers()['location']);
       expect(auth.pathname).toBe('/auth/v1/authorize');
       expect(auth.searchParams.get('provider')).toBe(provider);
-      expect(auth.searchParams.get('redirect_to')).toMatch(/\/auth\/callback\?next=%2Ft%2Fnew$/);
+      expect(auth.searchParams.get('redirect_to')).toMatch(
+        /\/auth\/callback\?next=%2Ftables%2Fnew$/,
+      );
       expect(auth.searchParams.get('code_challenge')).toBeTruthy(); // PKCE
 
       const hop = await request.get(auth.toString(), { maxRedirects: 0 });

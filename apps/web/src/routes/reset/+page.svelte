@@ -44,7 +44,7 @@
 >
   {#if data.done}
     <p role="status" class="max-w-sm text-lg">{m.reset_done_text()}</p>
-    <a href="/t" class="mt-6 {buttonClass('primary', 'md')} font-semibold">
+    <a href="/tables" class="mt-6 {buttonClass('primary', 'md')} font-semibold">
       {m.reset_done_link()}
     </a>
   {:else}

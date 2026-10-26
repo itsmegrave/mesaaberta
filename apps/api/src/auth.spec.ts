@@ -230,7 +230,7 @@ describe('api finish-login', () => {
       {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-client-ip': '203.0.113.9', ...headers },
-        body: JSON.stringify({ next: '/t/new' }),
+        body: JSON.stringify({ next: '/tables/new' }),
       },
       environment,
     );
@@ -239,17 +239,17 @@ describe('api finish-login', () => {
   beforeEach(() => completeLogin.mockReset());
 
   it('finishes the sign-in for whoever Supabase says the token belongs to', async () => {
-    completeLogin.mockResolvedValue({ result: 'ok', target: '/t/new' });
+    completeLogin.mockResolvedValue({ result: 'ok', target: '/tables/new' });
     const request = fake(user);
 
     const response = await send(request);
 
-    expect(await response.json()).toEqual({ result: 'ok', target: '/t/new' });
+    expect(await response.json()).toEqual({ result: 'ok', target: '/tables/new' });
     expect(String(request.mock.calls[0][0])).toBe('https://supabase.test/auth/v1/user');
     const [deps, who, next] = completeLogin.mock.calls[0];
     expect(deps.ip).toBe('203.0.113.9');
     expect(who).toEqual({ id: 'user-1', user_metadata: { name: 'Ana' } });
-    expect(next).toBe('/t/new');
+    expect(next).toBe('/tables/new');
   });
 
   it.each([

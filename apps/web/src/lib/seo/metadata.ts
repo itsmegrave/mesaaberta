@@ -40,9 +40,9 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
   const fallback = `${origin}/android-chrome-512x512.png`;
   const listings: Record<string, [string, string]> = {
     '/': [m.home_title(), m.home_description()],
-    '/t': [m.seo_tables_title(), m.tables_description()],
-    '/p': [m.seo_partners_title(), m.partner_description()],
-    '/cf': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
+    '/tables': [m.seo_tables_title(), m.tables_description()],
+    '/partners': [m.seo_partners_title(), m.partner_description()],
+    '/crowdfunding': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
     '/changelog': [`${m.changelog_title()} · Mesa Aberta`, m.changelog_description()],
     '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],
     '/terms': [`${m.terms_title()} · Mesa Aberta`, m.terms_description()],

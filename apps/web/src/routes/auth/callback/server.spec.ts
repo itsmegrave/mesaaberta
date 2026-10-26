@@ -53,22 +53,25 @@ describe('the auth callback', () => {
         flags: { isEnabled: vi.fn(async () => apiOn) },
         log: { warn: vi.fn() },
       };
-      await call('code=abc&next=%2Ft%2Fnew', locals);
+      await call('code=abc&next=%2Ftables%2Fnew', locals);
       const { remote } = finishLogin.mock.calls[0][0] as {
         remote: (token: string, next: string | null) => Promise<unknown>;
       };
-      return { fetch, locals, answer: await remote('jwt-a', '/t/new') };
+      return { fetch, locals, answer: await remote('jwt-a', '/tables/new') };
     };
 
     it('hands the database half to the api with the new access token', async () => {
-      const { fetch, answer, locals } = await remoteOf(true, { result: 'ok', target: '/t/new' });
+      const { fetch, answer, locals } = await remoteOf(true, {
+        result: 'ok',
+        target: '/tables/new',
+      });
 
-      expect(answer).toEqual({ result: 'ok', target: '/t/new' });
+      expect(answer).toEqual({ result: 'ok', target: '/tables/new' });
       const request = fetch.mock.calls[0][0];
       expect(new URL(request.url).pathname).toBe('/v1/auth/finish-login');
       expect(request.headers.get('authorization')).toBe('Bearer jwt-a');
       expect(request.headers.get('x-client-ip')).toBe('127.0.0.1');
-      expect(await request.json()).toEqual({ next: '/t/new' });
+      expect(await request.json()).toEqual({ next: '/tables/new' });
       expect(JSON.stringify(locals.log.warn.mock.calls)).not.toContain('jwt-a');
     });
 

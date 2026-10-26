@@ -29,12 +29,18 @@
         "kind": "new",
         "title": "Tipos de parceiro",
         "description": "Parceiros escolhem de um a três tipos, como Editora, Loja ou Podcast, e a lista de parceiros pode ser filtrada por tipo.",
-        "href": "/p"
+        "href": "/partners"
       },
       {
         "kind": "new",
         "title": "Aventuras com número de sessões",
         "description": "Ao abrir uma aventura, quem mestra diz quantas sessões ela terá, de 2 a 20. O número aparece no card e na confirmação de cada sessão."
+      },
+      {
+        "kind": "improved",
+        "title": "Endereços por extenso",
+        "description": "As listas ganharam endereços com nomes por extenso, como /tables e /partners. Links antigos continuam funcionando.",
+        "href": "/tables"
       },
       {
         "kind": "improved",
@@ -201,7 +207,7 @@
         "kind": "improved",
         "title": "Chat aberto por 30 dias",
         "description": "Depois que a sessão termina, o chat aceita mensagens por mais 30 dias e então fica só para leitura; em mesas canceladas ou desativadas, ele fecha na hora.",
-        "href": "/m"
+        "href": "/messages"
       },
       {
         "kind": "fixed",
@@ -262,7 +268,7 @@
         "kind": "new",
         "title": "Mínimo de participantes",
         "description": "Quem mestra pode definir de uma pessoa até o total de vagas como mínimo, sem cancelar a mesa nem bloquear inscrições se ele não for atingido.",
-        "href": "/t/new"
+        "href": "/tables/new"
       },
       {
         "kind": "new",
@@ -302,13 +308,13 @@
         "kind": "new",
         "title": "Mesas de aventura",
         "description": "Abra uma aventura com várias sessões e informe só a primeira data; o grupo combina as próximas sem uma recorrência fixa.",
-        "href": "/t/new"
+        "href": "/tables/new"
       },
       {
         "kind": "new",
         "title": "Mensagens na plataforma",
         "description": "Converse no chat da mesa ou mande uma mensagem direta a quem mestra antes de pedir uma vaga.",
-        "href": "/m"
+        "href": "/messages"
       },
       {
         "kind": "new",
@@ -357,7 +363,7 @@
         "kind": "new",
         "title": "Abra uma mesa ou pegue uma vaga",
         "description": "Encontre uma mesa de RPG para jogar ou abra a sua para reunir o grupo.",
-        "href": "/t"
+        "href": "/tables"
       }
     ]
   }

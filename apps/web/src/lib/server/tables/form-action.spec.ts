@@ -105,7 +105,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/login?next=%2Ft%2Fnew',
+      location: '/login?next=%2Ftables%2Fnew',
     });
     expect(s.save).not.toHaveBeenCalled();
   });
@@ -116,7 +116,7 @@ describe('handleTableForm', () => {
 
     await expect(run(request(), s)).rejects.toMatchObject({
       status: 303,
-      location: '/u/profile/setup?next=%2Ft%2Fnew',
+      location: '/u/profile/setup?next=%2Ftables%2Fnew',
     });
     expect(s.save).not.toHaveBeenCalled();
   });

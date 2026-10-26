@@ -5,7 +5,7 @@ import NotificationBell from './NotificationBell.svelte';
 
 const state = vi.hoisted(() => ({ updated: { current: false } }));
 vi.mock('$app/state', () => ({
-  page: { url: new URL('http://localhost/t?q=dragao') },
+  page: { url: new URL('http://localhost/tables?q=dragao') },
   updated: state.updated,
 }));
 

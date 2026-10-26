@@ -85,7 +85,7 @@
   {:else}
     <Breadcrumbs
       class="min-w-0 flex-1"
-      items={[{ label: m.messages_title(), href: '/m' }, { label: title }]}
+      items={[{ label: m.messages_title(), href: '/messages' }, { label: title }]}
     />
   {/if}
 
