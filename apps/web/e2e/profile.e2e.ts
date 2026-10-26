@@ -107,12 +107,27 @@ test('closing the account asks for the username, then removes the person and sig
   const user = await createUser('Conta Apagada');
   await signIn(page, user, '/u/profile/edit/data');
 
+  let posts = 0;
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('?/delete')) posts++;
+  });
+
+  // A wrong @usuário is caught before anything is sent.
   await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
   await expect(page.getByRole('alert')).toContainText('O @usuário digitado não confere.');
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
 
+  // The right one opens a dialog that asks once more; "Cancelar" sends nothing.
   await page.getByLabel('Digite seu @usuário para confirmar').fill(user.username);
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
+  const dialog = page.getByRole('alertdialog', { name: 'Apagar sua conta?' });
+  await dialog.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(posts).toBe(0);
+
+  await page.getByRole('button', { name: 'Apagar minha conta' }).click();
+  await dialog.getByRole('button', { name: 'Apagar minha conta' }).click();
   await expect(page).toHaveURL(/localhost:\d+\/$/);
   await expect(accountMenu(page, user.username)).toHaveCount(0);
 
@@ -232,9 +247,15 @@ test('a slow submit locks its button: it says it is busy, and a second click sen
     await route.continue();
   });
 
-  await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
-  const submit = page.getByRole('button', { name: 'Apagar minha conta' });
+  await page.getByLabel('Digite seu @usuário para confirmar').fill(user.username);
+  const submit = page.locator('form[action="?/delete"]').getByRole('button', {
+    name: 'Apagar minha conta',
+  });
   await submit.click();
+  await page
+    .getByRole('alertdialog', { name: 'Apagar sua conta?' })
+    .getByRole('button', { name: 'Apagar minha conta' })
+    .click();
 
   await expect(submit).toHaveAttribute('aria-busy', 'true');
   await expect(submit).toHaveAttribute('aria-disabled', 'true');
@@ -242,7 +263,6 @@ test('a slow submit locks its button: it says it is busy, and a second click sen
   await submit.evaluate((button: HTMLButtonElement) => button.click());
 
   release();
-  await expect(page.getByRole('alert')).toContainText('O @usuário digitado não confere.');
-  await expect(submit).not.toHaveAttribute('aria-busy');
+  await expect(page).toHaveURL(/localhost:\d+\/$/);
   expect(posts).toBe(1);
 });
