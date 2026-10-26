@@ -68,6 +68,12 @@ body {
   color: light-dark(var(--color-error-800), var(--color-error-300));
 }
 
+/* Skeleton has no single-step `preset-filled-error-700`: the danger fill (`danger-fill` token). */
+@utility preset-filled-error-700 {
+  background-color: var(--color-error-700);
+  color: var(--color-error-contrast-700);
+}
+
 @utility border-error-alert {
   border-color: light-dark(var(--color-error-800), var(--color-error-300));
 }

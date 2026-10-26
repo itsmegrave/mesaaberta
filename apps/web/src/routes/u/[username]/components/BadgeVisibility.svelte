@@ -33,7 +33,8 @@
     aria-pressed={hidden}
     class="w-full gap-2 {hidden ? 'preset-tonal' : ''}"
   >
-    <Icon name={hidden ? 'eye-off' : 'eye'} size={20} />
+    <!-- Busy at once while it saves; the spinner takes the eye's place if it is slow. -->
+    {#if !form.delayed}<Icon name={hidden ? 'eye-off' : 'eye'} size={20} />{/if}
     {m.badges_hide()}
   </MAButton>
 </MAForm>

@@ -70,6 +70,7 @@
     <Switch
       checked={messaging.values.enabled}
       disabled={messaging.pending}
+      aria-busy={messaging.pending || undefined}
       onCheckedChange={(event) => {
         messaging.change('enabled', event.checked);
         void tick().then(() => messagingForm?.requestSubmit());
@@ -138,6 +139,7 @@
     <Switch
       checked={inviting.values.enabled === 'true'}
       disabled={inviting.pending}
+      aria-busy={inviting.pending || undefined}
       onCheckedChange={(event) => {
         inviting.change('enabled', event.checked ? 'true' : 'false');
         void tick().then(() => invitingForm?.requestSubmit());

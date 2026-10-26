@@ -17,7 +17,7 @@
   import ExtensionWidgets from '#lib/components/shell/ExtensionWidgets.svelte';
   import AccountMenu from '#lib/components/shell/AccountMenu.svelte';
   import BottomTabBar from '#lib/components/shell/BottomTabBar.svelte';
-  import ListSkeleton, { type SkeletonKind } from '#lib/components/ui/ListSkeleton.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import NotificationBell from '#lib/components/shell/NotificationBell.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import SideNav from '#lib/components/shell/SideNav.svelte';
@@ -32,6 +32,8 @@
   import { isUnder } from '#lib/navigation/main-nav.js';
   import { directoryNav } from '#lib/navigation/directory-nav.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { inFlight } from '#lib/forms/in-flight.svelte.js';
+  import { arrivingSkeleton } from '#lib/navigation/skeletons.js';
   import { reloadPage } from '#lib/forms/leave-guard.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
   import { onMount } from 'svelte';
@@ -83,19 +85,10 @@
 
   // Loading shows only after 150 ms, so a quick navigation does not flash the bar or a skeleton.
   const loading = new Slow(() => navigating.to, 150);
-  const SKELETONS: Record<string, SkeletonKind> = {
-    '/(tables)/tables': 'cards',
-    '/u/tables': 'columns',
-    '/notifications': 'rows',
-    '/(messages)/messages': 'rows',
-  };
-  // A list page on its way from another page: its skeleton stands in for the page being left. Within
-  // the same page (a filter), the page draws its own skeleton under the filters.
-  const arriving = $derived.by(() => {
-    const to = loading.current;
-    if (!to?.route.id || to.route.id === page.route.id) return null;
-    return SKELETONS[to.route.id] ?? null;
-  });
+  // An action on its way shows the same bar, so one sent from a menu item is not silent either.
+  const acting = new Slow(() => (inFlight.count > 0 ? true : null), 150);
+  // A list or item page on its way gets its skeleton in place of the page being left.
+  const arriving = $derived(arrivingSkeleton(page.url, loading.current));
 </script>
 
 <svelte:head>
@@ -206,11 +199,14 @@
         </aside>
       {/if}
 
-      <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
-      {#if loading.current}
+      <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent.
+           A 4px primary line along the top edge; with reduced motion it stands still, full width. -->
+      {#if loading.current || acting.current}
         <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
-          <Progress.Track class="h-1">
-            <Progress.Range />
+          <Progress.Track data-nav-progress class="h-1 rounded-none bg-transparent">
+            <Progress.Range
+              class="rounded-none bg-primary-500 motion-reduce:animate-none motion-reduce:opacity-60"
+            />
           </Progress.Track>
         </Progress>
       {/if}
