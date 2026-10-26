@@ -1,0 +1,3 @@
+ALTER TABLE "partners" ADD COLUMN "types" text[] DEFAULT '{}'::text[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "partners" ADD CONSTRAINT "partners_types_count" CHECK (cardinality("partners"."types") <= 3);--> statement-breakpoint
+ALTER TABLE "partners" ADD CONSTRAINT "partners_types_known" CHECK ("partners"."types" <@ ARRAY['publisher', 'shop', 'content', 'podcast', 'collective', 'community', 'event', 'venue', 'art', 'translation', 'platform', 'other']::text[]);

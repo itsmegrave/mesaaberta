@@ -9,6 +9,7 @@ import {
   closeReportSchema,
   closeTableByIdSchema,
   closeTableSchema,
+  partnerTypesSchema,
   removeCrowdfundingSchema,
   removePartnerSchema,
   reportIdSchema,
@@ -18,7 +19,7 @@ import { removeCrowdfunding } from '../crowdfunding/admin';
 import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { Invalid } from '../errors';
-import { approvePartner, removePartner } from '../partners/admin';
+import { approvePartner, removePartner, setPartnerTypes } from '../partners/admin';
 import {
   banAccount,
   closeReport,
@@ -119,6 +120,10 @@ export const moderationDecisions = {
   'partner.remove': decision({
     schema: removePartnerSchema,
     apply: (db, actor, { id, reason, note }) => removePartner(db, actor, id, { reason, note }),
+  }),
+  'partner.setTypes': decision({
+    schema: partnerTypesSchema,
+    apply: (db, actor, { id, types }) => setPartnerTypes(db, actor, id, types),
   }),
   // Closing a table from the tables list, `/admin/tables`.
   'table.close': decision({

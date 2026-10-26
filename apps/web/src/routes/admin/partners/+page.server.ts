@@ -28,4 +28,8 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
   };
 };
 
-export const actions: Actions = { approve: partnerActions.approve, remove: partnerActions.remove };
+export const actions: Actions = {
+  approve: partnerActions.approve,
+  remove: partnerActions.remove,
+  setTypes: partnerActions.setTypes,
+};

@@ -3,7 +3,10 @@
   import { copyText } from '#lib/clipboard.js';
   import { Target } from '#lib/target.svelte.js';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
-  import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
+  import DataTable, {
+    type DataColumn,
+    type FilterPlace,
+  } from '#lib/components/admin/DataTable.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import ListCard from '#lib/components/admin/ui/ListCard.svelte';
   import Media from '#lib/components/admin/ui/Media.svelte';
@@ -14,6 +17,10 @@
   import { approvePartnerSchema, removePartnerSchema } from '@mesaaberta/core/moderation/reports';
   import { removePartner } from '#lib/admin/moderation-presets.js';
   import { m } from '#lib/paraglide/messages.js';
+  import FilterSelect from '#lib/components/admin/FilterSelect.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
+  import { partnerTypeLabels, partnerTypeOptions } from '#lib/partners/type-labels.js';
+  import PartnerTypesDialog from './components/PartnerTypesDialog.svelte';
 
   import {
     PARTNER_ADMIN_STATUSES,
@@ -28,6 +35,7 @@
 
   const columns: DataColumn[] = [
     { id: 'partner', header: m.admin_partners_col_partner() },
+    { id: 'types', header: m.admin_partners_col_types(), width: 'w-48' },
     { id: 'links', header: m.admin_partners_col_links(), width: 'w-40' },
     { id: 'backlink', header: m.admin_partners_col_backlink(), width: 'w-40' },
     { id: 'sender', header: m.admin_partners_col_sender(), width: 'w-40' },
@@ -37,6 +45,7 @@
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.
   const approving = new Target<Row>();
   const removing = new Target<Row>();
+  const typing = new Target<Row>();
   const badge = (row: Row) =>
     (row.removedAt
       ? row.withdrawn
@@ -87,6 +96,16 @@
           },
         ]
       : []),
+    ...(row.removedAt
+      ? []
+      : [
+          {
+            id: 'types',
+            label: m.admin_partners_edit_types_menu(),
+            icon: 'category' as const,
+            onselect: () => (typing.current = row),
+          },
+        ]),
     {
       id: 'reports',
       label: m.admin_partners_see_reports(),
@@ -119,6 +138,12 @@
       }[value](),
     })),
   );
+  // "Todos" opens the list; "Sem tipo" finds the partners sent before there were kinds.
+  const typeOptions = $derived([
+    { slug: 'all', name: m.admin_profile_all() },
+    ...partnerTypeOptions().map(({ value, label }) => ({ slug: value, name: label })),
+    { slug: 'none', name: m.admin_partners_no_type() },
+  ]);
   const backlinkOptions = $derived(
     PARTNER_BACKLINK_FILTERS.map((value) => ({
       value,
@@ -142,8 +167,11 @@
     page={list.page}
     pageSize={list.pageSize}
     search={{ value: list.query, label: m.admin_partners_search_label(), maxlength: 100 }}
-    filterKeys={['q', 'status', 'backlink', 'page']}
-    filtered={!!list.query || list.status !== 'pending' || list.backlink !== 'any'}
+    filterKeys={['q', 'status', 'type', 'backlink', 'page']}
+    filtered={!!list.query ||
+      list.status !== 'pending' ||
+      list.type !== null ||
+      list.backlink !== 'any'}
     empty={m.admin_partners_empty()}
     sizes={false}
     sheet
@@ -152,6 +180,18 @@
       items: items(row),
     })}
   >
+    {#snippet selects({ inSheet }: FilterPlace)}
+      <FilterSelect
+        id={inSheet ? 'type-filter-sheet' : 'type-filter'}
+        name="type"
+        label={m.partner_type_filter()}
+        options={typeOptions}
+        value={list.type ?? 'all'}
+        fallback="all"
+        class={inSheet ? 'w-full' : 'w-56'}
+        inDialog={inSheet}
+      />
+    {/snippet}
     {#snippet segments()}
       <SegmentedFilter
         name="status"
@@ -187,6 +227,16 @@
             </div>
           </div>
         </div>
+      {:else if id === 'types'}
+        {#if row.types.length > 0}
+          <ul class="flex flex-wrap gap-1.5" aria-label={m.partner_types_label({ name: row.name })}>
+            {#each row.types as type (type)}
+              <li><Pill tone="muted">{partnerTypeLabels[type]()}</Pill></li>
+            {/each}
+          </ul>
+        {:else}
+          <span class="text-muted">{m.admin_partners_no_type()}</span>
+        {/if}
       {:else if id === 'links'}
         <ul class="flex flex-wrap gap-2">
           {#each icons(row) as link (link.network + link.url)}
@@ -246,6 +296,11 @@
         {#snippet meta()}
           {#if row.description}<p class="truncate">{row.description}</p>{/if}
           <p>
+            {row.types.length > 0
+              ? row.types.map((type) => partnerTypeLabels[type]()).join(' · ')
+              : m.admin_partners_no_type()}
+          </p>
+          <p>
             {row.submitter ? `@${row.submitter}` : ''}{row.contactEmail
               ? ` · ${row.contactEmail}`
               : ''} · {row.backlinkUrl
@@ -280,6 +335,12 @@
         confirm={m.admin_partners_approve_confirm()}
         success={m.admin_partners_approve_done()}
       />
+    {/key}
+  {/if}
+  {#if typing.current}
+    {@const row = typing.current}
+    {#key row.id}
+      <PartnerTypesDialog partner={row} bind:open={typing.open} />
     {/key}
   {/if}
   {#if removing.current}

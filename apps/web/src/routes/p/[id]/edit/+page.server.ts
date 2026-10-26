@@ -21,6 +21,7 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
       form: initialForm({
         name: partner.name,
         description: partner.description ?? '',
+        types: [...partner.types],
         contactEmail: partner.contactEmail ?? '',
         siteUrl: partner.siteUrl ?? '',
         backlinkUrl: partner.backlinkUrl ?? '',
