@@ -21,6 +21,17 @@
         "href": "/u/profile/edit"
       },
       {
+        "kind": "new",
+        "title": "Comentário da avaliação no perfil de quem mestra",
+        "description": "Ao avaliar uma mesa, você pode escolher mostrar seu comentário no perfil público de quem mestrou. Começa desligado."
+      },
+      {
+        "kind": "new",
+        "title": "Tipos de parceiro",
+        "description": "Parceiros escolhem de um a três tipos, como Editora, Loja ou Podcast, e a lista de parceiros pode ser filtrada por tipo.",
+        "href": "/p"
+      },
+      {
         "kind": "improved",
         "title": "Confirmar a sessão passo a passo",
         "description": "Quem mestra diz se a sessão aconteceu, marca quem compareceu e escolhe a próxima data em etapas, e quem já avaliou a mesa conta como presente."
@@ -65,6 +76,11 @@
         "kind": "fixed",
         "title": "Novidades no celular",
         "description": "A ilustração dos destaques em Novidades não cobre mais o título no celular."
+      },
+      {
+        "kind": "improved",
+        "title": "Seções que dobram no celular",
+        "description": "Textos longos de mesas, novidades e gerenciamento se organizam em seções que abrem e fecham no celular."
       }
     ]
   },
