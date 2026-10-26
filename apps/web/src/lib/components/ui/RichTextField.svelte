@@ -341,38 +341,39 @@
     tabindex="-1"
     aria-label={m.rich_text_toolbar()}
     onkeydown={toolbarKeys}
-    class="flex flex-wrap items-center gap-1 border-b border-surface-200-800 p-1"
+    class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-surface-200-800 p-1"
   >
+    <!-- Each group of tools stays together: a narrow field wraps between groups, and no rule is
+         left dangling at the end of a line. -->
     {#each TOOLS as group, groupIndex (groupIndex)}
-      {#if groupIndex > 0}
-        <span class="mx-1 h-5 w-px bg-surface-200-800" aria-hidden="true"></span>
-      {/if}
-      {#each group as tool (tool.id)}
-        {@const pressed = pressedOf(tool)}
-        {@const disabled = disabledOf(tool)}
-        <MAButton
-          size="custom"
-          type="button"
-          title={tool.label()}
-          aria-label={tool.label()}
-          aria-pressed={tool.active ? pressed : undefined}
-          {disabled}
-          tabindex={groupIndex === 0 && tool.id === 'bold' ? 0 : -1}
-          onmousedown={(event) => event.preventDefault()}
-          onclick={() => editor && tool.run(editor)}
-          class="btn-icon size-11 rounded-md hover:preset-tonal disabled:opacity-40 {pressed
-            ? 'preset-tonal-primary'
-            : ''}"
-        >
-          {#if tool.icon}
-            <Icon name={tool.icon} size={18} />
-          {:else if tool.glyph}
-            <span aria-hidden="true" class="text-sm font-bold {tool.glyph.class ?? ''}"
-              >{tool.glyph.text}</span
-            >
-          {/if}
-        </MAButton>
-      {/each}
+      <span class="flex items-center gap-1">
+        {#each group as tool (tool.id)}
+          {@const pressed = pressedOf(tool)}
+          {@const disabled = disabledOf(tool)}
+          <MAButton
+            size="custom"
+            type="button"
+            title={tool.label()}
+            aria-label={tool.label()}
+            aria-pressed={tool.active ? pressed : undefined}
+            {disabled}
+            tabindex={groupIndex === 0 && tool.id === 'bold' ? 0 : -1}
+            onmousedown={(event) => event.preventDefault()}
+            onclick={() => editor && tool.run(editor)}
+            class="btn-icon size-11 rounded-md hover:preset-tonal disabled:opacity-40 {pressed
+              ? 'preset-tonal-primary'
+              : ''}"
+          >
+            {#if tool.icon}
+              <Icon name={tool.icon} size={18} />
+            {:else if tool.glyph}
+              <span aria-hidden="true" class="text-sm font-bold {tool.glyph.class ?? ''}"
+                >{tool.glyph.text}</span
+              >
+            {/if}
+          </MAButton>
+        {/each}
+      </span>
     {/each}
   </div>
 
