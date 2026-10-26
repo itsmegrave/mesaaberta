@@ -2779,5 +2779,16 @@
   "system_ended_title": "Mesas que já aconteceram",
   "system_ended_line": "Quem mestra: {gm} · encerrada em {date}",
   "directory_footer_title": "Diretórios",
-  "directory_footer_systems": "Sistemas"
+  "directory_footer_systems": "Sistemas",
+  "blog_title": "Blog",
+  "blog_lede": "Histórias, bastidores e ideias para a sua mesa, escritas por quem faz a Mesa Aberta.",
+  "blog_description": "Histórias, bastidores e ideias sobre RPG de mesa e a comunidade da Mesa Aberta.",
+  "blog_feed": "Assinar por RSS",
+  "blog_feed_title": "Blog da Mesa Aberta",
+  "blog_empty": "Ainda não há posts por aqui. Volte em breve.",
+  "blog_tags": "Assuntos",
+  "blog_draft": "Rascunho",
+  "blog_scheduled": "Agendado",
+  "blog_minutes": "{minutes} min de leitura",
+  "blog_back": "Todos os posts"
 }

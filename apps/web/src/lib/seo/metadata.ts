@@ -34,6 +34,7 @@ type PublicData = {
     [key: string]: unknown;
   };
   facts?: { openTables: number; totalTables: number; gmCount: number };
+  post?: { title: string; summary: string };
   profile?: {
     username: string | null;
     bio?: string | null;
@@ -50,6 +51,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     '/crowdfunding': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
     '/systems': [m.seo_systems_title(), m.systems_description()],
     '/changelog': [`${m.changelog_title()} · Mesa Aberta`, m.changelog_description()],
+    '/blog': [m.blog_feed_title(), m.blog_description()],
     '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],
     '/terms': [`${m.terms_title()} · Mesa Aberta`, m.terms_description()],
   };
@@ -86,6 +88,14 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
       description: text(m.seo_system_description({ name, facts })),
       image: fallback,
       type: 'website',
+    };
+  }
+  if (/^\/blog\/[^/]+$/.test(path) && data.post) {
+    return {
+      title: `${text(data.post.title, 100)} · Mesa Aberta`,
+      description: text(data.post.summary),
+      image: fallback,
+      type: 'article',
     };
   }
   if (/^\/u\/[^/]+$/.test(path) && data.profile?.username) {

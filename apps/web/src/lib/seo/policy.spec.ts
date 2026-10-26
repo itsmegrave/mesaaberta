@@ -55,6 +55,13 @@ describe('search indexing policy', () => {
     expect(policy('/partners?sort=name').index).toBe(false);
     expect(policy('/crowdfunding?sort=ending').canonical).toBe(`${origin}/crowdfunding`);
     expect(policy('/changelog?page=2').index).toBe(false);
+    expect(policy('/blog?page=2')).toEqual({ canonical: `${origin}/blog?page=2`, index: false });
+    expect(policy('/blog/por-que-um-blog?utm_source=x')).toEqual({
+      canonical: `${origin}/blog/por-que-um-blog`,
+      index: true,
+    });
+    expect(policy('/blog/rascunho', { draft: true }).index).toBe(false);
+    expect(policy('/blog/rss.xml').canonical).toBeNull();
   });
 
   it('removes ignored crowdfunding page numbers while preserving ended-campaign pagination', () => {

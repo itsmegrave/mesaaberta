@@ -12,10 +12,13 @@
   let {
     site,
     directories = { systems: false },
+    blogLive = false,
   }: {
     site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string };
     /** Which directories are on for the person: each one's link shows only then. */
     directories?: { systems: boolean };
+    /** Whether a blog post is out: the Blog link shows only then. */
+    blogLive?: boolean;
   } = $props();
 
   // `route` is the list's route id (its group included), `items` where the section's own pages
@@ -137,6 +140,12 @@
           class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
           >{m.changelog_title()}</a
         >
+        {#if blogLive}<a
+            href={resolve('/blog')}
+            aria-current={current('/blog') ? 'page' : undefined}
+            class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
+            >{m.blog_title()}</a
+          >{/if}
         <p class="text-sm leading-relaxed text-muted">
           {m.footer_help()}
           <a href="mailto:{site.CONTACT_EMAIL}" class="{strong} whitespace-nowrap"

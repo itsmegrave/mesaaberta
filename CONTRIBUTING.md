@@ -19,6 +19,10 @@ User-facing releases are recorded in `apps/web/src/content/changelog.json` and p
 
 Keep one entry per day. The page derives highlights, category counts and pagination from the content. The newest three days are the highlights; give one a `preview` (`chat` or `password`, light and dark captures in `apps/web/static/changelog/`) to show a capture instead of the table illustration. Content is rendered as escaped text, never HTML.
 
+## Blog
+
+Posts are written in the private repository (`blog/` in `itsmegrave/mesaaberta-privy`), whose overlay copies them into `apps/web/src/content/blog/` before the build; the public folder holds none (git ignores `*.md` there), so locally `/blog` shows its empty state until you drop a post in. One Markdown file each, and the file name is the address (`por-que-um-blog.md` is `/blog/por-que-um-blog`). Each starts with a frontmatter block: `title`, `date` (YYYY-MM-DD), `summary` (one or two sentences for the list, search and RSS), `author` (the writer's username, without the @), optional `tags` (`[a, b]`) and optional `draft: true`. A post is out when it isn't a draft and its date has come, so a future date schedules it; admins see drafts and scheduled posts on the page, marked as such. Write the body from `##` down (the title is the page's only h1). It is shown through the same rich-text subset as table descriptions, so images, tables and raw HTML are dropped; site links such as `/tables` work. A broken file fails the tests, naming the file and field.
+
 ## Code style
 
 Tabs for indentation and semicolons at the end of statements (YAML is the one exception and uses spaces). Prettier is the only formatter: `prettier.config.js` sets the rules and `.editorconfig` tells editors the same. ESLint checks code quality and never formatting.

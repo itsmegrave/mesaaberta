@@ -10,6 +10,7 @@ const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }
 const viewer = { timezone: 'America/Sao_Paulo', source: 'profile' } as const;
 const shell = {
   cacheIdentity: 'anonymous',
+  blogLive: false,
   accountRead: {
     summary: null,
     readSeed: {

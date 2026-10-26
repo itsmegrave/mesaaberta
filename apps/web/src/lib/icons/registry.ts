@@ -20,6 +20,7 @@ import MoonIcon from '@iconify-svelte/reicon/moon-filled';
 import SunIcon from '@iconify-svelte/reicon/sun-filled';
 import MoreHIcon from '@iconify-svelte/reicon/more-h-filled';
 import CopyIcon from '@iconify-svelte/reicon/copy-filled';
+import FeedIcon from '@iconify-svelte/reicon/feed-filled';
 import EyeIcon from '@iconify-svelte/reicon/eye-filled';
 import TrashIcon from '@iconify-svelte/reicon/trash-filled';
 import RoutingIcon from '@iconify-svelte/reicon/routing-filled';
@@ -141,6 +142,7 @@ export const ICONS = {
   sun: SunIcon,
   more: MoreHIcon,
   copy: CopyIcon,
+  feed: FeedIcon,
   eye: EyeIcon,
   'eye-off': EyeOffIcon,
   trash: TrashIcon,

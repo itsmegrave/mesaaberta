@@ -12,6 +12,8 @@ import {
   unreadCount,
 } from '@mesaaberta/core/server/notifications/service';
 import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
+import { isPublished } from '#lib/blog.js';
+import { posts } from '#lib/server/blog.js';
 import type { LayoutServerLoad } from './$types';
 
 /**
@@ -28,12 +30,15 @@ export const load: LayoutServerLoad = async (event) => {
   const { locals, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
   const site = siteOf(locals.env, locals.log);
+  // The footer links the blog once a post is out.
+  const blogLive = posts.some((post) => isPublished(post));
 
   // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
   if (route.id === '/maintenance') {
     return {
       authEnabled,
       site,
+      blogLive,
       maintenance: true,
       maintenanceBypass: false,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
@@ -64,6 +69,7 @@ export const load: LayoutServerLoad = async (event) => {
     return {
       authEnabled,
       site,
+      blogLive,
       cacheIdentity,
       accountRead,
       // Which directories the menus and the footer link to.
@@ -92,6 +98,7 @@ export const load: LayoutServerLoad = async (event) => {
     return {
       authEnabled,
       site,
+      blogLive,
       maintenance: false,
       maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),

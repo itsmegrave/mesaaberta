@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { sitemapResponse } from './sitemap';
 import { GET as robots } from '../../routes/robots.txt/+server';
+vi.mock('#lib/server/blog.js', () => ({
+  posts: [
+    { slug: 'publicado', date: '2026-10-01', draft: false },
+    { slug: 'rascunho', date: '2026-10-01', draft: true },
+  ],
+}));
 const origin = 'https://mesaaberta.example';
 const locals = (fetch: (request: Request) => Promise<Response>) =>
   ({
@@ -65,5 +71,17 @@ describe('sitemap transport', () => {
     expect(fetch).not.toHaveBeenCalled();
     await sitemapResponse(context, 'index', 1);
     expect(context.host.cache.set).toHaveBeenCalledTimes(1);
+  });
+  it('lists the blog and its published posts, never drafts', async () => {
+    const xml = await (
+      await sitemapResponse(
+        locals(async () => new Response()),
+        'pages',
+        1,
+      )
+    ).text();
+    expect(xml).toContain(`<loc>${origin}/blog</loc>`);
+    expect(xml).toContain(`<loc>${origin}/blog/publicado</loc><lastmod>2026-10-01</lastmod>`);
+    expect(xml).not.toContain('rascunho');
   });
 });

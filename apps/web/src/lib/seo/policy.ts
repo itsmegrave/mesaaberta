@@ -16,9 +16,11 @@ export function indexingPolicy(
       '/crowdfunding',
       '/systems',
       '/changelog',
+      '/blog',
       '/privacy',
       '/terms',
     ].includes(path) ||
+    /^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     /^\/t\/(?!new$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     /^\/s\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     publicProfile;
@@ -82,7 +84,8 @@ export function indexingPolicy(
     path === '/partners' ||
     path === '/systems' ||
     paginatedCrowdfunding ||
-    path === '/changelog'
+    path === '/changelog' ||
+    path === '/blog'
   ) {
     const page = url.searchParams.get('page');
     if (
@@ -92,7 +95,7 @@ export function indexingPolicy(
       Number(page) > 1
     ) {
       canonical.searchParams.set('page', page);
-      if (path === '/changelog') index = false;
+      if (path === '/changelog' || path === '/blog') index = false;
     }
   }
   return { canonical: canonical.href, index };
