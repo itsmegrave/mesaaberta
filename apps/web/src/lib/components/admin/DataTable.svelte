@@ -121,7 +121,8 @@
     menu
       ? [
           ...columns,
-          { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
+          // 80px: the 44px round kebab inside the cell's 16px padding.
+          { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-20' },
         ]
       : columns,
   );
@@ -167,6 +168,7 @@
 {/snippet}
 
 {#snippet toolbar()}
+  <!-- One row, as on the layout: search, the status tabs, selects, then the count; it wraps. -->
   <div class="flex flex-wrap items-center gap-3">
     {#if search}
       <ListSearch
@@ -174,13 +176,14 @@
         label={search.label}
         placeholder={search.placeholder}
         maxlength={search.maxlength}
+        class="max-w-96"
         {hash}
       />
     {/if}
+    {#if segments}<div>{@render segments({ inSheet: false })}</div>{/if}
     {@render selects?.({ inSheet: false })}
     <p role="status" class="ml-auto text-sm font-semibold text-muted">{totalLabel}</p>
   </div>
-  {#if segments}<div>{@render segments({ inSheet: false })}</div>{/if}
 {/snippet}
 
 {#snippet sizeChoice()}

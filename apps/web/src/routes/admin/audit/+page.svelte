@@ -105,18 +105,19 @@
     {filtered}
   >
     {#snippet toolbar()}
+      <!-- One row, as on the layout: the kinds, the search, then the count. -->
       <div class="flex flex-wrap items-center gap-3">
-        <ListSearch value={data.log.query} label={m.admin_audit_search()} />
+        <SegmentedFilter
+          name="kind"
+          label={m.admin_audit_kind()}
+          options={kinds}
+          value={data.log.kind}
+        />
+        <ListSearch value={data.log.query} label={m.admin_audit_search()} class="max-w-85" />
         <p role="status" class="ml-auto text-sm font-semibold text-muted">
           {m.admin_audit_total({ count: data.log.total })}
         </p>
       </div>
-      <SegmentedFilter
-        name="kind"
-        label={m.admin_audit_kind()}
-        options={kinds}
-        value={data.log.kind}
-      />
     {/snippet}
 
     {#each days as group (group.day)}

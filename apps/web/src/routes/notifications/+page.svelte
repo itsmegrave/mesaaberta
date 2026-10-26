@@ -53,8 +53,9 @@
       hourCycle: 'h23',
     }).format(date);
 
+  // Round filter pills, as on the layout: the picked one is filled.
   const chip =
-    'btn h-12 shrink-0 rounded-lg border-2 border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-tonal-primary';
+    'btn h-9 shrink-0 rounded-full border border-surface-200-800 px-4 text-sm font-semibold hover:preset-tonal aria-[current=page]:border-primary-500 aria-[current=page]:preset-filled-primary-500';
 </script>
 
 <svelte:head>
@@ -101,7 +102,7 @@
         <a
           href={hrefFor({ unread: !data.unread })}
           aria-current={data.unread ? 'true' : undefined}
-          class="{chip} aria-current:border-primary-500 aria-current:preset-tonal-primary"
+          class="{chip} aria-current:border-primary-500 aria-current:preset-filled-primary-500"
         >
           {m.notifications_filter_unread()}
         </a>
@@ -120,13 +121,16 @@
       {data.unread ? m.notifications_empty_unread() : m.notifications_empty()}
     </p>
   {:else}
-    <ul class="mt-6 grid gap-2">
+    <!-- One panel with a row per item; a dot marks the unread ones. -->
+    <ul
+      class="mt-6 divide-y divide-surface-200-800 overflow-hidden rounded-lg border border-surface-200-800 bg-panel"
+    >
       {#each data.notifications as item (item.id)}
-        <li
-          class="flex items-start gap-3 rounded-lg border border-surface-200-800 p-4 {item.read
-            ? ''
-            : 'bg-panel'}"
-        >
+        <li class="flex items-start gap-3 p-4">
+          <span
+            aria-hidden="true"
+            class="mt-2 size-2 shrink-0 rounded-full {item.read ? '' : 'bg-primary-500'}"
+          ></span>
           <NotificationIcon icon={notificationIcon(item)} size={22} class="mt-1 text-muted" />
           <div class="min-w-0 flex-1">
             {#if item.link}
