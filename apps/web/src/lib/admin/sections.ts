@@ -34,6 +34,7 @@ export function adminGroups(
   counts: AdminCounts,
   connectionsPath: string | null,
   extensions: readonly ExtensionSection[] = [],
+  { badges = false }: { badges?: boolean } = {},
 ): AdminGroup[] {
   return [
     {
@@ -72,6 +73,9 @@ export function adminGroups(
         },
         { path: '/admin/users', label: m.admin_profile_list(), icon: 'game-icons:meeple' },
         { path: '/admin/catalog', label: m.admin_nav_catalog(), icon: 'tag' },
+        ...(badges
+          ? [{ path: '/admin/badges', label: m.admin_nav_badges(), icon: 'sparkles' as const }]
+          : []),
       ],
     },
     {

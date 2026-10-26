@@ -33,6 +33,12 @@ export const accountActions = {
   revoke: decide('account.revoke', ['profileId']),
 };
 
+/** Giving a badge by hand, giving one back or taking it away, from `/admin/users/[id]`. */
+export const badgeActions = {
+  grantBadge: decide('badge.grant', ['profileId', 'badgeId', 'reason']),
+  revokeBadge: decide('badge.revoke', ['profileId', 'badgeId', 'reason']),
+};
+
 /** Taking a campaign down from the crowdfunding list, `/admin/crowdfunding`. */
 export const crowdfundingActions = {
   remove: decide('crowdfunding.remove', ['id', 'reason', 'note']),

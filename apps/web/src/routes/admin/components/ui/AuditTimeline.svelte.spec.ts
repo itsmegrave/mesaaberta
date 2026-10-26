@@ -15,6 +15,7 @@ const entry = (over: Partial<HistoryEntry> = {}): HistoryEntry => ({
   removed: false,
   autoClosed: false,
   changes: null,
+  badgeId: null,
   ...over,
 });
 const show = (entries: HistoryEntry[], more = false, showTable = false) =>
@@ -81,5 +82,19 @@ describe('AuditTimeline', () => {
     show([entry()]);
     await expect.element(page.getByText('@ana')).toBeVisible();
     expect(document.body.textContent).not.toContain('Mesa A');
+  });
+
+  it('names the badge an admin granted or revoked', async () => {
+    show([
+      entry({ type: 'BadgeGranted', subject: 'bia', badgeId: 'community-helper', table: null }),
+      entry({ type: 'BadgeRevoked', subject: 'bia', badgeId: 'first-table', table: null }),
+    ]);
+    await expect.element(page.getByRole('listitem').first()).toBeVisible();
+    expect(document.body.textContent).toMatch(
+      /concedeu\s+a\s+conquista\s+Ajuda\s+na\s+comunidade\s+a\s+@bia/,
+    );
+    expect(document.body.textContent).toMatch(
+      /revogou\s+a\s+conquista\s+Primeira\s+mesa\s+de\s+@bia/,
+    );
   });
 });

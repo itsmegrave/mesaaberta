@@ -17,6 +17,7 @@
     counts,
     connectionsPath,
     sections = [],
+    badges = false,
   }: {
     /** The route id of the page, to mark its section. */
     route: string | null;
@@ -27,9 +28,11 @@
     connectionsPath: string | null;
     /** The installed extensions' own sections. */
     sections?: readonly ExtensionSection[];
+    /** Whether the badges section is listed (`use_badges`). */
+    badges?: boolean;
   } = $props();
 
-  const groups = $derived(adminGroups(counts, connectionsPath, sections));
+  const groups = $derived(adminGroups(counts, connectionsPath, sections, { badges }));
   const current = $derived(sectionOf(groups, route, path));
 </script>
 

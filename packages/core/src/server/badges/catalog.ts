@@ -160,6 +160,9 @@ const ladder = (
     measure,
   }));
 
+/** Given only by an admin, from the user's admin page: no rule awards them. */
+export const MANUAL_BADGES: readonly string[] = ['community-helper'];
+
 /**
  * The badges a rule awards. Manual ones (a grant by an admin) and the Pioneiro (backfill only) are
  * not here. Adding one is safe at any time; renaming or removing an id is not.

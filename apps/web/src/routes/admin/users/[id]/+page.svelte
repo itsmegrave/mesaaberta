@@ -2,6 +2,7 @@
   import { copyText } from '#lib/clipboard.js';
   import GmRating from '#lib/components/ui/GmRating.svelte';
   import UserLink from '#lib/components/ui/UserLink.svelte';
+  import UserText from '#lib/components/ui/UserText.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import AuditTimeline from '../../components/ui/AuditTimeline.svelte';
@@ -15,6 +16,10 @@
   import { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import StatusBadge from '#lib/components/ui/StatusBadge.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import BadgeMedal from '#lib/components/ui/BadgeMedal.svelte';
+  import { presentationOf } from '#lib/badges/presentation.js';
+  import { BADGE_REASON_MAX, badgeDecisionSchema } from '@mesaaberta/core/badges/grants';
   import {
     accountSchema,
     banSchema,
@@ -60,6 +65,64 @@
   function copyId() {
     return copyText(data.user.id, m.toast_id_copied());
   }
+  // The badges the person has or had (with artwork), and the manual ones that can be given.
+  const badgeName = (badgeId: string) => presentationOf(badgeId)?.name() ?? badgeId;
+  const held = $derived(
+    (data.badges?.held ?? []).flatMap((badge) => {
+      const look = presentationOf(badge.badgeId);
+      return look ? [{ ...badge, look }] : [];
+    }),
+  );
+  const grantable = $derived(
+    (data.badges?.grantable ?? []).filter((badgeId) => presentationOf(badgeId)),
+  );
+  // One dialog, for the badge picked: grant, give back or revoke.
+  let chosen = $state<{ mode: 'grant' | 'restore' | 'revoke'; badgeId: string } | null>(null);
+  let deciding = $state(false);
+  function choose(mode: 'grant' | 'restore' | 'revoke', badgeId: string) {
+    chosen = { mode, badgeId };
+    deciding = true;
+  }
+  const badgeReason = {
+    name: 'reason' as const,
+    label: m.admin_badge_reason(),
+    hint: m.admin_badge_reason_hint({ max: BADGE_REASON_MAX }),
+    required: true,
+  };
+  const badgeWords = (mode: 'grant' | 'restore' | 'revoke', badge: string) =>
+    mode === 'revoke'
+      ? {
+          title: m.admin_badge_revoke_title({ badge, user: handle }),
+          text: m.admin_badge_revoke_text(),
+          label: m.admin_badge_revoke(),
+          confirm: m.admin_badge_revoke(),
+          success: m.admin_badge_revoke_done(),
+        }
+      : mode === 'restore'
+        ? {
+            title: m.admin_badge_restore_title({ badge, user: handle }),
+            text: m.admin_badge_restore_text(),
+            label: m.admin_badge_restore(),
+            confirm: m.admin_badge_restore(),
+            success: m.admin_badge_grant_done(),
+          }
+        : {
+            title: m.admin_badge_grant_title({ badge, user: handle }),
+            text: m.admin_badge_grant_text(),
+            label: m.admin_badge_grant({ badge }),
+            confirm: m.admin_badge_grant_confirm(),
+            success: m.admin_badge_grant_done(),
+          };
+  const badgeLine = (badge: (typeof held)[number]) =>
+    badge.source === 'grant'
+      ? m.admin_user_badge_grant({
+          user: badge.grantedBy ? atHandle(badge.grantedBy) : m.admin_profile_no_username(),
+          date: date(badge.awardedAt),
+        })
+      : badge.source === 'backfill'
+        ? m.admin_user_badge_backfill({ date: date(badge.awardedAt) })
+        : m.admin_user_badge_rule({ date: date(badge.awardedAt) });
+
   // The title's "3 dots": the user's public page, their ID, and the decisions (each asks first).
   let suspending = $state(false);
   let banning = $state(false);
@@ -252,6 +315,87 @@
       </MAAccordion>
     </Panel>
   </div>
+
+  {#if data.badges}
+    <Panel title={m.admin_user_badges()} class="mt-6 p-5">
+      {#if held.length === 0}
+        <p class="mt-3 text-muted" role="status">{m.admin_user_badges_empty()}</p>
+      {:else}
+        <ul class="mt-3 divide-y divide-surface-200-800">
+          {#each held as badge (badge.badgeId)}
+            <li class="flex flex-wrap items-center gap-3 py-3">
+              <BadgeMedal
+                icon={badge.look.icon}
+                mark={badge.look.mark}
+                size={40}
+                locked={!!badge.revokedAt}
+              />
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold">{badge.look.name()}</p>
+                <p class="text-sm text-muted">
+                  <UserText text={badgeLine(badge)} username={badge.grantedBy} />
+                  {#if badge.hidden && !badge.revokedAt}· {m.admin_user_badge_hidden()}{/if}
+                </p>
+                {#if badge.revokedAt}
+                  <p class="text-sm wrap-break-word whitespace-pre-line">
+                    {m.admin_user_badge_revoked({
+                      date: date(badge.revokedAt),
+                      reason: badge.revokeReason ?? '',
+                    })}
+                  </p>
+                {/if}
+              </div>
+              {#if badge.revokedAt}
+                <MAButton
+                  size="sm"
+                  variant="secondary"
+                  onclick={() => choose('restore', badge.badgeId)}
+                  >{m.admin_badge_restore()}</MAButton
+                >
+              {:else}
+                <MAButton
+                  size="sm"
+                  variant="secondary"
+                  onclick={() => choose('revoke', badge.badgeId)}>{m.admin_badge_revoke()}</MAButton
+                >
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      {#if grantable.length > 0}
+        <div class="mt-4 flex flex-wrap gap-2">
+          {#each grantable as badgeId (badgeId)}
+            <MAButton
+              size="sm"
+              variant="secondary"
+              class="gap-2"
+              onclick={() => choose('grant', badgeId)}
+              ><Icon name="sparkles" size={18} />{m.admin_badge_grant({
+                badge: badgeName(badgeId),
+              })}</MAButton
+            >
+          {/each}
+        </div>
+      {/if}
+    </Panel>
+
+    {#if chosen}
+      {#key `${chosen.mode}-${chosen.badgeId}`}
+        <ModerationDialog
+          bind:open={deciding}
+          trigger={false}
+          action={chosen.mode === 'revoke' ? '?/revokeBadge' : '?/grantBadge'}
+          schema={badgeDecisionSchema}
+          fields={{ profileId: data.user.id, badgeId: chosen.badgeId }}
+          danger={chosen.mode === 'revoke'}
+          write={badgeReason}
+          username={data.user.username}
+          {...badgeWords(chosen.mode, badgeName(chosen.badgeId))}
+        />
+      {/key}
+    {/if}
+  {/if}
 
   <Panel title={m.history_title()} class="mt-6 p-5">
     <AuditTimeline history={data.history} zone={data.viewer.timezone} showTable />

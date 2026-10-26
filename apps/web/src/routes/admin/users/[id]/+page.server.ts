@@ -6,7 +6,9 @@ import { failFrom } from '#lib/server/fail-from.js';
 import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { standingOf } from '@mesaaberta/core/profile/standing';
 import { moderationOf } from '@mesaaberta/core/server/moderation/admin';
-import { accountActions } from '#lib/server/moderation/admin-actions.js';
+import { accountActions, badgeActions } from '#lib/server/moderation/admin-actions.js';
+import { adminBadgesOf } from '@mesaaberta/core/server/badges/admin';
+import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { profileFilters } from '@mesaaberta/core/admin/profile-filters';
 import type { Actions, PageServerLoad } from './$types';
@@ -19,6 +21,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
   if (!locals.db) error(503, 'Database not configured');
   const profile = await adminProfile(locals.db, params.id);
   if (!profile) error(404, 'Not found');
+  const viewer = await locals.getProfile();
   const { avatarPath, avatarUrl, bannedAt, bannedUntil, ...user } = profile;
   const filters = profileFilters(url.searchParams);
   const back = new URLSearchParams({
@@ -31,17 +34,23 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     user,
     standing: standingOf({ status: user.status, bannedAt, bannedUntil }),
     activity: await adminActivity(locals.db, params.id),
-    history: await profileHistory(locals.db, await locals.getProfile(), params.id),
+    history: await profileHistory(locals.db, viewer, params.id),
+    // What the person holds and had taken away, while badges are on (`use_badges` is the switch).
+    badges:
+      viewer && (await badgesEnabled(locals, viewer))
+        ? await adminBadgesOf(locals.db, viewer, params.id)
+        : null,
     avatar: pictureOf(supabaseUrlOf(locals.env), { avatarPath, avatarUrl }),
     // Ban or revoke (never oneself, another admin, or a closed account), the ban itself, and the
     // reports accepted against the tables they run.
-    moderation: (await moderationOf(locals.db, await locals.getProfile(), params.id))!,
+    moderation: (await moderationOf(locals.db, viewer, params.id))!,
     back: `/admin/users?${back}#profiles`,
   };
 };
 
 export const actions: Actions = {
   ...accountActions,
+  ...badgeActions,
 
   // "Mandar mensagem": the direct conversation with this person (an admin may write to anyone who
   // takes direct messages).
