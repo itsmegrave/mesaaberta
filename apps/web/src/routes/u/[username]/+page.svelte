@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { copyText } from '#lib/clipboard.js';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import { page } from '$app/state';
@@ -10,6 +9,8 @@
   import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import BadgeIcons from './components/ui/BadgeIcons.svelte';
+  import ReviewCard from './components/ui/ReviewCard.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import BadgeStrip from './components/BadgeStrip.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
@@ -42,6 +43,11 @@
       debut: m.gm_rating_new(),
     },
   ]);
+
+  // "Avaliações da mestragem": three at first; the button shows the rest in place.
+  const REVIEWS_SHOWN = 3;
+  let allReviews = $state(false);
+  const reviews = $derived(allReviews ? data.reviews : data.reviews.slice(0, REVIEWS_SHOWN));
 
   // One social link: the network's icon with the handle beside it.
   const chip =
@@ -224,4 +230,34 @@
       href={(number) => pageHref(path, page.url.searchParams, number)}
     />
   </section>
+
+  {#if data.reviews.length > 0}
+    <section aria-labelledby="gm-reviews" class="mt-12">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 id="gm-reviews" class="text-2xl leading-tight font-semibold tracking-tight">
+          {m.public_profile_reviews()}
+        </h2>
+        {#if data.reviews.length > REVIEWS_SHOWN}
+          <MAButton
+            variant="secondary"
+            aria-expanded={allReviews}
+            aria-controls="gm-reviews-list"
+            onclick={() => (allReviews = !allReviews)}
+            >{allReviews
+              ? m.public_profile_reviews_fewer()
+              : m.public_profile_reviews_all({ count: data.reviews.length })}</MAButton
+          >
+        {/if}
+      </div>
+      <ul
+        id="gm-reviews-list"
+        aria-label={m.public_profile_reviews_of({ username: atHandle(profile.username) })}
+        class="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+      >
+        {#each reviews as review (`${review.username}-${review.table.slug}`)}
+          <li><ReviewCard {review} /></li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 </section>

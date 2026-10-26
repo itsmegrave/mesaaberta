@@ -123,7 +123,10 @@
       no chat de uma mesa, ou as duas pessoas de uma conversa direta. Quem sai da mesa perde o
       acesso ao chat. Você pode desligar as mensagens diretas no seu perfil.
     </li>
-    <li>Os comentários das avaliações não são mostrados publicamente.</li>
+    <li>
+      O comentário de uma avaliação fica só com você, a menos que você marque para mostrá-lo no
+      perfil de quem mestrou. Aí ele aparece lá com o seu nome de usuário, a nota e a mesa.
+    </li>
     <li>Seu e-mail nunca fica visível para outras pessoas.</li>
   </ul>
 

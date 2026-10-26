@@ -645,10 +645,12 @@
     }
   ],
   "rating_title": "Avalie a mestragem",
-  "rating_lede": "Você jogou. Aqui você avalia a mestragem: a nota entra na média de quem mestrou, visível para todo mundo, e o comentário fica só com você.",
+  "rating_lede": "Você jogou. Conte como foi: a nota entra na média pública de quem mestrou. O comentário fica só com você, a menos que escolha mostrar.",
   "rating_the_gm": "Sua nota para a mestragem",
   "rating_score_label": "{score} de 5",
   "rating_comment": "Comentário (opcional)",
+  "rating_comment_public": "Mostrar meu comentário no perfil de quem mestrou",
+  "rating_comment_public_hint": "Aparece com seu @usuário e a nota. Sem marcar, o comentário fica só com você.",
   "rating_submit": "Enviar avaliação",
   "rating_given_title": "Sua avaliação da mestragem",
   "rating_final": "Sua avaliação foi enviada e não pode ser alterada.",
@@ -784,7 +786,7 @@
   "account_seen_username": "Seu @usuário, sua foto, sua capa, sua bio e seus links sociais, no perfil público. Seu nome, só se você escolher mostrar.",
   "account_seen_rating": "Sua avaliação na mestragem e os totais de mesas jogadas e mestradas.",
   "account_seen_email": "Seu email. Ele nunca aparece.",
-  "account_seen_comments": "Os comentários das avaliações. Não são mostrados publicamente.",
+  "account_seen_comments": "Os comentários das avaliações. Só aparecem no perfil de quem mestrou quando você marca para mostrar.",
   "account_connections_title": "Contas conectadas",
   "account_connections_text": "As formas de entrar na sua conta. Conectar outra conta não cria um novo perfil: é o mesmo perfil, com mais um jeito de entrar. Isso só aparece para você; nada disso é mostrado no seu perfil público.",
   "account_connections_connect": "Conectar {provider}",
@@ -1503,6 +1505,20 @@
   "public_profile_counts_hint": "Mesas confirmadas como realizadas por quem mestrou. Mesas jogadas consideram as inscrições confirmadas atuais.",
   "public_profile_upcoming": "Próximas mesas",
   "public_profile_no_tables": "Nenhuma próxima mesa por aqui.",
+  "public_profile_reviews": "Avaliações da mestragem",
+  "public_profile_reviews_of": "Avaliações de {username}",
+  "public_profile_review_played": "Jogou em",
+  "public_profile_reviews_all": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Ver a avaliação",
+        "count=*": "Ver todas as {count} avaliações"
+      }
+    }
+  ],
+  "public_profile_reviews_fewer": "Mostrar menos",
   "session_day": "Dia da primeira sessão",
   "session_hour": "Hora",
   "session_minute": "Minutos",

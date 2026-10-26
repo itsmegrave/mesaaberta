@@ -53,6 +53,7 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
     'gmScore',
     'score',
     'comment',
+    'commentPublic',
     'message',
   ]);
   if (!form.valid) return formMessage(form, { code: 'invalid' }, { status: 400 });

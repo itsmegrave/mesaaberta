@@ -386,6 +386,13 @@
       "when": 1792974896438,
       "tag": "0054_profile_show_name",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1792977164485,
+      "tag": "0055_rating_comment_public",
+      "breakpoints": true
     }
   ]
 }

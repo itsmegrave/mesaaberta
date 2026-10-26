@@ -509,6 +509,9 @@ export const ratings = pgTable(
       .references(() => profiles.id),
     gmScore: smallint('gm_score').notNull(),
     comment: text('comment'),
+    // The player chose to show the comment on the GM's public profile, with their @usuário and the
+    // score. Off by default: a comment written before this choice existed stays private.
+    commentPublic: boolean('comment_public').notNull().default(false),
     ...timestamps,
   },
   (rating) => [
