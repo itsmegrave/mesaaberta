@@ -51,7 +51,7 @@ describe('admin notifications', () => {
     const drawn = () => preview().element().querySelector('svg')!.innerHTML;
     const infoIcon = drawn();
 
-    await page.getByText('Presente').click();
+    await page.getByTitle('Presente').click();
     await expect.poll(drawn).not.toBe(infoIcon);
   });
 

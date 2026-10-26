@@ -35,11 +35,11 @@
 
   const columns: DataColumn[] = [
     { id: 'partner', header: m.admin_partners_col_partner() },
-    { id: 'types', header: m.admin_partners_col_types(), width: 'w-48' },
-    { id: 'links', header: m.admin_partners_col_links(), width: 'w-40' },
-    { id: 'backlink', header: m.admin_partners_col_backlink(), width: 'w-40' },
+    { id: 'types', header: m.admin_partners_col_types(), width: 'w-32' },
+    { id: 'links', header: m.admin_partners_col_links(), width: 'w-24' },
+    { id: 'backlink', header: m.admin_partners_col_backlink(), width: 'w-28' },
     { id: 'sender', header: m.admin_partners_col_sender(), width: 'w-40' },
-    { id: 'reports', header: m.admin_partners_col_reports(), align: 'right', width: 'w-28' },
+    { id: 'reports', header: m.admin_partners_col_reports(), align: 'right', width: 'w-24' },
   ];
 
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.

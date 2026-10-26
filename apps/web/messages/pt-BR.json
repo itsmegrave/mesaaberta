@@ -1435,7 +1435,7 @@
   "login_suspended": "Esta conta está banida pela moderação e não pode entrar. Veja o e-mail que enviamos com o motivo.",
   "auth_error_suspended": "Esta conta está banida pela moderação e não pode entrar. Veja o e-mail que enviamos com o motivo.",
   "admin_reports_title": "Denúncias",
-  "admin_reports_lede": "Denúncias de mesas e perfis. Quem denunciou recebe um aviso quando a denúncia é encerrada, sem detalhes da decisão.",
+  "admin_reports_lede": "Denúncias de mesas, perfis, mensagens, financiamentos e parceiros. Quem denunciou recebe um aviso quando a denúncia é encerrada, sem detalhes da decisão.",
   "admin_reports_filter": "Filtrar denúncias",
   "admin_reports_filter_waiting": "Aguardando",
   "admin_reports_total": "{count} denúncias",
