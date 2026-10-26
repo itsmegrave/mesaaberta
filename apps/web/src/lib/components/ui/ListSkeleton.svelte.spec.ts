@@ -42,6 +42,22 @@ describe('ListSkeleton', () => {
     expect(region().element().querySelector('.aspect-4\\/1')).not.toBeNull();
   });
 
+  it('draws the signed-in Início: dashboard blocks, Sua conta and a row of cards', async () => {
+    render(ListSkeleton, { kind: 'home' });
+    expect(shapes()).toHaveLength(6);
+  });
+
+  it('draws an Admin section as a table of rows, beside the real nav', async () => {
+    render(ListSkeleton, { kind: 'admin' });
+    expect(shapes()).toHaveLength(8);
+    expect(region().element().querySelector('[data-skeleton-nav]')).toBeNull();
+  });
+
+  it('holds the place of the Admin nav when arriving from outside Admin', async () => {
+    render(ListSkeleton, { kind: 'admin', nav: true });
+    expect(region().element().querySelector('[data-skeleton-nav]')).not.toBeNull();
+  });
+
   it('draws no extra title over an item page, which has its own', async () => {
     render(ListSkeleton, { kind: 'detail', heading: true });
     expect(region().element().querySelector('[data-skeleton-heading]')).toBeNull();
