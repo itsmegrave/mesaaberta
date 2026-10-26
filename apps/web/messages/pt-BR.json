@@ -1570,8 +1570,26 @@
     }
   ],
   "public_profile_reviews_fewer": "Mostrar menos",
-  "public_profile_reviews_summary": "{count, plural, =1 {1 avaliação} other {{count} avaliações}}",
-  "public_profile_reviews_summary_score": "{score} · {count, plural, =1 {1 avaliação} other {{count} avaliações}}",
+  "public_profile_reviews_summary": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 avaliação",
+        "count=*": "{count} avaliações"
+      }
+    }
+  ],
+  "public_profile_reviews_summary_score": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "{score} · 1 avaliação",
+        "count=*": "{score} · {count} avaliações"
+      }
+    }
+  ],
   "session_day": "Dia da primeira sessão",
   "session_hour": "Hora",
   "session_minute": "Minutos",
@@ -2127,7 +2145,16 @@
   "admin_partners_col_links": "Links",
   "admin_partners_col_backlink": "Nosso link",
   "admin_partners_col_sender": "Quem cuida",
-  "admin_partners_pending_invites": "{count, plural, =1 {+1 convite pendente} other {+{count} convites pendentes}}",
+  "admin_partners_pending_invites": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "+1 convite pendente",
+        "count=*": "+{count} convites pendentes"
+      }
+    }
+  ],
   "admin_partners_col_reports": "Denúncias",
   "admin_partners_check": "Conferir ↗",
   "admin_partners_not_informed": "Não informado",
@@ -2292,11 +2319,41 @@
   "follow_stop_person": "Seguindo {username}. Deixar de seguir",
   "follow_stop": "Deixar de seguir",
   "follow_failed": "Não deu para mudar isso agora. Tente de novo.",
-  "follow_followers_count": "{count, plural, =0 {Ninguém segue você ainda} =1 {1 pessoa segue você} other {{count} pessoas seguem você}}",
-  "follow_following_count": "{count, plural, =0 {Você não segue ninguém} =1 {Você segue 1 pessoa} other {Você segue {count} pessoas}}",
+  "follow_followers_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém segue você ainda",
+        "count=1": "1 pessoa segue você",
+        "count=*": "{count} pessoas seguem você"
+      }
+    }
+  ],
+  "follow_following_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Você não segue ninguém",
+        "count=1": "Você segue 1 pessoa",
+        "count=*": "Você segue {count} pessoas"
+      }
+    }
+  ],
   "follow_following_label": "Pessoas que você segue",
   "follow_following_empty": "Siga quem mestra ou joga com você, no perfil da pessoa ou na página de uma mesa, para ver as mesas dela no seu Início.",
-  "follow_open_tables": "{count, plural, =0 {nenhuma mesa aberta} =1 {1 mesa aberta} other {{count} mesas abertas}}",
+  "follow_open_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa aberta",
+        "count=1": "1 mesa aberta",
+        "count=*": "{count} mesas abertas"
+      }
+    }
+  ],
   "follow_notices_title": "Me avise no sininho quando alguém que eu sigo",
   "follow_notices_tables": "abrir uma mesa",
   "follow_notices_seats": "abrir vaga numa mesa que estava cheia",
