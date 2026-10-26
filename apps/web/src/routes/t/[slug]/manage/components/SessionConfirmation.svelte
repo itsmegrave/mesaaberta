@@ -13,6 +13,8 @@
   import { toast } from '#lib/toaster.js';
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import SessionPicker from '#lib/components/ui/SessionPicker.svelte';
   import { kindLabel, type TableKind } from '#lib/tables/format.js';
 
@@ -286,55 +288,68 @@
       <input type="hidden" name="next" value={next} />
       {#if players.length > 0}
         <input type="hidden" name="attendance" value="1" />
-        <fieldset class="min-w-0" aria-describedby="attendance-hint">
-          <legend class="text-lg font-semibold">{m.manage_attendance_title()}</legend>
-          <p id="attendance-hint" class="mt-1 text-sm text-muted">
-            {m.manage_attendance_hint()}
-          </p>
-          <ul class="mt-3 flex flex-col">
-            {#each players as player (player.playerId)}
-              <li class="border-b border-surface-200-800 last:border-b-0">
-                <label class="{rowClass} min-h-16">
-                  {#if player.rated}
-                    <input type="hidden" name="present" value={player.playerId} />
-                  {/if}
-                  <input
-                    type="checkbox"
-                    name={player.rated ? undefined : 'present'}
-                    value={player.playerId}
-                    checked
-                    disabled={player.rated}
-                    onchange={(event) =>
-                      (absent = event.currentTarget.checked
-                        ? absent.filter((id) => id !== player.playerId)
-                        : [...absent, player.playerId])}
-                    class="checkbox size-6"
-                  />
-                  <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
-                  <span class="flex min-w-0 flex-col">
-                    <span class="truncate font-semibold">{player.username}</span>
-                    {#if player.rated}
-                      <span class="text-sm text-muted">{m.manage_attendance_rated()}</span>
-                    {:else if absent.includes(player.playerId)}
-                      <span class="text-sm text-muted"
-                        >{multi
-                          ? m.manage_attendance_absent_session()
-                          : m.manage_attendance_absent()}</span
-                      >
-                    {/if}
-                  </span>
-                </label>
-              </li>
-            {/each}
-          </ul>
-          <p aria-live="polite" class="mt-2 text-sm font-semibold text-muted tabular-nums">
-            {m.manage_attendance_count({ present, total: players.length })}
-          </p>
-        </fieldset>
+        <!-- On a phone the list folds under its header, which keeps the count; everyone starts
+             checked, so a closed list still posts a whole answer. -->
+        <MAAccordion collapse="phone" class="border-y border-surface-200-800 md:border-0">
+          <MAAccordionItem
+            value="present"
+            level={3}
+            title={m.manage_attendance_title()}
+            summary={m.manage_attendance_count({ present, total: players.length })}
+          >
+            <fieldset class="min-w-0" aria-describedby="attendance-hint">
+              <legend class="sr-only">{m.manage_attendance_title()}</legend>
+              <p id="attendance-hint" class="text-sm text-muted">
+                {m.manage_attendance_hint()}
+              </p>
+              <ul class="mt-3 flex flex-col">
+                {#each players as player (player.playerId)}
+                  <li class="border-b border-surface-200-800 last:border-b-0">
+                    <label class="{rowClass} min-h-16">
+                      {#if player.rated}
+                        <input type="hidden" name="present" value={player.playerId} />
+                      {/if}
+                      <input
+                        type="checkbox"
+                        name={player.rated ? undefined : 'present'}
+                        value={player.playerId}
+                        checked
+                        disabled={player.rated}
+                        onchange={(event) =>
+                          (absent = event.currentTarget.checked
+                            ? absent.filter((id) => id !== player.playerId)
+                            : [...absent, player.playerId])}
+                        class="checkbox size-6"
+                      />
+                      <MAAvatar src={player.avatarUrl} name={player.username} size={36} />
+                      <span class="flex min-w-0 flex-col">
+                        <span class="truncate font-semibold">{player.username}</span>
+                        {#if player.rated}
+                          <span class="text-sm text-muted">{m.manage_attendance_rated()}</span>
+                        {:else if absent.includes(player.playerId)}
+                          <span class="text-sm text-muted"
+                            >{multi
+                              ? m.manage_attendance_absent_session()
+                              : m.manage_attendance_absent()}</span
+                          >
+                        {/if}
+                      </span>
+                    </label>
+                  </li>
+                {/each}
+              </ul>
+              <p aria-live="polite" class="mt-2 text-sm font-semibold text-muted tabular-nums">
+                {m.manage_attendance_count({ present, total: players.length })}
+              </p>
+            </fieldset>
+          </MAAccordionItem>
+        </MAAccordion>
       {/if}
       {#if multi}
         <fieldset
-          class="min-w-0 {players.length > 0 ? 'mt-6 border-t border-surface-200-800 pt-5' : ''}"
+          class="min-w-0 {players.length > 0
+            ? 'mt-6 md:border-t md:border-surface-200-800 md:pt-5'
+            : ''}"
         >
           <legend class="float-left w-full text-lg font-semibold">
             {m.manage_confirm_more_title()}
