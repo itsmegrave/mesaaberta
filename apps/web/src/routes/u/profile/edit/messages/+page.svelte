@@ -10,6 +10,7 @@
   import { toast } from '#lib/toaster.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
+  import { invitationFormSchema, type InvitationFormValues } from '#lib/invitations/schema.js';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
@@ -32,6 +33,29 @@
     onFailure: restoreMessaging,
     onError: restoreMessaging,
     errorMessage: m.messages_setting_failed,
+  });
+
+  // "Receber convites" saves as soon as it flips, like the messages switch.
+  let invitingForm = $state<HTMLFormElement>();
+  const restoreInviting = () => {
+    inviting.change('enabled', inviting.values.enabled === 'true' ? 'false' : 'true');
+    toast.error(m.invitation_unavailable());
+  };
+  // svelte-ignore state_referenced_locally
+  const inviting = actionForm({
+    initial: {
+      username: '',
+      invitationId: '',
+      gmId: '',
+      enabled: data.invitationPreferences.enabled ? 'true' : 'false',
+      blocked: 'true',
+    } as InvitationFormValues,
+    schema: invitationFormSchema,
+    domain: 'account',
+    onSuccess: () => toast.success(m.invitation_saved()),
+    onFailure: restoreInviting,
+    onError: restoreInviting,
+    errorMessage: m.invitation_unavailable,
   });
 </script>
 
@@ -69,18 +93,29 @@
     >
       {m.invitation_unavailable()}
     </p>{/if}
-  <p class="mt-3 font-semibold">
-    {data.invitationPreferences.enabled
-      ? m.invitation_settings_enabled()
-      : m.invitation_settings_disabled()}
-  </p>
-  <div class="mt-4">
-    <InvitationAction
-      action="?/invitations"
-      enabled={!data.invitationPreferences.enabled}
-      label={data.invitationPreferences.enabled ? m.invitation_disable() : m.invitation_enable()}
-    />
-  </div>
+  <MAForm
+    bind:element={invitingForm}
+    action="?/invitations"
+    onsubmit={inviting.submit}
+    class="mt-4"
+  >
+    <Switch
+      checked={inviting.values.enabled === 'true'}
+      disabled={inviting.pending}
+      onCheckedChange={(event) => {
+        inviting.change('enabled', event.checked ? 'true' : 'false');
+        void tick().then(() => invitingForm?.requestSubmit());
+      }}
+      class="flex items-center justify-between gap-4"
+    >
+      <Switch.Label class="font-semibold">{m.invitation_enable()}</Switch.Label>
+      <Switch.Control>
+        <Switch.Thumb />
+      </Switch.Control>
+      <Switch.HiddenInput />
+      <input type="hidden" name="enabled" value={inviting.values.enabled} />
+    </Switch>
+  </MAForm>
   <h4 class="mt-6 text-lg font-semibold">{m.invitation_blocks_title()}</h4>
   {#if data.invitationPreferences.blocks.length === 0}<p class="mt-2 text-muted">
       {m.invitation_blocks_empty()}

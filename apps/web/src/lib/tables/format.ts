@@ -24,6 +24,14 @@ export function scheduleLabel(kind: TableKind, everyWeeks: number | null): strin
   return everyWeeks ? m.table_recurrence_weeks({ weeks: everyWeeks }) : null;
 }
 
+/** The seats in words, when invites hold some: "2 confirmadas · 1 reservada · 2 livres". */
+export const seatSummary = (confirmed: number, reserved: number, free: number): string =>
+  [
+    m.seats_confirmed({ count: confirmed }),
+    m.seats_reserved({ count: reserved }),
+    m.seats_free({ count: free }),
+  ].join(' · ');
+
 /** "Mesa cheia" or how many seats are left. */
 export const seatsLeftLabel = (seatsLeft: number): string =>
   seatsLeft === 0 ? m.table_full() : m.table_seats_left({ count: seatsLeft });

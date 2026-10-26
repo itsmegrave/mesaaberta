@@ -29,7 +29,7 @@
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { formatHours } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
-  import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, scheduleLabel, seatSummary, seatsLeftLabel } from '#lib/tables/format.js';
   import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
   import { onMount } from 'svelte';
 
@@ -259,11 +259,7 @@
             {m.invitation_unavailable()}
           </p>{/if}
         <p class="mt-3 font-semibold">
-          {m.invitation_seats({
-            confirmed: taken,
-            reserved: table.reserved,
-            available: table.seatsLeft,
-          })}
+          {seatSummary(taken, table.reserved, table.seatsLeft)}
         </p>
         {#if data.canInvite && table.status === 'active' && table.startsAt > new Date()}
           <div class="mt-4 max-w-md">
@@ -360,7 +356,7 @@
         </div>
         <p class="mt-3">
           <span class="sr-only">{m.table_seats_taken({ taken, total: table.capacity })}</span
-          ><SeatDots {taken} capacity={table.capacity} />
+          ><SeatDots {taken} capacity={table.capacity} reserved={table.reserved} />
         </p>
         {#if table.minPlayers}
           <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-2" />
