@@ -9,7 +9,7 @@ import {
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { publicProfile } from '@mesaaberta/core/server/profile/public';
+import { publicProfile, tablesPlayed } from '@mesaaberta/core/server/profile/public';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -143,10 +143,13 @@ describe('public profiles', () => {
       'bannerUrl',
       'bio',
       'links',
+      'participantRating',
       'rating',
       'totals',
       'username',
     ]);
+    // Off unless the `use_player_ratings` rollout reaches the profile.
+    expect(data.profile.participantRating).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
       'gmName',
@@ -251,6 +254,15 @@ describe('public profiles', () => {
     expect((await read('jogador-bia'))?.profile.totals).toEqual({ played: 1, hosted: 0 });
   });
 
+  it('gives the same "Mesas jogadas" for many people at once, 0 for who played none', async () => {
+    const played = await tablesPlayed(test.db, [id(1), id(2), id(3)]);
+    expect([...played]).toEqual([
+      [id(1), 1],
+      [id(2), 1],
+      [id(3), 0],
+    ]);
+  });
+
   it('uses the GM score and keeps unreviewed profiles distinct from zero', async () => {
     expect((await read())?.profile.rating).toEqual({ score: 4, count: 2, isNew: true });
     expect((await read('foto-provedor'))?.profile.rating).toEqual({
@@ -258,6 +270,16 @@ describe('public profiles', () => {
       count: 0,
       isNew: true,
     });
+  });
+
+  it('adds the score as a participant once the rollout reaches the profile, asked by its id', async () => {
+    const asked: unknown[] = [];
+    const data = await publicProfile(test.db, 'mestre-ana', {
+      now,
+      showParticipantRating: async (target) => (asked.push(target), true),
+    });
+    expect(asked).toEqual([{ id: id(1), isAdmin: true }]);
+    expect(data?.profile.participantRating).toEqual({ score: null, count: 0, isNew: true });
   });
 
   it("paginates the right GM's tables that have not started, in a steady order, with seats", async () => {

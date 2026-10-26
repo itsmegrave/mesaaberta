@@ -27,6 +27,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     supabaseUrl: supabaseUrlOf(locals.env),
     // The rollout is by the profile, so everyone sees the same strip on a given profile.
     showBadges: (target) => locals.flags.isEnabled('use_badges', target),
+    showParticipantRating: (target) => locals.flags.isEnabled('use_player_ratings', target),
   });
   if (!data || data.page > data.pages) error(404, 'Not found');
   const path = routes.profile(data.profile.username);

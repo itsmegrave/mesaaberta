@@ -76,6 +76,12 @@
     framing?.done(files);
     framing = null;
   };
+  // "Cancelar" closes the dialog from inside, which doesn't pass through `onOpenChange`: the picture
+  // has to be let go here too, or the next opening shows it again.
+  const close = () => {
+    open = false;
+    finish([]);
+  };
 
   async function picked(files: File[]) {
     upload.change(name, files[0]);
@@ -86,6 +92,8 @@
 
   const accept = IMAGE_TYPES.join(',');
   const avatar = $derived(kind === 'avatar');
+  // The size that is sent, so a picture of that shape needs no cutting.
+  const recommended = $derived(avatar ? m.upload_recommended_photo : m.upload_recommended_cover);
   const trigger = 'btn h-12 w-full gap-2 rounded-lg btn-secondary px-4 font-semibold sm:w-auto';
 </script>
 
@@ -156,11 +164,13 @@
                   round={avatar}
                   onconfirm={(cropped) => finish([cropped])}
                   onreplace={() => finish([])}
-                  oncancel={() => (open = false)}
+                  oncancel={close}
                   onunreadable={() => finish([framing!.file])}
                 />
               {:else}
-                <p id="{id}-formats" class="mt-3 text-sm text-muted">{m.upload_formats()}</p>
+                <p id="{id}-formats" class="mt-3 text-sm text-muted">
+                  {m.upload_formats()}<br />{recommended()}
+                </p>
               {/if}
               {#if upload.pending}
                 <p role="status" class="mt-3 text-sm font-semibold">{m.upload_sending()}</p>
@@ -187,7 +197,9 @@
       aria-invalid={error ? 'true' : undefined}
       class="block w-full text-sm file:mr-3 file:h-12 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
     />
-    <p id="{id}-formats" class="text-sm text-muted">{m.upload_formats()}</p>
+    <p id="{id}-formats" class="text-sm text-muted">
+      {m.upload_formats()}<br />{recommended()}
+    </p>
     {#if error}
       <p id="{id}-error" role="alert" class="text-sm font-semibold text-error-alert">{error}</p>
     {/if}

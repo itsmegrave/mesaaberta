@@ -7,7 +7,7 @@
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import Pager from '#lib/components/ui/Pager.svelte';
-  import GmRating from '#lib/components/ui/GmRating.svelte';
+  import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import BadgeIcons from './components/ui/BadgeIcons.svelte';
   import BadgeStrip from './components/BadgeStrip.svelte';
@@ -25,6 +25,23 @@
   const profile = $derived(data.profile);
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const path = $derived(`/u/${profile.username}`);
+  const stats = $derived([
+    {
+      label: m.public_profile_played(),
+      value: profile.totals.played,
+      // Null while `use_player_ratings` has not reached this profile.
+      rating: profile.participantRating,
+      ratingLabel: m.participant_rating(),
+      debut: m.participant_rating_new(),
+    },
+    {
+      label: m.public_profile_hosted(),
+      value: profile.totals.hosted,
+      rating: profile.rating,
+      ratingLabel: m.rating_gm_average(),
+      debut: m.gm_rating_new(),
+    },
+  ]);
 
   // One social link: the network's icon with the handle beside it.
   const chip =
@@ -152,26 +169,30 @@
         {/if}
       </div>
 
-      <div class="mt-8 grid gap-6 border-t border-surface-200-800 pt-6 lg:grid-cols-2">
-        <div>
-          <dl class="grid grid-cols-2 gap-4">
-            {#each [{ label: m.public_profile_played(), value: profile.totals.played }, { label: m.public_profile_hosted(), value: profile.totals.hosted }] as stat (stat.label)}
-              <div class="rounded-lg border border-surface-200-800 p-4">
-                <dt class="flex items-center gap-2 text-sm font-semibold text-muted">
-                  <Icon name="game-icons:meeple" size={18} class="shrink-0" />{stat.label}
-                </dt>
-                <dd class="mt-1 text-3xl font-semibold tabular-nums">
-                  {number.format(stat.value)}
+      <div class="mt-8 border-t border-surface-200-800 pt-6">
+        <!-- Each score sits in its tile: as a participant under "Mesas jogadas", the GM's under
+             "Mesas mestradas". -->
+        <dl class="grid max-w-xl grid-cols-2 gap-4">
+          {#each stats as stat (stat.label)}
+            <div class="rounded-lg border border-surface-200-800 p-4">
+              <dt class="flex items-center gap-2 text-sm font-semibold text-muted">
+                <Icon name="game-icons:meeple" size={18} class="shrink-0" />{stat.label}
+              </dt>
+              <dd class="mt-1 text-3xl font-semibold tabular-nums">
+                {number.format(stat.value)}
+              </dd>
+              {#if stat.rating}
+                <dd class="mt-3 border-t border-surface-200-800 pt-3">
+                  <ScoreLine rating={stat.rating} label={stat.ratingLabel} debut={stat.debut} />
                 </dd>
-              </div>
-            {/each}
-          </dl>
-          <p class="mt-3 max-w-prose text-sm text-muted">{m.public_profile_counts_hint()}</p>
-        </div>
-        <section aria-labelledby="gm-rating">
-          <h2 id="gm-rating" class="text-lg font-semibold">{m.public_profile_rating()}</h2>
-          <GmRating rating={profile.rating} class="mt-3 text-2xl" />
-        </section>
+              {/if}
+            </div>
+          {/each}
+        </dl>
+        <p class="mt-3 max-w-prose text-sm text-muted">{m.public_profile_counts_hint()}</p>
+        {#if data.isOwner && profile.participantRating}
+          <p class="mt-1 max-w-prose text-sm text-muted">{m.public_profile_scores_hint()}</p>
+        {/if}
       </div>
     </div>
   </header>

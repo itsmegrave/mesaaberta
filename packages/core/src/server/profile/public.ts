@@ -1,4 +1,4 @@
-import { and, asc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   gameTables,
@@ -9,33 +9,48 @@ import {
 import { bannerUrl, pictureOf, imageUrl } from '@mesaaberta/core/server/images';
 import { badgeProgress, heldBadges } from '@mesaaberta/core/server/badges/reads';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
+import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { isNetwork, socialTarget } from '../../profile/social-links';
 import { normalizeUsername, usernameProblem } from '../../profile/username';
 
 export const PUBLIC_PROFILE_PAGE_SIZE = 12;
 
+/**
+ * The "Mesas jogadas" total of these people: concluded tables where they had a confirmed seat (and
+ * were not the GM), each once. Everyone asked for is in the map, with 0 when they played none.
+ */
+export async function tablesPlayed(db: AnyDb, profileIds: string[]): Promise<Map<string, number>> {
+  const wanted = [...new Set(profileIds)];
+  const found = new Map(wanted.map((id) => [id, 0]));
+  if (wanted.length === 0) return found;
+  const rows = await db
+    .select({ playerId: registrations.playerId, count: sql<number>`count(*)::int` })
+    .from(registrations)
+    .innerJoin(gameTables, eq(registrations.tableId, gameTables.id))
+    .where(
+      and(
+        inArray(registrations.playerId, wanted),
+        eq(registrations.status, 'confirmed'),
+        ne(gameTables.gmId, registrations.playerId),
+        eq(gameTables.status, 'concluded'),
+      ),
+    )
+    .groupBy(registrations.playerId);
+  for (const row of rows) found.set(row.playerId, row.count);
+  return found;
+}
+
 /** Public totals describe concluded tables, once each; they never expose a player's history. */
 async function tableCounts(db: AnyDb, profileId: string) {
-  const [played, hosted] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(registrations)
-      .innerJoin(gameTables, eq(registrations.tableId, gameTables.id))
-      .where(
-        and(
-          eq(registrations.playerId, profileId),
-          eq(registrations.status, 'confirmed'),
-          ne(gameTables.gmId, profileId),
-          eq(gameTables.status, 'concluded'),
-        ),
-      ),
+  const [played, [hosted]] = await Promise.all([
+    tablesPlayed(db, [profileId]),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(gameTables)
       .where(and(eq(gameTables.gmId, profileId), eq(gameTables.status, 'concluded'))),
   ]);
-  return { played: played[0].count, hosted: hosted[0].count };
+  return { played: played.get(profileId)!, hosted: hosted.count };
 }
 
 /** Allowlisted public projection. Neither a full profile nor registrations leave this module. */
@@ -48,6 +63,7 @@ export async function publicProfile(
     supabaseUrl,
     viewerId = null,
     showBadges,
+    showParticipantRating,
   }: {
     page?: number;
     now?: Date;
@@ -55,6 +71,8 @@ export async function publicProfile(
     viewerId?: string | null;
     /** Whether this profile shows its badges (the `use_badges` rollout). Omitted: it does not. */
     showBadges?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
+    /** Whether this profile shows its score as a participant (`use_player_ratings`). Omitted: no. */
+    showParticipantRating?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -94,6 +112,14 @@ export async function publicProfile(
     ? await heldBadges(db, found.id, { includeHidden: isOwnerView })
     : null;
 
+  // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
+  const participantRating = (await showParticipantRating?.({
+    id: found.id,
+    isAdmin: found.role === 'admin',
+  }))
+    ? await participantRatingOf(db, found.id, now)
+    : null;
+
   return {
     badges,
     // What the owner has yet to earn, for their own view only.
@@ -112,6 +138,7 @@ export async function publicProfile(
       }),
       totals,
       rating,
+      participantRating,
     },
     tables: upcoming.tables.map((table) => ({
       slug: table.slug,

@@ -51,6 +51,7 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
     'playerId',
     'next',
     'gmScore',
+    'score',
     'comment',
     'message',
   ]);

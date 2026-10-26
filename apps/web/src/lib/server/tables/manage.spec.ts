@@ -1,5 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, profiles, ratings, systems } from '@mesaaberta/core/server/db/schema';
+import { eq } from 'drizzle-orm';
+import {
+  gameTables,
+  playerRatings,
+  profiles,
+  ratings,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
@@ -73,6 +81,32 @@ describe('loadManage', () => {
 
     expect(after.players.map((p) => [p.username, p.rated])).toEqual([['ana', true]]);
     await test.db.delete(ratings);
+  });
+
+  it('gives each request its score as a participant, and each player whether they can be rated and what they got', async () => {
+    const before = await loadManage(test.db, gm, 'mesa', now);
+    expect(before.requests[0].participantRating).toEqual({ score: null, count: 0, isNew: true });
+    expect(before.players[0]).toMatchObject({
+      tablesPlayed: 0,
+      markedPresent: false,
+      playerRating: null,
+    });
+
+    await test.db
+      .update(registrations)
+      .set({ attended: true })
+      .where(eq(registrations.playerId, ana.id));
+    await test.db
+      .insert(playerRatings)
+      .values({ tableId: before.table.id, playerId: ana.id, score: 5 });
+    const after = await loadManage(test.db, gm, 'mesa', now);
+
+    expect(after.players[0]).toMatchObject({ markedPresent: true, playerRating: 5 });
+    await test.db.delete(playerRatings);
+    await test.db
+      .update(registrations)
+      .set({ attended: null })
+      .where(eq(registrations.playerId, ana.id));
   });
 
   it('shows the latest activity first, naming the player and telling a removal from leaving', async () => {
