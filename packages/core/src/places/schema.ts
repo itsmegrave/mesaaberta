@@ -102,10 +102,7 @@ export const NEW_PLACE_VALUES = {
 };
 
 /** The links to store, in the order sent: empty rows dropped, addresses built. Validate first. */
-export function placeLinks({
-  linkNetwork,
-  linkUrl,
-}: Pick<PlaceInput, 'linkNetwork' | 'linkUrl'>): {
+export function placeLinks({ linkNetwork, linkUrl }: Pick<PlaceInput, 'linkNetwork' | 'linkUrl'>): {
   network: Exclude<Network, 'website'>;
   url: string;
 }[] {
