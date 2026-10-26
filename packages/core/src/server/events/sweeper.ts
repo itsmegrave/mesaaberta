@@ -43,9 +43,9 @@ type Deps = {
  * closes the connection. Before that it asks the GM of every table whose session is over whether it
  * happened (`closeElapsedTables`), lifts the temporary bans that ended and sends the session reminders
  * that are due (`sendSessionReminders`) and the e-mails that ask a GM to answer, or the close in their
- * place (`remindToClose`). It also deletes the events and notifications past their retention period,
- * table chats past their retention period, and
- * the sign-in attempts older than a day. Does nothing without a database. Returns how many events it tried.
+ * place (`remindToClose`). It also deletes the events, notifications and table chats past their
+ * retention period, and the sign-in attempts older than a day. Does nothing without a database.
+ * Returns how many events it tried.
  */
 export async function runSweeper(
   env: DatabaseEnv & PollerEnv,
