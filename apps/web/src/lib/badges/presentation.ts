@@ -1,5 +1,6 @@
 import { m } from '#lib/paraglide/messages.js';
 import type { IconName } from '#lib/icons/names.js';
+import { badges as extensionBadges } from '#lib/extensions/panels.js';
 
 export type BadgePresentation = {
   icon: IconName;
@@ -230,5 +231,7 @@ export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
   },
 };
 
+/** The look of a badge, the public ones first, then an extension's (`panels.ts`). */
 export const presentationOf = (badgeId: string): BadgePresentation | null =>
-  BADGE_PRESENTATION[badgeId] ?? null;
+  (Object.hasOwn(BADGE_PRESENTATION, badgeId) ? BADGE_PRESENTATION[badgeId] : null) ??
+  (Object.hasOwn(extensionBadges, badgeId) ? extensionBadges[badgeId] : null);

@@ -13,7 +13,8 @@ import {
 import { routes } from '../../routes';
 import { recordEvent } from '../events/outbox';
 import type { Handler, StoredEvent } from '../events/types';
-import { BADGES, meets, statsFor, type BadgeDefinition } from './catalog';
+import { meets, statsFor, type BadgeDefinition } from './catalog';
+import { ruleBadges } from './rules';
 
 /** Who an event may have earned a badge for. */
 async function candidates(db: AnyDb, event: StoredEvent): Promise<string[]> {
@@ -112,7 +113,8 @@ export async function awardBadges(
 }
 
 /**
- * Awards the badges an event can have earned. Idempotent: a badge is a row keyed by person and
+ * Awards the badges an event can have earned, the extensions' too when their `triggers` name one of
+ * these types. Idempotent: a badge is a row keyed by person and
  * badge, so a retry awards nothing twice and a revoked badge stays revoked.
  */
 export const badgeHandler: Handler = {
@@ -127,7 +129,7 @@ export const badgeHandler: Handler = {
     'CatalogEntryApproved',
   ],
   async handle(event, db) {
-    const rules = BADGES.filter((rule) => rule.triggers.includes(event.type));
+    const rules = ruleBadges().filter((rule) => rule.triggers.includes(event.type));
     if (rules.length === 0) return;
     for (const profileId of await candidates(db, event)) {
       await awardBadges(db, profileId, rules, event);

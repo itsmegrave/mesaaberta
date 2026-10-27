@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import type { BadgePresentation } from '#lib/badges/presentation.js';
 import type { WidgetComponent } from './widget-types.js';
 
 /**
@@ -29,3 +30,9 @@ export interface FooterNote {
 }
 
 export const footerNotes: readonly FooterNote[] = [];
+
+/**
+ * How each extension badge (`Extension.badges`) looks and reads, by badge id, like the public
+ * `BADGE_PRESENTATION`. A badge missing here is not shown. None in the public build.
+ */
+export const badges: Readonly<Record<string, BadgePresentation>> = {};

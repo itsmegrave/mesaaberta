@@ -1,5 +1,6 @@
 import type { ZodType } from 'zod';
 import type { ViewerSegments } from '../audience/segments';
+import type { BadgeDefinition } from '../badges/catalog';
 import type { AnyDb } from '../db/client';
 import type { Handler } from '../events/types';
 import type { Flags } from '../flags/flags';
@@ -133,6 +134,14 @@ export interface Extension {
   asset?(db: AnyDb, key: string): Promise<PublicAsset | null>;
   /** Widgets shown over the app's pages, such as polls. */
   readonly widgets?: WidgetSurface;
+  /**
+   * Badges of its own, such as a supporter badge (Trello #224). The badge handler checks one after
+   * the public events its `triggers` name; for an event of its own, the extension's handler calls
+   * `awardBadges` with `triggers: []`. A `measure` reads its own tables through `stats.person`. The
+   * id must be new: it is stored in `user_badges` and keys the badge's look in the web app's
+   * `panels.ts` (`badges`).
+   */
+  readonly badges?: readonly BadgeDefinition[];
   /**
    * Erases what it keeps about a person whose account is being closed (`closeAccount`), inside
    * that transaction. The profile row stays, so a foreign key cascade never fires: delete here.

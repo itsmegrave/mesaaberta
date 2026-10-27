@@ -31,6 +31,11 @@ import { gmRatings } from '../ratings/service';
 
 /** What a rule can ask about one person. Each answer is worked out once, when first asked. */
 export type BadgeStats = {
+  /**
+   * The person and the database the rule reads, for a rule that asks something the questions below
+   * do not, such as an extension's badge reading its own tables.
+   */
+  readonly person: { readonly db: AnyDb; readonly profileId: string };
   /** Concluded sessions played as a confirmed player, unless the GM marked the person absent. */
   sessionsPlayed(): Promise<number>;
   /** How many different systems those sessions used. */
@@ -117,6 +122,7 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
       );
   const sessions = memo(async () => (await played())[0]);
   return {
+    person: { db, profileId },
     sessionsPlayed: async () => (await sessions()).total,
     systemsPlayed: async () => (await sessions()).systems,
     tablesRun: memo(async () => {
@@ -351,12 +357,16 @@ const ladder = (
     measure,
   }));
 
+/** Given only by a backfill, to who joined before the feature was released. */
+export const PIONEER_BADGE = 'pioneer';
+
 /** Given only by an admin, from the user's admin page: no rule awards them. */
 export const MANUAL_BADGES: readonly string[] = ['community-helper'];
 
 /**
  * The badges a rule awards. Manual ones (a grant by an admin) and the Pioneiro (backfill only) are
- * not here. Adding one is safe at any time; renaming or removing an id is not.
+ * not here, nor the extensions' (`ruleBadges` adds them). Adding one is safe at any time; renaming
+ * or removing an id is not.
  */
 export const BADGES: readonly BadgeDefinition[] = [
   { id: 'first-table', triggers: ATTENDANCE, goal: 1, measure: (stats) => stats.sessionsPlayed() },
