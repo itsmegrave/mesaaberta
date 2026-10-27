@@ -4,8 +4,7 @@ import { initialForm, validateStringForm } from '#lib/forms/contract.js';
 import { formMessage } from '#lib/forms/server.js';
 import { credentialsSchema } from '#lib/auth/credentials.js';
 import { withoutSecrets } from '#lib/forms/server.js';
-import { SIGN_IN_LIMIT, attemptKey, attemptWait } from '@mesaaberta/core/server/auth/attempt-limit';
-import { signInWithEmail, type SignInResult } from '@mesaaberta/core/server/auth/email';
+import type { SignInResult } from '@mesaaberta/core/server/auth/email';
 import { callApiRaw } from '#lib/server/api-client.js';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
@@ -34,22 +33,17 @@ const STATUS = {
 } as const satisfies Record<Exclude<SignInResult, 'ok'>, number>;
 
 /**
- * Signs in through the api Worker (behind `api_auth_sign_in`): it applies the limit, checks the
- * password with Supabase and answers the JWT pair, which is set here as the cookie session (Supabase
- * verifies the token again when it is set). Resolves to the result to show, or to null when the
- * flag is off or the call cannot be used (no binding, a failure, a session that does not set), so
- * the caller runs the same sign-in in this Worker.
+ * Signs in through the api Worker: it applies the limit, checks the password with Supabase and
+ * answers the JWT pair, which is set here as the cookie session (Supabase verifies the token again
+ * when it is set). A call that cannot be used (no binding, a failure, a session that does not set)
+ * is `failed`: the database work lives in the api.
  */
 async function signInViaApi(
   locals: App.Locals,
   ip: string,
   credentials: { email: string; password: string },
-): Promise<{ result: SignInResult; retryAfter?: number } | null> {
-  if (!locals.supabase) return null;
-  // Nobody is signed in to target, so the visitor's network (hashed) stands in for the user id.
-  const id = await attemptKey('sign_in', ip);
-  if (!(await locals.flags.isEnabled('api_auth_sign_in', { id }))) return null;
-
+): Promise<{ result: SignInResult; retryAfter?: number }> {
+  if (!locals.supabase) return { result: 'failed' };
   const answer = await callApiRaw(locals.env, '/v1/auth/sign-in', null, locals.log, credentials, {
     'x-client-ip': ip,
   });
@@ -59,18 +53,18 @@ async function signInViaApi(
     session?: { accessToken?: string; refreshToken?: string };
   };
   if (!answer || !remote.result || !(remote.result in STATUS || remote.result === 'ok'))
-    return null;
+    return { result: 'failed' };
   if (remote.result !== 'ok') return { result: remote.result, retryAfter: remote.retryAfter };
 
   const { accessToken, refreshToken } = remote.session ?? {};
-  if (!accessToken || !refreshToken) return null;
+  if (!accessToken || !refreshToken) return { result: 'failed' };
   const { error } = await locals.supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
   });
   if (error) {
     locals.log.warn('api sign-in session not set', { code: 'api_session_rejected' });
-    return null;
+    return { result: 'failed' };
   }
   return { result: 'ok' };
 }
@@ -92,29 +86,12 @@ export const actions: Actions = {
     if (!form.valid) return fail(400, { form });
 
     const viaApi = await signInViaApi(locals, getClientAddress(), { email, password });
-    if (viaApi) {
-      if (viaApi.result === 'ok') redirect(303, await afterSignIn(locals, next));
-      if (viaApi.result === 'rate_limited') {
-        const retryAfter = viaApi.retryAfter ?? 60;
-        setHeaders({ 'Retry-After': String(retryAfter) });
-        return formMessage(form, { code: 'rate_limited', retryAfter }, { status: 429 });
-      }
-      return formMessage(form, { code: viaApi.result }, { status: STATUS[viaApi.result] });
+    if (viaApi.result === 'ok') redirect(303, await afterSignIn(locals, next));
+    if (viaApi.result === 'rate_limited') {
+      const retryAfter = viaApi.retryAfter ?? 60;
+      setHeaders({ 'Retry-After': String(retryAfter) });
+      return formMessage(form, { code: 'rate_limited', retryAfter }, { status: 429 });
     }
-
-    // Counted per network before Supabase sees it, so a script cannot guess passwords in a loop.
-    const wait = await attemptWait(locals.db, SIGN_IN_LIMIT, getClientAddress());
-    if (wait !== null) {
-      setHeaders({ 'Retry-After': String(wait) });
-      return formMessage(form, { code: 'rate_limited', retryAfter: wait }, { status: 429 });
-    }
-
-    const result = await signInWithEmail(
-      { supabase: locals.supabase, db: locals.db, log: locals.log, ip: getClientAddress() },
-      { email, password },
-    );
-    if (result !== 'ok') return formMessage(form, { code: result }, { status: STATUS[result] });
-
-    redirect(303, await afterSignIn(locals, next));
+    return formMessage(form, { code: viaApi.result }, { status: STATUS[viaApi.result] });
   },
 };

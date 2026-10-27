@@ -36,30 +36,29 @@ type Env = DatabaseEnv & { SUPABASE_URL?: string; SUPABASE_PUBLISHABLE_KEY?: str
 export const CLIENT_IP_HEADER = 'x-client-ip';
 
 /**
- * The anonymous auth forms of Trello #120, moved out of the web Worker one at a time, behind
- * `api_auth`. There is no actor here: the visitor has no account yet, so these routes are guarded by
- * the Service Binding (or the shared secret over HTTP) alone, and by the per-network limits the web
- * form already applied. Nothing here sets a session; the forms that do (sign in, sign up, choosing a
- * new password) stay in the web Worker until a session hand-off is designed.
+ * The auth forms of Trello #120: the web Worker has no fallback for them. There is no actor here:
+ * the visitor has no account yet, so these routes are guarded by the Service Binding (or the shared
+ * secret over HTTP) alone, and by the per-network limits applied here. Nothing here sets a cookie:
+ * the forms that sign someone in answer the JWT pair and the web Worker sets it as the session.
  *
- * `POST /sign-in` checks the e-mail and password with Supabase (behind `api_auth_sign_in`) and
+ * `POST /sign-in` checks the e-mail and password with Supabase and
  * answers `{ result, session }`. `session` is the JWT pair Supabase issued (`accessToken`,
  * `refreshToken`), present only when `result` is `ok`: the web Worker sets it as the person's
  * cookie session, the only place a session lives. It is never logged and only the Service Binding
  * (or the shared secret) can reach this route. Refusals are `invalid` and `unconfirmed` (400),
  * `suspended` (403), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
- * `POST /sign-up` (behind `api_auth_sign_up`) creates the account from `{ email, password, origin,
+ * `POST /sign-up` creates the account from `{ email, password, origin,
  * next }` and answers `{ result, session }`: `signed_in` with the JWT pair when no confirmation is
  * needed, `check_email` (also for an address that already has an account) without one; refusals are
  * `weak_password` (400), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
- * `POST /new-password` (behind `api_auth_new_password`) sets `{ password, passwordConfirm }` for the
+ * `POST /new-password` sets `{ password, passwordConfirm }` for the
  * person whose own access token comes in `Authorization: Bearer`, and signs their other sessions out.
  * The token alone says whose password changes; Supabase checks it. Answers `{ result }`: `ok`, or
  * `weak_password` / `same_password` (400), `no_session` (401), `rate_limited` (429), `failed` (500).
  *
- * `POST /finish-login` (behind `api_auth_finish_login`) is the database half of a provider sign-in:
+ * `POST /finish-login` is the database half of a provider sign-in:
  * the web Worker has traded the code for a session and forwards the new access token in
  * `Authorization`; Supabase vouches for it, then the api ensures the profile, refuses a banned
  * account, records the connection (the visitor's address in `x-client-ip`) and answers

@@ -198,39 +198,6 @@ export const flagDefaults = {
   // form leave places out and a table page hides its place. The admin screens stay open to admins,
   // so places can be sent and approved before the release. Targeted by the person's id.
   api_directory_places: false,
-  // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
-  // the api Worker does them over the Service Binding, with the same per-network limit; a call that
-  // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:
-  // the flag is all or nothing. Needs the API binding and, on the api Worker, the Supabase settings.
-  api_auth: false,
-  // Off: signing in with e-mail and password (/login) runs in the web Worker. On: the api Worker
-  // does it over the Service Binding (limit, Supabase, profile) and answers the JWT pair Supabase
-  // issued, which the web Worker sets as the cookie session; refusals come back as the codes the form
-  // shows and a call that cannot be made falls back to the web path. Visitors are targeted by a hash
-  // of their network, so a rollout is a share of networks. Needs the API binding and, on the api
-  // Worker, the Supabase settings.
-  api_auth_sign_in: false,
-  // Off: creating an account with e-mail and password (/signup) runs in the web Worker. On: the api
-  // Worker does it over the Service Binding (limit, Supabase, profile) and, when no confirmation
-  // e-mail is needed, answers the JWT pair for the web Worker to set as the cookie session; the form
-  // shows the same codes as before and a call that cannot be made falls back to the web path. A
-  // session that the web Worker cannot set sends the person to /login, since the account exists.
-  // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
-  // the Supabase and mail settings.
-  api_auth_sign_up: false,
-  // Off: choosing a new password after the e-mailed link (/reset) runs in the web Worker. On: the api
-  // Worker sets it over the Service Binding with the person's own access token (Supabase checks it)
-  // and signs their other sessions out; refusals come back as the codes the form shows and a call
-  // that cannot be made falls back to the web path. Targeted by user id like the other signed-in
-  // flags. Needs the API binding and, on the api Worker, the Supabase settings.
-  api_auth_new_password: false,
-  // Off: the database half of a provider sign-in (the OAuth callback: profile, ban check, connection
-  // log) runs in the web Worker. On: the api Worker does it over the Service Binding with the new
-  // access token, which Supabase vouches for; the web Worker still trades the code for the session
-  // and signs the person out on a refusal. A call that cannot be made falls back to the web path.
-  // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
-  // the Supabase settings.
-  api_auth_finish_login: false,
   // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
   // the api Worker does it over the Service Binding and the web Worker dispatches the event it
   // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
