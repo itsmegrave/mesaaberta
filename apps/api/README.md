@@ -153,3 +153,16 @@ Web turns the dates back with `revivedDates` (`api-read.ts`).
 - `GET /v1/partners/:id/edit?owners=1`: a partner the actor looks after, with "Quem cuida do parceiro" when asked (403/404 otherwise; web shows both as its 404).
 - `POST /v1/partners/:id/owners/{invite,cancel,remove,leave}` (`{ username }`, `{ invitationId }`, `{ profileId }`, nothing).
 - `GET /v1/partners/invitations/:id`, `POST /v1/partners/invitations/:id/{accept,decline}`: the invite, for the invited person only.
+
+## Admin pages
+
+The admin pages read no database in web; each route is behind the admin guard, takes the page's filters as the query string, and answers a 404 past the last page:
+
+- `GET /v1/admin-reads/counts`: what waits beside each section (`adminCounts`, now in core).
+- `GET /v1/admin-reads/{badges,audit,reports,places,claims,crowdfundings,partners}` and `GET /v1/admin-reads/reports/:id`.
+- `GET /v1/admin-reads/catalog?kind=&q=&status=&page=&size=&sort=` (the console, with the approved entries of that kind) and `GET /v1/admin-reads/queue` (suggestions waiting, recent decisions, the approved catalog).
+- `GET /v1/admin-reads/announcements` (audience sizes and history) and `GET /v1/admin-reads/recipients?q=` (usernames).
+- `GET /v1/admin-reads/users/:id?badges=1` and `GET /v1/admin-reads/tables/:id` (one person or table, with history; badges only while `use_badges` is on for the admin).
+- `GET /v1/admin/events?…`: the event queue page (`eventFilters` moved to core).
+
+The extension panels (`/admin/[ext]`) still run in web until the api can read the extensions' flags.

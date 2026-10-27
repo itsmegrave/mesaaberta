@@ -9,25 +9,26 @@ import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { callApiRaw } from '#lib/server/api-client.js';
-import {
+import type {
   audienceSizes,
   listAnnouncements,
 } from '@mesaaberta/core/server/notifications/announcements';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, each load and action
 // checks again with `requireAdmin`, and the api authorizes the actor itself.
 export const load: PageServerLoad = async ({ locals, url }) => {
-  await requireUser(locals, url);
+  const user = await requireUser(locals, url);
   await requireAdmin(locals);
-  if (!locals.db) error(503, 'Database not configured');
 
-  const [form, sizes, history] = await Promise.all([
-    Promise.resolve(initialForm(ANNOUNCEMENT_DEFAULTS)),
-    audienceSizes(locals.db),
-    listAnnouncements(locals.db),
-  ]);
-  return { form, sizes, history };
+  const { sizes, history } = revivedDates(
+    await readFromApi<{
+      sizes: Awaited<ReturnType<typeof audienceSizes>>;
+      history: Awaited<ReturnType<typeof listAnnouncements>>;
+    }>(locals, user.id, '/v1/admin-reads/announcements'),
+  );
+  return { form: initialForm(ANNOUNCEMENT_DEFAULTS), sizes, history };
 };
 
 export const actions: Actions = {
@@ -35,7 +36,6 @@ export const actions: Actions = {
     const { locals, request, url } = event;
     await requireUser(locals, new URL(url.pathname, url));
     await requireAdmin(locals);
-    if (!locals.db) error(503, 'Database not configured');
 
     const form = validateFormData(
       await request.formData(),

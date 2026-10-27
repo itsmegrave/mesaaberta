@@ -2,29 +2,29 @@ import { error, fail, type RequestEvent } from '@sveltejs/kit';
 import { forceSchema, retryAllSchema, reviewSchema } from '#lib/admin/event-filters.js';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '#lib/server/admin-access.js';
-import { eventQueue, reviewEvent } from '#lib/server/admin/event-queue.js';
+import type { eventQueue, reviewEvent } from '#lib/server/admin/event-queue.js';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { queueBacklog, type QueueBinding } from '@mesaaberta/events';
 import { requireApi } from '#lib/server/api-required.js';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { requireUser } from '#lib/server/auth/guard.js';
 import type { forceFailedEvents, ForceOutcome } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.
 export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
-  await requireUser(locals, url);
+  const user = await requireUser(locals, url);
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
-  if (!locals.db) error(503, 'Database not configured');
 
-  const queue = await eventQueue(
-    locals.db,
-    await locals.getProfile(),
-    handlersFor(locals.env),
-    url.searchParams,
+  // A page past the last is the api's 404, which becomes the page's.
+  const queue = revivedDates(
+    await readFromApi<NonNullable<Awaited<ReturnType<typeof eventQueue>>>>(
+      locals,
+      user.id,
+      `/v1/admin/events?${url.searchParams}`,
+    ),
   );
-  if (!queue) error(404, 'Not found');
   // The web Worker holds the producer binding; a deploy without it, or one that cannot report, shows no panel.
   const backlog = await queueBacklog(
     (locals.env as { DOMAIN_EVENTS?: QueueBinding } | undefined)?.DOMAIN_EVENTS,

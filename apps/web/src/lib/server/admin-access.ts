@@ -34,10 +34,12 @@ export async function isAdmin(locals: App.Locals) {
 
 /**
  * Call at the top of every admin `load`, action and endpoint, besides the hook below: 404 for
- * anyone but an active admin, so the area does not even show it exists.
+ * anyone but an active admin, so the area does not even show it exists. Answers the admin.
  */
 export async function requireAdmin(locals: App.Locals) {
-  if (!(await isAdmin(locals))) error(404, 'Not found');
+  const profile = await locals.getProfile().catch(() => null);
+  if (!profile || !can(profile, 'admin:access')) error(404, 'Not found');
+  return profile;
 }
 
 /**

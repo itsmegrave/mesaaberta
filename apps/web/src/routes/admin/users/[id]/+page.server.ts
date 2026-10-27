@@ -1,27 +1,36 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { requireAdmin } from '#lib/server/admin-access.js';
-import { adminActivity, adminProfile } from '@mesaaberta/core/server/admin/profiles';
-import { profileHistory } from '@mesaaberta/core/server/admin/history';
+import type { adminActivity, adminProfile } from '@mesaaberta/core/server/admin/profiles';
+import type { profileHistory } from '@mesaaberta/core/server/admin/history';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { failFrom } from '#lib/server/fail-from.js';
 import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { standingOf } from '@mesaaberta/core/profile/standing';
-import { moderationOf } from '@mesaaberta/core/server/moderation/admin';
+import type { moderationOf } from '@mesaaberta/core/server/moderation/admin';
 import { accountActions, badgeActions } from '#lib/server/moderation/admin-actions.js';
-import { adminBadgesOf } from '@mesaaberta/core/server/badges/admin';
+import type { adminBadgesOf } from '@mesaaberta/core/server/badges/admin';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { profileFilters } from '@mesaaberta/core/admin/profile-filters';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) => {
-  await requireAdmin(locals);
+  const viewer = await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id))
     error(404, 'Not found');
-  if (!locals.db) error(503, 'Database not configured');
-  const profile = await adminProfile(locals.db, params.id);
-  if (!profile) error(404, 'Not found');
-  const viewer = await locals.getProfile();
+  // What the person holds and had taken away, while badges are on (`use_badges` is the switch).
+  const withBadges = await badgesEnabled(locals, viewer);
+  // An unknown person is the api's 404, which becomes the page's.
+  const { profile, activity, history, moderation, badges } = revivedDates(
+    await readFromApi<{
+      profile: NonNullable<Awaited<ReturnType<typeof adminProfile>>>;
+      activity: Awaited<ReturnType<typeof adminActivity>>;
+      history: Awaited<ReturnType<typeof profileHistory>>;
+      moderation: NonNullable<Awaited<ReturnType<typeof moderationOf>>>;
+      badges: Awaited<ReturnType<typeof adminBadgesOf>> | null;
+    }>(locals, viewer.id, `/v1/admin-reads/users/${params.id}${withBadges ? '?badges=1' : ''}`),
+  );
   const { avatarPath, avatarUrl, bannedAt, bannedUntil, ...user } = profile;
   const filters = profileFilters(url.searchParams);
   const back = new URLSearchParams({
@@ -33,17 +42,13 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
   return {
     user,
     standing: standingOf({ status: user.status, bannedAt, bannedUntil }),
-    activity: await adminActivity(locals.db, params.id),
-    history: await profileHistory(locals.db, viewer, params.id),
-    // What the person holds and had taken away, while badges are on (`use_badges` is the switch).
-    badges:
-      viewer && (await badgesEnabled(locals, viewer))
-        ? await adminBadgesOf(locals.db, viewer, params.id)
-        : null,
+    activity,
+    history,
+    badges,
     avatar: pictureOf(supabaseUrlOf(locals.env), { avatarPath, avatarUrl }),
     // Ban or revoke (never oneself, another admin, or a closed account), the ban itself, and the
     // reports accepted against the tables they run.
-    moderation: (await moderationOf(locals.db, viewer, params.id))!,
+    moderation,
     back: `/admin/users?${back}#profiles`,
   };
 };
@@ -55,14 +60,9 @@ export const actions: Actions = {
   // "Mandar mensagem": the direct conversation with this person (an admin may write to anyone who
   // takes direct messages).
   message: async ({ locals, params }) => {
-    await requireAdmin(locals);
-    if (!locals.db) error(503, 'Database not configured');
+    const admin = await requireAdmin(locals);
     try {
-      const conversationId = await openDirectConversation(
-        locals,
-        await locals.getProfile(),
-        params.id,
-      );
+      const conversationId = await openDirectConversation(locals, admin, params.id);
       redirect(303, `/m/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;
