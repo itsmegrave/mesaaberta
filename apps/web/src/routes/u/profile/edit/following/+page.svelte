@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   // "Seguindo": the two bell switches for the people this person follows, how many follow them,
   // and the people they follow, each with "Deixar de seguir". Nobody else sees any of it.
   import MAButton from '#lib/components/ui/MAButton.svelte';
@@ -46,26 +47,12 @@
     <fieldset>
       <legend id="follow-notices" class={heading}>{m.follow_notices_title()}</legend>
       <div class="mt-3 grid gap-1">
-        <label class="flex min-h-11 items-center gap-3">
-          <input
-            type="checkbox"
-            name="tables"
-            value="true"
-            bind:checked={$draft.tables}
-            class="checkbox"
-          />
+        <MACheckbox name="tables" value="true" bind:checked={$draft.tables}>
           {m.follow_notices_tables()}
-        </label>
-        <label class="flex min-h-11 items-center gap-3">
-          <input
-            type="checkbox"
-            name="seats"
-            value="true"
-            bind:checked={$draft.seats}
-            class="checkbox"
-          />
+        </MACheckbox>
+        <MACheckbox name="seats" value="true" bind:checked={$draft.seats}>
           {m.follow_notices_seats()}
-        </label>
+        </MACheckbox>
       </div>
     </fieldset>
     {#if notices.errors._errors?.[0]}

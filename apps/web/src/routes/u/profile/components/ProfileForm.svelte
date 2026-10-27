@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
@@ -331,16 +332,9 @@
     </FormField>
     {#if section === 'public'}
       <!-- Off until the person turns it on: the name may have come from Google or Discord. -->
-      <label class="-mt-2 flex min-h-11 items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          name="showName"
-          value="true"
-          bind:checked={$draft.showName}
-          class="checkbox"
-        />
+      <MACheckbox name="showName" value="true" bind:checked={$draft.showName} class="-mt-2 text-sm">
         {m.profile_show_name()}
-      </label>
+      </MACheckbox>
     {/if}
   {/if}
 

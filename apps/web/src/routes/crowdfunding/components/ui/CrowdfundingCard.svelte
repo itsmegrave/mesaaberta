@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MAButton from '#lib/components/ui/MAButton.svelte';
   // One campaign of the list. The card opens the campaign's own page on another site, so it is one
   // link that says it leaves (a new tab, with the site named for a screen reader); "Denunciar" sits
   // above that link as a button of its own.
@@ -90,15 +91,15 @@
       <span class="truncate">{submissionLabel(campaign.submitter, campaign.importSource)}</span>
     </p>
     {#if onreport}
-      <button
-        type="button"
+      <MAButton
+        size="custom"
         class="relative z-10 {cardIconButtonClass}"
         aria-label={m.crowdfunding_report_trigger({ name: campaign.name })}
         title={m.report_trigger()}
         onclick={() => onreport(campaign)}
       >
         <Icon name="flag" size={20} />
-      </button>
+      </MAButton>
     {/if}
   {/snippet}
 </MediaCard>

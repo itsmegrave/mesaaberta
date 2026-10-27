@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // The list's filters. On a desktop one row: the system, the modality, a multi-select box each for
   // the platforms and the tags. On a phone the modality and a "Filtros (N)" button that opens a
   // full-screen sheet with all of them. A change applies at once (the list reloads on the new
@@ -105,8 +105,8 @@
     class="inline-flex h-11 shrink-0 gap-1 rounded-full bg-surface-wash p-1"
   >
     {#each modalities as option (option.value)}
-      <button
-        type="button"
+      <MAButton
+        size="custom"
         aria-pressed={option.value === picked.modality}
         class="{segment} {option.value === picked.modality
           ? 'preset-filled-primary-500'
@@ -115,7 +115,7 @@
         >{#if option.value}<Icon
             name={modalityIcon(option.value)}
             size={18}
-          />{/if}{option.label()}</button
+          />{/if}{option.label()}</MAButton
       >
     {/each}
   </div>
@@ -168,8 +168,8 @@
         </div>
       {/if}
     {/each}
-    <button
-      type="button"
+    <MAButton
+      size="custom"
       class="{trigger} md:hidden"
       aria-haspopup="dialog"
       onclick={() => (sheetOpen = true)}
@@ -181,28 +181,28 @@
           class="chip h-6 min-w-6 rounded-full preset-filled-primary-500 px-2 text-xs font-bold"
           >{chips.length}</span
         >{/if}
-    </button>
+    </MAButton>
   </div>
 
   {#if chips.length > 0}
     <ul class="flex flex-wrap items-center gap-2" aria-label={m.tables_filters_active()}>
       {#each chips as chip (chip.key)}
         <li>
-          <button
-            type="button"
+          <MAButton
+            size="custom"
             class="inline-flex h-8 max-w-full items-center gap-2 rounded-full border border-primary-500 bg-surface-wash pr-2 pl-3 text-sm font-semibold whitespace-nowrap hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
             aria-label={m.tables_filter_remove({ name: chip.name })}
             onclick={chip.remove}
           >
             <span class="truncate">{chip.name}</span><Icon name="xmark" size={14} />
-          </button>
+          </MAButton>
         </li>
       {/each}
       <li>
-        <button
-          type="button"
+        <MAButton
+          size="custom"
           class="h-8 px-2 text-sm font-semibold text-link underline underline-offset-4 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
-          onclick={clearAll}>{m.tables_filters_clear_all()}</button
+          onclick={clearAll}>{m.tables_filters_clear_all()}</MAButton
         >
       </li>
     </ul>
@@ -263,10 +263,10 @@
           <footer
             class="flex items-center justify-between gap-3 border-t border-surface-200-800 px-5 py-3"
           >
-            <button
-              type="button"
+            <MAButton
+              size="custom"
               class="{buttonClass('secondary', 'sm')} font-semibold"
-              onclick={clearAll}>{m.tables_filters_clear_everything()}</button
+              onclick={clearAll}>{m.tables_filters_clear_everything()}</MAButton
             >
             <Dialog.CloseTrigger
               class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold"

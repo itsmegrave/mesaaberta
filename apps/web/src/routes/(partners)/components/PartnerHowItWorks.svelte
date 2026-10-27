@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MAButton from '#lib/components/ui/MAButton.svelte';
   import { copyText } from '#lib/clipboard.js';
   // "Como funciona": the three steps of the link exchange, our link to copy and the button to send a
   // partner. The partner is listed after an admin approves it, and the note says what can take it off.
@@ -65,13 +66,13 @@
           class="flex h-11 min-w-0 flex-1 items-center truncate rounded-lg border border-surface-200-800 bg-panel px-3 font-mono text-sm"
           >{ourLink}</code
         >
-        <button
-          type="button"
+        <MAButton
+          size="custom"
           class="btn h-11 shrink-0 gap-2 rounded-lg btn-secondary px-3 text-sm font-semibold"
           onclick={() => void copy()}
         >
           <Icon name="copy" size={16} />{m.partner_copy()}
-        </button>
+        </MAButton>
       </div>
       <p class="text-xs text-muted">{m.partner_our_link_hint()}</p>
     </div>

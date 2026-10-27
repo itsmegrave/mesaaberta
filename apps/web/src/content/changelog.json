@@ -25,6 +25,16 @@
         "kind": "improved",
         "title": "Troca de tema animada",
         "description": "Ao trocar entre claro e escuro, o novo tema se espalha a partir do botão. Com movimento reduzido ligado no aparelho, a troca é imediata."
+      },
+      {
+        "kind": "improved",
+        "title": "Um site mais estável por dentro",
+        "description": "Todas as páginas agora leem e gravam os dados por um único serviço, que roda perto do banco de dados. Nada muda no que você vê, e o site fica mais firme para as próximas novidades."
+      },
+      {
+        "kind": "improved",
+        "title": "Sessão mais protegida",
+        "description": "O cookie que mantém você conectado não fica mais ao alcance de scripts da página."
       }
     ]
   },
