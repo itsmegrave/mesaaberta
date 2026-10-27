@@ -1,11 +1,12 @@
 import { cardPictures } from './card-pictures';
 import { error } from '@sveltejs/kit';
+import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { followsEnabled } from '#lib/server/follows/state.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicReadNow } from '@mesaaberta/core/server/reads/now';
-import { readHome, type Home } from '@mesaaberta/core/server/reads/home';
+import type { readHome, Home } from '@mesaaberta/core/server/reads/home';
 
 type HomeTable = NonNullable<Home['rows']['followed']>[number];
 
@@ -16,15 +17,19 @@ type HomeTable = NonNullable<Home['rows']['followed']>[number];
  */
 export const read = async ({ locals, url }: RequestEvent) => {
   const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
   const profile = await locals.getProfile();
   if (!profile) error(404, 'Not found');
 
   const now = publicReadNow();
-  const home = await readHome(locals.db, user.id, now, {
-    follows: await followsEnabled(locals, profile),
-  });
-  if (!home) error(404, 'Not found');
+  // The api reads it (its 404 becomes the page's); `now` there is the same rounded minute.
+  const follows = (await followsEnabled(locals, profile)) ? '?follows=1' : '';
+  const home = revivedDates(
+    await readFromApi<NonNullable<Awaited<ReturnType<typeof readHome>>>>(
+      locals,
+      user.id,
+      `/v1/reads/home${follows}`,
+    ),
+  );
 
   const supabaseUrl = supabaseUrlOf(locals.env);
   const withImage = (table: HomeTable) => cardPictures(supabaseUrl)(table);

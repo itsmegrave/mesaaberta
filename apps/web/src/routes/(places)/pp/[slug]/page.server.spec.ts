@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readPlacePage } from '@mesaaberta/core/server/places/directory';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/places/directory', () => ({ readPlacePage: vi.fn() }));
@@ -12,10 +13,12 @@ const event = (role = 'member') =>
   ({
     params: { slug: 'taverna' },
     locals: {
-      db: {},
-      env: { SUPABASE_URL: 'https://sb.test' },
+      // The api answers over the mocked reader; the stand-in database only names the viewer.
+      env: apiOver(actorsOnly([{ id: viewer, role, status: 'active' }]), {
+        SUPABASE_URL: 'https://sb.test',
+      }),
       flags: { isEnabled: flagged },
-      log: { info: logged },
+      log: { info: logged, warn: vi.fn() },
       getUser: async () => ({ id: viewer }),
       getProfile: async () => ({ id: viewer, role, status: 'active' }),
     },

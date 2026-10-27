@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestDb } from '#lib/server/db/test-db.js';
-import { apiOver } from '#lib/server/db/test-api.js';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { listNewTables, listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { readHome } from '@mesaaberta/core/server/reads/home';
 import { load } from './+page.server';
@@ -112,9 +112,8 @@ describe('the home page load', () => {
       params: {},
       url: new URL('https://x.test/'),
       locals: {
-        db: {},
-        log: { error },
-        env: {},
+        log: { error, warn: vi.fn() },
+        env: apiOver(actorsOnly([{ id: 'me', role: 'member', status: 'active' }])),
         flags: { isEnabled: async (name: string) => name === 'use_signed_in_home' },
         getUser: async () => ({ id: 'me' }),
         getProfile: async () => ({ id: 'me', username: 'eu', name: null, role: 'member' }),

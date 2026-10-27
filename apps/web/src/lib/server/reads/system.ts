@@ -1,16 +1,25 @@
 import { cardPictures } from './card-pictures';
-import { error, redirect } from '@sveltejs/kit';
+import { error, isHttpError, redirect } from '@sveltejs/kit';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { readSystemPage } from '@mesaaberta/core/server/systems/directory';
+import type { readSystemPage } from '@mesaaberta/core/server/systems/directory';
+import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
 
 /** The page of one system (`/s/[slug]`); a merged system moves to the one it was merged into. */
 export const read = async ({ locals, params }: RequestEvent) => {
   await requireDirectory(locals, 'systems');
-  if (!locals.db) error(503, 'Database not configured');
   const slug = params.slug ?? '';
-  const found = await readSystemPage(locals.db, slug, new Date());
+  const found = await readFromApi<NonNullable<Awaited<ReturnType<typeof readSystemPage>>>>(
+    locals,
+    (await locals.getUser())?.id ?? null,
+    `/v1/reads/systems/${encodeURIComponent(slug)}`,
+  )
+    .then(revivedDates)
+    .catch((cause) => {
+      if (isHttpError(cause) && cause.status === 404) return null;
+      throw cause;
+    });
   if (!found) {
     // The request line already names the system (`resourceType`, `resourceId`).
     locals.log.info('system not found', { code: 'system_not_found' });
