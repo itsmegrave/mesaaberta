@@ -87,3 +87,14 @@ The inbox and threads are API-owned, without a flag or web database fallback (we
 - `GET /v1/messages/blocked`, `POST /v1/messages/block`, `POST /v1/messages/:id/report`: blocking and reporting; web checks `use_message_safety` before it calls these.
 
 Pictures stay paths: the web Worker turns them into URLs.
+
+## The signed-in person's frame
+
+`/v1/me` is API-owned, without a flag or web database fallback:
+
+- `GET /v1/me`: the actor's whole profile row (`{ profile }`, null when the account has no profile yet). The web Worker's `locals.getProfile()` reads it once per request, so every policy check uses the api's copy.
+- `GET /v1/me/shell`: the header on every page (the bell's number and latest few, the conversations with something unread, and for an admin the catalog suggestions waiting).
+- `GET /v1/me/badges`: the two numbers the page polls.
+- `GET /v1/me/notifications?page=N&category=&unread=1`: a page of the feed and the unread total (a page past the last is a 404).
+
+`achievements=1` says the badge notices are on for the person (`use_badges`, decided in web).

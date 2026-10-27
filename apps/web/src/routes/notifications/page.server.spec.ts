@@ -1,21 +1,27 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { notificationPage } from '@mesaaberta/core/server/notifications/service';
-import { NotFound } from '@mesaaberta/core/server/errors';
 import { actions, load } from './+page.server';
 
-vi.mock('@mesaaberta/core/server/notifications/service', () => ({
-  notificationPage: vi.fn(async (_db: unknown, _id: string, page: number) => ({
-    items: [],
-    page,
-    pages: 1,
-  })),
-  unreadCount: vi.fn(async () => 3),
-}));
-
-// The api Worker marks them; it answers the opened notification's link, when it has one.
+// The api Worker reads the feed and marks them; it answers the opened notification's link, when
+// it has one, and a 404 past the last page.
 let link: string | null = null;
-const api = vi.fn(async (_request: Request) => Response.json({ eventIds: [], link }));
+let pastTheEnd = false;
+const api = vi.fn(async (request: Request) => {
+  const url = new URL(request.url);
+  if (url.pathname !== '/v1/me/notifications') return Response.json({ eventIds: [], link });
+  if (pastTheEnd) return Response.json({ error: 'not_found' }, { status: 404 });
+  return Response.json({
+    items: [{ id: n1, createdAt: '2026-10-01T10:00:00.000Z', readAt: null }],
+    page: Number(url.searchParams.get('page') ?? 1),
+    pages: 3,
+    unreadTotal: 3,
+  });
+});
+/** The feed's query string as the load asked the api. */
+const feedQuery = () => {
+  const request = api.mock.calls.map(([r]) => r).findLast((r) => r.url.includes('/v1/me/'));
+  return request ? Object.fromEntries(new URL(request.url).searchParams) : null;
+};
 /** What the action asked the api: the route and the body, or nothing. */
 const asked = async () => {
   const request = api.mock.lastCall?.[0];
@@ -60,6 +66,7 @@ const act = (name: keyof typeof actions, e: RequestEvent) =>
 beforeEach(() => {
   vi.clearAllMocks();
   link = null;
+  pastTheEnd = false;
 });
 
 describe('load', () => {
@@ -67,21 +74,17 @@ describe('load', () => {
   const run = (search: string) => load(event(search) as any) as Promise<any>;
 
   it('lists the viewer’s notifications, filtered by a known category', async () => {
-    expect((await run('?category=rating')).category).toBe('rating');
-    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 1, {
-      category: 'rating',
-      unread: false,
-      withAchievements: false,
-    });
+    const result = await run('?category=rating');
+    expect(result.category).toBe('rating');
+    expect(feedQuery()).toEqual({ category: 'rating' });
+    expect(api.mock.lastCall?.[0].headers.get('x-actor-id')).toBe('me');
+    // JSON turned the dates into strings; the page gets them as dates.
+    expect(result.notifications[0].createdAt).toEqual(new Date('2026-10-01T10:00:00Z'));
   });
 
   it('ignores a category it does not know', async () => {
     expect((await run('?category=nope')).category).toBeNull();
-    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 1, {
-      category: undefined,
-      unread: false,
-      withAchievements: false,
-    });
+    expect(feedQuery()).toEqual({});
   });
 
   it('includes the badge notices only where the badges are released', async () => {
@@ -93,28 +96,21 @@ describe('load', () => {
       locals: on,
     } as never)) as { withAchievements: boolean };
     expect(result.withAchievements).toBe(true);
-    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 1, {
-      category: undefined,
-      unread: false,
-      withAchievements: true,
-    });
+    expect(feedQuery()).toEqual({ achievements: '1' });
   });
 
   it('reads the page and the unread filter from the query, a bad page as the first', async () => {
     const result = await run('?category=table&unread=1&page=2');
     expect(result).toMatchObject({ page: 2, unread: true, unreadTotal: 3 });
     expect(Number.isNaN(Date.parse(result.seenAt))).toBe(false);
-    expect(notificationPage).toHaveBeenLastCalledWith({}, 'me', 2, {
-      category: 'table',
-      unread: true,
-      withAchievements: false,
-    });
+    expect(feedQuery()).toEqual({ page: '2', category: 'table', unread: '1' });
+    // The page travels as written: the api reads a bad one as the first.
     await run('?page=abc');
-    expect(vi.mocked(notificationPage).mock.lastCall?.[2]).toBe(1);
+    expect(feedQuery()).toEqual({ page: 'abc' });
   });
 
   it('answers 404 past the last page', async () => {
-    vi.mocked(notificationPage).mockRejectedValueOnce(new NotFound('no such page'));
+    pastTheEnd = true;
     await expect(run('?page=9')).rejects.toMatchObject({ status: 404 });
   });
 
