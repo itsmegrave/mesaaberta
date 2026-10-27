@@ -1,5 +1,7 @@
+import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { gameTables } from '@mesaaberta/db/schema';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { messageReportSchema } from '@mesaaberta/core/moderation/reports';
@@ -10,6 +12,7 @@ import {
   listInbox,
   listMessages,
   markConversationRead,
+  openDirect,
 } from '@mesaaberta/core/server/messages/service';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
@@ -59,6 +62,19 @@ export function messageRoutes(open: Open = openDb) {
   app.post('/tables/:slug', async (c) =>
     c.json(await openTableChat(c.get('db'), c.get('actor'), c.req.param('slug'))),
   );
+
+  // "Falar com quem mestra": the direct conversation with an active table's GM, made when there
+  // is none (`directBlocker` decides who may start one).
+  app.post('/tables/:slug/gm', async (c) => {
+    const [table] = await c
+      .get('db')
+      .select({ gmId: gameTables.gmId, slug: gameTables.slug })
+      .from(gameTables)
+      .where(and(eq(gameTables.slug, c.req.param('slug')), eq(gameTables.status, 'active')));
+    if (!table) return c.json({ error: 'not_found' }, 404);
+    const conversation = await openDirect(c.get('db'), c.get('actor'), table.gmId);
+    return c.json({ eventIds: [], conversationId: conversation.id, slug: table.slug });
+  });
 
   // Anything that is not a conversation id is no conversation.
   app.use('/:id/*', async (c, next) => {

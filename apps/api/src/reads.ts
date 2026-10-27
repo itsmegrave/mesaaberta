@@ -11,6 +11,11 @@ import { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readManage } from '@mesaaberta/core/server/reads/manage';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { viewerTimezone } from '@mesaaberta/core/time/timezone';
+import { placeOptions, withPlace } from '@mesaaberta/core/server/places/picker';
+import { withLocation } from '@mesaaberta/core/server/location/cep';
+import { tableInputSchema } from '@mesaaberta/core/tables/schema';
+import { z } from 'zod';
+import { loadTableForEdit } from '@mesaaberta/core/server/tables/write';
 import { refusal } from './refusal';
 import { userGuard, viewerGuard, type UserVariables, type ViewerVariables } from './user-guard';
 
@@ -54,6 +59,46 @@ export function readRoutes(open: Open = openDb) {
     try {
       return c.json(
         await readEditCatalog(c.get('db'), c.get('actor'), c.req.param('slug'), timezone),
+      );
+    } catch (error) {
+      const refused = refusal(c, error);
+      if (refused) return refused;
+      throw error;
+    }
+  });
+
+  // The "Onde jogar" picker of the new-table and edit forms: the listed places.
+  app.get('/place-options', async (c) => c.json(await placeOptions(c.get('db'))));
+
+  // Where a table the GM is saving happens: the "Onde jogar" place they picked (`placeSlug`, only
+  // while the places are on, which web decides) brings its CEP and area; otherwise the CEP they
+  // typed is looked up. Answers the input to save, or the refusal on the field.
+  app.post('/table-location', async (c) => {
+    const parsed = z
+      .object({ input: tableInputSchema, placeSlug: z.string().max(200) })
+      .safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: 'invalid', field: '', message: 'invalid' }, 400);
+    const { input, placeSlug } = parsed.data;
+    try {
+      return c.json(
+        placeSlug && input.modality === 'in_person'
+          ? await withPlace(c.get('db'), input, placeSlug)
+          : await withLocation(c.get('db'), input),
+      );
+    } catch (error) {
+      const refused = refusal(c, error);
+      if (refused) return refused;
+      throw error;
+    }
+  });
+
+  // A table as its edit form shows it, times in the zone web resolved (`?tz=`). Someone else's
+  // table is a 403 (a concluded one says why); one that is not there a 404.
+  app.get('/table-edit/:slug', async (c) => {
+    const { timezone } = viewerTimezone(c.req.query('tz'), null);
+    try {
+      return c.json(
+        await loadTableForEdit(c.get('db'), c.get('actor'), c.req.param('slug'), timezone),
       );
     } catch (error) {
       const refused = refusal(c, error);

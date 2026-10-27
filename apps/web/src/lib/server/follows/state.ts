@@ -1,5 +1,5 @@
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { isFollowing } from '@mesaaberta/core/server/follows/service';
+import { readFromApi } from '../api-read';
 
 type Profile = Parameters<typeof can>[0] & { id: string };
 
@@ -16,15 +16,39 @@ export async function followsEnabled(locals: Pick<App.Locals, 'flags'>, profile:
  * it is the viewer's own profile); `signedIn: false` for a visitor, whose button leads to Entrar.
  */
 export async function followState(
-  locals: Pick<App.Locals, 'flags' | 'db' | 'getProfile'>,
+  locals: App.Locals,
   targetId: string,
 ): Promise<{ profileId: string; following: boolean; signedIn: boolean } | null> {
   const profile = await locals.getProfile();
-  if (profile?.id === targetId || !locals.db) return null;
+  if (profile?.id === targetId) return null;
   if (!(await followsEnabled(locals, profile))) return null;
-  return {
-    profileId: targetId,
-    signedIn: profile !== null,
-    following: profile ? await isFollowing(locals.db, profile.id, targetId) : false,
-  };
+  const following = profile
+    ? (
+        await readFromApi<{ following: boolean }>(
+          locals,
+          profile.id,
+          `/v1/follows/${encodeURIComponent(targetId)}`,
+        )
+      ).following
+    : false;
+  return { profileId: targetId, signedIn: profile !== null, following };
+}
+
+/**
+ * The Seguir button on a table's GM row: the same as `followState`, for the GM of the table the api
+ * finds by its slug (the GM's id stays out of the table read).
+ */
+export async function gmFollowState(
+  locals: App.Locals,
+  slug: string,
+): Promise<{ profileId: string; following: boolean; signedIn: boolean } | null> {
+  const profile = await locals.getProfile();
+  if (!(await followsEnabled(locals, profile))) return null;
+  const gm = await readFromApi<{ profileId: string; following: boolean }>(
+    locals,
+    profile?.id ?? null,
+    `/v1/follows/gm/${encodeURIComponent(slug)}`,
+  );
+  if (profile?.id === gm.profileId) return null;
+  return { profileId: gm.profileId, signedIn: profile !== null, following: gm.following };
 }

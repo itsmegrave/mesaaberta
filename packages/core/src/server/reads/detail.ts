@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { tablePlace } from '../places/picker';
 import type { AnyDb } from '../db/client';
 import { profiles } from '../db/schema';
 import { can, joinBlocker, rateBlocker, type Actor } from '../auth/policy';
@@ -104,5 +105,8 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     // How to join is private: only the GM and the confirmed players get it.
     joinDetails:
       profile?.id === gmId || myStatus === 'confirmed' ? await joinDetailsOf(db, id) : null,
+    // The "Onde jogar" place it happens at, when that place is listed. The web drops it while the
+    // places directory is off.
+    place: table.placeId ? await tablePlace(db, table.placeId) : null,
   };
 }

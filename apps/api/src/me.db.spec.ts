@@ -53,6 +53,11 @@ describe('api me routes over a database', () => {
     expect(typeof shell.pendingSuggestions).toBe('number');
   });
 
+  it('says whether the actor is under a limit, and 404 for a limit it does not know', async () => {
+    expect(await (await get('/limits/table', ana)).json()).toEqual({ ok: true });
+    expect((await get('/limits/whatever', ana)).status).toBe(404);
+  });
+
   it('answers a page of the feed, a bad page as the first and one past the last as a 404', async () => {
     expect(await (await get('/notifications?page=abc&achievements=1', ana)).json()).toMatchObject({
       page: 1,
