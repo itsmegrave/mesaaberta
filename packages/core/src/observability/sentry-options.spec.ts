@@ -242,7 +242,7 @@ describe('sentry options', () => {
       contexts: {
         flags: {
           values: [
-            { flag: 'api_inbox', result: true },
+            { flag: 'api_events_fenced_leases', result: true },
             { flag: 'ana@example.com', result: true },
             { flag: 'use_badges', result: 'yes' },
           ],
@@ -254,7 +254,7 @@ describe('sentry options', () => {
     } as unknown as ErrorEvent;
 
     expect(privateEvent(event)?.contexts).toEqual({
-      flags: { values: [{ flag: 'api_inbox', result: true }] },
+      flags: { values: [{ flag: 'api_events_fenced_leases', result: true }] },
       cloud_resource: { 'cloud.provider': 'cloudflare', 'cloud.region': undefined },
       runtime: { name: 'cloudflare', version: undefined },
     });

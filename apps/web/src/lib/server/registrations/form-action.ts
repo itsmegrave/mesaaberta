@@ -11,7 +11,6 @@ import { failFrom } from '../fail-from';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { RegistrationActionName } from '@mesaaberta/core/server/registrations/decisions';
-import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 import { writeViaApi } from '../api-write';
 
 type Event = {
@@ -30,21 +29,23 @@ type Event = {
 export async function runRegistrationAction<T extends Record<string, unknown>>(
   event: Event,
   schema: z.ZodType<T>,
-  run: (db: AnyDb, actor: Actor | null, data: T) => Promise<{ eventIds: string[] }>,
   /**
-   * The same operation for the api Worker, behind `api_registrations` (or the `flag` it names, as
-   * `api_ratings` for a rating); `run` stays the fallback.
+   * The api route that makes it (`/v1/tables/<slug>/<action>`), or, for an operation the api does
+   * not serve yet, the service in this Worker.
    */
-  api?: (data: T) => {
-    action: RegistrationActionName;
-    slug: string;
-    body: Record<string, unknown>;
-    flag?: FlagName;
-  },
+  how:
+    | ((db: AnyDb, actor: Actor | null, data: T) => Promise<{ eventIds: string[] }>)
+    | {
+        api: (data: T) => {
+          action: RegistrationActionName;
+          slug: string;
+          body: Record<string, unknown>;
+        };
+      },
 ) {
   const { locals, url, request } = event;
   // The page itself, not the `?/join` action address, which only makes sense as a POST.
-  await requireUser(locals, new URL(url.pathname, url));
+  const user = await requireUser(locals, new URL(url.pathname, url));
   if (!locals.db) error(503, 'Database not configured');
 
   const form = validateStringForm(await request.formData(), schema, [
@@ -59,19 +60,21 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
   if (!form.valid) return formMessage(form, { code: 'invalid' }, { status: 400 });
 
   try {
-    const profile = await locals.getProfile();
     const data = form.data as T;
-    const call = api?.(data);
-    const { eventIds } =
-      (call && profile
-        ? await writeViaApi(
-            locals,
-            call.flag ?? 'api_registrations',
-            profile,
-            `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
-            call.body,
-          )
-        : null) ?? (await run(locals.db, profile, data));
+    let eventIds: string[];
+    if (typeof how === 'function') {
+      eventIds = (await how(locals.db, await locals.getProfile(), data)).eventIds;
+    } else {
+      const call = how.api(data);
+      eventIds = (
+        await writeViaApi(
+          locals,
+          user,
+          `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
+          call.body,
+        )
+      ).eventIds;
+    }
     for (const id of eventIds)
       locals.afterResponse((db) =>
         dispatchEvent(db, handlersFor(event.locals.env), id, new Date(), locals.log),

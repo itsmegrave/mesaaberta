@@ -13,7 +13,6 @@ import { timezoneOf } from '#lib/server/time.js';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
-import { createTable } from '@mesaaberta/core/server/tables/write';
 import {
   TABLE_CREATION_LIMIT,
   TABLE_DRAFT_LIMIT,
@@ -134,29 +133,25 @@ export const actions: Actions = {
       { ...event, formTimezone: source?.input.timezone },
       async (input, imagePath, draft) => {
         const profile = await locals.getProfile();
-        // Through the api Worker when `api_table_write` is on for this person; here otherwise.
-        if (sourceSlug && !profile) error(403, 'Forbidden');
-        const remote = sourceSlug
+        if (!profile) error(403, 'Forbidden');
+        // The api Worker writes the table, or its copy.
+        const written = sourceSlug
           ? await requireApiWrite(
               locals,
-              profile!,
+              profile,
               `/v1/tables/${encodeURIComponent(sourceSlug)}/duplicate`,
               { input, imagePath: imagePath ?? null, draft, requestKey },
             )
-          : profile
-            ? await writeViaApi(locals, 'api_table_write', profile, '/v1/table-writes', {
-                input,
-                imagePath: imagePath ?? null,
-                draft,
-              })
-            : null;
-        const created = remote
-          ? {
-              slug: String(remote.body.slug),
-              draft: remote.body.draft === true,
-              eventId: remote.eventIds[0],
-            }
-          : await createTable(db, profile, input, { imagePath, draft });
+          : await writeViaApi(locals, profile, '/v1/table-writes', {
+              input,
+              imagePath: imagePath ?? null,
+              draft,
+            });
+        const created = {
+          slug: String(written.body.slug),
+          draft: written.body.draft === true,
+          eventId: written.eventIds[0],
+        };
         // After the commit and the response, so the visitor never waits for a handler.
         locals.afterResponse((db) =>
           dispatchEvent(db, handlersFor(event.locals.env), created.eventId, new Date(), locals.log),

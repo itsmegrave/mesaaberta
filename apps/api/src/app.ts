@@ -59,38 +59,38 @@ export function createApi() {
       durationMs: Date.now() - started,
     });
   });
-  // The first moved route (Trello #120): the admin event actions, behind `api_admin_events` on web.
+  // The writes (Trello #120) live here only; web has no fallback. The admin event actions:
   app.route('/v1/admin/events', eventRoutes());
-  // The second: the catalog console's decisions, behind `api_admin_catalog` on web.
+  // the catalog console's decisions:
   app.route('/v1/admin/catalog', catalogRoutes());
-  // The third: the moderation decisions, behind `api_admin_moderation` on web.
+  // the moderation decisions:
   app.route('/v1/admin/moderation', moderationRoutes());
-  // The announcements console (confirm, then send), behind `api_admin_announcements`.
+  // the announcements console (confirm, then send).
   app.route('/v1/admin/announcements', announcementRoutes());
   // The admin's hand actions on an installed extension (Instagram: queue, reconcile, connect),
   // behind `api_admin_<extension>`. After the routes above, which have a path of their own.
   app.route('/v1/admin', extensionRoutes());
-  // The first player-facing one: join, leave and the GM's decisions, behind `api_registrations`.
+  // Join, leave and the GM's decisions.
   app.route('/v1/tables', tableWriteRoutes(undefined, true));
 
   app.route('/v1', invitationRoutes());
   app.route('/v1/tables', registrationRoutes());
-  // The GM's manage page (publish, happened, not held, postpone), behind `api_table_lifecycle`.
+  // The GM's manage page (publish, happened, not held, postpone).
   app.route('/v1/manage', manageRoutes());
-  // The GM's table record (create, edit, disable), behind `api_table_write`.
+  // The GM's table record (create, edit, disable).
   app.route('/v1/table-writes', tableWriteRoutes());
-  // Conversations and the notification feed (send, mute, open, read), behind `api_inbox`.
+  // Conversations and the notification feed (send, mute, open, read).
   app.route('/v1/inbox', inboxRoutes());
-  // What a member submits (partners, crowdfunding campaigns), behind `api_submissions`.
+  // What a member submits (partners, crowdfunding campaigns).
   app.route('/v1/submissions', submissionRoutes());
-  // Reporting a table, partner or campaign and withdrawing one's own partner, behind `api_reports`.
+  // Reporting a table, partner or campaign and withdrawing one's own partner.
   app.route('/v1/reports', reportRoutes());
-  // Adding a password to a provider-only account (a code by e-mail, then the password), behind
-  // `api_password`. Before `/v1/account`, whose `/:action` would otherwise catch it.
+  // Adding a password to a provider-only account (a code by e-mail, then the password). Before
+  // `/v1/account`, whose `/:action` would otherwise catch it.
   app.route('/v1/account/password', passwordRoutes());
   // The auth forms (password reset, sign-in, sign-up, new password, finish login).
   app.route('/v1/auth', authRoutes());
-  // The person's own profile (the form and the direct-messages switch), behind `api_account`.
+  // The person's own profile (the form and the direct-messages switch).
   app.route('/v1/account', accountRoutes());
 
   // The page readers: the web Worker reads no database for these pages.

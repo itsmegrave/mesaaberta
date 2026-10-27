@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { validateStringForm, validateFormData } from '#lib/forms/contract.js';
 import { formMessage } from '#lib/forms/server.js';
 import { blockSchema, messageSchema, muteSchema } from '@mesaaberta/core/messages/schema';
@@ -11,7 +11,6 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { RateLimited } from '@mesaaberta/core/server/errors';
 import { failFrom } from '#lib/server/fail-from.js';
-import { sendMessage, setMuted } from '@mesaaberta/core/server/messages/service';
 import { loadChatThread } from '#lib/server/messages/thread.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -19,26 +18,17 @@ export const load: PageServerLoad = (event) => loadChatThread(event, event.param
 
 export const actions: Actions = {
   send: async ({ request, locals, url, params, setHeaders }) => {
-    await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
+    const user = await requireUser(locals, new URL(url.pathname, url));
 
     const form = validateStringForm(await request.formData(), messageSchema, ['body', 'tableId']);
     if (!form.valid) return fail(400, { form });
 
     try {
-      const profile = await locals.getProfile();
-      // Through the api Worker when `api_inbox` is on for this person; here otherwise.
-      const remote = profile
-        ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/send', {
-            conversationId: params.id,
-            body: form.data.body,
-            ...(form.data.tableId ? { tableId: form.data.tableId } : {}),
-          })
-        : null;
-      if (!remote)
-        await sendMessage(locals.db, profile, params.id, form.data.body, {
-          tableId: form.data.tableId ?? null,
-        });
+      await writeViaApi(locals, user, '/v1/inbox/send', {
+        conversationId: params.id,
+        body: form.data.body,
+        ...(form.data.tableId ? { tableId: form.data.tableId } : {}),
+      });
     } catch (cause) {
       if (cause instanceof RateLimited) {
         setHeaders({ 'Retry-After': String(cause.retryAfterSeconds) });
@@ -51,8 +41,7 @@ export const actions: Actions = {
   },
 
   mute: async ({ request, locals, url, params }) => {
-    await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
+    const user = await requireUser(locals, new URL(url.pathname, url));
 
     const form = validateFormData(
       await request.formData(),
@@ -62,14 +51,10 @@ export const actions: Actions = {
     );
     if (!form.valid) return fail(400, { form });
     try {
-      const profile = await locals.getProfile();
-      const remote = profile
-        ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/mute', {
-            conversationId: params.id,
-            muted: form.data.muted,
-          })
-        : null;
-      if (!remote) await setMuted(locals.db, profile, params.id, form.data.muted);
+      await writeViaApi(locals, user, '/v1/inbox/mute', {
+        conversationId: params.id,
+        muted: form.data.muted,
+      });
     } catch (cause) {
       const failure = failFrom(cause);
       return formMessage(form, { code: failure.data.error }, { status: failure.status });

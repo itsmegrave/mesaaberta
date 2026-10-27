@@ -4,13 +4,10 @@ import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { eventQueue, reviewEvent } from '#lib/server/admin/event-queue.js';
 import { queueBacklog, type QueueBinding } from '@mesaaberta/events';
-import { callApi } from '#lib/server/api-client.js';
+import { requireApi } from '#lib/server/api-required.js';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { requireUser } from '#lib/server/auth/guard.js';
-import {
-  forceEvent,
-  forceFailedEvents,
-  type ForceOutcome,
-} from '@mesaaberta/core/server/events/dispatcher';
+import type { forceFailedEvents, ForceOutcome } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -35,95 +32,58 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
   return { queue, backlog };
 };
 
-/** The guard every action shares: signed in, an admin, with a database. Returns who is acting. */
+/** The guard every action shares: signed in and an admin. Returns who is acting. */
 async function admin({ locals, url }: RequestEvent) {
   await requireUser(locals, new URL(url.pathname, url));
   await requireAdmin(locals);
-  if (!locals.db) error(503, 'Database not configured');
   const profile = await locals.getProfile();
   if (!profile) error(404, 'Not found');
-  return { db: locals.db, adminId: profile.id };
+  return profile;
 }
 
-/** `api_admin_events` for this admin (kill switch: off sends the actions back to this Worker). */
-const apiEnabled = ({ locals }: RequestEvent, adminId: string) =>
-  locals.flags.isEnabled('api_admin_events', { id: adminId, isAdmin: true });
+/** One admin action on the queue, made by the api Worker (`/v1/admin/events/...`). */
+const run = <T>(event: RequestEvent, actor: Actor, path: string) =>
+  requireApi<T>(event.locals, actor, `/v1/admin/events/${path}`, { method: 'POST' });
 
 export const actions: Actions = {
   // "Rodar agora": one event, run at once. The page shows how it went.
   force: async (event) => {
-    const { db, adminId } = await admin(event);
+    const actor = await admin(event);
     const form = validateStringForm(await event.request.formData(), forceSchema, ['id']);
     if (!form.valid) return fail(400, { form });
 
-    const viaApi = (await apiEnabled(event, adminId))
-      ? await callApi<{ outcome: ForceOutcome }>(
-          event.locals.env,
-          `/v1/admin/events/${encodeURIComponent(form.data.id)}/force`,
-          adminId,
-          event.locals.log,
-        )
-      : null;
-    if (viaApi) return { form, outcome: viaApi.outcome };
-
-    const outcome = await forceEvent(
-      db,
-      handlersFor(event.locals.env),
-      form.data.id,
-      adminId,
-      new Date(),
-      event.locals.log,
+    const { outcome } = await run<{ outcome: ForceOutcome }>(
+      event,
+      actor,
+      `${encodeURIComponent(form.data.id)}/force`,
     );
     return { form, outcome };
   },
 
   // "Visto", "Ignorar", "Corrigido": an admin's word on a given-up event, with who and when.
   review: async (event) => {
-    const { db, adminId } = await admin(event);
+    const actor = await admin(event);
     const form = validateStringForm(await event.request.formData(), reviewSchema, ['id', 'review']);
     if (!form.valid) return fail(400, { form });
 
-    const viaApi = (await apiEnabled(event, adminId))
-      ? await callApi<{ outcome: Awaited<ReturnType<typeof reviewEvent>> }>(
-          event.locals.env,
-          `/v1/admin/events/${encodeURIComponent(form.data.id)}/review/${form.data.review}`,
-          adminId,
-          event.locals.log,
-        )
-      : null;
-    if (viaApi) return { form, outcome: viaApi.outcome };
-
-    const outcome = await reviewEvent(
-      db,
-      await event.locals.getProfile(),
-      form.data.id,
-      form.data.review,
+    const { outcome } = await run<{ outcome: Awaited<ReturnType<typeof reviewEvent>> }>(
+      event,
+      actor,
+      `${encodeURIComponent(form.data.id)}/review/${form.data.review}`,
     );
     return { form, outcome };
   },
 
   // "Rodar todos os que falharam": the given-up events, a bounded batch at a time.
   retryAll: async (event) => {
-    const { db, adminId } = await admin(event);
+    const actor = await admin(event);
     const form = validateStringForm(await event.request.formData(), retryAllSchema, []);
     if (!form.valid) return fail(400, { form });
 
-    const viaApi = (await apiEnabled(event, adminId))
-      ? await callApi<Awaited<ReturnType<typeof forceFailedEvents>>>(
-          event.locals.env,
-          '/v1/admin/events/retry-failed',
-          adminId,
-          event.locals.log,
-        )
-      : null;
-    if (viaApi) return { form, ...viaApi };
-
-    const result = await forceFailedEvents(
-      db,
-      handlersFor(event.locals.env),
-      adminId,
-      new Date(),
-      event.locals.log,
+    const result = await run<Awaited<ReturnType<typeof forceFailedEvents>>>(
+      event,
+      actor,
+      'retry-failed',
     );
     return { form, ...result };
   },

@@ -5,15 +5,18 @@ import {
 import { moderationAction } from './form-action';
 
 /**
- * One admin console action: the decision's schema and service come from core (the api route runs
- * the same ones), `fields` are the text fields the form posts. Only admins get in.
+ * One admin console action: the api Worker makes the decision (`/v1/admin/moderation/<name>`) with
+ * the schema core shares, which also checks the form here; `fields` are the text fields it posts.
+ * Only admins get in.
  */
 function decide(name: ModerationDecisionName, fields: readonly string[]) {
-  const { schema, apply } = moderationDecisions[name];
-  return moderationAction(schema, fields, (db, actor, data) => apply(db, actor, data as never), {
-    admin: true,
-    decision: name,
-  });
+  const { schema } = moderationDecisions[name];
+  return moderationAction(
+    schema,
+    fields,
+    { path: `/v1/admin/moderation/${name}` },
+    { admin: true },
+  );
 }
 
 /** The decisions on one report, for `/admin/reports/[id]`. */

@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import {
   AlreadyRated,
   AlreadyRegistered,
@@ -10,8 +11,7 @@ import {
   TableFull,
   TooEarly,
 } from '@mesaaberta/core/server/errors';
-import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
-import type { FlagName } from '@mesaaberta/core/server/flags/registry';
+import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { callApiRaw, routeTemplate } from './api-client';
 
 /** The refusal an api answer stands for, as the domain error `failFrom` already knows. */
@@ -35,26 +35,19 @@ export function refusalOf(status: number, body: Record<string, unknown>): Error 
 }
 
 /**
- * Makes a signed-in player's write in the api Worker when `flag` is on for them (targeted by id and
- * by `isAdmin`, so a rollout can start with admins). Resolves to the
- * events to dispatch, throws the refusal the api made (so the form shows it as it always did), and
- * resolves to null when the flag is off or the call cannot be used: the caller then runs the
- * service in this Worker, so the flag is a kill switch and not a dependency.
+ * Makes a signed-in person's write in the api Worker, the only place writes happen. Resolves to the
+ * events to dispatch and the api's answer, throws the refusal the api made (so the form shows it as
+ * it always did), and answers 503 when the call cannot be made or the api fails.
  */
 export async function writeViaApi(
   locals: App.Locals,
-  flag: FlagName,
-  player: Actor,
+  actor: Pick<Actor, 'id'>,
   path: string,
   body: Record<string, unknown>,
   headers?: Record<string, string>,
-): Promise<{ eventIds: string[]; body: Record<string, unknown> } | null> {
-  if (
-    !(await locals.flags.isEnabled(flag, { id: player.id, isAdmin: can(player, 'admin:access') }))
-  )
-    return null;
-  const answer = await callApiRaw(locals.env, path, player.id, locals.log, body, headers);
-  if (!answer) return null;
+): Promise<{ eventIds: string[]; body: Record<string, unknown> }> {
+  const answer = await callApiRaw(locals.env, path, actor.id, locals.log, body, headers);
+  if (!answer) error(503, 'API unavailable');
   const json = (answer.body ?? {}) as Record<string, unknown>;
   if (
     answer.ok &&
@@ -64,11 +57,11 @@ export async function writeViaApi(
     return { eventIds: json.eventIds as string[], body: json };
   const refusal = refusalOf(answer.status, json);
   if (refusal) throw refusal;
-  locals.log.warn('api write not used', {
-    code: 'api_call_refused',
+  locals.log.warn('api write failed', {
+    code: 'api_call_failed',
     route: routeTemplate(path),
     status: answer.status,
     reason: typeof json.error === 'string' ? json.error : undefined,
   });
-  return null;
+  error(503, 'API unavailable');
 }

@@ -7,20 +7,11 @@ import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { loadRead } from '#lib/server/reads/load.js';
 
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
-import { submitRating } from '@mesaaberta/core/server/ratings/service';
 import { ratingSchema } from '@mesaaberta/core/tables/rating';
 import { joinSchema, playerActionSchema, tableActionSchema } from '#lib/tables/registration.js';
 import { runRegistrationAction } from '#lib/server/registrations/form-action.js';
-import {
-  approveRegistration,
-  declineRegistration,
-  joinTable,
-  leaveTable,
-  removePlayer,
-} from '@mesaaberta/core/server/registrations/service';
 import { reportSchema } from '@mesaaberta/core/moderation/reports';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
-import { fileReport } from '@mesaaberta/core/server/moderation/reports';
 import { followAction } from '#lib/server/follows/action.js';
 import { followState } from '#lib/server/follows/state.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -110,69 +101,37 @@ export const actions: Actions = {
         ? { mesa_id: table.id, player_user_id: playerId, seat_claim_method: 'button_click' }
         : null;
     });
-    return runRegistrationAction(
-      event,
-      joinSchema,
-      (db, actor, { message }) => joinTable(db, actor, event.params.slug, { message }),
-      (data) => ({ action: 'join', slug: event.params.slug, body: { message: data.message } }),
-    );
+    return runRegistrationAction(event, joinSchema, {
+      api: (data) => ({ action: 'join', slug: event.params.slug, body: { message: data.message } }),
+    });
   },
   leave: (event) =>
-    runRegistrationAction(
-      event,
-      tableActionSchema,
-      (db, actor) => leaveTable(db, actor, event.params.slug),
-      () => ({ action: 'leave', slug: event.params.slug, body: {} }),
-    ),
+    runRegistrationAction(event, tableActionSchema, {
+      api: () => ({ action: 'leave', slug: event.params.slug, body: {} }),
+    }),
   approve: (event) =>
-    runRegistrationAction(
-      event,
-      playerActionSchema,
-      (db, actor, { playerId }) => approveRegistration(db, actor, event.params.slug, playerId),
-      ({ playerId }) => ({ action: 'approve', slug: event.params.slug, body: { playerId } }),
-    ),
+    runRegistrationAction(event, playerActionSchema, {
+      api: ({ playerId }) => ({ action: 'approve', slug: event.params.slug, body: { playerId } }),
+    }),
   decline: (event) =>
-    runRegistrationAction(
-      event,
-      playerActionSchema,
-      (db, actor, { playerId }) => declineRegistration(db, actor, event.params.slug, playerId),
-      ({ playerId }) => ({ action: 'decline', slug: event.params.slug, body: { playerId } }),
-    ),
+    runRegistrationAction(event, playerActionSchema, {
+      api: ({ playerId }) => ({ action: 'decline', slug: event.params.slug, body: { playerId } }),
+    }),
   rate: (event) =>
-    runRegistrationAction(
-      event,
-      ratingSchema,
-      (db, actor, data) =>
-        submitRating(db, actor, event.params.slug, {
-          gmScore: data.gmScore,
-          comment: data.comment || null,
-          commentPublic: data.commentPublic,
-        }),
-      (data) => ({
+    runRegistrationAction(event, ratingSchema, {
+      api: (data) => ({
         action: 'rate',
         slug: event.params.slug,
         body: { gmScore: data.gmScore, comment: data.comment, commentPublic: data.commentPublic },
-        flag: 'api_ratings',
       }),
-    ),
+    }),
   // "Denunciar": the table, or someone the reporter shares it with. Admins see it in the queue.
-  report: moderationAction(
-    reportSchema,
-    ['targetType', 'playerId', 'reason', 'details'],
-    async (db, actor, data, event) =>
-      (await fileReport(db, actor, event.params.slug!, data)).eventId,
-    {
-      player: {
-        path: '/v1/reports/table',
-        body: (data, event) => ({ ...data, slug: event.params.slug }),
-      },
-    },
-  ),
+  report: moderationAction(reportSchema, ['targetType', 'playerId', 'reason', 'details'], {
+    path: '/v1/reports/table',
+    body: (data, event) => ({ ...data, slug: event.params.slug }),
+  }),
   remove: (event) =>
-    runRegistrationAction(
-      event,
-      playerActionSchema,
-      (db, actor, { playerId }) => removePlayer(db, actor, event.params.slug, playerId),
-      ({ playerId }) => ({ action: 'remove', slug: event.params.slug, body: { playerId } }),
-    ),
+    runRegistrationAction(event, playerActionSchema, {
+      api: ({ playerId }) => ({ action: 'remove', slug: event.params.slug, body: { playerId } }),
+    }),
 };

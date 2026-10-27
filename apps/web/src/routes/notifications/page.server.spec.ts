@@ -1,10 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  markAllRead,
-  markRead,
-  notificationPage,
-} from '@mesaaberta/core/server/notifications/service';
+import { notificationPage } from '@mesaaberta/core/server/notifications/service';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { actions, load } from './+page.server';
 
@@ -15,9 +11,16 @@ vi.mock('@mesaaberta/core/server/notifications/service', () => ({
     pages: 1,
   })),
   unreadCount: vi.fn(async () => 3),
-  markRead: vi.fn(),
-  markAllRead: vi.fn(),
 }));
+
+// The api Worker marks them; it answers the opened notification's link, when it has one.
+let link: string | null = null;
+const api = vi.fn(async (_request: Request) => Response.json({ eventIds: [], link }));
+/** What the action asked the api: the route and the body, or nothing. */
+const asked = async () => {
+  const request = api.mock.lastCall?.[0];
+  return request ? { path: new URL(request.url).pathname, body: await request.json() } : null;
+};
 
 const user = { id: 'me' };
 const n1 = '0f8fad5b-d9cb-469f-a165-70867728950e';
@@ -26,6 +29,8 @@ const locals = (signedIn = true) => ({
   getUser: async () => (signedIn ? user : null),
   getProfile: async () => ({ id: 'me', username: 'ana' }),
   flags: { isEnabled: async () => false },
+  env: { API: { fetch: api } },
+  log: { warn: vi.fn() },
 });
 
 const event = (search = '', form: Record<string, string> = {}, signedIn = true) =>
@@ -52,7 +57,10 @@ const location = async (run: Promise<unknown>) => {
 const act = (name: keyof typeof actions, e: RequestEvent) =>
   (actions[name] as unknown as (e: RequestEvent) => Promise<unknown>)(e);
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  link = null;
+});
 
 describe('load', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
@@ -120,15 +128,14 @@ describe('load', () => {
 
 describe('actions', () => {
   it('open marks the notification read and follows its link', async () => {
-    vi.mocked(markRead).mockResolvedValueOnce({ link: '/t/mesa' });
+    link = '/t/mesa';
 
     expect(await location(act('open', event('', { id: n1, next: '/tables' })))).toBe('/t/mesa');
-    expect(markRead).toHaveBeenCalledWith({}, 'me', n1);
+    expect(await asked()).toEqual({ path: '/v1/inbox/open', body: { id: n1 } });
+    expect(api.mock.lastCall?.[0].headers.get('x-actor-id')).toBe('me');
   });
 
   it('open comes back to the page when the notification has no link, or is not the viewer’s', async () => {
-    vi.mocked(markRead).mockResolvedValueOnce(null);
-
     expect(await location(act('open', event('', { id: n1, next: '/tables' })))).toBe('/tables');
   });
 
@@ -136,25 +143,23 @@ describe('actions', () => {
     expect(await location(act('read', event('', { id: n1, next: 'https://evil.example' })))).toBe(
       '/notifications',
     );
-    expect(markRead).toHaveBeenCalledWith({}, 'me', n1);
+    expect(await asked()).toEqual({ path: '/v1/inbox/read', body: { id: n1 } });
   });
 
   it('read ignores an id that is not one, and still comes back', async () => {
     expect(await location(act('read', event('', { id: 'n1', next: '/tables' })))).toBe('/tables');
-    expect(markRead).not.toHaveBeenCalled();
+    expect(api).not.toHaveBeenCalled();
   });
 
   it('readAll marks every one read and goes back', async () => {
     expect(await location(act('readAll', event('', { next: '/u/tables' })))).toBe('/u/tables');
-    expect(markAllRead).toHaveBeenCalledWith({}, 'me', expect.any(Date), { until: undefined });
+    expect(await asked()).toEqual({ path: '/v1/inbox/readAll', body: {} });
   });
 
   it('readAll stops at when the page was loaded, so what came later stays unread', async () => {
     const until = '2026-10-25T12:00:00.000Z';
     await location(act('readAll', event('', { next: '/notifications', until })));
-    expect(markAllRead).toHaveBeenCalledWith({}, 'me', expect.any(Date), {
-      until: new Date(until),
-    });
+    expect(await asked()).toEqual({ path: '/v1/inbox/readAll', body: { until } });
   });
 
   it('rejects repeated notification ids without discarding a valid return address', async () => {
@@ -165,13 +170,18 @@ describe('actions', () => {
     body.set('next', '/tables');
     (e as { request: Request }).request = new Request(e.url, { method: 'POST', body });
     expect(await location(act('read', e))).toBe('/tables');
-    expect(markRead).not.toHaveBeenCalled();
+    expect(api).not.toHaveBeenCalled();
   });
 
   it('marks a valid id even when an oversized return address falls back to the feed', async () => {
     expect(await location(act('read', event('', { id: n1, next: '/' + 'a'.repeat(2000) })))).toBe(
       '/notifications',
     );
-    expect(markRead).toHaveBeenCalledWith({}, 'me', n1);
+    expect(await asked()).toEqual({ path: '/v1/inbox/read', body: { id: n1 } });
+  });
+
+  it('answers 503 when the api cannot mark it: nothing is marked here', async () => {
+    api.mockResolvedValueOnce(Response.json({ error: 'internal_error' }, { status: 500 }));
+    await expect(act('read', event('', { id: n1 }))).rejects.toMatchObject({ status: 503 });
   });
 });

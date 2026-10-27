@@ -15,15 +15,15 @@ describe('createFlags', () => {
     const flag = vi.fn();
     setTelemetrySink({ log: vi.fn(), capture: vi.fn(), flag });
     try {
-      const flags = createFlags(serving({ api_inbox: { defaultValue: true } }));
-      await flags.isEnabled('api_inbox');
+      const flags = createFlags(serving({ api_events_fenced_leases: { defaultValue: true } }));
+      await flags.isEnabled('api_events_fenced_leases');
       await flags.isEnabled('maintenance_mode');
     } finally {
       setTelemetrySink(null);
     }
 
     expect(flag.mock.calls).toEqual([
-      ['api_inbox', true],
+      ['api_events_fenced_leases', true],
       ['maintenance_mode', false],
     ]);
   });
@@ -51,22 +51,24 @@ describe('createFlags', () => {
   });
 
   it('disables table photos unless GrowthBook explicitly enables them', async () => {
-    expect(await createFlags(async () => null).isEnabled('api_inbox')).toBe(false);
+    expect(await createFlags(async () => null).isEnabled('api_events_fenced_leases')).toBe(false);
     expect(
-      await createFlags(serving({ api_inbox: { defaultValue: true } })).isEnabled('api_inbox'),
+      await createFlags(serving({ api_events_fenced_leases: { defaultValue: true } })).isEnabled(
+        'api_events_fenced_leases',
+      ),
     ).toBe(true);
   });
   it('uses the value GrowthBook serves', async () => {
-    const flags = createFlags(serving({ api_inbox: { defaultValue: true } }));
+    const flags = createFlags(serving({ api_events_fenced_leases: { defaultValue: true } }));
 
-    expect(await flags.isEnabled('api_inbox')).toBe(true);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(true);
   });
 
   it('forces every flag on without loading GrowthBook when the local override is enabled', async () => {
-    const load = vi.fn(serving({ api_inbox: { defaultValue: false } }));
+    const load = vi.fn(serving({ api_events_fenced_leases: { defaultValue: false } }));
     const flags = createFlags(load, { forceAll: true });
 
-    expect(await flags.isEnabled('api_inbox')).toBe(true);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(true);
     expect(load).not.toHaveBeenCalled();
   });
 
@@ -80,11 +82,11 @@ describe('createFlags', () => {
     const load = vi.fn(serving({ maintenance_mode: { defaultValue: false } }));
     const flags = createFlags(load, {
       forceAll: true,
-      overrides: { maintenance_mode: true, api_inbox: false },
+      overrides: { maintenance_mode: true, api_events_fenced_leases: false },
     });
 
     expect(await flags.isEnabled('maintenance_mode')).toBe(true);
-    expect(await flags.isEnabled('api_inbox')).toBe(false);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(false);
     expect(load).not.toHaveBeenCalled();
   });
 
@@ -97,7 +99,7 @@ describe('createFlags', () => {
   it('falls back to the safe default when no payload is available', async () => {
     const flags = createFlags(async () => null);
 
-    expect(await flags.isEnabled('api_inbox')).toBe(false);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(false);
   });
 
   it('falls back to the safe default when the loader throws', async () => {
@@ -105,18 +107,18 @@ describe('createFlags', () => {
       throw new Error('boom');
     });
 
-    expect(await flags.isEnabled('api_inbox')).toBe(false);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(false);
   });
 
   it('falls back to the safe default for a flag GrowthBook does not know yet', async () => {
     const flags = createFlags(serving({}));
 
-    expect(await flags.isEnabled('api_inbox')).toBe(false);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(false);
   });
 
   it('evaluates targeting rules against the attributes it is given', async () => {
     const features = {
-      api_inbox: {
+      api_events_fenced_leases: {
         defaultValue: false,
         rules: [{ condition: { role: 'admin' }, force: true }],
       },
@@ -124,16 +126,16 @@ describe('createFlags', () => {
 
     const flags = createFlags(serving(features));
 
-    expect(await flags.isEnabled('api_inbox', { role: 'admin' })).toBe(true);
-    expect(await flags.isEnabled('api_inbox', { role: 'member' })).toBe(false);
+    expect(await flags.isEnabled('api_events_fenced_leases', { role: 'admin' })).toBe(true);
+    expect(await flags.isEnabled('api_events_fenced_leases', { role: 'member' })).toBe(false);
   });
 
   it('loads the payload only once, however many flags are read', async () => {
-    const load = vi.fn(serving({ api_inbox: { defaultValue: true } }));
+    const load = vi.fn(serving({ api_events_fenced_leases: { defaultValue: true } }));
     const flags = createFlags(load);
 
-    await flags.isEnabled('api_inbox');
-    await flags.isEnabled('api_inbox');
+    await flags.isEnabled('api_events_fenced_leases');
+    await flags.isEnabled('api_events_fenced_leases');
 
     expect(load).toHaveBeenCalledTimes(1);
   });
@@ -173,25 +175,25 @@ describe('shouldForceAllFlags', () => {
   });
 
   it('keeps evaluating flags normally when the bypass is off', async () => {
-    const flags = createFlags(serving({ api_inbox: { defaultValue: false } }), {
+    const flags = createFlags(serving({ api_events_fenced_leases: { defaultValue: false } }), {
       forceAll: shouldForceAllFlags(on, 'mesaaberta.app'),
     });
 
-    expect(await flags.isEnabled('api_inbox')).toBe(false);
+    expect(await flags.isEnabled('api_events_fenced_leases')).toBe(false);
   });
 });
 
 describe('flagOverrides', () => {
-  const env = { FEATURE_FLAG_OVERRIDES: 'maintenance_mode=true, api_inbox = false' };
+  const env = { FEATURE_FLAG_OVERRIDES: 'maintenance_mode=true, api_events_fenced_leases = false' };
 
   it('reads the fixed values on a loopback host', () => {
     expect(flagOverrides(env, 'localhost')).toEqual({
       maintenance_mode: true,
-      api_inbox: false,
+      api_events_fenced_leases: false,
     });
     expect(flagOverrides(env, '127.0.0.1')).toEqual({
       maintenance_mode: true,
-      api_inbox: false,
+      api_events_fenced_leases: false,
     });
   });
 

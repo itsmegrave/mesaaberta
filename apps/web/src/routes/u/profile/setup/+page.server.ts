@@ -6,11 +6,7 @@ import { writeViaApi } from '#lib/server/api-write.js';
 import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import {
-  isUsernameAvailable,
-  loadProfileForm,
-  saveProfile,
-} from '@mesaaberta/core/server/profile/service';
+import { isUsernameAvailable, loadProfileForm } from '@mesaaberta/core/server/profile/service';
 import { profileSchema, PROFILE_DEFAULTS } from '@mesaaberta/core/profile/schema';
 import { suggestUsername } from '@mesaaberta/core/profile/username';
 import type { Actions, PageServerLoad } from './$types';
@@ -52,15 +48,7 @@ export const actions: Actions = {
     try {
       // The row is made here (it needs the Auth user's metadata), so the api can see the person.
       const profile = await ensureProfile(locals.db, user);
-      // Through the api Worker when `api_account` is on for this person; here otherwise.
-      const remote = await writeViaApi(
-        locals,
-        'api_account',
-        profile,
-        '/v1/account/onboard',
-        form.data,
-      );
-      if (!remote) await saveProfile(locals.db, user.id, form.data);
+      await writeViaApi(locals, profile, '/v1/account/onboard', form.data);
     } catch (e) {
       // The unique index decided: somebody took the name after the availability check.
       if (e instanceof Invalid && e.field === 'username') {

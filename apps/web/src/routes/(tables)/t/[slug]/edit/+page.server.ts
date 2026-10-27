@@ -12,7 +12,7 @@ import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { directoryEnabled } from '#lib/server/directories/flags.js';
 import { placeOptions } from '@mesaaberta/core/server/places/picker';
-import { disableTable, loadTableForEdit, updateTable } from '@mesaaberta/core/server/tables/write';
+import { loadTableForEdit } from '@mesaaberta/core/server/tables/write';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -58,26 +58,17 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
   save: async (event) => {
     const { locals, params } = event;
-    await requireUser(locals, event.url);
+    const user = await requireUser(locals, event.url);
     if (!locals.db) error(503, 'Database not configured');
-    const db = locals.db;
 
     return handleTableForm(
       event,
       async (input, imagePath) => {
-        const profile = await locals.getProfile();
         const path = `/v1/table-writes/${encodeURIComponent(params.slug)}/update`;
-        const remote = profile
-          ? await writeViaApi(locals, 'api_table_write', profile, path, {
-              input,
-              imagePath: imagePath ?? null,
-            })
-          : null;
-        const eventIds = remote
-          ? remote.eventIds
-          : [(await updateTable(db, profile, params.slug, input, { imagePath })).eventId].filter(
-              (id): id is string => id !== null,
-            );
+        const { eventIds } = await writeViaApi(locals, user, path, {
+          input,
+          imagePath: imagePath ?? null,
+        });
         // Nothing players see changed: no invite, no notification.
         for (const eventId of eventIds) {
           locals.afterResponse((db) =>
@@ -94,23 +85,16 @@ export const actions: Actions = {
 
   disable: async (event) => {
     const { locals, params, url } = event;
-    await requireUser(locals, url);
+    const user = await requireUser(locals, url);
     if (!locals.db) error(503, 'Database not configured');
 
     try {
-      const profile = await locals.getProfile();
-      const remote = profile
-        ? await writeViaApi(
-            locals,
-            'api_table_write',
-            profile,
-            `/v1/table-writes/${encodeURIComponent(params.slug)}/disable`,
-            {},
-          )
-        : null;
-      const eventIds = remote
-        ? remote.eventIds
-        : [(await disableTable(locals.db, profile, params.slug)).eventId];
+      const { eventIds } = await writeViaApi(
+        locals,
+        user,
+        `/v1/table-writes/${encodeURIComponent(params.slug)}/disable`,
+        {},
+      );
       for (const eventId of eventIds)
         locals.afterResponse((db) =>
           dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),

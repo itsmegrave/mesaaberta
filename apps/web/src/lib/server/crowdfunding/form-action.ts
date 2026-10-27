@@ -13,11 +13,7 @@ import { serverStorage } from '@mesaaberta/core/server/storage';
 import { CROWDFUNDING_LIMIT, checkRateLimit } from '@mesaaberta/core/server/rate-limit';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
-import {
-  addCrowdfunding,
-  findListedByUrl,
-  takeLinkRead,
-} from '@mesaaberta/core/server/crowdfunding/service';
+import { findListedByUrl, takeLinkRead } from '@mesaaberta/core/server/crowdfunding/service';
 import { writeViaApi } from '../api-write';
 
 export const NEW_CROWDFUNDING_VALUES = {
@@ -90,16 +86,12 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     );
 
     const { image: _image, ...input } = form.data;
-    // Through the api Worker when `api_submissions` is on for this person; here otherwise.
-    const remote = actor
-      ? await writeViaApi(locals, 'api_submissions', actor, '/v1/submissions/crowdfundings', {
-          input,
-          imagePath,
-        })
-      : null;
-    const eventId = remote
-      ? remote.eventIds[0]
-      : (await addCrowdfunding(db, actor, input, { imagePath })).eventId;
+    if (!actor) throw new Forbidden();
+    const written = await writeViaApi(locals, actor, '/v1/submissions/crowdfundings', {
+      input,
+      imagePath,
+    });
+    const eventId = written.eventIds[0];
     // After the commit and the response, so the visitor never waits for a handler.
     locals.afterResponse((db) =>
       dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),

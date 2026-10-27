@@ -10,12 +10,7 @@ import { writeViaApi } from '#lib/server/api-write.js';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { NotFound } from '@mesaaberta/core/server/errors';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
-import {
-  markAllRead,
-  markRead,
-  notificationPage,
-  unreadCount,
-} from '@mesaaberta/core/server/notifications/service';
+import { notificationPage, unreadCount } from '@mesaaberta/core/server/notifications/service';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -79,46 +74,21 @@ export const actions: Actions = {
   /** Opens a notification: marks it read and follows its link, or comes back when it has none. */
   open: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
     const { id, back } = await submitted(request);
-    const profile = await locals.getProfile();
-    const remote =
-      id && profile
-        ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/open', { id })
-        : null;
-    const link = remote
-      ? typeof remote.body.link === 'string'
-        ? remote.body.link
-        : null
-      : id
-        ? ((await markRead(locals.db, user.id, id))?.link ?? null)
-        : null;
+    const opened = id ? await writeViaApi(locals, user, '/v1/inbox/open', { id }) : null;
+    const link = typeof opened?.body.link === 'string' ? opened.body.link : null;
     redirect(303, safeNext(link, back));
   },
   read: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
     const { id, back } = await submitted(request);
-    const profile = await locals.getProfile();
-    const remote =
-      id && profile
-        ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/read', { id })
-        : null;
-    if (id && !remote) await markRead(locals.db, user.id, id);
+    if (id) await writeViaApi(locals, user, '/v1/inbox/read', { id });
     redirect(303, back);
   },
   readAll: async ({ locals, url, request }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
     const { back, until } = await submitted(request);
-    const profile = await locals.getProfile();
-    const remote = profile
-      ? await writeViaApi(locals, 'api_inbox', profile, '/v1/inbox/readAll', { until })
-      : null;
-    if (!remote)
-      await markAllRead(locals.db, user.id, new Date(), {
-        until: until ? new Date(until) : undefined,
-      });
+    await writeViaApi(locals, user, '/v1/inbox/readAll', { until });
     redirect(303, back);
   },
 };
