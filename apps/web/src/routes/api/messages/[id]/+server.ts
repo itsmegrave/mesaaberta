@@ -1,9 +1,8 @@
 import { error } from '@sveltejs/kit';
 import { stringify } from 'devalue';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { NotFound } from '@mesaaberta/core/server/errors';
-import { listMessages } from '@mesaaberta/core/server/messages/service';
 import { withPictures } from '@mesaaberta/core/server/messages/present';
+import { readMessages } from '#lib/server/messages/api.js';
 import type { RequestHandler } from './$types';
 
 /**
@@ -13,29 +12,22 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals, params, url }) => {
   const user = await locals.getUser();
   if (!user) error(401, 'Sign in required');
-  if (!locals.db) error(503, 'Database not configured');
-  const actor = await locals.getProfile();
 
   const beforeParam = url.searchParams.get('before');
   const before = beforeParam ? new Date(beforeParam) : undefined;
   if (before && Number.isNaN(before.getTime())) error(400, 'Bad time');
 
-  try {
-    const thread = await listMessages(locals.db, actor, params.id, { before });
-    const supabaseUrl = supabaseUrlOf(locals.env);
-    return new Response(
-      stringify({ ...thread, messages: withPictures(supabaseUrl, thread.messages) }),
-      {
-        headers: {
-          'content-type': 'application/json',
-          'x-query-codec': 'devalue',
-          'cache-control': 'private, no-store',
-          'x-query-viewer': user.id,
-        },
+  const thread = await readMessages(locals, user.id, params.id, before);
+  const supabaseUrl = supabaseUrlOf(locals.env);
+  return new Response(
+    stringify({ ...thread, messages: withPictures(supabaseUrl, thread.messages) }),
+    {
+      headers: {
+        'content-type': 'application/json',
+        'x-query-codec': 'devalue',
+        'cache-control': 'private, no-store',
+        'x-query-viewer': user.id,
       },
-    );
-  } catch (cause) {
-    if (cause instanceof NotFound) error(404, 'Not found');
-    throw cause;
-  }
+    },
+  );
 };

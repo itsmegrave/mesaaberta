@@ -74,3 +74,16 @@ New invitation routes are API-owned, without a migration flag or web database fa
 - `GET|POST /v1/account/invitation-preferences`, `POST /v1/account/invitation-blocks`: receiving preferences and GM-specific blocking.
 
 New calls require the API Service Binding or private `API_URL` / `API_INTERNAL_TOKEN` transport. Pending reservations expire after 48 hours or at the session start, whichever occurs first. The worker materializes expirations; capacity queries honor the deadline without waiting for it. The new optional hosted e-mail template is `RESEND_TEMPLATE_PLAYER_INVITATION`; its plain-text fallback is available without template configuration. The existing template script provisions it when explicitly run for a deployment.
+
+## Mensagens
+
+The inbox and threads are API-owned, without a flag or web database fallback (web answers the api's `not_found` as its 404 and anything else it cannot use as a 503):
+
+- `GET /v1/messages/inbox?page=N&kind=direct|table`: the actor's conversations (a page past the last is a 404).
+- `GET /v1/messages/:id?before=ISO`: a page of a conversation's messages, for a member.
+- `POST /v1/messages/:id/open` (`{ about }`, the table slug a direct message starts from): the thread page's header and newest messages; opening it reads it.
+- `POST /v1/messages/:id/read`: everything in the conversation is read now.
+- `POST /v1/messages/tables/:slug`: a table's chat for its GM and confirmed players, made on first use.
+- `GET /v1/messages/blocked`, `POST /v1/messages/block`, `POST /v1/messages/:id/report`: blocking and reporting; web checks `use_message_safety` before it calls these.
+
+Pictures stay paths: the web Worker turns them into URLs.

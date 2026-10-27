@@ -1,8 +1,6 @@
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { Forbidden } from '@mesaaberta/core/server/errors';
 import type { RequestEvent } from '@sveltejs/kit';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 
 /** Whether blocking and reporting in Mensagens are on for this person (`use_message_safety`). */
 export async function messageSafetyEnabled(
@@ -17,16 +15,8 @@ export async function messageSafetyEnabled(
 }
 
 /**
- * A block or report service behind `use_message_safety`: refused as `Forbidden` while the flag is
- * off for the person, so the action answers the same code as any other refusal.
+ * The `allow` of a block or report action behind `use_message_safety`: while the flag is off for
+ * the person it is refused as `forbidden`, the same code as any other refusal.
  */
-export const behindSafetyFlag =
-  <Data, Result>(
-    apply: (db: AnyDb, actor: Actor | null, data: Data, event: RequestEvent) => Promise<Result>,
-  ) =>
-  async (db: AnyDb, actor: Actor | null, data: Data, event: RequestEvent) => {
-    const profile = await event.locals.getProfile();
-    if (!(await messageSafetyEnabled(event.locals, profile)))
-      throw new Forbidden('use_message_safety');
-    return apply(db, actor, data, event);
-  };
+export const safetyAllowed = async (event: RequestEvent) =>
+  messageSafetyEnabled(event.locals, await event.locals.getProfile());

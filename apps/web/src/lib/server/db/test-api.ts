@@ -4,6 +4,7 @@ import { adminReadRoutes } from '../../../../../api/src/admin-reads';
 import { announcementRoutes } from '../../../../../api/src/announcements';
 import { catalogRoutes } from '../../../../../api/src/catalog';
 import { inboxRoutes } from '../../../../../api/src/inbox';
+import { messageRoutes } from '../../../../../api/src/messages';
 import { moderationRoutes } from '../../../../../api/src/moderation';
 import { profileRoutes } from '../../../../../api/src/profiles';
 import { readRoutes } from '../../../../../api/src/reads';
@@ -23,6 +24,7 @@ export function apiOver(db: AnyDb, env: Record<string, string> = {}) {
     ['/v1/admin/moderation', moderationRoutes(open)],
     ['/v1/admin/announcements', announcementRoutes(open)],
     ['/v1/inbox', inboxRoutes(open)],
+    ['/v1/messages', messageRoutes(open)],
     ['/v1/account', accountRoutes(open)],
   ] as const;
   const bindings = { DATABASE_URL: 'postgres://test', ...env };

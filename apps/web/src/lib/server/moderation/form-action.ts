@@ -18,10 +18,14 @@ type Apply<Schema extends ZodType> = (
   event: RequestEvent,
 ) => Promise<string | string[]>;
 
-/** The api route that makes the action, and the body its schema wants (the checked form by default). */
+/**
+ * The api route that makes the action, and the body its schema wants (the checked form by default).
+ * `allow` is a check the web Worker makes first (a flag): false answers `forbidden` like a refusal.
+ */
 type ViaApi<Schema extends ZodType> = {
-  path: string;
+  path: string | ((event: RequestEvent) => string);
   body?: (data: z.output<Schema>, event: RequestEvent) => object;
+  allow?: (event: RequestEvent) => Promise<boolean>;
 };
 
 /**
@@ -42,7 +46,6 @@ export function moderationAction<Schema extends ZodType>(
     const { locals, request, url } = event;
     const user = await requireUser(locals, new URL(url.pathname, url));
     if (admin) await requireAdmin(locals);
-    if (!locals.db) error(503, 'Database not configured');
 
     const form = validateStringForm(await request.formData(), schema, fields);
     if (!form.valid) return fail(400, { form });
@@ -56,17 +59,20 @@ export function moderationAction<Schema extends ZodType>(
     let eventIds: string[];
     try {
       if (typeof how === 'function') {
+        if (!locals.db) error(503, 'Database not configured');
         const written = await how(locals.db, await locals.getProfile(), form.data, event);
         eventIds = Array.isArray(written) ? written : [written];
       } else {
+        if (how.allow && !(await how.allow(event))) throw new Forbidden();
         const body = how.body ? how.body(form.data, event) : (form.data as object);
+        const path = typeof how.path === 'function' ? how.path(event) : how.path;
         if (admin) {
-          const decided = await decideViaApi(locals, how.path, user.id, body);
+          const decided = await decideViaApi(locals, path, user.id, body);
           if (decided.kind === 'refused')
             return refuse(decided.status, decided.field, decided.code);
           eventIds = decided.eventIds;
         } else {
-          eventIds = (await writeViaApi(locals, user, how.path, { ...body })).eventIds;
+          eventIds = (await writeViaApi(locals, user, path, { ...body })).eventIds;
         }
       }
     } catch (cause) {

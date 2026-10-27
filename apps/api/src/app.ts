@@ -13,6 +13,7 @@ import { extensionRoutes } from './extensions';
 import { inboxRoutes } from './inbox';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
+import { messageRoutes } from './messages';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
 import { profileRoutes } from './profiles';
@@ -81,6 +82,8 @@ export function createApi() {
   app.route('/v1/table-writes', tableWriteRoutes());
   // Conversations and the notification feed (send, mute, open, read).
   app.route('/v1/inbox', inboxRoutes());
+  // Mensagens: the inbox, a thread, the read mark, a table's chat, blocking and reporting.
+  app.route('/v1/messages', messageRoutes());
   // What a member submits (partners, crowdfunding campaigns).
   app.route('/v1/submissions', submissionRoutes());
   // Reporting a table, partner or campaign and withdrawing one's own partner.
