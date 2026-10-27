@@ -1,6 +1,7 @@
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { accountRoutes } from '../../../../../api/src/account';
 import { adminReadRoutes } from '../../../../../api/src/admin-reads';
+import { authRoutes } from '../../../../../api/src/auth';
 import { announcementRoutes } from '../../../../../api/src/announcements';
 import { catalogRoutes } from '../../../../../api/src/catalog';
 import { followRoutes } from '../../../../../api/src/follows';
@@ -10,6 +11,23 @@ import { messageRoutes } from '../../../../../api/src/messages';
 import { moderationRoutes } from '../../../../../api/src/moderation';
 import { profileRoutes } from '../../../../../api/src/profiles';
 import { readRoutes } from '../../../../../api/src/reads';
+
+/**
+ * For specs only: an access token the api's stand-in Supabase answers as this user's, for the routes
+ * that check the person's own token (`/v1/auth/ensure-profile`).
+ */
+export const testAccessToken = (user: { id: string; user_metadata?: object }) =>
+  encodeURIComponent(JSON.stringify(user));
+
+// The api's Supabase user lookup, answering the user a `testAccessToken` names.
+const supabaseUser = (async (_url: string, init?: RequestInit) => {
+  const token = new Headers(init?.headers).get('authorization')?.replace(/^Bearer /, '') ?? '';
+  try {
+    return Response.json(JSON.parse(decodeURIComponent(token)));
+  } catch {
+    return Response.json({ message: 'invalid token' }, { status: 401 });
+  }
+}) as typeof fetch;
 
 /**
  * For specs only: an `env` whose `API` binding answers from the api Worker's own routes over the
@@ -30,8 +48,14 @@ export function apiOver(db: AnyDb, env: Record<string, string> = {}) {
     ['/v1/me', meRoutes(open)],
     ['/v1/follows', followRoutes(open)],
     ['/v1/account', accountRoutes(open)],
+    ['/v1/auth', authRoutes(open, undefined, { request: supabaseUser })],
   ] as const;
-  const bindings = { DATABASE_URL: 'postgres://test', ...env };
+  const bindings = {
+    DATABASE_URL: 'postgres://test',
+    SUPABASE_URL: 'https://supabase.test',
+    SUPABASE_PUBLISHABLE_KEY: 'test-key',
+    ...env,
+  };
   return {
     ...env,
     API: {

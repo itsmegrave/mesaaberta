@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { eq } from 'drizzle-orm';
 import { profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '#lib/server/db/test-db.js';
-import { apiOver } from '#lib/server/db/test-api.js';
+import { apiOver, testAccessToken } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -34,6 +34,18 @@ const event = (
       log: { warn: () => undefined },
       track: tracked,
       getUser: async () => (n === null ? null : { id: id(n), user_metadata: metadata }),
+      supabase: {
+        auth: {
+          getSession: async () => ({
+            data: {
+              session:
+                n === null
+                  ? null
+                  : { access_token: testAccessToken({ id: id(n), user_metadata: metadata }) },
+            },
+          }),
+        },
+      },
     },
     url,
     request: new Request(url, { method: 'POST', body }),

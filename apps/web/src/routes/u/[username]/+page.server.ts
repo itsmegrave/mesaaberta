@@ -1,19 +1,17 @@
 import { indexingPolicy } from '#lib/seo/policy.js';
 import { siteOf } from '@mesaaberta/core/server/site';
-import { error, fail, isRedirect, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { error, fail, isHttpError, isRedirect, redirect } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { profiles } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '#lib/server/fail-from.js';
 import { validateStringForm } from '#lib/forms/contract.js';
-import { openDirectConversation } from '#lib/server/messages/open-direct.js';
+import { writeViaApi } from '#lib/server/api-write.js';
+import { NotFound } from '@mesaaberta/core/server/errors';
 import { routes } from '@mesaaberta/core/routes';
 import { normalizeUsername } from '@mesaaberta/core/profile/username';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
 
 import type { publicProfile } from '@mesaaberta/core/server/profile/public';
 import { callApiRaw } from '#lib/server/api-client.js';
-import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import { badgeVisibilitySchema } from '#lib/badges/visibility.js';
 import { followAction } from '#lib/server/follows/action.js';
 import { directoryEnabled } from '#lib/server/directories/flags.js';
@@ -94,7 +92,6 @@ export const actions: Actions = {
   // The eye on an earned badge: the owner hides it from their profile, or shows it again.
   badgeVisibility: async ({ locals, params, request, url }) => {
     const user = await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
     const profile = await locals.getProfile();
     if (!profile || profile.username !== normalizeUsername(params.username))
       error(403, 'Forbidden');
@@ -103,35 +100,38 @@ export const actions: Actions = {
       'hidden',
     ]);
     if (!form.valid) return fail(400, { form });
-    const changed = await setBadgeHidden(
-      locals.db,
-      user.id,
-      form.data.badgeId,
-      form.data.hidden === '1',
-    );
-    if (!changed)
-      return fail(404, { form: { ...form, valid: false, errors: { badgeId: ['not_found'] } } });
+    try {
+      await writeViaApi(
+        locals,
+        user,
+        `/v1/me/badges/${encodeURIComponent(form.data.badgeId)}/hidden`,
+        { hidden: form.data.hidden === '1' },
+      );
+    } catch (cause) {
+      if (cause instanceof NotFound)
+        return fail(404, { form: { ...form, valid: false, errors: { badgeId: ['not_found'] } } });
+      throw cause;
+    }
     return { form };
   },
 
   // "Mandar mensagem": the direct conversation with this person.
   message: async ({ locals, params, url }) => {
     await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
-    const [target] = await locals.db
-      .select({ id: profiles.id })
-      .from(profiles)
-      .where(eq(profiles.username, normalizeUsername(params.username)));
-    if (!target) error(404, 'Not found');
     try {
-      const conversationId = await openDirectConversation(
+      const profile = await locals.getProfile();
+      if (!profile) error(403, 'Forbidden');
+      const written = await writeViaApi(
         locals,
-        await locals.getProfile(),
-        target.id,
+        profile,
+        `/v1/messages/users/${encodeURIComponent(normalizeUsername(params.username))}`,
+        {},
       );
-      redirect(303, `/m/${conversationId}`);
+      if (typeof written.body.conversationId !== 'string') error(503, 'Invalid API response');
+      redirect(303, `/m/${written.body.conversationId}`);
     } catch (cause) {
-      if (isRedirect(cause)) throw cause;
+      if (isRedirect(cause) || isHttpError(cause)) throw cause;
+      if (cause instanceof NotFound) error(404, 'Not found');
       return failFrom(cause);
     }
   },

@@ -116,3 +116,20 @@ The new-table and edit forms read no database in web either:
 - `GET /v1/reads/place-options`: the "Onde jogar" picker's listed places.
 - `POST /v1/reads/table-location` (`{ input, placeSlug }`): where a table being saved happens; the picked place (web sends it only while the places are on) brings its CEP and area, otherwise the typed CEP is looked up. Answers the input to save, or the refusal on its field.
 - `GET /v1/me/limits/:name` (`table`, `draft`, `crowdfunding`, `place`, `placeClaim`): whether the actor is under a limit now (`{ ok: true }` or `rate_limited` with `retryAfter`), so a form can say so before it stores an image. The write checks again.
+
+## Profile setup and edit
+
+The onboarding step and the profile editor read no database in web:
+
+- `POST /v1/auth/ensure-profile`: with the person's own access token in `Authorization: Bearer`, checked by Supabase, makes sure they have a profile (made from their sign-in metadata on first use) and answers `{ result: 'ok', profile }`. No token or a refused one is `no_session` (401).
+- `GET /v1/me/profile-form`: the actor's profile as its form shows it.
+- `GET /v1/me/username-available?username=`: whether a username is free for the actor (their own counts as free).
+- `GET /v1/me/has-password`: whether the e-mail and password way in is on.
+- `GET /v1/me/export?email=`: the data portability copy; web passes the e-mail from Auth.
+- `GET /v1/me/favorite-systems` and `POST /v1/me/favorite-systems` (`{ systems, show }`): every system and the actor's favorites; the write records `FavoriteSystemsChanged`.
+
+## Profile page and calendar
+
+- `POST /v1/messages/users/:username`: "Mandar mensagem" on a profile; the direct conversation with that person, made when there is none (404 for an unknown username).
+- `POST /v1/me/badges/:badgeId/hidden` (`{ hidden }`): the eye on an earned badge (404 for a badge the actor does not hold).
+- `GET /v1/me/calendar`: the tables the actor runs or has a seat at; web writes the `.ics`.

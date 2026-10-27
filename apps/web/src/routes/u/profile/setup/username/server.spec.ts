@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { GET } from './+server';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -22,7 +23,12 @@ const ask = async (value: string | null, { signedIn = true } = {}) => {
   if (value !== null) url.searchParams.set('value', value);
   const event = {
     url,
-    locals: { db: test.db, userId: me, getUser: async () => (signedIn ? { id: me } : null) },
+    locals: {
+      env: apiOver(test.db),
+      log: { warn: () => undefined },
+      userId: me,
+      getUser: async () => (signedIn ? { id: me } : null),
+    },
   } as unknown as RequestEvent;
 
   return GET(event as never);

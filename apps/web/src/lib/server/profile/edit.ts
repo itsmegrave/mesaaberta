@@ -1,4 +1,4 @@
-import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
+import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { validateFormData } from '#lib/forms/contract.js';
 import { refuse, responseForm } from '#lib/forms/server.js';
 import { requireUser } from '#lib/server/auth/guard.js';
@@ -7,7 +7,7 @@ import { withStoredFields, type ProfileSection } from '#lib/profile/sections.js'
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
-import { loadProfileForm } from '@mesaaberta/core/server/profile/service';
+import { readProfileForm } from './api';
 import {
   profileSchema,
   PROFILE_DEFAULTS,
@@ -35,9 +35,8 @@ export function saveSection(
 ) {
   return async ({ request, locals, url }: RequestEvent) => {
     const user = await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
 
-    const stored = (await loadProfileForm(locals.db, user.id))!;
+    const stored = await readProfileForm(locals, user.id);
     const values = withStoredFields(await request.formData(), stored, section, {
       hidden: (await hidden?.(locals)) ?? [],
     });
@@ -82,7 +81,6 @@ export function uploadImage(
 ) {
   return async ({ request, locals, url }: RequestEvent) => {
     const user = await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
 
     // Files are allowed so the schema can check the picture; every failure below strips them.
     const form = validateFormData(
@@ -112,7 +110,6 @@ export function uploadImage(
 export function removeImage(field: keyof typeof images, notice: string) {
   return async ({ locals, url }: RequestEvent) => {
     const user = await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
 
     await removePicture(locals, user.id, await setImage(locals, user.id, field, null));
     redirect(303, `${url.pathname}?${notice}`);

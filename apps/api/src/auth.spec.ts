@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-const { signInForSession, signUpForSession, completeLogin } = vi.hoisted(() => ({
+const { signInForSession, signUpForSession, completeLogin, ensureProfile } = vi.hoisted(() => ({
   signInForSession: vi.fn(),
   signUpForSession: vi.fn(),
   completeLogin: vi.fn(),
+  ensureProfile: vi.fn(),
 }));
 vi.mock('@mesaaberta/core/server/auth/email', () => ({ signInForSession, signUpForSession }));
 vi.mock('@mesaaberta/core/server/auth/login', () => ({ completeLogin }));
+vi.mock('@mesaaberta/core/server/auth/profile', () => ({ ensureProfile }));
 
 import { authRoutes } from './auth';
 
@@ -301,5 +303,45 @@ describe('api finish-login', () => {
       503,
     );
     expect(completeLogin).not.toHaveBeenCalled();
+  });
+});
+
+describe('api ensure-profile', () => {
+  const supabase = (answer: { status: number; body?: object }) =>
+    (async () =>
+      new Response(JSON.stringify(answer.body ?? {}), { status: answer.status })) as typeof fetch;
+  const send = (
+    request: typeof fetch,
+    headers: Record<string, string> = { authorization: 'Bearer jwt-a' },
+  ) =>
+    authRoutes(open, undefined, { request }).request(
+      '/ensure-profile',
+      { method: 'POST', headers },
+      env,
+    );
+
+  beforeEach(() => ensureProfile.mockReset());
+
+  it('answers the profile of whoever Supabase says the token belongs to', async () => {
+    ensureProfile.mockResolvedValue({ id: 'user-1', username: null });
+
+    const response = await send(
+      supabase({ status: 200, body: { id: 'user-1', user_metadata: { name: 'Ana' } } }),
+    );
+
+    expect(await response.json()).toEqual({
+      result: 'ok',
+      profile: { id: 'user-1', username: null },
+    });
+    expect(ensureProfile.mock.calls[0][1]).toEqual({
+      id: 'user-1',
+      user_metadata: { name: 'Ana' },
+    });
+  });
+
+  it('makes nothing without a token or with one Supabase rejects', async () => {
+    expect((await send(supabase({ status: 200, body: { id: 'user-1' } }), {})).status).toBe(401);
+    expect((await send(supabase({ status: 401 }))).status).toBe(401);
+    expect(ensureProfile).not.toHaveBeenCalled();
   });
 });
