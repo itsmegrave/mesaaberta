@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Forbidden } from '@mesaaberta/core/server/errors';
 import { findEditablePlace, updatePlace } from '@mesaaberta/core/server/places/service';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/places/service', async (original) => ({
@@ -39,8 +40,8 @@ const place = {
 function event(form?: Record<string, string>, role = 'member') {
   return {
     locals: {
-      db: {},
-      env: {},
+      // The api answers over the mocked service; the stand-in database only names the actor.
+      env: apiOver(actorsOnly([{ id: ANA, role, status: 'active' }])),
       flags: { isEnabled: async () => true },
       log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() },
       getUser: async () => ({ id: ANA }),

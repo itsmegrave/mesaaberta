@@ -12,10 +12,13 @@ import {
   TooEarly,
 } from '@mesaaberta/core/server/errors';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import { PlaceDuplicate } from '@mesaaberta/core/server/places/service';
 import { callApiRaw, routeTemplate } from './api-client';
 
 /** The refusal an api answer stands for, as the domain error `failFrom` already knows. */
 export function refusalOf(status: number, body: Record<string, unknown>): Error | null {
+  if (status === 400 && body.error === 'invalid' && body.message === 'place_duplicate')
+    return new PlaceDuplicate(typeof body.slug === 'string' ? body.slug : null);
   if (status === 400 && body.error === 'invalid')
     return new Invalid(
       typeof body.field === 'string' ? body.field : '',

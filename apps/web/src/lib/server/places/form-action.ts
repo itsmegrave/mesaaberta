@@ -7,7 +7,8 @@ import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
-import { PlaceDuplicate, submitPlace, updatePlace } from '@mesaaberta/core/server/places/service';
+import { PlaceDuplicate } from '@mesaaberta/core/server/places/service';
+import { writeViaApi } from '../api-write';
 
 type Event = {
   request: Request;
@@ -24,7 +25,7 @@ type Event = {
  */
 export async function handlePlaceForm(
   { request, locals, setHeaders }: Event,
-  { id }: { id?: string } = {},
+  { slug: editing }: { slug?: string } = {},
 ) {
   const data = await request.formData();
   // Files are allowed so the schema can check the photo; every failure below strips them.
@@ -35,8 +36,6 @@ export async function handlePlaceForm(
     files: ['image'],
   });
   if (!form.valid) return fail(400, { form: responseForm(form) });
-  if (!locals.db) return formMessage(form, { code: 'unavailable' }, { status: 503 });
-  const db = locals.db;
 
   let slug: string;
   let replacedImage: string | null = null;
@@ -52,12 +51,17 @@ export async function handlePlaceForm(
       imagePath = await storeImage(storage, prepared, locals.log);
     }
 
-    let eventId: string;
-    if (id) {
-      ({ eventId, slug, replacedImage } = await updatePlace(db, actor, id, input, { imagePath }));
-    } else {
-      ({ eventId, slug } = await submitPlace(db, actor, input, { imagePath }));
-    }
+    if (!actor) throw new Forbidden();
+    // The api saves it (a new place, or an edit by the place's slug) and answers its slug.
+    const written = await writeViaApi(
+      locals,
+      actor,
+      editing ? `/v1/places/${encodeURIComponent(editing)}` : '/v1/places',
+      { input, imagePath },
+    );
+    const eventId = written.eventIds[0];
+    slug = String(written.body.slug);
+    if (typeof written.body.replacedImage === 'string') replacedImage = written.body.replacedImage;
     // After the commit and the response, so the person never waits for a handler.
     locals.afterResponse((db) =>
       dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
