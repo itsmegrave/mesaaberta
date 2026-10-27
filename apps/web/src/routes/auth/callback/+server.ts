@@ -1,6 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
-import { attemptKey } from '@mesaaberta/core/server/auth/attempt-limit';
 import { finishLogin, type CompleteLoginResult } from '@mesaaberta/core/server/auth/login';
 import { callApiRaw } from '#lib/server/api-client.js';
 import type { RequestHandler } from './$types';
@@ -19,16 +18,9 @@ export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => 
   }
 
   const ip = getClientAddress();
-  // Behind `api_auth_finish_login` the api Worker does the database half with the new access token;
-  // nothing here can be used (flag off, no binding, an answer it does not know) means null, and the
-  // web Worker does it. Nobody is known yet, so the visitor's network (hashed) stands in for the id.
+  // The api Worker does the database half with the new access token. An answer it does not know
+  // (no binding, a failure) is null: the person is signed out again and sent to the login page.
   const remote = async (accessToken: string, next: string | null) => {
-    if (
-      !(await locals.flags.isEnabled('api_auth_finish_login', {
-        id: await attemptKey('sign_in', ip),
-      }))
-    )
-      return null;
     const answer = await callApiRaw(
       locals.env,
       '/v1/auth/finish-login',
@@ -44,7 +36,8 @@ export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => 
   };
 
   const target = await finishLogin(
-    { supabase: locals.supabase, db: locals.db, log: locals.log, ip, remote },
+    // No database here: the profile, the ban check and the connection record live in the api.
+    { supabase: locals.supabase, db: null, log: locals.log, ip, remote },
     { code: url.searchParams.get('code'), next: url.searchParams.get('next') },
   );
 

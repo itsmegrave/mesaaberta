@@ -34,8 +34,7 @@ export type CompleteLoginResult =
  * The database half of a provider sign-in, once the session exists: makes sure a profile exists,
  * refuses a banned account (a temporary ban that ran out is lifted here), records the connection and
  * answers where to go next (the onboarding step first, if the profile is not complete). It does not
- * touch the session: the caller signs the person out on a refusal. It runs in the web Worker or, behind
- * `api_auth_finish_login`, in the api Worker.
+ * touch the session: the caller signs the person out on a refusal. It runs in the api Worker.
  */
 export async function completeLogin(
   { db, log, ip }: CompleteDeps,

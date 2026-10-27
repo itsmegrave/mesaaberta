@@ -29,37 +29,39 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type Open = typeof createDb;
-type MakeSupabase = (url: string, key: string) => SupabaseClient;
+/** Where a one-request client keeps what it stores (the PKCE code verifier), so the route can read it. */
+type FlowStore = Map<string, string>;
+type MakeSupabase = (url: string, key: string, flow?: FlowStore) => SupabaseClient;
 type Env = DatabaseEnv & { SUPABASE_URL?: string; SUPABASE_PUBLISHABLE_KEY?: string };
 
 /** The header the web Worker sends the visitor's address in; like `x-actor-id`, only a claim. */
 export const CLIENT_IP_HEADER = 'x-client-ip';
 
 /**
- * The anonymous auth forms of Trello #120, moved out of the web Worker one at a time, behind
- * `api_auth`. There is no actor here: the visitor has no account yet, so these routes are guarded by
- * the Service Binding (or the shared secret over HTTP) alone, and by the per-network limits the web
- * form already applied. Nothing here sets a session; the forms that do (sign in, sign up, choosing a
- * new password) stay in the web Worker until a session hand-off is designed.
+ * The auth forms of Trello #120: the web Worker has no fallback for them. There is no actor here:
+ * the visitor has no account yet, so these routes are guarded by the Service Binding (or the shared
+ * secret over HTTP) alone, and by the per-network limits applied here. Nothing here sets a cookie:
+ * the forms that sign someone in answer the JWT pair and the web Worker sets it as the session.
  *
- * `POST /sign-in` checks the e-mail and password with Supabase (behind `api_auth_sign_in`) and
+ * `POST /sign-in` checks the e-mail and password with Supabase and
  * answers `{ result, session }`. `session` is the JWT pair Supabase issued (`accessToken`,
  * `refreshToken`), present only when `result` is `ok`: the web Worker sets it as the person's
  * cookie session, the only place a session lives. It is never logged and only the Service Binding
  * (or the shared secret) can reach this route. Refusals are `invalid` and `unconfirmed` (400),
  * `suspended` (403), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
- * `POST /sign-up` (behind `api_auth_sign_up`) creates the account from `{ email, password, origin,
+ * `POST /sign-up` creates the account from `{ email, password, origin,
  * next }` and answers `{ result, session }`: `signed_in` with the JWT pair when no confirmation is
- * needed, `check_email` (also for an address that already has an account) without one; refusals are
+ * needed, `check_email` (also for an address that already has an account, with `codeVerifier`)
+ * without one; refusals are
  * `weak_password` (400), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
- * `POST /new-password` (behind `api_auth_new_password`) sets `{ password, passwordConfirm }` for the
+ * `POST /new-password` sets `{ password, passwordConfirm }` for the
  * person whose own access token comes in `Authorization: Bearer`, and signs their other sessions out.
  * The token alone says whose password changes; Supabase checks it. Answers `{ result }`: `ok`, or
  * `weak_password` / `same_password` (400), `no_session` (401), `rate_limited` (429), `failed` (500).
  *
- * `POST /finish-login` (behind `api_auth_finish_login`) is the database half of a provider sign-in:
+ * `POST /finish-login` is the database half of a provider sign-in:
  * the web Worker has traded the code for a session and forwards the new access token in
  * `Authorization`; Supabase vouches for it, then the api ensures the profile, refuses a banned
  * account, records the connection (the visitor's address in `x-client-ip`) and answers
@@ -67,10 +69,34 @@ export const CLIENT_IP_HEADER = 'x-client-ip';
  * person out on those). Body: `{ next }`.
  *
  * `POST /password-reset` e-mails a reset link. Answers `{ result }`: `sent` (whether or not the
- * address has an account), `rate_limited` (429, with `retryAfter` when it is our limit) or `failed`.
+ * address has an account, with `codeVerifier`), `rate_limited` (429, with `retryAfter` when it is
+ * our limit) or `failed`.
+ *
+ * The e-mailed links (sign-up confirmation, password reset) use the PKCE flow: they come back to
+ * /auth/callback with a code, and trading it needs the verifier made when the e-mail was asked for.
+ * The client here keeps it in memory for the request and the route answers it as `codeVerifier`;
+ * the web Worker stores it in the visitor's cookies, where the callback reads it.
  */
-const statelessClient: MakeSupabase = (url, key) =>
-  createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+const PKCE_STORAGE_KEY = 'mesaaberta-auth';
+const statelessClient: MakeSupabase = (url, key, flow) =>
+  flow
+    ? createClient(url, key, {
+        auth: {
+          flowType: 'pkce',
+          storageKey: PKCE_STORAGE_KEY,
+          storage: {
+            getItem: (name) => flow.get(name) ?? null,
+            setItem: (name, value) => void flow.set(name, value),
+            removeItem: (name) => void flow.delete(name),
+          },
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      })
+    : createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+
+/** The verifier the last PKCE flow stored (as auth-js stored it), or null when none was made. */
+const verifierOf = (flow: FlowStore) => flow.get(`${PKCE_STORAGE_KEY}-code-verifier`) ?? null;
 
 /** The status the sign-in form shows for each refusal; the same as the web action's. */
 const SIGN_IN_STATUS = {
@@ -128,12 +154,13 @@ export function authRoutes(
       );
       if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
 
-      const supabase = makeSupabase(url, key);
+      const flow: FlowStore = new Map();
       const result = await requestPasswordReset(
-        { supabase, log: logger },
+        { supabase: makeSupabase(url, key, flow), log: logger },
         { email: parsed.data.email, origin },
       );
-      return c.json({ result }, result === 'sent' ? 200 : result === 'rate_limited' ? 429 : 502);
+      if (result === 'sent') return c.json({ result, codeVerifier: verifierOf(flow) });
+      return c.json({ result }, result === 'rate_limited' ? 429 : 502);
     } finally {
       await close();
     }
@@ -192,12 +219,13 @@ export function authRoutes(
       const wait = await attemptWait(db, SIGN_UP_LIMIT, ip);
       if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
 
+      const flow: FlowStore = new Map();
       const { result, session } = await signUpForSession(
-        { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
+        { supabase: makeSupabase(url, key, flow), db, log: logger, ip: ip || null },
         { email: parsed.data.email, password: parsed.data.password, origin, next },
       );
       if (result === 'signed_in') return c.json({ result, session });
-      if (result === 'check_email') return c.json({ result });
+      if (result === 'check_email') return c.json({ result, codeVerifier: verifierOf(flow) });
       return c.json({ result }, SIGN_UP_STATUS[result]);
     } finally {
       await close();
