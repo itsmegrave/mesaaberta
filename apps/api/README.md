@@ -199,3 +199,11 @@ The api reads GrowthBook itself (`flags.ts`: the same settings as web, the insta
 - `GET /v1/widgets/assets/:ext/:key`: a public asset as raw bytes (Meta fetches it without cookies).
 - `GET /v1/admin/:ext/panel`: an extension's panel data. Its hand actions and the OAuth save always go through `POST /v1/admin/:ext/:action`, with no web fallback, so the `api_admin_<ext>` flag no longer decides anything.
 - `POST /v1/admin/social/publish` (`{ tableId }`): after `queue` answers `queued`, renders and publishes after the answer (202), on a connection of its own, reading `use_table_image`.
+
+## Event delivery
+
+The web Worker no longer delivers domain events. Every write that answers `eventIds` (any non-GET 2xx JSON answer under `/v1`) has them delivered here after the answer (`dispatch.ts`), on a connection of its own. The ids still go back in the answer.
+
+- The canary flags are read by the api, targeted at the actor who made the write: `api_events_fenced_leases`, and, only when the Worker has the `DOMAIN_EVENTS` producer binding, `api_events_queue_shadow` and the `api_events_queue_{analytics,bell,mail}` classes. Without the binding every handler runs inline.
+- A failed delivery is logged and left due; the background Worker's sweep runs it.
+- `POST /v1/admin/entries` (`{ route }`): an admin opened a page of the admin area. The section comes from the route id, at most one entry per section in half an hour, and the event is delivered like any other.

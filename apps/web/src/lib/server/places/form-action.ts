@@ -3,8 +3,6 @@ import { validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
 import { NEW_PLACE_VALUES, placeSchema, type PlaceFormInput } from '@mesaaberta/core/places/schema';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import { PlaceDuplicate } from '@mesaaberta/core/server/places/service';
@@ -59,13 +57,8 @@ export async function handlePlaceForm(
       editing ? `/v1/places/${encodeURIComponent(editing)}` : '/v1/places',
       { input, imagePath },
     );
-    const eventId = written.eventIds[0];
     slug = String(written.body.slug);
     if (typeof written.body.replacedImage === 'string') replacedImage = written.body.replacedImage;
-    // After the commit and the response, so the person never waits for a handler.
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
-    );
   } catch (error) {
     if (error instanceof PlaceDuplicate) {
       return formMessage(

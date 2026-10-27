@@ -10,8 +10,6 @@ import {
 import { decideViaApi } from '../api-decide';
 import { requireAdmin } from '../admin-access';
 import { requireUser } from '../auth/guard';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
 /**
  * One form action of the catalog console: only an admin gets in (the hook 404s everyone else, and
@@ -44,12 +42,6 @@ function catalogAction(name: string, schema: ZodType): Action {
     const user = await locals.getUser();
     const decided = await decideViaApi(locals, `/v1/admin/catalog/${name}`, user!.id, form.data);
     if (decided.kind === 'refused') return refuse(decided.field, decided.code);
-
-    // The record is written with the change; the dispatch (no handler yet, it marks it done) comes after.
-    const dispatched = decided.eventIds[0];
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(event.locals.env), dispatched, new Date(), locals.log),
-    );
     return { form };
   };
 }

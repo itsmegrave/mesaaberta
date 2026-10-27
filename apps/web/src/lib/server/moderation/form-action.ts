@@ -6,8 +6,6 @@ import { decideViaApi } from '../api-decide';
 import { requireUser } from '../auth/guard';
 import { writeViaApi } from '../api-write';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
 /**
  * The api route that makes the action, and the body its schema wants (the checked form by default).
@@ -24,7 +22,7 @@ type ViaApi<Schema extends ZodType> = {
  * (and, with `admin`, only an admin: everyone else gets the 404 the admin area answers), the form
  * checked by its schema over the named text fields, and then either the api route that makes it
  * (an admin decision, a member's report or withdrawal). What is refused comes back as a code on the field it names, or on the
- * form; the events written are dispatched after the response. Pairs with `actionForm` on the page.
+ * form; the api delivers the events it writes. Pairs with `actionForm` on the page.
  */
 export function moderationAction<Schema extends ZodType>(
   schema: Schema,
@@ -46,7 +44,6 @@ export function moderationAction<Schema extends ZodType>(
       return fail(status, { form });
     };
 
-    let eventIds: string[];
     try {
       if (how.allow && !(await how.allow(event))) throw new Forbidden();
       const body = how.body ? how.body(form.data, event) : (form.data as object);
@@ -54,9 +51,8 @@ export function moderationAction<Schema extends ZodType>(
       if (admin) {
         const decided = await decideViaApi(locals, path, user.id, body);
         if (decided.kind === 'refused') return refuse(decided.status, decided.field, decided.code);
-        eventIds = decided.eventIds;
       } else {
-        eventIds = (await writeViaApi(locals, user, path, { ...body })).eventIds;
+        await writeViaApi(locals, user, path, { ...body });
       }
     } catch (cause) {
       if (cause instanceof Invalid) return refuse(400, cause.field, cause.message);
@@ -65,12 +61,6 @@ export function moderationAction<Schema extends ZodType>(
       if (cause instanceof NotFound) return refuse(404, '', 'not_found');
       throw cause;
     }
-
-    const handlers = handlersFor(event.locals.env);
-    const dispatched = eventIds;
-    locals.afterResponse(async (db) => {
-      for (const id of dispatched) await dispatchEvent(db, handlers, id, new Date(), locals.log);
-    });
     return { form };
   };
 }

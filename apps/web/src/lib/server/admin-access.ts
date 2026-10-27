@@ -1,9 +1,7 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { adminSectionOf, recordAdminEntry } from '@mesaaberta/core/server/admin/entries';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { sendToApi } from './api-client';
 
 export const isAdminPath = (pathname: string) =>
   pathname === '/admin' || pathname.startsWith('/admin/');
@@ -44,8 +42,9 @@ export async function requireAdmin(locals: App.Locals) {
 
 /**
  * Records, after the response, that an admin opened a section of the area: a page or its data on
- * a client navigation, never an action or an endpoint. `recordAdminEntry` keeps it to one entry per
- * section in half an hour. A failure is logged and never reaches the admin.
+ * a client navigation, never an action or an endpoint. The api keeps it to one entry per section in
+ * half an hour and takes the section from the route id. A failure is logged and never reaches the
+ * admin.
  */
 async function noteEntry(event: RequestEvent) {
   const { locals, route, request } = event;
@@ -53,14 +52,16 @@ async function noteEntry(event: RequestEvent) {
   if (!event.isDataRequest && !request.headers.get('accept')?.includes('text/html')) return;
   const profile = await locals.getProfile().catch(() => null);
   if (!profile) return;
-  const section = adminSectionOf(route.id);
-  locals.afterResponse(async (db) => {
+  const routeId = route.id;
+  locals.afterResponse(async () => {
     try {
-      const eventId = await recordAdminEntry(db, { actorId: profile.id, section });
-      if (eventId)
-        await dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log);
+      const answer = await sendToApi(locals.env, '/v1/admin/entries', profile.id, {
+        method: 'POST',
+        json: { route: routeId },
+      });
+      if (answer && !answer.ok) throw new Error(`api answered ${answer.status}`);
     } catch (error) {
-      locals.log.warn('admin entry not recorded', { error, section });
+      locals.log.warn('admin entry not recorded', { error, route: routeId });
     }
   });
 }

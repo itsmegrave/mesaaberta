@@ -3,10 +3,8 @@ import { initialForm, validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse } from '#lib/forms/server.js';
 import { placeClaimSchema } from '@mesaaberta/core/places/claims';
 import { Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { readFromApi } from '#lib/server/api-read.js';
 import { writeViaApi } from '#lib/server/api-write.js';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { requireDirectory } from '#lib/server/directories/flags.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -55,14 +53,13 @@ export const actions: Actions = {
     });
     if (!form.valid) return formMessage(form, { code: 'invalid' }, { status: 400 });
 
-    let eventIds: string[];
     try {
-      ({ eventIds } = await writeViaApi(
+      await writeViaApi(
         locals,
         profile,
         `/v1/places/${encodeURIComponent(params.slug)}/claim`,
         form.data,
-      ));
+      );
     } catch (cause) {
       if (cause instanceof Invalid)
         return formMessage(form, { code: cause.message }, { status: 400 });
@@ -70,10 +67,6 @@ export const actions: Actions = {
       if (cause instanceof NotFound) error(404, 'Not found');
       throw cause;
     }
-    const handlers = handlersFor(locals.env);
-    locals.afterResponse(async (db) => {
-      for (const id of eventIds) await dispatchEvent(db, handlers, id, new Date(), locals.log);
-    });
     return formMessage(form, { code: 'sent' });
   },
 };

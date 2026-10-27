@@ -54,7 +54,7 @@ async function answer(name: keyof typeof actions, e: RequestEvent) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('"Quem cuida do parceiro" on the edit page', () => {
-  it('invites by @username for this partner and dispatches the event after the response', async () => {
+  it('invites by @username for this partner, leaving the event to the api', async () => {
     const { event: e, after } = event({ username: ' @Bruno ' });
     await answer('invite', e);
     expect(invitePartnerOwner).toHaveBeenCalledWith(
@@ -63,7 +63,7 @@ describe('"Quem cuida do parceiro" on the edit page', () => {
       PARTNER,
       'bruno',
     );
-    expect(after).toHaveLength(1);
+    expect(after).toHaveLength(0);
   });
 
   it('refuses while use_partner_owners is off for the person', async () => {

@@ -44,12 +44,6 @@ declare global {
       getProfile: () => Promise<
         typeof import('@mesaaberta/core/server/db/schema').profiles.$inferSelect | null
       >;
-      /** Whether `api_events_fenced_leases` is on for this request's person (read once, lazily). */
-      fencedLeases?: () => Promise<boolean>;
-      /** Whether `api_events_queue_shadow` is on for this request's person (read once, lazily). */
-      queueShadow?: () => Promise<boolean>;
-      /** The handler names this request hands to the queue (one `api_events_queue_*` flag per class); usually none. */
-      queueLive?: () => Promise<readonly string[]>;
       /** Set once someone is signed in; it ends up on the request log line. */
       userId?: string;
     }

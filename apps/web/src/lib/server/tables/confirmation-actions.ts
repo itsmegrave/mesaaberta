@@ -7,8 +7,6 @@ import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
 import { writeViaApi } from '../api-write';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { TableLifecycleActionName } from '@mesaaberta/core/server/tables/lifecycle-actions';
 
 /**
@@ -31,7 +29,6 @@ function confirmationAction<Schema extends ZodType>(
     const form = validateStringForm(formData, schema, fields);
     if (!form.valid) return fail(400, { form });
 
-    let eventId: string;
     try {
       const data = form.data as z.infer<Schema>;
       // The checkboxes are the players present. A form without the `attendance` marker (no
@@ -39,13 +36,12 @@ function confirmationAction<Schema extends ZodType>(
       const present = formData.has('attendance')
         ? formData.getAll('present').filter((id): id is string => typeof id === 'string')
         : undefined;
-      const written = await writeViaApi(
+      await writeViaApi(
         locals,
         user,
         `/v1/manage/${encodeURIComponent(params.slug!)}/${action}`,
         body?.(data, present) ?? {},
       );
-      eventId = written.eventIds[0];
     } catch (e) {
       if (e instanceof Invalid) {
         form.valid = false;
@@ -55,9 +51,6 @@ function confirmationAction<Schema extends ZodType>(
       return failFrom(e);
     }
 
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
-    );
     if (!request.headers.has('x-sveltekit-action')) {
       redirect(303, safeNext((form.data as { next: string }).next, url.pathname));
     }

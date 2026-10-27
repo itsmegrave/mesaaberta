@@ -65,7 +65,7 @@ describe('the report decisions', () => {
     expect(closeReport).not.toHaveBeenCalled();
   });
 
-  it('accept with the note, and dispatch the event after the response', async () => {
+  it('accept with the note, and leave the event to the api', async () => {
     const { event: e, after } = event({ id: report, note: '  Mesa desativada  ' });
 
     const result = await run('accept', e);
@@ -78,14 +78,8 @@ describe('the report decisions', () => {
       'resolved',
       'Mesa desativada',
     );
-    await after[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith(
-      {},
-      expect.anything(),
-      'event-2',
-      expect.any(Date),
-      e.locals.log,
-    );
+    expect(after).toHaveLength(0);
+    expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('refuse a note over the limit before the service sees it', async () => {

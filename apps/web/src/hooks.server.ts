@@ -13,7 +13,6 @@ import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
 import { handleCanonicalRoutes } from '#lib/server/canonical-routes.js';
 import { handleAuth } from '#lib/server/auth/handle-auth.js';
 import { handleSuspended } from '#lib/server/auth/suspended.js';
-import { can } from '@mesaaberta/core/server/auth/policy';
 import { handleDatabase } from '#lib/server/db/handle-database.js';
 import { logger, setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '#lib/server/sentry-sink.js';
@@ -21,8 +20,7 @@ import { handleRequestLog, handleUserTag } from '#lib/server/request-log.js';
 import { handleHostTelemetry, handleRuntime, handleServerTiming } from '#lib/server/runtime.js';
 import { handleHttpMetrics } from '#lib/server/http-metrics.js';
 import { createTracker } from '@mesaaberta/core/server/analytics/track';
-import { analyticsHandlers, type AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
-import { MAIL_HANDLER_NAMES, bellHandlers } from '@mesaaberta/core/server/events/handlers';
+import type { AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { handleMaintenance } from '#lib/server/maintenance.js';
 import { handleChangelogNotice } from '#lib/server/changelog-notice.js';
 import { handleAdminAccess } from '#lib/server/admin-access.js';
@@ -91,53 +89,6 @@ const handleFlags: Handle = ({ event, resolve }) => {
       : async () => null,
     { forceAll, overrides, extensionFlags: extensionFlagDefaults(), log: event.locals.log },
   );
-
-  // Targeted at admins first (`isAdmin = true`). Read the first time an event is dispatched.
-  let fenced: Promise<boolean> | undefined;
-
-  event.locals.fencedLeases = () =>
-    (fenced ??= (async () => {
-      const profile = await event.locals.getProfile().catch(() => null);
-
-      return event.locals.flags.isEnabled(
-        'api_events_fenced_leases',
-        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
-      );
-    })());
-
-  // The same targeting, read the first time an event is dispatched and only when a queue is bound.
-  let shadow: Promise<boolean> | undefined;
-
-  event.locals.queueShadow = () =>
-    (shadow ??= (async () => {
-      const profile = await event.locals.getProfile().catch(() => null);
-
-      return event.locals.flags.isEnabled(
-        'api_events_queue_shadow',
-        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
-      );
-    })());
-
-  // Stage 3: the handler classes this request hands to the queue, one flag per class, for the
-  // people each flag targets. Read like the two above.
-  let live: Promise<readonly string[]> | undefined;
-
-  event.locals.queueLive = () =>
-    (live ??= (async () => {
-      const profile = await event.locals.getProfile().catch(() => null);
-      const target = profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {};
-      const [analytics, bell, mail] = await Promise.all([
-        event.locals.flags.isEnabled('api_events_queue_analytics', target),
-        event.locals.flags.isEnabled('api_events_queue_bell', target),
-        event.locals.flags.isEnabled('api_events_queue_mail', target),
-      ]);
-      return [
-        ...(analytics ? analyticsHandlers(env as AnalyticsEnv | undefined) : []),
-        ...(bell ? bellHandlers : []),
-      ]
-        .map(({ name }) => name)
-        .concat(mail ? MAIL_HANDLER_NAMES : []);
-    })());
 
   return resolve(event);
 };

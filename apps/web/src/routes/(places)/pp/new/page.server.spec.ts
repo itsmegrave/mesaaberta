@@ -74,7 +74,7 @@ describe('"Cadastrar lugar"', () => {
     });
   });
 
-  it('sends the place and goes to its page, dispatching the event after the response', async () => {
+  it('sends the place and goes to its page, leaving the event to the api', async () => {
     const { event: e, after } = event(fields);
     const { thrown } = await send(e);
     expect(thrown?.location).toBe('/pp/taverna-do-dado?enviado=1');
@@ -83,7 +83,7 @@ describe('"Cadastrar lugar"', () => {
       kind: 'game_cafe',
       amenities: ['accessible'],
     });
-    expect(after).toHaveLength(1);
+    expect(after).toHaveLength(0);
   });
 
   it('refuses a form without a kind, with what was typed', async () => {

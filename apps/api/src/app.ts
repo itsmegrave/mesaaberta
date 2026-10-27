@@ -5,6 +5,7 @@ import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
 import type { DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { accountRoutes } from './account';
 import { ACTOR_HEADER } from './admin-guard';
+import { adminEntryRoutes } from './admin-entries';
 import { adminReadRoutes } from './admin-reads';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
@@ -16,6 +17,7 @@ import { storeHealth } from './health';
 import { partnerRoutes } from './partners';
 import { placeRoutes } from './places';
 import { crowdfundingRoutes } from './crowdfundings';
+import { dispatchAfterWrites } from './dispatch';
 import { inboxRoutes } from './inbox';
 import { locationRoutes } from './location';
 import { invitationRoutes } from './invitations';
@@ -72,6 +74,8 @@ export function createApi() {
       durationMs: Date.now() - started,
     });
   });
+  // The events a write answers (`eventIds`) are delivered here after the answer, never by web.
+  app.use('/v1/*', dispatchAfterWrites());
   // The writes (Trello #120) live here only; web has no fallback. The admin event actions:
   app.route('/v1/admin/events', eventRoutes());
   // the catalog console's decisions:
@@ -80,6 +84,8 @@ export function createApi() {
   app.route('/v1/admin/moderation', moderationRoutes());
   // the announcements console (confirm, then send).
   app.route('/v1/admin/announcements', announcementRoutes());
+  // That an admin entered a section of the admin area (the audit log).
+  app.route('/v1/admin/entries', adminEntryRoutes());
   // The admin's hand actions on an installed extension (Instagram: queue, reconcile, connect),
   // behind `api_admin_<extension>`. After the routes above, which have a path of their own.
   app.route('/v1/admin', extensionRoutes());

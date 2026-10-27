@@ -9,8 +9,6 @@ import {
   newPartnerSchema,
 } from '@mesaaberta/core/partners/schema';
 import { Forbidden, Invalid, NotFound } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import { writeViaApi } from '../api-write';
@@ -70,12 +68,7 @@ export async function handlePartnerForm(
       id ? `/v1/submissions/partners/${encodeURIComponent(id)}` : '/v1/submissions/partners',
       { input, logoPath },
     );
-    const eventId = written.eventIds[0];
     if (typeof written.body.replacedLogo === 'string') replacedLogo = written.body.replacedLogo;
-    // After the commit and the response, so the visitor never waits for a handler.
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
-    );
   } catch (error) {
     if (error instanceof Invalid) {
       // The upload errors are about "the image"; on this form that field is the logo.

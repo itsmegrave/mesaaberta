@@ -6,8 +6,6 @@ import { writeViaApi } from '../api-write';
 import { requireUser } from '../auth/guard';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
 /**
  * Whether "Quem cuida do parceiro" is on for a person (`use_partner_owners`): the section on the edit
@@ -25,8 +23,8 @@ export async function partnerOwnersEnabled(
 
 /**
  * A form action of "Quem cuida do parceiro" or of the invite page: validates `fields` with `schema`,
- * makes the api write `call` names (`[path, body]`; the service there authorizes) and dispatches the
- * events it returns after the response.
+ * makes the api write `call` names (`[path, body]`; the service there authorizes, and the api
+ * delivers the events it writes).
  * A refusal answers with its code on the form (`unavailable`, `too_many`, `last_owner`,
  * `rate_limited`), a vanished partner or invite with `not_found`. `flagged` actions refuse while
  * `use_partner_owners` is off for the person. `then` may redirect once it went through.
@@ -51,11 +49,7 @@ export function ownerAction<S extends ZodType>(
       return formMessage(form, { code: 'forbidden' }, { status: 403 });
     try {
       const [path, body] = call(checked.data, params as Record<string, string>);
-      const { eventIds } = await writeViaApi(locals, actor, path, body);
-      for (const eventId of eventIds)
-        locals.afterResponse((db) =>
-          dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
-        );
+      await writeViaApi(locals, actor, path, body);
     } catch (cause) {
       if (cause instanceof Invalid) return refuse(form, 400, cause.message, fields[0]);
       if (cause instanceof RateLimited)
