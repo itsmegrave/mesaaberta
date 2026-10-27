@@ -1,10 +1,11 @@
 <script lang="ts">
   import MAButton from '#lib/components/ui/MAButton.svelte';
-  import { onMount } from 'svelte';
+  import { flushSync, onMount } from 'svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import RailTip from '#lib/components/shell/RailTip.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { applyChoice, readChoice, type ThemeChoice } from '#lib/theme/theme.js';
+  import { originOf, revealTheme } from '#lib/theme/theme-transition.js';
 
   let {
     labelled = false,
@@ -55,11 +56,20 @@
     return () => mql.removeEventListener('change', onChange);
   });
 
-  function handlePressedChange(pressed: boolean) {
+  /** Changes the theme, growing the new one from `control` (the button that was used). */
+  function handlePressedChange(pressed: boolean, control?: Element | null): Promise<void> {
     animate = true;
-    isDark = pressed;
     activeChoice = pressed ? 'dark' : 'light';
-    applyChoice(activeChoice);
+    const choice = activeChoice;
+    // The view transition snapshots the page after this runs, so Svelte must draw the new state now.
+    return revealTheme(
+      () =>
+        flushSync(() => {
+          isDark = pressed;
+          applyChoice(choice);
+        }),
+      originOf(control),
+    );
   }
 </script>
 
@@ -89,13 +99,14 @@
     role="radio"
     aria-checked={checked}
     tabindex={checked ? 0 : -1}
-    onclick={() => handlePressedChange(dark)}
-    onkeydown={(event) => {
+    onclick={(event) => handlePressedChange(dark, event.currentTarget)}
+    onkeydown={async (event) => {
       // Arrow keys move between the two segments, as in a native radio group.
       if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
         event.preventDefault();
-        handlePressedChange(!dark);
         const group = (event.currentTarget as HTMLElement).parentElement;
+        const other = [...(group?.children ?? [])].find((el) => el !== event.currentTarget);
+        await handlePressedChange(!dark, other);
         group?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
       }
     }}
@@ -127,7 +138,7 @@
     role="switch"
     aria-checked={isDark}
     title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
-    onclick={() => handlePressedChange(!isDark)}
+    onclick={(event) => handlePressedChange(!isDark, event.currentTarget)}
     class="flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold hover:bg-surface-200-800"
   >
     <span class="flex shrink-0 text-muted">{@render themeIcon()}</span>
@@ -151,7 +162,7 @@
       type="button"
       aria-label={m.theme_dark_mode()}
       aria-pressed={isDark}
-      onclick={() => handlePressedChange(!isDark)}
+      onclick={(event) => handlePressedChange(!isDark, event.currentTarget)}
       class="group relative flex size-12 items-center justify-center text-muted hover:text-surface-950-50"
     >
       <span
@@ -168,7 +179,7 @@
     aria-label={m.theme_dark_mode()}
     aria-pressed={isDark}
     title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
-    onclick={() => handlePressedChange(!isDark)}
+    onclick={(event) => handlePressedChange(!isDark, event.currentTarget)}
     class="btn-icon size-11 shrink-0 rounded-full border border-surface-200-800 hover:preset-tonal"
   >
     {@render themeIcon()}

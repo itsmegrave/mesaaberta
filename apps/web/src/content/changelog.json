@@ -20,6 +20,11 @@
         "kind": "improved",
         "title": "Seções que se recolhem no celular",
         "description": "Nas páginas de sistemas e lugares, as seções longas se recolhem com um resumo de uma linha. Toque para abrir."
+      },
+      {
+        "kind": "improved",
+        "title": "Troca de tema animada",
+        "description": "Ao trocar entre claro e escuro, o novo tema se espalha a partir do botão. Com movimento reduzido ligado no aparelho, a troca é imediata."
       }
     ]
   },

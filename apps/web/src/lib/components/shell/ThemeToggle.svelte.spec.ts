@@ -81,7 +81,8 @@ describe('ThemeToggle', () => {
     const button = page.getByRole('button', { name: 'Tema escuro' });
     await button.click();
 
-    expect(root.dataset.mode).toBe('dark');
+    // The new theme lands once the view transition has taken its snapshot.
+    await expect.poll(() => root.dataset.mode).toBe('dark');
     mql.dispatchEvent(new MediaQueryListEvent('change', { matches: false }));
     expect(root.dataset.mode).toBe('dark');
   });
@@ -94,7 +95,7 @@ describe('ThemeToggle', () => {
     expect(shown()?.getAttribute('data-icon')).toBe('moon');
     await button.click();
 
-    expect(shown()?.getAttribute('data-icon')).toBe('sun');
+    await expect.poll(() => shown()?.getAttribute('data-icon')).toBe('sun');
     // The moon stays in place to fade out; it is hidden, not removed.
     expect(
       button.element().querySelector('[data-shown="false"] [data-icon="moon"]'),
@@ -126,5 +127,26 @@ describe('ThemeToggle', () => {
     expect(
       button.element().querySelector('[data-shown="true"] [data-icon]')?.getAttribute('data-icon'),
     ).toBe('sun');
+  });
+
+  it('grows the new theme from the button, and changes in place with reduced motion', async () => {
+    const start = vi.spyOn(document, 'startViewTransition');
+    render(ThemeToggle);
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    await button.click();
+    await expect.element(button).toHaveAttribute('aria-pressed', 'true');
+    expect(start).toHaveBeenCalledOnce();
+
+    const reduce = window.matchMedia;
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) =>
+      query.includes('reduced-motion')
+        ? ({ matches: true, media: query } as MediaQueryList)
+        : reduce.call(window, query),
+    );
+    await button.click();
+    await expect.element(button).toHaveAttribute('aria-pressed', 'false');
+    expect(root.dataset.mode).toBe('light');
+    expect(start).toHaveBeenCalledOnce();
   });
 });
