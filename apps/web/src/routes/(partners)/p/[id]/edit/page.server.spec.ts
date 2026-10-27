@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { invitePartnerOwner, removePartnerOwner } from '@mesaaberta/core/server/partners/owners';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { actions } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/partners/owners', () => ({
@@ -22,8 +23,8 @@ function event(form: Record<string, string>, { flagOn = true } = {}) {
     after,
     event: {
       locals: {
-        db: {},
-        env: {},
+        // The api answers over the mocked services; the stand-in database only names the actor.
+        env: apiOver(actorsOnly([{ id: ANA, role: 'member', status: 'active' }])),
         flags: { isEnabled: async () => flagOn },
         log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() },
         getUser: async () => ({ id: ANA }),

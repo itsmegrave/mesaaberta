@@ -2,10 +2,9 @@ import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm, type FormResult } from '#lib/forms/contract.js';
 import { formMessage, refuse } from '#lib/forms/server.js';
+import { writeViaApi } from '../api-write';
 import { requireUser } from '../auth/guard';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
@@ -26,7 +25,8 @@ export async function partnerOwnersEnabled(
 
 /**
  * A form action of "Quem cuida do parceiro" or of the invite page: validates `fields` with `schema`,
- * runs `apply` (the service authorizes) and dispatches the events it returns after the response.
+ * makes the api write `call` names (`[path, body]`; the service there authorizes) and dispatches the
+ * events it returns after the response.
  * A refusal answers with its code on the form (`unavailable`, `too_many`, `last_owner`,
  * `rate_limited`), a vanished partner or invite with `not_found`. `flagged` actions refuse while
  * `use_partner_owners` is off for the person. `then` may redirect once it went through.
@@ -34,17 +34,14 @@ export async function partnerOwnersEnabled(
 export function ownerAction<S extends ZodType>(
   schema: S,
   fields: readonly string[],
-  apply: (
-    db: AnyDb,
-    actor: Actor,
+  call: (
     data: z.output<S>,
     params: Record<string, string>,
-  ) => Promise<{ eventIds: string[] }>,
+  ) => [path: string, body: Record<string, unknown>],
   { flagged = true, then }: { flagged?: boolean; then?: (data: z.output<S>) => string | null } = {},
 ) {
   return async ({ locals, url, params, request }: RequestEvent) => {
     await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
     const checked = validateStringForm(await request.formData(), schema, fields);
     const form = checked as FormResult<Record<string, unknown>>;
     if (!form.valid) return fail(400, { form });
@@ -53,12 +50,8 @@ export function ownerAction<S extends ZodType>(
     if (flagged && !(await partnerOwnersEnabled(locals, actor)))
       return formMessage(form, { code: 'forbidden' }, { status: 403 });
     try {
-      const { eventIds } = await apply(
-        locals.db,
-        actor,
-        checked.data,
-        params as Record<string, string>,
-      );
+      const [path, body] = call(checked.data, params as Record<string, string>);
+      const { eventIds } = await writeViaApi(locals, actor, path, body);
       for (const eventId of eventIds)
         locals.afterResponse((db) =>
           dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
