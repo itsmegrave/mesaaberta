@@ -1,8 +1,8 @@
 import type { Handle } from '@sveltejs/kit/hooks';
 import { createServerClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
-import { eq } from 'drizzle-orm';
-import { profiles } from '@mesaaberta/core/server/db/schema';
+import type { profiles } from '@mesaaberta/core/server/db/schema';
+import { apiConfigured, readMe } from '../me';
 
 /** Supabase settings on the Worker. Both are public by design: they only identify the project. */
 type AuthEnv = { SUPABASE_URL?: string; SUPABASE_PUBLISHABLE_KEY?: string };
@@ -50,17 +50,15 @@ export const createHandleAuth =
         return data.user;
       })());
 
-    // The signed-in user's profile: the actor the authorization policy decides about. Null when
-    // anonymous, without a profile, or while there is no database.
+    // The signed-in user's profile: the actor the authorization policy decides about, read by the
+    // api Worker. Null when anonymous, without a profile, or while there is no api to ask.
     let profile: Promise<typeof profiles.$inferSelect | null> | undefined;
 
     event.locals.getProfile = () =>
       (profile ??= (async () => {
         const user = await event.locals.getUser();
-        if (!user || !event.locals.db) return null;
-
-        const [row] = await event.locals.db.select().from(profiles).where(eq(profiles.id, user.id));
-        return row ?? null;
+        if (!user || !apiConfigured(event.locals.env)) return null;
+        return readMe(event.locals, user.id);
       })());
 
     return resolve(event);

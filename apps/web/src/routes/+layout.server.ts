@@ -1,16 +1,10 @@
 import { siteOf } from '@mesaaberta/core/server/site';
 import { loadRead } from '#lib/server/reads/load.js';
-import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import { NO_DIRECTORIES, directoryFlags } from '#lib/server/directories/flags.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { unreadConversations } from '@mesaaberta/core/server/messages/service';
-import {
-  BELL_LIMIT,
-  listNotifications,
-  unreadCount,
-} from '@mesaaberta/core/server/notifications/service';
+import { readShell } from '#lib/server/me.js';
 import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
 import { isPublished } from '#lib/blog.js';
 import { posts } from '#lib/server/blog.js';
@@ -19,7 +13,8 @@ import type { LayoutServerLoad } from './$types';
 /**
  * postgres.js raises CONNECTION_ENDED only for a query submitted after this request's own `end()`
  * (see handleDatabase): the page's load already decided the response (a redirect, a 404) and this
- * layout load was still going. Nobody sees the account menu then, and the database is fine.
+ * layout load was still going. Nobody sees the account menu then, and the database is fine. The
+ * account read (`loadRead`) may still query in this Worker.
  */
 const requestAlreadyEnded = (error: unknown) =>
   [error, (error as { cause?: unknown } | null)?.cause].some(
@@ -57,14 +52,8 @@ export const load: LayoutServerLoad = async (event) => {
     const accountRead = await loadRead(event, 'account');
     // The bell: how many are unread, and the latest few for its menu.
     const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
-    const [unread, latest, messagesUnread] =
-      profile && locals.db
-        ? await Promise.all([
-            unreadCount(locals.db, profile.id, { withAchievements }),
-            listNotifications(locals.db, profile.id, { limit: BELL_LIMIT, withAchievements }),
-            unreadConversations(locals.db, profile.id),
-          ])
-        : [0, [], 0];
+    // The bell, the messages link and an admin's waiting suggestions, from the api Worker.
+    const shell = profile ? await readShell(locals, profile.id, withAchievements) : null;
 
     return {
       authEnabled,
@@ -83,11 +72,14 @@ export const load: LayoutServerLoad = async (event) => {
         username: profile.username,
         avatarUrl: pictureOf(supabaseUrlOf(locals.env), profile),
         isAdmin: can(profile, 'admin:access'),
-        pendingSuggestionsCount:
-          locals.db && can(profile, 'admin:access') ? await pendingCount(locals.db) : 0,
+        pendingSuggestionsCount: shell?.pendingSuggestions ?? 0,
         // When the bell's list was read: "mark all read" leaves what came after it.
-        notifications: { unread, latest, seenAt: new Date().toISOString() },
-        messagesUnread,
+        notifications: {
+          unread: shell?.unread ?? 0,
+          latest: shell?.latest ?? [],
+          seenAt: new Date().toISOString(),
+        },
+        messagesUnread: shell?.messagesUnread ?? 0,
       },
     };
   } catch (error) {

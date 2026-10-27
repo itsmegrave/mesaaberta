@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
+import { apiOver } from '../db/test-api';
 import { createHandleAuth } from './handle-auth';
 
 const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' };
@@ -109,50 +110,61 @@ describe('handleAuth', () => {
 describe('getProfile', () => {
   const id = '00000000-0000-4000-8000-000000000301';
   const signedIn = () => vi.fn().mockResolvedValue({ data: { user: { id } }, error: null });
+  // The api Worker reads the profile over the test database.
+  const withApi = (db: unknown) => ({ ...env, ...apiOver(db as never) });
 
-  it("returns the signed-in user's profile: the actor the policy decides about", async () => {
+  it("returns the signed-in user's profile from the api: the actor the policy decides about", async () => {
     const test = await createTestDb();
     await test.db.insert(profiles).values({ id, username: 'ana', role: 'admin' });
-    const { event, run } = setup(env, signedIn());
-    event.locals.db = test.db as never;
+    const { event, run } = setup(withApi(test.db), signedIn());
     await run();
 
-    expect(await event.locals.getProfile()).toMatchObject({ id, role: 'admin', status: 'active' });
+    const profile = await event.locals.getProfile();
+    expect(profile).toMatchObject({ id, role: 'admin', status: 'active' });
+    // JSON turned the dates into strings; they come back as dates.
+    expect(profile?.createdAt).toBeInstanceOf(Date);
     await test.close();
   });
 
-  it('is null for an anonymous visitor, without touching the database', async () => {
-    const { event, run } = setup({});
-    event.locals.db = null;
+  it('is null for an anonymous visitor, without asking the api', async () => {
+    const api = vi.fn();
+    const { event, run } = setup({ API: { fetch: api } });
     await run();
 
     expect(await event.locals.getProfile()).toBeNull();
+    expect(api).not.toHaveBeenCalled();
   });
 
   it('is null when someone is signed in but has no profile, rather than a made-up actor', async () => {
     const test = await createTestDb();
-    const { event, run } = setup(env, signedIn());
-    event.locals.db = test.db as never;
+    const { event, run } = setup(withApi(test.db), signedIn());
     await run();
 
     expect(await event.locals.getProfile()).toBeNull();
     await test.close();
   });
 
-  it('is null while no database is configured', async () => {
+  it('is null while there is no api to ask', async () => {
     const { event, run } = setup(env, signedIn());
-    event.locals.db = null;
     await run();
 
     expect(await event.locals.getProfile()).toBeNull();
+  });
+
+  it('fails the request when the api cannot answer, instead of reading as no profile', async () => {
+    const api = vi.fn(async () => Response.json({ error: 'internal_error' }, { status: 500 }));
+    const { event, run } = setup({ ...env, API: { fetch: api } }, signedIn());
+    (event.locals as { log?: unknown }).log = { warn: vi.fn() };
+    await run();
+
+    await expect(event.locals.getProfile()).rejects.toMatchObject({ status: 503 });
   });
 
   it('loads once per request however often it is asked', async () => {
     const test = await createTestDb();
     await test.db.insert(profiles).values({ id, username: 'ana' });
     const getUser = signedIn();
-    const { event, run } = setup(env, getUser);
-    event.locals.db = test.db as never;
+    const { event, run } = setup(withApi(test.db), getUser);
     await run();
 
     const [a, b] = await Promise.all([event.locals.getProfile(), event.locals.getProfile()]);

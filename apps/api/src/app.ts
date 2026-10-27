@@ -13,6 +13,7 @@ import { extensionRoutes } from './extensions';
 import { inboxRoutes } from './inbox';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
+import { meRoutes } from './me';
 import { messageRoutes } from './messages';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
@@ -93,6 +94,9 @@ export function createApi() {
   app.route('/v1/account/password', passwordRoutes());
   // The auth forms (password reset, sign-in, sign-up, new password, finish login).
   app.route('/v1/auth', authRoutes());
+  // The signed-in person's own frame: the profile row (the actor of every web request), the
+  // header's numbers and the bell, and the notification feed.
+  app.route('/v1/me', meRoutes());
   // The person's own profile (the form and the direct-messages switch).
   app.route('/v1/account', accountRoutes());
 

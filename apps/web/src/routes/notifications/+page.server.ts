@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { notificationActionSchema } from '#lib/notifications/actions.js';
 import {
@@ -8,9 +8,7 @@ import {
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
-import { NotFound } from '@mesaaberta/core/server/errors';
-import { pageNumber } from '@mesaaberta/core/admin/catalog';
-import { notificationPage, unreadCount } from '@mesaaberta/core/server/notifications/service';
+import { readNotifications } from '#lib/server/me.js';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -19,38 +17,31 @@ const categoryOf = (value: string | null): NotificationCategory | undefined =>
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
 
   const profile = await locals.getProfile();
   const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
   const category = categoryOf(url.searchParams.get('category'));
   const unread = url.searchParams.get('unread') === '1';
   const seenAt = new Date().toISOString();
-  try {
-    const [feed, unreadTotal] = await Promise.all([
-      notificationPage(locals.db, user.id, pageNumber(url.searchParams.get('page')), {
-        category,
-        unread,
-        withAchievements,
-      }),
-      unreadCount(locals.db, user.id, { withAchievements }),
-    ]);
-    return {
-      category: category ?? null,
-      unread,
-      page: feed.page,
-      pages: feed.pages,
-      // Every category and page counts for "mark all read", not only what this filter shows.
-      unreadTotal,
-      seenAt,
-      // The "Conquistas" filter and the badge notices wait for the badges to be released.
-      withAchievements,
-      notifications: feed.items,
-    };
-  } catch (cause) {
-    if (cause instanceof NotFound) error(404, 'Not found');
-    throw cause;
-  }
+  // A page past the last is the api's 404, which becomes the page's.
+  const feed = await readNotifications(locals, user.id, {
+    page: url.searchParams.get('page'),
+    category,
+    unread,
+    withAchievements,
+  });
+  return {
+    category: category ?? null,
+    unread,
+    page: feed.page,
+    pages: feed.pages,
+    // Every category and page counts for "mark all read", not only what this filter shows.
+    unreadTotal: feed.unreadTotal,
+    seenAt,
+    // The "Conquistas" filter and the badge notices wait for the badges to be released.
+    withAchievements,
+    notifications: feed.items,
+  };
 };
 
 /**
