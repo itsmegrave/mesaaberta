@@ -1,20 +1,22 @@
-import { error } from '@sveltejs/kit';
 import { readCrowdfundingFilters } from '@mesaaberta/core/crowdfunding/filters';
 import { reportCrowdfundingSchema } from '@mesaaberta/core/moderation/reports';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { listCrowdfundings } from '@mesaaberta/core/server/crowdfunding/service';
+import type { listCrowdfundings } from '@mesaaberta/core/server/crowdfunding/service';
+import { readFromApi } from '#lib/server/api-read.js';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-  if (!locals.db) error(503, 'Database not configured');
   const filters = readCrowdfundingFilters(url.searchParams);
-  const list = await listCrowdfundings(locals.db, filters);
-  // A page past the last one does not exist.
-  if (!list) error(404, 'Not found');
-
   const profile = await locals.getProfile();
+  // The api reads the page; one past the last is its 404, which becomes the page's.
+  const list = await readFromApi<NonNullable<Awaited<ReturnType<typeof listCrowdfundings>>>>(
+    locals,
+    profile?.id ?? null,
+    `/v1/crowdfundings?${url.searchParams}`,
+  );
+
   const supabase = supabaseUrlOf(locals.env);
   // The submitter's id stays on the server: the page needs their handle and whether they may be reported.
   const card = ({ imagePath, submitterId, ...campaign }: (typeof list.running)[number]) => ({

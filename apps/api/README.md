@@ -174,3 +174,11 @@ The extension panels (`/admin/[ext]`) still run in web until the api can read th
 - `POST /v1/places` (`{ input, imagePath }`) and `POST /v1/places/:slug` (an edit): answer `{ eventIds, slug }` (and `replacedImage` on an edit). A duplicate is `invalid` on `name` with `place_duplicate` and the listed place's `slug`.
 - `GET /v1/places/:slug/edit`: the place the actor may edit (403/404 otherwise; web shows both as its 404).
 - `GET /v1/places/:slug/claim` and `POST /v1/places/:slug/claim`: "Este lugar é seu?" for a listed place.
+
+## Financiamentos
+
+`/v1/crowdfundings` (`crowdfundings.ts`); adding a campaign stays `POST /v1/submissions/crowdfundings`:
+
+- `GET /v1/crowdfundings?…`: the list for visitors too, each campaign with its `submitterId` (web turns it into `canReport` and never sends it to the browser).
+- `GET /v1/crowdfundings/listed?url=`: whether a campaign at that link is listed already.
+- `POST /v1/crowdfundings/link-read`: counts one read of a campaign page against `LINK_READ_LIMIT` (`rate_limited` past it), for the link preview and the add form's own read.

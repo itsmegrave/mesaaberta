@@ -13,6 +13,7 @@ import { extensionRoutes } from './extensions';
 import { followRoutes } from './follows';
 import { partnerRoutes } from './partners';
 import { placeRoutes } from './places';
+import { crowdfundingRoutes } from './crowdfundings';
 import { inboxRoutes } from './inbox';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
@@ -106,6 +107,8 @@ export function createApi() {
   app.route('/v1/partners', partnerRoutes());
   // Onde jogar: sending, editing and claiming a place.
   app.route('/v1/places', placeRoutes());
+  // Financiamentos: the list and the add form's checks.
+  app.route('/v1/crowdfundings', crowdfundingRoutes());
   // The person's own profile (the form and the direct-messages switch).
   app.route('/v1/account', accountRoutes());
 

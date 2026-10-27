@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { listCrowdfundings } from '@mesaaberta/core/server/crowdfunding/service';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/crowdfunding/service', () => ({
@@ -24,7 +25,13 @@ const campaign = {
 // A visitor who is not signed in: no profile, no user.
 const anonymous = (search = '') =>
   ({
-    locals: { db: {}, getUser: async () => null, getProfile: async () => null },
+    locals: {
+      // The api answers over the mocked service, for a visitor.
+      env: apiOver(actorsOnly()),
+      log: { warn: vi.fn() },
+      getUser: async () => null,
+      getProfile: async () => null,
+    },
     url: new URL(`https://x.test/cf${search}`),
     platform: undefined,
   }) as unknown as RequestEvent;

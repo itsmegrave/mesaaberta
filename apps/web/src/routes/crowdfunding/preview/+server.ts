@@ -3,7 +3,7 @@ import { platformOf } from '@mesaaberta/core/crowdfunding/platforms';
 import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
-import { takeLinkRead } from '@mesaaberta/core/server/crowdfunding/service';
+import { writeViaApi } from '#lib/server/api-write.js';
 import { RateLimited } from '@mesaaberta/core/server/errors';
 import type { RequestHandler } from './$types';
 
@@ -16,12 +16,11 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals, url, setHeaders }) => {
   const actor = await locals.getProfile();
   if (!actor || !can(actor, 'crowdfunding:add')) error(401, 'Sign in first');
-  if (!locals.db) error(503, 'Database not configured');
   const link = normalizeCampaignUrl(url.searchParams.get('url') ?? '');
   if (!link) return Response.json({ url: null, title: null, platform: 'other' }, { status: 400 });
 
   try {
-    await takeLinkRead(locals.db, actor.id);
+    await writeViaApi(locals, actor, '/v1/crowdfundings/link-read', {});
   } catch (cause) {
     if (!(cause instanceof RateLimited)) throw cause;
     setHeaders({ 'Retry-After': String(cause.retryAfterSeconds) });
