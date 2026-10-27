@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MAButton from '#lib/components/ui/MAButton.svelte';
   import { copyText } from '#lib/clipboard.js';
   // One partner of the "Parceiros" page: the logo, the name, an optional line about them, the coupon
   // they give Mesa Aberta members (if any) and one icon per link. Its kinds sit under the name. Every icon is a link of its own
@@ -133,15 +134,15 @@
           <span class="font-semibold">{m.partner_coupon_label()}:</span>
           <code class="font-mono font-semibold break-all">{partner.couponCode}</code>
         </p>
-        <button
-          type="button"
+        <MAButton
+          size="custom"
           class={cardIconButtonClass}
           aria-label={m.partner_coupon_copy({ code: partner.couponCode })}
           title={m.partner_coupon_copy_short()}
           onclick={() => void copy(partner.couponCode!, m.partner_coupon_copied())}
         >
           <Icon name="copy" size={20} />
-        </button>
+        </MAButton>
       </div>
       {#if partner.couponDescription}
         <p class="text-sm text-muted">{partner.couponDescription}</p>

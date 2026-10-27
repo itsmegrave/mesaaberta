@@ -10,7 +10,7 @@
   import Pager from '#lib/components/ui/Pager.svelte';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
   import { placeAmenityOptions, placeKindOptions } from '#lib/places/labels.js';
@@ -175,13 +175,13 @@
         <span class="text-sm font-semibold text-muted">{m.places_amenities_label()}</span>
         {#each placeAmenityOptions() as amenity (amenity.value)}
           {@const on = filters.amenities.includes(amenity.value)}
-          <button
-            type="button"
+          <MAButton
+            size="custom"
             aria-pressed={on}
             class="chip h-8 rounded-full border px-3 text-sm font-semibold {on
               ? 'border-transparent preset-filled-primary-500'
               : 'border-surface-200-800'}"
-            onclick={() => void toggle(amenity.value)}>{amenity.label}</button
+            onclick={() => void toggle(amenity.value)}>{amenity.label}</MAButton
           >
         {/each}
         {#if filtered}

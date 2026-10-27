@@ -94,8 +94,8 @@
 
 {#snippet segment(dark: boolean, icon: 'sun' | 'moon', label: string)}
   {@const checked = isDark === dark}
-  <button
-    type="button"
+  <MAButton
+    size="custom"
     role="radio"
     aria-checked={checked}
     tabindex={checked ? 0 : -1}
@@ -116,7 +116,7 @@
   >
     <Icon name={icon} size={16} />
     {label}
-  </button>
+  </MAButton>
 {/snippet}
 
 {#if segmented}
@@ -133,8 +133,8 @@
 {:else if labelled}
   <!-- A plain switch button: Skeleton's Switch draws its hidden input with an inline style, which the
        CSP blocks in server-rendered HTML. -->
-  <button
-    type="button"
+  <MAButton
+    size="custom"
     role="switch"
     aria-checked={isDark}
     title={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}
@@ -155,11 +155,11 @@
           : 'left-0.5 bg-surface-600-400'}"
       ></span>
     </span>
-  </button>
+  </MAButton>
 {:else if rail}
   <RailTip label={isDark ? m.theme_switch_to_light() : m.theme_switch_to_dark()}>
-    <button
-      type="button"
+    <MAButton
+      size="custom"
       aria-label={m.theme_dark_mode()}
       aria-pressed={isDark}
       onclick={(event) => handlePressedChange(!isDark, event.currentTarget)}
@@ -170,7 +170,7 @@
       >
         {@render themeIcon()}
       </span>
-    </button>
+    </MAButton>
   </RailTip>
 {:else}
   <MAButton

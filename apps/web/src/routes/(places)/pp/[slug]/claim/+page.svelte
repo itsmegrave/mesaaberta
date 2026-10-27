@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   // "Este lugar é seu?": who the member is at the place, how the team reaches them to check, and
   // that they speak for it. An admin approves; then they manage the page and it shows "Verificado".
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
@@ -179,19 +180,17 @@
         {/snippet}
       </FormField>
       <div>
-        <label class="flex min-h-11 items-start gap-3">
-          <input
-            id="confirm"
-            type="checkbox"
-            name="confirm"
-            value="true"
-            bind:checked={$draft.confirm}
-            class="mt-1 checkbox"
-            aria-invalid={confirmError ? 'true' : undefined}
-            aria-describedby={confirmError ? 'confirm-error' : undefined}
-          />
+        <MACheckbox
+          id="confirm"
+          name="confirm"
+          value="true"
+          align="start"
+          bind:checked={$draft.confirm}
+          aria-invalid={confirmError ? 'true' : undefined}
+          aria-describedby={confirmError ? 'confirm-error' : undefined}
+        >
           <span>{m.place_claim_confirm_label()}</span>
-        </label>
+        </MACheckbox>
         <FieldError id="confirm" message={confirmError} />
       </div>
       <div class="flex flex-wrap items-center gap-5">

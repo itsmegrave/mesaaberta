@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts" generics="T extends RowData">
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // Every list an admin works through is this one pattern on TanStack Table: one bordered card with
   // the toolbar, a header row on the wash, the rows and a footer; on a phone no table, but a list of
   // cards with a "Filtros" sheet and "Mostrar mais". The address is the state (`?q=&status=&sort=&dir=
@@ -240,8 +240,8 @@
                   {#if column?.hideHeader}
                     <span class="sr-only"><FlexRender {header} /></span>
                   {:else if column?.sortable}
-                    <button
-                      type="button"
+                    <MAButton
+                      size="custom"
                       class="-mx-2 inline-flex min-h-10 items-center gap-1 rounded-md px-2 font-semibold hover:preset-tonal"
                       onclick={() => {
                         const next = nextSort(sort ?? { id: '', dir: 'asc' }, header.column.id);
@@ -258,7 +258,7 @@
                             : 'text-inherit'
                           : 'opacity-40'}
                       />
-                    </button>
+                    </MAButton>
                   {:else}
                     <FlexRender {header} />
                   {/if}

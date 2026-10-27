@@ -8,7 +8,7 @@
   import { pageQuery } from '#lib/query/page.svelte.js';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import ActionForm from '#lib/components/ActionForm.svelte';
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import ConfirmAction from '#lib/components/ConfirmAction.svelte';
   import ConfirmDialog from '#lib/components/ui/ConfirmDialog.svelte';
   import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
@@ -377,12 +377,13 @@
                     <KebabMenu name={atHandle(player.username)} items={playerMenu(player)} />
                     <!-- Opened from the row's menu ("Mandar mensagem"). -->
                     <ActionForm action="?/message" playerId={player.playerId} class="hidden">
-                      <button
+                      <MAButton
+                        size="custom"
                         id="message-{player.playerId}"
                         type="submit"
-                        tabindex="-1"
+                        tabindex={-1}
                         aria-hidden="true"
-                      ></button>
+                      ></MAButton>
                     </ActionForm>
                   {/snippet}
                 </RosterRow>
