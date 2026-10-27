@@ -133,3 +133,23 @@ The onboarding step and the profile editor read no database in web:
 - `POST /v1/messages/users/:username`: "Mandar mensagem" on a profile; the direct conversation with that person, made when there is none (404 for an unknown username).
 - `POST /v1/me/badges/:badgeId/hidden` (`{ hidden }`): the eye on an earned badge (404 for a badge the actor does not hold).
 - `GET /v1/me/calendar`: the tables the actor runs or has a seat at; web writes the `.ics`.
+
+## Início and the directories
+
+Each page past the last is a 404; web checks the directory flags first.
+
+- `GET /v1/reads/systems?…`, `GET /v1/reads/systems/:slug`: the systems list for the address's filters, and one system's page (a merged one answers `{ redirectTo }`).
+- `GET /v1/reads/gamemasters?…&badges=1`: Quem mestra, with the systems its filter offers; `badges=1` while `use_badges` is on for the viewer.
+- `GET /v1/reads/places?…`, `GET /v1/reads/places/:slug`: Onde jogar, and one place's page (a pending or hidden place only for whoever sent it, owns it or moderates).
+- `GET /v1/reads/home?follows=1`: the signed-in Início; `follows=1` while following is on for the actor.
+
+Web turns the dates back with `revivedDates` (`api-read.ts`).
+
+## Parceiros
+
+`/v1/partners` (`partners.ts`); the services authorize, and web checks `use_partner_owners` before the owner routes it gates:
+
+- `GET /v1/partners?…`: one page of the list for visitors too, each card with its `ownerIds` (web turns them into `canEdit` and `canReport` and never sends them to the browser). Past the last page is a 404.
+- `GET /v1/partners/:id/edit?owners=1`: a partner the actor looks after, with "Quem cuida do parceiro" when asked (403/404 otherwise; web shows both as its 404).
+- `POST /v1/partners/:id/owners/{invite,cancel,remove,leave}` (`{ username }`, `{ invitationId }`, `{ profileId }`, nothing).
+- `GET /v1/partners/invitations/:id`, `POST /v1/partners/invitations/:id/{accept,decline}`: the invite, for the invited person only.

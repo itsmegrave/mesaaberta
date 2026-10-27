@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { listPartners } from '@mesaaberta/core/server/partners/service';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/partners/service', () => ({
@@ -26,7 +27,12 @@ const card = {
 
 const visit = (profile: { id: string; role: string; status: string } | null, search = '') =>
   ({
-    locals: { db: {}, getProfile: async () => profile },
+    locals: {
+      // The api answers over the mocked service; the stand-in database only names the viewer.
+      env: apiOver(actorsOnly(profile ? [profile] : [])),
+      log: { warn: vi.fn() },
+      getProfile: async () => profile,
+    },
     url: new URL(`https://x.test/p${search}`),
     platform: undefined,
   }) as unknown as RequestEvent;

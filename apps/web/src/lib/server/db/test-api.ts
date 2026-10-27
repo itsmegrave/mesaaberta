@@ -9,6 +9,7 @@ import { inboxRoutes } from '../../../../../api/src/inbox';
 import { meRoutes } from '../../../../../api/src/me';
 import { messageRoutes } from '../../../../../api/src/messages';
 import { moderationRoutes } from '../../../../../api/src/moderation';
+import { partnerRoutes } from '../../../../../api/src/partners';
 import { profileRoutes } from '../../../../../api/src/profiles';
 import { readRoutes } from '../../../../../api/src/reads';
 
@@ -58,6 +59,7 @@ export function apiOver(db: AnyDb, env: Record<string, string> = {}) {
     ['/v1/me', meRoutes(open)],
     ['/v1/follows', followRoutes(open)],
     ['/v1/account', accountRoutes(open)],
+    ['/v1/partners', partnerRoutes(open)],
     ['/v1/auth', authRoutes(open, undefined, { request: supabaseUser })],
   ] as const;
   const bindings = {

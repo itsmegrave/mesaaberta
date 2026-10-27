@@ -1,20 +1,22 @@
-import { error } from '@sveltejs/kit';
 import { partnerIdSchema, reportPartnerSchema } from '@mesaaberta/core/moderation/reports';
 import { readPartnerFilters } from '@mesaaberta/core/partners/filters';
 import { can } from '@mesaaberta/core/server/auth/policy';
 
 import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
-import { listPartners } from '@mesaaberta/core/server/partners/service';
+import type { listPartners } from '@mesaaberta/core/server/partners/service';
+import { readFromApi } from '#lib/server/api-read.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-  if (!locals.db) error(503, 'Database not configured');
   const filters = readPartnerFilters(url.searchParams);
   const profile = await locals.getProfile();
-  const list = await listPartners(locals.db, filters, { viewerId: profile?.id ?? null });
-  // A page past the last one does not exist.
-  if (!list) error(404, 'Not found');
+  // The api reads the page; one past the last is its 404, which becomes the page's.
+  const list = await readFromApi<NonNullable<Awaited<ReturnType<typeof listPartners>>>>(
+    locals,
+    profile?.id ?? null,
+    `/v1/partners?${url.searchParams}`,
+  );
 
   const supabase = supabaseUrlOf(locals.env);
   // Who looks after a partner is for admins and those accounts only: the page learns whether the
