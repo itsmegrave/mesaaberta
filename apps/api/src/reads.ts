@@ -12,31 +12,41 @@ import { readManage } from '@mesaaberta/core/server/reads/manage';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { viewerTimezone } from '@mesaaberta/core/time/timezone';
 import { refusal } from './refusal';
-import { userGuard, type UserVariables } from './user-guard';
+import { userGuard, viewerGuard, type UserVariables, type ViewerVariables } from './user-guard';
 
 type Open = typeof createDb;
 
 /**
- * The read side of Trello #120, one resource at a time: `GET /v1/reads/:resource` answers the JSON
- * the web app's reader of the same name builds in-process today, so a page can switch between the
- * two with a flag. The subject is always the actor the web Worker names, never a query parameter.
- * Today: `catalog`, `dashboard`, `detail/:slug`, `edit-catalog/:slug`, `manage/:slug`, `preview` and `tables`, each behind its `api_reads_*` flag.
+ * The read side of Trello #120: `GET /v1/reads/:resource` answers the JSON a web page reader
+ * shows; the web Worker reads no database for these pages. The subject is always the actor the web
+ * Worker names, never a query parameter. `preview`, `tables` and `detail/:slug` are open to visitors
+ * too (no actor header); `catalog`, `dashboard`, `edit-catalog/:slug` and `manage/:slug` need one.
  */
 export function readRoutes(open: Open = openDb) {
   const app = new Hono<{ Bindings: DatabaseEnv; Variables: UserVariables }>();
+  const visitors = new Hono<{ Bindings: DatabaseEnv; Variables: ViewerVariables }>();
 
-  app.use('*', userGuard(open));
+  visitors.use('*', viewerGuard(open));
 
-  app.get('/catalog', async (c) => c.json(await readCatalog(c.get('db'), c.get('actorId'))));
+  visitors.get('/preview', async (c) => c.json(await readPreview(c.get('db'), publicReadNow())));
 
-  app.get('/preview', async (c) => c.json(await readPreview(c.get('db'), publicReadNow())));
-
-  app.get('/tables', async (c) =>
+  visitors.get('/tables', async (c) =>
     c.json(
       // The same validation web ran: what is not a filter is dropped, not refused.
       await readTables(c.get('db'), await readTableFilters(new URL(c.req.url)), publicReadNow()),
     ),
   );
+
+  visitors.get('/detail/:slug', async (c) => {
+    // An unknown, disabled or someone else's draft table is a 404: web then answers its own.
+    const detail = await readDetail(c.get('db'), c.get('actor'), c.req.param('slug'), new Date());
+    return detail ? c.json(detail) : c.json({ error: 'not_found' }, 404);
+  });
+
+  app.route('/', visitors);
+  app.use('*', userGuard(open));
+
+  app.get('/catalog', async (c) => c.json(await readCatalog(c.get('db'), c.get('actorId'))));
 
   app.get('/edit-catalog/:slug', async (c) => {
     // The zone web resolved for this person (profile, else browser); an unknown one reads as the default.
@@ -61,12 +71,6 @@ export function readRoutes(open: Open = openDb) {
       new Date(),
     );
     return dashboard ? c.json(dashboard) : c.json({ error: 'not_found' }, 404);
-  });
-
-  app.get('/detail/:slug', async (c) => {
-    // An unknown, disabled or someone else's draft table is a 404: web then answers its own.
-    const detail = await readDetail(c.get('db'), c.get('actor'), c.req.param('slug'), new Date());
-    return detail ? c.json(detail) : c.json({ error: 'not_found' }, 404);
   });
 
   app.get('/manage/:slug', async (c) => {

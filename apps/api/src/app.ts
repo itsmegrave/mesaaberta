@@ -93,7 +93,7 @@ export function createApi() {
   // The person's own profile (the form and the direct-messages switch), behind `api_account`.
   app.route('/v1/account', accountRoutes());
 
-  // The read side, one resource at a time (the catalog first), behind `api_reads_<resource>`.
+  // The page readers: the web Worker reads no database for these pages.
   app.route('/v1/reads', readRoutes());
   // The public sitemap's identifiers (published tables, active profiles). New and anonymous, so no
   // flag and no web fallback: web answers 503 when this read fails.
@@ -101,7 +101,7 @@ export function createApi() {
   // The public profile page (/u/[username]). No flag and no web fallback either: database reads
   // live in the api now, and web answers 503 when this one fails.
   app.route('/v1/profiles', profileRoutes());
-  // The admin pages' data (overview, users, tables), behind `api_reads_admin*`.
+  // The admin pages' data (overview, users, tables).
   app.route('/v1/admin-reads', adminReadRoutes());
 
   // JSON everywhere, so a caller never has to parse an HTML error page.

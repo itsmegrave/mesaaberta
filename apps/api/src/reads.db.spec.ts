@@ -162,8 +162,15 @@ describe('GET /v1/reads/preview', () => {
     expect(body).toEqual(JSON.parse(JSON.stringify(await readPreview(test.db, new Date()))));
   });
 
-  it('needs a known actor', async () => {
-    expect((await app.request('/preview', {}, env)).status).toBe(401);
+  it('is open to visitors, and reads an unknown account as one', async () => {
+    const visitor = await app.request('/preview', {}, env);
+    expect(visitor.status).toBe(200);
+    const unknown = await app.request(
+      '/preview',
+      { headers: { [ACTOR_HEADER]: '00000000-0000-4000-8000-0000000fffff' } },
+      env,
+    );
+    expect(await unknown.json()).toEqual(await visitor.json());
   });
 });
 
@@ -188,8 +195,10 @@ describe('GET /v1/reads/tables', () => {
     expect(none.pickedSystems).toEqual(['no-such-system']);
   });
 
-  it('needs a known actor', async () => {
-    expect((await getTables('', null)).status).toBe(401);
+  it('is open to visitors', async () => {
+    const visitor = await getTables('', null);
+    expect(visitor.status).toBe(200);
+    expect(await visitor.json()).toEqual(await (await getTables('')).json());
   });
 });
 
@@ -274,8 +283,9 @@ describe('GET /v1/reads/detail/:slug', () => {
     expect((await getDetail('no-such-table')).status).toBe(404);
   });
 
-  it('needs a known actor', async () => {
-    expect((await getDetail('mesa-detalhe', null)).status).toBe(401);
+  it('is open to visitors, who never see someone else’s draft', async () => {
+    expect((await getDetail('mesa-detalhe', null)).status).toBe(200);
+    expect((await getDetail('mesa-ana', null)).status).toBe(404);
   });
 });
 

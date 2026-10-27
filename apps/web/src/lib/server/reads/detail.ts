@@ -1,41 +1,32 @@
-import { error, type RequestEvent } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
-import { readDetail } from '@mesaaberta/core/server/reads/detail';
+import type { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { tablePlace } from '@mesaaberta/core/server/places/picker';
-import { readViaApi } from '../api-read';
+import { readFromApi } from '../api-read';
 import { badgesEnabled } from '../badges/enabled';
 import { directoryEnabled } from '../directories/flags';
 
 export const read = async ({ locals, params }: RequestEvent) => {
-  const signedIn = (await locals.getUser()) !== null;
-  const profile = await locals.getProfile().catch(() => null);
-  // Unknown, disabled, someone else's draft, or no database at all: the same translated 404.
-  if (!locals.db) error(404, 'Not found');
-
-  // Through the api Worker when `api_reads_detail` is on for the signed-in person (visitors stay
-  // here: a flag needs someone to target); here otherwise, which is also where a refusal ends in
-  // the page's own 404.
-  const remote = profile
-    ? await readViaApi<NonNullable<Awaited<ReturnType<typeof readDetail>>>>(
-        locals,
-        'api_reads_detail',
-        profile,
-        `/v1/reads/detail/${encodeURIComponent(params.slug!)}`,
-      )
-    : null;
-  // JSON turned the two dates into strings; the page gets them as dates either way.
-  const detail = remote
-    ? {
-        ...remote,
-        table: {
-          ...remote.table,
-          startsAt: new Date(remote.table.startsAt),
-          until: remote.table.until ? new Date(remote.table.until) : null,
-        },
-      }
-    : await readDetail(locals.db, profile, params.slug!, new Date());
-  if (!detail) error(404, 'Not found');
+  const user = await locals.getUser();
+  const signedIn = user !== null;
+  const profile = user ? await locals.getProfile().catch(() => null) : null;
+  // The api reads the table (visitors too). Unknown, disabled or someone else's draft: its 404,
+  // which becomes the page's.
+  const remote = await readFromApi<NonNullable<Awaited<ReturnType<typeof readDetail>>>>(
+    locals,
+    user?.id ?? null,
+    `/v1/reads/detail/${encodeURIComponent(params.slug!)}`,
+  );
+  // JSON turned the two dates into strings; the page gets them as dates.
+  const detail = {
+    ...remote,
+    table: {
+      ...remote.table,
+      startsAt: new Date(remote.table.startsAt),
+      until: remote.table.until ? new Date(remote.table.until) : null,
+    },
+  };
 
   const { imagePath, ...table } = detail.table;
   // An api Worker from before a field answers without it: the page then shows the handle alone,
@@ -57,7 +48,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.
     place:
-      table.placeId && (await directoryEnabled(locals, 'places'))
+      table.placeId && locals.db && (await directoryEnabled(locals, 'places'))
         ? await tablePlace(locals.db, table.placeId)
         : null,
   };

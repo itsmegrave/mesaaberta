@@ -9,6 +9,8 @@ const event = (resource: string, viewer: string | null = 'ana', query = '') =>
     url: new URL('https://x.test/api/query/' + resource + query),
     locals: {
       db: null,
+      env: {},
+      log: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
       getUser: async () => (viewer ? { id: viewer } : null),
       getProfile: async () => null,
     },
