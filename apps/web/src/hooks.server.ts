@@ -13,7 +13,7 @@ import { growthBookPayload } from '@mesaaberta/core/server/flags/payload';
 import { handleCanonicalRoutes } from '#lib/server/canonical-routes.js';
 import { handleAuth } from '#lib/server/auth/handle-auth.js';
 import { handleSuspended } from '#lib/server/auth/suspended.js';
-import { handleDatabase } from '#lib/server/db/handle-database.js';
+import { handleAfterResponse } from '#lib/server/after-response.js';
 import { logger, setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { sentrySink } from '#lib/server/sentry-sink.js';
 import { handleRequestLog, handleUserTag } from '#lib/server/request-log.js';
@@ -50,11 +50,11 @@ const handleParaglide: Handle = ({ event, resolve }) =>
     });
   });
 
-// Product events for signed-in people, sent after the response (needs `afterResponse`, so it follows handleDatabase).
+// Product events for signed-in people, sent after the response (needs `afterResponse`, so it follows handleAfterResponse).
 const handleAnalytics: Handle = ({ event, resolve }) => {
   event.locals.track = createTracker({
     env: event.locals.env as AnalyticsEnv | undefined,
-    afterResponse: (task) => event.locals.afterResponse((db) => task(db)),
+    afterResponse: (task) => event.locals.afterResponse(task),
     log: event.locals.log,
   });
   return resolve(event);
@@ -111,9 +111,9 @@ export const handle: Handle = sequence(
   // Before anything that reads configuration.
   handleRuntime,
   handleRequestLog(logger),
-  // Before the database and the actions: an oversized body is refused before anything reads it.
+  // Before the actions: an oversized body is refused before anything reads it.
   handleBodyLimit,
-  handleDatabase,
+  handleAfterResponse,
   handleAnalytics,
   handleAuth,
   // Needs the Supabase client, before anything that reads the signed-in profile.

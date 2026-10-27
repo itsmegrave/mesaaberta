@@ -29,6 +29,14 @@ const hostSdkCall = {
     'Host-specific Sentry set-up belongs in src/lib/server/host (the telemetry of a #host module).',
 };
 
+// The web Worker opens no database: every read and write goes through the api (Grave, 2026-10-27).
+const webDatabaseRead = {
+  selector:
+    "MemberExpression[property.name='db']:matches([object.name='locals'], [object.property.name='locals'])",
+  message:
+    'The web Worker has no database. Read or write through the api (readFromApi, writeViaApi).',
+};
+
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
   js.configs.recommended,
@@ -116,7 +124,45 @@ export default defineConfig(
     // Two rules share `no-restricted-syntax`, so each block below lists the ones that apply to it.
     files: ['apps/web/src/**/*.{ts,svelte}'],
     ignores: ['apps/web/src/**/*.spec.ts'],
-    rules: { 'no-restricted-syntax': ['error', roleRead, hostEnvRead, hostSdkCall] },
+    rules: {
+      'no-restricted-syntax': ['error', roleRead, hostEnvRead, hostSdkCall, webDatabaseRead],
+    },
+  },
+  // Nor may it open a connection itself. Types are fine; specs and their database helpers too.
+  {
+    files: ['apps/web/src/**/*.{ts,svelte}'],
+    ignores: [
+      'apps/web/src/**/*.spec.ts',
+      'apps/web/src/lib/server/db/test-*.ts',
+      'apps/web/src/lib/server/db/integration-db.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            '@mesaaberta/core/server/db/client',
+            '@mesaaberta/db/client',
+            '@mesaaberta/db',
+          ].map((name) => ({
+            name,
+            allowTypeImports: true,
+            message: 'The web Worker has no database. Read or write through the api.',
+          })),
+          patterns: [
+            {
+              group: [
+                'postgres',
+                'drizzle-orm/postgres-js',
+                'drizzle-orm/pglite',
+                '@electric-sql/*',
+              ],
+              message: 'The web Worker has no database. Read or write through the api.',
+            },
+          ],
+        },
+      ],
+    },
   },
   // The dev login and its personas run under `vite dev` only. hooks.server.ts loads them behind
   // `import.meta.env.DEV`; an import from anywhere else would put them in a production build.
@@ -140,12 +186,12 @@ export default defineConfig(
   // Access decisions live in one module, which is where a role is read.
   {
     files: ['apps/web/src/lib/server/auth/policy.ts'],
-    rules: { 'no-restricted-syntax': ['error', hostEnvRead, hostSdkCall] },
+    rules: { 'no-restricted-syntax': ['error', hostEnvRead, hostSdkCall, webDatabaseRead] },
   },
   // The host's variables and bindings are read in one module, which fills `locals.env`, from the
   // host modules `#host` chooses between (Cloudflare's SDK set-up lives in the latter).
   {
     files: ['apps/web/src/lib/server/runtime.ts', 'apps/web/src/lib/server/host/*.ts'],
-    rules: { 'no-restricted-syntax': ['error', roleRead] },
+    rules: { 'no-restricted-syntax': ['error', roleRead, webDatabaseRead] },
   },
 );

@@ -8,6 +8,7 @@ import { readTableFilters } from '@mesaaberta/core/tables/filters';
 import { readPreview } from '@mesaaberta/core/server/reads/preview';
 import { readDashboard } from '@mesaaberta/core/server/reads/dashboard';
 import { readDetail } from '@mesaaberta/core/server/reads/detail';
+import { findTableBySlug } from '@mesaaberta/core/server/tables/queries';
 import { readManage } from '@mesaaberta/core/server/reads/manage';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
 import { viewerTimezone } from '@mesaaberta/core/time/timezone';
@@ -54,6 +55,19 @@ export function readRoutes(open: Open = openDb) {
     // An unknown, disabled or someone else's draft table is a 404: web then answers its own.
     const detail = await readDetail(c.get('db'), c.get('actor'), c.req.param('slug'), new Date());
     return detail ? c.json(detail) : c.json({ error: 'not_found' }, 404);
+  });
+
+  // A table's own id and its GM's, for the product events web sends about it (never shown on
+  // the page). The same visibility as the table's page.
+  visitors.get('/table-ids/:slug', async (c) => {
+    const actor = c.get('actor');
+    const found = await findTableBySlug(
+      c.get('db'),
+      c.req.param('slug'),
+      new Date(),
+      actor && { id: actor.id, admin: can(actor, 'admin:access') },
+    );
+    return found ? c.json({ id: found.id, gmId: found.gmId }) : c.json({ error: 'not_found' }, 404);
   });
 
   // The directories (web checks their flags first). A page past the last one is a 404 in each.

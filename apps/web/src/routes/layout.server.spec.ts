@@ -28,20 +28,7 @@ const run = (e: ServerLoadEvent) =>
   (load as unknown as (e: ServerLoadEvent) => Promise<{ account: unknown }>)(e);
 
 describe('the layout load', () => {
-  it('shows the page without the account menu when the request already ended, and does not call it an error', async () => {
-    const ended = Object.assign(new Error('write CONNECTION_ENDED'), { code: 'CONNECTION_ENDED' });
-    const { event: e, log } = event(async () => {
-      throw Object.assign(new Error('Failed query'), { cause: ended });
-    });
-
-    const data = await run(e);
-
-    expect(data.account).toBeNull();
-    expect(log.error).not.toHaveBeenCalled();
-    expect(log.info).toHaveBeenCalledWith(expect.stringContaining('request ended'));
-  });
-
-  it('still reports any other failure as an error', async () => {
+  it('shows the page without the account menu and reports the failure', async () => {
     const { event: e, log } = event(async () => {
       throw new Error('boom');
     });

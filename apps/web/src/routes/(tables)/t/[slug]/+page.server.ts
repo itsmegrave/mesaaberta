@@ -1,9 +1,8 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
+import { readFromApi } from '#lib/server/api-read.js';
 import { NotFound } from '@mesaaberta/core/server/errors';
-import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '#lib/server/fail-from.js';
 import { loadRead } from '#lib/server/reads/load.js';
 
@@ -16,14 +15,20 @@ import { moderationAction } from '#lib/server/moderation/form-action.js';
 import { followAction } from '#lib/server/follows/action.js';
 import { gmFollowState } from '#lib/server/follows/state.js';
 import type { Actions, PageServerLoad } from './$types';
+/** The table's id and its GM's for a product event, after the response; null when it is gone. */
+const tableIds = (locals: App.Locals, actorId: string, slug: string) =>
+  readFromApi<{ id: string; gmId: string }>(
+    locals,
+    actorId,
+    `/v1/reads/table-ids/${encodeURIComponent(slug)}`,
+  ).catch(() => null);
+
 export const load: PageServerLoad = async (event) => {
   const data = await loadRead(event, 'detail');
   const { locals, params } = event;
-  locals.track('player_mesa_detail_viewed', (await locals.getUser())?.id, async (db) => {
-    const [table] = await db
-      .select({ id: gameTables.id, gmId: gameTables.gmId })
-      .from(gameTables)
-      .where(eq(gameTables.slug, params.slug));
+  const viewerId = (await locals.getUser())?.id;
+  locals.track('player_mesa_detail_viewed', viewerId, async () => {
+    const table = viewerId ? await tableIds(locals, viewerId, params.slug) : null;
     return table
       ? { mesa_id: table.id, gm_user_id: table.gmId, seat_availability: data.table.seatsLeft }
       : null;
@@ -86,11 +91,8 @@ export const actions: Actions = {
     }
     // The attempt, before it succeeds or fails: `player_seat_claimed` comes from the outbox.
     const playerId = (await locals.getUser())?.id;
-    locals.track('player_seat_claim_initiated', playerId, async (db) => {
-      const [table] = await db
-        .select({ id: gameTables.id })
-        .from(gameTables)
-        .where(eq(gameTables.slug, params.slug));
+    locals.track('player_seat_claim_initiated', playerId, async () => {
+      const table = playerId ? await tableIds(locals, playerId, params.slug) : null;
       return table && playerId
         ? { mesa_id: table.id, player_user_id: playerId, seat_claim_method: 'button_click' }
         : null;

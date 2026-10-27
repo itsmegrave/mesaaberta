@@ -12,7 +12,7 @@ const hasSession = (cookies: { name: string }[]) =>
 /**
  * A banned (suspended) account is signed out on its next request, wherever it was, and sent to the login
  * page, which says why. Signing in again is refused the same way (see `finishLogin` and
- * `signInWithEmail`). Runs after `handleAuth` and `handleDatabase`, which it needs.
+ * `signInWithEmail`). Runs after `handleAuth`, which it needs.
  */
 export const handleSuspended: Handle = async ({ event, resolve }) => {
   const { supabase } = event.locals;
