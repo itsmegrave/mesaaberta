@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { listApproved, listCatalogAdmin } from '@mesaaberta/core/server/admin/catalog';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/admin/catalog', async (original) => ({
@@ -19,7 +20,13 @@ vi.mock('@mesaaberta/core/server/admin/catalog', async (original) => ({
 const admin = { id: 'admin', role: 'admin', status: 'active', username: 'ana' };
 const visit = (search: string, profile: object = admin) =>
   load({
-    locals: { db: {}, getUser: async () => ({ id: 'admin' }), getProfile: async () => profile },
+    locals: {
+      // The api answers over the mocked catalog; the stand-in database only names the admin.
+      env: apiOver(actorsOnly([admin])),
+      log: { warn: vi.fn() },
+      getUser: async () => ({ id: 'admin' }),
+      getProfile: async () => profile,
+    },
     url: new URL(`https://x.test/admin/catalog${search}`),
   } as unknown as Parameters<typeof load>[0]) as Promise<Record<string, unknown>>;
 
@@ -37,7 +44,7 @@ describe('the catalog page', () => {
   it('reads the page from ?page=N: anything that is not a positive whole number is page 1', async () => {
     for (const bad of ['0', '-2', 'abc', '1.5', '', '01x']) {
       await visit(`?page=${bad}`);
-      expect(listCatalogAdmin).toHaveBeenLastCalledWith({}, 'platform', {
+      expect(listCatalogAdmin).toHaveBeenLastCalledWith(expect.anything(), 'platform', {
         query: '',
         page: 1,
         pageSize: 20,
@@ -46,7 +53,7 @@ describe('the catalog page', () => {
       });
     }
     await visit('?page=2&q=%20roll%20');
-    expect(listCatalogAdmin).toHaveBeenLastCalledWith({}, 'platform', {
+    expect(listCatalogAdmin).toHaveBeenLastCalledWith(expect.anything(), 'platform', {
       query: 'roll',
       page: 2,
       pageSize: 20,
@@ -57,7 +64,7 @@ describe('the catalog page', () => {
 
   it('reads the status, the page size and the sort, and ignores what the list does not offer', async () => {
     await visit('?status=disabled&size=50&sort=uses&dir=desc');
-    expect(listCatalogAdmin).toHaveBeenLastCalledWith({}, 'platform', {
+    expect(listCatalogAdmin).toHaveBeenLastCalledWith(expect.anything(), 'platform', {
       query: '',
       page: 1,
       pageSize: 50,
@@ -65,7 +72,7 @@ describe('the catalog page', () => {
       sort: { id: 'uses', dir: 'desc' },
     });
     await visit('?status=nada&size=7&sort=slug');
-    expect(listCatalogAdmin).toHaveBeenLastCalledWith({}, 'platform', {
+    expect(listCatalogAdmin).toHaveBeenLastCalledWith(expect.anything(), 'platform', {
       query: '',
       page: 1,
       pageSize: 20,

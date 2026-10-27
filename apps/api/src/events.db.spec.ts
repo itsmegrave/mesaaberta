@@ -49,6 +49,14 @@ const failed = async () => {
 };
 
 describe('api admin event routes over a database', () => {
+  it('answers the queue page to an admin, and 404 past the last page', async () => {
+    const read = (path: string, actor: string) =>
+      app().request(path, { headers: { [ACTOR_HEADER]: actor } }, env);
+    expect(await (await read('/?status=failed', admin)).json()).toHaveProperty('rows');
+    expect((await read('/?page=99', admin)).status).toBe(404);
+    expect((await read('/', member)).status).toBe(403);
+  });
+
   it('runs a given-up event for an admin and records who asked', async () => {
     const id = await failed();
 

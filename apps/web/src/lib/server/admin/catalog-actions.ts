@@ -1,4 +1,4 @@
-import { error, fail, type Action, type RequestEvent } from '@sveltejs/kit';
+import { fail, type Action, type RequestEvent } from '@sveltejs/kit';
 import { validateStringForm } from '#lib/forms/contract.js';
 import type { ZodType } from 'zod';
 import {
@@ -24,7 +24,6 @@ function catalogAction(name: string, schema: ZodType): Action {
     const { locals, request, url } = event;
     await requireUser(locals, new URL(url.pathname, url));
     await requireAdmin(locals);
-    if (!locals.db) error(503, 'Database not configured');
 
     const form = validateStringForm(await request.formData(), schema, [
       'kind',

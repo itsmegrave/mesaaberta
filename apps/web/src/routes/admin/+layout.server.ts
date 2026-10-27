@@ -11,13 +11,12 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ locals }) => {
   const profile = await locals.getProfile();
   if (!profile || !can(profile, 'admin:access')) error(404);
-  if (!locals.db) error(503, 'Database not configured');
 
   // The connections page opens on the first installed extension that has a panel on it; an
   // extension with a section of its own (the polls) gets its own entry instead.
   const panel = extensions.find((extension) => extension.admin && !extension.admin.section);
   return {
-    adminCounts: await adminCounts(locals.db),
+    adminCounts: await adminCounts(locals, profile.id),
     adminConnections: panel ? `/admin/${panel.id}` : null,
     // The badges section, while badges are on (`use_badges` is its kill switch).
     adminBadges: await badgesEnabled(locals, profile),

@@ -79,4 +79,41 @@ describe('GET /v1/admin-reads', () => {
       expect((await get(path, null)).status).toBe(401);
     }
   });
+
+  it('answers the counts, badges, audit log, reports and recipients', async () => {
+    expect(await (await get('/counts')).json()).toMatchObject({ reports: 0, queue: 0, events: 0 });
+    expect((await get('/badges')).status).toBe(200);
+    expect((await get('/audit')).status).toBe(200);
+    expect((await get('/reports')).status).toBe(200);
+    expect((await get('/audit?page=99')).status).toBe(404);
+    expect(await (await get('/recipients?q=memb')).json()).toEqual(['membro']);
+  });
+
+  it('answers one table with its history, and 404 for an unknown or malformed id', async () => {
+    const [table] = (await (await get('/tables')).json()).rows as { id: string; slug: string }[];
+    expect(await (await get(`/tables/${table.id}`)).json()).toMatchObject({
+      table: { slug: 'mesa-admin' },
+      history: expect.any(Object),
+    });
+    expect((await get('/tables/00000000-0000-4000-8000-000000000000')).status).toBe(404);
+    expect((await get('/tables/nope')).status).toBe(404);
+    expect((await get('/reports/nope')).status).toBe(404);
+  });
+
+  it('answers the review lists, the catalog console and its queue, and the announcements', async () => {
+    for (const path of ['/places', '/claims', '/crowdfundings', '/partners'])
+      expect((await get(path)).status).toBe(200);
+    expect((await get('/places?page=99')).status).toBe(404);
+    expect(await (await get('/catalog?kind=tag')).json()).toMatchObject({ kind: 'tag', page: 1 });
+    expect((await get('/catalog?page=99')).status).toBe(404);
+    expect(await (await get('/queue')).json()).toHaveProperty('approved');
+    expect(await (await get('/announcements')).json()).toHaveProperty('sizes');
+  });
+
+  it('answers one person for the admin, their badges only when asked', async () => {
+    const plain = await (await get(`/users/${member}`)).json();
+    expect(plain).toMatchObject({ profile: { username: 'membro' }, badges: null });
+    expect((await (await get(`/users/${member}?badges=1`)).json()).badges).not.toBeNull();
+    expect((await get('/users/00000000-0000-4000-8000-000000000000')).status).toBe(404);
+  });
 });

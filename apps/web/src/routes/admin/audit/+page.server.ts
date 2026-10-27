@@ -1,17 +1,20 @@
-import { error } from '@sveltejs/kit';
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { auditLog } from '@mesaaberta/core/server/moderation/admin';
+import type { auditLog } from '@mesaaberta/core/server/moderation/admin';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import type { PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and the load checks again.
 export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
-  await requireUser(locals, url);
+  const user = await requireUser(locals, url);
   await requireAdmin(locals);
   setHeaders({ 'cache-control': 'private, no-store' });
-  if (!locals.db) error(503, 'Database not configured');
 
-  const log = await auditLog(locals.db, await locals.getProfile(), url.searchParams);
-  if (!log) error(404, 'Not found');
-  return { log };
+  // A page past the last is the api's 404, which becomes the page's.
+  const log = await readFromApi<NonNullable<Awaited<ReturnType<typeof auditLog>>>>(
+    locals,
+    user.id,
+    `/v1/admin-reads/audit?${url.searchParams}`,
+  );
+  return { log: revivedDates(log) };
 };
