@@ -1,29 +1,20 @@
-import { error, fail, type RequestEvent } from '@sveltejs/kit';
+import { fail, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '../admin-access';
 import { decideViaApi } from '../api-decide';
 import { requireUser } from '../auth/guard';
 import { writeViaApi } from '../api-write';
-import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
-
-type Apply<Schema extends ZodType> = (
-  db: AnyDb,
-  actor: Actor | null,
-  data: z.output<Schema>,
-  event: RequestEvent,
-) => Promise<string | string[]>;
 
 /**
  * The api route that makes the action, and the body its schema wants (the checked form by default).
  * `allow` is a check the web Worker makes first (a flag): false answers `forbidden` like a refusal.
  */
 type ViaApi<Schema extends ZodType> = {
-  path: string | ((event: RequestEvent) => string);
+  path: string | ((event: RequestEvent, data: z.output<Schema>) => string);
   body?: (data: z.output<Schema>, event: RequestEvent) => object;
   allow?: (event: RequestEvent) => Promise<boolean>;
 };
@@ -32,14 +23,13 @@ type ViaApi<Schema extends ZodType> = {
  * One moderation form action, for the report dialog and the admin console alike: a signed-in user
  * (and, with `admin`, only an admin: everyone else gets the 404 the admin area answers), the form
  * checked by its schema over the named text fields, and then either the api route that makes it
- * (an admin decision, a member's report or withdrawal) or, for the actions it does not serve yet,
- * the service in this Worker. What is refused comes back as a code on the field it names, or on the
+ * (an admin decision, a member's report or withdrawal). What is refused comes back as a code on the field it names, or on the
  * form; the events written are dispatched after the response. Pairs with `actionForm` on the page.
  */
 export function moderationAction<Schema extends ZodType>(
   schema: Schema,
   fields: readonly string[],
-  how: Apply<Schema> | ViaApi<Schema>,
+  how: ViaApi<Schema>,
   { admin = false }: { admin?: boolean } = {},
 ) {
   return async (event: RequestEvent) => {
@@ -58,22 +48,15 @@ export function moderationAction<Schema extends ZodType>(
 
     let eventIds: string[];
     try {
-      if (typeof how === 'function') {
-        if (!locals.db) error(503, 'Database not configured');
-        const written = await how(locals.db, await locals.getProfile(), form.data, event);
-        eventIds = Array.isArray(written) ? written : [written];
+      if (how.allow && !(await how.allow(event))) throw new Forbidden();
+      const body = how.body ? how.body(form.data, event) : (form.data as object);
+      const path = typeof how.path === 'function' ? how.path(event, form.data) : how.path;
+      if (admin) {
+        const decided = await decideViaApi(locals, path, user.id, body);
+        if (decided.kind === 'refused') return refuse(decided.status, decided.field, decided.code);
+        eventIds = decided.eventIds;
       } else {
-        if (how.allow && !(await how.allow(event))) throw new Forbidden();
-        const body = how.body ? how.body(form.data, event) : (form.data as object);
-        const path = typeof how.path === 'function' ? how.path(event) : how.path;
-        if (admin) {
-          const decided = await decideViaApi(locals, path, user.id, body);
-          if (decided.kind === 'refused')
-            return refuse(decided.status, decided.field, decided.code);
-          eventIds = decided.eventIds;
-        } else {
-          eventIds = (await writeViaApi(locals, user, path, { ...body })).eventIds;
-        }
+        eventIds = (await writeViaApi(locals, user, path, { ...body })).eventIds;
       }
     } catch (cause) {
       if (cause instanceof Invalid) return refuse(400, cause.field, cause.message);

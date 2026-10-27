@@ -1,4 +1,4 @@
-import { error, fail, redirect, type Action, type RequestEvent } from '@sveltejs/kit';
+import { fail, redirect, type Action, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { answerSchema, heldSchema, postponeSchema } from '#lib/tables/confirmation.js';
@@ -26,7 +26,6 @@ function confirmationAction<Schema extends ZodType>(
   return async (event: RequestEvent) => {
     const { locals, request, url, params } = event;
     const user = await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
 
     const formData = await request.formData();
     const form = validateStringForm(formData, schema, fields);

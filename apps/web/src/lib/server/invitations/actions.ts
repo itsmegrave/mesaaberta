@@ -13,7 +13,6 @@ type Kind = 'invite' | 'cancel' | 'accept' | 'decline' | 'preference' | 'block';
 export function invitationAction(kind: Kind): Action {
   return async ({ locals, url, params, request }) => {
     await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
     const form = validateStringForm(await request.formData(), invitationFormSchema, [
       'username',
       'invitationId',
