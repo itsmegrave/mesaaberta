@@ -127,3 +127,9 @@ The onboarding step and the profile editor read no database in web:
 - `GET /v1/me/has-password`: whether the e-mail and password way in is on.
 - `GET /v1/me/export?email=`: the data portability copy; web passes the e-mail from Auth.
 - `GET /v1/me/favorite-systems` and `POST /v1/me/favorite-systems` (`{ systems, show }`): every system and the actor's favorites; the write records `FavoriteSystemsChanged`.
+
+## Profile page and calendar
+
+- `POST /v1/messages/users/:username`: "Mandar mensagem" on a profile; the direct conversation with that person, made when there is none (404 for an unknown username).
+- `POST /v1/me/badges/:badgeId/hidden` (`{ hidden }`): the eye on an earned badge (404 for a badge the actor does not hold).
+- `GET /v1/me/calendar`: the tables the actor runs or has a seat at; web writes the `.ics`.

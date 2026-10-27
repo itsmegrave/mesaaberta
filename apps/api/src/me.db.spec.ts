@@ -65,6 +65,22 @@ describe('api me routes over a database', () => {
     expect(await (await get('/favorite-systems', ana)).json()).toMatchObject({ favorites: [] });
   });
 
+  it("answers the actor's calendar and refuses to hide a badge they do not hold", async () => {
+    expect(await (await get('/calendar', ana)).json()).toEqual([]);
+    const hide = (body: object) =>
+      app().request(
+        '/badges/first-table/hidden',
+        {
+          method: 'POST',
+          headers: { [ACTOR_HEADER]: ana, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+        env,
+      );
+    expect((await hide({ hidden: true })).status).toBe(404);
+    expect((await hide({ hidden: 'yes' })).status).toBe(400);
+  });
+
   it('says whether the actor is under a limit, and 404 for a limit it does not know', async () => {
     expect(await (await get('/limits/table', ana)).json()).toEqual({ ok: true });
     expect((await get('/limits/whatever', ana)).status).toBe(404);

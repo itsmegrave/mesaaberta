@@ -18,6 +18,8 @@ import { createDb as openDb, connectionStringFrom } from '@mesaaberta/core/serve
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import { isUsernameAvailable, loadProfileForm } from '@mesaaberta/core/server/profile/service';
 import { exportAccount } from '@mesaaberta/core/server/account/service';
+import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
+import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
 import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
 import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
 import {
@@ -129,6 +131,25 @@ export function meRoutes(open: Open = openDb) {
   app.get('/export', async (c) =>
     c.json(await exportAccount(c.get('db'), c.get('actorId'), c.req.query('email') ?? '')),
   );
+
+  // "Baixar calendário": the tables the actor runs or has a seat at, for web to write as `.ics`.
+  app.get('/calendar', async (c) =>
+    c.json(await listCalendarTables(c.get('db'), c.get('actorId'), new Date())),
+  );
+
+  // The eye on an earned badge: hides it from the actor's profile, or shows it again. 404 when
+  // the actor has no such badge.
+  app.post('/badges/:badgeId/hidden', async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { hidden?: unknown } | null;
+    if (typeof body?.hidden !== 'boolean') return c.json({ error: 'invalid' }, 400);
+    const changed = await setBadgeHidden(
+      c.get('db'),
+      c.get('actorId'),
+      c.req.param('badgeId'),
+      body.hidden,
+    );
+    return changed ? c.json({ eventIds: [] }) : c.json({ error: 'not_found' }, 404);
+  });
 
   // "Sistemas favoritos": every system, and the ones the actor follows.
   app.get('/favorite-systems', async (c) => {

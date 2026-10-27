@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { gameTables } from '@mesaaberta/db/schema';
+import { gameTables, profiles } from '@mesaaberta/db/schema';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { messageReportSchema } from '@mesaaberta/core/moderation/reports';
@@ -74,6 +74,19 @@ export function messageRoutes(open: Open = openDb) {
     if (!table) return c.json({ error: 'not_found' }, 404);
     const conversation = await openDirect(c.get('db'), c.get('actor'), table.gmId);
     return c.json({ eventIds: [], conversationId: conversation.id, slug: table.slug });
+  });
+
+  // "Mandar mensagem" on a profile: the direct conversation with that person, made when there is
+  // none. The username is matched as typed in the URL, already normalized by web.
+  app.post('/users/:username', async (c) => {
+    const [target] = await c
+      .get('db')
+      .select({ id: profiles.id })
+      .from(profiles)
+      .where(eq(profiles.username, c.req.param('username')));
+    if (!target) return c.json({ error: 'not_found' }, 404);
+    const conversation = await openDirect(c.get('db'), c.get('actor'), target.id);
+    return c.json({ eventIds: [], conversationId: conversation.id });
   });
 
   // Anything that is not a conversation id is no conversation.

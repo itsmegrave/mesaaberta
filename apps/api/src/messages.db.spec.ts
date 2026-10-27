@@ -146,6 +146,14 @@ describe('api message routes over a database', () => {
     expect((await call('/tables/no-such-table/gm', bia, {})).status).toBe(404);
   });
 
+  it('opens the conversation with a person by username, and answers 404 for nobody', async () => {
+    expect(await (await call('/users/ana', bia, {})).json()).toEqual({
+      eventIds: [],
+      conversationId,
+    });
+    expect((await call('/users/ninguem', bia, {})).status).toBe(404);
+  });
+
   it('files a report on a message in the conversation', async () => {
     const response = await call(`/${conversationId}/report`, ana, {
       targetType: 'message',
