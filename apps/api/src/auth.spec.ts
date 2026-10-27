@@ -44,6 +44,26 @@ describe('api auth routes', () => {
 
     expect(response.status).toBe(503);
   });
+
+  it('asks for a PKCE link and answers the verifier the callback will need', async () => {
+    const supabase = vi.fn(
+      async () => new Response('{}', { headers: { 'content-type': 'application/json' } }),
+    );
+    vi.stubGlobal('fetch', supabase);
+    try {
+      const response = await post({ email: 'a@b.co', origin: 'https://mesaaberta.app' });
+      const answer = (await response.json()) as { result: string; codeVerifier: string };
+
+      expect(answer.result).toBe('sent');
+      // As auth-js stores it: JSON, marked as a recovery flow.
+      expect(JSON.parse(answer.codeVerifier)).toMatch(/^[\w-]{40,}\/recovery$/);
+      const [url, init] = supabase.mock.calls[0] as unknown as [string, RequestInit];
+      expect(url).toContain('/auth/v1/recover');
+      expect(JSON.parse(String(init.body))).toMatchObject({ code_challenge_method: 's256' });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe('api sign-in', () => {
@@ -99,8 +119,13 @@ describe('api sign-in', () => {
 });
 
 describe('api sign-up', () => {
+  // The client the route makes keeps a PKCE verifier, as auth-js does when it asks for the e-mail.
+  const withVerifier = (_url: string, _key: string, flow?: Map<string, string>) => {
+    flow?.set('mesaaberta-auth-code-verifier', '"verifier"');
+    return {} as SupabaseClient;
+  };
   const signUp = (body: unknown, environment: object = env) =>
-    authRoutes(open, () => ({}) as SupabaseClient).request(
+    authRoutes(open, withVerifier).request(
       '/sign-up',
       {
         method: 'POST',
@@ -133,7 +158,10 @@ describe('api sign-up', () => {
     expect(await (await signUp(details)).json()).toEqual({ result: 'signed_in', session });
 
     signUpForSession.mockResolvedValue({ result: 'check_email', session: null });
-    expect(await (await signUp(details)).json()).toEqual({ result: 'check_email' });
+    expect(await (await signUp(details)).json()).toEqual({
+      result: 'check_email',
+      codeVerifier: '"verifier"',
+    });
   });
 
   it.each([

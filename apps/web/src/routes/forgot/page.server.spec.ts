@@ -13,8 +13,10 @@ const api = (answer: { status: number; body: object } | 'down') => {
 
 const setup = (env: object = api({ status: 200, body: { result: 'sent' } }).env) => {
   const setHeaders = vi.fn();
+  const setItem = vi.fn();
   const locals = {
     env,
+    supabase: { auth: { storage: { setItem }, storageKey: 'sb-x-auth-token' } },
     log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn(), child: vi.fn() },
   };
   const event = (fields: Record<string, string> = {}) => {
@@ -29,13 +31,21 @@ const setup = (env: object = api({ status: 200, body: { result: 'sent' } }).env)
       request: new Request(url, { method: 'POST', body }),
     } as unknown as RequestEvent;
   };
-  return { event, setHeaders };
+  return { event, setHeaders, setItem };
 };
 
 const submit = (event: RequestEvent) =>
   (actions as Record<string, (e: RequestEvent) => Promise<unknown>>).default(event);
 
 describe('the forgot-password page', () => {
+  it('keeps the verifier the api made, so the e-mailed link can sign the person in', async () => {
+    const { env } = api({ status: 200, body: { result: 'sent', codeVerifier: '"v/recovery"' } });
+    const { event, setItem } = setup(env);
+
+    await submit(event({ email: 'ana@example.com' }));
+    expect(setItem).toHaveBeenCalledWith('sb-x-auth-token-code-verifier', '"v/recovery"');
+  });
+
   it('says a link expired only when it is sent here for that reason, and shows no text from the address', async () => {
     const url = (search: string) =>
       ({ url: new URL(`https://x.test/forgot${search}`) }) as unknown as RequestEvent;

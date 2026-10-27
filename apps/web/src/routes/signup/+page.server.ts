@@ -6,6 +6,7 @@ import { credentialsSchema } from '#lib/auth/credentials.js';
 import { withoutSecrets } from '#lib/forms/server.js';
 import type { SignUpResult } from '@mesaaberta/core/server/auth/email';
 import { callApiRaw } from '#lib/server/api-client.js';
+import { keepCodeVerifier } from '#lib/server/auth/code-verifier.js';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import type { Actions, PageServerLoad } from './$types';
@@ -44,9 +45,12 @@ async function signUpViaApi(
   const remote = (answer?.body ?? {}) as {
     result?: SignUpResult;
     retryAfter?: number;
+    codeVerifier?: unknown;
     session?: { accessToken?: string; refreshToken?: string };
   };
   if (!answer || !remote.result) return { result: 'failed' };
+  // The confirmation link comes back to /auth/callback, which needs this to trade its code.
+  if (remote.result === 'check_email') await keepCodeVerifier(locals.supabase, remote.codeVerifier);
   if (remote.result === 'check_email' || remote.result in STATUS)
     return { result: remote.result, retryAfter: remote.retryAfter };
   if (remote.result !== 'signed_in') return { result: 'failed' };
