@@ -6,8 +6,7 @@ import type { Actions, PageServerLoad } from './$types';
 // Visitors, and members without `use_signed_in_home`, get the landing page; the others their Início.
 export const load: PageServerLoad = async (event) => {
   const profile = await event.locals.getProfile().catch(() => null);
-  if (profile && (await signedInHomeEnabled(event.locals, profile)))
-    return loadRead(event, 'home');
+  if (profile && (await signedInHomeEnabled(event.locals, profile))) return loadRead(event, 'home');
   return loadRead(event, 'preview');
 };
 
