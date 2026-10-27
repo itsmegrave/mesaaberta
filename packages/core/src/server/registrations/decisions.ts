@@ -9,8 +9,9 @@ import {
   leaveTable,
   removePlayer,
 } from './service';
-import { ratingSchema } from '../../tables/rating';
+import { playerRatingSchema, ratingSchema } from '../../tables/rating';
 import { submitRating } from '../ratings/service';
+import { ratePlayer } from '../ratings/players';
 
 /** Mirrors the `registrations_message_length` check. */
 export const JOIN_MESSAGE_MAX = 500;
@@ -62,6 +63,16 @@ export const registrationActions = {
         commentPublic,
       }: { gmScore: number; comment: string; commentPublic: boolean },
     ) => submitRating(db, actor, slug, { gmScore, comment: comment || null, commentPublic }),
+  },
+  // The GM rating a player they marked present (`use_player_ratings`, checked by the web Worker).
+  ratePlayer: {
+    schema: playerRatingSchema,
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      { playerId, score, comment }: { playerId: string; score: number; comment: string },
+    ) => ratePlayer(db, actor, slug, playerId, { score, comment: comment || null }),
   },
 };
 

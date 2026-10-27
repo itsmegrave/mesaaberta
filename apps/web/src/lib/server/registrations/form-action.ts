@@ -1,12 +1,10 @@
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { formMessage } from '#lib/forms/server.js';
 import type { z } from 'zod';
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { requireUser } from '../auth/guard';
-import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
-import { RateLimited } from '@mesaaberta/core/server/errors';
+import { Forbidden, RateLimited } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
@@ -30,23 +28,21 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
   event: Event,
   schema: z.ZodType<T>,
   /**
-   * The api route that makes it (`/v1/tables/<slug>/<action>`), or, for an operation the api does
-   * not serve yet, the service in this Worker.
+   * The api route that makes it (`/v1/tables/<slug>/<action>`). `allow` false (a flag that is off)
+   * answers `forbidden` like a refusal.
    */
-  how:
-    | ((db: AnyDb, actor: Actor | null, data: T) => Promise<{ eventIds: string[] }>)
-    | {
-        api: (data: T) => {
-          action: RegistrationActionName;
-          slug: string;
-          body: Record<string, unknown>;
-        };
-      },
+  how: {
+    allow?: boolean;
+    api: (data: T) => {
+      action: RegistrationActionName;
+      slug: string;
+      body: Record<string, unknown>;
+    };
+  },
 ) {
   const { locals, url, request } = event;
   // The page itself, not the `?/join` action address, which only makes sense as a POST.
   const user = await requireUser(locals, new URL(url.pathname, url));
-  if (!locals.db) error(503, 'Database not configured');
 
   const form = validateStringForm(await request.formData(), schema, [
     'playerId',
@@ -61,20 +57,14 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
 
   try {
     const data = form.data as T;
-    let eventIds: string[];
-    if (typeof how === 'function') {
-      eventIds = (await how(locals.db, await locals.getProfile(), data)).eventIds;
-    } else {
-      const call = how.api(data);
-      eventIds = (
-        await writeViaApi(
-          locals,
-          user,
-          `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
-          call.body,
-        )
-      ).eventIds;
-    }
+    if (how.allow === false) throw new Forbidden();
+    const call = how.api(data);
+    const { eventIds } = await writeViaApi(
+      locals,
+      user,
+      `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
+      call.body,
+    );
     for (const id of eventIds)
       locals.afterResponse((db) =>
         dispatchEvent(db, handlersFor(event.locals.env), id, new Date(), locals.log),

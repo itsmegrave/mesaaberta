@@ -11,7 +11,7 @@ import {
   updatePlace,
 } from '@mesaaberta/core/server/places/service';
 import { readPlacePage } from '@mesaaberta/core/server/places/directory';
-import { fileClaim, pendingClaimOf } from '@mesaaberta/core/server/places/claims';
+import { fileClaim, pendingClaimOf, removePlaceOwner } from '@mesaaberta/core/server/places/claims';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
@@ -104,6 +104,13 @@ export function placeRoutes(open: Open = openDb) {
     if (!body.success) return invalid(c);
     const eventIds = await fileClaim(c.get('db'), c.get('actor'), c.req.param('slug'), body.data);
     return c.json({ eventIds });
+  });
+
+  // "Deixar de gerenciar": the owner hands the place back, by its id.
+  app.post('/:id/release', async (c) => {
+    return c.json({
+      eventIds: await removePlaceOwner(c.get('db'), c.get('actor'), c.req.param('id')),
+    });
   });
 
   return app;

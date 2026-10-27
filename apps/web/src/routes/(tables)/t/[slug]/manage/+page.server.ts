@@ -1,4 +1,4 @@
-import { error, isRedirect, redirect } from '@sveltejs/kit';
+import { isRedirect, redirect } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { failFrom } from '#lib/server/fail-from.js';
 import { openDirectConversation } from '#lib/server/messages/open-direct.js';
@@ -9,8 +9,6 @@ import { confirmationActions } from '#lib/server/tables/confirmation-actions.js'
 import { runRegistrationAction } from '#lib/server/registrations/form-action.js';
 import { playerRatingsEnabled } from '#lib/server/ratings/players.js';
 import { playerRatingFormSchema } from '#lib/tables/registration.js';
-import { Forbidden } from '@mesaaberta/core/server/errors';
-import { ratePlayer } from '@mesaaberta/core/server/ratings/players';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = (event) => loadRead(event, 'manage');
@@ -22,21 +20,23 @@ export const actions: Actions = {
   invite: invitationAction('invite'),
 
   // "Avalie quem jogou": the GM's stars for one player they marked present. Final once sent.
-  ratePlayer: (event) =>
-    runRegistrationAction(event, playerRatingFormSchema, async (db, actor, data) => {
-      if (!actor || !(await playerRatingsEnabled(event.locals, actor))) throw new Forbidden();
-      return ratePlayer(db, actor, event.params.slug, data.playerId, {
-        score: data.score,
-        comment: data.comment || null,
-      });
-    }),
+  ratePlayer: async (event) => {
+    const actor = await event.locals.getProfile();
+    return runRegistrationAction(event, playerRatingFormSchema, {
+      allow: !!actor && (await playerRatingsEnabled(event.locals, actor)),
+      api: ({ playerId, score, comment }) => ({
+        action: 'ratePlayer',
+        slug: event.params.slug,
+        body: { playerId, score, comment },
+      }),
+    });
+  },
   cancelInvitation: invitationAction('cancel'),
 
   // "Mandar mensagem" on a player's row: the direct conversation with them. `directBlocker` lets a
   // GM write only to someone with a request or a seat at one of their tables.
   message: async ({ locals, url, request }) => {
     await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
     const profile = await locals.getProfile();
     const playerId = String((await request.formData()).get('playerId') ?? '');
     try {
