@@ -1,8 +1,7 @@
 import { error } from '@sveltejs/kit';
-import { widgetExtensions } from '@mesaaberta/core/server/extensions/index';
 import { showsWidgets } from '#lib/extensions/widget-routes.js';
 import type { WidgetsResponse } from '#lib/query/widgets.js';
-import { widgetViewer } from '#lib/server/widgets.js';
+import { widgetsFor } from '#lib/server/widgets.js';
 import type { RequestHandler } from './$types';
 
 /**
@@ -11,20 +10,12 @@ import type { RequestHandler } from './$types';
  */
 export const GET: RequestHandler = async ({ locals, url }) => {
   if (!(await locals.getUser())) error(401, 'Sign in required');
-  if (!locals.db) error(503, 'Database not configured');
 
   const routeId = url.searchParams.get('route');
-  const viewer = showsWidgets(routeId) ? await widgetViewer(locals) : null;
-  const widgets: WidgetsResponse['widgets'] = [];
-  if (viewer)
-    for (const extension of widgetExtensions())
-      for (const widget of await extension.widgets.forViewer(
-        locals.db,
-        viewer,
-        routeId!,
-        locals.flags,
-      ))
-        widgets.push({ ext: extension.id, widget });
+  const profile = showsWidgets(routeId) ? await locals.getProfile() : null;
+  const widgets: WidgetsResponse['widgets'] = profile
+    ? await widgetsFor(locals, profile.id, routeId!)
+    : [];
 
   return Response.json({ widgets } satisfies WidgetsResponse, {
     headers: { 'cache-control': 'private, no-store' },

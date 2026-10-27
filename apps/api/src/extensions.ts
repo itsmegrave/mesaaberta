@@ -1,12 +1,15 @@
 import { Hono } from 'hono';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
-import { createDb as openDb } from '@mesaaberta/core/server/db/client';
+import { connectionStringFrom, createDb as openDb } from '@mesaaberta/core/server/db/client';
+import { logger } from '@mesaaberta/core/server/logger';
+import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 import {
   extensionById,
   extensions,
   type Extension,
 } from '@mesaaberta/core/server/extensions/index';
 import { adminGuard, type AdminVariables } from './admin-guard';
+import { afterAnswer, apiFlags, type FlagsEnv } from './flags';
 
 type Open = typeof createDb;
 
@@ -25,6 +28,41 @@ export function extensionRoutes(open: Open = openDb, installed: readonly Extensi
   }>();
 
   app.use('*', adminGuard(open));
+
+  // An extension's panel on the admin's connections page: its own data, never a token or a secret.
+  app.get('/:ext/panel', async (c) => {
+    const admin = extensionById(c.req.param('ext'), installed)?.admin;
+    if (!admin) return c.json({ error: 'not_found' }, 404);
+    return c.json({ panel: await admin.load(c.get('db'), c.env as never) });
+  });
+
+  // "Publicar no Instagram" after `queue` answered `queued`: the render and the publish run after
+  // the answer, on a connection of their own. Failures are recorded on the durable job; never log
+  // Meta payloads.
+  app.post('/social/publish', async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { tableId?: unknown } | null;
+    const tableId = typeof body?.tableId === 'string' ? body.tableId : '';
+    if (!/^[0-9a-f-]{36}$/i.test(tableId))
+      return c.json({ error: 'invalid', field: 'tableId', message: 'invalid' }, 400);
+    const env = c.env as SocialEnv & DatabaseEnv;
+    const social = socialFor(env, installed);
+    const connectionString = connectionStringFrom(env)!;
+    afterAnswer(
+      c,
+      (async () => {
+        const { db, close } = open(connectionString);
+        try {
+          const useTableImage = await apiFlags(c.env as FlagsEnv).isEnabled('use_table_image');
+          await social.publishTable(db, env, tableId, new Date(), { useTableImage });
+        } catch {
+          logger.error('instagram.background_publish_failed', { tableId });
+        } finally {
+          await close().catch(() => undefined);
+        }
+      })(),
+    );
+    return c.json({ eventIds: [] }, 202);
+  });
 
   app.post('/:ext/:action', async (c) => {
     const actions = extensionById(c.req.param('ext'), installed)?.adminActions;

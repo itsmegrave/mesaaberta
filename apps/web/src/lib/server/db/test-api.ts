@@ -8,6 +8,8 @@ import { followRoutes } from '../../../../../api/src/follows';
 import { inboxRoutes } from '../../../../../api/src/inbox';
 import { meRoutes } from '../../../../../api/src/me';
 import { locationRoutes } from '../../../../../api/src/location';
+import { widgetRoutes } from '../../../../../api/src/widgets';
+import { extensionRoutes } from '../../../../../api/src/extensions';
 import { messageRoutes } from '../../../../../api/src/messages';
 import { moderationRoutes } from '../../../../../api/src/moderation';
 import { partnerRoutes } from '../../../../../api/src/partners';
@@ -61,12 +63,15 @@ export function apiOver(db: AnyDb, env: Record<string, string> = {}) {
     ['/v1/messages', messageRoutes(open)],
     ['/v1/me', meRoutes(open)],
     ['/v1/location', locationRoutes(open)],
+    ['/v1/widgets', widgetRoutes(open)],
     ['/v1/follows', followRoutes(open)],
     ['/v1/account', accountRoutes(open)],
     ['/v1/partners', partnerRoutes(open)],
     ['/v1/places', placeRoutes(open)],
     ['/v1/crowdfundings', crowdfundingRoutes(open)],
     ['/v1/auth', authRoutes(open, undefined, { request: supabaseUser })],
+    // After every `/v1/admin/<area>` above: an installed extension's admin routes.
+    ['/v1/admin', extensionRoutes(open)],
   ] as const;
   const bindings = {
     DATABASE_URL: 'postgres://test',

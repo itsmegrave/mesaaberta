@@ -31,6 +31,7 @@ import { reportRoutes } from './reports';
 import { seoRoutes } from './seo';
 import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
+import { widgetRoutes } from './widgets';
 
 /**
  * The api app of Trello #120: the one place writes, policies and the outbox will live once routes
@@ -109,6 +110,8 @@ export function createApi() {
   app.route('/v1/me', meRoutes());
   // The address behind a CEP, for the forms that fill one in.
   app.route('/v1/location', locationRoutes());
+  // The installed extensions' widgets and public assets.
+  app.route('/v1/widgets', widgetRoutes());
   // Seguir: the button, "Seguindo" and its bell switches.
   app.route('/v1/follows', followRoutes());
   // Parceiros: the list, a partner's edit form and "Quem cuida do parceiro".

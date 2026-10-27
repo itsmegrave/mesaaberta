@@ -1,40 +1,49 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
+import { requireApi } from '../api-required';
+import { extensionAction } from './extension-api';
 import { publishInstagramAction } from './instagram-action';
 // The action talks to the port, so any installed connector behaves the same here.
-const social = vi.hoisted(() => ({
-  name: 'instagram',
-  queueTable: vi.fn(async () => 'queued'),
-  publishTable: vi.fn(async () => 'published'),
-}));
+const social = vi.hoisted(() => ({ name: 'instagram' }));
 vi.mock('@mesaaberta/core/server/social/index', () => ({ socialFor: vi.fn(() => social) }));
 vi.mock('@mesaaberta/core/server/auth/policy', () => ({ can: () => true }));
+vi.mock('./extension-api', () => ({ extensionAction: vi.fn() }));
+vi.mock('../api-required', () => ({ requireApi: vi.fn(async () => ({ eventIds: [] })) }));
 beforeEach(() => vi.clearAllMocks());
-it('returns queue feedback before running rendering or publication', async () => {
-  const tasks: Array<(db: unknown) => Promise<unknown>> = [];
+
+const tableId = '00000000-0000-4000-8000-000000001101';
+const event = () => {
   const form = new FormData();
-  form.set('tableId', '00000000-0000-4000-8000-000000001101');
-  const flags = { isEnabled: vi.fn(async () => true) };
-  const event = {
+  form.set('tableId', tableId);
+  return {
     request: new Request('https://test/admin/tables', { method: 'POST', body: form }),
-    locals: {
-      env: {},
-      db: {},
-      getProfile: async () => ({}),
-      flags,
-      afterResponse: (task: (db: unknown) => Promise<unknown>) => tasks.push(task),
-      log: { error: vi.fn() },
-    },
+    locals: { env: {}, getProfile: async () => ({ id: 'admin' }), log: { error: vi.fn() } },
   } as unknown as RequestEvent;
-  expect(await publishInstagramAction(event)).toEqual({ publishResult: 'queued' });
-  expect(social.queueTable).toHaveBeenCalledOnce();
-  expect(social.publishTable).not.toHaveBeenCalled();
-  // The image flag is read in the background task; only the api kill switch is read before.
-  expect(flags.isEnabled).not.toHaveBeenCalledWith('use_table_image');
-  expect(tasks).toHaveLength(1);
-  await tasks[0]({});
-  expect(flags.isEnabled).toHaveBeenCalledWith('use_table_image');
-  expect(social.publishTable).toHaveBeenCalledWith({}, {}, form.get('tableId'), expect.any(Date), {
-    useTableImage: true,
+};
+
+it('queues through the api, then has it render and publish after its answer', async () => {
+  vi.mocked(extensionAction).mockResolvedValueOnce({ result: 'queued' });
+
+  expect(await publishInstagramAction(event())).toEqual({ publishResult: 'queued' });
+  expect(extensionAction).toHaveBeenCalledWith(expect.anything(), 'instagram', 'admin', 'queue', {
+    tableId,
+  });
+  expect(requireApi).toHaveBeenCalledWith(
+    expect.anything(),
+    { id: 'admin' },
+    '/v1/admin/social/publish',
+    { method: 'POST', body: { tableId } },
+  );
+});
+
+it('publishes nothing when the table was not queued, and reports a failure without details', async () => {
+  vi.mocked(extensionAction).mockResolvedValueOnce({ result: 'already_published' });
+  expect(await publishInstagramAction(event())).toEqual({ publishResult: 'already_published' });
+  expect(requireApi).not.toHaveBeenCalled();
+
+  vi.mocked(extensionAction).mockRejectedValueOnce(new Error('token in here'));
+  expect(await publishInstagramAction(event())).toMatchObject({
+    status: 502,
+    data: { publishError: 'failed' },
   });
 });
