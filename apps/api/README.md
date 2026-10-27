@@ -183,3 +183,9 @@ The extension panels (`/admin/[ext]`) still run in web until the api can read th
 - `GET /v1/crowdfundings?…`: the list for visitors too, each campaign with its `submitterId` (web turns it into `canReport` and never sends it to the browser).
 - `GET /v1/crowdfundings/listed?url=`: whether a campaign at that link is listed already.
 - `POST /v1/crowdfundings/link-read`: counts one read of a campaign page against `LINK_READ_LIMIT` (`rate_limited` past it), for the link preview and the add form's own read.
+
+## CEP, health and suspended accounts
+
+- `GET /v1/location/cep?value=`: the address behind a CEP for the signed-in person (60 lookups a minute each, `rate_limited` with `retryAfter` past that; a provider outage is a 503).
+- `POST /v1/me/ban-check`: for a suspended account whose ban has an end that has passed. The api lifts it and answers `{ banned, eventIds }`. Web skips the call while the ban is still running or has no end.
+- `GET /healthz?deep=1`: the build plus `database` and `worker` (the background Worker's last sweep). The web `/healthz` asks this behind its token, because the api is the one app that opens the database. When the api can't be asked, the database reads `unknown` and the probe still answers 200.

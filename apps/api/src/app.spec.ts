@@ -14,6 +14,12 @@ describe('api app', () => {
     });
   });
 
+  it('adds the database to the deep probe, not_configured without one', async () => {
+    const response = await createApi().request('/healthz?deep=1');
+
+    expect(await response.json()).toMatchObject({ status: 'ok', database: 'not_configured' });
+  });
+
   it('says which build answers the health probe', async () => {
     const response = await createApi().request(
       '/healthz',

@@ -3,13 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { lookupCep } from '@mesaaberta/core/server/location/cep';
 import { recordAttempt } from '@mesaaberta/core/server/auth/attempt-limit';
 import { RateLimited } from '@mesaaberta/core/server/errors';
+import { apiOver, actorsOnly } from '#lib/server/db/test-api.js';
 import { GET } from './+server';
 vi.mock('@mesaaberta/core/server/location/cep', () => ({ lookupCep: vi.fn() }));
 vi.mock('@mesaaberta/core/server/auth/attempt-limit', () => ({ recordAttempt: vi.fn() }));
 const run = (value: string, user: unknown = { id: 'ana' }) => {
   const setHeaders = vi.fn();
   const event = {
-    locals: { getUser: async () => user, db: {} },
+    locals: {
+      getUser: async () => user,
+      env: apiOver(actorsOnly([{ id: 'ana', role: 'member', status: 'active' }])),
+      log: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
+    },
     url: new URL('https://x.test/api/location/cep?value=' + value),
     setHeaders,
   } as unknown as RequestEvent;
@@ -28,9 +33,9 @@ describe('authenticated CEP endpoint', () => {
     vi.mocked(lookupCep).mockResolvedValue(address);
     const { result, setHeaders } = run('01001-000');
     expect(await (await result).json()).toEqual(address);
-    expect(lookupCep).toHaveBeenCalledWith({}, '01001000');
+    expect(lookupCep).toHaveBeenCalledWith(expect.anything(), '01001000', expect.anything());
     expect(recordAttempt).toHaveBeenCalledWith(
-      {},
+      expect.anything(),
       expect.objectContaining({ action: 'cep_lookup' }),
       'ana',
     );
@@ -46,7 +51,7 @@ describe('authenticated CEP endpoint', () => {
     await expect(run('01001000').result).rejects.toMatchObject({ status: 503 });
   });
   it('honors throttling without contacting ViaCEP', async () => {
-    vi.mocked(recordAttempt).mockRejectedValue(new RateLimited(30));
+    vi.mocked(recordAttempt).mockRejectedValueOnce(new RateLimited(30));
     const { result, setHeaders } = run('01001000');
     await expect(result).rejects.toMatchObject({ status: 429 });
     expect(setHeaders).toHaveBeenCalledWith({ 'retry-after': '30' });
