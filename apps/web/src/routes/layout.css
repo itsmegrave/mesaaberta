@@ -25,6 +25,15 @@ body {
   background-color: light-dark(var(--color-root-bg-light), var(--color-root-bg-dark));
 }
 
+/* The theme change grows from the toggle as a circle (src/lib/theme/theme-transition.ts animates it);
+   the browser's default cross-fade would fight it. Only set during that change, so other view
+   transitions keep their defaults. */
+:root[data-theme-reveal]::view-transition-old(root),
+:root[data-theme-reveal]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /* Full-bleed bands paint past the content column; clipping keeps them from scrolling sideways. */
 body {
   overflow-x: clip;
