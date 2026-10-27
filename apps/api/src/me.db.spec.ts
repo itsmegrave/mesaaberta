@@ -8,6 +8,8 @@ let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = '00000000-0000-4000-8000-000000000f01';
 const admin = '00000000-0000-4000-8000-000000000f02';
 const nobody = '00000000-0000-4000-8000-000000000f03';
+const lapsed = '00000000-0000-4000-8000-000000000f04';
+const closed = '00000000-0000-4000-8000-000000000f05';
 const env = { DATABASE_URL: 'postgres://test' };
 
 beforeAll(async () => {
@@ -15,6 +17,14 @@ beforeAll(async () => {
   await test.db.insert(profiles).values([
     { id: ana, username: 'ana', role: 'member' },
     { id: admin, username: 'admin', role: 'admin' },
+    {
+      id: lapsed,
+      username: 'lapsed',
+      status: 'suspended',
+      bannedAt: new Date('2026-01-01'),
+      bannedUntil: new Date('2026-01-02'),
+    },
+    { id: closed, username: 'closed', status: 'suspended', bannedAt: new Date('2026-01-01') },
   ]);
   await test.db.insert(notifications).values([
     { recipientId: ana, category: 'table', type: 'table_updated', link: '/t/a' },
@@ -98,5 +108,15 @@ describe('api me routes over a database', () => {
       unreadTotal: 1,
     });
     expect((await get('/notifications?page=2', ana)).status).toBe(404);
+  });
+
+  it('lifts a temporary ban whose time is up, and keeps a closed account barred', async () => {
+    const check = (actor: string) =>
+      app().request('/ban-check', { method: 'POST', headers: { [ACTOR_HEADER]: actor } }, env);
+    const lifted = await (await check(lapsed)).json();
+    expect(lifted).toMatchObject({ banned: false });
+    expect(lifted.eventIds).toHaveLength(1);
+    expect(await (await get('/', lapsed)).json()).toMatchObject({ profile: { status: 'active' } });
+    expect(await (await check(closed)).json()).toEqual({ banned: true, eventIds: [] });
   });
 });

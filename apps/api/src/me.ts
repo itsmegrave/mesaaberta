@@ -21,6 +21,7 @@ import { exportAccount } from '@mesaaberta/core/server/account/service';
 import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
 import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
+import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
 import {
   readFavoriteSystems,
@@ -74,6 +75,17 @@ export function meRoutes(open: Open = openDb) {
   });
 
   app.use('/*', userGuard(open));
+
+  // A suspended account, on its next request: still barred, or a temporary ban whose time is up,
+  // which is lifted here (`eventIds` holds that event to dispatch).
+  app.post('/ban-check', async (c) => {
+    const db = c.get('db');
+    const [row] = await db
+      .select({ id: profiles.id, status: profiles.status, bannedUntil: profiles.bannedUntil })
+      .from(profiles)
+      .where(eq(profiles.id, c.get('actorId')));
+    return c.json(await stillBanned(db, row));
+  });
 
   const withAchievements = (value: string | undefined) => value === '1';
 

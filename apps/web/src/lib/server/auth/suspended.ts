@@ -1,6 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
-import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { readFromApi } from '../api-read';
 
 /** Where a suspended account lands: the login page, with the message that says why. */
 export const SUSPENDED_LOGIN = '/login?error=suspended';
@@ -19,10 +21,30 @@ export const handleSuspended: Handle = async ({ event, resolve }) => {
   if (!supabase || !hasSession(event.cookies.getAll())) return resolve(event);
 
   const profile = await event.locals.getProfile().catch(() => null);
-  if (!profile || !event.locals.db) return resolve(event);
-  // A temporary ban that has run out is lifted on the spot, so the person carries on.
-  const { banned } = await stillBanned(event.locals.db, profile);
-  if (!banned) return resolve(event);
+  if (!profile || profile.status !== 'suspended') return resolve(event);
+  // A temporary ban that has run out is lifted on the spot by the api, so the person carries on.
+  if (profile.bannedUntil && profile.bannedUntil <= new Date()) {
+    const { banned, eventIds } = await readFromApi<{ banned: boolean; eventIds: string[] }>(
+      event.locals,
+      profile.id,
+      '/v1/me/ban-check',
+      {},
+    );
+    for (const id of eventIds)
+      event.locals.afterResponse((db) =>
+        dispatchEvent(db, handlersFor(event.locals.env), id, new Date(), event.locals.log),
+      );
+    if (!banned) {
+      // The rest of the request sees the account active.
+      Object.assign(profile, {
+        status: 'active',
+        bannedAt: null,
+        bannedUntil: null,
+        banReason: null,
+      });
+      return resolve(event);
+    }
+  }
 
   await supabase.auth.signOut();
   if (event.url.pathname === '/login') return resolve(event);

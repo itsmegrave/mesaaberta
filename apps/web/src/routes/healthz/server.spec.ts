@@ -1,17 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@mesaaberta/core/server/db/health', () => ({ checkDatabase: vi.fn(async () => 'ok') }));
-vi.mock('@mesaaberta/core/server/events/heartbeat', () => ({
-  workerHealth: vi.fn(async () => ({
-    status: 'ok',
-    lastRunAt: '2026-10-11T17:55:00.000Z',
-    version: '0.61.0',
-    revision: 'abc',
-  })),
-}));
-
-import { checkDatabase } from '@mesaaberta/core/server/db/health';
-import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
 import { GET } from './+server';
 
 const TOKEN = 'health-s3cret';
@@ -22,31 +10,37 @@ const asked = (authorization?: string) =>
 /** As the deploy gate asks: with the token configured and sent. */
 const call = (env?: Record<string, unknown>) =>
   GET({
-    locals: { db: {}, log: {}, env: env && { HEALTHZ_TOKEN: TOKEN, ...env } },
+    locals: { log: {}, env: env && { HEALTHZ_TOKEN: TOKEN, ...env } },
     request: asked(`Bearer ${TOKEN}`),
   } as never);
 /** As anyone without the token asks. */
 const callPublic = (env: Record<string, unknown> | undefined, authorization?: string) =>
-  GET({ locals: { db: {}, log: {}, env }, request: asked(authorization) } as never);
+  GET({ locals: { log: {}, env }, request: asked(authorization) } as never);
 const apiAnswering = (answer: () => Promise<Response>) => ({ fetch: vi.fn(answer) });
-const healthy = () =>
-  Promise.resolve(
-    Response.json({ status: 'ok', service: 'api', version: '0.61.0', revision: 'abc' }),
-  );
+const worker = {
+  status: 'ok',
+  lastRunAt: '2026-10-11T17:55:00.000Z',
+  version: '0.61.0',
+  revision: 'abc',
+};
+/** The api's deep answer: its build, the database and the background Worker's last sweep. */
+const answering =
+  (store: Record<string, unknown> = { database: 'ok', worker }) =>
+  () =>
+    Promise.resolve(
+      Response.json({ status: 'ok', service: 'api', version: '0.61.0', revision: 'abc', ...store }),
+    );
+const healthy = answering();
 
 describe('GET /healthz', () => {
   it('answers 401 without the token, before any probe runs', async () => {
     const env = { HEALTHZ_TOKEN: TOKEN, DEPLOYMENT_SOURCE_SHA: 'abc', API: apiAnswering(healthy) };
     for (const authorization of [undefined, 'Bearer wrong', TOKEN, `Basic ${TOKEN}`]) {
-      vi.mocked(checkDatabase).mockClear();
-      vi.mocked(workerHealth).mockClear();
       const response = await callPublic(env, authorization);
       expect(response.status).toBe(401);
       expect(response.headers.get('cache-control')).toBe('no-store');
       expect(await response.json()).toEqual({ error: 'unauthorized' });
-      expect(checkDatabase).not.toHaveBeenCalled();
       expect(env.API.fetch).not.toHaveBeenCalled();
-      expect(workerHealth).not.toHaveBeenCalled();
     }
   });
 
@@ -58,10 +52,11 @@ describe('GET /healthz', () => {
   });
 
   it('reports each app with the build it runs when the pipeline sets it', async () => {
+    const API = apiAnswering(healthy);
     const response = await call({
       DEPLOYMENT_SOURCE_SHA: ' 40a3e22771d658b31a8fbfdd8f222436b0a6efce ',
       DEPLOYMENT_VERSION: 'v0.61.0',
-      API: apiAnswering(healthy),
+      API,
     });
 
     expect(response.status).toBe(200);
@@ -76,13 +71,11 @@ describe('GET /healthz', () => {
         revision: '40a3e22771d658b31a8fbfdd8f222436b0a6efce',
       },
       api: { status: 'ok', version: '0.61.0', revision: 'abc', latencyMs: expect.any(Number) },
-      worker: {
-        status: 'ok',
-        lastRunAt: '2026-10-11T17:55:00.000Z',
-        version: '0.61.0',
-        revision: 'abc',
-      },
+      worker,
     });
+    // The api answers for the database and the background Worker.
+    const [asked] = API.fetch.mock.calls[0] as unknown as [Request];
+    expect(new URL(asked.url).search).toBe('?deep=1');
   });
 
   it('omits the top-level revision and says the api is unbound when nothing is configured', async () => {
@@ -91,6 +84,8 @@ describe('GET /healthz', () => {
     expect(body).toMatchObject({
       web: { status: 'ok', version: null, revision: null },
       api: { status: 'unbound' },
+      database: 'unknown',
+      status: 'ok',
     });
   });
 
@@ -101,13 +96,19 @@ describe('GET /healthz', () => {
     ]) {
       const response = await call({ API: apiAnswering(answer) });
       expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({ status: 'ok', api: { status: 'down' } });
+      expect(await response.json()).toMatchObject({
+        status: 'ok',
+        database: 'unknown',
+        api: { status: 'down' },
+      });
     }
   });
 
   it('keeps answering 503 with the revision when the database is down', async () => {
-    vi.mocked(checkDatabase).mockResolvedValueOnce('down');
-    const response = await call({ DEPLOYMENT_SOURCE_SHA: 'abc' });
+    const response = await call({
+      DEPLOYMENT_SOURCE_SHA: 'abc',
+      API: apiAnswering(answering({ database: 'down' })),
+    });
 
     expect(response.status).toBe(503);
     const body = await response.json();
@@ -116,13 +117,15 @@ describe('GET /healthz', () => {
   });
 
   it('reports a stale background worker without failing the probe', async () => {
-    vi.mocked(workerHealth).mockResolvedValueOnce({
+    const stale = {
       status: 'stale',
       lastRunAt: '2026-10-11T10:00:00.000Z',
       version: null,
       revision: null,
+    };
+    const response = await call({
+      API: apiAnswering(answering({ database: 'ok', worker: stale })),
     });
-    const response = await call({});
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ status: 'ok', worker: { status: 'stale' } });

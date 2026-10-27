@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { REQUEST_ID_HEADER, requestIdFrom, withRequestId } from '@mesaaberta/contracts';
 import { logger } from '@mesaaberta/core/server/logger';
 import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
+import type { DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { accountRoutes } from './account';
 import { ACTOR_HEADER } from './admin-guard';
 import { adminReadRoutes } from './admin-reads';
@@ -11,10 +12,12 @@ import { catalogRoutes } from './catalog';
 import { eventRoutes } from './events';
 import { extensionRoutes } from './extensions';
 import { followRoutes } from './follows';
+import { storeHealth } from './health';
 import { partnerRoutes } from './partners';
 import { placeRoutes } from './places';
 import { crowdfundingRoutes } from './crowdfundings';
 import { inboxRoutes } from './inbox';
+import { locationRoutes } from './location';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
 import { meRoutes } from './me';
@@ -46,10 +49,13 @@ export function createApi() {
     c.header(REQUEST_ID_HEADER, requestId);
   });
 
-  // Which build answers, so the web /healthz can show a mismatch after a one-app rollback.
-  app.get('/healthz', (c) =>
-    c.json({ status: 'ok', service: 'api', ...buildInfoOf(c.env as BuildEnv | undefined) }),
-  );
+  // Which build answers, so the web /healthz can show a mismatch after a one-app rollback. With
+  // `?deep=1` (the web /healthz, behind its token) also the database and the background Worker.
+  app.get('/healthz', async (c) => {
+    const build = { status: 'ok', service: 'api', ...buildInfoOf(c.env as BuildEnv | undefined) };
+    if (c.req.query('deep') !== '1') return c.json(build);
+    return c.json({ ...build, ...(await storeHealth(c.env as DatabaseEnv | undefined)) });
+  });
 
   // One line per request, so a rollout can be read in Sentry: which route, what answer, how long.
   // The route template, the method, the status, the duration and who asked (the actor the web
@@ -101,6 +107,8 @@ export function createApi() {
   // The signed-in person's own frame: the profile row (the actor of every web request), the
   // header's numbers and the bell, and the notification feed.
   app.route('/v1/me', meRoutes());
+  // The address behind a CEP, for the forms that fill one in.
+  app.route('/v1/location', locationRoutes());
   // Seguir: the button, "Seguindo" and its bell switches.
   app.route('/v1/follows', followRoutes());
   // Parceiros: the list, a partner's edit form and "Quem cuida do parceiro".
