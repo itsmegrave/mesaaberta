@@ -35,6 +35,35 @@ describe('handleAuth', () => {
     expect(event.locals.supabase).toBeNull();
   });
 
+  it('keeps the session cookies away from page scripts, whatever @supabase/ssr asks', async () => {
+    let setAll: ((cookies: object[]) => void) | undefined;
+    const createClient = vi.fn((_url: string, _key: string, options: never) => {
+      setAll = (options as { cookies: { setAll: typeof setAll } }).cookies.setAll;
+      return { auth: { getUser: vi.fn() } };
+    });
+    const set = vi.fn();
+    const event = {
+      locals: { env },
+      cookies: { getAll: () => [], set },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+
+    setAll?.([
+      {
+        name: 'sb-x-auth-token',
+        value: 'base64-token',
+        options: { httpOnly: false, sameSite: 'lax', maxAge: 60, path: '/auth' },
+      },
+    ]);
+
+    expect(set).toHaveBeenCalledWith('sb-x-auth-token', 'base64-token', {
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60,
+      path: '/',
+    });
+  });
+
   it('returns the user Supabase verified, and records the id for the request log', async () => {
     const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
     const { event, run } = setup(env, getUser);

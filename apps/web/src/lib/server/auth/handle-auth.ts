@@ -24,9 +24,12 @@ export const createHandleAuth =
         ? createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
             cookies: {
               getAll: () => event.cookies.getAll(),
+              // @supabase/ssr asks for `httpOnly: false` so a browser client could read the
+              // session; this app has none, so the tokens stay out of reach of page scripts.
+              // SvelteKit adds `secure` (except on http://localhost) and `sameSite: 'lax'`.
               setAll: (cookies) =>
                 cookies.forEach(({ name, value, options }) =>
-                  event.cookies.set(name, value, { ...options, path: '/' }),
+                  event.cookies.set(name, value, { ...options, path: '/', httpOnly: true }),
                 ),
             },
           })
