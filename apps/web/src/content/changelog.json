@@ -1,5 +1,30 @@
 [
   {
+    "date": "2026-10-27",
+    "title": "Onde jogar RPG presencial",
+    "summary": "Um diretório de lojas, clubes e espaços para jogar RPG, que qualquer pessoa pode indicar.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Onde jogar",
+        "description": "Encontre lojas, clubes e espaços para jogar RPG perto de você, com endereço, horários e comodidades. Conhece um lugar? Cadastre e a equipe aprova. Quem cuida do lugar pode reivindicar a página.",
+        "href": "/places"
+      },
+      {
+        "kind": "new",
+        "title": "Mesas com lugar marcado",
+        "description": "Ao criar uma mesa presencial, escolha o lugar onde ela vai acontecer. A mesa mostra o lugar e a página do lugar mostra as próximas mesas.",
+        "href": "/tables/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Seções que se recolhem no celular",
+        "description": "Nas páginas de sistemas e lugares, as seções longas se recolhem com um resumo de uma linha. Toque para abrir."
+      }
+    ]
+  },
+
+  {
     "date": "2026-10-26",
     "title": "Lembretes de sessão e um menu mais claro",
     "summary": "A mesa avisa antes da sessão, a confirmação de presença ficou passo a passo e o menu lateral é o mesmo aberto ou fechado.",
