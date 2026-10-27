@@ -5,7 +5,7 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { disconnectSchema } from '#lib/profile/connections.js';
 import { addPasswordFormSchema } from '@mesaaberta/core/auth/password-setup';
-import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
+import { readFromApi } from '#lib/server/api-read.js';
 import { connections, unlink } from '@mesaaberta/core/server/auth/identities';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import type { Actions, PageServerLoad } from './$types';
@@ -13,13 +13,15 @@ import type { Actions, PageServerLoad } from './$types';
 // "Conta e acesso": the email, the @usuário and the ways to sign in.
 export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
 
   const linked = locals.supabase ? await connections(locals.supabase) : null;
   // A password set on a provider account adds no `email` identity, so `auth.users` says whether
   // the e-mail and password way in is on. `total` stays the identities: it guards disconnecting.
   const connected =
-    linked && !linked.email && (await hasPassword(locals.db, user.id))
+    linked &&
+    !linked.email &&
+    (await readFromApi<{ hasPassword: boolean }>(locals, user.id, '/v1/me/has-password'))
+      .hasPassword
       ? { ...linked, email: true }
       : linked;
   return {

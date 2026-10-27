@@ -16,6 +16,15 @@ import {
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb, connectionStringFrom } from '@mesaaberta/core/server/db/client';
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';
+import { isUsernameAvailable, loadProfileForm } from '@mesaaberta/core/server/profile/service';
+import { exportAccount } from '@mesaaberta/core/server/account/service';
+import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
+import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
+import {
+  readFavoriteSystems,
+  setFavoriteSystems,
+} from '@mesaaberta/core/server/profile/favorite-systems';
+import { listSystems } from '@mesaaberta/core/server/systems';
 import {
   BELL_LIMIT,
   listNotifications,
@@ -92,6 +101,60 @@ export function meRoutes(open: Open = openDb) {
       unreadConversations(db, actorId),
     ]);
     return c.json({ unread, messages });
+  });
+
+  // The actor's profile as its form shows it (the onboarding step and "Editar perfil").
+  app.get('/profile-form', async (c) =>
+    c.json(await loadProfileForm(c.get('db'), c.get('actorId'))),
+  );
+
+  // Whether a username is free for the actor (their own counts as free).
+  app.get('/username-available', async (c) => {
+    const username = c.req.query('username') ?? '';
+    if (!username) return c.json({ available: false });
+    return c.json({
+      available: await isUsernameAvailable(c.get('db'), username, {
+        exceptProfileId: c.get('actorId'),
+      }),
+    });
+  });
+
+  // Whether the e-mail and password way in is on (a password set on a provider account).
+  app.get('/has-password', async (c) =>
+    c.json({ hasPassword: await hasPassword(c.get('db'), c.get('actorId')) }),
+  );
+
+  // The data portability copy (LGPD art. 18, V). `email` is the account's own, which web reads
+  // from Auth.
+  app.get('/export', async (c) =>
+    c.json(await exportAccount(c.get('db'), c.get('actorId'), c.req.query('email') ?? '')),
+  );
+
+  // "Sistemas favoritos": every system, and the ones the actor follows.
+  app.get('/favorite-systems', async (c) => {
+    const [systems, favorites] = await Promise.all([
+      listSystems(c.get('db')),
+      readFavoriteSystems(c.get('db'), c.get('actorId')),
+    ]);
+    return c.json({ systems, favorites });
+  });
+
+  app.post('/favorite-systems', async (c) => {
+    const parsed = favoriteSystemsSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      return c.json(
+        { error: 'invalid', field: 'systems', message: issue?.message ?? 'invalid' },
+        400,
+      );
+    }
+    try {
+      return c.json(await setFavoriteSystems(c.get('db'), c.get('actorId'), parsed.data));
+    } catch (error) {
+      const refused = refusal(c, error);
+      if (refused) return refused;
+      throw error;
+    }
   });
 
   // Whether the actor is under a limit now: `{ ok: true }`, or the refusal with when it frees.

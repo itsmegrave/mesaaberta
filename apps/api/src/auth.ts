@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import {
   credentialsSchema,
   emailSchema,
@@ -13,6 +13,7 @@ import {
   attemptWait,
 } from '@mesaaberta/core/server/auth/attempt-limit';
 import { completeLogin } from '@mesaaberta/core/server/auth/login';
+import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
 import {
   signInForSession,
   signUpForSession,
@@ -256,41 +257,68 @@ export function authRoutes(
     return c.json({ result }, NEW_PASSWORD_STATUS[result]);
   });
 
-  app.post('/finish-login', async (c) => {
-    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
-    const connectionString = connectionStringFrom(c.env);
-    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
-
+  /**
+   * Whose account the access token in `Authorization: Bearer` is, checked by Supabase: the user, or
+   * the answer to give (`no_session` for a missing or refused token, `failed` otherwise).
+   */
+  const verifiedUser = async (c: Context<{ Bindings: Env }>, url: string, key: string) => {
     const token = /^Bearer (.+)$/.exec(c.req.header('authorization') ?? '')?.[1];
-    if (!token) return c.json({ result: 'no_session' }, 401);
-    const body = (await c.req.json().catch(() => null)) as { next?: unknown } | null;
-    const next = typeof body?.next === 'string' ? body.next : null;
-
-    // Whoever the token belongs to, checked by Supabase: it says whose profile this is.
-    let user: { id?: string; user_metadata?: Record<string, unknown> } | null;
+    if (!token) return { refused: c.json({ result: 'no_session' }, 401) } as const;
     try {
       const response = await (deps.request ?? fetch)(`${url.replace(/\/$/, '')}/auth/v1/user`, {
         headers: { apikey: key, authorization: `Bearer ${token}` },
         signal: AbortSignal.timeout(10_000),
       });
       if (response.status === 401 || response.status === 403)
-        return c.json({ result: 'no_session' }, 401);
-      if (!response.ok) return c.json({ result: 'failed' }, 502);
-      user = await response.json();
+        return { refused: c.json({ result: 'no_session' }, 401) } as const;
+      if (!response.ok) return { refused: c.json({ result: 'failed' }, 502) } as const;
+      const user = (await response.json()) as {
+        id?: string;
+        user_metadata?: Record<string, unknown>;
+      } | null;
+      if (!user?.id) return { refused: c.json({ result: 'failed' }, 502) } as const;
+      return { user: { id: user.id, user_metadata: user.user_metadata } } as const;
     } catch {
-      return c.json({ result: 'failed' }, 502);
+      return { refused: c.json({ result: 'failed' }, 502) } as const;
     }
-    if (!user?.id) return c.json({ result: 'failed' }, 502);
+  };
+
+  app.post('/finish-login', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    const connectionString = connectionStringFrom(c.env);
+    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const body = (await c.req.json().catch(() => null)) as { next?: unknown } | null;
+    const next = typeof body?.next === 'string' ? body.next : null;
+
+    // Whoever the token belongs to, checked by Supabase: it says whose profile this is.
+    const verified = await verifiedUser(c, url, key);
+    if (verified.refused) return verified.refused;
 
     const ip = c.req.header(CLIENT_IP_HEADER) ?? '';
     const { db, close } = open(connectionString);
     try {
-      const done = await completeLogin(
-        { db, log: logger, ip: ip || null },
-        { id: user.id, user_metadata: user.user_metadata },
-        next,
-      );
+      const done = await completeLogin({ db, log: logger, ip: ip || null }, verified.user, next);
       return c.json(done, done.result === 'ok' ? 200 : done.result === 'suspended' ? 403 : 500);
+    } finally {
+      await close();
+    }
+  });
+
+  // The onboarding step's half of `finish-login`: makes sure the person whose access token comes in
+  // `Authorization` has a profile (made from their sign-in metadata on first use, never
+  // overwritten) and answers `{ result: 'ok', profile }`.
+  app.post('/ensure-profile', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    const connectionString = connectionStringFrom(c.env);
+    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const verified = await verifiedUser(c, url, key);
+    if (verified.refused) return verified.refused;
+
+    const { db, close } = open(connectionString);
+    try {
+      return c.json({ result: 'ok', profile: await ensureProfile(db, verified.user) });
     } finally {
       await close();
     }

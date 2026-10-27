@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { initialForm, validateStringForm } from '#lib/forms/contract.js';
 import { refuse } from '#lib/forms/server.js';
 import { requireUser } from '#lib/server/auth/guard.js';
@@ -6,7 +6,6 @@ import { writeViaApi } from '#lib/server/api-write.js';
 import { removePicture } from '#lib/server/profile/edit.js';
 import { deleteAccountSchema } from '#lib/profile/delete.js';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import { loadProfileForm } from '@mesaaberta/core/server/profile/service';
 import type { Actions, PageServerLoad } from './$types';
 
 // "Privacidade e dados": what others see, a copy of the account's data, and closing the account.
@@ -20,15 +19,14 @@ export const actions: Actions = {
   // calendar cancellations, then the profile is emptied and the Auth user deleted.
   delete: async ({ request, locals, url }) => {
     const user = await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
 
-    const username = (await loadProfileForm(locals.db, user.id))!.username;
+    const profile = await locals.getProfile();
+    const username = profile?.username ?? '';
     const form = validateStringForm(await request.formData(), deleteAccountSchema, ['confirm']);
     if (!form.valid || form.data.confirm !== username)
       return refuse(form, 400, 'confirm', 'confirm');
 
     // The picture and the cover go first, while the profile still says which files are theirs.
-    const profile = await locals.getProfile();
     await removePicture(locals, user.id, profile?.avatarPath ?? null);
     await removePicture(locals, user.id, profile?.bannerPath ?? null);
     // The api Worker deletes the account, its data and its Auth user.

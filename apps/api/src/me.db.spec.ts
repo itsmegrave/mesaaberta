@@ -53,6 +53,18 @@ describe('api me routes over a database', () => {
     expect(typeof shell.pendingSuggestions).toBe('number');
   });
 
+  it("answers the actor's own profile form, username availability and export", async () => {
+    expect(await (await get('/profile-form', ana)).json()).toMatchObject({ username: 'ana' });
+    expect(await (await get('/username-available?username=ana', ana)).json()).toEqual({
+      available: true,
+    });
+    expect(await (await get('/username-available?username=admin', ana)).json()).toEqual({
+      available: false,
+    });
+    expect((await get('/export?email=ana@x.test', ana)).status).toBe(200);
+    expect(await (await get('/favorite-systems', ana)).json()).toMatchObject({ favorites: [] });
+  });
+
   it('says whether the actor is under a limit, and 404 for a limit it does not know', async () => {
     expect(await (await get('/limits/table', ana)).json()).toEqual({ ok: true });
     expect((await get('/limits/whatever', ana)).status).toBe(404);
