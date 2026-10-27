@@ -70,8 +70,6 @@ export type BadgeStats = {
    * report an admin accepted, or a GM removing them from a table.
    */
   recentlyUnreliable(): Promise<boolean>;
-  /** The most concluded sessions the person played of one campaign (its chain of sessions). */
-  campaignSessions(): Promise<number>;
 };
 
 /** How many members the "100!" badge (once "Primeira centena") goes to. */
@@ -313,35 +311,6 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
         );
       return noShow.total > 0 || removed.total > 0;
     }),
-    campaignSessions: memo(async () => {
-      // Walk up from each campaign session the person played to the first of its chain, then count
-      // the sessions per chain.
-      const rows = await db.execute<{ total: number }>(sql`
-        with recursive played as (
-          select ${gameTables.id} as start, ${gameTables.id} as id,
-            ${gameTables.duplicatedFromTableId} as parent
-          from ${registrations}
-          join ${gameTables} on ${gameTables.id} = ${registrations.tableId}
-          where ${registrations.playerId} = ${profileId}
-            and ${registrations.status} = 'confirmed'
-            and (${registrations.attended} is null or ${registrations.attended})
-            and ${gameTables.status} = 'concluded'
-            and ${gameTables.kind} = 'campaign'
-          union all
-          select played.start, source.id, source.duplicated_from_table_id
-          from played
-          join game_tables source on source.id = played.parent
-        )
-        select count(distinct start)::int as total
-        from played
-        where parent is null
-        group by id
-        order by total desc
-        limit 1
-      `);
-      const list = Array.isArray(rows) ? rows : (rows as { rows: { total: number }[] }).rows;
-      return Number(list[0]?.total ?? 0);
-    }),
     hasApprovedPartner: memo(async () => {
       const [row] = await db
         .select({ total: count() })
@@ -473,12 +442,6 @@ export const BADGES: readonly BadgeDefinition[] = [
       const sessions = await stats.sessionsPlayed();
       return (await stats.recentlyUnreliable()) ? Math.min(sessions, 9) : sessions;
     },
-  },
-  {
-    id: 'campaign-veteran',
-    triggers: ATTENDANCE,
-    goal: 10,
-    measure: (stats) => stats.campaignSessions(),
   },
   {
     id: 'curator',
