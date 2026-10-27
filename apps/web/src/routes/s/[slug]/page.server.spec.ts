@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readSystemPage } from '@mesaaberta/core/server/systems/directory';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/systems/directory', () => ({ readSystemPage: vi.fn() }));
@@ -11,9 +12,9 @@ const event = (slug: string) =>
   ({
     params: { slug },
     locals: {
-      db: {},
-      env: {},
-      log: { info: logged },
+      // The api answers over the mocked reader.
+      env: apiOver(actorsOnly()),
+      log: { info: logged, warn: vi.fn() },
       flags: { isEnabled: flagged },
       getUser: async () => null,
       getProfile: async () => null,

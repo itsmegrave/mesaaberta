@@ -1,7 +1,6 @@
-import { error } from '@sveltejs/kit';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { publicReadNow } from '@mesaaberta/core/server/reads/now';
-import { listPlaces } from '@mesaaberta/core/server/places/directory';
+import type { listPlaces } from '@mesaaberta/core/server/places/directory';
+import { readFromApi } from '../api-read';
 import { readPlaceFilters } from '@mesaaberta/core/places/filters';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
@@ -10,12 +9,12 @@ import { requireDirectory } from '../directories/flags';
 export const read = async ({ locals, url }: RequestEvent) => {
   await requireDirectory(locals, 'places');
   const filters = readPlaceFilters(url.searchParams);
-  // No database yet (see the README): the page still renders, with nothing to list.
-  if (!locals.db) return { filters, places: [], total: 0, pages: 1, states: [], cities: [] };
-
-  const list = await listPlaces(locals.db, filters, publicReadNow());
-  // A page past the last one does not exist.
-  if (!list) error(404, 'Not found');
+  // The api reads the page; one past the last is its 404, which becomes the page's.
+  const list = await readFromApi<NonNullable<Awaited<ReturnType<typeof listPlaces>>>>(
+    locals,
+    (await locals.getUser())?.id ?? null,
+    `/v1/reads/places?${url.searchParams}`,
+  );
   const supabase = supabaseUrlOf(locals.env);
   return {
     filters,

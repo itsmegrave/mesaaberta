@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { gmDirectorySystems, listGmDirectory } from '@mesaaberta/core/server/gms/directory';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/gms/directory', () => ({
@@ -15,8 +16,11 @@ const event = (search = '', referer = '') =>
   ({
     params: {},
     locals: {
-      db: {},
-      env: { SUPABASE_URL: 'https://sb.test' },
+      // The api answers over the mocked readers; the stand-in database only names the viewer.
+      env: apiOver(actorsOnly([{ id: viewer, role: 'member', status: 'active' }]), {
+        SUPABASE_URL: 'https://sb.test',
+      }),
+      log: { warn: vi.fn(), info: vi.fn() },
       flags: { isEnabled: flagged },
       track: tracked,
       getUser: async () => ({ id: viewer }),

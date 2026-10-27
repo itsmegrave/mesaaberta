@@ -1,7 +1,7 @@
-import { error } from '@sveltejs/kit';
-import { can } from '@mesaaberta/core/server/auth/policy';
+import { error, isHttpError } from '@sveltejs/kit';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { readPlacePage } from '@mesaaberta/core/server/places/directory';
+import type { readPlacePage } from '@mesaaberta/core/server/places/directory';
+import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
 
@@ -11,10 +11,17 @@ import { requireDirectory } from '../directories/flags';
  */
 export const read = async ({ locals, params }: RequestEvent) => {
   await requireDirectory(locals, 'places');
-  if (!locals.db) error(503, 'Database not configured');
-  const profile = await locals.getProfile();
-  const viewer = profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : null;
-  const found = await readPlacePage(locals.db, params.slug ?? '', viewer, new Date());
+  // The api decides who may see it, from the actor it is named.
+  const found = await readFromApi<NonNullable<Awaited<ReturnType<typeof readPlacePage>>>>(
+    locals,
+    (await locals.getUser())?.id ?? null,
+    `/v1/reads/places/${encodeURIComponent(params.slug ?? '')}`,
+  )
+    .then(revivedDates)
+    .catch((cause) => {
+      if (isHttpError(cause) && cause.status === 404) return null;
+      throw cause;
+    });
   if (!found) {
     // The request line already names the place (`resourceType`, `resourceId`).
     locals.log.info('place not found', { code: 'place_not_found' });

@@ -1,8 +1,7 @@
-import { error } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { publicReadNow } from '@mesaaberta/core/server/reads/now';
-import { gmDirectorySystems, listGmDirectory } from '@mesaaberta/core/server/gms/directory';
+import type { gmDirectorySystems, listGmDirectory } from '@mesaaberta/core/server/gms/directory';
+import { readFromApi, revivedDates } from '../api-read';
 import { readGmDirectoryFilters } from '@mesaaberta/core/gms/directory-filters';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
@@ -11,20 +10,21 @@ import { requireDirectory } from '../directories/flags';
 export const read = async ({ locals, url }: RequestEvent) => {
   await requireDirectory(locals, 'gms');
   const filters = readGmDirectoryFilters(url.searchParams);
-  // No database yet (see the README): the page still renders, with nothing to list.
-  if (!locals.db) return { filters, people: [], total: 0, pages: 1, systems: [] };
-
   const profile = await locals.getProfile();
   const showBadges = await locals.flags.isEnabled(
     'use_badges',
     profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
   );
-  const [list, systems] = await Promise.all([
-    listGmDirectory(locals.db, filters, publicReadNow(), { showBadges }),
-    gmDirectorySystems(locals.db),
-  ]);
-  // A page past the last one does not exist.
-  if (!list) error(404, 'Not found');
+  // The api reads the page; one past the last is its 404, which becomes the page's.
+  const query = new URLSearchParams(url.searchParams);
+  if (showBadges) query.set('badges', '1');
+  const { systems, ...list } = revivedDates(
+    await readFromApi<
+      NonNullable<Awaited<ReturnType<typeof listGmDirectory>>> & {
+        systems: Awaited<ReturnType<typeof gmDirectorySystems>>;
+      }
+    >(locals, profile?.id ?? null, `/v1/reads/gamemasters?${query}`),
+  );
   const supabase = supabaseUrlOf(locals.env);
   return {
     filters,

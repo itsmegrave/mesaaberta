@@ -31,3 +31,20 @@ export async function readFromApi<T>(
     throw cause;
   }
 }
+
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
+/**
+ * JSON turned every `Date` an api reader answered into an ISO string: this turns them back, at any
+ * depth, so a page gets the dates its reader typed. Only full UTC timestamps (what `Date` writes)
+ * are read as dates; a calendar day such as `2026-10-27` stays a string.
+ */
+export function revivedDates<T>(value: T): T {
+  if (typeof value === 'string') return (TIMESTAMP.test(value) ? new Date(value) : value) as T;
+  if (Array.isArray(value)) return value.map(revivedDates) as T;
+  if (value && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value).map(([key, inner]) => [key, revivedDates(inner)]),
+    ) as T;
+  return value;
+}

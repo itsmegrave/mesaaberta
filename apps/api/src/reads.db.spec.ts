@@ -350,3 +350,28 @@ describe('GET /v1/reads/manage/:slug', () => {
     expect((await getManage('mesa-detalhe', null)).status).toBe(401);
   });
 });
+
+describe('the directory reads and Início', () => {
+  const read = (path: string, actor: string | null = ana) =>
+    app.request(path, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+
+  it('answers a page of each directory to visitors, and 404 past the last page', async () => {
+    for (const path of ['/systems', '/gamemasters', '/places']) {
+      const page = await read(path, null);
+      expect(page.status).toBe(200);
+      expect(await page.json()).toHaveProperty('pages');
+      expect((await read(`${path}?page=99`, null)).status).toBe(404);
+    }
+    expect(await (await read('/gamemasters')).json()).toHaveProperty('systems');
+  });
+
+  it('answers 404 for a system or a place that is not there', async () => {
+    expect((await read('/systems/no-such-system')).status).toBe(404);
+    expect((await read('/places/no-such-place')).status).toBe(404);
+  });
+
+  it('answers the signed-in Início, only for someone signed in', async () => {
+    expect(await (await read('/home?follows=1')).json()).toHaveProperty('rows');
+    expect((await read('/home', null)).status).toBe(401);
+  });
+});
