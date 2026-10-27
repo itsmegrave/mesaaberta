@@ -14,6 +14,7 @@ function setup({
   routeId = null as string | null,
   accept = 'text/html',
   isDataRequest = false,
+  api = vi.fn(async (_request: Request) => Response.json({ eventIds: [] })),
 } = {}) {
   const afterResponse = vi.fn();
   const event = {
@@ -23,6 +24,8 @@ function setup({
     request: new Request(`http://localhost${path}`, { method, headers: { accept } }),
     locals: {
       afterResponse,
+      env: { API: { fetch: api } },
+      log: { warn: vi.fn() },
       getProfile: vi.fn(async () => {
         if (profile instanceof Error) throw profile;
         return profile;
@@ -63,6 +66,22 @@ describe('handleAdminAccess', () => {
       await run();
       expect(afterResponse).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it('sends the route id to the api, which records the section', async () => {
+    const api = vi.fn(async (_request: Request) => Response.json({ eventIds: ['e'] }));
+    const { run, afterResponse } = setup({
+      path: '/admin/users/x',
+      routeId: '/admin/users/[id]',
+      profile: admin,
+      api,
+    });
+    await run();
+    await afterResponse.mock.calls[0][0]();
+    const request = api.mock.calls[0][0];
+    expect(new URL(request.url).pathname).toBe('/v1/admin/entries');
+    expect(request.headers.get('x-actor-id')).toBe(admin.id);
+    expect(await request.json()).toEqual({ route: '/admin/users/[id]' });
   });
 
   it('notes nothing for an action or an endpoint', async () => {

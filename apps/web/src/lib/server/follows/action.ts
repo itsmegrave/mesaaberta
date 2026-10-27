@@ -5,8 +5,6 @@ import { requireUser } from '../auth/guard';
 import { failFrom } from '../fail-from';
 import { followSchema } from '@mesaaberta/core/follows/schema';
 import { Forbidden } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { followsEnabled } from './state';
 
 /**
@@ -33,16 +31,9 @@ export async function followAction({
     const profile = await locals.getProfile();
     if (!(await followsEnabled(locals, profile))) throw new Forbidden('use_follows');
     // The api follows or stops following; a new follow comes back with its event.
-    const { eventIds } = await writeViaApi(
-      locals,
-      user,
-      `/v1/follows/${encodeURIComponent(form.data.profileId)}`,
-      { follow: form.data.follow === 'true' },
-    );
-    for (const id of eventIds)
-      locals.afterResponse((db) =>
-        dispatchEvent(db, handlersFor(locals.env), id, new Date(), locals.log),
-      );
+    await writeViaApi(locals, user, `/v1/follows/${encodeURIComponent(form.data.profileId)}`, {
+      follow: form.data.follow === 'true',
+    });
     return { form };
   } catch (cause) {
     return failFrom(cause);

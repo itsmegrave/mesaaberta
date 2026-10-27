@@ -11,8 +11,6 @@ import { writeViaApi } from '#lib/server/api-write.js';
 import { requireApi, requireApiWrite } from '#lib/server/api-required.js';
 import { timezoneOf } from '#lib/server/time.js';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
 import { directoryEnabled } from '#lib/server/directories/flags.js';
 import { checkLimitViaApi, readPlaceOptions } from '#lib/server/tables/api.js';
@@ -141,16 +139,7 @@ export const actions: Actions = {
               imagePath: imagePath ?? null,
               draft,
             });
-        const created = {
-          slug: String(written.body.slug),
-          draft: written.body.draft === true,
-          eventId: written.eventIds[0],
-        };
-        // After the commit and the response, so the visitor never waits for a handler.
-        locals.afterResponse((db) =>
-          dispatchEvent(db, handlersFor(event.locals.env), created.eventId, new Date(), locals.log),
-        );
-        return created;
+        return { slug: String(written.body.slug), draft: written.body.draft === true };
       },
       // A limited person is told before their image is stored. `createTable` checks again, under a lock.
       async (draft, data) => {

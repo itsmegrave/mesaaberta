@@ -98,22 +98,15 @@ describe('the send action', () => {
     expect(after).toHaveLength(0);
   });
 
-  it('once confirmed, sends it, delivers after the response and comes back to the page', async () => {
+  it('once confirmed, sends it (the api delivers it) and comes back to the page', async () => {
     vi.mocked(sendAnnouncement).mockResolvedValueOnce({ step: 'sent', count: 42, eventId: 'ev1' });
     const { event: e, after } = event({ ...valid, confirmed: 'true' });
 
     expect(await answer(e)).toEqual({ location: '/admin/notifications' });
     expect(vi.mocked(sendAnnouncement).mock.calls[0][2]).toMatchObject({ confirmed: true });
 
-    expect(after).toHaveLength(1);
-    await after[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith(
-      {},
-      expect.anything(),
-      'ev1',
-      expect.any(Date),
-      e.locals.log,
-    );
+    expect(after).toHaveLength(0);
+    expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('refuses a missing title or body, and a link that leaves the site, before sending', async () => {

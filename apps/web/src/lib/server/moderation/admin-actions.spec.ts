@@ -34,7 +34,7 @@ function approve(api?: (request: Request) => Promise<Response>) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('admin moderation actions', () => {
-  it('let the api decide and dispatch every event it answers with', async () => {
+  it('let the api decide, and leave the events it answers with to it', async () => {
     const api = vi.fn(async (_request: Request) => Response.json({ eventIds: ['e1', 'e2'] }));
     const { event, tasks } = approve(api);
 
@@ -44,8 +44,8 @@ describe('admin moderation actions', () => {
     expect(new URL(request.url).pathname).toBe('/v1/admin/moderation/partner.approve');
     expect(request.headers.get('x-actor-id')).toBe(admin.id);
     expect(await request.json()).toMatchObject({ id: partner });
-    await tasks[0]({});
-    expect(vi.mocked(dispatchEvent).mock.calls.map((call) => call[2])).toEqual(['e1', 'e2']);
+    expect(tasks).toHaveLength(0);
+    expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
   it("show the api's refusal on the form and never decide a second time", async () => {

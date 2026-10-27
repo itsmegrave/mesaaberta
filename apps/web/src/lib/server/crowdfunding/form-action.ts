@@ -6,8 +6,6 @@ import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
 import { serverStorage } from '@mesaaberta/core/server/storage';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
@@ -94,15 +92,10 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
 
     const { image: _image, ...input } = form.data;
     if (!actor) throw new Forbidden();
-    const written = await writeViaApi(locals, actor, '/v1/submissions/crowdfundings', {
+    await writeViaApi(locals, actor, '/v1/submissions/crowdfundings', {
       input,
       imagePath,
     });
-    const eventId = written.eventIds[0];
-    // After the commit and the response, so the visitor never waits for a handler.
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
-    );
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
     if (error instanceof Forbidden)

@@ -49,7 +49,8 @@ describe('handleSuspended', () => {
     await run();
 
     expect(vi.mocked(readFromApi).mock.lastCall?.slice(1)).toEqual(['u', '/v1/me/ban-check', {}]);
-    expect(afterResponse).toHaveBeenCalledOnce();
+    // The api delivers the lift's events itself.
+    expect(afterResponse).not.toHaveBeenCalled();
     expect(profile).toMatchObject({ status: 'active', bannedUntil: null });
     expect(resolve).toHaveBeenCalled();
     expect(signOut).not.toHaveBeenCalled();

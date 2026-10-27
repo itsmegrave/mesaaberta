@@ -79,12 +79,12 @@ describe('runRegistrationAction', () => {
     },
   );
 
-  it('queues each event the api wrote for dispatch after the response', async () => {
+  it('leaves the events the api wrote to the api', async () => {
     const { event, queued } = setup({ answer: () => json(200, { eventIds: ['e1', 'e2'] }) });
 
     await runRegistrationAction(event(), tableActionSchema, { api: call }).catch(() => {});
 
-    expect(queued).toHaveLength(2);
+    expect(queued).toHaveLength(0);
   });
 
   it('sends an anonymous visitor to log in, and calls nothing', async () => {

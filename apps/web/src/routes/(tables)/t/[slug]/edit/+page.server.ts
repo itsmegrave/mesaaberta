@@ -7,8 +7,6 @@ import { writeViaApi } from '#lib/server/api-write.js';
 import { timezoneOf } from '#lib/server/time.js';
 import { Forbidden, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { directoryEnabled } from '#lib/server/directories/flags.js';
 import { readPlaceOptions, readTableForEdit } from '#lib/server/tables/api.js';
@@ -63,16 +61,7 @@ export const actions: Actions = {
       event,
       async (input, imagePath) => {
         const path = `/v1/table-writes/${encodeURIComponent(params.slug)}/update`;
-        const { eventIds } = await writeViaApi(locals, user, path, {
-          input,
-          imagePath: imagePath ?? null,
-        });
-        // Nothing players see changed: no invite, no notification.
-        for (const eventId of eventIds) {
-          locals.afterResponse((db) =>
-            dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
-          );
-        }
+        await writeViaApi(locals, user, path, { input, imagePath: imagePath ?? null });
         return { slug: params.slug };
       },
       undefined,
@@ -86,16 +75,12 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
 
     try {
-      const { eventIds } = await writeViaApi(
+      await writeViaApi(
         locals,
         user,
         `/v1/table-writes/${encodeURIComponent(params.slug)}/disable`,
         {},
       );
-      for (const eventId of eventIds)
-        locals.afterResponse((db) =>
-          dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
-        );
     } catch (e) {
       if (e instanceof Forbidden) error(403, 'Forbidden');
       if (e instanceof NotFound) error(404, 'Not found');

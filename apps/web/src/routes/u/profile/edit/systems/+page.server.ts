@@ -4,8 +4,6 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { signedInHomeEnabled } from '#lib/server/profile/signed-in-home.js';
 import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { readFavoriteSystems } from '@mesaaberta/core/server/profile/favorite-systems';
 import type { listSystems } from '@mesaaberta/core/server/systems';
 import { readFromApi } from '#lib/server/api-read.js';
@@ -49,16 +47,7 @@ export const actions: Actions = {
     if (!form.valid) return fail(400, { form });
 
     try {
-      const { eventIds } = await writeViaApi(
-        event.locals,
-        profile,
-        '/v1/me/favorite-systems',
-        form.data,
-      );
-      for (const id of eventIds)
-        event.locals.afterResponse((tx) =>
-          dispatchEvent(tx, handlersFor(event.locals.env), id, new Date(), event.locals.log),
-        );
+      await writeViaApi(event.locals, profile, '/v1/me/favorite-systems', form.data);
     } catch (cause) {
       if (!(cause instanceof Invalid)) throw cause;
       return fail(400, { form: { ...form, valid: false, errors: { systems: [cause.message] } } });

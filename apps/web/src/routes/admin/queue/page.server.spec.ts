@@ -68,7 +68,7 @@ describe('the queue actions', () => {
     expect(approveEntry).not.toHaveBeenCalled();
   });
 
-  it('approve, and dispatch the event after the response', async () => {
+  it('approve, and leave the event to the api', async () => {
     const { event: e, after } = event({ kind: 'tag', id: entry });
 
     const result = await run('approve', e);
@@ -80,15 +80,8 @@ describe('the queue actions', () => {
       'tag',
       entry,
     );
-    expect(after).toHaveLength(1);
-    await after[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith(
-      {},
-      expect.anything(),
-      'event-1',
-      expect.any(Date),
-      e.locals.log,
-    );
+    expect(after).toHaveLength(0);
+    expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('refuse an id that is not an id, and a kind that is not a catalog', async () => {

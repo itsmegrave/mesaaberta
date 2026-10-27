@@ -33,7 +33,7 @@ function approve({ api }: { api?: (request: Request) => Promise<Response> }) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('catalog actions', () => {
-  it('lets the api decide and dispatches the event it answers with', async () => {
+  it('lets the api decide, and leaves the event to it', async () => {
     const api = vi.fn(async (_request: Request) => Response.json({ eventId: 'event-from-api' }));
     const { event, tasks } = approve({ api });
 
@@ -43,14 +43,8 @@ describe('catalog actions', () => {
     expect(new URL(request.url).pathname).toBe('/v1/admin/catalog/approve');
     expect(request.headers.get('x-actor-id')).toBe(admin.id);
     expect(await request.json()).toMatchObject({ kind: 'platform', id: entry });
-    await tasks[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith(
-      {},
-      [],
-      'event-from-api',
-      expect.any(Date),
-      expect.anything(),
-    );
+    expect(tasks).toHaveLength(0);
+    expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
   it("shows the api's refusal on the form and does not decide a second time", async () => {

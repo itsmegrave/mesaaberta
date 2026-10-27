@@ -6,8 +6,6 @@ import { requireUser } from '../auth/guard';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Forbidden, RateLimited } from '@mesaaberta/core/server/errors';
 import { failFrom } from '../fail-from';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import type { RegistrationActionName } from '@mesaaberta/core/server/registrations/decisions';
 import { writeViaApi } from '../api-write';
 
@@ -20,8 +18,8 @@ type Event = {
 
 /**
  * What every join, leave, approve, decline and remove action shares: an anonymous visitor goes to
- * log in, and one without a username yet to finish the profile; the operation runs as the signed-in player; the events it wrote are dispatched after the
- * response; then the browser goes back to the page. A domain error (a full table, a refused
+ * log in, and one without a username yet to finish the profile; the operation runs as the signed-in player (the api delivers the events it
+ * wrote); then the browser goes back to the page. A domain error (a full table, a refused
  * permission) becomes a form failure the page can show; anything else is a bug and surfaces.
  */
 export async function runRegistrationAction<T extends Record<string, unknown>>(
@@ -59,16 +57,12 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
     const data = form.data as T;
     if (how.allow === false) throw new Forbidden();
     const call = how.api(data);
-    const { eventIds } = await writeViaApi(
+    await writeViaApi(
       locals,
       user,
       `/v1/tables/${encodeURIComponent(call.slug)}/${call.action}`,
       call.body,
     );
-    for (const id of eventIds)
-      locals.afterResponse((db) =>
-        dispatchEvent(db, handlersFor(event.locals.env), id, new Date(), locals.log),
-      );
   } catch (e) {
     if (e instanceof RateLimited) {
       event.setHeaders?.({ 'Retry-After': String(e.retryAfterSeconds) });

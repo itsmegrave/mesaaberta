@@ -50,13 +50,13 @@ const post = (locals: App.Locals, form: Record<string, string>) =>
   });
 
 describe('the Seguir button', () => {
-  it('follows through the api and hands the event to dispatch', async () => {
+  it('follows through the api, which delivers the event', async () => {
     const locals = localsOf(ana);
     await post(locals, { profileId: gm, follow: 'true' });
     expect(await test.db.select().from(follows)).toMatchObject([
       { followerId: ana, followeeId: gm },
     ]);
-    expect(locals.afterResponse).toHaveBeenCalledOnce();
+    expect(locals.afterResponse).not.toHaveBeenCalled();
     expect(await followState(locals, gm)).toEqual({
       profileId: gm,
       signedIn: true,

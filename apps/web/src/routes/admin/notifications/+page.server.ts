@@ -6,8 +6,6 @@ import type { AnnouncementMessage } from '#lib/notifications/announcement-messag
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { callApiRaw } from '#lib/server/api-client.js';
 import type {
   audienceSizes,
@@ -69,18 +67,14 @@ export const actions: Actions = {
       } as AnnouncementMessage);
     }
 
-    // After the response, so a large audience never holds up the page; the sweeper retries it.
-    const { eventId } = result;
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(event.locals.env), eventId, new Date(), locals.log),
-    );
+    // The api delivers it after its answer, so a large audience never holds up the page.
     redirect(303, url.pathname);
   },
 };
 
 type SendOutcome =
   | { step: 'confirm'; count: number; recipient: { username: string } | null }
-  | { step: 'sent'; count: number; eventId: string };
+  | { step: 'sent'; count: number };
 
 /** The api's answer as the service's own result, a thrown `Invalid` for its refusals, or a 503. */
 async function viaApi(locals: App.Locals, adminId: string, data: unknown): Promise<SendOutcome> {
@@ -97,14 +91,8 @@ async function viaApi(locals: App.Locals, adminId: string, data: unknown): Promi
           ? { username: (body.recipient as { username: string }).username }
           : null,
     };
-  if (
-    answer.ok &&
-    body.step === 'sent' &&
-    Array.isArray(body.eventIds) &&
-    typeof body.eventIds[0] === 'string' &&
-    typeof body.count === 'number'
-  )
-    return { step: 'sent', count: body.count, eventId: body.eventIds[0] };
+  if (answer.ok && body.step === 'sent' && typeof body.count === 'number')
+    return { step: 'sent', count: body.count };
   if (answer.status === 400 && body.error === 'invalid' && typeof body.field === 'string')
     throw new Invalid(body.field, typeof body.message === 'string' ? body.message : 'invalid');
 

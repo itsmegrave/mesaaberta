@@ -1,8 +1,4 @@
 import type { Handle } from '@sveltejs/kit/hooks';
-import type { QueueBinding } from '@mesaaberta/events';
-import { registerFencing } from '@mesaaberta/core/server/events/fencing';
-import { registerShadowQueue } from '@mesaaberta/core/server/events/shadow-queue';
-import { registerLiveQueue } from '@mesaaberta/core/server/events/live-queue';
 import {
   connectionStringFrom,
   createDb,
@@ -16,7 +12,8 @@ import {
  * route reads it, and is closed after the response without holding it up.
  *
  * `locals.afterResponse(task)` queues work to run once the response is on its way, with the same
- * database, for things that must not slow the request (dispatching a domain event). The
+ * database, for things that must not slow the request (a product event). The api delivers domain
+ * events now, never this Worker. The
  * connection stays open until every task has finished. A failing task is logged, never thrown.
  */
 export const handleDatabase: Handle = async ({ event, resolve }) => {
@@ -34,23 +31,6 @@ export const handleDatabase: Handle = async ({ event, resolve }) => {
         connection = createDb(connectionString, {
           onQuery: (seconds) => (event.locals.dbSeconds = (event.locals.dbSeconds ?? 0) + seconds),
         });
-        // The flag is read when an event is dispatched, not here: `handleFlags` runs later.
-        registerFencing(
-          connection.db,
-          () => event.locals.fencedLeases?.() ?? Promise.resolve(false),
-        );
-        const queue = (env as { DOMAIN_EVENTS?: QueueBinding } | undefined)?.DOMAIN_EVENTS;
-        // No binding, no flag read: a deploy without the queue pays nothing for the canary.
-        if (queue) {
-          registerShadowQueue(connection.db, async () =>
-            (await event.locals.queueShadow?.()) ? queue : null,
-          );
-
-          registerLiveQueue(connection.db, async () => {
-            const handlers = (await event.locals.queueLive?.()) ?? [];
-            return handlers.length > 0 ? { queue, handlers } : null;
-          });
-        }
       }
       return connection.db;
     },
