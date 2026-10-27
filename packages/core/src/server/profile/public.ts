@@ -102,42 +102,39 @@ export async function publicProfile(
     .limit(1);
   if (!found) return null;
 
-  const [links, totals, rating, upcoming, reviews] = await Promise.all([
-    db
-      .select({
-        network: profileSocialLinks.network,
-        handle: profileSocialLinks.handle,
-        url: profileSocialLinks.url,
-      })
-      .from(profileSocialLinks)
-      .where(eq(profileSocialLinks.profileId, found.id))
-      .orderBy(asc(profileSocialLinks.position), asc(profileSocialLinks.id)),
-    tableCounts(db, found.id),
-    gmRatingOf(db, found.id),
-    listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
-    publicGmReviews(db, found.id),
-  ]);
-
-  // Null: the rollout has not reached this profile, so the page shows no strip at all.
   const isOwnerView = viewerId === found.id;
-  const badges = (await showBadges?.({ id: found.id, isAdmin: found.role === 'admin' }))
-    ? await heldBadges(db, found.id, { includeHidden: isOwnerView })
-    : null;
-
-  // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
-  const participantRating = (await showParticipantRating?.({
-    id: found.id,
-    isAdmin: found.role === 'admin',
-  }))
-    ? await participantRatingOf(db, found.id, now)
-    : null;
-
-  // Null: the rollout has not reached this profile, or its owner hid them. Pills under the bio.
-  const favoriteSystems =
-    found.showFavoriteSystems &&
-    (await showFavoriteSystems?.({ id: found.id, isAdmin: found.role === 'admin' }))
-      ? await readFavoriteSystems(db, found.id)
-      : null;
+  const target = { id: found.id, isAdmin: found.role === 'admin' };
+  // Everything below depends only on the profile row, so it all goes out at once: awaiting the
+  // flag-gated reads one after another made Sentry flag the page for consecutive DB queries.
+  const [links, totals, rating, upcoming, reviews, badges, participantRating, favoriteSystems] =
+    await Promise.all([
+      db
+        .select({
+          network: profileSocialLinks.network,
+          handle: profileSocialLinks.handle,
+          url: profileSocialLinks.url,
+        })
+        .from(profileSocialLinks)
+        .where(eq(profileSocialLinks.profileId, found.id))
+        .orderBy(asc(profileSocialLinks.position), asc(profileSocialLinks.id)),
+      tableCounts(db, found.id),
+      gmRatingOf(db, found.id),
+      listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
+      publicGmReviews(db, found.id),
+      // Null: the rollout has not reached this profile, so the page shows no strip at all.
+      (async () =>
+        (await showBadges?.(target))
+          ? heldBadges(db, found.id, { includeHidden: isOwnerView })
+          : null)(),
+      // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
+      (async () =>
+        (await showParticipantRating?.(target)) ? participantRatingOf(db, found.id, now) : null)(),
+      // Null: the rollout has not reached this profile, or its owner hid them. Pills under the bio.
+      (async () =>
+        found.showFavoriteSystems && (await showFavoriteSystems?.(target))
+          ? readFavoriteSystems(db, found.id)
+          : null)(),
+    ]);
 
   return {
     badges,
@@ -199,6 +196,6 @@ export async function publicProfile(
     pages: Math.max(1, Math.ceil(upcoming.total / PUBLIC_PROFILE_PAGE_SIZE)),
     total: upcoming.total,
     // This per-request action flag is never stored in a shared public Query cache.
-    isOwner: viewerId === found.id,
+    isOwner: isOwnerView,
   };
 }
