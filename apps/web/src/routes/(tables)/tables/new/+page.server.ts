@@ -13,20 +13,14 @@ import { timezoneOf } from '#lib/server/time.js';
 import { handleTableForm } from '#lib/server/tables/form-action.js';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
-import {
-  TABLE_CREATION_LIMIT,
-  TABLE_DRAFT_LIMIT,
-  checkRateLimit,
-} from '@mesaaberta/core/server/rate-limit';
 import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
 import { directoryEnabled } from '#lib/server/directories/flags.js';
-import { placeOptions } from '@mesaaberta/core/server/places/picker';
+import { checkLimitViaApi, readPlaceOptions } from '#lib/server/tables/api.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
   const { locals, url, cookies } = event;
   const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
   locals.track('gm_onboarding_started', user.id, {
     gm_user_id: user.id,
     onboarding_step: 'table_setup_start',
@@ -47,7 +41,9 @@ export const load: PageServerLoad = async (event) => {
   )?.slug;
   // "Abrir mesa aqui" on a place's page (`?place=<slug>`) picks that place, in person; only a
   // listed one, and only while the places are on.
-  const places = (await directoryEnabled(locals, 'places')) ? await placeOptions(locals.db) : null;
+  const places = (await directoryEnabled(locals, 'places'))
+    ? await readPlaceOptions(locals, user.id)
+    : null;
   const presetPlace = places?.find((place) => place.slug === url.searchParams.get('place'))?.slug;
   return {
     duplication: source
@@ -116,8 +112,6 @@ export const actions: Actions = {
     const { locals } = event;
     // Who is asking comes before whether we can serve them.
     await requireUser(locals, event.url);
-    if (!locals.db) error(503, 'Database not configured');
-    const db = locals.db;
     const sourceSlug = event.url.searchParams.get('duplicate');
     // Only the zone comes from the source. A retry can find it deleted or moderated: the api still
     // answers that replay with the copy that exists, and refuses anything else.
@@ -168,7 +162,7 @@ export const actions: Actions = {
         const actor = await locals.getProfile();
         // The API checks limits only for a new copy, after its idempotency lookup.
         if (actor && !sourceSlug)
-          await checkRateLimit(db, actor.id, draft ? TABLE_DRAFT_LIMIT : TABLE_CREATION_LIMIT);
+          await checkLimitViaApi(locals, actor.id, draft ? 'draft' : 'table');
       },
       // A draft goes to where its GM manages it, which says it is not public yet.
       (slug, draft) => (draft ? `/t/${slug}/manage` : `/t/${slug}`),

@@ -107,3 +107,12 @@ Pictures stay paths: the web Worker turns them into URLs.
 - `GET /v1/follows/:profileId` and `POST /v1/follows/:profileId` (`{ follow }`): whether the actor follows someone, and following (records `FollowStarted` the first time) or stopping.
 - `GET /v1/follows/gm/:slug`: the Seguir button on a table's GM row, for visitors too (`{ profileId, following }`; a table the viewer cannot see is a 404). The table read keeps the GM's id out.
 - `GET /v1/follows?page=N` ("Seguindo" and the follower count) and `POST /v1/follows/notices` (its bell switches).
+
+## Table forms
+
+The new-table and edit forms read no database in web either:
+
+- `GET /v1/reads/table-edit/:slug?tz=`: a table as its edit form shows it, times in the zone web resolved (403 for someone else's table, with `table_concluded` for a concluded one; 404 when it is not there).
+- `GET /v1/reads/place-options`: the "Onde jogar" picker's listed places.
+- `POST /v1/reads/table-location` (`{ input, placeSlug }`): where a table being saved happens; the picked place (web sends it only while the places are on) brings its CEP and area, otherwise the typed CEP is looked up. Answers the input to save, or the refusal on its field.
+- `GET /v1/me/limits/:name` (`table`, `draft`, `crowdfunding`, `place`, `placeClaim`): whether the actor is under a limit now (`{ ok: true }` or `rate_limited` with `retryAfter`), so a form can say so before it stores an image. The write checks again.

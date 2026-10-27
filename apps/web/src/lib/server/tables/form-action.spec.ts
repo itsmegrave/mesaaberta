@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
+import { apiOver } from '../db/test-api';
 import { Forbidden, Invalid, RateLimited, TableConcluded } from '@mesaaberta/core/server/errors';
 import { handleTableForm } from './form-action';
 import { createTable } from '@mesaaberta/core/server/tables/write';
@@ -52,7 +53,9 @@ const setup = (options: { user?: boolean; upload?: ReturnType<typeof vi.fn> } = 
   const locals = {
     getUser: async () => (options.user === false ? null : { id: ana.id }),
     getProfile: async () => (options.user === false ? null : ana),
-    db: test.db,
+    // The api Worker resolves where the table happens, over the test database.
+    env: apiOver(test.db),
+    log: { warn: vi.fn() },
   } as unknown as App.Locals;
   const save = vi.fn(async (input: TableInput, imagePath?: string) =>
     createTable(test.db, ana, input, { imagePath: imagePath ?? null }),

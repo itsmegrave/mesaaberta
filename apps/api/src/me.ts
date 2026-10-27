@@ -5,6 +5,14 @@ import { NOTIFICATION_CATEGORIES } from '@mesaaberta/core/notifications/kinds';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
 import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
+import {
+  CROWDFUNDING_LIMIT,
+  PLACE_CLAIM_LIMIT,
+  PLACE_LIMIT,
+  TABLE_CREATION_LIMIT,
+  TABLE_DRAFT_LIMIT,
+  checkRateLimit,
+} from '@mesaaberta/core/server/rate-limit';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb, connectionStringFrom } from '@mesaaberta/core/server/db/client';
 import { unreadConversations } from '@mesaaberta/core/server/messages/service';
@@ -19,6 +27,15 @@ import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
 type Open = typeof createDb;
+
+/** The limits a form tells a person about before it stores anything; the write checks again. */
+const LIMITS = {
+  table: TABLE_CREATION_LIMIT,
+  draft: TABLE_DRAFT_LIMIT,
+  crowdfunding: CROWDFUNDING_LIMIT,
+  place: PLACE_LIMIT,
+  placeClaim: PLACE_CLAIM_LIMIT,
+};
 
 /**
  * The signed-in person's own frame (Trello #120): their profile row, which the web Worker uses as
@@ -75,6 +92,20 @@ export function meRoutes(open: Open = openDb) {
       unreadConversations(db, actorId),
     ]);
     return c.json({ unread, messages });
+  });
+
+  // Whether the actor is under a limit now: `{ ok: true }`, or the refusal with when it frees.
+  app.get('/limits/:name', async (c) => {
+    const name = c.req.param('name');
+    if (!Object.hasOwn(LIMITS, name)) return c.json({ error: 'not_found' }, 404);
+    try {
+      await checkRateLimit(c.get('db'), c.get('actorId'), LIMITS[name as keyof typeof LIMITS]);
+      return c.json({ ok: true });
+    } catch (error) {
+      const refused = refusal(c, error);
+      if (refused) return refused;
+      throw error;
+    }
   });
 
   // A page of the feed (`?page=N`, `category`, `unread=1`) and the unread total over all of it. A
