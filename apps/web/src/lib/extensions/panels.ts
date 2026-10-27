@@ -1,5 +1,5 @@
 import type { Component } from 'svelte';
-import type { BadgePresentation } from '#lib/badges/presentation.js';
+import type { BadgePresentation } from './badge-types.js';
 import type { WidgetComponent } from './widget-types.js';
 
 /**
