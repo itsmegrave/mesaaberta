@@ -5,8 +5,8 @@ import { logger, type Logger } from '@mesaaberta/core/server/logger';
 export type ApiBinding = { fetch: (request: Request) => Promise<Response> };
 
 /**
- * The api path as a template, for logs: a table's slug and any id become `:param`, so telemetry
- * carries which route failed and never which table, partner or person it was about.
+ * The api path as a template, for logs: a table's slug, a username and any id become `:param`, so
+ * telemetry carries which route failed and never which table, partner or person it was about.
  */
 export function routeTemplate(path: string): string {
   const segments = path.split('?')[0].split('/');
@@ -17,6 +17,7 @@ export function routeTemplate(path: string): string {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) ||
         before === 'tables' ||
         before === 'manage' ||
+        before === 'profiles' ||
         (before === 'table-writes' && i < segments.length - 1);
       return dynamic ? ':param' : segment;
     })

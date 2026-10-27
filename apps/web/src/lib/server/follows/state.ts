@@ -1,7 +1,5 @@
 import { can } from '@mesaaberta/core/server/auth/policy';
-import { eq } from 'drizzle-orm';
-import { profiles } from '@mesaaberta/core/server/db/schema';
-import { followerCount, isFollowing } from '@mesaaberta/core/server/follows/service';
+import { isFollowing } from '@mesaaberta/core/server/follows/service';
 
 type Profile = Parameters<typeof can>[0] & { id: string };
 
@@ -28,31 +26,5 @@ export async function followState(
     profileId: targetId,
     signedIn: profile !== null,
     following: profile ? await isFollowing(locals.db, profile.id, targetId) : false,
-  };
-}
-
-/**
- * The follow part of a public profile: Seguir for anyone else, and for its owner how many follow
- * them (shown to nobody else). Both null where following is off.
- */
-export async function profileFollow(
-  locals: Pick<App.Locals, 'flags' | 'db' | 'getProfile'>,
-  username: string,
-  isOwner: boolean,
-) {
-  if (!locals.db) return { follow: null, followers: null };
-  const [target] = await locals.db
-    .select({ id: profiles.id })
-    .from(profiles)
-    .where(eq(profiles.username, username));
-  if (!target) return { follow: null, followers: null };
-  if (!isOwner) return { follow: await followState(locals, target.id), followers: null };
-  const viewer = await locals.getProfile();
-  return {
-    follow: null,
-    followers:
-      viewer && (await followsEnabled(locals, viewer))
-        ? await followerCount(locals.db, target.id)
-        : null,
   };
 }
