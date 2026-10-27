@@ -2,7 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Extension } from '@mesaaberta/core/server/extensions/index';
-import { extensionViaApi } from '#lib/server/admin/extension-api.js';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { GET as callback } from './callback/+server';
 import { POST as connect } from './connect/+server';
 import { GET as asset } from '../../[ext]/assets/[key]/+server';
@@ -29,11 +29,11 @@ const fake: Extension = {
   asset: found,
 };
 
-vi.mock('@mesaaberta/core/server/extensions/index', () => ({
+vi.mock('@mesaaberta/core/server/extensions/index', async (original) => ({
+  ...(await original<object>()),
   extensionById: (id: string) =>
     id === 'fake' ? fake : id === 'bare' ? { id: 'bare' } : undefined,
 }));
-vi.mock('#lib/server/admin/extension-api.js', () => ({ extensionViaApi: vi.fn(async () => null) }));
 
 const admin = { id: 'admin', role: 'admin', status: 'active', username: 'ana' };
 const cookies = () => {
@@ -66,11 +66,9 @@ const event = ({
   ({
     params: { ext, key },
     locals: {
-      db: {},
-      env,
+      env: { ...env, API: apiOver(actorsOnly([admin]), env as Record<string, string>).API },
       getProfile: async () => profile,
-      flags: { isEnabled: async () => false },
-      log: { warn: () => undefined },
+      log: { warn: () => undefined, info: () => undefined, error: () => undefined },
     },
     cookies: jar.cookies,
     url: new URL(`https://x.test/admin/${ext}/callback${search}`),
@@ -82,10 +80,7 @@ const outcome = (result: unknown) =>
     (thrown) => thrown as { status: number; location?: string; body?: { message: string } },
   );
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(extensionViaApi).mockResolvedValue(null);
-});
+beforeEach(() => vi.clearAllMocks());
 
 describe('connecting an extension', () => {
   it('is for admins, and only for an extension that connects', async () => {
@@ -151,7 +146,7 @@ describe('coming back from the extension', () => {
     expect(complete).not.toHaveBeenCalled();
   });
 
-  it('saves the account through the extension’s own action and reports it connected', async () => {
+  it('has the api Worker save the account through the extension’s own action, and reports it connected', async () => {
     const jar = cookies();
     jar.jar.set('fake_oauth_state', 's');
 
@@ -160,23 +155,14 @@ describe('coming back from the extension', () => {
       location: '/admin/fake?connected=1',
     });
 
-    expect(complete).toHaveBeenCalledWith({ KEY: 'x' }, 'the-code', expect.any(Function));
-    expect(apply).toHaveBeenCalledWith({}, { KEY: 'x' }, { token: 'sealed' });
-  });
-
-  it('leaves the saving to the api Worker when it took the call', async () => {
-    vi.mocked(extensionViaApi).mockResolvedValue({ eventIds: [], connected: true });
-    const jar = cookies();
-    jar.jar.set('fake_oauth_state', 's');
-
-    expect(await back('?state=s&code=c', jar)).toMatchObject({
-      location: '/admin/fake?connected=1',
-    });
-
-    expect(extensionViaApi).toHaveBeenCalledWith(expect.anything(), 'fake', 'admin', 'connect', {
+    expect(complete).toHaveBeenCalledWith(
+      expect.objectContaining({ KEY: 'x' }),
+      'the-code',
+      expect.any(Function),
+    );
+    expect(apply).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ KEY: 'x' }), {
       token: 'sealed',
     });
-    expect(apply).not.toHaveBeenCalled();
   });
 
   it('reports a failed handshake or an invalid account as a connection error, never logging it', async () => {
@@ -187,7 +173,9 @@ describe('coming back from the extension', () => {
       location: '/admin/fake?connection_error=1',
     });
 
-    vi.mocked(extensionViaApi).mockResolvedValue({ invalid: true });
+    complete.mockImplementationOnce(async (_env, _code, save) =>
+      save('connect', { token: 7 } as never),
+    );
     const second = cookies();
     second.jar.set('fake_oauth_state', 's');
     expect(await back('?state=s&code=c', second)).toMatchObject({
@@ -201,7 +189,7 @@ describe('an extension’s public asset', () => {
   it('is served without cookies, never cached, never indexed', async () => {
     const response = (await asset(event({ key: 'k' }) as never)) as Response;
 
-    expect(found).toHaveBeenCalledWith({}, 'k');
+    expect(found).toHaveBeenCalledWith(expect.anything(), 'k');
     expect(response.headers.get('content-type')).toBe('image/png');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('x-robots-tag')).toBe('noindex');
@@ -209,8 +197,12 @@ describe('an extension’s public asset', () => {
   });
 
   it('is a 404 for an unknown extension, one without assets, or a key with nothing behind it', async () => {
-    expect(await outcome(asset(event({ ext: 'ghost' }) as never))).toMatchObject({ status: 404 });
-    expect(await outcome(asset(event({ ext: 'bare' }) as never))).toMatchObject({ status: 404 });
+    expect(await outcome(asset(event({ ext: 'ghost', key: 'k' }) as never))).toMatchObject({
+      status: 404,
+    });
+    expect(await outcome(asset(event({ ext: 'bare', key: 'k' }) as never))).toMatchObject({
+      status: 404,
+    });
     found.mockResolvedValueOnce(null as never);
     expect(await outcome(asset(event({ key: 'gone' }) as never))).toMatchObject({ status: 404 });
   });

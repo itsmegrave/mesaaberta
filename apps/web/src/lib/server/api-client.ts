@@ -28,6 +28,47 @@ export function routeTemplate(path: string): string {
 export type ApiAnswer = { ok: boolean; status: number; body: unknown };
 
 /**
+ * Sends one request to the api Worker as `actorId`: over its Service Binding on Cloudflare, or to
+ * its private address with the shared secret self-hosted. Null when neither is configured; a
+ * network error throws.
+ */
+export async function sendToApi(
+  env: App.Locals['env'],
+  path: string,
+  actorId: string | null,
+  {
+    method = 'GET',
+    json,
+    headers = {},
+  }: { method?: 'GET' | 'POST' | 'DELETE'; json?: unknown; headers?: Record<string, string> } = {},
+): Promise<Response | null> {
+  const settings = env as
+    { API?: ApiBinding; API_URL?: string; API_INTERNAL_TOKEN?: string } | undefined;
+  const binding = settings?.API;
+  const remote = !binding && settings?.API_URL && settings.API_INTERNAL_TOKEN ? settings : null;
+  if (!binding && !remote) return null;
+  const requestId = currentRequestId();
+  // With a Service Binding the host is never resolved: it routes by binding, not by name.
+  const send = binding ? binding.fetch.bind(binding) : (request: Request) => fetch(request);
+  const origin = binding ? 'https://api.internal' : remote!.API_URL!.replace(/\/$/, '');
+  return send(
+    new Request(`${origin}${path}`, {
+      method,
+      headers: {
+        ...headers,
+        ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
+        ...(actorId ? { 'x-actor-id': actorId } : {}),
+        // The same request id on both sides, so the api's lines join the web request's.
+        ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
+        ...(json === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      ...(json === undefined ? {} : { body: JSON.stringify(json) }),
+      signal: AbortSignal.timeout(25_000),
+    }),
+  );
+}
+
+/**
  * Calls the api Worker over its Service Binding as `actorId` (the api checks that person is an
  * admin again). Resolves to null only when the call could not be made (no binding, a network error
  * or a body that is not JSON), so the caller can keep its own path; any answer, a refusal included,
@@ -42,32 +83,9 @@ export async function callApiRaw(
   headers: Record<string, string> = {},
   method: 'GET' | 'POST' | 'DELETE' = 'POST',
 ): Promise<ApiAnswer | null> {
-  const settings = env as
-    { API?: ApiBinding; API_URL?: string; API_INTERNAL_TOKEN?: string } | undefined;
-  // On Cloudflare the Service Binding; self-hosted, the api's private address and its shared secret.
-  const binding = settings?.API;
-  const remote = !binding && settings?.API_URL && settings.API_INTERNAL_TOKEN ? settings : null;
-  if (!binding && !remote) return null;
-  const requestId = currentRequestId();
   try {
-    // With a Service Binding the host is never resolved: it routes by binding, not by name.
-    const send = binding ? binding.fetch.bind(binding) : (request: Request) => fetch(request);
-    const origin = binding ? 'https://api.internal' : remote!.API_URL!.replace(/\/$/, '');
-    const response = await send(
-      new Request(`${origin}${path}`, {
-        method,
-        headers: {
-          ...headers,
-          ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
-          ...(actorId ? { 'x-actor-id': actorId } : {}),
-          // The same request id on both sides, so the api's lines join the web request's.
-          ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
-          ...(json === undefined ? {} : { 'content-type': 'application/json' }),
-        },
-        ...(json === undefined ? {} : { body: JSON.stringify(json) }),
-        signal: AbortSignal.timeout(25_000),
-      }),
-    );
+    const response = await sendToApi(env, path, actorId, { method, json, headers });
+    if (!response) return null;
     return { ok: response.ok, status: response.status, body: await response.json() };
   } catch (error) {
     log.warn('api call failed', { code: 'api_call_failed', route: routeTemplate(path), error });

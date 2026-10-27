@@ -189,3 +189,13 @@ The extension panels (`/admin/[ext]`) still run in web until the api can read th
 - `GET /v1/location/cep?value=`: the address behind a CEP for the signed-in person (60 lookups a minute each, `rate_limited` with `retryAfter` past that; a provider outage is a 503).
 - `POST /v1/me/ban-check`: for a suspended account whose ban has an end that has passed. The api lifts it and answers `{ banned, eventIds }`. Web skips the call while the ban is still running or has no end.
 - `GET /healthz?deep=1`: the build plus `database` and `worker` (the background Worker's last sweep). The web `/healthz` asks this behind its token, because the api is the one app that opens the database. When the api can't be asked, the database reads `unknown` and the probe still answers 200.
+
+## Widgets and extension pages
+
+The api reads GrowthBook itself (`flags.ts`: the same settings as web, the installed extensions' own flags, the payload kept for a minute in the isolate).
+
+- `GET /v1/widgets?route=`: the widgets the actor may see on that page. Web still decides which pages show widgets at all (`showsWidgets`).
+- `GET /v1/widgets/:ext/:id`: a widget's public page, for anyone. `POST /v1/widgets/:ext/:id` (`{ fields }`): an answer from its form, which comes back as `{ widget }`, `invalid` or 404.
+- `GET /v1/widgets/assets/:ext/:key`: a public asset as raw bytes (Meta fetches it without cookies).
+- `GET /v1/admin/:ext/panel`: an extension's panel data. Its hand actions and the OAuth save always go through `POST /v1/admin/:ext/:action`, with no web fallback, so the `api_admin_<ext>` flag no longer decides anything.
+- `POST /v1/admin/social/publish` (`{ tableId }`): after `queue` answers `queued`, renders and publishes after the answer (202), on a connection of its own, reading `use_table_image`.

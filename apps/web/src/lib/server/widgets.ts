@@ -1,13 +1,18 @@
-import { viewerSegments } from '@mesaaberta/core/server/audience/segments';
-import type { WidgetViewer } from '@mesaaberta/core/server/extensions/contract';
+import type { WidgetPayload } from '@mesaaberta/core/server/extensions/contract';
+import { readFromApi } from './api-read';
+
+/** A widget as the api answers it, with the extension that drew it. */
+export type ExtensionWidget = { ext: string; widget: WidgetPayload };
 
 /**
- * The signed-in person as a widget sees them, or null when nothing should be aimed at them (signed
- * out, suspended, still onboarding, or no database). Widgets are never for signed-out visitors.
+ * The widgets the signed-in person may see on the page with this route id, read by the api (which
+ * aims them: never at a suspended account or one still onboarding).
  */
-export async function widgetViewer(locals: App.Locals): Promise<WidgetViewer | null> {
-  const profile = await locals.getProfile();
-  if (!profile || !locals.db) return null;
-  const segments = await viewerSegments(locals.db, profile.id);
-  return segments && { id: profile.id, segments };
+export async function widgetsFor(locals: App.Locals, actorId: string, routeId: string) {
+  const { widgets } = await readFromApi<{ widgets: ExtensionWidget[] }>(
+    locals,
+    actorId,
+    `/v1/widgets?route=${encodeURIComponent(routeId)}`,
+  );
+  return widgets;
 }

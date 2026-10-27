@@ -1,7 +1,8 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Extension, WidgetAnswer } from '@mesaaberta/core/server/extensions/index';
-import { widgetViewer } from '#lib/server/widgets.js';
+import { viewerSegments } from '@mesaaberta/core/server/audience/segments';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
 const results = { id: 'p1', kind: 'poll', data: { total: 12 } };
@@ -14,33 +15,39 @@ const fake: Extension = {
   widgets: { forViewer: async () => [], respond, page },
 };
 
-vi.mock('@mesaaberta/core/server/extensions/index', () => ({
+vi.mock('@mesaaberta/core/server/extensions/index', async (original) => ({
+  ...(await original<object>()),
   extensionById: (id: string) =>
     id === 'fake' ? fake : id === 'bare' ? { id: 'bare' } : undefined,
 }));
 vi.mock('#lib/extensions/panels.js', () => ({
   widgets: { poll: async () => ({ default: () => null }) },
 }));
-vi.mock('#lib/server/widgets.js', () => ({ widgetViewer: vi.fn() }));
+vi.mock('@mesaaberta/core/server/audience/segments', () => ({ viewerSegments: vi.fn() }));
 
 const viewer = {
   id: 'ana',
   segments: { admin: false, gm: false, player: true, recent: true, new: false },
 };
-const flags = { isEnabled: async () => true };
 
+const ana = { id: 'ana', role: 'member', status: 'active' };
 const event = ({
   ext = 'fake',
   id = 'p1',
   fields = [] as [string, string][],
   enhanced = true,
+  profile = ana as typeof ana | null,
 } = {}) => {
   const body = new FormData();
   for (const [key, value] of fields) body.append(key, value);
   const url = new URL(`https://x.test/${ext}/w/${id}`);
   return {
     params: { ext, id },
-    locals: { db: {}, flags },
+    locals: {
+      getProfile: async () => profile,
+      env: apiOver(actorsOnly([ana])),
+      log: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
+    },
     url,
     request: new Request(url, {
       method: 'POST',
@@ -62,13 +69,13 @@ const answer = (e: ReturnType<typeof event>) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(widgetViewer).mockResolvedValue(viewer);
+  vi.mocked(viewerSegments).mockResolvedValue(viewer.segments);
 });
 
 describe('a widget’s own page', () => {
   it('shows what the extension makes public, for anyone', async () => {
     expect(await run(load, event())).toEqual({ ext: 'fake', widget: results });
-    expect(page).toHaveBeenCalledWith({}, 'p1', flags);
+    expect(page).toHaveBeenCalledWith(expect.anything(), 'p1', expect.anything());
   });
 
   it('is a 404 without a public page, an extension with widgets, or a component for its kind', async () => {
@@ -89,7 +96,13 @@ describe('answering a widget', () => {
         ],
       }),
     );
-    expect(respond).toHaveBeenCalledWith({}, viewer, 'p1', { option: 'o2' }, flags);
+    expect(respond).toHaveBeenCalledWith(
+      expect.anything(),
+      viewer,
+      'p1',
+      { option: 'o2' },
+      expect.anything(),
+    );
     expect(result).toEqual({ widget: { ...results, data: { voted: true } } });
   });
 
@@ -106,8 +119,7 @@ describe('answering a widget', () => {
   });
 
   it('refuses signed-out people, unknown widgets and invalid answers', async () => {
-    vi.mocked(widgetViewer).mockResolvedValueOnce(null);
-    expect(await thrown(answer(event()))).toMatchObject({ status: 401 });
+    expect(await thrown(answer(event({ profile: null })))).toMatchObject({ status: 401 });
     expect(respond).not.toHaveBeenCalled();
 
     respond.mockResolvedValueOnce(null);

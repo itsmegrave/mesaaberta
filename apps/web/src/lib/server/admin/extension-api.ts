@@ -1,44 +1,28 @@
-import { extensionById } from '@mesaaberta/core/server/extensions/index';
-import { callApiRaw } from '../api-client';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { requireApi } from '../api-required';
 
 /**
- * Asks the api Worker for one of an extension's admin hand actions when `api_admin_<id>` is on for
- * the admin: its answer, or null when the extension has no such flag, the flag is off or the call
- * cannot be made (the caller then runs the same action here). A refusal the api made is
- * `{ invalid: true }`.
+ * Runs one of an extension's admin hand actions in the api Worker, as this admin: its answer
+ * (without `eventIds`), or `{ invalid: true }` for data the action's schema refuses. A 404 for an
+ * extension or action nobody installed, a 503 when the api cannot answer.
  */
-export async function extensionViaApi(
+export async function extensionAction(
   locals: App.Locals,
   extensionId: string,
   adminId: string,
   action: string,
   data: Record<string, string>,
-): Promise<{ invalid: true } | Record<string, unknown> | null> {
-  const flag = `api_admin_${extensionId}`;
-  if (
-    extensionById(extensionId)?.flags?.[flag] === undefined ||
-    !(await locals.flags.isEnabled(flag, { id: adminId, isAdmin: true }))
-  )
-    return null;
-
-  const answer = await callApiRaw(
-    locals.env,
-    `/v1/admin/${extensionId}/${action}`,
-    adminId,
-    locals.log,
-    data,
-  );
-  if (!answer) return null;
-
-  const body = (answer.body ?? {}) as Record<string, unknown>;
-  if (answer.ok && Array.isArray(body.eventIds)) return body;
-  if (answer.status === 400 && body.error === 'invalid') return { invalid: true };
-
-  locals.log.warn('api extension action not used', {
-    code: 'api_call_refused',
-    extension: extensionId,
-    status: answer.status,
-    reason: typeof body.error === 'string' ? body.error : undefined,
-  });
-  return null;
+): Promise<{ invalid: true } | Record<string, unknown>> {
+  try {
+    const { eventIds: _eventIds, ...answer } = await requireApi<Record<string, unknown>>(
+      locals,
+      { id: adminId },
+      `/v1/admin/${encodeURIComponent(extensionId)}/${encodeURIComponent(action)}`,
+      { method: 'POST', body: data },
+    );
+    return answer;
+  } catch (cause) {
+    if (cause instanceof Invalid) return { invalid: true };
+    throw cause;
+  }
 }

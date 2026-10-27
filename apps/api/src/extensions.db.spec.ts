@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import type { Extension } from '@mesaaberta/core/server/extensions/index';
 import { profiles } from '@mesaaberta/db/schema';
@@ -22,6 +22,12 @@ const fake: Extension = {
   },
 };
 const plain: Extension = { id: 'plain' };
+const publishTable = vi.fn(async () => 'published' as const);
+const withPanel: Extension = {
+  id: 'panelled',
+  admin: { count: async () => 0, load: async (_db, env) => ({ hasKey: 'KEY' in (env as object) }) },
+  social: { name: 'panelled', publishTable } as unknown as NonNullable<Extension['social']>,
+};
 
 beforeAll(async () => {
   test = await createTestDb();
@@ -74,5 +80,41 @@ describe('api extension routes over a database', () => {
 
   it('answers 404 for everything in the public build, which installs nothing', async () => {
     expect((await post('queue', { tableId: 'x' }, admin, 'instagram', [])).status).toBe(404);
+  });
+
+  it('answers an extension’s panel for an admin only', async () => {
+    const get = (actor: string) =>
+      app([withPanel]).request(
+        '/panelled/panel',
+        { headers: { [ACTOR_HEADER]: actor } },
+        { ...env, KEY: 'x' },
+      );
+    expect(await (await get(admin)).json()).toEqual({ panel: { hasKey: true } });
+    expect((await get(member)).status).toBe(403);
+  });
+
+  it('publishes a queued table after its answer, with the installed connector', async () => {
+    const send = (tableId: string) =>
+      app([withPanel]).request(
+        '/social/publish',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', [ACTOR_HEADER]: admin },
+          body: JSON.stringify({ tableId }),
+        },
+        env,
+      );
+    expect((await send('nope')).status).toBe(400);
+    const tableId = '00000000-0000-4000-8000-000000000cb1';
+    expect((await send(tableId)).status).toBe(202);
+    await vi.waitFor(() =>
+      expect(publishTable).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        tableId,
+        expect.any(Date),
+        { useTableImage: false },
+      ),
+    );
   });
 });
