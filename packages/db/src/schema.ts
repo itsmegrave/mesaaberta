@@ -596,6 +596,7 @@ export const ratings = pgTable(
     check('ratings_gm_score_range', sql`${rating.gmScore} BETWEEN 1 AND 5`),
     check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
     index('ratings_table_idx').on(rating.tableId),
+    index('ratings_player_idx').on(rating.playerId),
   ],
 ).enableRLS();
 
@@ -746,6 +747,7 @@ export const notifications = pgTable(
       notification.recipientId,
     ),
     index('notifications_recipient_feed_idx').on(notification.recipientId, notification.createdAt),
+    index('notifications_actor_idx').on(notification.actorId),
     // The badge: a person's unread count.
     index('notifications_recipient_unread_idx')
       .on(notification.recipientId, notification.createdAt)
@@ -784,6 +786,7 @@ export const userBadges = pgTable(
     primaryKey({ columns: [badge.profileId, badge.badgeId] }),
     // Who holds a badge, for the admin catalog's counts.
     index('user_badges_badge_idx').on(badge.badgeId),
+    index('user_badges_granted_by_idx').on(badge.grantedBy),
     check('user_badges_badge_id_format', sql`${badge.badgeId} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // A reason only comes with a revocation. Mirrors the reason limit of a report's resolution note.
     check(
@@ -866,6 +869,7 @@ export const messages = pgTable(
   (message) => [
     index('messages_conversation_created_idx').on(message.conversationId, message.createdAt.desc()),
     index('messages_sender_idx').on(message.senderId),
+    index('messages_table_idx').on(message.tableId),
     // Mirrors MESSAGE_MAX_LENGTH in apps/web/src/lib/messages/schema.
     check('messages_body_length', sql`char_length(${message.body}) BETWEEN 1 AND 2000`),
   ],
@@ -956,6 +960,8 @@ export const reports = pgTable(
       .where(sql`${report.status} IN ('open', 'reviewing')`),
     // The admin queue, filtered by status, newest first.
     index('reports_status_created_idx').on(report.status, report.createdAt),
+    index('reports_subject_idx').on(report.subjectId),
+    index('reports_table_idx').on(report.tableId),
     // Mirror REPORT_DETAILS_MAX and RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('reports_details_length', sql`char_length(${report.details}) <= 1000`),
     check('reports_resolution_note_length', sql`char_length(${report.resolutionNote}) <= 1000`),
@@ -1287,6 +1293,7 @@ export const placeClaims = pgTable(
       .on(claim.placeId, claim.claimantId)
       .where(sql`${claim.status} = 'pending'`),
     index('place_claims_status_idx').on(claim.status, claim.createdAt),
+    index('place_claims_claimant_idx').on(claim.claimantId),
     check('place_claims_contact_length', sql`char_length(${claim.contact}) BETWEEN 3 AND 120`),
     check('place_claims_note_length', sql`char_length(${claim.note}) <= 500`),
     check('place_claims_decision_note_length', sql`char_length(${claim.decisionNote}) <= 1000`),
@@ -1405,6 +1412,7 @@ export const gmInviteBlocks = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.playerId, t.gmId] }),
+    index('gm_invite_blocks_gm_idx').on(t.gmId),
     check('gm_invite_blocks_not_self', sql`${t.playerId} <> ${t.gmId}`),
   ],
 ).enableRLS();
@@ -1459,6 +1467,7 @@ export const partnerInvitations = pgTable(
       .where(sql`${t.status} = 'pending'`),
     index('partner_invitations_partner_idx').on(t.partnerId, t.status),
     index('partner_invitations_invitee_idx').on(t.inviteeId, t.status),
+    index('partner_invitations_inviter_idx').on(t.inviterId),
     check('partner_invitations_not_self', sql`${t.inviterId} <> ${t.inviteeId}`),
     check('partner_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
   ],
@@ -1577,6 +1586,7 @@ export const pollVotes = pgTable(
   (vote) => [
     primaryKey({ columns: [vote.pollId, vote.profileId, vote.optionId] }),
     index('poll_votes_option_idx').on(vote.pollId, vote.optionId),
+    index('poll_votes_profile_idx').on(vote.profileId),
   ],
 ).enableRLS();
 
@@ -1593,5 +1603,8 @@ export const widgetDismissals = pgTable(
     dismissedAt: timestamp('dismissed_at', { withTimezone: true }).notNull().defaultNow(),
     times: smallint('times').notNull().default(1),
   },
-  (dismissal) => [primaryKey({ columns: [dismissal.widgetId, dismissal.profileId] })],
+  (dismissal) => [
+    primaryKey({ columns: [dismissal.widgetId, dismissal.profileId] }),
+    index('widget_dismissals_profile_idx').on(dismissal.profileId),
+  ],
 ).enableRLS();

@@ -491,6 +491,13 @@
       "when": 1793032437871,
       "tag": "0069_place_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1793102411281,
+      "tag": "0070_fk_indexes",
+      "breakpoints": true
     }
   ]
 }
