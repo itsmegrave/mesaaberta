@@ -12,7 +12,7 @@
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
   const readonly =
-    'input h-13 w-full rounded-lg border-control border-ink-muted bg-surface-950-50/5 px-3 text-muted';
+    'input h-11 w-full rounded-lg border-control border-ink-muted bg-surface-950-50/5 px-3 text-muted';
 </script>
 
 <SettingsSection title={m.profile_section_account()} lede={m.profile_section_account_lede()} />

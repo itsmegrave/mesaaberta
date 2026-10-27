@@ -17,7 +17,7 @@
 </script>
 
 <span
-  class="inline-flex max-w-full items-center gap-1.5 text-sm whitespace-nowrap {tone} {className}"
+  class="inline-flex max-w-full items-center gap-2 text-sm whitespace-nowrap {tone} {className}"
 >
   <Icon name="instagram" size={16} class="shrink-0" />
   {instagramStatus(status)}

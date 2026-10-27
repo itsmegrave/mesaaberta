@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { HTMLInputAttributes } from 'svelte/elements';
   let {
-    class: className = 'input h-13 w-full rounded-lg border-control border-ink-muted px-3',
+    class: className = 'input h-11 w-full rounded-lg border-control border-ink-muted px-3',
     value = $bindable(''),
     element = $bindable(),
     ...attributes

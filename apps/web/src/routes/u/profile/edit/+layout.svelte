@@ -14,7 +14,7 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs
     class="mb-8"
     items={[
@@ -22,7 +22,7 @@
       { label: m.nav_edit_profile() },
     ]}
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+  <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {m.account_profile_title()}
   </h1>
   <p class="mt-2 max-w-md text-base text-muted md:mt-3 md:max-w-xl md:text-xl">

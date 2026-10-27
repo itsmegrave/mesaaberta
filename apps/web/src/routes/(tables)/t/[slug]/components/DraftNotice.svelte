@@ -41,7 +41,7 @@
 
 <section
   aria-labelledby="draft-notice"
-  class="mt-8 rounded-lg border-2 border-primary-500 bg-panel p-5 md:p-6"
+  class="mt-8 rounded-lg border-2 border-primary-500 bg-panel p-4 md:p-5"
 >
   <h2 id="draft-notice" class="text-xl font-semibold">{m.draft_title()}</h2>
   {#if waiting?.status === 'pending'}

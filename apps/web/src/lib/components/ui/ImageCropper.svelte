@@ -232,7 +232,7 @@
       <MAButton
         size="custom"
         type="button"
-        class="ml-auto btn h-12 rounded-lg btn-secondary px-4 font-semibold"
+        class="ml-auto btn h-11 rounded-lg btn-secondary px-4 font-semibold"
         onclick={onreplace}>{m.upload_replace()}</MAButton
       >
     {/if}

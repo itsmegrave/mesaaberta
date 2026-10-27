@@ -11,12 +11,12 @@
   // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
   let {
     site,
-    directories = { systems: false, gms: false },
+    directories = { systems: false, gms: false, places: false },
     blogLive = false,
   }: {
     site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string };
     /** Which directories are on for the person: each one's link shows only then. */
-    directories?: { systems: boolean; gms: boolean };
+    directories?: { systems: boolean; gms: boolean; places: boolean };
     /** Whether a blog post is out: the Blog link shows only then. */
     blogLive?: boolean;
   } = $props();
@@ -43,6 +43,16 @@
             path: '/systems',
             items: '/s',
             label: m.directory_footer_systems,
+          } as const,
+        ]
+      : []),
+    ...(directories.places
+      ? [
+          {
+            route: '/(places)/places',
+            path: '/places',
+            items: '/pp',
+            label: m.directory_footer_places,
           } as const,
         ]
       : []),

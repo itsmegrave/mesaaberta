@@ -117,7 +117,7 @@
   <title>{m.crowdfunding_new_title()}</title>
 </svelte:head>
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs
     class="mb-8"
     items={[
@@ -125,7 +125,7 @@
       { label: m.crowdfunding_new_title() },
     ]}
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+  <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {m.crowdfunding_new_title()}
   </h1>
   <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
@@ -151,7 +151,7 @@
             maxlength={CROWDFUNDING_LIMITS.url}
             bind:value={$draft.url}
             onchange={readLink}
-            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -171,7 +171,7 @@
             maxlength={CROWDFUNDING_LIMITS.name}
             bind:value={$draft.name}
             oninput={() => (named = false)}
-            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
           <p role="status" class="mt-1 text-sm text-muted">
@@ -193,7 +193,7 @@
             required
             maxlength={CROWDFUNDING_LIMITS.owner}
             bind:value={$draft.owner}
-            class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 rounded-lg border-control border-ink-muted bg-panel px-3"
             {...aria}
           />
         {/snippet}
@@ -246,7 +246,7 @@
         type="submit"
         size="custom"
         {controller}
-        class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+        class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
         >{m.crowdfunding_form_submit()}</MAButton
       >
     {/snippet}

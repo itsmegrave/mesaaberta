@@ -12,6 +12,12 @@
       },
       {
         "kind": "new",
+        "title": "Quem mestra",
+        "description": "Conheça quem conduz as mesas da comunidade: a nota da mestragem, os sistemas que mestra e as mesas abertas agora. Dá para filtrar por sistema, modalidade e mesas abertas.",
+        "href": "/gamemasters"
+      },
+      {
+        "kind": "new",
         "title": "Um Início para quem entrou",
         "description": "Com a conta aberta, o Início mostra o que espera por você, suas próximas sessões, sua conta e mesas de quem você segue e dos seus sistemas favoritos.",
         "href": "/"
@@ -213,6 +219,16 @@
         "kind": "new",
         "title": "Presença confiável",
         "description": "Uma conquista nova no perfil para quem joga 10 mesas sem falta confirmada nem remoção nos últimos 6 meses. A página da mesa mostra a conquista de mestragem mais forte ao lado de quem mestra."
+      },
+      {
+        "kind": "improved",
+        "title": "Telas mais compactas",
+        "description": "Botões, campos, títulos, etiquetas e cartões ficaram menores e mais próximos, no celular e no computador. Dá para ver mais de cada página com menos rolagem."
+      },
+      {
+        "kind": "improved",
+        "title": "Início mais curto",
+        "description": "Suas próximas sessões, Sua conta e De quem você segue se recolhem e mostram um resumo quando não há nada para fazer agora. Toque no título para abrir."
       }
     ]
   },

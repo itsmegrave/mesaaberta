@@ -3,12 +3,14 @@ import {
   partnerIdSchema,
   reportCrowdfundingSchema,
   reportPartnerSchema,
+  reportPlaceSchema,
   reportSchema,
 } from '../../moderation/reports';
 import type { Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
 import { fileCrowdfundingReport } from '../crowdfunding/service';
 import { filePartnerReport, withdrawPartner } from '../partners/service';
+import { filePlaceReport } from '../places/service';
 import { fileReport } from './reports';
 
 /**
@@ -38,6 +40,15 @@ export const playerModerationActions = {
       actor: Actor | null,
       { id, reason, details }: z.output<typeof reportPartnerSchema>,
     ) => [(await filePartnerReport(db, actor, id, { reason, details })).eventId],
+  },
+  /** "Denunciar lugar" on a place's page. Enough of them hide it until an admin acts. */
+  place: {
+    schema: reportPlaceSchema,
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      { id, reason, details }: z.output<typeof reportPlaceSchema>,
+    ) => filePlaceReport(db, actor, id, { reason, details }),
   },
   crowdfunding: {
     schema: reportCrowdfundingSchema,

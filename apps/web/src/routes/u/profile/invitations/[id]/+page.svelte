@@ -36,7 +36,7 @@
     content="noindex"
   /></svelte:head
 >
-<section class="mx-auto max-w-2xl py-8 md:py-12">
+<section class="mx-auto max-w-2xl py-8 md:py-8">
   <Breadcrumbs
     items={[{ label: m.nav_my_tables(), href: '/u/tables' }, { label: m.invitation_crumb() }]}
   />

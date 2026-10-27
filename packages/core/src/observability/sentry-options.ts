@@ -21,6 +21,47 @@ const flagsOf = (event: ErrorEvent) => {
   return values?.length ? { flags: { values } } : undefined;
 };
 
+/** The contexts that survived, or none at all. */
+const optionalContexts = <T extends Record<string, unknown>>(contexts: T) => {
+  const kept = Object.fromEntries(Object.entries(contexts).filter(([, value]) => value));
+  return Object.keys(kept).length ? (kept as T) : undefined;
+};
+
+/**
+ * Where the event ran, never who sent it: the runtime's name and version, the cloud provider and
+ * region the SDK set and, from the browser, the browser and OS families (names only). Workers expose no CPU, memory, OS or host name; the data center that served a
+ * request travels as the `colo` tag (`coloOf`).
+ */
+const hostContexts = (event: { contexts?: ErrorEvent['contexts'] }) => {
+  const runtime = event.contexts?.runtime;
+  const cloud = event.contexts?.cloud_resource;
+  const label = (value: unknown) =>
+    typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,64}$/.test(value) ? value : undefined;
+  // The browser sets only family names (apps/web/src/lib/observability/client-family.ts).
+  const family = (context: { name?: unknown } | undefined) =>
+    context && label(context.name) && { name: label(context.name) };
+  const kept = {
+    runtime: runtime && { name: label(runtime.name), version: label(runtime.version) },
+    browser: family(event.contexts?.browser),
+    os: family(event.contexts?.os),
+    cloud_resource: cloud && {
+      'cloud.provider': label(cloud['cloud.provider']),
+      'cloud.region': label(cloud['cloud.region']),
+    },
+  };
+  return Object.fromEntries(Object.entries(kept).filter(([, value]) => value));
+};
+
+/**
+ * The Cloudflare data center (IATA code, e.g. `GRU`) that served a request: the runtime's
+ * `request.cf.colo`, else the suffix of the `cf-ray` header. Undefined off Cloudflare.
+ */
+export const coloOf = (request: Request): string | undefined => {
+  const colo = (request as { cf?: { colo?: unknown } }).cf?.colo;
+  if (typeof colo === 'string' && /^[A-Z]{3}$/.test(colo)) return colo;
+  return request.headers.get('cf-ray')?.match(/-([A-Z]{3})$/)?.[1];
+};
+
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
   if (cancelled(event)) return null;
   // Reconstruct rather than redact unknown SDK contexts. Keep code locations and the flags the
@@ -35,7 +76,7 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     release: event.release,
     environment: event.environment,
     tags: safeFields(event.tags),
-    contexts: flagsOf(event),
+    contexts: optionalContexts({ ...flagsOf(event), ...hostContexts(event) }),
     debug_meta: event.debug_meta && {
       images: event.debug_meta.images?.flatMap((image) =>
         image.type === 'sourcemap'
@@ -140,6 +181,22 @@ export function privateSpan(span: SpanJSON): SpanJSON {
 }
 
 /**
+ * A request's transaction named by its route template (`GET /u/[username]`) rather than the path it
+ * served (`GET /u/ana`), when the request hook tagged the `route`: on Workers the SDK names the root
+ * span before SvelteKit has matched a route, so every profile and table would be its own row.
+ */
+const transactionName = (
+  event: TransactionEvent,
+): Pick<TransactionEvent, 'transaction' | 'transaction_info'> => {
+  const name = event.transaction && scrubString(withoutQuery(event.transaction));
+  const route = safeFields(event.tags).route;
+  const method = name?.match(/^([A-Z]+) \//)?.[1];
+  if (typeof route === 'string' && method && event.transaction_info?.source !== 'route')
+    return { transaction: `${method} ${route}`, transaction_info: { source: 'route' } };
+  return { transaction: name, transaction_info: event.transaction_info };
+};
+
+/**
  * A transaction rebuilt from the parts that measure performance: its route, timings, Web Vitals and
  * spans. No request, user, breadcrumbs or extra data; tags pass the same allowlist as errors.
  */
@@ -154,12 +211,12 @@ export function privateTransaction(event: TransactionEvent): TransactionEvent {
     release: event.release,
     dist: event.dist,
     environment: event.environment,
-    transaction: event.transaction && scrubString(withoutQuery(event.transaction)),
-    transaction_info: event.transaction_info,
+    ...transactionName(event),
     tags: safeFields(event.tags),
     measurements: event.measurements,
-    contexts: trace && {
-      trace: {
+    contexts: optionalContexts({
+      ...hostContexts(event),
+      trace: trace && {
         trace_id: trace.trace_id,
         span_id: trace.span_id,
         parent_span_id: trace.parent_span_id,
@@ -174,7 +231,7 @@ export function privateTransaction(event: TransactionEvent): TransactionEvent {
           data: trace.data ?? {},
         }).data,
       },
-    },
+    }),
     spans: event.spans?.map(privateSpan),
   };
 }

@@ -8,6 +8,7 @@ import { isLocalDateTime, tableInputSchema, type TableInput } from '../../tables
 import { instantToLocal, localToInstant } from './schedule';
 import { assertTableSchedule, lockTableFamily, lockTableSchedule } from './schedule-guard';
 import { createTable } from './write';
+import { placeSlugOf } from '../places/picker';
 
 async function sourceFor(db: AnyDb, actor: Actor | null, slug: string) {
   const [source] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
@@ -29,6 +30,8 @@ export async function loadTableForDuplication(
   sourceSlug: string;
   input: Omit<TableInput, 'startsAtLocal'> & { startsAtLocal: '' };
   imagePath: string | null;
+  /** The source's "Onde jogar" place, for the form's picker; blank when it has none or it is gone. */
+  placeSlug: string;
   heldCatalog: { systems: CatalogItem[]; platforms: CatalogItem[]; tags: CatalogItem[] };
 }> {
   const source = await sourceFor(db, actor, sourceSlug);
@@ -41,6 +44,7 @@ export async function loadTableForDuplication(
     sourceId: source.id,
     sourceSlug: source.slug,
     imagePath: source.imagePath,
+    placeSlug: await placeSlugOf(db, source.placeId),
     heldCatalog: {
       systems:
         system.status === 'pending'
@@ -74,6 +78,7 @@ export async function loadTableForDuplication(
       locationNeighbourhood: source.locationNeighbourhood,
       locationCity: source.locationCity,
       locationState: source.locationState,
+      placeId: source.placeId,
       platforms: catalog.platforms.map((entry) => entry.slug),
       tags: catalog.tags.map((entry) => entry.slug),
       removeImage: false,

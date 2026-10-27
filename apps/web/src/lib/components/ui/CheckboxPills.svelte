@@ -34,7 +34,7 @@
   {#if hint}<p id="{name}-hint" class="text-sm text-muted">{hint}</p>{/if}
   <div class="flex flex-wrap gap-2">
     {#each options as option (option.value)}<label
-        class="flex h-11 cursor-pointer items-center gap-2 rounded-full border-2 border-surface-200-800 bg-panel px-4 text-sm has-checked:border-primary-500 has-checked:preset-filled-primary-500 has-checked:font-semibold has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500"
+        class="flex h-9 cursor-pointer items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-3 text-sm has-checked:border-primary-500 has-checked:preset-filled-primary-500 has-checked:font-semibold has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500"
         ><input
           type="checkbox"
           {name}

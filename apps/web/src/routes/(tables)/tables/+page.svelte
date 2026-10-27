@@ -37,13 +37,13 @@
 
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<section class="py-2 md:pt-12">
+<section class="py-2 md:pt-8">
   <PageHead crumbs={[{ label: m.nav_tables() }]} title={m.tables_title()} lede={m.tables_lede()}>
     {#snippet actions()}
       <!-- On a phone the bottom tab bar already offers this action. -->
       <a
         href="/tables/new"
-        class="btn hidden h-12 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex"
+        class="btn hidden h-11 shrink-0 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold md:inline-flex"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.tables_open_cta()}

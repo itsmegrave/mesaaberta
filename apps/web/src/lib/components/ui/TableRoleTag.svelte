@@ -19,7 +19,7 @@
 </script>
 
 {#if tableRole}
-  {@const chip = `inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold ${
+  {@const chip = `inline-flex h-6 items-center rounded-full px-2 text-xs font-semibold ${
     tableRole === 'player' ? 'bg-surface-wash' : 'bg-lamp-wash'
   } ${className}`}
   {#if href}

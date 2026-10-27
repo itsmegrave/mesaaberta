@@ -1,0 +1,69 @@
+import { error } from '@sveltejs/kit';
+import { initialForm, validateFormData } from '#lib/forms/contract.js';
+import { formMessage, refuse } from '#lib/forms/server.js';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { placeClaimSchema } from '@mesaaberta/core/places/claims';
+import { Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
+import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
+import { handlersFor } from '@mesaaberta/core/server/events/handlers';
+import { readPlacePage } from '@mesaaberta/core/server/places/directory';
+import { fileClaim, pendingClaimOf } from '@mesaaberta/core/server/places/claims';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { requireDirectory } from '#lib/server/directories/flags.js';
+import type { Actions, PageServerLoad } from './$types';
+
+const DEFAULTS = { relation: '', contact: '', note: '', confirm: false };
+
+/** The listed place at this address, for a signed-in member; anything else is a 404. */
+async function placeFor(locals: App.Locals, url: URL, slug: string) {
+  await requireDirectory(locals, 'places');
+  await requireUser(locals, url);
+  if (!locals.db) error(503, 'Database not configured');
+  const profile = (await locals.getProfile())!;
+  const viewer = { id: profile.id, isAdmin: can(profile, 'admin:access') };
+  const found = await readPlacePage(locals.db, slug, viewer, new Date());
+  if (!found || found.pending || found.hidden) error(404, 'Not found');
+  return { profile, found };
+}
+
+// "Este lugar é seu?": who they are at the place and how the team reaches them. An admin reads it
+// in /admin/places/claims; approved, the member manages the page and it shows "Verificado".
+export const load: PageServerLoad = async ({ locals, url, params }) => {
+  const { profile, found } = await placeFor(locals, url, params.slug);
+  const waiting = found.claimable
+    ? await pendingClaimOf(locals.db!, found.place.id, profile.id)
+    : null;
+  return {
+    place: { slug: found.place.slug, name: found.place.name },
+    // Owned already (by them or someone else), or theirs waits: the page says so instead of the form.
+    state: found.owner ? 'owner' : !found.claimable ? 'owned' : waiting ? 'pending' : 'open',
+    form: initialForm(DEFAULTS),
+  };
+};
+
+export const actions: Actions = {
+  default: async (event) => {
+    const { locals, url, params, request } = event;
+    const { profile } = await placeFor(locals, url, params.slug);
+    const form = validateFormData(await request.formData(), placeClaimSchema, DEFAULTS as never, {
+      booleans: ['confirm'],
+    });
+    if (!form.valid) return formMessage(form, { code: 'invalid' }, { status: 400 });
+
+    let eventIds: string[];
+    try {
+      eventIds = await fileClaim(locals.db!, profile, params.slug, form.data);
+    } catch (cause) {
+      if (cause instanceof Invalid)
+        return formMessage(form, { code: cause.message }, { status: 400 });
+      if (cause instanceof RateLimited) return refuse(form, 429, 'rate_limited');
+      if (cause instanceof NotFound) error(404, 'Not found');
+      throw cause;
+    }
+    const handlers = handlersFor(locals.env);
+    locals.afterResponse(async (db) => {
+      for (const id of eventIds) await dispatchEvent(db, handlers, id, new Date(), locals.log);
+    });
+    return formMessage(form, { code: 'sent' });
+  },
+};

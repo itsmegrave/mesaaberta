@@ -36,10 +36,11 @@
   const current = $derived(sectionOf(groups, route, path));
 </script>
 
-<!-- 236px wide (59 × 4px) and sticky at the top of the content. -->
+<!-- 236px wide (59 × 4px) and sticky at the top of the content. The 20px above it centres
+     "Visão geral" on the breadcrumbs row of the page beside it. -->
 <nav
   aria-label={m.admin_nav_label()}
-  class="sticky top-6 hidden w-59 shrink-0 gap-5 self-start md:grid"
+  class="sticky top-5 mt-5 hidden w-59 shrink-0 gap-5 self-start md:grid"
 >
   {#each groups as group (group.key)}
     <div class="grid gap-1">
@@ -58,7 +59,12 @@
             >
               <Icon name={section.icon} size={20} class="shrink-0 text-muted" />
               <span class="min-w-0 flex-1 truncate">{section.label}</span>
-              <CountBadge count={section.count ?? 0} max={99} class="min-w-6 px-1" />
+              <CountBadge
+                count={section.count ?? 0}
+                max={99}
+                tone={section.alert ? 'error' : 'warning'}
+                class="min-w-6 px-1"
+              />
             </a>
             {#if here}
               <!-- The bar of the current section, on the left edge of its item. -->

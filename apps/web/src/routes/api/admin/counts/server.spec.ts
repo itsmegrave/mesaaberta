@@ -10,6 +10,8 @@ vi.mock('#lib/server/admin/counts.js', () => ({
     connections: 0,
     events: 3,
     partners: 0,
+    places: 0,
+    hiddenPlaces: 0,
   })),
 }));
 
@@ -30,6 +32,8 @@ describe('GET /api/admin/counts', () => {
       connections: 0,
       events: 3,
       partners: 0,
+      places: 0,
+      hiddenPlaces: 0,
     });
     expect(response.headers.get('cache-control')).toBe('private, no-store');
   });

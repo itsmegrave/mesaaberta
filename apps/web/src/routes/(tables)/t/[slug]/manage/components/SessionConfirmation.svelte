@@ -207,7 +207,7 @@
   );
 
   // A row of a list of choices: a 24px control, a gap and the text, with a line under it.
-  const rowClass = 'flex items-center gap-3.5 px-1 py-2';
+  const rowClass = 'flex items-center gap-3 px-1 py-2';
 </script>
 
 <section
@@ -215,7 +215,7 @@
   class="mt-8 rounded-lg border-2 border-primary-500 bg-panel p-5 md:p-7"
 >
   {#if heading}
-    <p class="flex items-center gap-2.5 text-sm font-semibold text-muted">
+    <p class="flex items-center gap-2 text-sm font-semibold text-muted">
       <Icon name="calendar" size={16} />{heading}
     </p>
   {/if}
@@ -237,7 +237,7 @@
         <a
           href={stepHref('presenca')}
           onclick={go('presenca')}
-          class="{buttonClass('primary')} gap-2.5 font-semibold no-underline"
+          class="{buttonClass('primary')} gap-2 font-semibold no-underline"
           ><Icon name="check" size={18} />{m.manage_confirm_yes()}</a
         >
       {:else}
@@ -247,7 +247,7 @@
             type="submit"
             variant="primary"
             controller={happened}
-            class="gap-2.5 font-semibold"
+            class="gap-2 font-semibold"
             ><Icon name="check" size={18} />{m.manage_confirm_yes()}</MAButton
           >
         </MAForm>
@@ -270,7 +270,7 @@
       <a
         href={stepHref('adiar')}
         onclick={go('adiar')}
-        class="{buttonClass('secondary')} gap-2.5 font-semibold no-underline"
+        class="{buttonClass('secondary')} gap-2 font-semibold no-underline"
         ><Icon name="clock" size={18} />{m.manage_confirm_postpone()}</a
       >
     </div>
@@ -354,14 +354,14 @@
           <legend class="float-left w-full text-lg font-semibold">
             {m.manage_confirm_more_title()}
           </legend>
-          <div class="clear-both pt-1.5">
+          <div class="clear-both pt-2">
             <label class="{rowClass} min-h-14 border-b border-surface-200-800">
               <input type="radio" class="radio size-6" bind:group={more} value={true} />
               {@render choice(m.manage_confirm_more_yes(), m.manage_confirm_more_yes_hint())}
             </label>
             {#if more}
               <!-- Under the choice's text: the 24px control plus the 14px gap. -->
-              <div class="mt-3 mb-4 ml-9.5">
+              <div class="mt-3 mb-4 ml-10">
                 <SessionPicker
                   bind:startsAt={nextAt}
                   duration={durationHours}
@@ -435,13 +435,13 @@
       <input type="hidden" name="next" value={next} />
       <fieldset class="min-w-0">
         <legend class="float-left w-full text-lg font-semibold">{m.manage_skip_title()}</legend>
-        <div class="clear-both pt-1.5">
+        <div class="clear-both pt-2">
           <label class="{rowClass} min-h-14 border-b border-surface-200-800">
             <input type="radio" class="radio size-6" bind:group={skip} value={true} />
             {@render choice(m.manage_skip_yes(), m.manage_skip_yes_hint())}
           </label>
           {#if skip}
-            <div class="mt-3 mb-4 ml-9.5">
+            <div class="mt-3 mb-4 ml-10">
               <SessionPicker
                 bind:startsAt={skipAt}
                 duration={durationHours}

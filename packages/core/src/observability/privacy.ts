@@ -57,6 +57,7 @@ const LABELS = new Set([
   'stage',
   'reason',
   'resourceType',
+  'colo',
 ]);
 const IDS = new Set(['requestId', 'actionId', 'eventId', 'tableId', 'registrationId', 'userId']);
 // A resource is named by its uuid or by its public handle (a table's slug, a profile's @username).

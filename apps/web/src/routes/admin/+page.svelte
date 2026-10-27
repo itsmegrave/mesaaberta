@@ -178,6 +178,23 @@
   {/snippet}
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
+  {#if counts.current.hiddenPlaces > 0}
+    <!-- The high alert: reports hid a place, and it stays hidden until an admin decides. -->
+    <a
+      href={href('/admin/places?status=reported')}
+      class="mt-8 flex items-center gap-3 rounded-lg border border-error-500 preset-tonal-error px-5 py-4 no-underline"
+    >
+      <Icon name="triangle-alert" size={20} class="shrink-0" />
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold"
+          >{m.admin_places_hidden_alert({ count: counts.current.hiddenPlaces })}</span
+        >
+        <span class="block text-sm">{m.admin_places_hidden_alert_detail()}</span>
+      </span>
+      <Icon name="chevron-right" size={18} />
+    </a>
+  {/if}
+
   <!-- As on the AdminOverview board: the heading and how much waits sit inside the card. -->
   <section
     aria-labelledby="attention-title"
@@ -207,7 +224,7 @@
                 <span class="block truncate text-sm text-muted">{item.detail}</span>
               </span>
               <span
-                class="chip rounded-full preset-filled-warning-500 px-2.5 font-semibold tabular-nums"
+                class="chip rounded-full preset-filled-warning-500 px-2 font-semibold tabular-nums"
                 >{number(item.count)}</span
               >
               <Icon name="chevron-right" size={18} />

@@ -4,7 +4,7 @@ import { callApiRaw } from '#lib/server/api-client.js';
 import { isPublished } from '#lib/blog.js';
 import { posts } from '#lib/server/blog.js';
 
-type Resource = 'index' | 'pages' | 'tables' | 'profiles' | 'systems';
+type Resource = 'index' | 'pages' | 'tables' | 'profiles' | 'systems' | 'places';
 const escape = (value: string) =>
   value.replace(
     /[<>&"']/g,
@@ -26,9 +26,10 @@ const staticPaths = [
 const directories = [
   { flag: 'api_directory_systems', path: '/systems', items: 'systems' },
   // Quem mestra's people are already in the profiles sitemap.
+  { flag: 'api_directory_places', path: '/places', items: 'places' },
   { flag: 'api_directory_gms', path: '/gamemasters', items: null },
 ] as const;
-const PREFIX = { tables: 't', profiles: 'u', systems: 's' } as const;
+const PREFIX = { tables: 't', profiles: 'u', systems: 's', places: 'pp' } as const;
 const unavailable = () =>
   new Response('Sitemap temporarily unavailable', {
     status: 503,
@@ -49,7 +50,10 @@ export async function sitemapResponse(
     )
   ).filter((directory) => directory !== null);
   // A directory that is off has no sitemap of its items.
-  if (resource === 'systems' && !shown.some((directory) => directory.items === 'systems'))
+  if (
+    (resource === 'systems' || resource === 'places') &&
+    !shown.some((directory) => directory.items === resource)
+  )
     return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
   const cache = locals.host?.cache;
   // Which directories are on is part of the answer: a flag change must not serve the old one.

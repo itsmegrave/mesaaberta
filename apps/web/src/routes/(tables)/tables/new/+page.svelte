@@ -48,12 +48,12 @@
 
 <QueryStatus failed={options.isError} retry={() => options.refetch()} />
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs
     class="mb-8"
     items={[{ label: m.nav_my_tables(), href: '/u/tables' }, { label: m.nav_open_table_short() }]}
   />
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+  <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {data.duplication ? m.table_duplicate() : m.form_new_title()}
   </h1>
   <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
@@ -76,5 +76,6 @@
     duplicationRequestKey={requestKey}
     cancelHref={data.duplication ? `/t/${data.duplication.sourceSlug}/manage` : '/tables'}
     gmName={data.account?.username ?? undefined}
+    places={data.places}
   />
 </section>

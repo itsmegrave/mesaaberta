@@ -68,7 +68,7 @@
 
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<section class="py-2 md:pt-12">
+<section class="py-2 md:pt-8">
   <PageHead
     crumbs={[{ label: m.systems_crumb() }]}
     title={m.systems_title()}

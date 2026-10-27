@@ -1,6 +1,6 @@
 <script lang="ts">
   // A pick-from-a-list field on a phone: the field is a button, so a tap never raises the keyboard,
-  // and the list opens in a bottom sheet with 52px options, a radio or a checkbox each. Long lists
+  // and the list opens in a bottom sheet with 44px options, a radio or a checkbox each. Long lists
   // get a search box at the top that does not take focus on open; while it is typed into, the sheet
   // takes the whole visible height, above the keyboard. One pick closes the sheet; several stay
   // open, listed first, until "Pronto". The state (filtering, picks) is the field's SelectState.
@@ -38,7 +38,7 @@
     label: string;
     labelClass: string;
     rootClass: string;
-    /** The 52px (or 44px) box every field draws. */
+    /** The 44px box every field draws. */
     controlClass: string;
     placeholder: string;
     icon?: IconName;
@@ -157,7 +157,7 @@
     {#if searchable}
       <div class="border-b border-surface-200-800 px-5 pb-3">
         <div class="relative flex items-center">
-          <Icon name="search" size={18} class="pointer-events-none absolute left-3.5 text-muted" />
+          <Icon name="search" size={18} class="pointer-events-none absolute left-3 text-muted" />
           <Listbox.Input
             type="search"
             class="h-11 w-full rounded-lg border-control border-ink-muted bg-panel pr-3 pl-10 text-base focus:outline-4 focus:outline-offset-2 focus:outline-primary-500"
@@ -213,7 +213,7 @@
         type="button"
         variant="secondary"
         size="custom"
-        class="btn h-13 flex-1 rounded-lg px-4"
+        class="btn h-11 flex-1 rounded-lg px-4"
         disabled={select.value.length === 0}
         onclick={() => select.commit([])}>{m.search_select_clear()}</MAButton
       >
@@ -221,7 +221,7 @@
         type="button"
         variant="primary"
         size="custom"
-        class="btn h-13 flex-1 rounded-lg px-4"
+        class="btn h-11 flex-1 rounded-lg px-4"
         onclick={close}>{m.search_select_done({ count: select.value.length })}</MAButton
       >
     </div>
@@ -232,7 +232,7 @@
   <Listbox.Item
     {item}
     onclick={() => keep(item.slug)}
-    class="flex min-h-13 cursor-pointer items-center gap-3 rounded-lg px-3 text-base group-focus-visible:data-highlighted:outline-2 group-focus-visible:data-highlighted:-outline-offset-2 group-focus-visible:data-highlighted:outline-primary-500 data-selected:bg-surface-wash data-selected:font-semibold"
+    class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-base group-focus-visible:data-highlighted:outline-2 group-focus-visible:data-highlighted:-outline-offset-2 group-focus-visible:data-highlighted:outline-primary-500 data-selected:bg-surface-wash data-selected:font-semibold"
   >
     <Listbox.ItemText class="min-w-0 flex-1"
       >{item.name}{#if isPending(item) && pendingLabel && !item.slug.startsWith('new:')}
@@ -241,17 +241,17 @@
     {#if select.value.includes(item.slug)}
       <span
         aria-hidden="true"
-        class="flex size-5.5 shrink-0 items-center justify-center border-2 border-primary-500 {multiple
+        class="flex size-5 shrink-0 items-center justify-center border-2 border-primary-500 {multiple
           ? 'rounded preset-filled-primary-500'
           : 'rounded-full'}"
         >{#if multiple}<Icon name="check" size={14} />{:else}<span
-            class="size-2.5 rounded-full bg-primary-500"
+            class="size-2 rounded-full bg-primary-500"
           ></span>{/if}</span
       >
     {:else}
       <span
         aria-hidden="true"
-        class="size-5.5 shrink-0 border-2 border-ink-muted {multiple ? 'rounded' : 'rounded-full'}"
+        class="size-5 shrink-0 border-2 border-ink-muted {multiple ? 'rounded' : 'rounded-full'}"
       ></span>
     {/if}
   </Listbox.Item>

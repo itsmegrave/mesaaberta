@@ -8,7 +8,7 @@
    */
   let {
     crumbs,
-    crumbsClass = 'mb-8',
+    crumbsClass = 'mb-4 md:mb-6',
     title,
     lede,
     actions,
@@ -23,7 +23,7 @@
 </script>
 
 {#snippet heading()}
-  <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+  <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
     {title}
   </h1>
   {#if lede}
@@ -37,7 +37,7 @@
   <Breadcrumbs class={crumbsClass} items={crumbs} />
 {/if}
 {#if actions}
-  <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-12">
+  <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-8">
     <div>{@render heading()}</div>
     {@render actions()}
   </div>

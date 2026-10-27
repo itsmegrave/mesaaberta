@@ -158,7 +158,7 @@
       {accept}
       aria-describedby="{id}-formats{error ? ` ${id}-error` : ''}"
       aria-invalid={error ? 'true' : undefined}
-      class="block w-full text-sm file:mr-3 file:h-12 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
+      class="block w-full text-sm file:mr-3 file:h-11 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
     />
     <p id="{id}-formats" class="text-sm text-muted">
       {m.upload_formats()}<br />{recommended()}

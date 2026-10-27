@@ -4,6 +4,7 @@
 import {
   CROWDFUNDING_REPORT_REASONS,
   PARTNER_REPORT_REASONS,
+  PLACE_REPORT_REASONS,
   RESOLUTION_NOTE_MAX,
   type ReportReason,
   type ReportTarget,
@@ -62,6 +63,33 @@ export function removePartner(name: string): Words & {
     text: m.admin_partners_remove_text(),
     confirm: m.admin_partners_remove_confirm(),
     success: m.admin_partners_remove_done(),
+  };
+}
+
+/** Taking a place off "Onde jogar" (or turning one down), with the reason and a note. */
+export function removePlace(
+  name: string,
+  approved: boolean,
+): Words & {
+  danger: true;
+  reasons: readonly ReportReason[];
+  reasonTarget: ReportTarget;
+  write: Write;
+} {
+  return {
+    danger: true,
+    reasons: PLACE_REPORT_REASONS,
+    reasonTarget: 'place',
+    write: {
+      name: 'note',
+      label: m.admin_places_remove_note(),
+      hint: m.admin_places_remove_note_hint({ max: RESOLUTION_NOTE_MAX }),
+    },
+    label: approved ? m.admin_places_remove() : m.admin_places_reject(),
+    title: approved ? m.admin_places_remove_title({ name }) : m.admin_places_reject_title({ name }),
+    text: approved ? m.admin_places_remove_text() : m.admin_places_reject_text(),
+    confirm: approved ? m.admin_places_remove_confirm() : m.admin_places_reject_confirm(),
+    success: approved ? m.admin_places_remove_done() : m.admin_places_reject_done(),
   };
 }
 

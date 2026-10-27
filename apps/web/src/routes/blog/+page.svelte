@@ -21,11 +21,11 @@
   />
 </svelte:head>
 
-<div class="mx-auto max-w-3xl py-6 md:py-12">
+<div class="mx-auto max-w-3xl py-6 md:py-8">
   <Breadcrumbs class="mb-2 md:mb-10" items={[{ label: m.blog_title() }]} />
   <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-8">
     <div>
-      <h1 class="text-4xl leading-tight font-semibold tracking-tight text-balance md:text-6xl">
+      <h1 class="text-3xl leading-tight font-semibold tracking-tight text-balance md:text-5xl">
         {m.blog_title()}
       </h1>
       <p class="mt-3 max-w-2xl leading-relaxed text-muted md:text-lg">{m.blog_lede()}</p>

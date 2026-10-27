@@ -1,16 +1,32 @@
-import { and, asc, eq, isNull, like, ne, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  countDistinct,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  ne,
+  sql,
+} from 'drizzle-orm';
+import {
+  OPEN_REPORT_STATUSES,
+  PLACE_REPORTS_TO_HIDE,
+  type PlaceReportInput,
+} from '../../moderation/reports';
 import { placeLinks, type PlaceInput } from '../../places/schema';
 import { orderedAmenities } from '../../places/types';
 import { normalizeCep } from '../../location/cep';
 import { parseSocialUrl, type Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { placeLinks as placeLinksTable, places } from '@mesaaberta/core/server/db/schema';
+import { placeLinks as placeLinksTable, places, reports } from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { Changes } from '@mesaaberta/core/server/events/types';
 import { lookupCep } from '@mesaaberta/core/server/location/cep';
-import { enforceRateLimit, PLACE_LIMIT } from '@mesaaberta/core/server/rate-limit';
+import { enforceRateLimit, PLACE_LIMIT, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 import { nextFreeSlug, slugify } from '@mesaaberta/core/slug';
 import { clearPlaceTags, rebuildPlaceTags } from './tags';
 
@@ -209,7 +225,7 @@ export async function updatePlace(
     now = new Date(),
     request = fetch,
   }: { imagePath?: string | null; now?: Date; request?: typeof fetch } = {},
-): Promise<{ eventId: string; replacedImage: string | null; pending: boolean }> {
+): Promise<{ eventId: string; slug: string; replacedImage: string | null; pending: boolean }> {
   const [found] = await db
     .select()
     .from(places)
@@ -285,6 +301,7 @@ export async function updatePlace(
     );
     return {
       eventId,
+      slug: current.slug,
       replacedImage: imagePath || dropImage ? current.imagePath : null,
       pending,
     };
@@ -334,5 +351,108 @@ export async function withdrawPlace(
         { now },
       ),
     ];
+  });
+}
+
+/**
+ * A member reports a listed place from its page. Refused for one they look after, while their
+ * report on it still waits (`already_reported`) and past REPORT_LIMIT. The reporter stays
+ * anonymous. When this report makes PLACE_REPORTS_TO_HIDE open ones from as many members, the place
+ * is hidden in the same transaction (`PlaceHidden`, the admins' high alert); the place row is
+ * locked first, so two reports landing together hide it once. Returns the events to dispatch.
+ */
+export async function filePlaceReport(
+  db: AnyDb,
+  actor: Actor | null,
+  id: string,
+  input: PlaceReportInput,
+  { now = new Date() }: { now?: Date } = {},
+): Promise<string[]> {
+  return db.transaction(async (tx) => {
+    const t = tx as unknown as AnyDb;
+    const [place] = await t
+      .select()
+      .from(places)
+      .where(
+        and(
+          eq(places.id, id),
+          isNotNull(places.approvedAt),
+          isNull(places.removedAt),
+          isNull(places.hiddenAt),
+        ),
+      )
+      .for('update');
+    if (!place) throw new NotFound(`no place "${id}"`);
+    authorize(actor, 'place:report', place);
+    await enforceRateLimit(t, actor!.id, REPORT_LIMIT, now);
+
+    const [report] = await t
+      .insert(reports)
+      .values({
+        reporterId: actor!.id,
+        targetType: 'place',
+        targetId: place.id,
+        tableId: null,
+        reason: input.reason,
+        details: input.details,
+        createdAt: now,
+      })
+      .onConflictDoNothing()
+      .returning({ id: reports.id });
+    if (!report) throw new Invalid('', 'already_reported');
+
+    const eventIds = [
+      await recordEvent(
+        t,
+        {
+          type: 'ReportFiled',
+          actorId: actor!.id,
+          payload: {
+            reportId: report.id,
+            targetType: 'place',
+            targetId: place.id,
+            tableId: null,
+            reason: input.reason,
+          },
+        },
+        { now },
+      ),
+    ];
+
+    const [{ reporters }] = await t
+      .select({ reporters: countDistinct(reports.reporterId) })
+      .from(reports)
+      .where(
+        and(
+          eq(reports.targetType, 'place'),
+          eq(reports.targetId, place.id),
+          inArray(reports.status, [...OPEN_REPORT_STATUSES]),
+        ),
+      );
+    if (reporters >= PLACE_REPORTS_TO_HIDE) {
+      await t
+        .update(places)
+        .set({ hiddenAt: now, hiddenReason: 'reports' })
+        .where(eq(places.id, place.id));
+      eventIds.push(
+        await recordEvent(
+          t,
+          {
+            type: 'PlaceHidden',
+            actorId: actor!.id,
+            payload: {
+              placeId: place.id,
+              slug: place.slug,
+              name: place.name,
+              submitterId: place.submitterId,
+              ownerId: place.ownerId,
+              reportId: report.id,
+            },
+          },
+          { now },
+        ),
+      );
+    }
+    return eventIds;
   });
 }

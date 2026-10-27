@@ -24,6 +24,8 @@ export const reportActions = {
   closeTable: decide('report.closeTable', ['id', 'note']),
   removeCrowdfunding: decide('report.removeCrowdfunding', ['id', 'reason', 'note', 'reportId']),
   removePartner: decide('report.removePartner', ['id', 'reason', 'note', 'reportId']),
+  removePlace: decide('place.remove', ['id', 'reason', 'note', 'reportId']),
+  restorePlace: decide('place.restore', ['id', 'note', 'reportId']),
   ban: decide('report.ban', ['id', 'duration', 'reason']),
 };
 
@@ -49,6 +51,20 @@ export const partnerActions = {
   approve: decide('partner.approve', ['id']),
   remove: decide('partner.remove', ['id', 'reason', 'note']),
   setTypes: decide('partner.setTypes', ['id', 'types']),
+};
+
+/** Approving, rejecting and removing places from the "Onde jogar" queue, `/admin/places`. */
+export const placeActions = {
+  approve: decide('place.approve', ['id']),
+  remove: decide('place.remove', ['id', 'reason', 'note']),
+  restore: decide('place.restore', ['id', 'note']),
+  removeOwner: decide('place.removeOwner', ['id']),
+};
+
+/** Approving and rejecting "Este lugar é seu?" claims, `/admin/places/claims`. */
+export const placeClaimActions = {
+  approve: decide('place.approveClaim', ['id']),
+  reject: decide('place.rejectClaim', ['id', 'note']),
 };
 
 /** Closing a table from the tables list, `/admin/tables`. */

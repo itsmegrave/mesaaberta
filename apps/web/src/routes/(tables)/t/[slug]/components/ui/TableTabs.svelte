@@ -18,7 +18,7 @@
   } = $props();
 
   const tab = (active: boolean) =>
-    `inline-flex h-11 flex-1 items-center justify-center gap-2.5 rounded-lg px-4 font-semibold whitespace-nowrap no-underline ${
+    `inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg px-4 font-semibold whitespace-nowrap no-underline ${
       active ? 'preset-filled-primary-500' : 'hover:bg-surface-wash'
     }`;
 </script>
@@ -26,7 +26,7 @@
 <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
   <nav
     aria-label={m.manage_sections()}
-    class="flex w-full gap-1.5 rounded-lg bg-surface-wash p-1 sm:w-110"
+    class="flex w-full gap-2 rounded-lg bg-surface-wash p-1 sm:w-110"
   >
     <a
       href="/t/{slug}/manage"
@@ -34,7 +34,7 @@
       class={tab(current === 'players')}
     >
       {m.manage_tab_players()}
-      <CountBadge count={requests} max={99} class="h-6 min-w-6 px-1.5" />
+      <CountBadge count={requests} max={99} class="h-6 min-w-6 px-2" />
     </a>
     {#if canEdit}
       <a

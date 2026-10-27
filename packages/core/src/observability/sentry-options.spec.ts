@@ -6,9 +6,11 @@ import {
   privateSentryOptions,
   privateSpan,
   privateTransaction,
+  coloOf,
   sentryOptionsForApp,
   sentryReleaseFor,
 } from './sentry-options';
+import { safeFields } from './privacy';
 
 describe('sentry options', () => {
   it('withholds exception messages and request data', () => {
@@ -127,6 +129,7 @@ describe('sentry options', () => {
       dist: 'web',
     });
     expect(kept.contexts).toEqual({
+      runtime: { name: 'workerd', version: undefined },
       trace: expect.objectContaining({
         op: 'http.server',
         data: { 'http.response.status_code': 200 },
@@ -139,6 +142,25 @@ describe('sentry options', () => {
     expect(kept.spans?.[0]?.data).not.toHaveProperty('url.full');
     expect(kept.spans?.[1]?.description).toBe('select * from profiles where email = ? and age > ?');
     expect(kept.spans?.[1]?.data).toEqual({});
+  });
+
+  it('names a request by its route template when the path was used', () => {
+    const event = {
+      type: 'transaction',
+      transaction: 'GET /u/ana',
+      transaction_info: { source: 'url' },
+      tags: { route: '/u/[username]' },
+    } as unknown as TransactionEvent;
+    expect(privateTransaction(event)).toMatchObject({
+      transaction: 'GET /u/[username]',
+      transaction_info: { source: 'route' },
+    });
+    const cron = {
+      type: 'transaction',
+      transaction: 'Scheduled Cron */5 * * * *',
+      transaction_info: { source: 'task' },
+    } as unknown as TransactionEvent;
+    expect(privateTransaction(cron).transaction).toBe('Scheduled Cron */5 * * * *');
   });
 
   it('scrubs standalone spans the same way', () => {
@@ -185,6 +207,36 @@ describe('sentry options', () => {
     expect(sentryReleaseFor('api', undefined)).toEqual({ release: undefined });
   });
 
+  it('names the Cloudflare data center from the runtime or the cf-ray header', () => {
+    const withCf = Object.assign(new Request('https://x.test/'), { cf: { colo: 'GRU' } });
+    expect(coloOf(withCf)).toBe('GRU');
+    const withRay = new Request('https://x.test/', {
+      headers: { 'cf-ray': '8d2f0a1b2c3d4e5f-EWR' },
+    });
+    expect(coloOf(withRay)).toBe('EWR');
+    expect(coloOf(new Request('https://x.test/'))).toBeUndefined();
+    expect(safeFields({ colo: 'GRU' })).toEqual({ colo: 'GRU' });
+  });
+
+  it('keeps the runtime, cloud and browser family contexts on a transaction', () => {
+    const event = {
+      type: 'transaction',
+      contexts: {
+        runtime: { name: 'cloudflare' },
+        cloud_resource: { 'cloud.provider': 'cloudflare' },
+        os: { name: 'Android', version: '14', kernel_version: 'x' },
+        browser: { name: 'Chrome', version: '130' },
+        device: { model: 'Pixel 9' },
+      },
+    } as unknown as TransactionEvent;
+    expect(privateTransaction(event).contexts).toEqual({
+      runtime: { name: 'cloudflare', version: undefined },
+      browser: { name: 'Chrome' },
+      os: { name: 'Android' },
+      cloud_resource: { 'cloud.provider': 'cloudflare', 'cloud.region': undefined },
+    });
+  });
+
   it('keeps the flags the request read, and nothing else from the contexts', () => {
     const event = {
       contexts: {
@@ -195,12 +247,16 @@ describe('sentry options', () => {
             { flag: 'use_badges', result: 'yes' },
           ],
         },
-        cloud_resource: { 'cloud.provider': 'cloudflare' },
+        cloud_resource: { 'cloud.provider': 'cloudflare', 'host.name': 'box-1' },
+        runtime: { name: 'cloudflare', raw_description: 'Mozilla/5.0 (ana)' },
+        device: { model: 'Pixel 9' },
       },
     } as unknown as ErrorEvent;
 
     expect(privateEvent(event)?.contexts).toEqual({
       flags: { values: [{ flag: 'api_inbox', result: true }] },
+      cloud_resource: { 'cloud.provider': 'cloudflare', 'cloud.region': undefined },
+      runtime: { name: 'cloudflare', version: undefined },
     });
     expect(privateEvent({ type: undefined })?.contexts).toBeUndefined();
   });

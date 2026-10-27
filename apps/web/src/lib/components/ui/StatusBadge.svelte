@@ -33,6 +33,13 @@
     | 'partner:up'
     | 'partner:removed'
     | 'partner:withdrawn'
+    | 'place:pending'
+    | 'place:up'
+    | 'place:hidden'
+    | 'place:removed'
+    | 'claim:pending'
+    | 'claim:approved'
+    | 'claim:rejected'
     | 'catalog:approved'
     | 'catalog:pending'
     | 'catalog:disabled'
@@ -157,6 +164,26 @@
       dot: 'border-2 border-surface-500 bg-transparent',
       text: 'muted',
     },
+    // A place waits for an admin, is listed, was hidden by reports, or was taken down.
+    'place:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'place:up': { label: () => m.partner_status_up(), dot: 'bg-success-500' },
+    'place:hidden': {
+      label: () => m.place_status_hidden(),
+      dot: 'border-2 border-warning-500 bg-transparent',
+    },
+    'place:removed': {
+      label: () => m.partner_status_removed(),
+      dot: 'bg-error-500',
+      text: 'danger',
+    },
+    // A claim on a place waits for an admin, or was approved or turned down.
+    'claim:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'claim:approved': { label: () => m.admin_claims_status_approved(), dot: 'bg-success-500' },
+    'claim:rejected': {
+      label: () => m.admin_claims_status_rejected(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
     'catalog:approved': { label: () => m.admin_catalog_status_approved(), dot: 'bg-success-500' },
     'catalog:pending': { label: () => m.admin_catalog_status_pending(), dot: 'bg-warning-500' },
     'catalog:disabled': { label: () => m.admin_catalog_status_disabled(), dot: 'bg-surface-500' },
@@ -195,7 +222,7 @@
 </script>
 
 <span
-  class="inline-flex h-7 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-3 text-sm font-[650] whitespace-nowrap {look.text ===
+  class="inline-flex h-6 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-2 text-xs font-[650] whitespace-nowrap {look.text ===
   'danger'
     ? 'text-error-700-300'
     : look.text === 'muted'

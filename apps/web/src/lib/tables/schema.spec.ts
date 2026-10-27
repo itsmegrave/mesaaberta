@@ -66,6 +66,7 @@ describe('parseTableForm', () => {
         locationNeighbourhood: null,
         locationCity: null,
         locationState: null,
+        placeId: null,
         platforms: [],
         tags: [],
         removeImage: false,

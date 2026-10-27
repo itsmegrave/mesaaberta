@@ -69,6 +69,14 @@ export const PLACE_LIMIT = {
   windowSeconds: 86_400,
 } as const satisfies RateLimit;
 
+// A claim waits for an admin too. Someone who runs a few places claims them together; more than a
+// handful a day is not a store.
+export const PLACE_CLAIM_LIMIT = {
+  events: ['PlaceClaimed'],
+  max: 5,
+  windowSeconds: 86_400,
+} as const satisfies RateLimit;
+
 // Reading a link makes this server fetch an address a member typed. Filling one form takes a few
 // reads (a mistyped link is read again); a script walking addresses takes hundreds.
 export const LINK_READ_LIMIT = {

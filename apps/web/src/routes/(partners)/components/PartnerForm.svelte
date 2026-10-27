@@ -169,7 +169,7 @@
     return copyText(ourLink, m.toast_link_copied());
   }
 
-  const input = 'input h-13 rounded-lg border-control border-ink-muted bg-panel px-3';
+  const input = 'input h-11 rounded-lg border-control border-ink-muted bg-panel px-3';
   const secondary = 'btn h-11 rounded-lg btn-secondary px-4 font-semibold';
 </script>
 
@@ -410,7 +410,7 @@
       type="submit"
       size="custom"
       {controller}
-      class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
+      class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-7 font-semibold"
       >{editing ? m.partner_form_submit_edit() : m.partner_form_submit()}</MAButton
     >
   {/snippet}

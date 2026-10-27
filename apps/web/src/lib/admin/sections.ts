@@ -8,6 +8,9 @@ export type AdminCounts = {
   connections: number;
   events: number;
   partners: number;
+  places: number;
+  /** Places reports hid: the admins' high alert, counted in red beside "Lugares". */
+  hiddenPlaces: number;
 };
 export type AdminSection = {
   path: string;
@@ -16,6 +19,8 @@ export type AdminSection = {
   label: string;
   icon: IconName;
   count?: number;
+  /** The count is a high alert, drawn in the danger tone. */
+  alert?: boolean;
 };
 export type AdminGroup = { key: string; label: string; sections: AdminSection[] };
 /** An installed extension's own section (the admin layout's `adminSections`). */
@@ -70,6 +75,13 @@ export function adminGroups(
           label: m.admin_nav_partners(),
           icon: 'game-icons:trade',
           count: counts.partners,
+        },
+        {
+          path: '/admin/places',
+          label: m.admin_nav_places(),
+          icon: 'game-icons:position-marker',
+          count: counts.places + counts.hiddenPlaces,
+          alert: counts.hiddenPlaces > 0,
         },
         { path: '/admin/users', label: m.admin_profile_list(), icon: 'game-icons:meeple' },
         { path: '/admin/catalog', label: m.admin_nav_catalog(), icon: 'tag' },

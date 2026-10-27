@@ -221,6 +221,38 @@ export const partnerTypesSchema = z.object({
     .transform((types) => orderedTypes(types)),
 });
 
+/** How many open reports, from as many members, hide a place until an admin acts (Grave: "more than 5"). */
+export const PLACE_REPORTS_TO_HIDE = 6;
+
+/** What a member gives when they report a place on its page. */
+export const placeReportSchema = z.object({
+  reason: z.enum(PLACE_REPORT_REASONS),
+  details: z.string().trim().max(REPORT_DETAILS_MAX),
+});
+export type PlaceReportInput = z.output<typeof placeReportSchema>;
+
+/** The report form on a place's page: the place it is about, with the reason and details. */
+export const reportPlaceSchema = z.object({ id: uuid, ...placeReportSchema.shape });
+
+/** An admin putting back a place its reports hid: the reports are dismissed with the note. */
+export const restorePlaceSchema = z.object({
+  id: uuid,
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});
+
+/** An admin approving an "Onde jogar" place that waits for review. */
+export const approvePlaceSchema = z.object({ id: uuid });
+
+/** An admin rejecting a place that waits, or taking one down: the reason and a note the submitter reads. */
+export const removePlaceSchema = z.object({
+  id: uuid,
+  reason: z.enum(PLACE_REPORT_REASONS),
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  // The report the admin decided it from, when they did (it is accepted with the others about it).
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});
+
 /** An admin taking a partner down, or rejecting one that waits: the reason and a note the submitter reads. */
 export const removePartnerSchema = z.object({
   id: uuid,

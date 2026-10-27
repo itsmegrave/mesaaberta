@@ -163,7 +163,7 @@
             <MAButton
               size="custom"
               type="button"
-              class="btn h-12 rounded-lg px-3 font-semibold hover:preset-tonal"
+              class="btn h-11 rounded-lg px-3 font-semibold hover:preset-tonal"
               onclick={() => (removed = false)}>{m.form_image_undo_remove()}</MAButton
             >
             <input type="hidden" name="removeImage" value="true" />
@@ -171,7 +171,7 @@
             <MAButton
               size="custom"
               type="button"
-              class="btn h-12 rounded-lg px-3 font-semibold text-error-alert hover:preset-tonal"
+              class="btn h-11 rounded-lg px-3 font-semibold text-error-alert hover:preset-tonal"
               onclick={() => (removed = true)}>{m.form_image_remove_current()}</MAButton
             >
           {/if}
@@ -213,7 +213,7 @@
       {name}
       type="file"
       {accept}
-      class="mt-1 block w-full text-sm file:mr-3 file:h-12 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
+      class="mt-1 block w-full text-sm file:mr-3 file:h-11 file:rounded-lg file:border-2 file:border-surface-950-50 file:bg-transparent file:px-4 file:font-semibold"
       aria-invalid={error ? 'true' : undefined}
       aria-describedby={describedby}
     />

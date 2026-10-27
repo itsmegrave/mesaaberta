@@ -120,6 +120,11 @@ describe('the signed-in Início', () => {
     await expect
       .element(page.getByText(/23 pessoas seguem você\. Você segue 8 pessoas\./))
       .toBeVisible();
+    // De quem você segue is news, so it starts closed with a count in its header.
+    const feed = page.getByRole('button', { name: /De quem você segue/ });
+    await expect.element(feed).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText(/^1 novidade · /)).toBeVisible();
+    await feed.click();
     await expect.element(page.getByText('@rafael abriu A Torre das Marés')).toBeVisible();
 
     const headings = page
@@ -173,5 +178,23 @@ describe('the signed-in Início', () => {
     await expect
       .element(page.getByRole('heading', { name: 'Mesas de quem você segue' }))
       .not.toBeInTheDocument();
+  });
+
+  it('folds the cards with nothing to do now, their headers saying what they hold', async () => {
+    const base = home();
+    show({
+      sessions: { ...base.sessions, thisWeek: 0 },
+      account: { ...base.account, unreadRatings: 0 },
+    });
+
+    const sessions = page.getByRole('button', { name: /Suas próximas sessões/ });
+    await expect.element(sessions).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText(/^1 sessão · /)).toBeVisible();
+    const account = page.getByRole('button', { name: /Sua conta/ });
+    await expect.element(account).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText(/· Participante estreia$/)).toBeVisible();
+    await expect
+      .element(page.getByRole('button', { name: /Esperando você/ }))
+      .toHaveAttribute('aria-expanded', 'true');
   });
 });

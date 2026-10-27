@@ -4,6 +4,7 @@ import { badgeDecisionSchema } from '../../badges/grants';
 import {
   accountSchema,
   approvePartnerSchema,
+  approvePlaceSchema,
   banEnd,
   banFromReportSchema,
   banSchema,
@@ -13,6 +14,8 @@ import {
   partnerTypesSchema,
   removeCrowdfundingSchema,
   removePartnerSchema,
+  removePlaceSchema,
+  restorePlaceSchema,
   reportIdSchema,
 } from '../../moderation/reports';
 import type { Actor } from '../auth/policy';
@@ -22,6 +25,9 @@ import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { Invalid } from '../errors';
 import { approvePartner, removePartner, setPartnerTypes } from '../partners/admin';
+import { approvePlace, removePlace, restorePlace } from '../places/admin';
+import { approveClaim, rejectClaim, removePlaceOwner } from '../places/claims';
+import { approveClaimSchema, placeOwnerSchema, rejectClaimSchema } from '../../places/claims';
 import {
   banAccount,
   closeReport,
@@ -141,6 +147,33 @@ export const moderationDecisions = {
   'partner.setTypes': decision({
     schema: partnerTypesSchema,
     apply: (db, actor, { id, types }) => setPartnerTypes(db, actor, id, types),
+  }),
+  // Approving, rejecting and removing "Onde jogar" places from `/admin/places`.
+  'place.approve': decision({
+    schema: approvePlaceSchema,
+    apply: (db, actor, { id }) => approvePlace(db, actor, id),
+  }),
+  'place.remove': decision({
+    schema: removePlaceSchema,
+    apply: (db, actor, { id, reason, note, reportId }) =>
+      removePlace(db, actor, id, { reason, note, reportId: reportId || null }),
+  }),
+  // Claims from `/admin/places/claims`, and taking an owner off from `/admin/places`.
+  'place.approveClaim': decision({
+    schema: approveClaimSchema,
+    apply: (db, actor, { id }) => approveClaim(db, actor, id),
+  }),
+  'place.rejectClaim': decision({
+    schema: rejectClaimSchema,
+    apply: (db, actor, { id, note }) => rejectClaim(db, actor, id, { note }),
+  }),
+  'place.removeOwner': decision({
+    schema: placeOwnerSchema,
+    apply: (db, actor, { id }) => removePlaceOwner(db, actor, id),
+  }),
+  'place.restore': decision({
+    schema: restorePlaceSchema,
+    apply: (db, actor, { id, note }) => restorePlace(db, actor, id, { note }),
   }),
   // Closing a table from the tables list, `/admin/tables`.
   'table.close': decision({

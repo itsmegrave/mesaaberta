@@ -30,7 +30,15 @@ const show = (over = {}) =>
         suggestions: { platforms: 0, tags: 0, duplicates: 0 },
       },
       recent: [],
-      adminCounts: { reports: 0, queue: 0, connections: 0, events: 0, partners: 0 },
+      adminCounts: {
+        reports: 0,
+        queue: 0,
+        connections: 0,
+        events: 0,
+        partners: 0,
+        places: 0,
+        hiddenPlaces: 0,
+      },
       updatedAt: new Date('2026-10-02T12:00:00Z'),
       viewer: { timezone: 'America/Sao_Paulo' },
       ...over,
@@ -110,7 +118,15 @@ describe('admin overview', () => {
     await expect.element(page.getByText('Nada esperando por você agora.')).toBeVisible();
 
     show({
-      adminCounts: { reports: 2, queue: 0, connections: 0, events: 0, partners: 0 },
+      adminCounts: {
+        reports: 2,
+        queue: 0,
+        connections: 0,
+        events: 0,
+        partners: 0,
+        places: 0,
+        hiddenPlaces: 0,
+      },
       attention: {
         reports: { oldestAt: new Date('2026-10-01T12:00:00Z') },
         posts: { count: 0, first: null },

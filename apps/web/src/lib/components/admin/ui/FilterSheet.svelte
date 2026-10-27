@@ -60,7 +60,7 @@
               >
             {/if}
             <Dialog.CloseTrigger
-              class="btn h-12 flex-1 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+              class="btn h-11 flex-1 rounded-lg preset-filled-primary-500 px-4 font-semibold"
               >{m.admin_list_show({ results })}</Dialog.CloseTrigger
             >
           </footer>

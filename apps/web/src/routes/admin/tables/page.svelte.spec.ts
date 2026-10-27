@@ -19,7 +19,15 @@ vi.mock('$app/state', () => ({
     route: { id: '/admin/tables' },
     data: {
       viewer: { timezone: 'America/Sao_Paulo' },
-      adminCounts: { reports: 0, queue: 0, connections: 0, events: 0, partners: 0 },
+      adminCounts: {
+        reports: 0,
+        queue: 0,
+        connections: 0,
+        events: 0,
+        partners: 0,
+        places: 0,
+        hiddenPlaces: 0,
+      },
     },
   },
 }));
@@ -85,8 +93,8 @@ describe('admin tables', () => {
     show([row(), row({ id: '2', slug: 'b', instagramStatus: 'failed' })]);
 
     const status = page.getByText('Ativa').first().element();
-    // The design system's StatusBadge: a 28px pill with a hairline border.
-    expect(status.className).toMatch(/\bh-7\b/);
+    // The design system's StatusBadge: a 24px pill with a hairline border.
+    expect(status.className).toMatch(/\bh-6\b/);
     expect(status.className).toContain('rounded-full');
     expect(status.className).toContain('border');
     const post = page.getByText('Publicado').first().element();

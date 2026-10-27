@@ -32,9 +32,7 @@
   const scored = $derived(!rating.isNew && rating.score !== null);
 </script>
 
-<span
-  class="inline-flex flex-wrap items-center gap-1.5 text-sm font-semibold text-muted {className}"
->
+<span class="inline-flex flex-wrap items-center gap-2 text-sm font-semibold text-muted {className}">
   {#if scored}
     <span class="sr-only">{label}:</span>
     <Icon name="star" size={16} class="text-lamp" />

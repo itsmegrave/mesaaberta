@@ -2,6 +2,33 @@ import { describe, expect, it } from 'vitest';
 import { publicMetadata } from './metadata';
 const origin = 'https://mesaaberta.example';
 describe('public search metadata', () => {
+  it('describes a place by its kind, area and description, never its street', () => {
+    const result = publicMetadata(
+      '/pp/taverna',
+      {
+        place: {
+          name: 'Taverna do Dado',
+          kind: 'game_cafe',
+          description: 'Mesas toda sexta',
+          street: 'Av. Boa Viagem, 100',
+          neighbourhood: 'Boa Viagem',
+          city: 'Recife',
+          state: 'PE',
+          imageUrl: 'https://sb.test/p.png',
+        },
+      },
+      origin,
+    );
+    expect(result).toEqual({
+      title: 'Taverna do Dado · Onde jogar RPG · Mesa Aberta',
+      description: 'Luderia em Boa Viagem, Recife · PE. Mesas toda sexta',
+      image: 'https://sb.test/p.png',
+      type: 'website',
+    });
+    expect(publicMetadata('/places', {}, origin)?.title).toBe(
+      'Onde jogar RPG presencial · Mesa Aberta',
+    );
+  });
   it('uses public table content without leaking member-only fields', () => {
     const result = publicMetadata(
       '/t/a-table',

@@ -107,7 +107,7 @@
       {/if}
     </div>
 
-    <div class="grid gap-1.5">
+    <div class="grid gap-2">
       <SearchSelect
         id="systems"
         name="systems"
@@ -168,7 +168,7 @@
         type="submit"
         size="custom"
         {controller}
-        class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
+        class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
       >
         {m.favorite_systems_save()}
       </MAButton>

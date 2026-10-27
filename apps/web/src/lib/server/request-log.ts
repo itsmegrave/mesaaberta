@@ -2,6 +2,7 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { isHttpError, isRedirect } from '@sveltejs/kit';
 import * as Sentry from '@sentry/sveltekit';
 import type { Fields, Logger } from '@mesaaberta/core/server/logger';
+import { coloOf } from '@mesaaberta/core/observability/sentry-options';
 import { withRequestId } from '@mesaaberta/contracts';
 
 /** The record a route parameter names, by the path segment before it (`/t/[slug]`). */
@@ -73,6 +74,9 @@ export const handleRequestLog =
     const started = Date.now();
     Sentry.setTag('requestId', requestId);
     Sentry.setTag('route', event.route?.id ?? '/unmatched');
+    // The Cloudflare data center that served the request, to split latency by region.
+    const colo = coloOf(event.request);
+    if (colo) Sentry.setTag('colo', colo);
     if (resource.resourceType) Sentry.setTag('resourceType', resource.resourceType);
     if (resource.resourceId) Sentry.setTag('resourceId', resource.resourceId);
 

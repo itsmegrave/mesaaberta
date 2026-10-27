@@ -151,9 +151,9 @@
     { value: '', label: m.profile_table_role_none() },
   ] as const;
 
-  const input = 'input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
+  const input = 'input h-11 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
   const secondary =
-    'btn h-12 min-w-11 rounded-lg btn-secondary px-3 font-semibold disabled:opacity-50';
+    'btn h-11 min-w-11 rounded-lg btn-secondary px-3 font-semibold disabled:opacity-50';
 
   const ERRORS: Record<string, () => string> = {
     required: m.profile_error_required,
@@ -513,7 +513,7 @@
       type="submit"
       size="custom"
       {controller}
-      class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
+      class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
     </MAButton>

@@ -19,7 +19,15 @@ vi.mock('$app/state', () => ({
     route: { id: '/admin/events' },
     data: {
       viewer: { timezone: 'America/Sao_Paulo' },
-      adminCounts: { reports: 0, queue: 0, connections: 0, events: 1, partners: 0 },
+      adminCounts: {
+        reports: 0,
+        queue: 0,
+        connections: 0,
+        events: 1,
+        partners: 0,
+        places: 0,
+        hiddenPlaces: 0,
+      },
     },
   },
 }));
@@ -80,13 +88,7 @@ describe('admin events page', () => {
     await expect
       .element(page.getByRole('heading', { name: 'Fila de eventos', level: 1 }))
       .toBeVisible();
-    for (const label of [
-      /Falhou/,
-      /Aguardando nova tentativa/,
-      /Pendente/,
-      /Em execução/,
-      /Processado/,
-    ]) {
+    for (const label of [/Falhou/, /Nova tentativa/, /Pendente/, /Em execução/, /Processado/]) {
       expect(page.getByRole('radio', { name: label }).elements()).toHaveLength(1);
     }
     expect(

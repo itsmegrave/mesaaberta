@@ -3,6 +3,7 @@
   import DirectoryMark from '#lib/components/directory/ui/DirectoryMark.svelte';
   import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
   import PersonRow from '#lib/components/directory/ui/PersonRow.svelte';
+  import { namesSummary } from '#lib/components/directory/summary.js';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
@@ -43,7 +44,7 @@
 
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<section class="py-2 md:pt-12">
+<section class="py-2 md:pt-8">
   <DirectoryHeader
     crumbs={[{ label: m.systems_crumb(), href: '/systems' }, { label: system.name }]}
     name={system.name}
@@ -93,6 +94,13 @@
       lede={m.system_gms_lede({ name: system.name })}
       moreHref={data.directories.gms ? `/gamemasters?system=${system.slug}` : undefined}
       moreLabel={m.system_gms_all()}
+      summary={m.system_gms_summary({
+        count: facts.gmCount,
+        names: namesSummary(
+          data.gms.map((gm) => `@${gm.username}`),
+          facts.gmCount,
+        ),
+      })}
     >
       <ul class="grid grid-cols-1 gap-4 md:grid-cols-2">
         {#each data.gms as gm (gm.username)}
@@ -103,7 +111,10 @@
   {/if}
 
   {#if data.ended.length > 0}
-    <DirectorySection title={m.system_ended_title()}>
+    <DirectorySection
+      title={m.system_ended_title()}
+      summary={m.system_ended_summary({ count: data.ended.length })}
+    >
       <ul class="border-t border-surface-200-800">
         {#each data.ended as table (table.slug)}
           <li
