@@ -15,6 +15,7 @@ import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
+import { profileRoutes } from './profiles';
 import { registrationRoutes } from './registrations';
 import { readRoutes } from './reads';
 import { reportRoutes } from './reports';
@@ -97,6 +98,9 @@ export function createApi() {
   // The public sitemap's identifiers (published tables, active profiles). New and anonymous, so no
   // flag and no web fallback: web answers 503 when this read fails.
   app.route('/v1/seo', seoRoutes());
+  // The public profile page (/u/[username]). No flag and no web fallback either: database reads
+  // live in the api now, and web answers 503 when this one fails.
+  app.route('/v1/profiles', profileRoutes());
   // The admin pages' data (overview, users, tables), behind `api_reads_admin*`.
   app.route('/v1/admin-reads', adminReadRoutes());
 

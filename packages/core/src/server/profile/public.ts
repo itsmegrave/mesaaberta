@@ -12,6 +12,7 @@ import { gmRatingOf, publicGmReviews } from '@mesaaberta/core/server/ratings/ser
 import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { readFavoriteSystems } from '@mesaaberta/core/server/profile/favorite-systems';
+import { followerCount, isFollowing } from '@mesaaberta/core/server/follows/service';
 import { isNetwork, socialTarget } from '../../profile/social-links';
 import { normalizeUsername, usernameProblem } from '../../profile/username';
 
@@ -67,6 +68,7 @@ export async function publicProfile(
     showParticipantRating,
     showFavoriteSystems,
     showTableRole = false,
+    withFollows = false,
   }: {
     page?: number;
     now?: Date;
@@ -80,6 +82,11 @@ export async function publicProfile(
     showFavoriteSystems?: (profile: { id: string; isAdmin: boolean }) => Promise<boolean>;
     /** Whether Quem mestra is on for the viewer (`api_directory_gms`), so the role tag shows. */
     showTableRole?: boolean;
+    /**
+     * Whether to read the follow part too: whether the viewer follows this person, and for the
+     * owner how many follow them. The caller decides who sees it (`use_follows`). Omitted: null.
+     */
+    withFollows?: boolean;
   } = {},
 ) {
   if (usernameProblem(username) !== null) return null;
@@ -106,37 +113,57 @@ export async function publicProfile(
   const target = { id: found.id, isAdmin: found.role === 'admin' };
   // Everything below depends only on the profile row, so it all goes out at once: awaiting the
   // flag-gated reads one after another made Sentry flag the page for consecutive DB queries.
-  const [links, totals, rating, upcoming, reviews, badges, participantRating, favoriteSystems] =
-    await Promise.all([
-      db
-        .select({
-          network: profileSocialLinks.network,
-          handle: profileSocialLinks.handle,
-          url: profileSocialLinks.url,
-        })
-        .from(profileSocialLinks)
-        .where(eq(profileSocialLinks.profileId, found.id))
-        .orderBy(asc(profileSocialLinks.position), asc(profileSocialLinks.id)),
-      tableCounts(db, found.id),
-      gmRatingOf(db, found.id),
-      listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
-      publicGmReviews(db, found.id),
-      // Null: the rollout has not reached this profile, so the page shows no strip at all.
-      (async () =>
-        (await showBadges?.(target))
-          ? heldBadges(db, found.id, { includeHidden: isOwnerView })
-          : null)(),
-      // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
-      (async () =>
-        (await showParticipantRating?.(target)) ? participantRatingOf(db, found.id, now) : null)(),
-      // Null: the rollout has not reached this profile, or its owner hid them. Pills under the bio.
-      (async () =>
-        found.showFavoriteSystems && (await showFavoriteSystems?.(target))
-          ? readFavoriteSystems(db, found.id)
-          : null)(),
-    ]);
+  const [
+    links,
+    totals,
+    rating,
+    upcoming,
+    reviews,
+    badges,
+    participantRating,
+    favoriteSystems,
+    follows,
+  ] = await Promise.all([
+    db
+      .select({
+        network: profileSocialLinks.network,
+        handle: profileSocialLinks.handle,
+        url: profileSocialLinks.url,
+      })
+      .from(profileSocialLinks)
+      .where(eq(profileSocialLinks.profileId, found.id))
+      .orderBy(asc(profileSocialLinks.position), asc(profileSocialLinks.id)),
+    tableCounts(db, found.id),
+    gmRatingOf(db, found.id),
+    listUpcomingTablesByGm(db, found.id, now, page, PUBLIC_PROFILE_PAGE_SIZE),
+    publicGmReviews(db, found.id),
+    // Null: the rollout has not reached this profile, so the page shows no strip at all.
+    (async () =>
+      (await showBadges?.(target))
+        ? heldBadges(db, found.id, { includeHidden: isOwnerView })
+        : null)(),
+    // Null: the rollout has not reached this profile, so its "Mesas jogadas" tile has no score.
+    (async () =>
+      (await showParticipantRating?.(target)) ? participantRatingOf(db, found.id, now) : null)(),
+    // Null: the rollout has not reached this profile, or its owner hid them. Pills under the bio.
+    (async () =>
+      found.showFavoriteSystems && (await showFavoriteSystems?.(target))
+        ? readFavoriteSystems(db, found.id)
+        : null)(),
+    (async () => {
+      if (!withFollows) return null;
+      const [following, followers] = await Promise.all([
+        viewerId && !isOwnerView ? isFollowing(db, viewerId, found.id) : false,
+        isOwnerView ? followerCount(db, found.id) : null,
+      ]);
+      return { following, followers };
+    })(),
+  ]);
 
   return {
+    // Who the page is about, for the caller's flag targeting (rollouts are by the profile shown).
+    subject: target,
+    follows,
     badges,
     profile: {
       username: found.username!,

@@ -55,7 +55,13 @@ export default defineConfig({
     {
       command: 'bun apps/api/src/entry/bun.ts',
       cwd: '../..',
-      env: { DATABASE_URL: supabase.DB_URL, API_INTERNAL_TOKEN: apiToken, PORT: String(apiPort) },
+      env: {
+        DATABASE_URL: supabase.DB_URL,
+        API_INTERNAL_TOKEN: apiToken,
+        PORT: String(apiPort),
+        // Public profiles answer picture URLs, built from the same storage the web app uses.
+        SUPABASE_URL: supabase.API_URL,
+      },
       url: `http://127.0.0.1:${apiPort}/healthz`,
       reuseExistingServer: false,
       timeout: 30_000,
