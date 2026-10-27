@@ -3,6 +3,7 @@ import { accountRoutes } from '../../../../../api/src/account';
 import { adminReadRoutes } from '../../../../../api/src/admin-reads';
 import { announcementRoutes } from '../../../../../api/src/announcements';
 import { catalogRoutes } from '../../../../../api/src/catalog';
+import { followRoutes } from '../../../../../api/src/follows';
 import { inboxRoutes } from '../../../../../api/src/inbox';
 import { meRoutes } from '../../../../../api/src/me';
 import { messageRoutes } from '../../../../../api/src/messages';
@@ -27,6 +28,7 @@ export function apiOver(db: AnyDb, env: Record<string, string> = {}) {
     ['/v1/inbox', inboxRoutes(open)],
     ['/v1/messages', messageRoutes(open)],
     ['/v1/me', meRoutes(open)],
+    ['/v1/follows', followRoutes(open)],
     ['/v1/account', accountRoutes(open)],
   ] as const;
   const bindings = { DATABASE_URL: 'postgres://test', ...env };

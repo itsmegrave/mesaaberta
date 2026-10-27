@@ -1,9 +1,10 @@
 import { error, isRedirect, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { requireUser } from '#lib/server/auth/guard.js';
+import { writeViaApi } from '#lib/server/api-write.js';
+import { NotFound } from '@mesaaberta/core/server/errors';
 import { gameTables } from '@mesaaberta/core/server/db/schema';
 import { failFrom } from '#lib/server/fail-from.js';
-import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { loadRead } from '#lib/server/reads/load.js';
 
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
@@ -13,7 +14,7 @@ import { runRegistrationAction } from '#lib/server/registrations/form-action.js'
 import { reportSchema } from '@mesaaberta/core/moderation/reports';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
 import { followAction } from '#lib/server/follows/action.js';
-import { followState } from '#lib/server/follows/state.js';
+import { gmFollowState } from '#lib/server/follows/state.js';
 import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
   const data = await loadRead(event, 'detail');
@@ -27,16 +28,10 @@ export const load: PageServerLoad = async (event) => {
       ? { mesa_id: table.id, gm_user_id: table.gmId, seat_availability: data.table.seatsLeft }
       : null;
   });
-  // Seguir on the GM row, for anyone but the GM.
-  const [gm] = locals.db
-    ? await locals.db
-        .select({ gmId: gameTables.gmId })
-        .from(gameTables)
-        .where(eq(gameTables.slug, params.slug))
-    : [];
   return {
     ...data,
-    follow: gm && data.gmUsername ? await followState(locals, gm.gmId) : null,
+    // Seguir on the GM row, for anyone but the GM.
+    follow: data.gmUsername ? await gmFollowState(locals, params.slug) : null,
     ratingForm: {
       valid: false,
       data: {
@@ -56,23 +51,22 @@ export const actions: Actions = {
 
   // "Falar com quem mestra": opens the direct conversation with the GM, about this table.
   talk: async ({ locals, url, params }) => {
-    await requireUser(locals, new URL(url.pathname, url));
-    if (!locals.db) error(503, 'Database not configured');
-
-    const [table] = await locals.db
-      .select({ gmId: gameTables.gmId, slug: gameTables.slug, status: gameTables.status })
-      .from(gameTables)
-      .where(eq(gameTables.slug, params.slug));
-    if (!table || table.status !== 'active') error(404, 'Not found');
+    const user = await requireUser(locals, new URL(url.pathname, url));
 
     try {
-      const conversationId = await openDirectConversation(
+      // The api finds the active table and opens the conversation with its GM; any other table is
+      // its 404.
+      const { body } = await writeViaApi(
         locals,
-        await locals.getProfile(),
-        table.gmId,
+        user,
+        `/v1/messages/tables/${encodeURIComponent(params.slug)}/gm`,
+        {},
       );
-      redirect(303, `/m/${conversationId}?mesa=${encodeURIComponent(table.slug)}`);
+      if (typeof body.conversationId !== 'string' || typeof body.slug !== 'string')
+        error(503, 'Invalid API response');
+      redirect(303, `/m/${body.conversationId}?mesa=${encodeURIComponent(body.slug)}`);
     } catch (cause) {
+      if (cause instanceof NotFound) error(404, 'Not found');
       if (cause instanceof Error && cause.name === 'DirectMessagesOff') {
         return failFrom(cause);
       }

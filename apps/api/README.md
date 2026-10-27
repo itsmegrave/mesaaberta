@@ -84,6 +84,7 @@ The inbox and threads are API-owned, without a flag or web database fallback (we
 - `POST /v1/messages/:id/open` (`{ about }`, the table slug a direct message starts from): the thread page's header and newest messages; opening it reads it.
 - `POST /v1/messages/:id/read`: everything in the conversation is read now.
 - `POST /v1/messages/tables/:slug`: a table's chat for its GM and confirmed players, made on first use.
+- `POST /v1/messages/tables/:slug/gm`: "Falar com quem mestra", the direct conversation with an active table's GM (`{ conversationId, slug }`).
 - `GET /v1/messages/blocked`, `POST /v1/messages/block`, `POST /v1/messages/:id/report`: blocking and reporting; web checks `use_message_safety` before it calls these.
 
 Pictures stay paths: the web Worker turns them into URLs.
@@ -98,3 +99,11 @@ Pictures stay paths: the web Worker turns them into URLs.
 - `GET /v1/me/notifications?page=N&category=&unread=1`: a page of the feed and the unread total (a page past the last is a 404).
 
 `achievements=1` says the badge notices are on for the person (`use_badges`, decided in web).
+
+## Seguir
+
+`/v1/follows` is API-owned, without a flag or web database fallback; web checks `use_follows` before it calls these:
+
+- `GET /v1/follows/:profileId` and `POST /v1/follows/:profileId` (`{ follow }`): whether the actor follows someone, and following (records `FollowStarted` the first time) or stopping.
+- `GET /v1/follows/gm/:slug`: the Seguir button on a table's GM row, for visitors too (`{ profileId, following }`; a table the viewer cannot see is a 404). The table read keeps the GM's id out.
+- `GET /v1/follows?page=N` ("Seguindo" and the follower count) and `POST /v1/follows/notices` (its bell switches).

@@ -139,6 +139,13 @@ describe('api message routes over a database', () => {
     expect((await call('/tables/no-such-table', ana, {})).status).toBe(404);
   });
 
+  it("opens the conversation with an active table's GM, and answers 404 for any other", async () => {
+    const response = await call('/tables/mesa-chat/gm', bia, {});
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ eventIds: [], conversationId, slug: 'mesa-chat' });
+    expect((await call('/tables/no-such-table/gm', bia, {})).status).toBe(404);
+  });
+
   it('files a report on a message in the conversation', async () => {
     const response = await call(`/${conversationId}/report`, ana, {
       targetType: 'message',
