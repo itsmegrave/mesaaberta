@@ -30,6 +30,16 @@ const supabaseUser = (async (_url: string, init?: RequestInit) => {
 }) as typeof fetch;
 
 /**
+ * For specs that mock the core readers: a stand-in database that answers only the api guards'
+ * lookup of the actor, with these profiles (a visitor when empty). Whatever else is read must be
+ * mocked.
+ */
+export const actorsOnly = (actors: { id: string; role: string; status: string }[] = []) =>
+  ({
+    select: () => ({ from: () => ({ where: async () => actors }) }),
+  }) as unknown as AnyDb;
+
+/**
  * For specs only: an `env` whose `API` binding answers from the api Worker's own routes over the
  * test database, so a web page or form action runs end to end the way it does in production (the
  * web Worker reads and writes no database for these).
