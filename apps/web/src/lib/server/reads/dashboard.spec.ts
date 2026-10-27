@@ -1,6 +1,9 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
+import { createTestDb } from '../db/test-db';
+import { apiOver } from '../db/test-api';
 import { DASHBOARD_PAGE_SIZE, read } from './dashboard';
 
 vi.mock('#lib/server/invitations/api.js', () => ({
@@ -13,17 +16,27 @@ vi.mock('@mesaaberta/core/server/dashboard/queries', () => ({
 }));
 
 const table = (n: number, requests = 0) => ({
+  startsAt: new Date('2099-01-01T20:00:00Z'),
   slug: `mesa-${n}`,
   title: `Mesa ${n}`,
   requests: Array.from({ length: requests }, (_, i) => ({ playerId: `p${i}`, username: `p${i}` })),
 });
+const gm = '00000000-0000-4000-8000-0000000000f1';
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+  await test.db.insert(profiles).values({ id: gm, username: 'gm' });
+});
+afterAll(() => test.close());
+
+// The api Worker reads the page (over the test database; the lists themselves are mocked).
 const event = (search = '') =>
   ({
     locals: {
-      db: {},
-      flags: { isEnabled: async () => false },
-      getUser: async () => ({ id: 'gm' }),
-      getProfile: async () => ({ id: 'gm', username: 'gm' }),
+      env: apiOver(test.db),
+      log: { warn: vi.fn() },
+      getUser: async () => ({ id: gm }),
+      getProfile: async () => ({ id: gm, username: 'gm' }),
     },
     url: new URL(`https://x.test/u/tables${search}`),
   }) as unknown as RequestEvent;

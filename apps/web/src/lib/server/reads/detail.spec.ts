@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
+import { apiOver } from '../db/test-api';
 import { read } from './detail';
 
 vi.mock('#lib/server/invitations/api.js', () => ({
@@ -48,12 +49,12 @@ beforeAll(async () => {
 });
 afterAll(() => test.close());
 
-// The in-process reader: every `api_*` flag off, so nothing goes to the api Worker.
+// The api Worker reads the page, over the test database.
 const eventFor = (who: Person | null, slug: string) =>
   ({
     locals: {
-      db: test.db,
-      env: {},
+      env: apiOver(test.db),
+      log: { warn: vi.fn() },
       flags: { isEnabled: async () => false },
       getUser: async () => (who ? { id: who.id } : null),
       getProfile: async () => who,

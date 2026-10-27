@@ -66,7 +66,11 @@ describe('GET /v1/admin-reads', () => {
     expect(answer.status).toBe(200);
     const body = (await answer.json()) as { rows: { slug: string }[] };
     expect(body.rows.map((row) => row.slug)).toContain('mesa-admin');
-    expect(body).toEqual(json(await listAdminTables(test.db, new URLSearchParams())));
+    expect(body).toEqual({
+      ...json(await listAdminTables(test.db, new URLSearchParams())),
+      // No Instagram account connected in the test database.
+      instagramExpiresAt: null,
+    });
   });
 
   it('refuses anyone who is not an admin, and needs an actor', async () => {

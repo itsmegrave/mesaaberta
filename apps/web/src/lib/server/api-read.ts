@@ -1,34 +1,26 @@
-import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
-import type { FlagName } from '@mesaaberta/core/server/flags/registry';
-import { callApiRaw, routeTemplate } from './api-client';
+import { error } from '@sveltejs/kit';
+import { Forbidden, NotFound, TableConcluded } from '@mesaaberta/core/server/errors';
+import { requireApi } from './api-required';
 
 /**
- * Reads a page's data from the api Worker when `flag` is on for the signed-in person (targeted by
- * id and `isAdmin`, so a rollout can start with admins). Resolves to the JSON the api answered, or
- * to null when the flag is off or the call cannot be used (no binding, a refusal, a failure): the
- * caller then runs the same reader in this Worker, so the flag is a kill switch and not a
- * dependency. The api takes the subject from the actor header, never from the path.
+ * Reads a page's data from the api Worker as `actorId` (null: a visitor), which is where the
+ * database is read; there is no web fallback. The api's refusals become the page's own errors:
+ * not found a 404, forbidden a 403 and a concluded table a 403 with its code. A call that cannot be
+ * made, or any other failure, is a 503.
  */
-export async function readViaApi<T>(
+export async function readFromApi<T>(
   locals: App.Locals,
-  flag: FlagName,
-  viewer: Actor,
+  actorId: string | null,
   path: string,
-): Promise<T | null> {
-  if (
-    !(await locals.flags.isEnabled(flag, { id: viewer.id, isAdmin: can(viewer, 'admin:access') }))
-  )
-    return null;
-
-  const answer = await callApiRaw(locals.env, path, viewer.id, locals.log, undefined, {}, 'GET');
-  if (!answer) return null;
-  if (!answer.ok) {
-    locals.log.warn('api read not used', {
-      code: 'api_call_refused',
-      route: routeTemplate(path),
-      status: answer.status,
-    });
-    return null;
+): Promise<T> {
+  try {
+    return await requireApi<T>(locals, actorId === null ? null : { id: actorId }, path);
+  } catch (cause) {
+    // Before `Forbidden`, which it extends: the page tells the GM why.
+    if (cause instanceof TableConcluded)
+      error(403, { message: 'Forbidden', code: 'table_concluded' });
+    if (cause instanceof Forbidden) error(403, 'Forbidden');
+    if (cause instanceof NotFound) error(404, 'Not found');
+    throw cause;
   }
-  return answer.body as T;
 }

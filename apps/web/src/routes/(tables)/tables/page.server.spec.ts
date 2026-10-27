@@ -1,5 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { listSystems } from '@mesaaberta/core/server/systems';
 import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { load } from './+page.server';
@@ -31,13 +33,21 @@ const table = (slug: string, systemSlug: string) =>
 // Catalogue order: a, b, c, d, e.
 const catalogue = ['a', 'b', 'c', 'd', 'e'].map(system);
 
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+});
+afterAll(() => test.close());
+
 const tracked = vi.fn();
 const viewer = '00000000-0000-4000-8000-000000000001';
 const event = (search = '', referer = '') =>
   ({
     params: {},
     locals: {
-      db: {},
+      // The api Worker reads the list (over the test database; the queries are mocked).
+      env: apiOver(test.db),
+      log: { warn: vi.fn() },
       track: tracked,
       getUser: async () => ({ id: viewer }),
       getProfile: async () => null,

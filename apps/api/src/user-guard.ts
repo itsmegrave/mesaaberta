@@ -41,3 +41,32 @@ export const userGuard = (open: Open) =>
       await close().catch(() => undefined);
     }
   });
+
+export type ViewerVariables = { db: AnyDb; actor: Actor | null };
+
+/**
+ * The gate for reads anyone may see (the home preview, the table list, a table's page): the actor
+ * header is optional. When it names an account, that account is read from the database like in
+ * `userGuard`; no header, or an account that has no profile yet, reads as a visitor.
+ */
+export const viewerGuard = (open: Open) =>
+  createMiddleware<{ Bindings: DatabaseEnv; Variables: ViewerVariables }>(async (c, next) => {
+    const actorId = c.req.header(ACTOR_HEADER);
+    const connectionString = connectionStringFrom(c.env);
+    if (!connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const { db, close } = open(connectionString);
+    try {
+      const [actor] = actorId
+        ? await db
+            .select({ id: profiles.id, role: profiles.role, status: profiles.status })
+            .from(profiles)
+            .where(eq(profiles.id, actorId))
+        : [];
+      c.set('db', db as AnyDb);
+      c.set('actor', actor ?? null);
+      await next();
+    } finally {
+      await close().catch(() => undefined);
+    }
+  });

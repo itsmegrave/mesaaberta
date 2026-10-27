@@ -1,5 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { listNewTables, listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
 import { readHome } from '@mesaaberta/core/server/reads/home';
 import { load } from './+page.server';
@@ -22,12 +24,25 @@ const table = (n: number) =>
     imagePath: null,
   }) as unknown as Awaited<ReturnType<typeof listUpcomingTables>>[number];
 
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+});
+afterAll(() => test.close());
+
 const error = vi.fn();
-const event = (db: unknown = {}) =>
+// A visitor: the api Worker reads the preview (over the test database; the queries are mocked).
+// `api: false` is a web Worker with no api to call.
+const event = ({ api = true } = {}) =>
   ({
     params: {},
     url: new URL('https://x.test/'),
-    locals: { db, log: { error }, getProfile: async () => null },
+    locals: {
+      env: api ? apiOver(test.db) : {},
+      log: { error, warn: vi.fn() },
+      getUser: async () => null,
+      getProfile: async () => null,
+    },
     platform: undefined,
   }) as unknown as RequestEvent;
 
@@ -42,8 +57,8 @@ describe('the home page load', () => {
     error.mockReset();
   });
 
-  it('lists nothing when there is no database yet', async () => {
-    expect(await run(event(null))).toMatchObject({
+  it('lists nothing when there is no api to read from', async () => {
+    expect(await run(event({ api: false }))).toMatchObject({
       tables: [],
       newTables: [],
       readSeed: { resource: 'preview', viewer: 'public', fields: ['tables', 'newTables', 'now'] },
