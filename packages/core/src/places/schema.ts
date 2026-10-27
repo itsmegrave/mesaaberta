@@ -82,6 +82,9 @@ export const placeSchema = z.object({ ...fields, image: imageFile }).superRefine
 
 export type PlaceFormInput = z.output<typeof placeSchema>;
 
+/** The same input without the photo, as the api Worker takes it once web stored the photo. */
+export const placeInputSchema = z.object(fields).superRefine(checkLists);
+
 /** What the service stores: the form without the photo file, the kind narrowed. */
 export type PlaceInput = Omit<PlaceFormInput, 'image' | 'kind'> & { kind: PlaceKind };
 

@@ -12,6 +12,7 @@ import { eventRoutes } from './events';
 import { extensionRoutes } from './extensions';
 import { followRoutes } from './follows';
 import { partnerRoutes } from './partners';
+import { placeRoutes } from './places';
 import { inboxRoutes } from './inbox';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
@@ -103,6 +104,8 @@ export function createApi() {
   app.route('/v1/follows', followRoutes());
   // Parceiros: the list, a partner's edit form and "Quem cuida do parceiro".
   app.route('/v1/partners', partnerRoutes());
+  // Onde jogar: sending, editing and claiming a place.
+  app.route('/v1/places', placeRoutes());
   // The person's own profile (the form and the direct-messages switch).
   app.route('/v1/account', accountRoutes());
 

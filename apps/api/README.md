@@ -166,3 +166,11 @@ The admin pages read no database in web; each route is behind the admin guard, t
 - `GET /v1/admin/events?…`: the event queue page (`eventFilters` moved to core).
 
 The extension panels (`/admin/[ext]`) still run in web until the api can read the extensions' flags.
+
+## Onde jogar forms
+
+`/v1/places` (`places.ts`); web checks `api_directory_places`, validates the form and stores the photo, and the services authorize:
+
+- `POST /v1/places` (`{ input, imagePath }`) and `POST /v1/places/:slug` (an edit): answer `{ eventIds, slug }` (and `replacedImage` on an edit). A duplicate is `invalid` on `name` with `place_duplicate` and the listed place's `slug`.
+- `GET /v1/places/:slug/edit`: the place the actor may edit (403/404 otherwise; web shows both as its 404).
+- `GET /v1/places/:slug/claim` and `POST /v1/places/:slug/claim`: "Este lugar é seu?" for a listed place.

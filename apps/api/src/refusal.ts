@@ -11,12 +11,19 @@ import {
   TableFull,
   TooEarly,
 } from '@mesaaberta/core/server/errors';
+import { PlaceDuplicate } from '@mesaaberta/core/server/places/service';
 
 /**
  * A domain refusal as the JSON the web Worker turns back into the same error, so a form shows what
  * it always showed. Null for anything that is not a refusal: a bug, which the caller rethrows.
  */
 export function refusal(c: Context, error: unknown) {
+  // Before `Invalid`, which it extends: the form links to the place already listed.
+  if (error instanceof PlaceDuplicate)
+    return c.json(
+      { error: 'invalid', field: error.field, message: error.message, slug: error.slug },
+      400,
+    );
   if (error instanceof Invalid)
     return c.json({ error: 'invalid', field: error.field, message: error.message }, 400);
   if (error instanceof RateLimited)
