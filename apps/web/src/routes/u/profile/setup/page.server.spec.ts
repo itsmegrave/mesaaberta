@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { eq } from 'drizzle-orm';
 import { profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -27,7 +28,8 @@ const event = (
   return {
     locals: {
       db: test.db,
-      env: {},
+      // The api Worker saves the profile, over the same test database.
+      env: apiOver(test.db),
       flags: { isEnabled: async () => false },
       log: { warn: () => undefined },
       track: tracked,

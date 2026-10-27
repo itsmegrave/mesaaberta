@@ -1,4 +1,4 @@
-import type { FlagName } from '@mesaaberta/core/server/flags/registry';
+import { error } from '@sveltejs/kit';
 import { callApiRaw, routeTemplate } from './api-client';
 
 /** How a decision handed to the api Worker came out. */
@@ -6,9 +6,7 @@ export type Decided =
   /** The api made it; these are the events to dispatch after the response. */
   | { kind: 'done'; eventIds: string[] }
   /** The api refused it the way the in-process service would: show `code` on `field`. */
-  | { kind: 'refused'; status: 400 | 403 | 404 | 429; field: string; code: string }
-  /** The flag is off, or the call could not be made or failed: decide in this Worker. */
-  | { kind: 'fallback' };
+  | { kind: 'refused'; status: 400 | 403 | 404 | 429; field: string; code: string };
 
 type Body = {
   eventId?: unknown;
@@ -19,22 +17,17 @@ type Body = {
 };
 
 /**
- * Asks the api Worker to make an admin decision, when `flag` is on for this admin. A refusal from
- * the api comes back as `refused` and is never repeated here; a call that cannot be made, or an api
- * that answers with a failure, is `fallback`, so the flag is a kill switch and not a dependency.
+ * Asks the api Worker to make an admin decision; the api is the only place it is made. A refusal
+ * comes back as `refused`; a call that cannot be made, or an api that fails, answers 503.
  */
 export async function decideViaApi(
   locals: App.Locals,
-  flag: FlagName,
   path: string,
   actorId: string,
   data: unknown,
 ): Promise<Decided> {
-  if (!(await locals.flags.isEnabled(flag, { id: actorId, isAdmin: true })))
-    return { kind: 'fallback' };
-
   const answer = await callApiRaw(locals.env, path, actorId, locals.log, data);
-  if (!answer) return { kind: 'fallback' };
+  if (!answer) error(503, 'API unavailable');
   const body = (answer.body ?? {}) as Body;
 
   if (answer.ok) {
@@ -61,14 +54,14 @@ export async function decideViaApi(
   } else if (answer.status === 403 && body.error === 'forbidden') {
     return { kind: 'refused', status: 403, field: '', code: 'forbidden' };
   } else if (answer.status === 404 && body.error === 'not_found' && path.split('/').length > 4) {
-    // Only an entry the service could not find; an unknown decision is a bug and falls back.
+    // Only an entry the service could not find; an unknown decision is a bug.
     return { kind: 'refused', status: 404, field: '', code: 'not_found' };
   }
-  locals.log.warn('api decision not used', {
-    code: 'api_call_refused',
+  locals.log.warn('api decision failed', {
+    code: 'api_call_failed',
     route: routeTemplate(path),
     status: answer.status,
     reason: typeof body.error === 'string' ? body.error : undefined,
   });
-  return { kind: 'fallback' };
+  error(503, 'API unavailable');
 }

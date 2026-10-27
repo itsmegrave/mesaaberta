@@ -64,6 +64,8 @@ export default defineConfig({
         // The auth forms run here only (no web fallback): Supabase Auth and the local Mailpit.
         SUPABASE_PUBLISHABLE_KEY: supabase.PUBLISHABLE_KEY,
         MAILPIT_URL: supabase.MAILPIT_URL,
+        // Closing an account deletes its Auth user, from here only.
+        SUPABASE_SECRET_KEY: supabase.SECRET_KEY,
       },
       url: `http://127.0.0.1:${apiPort}/healthz`,
       reuseExistingServer: false,

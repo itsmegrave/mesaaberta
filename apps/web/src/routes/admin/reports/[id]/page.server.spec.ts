@@ -1,8 +1,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { closeReport, startReview } from '@mesaaberta/core/server/moderation/admin';
+import { profiles } from '@mesaaberta/core/server/db/schema';
+import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { actions } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/moderation/admin', async (original) => ({
@@ -12,7 +15,19 @@ vi.mock('@mesaaberta/core/server/moderation/admin', async (original) => ({
 }));
 vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 
-const admin = { id: 'admin', role: 'admin', status: 'active', username: 'ana' };
+const admin = {
+  id: '00000000-0000-4000-8000-0000000000ad',
+  role: 'admin',
+  status: 'active',
+  username: 'ana',
+};
+// The api Worker makes the decisions over the test database (the moderation services are mocked).
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+  await test.db.insert(profiles).values(admin as never);
+});
+afterAll(() => test.close());
 const report = '00000000-0000-4000-8000-000000000001';
 
 function event(form: Record<string, string>, profile: object = admin) {
@@ -22,10 +37,10 @@ function event(form: Record<string, string>, profile: object = admin) {
     event: {
       locals: {
         db: {},
-        getUser: async () => ({ id: 'admin' }),
+        getUser: async () => ({ id: admin.id }),
         getProfile: async () => profile,
-        // api_admin_moderation off: these specs cover the in-process path.
-        flags: { isEnabled: async () => false },
+        env: apiOver(test.db),
+        log: { warn: vi.fn() },
         afterResponse: (task: (db: unknown) => Promise<unknown>) => void after.push(task),
       },
       url: new URL(`https://x.test/admin/reports/${report}`),
@@ -56,7 +71,13 @@ describe('the report decisions', () => {
     const result = await run('accept', e);
 
     expect(result.form.valid).toBe(true);
-    expect(closeReport).toHaveBeenCalledWith({}, admin, report, 'resolved', 'Mesa desativada');
+    expect(closeReport).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: admin.id }),
+      report,
+      'resolved',
+      'Mesa desativada',
+    );
     await after[0]({});
     expect(dispatchEvent).toHaveBeenCalledWith(
       {},

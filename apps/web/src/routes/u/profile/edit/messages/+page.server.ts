@@ -5,7 +5,6 @@ import { writeViaApi } from '#lib/server/api-write.js';
 import { invitationAction } from '#lib/server/invitations/actions.js';
 import { invitationPreferences } from '#lib/server/invitations/api.js';
 import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
-import { setDirectMessages } from '@mesaaberta/core/server/messages/service';
 import { blockSchema } from '@mesaaberta/core/messages/schema';
 import { listBlocked, setBlocked } from '@mesaaberta/core/server/blocks/service';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
@@ -57,11 +56,7 @@ export const actions: Actions = {
     );
     if (!messagesForm.valid) return fail(400, { form: messagesForm });
 
-    const profile = await locals.getProfile();
-    const remote = profile
-      ? await writeViaApi(locals, 'api_account', profile, '/v1/account/messages', messagesForm.data)
-      : null;
-    if (!remote) await setDirectMessages(locals.db, user.id, messagesForm.data.enabled);
+    await writeViaApi(locals, user, '/v1/account/messages', messagesForm.data);
     return { form: messagesForm };
   },
 };

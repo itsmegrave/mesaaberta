@@ -4,11 +4,10 @@ import { refuse, responseForm } from '#lib/forms/server.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { withStoredFields, type ProfileSection } from '#lib/profile/sections.js';
-import { setAvatarPath, setBannerPath } from '@mesaaberta/core/server/account/service';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
-import { loadProfileForm, saveProfile } from '@mesaaberta/core/server/profile/service';
+import { loadProfileForm } from '@mesaaberta/core/server/profile/service';
 import {
   profileSchema,
   PROFILE_DEFAULTS,
@@ -48,29 +47,19 @@ export function saveSection(
     });
     if (!form.valid) return fail(400, { form });
 
-    // Through the api Worker when `api_account` is on for this person; here otherwise.
-    const profile = await locals.getProfile();
-    const remote = profile
-      ? await writeViaApi(locals, 'api_account', profile, '/v1/account/save', form.data)
-      : null;
-    if (!remote) await saveProfile(locals.db, user.id, form.data);
+    await writeViaApi(locals, user, '/v1/account/save', form.data);
     return { form };
   };
 }
 
 const images = {
-  photo: { api: '/v1/account/avatar', set: setAvatarPath, folder: (id: string) => id },
-  banner: {
-    api: '/v1/account/banner',
-    set: setBannerPath,
-    folder: (id: string) => `${id}/banners`,
-  },
+  photo: { api: '/v1/account/avatar', folder: (id: string) => id },
+  banner: { api: '/v1/account/banner', folder: (id: string) => `${id}/banners` },
 } as const;
 
 /**
- * Points the profile at a stored picture or cover (or at none) and answers the file it replaced,
- * for the caller to delete. Through the api Worker when `api_account` is
- * on for this person.
+ * Points the profile at a stored picture or cover (or at none), through the api Worker, and answers
+ * the file it replaced, for the caller to delete.
  */
 async function setImage(
   locals: App.Locals,
@@ -78,12 +67,8 @@ async function setImage(
   field: keyof typeof images,
   path: string | null,
 ) {
-  const profile = await locals.getProfile();
-  const remote = profile
-    ? await writeViaApi(locals, 'api_account', profile, images[field].api, { path })
-    : null;
-  if (remote) return typeof remote.body.replaced === 'string' ? remote.body.replaced : null;
-  return images[field].set(locals.db!, userId, path);
+  const written = await writeViaApi(locals, { id: userId }, images[field].api, { path });
+  return typeof written.body.replaced === 'string' ? written.body.replaced : null;
 }
 
 /**

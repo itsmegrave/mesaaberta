@@ -13,7 +13,6 @@ import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { AVATAR_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
-import { addPartner, updatePartner } from '@mesaaberta/core/server/partners/service';
 import { writeViaApi } from '../api-write';
 
 type Event = {
@@ -49,8 +48,6 @@ export async function handlePartnerForm(
     { arrays: ['types', 'linkNetwork', 'linkUrl'], files: ['logo'] },
   );
   if (!form.valid) return fail(400, { form: responseForm(form) });
-  if (!locals.db) return formMessage(form, { code: 'unavailable' }, { status: 503 });
-  const db = locals.db;
 
   let replacedLogo: string | null = null;
   try {
@@ -66,25 +63,15 @@ export async function handlePartnerForm(
     }
 
     if (!id && !logoPath) throw new Invalid('logo', 'required');
-    // Through the api Worker when `api_submissions` is on for this person; here otherwise.
-    const remote = actor
-      ? await writeViaApi(
-          locals,
-          'api_submissions',
-          actor,
-          id ? `/v1/submissions/partners/${encodeURIComponent(id)}` : '/v1/submissions/partners',
-          { input, logoPath },
-        )
-      : null;
-    let eventId: string;
-    if (remote) {
-      eventId = remote.eventIds[0];
-      if (typeof remote.body.replacedLogo === 'string') replacedLogo = remote.body.replacedLogo;
-    } else if (id) {
-      ({ eventId, replacedLogo } = await updatePartner(db, actor, id, input, { logoPath }));
-    } else {
-      ({ eventId } = await addPartner(db, actor, input, { logoPath: logoPath! }));
-    }
+    if (!actor) throw new Forbidden();
+    const written = await writeViaApi(
+      locals,
+      actor,
+      id ? `/v1/submissions/partners/${encodeURIComponent(id)}` : '/v1/submissions/partners',
+      { input, logoPath },
+    );
+    const eventId = written.eventIds[0];
+    if (typeof written.body.replacedLogo === 'string') replacedLogo = written.body.replacedLogo;
     // After the commit and the response, so the visitor never waits for a handler.
     locals.afterResponse((db) =>
       dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),

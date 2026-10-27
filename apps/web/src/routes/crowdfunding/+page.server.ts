@@ -2,10 +2,7 @@ import { error } from '@sveltejs/kit';
 import { readCrowdfundingFilters } from '@mesaaberta/core/crowdfunding/filters';
 import { reportCrowdfundingSchema } from '@mesaaberta/core/moderation/reports';
 import { can } from '@mesaaberta/core/server/auth/policy';
-import {
-  fileCrowdfundingReport,
-  listCrowdfundings,
-} from '@mesaaberta/core/server/crowdfunding/service';
+import { listCrowdfundings } from '@mesaaberta/core/server/crowdfunding/service';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -39,11 +36,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
   // "Denunciar" on a card. The service refuses one's own campaign and a repeat while one waits.
-  report: moderationAction(
-    reportCrowdfundingSchema,
-    ['id', 'reason', 'details'],
-    async (db, actor, { id, reason, details }) =>
-      (await fileCrowdfundingReport(db, actor, id, { reason, details })).eventId,
-    { player: { path: '/v1/reports/crowdfunding' } },
-  ),
+  report: moderationAction(reportCrowdfundingSchema, ['id', 'reason', 'details'], {
+    path: '/v1/reports/crowdfunding',
+  }),
 };

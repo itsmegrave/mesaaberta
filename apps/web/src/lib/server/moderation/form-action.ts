@@ -18,40 +18,29 @@ type Apply<Schema extends ZodType> = (
   event: RequestEvent,
 ) => Promise<string | string[]>;
 
+/** The api route that makes the action, and the body its schema wants (the checked form by default). */
+type ViaApi<Schema extends ZodType> = {
+  path: string;
+  body?: (data: z.output<Schema>, event: RequestEvent) => object;
+};
+
 /**
  * One moderation form action, for the report dialog and the admin console alike: a signed-in user
  * (and, with `admin`, only an admin: everyone else gets the 404 the admin area answers), the form
- * checked by its schema over the named text fields, and the service deciding. What the service
- * refuses comes back as a code on the field it names, or on the form; the events it wrote are
- * dispatched after the response. Pairs with `actionForm` on the page.
+ * checked by its schema over the named text fields, and then either the api route that makes it
+ * (an admin decision, a member's report or withdrawal) or, for the actions it does not serve yet,
+ * the service in this Worker. What is refused comes back as a code on the field it names, or on the
+ * form; the events written are dispatched after the response. Pairs with `actionForm` on the page.
  */
 export function moderationAction<Schema extends ZodType>(
   schema: Schema,
   fields: readonly string[],
-  apply: Apply<Schema>,
-  {
-    admin = false,
-    decision,
-    player,
-  }: {
-    admin?: boolean;
-    /**
-     * The admin decision's name in `moderationDecisions`. With `api_admin_moderation` on for the
-     * admin the api Worker makes it (`/v1/admin/moderation/<decision>`), and this Worker only
-     * decides when the api cannot be reached or fails.
-     */
-    decision?: string;
-    /**
-     * For a member's own action (a report, a withdrawal): the api route that makes it when
-     * `api_reports` is on for them. `body` is what the route's schema wants, from the checked form
-     * and the request. Falls back to `apply` when the api cannot be reached.
-     */
-    player?: { path: string; body?: (data: z.output<Schema>, event: RequestEvent) => object };
-  } = {},
+  how: Apply<Schema> | ViaApi<Schema>,
+  { admin = false }: { admin?: boolean } = {},
 ) {
   return async (event: RequestEvent) => {
     const { locals, request, url } = event;
-    await requireUser(locals, new URL(url.pathname, url));
+    const user = await requireUser(locals, new URL(url.pathname, url));
     if (admin) await requireAdmin(locals);
     if (!locals.db) error(503, 'Database not configured');
 
@@ -64,30 +53,21 @@ export function moderationAction<Schema extends ZodType>(
       return fail(status, { form });
     };
 
-    const profile = await locals.getProfile();
-    let eventIds: string[] | undefined;
-    if (admin && decision && profile) {
-      const viaApi = await decideViaApi(
-        locals,
-        'api_admin_moderation',
-        `/v1/admin/moderation/${decision}`,
-        profile.id,
-        form.data,
-      );
-      if (viaApi.kind === 'done') eventIds = viaApi.eventIds;
-      else if (viaApi.kind === 'refused') return refuse(viaApi.status, viaApi.field, viaApi.code);
-    }
-
+    let eventIds: string[];
     try {
-      if (!eventIds && player && profile) {
-        const remote = await writeViaApi(locals, 'api_reports', profile, player.path, {
-          ...(player.body ? player.body(form.data, event) : (form.data as object)),
-        });
-        if (remote) eventIds = remote.eventIds;
-      }
-      if (!eventIds) {
-        const written = await apply(locals.db, profile, form.data, event);
+      if (typeof how === 'function') {
+        const written = await how(locals.db, await locals.getProfile(), form.data, event);
         eventIds = Array.isArray(written) ? written : [written];
+      } else {
+        const body = how.body ? how.body(form.data, event) : (form.data as object);
+        if (admin) {
+          const decided = await decideViaApi(locals, how.path, user.id, body);
+          if (decided.kind === 'refused')
+            return refuse(decided.status, decided.field, decided.code);
+          eventIds = decided.eventIds;
+        } else {
+          eventIds = (await writeViaApi(locals, user, how.path, { ...body })).eventIds;
+        }
       }
     } catch (cause) {
       if (cause instanceof Invalid) return refuse(400, cause.field, cause.message);

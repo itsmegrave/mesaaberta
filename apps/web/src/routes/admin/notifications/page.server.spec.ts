@@ -1,8 +1,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { sendAnnouncement } from '@mesaaberta/core/server/notifications/announcements';
+import { profiles } from '@mesaaberta/core/server/db/schema';
+import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { actions } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/notifications/announcements', () => ({
@@ -12,7 +15,14 @@ vi.mock('@mesaaberta/core/server/notifications/announcements', () => ({
 }));
 vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 
-const admin = { id: 'admin', role: 'admin', status: 'active' };
+const admin = { id: '00000000-0000-4000-8000-0000000000ad', role: 'admin', status: 'active' };
+// The api Worker counts and sends over the test database (the announcement service is mocked).
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+  await test.db.insert(profiles).values({ ...admin, username: 'admin' } as never);
+});
+afterAll(() => test.close());
 const valid = {
   title: 'Manutenção no sábado',
   body: 'Fora do ar das 2h às 4h.',
@@ -22,7 +32,7 @@ const valid = {
 
 function event(
   form: Record<string, string>,
-  { api, flagOn = false }: { api?: (request: Request) => Promise<Response>; flagOn?: boolean } = {},
+  { api }: { api?: (request: Request) => Promise<Response> } = {},
 ) {
   const after: ((db: unknown) => Promise<unknown>)[] = [];
   return {
@@ -30,10 +40,9 @@ function event(
     event: {
       locals: {
         db: {},
-        env: api ? { API: { fetch: api } } : {},
-        flags: { isEnabled: async () => flagOn },
+        env: api ? { API: { fetch: api } } : apiOver(test.db),
         log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() },
-        getUser: async () => ({ id: 'admin' }),
+        getUser: async () => ({ id: admin.id }),
         getProfile: async () => ({ ...admin, username: 'admin' }),
         afterResponse: (task: (db: unknown) => Promise<unknown>) => void after.push(task),
       },
@@ -147,20 +156,7 @@ describe('the send action', () => {
     expect(empty.result.data.form.message).toEqual({ code: 'empty' });
   });
 
-  it('asks the api Worker when api_admin_announcements is on, and does not repeat what it answered', async () => {
-    const api = vi.fn(async () =>
-      Response.json({ step: 'confirm', count: 3, recipient: { username: 'ana' } }),
-    );
-    const { event: e } = event(valid, { api, flagOn: true });
-
-    const { result } = await answer(e);
-
-    expect(result.form.message).toEqual({ code: 'confirm', count: 3, recipient: 'ana' });
-    expect(api).toHaveBeenCalledOnce();
-    expect(sendAnnouncement).not.toHaveBeenCalled();
-  });
-
-  it('shows the api refusal on its field, and falls back when the api cannot answer', async () => {
+  it('shows the api refusal on its field, and answers 503 when the api cannot answer', async () => {
     const refused = event(
       { ...valid, audience: 'specific_user', recipient: 'x' },
       {
@@ -169,22 +165,13 @@ describe('the send action', () => {
             { error: 'invalid', field: 'recipient', message: 'not_found' },
             { status: 400 },
           ),
-        flagOn: true,
       },
     );
     const { result } = await answer(refused.event);
     expect(result.data.form.errors.recipient).toEqual(['not_found']);
-    expect(sendAnnouncement).not.toHaveBeenCalled();
 
-    vi.mocked(sendAnnouncement).mockResolvedValueOnce({
-      step: 'confirm',
-      count: 7,
-      recipient: null,
-    });
-    const down = event(valid, {
-      api: async () => new Response('x', { status: 500 }),
-      flagOn: true,
-    });
-    expect((await answer(down.event)).result.form.message).toMatchObject({ count: 7 });
+    const down = event(valid, { api: async () => Response.json({}, { status: 500 }) });
+    await expect(send(down.event)).rejects.toMatchObject({ status: 503 });
+    expect(sendAnnouncement).not.toHaveBeenCalled();
   });
 });

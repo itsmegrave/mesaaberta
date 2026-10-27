@@ -12,12 +12,11 @@ import { callApiRaw } from '#lib/server/api-client.js';
 import {
   audienceSizes,
   listAnnouncements,
-  sendAnnouncement,
 } from '@mesaaberta/core/server/notifications/announcements';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, each load and action
-// checks again with `requireAdmin`, and `sendAnnouncement` authorizes the actor itself.
+// checks again with `requireAdmin`, and the api authorizes the actor itself.
 export const load: PageServerLoad = async ({ locals, url }) => {
   await requireUser(locals, url);
   await requireAdmin(locals);
@@ -47,13 +46,11 @@ export const actions: Actions = {
     if (!form.valid)
       return formMessage(form, { code: 'invalid' } as AnnouncementMessage, { status: 400 });
 
-    const profile = await locals.getProfile();
+    const user = await locals.getUser();
     let result: SendOutcome;
     try {
-      // Through the api Worker when `api_admin_announcements` is on; here when it is off or the call
-      // cannot be made. A refusal the api made is the form's refusal, never repeated here.
-      const remote = profile ? await viaApi(locals, profile.id, form.data) : null;
-      result = remote ?? (await sendAnnouncement(locals.db, profile, form.data));
+      // The api Worker counts the audience and sends; a refusal it made is the form's refusal.
+      result = await viaApi(locals, user!.id, form.data);
     } catch (e) {
       if (e instanceof Invalid && e.field === 'recipient') {
         return refuse(form, 400, e.message, 'recipient');
@@ -85,16 +82,10 @@ type SendOutcome =
   | { step: 'confirm'; count: number; recipient: { username: string } | null }
   | { step: 'sent'; count: number; eventId: string };
 
-/** The api's answer as the service's own result, a thrown `Invalid` for its refusals, or null. */
-async function viaApi(
-  locals: App.Locals,
-  adminId: string,
-  data: unknown,
-): Promise<SendOutcome | null> {
-  if (!(await locals.flags.isEnabled('api_admin_announcements', { id: adminId, isAdmin: true })))
-    return null;
+/** The api's answer as the service's own result, a thrown `Invalid` for its refusals, or a 503. */
+async function viaApi(locals: App.Locals, adminId: string, data: unknown): Promise<SendOutcome> {
   const answer = await callApiRaw(locals.env, '/v1/admin/announcements', adminId, locals.log, data);
-  if (!answer) return null;
+  if (!answer) error(503, 'API unavailable');
 
   const body = (answer.body ?? {}) as Record<string, unknown>;
   if (answer.ok && body.step === 'confirm' && typeof body.count === 'number')
@@ -117,10 +108,10 @@ async function viaApi(
   if (answer.status === 400 && body.error === 'invalid' && typeof body.field === 'string')
     throw new Invalid(body.field, typeof body.message === 'string' ? body.message : 'invalid');
 
-  locals.log.warn('api announcement not used', {
-    code: 'api_call_refused',
+  locals.log.warn('api announcement failed', {
+    code: 'api_call_failed',
     status: answer.status,
     reason: typeof body.error === 'string' ? body.error : undefined,
   });
-  return null;
+  error(503, 'API unavailable');
 }
