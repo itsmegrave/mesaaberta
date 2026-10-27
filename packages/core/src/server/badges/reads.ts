@@ -1,7 +1,8 @@
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { userBadges } from '../db/schema';
-import { BADGES, statsFor } from './catalog';
+import { statsFor } from './catalog';
+import { ruleBadges } from './rules';
 
 export type HeldBadge = {
   badgeId: string;
@@ -61,11 +62,12 @@ export async function badgeProgress(db: AnyDb, profileId: string): Promise<Badge
     ).map((row) => row.id),
   );
   const stats = statsFor(db, profileId);
-  const next = BADGES.filter(
+  const rules = ruleBadges();
+  const next = rules.filter(
     (rule) =>
       !rule.unlisted &&
       !have.has(rule.id) &&
-      !BADGES.some(
+      !rules.some(
         (other) =>
           other.ladder === rule.ladder &&
           other.ladder !== undefined &&

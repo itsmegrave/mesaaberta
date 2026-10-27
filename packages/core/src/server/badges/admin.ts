@@ -6,20 +6,20 @@ import type { AnyDb } from '../db/client';
 import { profiles, userBadges } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
-import { PIONEER_BADGE } from './backfill';
-import { BADGES, MANUAL_BADGES } from './catalog';
+import { MANUAL_BADGES, PIONEER_BADGE } from './catalog';
+import { ruleBadges } from './rules';
 
 /** How a badge is given: by a rule after an event, only by the backfill, or only by an admin. */
 export type BadgeKind = 'rule' | 'backfill' | 'manual';
 
-/** Every badge id there is, in the catalog's order, with how it is given. */
-export const KNOWN_BADGES: readonly { badgeId: string; kind: BadgeKind }[] = [
-  ...BADGES.map((rule) => ({ badgeId: rule.id, kind: 'rule' as const })),
+/** Every badge id there is, in the catalog's order (the extensions' after), with how it is given. */
+export const knownBadges = (): readonly { badgeId: string; kind: BadgeKind }[] => [
+  ...ruleBadges().map((rule) => ({ badgeId: rule.id, kind: 'rule' as const })),
   { badgeId: PIONEER_BADGE, kind: 'backfill' },
   ...MANUAL_BADGES.map((badgeId) => ({ badgeId, kind: 'manual' as const })),
 ];
 
-const isKnown = (badgeId: string) => KNOWN_BADGES.some((badge) => badge.badgeId === badgeId);
+const isKnown = (badgeId: string) => knownBadges().some((badge) => badge.badgeId === badgeId);
 
 /**
  * `/admin/badges`: every badge with how many people hold it now and how many had it taken away.
@@ -38,7 +38,7 @@ export async function badgeCatalogAdmin(db: AnyDb, actor: Actor | null) {
     .from(userBadges)
     .groupBy(userBadges.badgeId);
   const counts = new Map(counted.map((row) => [row.badgeId, row]));
-  return KNOWN_BADGES.map((badge) => ({
+  return knownBadges().map((badge) => ({
     ...badge,
     holders: counts.get(badge.badgeId)?.holders ?? 0,
     revoked: counts.get(badge.badgeId)?.revoked ?? 0,

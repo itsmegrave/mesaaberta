@@ -6,7 +6,7 @@ import {
   adminBadgesOf,
   badgeCatalogAdmin,
   grantBadge,
-  KNOWN_BADGES,
+  knownBadges,
   revokeBadge,
 } from '@mesaaberta/core/server/badges/admin';
 import { badgeHandler, badgeNoticeHandler } from '@mesaaberta/core/server/badges/handlers';
@@ -157,7 +157,7 @@ describe('revokeBadge', () => {
 describe('the admin reads', () => {
   it("counts each badge's holders and revocations, every known badge listed", async () => {
     const catalog = await badgeCatalogAdmin(test.db, staff);
-    expect(catalog.map((badge) => badge.badgeId)).toEqual(KNOWN_BADGES.map((b) => b.badgeId));
+    expect(catalog.map((badge) => badge.badgeId)).toEqual(knownBadges().map((b) => b.badgeId));
     expect(catalog.find((badge) => badge.badgeId === 'first-table')).toEqual({
       badgeId: 'first-table',
       kind: 'rule',
