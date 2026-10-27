@@ -61,6 +61,9 @@ export default defineConfig({
         PORT: String(apiPort),
         // Public profiles answer picture URLs, built from the same storage the web app uses.
         SUPABASE_URL: supabase.API_URL,
+        // The auth forms run here only (no web fallback): Supabase Auth and the local Mailpit.
+        SUPABASE_PUBLISHABLE_KEY: supabase.PUBLISHABLE_KEY,
+        MAILPIT_URL: supabase.MAILPIT_URL,
       },
       url: `http://127.0.0.1:${apiPort}/healthz`,
       reuseExistingServer: false,
