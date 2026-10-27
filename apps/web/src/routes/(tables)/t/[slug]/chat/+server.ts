@@ -1,8 +1,6 @@
-import { error, redirect } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { redirect } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { gameTables, registrations } from '@mesaaberta/core/server/db/schema';
-import { addTableMember, ensureTableConversation } from '@mesaaberta/core/server/messages/service';
+import { openTableChatViaApi } from '#lib/server/messages/api.js';
 import type { RequestHandler } from './$types';
 
 /**
@@ -11,21 +9,6 @@ import type { RequestHandler } from './$types';
  */
 export const GET: RequestHandler = async ({ locals, url, params }) => {
   const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
-
-  const [table] = await locals.db
-    .select({ id: gameTables.id, gmId: gameTables.gmId })
-    .from(gameTables)
-    .where(eq(gameTables.slug, params.slug));
-  if (!table) error(404, 'Not found');
-
-  const [seat] = await locals.db
-    .select({ status: registrations.status })
-    .from(registrations)
-    .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, user.id)));
-  if (table.gmId !== user.id && seat?.status !== 'confirmed') error(404, 'Not found');
-
-  await addTableMember(locals.db, table.id, user.id);
-  const conversation = await ensureTableConversation(locals.db, table.id);
-  redirect(303, `/m/${conversation.id}`);
+  const { conversationId } = await openTableChatViaApi(locals, user.id, params.slug);
+  redirect(303, `/m/${conversationId}`);
 };

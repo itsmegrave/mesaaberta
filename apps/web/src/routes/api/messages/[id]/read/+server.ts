@@ -1,6 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { NotFound } from '@mesaaberta/core/server/errors';
-import { markConversationRead } from '@mesaaberta/core/server/messages/service';
+import { markReadViaApi } from '#lib/server/messages/api.js';
 import type { RequestHandler } from './$types';
 
 /**
@@ -8,13 +7,8 @@ import type { RequestHandler } from './$types';
  * only when something new arrived, so a poll in the background never counts as reading.
  */
 export const POST: RequestHandler = async ({ locals, params }) => {
-  if (!(await locals.getUser())) error(401, 'Sign in required');
-  if (!locals.db) error(503, 'Database not configured');
-  try {
-    await markConversationRead(locals.db, await locals.getProfile(), params.id);
-  } catch (cause) {
-    if (cause instanceof NotFound) error(404, 'Not found');
-    throw cause;
-  }
+  const user = await locals.getUser();
+  if (!user) error(401, 'Sign in required');
+  await markReadViaApi(locals, user.id, params.id);
   return new Response(null, { status: 204, headers: { 'cache-control': 'private, no-store' } });
 };

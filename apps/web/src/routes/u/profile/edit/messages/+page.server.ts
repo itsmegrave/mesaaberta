@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { initialForm, validateFormData } from '#lib/forms/contract.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
@@ -6,11 +6,11 @@ import { invitationAction } from '#lib/server/invitations/actions.js';
 import { invitationPreferences } from '#lib/server/invitations/api.js';
 import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
 import { blockSchema } from '@mesaaberta/core/messages/schema';
-import { listBlocked, setBlocked } from '@mesaaberta/core/server/blocks/service';
+import { readBlocked } from '#lib/server/messages/api.js';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { withPictures } from '@mesaaberta/core/server/messages/present';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
-import { behindSafetyFlag, messageSafetyEnabled } from '#lib/server/messages/safety.js';
+import { messageSafetyEnabled, safetyAllowed } from '#lib/server/messages/safety.js';
 import type { Actions, PageServerLoad } from './$types';
 
 // "Mensagens e convites": direct messages, the people this person blocked (`use_message_safety`),
@@ -19,8 +19,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   await requireUser(locals, url);
   const profile = await locals.getProfile();
   const blocked =
-    locals.db && (await messageSafetyEnabled(locals, profile))
-      ? withPictures(supabaseUrlOf(locals.env), await listBlocked(locals.db, profile))
+    profile && (await messageSafetyEnabled(locals, profile))
+      ? withPictures(supabaseUrlOf(locals.env), await readBlocked(locals, profile.id))
       : null;
   return {
     invitationPreferences: await invitationPreferences(locals, profile),
@@ -34,19 +34,14 @@ export const actions: Actions = {
   invitationBlock: invitationAction('block'),
 
   // "Desbloquear" in "Pessoas bloqueadas" (`use_message_safety`).
-  block: moderationAction(
-    blockSchema,
-    ['profileId', 'blocked'],
-    behindSafetyFlag(
-      async (db, actor, data) =>
-        (await setBlocked(db, actor, data.profileId, data.blocked)).eventIds,
-    ),
-  ),
+  block: moderationAction(blockSchema, ['profileId', 'blocked'], {
+    path: '/v1/messages/block',
+    allow: safetyAllowed,
+  }),
 
   // The switch for direct messages: it saves on its own.
   messages: async ({ request, locals, url }) => {
     const user = await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
 
     const messagesForm = validateFormData(
       await request.formData(),
