@@ -1,4 +1,3 @@
-import { error } from '@sveltejs/kit';
 import {
   NEW_CROWDFUNDING_VALUES,
   handleCrowdfundingForm,
@@ -9,7 +8,6 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
   return { form: initialForm(NEW_CROWDFUNDING_VALUES) };
 };
 

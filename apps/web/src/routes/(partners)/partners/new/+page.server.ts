@@ -1,4 +1,3 @@
-import { error } from '@sveltejs/kit';
 import { initialForm } from '#lib/forms/contract.js';
 import { NEW_PARTNER_VALUES } from '@mesaaberta/core/partners/schema';
 import { requireUser } from '#lib/server/auth/guard.js';
@@ -7,7 +6,6 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
   return { form: initialForm(NEW_PARTNER_VALUES) };
 };
 

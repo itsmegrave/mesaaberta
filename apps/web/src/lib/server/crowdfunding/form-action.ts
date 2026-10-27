@@ -10,11 +10,11 @@ import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
 import { serverStorage } from '@mesaaberta/core/server/storage';
-import { CROWDFUNDING_LIMIT, checkRateLimit } from '@mesaaberta/core/server/rate-limit';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
-import { findListedByUrl, takeLinkRead } from '@mesaaberta/core/server/crowdfunding/service';
+import { readFromApi } from '../api-read';
 import { writeViaApi } from '../api-write';
+import { checkLimitViaApi } from '../tables/api';
 
 export const NEW_CROWDFUNDING_VALUES = {
   url: '',
@@ -52,17 +52,24 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     files: ['image'],
   });
   if (!form.valid) return fail(400, { form: responseForm(form) });
-  if (!locals.db) return formMessage(form, { code: 'unavailable' }, { status: 503 });
-  const db = locals.db;
 
   try {
     const actor = await locals.getProfile();
     // A limited person is told before anything is fetched or stored. `addCrowdfunding` checks again, under a lock.
-    if (actor) await checkRateLimit(db, actor.id, CROWDFUNDING_LIMIT);
+    if (actor) await checkLimitViaApi(locals, actor.id, 'crowdfunding');
 
     const link = normalizeCampaignUrl(form.data.url);
-    const existing = link ? await findListedByUrl(db, link) : null;
-    if (existing) return refuse(form, 400, 'already_listed', 'url');
+    const listed =
+      link && actor
+        ? (
+            await readFromApi<{ listed: boolean }>(
+              locals,
+              actor.id,
+              `/v1/crowdfundings/listed?url=${encodeURIComponent(link)}`,
+            )
+          ).listed
+        : false;
+    if (listed) return refuse(form, 400, 'already_listed', 'url');
 
     const upload = form.data.image;
     // The page's own picture is only a convenience: a member past the link-read limit just gets none,
@@ -70,7 +77,7 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     let pageImageUrl: string | null = null;
     if (!upload && link && actor) {
       try {
-        await takeLinkRead(db, actor.id);
+        await writeViaApi(locals, actor, '/v1/crowdfundings/link-read', {});
         pageImageUrl = (await readLinkPreview(link)).imageUrl;
       } catch (error) {
         if (!(error instanceof RateLimited)) throw error;
