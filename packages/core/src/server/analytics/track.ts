@@ -1,4 +1,3 @@
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import type { Logger } from '@mesaaberta/core/server/logger';
 import type { AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { analyticsProviders } from '@mesaaberta/core/server/analytics/index';
@@ -18,7 +17,7 @@ export type RequestEventProperties = Record<string, string | number>;
 
 /** What to send, or a lookup that runs after the response and may decide there is nothing to send. */
 export type RequestEventInput =
-  RequestEventProperties | ((db: AnyDb) => Promise<RequestEventProperties | null>);
+  RequestEventProperties | (() => Promise<RequestEventProperties | null>);
 
 export type Track = (
   name: RequestEventName,
@@ -46,7 +45,7 @@ export function sourceChannel(referer: string | null, url: URL): string {
  */
 export function createTracker(options: {
   env: AnalyticsEnv | undefined;
-  afterResponse: (task: (db: AnyDb) => Promise<unknown>) => void;
+  afterResponse: (task: () => Promise<unknown>) => void;
   log: Logger;
   factories?: readonly AnalyticsProviderFactory<AnalyticsEnv>[];
   now?: () => Date;
@@ -57,8 +56,8 @@ export function createTracker(options: {
     const providers = analyticsProviders(env, factories);
     if (providers.length === 0) return;
     const time = now();
-    afterResponse(async (db) => {
-      const resolved = typeof properties === 'function' ? await properties(db) : properties;
+    afterResponse(async () => {
+      const resolved = typeof properties === 'function' ? await properties() : properties;
       if (!resolved) return;
       const event = {
         name,

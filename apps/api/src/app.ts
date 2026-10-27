@@ -10,6 +10,7 @@ import { adminReadRoutes } from './admin-reads';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
 import { catalogRoutes } from './catalog';
+import { changelogRoutes } from './changelog';
 import { eventRoutes } from './events';
 import { extensionRoutes } from './extensions';
 import { followRoutes } from './follows';
@@ -128,6 +129,9 @@ export function createApi() {
   app.route('/v1/crowdfundings', crowdfundingRoutes());
   // The person's own profile (the form and the direct-messages switch).
   app.route('/v1/account', accountRoutes());
+
+  // The newest changelog day in everyone's bell, once (the release speaking, no actor).
+  app.route('/v1/changelog', changelogRoutes());
 
   // The page readers: the web Worker reads no database for these pages.
   app.route('/v1/reads', readRoutes());

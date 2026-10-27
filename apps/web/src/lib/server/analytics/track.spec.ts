@@ -12,16 +12,16 @@ const setup = (send = vi.fn(async () => {}), configured = true) => {
   const factories: AnalyticsProviderFactory<AnalyticsEnv>[] = [
     () => (configured ? provider : null),
   ];
-  const queued: ((db: never) => Promise<unknown>)[] = [];
+  const queued: (() => Promise<unknown>)[] = [];
   const log = { warn: vi.fn() };
   const track = createTracker({
     env: undefined,
-    afterResponse: (task) => void queued.push(task as never),
+    afterResponse: (task) => void queued.push(task),
     log: log as never,
     factories,
     now: () => new Date('2026-09-30T12:00:00Z'),
   });
-  const flush = () => Promise.all(queued.map((task) => task({} as never)));
+  const flush = () => Promise.all(queued.map((task) => task()));
   return { track, flush, queued, send, log };
 };
 

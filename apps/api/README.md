@@ -207,3 +207,10 @@ The web Worker no longer delivers domain events. Every write that answers `event
 - The canary flags are read by the api, targeted at the actor who made the write: `api_events_fenced_leases`, and, only when the Worker has the `DOMAIN_EVENTS` producer binding, `api_events_queue_shadow` and the `api_events_queue_{analytics,bell,mail}` classes. Without the binding every handler runs inline.
 - A failed delivery is logged and left due; the background Worker's sweep runs it.
 - `POST /v1/admin/entries` (`{ route }`): an admin opened a page of the admin area. The section comes from the route id, at most one entry per section in half an hour, and the event is delivered like any other.
+
+## Changelog notice and product events
+
+- `POST /v1/changelog/notice` (`{ date, title, summary, link }`, no actor): the newest changelog day, sent by the web Worker after a response (at most once every ten minutes per isolate). While `use_changelog_notices` is on, it goes to everyone's bell once; the sweep delivers it.
+- `GET /v1/reads/table-ids/:slug`: a table's id and its GM's, with the table page's visibility, for the product events web sends about a table. They are never shown on the page.
+
+With these, the web Worker opens no database at all. ESLint refuses `locals.db` and any value import of a database client in `apps/web/src` (specs and their test helpers aside).

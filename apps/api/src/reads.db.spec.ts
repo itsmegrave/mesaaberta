@@ -202,6 +202,35 @@ describe('GET /v1/reads/tables', () => {
   });
 });
 
+describe('GET /v1/reads/table-ids/:slug', () => {
+  it("answers a table's id and its GM's, with the page's visibility", async () => {
+    const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+    const values = (slug: string, status: string) => ({
+      slug,
+      title: slug,
+      kind: 'one_shot',
+      capacity: 4,
+      status,
+      startsAt: new Date('2099-03-01T20:00:00Z'),
+      durationMinutes: 60,
+      timezone: 'UTC',
+      gmId: ana,
+      systemId: system.id,
+    });
+    const [table] = await test.db
+      .insert(gameTables)
+      .values([values('mesa-ids', 'active'), values('rascunho-ids', 'draft')] as never)
+      .returning({ id: gameTables.id });
+    const ids = (slug: string, actor: string | null) =>
+      app.request(`/table-ids/${slug}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+
+    expect(await (await ids('mesa-ids', null)).json()).toEqual({ id: table.id, gmId: ana });
+    expect((await ids('rascunho-ids', bia)).status).toBe(404);
+    expect((await ids('rascunho-ids', ana)).status).toBe(200);
+    expect((await ids('nenhuma', ana)).status).toBe(404);
+  });
+});
+
 describe('GET /v1/reads/detail/:slug', () => {
   const getDetail = (slug: string, actor: string | null = ana) =>
     app.request(`/detail/${slug}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
