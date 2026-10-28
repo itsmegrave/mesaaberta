@@ -121,7 +121,7 @@
         title: m.admin_attention_posts(),
         count: posts.count,
         detail: m.admin_attention_posts_detail({ title: posts.first ?? '' }),
-        href: '/admin/tables?instagram=uncertain',
+        href: '/admin/tables?post=uncertain',
       });
     if (awaiting.count > 0 && awaiting.first)
       found.push({

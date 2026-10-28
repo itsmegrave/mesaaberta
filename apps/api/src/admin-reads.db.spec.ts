@@ -69,7 +69,7 @@ describe('GET /v1/admin-reads', () => {
     expect(body).toEqual({
       ...json(await listAdminTables(test.db, new URLSearchParams())),
       // No Instagram account connected in the test database.
-      instagramExpiresAt: null,
+      socialExpiresAt: null,
     });
   });
 

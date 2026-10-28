@@ -22,6 +22,8 @@ export type PublishResult =
  */
 export interface SocialPublisher {
   readonly name: string;
+  /** The network's name as the admin reads it ("Instagram"); without one, the capitalized `name`. */
+  readonly label?: string;
   /** Whether the deployment has the credentials to publish at all. */
   configured(env: object | undefined): boolean;
   /** Persist a publication request for a table; the external write happens in the background. */

@@ -19,9 +19,9 @@
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
-  import { instagramStatus } from '#lib/admin/instagram-status.js';
+  import { postStatus } from '#lib/admin/post-status.js';
   import { publishTable } from '#lib/admin/publish-table.js';
-  import { INSTAGRAM_FILTERS } from '@mesaaberta/core/admin/table-filters';
+  import { POST_FILTERS } from '@mesaaberta/core/admin/table-filters';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
@@ -54,11 +54,11 @@
     return copyText(new URL(href(row), current.url.origin).href, m.toast_link_copied());
   }
   const canPublish = (row: Row) =>
-    data.instagramAvailable &&
+    data.socialAvailable &&
     row.status === 'active' &&
     row.startsAt.getTime() > Date.now() &&
     !['published', 'publishing', 'uncertain', 'queued', 'processing'].includes(
-      row.instagramStatus ?? '',
+      row.postStatus ?? '',
     );
   const items = (row: Row): KebabItem[] => [
     { id: 'view', label: m.menu_view_table(), icon: 'eye', href: href(row) },
@@ -71,12 +71,12 @@
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
     {
       id: 'publish',
-      label: m.instagram_generate_publish(),
-      icon: 'instagram',
+      label: m.post_generate_publish({ network: data.social.label }),
+      icon: data.social.icon,
       disabled: !canPublish(row) || publishing !== null,
       onselect: () => {
         publishing = row.id;
-        void publishTable(row.id).finally(() => (publishing = null));
+        void publishTable(row.id, data.social.label).finally(() => (publishing = null));
       },
     },
     ...(row.status === 'active'
@@ -92,11 +92,10 @@
       : []),
   ];
 
-  const instagramOptions = $derived(
-    INSTAGRAM_FILTERS.map((value) => ({
+  const postOptions = $derived(
+    POST_FILTERS.map((value) => ({
       slug: value,
-      name:
-        value === 'all' ? m.admin_profile_all() : instagramStatus(value === 'none' ? null : value),
+      name: value === 'all' ? m.admin_profile_all() : postStatus(value === 'none' ? null : value),
     })),
   );
   const statusOptions = $derived([
@@ -107,9 +106,7 @@
       count: tables.counts[value],
     })),
   ]);
-  const filtered = $derived(
-    !!tables.query || tables.status !== 'all' || tables.instagram !== 'all',
-  );
+  const filtered = $derived(!!tables.query || tables.status !== 'all' || tables.post !== 'all');
   const busy = $derived(remote.isFetching || !!navigating.to);
 </script>
 
@@ -130,7 +127,7 @@
     {sort}
     sortLabel={tables.sort.id === 'next' ? m.admin_tables_sort_next() : m.admin_tables_col_table()}
     search={{ value: tables.query, label: m.admin_tables_search_label(), maxlength: 100 }}
-    filterKeys={['q', 'status', 'instagram', 'page']}
+    filterKeys={['q', 'status', 'post', 'instagram', 'page']}
     {filtered}
     empty={m.admin_tables_empty()}
     {busy}
@@ -144,11 +141,11 @@
     {#snippet selects({ inSheet }: FilterPlace)}
       {#if data.socialInstalled}
         <FilterSelect
-          id={inSheet ? 'instagram-filter-sheet' : 'instagram-filter'}
-          name="instagram"
-          label={m.admin_instagram_filter()}
-          options={instagramOptions}
-          value={tables.instagram}
+          id={inSheet ? 'post-filter-sheet' : 'post-filter'}
+          name="post"
+          label={data.social.label}
+          options={postOptions}
+          value={tables.post}
           class={inSheet ? 'w-full' : 'w-56'}
           inDialog={inSheet}
         />
@@ -182,7 +179,10 @@
       {:else if id === 'status'}
         <div class="grid justify-items-start gap-1">
           <StatusBadge status={`table:${row.status}` as Status} />
-          {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
+          {#if data.socialInstalled}<PostStatus
+              status={row.postStatus}
+              icon={data.social.icon}
+            />{/if}
         </div>
       {/if}
     {/snippet}
@@ -205,7 +205,10 @@
           <span class="text-sm text-muted"
             >{m.admin_tables_seats_phone({ taken: row.seats, capacity: row.capacity })}</span
           >
-          {#if data.socialInstalled}<PostStatus status={row.instagramStatus} />{/if}
+          {#if data.socialInstalled}<PostStatus
+              status={row.postStatus}
+              icon={data.social.icon}
+            />{/if}
         {/snippet}
       </ListCard>
     {/snippet}
