@@ -3,6 +3,7 @@ import { MAX_PARTNER_OWNERS, PARTNER_INVITATION_DAYS } from '../../partners/owne
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
+import { textArray } from '@mesaaberta/core/server/db/text-array';
 import {
   partnerInvitations,
   partnerOwners,
@@ -33,7 +34,9 @@ const unavailable = () => new Invalid('username', 'unavailable');
 export const ownerIdsOf = (partnerId: AnyColumn, submitterId: AnyColumn) =>
   sql<
     string[]
-  >`coalesce(nullif(array(select ${partnerOwners.profileId} from ${partnerOwners} where ${partnerOwners.partnerId} = ${partnerId} order by ${partnerOwners.createdAt}), '{}'), array[${submitterId}])`;
+  >`coalesce(nullif(array(select ${partnerOwners.profileId} from ${partnerOwners} where ${partnerOwners.partnerId} = ${partnerId} order by ${partnerOwners.createdAt}), '{}'), array[${submitterId}])`.mapWith(
+    textArray,
+  );
 
 /** The owners of one partner, the submitter alone when it has no row yet. */
 export async function ownersOf(

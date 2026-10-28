@@ -18,6 +18,7 @@ import { OPEN_REPORT_STATUSES, type ReportReason } from '../../moderation/report
 import type { Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
+import { textArray } from '@mesaaberta/core/server/db/text-array';
 import { NAMELESS, publicName } from '@mesaaberta/core/server/db/public-name';
 import {
   partnerInvitations,
@@ -136,7 +137,9 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       // with no row yet: then it is the submitter alone.
       owners: sql<
         string[]
-      >`array(select coalesce(owner.username, ${NAMELESS}) from ${partnerOwners} join ${profiles} owner on owner.id = ${partnerOwners.profileId} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt})`,
+      >`array(select coalesce(owner.username, ${NAMELESS}) from ${partnerOwners} join ${profiles} owner on owner.id = ${partnerOwners.profileId} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt})`.mapWith(
+        textArray,
+      ),
       pendingInvites:
         sql<number>`(select count(*) from ${partnerInvitations} where ${partnerInvitations.partnerId} = ${partners.id} and ${partnerInvitations.status} = 'pending' and ${partnerInvitations.expiresAt} > now())`.mapWith(
           Number,
