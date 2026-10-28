@@ -2,28 +2,22 @@ import { TABLE_STATUSES, type TableStatus } from '@mesaaberta/core/tables/status
 import { pageSizeOf, sortOf } from './list';
 
 export const TABLE_SORTS = ['created', 'title', 'next'] as const;
-/** The Instagram post's state, as the filter names it: `none` is a table with no post to speak of. */
-export const INSTAGRAM_FILTERS = [
-  'all',
-  'published',
-  'queued',
-  'uncertain',
-  'failed',
-  'none',
-] as const;
-export type InstagramFilter = (typeof INSTAGRAM_FILTERS)[number];
+/** The social post's state, as the filter names it: `none` is a table with no post to speak of. */
+export const POST_FILTERS = ['all', 'published', 'queued', 'uncertain', 'failed', 'none'] as const;
+export type PostFilter = (typeof POST_FILTERS)[number];
 
 export function tableFilters(params: URLSearchParams) {
   const raw = params.get('status');
   const status: 'all' | TableStatus = TABLE_STATUSES.includes(raw as TableStatus)
     ? (raw as TableStatus)
     : 'all';
-  const instagram = params.get('instagram');
+  // `instagram` is the parameter's old name, still in saved links.
+  const post = params.get('post') ?? params.get('instagram');
   const page = params.get('page') ?? '1';
   return {
     status,
-    instagram: (INSTAGRAM_FILTERS as readonly string[]).includes(instagram ?? '')
-      ? (instagram as InstagramFilter)
+    post: (POST_FILTERS as readonly string[]).includes(post ?? '')
+      ? (post as PostFilter)
       : ('all' as const),
     query: (params.get('q') ?? '').trim().slice(0, 100),
     page: /^\d+$/.test(page) ? Math.min(1000000, Math.max(1, Number(page))) : 1,

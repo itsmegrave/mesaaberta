@@ -83,7 +83,8 @@ describe('admin pages on a phone', () => {
   it('Mesas does not scroll sideways', async () => {
     render(Tables, {
       data: {
-        instagramAvailable: true,
+        socialAvailable: true,
+        social: { label: 'Instagram', icon: 'instagram' },
         socialInstalled: true,
         tables: {
           rows: [
@@ -100,7 +101,7 @@ describe('admin pages on a phone', () => {
               seats: 3,
               startsAt: new Date('2026-10-10T22:00:00Z'),
               timezone: 'America/Sao_Paulo',
-              instagramStatus: 'uncertain',
+              postStatus: 'uncertain',
             },
           ],
           total: 1,
@@ -108,7 +109,7 @@ describe('admin pages on a phone', () => {
           pageSize: 20,
           query: '',
           status: 'all',
-          instagram: 'all',
+          post: 'all',
           sort: { id: 'created', dir: 'desc' },
           counts: {
             all: 1,

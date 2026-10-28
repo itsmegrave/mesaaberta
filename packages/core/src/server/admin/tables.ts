@@ -1,11 +1,11 @@
 import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, systems, instagramPosts, profiles } from '@mesaaberta/core/server/db/schema';
-import { tableFilters, type InstagramFilter } from '../../admin/table-filters';
+import { tableFilters, type PostFilter } from '../../admin/table-filters';
 import { TABLE_STATUSES, type TableStatus } from '@mesaaberta/core/tables/status-values';
 
 /** The posts the filter names; `none` is a table that never had one, or one that was skipped. */
-const instagramWhere = (filter: InstagramFilter): SQL | undefined => {
+const postWhere = (filter: PostFilter): SQL | undefined => {
   switch (filter) {
     case 'all':
       return undefined;
@@ -34,7 +34,7 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams) {
           ilike(profiles.username, `%${search}%`),
         )
       : undefined,
-    instagramWhere(filters.instagram),
+    postWhere(filters.post),
   );
   const where = and(
     filters.status === 'all' ? undefined : eq(gameTables.status, filters.status),
@@ -76,7 +76,7 @@ export async function listAdminTables(db: AnyDb, params: URLSearchParams) {
     startsAt: gameTables.startsAt,
     kind: gameTables.kind,
     timezone: gameTables.timezone,
-    instagramStatus: instagramPosts.status,
+    postStatus: instagramPosts.status,
     permalink: instagramPosts.permalink,
   };
   const listed = () =>

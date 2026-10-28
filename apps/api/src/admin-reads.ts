@@ -70,7 +70,8 @@ export function adminReadRoutes(open: Open = createDb) {
     c.json(await listAdminProfiles(c.get('db'), new URL(c.req.url).searchParams)),
   );
 
-  // With when the site's Instagram token runs out (null: none connected), for the post column.
+  // With when the site's social token runs out (null: none connected), for the post column.
+  // The connector's account still lives in Instagram's table, which stays public.
   app.get('/tables', async (c) => {
     const [tables, [account]] = await Promise.all([
       listAdminTables(c.get('db'), new URL(c.req.url).searchParams),
@@ -80,7 +81,7 @@ export function adminReadRoutes(open: Open = createDb) {
         .from(instagramAccounts)
         .where(eq(instagramAccounts.id, 'mesaaberta')),
     ]);
-    return c.json({ ...tables, instagramExpiresAt: account?.expiresAt ?? null });
+    return c.json({ ...tables, socialExpiresAt: account?.expiresAt ?? null });
   });
 
   // What waits on an admin, beside each section.

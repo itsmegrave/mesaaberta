@@ -55,13 +55,14 @@ const row = (over = {}) => ({
   seats: 3,
   startsAt: new Date('2026-10-10T22:00:00Z'),
   timezone: 'America/Sao_Paulo',
-  instagramStatus: 'published',
+  postStatus: 'published',
   ...over,
 });
 const show = (rows: unknown[], sort = { id: 'created', dir: 'desc' }, socialInstalled = true) =>
   render(Page, {
     data: {
-      instagramAvailable: true,
+      socialAvailable: true,
+      social: { label: 'Instagram', icon: 'instagram' },
       socialInstalled,
       tables: {
         rows,
@@ -70,7 +71,7 @@ const show = (rows: unknown[], sort = { id: 'created', dir: 'desc' }, socialInst
         pageSize: 20,
         query: '',
         status: 'all',
-        instagram: 'all',
+        post: 'all',
         sort,
         counts: {
           all: 2,
@@ -89,8 +90,8 @@ describe('admin tables', () => {
     await page.viewport(1280, 900);
   });
 
-  it('shows the table status as a badge and the Instagram post as a line under it', async () => {
-    show([row(), row({ id: '2', slug: 'b', instagramStatus: 'failed' })]);
+  it('shows the table status as a badge and the social post as a line under it', async () => {
+    show([row(), row({ id: '2', slug: 'b', postStatus: 'failed' })]);
 
     const status = page.getByText('Ativa').first().element();
     // The design system's StatusBadge: a 24px pill with a hairline border.

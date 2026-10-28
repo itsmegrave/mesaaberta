@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireApi } from '../api-required';
 import { extensionAction } from './extension-api';
-import { publishInstagramAction } from './instagram-action';
+import { publishSocialAction } from './social-action';
 // The action talks to the port, so any installed connector behaves the same here.
 const social = vi.hoisted(() => ({ name: 'instagram' }));
 vi.mock('@mesaaberta/core/server/social/index', () => ({ socialFor: vi.fn(() => social) }));
@@ -24,7 +24,7 @@ const event = () => {
 it('queues through the api, then has it render and publish after its answer', async () => {
   vi.mocked(extensionAction).mockResolvedValueOnce({ result: 'queued' });
 
-  expect(await publishInstagramAction(event())).toEqual({ publishResult: 'queued' });
+  expect(await publishSocialAction(event())).toEqual({ publishResult: 'queued' });
   expect(extensionAction).toHaveBeenCalledWith(expect.anything(), 'instagram', 'admin', 'queue', {
     tableId,
   });
@@ -38,11 +38,11 @@ it('queues through the api, then has it render and publish after its answer', as
 
 it('publishes nothing when the table was not queued, and reports a failure without details', async () => {
   vi.mocked(extensionAction).mockResolvedValueOnce({ result: 'already_published' });
-  expect(await publishInstagramAction(event())).toEqual({ publishResult: 'already_published' });
+  expect(await publishSocialAction(event())).toEqual({ publishResult: 'already_published' });
   expect(requireApi).not.toHaveBeenCalled();
 
   vi.mocked(extensionAction).mockRejectedValueOnce(new Error('token in here'));
-  expect(await publishInstagramAction(event())).toMatchObject({
+  expect(await publishSocialAction(event())).toMatchObject({
     status: 502,
     data: { publishError: 'failed' },
   });

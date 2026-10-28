@@ -5,7 +5,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { requireApi } from '../api-required';
 import { extensionAction } from './extension-api';
 
-export const publishInstagramAction = async ({ locals, request }: RequestEvent) => {
+export const publishSocialAction = async ({ locals, request }: RequestEvent) => {
   const profile = await locals.getProfile();
   if (!can(profile, 'admin:access')) error(404);
   const form = await request.formData();
@@ -24,8 +24,8 @@ export const publishInstagramAction = async ({ locals, request }: RequestEvent) 
       });
     return { publishResult: result };
   } catch (cause) {
-    // Meta and api errors can include credentials or bound values. Log only safe codes.
-    locals.log.error('instagram.publish_failed', {
+    // Network and api errors can include credentials or bound values. Log only safe codes.
+    locals.log.error('social.publish_failed', {
       tableId,
       errorType: cause instanceof Error ? cause.name : 'unknown',
       code: (cause as { code?: number } | null)?.code,
