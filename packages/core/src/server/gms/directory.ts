@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
+import { textArray } from '../db/text-array';
 import { gameTables, gmScores, profiles, systems, userBadges } from '../db/schema';
 import type { HeldBadge } from '../badges/reads';
 import { escapeLike, folded, openSql, published } from '../directories/sql';
@@ -195,7 +196,9 @@ async function tableDetails(db: AnyDb, gmIds: string[]) {
       gmId: gameTables.gmId,
       modalities: sql<
         ('online' | 'in_person')[]
-      >`array_agg(distinct ${gameTables.modality}::text order by ${gameTables.modality}::text)`,
+      >`array_agg(distinct ${gameTables.modality}::text order by ${gameTables.modality}::text)`.mapWith(
+        (value) => textArray(value) as ('online' | 'in_person')[],
+      ),
       city: sql<
         string | null
       >`(array_agg(${gameTables.locationCity} order by ${gameTables.startsAt} desc) filter (where ${gameTables.modality} = 'in_person' and ${gameTables.locationCity} is not null))[1]`,
