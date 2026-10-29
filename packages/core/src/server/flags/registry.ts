@@ -108,6 +108,18 @@ export const flagDefaults = {
   // the table form leaves both out (a save keeps what is stored), a table page does not show them
   // and the list shows 18+ tables like any other. Targeted by the person's id.
   use_table_safety: false,
+  // "Começa já" on /tables, a new feature (created on for everyone): the tables of the list that
+  // start within six hours and still have a seat, in a row of their own. Off: no row. Targeted by
+  // the person's id.
+  use_starting_soon: false,
+  // Procuro mesa (`/players`), a new feature (created on for everyone): people say they are looking
+  // for a table and GMs find them. Off: the page is a 404, the menus leave it out and the switch
+  // refuses. Signed-in people only. Targeted by the person's id.
+  use_players_directory: false,
+  // The westmarch (open table) kind, a new feature (created on for everyone): a roster larger than
+  // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
+  // they are. Targeted by the person's id.
+  use_open_tables: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

@@ -52,7 +52,9 @@ export const ageRange = pgEnum('age_range', [
 // Quem mestra. Keep in step with TABLE_ROLES in packages/core/src/profile/schema.
 export const tableRole = pgEnum('table_role', ['player', 'gm', 'both']);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
-export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure']);
+// `open`: a westmarch (an open table), a roster larger than any one session. Added last: an enum
+// value is only ever appended.
+export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure', 'open']);
 // `active` is open; `disabled` is the GM cancelling before the session; after the session the GM
 // confirms it: `awaiting_confirmation` until they answer, then `concluded` or `not_held`.
 export const tableStatus = pgEnum('table_status', TABLE_STATUSES);
@@ -127,6 +129,10 @@ export const profiles = pgTable(
     // messages. Table chats are not affected.
     directMessagesEnabled: boolean('direct_messages_enabled').notNull().default(true),
     invitationsEnabled: boolean('invitations_enabled').notNull().default(true),
+    // "Procuro mesa": since when the person says they are looking for a table, and the line they
+    // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
+    lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
+    lookingForTableNote: text('looking_for_table_note'),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -146,6 +152,12 @@ export const profiles = pgTable(
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
     // Mirrors PROFILE_LIMITS.bio in packages/core/src/profile/schema.
     check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
+    // Mirrors LOOKING_NOTE_MAX in packages/core/src/players/looking.
+    check('profiles_looking_note_length', sql`char_length(${profile.lookingForTableNote}) <= 200`),
+    // Procuro mesa reads the people looking, newest first.
+    index('profiles_looking_for_table_idx')
+      .on(profile.lookingForTableAt)
+      .where(sql`${profile.lookingForTableAt} IS NOT NULL`),
     // Expired temporary bans, for the sweep that lifts them.
     index('profiles_banned_until_idx')
       .on(profile.bannedUntil)
@@ -348,6 +360,9 @@ export const gameTables = pgTable(
     // The content rating, ClassInd style: L, 10, 12, 14, 16 or 18. Null: not said. An 18 table is
     // left out of the list unless the visitor asks for it.
     contentRating: text('content_rating'),
+    // How many play each session of a westmarch, whose `capacity` is the roster. Null on the
+    // other kinds.
+    sessionSize: integer('session_size'),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     durationMinutes: integer('duration_minutes').notNull(),
     timezone: text('timezone').notNull(),
@@ -384,9 +399,14 @@ export const gameTables = pgTable(
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(
       'game_tables_recurrence_matches_kind',
-      sql`(${table.kind}::text IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind}::text = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
+      // A westmarch may repeat or not.
+      sql`(${table.kind}::text IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind}::text = 'campaign' AND ${table.recurrence} IS NOT NULL) OR ${table.kind}::text = 'open'`,
     ),
     check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
+    check(
+      'game_tables_session_size_range',
+      sql`${table.sessionSize} IS NULL OR (${table.sessionSize} >= 1 AND ${table.sessionSize} <= ${table.capacity})`,
+    ),
     check(
       'game_tables_min_players_range',
       sql`${table.minPlayers} IS NULL OR (${table.minPlayers} >= 1 AND ${table.minPlayers} <= ${table.capacity})`,

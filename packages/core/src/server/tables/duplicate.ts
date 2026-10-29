@@ -67,6 +67,7 @@ export async function loadTableForDuplication(
       safetyTools: orderedSafetyTools(source.safetyTools),
       contentRating:
         source.contentRating && isContentRating(source.contentRating) ? source.contentRating : null,
+      sessionSize: source.sessionSize,
       startsAtLocal: '',
       timezone: source.timezone,
       durationMinutes: source.durationMinutes,

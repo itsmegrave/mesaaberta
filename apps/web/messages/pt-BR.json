@@ -400,6 +400,7 @@
   "table_kind_campaign": "Campanha",
   "table_kind_one_shot": "One-shot",
   "table_kind_adventure": "Aventura",
+  "table_kind_open": "Westmarch",
   "table_seats_left": [
     {
       "declarations": ["input count"],
@@ -427,6 +428,17 @@
   "table_extra_info": "Informações extras",
   "table_extra_info_summary": "O que quem mestra pede para a mesa.",
   "table_recurrence_once": "Sessão única",
+  "table_open_schedule": "Sem data fixa: quem mestra marca cada sessão",
+  "table_open_session_size": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Westmarch: 1 pessoa joga cada sessão",
+        "count=*": "Westmarch: até {count} pessoas jogam cada sessão"
+      }
+    }
+  ],
   "table_adventure_schedule": "Aventura com várias sessões; as próximas datas serão combinadas pelo grupo.",
   "table_adventure_schedule_count": "Aventura de {count} sessões; as próximas datas serão combinadas pelo grupo.",
   "table_kind_adventure_sessions": "Aventura · {count} sessões",
@@ -473,7 +485,13 @@
   "form_kind_one_shot": "One-shot (uma sessão)",
   "form_kind_campaign": "Campanha (várias sessões)",
   "form_kind_adventure": "Aventura (várias sessões, sem recorrência fixa)",
+  "form_kind_open": "Westmarch (elenco grande, cada sessão com parte dele)",
   "form_capacity": "Vagas",
+  "form_roster": "Tamanho do elenco",
+  "form_session_size": "Pessoas por sessão",
+  "form_session_size_hint": "Quantas pessoas do elenco jogam cada sessão. Quem mestra escolhe quem joga em cada uma.",
+  "form_error_session_size_above": "Não pode ser maior que o elenco.",
+  "form_error_session_size_invalid": "Use um número de 1 a 30.",
   "date_picker_open": "Abrir o calendário de {label}",
   "date_picker_time": "Hora de {label}",
   "date_picker_prev": "Mês anterior",
@@ -516,6 +534,7 @@
   "form_duration": "Duração (horas)",
   "form_repeat": "Repete",
   "form_repeat_weekly": "Toda semana",
+  "form_repeat_none": "Sem ritmo fixo",
   "form_repeat_biweekly": "A cada 2 semanas",
   "form_until": "Última sessão até",
   "form_until_hint": "Deixe vazio para uma campanha sem data para acabar.",
@@ -1729,6 +1748,8 @@
   ],
   "tables_adult_show": "Mostrar",
   "tables_adult_hide": "Ocultar",
+  "tables_starting_soon": "Começa já",
+  "tables_starting_soon_hint": "Mesas com vaga que começam nas próximas {hours} horas.",
   "public_profile_message": "Mandar mensagem",
   "public_profile_message_to": "Mandar mensagem para {username}",
   "menu_view_as_visitor": "Ver como visitante",
@@ -1854,6 +1875,7 @@
   "history_field_plannedSessions": "Sessões planejadas",
   "history_field_safetyTools": "Ferramentas de segurança",
   "history_field_contentRating": "Classificação indicativa",
+  "history_field_sessionSize": "Pessoas por sessão",
   "history_field_startsAt": "Data e hora",
   "history_field_durationMinutes": "Duração (minutos)",
   "history_field_timezone": "Fuso horário",
@@ -1945,6 +1967,9 @@
   "nav_directory_systems_description": "Os sistemas jogados aqui e quem mestra cada um.",
   "nav_directory_gms": "Quem mestra",
   "nav_directory_gms_description": "Quem conduz as mesas, com a nota e os sistemas de cada pessoa.",
+  "nav_directory_players": "Procuro mesa",
+  "nav_directory_players_short": "Procuro mesa",
+  "nav_directory_players_description": "Quem está procurando uma mesa, para quem mestra convidar.",
   "crowdfunding_title": "Financiamentos coletivos",
   "crowdfunding_description": "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais.",
   "crowdfunding_lede": "Campanhas de RPG e jogos de mesa abertas para apoio, enviadas pela comunidade. Cada card abre a campanha no site dela.",
@@ -2827,6 +2852,57 @@
   "gms_sort_score": "Melhor nota",
   "gms_sort_tables": "Mais mesas mestradas",
   "gms_sort_name": "Nome (A–Z)",
+  "players_crumb": "Procuro mesa",
+  "players_title": "Procuro mesa",
+  "players_lede": "Pessoas procurando uma mesa. Se você mestra, encontre quem combina com a sua e convide pela página de gerenciar a mesa, com o @usuário.",
+  "players_me_title": "Você está procurando mesa?",
+  "players_me_hint": "Marque para aparecer aqui por 60 dias. Quem mestra pode te convidar para uma mesa.",
+  "players_me_listed": "Você aparece nesta lista. Salvar de novo conta mais 60 dias.",
+  "players_me_looking": "Estou procurando mesa",
+  "players_me_note": "O que você procura",
+  "players_me_note_hint": "Uma linha para quem mestra: sistema, horários, online ou presencial.",
+  "players_me_save": "Salvar",
+  "players_looking_saved_on": "Pronto, você aparece em Procuro mesa.",
+  "players_looking_saved_off": "Pronto, você saiu de Procuro mesa.",
+  "players_search_label": "Buscar por nome, @usuário ou texto",
+  "players_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém procurando mesa",
+        "count=1": "1 pessoa procurando mesa",
+        "count=*": "{count} pessoas procurando mesa"
+      }
+    }
+  ],
+  "players_found_hint": "Aparece aqui quem marcou que está procurando mesa nos últimos 60 dias.",
+  "players_systems_label": "Sistemas favoritos",
+  "players_looking_since": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "procurando desde hoje",
+        "count=1": "procurando desde ontem",
+        "count=*": "procurando há {count} dias"
+      }
+    }
+  ],
+  "players_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa jogada ainda",
+        "count=1": "1 mesa jogada",
+        "count=*": "{count} mesas jogadas"
+      }
+    }
+  ],
+  "players_empty": "Ninguém procurando mesa agora",
+  "players_empty_hint": "Marque acima que você está procurando e apareça para quem mestra.",
+  "players_empty_filtered": "Ninguém procurando mesa com esses filtros",
   "gms_tables_run": [
     {
       "declarations": ["input count"],
@@ -3003,6 +3079,7 @@
   "blog_minutes": "{minutes} min de leitura",
   "blog_back": "Todos os posts",
   "directory_footer_gms": "Quem mestra",
+  "directory_footer_players": "Procuro mesa",
   "admin_nav_badges": "Conquistas",
   "admin_badges_title": "Conquistas",
   "admin_badges_lede": "Cada conquista, quantas pessoas a têm e quantas foram revogadas. Conceda ou revogue na página da pessoa.",

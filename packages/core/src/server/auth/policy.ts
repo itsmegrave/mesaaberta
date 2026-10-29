@@ -29,7 +29,7 @@ type Resources = {
   'table:finish': {
     gmId: string;
     tableStatus: TableStatus;
-    kind: 'campaign' | 'one_shot' | 'adventure';
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
   };
   /** The facts a join depends on, read inside the capacity transaction. */
   'table:join': {
@@ -58,7 +58,7 @@ type Resources = {
   'player:rate': {
     gmId: string;
     tableStatus: TableStatus;
-    kind: 'campaign' | 'one_shot' | 'adventure';
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
     markedPresent: boolean;
   };
   /** Approve or decline a request, or remove a player. */
@@ -193,7 +193,7 @@ export function rateBlocker(
  */
 export const playerRatingOpen = (table: {
   tableStatus: TableStatus;
-  kind: 'campaign' | 'one_shot' | 'adventure';
+  kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
 }): boolean =>
   table.tableStatus === 'concluded' ||
   (table.kind !== 'one_shot' &&

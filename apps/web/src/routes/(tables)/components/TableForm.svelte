@@ -62,6 +62,8 @@
     places?: PlaceOption[] | null;
     /** Safety tools and the content rating (`use_table_safety`). Off, their values ride along unseen. */
     safety?: boolean;
+    /** The westmarch kind is offered (`use_open_tables`); a table that is one keeps it anyway. */
+    openTables?: boolean;
   };
 
   let {
@@ -81,6 +83,7 @@
     calendarNote = false,
     places = null,
     safety = false,
+    openTables = false,
   }: Props = $props();
   // svelte-ignore state_referenced_locally
   const { draft } = controller;
@@ -167,6 +170,7 @@
         ['repeat', m.form_repeat()],
         ['until', m.form_until()],
         ['plannedSessions', m.form_planned_sessions()],
+        ['sessionSize', m.form_session_size()],
         ['placeSlug', m.table_form_place()],
         ['postalCode', m.form_postal_code()],
         ['locationArea', m.form_location_area()],
@@ -348,6 +352,9 @@
         { value: 'one_shot', label: m.form_kind_one_shot() },
         { value: 'campaign', label: m.form_kind_campaign() },
         { value: 'adventure', label: m.form_kind_adventure() },
+        ...(openTables || $draft.kind === 'open'
+          ? [{ value: 'open', label: m.form_kind_open() }]
+          : []),
       ]}
       bind:group={$draft.kind}
       error={err('kind')}
@@ -382,18 +389,24 @@
           </p>{/if}
       </div>
     </div>
-    {#if $draft.kind === 'campaign'}
+    {#if $draft.kind === 'campaign' || $draft.kind === 'open'}
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="min-w-0">
+          <!-- A westmarch may have no rhythm: the GM sets each next date. -->
           <SegmentedChoice
             id="repeat"
             name="repeat"
             legend={m.form_repeat()}
             options={[
+              ...($draft.kind === 'open' ? [{ value: '', label: m.form_repeat_none() }] : []),
               { value: 'weekly', label: m.form_repeat_weekly() },
               { value: 'biweekly', label: m.form_repeat_biweekly() },
             ]}
-            value={$draft.repeat === 'biweekly' ? 'biweekly' : 'weekly'}
+            value={$draft.repeat === 'biweekly'
+              ? 'biweekly'
+              : $draft.kind === 'open' && !$draft.repeat
+                ? ''
+                : 'weekly'}
             invalid={!!invalid('repeat')}
             describedby={err('repeat') ? 'repeat-error' : undefined}
             onchange={(picked) => ($draft.repeat = picked)}
@@ -551,10 +564,10 @@
       <SeatSlider
         id="capacity"
         name="capacity"
-        label={m.form_capacity()}
+        label={$draft.kind === 'open' ? m.form_roster() : m.form_capacity()}
         bind:value={$draft.capacity}
         min={minCapacity}
-        max={TABLE_LIMITS.capacity.max}
+        max={$draft.kind === 'open' ? TABLE_LIMITS.roster.max : TABLE_LIMITS.capacity.max}
         invalid={!!invalid('capacity')}
         describedby={[
           minCapacity > 1 ? 'capacity-taken' : '',
@@ -572,6 +585,28 @@
         </p>{/if}
       <FieldError id="capacity" message={err('capacity')} />
     </div>
+    {#if $draft.kind === 'open'}
+      <FormField
+        id="sessionSize"
+        label={m.form_session_size()}
+        hint={m.form_session_size_hint()}
+        error={err('sessionSize')}
+      >
+        {#snippet children(aria)}
+          <TextInput
+            id="sessionSize"
+            name="sessionSize"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength={2}
+            required
+            bind:value={$draft.sessionSize}
+            class="input h-11 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
+            {...aria}
+          />
+        {/snippet}
+      </FormField>
+    {/if}
     <FormField
       id="minPlayers"
       label={m.form_min_players()}
@@ -649,15 +684,17 @@
           : m.table_modality_online()}
       </li>
       <li>
-        {$draft.kind === 'campaign'
-          ? $draft.repeat === 'biweekly'
-            ? m.form_repeat_biweekly()
-            : m.form_repeat_weekly()
-          : $draft.kind === 'adventure'
-            ? plannedCount
-              ? m.form_schedule_sessions({ count: plannedCount })
-              : m.form_schedule_adventure()
-            : m.table_recurrence_once()}, {formatHours(
+        {$draft.kind === 'open' && !$draft.repeat
+          ? m.table_open_schedule()
+          : $draft.kind === 'campaign' || $draft.kind === 'open'
+            ? $draft.repeat === 'biweekly'
+              ? m.form_repeat_biweekly()
+              : m.form_repeat_weekly()
+            : $draft.kind === 'adventure'
+              ? plannedCount
+                ? m.form_schedule_sessions({ count: plannedCount })
+                : m.form_schedule_adventure()
+              : m.table_recurrence_once()}, {formatHours(
           (Number($draft.durationHours) || 0) * 60,
           getLocale(),
         )}

@@ -2,17 +2,22 @@
 // and durations themselves are formatted in `@mesaaberta/core/tables/format`.
 import { m } from '#lib/paraglide/messages.js';
 
-export type TableKind = 'campaign' | 'one_shot' | 'adventure';
+export type TableKind = 'campaign' | 'one_shot' | 'adventure' | 'open';
 
-/** "Campanha", "Aventura", "One-shot"; "Aventura · 4 sessões" with an adventure's planned count. */
+/**
+ * "Campanha", "Aventura", "One-shot", "Mesa aberta"; "Aventura · 4 sessões" with an adventure's
+ * planned count.
+ */
 export const kindLabel = (kind: TableKind, plannedSessions: number | null = null): string =>
-  kind === 'campaign'
-    ? m.table_kind_campaign()
-    : kind === 'adventure'
-      ? plannedSessions
-        ? m.table_kind_adventure_sessions({ count: plannedSessions })
-        : m.table_kind_adventure()
-      : m.table_kind_one_shot();
+  kind === 'open'
+    ? m.table_kind_open()
+    : kind === 'campaign'
+      ? m.table_kind_campaign()
+      : kind === 'adventure'
+        ? plannedSessions
+          ? m.table_kind_adventure_sessions({ count: plannedSessions })
+          : m.table_kind_adventure()
+        : m.table_kind_one_shot();
 
 /**
  * How often the table meets. A campaign always has a repeat rule (the database requires one) and
@@ -28,7 +33,9 @@ export function scheduleLabel(
     return plannedSessions
       ? m.table_adventure_schedule_count({ count: plannedSessions })
       : m.table_adventure_schedule();
-  if (kind !== 'campaign') return m.table_recurrence_once();
+  // A westmarch without a rhythm: the GM sets each next date.
+  if (kind === 'open' && !everyWeeks) return m.table_open_schedule();
+  if (kind !== 'campaign' && kind !== 'open') return m.table_recurrence_once();
   if (everyWeeks === 1) return m.table_recurrence_weekly();
   return everyWeeks ? m.table_recurrence_weeks({ weeks: everyWeeks }) : null;
 }

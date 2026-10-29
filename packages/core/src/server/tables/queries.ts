@@ -44,6 +44,7 @@ const columns = {
   plannedSessions: gameTables.plannedSessions,
   safetyTools: gameTables.safetyTools,
   contentRating: gameTables.contentRating,
+  sessionSize: gameTables.sessionSize,
   startsAt: gameTables.startsAt,
   durationMinutes: gameTables.durationMinutes,
   timezone: gameTables.timezone,
@@ -105,7 +106,8 @@ const shape = (row: Row) => {
     seatsLeft: seatsLeft(row.capacity, row.taken + row.reserved),
     // Weeks between sessions for a weekly campaign; null for a one-shot. Information only: the
     // platform keeps one date per table, `startsAt`.
-    everyWeeks: row.kind === 'campaign' ? weeklyInterval(row.recurrence) : null,
+    everyWeeks:
+      row.kind === 'campaign' || row.kind === 'open' ? weeklyInterval(row.recurrence) : null,
   };
 };
 

@@ -14,6 +14,7 @@ import { changelogRoutes } from './changelog';
 import { eventRoutes } from './events';
 import { extensionRoutes } from './extensions';
 import { followRoutes } from './follows';
+import { playerRoutes } from './players';
 import { storeHealth } from './health';
 import { partnerRoutes } from './partners';
 import { placeRoutes } from './places';
@@ -123,6 +124,8 @@ export function createApi() {
   app.route('/v1/widgets', widgetRoutes());
   // Seguir: the button, "Seguindo" and its bell switches.
   app.route('/v1/follows', followRoutes());
+  // Procuro mesa: the people looking for a table and the actor's own switch.
+  app.route('/v1/players', playerRoutes());
   // Parceiros: the list, a partner's edit form and "Quem cuida do parceiro".
   app.route('/v1/partners', partnerRoutes());
   // Onde jogar: sending, editing and claiming a place.
