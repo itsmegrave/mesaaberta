@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
@@ -28,20 +27,20 @@ export default defineConfig({
   ssr: {
     noExternal: [/^@iconify-svelte\//, /^@skeletonlabs\//, /^@tanstack\/svelte-/, /^@zag-js\//],
   },
+  // The browser's maps, written next to each file without a `sourceMappingURL` comment. The deploy
+  // stamps them with debug ids and uploads them with `sentry-cli` (`sourcemaps inject` and
+  // `upload`): the plugin's own upload never runs under Vite 8, whose environment builds leave
+  // its "is this the server build" check false, so no browser map had ever reached Sentry.
+  build: { sourcemap: 'hidden' },
+  // The release the browser's events carry (the tag; the deploy sets SENTRY_RELEASE), the same as
+  // the server's `sentryReleaseFor`. Empty outside a deploy.
+  define: { __SENTRY_RELEASE__: JSON.stringify(process.env.SENTRY_RELEASE ?? '') },
   plugins: [
     sentrySvelteKit({
-      // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
       adapter: hostSentry.adapter,
       telemetry: false,
       autoInstrument: false,
-      autoUploadSourceMaps:
-        !!process.env.SENTRY_AUTH_TOKEN || existsSync('.env.sentry-build-plugin'),
-      sourcemaps: {
-        assets: hostSentry.sourcemapAssets,
-        ignore: hostSentry.sourcemapIgnore,
-      },
+      autoUploadSourceMaps: false,
     }),
     tailwindcss(),
     sveltekit({

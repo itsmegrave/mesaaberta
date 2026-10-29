@@ -39,6 +39,12 @@ const COUNTS = new Set([
   'failed',
   'delayed',
   'delaySeconds',
+  'closed',
+  'lifted',
+  'reminded',
+  'deliveries',
+  'attempts',
+  'retry',
 ]);
 const LABELS = new Set([
   'event',
@@ -60,6 +66,18 @@ const LABELS = new Set([
   'colo',
 ]);
 const IDS = new Set(['requestId', 'actionId', 'eventId', 'tableId', 'registrationId', 'userId']);
+/**
+ * Every field name a log line or issue tag can carry; any other is dropped. `error` is the logger's
+ * own: it becomes `errorType`, `code` and `causeCode`.
+ */
+export const LOGGED_FIELDS: ReadonlySet<string> = new Set([
+  ...COUNTS,
+  ...LABELS,
+  ...IDS,
+  'resourceId',
+  'route',
+  'error',
+]);
 // A resource is named by its uuid or by its public handle (a table's slug, a profile's @username).
 const RESOURCE_ID = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$/;
 
@@ -79,8 +97,9 @@ export function safeFields(
       safe[key] = value;
     if (key === 'resourceId' && typeof value === 'string' && RESOURCE_ID.test(value))
       safe[key] = value;
-    // SvelteKit route IDs are templates, not the requested pathname with user-controlled slugs.
-    if (key === 'route' && typeof value === 'string' && /^\/[a-zA-Z0-9/_[\]()=.-]*$/.test(value))
+    // Route templates, never the requested pathname with user-controlled slugs: SvelteKit's
+    // (`/t/[slug]`) and the api's (`/v1/tables/:slug`).
+    if (key === 'route' && typeof value === 'string' && /^\/[a-zA-Z0-9/_[\]()=.:-]*$/.test(value))
       safe[key] = value;
   }
   return safe;

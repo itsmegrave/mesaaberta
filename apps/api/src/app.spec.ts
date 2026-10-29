@@ -63,7 +63,9 @@ describe('api app', () => {
     await app.request('/v1/nothing/ana@example.com');
     spy.mockRestore();
 
-    const entry = lines.map((line) => JSON.parse(line)).find((l) => l.msg === 'api request');
+    const entry = lines
+      .map((line) => JSON.parse(line))
+      .find((l) => l.msg === 'api.request_completed');
     expect(entry).toMatchObject({ method: 'GET', status: 404 });
     expect(JSON.stringify(entry)).not.toContain('ana@example.com');
   });

@@ -63,7 +63,7 @@ async function signInViaApi(
     refresh_token: refreshToken,
   });
   if (error) {
-    locals.log.warn('api sign-in session not set', { code: 'api_session_rejected' });
+    locals.log.warn('auth.sign_in_session_not_set', { code: 'api_session_rejected' });
     return { result: 'failed' };
   }
   return { result: 'ok' };

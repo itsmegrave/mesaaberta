@@ -3,13 +3,15 @@ import { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN } from '$app/env/public';
 import { sentryOptionsFor } from '#lib/observability/privacy.js';
 import { clientFamilyOf } from '#lib/observability/client-family.js';
 
-Sentry.init(
-  sentryOptionsFor(
+Sentry.init({
+  ...sentryOptionsFor(
     { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_ORIGIN },
     location.origin,
     import.meta.env.PROD,
   ),
-);
+  // The tag the deploy built (vite.config.ts), as the server's events name it.
+  release: __SENTRY_RELEASE__ || undefined,
+});
 // Browser and OS families only, so Web Vitals can be split by device; the user agent stays here.
 const family = clientFamilyOf(navigator.userAgent);
 Sentry.setContext('browser', { name: family.browser });

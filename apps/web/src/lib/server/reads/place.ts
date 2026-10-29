@@ -25,7 +25,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     });
   if (!found) {
     // The request line already names the place (`resourceType`, `resourceId`).
-    locals.log.info('place not found', { code: 'place_not_found' });
+    locals.log.info('places.not_found', { code: 'place_not_found' });
     error(404, 'Not found');
   }
 

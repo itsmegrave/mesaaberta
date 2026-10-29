@@ -42,6 +42,6 @@ export async function reportDelay(db: AnyDb, now: Date, log: Logger) {
         error: new Error('outbox_delayed'),
       });
   } catch (error) {
-    log.warn('event delay check failed', { code: 'delay_check_failed', error });
+    log.warn('event.delay_check_failed', { code: 'delay_check_failed', error });
   }
 }

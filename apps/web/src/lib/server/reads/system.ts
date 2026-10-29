@@ -22,7 +22,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     });
   if (!found) {
     // The request line already names the system (`resourceType`, `resourceId`).
-    locals.log.info('system not found', { code: 'system_not_found' });
+    locals.log.info('systems.not_found', { code: 'system_not_found' });
     error(404, 'Not found');
   }
   if ('redirectTo' in found) redirect(301, `/s/${found.redirectTo}`);

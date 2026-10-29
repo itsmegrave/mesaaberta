@@ -64,7 +64,7 @@ async function signUpViaApi(
         })
       : { error: true };
   if (set.error) {
-    locals.log.warn('api sign-up session not set', { code: 'api_session_rejected' });
+    locals.log.warn('auth.sign_up_session_not_set', { code: 'api_session_rejected' });
     return { result: 'session_lost' };
   }
   return { result: 'signed_in' };

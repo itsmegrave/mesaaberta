@@ -36,7 +36,7 @@ describe('the layout load', () => {
     const data = await run(e);
 
     expect(data.account).toBeNull();
-    expect(log.error).toHaveBeenCalledWith('layout: could not load the profile', expect.anything());
+    expect(log.error).toHaveBeenCalledWith('layout.profile_load_failed', expect.anything());
   });
 });
 

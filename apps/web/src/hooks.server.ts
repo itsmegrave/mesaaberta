@@ -132,10 +132,28 @@ export const handle: Handle = sequence(
 
 // Replaces SvelteKit's default console output so an unexpected error carries the request id.
 // A 404 is a visitor's typo, not a fault, and the request line already records it.
-export const handleError: HandleServerError = Sentry.handleErrorWithSentry((input) => {
+const reportError: HandleServerError = Sentry.handleErrorWithSentry((input) => {
   // SvelteKit 3 calls this for every error, the ones thrown with `error()` and the 404s it makes
   // itself included: only what nobody meant to happen (an unknown error, or a 5xx) is a fault.
   const status = input.kind === 'unknown' ? 500 : input.error.status;
   if (input.kind === 'unknown' || status >= 500)
-    (input.event.locals.log ?? logger).error('unhandled error', { error: input.error, status });
+    (input.event.locals.log ?? logger).error('request.unhandled_error', {
+      error: input.error,
+      status,
+    });
 });
+
+/** An `error(503, ...)` is a plain object: as an `Error`, its issue is titled by its status. */
+class HttpError extends Error {
+  override name = 'HttpError';
+}
+
+export const handleError: HandleServerError = (input) => {
+  if (input.kind === 'unknown') return reportError(input);
+  // The status goes on the issue (and in its title), so a 503 is not just "an object".
+  Sentry.setTag('status', input.error.status);
+  return reportError({
+    ...input,
+    error: Object.assign(new HttpError(`HttpError ${input.error.status}`), input.error),
+  } as typeof input);
+};

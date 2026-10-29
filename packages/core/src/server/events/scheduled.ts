@@ -19,5 +19,5 @@ export async function runScheduled(
     await importer(env, { scheduledTime: controller.scheduledTime, log });
   else if (controller.cron === SWEEPER_CRON)
     await sweeper(env, { handlers: handlersFor(env), log });
-  else log.warn('unknown scheduled trigger', { code: 'unknown_cron' });
+  else log.warn('scheduled.unknown_trigger', { code: 'unknown_cron' });
 }

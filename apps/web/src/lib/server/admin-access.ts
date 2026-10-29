@@ -61,7 +61,7 @@ async function noteEntry(event: RequestEvent) {
       });
       if (answer && !answer.ok) throw new Error(`api answered ${answer.status}`);
     } catch (error) {
-      locals.log.warn('admin entry not recorded', { error, route: routeId });
+      locals.log.warn('admin.entry_not_recorded', { error, route: routeId });
     }
   });
 }

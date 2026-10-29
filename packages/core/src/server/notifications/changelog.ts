@@ -27,8 +27,17 @@ export async function announceChangelogDay(
   if (Number.isNaN(published) || now.getTime() - published > FRESH_DAYS * DAY) return null;
 
   return db.transaction(async (tx) => {
-    // One at a time across isolates: the check and the write below must not interleave.
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('changelog-announcement'))`);
+    // One at a time across isolates: the check and the write below must not interleave. Never
+    // wait for the lock: every new isolate asks at once after a deploy, and waiting ones queued
+    // behind a slow holder until the statement timeout (2 min) cancelled them. The holder is
+    // sending this very day, so one that finds it taken has nothing to do.
+    const result: unknown = await tx.execute(
+      sql`select pg_try_advisory_xact_lock(hashtext('changelog-announcement')) as locked`,
+    );
+    // postgres.js answers with the rows, PGlite with `{ rows }`.
+    type Row = { locked: boolean };
+    const rows = (Array.isArray(result) ? result : (result as { rows: Row[] }).rows) as Row[];
+    if (rows[0]?.locked !== true) return null;
     const [sent] = await tx
       .select({ id: events.id })
       .from(events)

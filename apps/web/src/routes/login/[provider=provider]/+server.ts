@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
     next: url.searchParams.get('next'),
   });
   if (!target) {
-    locals.log.error('login: Supabase gave no provider URL', { provider: params.provider });
+    locals.log.error('auth.login_no_provider_url', { provider: params.provider });
     redirect(303, '/login?error=start_failed');
   }
 

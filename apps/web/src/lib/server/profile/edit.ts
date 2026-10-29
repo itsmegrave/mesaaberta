@@ -22,7 +22,7 @@ import type { ZodType } from 'zod';
 export async function removePicture(locals: App.Locals, userId: string, path: string | null) {
   if (!path || !isInside(path, userId)) return;
   const { error } = (await serverStorage(locals.env, AVATAR_BUCKET)?.remove([path])) ?? {};
-  if (error) locals.log.warn('profile picture: could not delete the old file', { error });
+  if (error) locals.log.warn('storage.profile_picture_delete_failed', { error });
 }
 
 /**

@@ -57,7 +57,7 @@ export async function decideViaApi(
     // Only an entry the service could not find; an unknown decision is a bug.
     return { kind: 'refused', status: 404, field: '', code: 'not_found' };
   }
-  locals.log.warn('api decision failed', {
+  locals.log.warn('api.decision_failed', {
     code: 'api_call_failed',
     route: routeTemplate(path),
     status: answer.status,

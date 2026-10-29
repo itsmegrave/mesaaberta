@@ -468,23 +468,30 @@ locals.log.info('event.handler.succeeded', {
 });
 ```
 
-Every console line has `schemaVersion`, `time` (UTC ISO timestamp), `level`, `msg` and `service`.
-Request logs add the Cloudflare `cf-ray` as `requestId` (a UUID locally), `environment`, Worker
-version `release`, method, **route template** (for example `/t/[slug]`), status, outcome and
-duration. Raw paths and query strings are not recorded. The web Worker passes its `requestId` to
+Every console line has `schemaVersion`, `time` (UTC ISO timestamp), `level`, `msg`, `service` and
+`app` (web, api or worker). `msg` names what happened as `area.event` in snake case
+(`request.completed`, `sweep.events_swept`, `api.call_failed`), so Sentry Logs can be filtered and
+counted by it; put the details in fields, never in the message. Every web line adds the Cloudflare
+`cf-ray` as `requestId` (a UUID locally), `environment`, the deployed tag as `release` (the same
+release Sentry issues carry), the **route template** (for example `/t/[slug]`) and, once the session
+is verified, `userId`; the request line adds method, status, outcome and duration. Raw paths and query strings are not recorded. The web Worker passes its `requestId` to
 the api in `x-request-id`, so the api's lines carry the same id, and each worker run (cron or queue
 delivery) has its own. Field names are camelCase: `requestId` for the request or run a line belongs
 to, `actionId` for the request that recorded an event. Dispatcher logs add event ID/type, the
 event's `actionId`, handler, attempt and duration. Failed handlers produce `event.handler.failed`, followed by
 `event.retry.scheduled` with `retryInSeconds`, or `event.exhausted` after eight attempts.
 
-**Privacy boundary:** `src/lib/observability/privacy.ts` defines the allowed operational fields.
-Unknown fields, nested objects, user identity, form data, headers, cookies, session IDs and payloads
-are dropped **before both destinations**. Strings have an additional credential/email scrubber.
-Errors contribute only their type and safe error code to logs; caught operational errors and
-unexpected SvelteKit errors produce Sentry issues with code locations and safe correlation tags.
-The Sentry `beforeSend` callback reconstructs exceptions without messages, request data, user data,
-breadcrumbs, source context or local variables. `beforeSendLog` independently filters SDK-added
+**Privacy boundary:** `packages/core/src/observability/privacy.ts` defines the allowed operational
+fields. Unknown fields, nested objects, form data, headers, cookies, session IDs and payloads are
+dropped **before both destinations**; who acted travels only as the opaque `userId`.
+`logger-fields.spec.ts` fails when a log call uses a field the allowlist would drop. Strings have an
+additional credential/email scrubber. Errors contribute only their type and safe error code to
+logs; caught operational errors and unexpected SvelteKit errors produce Sentry issues with code
+locations and safe correlation tags. The Sentry `beforeSend` callback reconstructs exceptions
+without request data, breadcrumbs, source context or local variables; the user is only `{ id }`.
+An issue's title keeps the exception message only when it names nothing but code (an engine
+`TypeError`, a Svelte error code, `HttpError 503`); otherwise it is the error's `code`, `causeCode`
+and `status`. Browsers that lost the network (`Failed to fetch`, `Load failed`) are not reported. `beforeSendLog` independently filters SDK-added
 attributes and rejects automatic console logs. Do not add console-capture integrations.
 Performance traces (`TRACES_SAMPLE_RATE` in `packages/core/src/observability/sentry-options.ts`,
 100% for now) pass `beforeSendTransaction` and `beforeSendSpan`, which keep the route, timings, Web

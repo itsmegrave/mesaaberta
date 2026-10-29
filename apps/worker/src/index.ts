@@ -7,6 +7,7 @@ import { runScheduled } from '@mesaaberta/core/server/events/scheduled';
 import type { SocialEnv } from '@mesaaberta/core/server/social/port';
 import { withRequestId } from '@mesaaberta/contracts';
 import { logger } from '@mesaaberta/core/server/logger';
+import { sentryReleaseFor } from '@mesaaberta/core/observability/sentry-options';
 import { createDeadLetterConsumer, createQueueConsumer, type QueueBatch } from '@mesaaberta/events';
 
 // The background half of the system (Trello #120): the Cron Triggers and, later, the Queues
@@ -49,13 +50,13 @@ export const createWorker = (
     const log = logger.child({
       requestId,
       environment: 'production',
-      release: env.CF_VERSION_METADATA?.id,
+      release: sentryReleaseFor('worker', env).release,
     });
     const job = CRON_MONITORS[controller.cron];
     const work = () => withRequestId(requestId, () => run(controller, env, { log }));
     // The monitor sees the failure (an error check-in) before it is logged and swallowed here.
     await (job && env.SENTRY_CRON_MONITORS === 'true' ? monitor(job, work) : work()).catch(
-      (error) => log.error('scheduled job failed', { error }),
+      (error) => log.error('scheduled.job_failed', { error }),
     );
   },
   /**
@@ -82,19 +83,19 @@ async function deliver(
   const log = logger.child({
     requestId,
     environment: 'production',
-    release: env?.CF_VERSION_METADATA?.id,
+    release: sentryReleaseFor('worker', env).release,
   });
   if (batch.queue === DEAD_LETTER_QUEUE) {
     // Only a reference travels, so ids are all there is to log. The outbox row is still due and
     // the sweeper runs it; this makes sure someone sees that the queue gave up.
     const dead = createDeadLetterConsumer({
       onDead: (ref, attempts) =>
-        log.error('queue dead letter', {
+        log.error('queue.dead_letter', {
           event: 'queue.dead_letter',
           eventId: ref?.eventId,
           resourceType: 'event',
           resourceId: ref?.eventId,
-          type: ref?.type,
+          eventType: ref?.type,
           attempts,
         }),
     });
@@ -104,11 +105,15 @@ async function deliver(
   const only = liveHandlers(env);
   const connectionString = only.length > 0 ? connectionStringFrom(env) : undefined;
   const onFailed = (_ref: unknown, reason: string) =>
-    log.warn('queue message rejected', { reason });
+    log.warn('queue.message_rejected', { reason });
   if (!connectionString) {
     const consume = createQueueConsumer({ executor: async () => ({ status: 'done' }), onFailed });
     const { done, failed } = await consume(batch);
-    log.info('queue shadow', { received: batch.messages.length, acknowledged: done, failed });
+    log.info('queue.shadow_consumed', {
+      received: batch.messages.length,
+      acknowledged: done,
+      failed,
+    });
     return;
   }
   const { db, close } = open(connectionString);
@@ -122,10 +127,10 @@ async function deliver(
       onFailed,
     });
     const { done, retried, failed } = await consume(batch);
-    log.info('queue live', { received: batch.messages.length, done, retried, failed });
+    log.info('queue.live_consumed', { received: batch.messages.length, done, retried, failed });
   } catch (error) {
     // Unsettled messages are redelivered by the queue; the outbox rows are untouched.
-    log.error('queue consumer failed', { error });
+    log.error('queue.consumer_failed', { error });
     throw error;
   } finally {
     await close();

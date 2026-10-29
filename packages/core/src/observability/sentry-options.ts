@@ -13,6 +13,63 @@ import { buildInfoOf, type BuildEnv } from '../server/build-info';
 const cancelled = (event: ErrorEvent) =>
   event.exception?.values?.some((exception) => exception.type === 'AbortError') ?? false;
 
+/**
+ * The browser lost the network (offline, a dropped connection, a page left mid-request): each
+ * browser words it differently, and nothing on our side failed. The server's own lines record a
+ * request that did reach it.
+ */
+const NETWORK_FAILURES = [
+  /^Failed to fetch( \(.*\))?$/,
+  /^Load failed( \(.*\))?$/,
+  /^NetworkError when attempting to fetch resource\.?$/,
+  /^Network request failed$/,
+  /^The network connection was lost\.?$/,
+];
+const offline = (event: ErrorEvent) =>
+  event.exception?.values?.some(
+    ({ type, value }) =>
+      type === 'TypeError' && !!value && NETWORK_FAILURES.some((shape) => shape.test(value)),
+  ) ?? false;
+
+/** A code identifier (`data.table.slug`, `e[0]`), never free text. */
+const IDENT = String.raw`[\w$.[\]'"]{1,80}`;
+/**
+ * Exception messages that only ever name code, never data: the engine's own type errors, Svelte's
+ * error codes, SvelteKit's wrapped `HttpError`, a failed chunk import. Anything else is withheld.
+ */
+const SAFE_MESSAGES = [
+  new RegExp(`^Cannot read propert(?:y|ies) of (?:undefined|null) \\(reading ${IDENT}\\)$`),
+  new RegExp(`^Cannot set propert(?:y|ies) of (?:undefined|null) \\(setting ${IDENT}\\)$`),
+  new RegExp(`^(?:undefined|null) is not an object \\(evaluating ${IDENT}\\)$`),
+  new RegExp(`^${IDENT} is not (?:a function|iterable|defined|a constructor)$`),
+  new RegExp(`^${IDENT} is (?:undefined|null)$`),
+  new RegExp(`^can't access property ${IDENT}, ${IDENT} is (?:undefined|null)$`),
+  /^https:\/\/svelte\.dev\/e\/[a-z_]{1,60}$/,
+  /^Object captured as exception with keys: [\w, ]{1,80}$/,
+  /^HttpError \d{3}$/,
+  /^(?:Failed to fetch dynamically imported module|Importing a module script failed\.?|error loading dynamically imported module)/,
+  /^Maximum call stack size exceeded\.?$/,
+  /^The operation was aborted due to timeout$/,
+];
+
+/** What an issue's title says: a code-only message as it was, else the safe tags it carried. */
+const describe = (value: string | undefined, tags: Record<string, string | number | boolean>) => {
+  const message = value?.split('\n')[0];
+  // A failed chunk import names the chunk's URL after the message: keep the message, not the URL.
+  if (message && SAFE_MESSAGES.some((safe) => safe.test(message)))
+    return scrubString(message.replace(/\s+https?:\/\/\S+$/, '')).slice(0, 200);
+  const known = ['code', 'causeCode', 'status']
+    .filter((key) => tags[key] !== undefined)
+    .map((key) => `${key} ${tags[key]}`);
+  return known.length
+    ? `${known.join(', ')} (details withheld; correlate by requestId)`
+    : 'Exception details withheld; correlate by requestId and code location';
+};
+
+/** The person an event happened to, as their opaque id only (the `userId` tag the request set). */
+const userOf = (tags: Record<string, string | number | boolean>) =>
+  typeof tags.userId === 'string' ? { id: tags.userId } : undefined;
+
 /** Flag evaluations the request recorded (`recordFlag`): only flag-shaped names and booleans. */
 const flagsOf = (event: ErrorEvent) => {
   const values = event.contexts?.flags?.values?.filter(
@@ -63,10 +120,12 @@ export const coloOf = (request: Request): string | undefined => {
 };
 
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
-  if (cancelled(event)) return null;
-  // Reconstruct rather than redact unknown SDK contexts. Keep code locations and the flags the
-  // request read for diagnosis, never exception messages, local variables, source context,
-  // breadcrumbs or request data.
+  if (cancelled(event) || offline(event)) return null;
+  const tags = safeFields(event.tags);
+  // Reconstruct rather than redact unknown SDK contexts. Keep code locations, the flags the
+  // request read and who it happened to (an opaque id) for diagnosis, never free-text exception
+  // messages, local variables, source context, breadcrumbs or request data. `dist` must survive:
+  // the server's source maps are uploaded per app (release + dist), and without it no frame maps.
   return {
     type: undefined,
     event_id: event.event_id,
@@ -74,8 +133,10 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     platform: event.platform,
     level: event.level,
     release: event.release,
+    dist: event.dist,
     environment: event.environment,
-    tags: safeFields(event.tags),
+    tags,
+    user: userOf(tags),
     contexts: optionalContexts({ ...flagsOf(event), ...hostContexts(event) }),
     debug_meta: event.debug_meta && {
       images: event.debug_meta.images?.flatMap((image) =>
@@ -93,7 +154,7 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     exception: event.exception && {
       values: event.exception.values?.map((exception) => ({
         type: exception.type && /^[A-Za-z]+Error$/.test(exception.type) ? exception.type : 'Error',
-        value: 'Exception details withheld; correlate by requestId and code location',
+        value: describe(exception.value, tags),
         stacktrace: exception.stacktrace && {
           frames: exception.stacktrace.frames?.map((frame) => ({
             filename: frame.filename?.split(/[?#]/)[0],

@@ -71,7 +71,7 @@ export async function runDailyImports(
 ): Promise<RunSummary[]> {
   const connection = connectionStringFrom(env);
   if (env.CROWDFUNDING_IMPORT_ENABLED !== 'true' || !connection) {
-    log.info('crowdfunding import disabled', { outcome: 'disabled' });
+    log.info('crowdfunding.import_disabled', { outcome: 'disabled' });
     return [];
   }
   const { db, close } = open(connection);
@@ -83,7 +83,7 @@ export async function runDailyImports(
     try {
       storage = serverStorage(env, IMAGE_BUCKET);
     } catch {
-      log.warn('crowdfunding image storage unavailable', { code: 'image_storage_invalid' });
+      log.warn('crowdfunding.image_storage_unavailable', { code: 'image_storage_invalid' });
     }
     const saveImage =
       image ??
@@ -127,7 +127,7 @@ export async function runDailyImports(
         if (!rows.length) await discardImage(path);
       } catch {
         if (path) await discardImage(path).catch(() => undefined);
-        log.warn('crowdfunding image unavailable', {
+        log.warn('crowdfunding.image_unavailable', {
           provider: c.source,
           code: 'image_unavailable',
         });
@@ -190,7 +190,7 @@ export async function runDailyImports(
               // every later campaign forever; blocked/changed/transient pages still fail the source.
               if (!(error instanceof Error) || !/^source_http_(404|410)$/.test(error.message))
                 throw error;
-              log.warn('crowdfunding campaign no longer available', {
+              log.warn('crowdfunding.campaign_unavailable', {
                 provider: adapter.source,
                 code: error.message,
               });
@@ -243,12 +243,12 @@ export async function runDailyImports(
         durationMs: clock() - started,
       };
       if (summary.status === 'failed')
-        log.error('crowdfunding source import failed', {
+        log.error('crowdfunding.source_import_failed', {
           ...fields,
           stage,
           ...(unexpected ? { error: unexpected } : {}),
         });
-      else log.info('crowdfunding source import', fields);
+      else log.info('crowdfunding.source_imported', fields);
       summaries.push(summary);
     }
     return summaries;

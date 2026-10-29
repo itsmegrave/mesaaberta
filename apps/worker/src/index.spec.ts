@@ -156,7 +156,7 @@ describe('worker', () => {
     expect(ack).toHaveBeenCalledOnce();
     expect(retry).not.toHaveBeenCalled();
     expect(open).not.toHaveBeenCalled();
-    expect(JSON.stringify(error.mock.calls)).toContain('queue dead letter');
+    expect(JSON.stringify(error.mock.calls)).toContain('queue.dead_letter');
     error.mockRestore();
   });
 });

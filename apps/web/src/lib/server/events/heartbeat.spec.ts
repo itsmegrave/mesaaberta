@@ -72,7 +72,7 @@ describe('the worker heartbeat', () => {
       recordHeartbeat(broken, SWEEPER_HEARTBEAT, t0, logger as never),
     ).resolves.toBeUndefined();
     expect(logger.warn).toHaveBeenCalledWith(
-      'worker heartbeat failed',
+      'worker.heartbeat_failed',
       expect.objectContaining({ code: 'heartbeat_failed' }),
     );
   });

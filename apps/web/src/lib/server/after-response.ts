@@ -15,7 +15,7 @@ export const handleAfterResponse: Handle = async ({ event, resolve }) => {
     const finishing = Promise.all(
       tasks.map((task) =>
         task().catch((error: unknown) =>
-          event.locals.log?.error('after-response task failed', { error }),
+          event.locals.log?.error('request.after_response_failed', { error }),
         ),
       ),
     );
