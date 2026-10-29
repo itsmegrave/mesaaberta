@@ -57,6 +57,11 @@
         "title": "Westmarch",
         "description": "Um novo tipo de mesa para quem mestra westmarch: um elenco grande, com até 100 pessoas, e cada sessão com parte dele. Diga quantas jogam por sessão e marque as datas no seu ritmo, toda semana ou quando quiser.",
         "href": "/tables/new"
+      },
+      {
+        "kind": "fixed",
+        "title": "Conquistas depois da mesa",
+        "description": "As conquistas voltam a chegar quando quem mestra conclui uma mesa."
       }
     ]
   },
