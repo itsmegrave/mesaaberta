@@ -21,6 +21,10 @@ const show = (
   links: { network: string; text: string; href: string | null }[],
   name?: string,
   reviews: ReturnType<typeof review>[] = [],
+  directoryLinks: {
+    hostedAt?: { slug: string; name: string }[];
+    looksAfter?: { id: string; name: string }[];
+  } = {},
 ) =>
   render(Page, {
     data: {
@@ -31,6 +35,8 @@ const show = (
         links,
         totals: { played: 0, hosted: 0 },
         rating: { score: null, count: 0, isNew: true },
+        hostedAt: directoryLinks.hostedAt ?? [],
+        looksAfter: directoryLinks.looksAfter ?? [],
       },
       tables: [],
       reviews,
@@ -140,5 +146,29 @@ describe('public profile reviews', () => {
     await expect
       .element(page.getByRole('button', { name: 'Ver todas as 5 avaliações' }))
       .toBeVisible();
+  });
+});
+
+describe('public profile directory links', () => {
+  it('says where the person mestra na casa and which partners they look after', async () => {
+    show([], undefined, [], {
+      hostedAt: [{ slug: 'taverna', name: 'Taverna do Dado' }],
+      looksAfter: [{ id: 'p1', name: 'Goblin Games' }],
+    });
+    await expect.element(page.getByText('Mestra em')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Taverna do Dado' }))
+      .toHaveAttribute('href', '/pp/taverna');
+    await expect.element(page.getByText('Cuida de')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Goblin Games' }))
+      .toHaveAttribute('href', '/p/p1');
+  });
+
+  it('has neither line when there is nothing to say', async () => {
+    show([]);
+    await expect.element(page.getByRole('heading', { level: 1 })).toBeVisible();
+    expect(page.getByText('Mestra em').elements()).toHaveLength(0);
+    expect(page.getByText('Cuida de').elements()).toHaveLength(0);
   });
 });

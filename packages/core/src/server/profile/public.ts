@@ -13,6 +13,8 @@ import { participantRatingOf } from '@mesaaberta/core/server/ratings/players';
 import { listUpcomingTablesByGm } from '@mesaaberta/core/server/tables/queries';
 import { readFavoriteSystems } from '@mesaaberta/core/server/profile/favorite-systems';
 import { followerCount, isFollowing } from '@mesaaberta/core/server/follows/service';
+import { hostedPlacesOf } from '@mesaaberta/core/server/places/hosts';
+import { shownPartnersOf } from '@mesaaberta/core/server/places/partner-links';
 import { isNetwork, socialTarget } from '../../profile/social-links';
 import { normalizeUsername, usernameProblem } from '../../profile/username';
 
@@ -123,6 +125,8 @@ export async function publicProfile(
     participantRating,
     favoriteSystems,
     follows,
+    hosted,
+    looksAfter,
   ] = await Promise.all([
     db
       .select({
@@ -158,6 +162,9 @@ export async function publicProfile(
       ]);
       return { following, followers };
     })(),
+    // "Mestra em" and "Cuida de" (`use_directory_links`, which web asks).
+    hostedPlacesOf(db, [found.id]),
+    shownPartnersOf(db, found.id),
   ]);
 
   return {
@@ -185,6 +192,9 @@ export async function publicProfile(
       rating,
       participantRating,
       favoriteSystems,
+      // The places where they are a house GM, and the partners they chose to show they look after.
+      hostedAt: (hosted.get(found.id) ?? []).map(({ slug, name }) => ({ slug, name })),
+      looksAfter,
     },
     tables: upcoming.tables.map((table) => ({
       slug: table.slug,

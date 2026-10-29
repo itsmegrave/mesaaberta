@@ -216,6 +216,15 @@ export type DomainEvent =
   | { type: 'PlacePartnerLinkApproved'; payload: PlacePartnerLinkFact }
   | { type: 'PlacePartnerLinkRejected'; payload: PlacePartnerLinkFact }
   | { type: 'PlacePartnerUnlinked'; payload: PlacePartnerLinkFact }
+  // "Quem mestra na casa": whoever owns a place (or an admin) invites someone; they accept or
+  // decline, or it is cancelled or lapses. A house GM leaves (`actorId` is `profileId`) or is
+  // taken off by the place's owner or an admin (then they are told).
+  | { type: 'PlaceHostInvited'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationAccepted'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationDeclined'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationCancelled'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationExpired'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostRemoved'; payload: PlaceFact & { profileId: string } }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -312,6 +321,13 @@ export type PlacePartnerLinkFact = PlaceFact & {
   partnerId: string;
   partnerName: string;
   requestedBy: string | null;
+};
+
+// An invite to be a place's house GM.
+export type PlaceHostInvitationFact = PlaceFact & {
+  inviterId: string;
+  inviteeId: string;
+  invitationId: string;
 };
 
 // A place and who looks after it: whoever sent it, and the owner an admin accepted, if any.
