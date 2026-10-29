@@ -1,3 +1,4 @@
+import { openTablesEnabled } from '#lib/server/tables/open-enabled.js';
 import { loadRead } from '#lib/server/reads/load.js';
 import { tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
 import { error, redirect } from '@sveltejs/kit';
@@ -39,6 +40,7 @@ export const load: PageServerLoad = async (event) => {
       catalog: catalogRead.catalog,
       catalogRead,
       seatsTaken,
+      openTables: await openTablesEnabled(locals),
       // The "Onde jogar" picker, while the places are on.
       places: (await directoryEnabled(locals, 'places'))
         ? await readPlaceOptions(locals, user.id)

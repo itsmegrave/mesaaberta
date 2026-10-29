@@ -116,6 +116,10 @@ export const flagDefaults = {
   // for a table and GMs find them. Off: the page is a 404, the menus leave it out and the switch
   // refuses. Signed-in people only. Targeted by the person's id.
   use_players_directory: false,
+  // The westmarch (open table) kind, a new feature (created on for everyone): a roster larger than
+  // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
+  // they are. Targeted by the person's id.
+  use_open_tables: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

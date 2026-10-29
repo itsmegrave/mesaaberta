@@ -16,7 +16,7 @@ export type CalendarTable = {
   title: string;
   description: string;
   extraInfo: string | null;
-  kind: 'campaign' | 'one_shot' | 'adventure';
+  kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
   startsAt: Date;
   durationMinutes: number;
   timezone: string;

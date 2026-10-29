@@ -1,7 +1,7 @@
 [
   {
     "date": "2026-10-29",
-    "title": "Lista de espera, Começa já, Procuro mesa, segurança nas mesas e parceiros nos lugares",
+    "title": "Lista de espera, Começa já, Procuro mesa, Westmarch, segurança nas mesas e parceiros nos lugares",
     "summary": "Mesa cheia ganhou lista de espera, cada mesa pode dizer como cuida da segurança de quem joga, os lugares ganharam tags e quem mestra na casa, e cada parceiro tem sua página.",
     "changes": [
       {
@@ -51,6 +51,12 @@
         "title": "Procuro mesa",
         "description": "Está sem mesa? Marque que você está procurando, conte em uma linha o que procura e apareça por 60 dias para quem mestra, que encontra você na lista e convida pelo seu @usuário.",
         "href": "/players"
+      },
+      {
+        "kind": "new",
+        "title": "Westmarch",
+        "description": "Um novo tipo de mesa para quem mestra westmarch: um elenco grande, com até 100 pessoas, e cada sessão com parte dele. Diga quantas jogam por sessão e marque as datas no seu ritmo, toda semana ou quando quiser.",
+        "href": "/tables/new"
       }
     ]
   },

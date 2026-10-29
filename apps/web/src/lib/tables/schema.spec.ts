@@ -52,6 +52,7 @@ describe('parseTableForm', () => {
         capacity: 5,
         minPlayers: null,
         plannedSessions: null,
+        sessionSize: null,
         startsAtLocal: '2026-10-10T19:00',
         timezone: 'America/Sao_Paulo',
         durationMinutes: 240,
@@ -160,6 +161,40 @@ describe('parseTableForm', () => {
     expect(
       parseTableForm(form({ kind: 'campaign', repeat: 'weekly', plannedSessions: '4' })),
     ).toMatchObject({ ok: true, data: { plannedSessions: null } });
+  });
+
+  describe('westmarch', () => {
+    it('takes a roster past the largest table and how many play each session', () => {
+      const result = parseTableForm(
+        form({ kind: 'open', capacity: '40', sessionSize: '5', repeat: '' }),
+      );
+      expect(result.ok && result.data).toMatchObject({
+        kind: 'open',
+        capacity: 40,
+        sessionSize: 5,
+        recurrence: null,
+      });
+    });
+
+    it('may repeat weekly, like a campaign', () => {
+      const result = parseTableForm(
+        form({ kind: 'open', capacity: '12', sessionSize: '4', repeat: 'weekly' }),
+      );
+      expect(result.ok && result.data.recurrence).toBe('FREQ=WEEKLY');
+    });
+
+    it('needs the players per session, no more than the roster', () => {
+      expect(errorsOf({ kind: 'open', capacity: '12' })).toEqual({ sessionSize: 'required' });
+      expect(errorsOf({ kind: 'open', capacity: '3', sessionSize: '5' })).toEqual({
+        sessionSize: 'above_capacity',
+      });
+    });
+
+    it('keeps the other kinds to the largest table, and drops a session size on them', () => {
+      expect(errorsOf({ capacity: '40' })).toEqual({ capacity: 'too_big' });
+      const result = parseTableForm(form({ sessionSize: '4' }));
+      expect(result.ok && result.data.sessionSize).toBeNull();
+    });
   });
 
   it('accepts a minimum equal to the seats, and says a larger one is above the capacity', () => {

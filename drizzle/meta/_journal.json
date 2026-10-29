@@ -540,6 +540,13 @@
       "when": 1793276830469,
       "tag": "0076_players_looking",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1793277342432,
+      "tag": "0077_open_tables",
+      "breakpoints": true
     }
   ]
 }

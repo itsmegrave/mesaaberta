@@ -1,3 +1,4 @@
+import { openTablesEnabled } from '#lib/server/tables/open-enabled.js';
 import { loadRead } from '#lib/server/reads/load.js';
 import { tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
 import type { TableFormValues } from '#lib/tables/form-values.js';
@@ -64,6 +65,10 @@ export const load: PageServerLoad = async (event) => {
             welcomeMessage: input.welcomeMessage ?? '',
             minPlayers: input.minPlayers === null ? '' : String(input.minPlayers),
             plannedSessions: input.plannedSessions === null ? '' : String(input.plannedSessions),
+            sessionSize:
+              input.sessionSize === null || input.sessionSize === undefined
+                ? ''
+                : String(input.sessionSize),
             durationHours: minutesToHours(input.durationMinutes),
             repeat:
               input.recurrence === 'FREQ=WEEKLY;INTERVAL=2'
@@ -91,6 +96,7 @@ export const load: PageServerLoad = async (event) => {
     catalogRead,
     places,
     safety: await tableSafetyEnabled(locals, await locals.getProfile()),
+    openTables: await openTablesEnabled(locals),
   };
 };
 
