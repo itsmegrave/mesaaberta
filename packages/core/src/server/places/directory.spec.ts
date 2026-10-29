@@ -9,6 +9,7 @@ import {
 import { createTestDb } from '../../../../../apps/web/src/lib/server/db/test-db';
 import { readPlaceFilters } from '../../places/filters';
 import { listPlaces, readPlacePage } from './directory';
+import { setPlaceFeatures } from './features';
 import { rebuildPlaceTags } from './tags';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -69,13 +70,18 @@ beforeAll(async () => {
     place(6, { name: 'Fechado', removedAt: now, removalReason: 'place_closed' }),
   ];
   await test.db.insert(places).values(rows);
+  // Their tags: catalog entries, and on the first one a suggestion of its submitter's that waits.
+  const picks: Record<string, string[]> = {
+    [id(51)]: ['free-to-play', 'accessible', 'rpg', 'new:Bar de vinil'],
+    [id(53)]: ['free-to-play'],
+  };
   for (const row of rows.slice(0, 3)) {
+    await setPlaceFeatures(test.db, row.id!, id(1), picks[row.id!] ?? []);
     await rebuildPlaceTags(test.db, row.id!, {
       state: row.state,
       city: row.city,
       neighbourhood: row.neighbourhood ?? null,
       kind: row.kind,
-      amenities: row.amenities ?? [],
     });
   }
   await test.db.insert(placeLinks).values({
@@ -123,7 +129,12 @@ describe('the Onde jogar list', () => {
       ['lugar-2', 0],
     ]);
     expect(page.total).toBe(3);
-    expect(page.places[1].amenities).toEqual(['accessible', 'free_to_play']);
+    // Its approved tags, in the order picked; the suggestion waits apart.
+    expect(page.places[1].features).toEqual([
+      { name: 'Sem taxa para jogar', slug: 'free-to-play' },
+      { name: 'Acessível', slug: 'accessible' },
+      { name: 'RPG de mesa', slug: 'rpg' },
+    ]);
   });
 
   it('orders by name or newest', async () => {
@@ -131,13 +142,32 @@ describe('the Onde jogar list', () => {
     expect((await slugs('sort=recent'))[0]).toBe('lugar-2');
   });
 
-  it('filters by search, state, city, kind and amenities', async () => {
+  it('filters by search, state, city, kind and tags', async () => {
     expect(await slugs('q=agora')).toEqual(['lugar-2']);
     expect(await slugs('q=boa viagem')).toEqual(['lugar-3', 'lugar-1']);
     expect(await slugs('state=sp')).toEqual(['lugar-2']);
     expect(await slugs('state=pe&city=pe-recife')).toEqual(['lugar-3', 'lugar-1']);
     expect(await slugs('kind=game-cafe')).toEqual(['lugar-1']);
-    expect(await slugs('amenity=free-to-play&amenity=accessible')).toEqual(['lugar-1']);
+    expect(await slugs('tag=free-to-play&tag=accessible')).toEqual(['lugar-1']);
+    expect(await slugs('tag=free-to-play')).toEqual(['lugar-3', 'lugar-1']);
+    expect(await slugs('tag=rpg')).toEqual(['lugar-1']);
+    // An address from before the catalog still filters.
+    expect(await slugs('amenity=free_to_play&amenity=accessible')).toEqual(['lugar-1']);
+    expect(await slugs('tag=bar-de-vinil')).toEqual([]);
+  });
+
+  it('offers the approved tags some listed place has, and any picked', async () => {
+    expect((await list())!.tags.map((tag) => tag.slug)).toEqual([
+      'accessible',
+      'free-to-play',
+      'rpg',
+    ]);
+    expect((await list('tag=wifi'))!.tags.map((tag) => tag.slug)).toEqual([
+      'accessible',
+      'free-to-play',
+      'wifi',
+      'rpg',
+    ]);
   });
 
   it('offers the states with a place, and the cities of the state picked', async () => {
@@ -162,13 +192,11 @@ describe("a place's page", () => {
     expect(page.place.name).toBe('Taverna do Dado');
     expect(page.place).not.toHaveProperty('submitterId');
     expect(page.links).toEqual([{ network: 'instagram', url: 'https://instagram.com/taverna' }]);
-    expect(page.tags.map((tag) => tag.kind)).toEqual([
-      'state',
-      'city',
-      'neighbourhood',
-      'kind',
-      'amenity',
-      'amenity',
+    expect(page.tags.map((tag) => tag.kind)).toEqual(['state', 'city', 'neighbourhood', 'kind']);
+    expect(page.features.map((feature) => feature.slug)).toEqual([
+      'free-to-play',
+      'accessible',
+      'rpg',
     ]);
     expect(page.tables.map((table) => table.slug)).toEqual(['mesa-lugar-3']);
     expect(page).toMatchObject({
@@ -196,6 +224,17 @@ describe("a place's page", () => {
     });
     expect(await read('lugar-5')).toBeNull();
     expect(await read('lugar-5', { id: id(3), isAdmin: true })).toMatchObject({ hidden: true });
+  });
+
+  it('shows a suggested tag that waits only to whoever may edit the place, marked', async () => {
+    const mine = (await read('lugar-1', { id: id(1), isAdmin: false }))!;
+    expect(mine.features.at(-1)).toEqual({
+      name: 'Bar de vinil',
+      slug: 'bar-de-vinil',
+      pending: true,
+    });
+    const theirs = (await read('lugar-1', { id: id(3), isAdmin: false }))!;
+    expect(theirs.features.map((feature) => feature.slug)).not.toContain('bar-de-vinil');
   });
 
   it('never opens a removed or unknown place', async () => {

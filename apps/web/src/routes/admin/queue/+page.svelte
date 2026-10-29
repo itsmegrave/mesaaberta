@@ -10,12 +10,14 @@
 
   const locale = getLocale();
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const kindLabel = (kind: 'platform' | 'tag' | 'system') =>
+  const kindLabel = (kind: 'platform' | 'tag' | 'system' | 'placeTag') =>
     kind === 'platform'
       ? m.admin_kind_platform()
       : kind === 'tag'
         ? m.admin_kind_tag()
-        : m.admin_kind_system();
+        : kind === 'placeTag'
+          ? m.admin_kind_place_tag()
+          : m.admin_kind_system();
   const decisionText = (decision: (typeof data.decisions)[number]) => {
     const kind = kindLabel(decision.kind).toLowerCase();
     const { name, from, into } = decision;
@@ -76,6 +78,16 @@
                       ? ', '
                       : ''}
                   {/each}
+                {:else if entry.places.length > 0}
+                  <span class="font-semibold">{m.admin_queue_used_in()}:</span>
+                  {#each entry.places as place, index (place.slug)}
+                    <a href={`/pp/${place.slug}`} class="link-underline">{place.name}</a>{index <
+                    entry.places.length - 1
+                      ? ', '
+                      : ''}
+                  {/each}
+                {:else if entry.kind === 'placeTag'}
+                  <span class="text-muted">{m.admin_queue_unused_place()}</span>
                 {:else}
                   <span class="text-muted">{m.admin_queue_unused()}</span>
                 {/if}

@@ -123,6 +123,7 @@ describe('search indexing policy', () => {
       'state=pe',
       'city=pe-recife',
       'kind=bar',
+      'tag=rpg',
       'amenity=accessible',
       'sort=name',
     ])

@@ -140,7 +140,7 @@ Each page past the last is a 404; web checks the directory flags first.
 
 - `GET /v1/reads/systems?…`, `GET /v1/reads/systems/:slug`: the systems list for the address's filters, and one system's page (a merged one answers `{ redirectTo }`).
 - `GET /v1/reads/gamemasters?…&badges=1`: Quem mestra, with the systems its filter offers; `badges=1` while `use_badges` is on for the viewer.
-- `GET /v1/reads/places?…`, `GET /v1/reads/places/:slug`: Onde jogar, and one place's page (a pending or hidden place only for whoever sent it, owns it or moderates).
+- `GET /v1/reads/places?…`, `GET /v1/reads/places/:slug`: Onde jogar (with the tags its filter offers), and one place's page (a pending or hidden place only for whoever sent it, owns it or moderates).
 - `GET /v1/reads/home?follows=1`: the signed-in Início; `follows=1` while following is on for the actor.
 
 Web turns the dates back with `revivedDates` (`api-read.ts`).
@@ -172,7 +172,8 @@ The extension panels (`/admin/[ext]`) still run in web until the api can read th
 `/v1/places` (`places.ts`); web checks `api_directory_places`, validates the form and stores the photo, and the services authorize:
 
 - `POST /v1/places` (`{ input, imagePath }`) and `POST /v1/places/:slug` (an edit): answer `{ eventIds, slug }` (and `replacedImage` on an edit). A duplicate is `invalid` on `name` with `place_duplicate` and the listed place's `slug`.
-- `GET /v1/places/:slug/edit`: the place the actor may edit (403/404 otherwise; web shows both as its 404).
+- `GET /v1/places/tag-options`: what the form's Tags offer (the approved catalog and the actor's own suggestions waiting); `?legacy=1` keeps it to the old Comodidades, while `use_place_tags` is off.
+- `GET /v1/places/:slug/edit`: the place the actor may edit, with its tags (pending ones too) (403/404 otherwise; web shows both as its 404).
 - `GET /v1/places/:slug/claim` and `POST /v1/places/:slug/claim`: "Este lugar é seu?" for a listed place.
 - `POST /v1/places/:id/release`: "Deixar de gerenciar", the owner (or an admin) hands the place back; answers `{ eventIds }`.
 

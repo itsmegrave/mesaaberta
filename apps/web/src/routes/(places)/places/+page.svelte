@@ -13,7 +13,7 @@
   import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { placeAmenityOptions, placeKindOptions } from '#lib/places/labels.js';
+  import { legacyTagOptions, placeKindOptions } from '#lib/places/labels.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
   import {
     NO_FILTERS,
@@ -21,7 +21,7 @@
     placeDirectoryQuery,
     type PlaceFilters,
   } from '@mesaaberta/core/places/filters';
-  import { isPlaceKind, type PlaceAmenity } from '@mesaaberta/core/places/types';
+  import { isPlaceKind } from '@mesaaberta/core/places/types';
   import PlaceCard from './components/ui/PlaceCard.svelte';
 
   let { data: serverData } = $props();
@@ -39,11 +39,11 @@
   // A new filter starts over on the first page.
   const apply = (change: Partial<Omit<PlaceFilters, 'page'>>) =>
     goto(`/places${placeDirectoryQuery({ ...filters, ...change })}`, { reset: false });
-  const toggle = (amenity: PlaceAmenity) =>
+  const toggle = (slug: string) =>
     apply({
-      amenities: filters.amenities.includes(amenity)
-        ? filters.amenities.filter((picked) => picked !== amenity)
-        : [...filters.amenities, amenity],
+      tags: filters.tags.includes(slug)
+        ? filters.tags.filter((picked) => picked !== slug)
+        : [...filters.tags, slug],
     });
 
   const sorts = $derived(
@@ -71,7 +71,7 @@
     ...placeKindOptions().map(({ value, label }) => ({ slug: value, name: label })),
   ]);
   const filtered = $derived(
-    !!(filters.query || filters.state || filters.kind || filters.amenities.length > 0),
+    !!(filters.query || filters.state || filters.kind || filters.tags.length > 0),
   );
   const steps = $derived([
     { title: m.places_step_1_title(), text: m.places_step_1() },
@@ -167,23 +167,42 @@
           void apply({ kind: isPlaceKind(kind) ? kind : '' });
         }}
       />
+      {#if data.placeTags}
+        <SearchSelect
+          id="places-tags"
+          name="tag"
+          label={m.places_amenities_label()}
+          labelClass="sr-only"
+          class="w-full md:w-72"
+          compact
+          search
+          multiple
+          summary
+          items={data.tags}
+          value={filters.tags}
+          placeholder={m.places_amenities_label()}
+          onchange={(next) => void apply({ tags: next })}
+        />
+      {/if}
       <div
         role="group"
         aria-label={m.places_amenities_label()}
         class="flex w-full flex-wrap items-center gap-2"
       >
-        <span class="text-sm font-semibold text-muted">{m.places_amenities_label()}</span>
-        {#each placeAmenityOptions() as amenity (amenity.value)}
-          {@const on = filters.amenities.includes(amenity.value)}
-          <MAButton
-            size="custom"
-            aria-pressed={on}
-            class="chip h-8 rounded-full border px-3 text-sm font-semibold {on
-              ? 'border-transparent preset-filled-primary-500'
-              : 'border-surface-200-800'}"
-            onclick={() => void toggle(amenity.value)}>{amenity.label}</MAButton
-          >
-        {/each}
+        {#if !data.placeTags}
+          <span class="text-sm font-semibold text-muted">{m.places_amenities_label()}</span>
+          {#each legacyTagOptions() as option (option.slug)}
+            {@const on = filters.tags.includes(option.slug)}
+            <MAButton
+              size="custom"
+              aria-pressed={on}
+              class="chip h-8 rounded-full border px-3 text-sm font-semibold {on
+                ? 'border-transparent preset-filled-primary-500'
+                : 'border-surface-200-800'}"
+              onclick={() => void toggle(option.slug)}>{option.name}</MAButton
+            >
+          {/each}
+        {/if}
         {#if filtered}
           <a
             href="/places"

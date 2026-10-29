@@ -16,6 +16,13 @@ vi.mock('@mesaaberta/core/server/places/service', async (original) => ({
   })),
 }));
 vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
+vi.mock('@mesaaberta/core/server/places/features', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/features')>()),
+  listFeatureOptions: vi.fn(async () => [
+    { name: 'Acessível', slug: 'accessible' },
+    { name: 'Wi-Fi', slug: 'wifi' },
+  ]),
+}));
 
 const ANA = '00000000-0000-4000-8000-0000000000aa';
 const PLACE = '00000000-0000-4000-8000-000000000001';
@@ -30,6 +37,10 @@ const place = {
   description: null,
   openingHours: 'Ter a dom',
   amenities: ['accessible'],
+  features: [
+    { name: 'Acessível', slug: 'accessible' },
+    { name: 'Bar de vinil', slug: 'bar-de-vinil', pending: true },
+  ],
   siteUrl: null,
   imagePath: null,
   ownerId: null,
@@ -73,11 +84,17 @@ describe('"Editar lugar"', () => {
       name: 'Taverna do Dado',
       kind: 'game_cafe',
       postalCode: '51020-000',
-      amenities: ['accessible'],
+      tags: ['accessible', 'bar-de-vinil'],
       linkNetwork: ['instagram'],
       linkUrl: ['https://instagram.com/taverna'],
     });
-    expect(data).toMatchObject({ reviewAgain: true, approved: true });
+    expect(data).toMatchObject({ reviewAgain: true, approved: true, catalog: true });
+    // The catalog, and the suggestion it has that is not the reader's own.
+    expect(data.tagOptions.map((option: { slug: string }) => option.slug)).toEqual([
+      'accessible',
+      'wifi',
+      'bar-de-vinil',
+    ]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
     expect(((await (load as unknown as Run)(event(undefined, 'admin'))) as any).reviewAgain).toBe(
       false,

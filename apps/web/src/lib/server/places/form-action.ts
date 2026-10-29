@@ -7,6 +7,8 @@ import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import { PlaceDuplicate } from '@mesaaberta/core/server/places/service';
 import { writeViaApi } from '../api-write';
+import { NEW_CATALOG_PREFIX } from '@mesaaberta/core/tables/catalog';
+import { placeTagsEnabled } from './tags';
 
 type Event = {
   request: Request;
@@ -30,7 +32,7 @@ export async function handlePlaceForm(
   // A new form has no kind yet; the schema narrows it once it is picked.
   const empty = NEW_PLACE_VALUES as unknown as Partial<PlaceFormInput>;
   const form = validateFormData(data, placeSchema, empty, {
-    arrays: ['amenities', 'linkNetwork', 'linkUrl'],
+    arrays: ['tags', 'linkNetwork', 'linkUrl'],
     files: ['image'],
   });
   if (!form.valid) return fail(400, { form: responseForm(form) });
@@ -40,6 +42,9 @@ export async function handlePlaceForm(
   try {
     const actor = await locals.getProfile();
     const { image, ...input } = form.data;
+    // Suggesting a new tag is part of the catalog (`use_place_tags`); off, only picks are kept.
+    if (!(await placeTagsEnabled(locals)))
+      input.tags = input.tags.filter((pick) => !pick.startsWith(NEW_CATALOG_PREFIX));
 
     let imagePath: string | null = null;
     if (image && actor) {

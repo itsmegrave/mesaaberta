@@ -19,6 +19,7 @@ import {
   events,
   gameTables,
   partners,
+  placeFeatures,
   platforms,
   profiles,
   ratings,
@@ -264,7 +265,7 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
     }),
     catalogApproved: memo(async () => {
       const approved = await Promise.all(
-        [platforms, tags, systems].map(async (table) => {
+        [platforms, tags, systems, placeFeatures].map(async (table) => {
           const [row] = await db
             .select({ total: count() })
             .from(table)

@@ -85,10 +85,10 @@ export function indexingPolicy(
     ['system', 'modality', 'open', 'sort'].some((key) => url.searchParams.get(key))
   )
     index = false;
-  // Onde jogar: the same, for a state, city, kind, amenity or another order.
+  // Onde jogar: the same, for a state, city, kind, tag (or an old amenity address) or another order.
   if (
     path === '/places' &&
-    ['state', 'city', 'kind', 'amenity', 'sort'].some((key) => url.searchParams.get(key))
+    ['state', 'city', 'kind', 'tag', 'amenity', 'sort'].some((key) => url.searchParams.get(key))
   )
     index = false;
   if (path === '/changelog') {

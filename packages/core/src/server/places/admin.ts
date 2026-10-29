@@ -14,13 +14,14 @@ import {
 } from 'drizzle-orm';
 import { OPEN_REPORT_STATUSES, type ReportReason } from '../../moderation/reports';
 import { placeAdminFilters } from '../../places/admin-filters';
-import { orderedAmenities, type PlaceKind } from '../../places/types';
+import type { PlaceKind } from '../../places/types';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { places, profiles, reports } from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { featuresOf } from './features';
 import { clearPlaceTags, rebuildPlaceTags } from './tags';
 
 // The admin side of "Onde jogar": approving, rejecting and removing places. Every function
@@ -111,7 +112,6 @@ export async function listAdminPlaces(db: AnyDb, actor: Actor | null, params: UR
       city: places.city,
       state: places.state,
       postalCode: places.postalCode,
-      amenities: places.amenities,
       imagePath: places.imagePath,
       createdAt: places.createdAt,
       approvedAt: places.approvedAt,
@@ -137,6 +137,12 @@ export async function listAdminPlaces(db: AnyDb, actor: Actor | null, params: UR
     .limit(filters.pageSize)
     .offset((filters.page - 1) * filters.pageSize);
 
+  // The tags it picked, the ones still waiting for an admin marked: approving lists the rest.
+  const features = await featuresOf(
+    db,
+    rows.map((row) => row.id),
+    { withPending: true },
+  );
   return {
     ...filters,
     total,
@@ -144,7 +150,7 @@ export async function listAdminPlaces(db: AnyDb, actor: Actor | null, params: UR
     rows: rows.map((row) => ({
       ...row,
       kind: row.kind as PlaceKind,
-      amenities: orderedAmenities(row.amenities),
+      features: features.get(row.id) ?? [],
     })),
   };
 }
@@ -195,7 +201,7 @@ export async function resolveOpenPlaceReports(
 
 /**
  * An admin approves a place that waits for review: it goes on /places with tags made from its
- * address, kind and amenities, and its submitter is told (`PlaceApproved`). Refused for one that is
+ * address, kind and approved catalog tags, and its submitter is told (`PlaceApproved`). Refused for one that is
  * already approved (`already_approved`), taken down (`closed`) or unknown (`not_found`). Returns
  * the events to dispatch.
  */

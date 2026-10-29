@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, ne, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { Sort } from '../../admin/list';
 import { slugify } from '@mesaaberta/core/slug';
 import { SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
@@ -8,6 +8,9 @@ import {
   gameTablePlatforms,
   gameTableTags,
   gameTables,
+  placeFeaturePicks,
+  placeFeatures,
+  places,
   platforms,
   profileFavoriteSystems,
   profiles,
@@ -18,16 +21,25 @@ import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { CatalogDecision } from '@mesaaberta/core/server/events/types';
+import { listedPlacesPicking } from '@mesaaberta/core/server/places/features';
+import { rebuildTagsOf } from '@mesaaberta/core/server/places/tags';
 
-export type CatalogKind = 'platform' | 'tag' | 'system';
-export const CATALOG_KINDS: readonly CatalogKind[] = ['platform', 'tag', 'system'];
+export type CatalogKind = 'platform' | 'tag' | 'system' | 'placeTag';
+export const CATALOG_KINDS: readonly CatalogKind[] = ['platform', 'tag', 'system', 'placeTag'];
 export const CATALOG_PAGE_SIZE = 20;
 
 const tableOf = (kind: CatalogKind) =>
-  kind === 'platform' ? platforms : kind === 'tag' ? tags : systems;
+  kind === 'platform'
+    ? platforms
+    : kind === 'tag'
+      ? tags
+      : kind === 'placeTag'
+        ? placeFeatures
+        : systems;
 /**
- * Where tables say they use an entry. A platform or a tag is linked through its own table, many to
- * a table; a system is the table's own column, exactly one, so a table can never be left without.
+ * Where an entry is used. A platform or a tag is linked through its own table, many to a table; a
+ * system is the table's own column, exactly one, so a table can never be left without. A place's
+ * tag (`placeTag`) is linked to places, not tables: `tableId` is the place there.
  */
 const usageOf = (kind: CatalogKind) =>
   kind === 'platform'
@@ -38,8 +50,14 @@ const usageOf = (kind: CatalogKind) =>
       }
     : kind === 'tag'
       ? { from: gameTableTags, entryId: gameTableTags.tagId, tableId: gameTableTags.tableId }
-      : { from: gameTables, entryId: gameTables.systemId, tableId: gameTables.id };
-type LinkedKind = Exclude<CatalogKind, 'system'>;
+      : kind === 'placeTag'
+        ? {
+            from: placeFeaturePicks,
+            entryId: placeFeaturePicks.featureId,
+            tableId: placeFeaturePicks.placeId,
+          }
+        : { from: gameTables, entryId: gameTables.systemId, tableId: gameTables.id };
+type LinkedKind = Exclude<CatalogKind, 'system' | 'placeTag'>;
 const linkOf = (kind: LinkedKind) => (kind === 'platform' ? gameTablePlatforms : gameTableTags);
 const linkColumn = (kind: LinkedKind) =>
   kind === 'platform' ? gameTablePlatforms.platformId : gameTableTags.tagId;
@@ -106,10 +124,15 @@ export type QueueEntry = {
   suggestedBy: string | null;
   createdAt: Date;
   tables: { title: string; slug: string }[];
+  /** The places that picked a suggested place tag (none for the other kinds). */
+  places: { name: string; slug: string }[];
   duplicateOf: { id: string; name: string } | null;
 };
 
-/** The pending suggestions, oldest first: who suggested each, on which tables, and any near-duplicate. */
+/**
+ * The pending suggestions, oldest first: who suggested each, on which tables (or places, for a
+ * place's tag), and any near-duplicate.
+ */
 export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
   const entries: QueueEntry[] = [];
   for (const kind of CATALOG_KINDS) {
@@ -130,6 +153,34 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
         .orderBy(asc(table.createdAt), asc(table.name)),
       db.select({ id: table.id, name: table.name }).from(table).where(eq(table.status, 'approved')),
     ]);
+    const ids = pending.map((entry) => entry.id);
+    if (kind === 'placeTag') {
+      const picked =
+        ids.length === 0
+          ? []
+          : await db
+              .select({
+                entryId: placeFeaturePicks.featureId,
+                name: places.name,
+                slug: places.slug,
+              })
+              .from(placeFeaturePicks)
+              .innerJoin(places, eq(places.id, placeFeaturePicks.placeId))
+              .where(and(inArray(placeFeaturePicks.featureId, ids), isNull(places.removedAt)))
+              .orderBy(asc(places.name));
+      for (const entry of pending) {
+        entries.push({
+          kind,
+          ...entry,
+          tables: [],
+          places: picked
+            .filter((row) => row.entryId === entry.id)
+            .map(({ name, slug }) => ({ name, slug })),
+          duplicateOf: nearDuplicate(entry.name, approved),
+        });
+      }
+      continue;
+    }
     const used =
       pending.length === 0
         ? []
@@ -151,12 +202,7 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
                   .from(usage.from)
                   .innerJoin(gameTables, eq(gameTables.id, usage.tableId))
           )
-            .where(
-              inArray(
-                usage.entryId,
-                pending.map((entry) => entry.id),
-              ),
-            )
+            .where(inArray(usage.entryId, ids))
             .orderBy(asc(gameTables.title));
     for (const entry of pending) {
       entries.push({
@@ -165,6 +211,7 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
         tables: used
           .filter((row) => row.entryId === entry.id)
           .map(({ title, slug }) => ({ title, slug })),
+        places: [],
         duplicateOf: nearDuplicate(entry.name, approved),
       });
     }
@@ -182,12 +229,13 @@ export async function listApproved(db: AnyDb) {
       .where(eq(table.status, 'approved'))
       .orderBy(asc(table.position), asc(table.name));
   };
-  const [platform, tag, system] = await Promise.all([
+  const [platform, tag, system, placeTag] = await Promise.all([
     list('platform'),
     list('tag'),
     list('system'),
+    list('placeTag'),
   ]);
-  return { platform, tag, system };
+  return { platform, tag, system, placeTag };
 }
 
 export type Decision = {
@@ -331,6 +379,14 @@ export async function listCatalogAdmin(
   return { rows, total, page, pages, pageSize, counts };
 }
 
+/**
+ * A decision on a place's tag changes what listed places that picked it show and are found by:
+ * rebuild their tags, in the same transaction.
+ */
+async function rebuildPlacesPicking(tx: AnyDb, kind: CatalogKind, id: string) {
+  if (kind === 'placeTag') await rebuildTagsOf(tx, await listedPlacesPicking(tx, id));
+}
+
 async function entry(db: AnyDb, kind: CatalogKind, id: string) {
   const table = tableOf(kind);
   const [row] = await db
@@ -377,6 +433,7 @@ export async function approveEntry(db: AnyDb, actor: Actor | null, kind: Catalog
       .update(table)
       .set({ status: 'approved', reviewedBy: actor!.id, reviewedAt: new Date() })
       .where(eq(table.id, id));
+    await rebuildPlacesPicking(tx, kind, id);
     return recordEvent(tx, {
       type: 'CatalogEntryApproved',
       actorId: actor!.id,
@@ -396,7 +453,9 @@ export async function rejectEntry(db: AnyDb, actor: Actor | null, kind: CatalogK
   return db.transaction(async (tx) => {
     const current = await entry(tx, kind, id);
     if (current.status !== 'pending') throw new Invalid('id', 'not_pending');
-    if (kind !== 'system') await tx.delete(linkOf(kind)).where(eq(linkColumn(kind), id));
+    if (kind === 'placeTag')
+      await tx.delete(placeFeaturePicks).where(eq(placeFeaturePicks.featureId, id));
+    else if (kind !== 'system') await tx.delete(linkOf(kind)).where(eq(linkColumn(kind), id));
     await tx
       .update(table)
       .set({ status: 'rejected', reviewedBy: actor!.id, reviewedAt: new Date() })
@@ -428,6 +487,7 @@ export async function renameEntry(
       .where(and(eq(table.slug, slug), ne(table.id, id)));
     if (taken) throw new Invalid('name', 'taken');
     await tx.update(table).set({ name, slug, updatedAt: new Date() }).where(eq(table.id, id));
+    await rebuildPlacesPicking(tx, kind, id);
     return recordEvent(tx, {
       type: 'CatalogEntryRenamed',
       actorId: actor!.id,
@@ -471,7 +531,20 @@ export async function mergeEntry(
           .values(fans.map(({ profileId }) => ({ profileId, systemId: toId })))
           .onConflictDoNothing();
       }
-    } else {
+    } else if (kind === 'placeTag') {
+      // A place's tags move to the target, once, where the place had the duplicate.
+      const moving = await tx
+        .select({ placeId: placeFeaturePicks.placeId, position: placeFeaturePicks.position })
+        .from(placeFeaturePicks)
+        .where(eq(placeFeaturePicks.featureId, fromId));
+      await tx.delete(placeFeaturePicks).where(eq(placeFeaturePicks.featureId, fromId));
+      if (moving.length > 0) {
+        await tx
+          .insert(placeFeaturePicks)
+          .values(moving.map((row) => ({ ...row, featureId: toId })))
+          .onConflictDoNothing();
+      }
+    } else if (kind === 'platform' || kind === 'tag') {
       const link = linkOf(kind);
       const column = linkColumn(kind);
       const moving = await tx
@@ -501,6 +574,7 @@ export async function mergeEntry(
       .update(table)
       .set({ status: 'rejected', mergedInto: toId, reviewedBy: actor!.id, reviewedAt: new Date() })
       .where(eq(table.id, fromId));
+    await rebuildPlacesPicking(tx, kind, toId);
     return recordEvent(tx, {
       type: 'CatalogEntryMerged',
       actorId: actor!.id,

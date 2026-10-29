@@ -1,11 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { createTestDb } from '../db/test-db';
 import {
   events,
   gameTablePlatforms,
   gameTableTags,
   gameTables,
+  placeFeaturePicks,
+  placeFeatures,
+  places,
+  placeTags,
   platforms,
   profiles,
   systems,
@@ -25,6 +29,8 @@ import {
   rejectEntry,
   renameEntry,
 } from '@mesaaberta/core/server/admin/catalog';
+import { setPlaceFeatures } from '@mesaaberta/core/server/places/features';
+import { rebuildTagsOf } from '@mesaaberta/core/server/places/tags';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -268,5 +274,93 @@ describe('near duplicates', () => {
   it('leaves different names alone', () => {
     expect(nearDuplicate('Telegram', approved)).toBeNull();
     expect(nearDuplicate('VTT', approved)).toBeNull();
+  });
+});
+
+describe("a place's tags", () => {
+  const placeId = id(300);
+  const tagsOfPlace = async () =>
+    (await test.db.select().from(placeTags).where(eq(placeTags.placeId, placeId)))
+      .filter((tag) => tag.kind === 'feature')
+      .map((tag) => tag.slug)
+      .sort();
+  const suggestion = async (slug: string) => {
+    const [row] = await test.db.select().from(placeFeatures).where(eq(placeFeatures.slug, slug));
+    return row;
+  };
+
+  beforeAll(async () => {
+    await test.db.insert(places).values({
+      id: placeId,
+      slug: 'taverna',
+      submitterId: gm.id,
+      name: 'Taverna',
+      kind: 'bar',
+      postalCode: '51020000',
+      street: 'Rua 1',
+      neighbourhood: null,
+      city: 'Recife',
+      state: 'PE',
+      approvedAt: new Date('2026-10-01T12:00:00Z'),
+    });
+    await setPlaceFeatures(test.db, placeId, gm.id, [
+      'wifi',
+      'new:Bar de vinil',
+      'new:Noite de karaokê',
+    ]);
+    await rebuildTagsOf(test.db, [placeId]);
+  });
+
+  it('waits in the queue with the places that picked it, and is not a tag yet', async () => {
+    const queued = (await listQueue(test.db)).filter((entry) => entry.kind === 'placeTag');
+    expect(queued.map((entry) => [entry.name, entry.places])).toEqual([
+      ['Bar de vinil', [{ name: 'Taverna', slug: 'taverna' }]],
+      ['Noite de karaokê', [{ name: 'Taverna', slug: 'taverna' }]],
+    ]);
+    expect(queued[0].tables).toEqual([]);
+    expect(await tagsOfPlace()).toEqual(['wifi']);
+  });
+
+  it('becomes a tag of the places that picked it once approved, and tells who suggested it', async () => {
+    const vinyl = await suggestion('bar-de-vinil');
+    await approveEntry(test.db, admin, 'placeTag', vinyl.id);
+    expect(await tagsOfPlace()).toEqual(['bar-de-vinil', 'wifi']);
+    const [event] = await test.db
+      .select()
+      .from(events)
+      .where(eq(events.type, 'CatalogEntryApproved'))
+      .orderBy(desc(events.createdAt))
+      .limit(1);
+    expect(event.payload).toMatchObject({ kind: 'placeTag', name: 'Bar de vinil' });
+  });
+
+  it('follows a rename, and a merge moves the places to the target', async () => {
+    const vinyl = await suggestion('bar-de-vinil');
+    await renameEntry(test.db, admin, 'placeTag', vinyl.id, 'Discos de vinil');
+    expect(await tagsOfPlace()).toEqual(['discos-de-vinil', 'wifi']);
+    const karaoke = await suggestion('noite-de-karaoke');
+    await mergeEntry(test.db, admin, 'placeTag', karaoke.id, vinyl.id);
+    const picks = await test.db
+      .select()
+      .from(placeFeaturePicks)
+      .where(eq(placeFeaturePicks.placeId, placeId));
+    expect(picks.map((pick) => pick.featureId)).not.toContain(karaoke.id);
+    expect(await tagsOfPlace()).toEqual(['discos-de-vinil', 'wifi']);
+  });
+
+  it('a rejected suggestion leaves the places that picked it', async () => {
+    await setPlaceFeatures(test.db, placeId, gm.id, ['wifi', 'new:Sala de som']);
+    const sound = await suggestion('sala-de-som');
+    await rejectEntry(test.db, admin, 'placeTag', sound.id);
+    const picks = await test.db
+      .select()
+      .from(placeFeaturePicks)
+      .where(eq(placeFeaturePicks.placeId, placeId));
+    expect(picks.map((pick) => pick.featureId)).not.toContain(sound.id);
+  });
+
+  it('counts places, not tables, in the catalog list', async () => {
+    const { rows } = await listCatalogAdmin(test.db, 'placeTag', { query: 'wi-fi' });
+    expect(rows).toEqual([expect.objectContaining({ slug: 'wifi', uses: 1 })]);
   });
 });

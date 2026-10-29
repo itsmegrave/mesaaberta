@@ -29,5 +29,7 @@
     reviewAgain={data.reviewAgain}
     approved={data.approved}
     cancelHref="/pp/{data.slug}"
+    tagOptions={data.tagOptions}
+    catalog={data.catalog}
   />
 </section>

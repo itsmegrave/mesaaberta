@@ -1,22 +1,25 @@
 import {
   and,
-  arrayContains,
   asc,
   count,
   desc,
   eq,
   exists,
+  inArray,
   isNotNull,
   isNull,
+  or,
   sql,
 } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, placeLinks, places, placeTags } from '../db/schema';
+import { gameTables, placeFeatures, placeLinks, places, placeTags } from '../db/schema';
 import { escapeLike, folded, openSql } from '../directories/sql';
 import { listUpcomingTables } from '../tables/queries';
 import { PLACE_PAGE_SIZE, type PlaceFilters } from '../../places/filters';
 import { foldText } from '../../systems/directory-filters';
-import { orderedAmenities, type PlaceAmenity, type PlaceKind } from '../../places/types';
+import type { PlaceFeature } from '../../places/features';
+import type { PlaceKind } from '../../places/types';
+import { featuresOf } from './features';
 import type { Network } from '../../profile/social-links';
 
 // The public side of "Onde jogar" (`/places`, `/pp/<slug>`). The list and the filters only ever
@@ -55,15 +58,18 @@ export type PlaceCard = {
   city: string;
   state: string;
   description: string | null;
-  amenities: PlaceAmenity[];
+  /** Its approved tags, in the order it picked them. */
+  features: PlaceFeature[];
   imagePath: string | null;
   openTables: number;
 };
 
 /**
- * One page of `/places` for the filters, and what the Estado and Cidade filters can offer: the
- * states with a place listed, and the cities of the state picked. Null for a page past the last
- * one, which the page answers with a 404 (the first page always exists, even empty).
+ * One page of `/places` for the filters, and what the Estado, Cidade and Tags filters can offer:
+ * the states with a place listed, the cities of the state picked, and the approved tags some listed
+ * place has (plus any picked in the address, so a pick never vanishes from its own filter). Null for
+ * a page past the last one, which the page answers with a 404 (the first page always exists, even
+ * empty).
  */
 export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
   const open = openAt(db, now);
@@ -77,7 +83,7 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
     filters.state ? hasTag('state', filters.state) : undefined,
     filters.city ? hasTag('city', filters.city) : undefined,
     filters.kind ? eq(places.kind, filters.kind) : undefined,
-    filters.amenities.length > 0 ? arrayContains(places.amenities, filters.amenities) : undefined,
+    ...filters.tags.map((slug) => hasTag('feature', slug)),
   );
 
   const [{ total }] = await db.select({ total: count() }).from(places).where(where);
@@ -89,7 +95,7 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
     recent: [desc(places.approvedAt), asc(places.id)],
     name: [asc(sql`lower(${places.name})`), asc(places.id)],
   }[filters.sort];
-  const [rows, states, cities] = await Promise.all([
+  const [rows, states, cities, tags] = await Promise.all([
     db
       .select({
         slug: places.slug,
@@ -98,8 +104,8 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
         neighbourhood: places.neighbourhood,
         city: places.city,
         state: places.state,
+        id: places.id,
         description: places.description,
-        amenities: places.amenities,
         imagePath: places.imagePath,
         openTables,
       })
@@ -111,16 +117,22 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
       .offset((filters.page - 1) * PLACE_PAGE_SIZE),
     tagOptions(db, 'state'),
     filters.state ? tagOptions(db, 'city', `${filters.state}-`) : Promise.resolve([]),
+    featureOptions(db, filters.tags),
   ]);
+  const features = await featuresOf(
+    db,
+    rows.map((row) => row.id),
+  );
 
   return {
     total,
     pages,
     states,
     cities,
-    places: rows.map((row) => ({
+    tags,
+    places: rows.map(({ id, ...row }) => ({
       ...row,
-      amenities: orderedAmenities(row.amenities),
+      features: features.get(id) ?? [],
     })) as PlaceCard[],
   };
 }
@@ -141,6 +153,26 @@ async function tagOptions(db: AnyDb, kind: 'state' | 'city', prefix?: string) {
       ),
     )
     .orderBy(asc(placeTags.label));
+}
+
+/**
+ * The approved catalog tags that at least one listed place has, in catalog order, and those
+ * `picked` in the address whatever they are: the options of the Tags filter.
+ */
+async function featureOptions(db: AnyDb, picked: readonly string[]) {
+  const used = exists(
+    sql`(select 1 from ${placeTags} join ${places} on ${places.id} = ${placeTags.placeId} where ${placeTags.kind} = 'feature' and ${placeTags.slug} = ${placeFeatures.slug} and ${listed})`,
+  );
+  return db
+    .select({ slug: placeFeatures.slug, name: placeFeatures.name })
+    .from(placeFeatures)
+    .where(
+      and(
+        eq(placeFeatures.status, 'approved'),
+        picked.length > 0 ? or(used, inArray(placeFeatures.slug, [...picked])) : used,
+      ),
+    )
+    .orderBy(asc(placeFeatures.position), asc(placeFeatures.name));
 }
 
 // How many upcoming tables a place's page shows before "Ver todas em Mesas".
@@ -166,7 +198,7 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
   const insider = mine || viewer?.isAdmin === true;
   if ((pending || hidden) && !insider) return null;
 
-  const [links, tags, tables, [{ open }]] = await Promise.all([
+  const [links, tags, tables, [{ open }], features] = await Promise.all([
     db
       .select({ network: placeLinks.network, url: placeLinks.url })
       .from(placeLinks)
@@ -181,9 +213,13 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
       .select({ open: count() })
       .from(gameTables)
       .where(and(eq(gameTables.placeId, place.id), isNull(gameTables.moderatedAt), openSql(now))),
+    // Whoever may edit it also sees the tags they suggested that still wait for an admin.
+    featuresOf(db, [place.id], { withPending: insider }),
   ]);
 
-  const TAG_ORDER = ['state', 'city', 'neighbourhood', 'kind', 'amenity'];
+  // The catalog tags come apart (`features`), as the place picked them; these are the rest, made
+  // from its address and kind. `amenity` rows from before the catalog are left out.
+  const TAG_ORDER = ['state', 'city', 'neighbourhood', 'kind'];
   return {
     place: {
       id: place.id,
@@ -198,13 +234,16 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
       city: place.city,
       state: place.state,
       openingHours: place.openingHours,
-      amenities: orderedAmenities(place.amenities),
       siteUrl: place.siteUrl,
       imagePath: place.imagePath,
       verified: place.ownerId !== null,
     },
     links: links as { network: Exclude<Network, 'website'>; url: string }[],
-    tags: tags.sort((a, b) => TAG_ORDER.indexOf(a.kind) - TAG_ORDER.indexOf(b.kind)),
+    tags: tags
+      .filter((tag) => TAG_ORDER.includes(tag.kind))
+      .sort((a, b) => TAG_ORDER.indexOf(a.kind) - TAG_ORDER.indexOf(b.kind)),
+    /** Its tags, in the order picked; pending ones only for whoever may edit it, marked. */
+    features: features.get(place.id) ?? [],
     tables: tables.map(({ gmId, ...table }) => table),
     openTables: open,
     pending,

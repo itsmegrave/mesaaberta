@@ -56,8 +56,12 @@
           : 'place:pending') as Status;
   const street = (row: Row) =>
     [row.street, row.complement].filter(Boolean).join(', ') + ` · ${formatCep(row.postalCode)}`;
-  // What approving gives it: the tags its kind, address and amenities make, as /places shows them.
-  const tagsOf = (row: Row) => placeTags(row).map(placeTagLabel).join(', ');
+  // What approving gives it: the tags its kind, address and approved tags make, as /places shows them.
+  // The tags approving gives it: a suggestion of its that waits is not one yet.
+  const tagsOf = (row: Row) =>
+    placeTags({ ...row, features: row.features.filter((feature) => !feature.pending) })
+      .map(placeTagLabel)
+      .join(', ');
 
   function copyId(row: Row) {
     return copyText(row.id, m.toast_id_copied());

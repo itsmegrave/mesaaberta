@@ -3,12 +3,13 @@ import { NEW_PLACE_VALUES } from '@mesaaberta/core/places/schema';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { requireDirectory } from '#lib/server/directories/flags.js';
 import { handlePlaceForm } from '#lib/server/places/form-action.js';
+import { placeTagOptions } from '#lib/server/places/tags.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   await requireDirectory(locals, 'places');
-  await requireUser(locals, url);
-  return { form: initialForm(NEW_PLACE_VALUES) };
+  const user = await requireUser(locals, url);
+  return { form: initialForm(NEW_PLACE_VALUES), ...(await placeTagOptions(locals, user.id)) };
 };
 
 export const actions: Actions = {
