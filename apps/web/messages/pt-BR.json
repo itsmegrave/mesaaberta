@@ -558,6 +558,27 @@
   "table_request_pending": "Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.",
   "table_leave": "Sair da mesa",
   "table_cancel_request": "Cancelar pedido",
+  "table_waitlist_join": "Entrar na lista de espera",
+  "table_waitlist_leave": "Sair da lista de espera",
+  "table_waitlist_position": "Você está na lista de espera: posição {position}.",
+  "table_waitlist_hint_auto": "Quando abrir uma vaga, ela vai para a primeira pessoa da lista, que entra na mesa e recebe um aviso.",
+  "table_waitlist_hint_approval": "Quando abrir uma vaga, o pedido da primeira pessoa da lista vai para quem mestra, e ela recebe um aviso.",
+  "table_waitlist_size": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 pessoa na lista de espera",
+        "count=*": "{count} pessoas na lista de espera"
+      }
+    }
+  ],
+  "toast_waitlist_joined": "Você entrou na lista de espera.",
+  "toast_waitlist_left": "Você saiu da lista de espera.",
+  "manage_waitlist_title": "Lista de espera",
+  "table_waitlist_place": "Posição {position} na fila",
+  "manage_waitlist_note_auto": "Quando abrir uma vaga, a primeira pessoa da lista entra sozinha. Você não precisa fazer nada.",
+  "manage_waitlist_note_approval": "Quando abrir uma vaga, o pedido da primeira pessoa da lista chega para você aprovar.",
   "table_you_are_gm": "Você mestra esta mesa.",
   "table_players": "Participantes",
   "table_players_summary": [
@@ -1083,6 +1104,8 @@
   "notification_badge_earned": "Uma conquista nova chegou ao seu perfil.",
   "notification_followed_table_opened": "{gm} abriu uma mesa nova: {table}.",
   "notification_followed_seat_opened": "Abriu uma vaga em {table}, de {gm}.",
+  "notification_waitlist_seated": "Abriu uma vaga em {table} e ela é sua: você entrou pela lista de espera.",
+  "notification_waitlist_requested": "Abriu uma vaga em {table}: seu pedido saiu da lista de espera e foi para quem mestra.",
   "notification_follow_started": "{player} começou a seguir você.",
   "notification_rating_prompt": "A sessão de {table} terminou. Que tal deixar uma avaliação?",
   "notification_catalog_suggestion_approved": "Sua sugestão “{name}” foi aprovada no catálogo.",

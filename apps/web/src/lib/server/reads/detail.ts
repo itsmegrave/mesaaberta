@@ -5,6 +5,7 @@ import type { readDetail } from '@mesaaberta/core/server/reads/detail';
 import { readFromApi } from '../api-read';
 import { badgesEnabled } from '../badges/enabled';
 import { directoryEnabled } from '../directories/flags';
+import { waitlistEnabled } from '../waitlist/enabled';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const user = await locals.getUser();
@@ -35,6 +36,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     canManage = detail.registrations !== null,
     badges = null,
     place = null,
+    waitlist = null,
     ...rest
   } = detail;
   return {
@@ -48,5 +50,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.
     place: place && (await directoryEnabled(locals, 'places')) ? place : null,
+    // The lista de espera, while `use_waitlist` is on: how many wait and the viewer's place in line.
+    waitlist: waitlist && (await waitlistEnabled(locals, profile)) ? waitlist : null,
   };
 };

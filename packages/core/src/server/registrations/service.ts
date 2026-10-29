@@ -12,6 +12,7 @@ import { seatAvailability } from '../invitations/seats';
 import { pendingInvitationFor } from '../invitations/service';
 import { Invalid } from '../errors';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
+import { promoteWaitlistOf } from './waitlist';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -151,7 +152,8 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
         ...(wasFull ? { wasFull: true as const } : {}),
       },
     });
-    return { eventIds: [eventId] };
+    // The seat goes to the first in the lista de espera, if anyone waits.
+    return { eventIds: [eventId, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 
@@ -203,7 +205,9 @@ export async function declineRegistration(
       .delete(registrations)
       .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
 
-    return { eventIds: [await record(tx, actor!, table, playerId, 'JoinDeclined')] };
+    const declined = await record(tx, actor!, table, playerId, 'JoinDeclined');
+    // At a table that approves each player, a declined request makes room for the next in line.
+    return { eventIds: [declined, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 
@@ -234,7 +238,7 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
         ...(wasFull ? { wasFull: true as const } : {}),
       },
     });
-    return { eventIds: [eventId] };
+    return { eventIds: [eventId, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 

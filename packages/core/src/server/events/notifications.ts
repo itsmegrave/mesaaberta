@@ -191,5 +191,26 @@ export const notificationHandler: Handler = {
         })),
       )
       .onConflictDoNothing({ target: [notifications.eventId, notifications.recipientId] });
+
+    // A move up the lista de espera was nobody's click just now: the player hears it too.
+    if (
+      (notifying.type === 'PlayerJoined' || notifying.type === 'JoinRequested') &&
+      notifying.payload.fromWaitlist
+    ) {
+      const type = notifying.type === 'PlayerJoined' ? 'waitlist_seated' : 'waitlist_requested';
+      await db
+        .insert(notifications)
+        .values({
+          recipientId: notifying.payload.playerId,
+          actorId: null,
+          eventId: event.id,
+          category: NOTIFICATION_KINDS[type].category,
+          type,
+          link: routes.table(notifying.payload.slug),
+          metadata,
+          createdAt: event.createdAt,
+        })
+        .onConflictDoNothing({ target: [notifications.eventId, notifications.recipientId] });
+    }
   },
 };

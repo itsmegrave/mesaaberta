@@ -1,6 +1,7 @@
 import type { AnyDb } from '../db/client';
 import { can, playerRatingOpen, type Actor } from '../auth/policy';
 import { loadManage } from '../tables/manage';
+import { listWaitlist } from '../registrations/waitlist';
 import { instantToLocal, nextWeeklySession, weeklyInterval } from '../tables/schedule';
 
 function nextSessionOf(
@@ -54,6 +55,8 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
     gmRating: manage.gmRating,
     requests: manage.requests,
     players: manage.players,
+    // The lista de espera in order (`use_waitlist`; the web drops it while the flag is off).
+    waitlist: await listWaitlist(db, actor, { id, gmId }),
     activity: manage.activity,
   };
 }

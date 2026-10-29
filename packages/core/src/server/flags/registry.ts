@@ -100,6 +100,10 @@ export const flagDefaults = {
   // everyone). Off: a partner has no page of its own (/p/:id answers 404) and its card on
   // /partners links nowhere. Targeted by the person's id.
   use_directory_links: false,
+  // The lista de espera on full tables, a new feature (created on for everyone). Off: a full table
+  // offers nothing, its page shows no line and the GM's page no list, and the actions refuse. Lines
+  // already joined still move up when a seat frees. Targeted by the person's id.
+  use_waitlist: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

@@ -385,6 +385,43 @@
               href={`/u/profile/invitations/${data.invitation.id}`}
               class="{buttonClass('primary')} w-full font-semibold">{m.invitation_review()}</a
             >
+          {:else if data.waitlist?.position}
+            <p class="font-semibold">
+              {m.table_waitlist_position({ position: data.waitlist.position })}
+            </p>
+            <p class="mt-1 text-sm text-muted">
+              {table.joinMode === 'approval'
+                ? m.table_waitlist_hint_approval()
+                : m.table_waitlist_hint_auto()}
+            </p>
+            <ActionForm
+              action="?/unwaitlist"
+              class="mt-3"
+              label={m.table_waitlist_leave()}
+              buttonClass="btn h-11 w-full rounded-lg btn-secondary font-semibold"
+              success={m.toast_waitlist_left()}
+              onfail={(message) => (failed = message)}
+            />
+          {:else if data.waitlist?.canJoin}
+            {#if data.waitlist.size > 0}
+              <p class="text-sm text-muted">
+                {m.table_waitlist_size({ count: data.waitlist.size })}
+              </p>
+            {/if}
+            <ActionForm
+              action="?/waitlist"
+              class={data.waitlist.size > 0 ? 'mt-3' : ''}
+              label={m.table_waitlist_join()}
+              icon="game-icons:hourglass"
+              buttonClass="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 font-semibold"
+              success={m.toast_waitlist_joined()}
+              onfail={(message) => (failed = message)}
+            />
+            <p class="mt-2 text-sm text-muted">
+              {table.joinMode === 'approval'
+                ? m.table_waitlist_hint_approval()
+                : m.table_waitlist_hint_auto()}
+            </p>
           {:else if data.canJoin && table.joinMode === 'approval'}
             <JoinRequestDialog
               onfail={(message) => (failed = message)}

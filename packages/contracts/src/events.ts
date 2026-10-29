@@ -112,11 +112,13 @@ export type DomainEvent =
     }
   | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
   // A player asked for a seat at a table that approves each one. Takes no seat.
-  | { type: 'JoinRequested'; payload: Registration }
+  // `fromWaitlist`: no one asked just now; a seat freed up and the first in the table's lista de espera
+  // moved up (the actor is that player). They are told too.
+  | { type: 'JoinRequested'; payload: Registration & { fromWaitlist?: true } }
   | { type: 'JoinApproved'; payload: Registration }
   | { type: 'JoinDeclined'; payload: Registration }
   // A seat was confirmed by an automatic join. An approval records `JoinApproved` alone, so a player is never told twice.
-  | { type: 'PlayerJoined'; payload: Registration }
+  | { type: 'PlayerJoined'; payload: Registration & { fromWaitlist?: true } }
   // `wasFull`: the table had no seat left before this one was given up (followers of its GM hear of it).
   | {
       type: 'PlayerLeft';

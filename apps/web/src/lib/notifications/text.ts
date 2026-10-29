@@ -137,6 +137,10 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return m.notification_followed_table_opened({ gm: player, table });
     case 'followed_seat_opened':
       return m.notification_followed_seat_opened({ gm: player, table });
+    case 'waitlist_seated':
+      return m.notification_waitlist_seated({ table });
+    case 'waitlist_requested':
+      return m.notification_waitlist_requested({ table });
     case 'follow_started':
       return m.notification_follow_started({ player });
     case 'catalog_suggestion_approved':
