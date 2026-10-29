@@ -2,6 +2,7 @@
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
+  import PersonRow from '#lib/components/directory/ui/PersonRow.svelte';
   import { namesSummary } from '#lib/components/directory/summary.js';
   import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
@@ -208,6 +209,34 @@
           </ul>
         </DirectorySection>
       {/if}
+
+      {#if data.systems.length > 0}
+        <DirectorySection
+          title={m.place_systems_title()}
+          lede={m.place_systems_hint()}
+          summary={namesSummary(data.systems.map((system) => system.name))}
+        >
+          <ul class="flex flex-wrap gap-2">
+            {#each data.systems as system (system.slug)}
+              {@const label = m.place_systems_item({ name: system.name, count: system.tables })}
+              <li>
+                {#if data.directories.systems}
+                  <a
+                    href="/s/{system.slug}"
+                    class="inline-flex h-8 items-center rounded-full border border-surface-200-800 px-3 text-sm font-semibold no-underline hover:bg-surface-wash"
+                    >{label}</a
+                  >
+                {:else}
+                  <span
+                    class="inline-flex h-8 items-center rounded-full border border-surface-200-800 px-3 text-sm font-semibold"
+                    >{label}</span
+                  >
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        </DirectorySection>
+      {/if}
     </div>
 
     <aside class="flex flex-col gap-6">
@@ -321,6 +350,33 @@
       {/if}
     </aside>
   </div>
+
+  {#if data.gms.total > 0}
+    <DirectorySection
+      title={m.place_gms_title()}
+      lede={m.place_gms_hint()}
+      moreHref={data.directories.gms && data.gms.total > data.gms.people.length
+        ? `/gamemasters?place=${place.slug}`
+        : undefined}
+      moreLabel={m.place_gms_more({ count: data.gms.total })}
+    >
+      <ul class="grid gap-3 md:grid-cols-2">
+        {#each data.gms.people as gm (gm.username)}
+          <li>
+            <PersonRow
+              person={gm}
+              detail={[
+                gm.house ? m.place_hosts_house() : '',
+                gm.tables > 0 ? m.place_gms_tables({ count: gm.tables }) : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            />
+          </li>
+        {/each}
+      </ul>
+    </DirectorySection>
+  {/if}
 
   <!-- Full width, like a system's page: the cards need the room the aside would take. -->
   <DirectorySection title={m.place_tables_title()}>

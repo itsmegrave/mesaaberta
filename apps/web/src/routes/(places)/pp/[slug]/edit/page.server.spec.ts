@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Forbidden } from '@mesaaberta/core/server/errors';
 import { findEditablePlace, updatePlace } from '@mesaaberta/core/server/places/service';
 import { placePartnerState } from '@mesaaberta/core/server/places/partner-links';
+import { listPlaceHosts } from '@mesaaberta/core/server/places/hosts';
 import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
@@ -19,6 +20,12 @@ vi.mock('@mesaaberta/core/server/places/service', async (original) => ({
 vi.mock('@mesaaberta/core/server/places/partner-links', async (original) => ({
   ...(await original<typeof import('@mesaaberta/core/server/places/partner-links')>()),
   placePartnerState: vi.fn(async () => null),
+}));
+vi.mock('@mesaaberta/core/server/places/hosts', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/hosts')>()),
+  listPlaceHosts: vi.fn(async () => {
+    throw new Forbidden('not the owner');
+  }),
 }));
 vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 vi.mock('@mesaaberta/core/server/places/features', async (original) => ({
@@ -120,6 +127,19 @@ describe('"Editar lugar"', () => {
       pending: null,
       options: [{ id: PLACE, name: 'Taverna do Dado Editora' }],
     });
+  });
+
+  it('shows "Quem mestra na casa" to the owner and admins only, through the api', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event())) as any).hosts).toBeNull();
+    vi.mocked(listPlaceHosts).mockResolvedValueOnce({
+      placeId: PLACE,
+      hosts: [{ profileId: ANA, username: 'ana', since: new Date('2026-10-28T12:00:00Z') }],
+      invitations: [],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    const data = (await (load as unknown as Run)(event(undefined, 'admin'))) as any;
+    expect(data.hosts.hosts.map((host: { username: string }) => host.username)).toEqual(['ana']);
   });
 
   it('answers 404 for a place this person may not edit', async () => {

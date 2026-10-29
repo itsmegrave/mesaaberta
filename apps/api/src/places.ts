@@ -19,10 +19,28 @@ import {
   placePartnerState,
   requestPlacePartner,
 } from '@mesaaberta/core/server/places/partner-links';
+import {
+  placeHostInvitationIdSchema,
+  placeHostInviteSchema,
+  placeHostLeaveSchema,
+  placeHostSchema,
+} from '@mesaaberta/core/places/hosts';
+import {
+  cancelPlaceHostInvitation,
+  hostedPlacesOf,
+  invitePlaceHost,
+  listPlaceHosts,
+  loadPlaceHostInvitation,
+  placeIdOf,
+  removePlaceHost,
+  respondToPlaceHostInvitation,
+} from '@mesaaberta/core/server/places/hosts';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
 type Open = typeof createDb;
+
+const id = z.guid();
 type Ctx = Context<{ Bindings: DatabaseEnv; Variables: UserVariables }>;
 
 /** A photo the web Worker already stored, as a path in the bucket (never a URL, never a file). */
@@ -55,6 +73,24 @@ export function placeRoutes(open: Open = openDb) {
     return body.success ? (body.data as { input: PlaceInput; imagePath: string | null }) : null;
   };
   const invalid = (c: Ctx) => c.json({ error: 'invalid', field: '', message: 'invalid' }, 400);
+
+  // "Quem mestra na casa": the invite page and its answer, for the person invited only, and the
+  // places where the actor is a house GM (Editar perfil, to leave one). Never gated, so an invite
+  // that was sent can always be answered.
+  app.get('/hosts/invitations/:id', async (c) => {
+    if (!id.safeParse(c.req.param('id')).success) return c.json({ error: 'not_found' }, 404);
+    return c.json(await loadPlaceHostInvitation(c.get('db'), c.get('actor'), c.req.param('id')));
+  });
+  app.post('/hosts/invitations/:id/:decision{accept|decline}', async (c) => {
+    if (!id.safeParse(c.req.param('id')).success) return c.json({ error: 'not_found' }, 404);
+    const decision = c.req.param('decision') as 'accept' | 'decline';
+    return c.json(
+      await respondToPlaceHostInvitation(c.get('db'), c.get('actor'), c.req.param('id'), decision),
+    );
+  });
+  app.get('/hosted', async (c) =>
+    c.json((await hostedPlacesOf(c.get('db'), [c.get('actorId')])).get(c.get('actorId')) ?? []),
+  );
 
   app.post('/', async (c) => {
     const body = await parsed(c);
@@ -151,6 +187,39 @@ export function placeRoutes(open: Open = openDb) {
     return c.json({
       eventIds: await endPlacePartner(c.get('db'), c.get('actor'), c.req.param('slug'), which),
     });
+  });
+
+  // "Quem mestra na casa" on the edit page (`use_directory_links`, checked by web): its owner or an
+  // admin invites, cancels an invite and takes someone off; a house GM takes themself off.
+  app.get('/:slug/hosts', async (c) =>
+    c.json(await listPlaceHosts(c.get('db'), c.get('actor'), c.req.param('slug'))),
+  );
+  app.post('/:slug/hosts/invite', async (c) => {
+    const body = placeHostInviteSchema.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return invalid(c);
+    const placeId = await placeIdOf(c.get('db'), c.req.param('slug'));
+    return c.json(await invitePlaceHost(c.get('db'), c.get('actor'), placeId, body.data.username));
+  });
+  app.post('/:slug/hosts/cancel', async (c) => {
+    const body = placeHostInvitationIdSchema.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return invalid(c);
+    return c.json(
+      await cancelPlaceHostInvitation(c.get('db'), c.get('actor'), body.data.invitationId),
+    );
+  });
+  app.post('/:slug/hosts/remove', async (c) => {
+    const body = placeHostSchema.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return invalid(c);
+    const placeId = await placeIdOf(c.get('db'), c.req.param('slug'));
+    return c.json(await removePlaceHost(c.get('db'), c.get('actor'), placeId, body.data.profileId));
+  });
+  // "Sair" from Editar perfil: a house GM leaves a place, by its id.
+  app.post('/hosts/leave', async (c) => {
+    const body = placeHostLeaveSchema.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return invalid(c);
+    return c.json(
+      await removePlaceHost(c.get('db'), c.get('actor'), body.data.placeId, c.get('actorId')),
+    );
   });
 
   // "Deixar de gerenciar": the owner hands the place back, by its id.

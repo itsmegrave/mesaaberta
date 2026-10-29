@@ -1,5 +1,5 @@
 import { error, isHttpError } from '@sveltejs/kit';
-import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { readPlacePage } from '@mesaaberta/core/server/places/directory';
 import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -31,10 +31,22 @@ export const read = async ({ locals, params }: RequestEvent) => {
 
   const supabase = supabaseUrlOf(locals.env);
   const { imagePath, ...place } = found.place;
+  const links = await directoryLinksEnabled(locals);
   return {
     ...found,
-    // "Parceiro Mesa Aberta: <nome>" (`use_directory_links`).
-    partner: (await directoryLinksEnabled(locals)) ? found.partner : null,
+    // "Parceiro Mesa Aberta: <nome>", "Quem mestra aqui" and "Sistemas jogados aqui"
+    // (`use_directory_links`).
+    partner: links ? found.partner : null,
+    gms: links
+      ? {
+          total: found.gms.total,
+          people: found.gms.people.map(({ avatarPath, avatarUrl, ...gm }) => ({
+            ...gm,
+            avatarUrl: pictureOf(supabase, { avatarPath, avatarUrl }),
+          })),
+        }
+      : { total: 0, people: [] },
+    systems: links ? found.systems : [],
     // Off, the page shows the old Comodidades apart, as before the catalog.
     placeTags: await placeTagsEnabled(locals),
     place: { ...place, imageUrl: imageUrl(supabase, imagePath) },

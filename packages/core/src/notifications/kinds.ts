@@ -97,6 +97,10 @@ export const NOTIFICATION_KINDS = {
   partner_invitation_accepted: { category: 'system', icon: 'user-check' },
   partner_invitation_declined: { category: 'system', icon: 'user-x' },
   partner_owner_removed: { category: 'system', icon: 'user-minus' },
+  place_host_invited: { category: 'system', icon: 'user-plus' },
+  place_host_invitation_accepted: { category: 'system', icon: 'user-check' },
+  place_host_invitation_declined: { category: 'system', icon: 'user-x' },
+  place_host_removed: { category: 'system', icon: 'user-minus' },
   system_announcement: { category: 'system', icon: 'megaphone' },
   message_received: { category: 'messages', icon: 'message' },
 } as const satisfies Record<string, { category: NotificationCategory; icon: NotificationIcon }>;

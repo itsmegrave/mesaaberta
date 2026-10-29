@@ -5,6 +5,7 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import ProfileForm from '../components/ProfileForm.svelte';
+  import HostedPlaces from './components/HostedPlaces.svelte';
   import SettingsSection from './components/ui/SettingsSection.svelte';
   import UploadDialog from './components/UploadDialog.svelte';
   import { bannerSchema, photoSchema } from '#lib/profile/photo.js';
@@ -149,3 +150,7 @@
     onsaved={() => toast.success(m.account_profile_saved())}
   />
 </section>
+
+{#if data.hostedPlaces.length > 0}
+  <HostedPlaces places={data.hostedPlaces} class={card} />
+{/if}

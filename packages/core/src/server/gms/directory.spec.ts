@@ -149,7 +149,7 @@ describe('listGmDirectory', () => {
 
   it('answers null past the last page, and one empty page when nobody matches', async () => {
     expect(await list('page=2')).toBeNull();
-    expect(await list('q=ninguem')).toEqual({ total: 0, pages: 1, people: [] });
+    expect(await list('q=ninguem')).toEqual({ total: 0, pages: 1, people: [], place: null });
   });
 });
 

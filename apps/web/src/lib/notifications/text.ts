@@ -171,6 +171,16 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       });
     case 'partner_owner_removed':
       return m.notification_partner_owner_removed({ player, partner: item.metadata.partner ?? '' });
+    case 'place_host_invited':
+      return m.notification_place_host_invited({ player, place: item.metadata.place ?? '' });
+    case 'place_host_invitation_accepted':
+      return m.notification_place_host_accepted({ player, place: item.metadata.place ?? '' });
+    case 'place_host_invitation_declined':
+      return m.notification_place_host_declined({ player, place: item.metadata.place ?? '' });
+    case 'place_host_removed':
+      return item.metadata.left
+        ? m.notification_place_host_left({ player, place: item.metadata.place ?? '' })
+        : m.notification_place_host_removed({ place: item.metadata.place ?? '' });
     case 'place_hidden_alert':
       return m.notification_place_hidden_alert({ place: item.metadata.place ?? '' });
     case 'moderation_notice':

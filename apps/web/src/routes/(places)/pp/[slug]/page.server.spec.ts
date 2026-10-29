@@ -41,6 +41,21 @@ const page = {
   owner: false,
   claimable: true,
   canReport: true,
+  partner: { id: 'p1', name: 'Loja do Dado' },
+  gms: {
+    total: 1,
+    people: [
+      {
+        username: 'ana',
+        name: null,
+        avatarPath: 'ana/a.png',
+        avatarUrl: null,
+        house: true,
+        tables: 2,
+      },
+    ],
+  },
+  systems: [{ name: 'D&D', slug: 'dnd', tables: 2 }],
 };
 
 describe("a place's page load", () => {
@@ -66,6 +81,18 @@ describe("a place's page load", () => {
     expect(data.place).not.toHaveProperty('imagePath');
     expect(data.place.imageUrl).toContain('places/t.png');
     expect(data.tables[0]).toEqual({ slug: 'mesa', imageUrl: null });
+    expect(data.partner).toEqual({ id: 'p1', name: 'Loja do Dado' });
+    expect(data.gms.people[0]).not.toHaveProperty('avatarPath');
+    expect(data.gms.people[0].avatarUrl).toContain('ana/a.png');
+    expect(data.systems).toHaveLength(1);
+  });
+
+  it('leaves out the partner, Quem mestra aqui and the systems while use_directory_links is off', async () => {
+    flagged.mockImplementation(async (name: string) => name !== 'use_directory_links');
+    const data = await run(event());
+    expect(data.partner).toBeNull();
+    expect(data.gms).toEqual({ total: 0, people: [] });
+    expect(data.systems).toEqual([]);
   });
 
   it('answers 404 for a place nobody may see, and logs it', async () => {

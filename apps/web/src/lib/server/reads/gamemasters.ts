@@ -4,7 +4,7 @@ import type { gmDirectorySystems, listGmDirectory } from '@mesaaberta/core/serve
 import { readFromApi, revivedDates } from '../api-read';
 import { readGmDirectoryFilters } from '@mesaaberta/core/gms/directory-filters';
 import type { RequestEvent } from '@sveltejs/kit';
-import { requireDirectory } from '../directories/flags';
+import { directoryLinksEnabled, requireDirectory } from '../directories/flags';
 
 /** The `/gamemasters` list (Quem mestra): one page of people who run games, for the address's filters. */
 export const read = async ({ locals, url }: RequestEvent) => {
@@ -26,13 +26,18 @@ export const read = async ({ locals, url }: RequestEvent) => {
     >(locals, profile?.id ?? null, `/v1/reads/gamemasters?${query}`),
   );
   const supabase = supabaseUrlOf(locals.env);
+  // The Parceiro pill, "Mestra em" and the place's chip (`use_directory_links`).
+  const links = await directoryLinksEnabled(locals);
   return {
     filters,
     total: list.total,
     pages: list.pages,
     systems,
-    people: list.people.map(({ avatarPath, avatarUrl, ...person }) => ({
+    place: links ? list.place : null,
+    people: list.people.map(({ avatarPath, avatarUrl, partner, hostedAt, ...person }) => ({
       ...person,
+      partner: links && partner,
+      hostedAt: links ? hostedAt : [],
       avatarUrl: pictureOf(supabase, { avatarPath, avatarUrl }),
     })),
   };

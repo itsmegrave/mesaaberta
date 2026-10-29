@@ -21,6 +21,7 @@ import type { PlaceFeature } from '../../places/features';
 import type { PlaceKind } from '../../places/types';
 import { featuresOf } from './features';
 import { isPartnerPlace, partnerOfPlace } from './partner-links';
+import { placeGms, placeSystems } from './people';
 import type { Network } from '../../profile/social-links';
 
 // The public side of "Onde jogar" (`/places`, `/pp/<slug>`). The list and the filters only ever
@@ -238,7 +239,7 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
   const insider = mine || viewer?.isAdmin === true;
   if ((pending || hidden) && !insider) return null;
 
-  const [links, tags, tables, [{ open }], features, partner] = await Promise.all([
+  const [links, tags, tables, [{ open }], features, partner, gms, systemsHere] = await Promise.all([
     db
       .select({ network: placeLinks.network, url: placeLinks.url })
       .from(placeLinks)
@@ -256,6 +257,8 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
     // Whoever may edit it also sees the tags they suggested that still wait for an admin.
     featuresOf(db, [place.id], { withPending: insider }),
     partnerOfPlace(db, place.id),
+    placeGms(db, place.id, now),
+    placeSystems(db, place.id, now),
   ]);
 
   // The catalog tags come apart (`features`), as the place picked them; these are the rest, made
@@ -289,6 +292,10 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
     openTables: open,
     /** "Parceiro Mesa Aberta": the partner it is shown as, once an admin approved the link. */
     partner,
+    /** "Quem mestra aqui": the house GMs, then who ran a table here in the last year. */
+    gms,
+    /** "Sistemas jogados aqui", from its tables of the last year. */
+    systems: systemsHere,
     pending,
     hidden,
     /** The viewer sent it or owns it, or moderates: they may edit it. */

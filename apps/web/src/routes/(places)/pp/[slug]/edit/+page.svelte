@@ -1,6 +1,7 @@
 <script lang="ts">
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import PlaceForm from '../../../components/PlaceForm.svelte';
+  import PlaceHosts from '../../../components/PlaceHosts.svelte';
   import PlacePartner from '../../../components/PlacePartner.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -37,10 +38,14 @@
     tagOptions={data.tagOptions}
     catalog={data.catalog}
   />
-  {#if data.partner}
-    <!-- Its own forms, so after the edit form; as wide as the form's fields (see Editar parceiro). -->
-    <div class="mt-8 lg:w-[calc((200%-3rem)/3)]">
-      <PlacePartner {...data.partner} />
+  {#if data.partner || data.hosts}
+    <!-- Their own forms, so after the edit form; as wide as the form's fields (see Editar parceiro). -->
+    <div class="mt-8 grid gap-8 lg:w-[calc((200%-3rem)/3)]">
+      {#if data.partner}<PlacePartner {...data.partner} />{/if}
+      {#if data.hosts}<PlaceHosts
+          hosts={data.hosts.hosts}
+          invitations={data.hosts.invitations}
+        />{/if}
     </div>
   {/if}
 </section>

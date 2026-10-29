@@ -1568,6 +1568,59 @@ export const partnerShownGms = pgTable(
   ],
 ).enableRLS();
 
+// "Quem mestra na casa": people a place names as its house GMs, shown first under "Quem mestra
+// aqui". Whoever owns the place (or an admin) invites by @username; the person shows only once they
+// accept, and can leave whenever they like.
+export const placeHosts = pgTable(
+  'place_hosts',
+  {
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    // Who invited them. Not a foreign key: the inviter may leave.
+    invitedBy: uuid('invited_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.placeId, t.profileId] }),
+    index('place_hosts_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
+// The invites to be a place's house GM. It counts only once accepted. A pending one past
+// `expires_at` has lapsed even before anything marks it.
+export const placeHostInvitations = pgTable(
+  'place_host_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    inviterId: uuid('inviter_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: invitationStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('place_host_invitations_pending_unique')
+      .on(t.placeId, t.inviteeId)
+      .where(sql`${t.status} = 'pending'`),
+    index('place_host_invitations_place_idx').on(t.placeId, t.status),
+    index('place_host_invitations_invitee_idx').on(t.inviteeId, t.status),
+    index('place_host_invitations_inviter_idx').on(t.inviterId),
+    check('place_host_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
+  ],
+).enableRLS();
+
 // Widgets an extension floats over the app's pages, a poll today (Trello #231). The tables live here,
 // not in the private package, so every deployment keeps one schema; a build without that extension
 // never reads them.

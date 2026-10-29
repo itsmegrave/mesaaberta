@@ -1,12 +1,13 @@
 <script lang="ts">
   // A person in Quem mestra: the avatar, the name (or the @usuário) as the card's one link to the
   // profile, the role tag and the badges, the score, the bio in two lines, the systems they ran
-  // most, a line of facts, and a footer with the tables open now, a link to them on /tables.
+  // most, a line of facts, where they are a house GM ("Mestra em"), and a footer with the tables open now, a link to them on /tables.
   // Draws only what it is given.
   import BadgeMedal from '#lib/components/ui/BadgeMedal.svelte';
   import GmRating from '#lib/components/ui/GmRating.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import TableRoleTag from '#lib/components/ui/TableRoleTag.svelte';
   import { linkedCardClass } from '#lib/components/ui/MediaCard.svelte';
   import { publicBadges, type HeldBadge } from '#lib/badges/shown.js';
@@ -27,6 +28,10 @@
       openTables: number;
       systems: { name: string; slug: string; tables: number }[];
       moreSystems: number;
+      /** Shows under "Quem mestra" on a partner they look after: the Parceiro pill. */
+      partner?: boolean;
+      /** "Mestra em": the places where they are a house GM. */
+      hostedAt?: { slug: string; name: string }[];
     };
     /** The line of facts (`gmFacts`). */
     facts: string;
@@ -49,6 +54,7 @@
       {#if gm.name}<p class="mt-0.5 truncate text-sm text-muted">@{gm.username}</p>{/if}
       <div class="mt-2 flex flex-wrap items-center gap-1.5">
         <TableRoleTag tableRole={gm.tableRole} class="h-5 px-2" />
+        {#if gm.partner}<Pill tone="primary" class="h-5 px-2">{m.place_partner_pill()}</Pill>{/if}
         {#each badges as badge (badge.badgeId)}
           <span title={badge.look.name()}>
             <span class="sr-only">{badge.look.name()}</span>
@@ -81,6 +87,16 @@
     </ul>
   {/if}
   <p class="text-sm font-medium text-muted">{facts}</p>
+  {#if gm.hostedAt && gm.hostedAt.length > 0}
+    <!-- Above the card's link: each place goes to its own page. -->
+    <p class="relative z-10 text-sm">
+      <span class="font-semibold text-muted">{m.gms_hosted_at()}</span>
+      {#each gm.hostedAt as place, index (place.slug)}{index > 0 ? ', ' : ' '}<a
+          href="/pp/{place.slug}"
+          class="font-semibold underline underline-offset-4">{place.name}</a
+        >{/each}
+    </p>
+  {/if}
   <div class="mt-auto flex items-center justify-between gap-3 border-t border-surface-200-800 pt-4">
     {#if gm.openTables > 0}
       <!-- Above the card's link: this one goes to the person's open tables. -->

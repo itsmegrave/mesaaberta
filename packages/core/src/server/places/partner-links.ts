@@ -469,6 +469,26 @@ export async function setShownAsGm(
 }
 
 /** Whether the actor shows under "Quem mestra" on the partner, for its edit page. */
+/**
+ * "Cuida de" on a public profile: the approved partners this person still looks after and chose to
+ * show they mestra on (`partner_shown_gms`). Nobody else is told who looks after a partner.
+ */
+export async function shownPartnersOf(db: AnyDb, profileId: string) {
+  return db
+    .select({ id: partners.id, name: partners.name })
+    .from(partnerShownGms)
+    .innerJoin(partners, eq(partners.id, partnerShownGms.partnerId))
+    .where(
+      and(
+        eq(partnerShownGms.profileId, profileId),
+        isNotNull(partners.approvedAt),
+        isNull(partners.removedAt),
+        sql`${profileId}::uuid = any(${ownerIdsOf(partners.id, partners.submitterId)})`,
+      ),
+    )
+    .orderBy(asc(sql`lower(${partners.name})`));
+}
+
 export async function isShownAsGm(db: AnyDb, partnerId: string, profileId: string) {
   const [row] = await db
     .select({ partnerId: partnerShownGms.partnerId })

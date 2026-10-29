@@ -105,6 +105,8 @@ type Resources = {
   'place:claim': undefined;
   /** Taking the owner off a place: the owner themself, or an admin. */
   'place:release': { ownerId: string | null };
+  /** Inviting and taking off its house GMs ("Quem mestra na casa"): its owner, or an admin. */
+  'place:hosts': { ownerId: string | null };
   /**
    * Asking to link a place and a partner ("Parceiro Mesa Aberta"): someone who is the place's owner
    * and looks after the partner too, or an admin. An admin approves the request before it shows.
@@ -257,6 +259,8 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     (actor.role === 'admin' ||
       actor.id === link.placeOwnerId ||
       link.partnerOwnerIds.includes(actor.id)),
+  'place:hosts': (actor, place) =>
+    place !== undefined && (actor.role === 'admin' || actor.id === place.ownerId),
   'place:release': (actor, place) =>
     place !== undefined && (actor.role === 'admin' || actor.id === place.ownerId),
   'place:report': (actor, place) =>

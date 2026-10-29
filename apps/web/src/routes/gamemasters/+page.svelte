@@ -11,7 +11,7 @@
   import Pager from '#lib/components/ui/Pager.svelte';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
   import { pageQuery } from '#lib/query/page.svelte.js';
@@ -65,7 +65,7 @@
     ...data.systems.map((system) => ({ slug: system.slug, name: system.name })),
   ]);
   const filtered = $derived(
-    !!(filters.query || filters.system || filters.modality || filters.open),
+    !!(filters.query || filters.system || filters.modality || filters.open || filters.place),
   );
 </script>
 
@@ -115,6 +115,17 @@
           void apply({ system: slug === ANY_SYSTEM ? '' : slug });
         }}
       />
+      {#if data.place}
+        <!-- "Quem mestra aqui" of a place: the chip takes it off. -->
+        <MAButton
+          size="custom"
+          aria-pressed="true"
+          class="chip h-8 gap-1 rounded-full border border-transparent preset-filled-primary-500 px-3 text-sm font-semibold"
+          aria-label={m.gms_place_remove({ name: data.place.name })}
+          onclick={() => void apply({ place: '' })}
+          >{m.gms_place_chip({ name: data.place.name })}<Icon name="xmark" size={14} /></MAButton
+        >
+      {/if}
       <Switch
         checked={filters.open}
         onCheckedChange={(event) => void apply({ open: event.checked })}

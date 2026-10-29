@@ -11,6 +11,12 @@ import {
   placePartnerRequestSchema,
 } from '@mesaaberta/core/places/partner-links';
 import type { placePartnerState } from '@mesaaberta/core/server/places/partner-links';
+import {
+  placeHostInvitationIdSchema,
+  placeHostInviteSchema,
+  placeHostSchema,
+} from '@mesaaberta/core/places/hosts';
+import type { listPlaceHosts } from '@mesaaberta/core/server/places/hosts';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { findEditablePlace } from '@mesaaberta/core/server/places/service';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
@@ -41,22 +47,25 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
   await requireUser(locals, url);
   const { profile, place } = await editable(locals, params.slug);
   const links = place.links.slice(0, MAX_PLACE_LINKS);
-  // "Parceiro" (`use_directory_links`): only for its owner and admins, once it is on the list.
-  const partner =
-    place.approvedAt !== null && (await directoryLinksEnabled(locals))
-      ? await readFromApi<NonNullable<Awaited<ReturnType<typeof placePartnerState>>>>(
-          locals,
-          profile.id,
-          `/v1/places/${encodeURIComponent(place.slug)}/partner`,
-        )
+  // "Parceiro" and "Quem mestra na casa" (`use_directory_links`): only for its owner and admins,
+  // once it is on the list. The api answers anyone else with a 403 or 404.
+  const linked = place.approvedAt !== null && (await directoryLinksEnabled(locals));
+  const section = <T>(path: string) =>
+    linked
+      ? readFromApi<T>(locals, profile.id, `/v1/places/${encodeURIComponent(place.slug)}/${path}`)
           .then(revivedDates)
           .catch((cause) => {
-            if (isHttpError(cause) && cause.status === 404) return null;
+            if (isHttpError(cause) && (cause.status === 403 || cause.status === 404)) return null;
             throw cause;
           })
       : null;
+  const [partner, hosts] = await Promise.all([
+    section<NonNullable<Awaited<ReturnType<typeof placePartnerState>>>>('partner'),
+    section<Awaited<ReturnType<typeof listPlaceHosts>>>('hosts'),
+  ]);
   return {
     partner,
+    hosts,
     ...(await placeTagOptions(locals, profile.id, place.features)),
     slug: place.slug,
     imageUrl: imageUrl(supabaseUrlOf(locals.env), place.imagePath),
@@ -81,9 +90,11 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
   };
 };
 
-// "Parceiro": the api authorizes (the place's owner who looks after the partner, or an admin).
+// "Parceiro" and "Quem mestra na casa": the api authorizes (the place's owner, or an admin).
+const placePath = (event: { params: Partial<Record<string, string>> }, end: string) =>
+  `/v1/places/${encodeURIComponent(event.params.slug ?? '')}/${end}`;
 const partnerPath = (event: { params: Partial<Record<string, string>> }, end = '') =>
-  `/v1/places/${encodeURIComponent(event.params.slug ?? '')}/partner${end}`;
+  placePath(event, `partner${end}`);
 const allow = (event: { locals: App.Locals }) => directoryLinksEnabled(event.locals);
 
 export const actions: Actions = {
@@ -103,6 +114,18 @@ export const actions: Actions = {
   }),
   removePartner: moderationAction(placePartnerEndSchema, [], {
     path: (event) => partnerPath(event, '/remove'),
+    allow,
+  }),
+  inviteHost: moderationAction(placeHostInviteSchema, ['username'], {
+    path: (event) => placePath(event, 'hosts/invite'),
+    allow,
+  }),
+  cancelHostInvite: moderationAction(placeHostInvitationIdSchema, ['invitationId'], {
+    path: (event) => placePath(event, 'hosts/cancel'),
+    allow,
+  }),
+  removeHost: moderationAction(placeHostSchema, ['profileId'], {
+    path: (event) => placePath(event, 'hosts/remove'),
     allow,
   }),
 };

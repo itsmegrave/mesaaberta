@@ -215,6 +215,24 @@
             {/each}
           </ul>
         {/if}
+        {#if profile.hostedAt.length > 0}
+          <p class="mt-4 text-sm">
+            <span class="font-semibold text-muted">{m.gms_hosted_at()}</span>
+            {#each profile.hostedAt as place, index (place.slug)}{index > 0 ? ', ' : ' '}<a
+                href="/pp/{place.slug}"
+                class="font-semibold underline underline-offset-4">{place.name}</a
+              >{/each}
+          </p>
+        {/if}
+        {#if profile.looksAfter.length > 0}
+          <p class="mt-2 text-sm">
+            <span class="font-semibold text-muted">{m.public_profile_looks_after()}</span>
+            {#each profile.looksAfter as partner, index (partner.id)}{index > 0 ? ', ' : ' '}<a
+                href="/p/{partner.id}"
+                class="font-semibold underline underline-offset-4">{partner.name}</a
+              >{/each}
+          </p>
+        {/if}
         {#if profile.links.length > 0}
           <ul aria-label={m.public_profile_social_links()} class="mt-4 flex flex-wrap gap-2">
             {#each profile.links as link, index (`${link.network}-${index}`)}

@@ -1,7 +1,19 @@
 import { and, asc, count, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { textArray } from '../db/text-array';
-import { gameTables, gmScores, profiles, systems, userBadges } from '../db/schema';
+import {
+  gameTables,
+  gmScores,
+  partners,
+  partnerShownGms,
+  places,
+  profiles,
+  systems,
+  userBadges,
+} from '../db/schema';
+import { hostedPlacesOf } from '../places/hosts';
+import { ownerIdsOf } from '../partners/owners';
+import { atPlace } from '../places/people';
 import type { HeldBadge } from '../badges/reads';
 import { escapeLike, folded, openSql, published } from '../directories/sql';
 import { gmRatings, type GmRating } from '../ratings/service';
@@ -55,9 +67,19 @@ export type GmCard = {
   modalities: ('online' | 'in_person')[];
   /** From the in-person tables they ran (the latest one), never from the profile. */
   city: string | null;
+  /** Shows under "Quem mestra" on a listed partner they look after (the Parceiro pill). */
+  partner: boolean;
+  /** "Mestra em": the places where they are a house GM, A to Z. */
+  hostedAt: { slug: string; name: string }[];
 };
 
-export type GmDirectoryList = { total: number; pages: number; people: GmCard[] };
+export type GmDirectoryList = {
+  total: number;
+  pages: number;
+  people: GmCard[];
+  /** The place `?place=` names, for its chip; null without one (or for one not listed). */
+  place: { slug: string; name: string } | null;
+};
 
 /**
  * One page of Quem mestra (`/gamemasters`): active accounts with a username that answered "Mestra"
@@ -70,6 +92,20 @@ export async function listGmDirectory(
   now: Date,
   { showBadges = false }: { showBadges?: boolean } = {},
 ): Promise<GmDirectoryList | null> {
+  // A place that is not on the list filters nothing, like any other unknown value.
+  const [place] = filters.place
+    ? await db
+        .select({ slug: places.slug, name: places.name })
+        .from(places)
+        .where(
+          and(
+            eq(places.slug, filters.place),
+            isNotNull(places.approvedAt),
+            isNull(places.removedAt),
+            isNull(places.hiddenAt),
+          ),
+        )
+    : [];
   const stats = statsOf(db, now);
   const tables = sql<number>`coalesce(${stats.tables}, 0)`;
   const openTables = sql<number>`coalesce(${stats.openTables}, 0)`;
@@ -77,7 +113,8 @@ export async function listGmDirectory(
   const where = and(
     eq(profiles.status, 'active'),
     isNotNull(profiles.username),
-    inArray(profiles.tableRole, ['gm', 'both']),
+    // A place's people are its house GMs and whoever ran a table there, whatever their profile says.
+    place ? atPlace(place.slug, now) : inArray(profiles.tableRole, ['gm', 'both']),
     // The name is searched only where it is public.
     needle
       ? sql`(${folded(profiles.username)} like ${needle} or (${profiles.showName} and ${folded(profiles.name)} like ${needle}))`
@@ -132,16 +169,19 @@ export async function listGmDirectory(
     .offset((filters.page - 1) * GM_DIRECTORY_PAGE_SIZE);
 
   const ids = rows.map((row) => row.id);
-  const [ratings, systemsRun, details, badges] = await Promise.all([
+  const [ratings, systemsRun, details, badges, hosted, partnered] = await Promise.all([
     gmRatings(db, ids, now),
     systemsOf(db, ids),
     tableDetails(db, ids),
     showBadges ? badgesOf(db, ids) : null,
+    hostedPlacesOf(db, ids),
+    shownOnPartners(db, ids),
   ]);
 
   return {
     total,
     pages,
+    place: place ?? null,
     people: rows.map((row) => {
       const ran = systemsRun.get(row.id) ?? [];
       const detail = details.get(row.id);
@@ -151,7 +191,8 @@ export async function listGmDirectory(
         avatarPath: row.avatarPath,
         avatarUrl: row.avatarUrl,
         bio: row.bio,
-        tableRole: row.tableRole as 'gm' | 'both',
+        // Someone a place lists without a role on their profile still reads as one who mestra.
+        tableRole: row.tableRole === 'both' ? 'both' : 'gm',
         rating: ratings.get(row.id)!,
         badges: badges ? (badges.get(row.id) ?? []) : null,
         tables: row.tables,
@@ -162,9 +203,30 @@ export async function listGmDirectory(
         moreSystems: Math.max(0, ran.length - GM_CARD_SYSTEMS),
         modalities: detail?.modalities ?? [],
         city: detail?.city ?? null,
+        partner: partnered.has(row.id),
+        hostedAt: (hosted.get(row.id) ?? []).map(({ slug, name }) => ({ slug, name })),
       };
     }),
   };
+}
+
+/** Who among these shows under "Quem mestra" on a listed partner they look after. */
+async function shownOnPartners(db: AnyDb, gmIds: string[]) {
+  if (gmIds.length === 0) return new Set<string>();
+  const rows = await db
+    .selectDistinct({ id: partnerShownGms.profileId })
+    .from(partnerShownGms)
+    .innerJoin(partners, eq(partners.id, partnerShownGms.partnerId))
+    .where(
+      and(
+        inArray(partnerShownGms.profileId, gmIds),
+        isNotNull(partners.approvedAt),
+        isNull(partners.removedAt),
+        // Still one of those who look after it.
+        sql`${partnerShownGms.profileId} = any(${ownerIdsOf(partners.id, partners.submitterId)})`,
+      ),
+    );
+  return new Set(rows.map((row) => row.id));
 }
 
 /** The systems each person ran, most tables first. */

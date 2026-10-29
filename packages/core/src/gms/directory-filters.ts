@@ -25,6 +25,8 @@ export type GmDirectoryFilters = {
   modality: GmModality | '';
   /** Only people with a table open now. */
   open: boolean;
+  /** A place's slug: its house GMs and who ran a table there in the last year ("Quem mestra aqui"). */
+  place: string;
   sort: GmSort;
   page: number;
 };
@@ -40,11 +42,13 @@ const oneOf = <T extends string>(list: readonly T[], value: string | null, fallb
  */
 export function readGmDirectoryFilters(params: SearchParamsLike): GmDirectoryFilters {
   const system = (params.get('system') ?? '').trim().toLowerCase();
+  const place = (params.get('place') ?? '').trim().toLowerCase();
   return {
     query: (params.get('q') ?? '').trim().replace(/^@/, '').slice(0, SYSTEM_SEARCH_MAX),
     system: SLUG.test(system) ? system : '',
     modality: oneOf<GmModality | ''>(GM_MODALITIES, params.get('modality'), ''),
     open: params.get('open') === '1',
+    place: SLUG.test(place) ? place : '',
     sort: oneOf(GM_SORTS, params.get('sort'), 'recent'),
     page: pageNumber(params.get('page')),
   };
@@ -57,6 +61,7 @@ export function gmDirectoryQuery(filters: Omit<GmDirectoryFilters, 'page'>, page
   if (filters.system) params.set('system', filters.system);
   if (filters.modality) params.set('modality', filters.modality);
   if (filters.open) params.set('open', '1');
+  if (filters.place) params.set('place', filters.place);
   if (filters.sort !== 'recent') params.set('sort', filters.sort);
   if (page > 1) params.set('page', String(page));
   const query = params.toString();

@@ -49,13 +49,20 @@ const ana = {
   moreSystems: 0,
   modalities: [],
   city: null,
+  partner: false,
+  hostedAt: [],
 };
 
 describe('the Quem mestra load', () => {
   beforeEach(() => {
     tracked.mockClear();
     flagged.mockReset().mockResolvedValue(true);
-    vi.mocked(listGmDirectory).mockResolvedValue({ total: 1, pages: 1, people: [ana] });
+    vi.mocked(listGmDirectory).mockResolvedValue({
+      total: 1,
+      pages: 1,
+      people: [ana],
+      place: null,
+    });
     vi.mocked(gmDirectorySystems).mockResolvedValue([{ name: 'D&D', slug: 'dnd' }]);
   });
 
@@ -76,6 +83,7 @@ describe('the Quem mestra load', () => {
       open: true,
       sort: 'recent',
       page: 1,
+      place: '',
     });
     expect(options).toEqual({ showBadges: true });
     expect(flagged).toHaveBeenCalledWith('use_badges', { id: viewer, isAdmin: false });
