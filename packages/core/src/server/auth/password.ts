@@ -27,7 +27,7 @@ export async function requestPasswordReset(
   if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
 
   // The code and status only: the message can quote the address.
-  log.warn('password reset: request refused', { code: error.code, status: error.status });
+  log.warn('auth.password_reset_request_refused', { code: error.code, status: error.status });
   return 'failed';
 }
 
@@ -44,7 +44,7 @@ export async function changePassword(
     if (error.name === 'AuthSessionMissingError') return 'no_session';
     if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
 
-    log.warn('password reset: change refused', { code: error.code, status: error.status });
+    log.warn('auth.password_reset_change_refused', { code: error.code, status: error.status });
     return 'failed';
   }
 
@@ -52,7 +52,7 @@ export async function changePassword(
   try {
     await supabase.auth.signOut({ scope: 'others' });
   } catch (signOutError) {
-    log.warn('password reset: could not sign the other sessions out', { error: signOutError });
+    log.warn('auth.password_reset_sign_out_failed', { error: signOutError });
   }
 
   return 'ok';
@@ -88,7 +88,7 @@ export async function changePasswordWithToken(
   try {
     response = await call('/user', { method: 'PUT', body: JSON.stringify({ password }) });
   } catch (error) {
-    log.warn('password reset: change failed', { error });
+    log.warn('auth.password_reset_change_failed', { error });
     return 'failed';
   }
 
@@ -102,7 +102,7 @@ export async function changePasswordWithToken(
     if (code === 'weak_password') return 'weak_password';
     if (code === 'same_password') return 'same_password';
     if (response.status === 429 || (code && RATE_LIMITED.has(code))) return 'rate_limited';
-    log.warn('password reset: change refused', { code, status: response.status });
+    log.warn('auth.password_reset_change_refused', { code, status: response.status });
     return 'failed';
   }
 
@@ -110,7 +110,7 @@ export async function changePasswordWithToken(
   try {
     await call('/logout?scope=others', { method: 'POST' });
   } catch (error) {
-    log.warn('password reset: could not sign the other sessions out', { error });
+    log.warn('auth.password_reset_sign_out_failed', { error });
   }
   return 'ok';
 }

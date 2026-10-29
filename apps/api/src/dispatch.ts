@@ -86,7 +86,7 @@ export async function dispatchEvents(
     const handlers = handlersFor(env);
     for (const id of eventIds) {
       await dispatchEvent(db as AnyDb, handlers, id, new Date(), logger).catch((error: unknown) =>
-        logger.error('event dispatch failed', { eventId: id, error }),
+        logger.error('event.dispatch_failed', { eventId: id, error }),
       );
     }
   } finally {

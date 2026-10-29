@@ -19,7 +19,7 @@ export function siteOf(env: App.Locals['env'], log?: Pick<Logger, 'warn'>): Site
   try {
     return publicConfig(readConfig((env ?? {}) as Record<string, unknown>));
   } catch {
-    log?.warn('site configuration invalid', { code: 'site_config_invalid' });
+    log?.warn('site.configuration_invalid', { code: 'site_config_invalid' });
     const fallback = publicConfig(readConfig());
     // Contact and calendar settings must not replace valid canonical/sitemap URLs with localhost.
     const origin = publicConfigSchema.shape.APP_ORIGIN.safeParse(env?.APP_ORIGIN);

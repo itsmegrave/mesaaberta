@@ -42,7 +42,7 @@ describe('a system page load', () => {
   it('answers 404 for a system that is not approved, with a code in the log', async () => {
     vi.mocked(readSystemPage).mockResolvedValue(null);
     await expect(run(event('sugestao'))).rejects.toMatchObject({ status: 404 });
-    expect(logged).toHaveBeenCalledWith('system not found', { code: 'system_not_found' });
+    expect(logged).toHaveBeenCalledWith('systems.not_found', { code: 'system_not_found' });
   });
 
   it('moves a merged system to the one it was merged into, permanently', async () => {

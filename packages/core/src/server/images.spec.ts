@@ -125,7 +125,7 @@ describe('storeImage', () => {
     const image = await prepareImage(file(bytes(PNG)));
 
     await expect(storeImage({ upload }, image, log)).rejects.toThrow('upload_failed');
-    expect(log.warn).toHaveBeenCalledWith('image upload refused by Storage', {
+    expect(log.warn).toHaveBeenCalledWith('storage.image_upload_refused', {
       reason: 'new row violates row-level security policy',
     });
   });

@@ -91,7 +91,7 @@ export async function handlePlaceForm(
   if (replacedImage && isInside(replacedImage, 'places')) {
     const { error } =
       (await serverStorage(locals.env, IMAGE_BUCKET)?.remove([replacedImage])) ?? {};
-    if (error) locals.log.warn('place photo: could not delete the old file', { error });
+    if (error) locals.log.warn('storage.place_photo_delete_failed', { error });
   }
 
   redirect(303, `/pp/${slug}?enviado=1`);

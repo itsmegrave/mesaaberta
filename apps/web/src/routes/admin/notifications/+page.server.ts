@@ -96,7 +96,7 @@ async function viaApi(locals: App.Locals, adminId: string, data: unknown): Promi
   if (answer.status === 400 && body.error === 'invalid' && typeof body.field === 'string')
     throw new Invalid(body.field, typeof body.message === 'string' ? body.message : 'invalid');
 
-  locals.log.warn('api announcement failed', {
+  locals.log.warn('api.announcement_failed', {
     code: 'api_call_failed',
     status: answer.status,
     reason: typeof body.error === 'string' ? body.error : undefined,

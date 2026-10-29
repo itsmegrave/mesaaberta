@@ -60,7 +60,7 @@ export async function writeViaApi(
     return { eventIds: json.eventIds as string[], body: json };
   const refusal = refusalOf(answer.status, json);
   if (refusal) throw refusal;
-  locals.log.warn('api write failed', {
+  locals.log.warn('api.write_failed', {
     code: 'api_call_failed',
     route: routeTemplate(path),
     status: answer.status,

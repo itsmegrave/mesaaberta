@@ -37,7 +37,7 @@ export const read = async ({ locals }: RequestEvent) => {
     };
   } catch (error) {
     // The landing page is still worth showing without the preview.
-    locals.log.error('home: could not list upcoming tables', { error });
+    locals.log.error('home.upcoming_tables_failed', { error });
     return { tables: [], newTables: [], now };
   }
 };

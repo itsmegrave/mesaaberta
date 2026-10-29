@@ -11,7 +11,7 @@ is off.
 
 1. The private repo deploys this Worker with its secrets (database, Instagram, Resend).
 2. The same release empties `triggers.crons` on the web Worker and sets the two crons here.
-3. Watch one `event sweep` line every five minutes, the daily import, the pending and failed counts
+3. Watch one `sweep.events_swept` line every five minutes, the daily import, the pending and failed counts
    on `/admin/events` and Sentry for `scheduled job failed`.
 
 Rollback is the reverse: crons back on the web Worker (pin the previous release), then delete this

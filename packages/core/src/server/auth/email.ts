@@ -38,7 +38,7 @@ async function keepProfile(
     // A temporary ban that ran out is lifted here; anything else still barred is signed out.
     if (!profile || !(await stillBanned(db, profile)).banned) return 'kept';
   } catch (error) {
-    log.error('email auth: could not create the profile', { error });
+    log.error('auth.email_profile_not_created', { error });
     await supabase.auth.signOut();
     return 'failed';
   }
@@ -85,7 +85,7 @@ export async function signUpForSession(
     if (error.code && RATE_LIMITED.has(error.code))
       return { result: 'rate_limited', session: null };
     // The code and status only: the message can quote the address.
-    deps.log.warn('email auth: sign-up refused', { code: error.code, status: error.status });
+    deps.log.warn('auth.email_sign_up_refused', { code: error.code, status: error.status });
     return { result: 'failed', session: null };
   }
 
@@ -128,7 +128,7 @@ export async function signInForSession(
     if (error.code === 'email_not_confirmed') return { result: 'unconfirmed', session: null };
     if (error.code && RATE_LIMITED.has(error.code))
       return { result: 'rate_limited', session: null };
-    deps.log.warn('email auth: sign-in refused', { code: error.code, status: error.status });
+    deps.log.warn('auth.email_sign_in_refused', { code: error.code, status: error.status });
     return { result: 'failed', session: null };
   }
 

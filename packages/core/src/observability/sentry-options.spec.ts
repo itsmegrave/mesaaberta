@@ -32,6 +32,62 @@ describe('sentry options', () => {
     expect(out.breadcrumbs).toBeUndefined();
   });
 
+  it('keeps the dist, so server frames map to the per-app source maps', () => {
+    const event = { event_id: 'e1', release: '0.97.0', dist: 'api' } as ErrorEvent;
+    expect(privateEvent(event)).toMatchObject({ release: '0.97.0', dist: 'api' });
+  });
+
+  it('names the person by the opaque userId tag only', () => {
+    const userId = '271761e6-d8aa-43ac-b3d5-4da3ca054af0';
+    const event = {
+      event_id: 'e1',
+      tags: { userId },
+      user: { id: userId, email: 'ana@example.com', ip_address: '10.0.0.1' },
+    } as unknown as ErrorEvent;
+    expect(privateEvent(event)?.user).toEqual({ id: userId });
+  });
+
+  it('titles an issue by a code-only message, else by its safe tags', () => {
+    const titled = (value: string, tags: Record<string, unknown> = {}) =>
+      privateEvent({
+        event_id: 'e1',
+        tags,
+        exception: { values: [{ type: 'TypeError', value }] },
+      } as unknown as ErrorEvent)?.exception?.values?.[0].value;
+
+    expect(titled("Cannot read properties of undefined (reading 'slug')")).toBe(
+      "Cannot read properties of undefined (reading 'slug')",
+    );
+    expect(titled('https://svelte.dev/e/effect_update_depth_exceeded')).toBe(
+      'https://svelte.dev/e/effect_update_depth_exceeded',
+    );
+    expect(titled('HttpError 503')).toBe('HttpError 503');
+    expect(
+      titled('Failed to fetch dynamically imported module: https://mesaaberta.app/_app/x.js'),
+    ).toBe('Failed to fetch dynamically imported module:');
+    // Free text never: the tags the line carried name it instead.
+    expect(titled('no profile for ana@example.com', { code: 'api_call_failed', status: 503 })).toBe(
+      'code api_call_failed, status 503 (details withheld; correlate by requestId)',
+    );
+    expect(titled("Cannot read properties of undefined (reading 'ana silva')")).toBe(
+      'Exception details withheld; correlate by requestId and code location',
+    );
+  });
+
+  it('drops a browser that lost the network', () => {
+    for (const value of [
+      'Failed to fetch',
+      'Load failed',
+      'NetworkError when attempting to fetch resource.',
+    ])
+      expect(
+        privateEvent({
+          event_id: 'e1',
+          exception: { values: [{ type: 'TypeError', value }] },
+        } as unknown as ErrorEvent),
+      ).toBeNull();
+  });
+
   it('drops a request the app cancelled itself', () => {
     const aborted = {
       event_id: 'e1',

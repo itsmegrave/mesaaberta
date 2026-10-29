@@ -29,7 +29,12 @@ export const handleChangelogNotice: Handle = ({ event, resolve }) => {
           link: releaseHref(latest.date),
         },
       });
-      if (answer && !answer.ok) throw new Error(`changelog notice: api answered ${answer.status}`);
+      // A refusal is the api's to explain in its own lines; this one says which status came back.
+      if (answer && !answer.ok)
+        event.locals.log.warn('changelog.notice_refused', {
+          code: 'changelog_notice_refused',
+          status: answer.status,
+        });
     });
   }
 

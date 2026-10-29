@@ -332,7 +332,13 @@ export async function forceEvent(
     return found.processedAt ? 'already_processed' : 'running';
   }
 
-  log.info('event.forced', { event: 'event.forced', eventId: id, eventType: row.type, adminId });
+  // The admin who forced it is the actor: `userId`, like every other line.
+  log.info('event.forced', {
+    event: 'event.forced',
+    eventId: id,
+    eventType: row.type,
+    userId: adminId,
+  });
   const recorded = await recordEvent(
     db,
     { type: 'EventForced', actorId: adminId, payload: { eventId: id, eventType: row.type } },

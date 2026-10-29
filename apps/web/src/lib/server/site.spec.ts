@@ -45,7 +45,7 @@ describe('siteOf', () => {
     const site = siteOf({ CONTACT_EMAIL: 'not an address' } as never, { warn });
 
     expect(site.CONTACT_EMAIL).toBe('contact@example.invalid');
-    expect(warn).toHaveBeenCalledWith('site configuration invalid', {
+    expect(warn).toHaveBeenCalledWith('site.configuration_invalid', {
       code: 'site_config_invalid',
     });
   });

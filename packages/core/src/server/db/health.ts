@@ -14,7 +14,7 @@ export async function checkDatabase(db: Queryable | null, log?: Logger): Promise
     await db.execute(sql`select 1`);
     return 'ok';
   } catch (error) {
-    log?.error('database health check failed', { error });
+    log?.error('db.health_check_failed', { error });
     return 'down';
   }
 }

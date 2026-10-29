@@ -83,12 +83,21 @@ export async function callApiRaw(
   headers: Record<string, string> = {},
   method: 'GET' | 'POST' | 'DELETE' = 'POST',
 ): Promise<ApiAnswer | null> {
+  let status: number | undefined;
   try {
     const response = await sendToApi(env, path, actorId, { method, json, headers });
     if (!response) return null;
-    return { ok: response.ok, status: response.status, body: await response.json() };
+    status = response.status;
+    return { ok: response.ok, status, body: await response.json() };
   } catch (error) {
-    log.warn('api call failed', { code: 'api_call_failed', route: routeTemplate(path), error });
+    // With a status, the api (or Cloudflare in front of it) answered something that is not JSON:
+    // an error page when the api Worker itself failed. Without one, the call never got an answer.
+    log.warn('api.call_failed', {
+      code: status === undefined ? 'api_call_failed' : 'api_answer_not_json',
+      route: routeTemplate(path),
+      status,
+      error,
+    });
     return null;
   }
 }
@@ -107,7 +116,7 @@ export async function callApi<T>(
   const answer = await callApiRaw(env, path, actorId, log);
   if (!answer) return null;
   if (!answer.ok) {
-    log.warn('api call refused', {
+    log.warn('api.call_refused', {
       code: 'api_call_refused',
       route: routeTemplate(path),
       status: answer.status,

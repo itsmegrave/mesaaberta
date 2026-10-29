@@ -73,7 +73,7 @@ export const load: LayoutServerLoad = async (event) => {
     };
   } catch (error) {
     // The page is still worth showing without the account menu.
-    locals.log.error('layout: could not load the profile', { error });
+    locals.log.error('layout.profile_load_failed', { error });
     return {
       authEnabled,
       site,

@@ -45,7 +45,7 @@ export async function completeLogin(
   try {
     profile = await ensureProfile(db, user);
   } catch (error) {
-    log.error('login: could not create the profile', { error });
+    log.error('auth.login_profile_not_created', { error });
     return { result: 'profile_failed' };
   }
 
@@ -85,14 +85,14 @@ export async function finishLogin(
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error || !data.user) {
-    log.warn('login: could not exchange the code', { error });
+    log.warn('auth.login_code_exchange_failed', { error });
     return '/login?error=exchange_failed';
   }
 
   const token = data.session?.access_token;
   let done = remote && token ? await remote(token, next) : null;
   if (!done && db) done = await completeLogin({ db, log, ip }, data.user, next);
-  if (!done) log.error('login: there is no database to create the profile in');
+  if (!done) log.error('auth.login_no_database');
   if (!done) {
     await supabase.auth.signOut();
     return '/login?error=unavailable';

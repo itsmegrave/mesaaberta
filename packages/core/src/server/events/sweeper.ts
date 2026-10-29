@@ -64,30 +64,34 @@ export async function runSweeper(
     // First, so the GM's question goes out in this very run: its events are due at once.
     await expireInvitations(db, { now });
     const closed = await closeElapsedTables(db, now);
-    if (closed.length > 0) log.info('tables awaiting confirmation', { closed: closed.length });
+    if (closed.length > 0)
+      log.info('sweep.tables_awaiting_confirmation', { closed: closed.length });
     // Temporary bans whose time is up; their events go out in this run too.
     const lifted = await liftExpiredBans(db, now);
-    if (lifted.length > 0) log.info('bans lifted', { lifted: lifted.length });
+    if (lifted.length > 0) log.info('sweep.bans_lifted', { lifted: lifted.length });
     // Isolated like the social publish: a failed reminder must not hold up the sweep.
     try {
       const reminded = await sendSessionReminders(db, now);
-      if (reminded > 0) log.info('session reminders', { reminded });
+      if (reminded > 0) log.info('sweep.session_reminders_sent', { reminded });
     } catch (error) {
-      log.warn('session reminders failed', { code: 'session_reminders_failed', error });
+      log.warn('sweep.session_reminders_failed', { code: 'session_reminders_failed', error });
     }
     // Isolated too, and before the sweep so its e-mails and the close's notices go out in this run.
     try {
       const { reminded, closed } = await remindToClose(db, now, remindGm);
       if (reminded.length > 0 || closed.length > 0)
-        log.info('close reminders', { reminded: reminded.length, closed: closed.length });
+        log.info('sweep.close_reminders_sent', {
+          reminded: reminded.length,
+          closed: closed.length,
+        });
     } catch (error) {
-      log.warn('close reminders failed', { code: 'close_reminders_failed', error });
+      log.warn('sweep.close_reminders_failed', { code: 'close_reminders_failed', error });
     }
     const swept =
       env.EVENT_POLLER === 'true'
         ? await sweepThroughPoller(db, handlers, now, log)
         : await sweepEvents(db, handlers, now, 50, log, { clock: () => new Date() });
-    if (swept > 0) log.info('event sweep', { swept });
+    if (swept > 0) log.info('sweep.events_swept', { swept });
     // After the sweep: whatever is still late after it ran is worth a person's look.
     await reportDelay(db, new Date(), log);
     // Isolated: an unreadable Instagram token (a rotated INSTAGRAM_TOKEN_KEY) or a Meta outage must
@@ -95,18 +99,18 @@ export async function runSweeper(
     try {
       await socialFor(env).publishDue(db, env);
     } catch (error) {
-      log.warn('social publish failed', { code: 'social_publish_failed', error });
+      log.warn('social.publish_failed', { code: 'social_publish_failed', error });
     }
     const pruned = await pruneEvents(db);
-    if (pruned > 0) log.info('event prune', { pruned });
+    if (pruned > 0) log.info('sweep.events_pruned', { pruned });
     const expired = await pruneNotifications(db);
-    if (expired > 0) log.info('notification prune', { expired });
+    if (expired > 0) log.info('sweep.notifications_pruned', { expired });
     const chats = await pruneTableChats(db);
-    if (chats > 0) log.info('table chat prune', { chats });
+    if (chats > 0) log.info('sweep.table_chats_pruned', { chats });
     const deliveries = await pruneMailDeliveries(db);
-    if (deliveries > 0) log.info('mail delivery prune', { deliveries });
+    if (deliveries > 0) log.info('sweep.mail_deliveries_pruned', { deliveries });
     const attempts = await pruneAuthAttempts(db);
-    if (attempts > 0) log.info('auth attempt prune', { attempts });
+    if (attempts > 0) log.info('sweep.auth_attempts_pruned', { attempts });
     // Last, so a run that threw before this point does not look alive to /healthz.
     await recordHeartbeat(db, SWEEPER_HEARTBEAT, new Date(), log, buildInfoOf(env));
     return swept;
@@ -126,7 +130,7 @@ async function sweepThroughPoller(
     limit: 50,
   });
   if (summary.retry > 0 || summary.failed > 0) {
-    log.info('event poll', { retry: summary.retry, failed: summary.failed });
+    log.info('sweep.event_poll', { retry: summary.retry, failed: summary.failed });
   }
   return summary.tried;
 }

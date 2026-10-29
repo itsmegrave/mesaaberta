@@ -41,15 +41,9 @@ export const hostBindingsPath = fileURLToPath(
   ),
 );
 
-/** What `sentrySvelteKit` needs to know about the adapter's output. */
-export const hostSentry = bun
-  ? { adapter: 'node' as const, sourcemapAssets: undefined, sourcemapIgnore: undefined }
-  : {
-      adapter: 'cloudflare' as const,
-      // Only the browser's files. Wrangler bundles the server code (`.svelte-kit/output/server` and
-      // the `_worker.js` entry) into one `_worker.js` on deploy, so Vite's server maps never match a
-      // server frame, and their debug ids would all claim that one file. The deploy uploads the
-      // Wrangler bundle's own map instead, under the release and dist `sentryReleaseFor` sets.
-      sourcemapAssets: ['.svelte-kit/cloudflare/**'],
-      sourcemapIgnore: ['**/node_modules/**', '.svelte-kit/cloudflare/_worker.js*'],
-    };
+/**
+ * What `sentrySvelteKit` needs to know about the adapter's output. Source maps are the deploy's
+ * job: it uploads the browser's (`.svelte-kit/cloudflare/_app`) and Wrangler's server bundle's,
+ * since Wrangler bundles the server into one `_worker.js` that Vite's server maps never match.
+ */
+export const hostSentry = { adapter: bun ? ('node' as const) : ('cloudflare' as const) };

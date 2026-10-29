@@ -59,7 +59,7 @@ async function userOf(
   const response = await authCall(auth, token, '/user');
   if (response.status === 401 || response.status === 403) throw new Forbidden('no session');
   if (!response.ok) {
-    log.warn('password setup: could not read the user', { status: response.status });
+    log.warn('auth.password_setup_user_read_failed', { status: response.status });
     throw new Error(`auth: could not read the user (${response.status})`);
   }
 
@@ -201,7 +201,7 @@ export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
       idempotencyKey: `password-code:${who.profileId}:${codeHash.slice(0, 16)}`,
     });
   } catch (error) {
-    deps.log.warn('password setup: the code was not sent', { error });
+    deps.log.warn('auth.password_setup_code_not_sent', { error });
     // No code the person never received is left to be guessed.
     await db.delete(passwordSetupCodes).where(eq(passwordSetupCodes.profileId, who.profileId));
     throw error;
@@ -258,7 +258,7 @@ export async function addPassword(
       throw new Invalid('password', 'weak_password');
     }
     if (response.status === 429) throw new RateLimited(60);
-    log.warn('password setup: Supabase refused', { code, status: response.status });
+    log.warn('auth.password_setup_refused', { code, status: response.status });
     throw new Error(`auth: could not set the password (${response.status})`);
   }
 
@@ -267,6 +267,6 @@ export async function addPassword(
   try {
     await authCall(auth, who.token, '/logout?scope=others', { method: 'POST' });
   } catch (error) {
-    log.warn('password setup: could not sign the other sessions out', { error });
+    log.warn('auth.password_setup_sign_out_failed', { error });
   }
 }

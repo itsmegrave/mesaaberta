@@ -98,6 +98,6 @@ describe("a place's page load", () => {
   it('answers 404 for a place nobody may see, and logs it', async () => {
     vi.mocked(readPlacePage).mockResolvedValue(null);
     await expect(run(event())).rejects.toMatchObject({ status: 404 });
-    expect(logged).toHaveBeenCalledWith('place not found', { code: 'place_not_found' });
+    expect(logged).toHaveBeenCalledWith('places.not_found', { code: 'place_not_found' });
   });
 });

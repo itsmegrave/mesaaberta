@@ -87,7 +87,7 @@ describe('handleRequestLog', () => {
 
     expect(lines).toHaveLength(1);
     expect(lines[0]).toMatchObject({
-      msg: 'request',
+      msg: 'request.completed',
       method: 'POST',
       route: '/healthz',
       status: 204,
@@ -115,7 +115,7 @@ describe('handleRequestLog', () => {
 
     expect(lines).toEqual([
       expect.objectContaining({ msg: 'from a route', userId }),
-      expect.objectContaining({ msg: 'request', userId }),
+      expect.objectContaining({ msg: 'request.completed', userId }),
     ]);
   });
 

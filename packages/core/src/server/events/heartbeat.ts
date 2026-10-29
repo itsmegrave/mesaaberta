@@ -26,7 +26,7 @@ export async function recordHeartbeat(
       .values({ name, ...run })
       .onConflictDoUpdate({ target: workerHeartbeats.name, set: run });
   } catch (error) {
-    log?.warn('worker heartbeat failed', { code: 'heartbeat_failed', error });
+    log?.warn('worker.heartbeat_failed', { code: 'heartbeat_failed', error });
   }
 }
 

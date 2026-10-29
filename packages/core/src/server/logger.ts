@@ -100,7 +100,7 @@ export function createLogger(
         write === consoleWrite &&
         level === 'error' &&
         fields.error instanceof Error &&
-        msg !== 'unhandled error' &&
+        msg !== 'request.unhandled_error' &&
         msg !== 'request.failed'
       ) {
         sink?.capture(

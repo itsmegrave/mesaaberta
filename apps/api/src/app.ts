@@ -67,7 +67,9 @@ export function createApi() {
   app.use('/v1/*', async (c, next) => {
     const started = Date.now();
     await next();
-    logger.info('api request', {
+    logger.info('api.request_completed', {
+      // The tag, as on the api's Sentry issues, so a line and an issue of one deploy match.
+      release: buildInfoOf(c.env as BuildEnv | undefined).version ?? undefined,
       route: c.req.routePath,
       method: c.req.method,
       userId: c.req.header(ACTOR_HEADER),
@@ -149,7 +151,8 @@ export function createApi() {
   // The caller never sees the cause. The logger forwards the error's type, code and stack location to
   // Sentry, never its message, and the route is the template (`/v1/account/password/code`).
   app.onError((error, c) => {
-    logger.error('api request failed', {
+    logger.error('api.request_failed', {
+      release: buildInfoOf(c.env as BuildEnv | undefined).version ?? undefined,
       route: c.req.routePath,
       method: c.req.method,
       userId: c.req.header(ACTOR_HEADER),

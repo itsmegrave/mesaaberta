@@ -84,7 +84,7 @@ export async function handlePartnerForm(
   if (replacedLogo && isInside(replacedLogo, 'partners')) {
     const { error } =
       (await serverStorage(locals.env, AVATAR_BUCKET)?.remove([replacedLogo])) ?? {};
-    if (error) locals.log.warn('partner logo: could not delete the old file', { error });
+    if (error) locals.log.warn('storage.partner_logo_delete_failed', { error });
   }
 
   redirect(303, '/partners?enviado=1');

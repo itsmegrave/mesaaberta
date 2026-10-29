@@ -78,7 +78,7 @@ export async function storeImage(
         : '86400',
   });
   if (error) {
-    log?.warn('image upload refused by Storage', { reason: error.message });
+    log?.warn('storage.image_upload_refused', { reason: error.message });
     throw new Invalid('image', 'upload_failed');
   }
 
