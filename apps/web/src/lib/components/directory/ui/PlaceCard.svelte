@@ -1,8 +1,9 @@
 <script lang="ts">
   // A place in Onde jogar: its photo (or its kind's drawing) with the kind in the corner, the name
-  // as the card's one link to its page, the area, two lines of description, up to two of its tags and
+  // as the card's one link to its page, the area, the Parceiro pill, two lines of description, up to two of its tags and
   // the tables open there now. Draws only what it is given.
   import Icon from '#lib/components/ui/Icon.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
   import MediaCard from '#lib/components/ui/MediaCard.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { placeArea, placeKindIcons, placeKindLabels } from '#lib/places/labels.js';
@@ -23,6 +24,8 @@
       features: { name: string; slug: string }[];
       imageUrl: string | null;
       openTables: number;
+      /** Shown as a partner's: the Parceiro pill. */
+      partner?: boolean;
     };
   } = $props();
 
@@ -57,6 +60,7 @@
   <p class="flex items-center gap-1 text-sm font-semibold text-muted">
     <Icon name="map-pin" size={16} />{placeArea(place)}
   </p>
+  {#if place.partner}<Pill tone="primary" class="self-start">{m.place_partner_pill()}</Pill>{/if}
   {#if place.description}<p class="line-clamp-2 text-sm text-muted">{place.description}</p>{/if}
   {#if place.features.length > 0}
     <ul class="mt-1 flex flex-wrap gap-1">

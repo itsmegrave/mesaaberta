@@ -20,10 +20,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   );
 
   const supabase = supabaseUrlOf(locals.env);
+  const partnerPages = await directoryLinksEnabled(locals);
   // Who looks after a partner is for admins and those accounts only: the page learns whether the
   // viewer is one of them, and the ids stay on the server.
-  const cards = list.cards.map(({ logoPath, ownerIds, ...card }) => ({
+  const cards = list.cards.map(({ logoPath, ownerIds, reach, ...card }) => ({
     ...card,
+    reach: partnerPages ? reach : null,
     logoUrl: partnerLogoUrl(supabase, logoPath),
     canEdit: !!profile && ownerIds.includes(profile.id),
     // Only a member can report, and not one they look after; a card waiting for review is not.
@@ -36,7 +38,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     pages: list.pages,
     signedIn: !!profile,
     // Each card links to its partner's own page (`use_directory_links`).
-    partnerPages: await directoryLinksEnabled(locals),
+    partnerPages,
     sent: url.searchParams.get('enviado') === '1',
   };
 };

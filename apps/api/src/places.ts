@@ -13,6 +13,12 @@ import {
 import { readPlacePage } from '@mesaaberta/core/server/places/directory';
 import { listFeatureOptions } from '@mesaaberta/core/server/places/features';
 import { fileClaim, pendingClaimOf, removePlaceOwner } from '@mesaaberta/core/server/places/claims';
+import { placePartnerRequestSchema } from '@mesaaberta/core/places/partner-links';
+import {
+  endPlacePartner,
+  placePartnerState,
+  requestPlacePartner,
+} from '@mesaaberta/core/server/places/partner-links';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
@@ -116,6 +122,35 @@ export function placeRoutes(open: Open = openDb) {
     if (!body.success) return invalid(c);
     const eventIds = await fileClaim(c.get('db'), c.get('actor'), c.req.param('slug'), body.data);
     return c.json({ eventIds });
+  });
+
+  // "Parceiro" on the place's edit page (`use_directory_links`, checked by web): the link that is up,
+  // the request that waits and the partners the actor could ask for; 404 for anyone but its owner
+  // and admins.
+  app.get('/:slug/partner', async (c) => {
+    const state = await placePartnerState(c.get('db'), c.get('actor'), c.req.param('slug'));
+    return state ? c.json(state) : c.json({ error: 'not_found' }, 404);
+  });
+
+  app.post('/:slug/partner', async (c) => {
+    const body = placePartnerRequestSchema.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return invalid(c);
+    return c.json({
+      eventIds: await requestPlacePartner(
+        c.get('db'),
+        c.get('actor'),
+        c.req.param('slug'),
+        body.data.partnerId,
+      ),
+    });
+  });
+
+  // Withdrawing the request that waits, or taking the link that is up down.
+  app.post('/:slug/partner/:which{cancel|remove}', async (c) => {
+    const which = c.req.param('which') === 'cancel' ? 'pending' : 'approved';
+    return c.json({
+      eventIds: await endPlacePartner(c.get('db'), c.get('actor'), c.req.param('slug'), which),
+    });
   });
 
   // "Deixar de gerenciar": the owner hands the place back, by its id.

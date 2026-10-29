@@ -209,6 +209,13 @@ export type DomainEvent =
   // A place lost its owner: they handed it back (`actorId` is `profileId`), or an admin took them
   // off (then they are told).
   | { type: 'PlaceOwnerRemoved'; payload: PlaceFact & { profileId: string } }
+  // Someone who looks after a place and a partner asked to link them; an admin approved (the place
+  // shows "Parceiro Mesa Aberta", the partner the place) or rejected it, and the requester hears.
+  // A link taken down later, by an admin or either side, is `PlacePartnerUnlinked`.
+  | { type: 'PlacePartnerLinkRequested'; payload: PlacePartnerLinkFact }
+  | { type: 'PlacePartnerLinkApproved'; payload: PlacePartnerLinkFact }
+  | { type: 'PlacePartnerLinkRejected'; payload: PlacePartnerLinkFact }
+  | { type: 'PlacePartnerUnlinked'; payload: PlacePartnerLinkFact }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -298,6 +305,14 @@ export type PlaceFact = { placeId: string; slug: string; name: string };
 
 // A claim on a place, and who made it.
 export type PlaceClaimFact = PlaceFact & { claimId: string; claimantId: string };
+
+// A request to link a place and a partner, and who asked (null once their account is gone).
+export type PlacePartnerLinkFact = PlaceFact & {
+  linkId: string;
+  partnerId: string;
+  partnerName: string;
+  requestedBy: string | null;
+};
 
 // A place and who looks after it: whoever sent it, and the owner an admin accepted, if any.
 export type PlaceKeepers = PlaceFact & { submitterId: string; ownerId: string | null };

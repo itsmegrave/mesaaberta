@@ -30,6 +30,7 @@ import type { Changes } from '@mesaaberta/core/server/events/types';
 import { enforceRateLimit, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 import { resolveOpenPartnerReports } from './admin';
 import { addSubmitterAsOwner, ownerIdsOf, ownersOf } from './owners';
+import { partnerReachOf } from '../places/partner-links';
 
 // The member side of the partners (link exchange) page. A partner is sent by a member, waits for an
 // admin (`approvedAt`), and is then public. Editing it clears the approval again. Who looks after it
@@ -333,8 +334,19 @@ export async function listPartners(
     .limit(PARTNER_PAGE_SIZE)
     .offset((filters.page - 1) * PARTNER_PAGE_SIZE);
 
-  const cards = await withLinks(db, rows);
-  return { cards, total, pages };
+  const [cards, reach] = await Promise.all([
+    withLinks(db, rows),
+    partnerReachOf(
+      db,
+      rows.map((row) => row.id),
+    ),
+  ]);
+  // What its links reach ("2 lugares · Mestra: @ana"); null when it has none.
+  return {
+    cards: cards.map((card) => ({ ...card, reach: reach.get(card.id) ?? null })),
+    total,
+    pages,
+  };
 }
 
 export type PartnerList = NonNullable<Awaited<ReturnType<typeof listPartners>>>;

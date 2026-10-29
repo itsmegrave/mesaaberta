@@ -19,6 +19,8 @@ export type PlaceFilters = {
   kind: PlaceKind | '';
   /** Tags (`place_features` slugs) a place must have every one of, A to Z. */
   tags: string[];
+  /** Only places shown as a partner's ("Só parceiros", `?partner=1`). */
+  partner: boolean;
   sort: PlaceSort;
   page: number;
 };
@@ -51,6 +53,7 @@ export function readPlaceFilters(params: SearchParamsLike): PlaceFilters {
     city: okState && SLUG.test(city) && city.startsWith(`${okState}-`) ? city : '',
     kind: isPlaceKind(kind) ? kind : '',
     tags: [...new Set(picked)].sort().slice(0, MAX_TAG_FILTERS),
+    partner: params.get('partner') === '1',
     sort: oneOf(PLACE_SORTS, params.get('sort'), 'open'),
     page: pageNumber(params.get('page')),
   };
@@ -64,6 +67,7 @@ export function placeDirectoryQuery(filters: Omit<PlaceFilters, 'page'>, page = 
   if (filters.state && filters.city) params.set('city', filters.city);
   if (filters.kind) params.set('kind', filters.kind.replaceAll('_', '-'));
   for (const tag of [...filters.tags].sort()) params.append('tag', tag);
+  if (filters.partner) params.set('partner', '1');
   if (filters.sort !== 'open') params.set('sort', filters.sort);
   if (page > 1) params.set('page', String(page));
   const query = params.toString();
@@ -98,5 +102,6 @@ export const NO_FILTERS: Omit<PlaceFilters, 'page'> = {
   city: '',
   kind: '',
   tags: [],
+  partner: false,
   sort: 'open',
 };

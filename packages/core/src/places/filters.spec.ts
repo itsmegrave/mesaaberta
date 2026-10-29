@@ -7,7 +7,7 @@ describe('the Onde jogar filters', () => {
   it('reads every filter from the address', () => {
     expect(
       read(
-        'q=+Dragão+&state=PE&city=pe-recife&kind=game-cafe&tag=rpg&tag=free-to-play&amenity=accessible&sort=name&page=2',
+        'q=+Dragão+&state=PE&city=pe-recife&kind=game-cafe&tag=rpg&tag=free-to-play&amenity=accessible&partner=1&sort=name&page=2',
       ),
     ).toEqual({
       query: 'Dragão',
@@ -16,9 +16,11 @@ describe('the Onde jogar filters', () => {
       kind: 'game_cafe',
       // `amenity` is the old address of the first tags: it still filters.
       tags: ['accessible', 'free-to-play', 'rpg'],
+      partner: true,
       sort: 'name',
       page: 2,
     });
+    expect(read('partner=yes').partner).toBe(false);
   });
 
   it('takes at most ten tags, each once', () => {

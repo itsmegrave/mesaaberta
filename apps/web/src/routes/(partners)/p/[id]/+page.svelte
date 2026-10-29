@@ -1,8 +1,13 @@
 <script lang="ts">
   // A partner's own page: its logo, name and kinds, what it says about itself, its coupon and its
-  // links, with "Visitar o site" first. Whoever looks after it can edit it from here; a member who
+  // links, with "Visitar o site" first. Below, the places it is ("Onde jogar") and those who look
+  // after it and chose to show they mestra ("Quem mestra"). Whoever looks after it can edit it from here; a member who
   // does not can report it.
   import { page } from '$app/state';
+  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
+  import PersonRow from '#lib/components/directory/ui/PersonRow.svelte';
+  import PlaceCard from '#lib/components/directory/ui/PlaceCard.svelte';
   import EntityReportDialog from '#lib/components/report/EntityReportDialog.svelte';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -169,4 +174,24 @@
       {/if}
     </aside>
   </div>
+
+  {#if data.places.length > 0}
+    <DirectorySection title={m.partner_page_places()} lede={m.partner_page_places_lede()}>
+      <CardGrid>
+        {#each data.places as place (place.slug)}
+          <li class="min-w-0"><PlaceCard {place} /></li>
+        {/each}
+      </CardGrid>
+    </DirectorySection>
+  {/if}
+
+  {#if data.gms.length > 0}
+    <DirectorySection title={m.partner_page_gms()} lede={m.partner_page_gms_lede()}>
+      <ul class="grid gap-3 md:grid-cols-2">
+        {#each data.gms as gm (gm.username)}
+          <li><PersonRow person={gm} detail={gm.name ?? m.partner_page_gm_detail()} /></li>
+        {/each}
+      </ul>
+    </DirectorySection>
+  {/if}
 </section>

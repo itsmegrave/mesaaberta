@@ -7,6 +7,7 @@ import { notificationHandler } from './notifications';
 import { announcementHandler } from './announcements';
 import { moderationHandler } from './moderation';
 import { placeAlertHandler } from './place-alerts';
+import { directoryLinkHandler } from './directory-links';
 import { catalogHandler } from './catalog';
 import { badgeHandler, badgeNoticeHandler } from '../badges/handlers';
 import { banMailHandler } from './ban-mail';
@@ -28,6 +29,7 @@ export const bellHandlers: readonly Handler[] = [
   announcementHandler,
   moderationHandler,
   placeAlertHandler,
+  directoryLinkHandler,
   catalogHandler,
   playerInvitationNotificationHandler,
   partnerOwnerNotificationHandler,

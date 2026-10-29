@@ -13,7 +13,8 @@
     person: {
       username: string;
       avatarUrl: string | null;
-      rating: { score: number | null; count: number; isNew: boolean };
+      /** The GM's score; none draws no pill (a partner's "Quem mestra"). */
+      rating?: { score: number | null; count: number; isNew: boolean };
     };
     /** The muted line under the name ("9 mesas deste sistema"). */
     detail: string;
@@ -30,7 +31,11 @@
     >
     <p class="text-sm font-medium text-muted">{detail}</p>
     <!-- On a phone the score sits under the name; the pill needs the width a wider screen has. -->
-    <span class="sm:hidden"><GmRating rating={person.rating} variant="short" /></span>
+    {#if person.rating}
+      <span class="sm:hidden"><GmRating rating={person.rating} variant="short" /></span>
+    {/if}
   </div>
-  <span class="hidden shrink-0 sm:block"><GmRating rating={person.rating} variant="pill" /></span>
+  {#if person.rating}
+    <span class="hidden shrink-0 sm:block"><GmRating rating={person.rating} variant="pill" /></span>
+  {/if}
 </div>

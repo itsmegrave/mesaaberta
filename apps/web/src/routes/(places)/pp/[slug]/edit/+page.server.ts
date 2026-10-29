@@ -4,7 +4,13 @@ import { can } from '@mesaaberta/core/server/auth/policy';
 import { formatCep } from '@mesaaberta/core/location/cep';
 import { MAX_PLACE_LINKS } from '@mesaaberta/core/places/types';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { requireDirectory } from '#lib/server/directories/flags.js';
+import { directoryLinksEnabled, requireDirectory } from '#lib/server/directories/flags.js';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
+import {
+  placePartnerEndSchema,
+  placePartnerRequestSchema,
+} from '@mesaaberta/core/places/partner-links';
+import type { placePartnerState } from '@mesaaberta/core/server/places/partner-links';
 import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { findEditablePlace } from '@mesaaberta/core/server/places/service';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
@@ -35,7 +41,22 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
   await requireUser(locals, url);
   const { profile, place } = await editable(locals, params.slug);
   const links = place.links.slice(0, MAX_PLACE_LINKS);
+  // "Parceiro" (`use_directory_links`): only for its owner and admins, once it is on the list.
+  const partner =
+    place.approvedAt !== null && (await directoryLinksEnabled(locals))
+      ? await readFromApi<NonNullable<Awaited<ReturnType<typeof placePartnerState>>>>(
+          locals,
+          profile.id,
+          `/v1/places/${encodeURIComponent(place.slug)}/partner`,
+        )
+          .then(revivedDates)
+          .catch((cause) => {
+            if (isHttpError(cause) && cause.status === 404) return null;
+            throw cause;
+          })
+      : null;
   return {
+    partner,
     ...(await placeTagOptions(locals, profile.id, place.features)),
     slug: place.slug,
     imageUrl: imageUrl(supabaseUrlOf(locals.env), place.imagePath),
@@ -60,11 +81,28 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
   };
 };
 
+// "Parceiro": the api authorizes (the place's owner who looks after the partner, or an admin).
+const partnerPath = (event: { params: Partial<Record<string, string>> }, end = '') =>
+  `/v1/places/${encodeURIComponent(event.params.slug ?? '')}/partner${end}`;
+const allow = (event: { locals: App.Locals }) => directoryLinksEnabled(event.locals);
+
 export const actions: Actions = {
-  default: async (event) => {
+  save: async (event) => {
     await requireDirectory(event.locals, 'places');
     await requireUser(event.locals, event.url);
     const { place } = await editable(event.locals, event.params.slug);
     return handlePlaceForm(event, { slug: place.slug });
   },
+  requestPartner: moderationAction(placePartnerRequestSchema, ['partnerId'], {
+    path: (event) => partnerPath(event),
+    allow,
+  }),
+  cancelPartner: moderationAction(placePartnerEndSchema, [], {
+    path: (event) => partnerPath(event, '/cancel'),
+    allow,
+  }),
+  removePartner: moderationAction(placePartnerEndSchema, [], {
+    path: (event) => partnerPath(event, '/remove'),
+    allow,
+  }),
 };

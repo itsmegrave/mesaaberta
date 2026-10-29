@@ -21,6 +21,9 @@ import {
   removePartnerOwner,
   respondToPartnerInvitation,
 } from '@mesaaberta/core/server/partners/owners';
+import { partnerConnections } from '@mesaaberta/core/server/directories/links';
+import { partnerShowAsGmSchema } from '@mesaaberta/core/places/partner-links';
+import { isShownAsGm, setShownAsGm } from '@mesaaberta/core/server/places/partner-links';
 import { refusal } from './refusal';
 import { userGuard, viewerGuard, type UserVariables, type ViewerVariables } from './user-guard';
 
@@ -58,7 +61,12 @@ export function partnerRoutes(open: Open = openDb) {
     const found = await readPartnerPage(c.get('db'), c.req.param('id'), {
       viewerId: c.get('actor')?.id ?? null,
     });
-    return found ? c.json(found) : c.json({ error: 'not_found' }, 404);
+    if (!found) return c.json({ error: 'not_found' }, 404);
+    // Its places and who mestra there, once it is on the list.
+    const connections = found.pending
+      ? { places: [], gms: [] }
+      : await partnerConnections(c.get('db'), found.id, new Date());
+    return c.json({ ...found, ...connections });
   });
 
   app.route('/', visitors);
@@ -96,7 +104,12 @@ export function partnerRoutes(open: Open = openDb) {
       c.req.query('owners') === '1'
         ? await listPartnerOwners(c.get('db'), c.get('actor'), partner.id)
         : null;
-    return c.json({ partner, owners });
+    // "Mostrar meu perfil em Quem mestra" with `links=1` (`use_directory_links`).
+    const shownAsGm =
+      c.req.query('links') === '1'
+        ? await isShownAsGm(c.get('db'), partner.id, c.get('actorId'))
+        : null;
+    return c.json({ partner, owners, shownAsGm });
   });
 
   const body = async <S extends z.ZodType>(c: Context, schema: S) => {
@@ -125,6 +138,14 @@ export function partnerRoutes(open: Open = openDb) {
     return c.json(
       await removePartnerOwner(c.get('db'), c.get('actor'), c.req.param('id'), data.profileId),
     );
+  });
+
+  // "Mostrar meu perfil em Quem mestra": each person who looks after it decides for themselves.
+  app.post('/:id/show-as-gm', async (c) => {
+    const data = await body(c, partnerShowAsGmSchema);
+    if (!data) return invalid(c);
+    await setShownAsGm(c.get('db'), c.get('actor'), c.req.param('id'), data.show);
+    return c.json({ eventIds: [] });
   });
 
   // "Deixar de cuidar…": the actor takes themselves off.

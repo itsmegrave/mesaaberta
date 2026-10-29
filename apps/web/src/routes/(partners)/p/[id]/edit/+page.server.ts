@@ -14,6 +14,8 @@ import {
 } from '@mesaaberta/core/partners/owners';
 import type { listPartnerOwners } from '@mesaaberta/core/server/partners/owners';
 import { ownerAction, partnerOwnersEnabled } from '#lib/server/partners/owner-actions.js';
+import { directoryLinksEnabled } from '#lib/server/directories/flags.js';
+import { partnerShowAsGmFormSchema } from '@mesaaberta/core/places/partner-links';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url, params }) => {
@@ -22,19 +24,30 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
     const profile = await locals.getProfile();
     // "Quem cuida do parceiro", while `use_partner_owners` is on for this person.
     const withOwners = !!profile && (await partnerOwnersEnabled(locals, profile));
-    const { partner, owners: list } = revivedDates(
+    // "Mostrar meu perfil em Quem mestra", while `use_directory_links` is on.
+    const withLinks = await directoryLinksEnabled(locals);
+    const query = new URLSearchParams();
+    if (withOwners) query.set('owners', '1');
+    if (withLinks) query.set('links', '1');
+    const {
+      partner,
+      owners: list,
+      shownAsGm,
+    } = revivedDates(
       await readFromApi<{
         partner: Awaited<ReturnType<typeof findOwnPartner>>;
         owners: Awaited<ReturnType<typeof listPartnerOwners>> | null;
+        shownAsGm: boolean | null;
       }>(
         locals,
         user.id,
-        `/v1/partners/${encodeURIComponent(params.id)}/edit${withOwners ? '?owners=1' : ''}`,
+        `/v1/partners/${encodeURIComponent(params.id)}/edit${query.size > 0 ? `?${query}` : ''}`,
       ),
     );
     const owners = list && profile ? { ...list, you: profile.id } : null;
     return {
       owners,
+      shownAsGm,
       id: partner.id,
       logoUrl: partnerLogoUrl(supabaseUrlOf(locals.env), partner.logoPath),
       approved: partner.approvedAt !== null,
@@ -76,6 +89,11 @@ export const actions: Actions = {
     `/v1/partners/${params.id}/owners/cancel`,
     { invitationId: data.invitationId },
   ]),
+  // "Mostrar meu perfil em Quem mestra": each person who looks after it decides for themselves.
+  showAsGm: async (event) => {
+    if (!(await directoryLinksEnabled(event.locals))) error(404, 'Not found');
+    return showAsGm(event);
+  },
   // Their own row is "Deixar de cuidar…": they no longer reach this page, so it sends them to /p.
   removeOwner: ownerAction(partnerOwnerSchema, ['profileId'], ({ profileId }, params) => [
     `/v1/partners/${params.id}/owners/remove`,
@@ -88,3 +106,10 @@ export const actions: Actions = {
     { flagged: false, then: () => '/partners' },
   ),
 };
+
+const showAsGm = ownerAction(
+  partnerShowAsGmFormSchema,
+  ['show'],
+  ({ show }, params) => [`/v1/partners/${params.id}/show-as-gm`, { show: show === 'true' }],
+  { flagged: false },
+);

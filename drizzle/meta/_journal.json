@@ -505,6 +505,13 @@
       "when": 1793240289775,
       "tag": "0071_place_features",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793243026691,
+      "tag": "0072_place_partner_links",
+      "breakpoints": true
     }
   ]
 }

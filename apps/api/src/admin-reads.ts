@@ -37,6 +37,7 @@ import { listAdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/adm
 import { listAdminPartners } from '@mesaaberta/core/server/partners/admin';
 import { listAdminPlaces } from '@mesaaberta/core/server/places/admin';
 import { listClaims } from '@mesaaberta/core/server/places/claims';
+import { listPartnerLinks } from '@mesaaberta/core/server/places/partner-links';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { z } from 'zod';
@@ -129,6 +130,7 @@ export function adminReadRoutes(open: Open = createDb) {
   > = {
     places: listAdminPlaces,
     claims: listClaims,
+    links: listPartnerLinks,
     crowdfundings: listAdminCrowdfundings,
     partners: listAdminPartners,
   };

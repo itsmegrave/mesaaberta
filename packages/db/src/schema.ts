@@ -1506,6 +1506,68 @@ export const partnerInvitations = pgTable(
   ],
 ).enableRLS();
 
+// A place that is also a partner ("Parceiro Mesa Aberta" on its page): someone who looks after both
+// asks, an admin approves. A place has at most one partner (one request waiting, one link up); a
+// partner may have many places. `cancelled` is a request withdrawn or replaced, `removed` a link
+// taken down after it was approved.
+export const placePartnerLinks = pgTable(
+  'place_partner_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    requestedBy: uuid('requested_by').references(() => profiles.id, { onDelete: 'set null' }),
+    status: text('status', {
+      enum: ['pending', 'approved', 'rejected', 'cancelled', 'removed'],
+    })
+      .notNull()
+      .default('pending'),
+    // The admin who decided. Not a foreign key, like `place_claims.decided_by`.
+    decidedBy: uuid('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    ...timestamps,
+  },
+  (link) => [
+    uniqueIndex('place_partner_links_one_pending')
+      .on(link.placeId)
+      .where(sql`${link.status} = 'pending'`),
+    uniqueIndex('place_partner_links_one_approved')
+      .on(link.placeId)
+      .where(sql`${link.status} = 'approved'`),
+    index('place_partner_links_partner_idx').on(link.partnerId, link.status),
+    index('place_partner_links_status_idx').on(link.status, link.createdAt),
+    check(
+      'place_partner_links_decision_note_length',
+      sql`char_length(${link.decisionNote}) <= 1000`,
+    ),
+  ],
+).enableRLS();
+
+// Who looks after a partner and chose to show on its page under "Quem mestra". Each person turns it
+// on for themself; it counts only while they still look after the partner and their profile says
+// they run games.
+export const partnerShownGms = pgTable(
+  'partner_shown_gms',
+  {
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.partnerId, t.profileId] }),
+    index('partner_shown_gms_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
 // Widgets an extension floats over the app's pages, a poll today (Trello #231). The tables live here,
 // not in the private package, so every deployment keeps one schema; a build without that extension
 // never reads them.

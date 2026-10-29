@@ -153,6 +153,9 @@
     <a href="/admin/places/claims" class="{buttonClass('secondary', 'sm')} font-semibold"
       >{m.admin_claims_title()}</a
     >
+    <a href="/admin/places/links" class="{buttonClass('secondary', 'sm')} font-semibold"
+      >{m.admin_links_title()}</a
+    >
   {/snippet}
   <DataTable
     rows={list.rows}

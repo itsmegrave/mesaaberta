@@ -2,6 +2,7 @@
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import PartnerForm from '../../../components/PartnerForm.svelte';
   import PartnerOwners from '../../../components/PartnerOwners.svelte';
+  import PartnerShowAsGm from '../../../components/PartnerShowAsGm.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form = null } = $props();
@@ -33,6 +34,11 @@
         invitations={data.owners.invitations}
         you={data.owners.you}
       />
+    </div>
+  {/if}
+  {#if data.shownAsGm !== null && data.approved}
+    <div class="mt-4 lg:w-[calc((200%-3rem)/3)]">
+      <PartnerShowAsGm shown={data.shownAsGm} />
     </div>
   {/if}
 </section>

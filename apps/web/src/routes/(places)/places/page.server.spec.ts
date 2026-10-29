@@ -41,6 +41,7 @@ const taverna = {
   features: [],
   imagePath: 'places/t.png',
   openTables: 2,
+  partner: false,
 };
 
 describe('the Onde jogar load', () => {
