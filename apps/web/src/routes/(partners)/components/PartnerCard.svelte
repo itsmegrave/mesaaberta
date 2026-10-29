@@ -28,6 +28,8 @@
     /** Waits for an admin: only its submitter sees it, so it says so. */
     pending?: boolean;
     links: { network: Exclude<Network, 'website'>; url: string }[];
+    /** What its links reach (`use_directory_links`): its places, and who mestra there. */
+    reach?: { places: number; gms: string[] } | null;
   };
 
   let {
@@ -135,6 +137,18 @@
   {/if}
   {#if partner.description}
     <p class="text-sm text-muted">{partner.description}</p>
+  {/if}
+  {#if partner.reach}
+    <p class="text-sm font-semibold text-muted">
+      {[
+        partner.reach.places > 0 ? m.partner_card_places({ count: partner.reach.places }) : '',
+        partner.reach.gms.length > 0
+          ? m.partner_card_gms({ people: partner.reach.gms.map((name) => `@${name}`).join(', ') })
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')}
+    </p>
   {/if}
   {#if partner.couponCode}
     <div class="grid gap-1 rounded-lg border border-dashed border-primary-500 p-3">

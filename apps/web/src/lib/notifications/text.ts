@@ -186,6 +186,23 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
           ? m.notification_place_claim_rejected_note({ place, note: item.metadata.note })
           : m.notification_place_claim_rejected({ place });
       }
+      if (item.metadata.placePartnerApproved)
+        return m.notification_place_partner_approved({
+          place: item.metadata.placePartnerApproved,
+          partner: item.metadata.partner ?? '',
+        });
+      if (item.metadata.placePartnerRejected) {
+        const place = item.metadata.placePartnerRejected;
+        const partner = item.metadata.partner ?? '';
+        return item.metadata.note
+          ? m.notification_place_partner_rejected_note({ place, partner, note: item.metadata.note })
+          : m.notification_place_partner_rejected({ place, partner });
+      }
+      if (item.metadata.placePartnerRemoved)
+        return m.notification_place_partner_removed({
+          place: item.metadata.placePartnerRemoved,
+          partner: item.metadata.partner ?? '',
+        });
       if (item.metadata.placeOwnerRemoved)
         return m.notification_place_owner_removed({ place: item.metadata.placeOwnerRemoved });
       if (item.metadata.partnerWithdrawn)

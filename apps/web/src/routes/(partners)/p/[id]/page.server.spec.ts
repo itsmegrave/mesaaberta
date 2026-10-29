@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readPartnerPage } from '@mesaaberta/core/server/partners/service';
+import { partnerConnections } from '@mesaaberta/core/server/directories/links';
 import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { load } from './+page.server';
 
@@ -8,6 +9,8 @@ vi.mock('@mesaaberta/core/server/partners/service', async (original) => ({
   ...(await original<typeof import('@mesaaberta/core/server/partners/service')>()),
   readPartnerPage: vi.fn(),
 }));
+
+vi.mock('@mesaaberta/core/server/directories/links', () => ({ partnerConnections: vi.fn() }));
 
 const ANA = '00000000-0000-4000-8000-0000000000aa';
 const BIA = '00000000-0000-4000-8000-0000000000bb';
@@ -51,6 +54,7 @@ beforeEach(() => {
   vi.mocked(readPartnerPage).mockResolvedValue(
     partner as unknown as Awaited<ReturnType<typeof readPartnerPage>>,
   );
+  vi.mocked(partnerConnections).mockResolvedValue({ places: [], gms: [] });
 });
 
 describe("a partner's page", () => {
@@ -74,5 +78,30 @@ describe("a partner's page", () => {
     expect(await run(event(BIA))).toMatchObject({ canEdit: false, canReport: true });
     // A visitor is offered the report through the login.
     expect(await run(event(null))).toMatchObject({ canEdit: false, canReport: true });
+  });
+
+  it('lists its places and who mestra there, pictures as URLs', async () => {
+    vi.mocked(partnerConnections).mockResolvedValue({
+      places: [
+        {
+          slug: 'taverna',
+          name: 'Taverna',
+          kind: 'game_cafe',
+          neighbourhood: null,
+          city: 'Recife',
+          state: 'PE',
+          description: null,
+          features: [],
+          imagePath: 'places/t.png',
+          openTables: 2,
+          partner: true,
+        },
+      ],
+      gms: [{ partnerId: PARTNER, username: 'ana', name: null, avatarPath: null, avatarUrl: null }],
+    });
+    const page = await run(event(null));
+    expect(page.places).toMatchObject([{ slug: 'taverna', partner: true }]);
+    expect(page.places[0].imageUrl).toContain('places/t.png');
+    expect(page.gms).toEqual([{ username: 'ana', name: null, avatarUrl: null }]);
   });
 });

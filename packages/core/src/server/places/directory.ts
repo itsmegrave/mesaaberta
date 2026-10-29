@@ -20,6 +20,7 @@ import { foldText } from '../../systems/directory-filters';
 import type { PlaceFeature } from '../../places/features';
 import type { PlaceKind } from '../../places/types';
 import { featuresOf } from './features';
+import { isPartnerPlace, partnerOfPlace } from './partner-links';
 import type { Network } from '../../profile/social-links';
 
 // The public side of "Onde jogar" (`/places`, `/pp/<slug>`). The list and the filters only ever
@@ -62,6 +63,8 @@ export type PlaceCard = {
   features: PlaceFeature[];
   imagePath: string | null;
   openTables: number;
+  /** Shown as a partner's ("Parceiro"): its link is up. */
+  partner: boolean;
 };
 
 /**
@@ -84,6 +87,7 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
     filters.city ? hasTag('city', filters.city) : undefined,
     filters.kind ? eq(places.kind, filters.kind) : undefined,
     ...filters.tags.map((slug) => hasTag('feature', slug)),
+    filters.partner ? isPartnerPlace() : undefined,
   );
 
   const [{ total }] = await db.select({ total: count() }).from(places).where(where);
@@ -108,6 +112,7 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
         description: places.description,
         imagePath: places.imagePath,
         openTables,
+        partner: isPartnerPlace(),
       })
       .from(places)
       .leftJoin(open, eq(open.placeId, places.id))
@@ -138,6 +143,41 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
 }
 
 export type PlaceList = NonNullable<Awaited<ReturnType<typeof listPlaces>>>;
+
+/** The cards of these places that are listed, in the order of `ids`: a partner's "Onde jogar". */
+export async function placeCardsOf(
+  db: AnyDb,
+  ids: readonly string[],
+  now: Date,
+): Promise<PlaceCard[]> {
+  if (ids.length === 0) return [];
+  const open = openAt(db, now);
+  const rows = await db
+    .select({
+      slug: places.slug,
+      name: places.name,
+      kind: places.kind,
+      neighbourhood: places.neighbourhood,
+      city: places.city,
+      state: places.state,
+      id: places.id,
+      description: places.description,
+      imagePath: places.imagePath,
+      openTables: sql<number>`coalesce(${open.open}, 0)`,
+      partner: isPartnerPlace(),
+    })
+    .from(places)
+    .leftJoin(open, eq(open.placeId, places.id))
+    .where(and(listed, inArray(places.id, [...ids])));
+  const features = await featuresOf(
+    db,
+    rows.map((row) => row.id),
+  );
+  const at = new Map(ids.map((id, index) => [id, index]));
+  return rows
+    .sort((a, b) => at.get(a.id)! - at.get(b.id)!)
+    .map(({ id, ...row }) => ({ ...row, features: features.get(id) ?? [] })) as PlaceCard[];
+}
 
 /** The tags of one kind that listed places carry, A to Z: the options of a filter. */
 async function tagOptions(db: AnyDb, kind: 'state' | 'city', prefix?: string) {
@@ -198,7 +238,7 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
   const insider = mine || viewer?.isAdmin === true;
   if ((pending || hidden) && !insider) return null;
 
-  const [links, tags, tables, [{ open }], features] = await Promise.all([
+  const [links, tags, tables, [{ open }], features, partner] = await Promise.all([
     db
       .select({ network: placeLinks.network, url: placeLinks.url })
       .from(placeLinks)
@@ -215,6 +255,7 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
       .where(and(eq(gameTables.placeId, place.id), isNull(gameTables.moderatedAt), openSql(now))),
     // Whoever may edit it also sees the tags they suggested that still wait for an admin.
     featuresOf(db, [place.id], { withPending: insider }),
+    partnerOfPlace(db, place.id),
   ]);
 
   // The catalog tags come apart (`features`), as the place picked them; these are the rest, made
@@ -246,6 +287,8 @@ export async function readPlacePage(db: AnyDb, slug: string, viewer: PlaceViewer
     features: features.get(place.id) ?? [],
     tables: tables.map(({ gmId, ...table }) => table),
     openTables: open,
+    /** "Parceiro Mesa Aberta": the partner it is shown as, once an admin approved the link. */
+    partner,
     pending,
     hidden,
     /** The viewer sent it or owns it, or moderates: they may edit it. */

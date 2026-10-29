@@ -3,7 +3,7 @@ import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { readPlacePage } from '@mesaaberta/core/server/places/directory';
 import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
-import { requireDirectory } from '../directories/flags';
+import { directoryLinksEnabled, requireDirectory } from '../directories/flags';
 import { placeTagsEnabled } from '../places/tags';
 
 /**
@@ -33,6 +33,8 @@ export const read = async ({ locals, params }: RequestEvent) => {
   const { imagePath, ...place } = found.place;
   return {
     ...found,
+    // "Parceiro Mesa Aberta: <nome>" (`use_directory_links`).
+    partner: (await directoryLinksEnabled(locals)) ? found.partner : null,
     // Off, the page shows the old Comodidades apart, as before the catalog.
     placeTags: await placeTagsEnabled(locals),
     place: { ...place, imageUrl: imageUrl(supabase, imagePath) },

@@ -22,7 +22,7 @@
     type PlaceFilters,
   } from '@mesaaberta/core/places/filters';
   import { isPlaceKind } from '@mesaaberta/core/places/types';
-  import PlaceCard from './components/ui/PlaceCard.svelte';
+  import PlaceCard from '#lib/components/directory/ui/PlaceCard.svelte';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
@@ -71,7 +71,13 @@
     ...placeKindOptions().map(({ value, label }) => ({ slug: value, name: label })),
   ]);
   const filtered = $derived(
-    !!(filters.query || filters.state || filters.kind || filters.tags.length > 0),
+    !!(
+      filters.query ||
+      filters.state ||
+      filters.kind ||
+      filters.tags.length > 0 ||
+      filters.partner
+    ),
   );
   const steps = $derived([
     { title: m.places_step_1_title(), text: m.places_step_1() },
@@ -202,6 +208,17 @@
               onclick={() => void toggle(option.slug)}>{option.name}</MAButton
             >
           {/each}
+        {/if}
+        {#if data.links}
+          <MAButton
+            size="custom"
+            aria-pressed={filters.partner}
+            class="chip h-8 rounded-full border px-3 text-sm font-semibold {filters.partner
+              ? 'border-transparent preset-filled-primary-500'
+              : 'border-surface-200-800'}"
+            onclick={() => void apply({ partner: !filters.partner })}
+            >{m.places_filter_partner()}</MAButton
+          >
         {/if}
         {#if filtered}
           <a

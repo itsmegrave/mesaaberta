@@ -1,11 +1,15 @@
 <script lang="ts">
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import PlaceForm from '../../../components/PlaceForm.svelte';
+  import PlacePartner from '../../../components/PlacePartner.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form = null } = $props();
   // svelte-ignore state_referenced_locally
-  const initial = form?.form ?? data.form;
+  // The edit form's own answer; the "Parceiro" actions answer with their own forms.
+  const initial = (
+    form && 'form' in form && form.form && 'street' in form.form.data ? form.form : data.form
+  ) as typeof data.form;
 </script>
 
 <svelte:head><title>{m.place_edit_title()}</title></svelte:head>
@@ -24,6 +28,7 @@
   </h1>
   <PlaceForm
     {initial}
+    action="?/save"
     mode="edit"
     imageUrl={data.imageUrl}
     reviewAgain={data.reviewAgain}
@@ -32,4 +37,10 @@
     tagOptions={data.tagOptions}
     catalog={data.catalog}
   />
+  {#if data.partner}
+    <!-- Its own forms, so after the edit form; as wide as the form's fields (see Editar parceiro). -->
+    <div class="mt-8 lg:w-[calc((200%-3rem)/3)]">
+      <PlacePartner {...data.partner} />
+    </div>
+  {/if}
 </section>

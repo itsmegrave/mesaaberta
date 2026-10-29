@@ -108,6 +108,15 @@
         <Pill tone="primary"><Icon name="check" size={14} class="mr-1" />{m.place_verified()}</Pill>
       {/if}
     </div>
+    {#if data.partner}
+      <a
+        href="/p/{data.partner.id}"
+        class="inline-flex min-h-11 items-center gap-2 self-start font-semibold text-link underline underline-offset-4"
+        ><Icon name="game-icons:shaking-hands" size={20} />{m.place_partner_badge({
+          name: data.partner.name,
+        })}</a
+      >
+    {/if}
     <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
       {place.name}
     </h1>

@@ -57,6 +57,7 @@ describe('the bell on the queue', () => {
       'system-announcements-v1',
       'moderation-notifications-v1',
       'place-alert-notifications-v1',
+      'directory-link-notifications-v1',
       'catalog-notifications-v1',
       'player-invitation-notifications-v1',
       'partner-owner-notifications-v1',

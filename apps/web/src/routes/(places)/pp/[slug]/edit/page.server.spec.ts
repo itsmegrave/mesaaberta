@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Forbidden } from '@mesaaberta/core/server/errors';
 import { findEditablePlace, updatePlace } from '@mesaaberta/core/server/places/service';
+import { placePartnerState } from '@mesaaberta/core/server/places/partner-links';
 import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
@@ -14,6 +15,10 @@ vi.mock('@mesaaberta/core/server/places/service', async (original) => ({
     replacedImage: null,
     pending: true,
   })),
+}));
+vi.mock('@mesaaberta/core/server/places/partner-links', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/partner-links')>()),
+  placePartnerState: vi.fn(async () => null),
 }));
 vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 vi.mock('@mesaaberta/core/server/places/features', async (original) => ({
@@ -101,10 +106,26 @@ describe('"Editar lugar"', () => {
     );
   });
 
+  it('shows "Parceiro" to whoever the api lets ask, and nothing to anyone else', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event())) as any).partner).toBeNull();
+    vi.mocked(placePartnerState).mockResolvedValueOnce({
+      approved: null,
+      pending: null,
+      options: [{ id: PLACE, name: 'Taverna do Dado Editora' }],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event())) as any).partner).toEqual({
+      approved: null,
+      pending: null,
+      options: [{ id: PLACE, name: 'Taverna do Dado Editora' }],
+    });
+  });
+
   it('answers 404 for a place this person may not edit', async () => {
     vi.mocked(findEditablePlace).mockRejectedValue(new Forbidden('no'));
     await expect((load as unknown as Run)(event())).rejects.toMatchObject({ status: 404 });
-    await expect((actions.default as unknown as Run)(event({ name: 'x' }))).rejects.toMatchObject({
+    await expect((actions.save as unknown as Run)(event({ name: 'x' }))).rejects.toMatchObject({
       status: 404,
     });
     expect(updatePlace).not.toHaveBeenCalled();
@@ -112,7 +133,7 @@ describe('"Editar lugar"', () => {
 
   it('saves the place it found and goes back to its page', async () => {
     await expect(
-      (actions.default as unknown as Run)(
+      (actions.save as unknown as Run)(
         event({
           name: 'Taverna do Dado',
           kind: 'game_cafe',

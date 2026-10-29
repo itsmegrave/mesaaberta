@@ -17,7 +17,7 @@
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import type { SelectItem } from '#lib/components/ui/select.svelte.js';
   import TextInput from '#lib/components/ui/TextInput.svelte';
-  import PlaceCard from '../places/components/ui/PlaceCard.svelte';
+  import PlaceCard from '#lib/components/directory/ui/PlaceCard.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { fromResult, type FormResult } from '#lib/forms/contract.js';
   import { fieldErrors, problem } from '#lib/forms/field-errors.js';
@@ -63,6 +63,7 @@
     reviewAgain = true,
     approved = false,
     cancelHref = '/places',
+    action,
     tagOptions,
     catalog = false,
   }: {
@@ -75,6 +76,8 @@
     /** The place is up now, so saving would take it off the list. */
     approved?: boolean;
     cancelHref?: string;
+    /** The action it posts to: the page's default one unless named (`?/save` on the edit page). */
+    action?: string;
     /** What Tags offers: the catalog (with the person's own suggestions waiting) and what it has. */
     tagOptions: SelectItem[];
     /**
@@ -207,6 +210,7 @@
 <!-- No `required`, `min`, `max` or `type=url` on the inputs: the browser would check them first, in its
      own words, and show validation in the same translated messages as the server. -->
 <EditorForm
+  {action}
   {controller}
   {problems}
   banner={formError}

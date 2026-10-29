@@ -70,6 +70,12 @@ export const placeClaimActions = {
   reject: decide('place.rejectClaim', ['id', 'note']),
 };
 
+/** Places shown as a partner's, from `/admin/places/links`. */
+export const placeLinkActions = {
+  approve: decide('place.approveLink', ['id']),
+  reject: decide('place.rejectLink', ['id', 'note']),
+};
+
 /** Closing a table from the tables list, `/admin/tables`. */
 export const tableActions = {
   close: decide('table.close', ['tableId', 'note']),

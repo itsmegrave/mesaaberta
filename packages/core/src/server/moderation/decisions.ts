@@ -28,6 +28,8 @@ import { approvePartner, removePartner, setPartnerTypes } from '../partners/admi
 import { approvePlace, removePlace, restorePlace } from '../places/admin';
 import { approveClaim, rejectClaim, removePlaceOwner } from '../places/claims';
 import { approveClaimSchema, placeOwnerSchema, rejectClaimSchema } from '../../places/claims';
+import { approvePartnerLink, rejectPartnerLink } from '../places/partner-links';
+import { approvePartnerLinkSchema, rejectPartnerLinkSchema } from '../../places/partner-links';
 import {
   banAccount,
   closeReport,
@@ -170,6 +172,15 @@ export const moderationDecisions = {
   'place.removeOwner': decision({
     schema: placeOwnerSchema,
     apply: (db, actor, { id }) => removePlaceOwner(db, actor, id),
+  }),
+  // Places shown as a partner's, from `/admin/places/links`.
+  'place.approveLink': decision({
+    schema: approvePartnerLinkSchema,
+    apply: (db, actor, { id }) => approvePartnerLink(db, actor, id),
+  }),
+  'place.rejectLink': decision({
+    schema: rejectPartnerLinkSchema,
+    apply: (db, actor, { id, note }) => rejectPartnerLink(db, actor, id, { note }),
   }),
   'place.restore': decision({
     schema: restorePlaceSchema,
