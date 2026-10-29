@@ -11,14 +11,18 @@ const place = (values = {}) => ({
   city: 'Recife',
   state: 'PE',
   description: 'Mesas toda sexta' as string | null,
-  amenities: ['accessible' as const, 'lends_games' as const, 'free_to_play' as const],
+  features: [
+    { name: 'Acessível', slug: 'accessible' },
+    { name: 'RPG de mesa', slug: 'rpg' },
+    { name: 'Torneios', slug: 'tournaments' },
+  ],
   imageUrl: null,
   openTables: 2,
   ...values,
 });
 
 describe('PlaceCard', () => {
-  it('is one link to the page, with the kind, area, two amenities and the open tables', async () => {
+  it('is one link to the page, with the kind, area, two of its tags and the open tables', async () => {
     await render(PlaceCard, { place: place() });
     const link = page.getByRole('link', { name: 'Taverna do Dado' });
     await expect.element(link).toHaveAttribute('href', '/pp/taverna-do-dado');
@@ -26,12 +30,13 @@ describe('PlaceCard', () => {
     await expect.element(page.getByText('Luderia')).toBeVisible();
     await expect.element(page.getByText('Boa Viagem, Recife · PE')).toBeVisible();
     expect(page.getByRole('listitem').all()).toHaveLength(2);
+    await expect.element(page.getByText('RPG de mesa')).toBeVisible();
     await expect.element(page.getByText('2 mesas abertas')).toBeVisible();
   });
 
   it('says the city alone when the CEP has no neighbourhood, and when no table is open', async () => {
     await render(PlaceCard, {
-      place: place({ neighbourhood: null, openTables: 0, amenities: [], description: null }),
+      place: place({ neighbourhood: null, openTables: 0, features: [], description: null }),
     });
     await expect.element(page.getByText('Recife · PE')).toBeVisible();
     expect(page.getByRole('list').all()).toHaveLength(0);

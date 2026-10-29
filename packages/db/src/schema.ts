@@ -1166,7 +1166,9 @@ export const places = pgTable(
     city: text('city').notNull(),
     state: text('state').notNull(),
     openingHours: text('opening_hours'),
-    // Slugs of PLACE_AMENITIES, in that list's order.
+    // Slugs of PLACE_AMENITIES, in that list's order: the picks among the first six entries of
+    // `place_features`, still written so the release before the catalog reads the same. The
+    // picks themselves are in `place_feature_picks`.
     amenities: text('amenities')
       .array()
       .notNull()
@@ -1245,21 +1247,52 @@ export const placeLinks = pgTable(
 ).enableRLS();
 
 // The tags of an approved place, made from its own fields every time it is approved (nobody types
-// them): its state, city and neighbourhood (`label` as written), its kind and each amenity (`label`
-// is the slug; the page names them). The list filters on (`kind`, `slug`).
+// them): its state, city and neighbourhood (`label` as written), its kind (`label` is the slug; the
+// page names it) and each approved entry of `place_features` it picked (`label` is the entry's
+// name). The list filters on (`kind`, `slug`). `amenity` rows come from before the catalog: the
+// first rebuild of a place replaces them with `feature` rows.
 export const placeTags = pgTable(
   'place_tags',
   {
     placeId: uuid('place_id')
       .notNull()
       .references(() => places.id, { onDelete: 'cascade' }),
-    kind: text('kind', { enum: ['state', 'city', 'neighbourhood', 'kind', 'amenity'] }).notNull(),
+    kind: text('kind', {
+      enum: ['state', 'city', 'neighbourhood', 'kind', 'amenity', 'feature'],
+    }).notNull(),
     label: text('label').notNull(),
     slug: text('slug').notNull(),
   },
   (tag) => [
     primaryKey({ columns: [tag.placeId, tag.kind, tag.slug] }),
     index('place_tags_filter_idx').on(tag.kind, tag.slug),
+  ],
+).enableRLS();
+
+// What a place has and what is played there ("Tags" in Onde jogar): Acessível, Wi-Fi, RPG de mesa,
+// Torneios... A catalog like `tags`: admins keep it, and members suggest entries from the place form;
+// a suggestion shows only to whoever suggested it, and on places only once an admin approves it.
+// The first six are the old Comodidades (`places.amenities`), with the same slugs as their tags.
+export const placeFeatures = pgTable('place_features', catalogColumns(), (row) => [
+  uniqueIndex('place_features_slug_unique').on(sql`lower(${row.slug})`),
+  check('place_features_slug_format', sql`${row.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+]).enableRLS();
+
+// The entries of `place_features` a place picked, in the order picked.
+export const placeFeaturePicks = pgTable(
+  'place_feature_picks',
+  {
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    featureId: uuid('feature_id')
+      .notNull()
+      .references(() => placeFeatures.id),
+    position: integer('position').notNull(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.placeId, row.featureId] }),
+    index('place_feature_picks_feature_idx').on(row.featureId),
   ],
 ).enableRLS();
 

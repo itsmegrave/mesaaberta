@@ -41,8 +41,15 @@ export const placeAmenityLabels: Record<PlaceAmenity, () => string> = {
 
 export const placeKindOptions = () =>
   PLACE_KINDS.map((value) => ({ value, label: placeKindLabels[value]() }));
-export const placeAmenityOptions = () =>
-  PLACE_AMENITIES.map((value) => ({ value, label: placeAmenityLabels[value]() }));
+/**
+ * The old Comodidades as catalog tags (their slugs with dashes): all the form and the filter offer
+ * while `use_place_tags` is off.
+ */
+export const legacyTagOptions = () =>
+  PLACE_AMENITIES.map((value) => ({
+    slug: value.replaceAll('_', '-'),
+    name: placeAmenityLabels[value](),
+  }));
 
 /** "Boa Viagem, Recife · PE", or "Recife · PE" when the CEP has no neighbourhood. */
 export const placeArea = (place: { neighbourhood: string | null; city: string; state: string }) =>
@@ -51,8 +58,9 @@ export const placeArea = (place: { neighbourhood: string | null; city: string; s
     : m.place_area_city({ city: place.city, state: place.state });
 
 /**
- * What a tag says: the place's own words for its state, city and neighbourhood, the message for
- * its kind and amenities (their tags keep the slug).
+ * What a tag says: the place's own words for its state, city and neighbourhood, the catalog's name
+ * for its tags, the message for its kind and for an amenity tag from before the catalog (those keep
+ * the slug).
  */
 export function placeTagLabel(tag: { kind: string; label: string }): string {
   if (tag.kind === 'kind' && isPlaceKind(tag.label)) return placeKindLabels[tag.label]();

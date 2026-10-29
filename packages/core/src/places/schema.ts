@@ -4,6 +4,7 @@ import { imageFile } from '@mesaaberta/core/forms/files';
 import { normalizeCep } from '../location/cep';
 import { isNetwork, parseSocialUrl, type Network } from '../profile/social-links';
 import { partnerLinkUrl } from '../partners/schema';
+import { MAX_PLACE_FEATURES } from './features';
 import {
   isPlaceAmenity,
   isPlaceKind,
@@ -31,6 +32,9 @@ const fields = {
   complement: optionalText(PLACE_LIMITS.complement),
   description: optionalText(PLACE_LIMITS.description),
   openingHours: optionalText(PLACE_LIMITS.openingHours),
+  // The tags: catalog slugs (`place_features`), or `new:<name>` for a suggestion. `amenities` is
+  // what the form sent before the catalog (the old Comodidades); the api still takes it.
+  tags: z.array(z.string().max(60)).default([]),
   amenities: z.array(z.string()).default([]),
   siteUrl: z
     .string()
@@ -43,16 +47,17 @@ const fields = {
   removeImage: z.boolean().default(false),
 };
 
-type Fields = { amenities: string[]; linkNetwork: string[]; linkUrl: string[] };
+type Fields = { tags: string[]; amenities: string[]; linkNetwork: string[]; linkUrl: string[] };
 
 function checkLists(
-  { amenities, linkNetwork, linkUrl }: Fields,
+  { tags, amenities, linkNetwork, linkUrl }: Fields,
   ctx: z.core.$RefinementCtx<unknown>,
 ) {
   const add = (message: string, path: (string | number)[]) =>
     ctx.addIssue({ code: 'custom', message, path });
 
   if (!amenities.every(isPlaceAmenity)) add('invalid', ['amenities']);
+  if (new Set(tags).size > MAX_PLACE_FEATURES) add('too_many', ['tags']);
 
   if (linkNetwork.length !== linkUrl.length) {
     add('invalid', ['linkUrl']);
@@ -96,6 +101,7 @@ export const NEW_PLACE_VALUES = {
   complement: '',
   description: '',
   openingHours: '',
+  tags: [] as string[],
   amenities: [] as string[],
   siteUrl: '',
   linkNetwork: [] as string[],

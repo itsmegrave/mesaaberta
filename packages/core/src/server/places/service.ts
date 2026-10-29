@@ -16,18 +16,25 @@ import {
   type PlaceReportInput,
 } from '../../moderation/reports';
 import { placeLinks, type PlaceInput } from '../../places/schema';
-import { orderedAmenities } from '../../places/types';
+import { amenitiesOf, featuresOfAmenities } from '../../places/features';
 import { normalizeCep } from '../../location/cep';
 import { parseSocialUrl, type Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { placeLinks as placeLinksTable, places, reports } from '@mesaaberta/core/server/db/schema';
+import {
+  placeFeaturePicks,
+  placeFeatures,
+  placeLinks as placeLinksTable,
+  places,
+  reports,
+} from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { Changes } from '@mesaaberta/core/server/events/types';
 import { lookupCep } from '@mesaaberta/core/server/location/cep';
 import { enforceRateLimit, PLACE_LIMIT, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 import { nextFreeSlug, slugify } from '@mesaaberta/core/slug';
+import { featuresOf, setPlaceFeatures } from './features';
 import { clearPlaceTags, rebuildPlaceTags } from './tags';
 
 // The member side of "Onde jogar": sending a place, editing it and taking it off. A place waits for
@@ -73,6 +80,10 @@ async function locate(db: AnyDb, raw: string, request: typeof fetch): Promise<Lo
   return { postalCode, ...found.place };
 }
 
+/** The tags picked: catalog slugs or suggestions, or the Comodidades an older form sent. */
+const picksOf = (input: PlaceInput) =>
+  input.tags.length > 0 ? input.tags : featuresOfAmenities(input.amenities);
+
 /** The columns an add or an edit writes, from a validated form and its resolved CEP. */
 function columnsOf(input: PlaceInput, location: Location) {
   return {
@@ -83,7 +94,8 @@ function columnsOf(input: PlaceInput, location: Location) {
     street: input.street.trim(),
     complement: textOrNull(input.complement),
     openingHours: textOrNull(input.openingHours),
-    amenities: orderedAmenities(input.amenities),
+    // The Comodidades among the picks, for the release before the catalog.
+    amenities: amenitiesOf(picksOf(input)),
     siteUrl: input.siteUrl.trim() === '' ? null : parseSocialUrl(input.siteUrl),
   };
 }
@@ -170,6 +182,7 @@ export async function submitPlace(
           })
           .returning({ id: places.id });
         await writeLinks(t, row.id, input);
+        await setPlaceFeatures(t, row.id, actor!.id, picksOf(input));
         const eventId = await recordEvent(
           t,
           {
@@ -206,7 +219,13 @@ export async function findEditablePlace(db: AnyDb, actor: Actor | null, slug: st
     .from(placeLinksTable)
     .where(eq(placeLinksTable.placeId, row.id))
     .orderBy(asc(placeLinksTable.position));
-  return { ...row, links: links as { network: Exclude<Network, 'website'>; url: string }[] };
+  // The form shows every tag it picked, the ones still waiting for an admin too.
+  const features = (await featuresOf(db, [row.id], { withPending: true })).get(row.id) ?? [];
+  return {
+    ...row,
+    links: links as { network: Exclude<Network, 'website'>; url: string }[],
+    features,
+  };
 }
 
 /**
@@ -256,12 +275,19 @@ export async function updatePlace(
     const next = columnsOf(input, location);
     const changes: Changes = {};
     for (const key of Object.keys(next) as (keyof typeof next)[]) {
-      const [from, to] =
-        key === 'amenities'
-          ? [current.amenities.join(','), next.amenities.join(',')]
-          : [current[key], next[key]];
-      if (from !== to) changes[key] = { from, to };
+      // The Comodidades follow the tags, which are compared below.
+      if (key === 'amenities') continue;
+      if (current[key] !== next[key]) changes[key] = { from: current[key], to: next[key] };
     }
+    const oldTags = await t
+      .select({ slug: placeFeatures.slug })
+      .from(placeFeaturePicks)
+      .innerJoin(placeFeatures, eq(placeFeatures.id, placeFeaturePicks.featureId))
+      .where(eq(placeFeaturePicks.placeId, id))
+      .orderBy(asc(placeFeaturePicks.position));
+    const tags = await setPlaceFeatures(t, id, actor!.id, picksOf(input));
+    const before = oldTags.map((tag) => tag.slug).join(',');
+    if (before !== tags.join(',')) changes.tags = { from: before, to: tags.join(',') };
     const oldLinks = await t
       .select({ url: placeLinksTable.url })
       .from(placeLinksTable)

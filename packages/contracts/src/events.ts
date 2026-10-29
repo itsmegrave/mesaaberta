@@ -318,7 +318,8 @@ export type PartnerInvitationFact = PartnerFact & {
 export type ReportClosure = { reportId: string; reporterId: string };
 
 export type CatalogDecision = {
-  kind: 'platform' | 'tag' | 'system';
+  /** `placeTag` is a place's tag (`place_features`); the rest are what tables pick. */
+  kind: 'platform' | 'tag' | 'system' | 'placeTag';
   entryId: string;
   name: string;
 };

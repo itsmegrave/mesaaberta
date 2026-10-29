@@ -7,23 +7,29 @@ describe('the Onde jogar filters', () => {
   it('reads every filter from the address', () => {
     expect(
       read(
-        'q=+Dragão+&state=PE&city=pe-recife&kind=game-cafe&amenity=free-to-play&amenity=accessible&sort=name&page=2',
+        'q=+Dragão+&state=PE&city=pe-recife&kind=game-cafe&tag=rpg&tag=free-to-play&amenity=accessible&sort=name&page=2',
       ),
     ).toEqual({
       query: 'Dragão',
       state: 'pe',
       city: 'pe-recife',
       kind: 'game_cafe',
-      amenities: ['accessible', 'free_to_play'],
+      // `amenity` is the old address of the first tags: it still filters.
+      tags: ['accessible', 'free-to-play', 'rpg'],
       sort: 'name',
       page: 2,
     });
   });
 
+  it('takes at most ten tags, each once', () => {
+    const many = Array.from({ length: 12 }, (_, i) => `tag=t${String(i).padStart(2, '0')}`);
+    expect(read([...many, 'tag=t00'].join('&')).tags).toHaveLength(10);
+  });
+
   it('drops what it does not know, and a city outside the state', () => {
-    expect(read('state=pernambuco&city=pe-recife&kind=castle&amenity=wifi&sort=x&page=-1')).toEqual(
-      { ...NO_FILTERS, page: 1 },
-    );
+    expect(
+      read('state=pernambuco&city=pe-recife&kind=castle&tag=Not+a+slug!&sort=x&page=-1'),
+    ).toEqual({ ...NO_FILTERS, page: 1 });
     expect(read('state=sp&city=pe-recife').city).toBe('');
     expect(read('city=pe-recife').city).toBe('');
   });
@@ -31,12 +37,12 @@ describe('the Onde jogar filters', () => {
   it('writes one address per list, defaults left out', () => {
     expect(placeDirectoryQuery(NO_FILTERS)).toBe('');
     const query = placeDirectoryQuery(
-      { ...NO_FILTERS, state: 'pe', city: 'pe-recife', amenities: ['free_to_play', 'accessible'] },
+      { ...NO_FILTERS, state: 'pe', city: 'pe-recife', tags: ['free-to-play', 'accessible'] },
       3,
     );
-    expect(query).toBe('?state=pe&city=pe-recife&amenity=accessible&amenity=free-to-play&page=3');
+    expect(query).toBe('?state=pe&city=pe-recife&tag=accessible&tag=free-to-play&page=3');
     expect(read(query.slice(1))).toMatchObject({
-      amenities: ['accessible', 'free_to_play'],
+      tags: ['accessible', 'free-to-play'],
       page: 3,
     });
   });
@@ -51,8 +57,8 @@ describe('the Onde jogar filters', () => {
     expect(tagHref(tags[1], tags)).toBe('/places?state=pe&city=pe-recife');
     expect(tagHref(tags[2], tags)).toBe('/places?state=pe&city=pe-recife');
     expect(tagHref({ kind: 'kind', slug: 'game-cafe' }, tags)).toBe('/places?kind=game-cafe');
-    expect(tagHref({ kind: 'amenity', slug: 'free-to-play' }, tags)).toBe(
-      '/places?amenity=free-to-play',
+    expect(tagHref({ kind: 'feature', slug: 'free-to-play' }, tags)).toBe(
+      '/places?tag=free-to-play',
     );
   });
 });

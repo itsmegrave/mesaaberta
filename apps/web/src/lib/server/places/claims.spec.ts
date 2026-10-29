@@ -53,6 +53,7 @@ const listed = async () => {
       complement: '',
       description: '',
       openingHours: '',
+      tags: [],
       amenities: [],
       siteUrl: '',
       linkNetwork: [],

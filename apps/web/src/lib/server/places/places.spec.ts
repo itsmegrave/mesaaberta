@@ -52,6 +52,7 @@ const input = (over: Partial<PlaceInput> = {}): PlaceInput => ({
   complement: '',
   description: 'Mesas toda sexta',
   openingHours: 'Ter a dom, 14h às 23h',
+  tags: [],
   amenities: ['free_to_play', 'accessible'],
   siteUrl: '',
   linkNetwork: ['instagram'],
@@ -167,14 +168,14 @@ describe('approving', () => {
     await expect(approvePlace(test.db, bruno, placeId, { now })).rejects.toThrow(Forbidden);
   });
 
-  it('puts it up with tags from its address, kind and amenities, and tells the submitter', async () => {
+  it('puts it up with tags from its address, kind and the tags an older form sent as amenities, and tells the submitter', async () => {
     const { id: placeId } = await send();
     await approvePlace(test.db, admin, placeId, { now });
     expect((await placeAt(placeId)).approvedAt).toEqual(now);
     expect(await tagsOf(placeId)).toEqual([
-      'amenity:accessible',
-      'amenity:free-to-play',
       'city:pe-recife',
+      'feature:accessible',
+      'feature:free-to-play',
       'kind:game-cafe',
       'neighbourhood:pe-recife-boa-viagem',
       'state:pe',
@@ -185,6 +186,45 @@ describe('approving', () => {
     expect(approved?.payload).toMatchObject({ placeId, submitterId: ana.id });
     await expect(approvePlace(test.db, admin, placeId, { now })).rejects.toMatchObject({
       message: 'already_approved',
+    });
+  });
+});
+
+describe('tags', () => {
+  it('keeps the picks in order, and a new term waits as a suggestion, not a tag', async () => {
+    const { id: placeId } = await send({
+      tags: ['rpg', 'wifi', 'new:Bar de vinil'],
+      amenities: [],
+    });
+    await approvePlace(test.db, admin, placeId, { now });
+    expect((await tagsOf(placeId)).filter((tag) => tag.startsWith('feature:'))).toEqual([
+      'feature:rpg',
+      'feature:wifi',
+    ]);
+    expect((await placeAt(placeId)).amenities).toEqual([]);
+    // Its form shows the suggestion, marked.
+    const editable = await findEditablePlace(test.db, ana, 'taverna-do-dado');
+    expect(editable.features).toEqual([
+      { name: 'RPG de mesa', slug: 'rpg' },
+      { name: 'Wi-Fi', slug: 'wifi' },
+      { name: 'Bar de vinil', slug: 'bar-de-vinil', pending: true },
+    ]);
+  });
+
+  it('writes the old Comodidades among the picks to the old column too', async () => {
+    const { id: placeId } = await send({ tags: ['rpg', 'open-late', 'accessible'] });
+    expect((await placeAt(placeId)).amenities).toEqual(['accessible', 'open_late']);
+  });
+
+  it("refuses a tag that is not in the catalog, or another person's suggestion", async () => {
+    await expect(send({ tags: ['nao-existe'] })).rejects.toMatchObject({
+      field: 'tags',
+      message: 'invalid',
+    });
+    await send({ tags: ['new:Sala de som'] });
+    await expect(send({ name: 'Outro', tags: ['sala-de-som'] }, bruno)).rejects.toMatchObject({
+      field: 'tags',
+      message: 'invalid',
     });
   });
 });

@@ -13,7 +13,6 @@
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import {
-    placeAmenityLabels,
     placeArea,
     placeKindIcons,
     placeKindLabels,
@@ -47,6 +46,18 @@
     ...data.links,
   ]);
   const newTableHref = $derived(`/tables/new?place=${place.slug}`);
+  // The catalog tags it picked (approved; pending ones only reach whoever may edit it).
+  const approved = $derived(data.features.filter((feature) => !feature.pending));
+  // Off (`use_place_tags`), the tags are the ones made from its address, kind and Comodidades.
+  const tags = $derived([
+    ...(data.placeTags ? data.features : approved).map((feature) => ({
+      kind: 'feature',
+      label: feature.name,
+      slug: feature.slug,
+      pending: feature.pending === true,
+    })),
+    ...data.tags.map((tag) => ({ ...tag, pending: false })),
+  ]);
   let reporting = $state(false);
 </script>
 
@@ -137,41 +148,52 @@
         </DirectorySection>
       {/if}
 
-      {#if place.amenities.length > 0}
+      {#if !data.placeTags && approved.length > 0}
         <DirectorySection
           title={m.place_amenities()}
           summary={m.place_amenities_summary({
-            count: place.amenities.length,
-            names: namesSummary(place.amenities.map((amenity) => placeAmenityLabels[amenity]())),
+            count: approved.length,
+            names: namesSummary(approved.map((feature) => feature.name)),
           })}
         >
           <ul class="flex flex-wrap gap-2">
-            {#each place.amenities as amenity (amenity)}
+            {#each approved as feature (feature.slug)}
               <li
                 class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-surface-wash px-3 text-sm font-semibold"
               >
-                <Icon name="check" size={16} />{placeAmenityLabels[amenity]()}
+                <Icon name="check" size={16} />{feature.name}
               </li>
             {/each}
           </ul>
         </DirectorySection>
       {/if}
 
-      {#if data.tags.length > 0}
+      {#if tags.length > 0}
         <DirectorySection
           title={m.place_tags()}
-          lede={m.place_tags_hint()}
-          summary={m.place_tags_summary({ count: data.tags.length })}
+          lede={data.placeTags ? m.place_tags_hint_catalog() : m.place_tags_hint()}
+          summary={data.placeTags
+            ? m.place_tags_summary_catalog({ count: tags.length })
+            : m.place_tags_summary({ count: tags.length })}
         >
           <ul class="flex flex-wrap gap-2">
-            {#each data.tags as tag (tag.kind + tag.slug)}
+            {#each tags as tag (tag.kind + tag.slug)}
               <li>
-                <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- tagHref builds a /places filter address -->
-                <a
-                  href={tagHref(tag, data.tags)}
-                  class="inline-flex h-8 items-center rounded-full border border-surface-200-800 px-3 text-sm font-semibold no-underline hover:bg-surface-wash"
-                  >{placeTagLabel(tag)}</a
-                >
+                {#if tag.pending}
+                  <!-- Waiting for an admin: no filter has it yet. -->
+                  <span
+                    class="inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed border-surface-200-800 px-3 text-sm font-semibold text-muted"
+                    >{tag.label}<span class="text-xs font-normal">({m.form_catalog_pending()})</span
+                    ></span
+                  >
+                {:else}
+                  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- tagHref builds a /places filter address -->
+                  <a
+                    href={tagHref(tag, data.tags)}
+                    class="inline-flex h-8 items-center rounded-full border border-surface-200-800 px-3 text-sm font-semibold no-underline hover:bg-surface-wash"
+                    >{placeTagLabel(tag)}</a
+                  >
+                {/if}
               </li>
             {/each}
           </ul>

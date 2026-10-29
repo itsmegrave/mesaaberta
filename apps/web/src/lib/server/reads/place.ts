@@ -4,6 +4,7 @@ import type { readPlacePage } from '@mesaaberta/core/server/places/directory';
 import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
+import { placeTagsEnabled } from '../places/tags';
 
 /**
  * The page of one place (`/pp/[slug]`). A place that waits for review or is hidden opens only for
@@ -32,6 +33,8 @@ export const read = async ({ locals, params }: RequestEvent) => {
   const { imagePath, ...place } = found.place;
   return {
     ...found,
+    // Off, the page shows the old Comodidades apart, as before the catalog.
+    placeTags: await placeTagsEnabled(locals),
     place: { ...place, imageUrl: imageUrl(supabase, imagePath) },
     tables: found.tables.map(({ imagePath: tableImage, ...table }) => ({
       ...table,

@@ -1,17 +1,12 @@
 <script lang="ts">
   // A place in Onde jogar: its photo (or its kind's drawing) with the kind in the corner, the name
-  // as the card's one link to its page, the area, two lines of description, up to two amenities and
+  // as the card's one link to its page, the area, two lines of description, up to two of its tags and
   // the tables open there now. Draws only what it is given.
   import Icon from '#lib/components/ui/Icon.svelte';
   import MediaCard from '#lib/components/ui/MediaCard.svelte';
   import { m } from '#lib/paraglide/messages.js';
-  import {
-    placeAmenityLabels,
-    placeArea,
-    placeKindIcons,
-    placeKindLabels,
-  } from '#lib/places/labels.js';
-  import type { PlaceAmenity, PlaceKind } from '@mesaaberta/core/places/types';
+  import { placeArea, placeKindIcons, placeKindLabels } from '#lib/places/labels.js';
+  import type { PlaceKind } from '@mesaaberta/core/places/types';
 
   let {
     place,
@@ -24,14 +19,15 @@
       city: string;
       state: string;
       description: string | null;
-      amenities: PlaceAmenity[];
+      /** Its tags, in the order it picked them. */
+      features: { name: string; slug: string }[];
       imageUrl: string | null;
       openTables: number;
     };
   } = $props();
 
   // The card has room for two; the page lists them all.
-  const SHOWN_AMENITIES = 2;
+  const SHOWN_TAGS = 2;
 </script>
 
 <MediaCard
@@ -62,13 +58,13 @@
     <Icon name="map-pin" size={16} />{placeArea(place)}
   </p>
   {#if place.description}<p class="line-clamp-2 text-sm text-muted">{place.description}</p>{/if}
-  {#if place.amenities.length > 0}
+  {#if place.features.length > 0}
     <ul class="mt-1 flex flex-wrap gap-1">
-      {#each place.amenities.slice(0, SHOWN_AMENITIES) as amenity (amenity)}
+      {#each place.features.slice(0, SHOWN_TAGS) as feature (feature.slug)}
         <li
           class="inline-flex h-7 items-center rounded-lg bg-surface-wash px-2 text-xs font-semibold"
         >
-          {placeAmenityLabels[amenity]()}
+          {feature.name}
         </li>
       {/each}
     </ul>

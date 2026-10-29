@@ -2,7 +2,7 @@
   // "Cadastrar lugar" and "Editar lugar": the same form. What the place is, where it is (the CEP
   // gives the neighbourhood, city and state), when it opens and what it offers, a photo and links.
   // The card it will have sits beside it (below it on a phone), with the tags its address, kind and
-  // amenities make. An admin approves what is sent; an edit by whoever sent it goes back to them.
+  // picked tags make. An admin approves what is sent; an edit by whoever sent it goes back to them.
   import CepLookup from '#lib/components/CepLookup.svelte';
   import CheckboxPills from '#lib/components/ui/CheckboxPills.svelte';
   import EditorForm from '#lib/components/ui/EditorForm.svelte';
@@ -13,6 +13,9 @@
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
   import NetworkLinksField from '#lib/components/ui/NetworkLinksField.svelte';
   import RadioCards from '#lib/components/ui/RadioCards.svelte';
+  import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
+  import FieldError from '#lib/components/ui/FieldError.svelte';
+  import type { SelectItem } from '#lib/components/ui/select.svelte.js';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import PlaceCard from '../places/components/ui/PlaceCard.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
@@ -21,22 +24,18 @@
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
   import { networkLabels } from '#lib/profile/social-presentation.js';
-  import {
-    placeAmenityOptions,
-    placeKindIcons,
-    placeKindLabels,
-    placeTagLabel,
-  } from '#lib/places/labels.js';
+  import { placeKindIcons, placeKindLabels, placeTagLabel } from '#lib/places/labels.js';
   import { errorText, formProblem } from '#lib/tables/form-values.js';
   import { toast } from '#lib/toaster.js';
   import type { CepPlace } from '@mesaaberta/core/location/cep';
   import { PARTNER_NETWORKS } from '@mesaaberta/core/partners/schema';
   import { placeSchema } from '@mesaaberta/core/places/schema';
+  import { MAX_PLACE_FEATURES } from '@mesaaberta/core/places/features';
   import { placeTags } from '@mesaaberta/core/places/tags';
+  import { pickName } from '@mesaaberta/core/tables/catalog';
   import {
     isPlaceKind,
     MAX_PLACE_LINKS,
-    orderedAmenities,
     PLACE_KINDS,
     PLACE_LIMITS,
   } from '@mesaaberta/core/places/types';
@@ -49,7 +48,7 @@
     complement: string;
     description: string;
     openingHours: string;
-    amenities: string[];
+    tags: string[];
     siteUrl: string;
     linkNetwork: string[];
     linkUrl: string[];
@@ -64,6 +63,8 @@
     reviewAgain = true,
     approved = false,
     cancelHref = '/places',
+    tagOptions,
+    catalog = false,
   }: {
     initial: FormResult<Values>;
     mode: 'new' | 'edit';
@@ -74,6 +75,13 @@
     /** The place is up now, so saving would take it off the list. */
     approved?: boolean;
     cancelHref?: string;
+    /** What Tags offers: the catalog (with the person's own suggestions waiting) and what it has. */
+    tagOptions: SelectItem[];
+    /**
+     * The whole catalog, searched, with suggestions (`use_place_tags`). Off, the six old
+     * Comodidades as pills.
+     */
+    catalog?: boolean;
   } = $props();
 
   const editing = $derived(mode === 'edit');
@@ -103,6 +111,12 @@
   };
   const say = (code: string | undefined, field = '') =>
     code ? (codes[code]?.() ?? errorText(code, field)) : undefined;
+  // Too many tags is its own limit, not the links'.
+  const tagsError = $derived(
+    controller.errors.tags?.[0] === 'too_many'
+      ? m.place_err_too_many_tags({ max: MAX_PLACE_FEATURES })
+      : say(controller.errors.tags?.[0], 'tags'),
+  );
   const errors = fieldErrors<keyof Values>(controller, say);
   const { err } = errors;
   const kindError = $derived(controller.errors.kind?.[0] ? m.place_err_kind() : undefined);
@@ -128,9 +142,9 @@
         ['street', m.place_form_street()],
         ['complement', m.place_form_complement()],
         ['openingHours', m.place_form_hours()],
-        ['amenities', m.place_form_amenities()],
         ['siteUrl', m.partner_form_site()],
       ],
+      problem('tags', catalog ? m.place_form_tags_field() : m.place_form_amenities(), tagsError),
       problem('kind', m.place_form_kind(), kindError),
       problem('postalCode', m.form_postal_code(), postalCodeError),
       problem('image', m.form_image(), imageError),
@@ -158,7 +172,12 @@
   }
 
   const kind = $derived(isPlaceKind($draft.kind) ? $draft.kind : 'other');
-  const amenities = $derived(orderedAmenities($draft.amenities));
+  // A suggestion only counts once an admin approves it; the preview shows what the page will.
+  const features = $derived(
+    $draft.tags
+      .filter((pick) => tagOptions.some((option) => option.slug === pick && !option.pending))
+      .map((slug) => ({ slug, name: pickName(tagOptions, slug) })),
+  );
   const card = $derived({
     slug: 'preview',
     name: $draft.name || m.place_form_name(),
@@ -167,13 +186,13 @@
     city: located?.city ?? m.place_form_city_pending(),
     state: located?.state ?? '··',
     description: $draft.description || null,
-    amenities,
+    features,
     imageUrl: picked ?? ($draft.removeImage ? null : imageUrl),
     openTables: 0,
   });
   const tags = $derived(
     located && isPlaceKind($draft.kind)
-      ? placeTags({ ...located, kind: $draft.kind, amenities })
+      ? placeTags({ ...located, kind: $draft.kind, features })
       : [],
   );
 
@@ -348,14 +367,37 @@
         />
       {/snippet}
     </FormField>
-    <CheckboxPills
-      name="amenities"
-      legend={m.place_form_amenities()}
-      hint={m.place_form_amenities_hint()}
-      options={placeAmenityOptions()}
-      bind:group={$draft.amenities}
-      error={err('amenities')}
-    />
+    {#if catalog}
+      <div class="min-w-0">
+        <SearchSelect
+          id="tags"
+          search
+          name="tags"
+          label={m.place_form_tags_field()}
+          labelClass="label-text block font-semibold"
+          class="flex flex-col gap-1"
+          items={tagOptions}
+          multiple
+          value={$draft.tags}
+          placeholder={m.form_catalog_search()}
+          invalid={!!tagsError}
+          suggestLabel={(name) => m.form_catalog_suggest({ name })}
+          pendingLabel={m.form_catalog_pending()}
+          onchange={(picked) => ($draft.tags = picked)}
+        />
+        <p class="mt-1 text-sm text-surface-700-300">{m.place_form_tags_hint()}</p>
+        <FieldError id="tags" message={tagsError} />
+      </div>
+    {:else}
+      <CheckboxPills
+        name="tags"
+        legend={m.place_form_amenities()}
+        hint={m.place_form_amenities_hint()}
+        options={tagOptions.map((option) => ({ value: option.slug, label: option.name }))}
+        bind:group={$draft.tags}
+        error={tagsError}
+      />
+    {/if}
   </FormSection>
 
   <FormSection id="photo-section" step={4} title={m.place_form_photo_links()}>

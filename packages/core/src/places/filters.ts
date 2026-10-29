@@ -1,13 +1,7 @@
 import { pageNumber } from '../admin/catalog';
 import type { SearchParamsLike } from '../search-params';
 import { SYSTEM_SEARCH_MAX } from '../systems/directory-filters';
-import {
-  isPlaceAmenity,
-  isPlaceKind,
-  PLACE_AMENITIES,
-  type PlaceAmenity,
-  type PlaceKind,
-} from './types';
+import { isPlaceKind, type PlaceKind } from './types';
 
 /** How "Onde jogar" orders places: most tables open there now, the newest, or by name. */
 export const PLACE_SORTS = ['open', 'recent', 'name'] as const;
@@ -23,14 +17,16 @@ export type PlaceFilters = {
   /** A city tag (`pe-recife`), only within the state picked. */
   city: string;
   kind: PlaceKind | '';
-  /** Amenities a place must have every one of, in PLACE_AMENITIES order. */
-  amenities: PlaceAmenity[];
+  /** Tags (`place_features` slugs) a place must have every one of, A to Z. */
+  tags: string[];
   sort: PlaceSort;
   page: number;
 };
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const STATE = /^[a-z]{2}$/;
+/** How many tags one list may ask for at once. */
+export const MAX_TAG_FILTERS = 10;
 const oneOf = <T extends string>(list: readonly T[], value: string | null, fallback: T): T =>
   (list as readonly string[]).includes(value ?? '') ? (value as T) : fallback;
 
@@ -42,16 +38,19 @@ const oneOf = <T extends string>(list: readonly T[], value: string | null, fallb
 export function readPlaceFilters(params: SearchParamsLike): PlaceFilters {
   const state = (params.get('state') ?? '').trim().toLowerCase();
   const city = (params.get('city') ?? '').trim().toLowerCase();
-  // Kinds and amenities are written with dashes in the address, as their tags are.
+  // Kinds are written with dashes in the address, as their tags are. `amenity` is the address the
+  // Comodidades had before the catalog: their slugs are the same, with dashes.
   const kind = (params.get('kind') ?? '').replaceAll('-', '_');
-  const picked = new Set(params.getAll('amenity').map((slug) => slug.replaceAll('-', '_')));
+  const picked = [...params.getAll('tag'), ...params.getAll('amenity')]
+    .map((slug) => slug.trim().toLowerCase().replaceAll('_', '-'))
+    .filter((slug) => SLUG.test(slug));
   const okState = STATE.test(state) ? state : '';
   return {
     query: (params.get('q') ?? '').trim().slice(0, SYSTEM_SEARCH_MAX),
     state: okState,
     city: okState && SLUG.test(city) && city.startsWith(`${okState}-`) ? city : '',
     kind: isPlaceKind(kind) ? kind : '',
-    amenities: PLACE_AMENITIES.filter((amenity) => picked.has(amenity) && isPlaceAmenity(amenity)),
+    tags: [...new Set(picked)].sort().slice(0, MAX_TAG_FILTERS),
     sort: oneOf(PLACE_SORTS, params.get('sort'), 'open'),
     page: pageNumber(params.get('page')),
   };
@@ -64,9 +63,7 @@ export function placeDirectoryQuery(filters: Omit<PlaceFilters, 'page'>, page = 
   if (filters.state) params.set('state', filters.state);
   if (filters.state && filters.city) params.set('city', filters.city);
   if (filters.kind) params.set('kind', filters.kind.replaceAll('_', '-'));
-  for (const amenity of PLACE_AMENITIES) {
-    if (filters.amenities.includes(amenity)) params.append('amenity', amenity.replaceAll('_', '-'));
-  }
+  for (const tag of [...filters.tags].sort()) params.append('tag', tag);
   if (filters.sort !== 'open') params.set('sort', filters.sort);
   if (page > 1) params.set('page', String(page));
   const query = params.toString();
@@ -91,8 +88,7 @@ export function tagHref(
     const kind = tag.slug.replaceAll('-', '_');
     return `/places${placeDirectoryQuery({ ...NO_FILTERS, kind: isPlaceKind(kind) ? kind : '' })}`;
   }
-  const amenity = tag.slug.replaceAll('-', '_');
-  return `/places${placeDirectoryQuery({ ...NO_FILTERS, amenities: isPlaceAmenity(amenity) ? [amenity] : [] })}`;
+  return `/places${placeDirectoryQuery({ ...NO_FILTERS, tags: [tag.slug] })}`;
 }
 
 /** The list with nothing picked. */
@@ -101,6 +97,6 @@ export const NO_FILTERS: Omit<PlaceFilters, 'page'> = {
   state: '',
   city: '',
   kind: '',
-  amenities: [],
+  tags: [],
   sort: 'open',
 };

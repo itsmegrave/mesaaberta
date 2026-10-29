@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import {
   gameTables,
   notifications,
+  placeFeatures,
   platforms,
   profiles,
   registrations,
@@ -52,7 +53,12 @@ async function candidates(db: AnyDb, event: StoredEvent): Promise<string[]> {
       return event.actorId ? [event.actorId] : [];
     case 'CatalogEntryApproved': {
       // Whoever suggested the entry, if a member did.
-      const table = { platform: platforms, tag: tags, system: systems }[event.payload.kind];
+      const table = {
+        platform: platforms,
+        tag: tags,
+        system: systems,
+        placeTag: placeFeatures,
+      }[event.payload.kind];
       const [entry] = await db
         .select({ suggestedBy: table.suggestedBy })
         .from(table)

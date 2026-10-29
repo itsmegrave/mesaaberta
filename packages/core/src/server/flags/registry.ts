@@ -89,6 +89,13 @@ export const flagDefaults = {
   // form leave places out and a table page hides its place. The admin screens stay open to admins,
   // so places can be sent and approved before the release. Targeted by the person's id.
   api_directory_places: false,
+  // The place tags catalog (Trello "Diretórios conectados" 1), a new feature (created on for
+  // everyone). Off: the place form offers only the six old Comodidades with no suggestions, Onde
+  // jogar filters by those six and a place page shows them as "Comodidades". On: the form picks from
+  // the whole catalog and suggests new tags (shown once an admin approves them), the page shows one
+  // "Tags" section and the list filters by any tag. Either way the tags are stored the same.
+  // Targeted by the person's id.
+  use_place_tags: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

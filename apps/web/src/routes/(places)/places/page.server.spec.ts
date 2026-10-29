@@ -38,7 +38,7 @@ const taverna = {
   city: 'Recife',
   state: 'PE',
   description: null,
-  amenities: [],
+  features: [],
   imagePath: 'places/t.png',
   openTables: 2,
 };
@@ -52,6 +52,7 @@ describe('the Onde jogar load', () => {
       pages: 1,
       states: [{ slug: 'pe', label: 'PE' }],
       cities: [],
+      tags: [],
       places: [taverna],
     });
   });
@@ -66,7 +67,7 @@ describe('the Onde jogar load', () => {
   it('reads the filters from the address and turns image paths into URLs', async () => {
     const data = await run(event('?state=PE&kind=bar&amenity=wifi&page=abc'));
     const [, filters] = vi.mocked(listPlaces).mock.lastCall!;
-    expect(filters).toMatchObject({ state: 'pe', kind: 'bar', amenities: [], page: 1 });
+    expect(filters).toMatchObject({ state: 'pe', kind: 'bar', tags: ['wifi'], page: 1 });
     expect(data.places[0]).not.toHaveProperty('imagePath');
     expect(data.places[0].imageUrl).toContain('places/t.png');
   });

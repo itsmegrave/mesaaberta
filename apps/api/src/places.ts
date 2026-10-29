@@ -11,6 +11,7 @@ import {
   updatePlace,
 } from '@mesaaberta/core/server/places/service';
 import { readPlacePage } from '@mesaaberta/core/server/places/directory';
+import { listFeatureOptions } from '@mesaaberta/core/server/places/features';
 import { fileClaim, pendingClaimOf, removePlaceOwner } from '@mesaaberta/core/server/places/claims';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
@@ -72,6 +73,17 @@ export function placeRoutes(open: Open = openDb) {
     );
     return c.json({ eventIds: [eventId], slug, replacedImage });
   });
+
+  // What the place form's Tags offer: the approved catalog and the actor's own suggestions waiting,
+  // or only the old Comodidades with `?legacy=1` (web asks for that while `use_place_tags` is off).
+  app.get('/tag-options', async (c) =>
+    c.json(
+      await listFeatureOptions(
+        c.get('db'),
+        c.req.query('legacy') === '1' ? { legacyOnly: true } : { suggestedBy: c.get('actor').id },
+      ),
+    ),
+  );
 
   // The edit form of a place the actor may edit (403/404 otherwise).
   app.get('/:slug/edit', async (c) =>

@@ -17,10 +17,13 @@ const fields = {
   kind: 'game_cafe',
   postalCode: '51020-000',
   street: 'Av. Boa Viagem, 100',
-  amenities: 'accessible',
+  tags: 'accessible',
 };
 
-function event(form: Record<string, string>, { flagOn = true, signedIn = true } = {}) {
+function event(
+  form: Record<string, string> | URLSearchParams,
+  { flagOn = true, signedIn = true, tagsOn = false } = {},
+) {
   const after: unknown[] = [];
   return {
     after,
@@ -29,7 +32,8 @@ function event(form: Record<string, string>, { flagOn = true, signedIn = true } 
         // The api answers over the mocked service; the stand-in database only names the actor.
         env: apiOver(actorsOnly([{ id: ANA, role: 'member', status: 'active' }])),
         flags: {
-          isEnabled: async (name: string) => (name === 'api_directory_places' ? flagOn : false),
+          isEnabled: async (name: string) =>
+            name === 'api_directory_places' ? flagOn : name === 'use_place_tags' ? tagsOn : false,
         },
         log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() },
         getUser: async () => (signedIn ? { id: ANA } : null),
@@ -81,9 +85,21 @@ describe('"Cadastrar lugar"', () => {
     expect(vi.mocked(submitPlace).mock.lastCall?.[2]).toMatchObject({
       name: 'Taverna do Dado',
       kind: 'game_cafe',
-      amenities: ['accessible'],
+      tags: ['accessible'],
     });
     expect(after).toHaveLength(0);
+  });
+
+  it('suggests a new tag only while use_place_tags is on', async () => {
+    const form = () =>
+      new URLSearchParams([...Object.entries(fields), ['tags', 'new:Bar de vinil']]);
+    await send(event(form()).event);
+    expect(vi.mocked(submitPlace).mock.lastCall?.[2].tags).toEqual(['accessible']);
+    await send(event(form(), { tagsOn: true }).event);
+    expect(vi.mocked(submitPlace).mock.lastCall?.[2].tags).toEqual([
+      'accessible',
+      'new:Bar de vinil',
+    ]);
   });
 
   it('refuses a form without a kind, with what was typed', async () => {
