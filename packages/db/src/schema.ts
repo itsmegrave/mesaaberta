@@ -127,6 +127,10 @@ export const profiles = pgTable(
     // messages. Table chats are not affected.
     directMessagesEnabled: boolean('direct_messages_enabled').notNull().default(true),
     invitationsEnabled: boolean('invitations_enabled').notNull().default(true),
+    // "Procuro mesa": since when the person says they are looking for a table, and the line they
+    // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
+    lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
+    lookingForTableNote: text('looking_for_table_note'),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -146,6 +150,12 @@ export const profiles = pgTable(
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
     // Mirrors PROFILE_LIMITS.bio in packages/core/src/profile/schema.
     check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
+    // Mirrors LOOKING_NOTE_MAX in packages/core/src/players/looking.
+    check('profiles_looking_note_length', sql`char_length(${profile.lookingForTableNote}) <= 200`),
+    // Procuro mesa reads the people looking, newest first.
+    index('profiles_looking_for_table_idx')
+      .on(profile.lookingForTableAt)
+      .where(sql`${profile.lookingForTableAt} IS NOT NULL`),
     // Expired temporary bans, for the sweep that lifts them.
     index('profiles_banned_until_idx')
       .on(profile.bannedUntil)

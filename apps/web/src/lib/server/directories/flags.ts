@@ -7,11 +7,17 @@ export const DIRECTORY_FLAGS = {
   systems: 'api_directory_systems',
   gms: 'api_directory_gms',
   places: 'api_directory_places',
+  players: 'use_players_directory',
 } as const satisfies Record<string, FlagName>;
 export type Directory = keyof typeof DIRECTORY_FLAGS;
 export type DirectoryFlags = Record<Directory, boolean>;
 /** Every directory off: the maintenance screen, and a layout that could not read the flags. */
-export const NO_DIRECTORIES: DirectoryFlags = { systems: false, gms: false, places: false };
+export const NO_DIRECTORIES: DirectoryFlags = {
+  systems: false,
+  gms: false,
+  places: false,
+  players: false,
+};
 
 /** Whether a directory is on for the person reading (targeted by id), or for visitors. */
 export async function directoryEnabled(
@@ -19,6 +25,8 @@ export async function directoryEnabled(
   directory: Directory,
 ): Promise<boolean> {
   const profile = await locals.getProfile();
+  // Procuro mesa lists people, so it is for signed-in people only.
+  if (directory === 'players' && !profile) return false;
   return locals.flags.isEnabled(
     DIRECTORY_FLAGS[directory],
     profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},

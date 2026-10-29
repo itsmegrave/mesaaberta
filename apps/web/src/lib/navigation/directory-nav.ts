@@ -3,7 +3,12 @@ import { isUnder } from '#lib/navigation/main-nav.js';
 import { m } from '#lib/paraglide/messages.js';
 
 /** Which directories are on for the person reading (the layout's `directories`). */
-export type DirectorySwitches = { systems: boolean; gms: boolean; places: boolean };
+export type DirectorySwitches = {
+  systems: boolean;
+  gms: boolean;
+  places: boolean;
+  players?: boolean;
+};
 
 export interface DirectoryLink {
   href: `/${string}`;
@@ -18,7 +23,7 @@ export interface DirectoryLink {
   current: (pathname: string) => boolean;
 }
 
-// In the menus' order: Sistemas, Onde jogar, Quem mestra.
+// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa.
 const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })[] = [
   {
     key: 'systems',
@@ -48,9 +53,18 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })
     // A profile is anyone's, not only a person who runs games: only the list is this directory.
     current: (pathname) => isUnder(pathname, '/gamemasters'),
   },
+  {
+    key: 'players',
+    href: '/players',
+    icon: 'game-icons:dice-twenty-faces-twenty',
+    label: m.nav_directory_players,
+    shortLabel: m.nav_directory_players_short,
+    description: m.nav_directory_players_description,
+    current: (pathname) => isUnder(pathname, '/players'),
+  },
 ];
 
 /** The directory links to draw, in order: only the ones whose flag is on. */
 export function directoryNav(switches: DirectorySwitches): DirectoryLink[] {
-  return DIRECTORY_NAV.filter((link) => switches[link.key]);
+  return DIRECTORY_NAV.filter((link) => switches[link.key] === true);
 }

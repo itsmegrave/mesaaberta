@@ -1947,6 +1947,9 @@
   "nav_directory_systems_description": "Os sistemas jogados aqui e quem mestra cada um.",
   "nav_directory_gms": "Quem mestra",
   "nav_directory_gms_description": "Quem conduz as mesas, com a nota e os sistemas de cada pessoa.",
+  "nav_directory_players": "Procuro mesa",
+  "nav_directory_players_short": "Procuro mesa",
+  "nav_directory_players_description": "Quem está procurando uma mesa, para quem mestra convidar.",
   "crowdfunding_title": "Financiamentos coletivos",
   "crowdfunding_description": "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais.",
   "crowdfunding_lede": "Campanhas de RPG e jogos de mesa abertas para apoio, enviadas pela comunidade. Cada card abre a campanha no site dela.",
@@ -2829,6 +2832,57 @@
   "gms_sort_score": "Melhor nota",
   "gms_sort_tables": "Mais mesas mestradas",
   "gms_sort_name": "Nome (A–Z)",
+  "players_crumb": "Procuro mesa",
+  "players_title": "Procuro mesa",
+  "players_lede": "Pessoas procurando uma mesa. Se você mestra, encontre quem combina com a sua e convide pela página de gerenciar a mesa, com o @usuário.",
+  "players_me_title": "Você está procurando mesa?",
+  "players_me_hint": "Marque para aparecer aqui por 60 dias. Quem mestra pode te convidar para uma mesa.",
+  "players_me_listed": "Você aparece nesta lista. Salvar de novo conta mais 60 dias.",
+  "players_me_looking": "Estou procurando mesa",
+  "players_me_note": "O que você procura",
+  "players_me_note_hint": "Uma linha para quem mestra: sistema, horários, online ou presencial.",
+  "players_me_save": "Salvar",
+  "players_looking_saved_on": "Pronto, você aparece em Procuro mesa.",
+  "players_looking_saved_off": "Pronto, você saiu de Procuro mesa.",
+  "players_search_label": "Buscar por nome, @usuário ou texto",
+  "players_found": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Ninguém procurando mesa",
+        "count=1": "1 pessoa procurando mesa",
+        "count=*": "{count} pessoas procurando mesa"
+      }
+    }
+  ],
+  "players_found_hint": "Aparece aqui quem marcou que está procurando mesa nos últimos 60 dias.",
+  "players_systems_label": "Sistemas favoritos",
+  "players_looking_since": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "procurando desde hoje",
+        "count=1": "procurando desde ontem",
+        "count=*": "procurando há {count} dias"
+      }
+    }
+  ],
+  "players_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa jogada ainda",
+        "count=1": "1 mesa jogada",
+        "count=*": "{count} mesas jogadas"
+      }
+    }
+  ],
+  "players_empty": "Ninguém procurando mesa agora",
+  "players_empty_hint": "Marque acima que você está procurando e apareça para quem mestra.",
+  "players_empty_filtered": "Ninguém procurando mesa com esses filtros",
   "gms_tables_run": [
     {
       "declarations": ["input count"],
@@ -3005,6 +3059,7 @@
   "blog_minutes": "{minutes} min de leitura",
   "blog_back": "Todos os posts",
   "directory_footer_gms": "Quem mestra",
+  "directory_footer_players": "Procuro mesa",
   "admin_nav_badges": "Conquistas",
   "admin_badges_title": "Conquistas",
   "admin_badges_lede": "Cada conquista, quantas pessoas a têm e quantas foram revogadas. Conceda ou revogue na página da pessoa.",
