@@ -3590,5 +3590,15 @@
         "count=*": "{count} tags, geradas a partir do endereço, do tipo e das comodidades"
       }
     }
-  ]
+  ],
+  "oauth_consent_page_title": "Conectar um app",
+  "oauth_consent_title": "Conectar {client} à sua conta",
+  "oauth_consent_lede": "{client} vai ver o Mesa Aberta como @{username}.",
+  "oauth_consent_reads_heading": "O que {client} vai poder ver",
+  "oauth_consent_reads": "As mesas abertas, as suas mesas e a sua agenda, os sistemas, os lugares para jogar, quem mestra, os perfis públicos, as suas notificações e as suas mensagens.",
+  "oauth_consent_no_writes": "{client} não muda nada no site: não pede vaga, não manda mensagem e não edita nada.",
+  "oauth_consent_returns": "Depois, você volta para {host}.",
+  "oauth_consent_approve": "Permitir",
+  "oauth_consent_deny": "Não permitir",
+  "oauth_consent_expired": "Este pedido de conexão expirou ou não vale mais. Volte ao app e tente conectar de novo."
 }

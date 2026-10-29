@@ -120,6 +120,10 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
+  // the person who approved them. Grave first, then everyone. Off: the consent page is a 404 and
+  // every MCP request is refused, even with a valid token. Targeted by the person's id.
+  use_mcp: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

@@ -62,7 +62,8 @@ apps/web/src/lib/      shared code, imported through #lib/...
 apps/web/e2e/          Playwright tests (*.e2e.ts)
 apps/web/messages/     translations
 apps/api, apps/worker  the API and background Workers
-packages/              code shared by the three apps
+apps/mcp               the MCP server (Claude and other MCP clients)
+packages/              code shared by the apps
 ```
 
 The web app lives in `apps/web`: every `src/...`, `e2e/...` or `messages/...` path in this README

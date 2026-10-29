@@ -8,8 +8,8 @@ export const scrubString = (text: string) =>
     )
     .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[redacted]');
 
-/** Which deployable wrote a log line or raised an error, so web, api and worker can be told apart. */
-export type AppName = 'web' | 'api' | 'worker';
+/** Which deployable wrote a log line or raised an error, so web, api, worker and mcp can be told apart. */
+export type AppName = 'web' | 'api' | 'worker' | 'mcp';
 
 // No free text or request payloads are forwarded. Who acted and on what is, as opaque ids only
 // (`userId`, `resourceType`, `resourceId`), so a line can be traced to a person and a record.
@@ -64,6 +64,8 @@ const LABELS = new Set([
   'reason',
   'resourceType',
   'colo',
+  // The MCP tool a call ran (`search_tables`), never its arguments.
+  'tool',
 ]);
 const IDS = new Set(['requestId', 'actionId', 'eventId', 'tableId', 'registrationId', 'userId']);
 /**
