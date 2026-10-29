@@ -1,8 +1,8 @@
 [
   {
     "date": "2026-10-29",
-    "title": "Lista de espera e segurança nas mesas",
-    "summary": "Mesa cheia ganhou lista de espera, e cada mesa pode dizer como cuida da segurança de quem joga.",
+    "title": "Lista de espera, segurança nas mesas e parceiros nos lugares",
+    "summary": "Mesa cheia ganhou lista de espera, cada mesa pode dizer como cuida da segurança de quem joga, os lugares ganharam tags e quem mestra na casa, e cada parceiro tem sua página.",
     "changes": [
       {
         "kind": "new",
@@ -15,6 +15,30 @@
         "title": "Segurança e classificação nas mesas",
         "description": "Quem mestra pode marcar as ferramentas de segurança da mesa, como sessão zero, linhas e véus e carta X, e a classificação indicativa. Mesas 18+ ficam fora da lista até você pedir para vê-las.",
         "href": "/tables/new"
+      },
+      {
+        "kind": "new",
+        "title": "Tags nos lugares",
+        "description": "Os lugares de Onde jogar agora têm tags do que oferecem, do que se joga e do que acontece por lá. Filtre por qualquer uma e sugira uma tag nova ao cadastrar ou editar um lugar.",
+        "href": "/places"
+      },
+      {
+        "kind": "new",
+        "title": "Quem mestra aqui",
+        "description": "A página de um lugar mostra quem mestra por lá e os sistemas jogados no último ano. Quem cuida do lugar pode convidar quem mestra na casa, e quem aceita vê o lugar no próprio perfil.",
+        "href": "/places"
+      },
+      {
+        "kind": "new",
+        "title": "Página de cada parceiro",
+        "description": "Cada parceiro tem uma página com logo, tipos, descrição, cupom e links. Na lista de parceiros, toque no nome para abrir.",
+        "href": "/partners"
+      },
+      {
+        "kind": "new",
+        "title": "Lugares parceiros",
+        "description": "Quem cuida de um lugar e de um parceiro pode ligar os dois. Depois da aprovação da equipe, o lugar mostra o selo de parceiro e aparece na página do parceiro.",
+        "href": "/places"
       }
     ]
   },
@@ -57,7 +81,6 @@
       }
     ]
   },
-
   {
     "date": "2026-10-26",
     "title": "Lembretes de sessão e um menu mais claro",
