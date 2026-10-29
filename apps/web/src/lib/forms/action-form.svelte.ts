@@ -4,7 +4,7 @@ import { createForm, type DeepKeys, type DeepValue } from '@tanstack/svelte-form
 import { createMutation } from '@tanstack/svelte-query';
 import type { FormMessage } from './message';
 import type { ZodType } from 'zod';
-import { tick } from 'svelte';
+import { tick, untrack } from 'svelte';
 import { toStore } from 'svelte/store';
 import { queryClient } from '#lib/query/context.js';
 import { afterWrite } from '#lib/query/invalidate.js';
@@ -180,8 +180,13 @@ export function actionForm<T extends Record<string, unknown>>(options: {
       }
     },
     change<K extends DeepKeys<T>>(field: K, value: DeepValue<T, K>) {
-      form.setFieldValue(field, value);
-      errors = Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field));
+      // Untracked, so an `$effect` that calls `change` does not depend on the form state it writes
+      // (it would run itself again forever: effect_update_depth_exceeded).
+      untrack(() => {
+        form.setFieldValue(field, value);
+        if (field in errors)
+          errors = Object.fromEntries(Object.entries(errors).filter(([path]) => path !== field));
+      });
     },
     validateField,
     /**
