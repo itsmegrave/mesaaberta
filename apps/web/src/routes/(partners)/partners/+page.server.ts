@@ -6,6 +6,7 @@ import { partnerLogoUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
 import type { listPartners } from '@mesaaberta/core/server/partners/service';
 import { readFromApi } from '#lib/server/api-read.js';
+import { directoryLinksEnabled } from '#lib/server/directories/flags.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -34,6 +35,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     total: list.total,
     pages: list.pages,
     signedIn: !!profile,
+    // Each card links to its partner's own page (`use_directory_links`).
+    partnerPages: await directoryLinksEnabled(locals),
     sent: url.searchParams.get('enviado') === '1',
   };
 };

@@ -250,6 +250,50 @@ export type PartnerCard = {
   links: { network: Exclude<Network, 'website'>; url: string }[];
 };
 
+/** What a card (and a partner's page) shows, read in one select. */
+const cardColumns = () => ({
+  id: partners.id,
+  name: partners.name,
+  description: partners.description,
+  types: partners.types,
+  logoPath: partners.logoPath,
+  siteUrl: partners.siteUrl,
+  couponCode: partners.couponCode,
+  couponDescription: partners.couponDescription,
+  pending: sql<boolean>`${partners.approvedAt} IS NULL`,
+  ownerIds: ownerIdsOf(partners.id, partners.submitterId),
+});
+
+/** The cards of these rows, each with its links in their order. */
+async function withLinks(
+  db: AnyDb,
+  rows: (Omit<PartnerCard, 'types' | 'links'> & { types: readonly string[] })[],
+): Promise<PartnerCard[]> {
+  const links = rows.length
+    ? await db
+        .select({
+          partnerId: partnerLinksTable.partnerId,
+          network: partnerLinksTable.network,
+          url: partnerLinksTable.url,
+        })
+        .from(partnerLinksTable)
+        .where(
+          inArray(
+            partnerLinksTable.partnerId,
+            rows.map((row) => row.id),
+          ),
+        )
+        .orderBy(asc(partnerLinksTable.position))
+    : [];
+  return rows.map((row) => ({
+    ...row,
+    types: orderedTypes(row.types),
+    links: links
+      .filter((link) => link.partnerId === row.id)
+      .map(({ network, url }) => ({ network: network as Exclude<Network, 'website'>, url })),
+  }));
+}
+
 /**
  * The public list: approved partners that were not removed, plus those the viewer looks after
  * that wait for review. A `page` past the last is `null`, so the route answers 404 (the first page always
@@ -279,18 +323,7 @@ export async function listPartners(
   if (filters.page > pages) return null;
 
   const rows = await db
-    .select({
-      id: partners.id,
-      name: partners.name,
-      description: partners.description,
-      types: partners.types,
-      logoPath: partners.logoPath,
-      siteUrl: partners.siteUrl,
-      couponCode: partners.couponCode,
-      couponDescription: partners.couponDescription,
-      pending: sql<boolean>`${partners.approvedAt} IS NULL`,
-      ownerIds: ownerIdsOf(partners.id, partners.submitterId),
-    })
+    .select(cardColumns())
     .from(partners)
     .where(where)
     .orderBy(
@@ -300,34 +333,42 @@ export async function listPartners(
     .limit(PARTNER_PAGE_SIZE)
     .offset((filters.page - 1) * PARTNER_PAGE_SIZE);
 
-  const links = rows.length
-    ? await db
-        .select({
-          partnerId: partnerLinksTable.partnerId,
-          network: partnerLinksTable.network,
-          url: partnerLinksTable.url,
-        })
-        .from(partnerLinksTable)
-        .where(
-          inArray(
-            partnerLinksTable.partnerId,
-            rows.map((row) => row.id),
-          ),
-        )
-        .orderBy(asc(partnerLinksTable.position))
-    : [];
-
-  const cards: PartnerCard[] = rows.map((row) => ({
-    ...row,
-    types: orderedTypes(row.types),
-    links: links
-      .filter((link) => link.partnerId === row.id)
-      .map(({ network, url }) => ({ network: network as Exclude<Network, 'website'>, url })),
-  }));
+  const cards = await withLinks(db, rows);
   return { cards, total, pages };
 }
 
 export type PartnerList = NonNullable<Awaited<ReturnType<typeof listPartners>>>;
+
+/**
+ * A partner's own page (`/p/<id>`): what its card shows, when it is on the list (approved and not
+ * removed). One waiting for review opens only for those who look after it, as on the list; anything
+ * else, a malformed id included, is null and the page answers 404.
+ */
+export async function readPartnerPage(
+  db: AnyDb,
+  id: string,
+  { viewerId = null }: { viewerId?: string | null } = {},
+): Promise<PartnerCard | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  const [row] = await db
+    .select(cardColumns())
+    .from(partners)
+    .where(
+      and(
+        eq(partners.id, id),
+        isNull(partners.removedAt),
+        viewerId
+          ? or(
+              isNotNull(partners.approvedAt),
+              sql`${viewerId}::uuid = any(${ownerIdsOf(partners.id, partners.submitterId)})`,
+            )
+          : isNotNull(partners.approvedAt),
+      ),
+    );
+  if (!row) return null;
+  const [card] = await withLinks(db, [row]);
+  return card;
+}
 
 /** Whether the partner is on the page (approved and not removed), and who looks after it. */
 export async function findListed(db: AnyDb, id: string) {

@@ -8,7 +8,11 @@ import {
   partnerInviteSchema,
   partnerOwnerSchema,
 } from '@mesaaberta/core/partners/owners';
-import { findOwnPartner, listPartners } from '@mesaaberta/core/server/partners/service';
+import {
+  findOwnPartner,
+  listPartners,
+  readPartnerPage,
+} from '@mesaaberta/core/server/partners/service';
 import {
   cancelPartnerInvitation,
   invitePartnerOwner,
@@ -46,6 +50,15 @@ export function partnerRoutes(open: Open = openDb) {
       },
     );
     return list ? c.json(list) : c.json({ error: 'not_found' }, 404);
+  });
+
+  // A partner's page: the card's fields and its owners (web turns them into `canEdit` and
+  // `canReport`). One waiting for review only for those who look after it; otherwise a 404.
+  visitors.get('/:id', async (c) => {
+    const found = await readPartnerPage(c.get('db'), c.req.param('id'), {
+      viewerId: c.get('actor')?.id ?? null,
+    });
+    return found ? c.json(found) : c.json({ error: 'not_found' }, 404);
   });
 
   app.route('/', visitors);

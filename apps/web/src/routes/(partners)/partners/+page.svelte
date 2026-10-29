@@ -57,6 +57,7 @@
         <li>
           <PartnerCard
             {partner}
+            href={data.partnerPages ? `/p/${partner.id}` : undefined}
             canEdit={partner.canEdit}
             onreport={partner.canReport ? (picked) => (reporting.current = picked) : undefined}
             onwithdraw={(picked) => (withdrawing.current = picked)}
