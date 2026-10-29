@@ -96,6 +96,10 @@ export const flagDefaults = {
   // "Tags" section and the list filters by any tag. Either way the tags are stored the same.
   // Targeted by the person's id.
   use_place_tags: false,
+  // Linking the directories (Trello "Diretórios conectados" 2 and 3), a new feature (created on for
+  // everyone). Off: a partner has no page of its own (/p/:id answers 404) and its card on
+  // /partners links nowhere. Targeted by the person's id.
+  use_directory_links: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

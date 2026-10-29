@@ -23,6 +23,7 @@ import {
   filePartnerReport,
   findOwnPartner,
   listPartners,
+  readPartnerPage,
   updatePartner,
   withdrawPartner,
 } from '@mesaaberta/core/server/partners/service';
@@ -108,6 +109,41 @@ describe('a new partner', () => {
     const [row] = await test.db.select().from(partners).where(eq(partners.id, partnerId));
     expect(row.couponCode).toBeNull();
     expect(row.couponDescription).toBeNull();
+  });
+});
+
+describe("a partner's page", () => {
+  it('opens once approved, for anyone, with what its card shows', async () => {
+    const { id: partnerId } = await send({
+      couponCode: 'MESA10',
+      linkNetwork: ['instagram'],
+      linkUrl: ['@taverna'],
+    });
+    expect(await readPartnerPage(test.db, partnerId)).toBeNull();
+    expect(await readPartnerPage(test.db, partnerId, { viewerId: id(2) })).toBeNull();
+    // Its submitter sees it while it waits, marked.
+    expect(await readPartnerPage(test.db, partnerId, { viewerId: id(1) })).toMatchObject({
+      name: 'Taverna do Dado',
+      pending: true,
+    });
+    await approvePartner(test.db, admin, partnerId, { now });
+    const page = await readPartnerPage(test.db, partnerId);
+    expect(page).toMatchObject({
+      id: partnerId,
+      name: 'Taverna do Dado',
+      couponCode: 'MESA10',
+      pending: false,
+      ownerIds: [id(1)],
+    });
+    expect(page?.links).toEqual([{ network: 'instagram', url: 'https://instagram.com/taverna' }]);
+  });
+
+  it('is not found once withdrawn, or for an id that is not one', async () => {
+    const { id: partnerId } = await send();
+    await approvePartner(test.db, admin, partnerId, { now });
+    await withdrawPartner(test.db, ana, partnerId);
+    expect(await readPartnerPage(test.db, partnerId, { viewerId: id(1) })).toBeNull();
+    expect(await readPartnerPage(test.db, 'nao-existe')).toBeNull();
   });
 });
 

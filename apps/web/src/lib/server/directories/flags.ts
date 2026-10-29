@@ -44,3 +44,17 @@ export async function requireDirectory(
 ) {
   if (!(await directoryEnabled(locals, directory))) error(404, 'Not found');
 }
+
+/**
+ * Whether the directories link to each other for the person reading (`use_directory_links`): a
+ * partner's own page, and the links between partners, places and quem mestra.
+ */
+export async function directoryLinksEnabled(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+): Promise<boolean> {
+  const profile = await locals.getProfile();
+  return locals.flags.isEnabled(
+    'use_directory_links',
+    profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+  );
+}

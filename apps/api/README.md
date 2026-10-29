@@ -150,6 +150,7 @@ Web turns the dates back with `revivedDates` (`api-read.ts`).
 `/v1/partners` (`partners.ts`); the services authorize, and web checks `use_partner_owners` before the owner routes it gates:
 
 - `GET /v1/partners?…`: one page of the list for visitors too, each card with its `ownerIds` (web turns them into `canEdit` and `canReport` and never sends them to the browser). Past the last page is a 404.
+- `GET /v1/partners/:id`: a partner's page for visitors too, the card's fields with its `ownerIds`; one waiting for review only for those who look after it, anything else a 404.
 - `GET /v1/partners/:id/edit?owners=1`: a partner the actor looks after, with "Quem cuida do parceiro" when asked (403/404 otherwise; web shows both as its 404).
 - `POST /v1/partners/:id/owners/{invite,cancel,remove,leave}` (`{ username }`, `{ invitationId }`, `{ profileId }`, nothing).
 - `GET /v1/partners/invitations/:id`, `POST /v1/partners/invitations/:id/{accept,decline}`: the invite, for the invited person only.

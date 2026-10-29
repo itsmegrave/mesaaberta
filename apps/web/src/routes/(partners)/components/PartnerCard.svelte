@@ -32,11 +32,14 @@
 
   let {
     partner,
+    href,
     canEdit = false,
     onreport,
     onwithdraw,
   }: {
     partner: Partner;
+    /** Its own page (`use_directory_links`): the name links there. */
+    href?: string;
     /** The viewer sent this partner: "Editar" and "Remover…" are offered. */
     canEdit?: boolean;
     /** Offered to a signed-in member who did not send it; without it there is no "Denunciar…". */
@@ -115,7 +118,14 @@
     {/if}
   {/snippet}
 
-  <h3 class="text-lg leading-snug font-semibold text-balance">{partner.name}</h3>
+  <h3 class="text-lg leading-snug font-semibold text-balance">
+    {#if href}
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the page passes /p/<id> -->
+      <a {href} class="underline-offset-4 hover:underline">{partner.name}</a>
+    {:else}
+      {partner.name}
+    {/if}
+  </h3>
   {#if partner.types.length > 0}
     <ul class="flex flex-wrap gap-2" aria-label={m.partner_types_label({ name: partner.name })}>
       {#each partner.types as type (type)}

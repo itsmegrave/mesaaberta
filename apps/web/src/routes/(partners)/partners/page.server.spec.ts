@@ -32,6 +32,7 @@ const visit = (profile: { id: string; role: string; status: string } | null, sea
       env: apiOver(actorsOnly(profile ? [profile] : [])),
       log: { warn: vi.fn() },
       getProfile: async () => profile,
+      flags: { isEnabled: async () => true },
     },
     url: new URL(`https://x.test/p${search}`),
     platform: undefined,
@@ -57,6 +58,8 @@ describe('the partners page load', () => {
     }
     const other = await run(visit({ id: 'other', role: 'member', status: 'active' }));
     expect(other.cards[0]).toMatchObject({ canEdit: false, canReport: true });
+    // Each card links to its own page while use_directory_links is on.
+    expect(other.partnerPages).toBe(true);
   });
 
   it('does not offer to report a card that still waits for review', async () => {
