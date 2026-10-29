@@ -4,6 +4,7 @@ import type { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readTableFilters } from '#lib/tables/filters.js';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
+import { tableSafetyEnabled } from '../tables/safety-enabled';
 
 export const read = async ({ locals, url }: RequestEvent) => {
   // Every filter comes from the query string of the GET form, validated by its schema. Several of
@@ -32,8 +33,17 @@ export const read = async ({ locals, url }: RequestEvent) => {
     })),
   };
 
+  // 18+ tables stay out of the list until the visitor asks for them (`?adult=1`, `use_table_safety`).
+  const safety = await tableSafetyEnabled(locals, user ? await locals.getProfile() : null);
+  const adultShown = url.searchParams.get('adult') === '1';
+  const isAdult = (table: { contentRating?: string | null }) => table.contentRating === '18';
+  const adultCount = safety ? answer.tables.filter(isAdult).length : 0;
+  const listed =
+    safety && !adultShown ? answer.tables.filter((table) => !isAdult(table)) : answer.tables;
+
   return {
     ...answer,
-    tables: answer.tables.map(cardPictures(supabaseUrlOf(locals.env))),
+    tables: listed.map(cardPictures(supabaseUrlOf(locals.env))),
+    adult: { count: adultCount, shown: adultShown },
   };
 };

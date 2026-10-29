@@ -42,6 +42,8 @@ const columns = {
   capacity: gameTables.capacity,
   minPlayers: gameTables.minPlayers,
   plannedSessions: gameTables.plannedSessions,
+  safetyTools: gameTables.safetyTools,
+  contentRating: gameTables.contentRating,
   startsAt: gameTables.startsAt,
   durationMinutes: gameTables.durationMinutes,
   timezone: gameTables.timezone,

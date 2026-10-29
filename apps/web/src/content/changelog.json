@@ -1,14 +1,20 @@
 [
   {
     "date": "2026-10-29",
-    "title": "Lista de espera, tags e parceiros nos lugares",
-    "summary": "Mesa cheia ganhou lista de espera, os lugares ganharam tags e quem mestra na casa, e cada parceiro tem sua página.",
+    "title": "Lista de espera, segurança nas mesas e parceiros nos lugares",
+    "summary": "Mesa cheia ganhou lista de espera, cada mesa pode dizer como cuida da segurança de quem joga, os lugares ganharam tags e quem mestra na casa, e cada parceiro tem sua página.",
     "changes": [
       {
         "kind": "new",
         "title": "Lista de espera",
         "description": "Numa mesa cheia, toque em Entrar na lista de espera. Quando abrir uma vaga, a primeira pessoa da lista entra na mesa e recebe um aviso. Se quem mestra aprova cada pessoa, o pedido vai direto para aprovação.",
         "href": "/tables"
+      },
+      {
+        "kind": "new",
+        "title": "Segurança e classificação nas mesas",
+        "description": "Quem mestra pode marcar as ferramentas de segurança da mesa, como sessão zero, linhas e véus e carta X, e a classificação indicativa. Mesas 18+ ficam fora da lista até você pedir para vê-las.",
+        "href": "/tables/new"
       },
       {
         "kind": "new",

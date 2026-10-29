@@ -96,5 +96,6 @@
     calendarNote
     suggestSystem={data.status === 'draft'}
     places={data.places}
+    safety={data.safety}
   />
 </section>

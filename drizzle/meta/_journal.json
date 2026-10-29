@@ -526,6 +526,13 @@
       "when": 1793269403144,
       "tag": "0074_table_waitlist",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1793271208458,
+      "tag": "0075_table_safety",
+      "breakpoints": true
     }
   ]
 }

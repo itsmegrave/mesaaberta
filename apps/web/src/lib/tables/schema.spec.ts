@@ -67,6 +67,8 @@ describe('parseTableForm', () => {
         locationCity: null,
         locationState: null,
         placeId: null,
+        safetyTools: [],
+        contentRating: null,
         platforms: [],
         tags: [],
         removeImage: false,
@@ -280,5 +282,32 @@ describe('parseTableForm', () => {
     expect(result.ok && Object.keys(result.data)).not.toEqual(
       expect.arrayContaining(['gmId', 'status', 'slug']),
     );
+  });
+});
+
+describe('safety tools and content rating', () => {
+  const parse = (extra: Record<string, unknown>) =>
+    tableFormSchema.safeParse({ ...Object.fromEntries(form()), ...extra });
+
+  it('keeps the tools in the catalogue order and a blank rating as not said', () => {
+    const parsed = parse({ safetyTools: ['x_card', 'session_zero'] });
+    if (!parsed.success) throw new Error('expected the form to pass');
+
+    expect(toTableInput(parsed.data)).toMatchObject({
+      safetyTools: ['session_zero', 'x_card'],
+      contentRating: null,
+    });
+  });
+
+  it('takes a known rating', () => {
+    const parsed = parse({ contentRating: '16' });
+    if (!parsed.success) throw new Error('expected the form to pass');
+
+    expect(toTableInput(parsed.data).contentRating).toBe('16');
+  });
+
+  it('refuses an unknown tool or rating', () => {
+    expect(parse({ safetyTools: ['dice_jail'] }).success).toBe(false);
+    expect(parse({ contentRating: '21' }).success).toBe(false);
   });
 });

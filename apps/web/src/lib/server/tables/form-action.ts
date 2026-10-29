@@ -65,7 +65,7 @@ export async function handleTableForm(
     data,
     tableFormSchema,
     { ...NEW_TABLE_VALUES, image: undefined },
-    { arrays: ['platforms', 'tags'], booleans: ['removeImage'], files: ['image'] },
+    { arrays: ['platforms', 'tags', 'safetyTools'], booleans: ['removeImage'], files: ['image'] },
   );
   if (!form.valid) return fail(400, { form: responseForm(form) });
 

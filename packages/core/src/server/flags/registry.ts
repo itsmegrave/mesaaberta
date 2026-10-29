@@ -104,6 +104,10 @@ export const flagDefaults = {
   // offers nothing, its page shows no line and the GM's page no list, and the actions refuse. Lines
   // already joined still move up when a seat frees. Targeted by the person's id.
   use_waitlist: false,
+  // Safety tools and the content rating on tables, a new feature (created on for everyone). Off:
+  // the table form leaves both out (a save keeps what is stored), a table page does not show them
+  // and the list shows 18+ tables like any other. Targeted by the person's id.
+  use_table_safety: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

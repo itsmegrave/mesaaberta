@@ -1,4 +1,6 @@
 import { loadRead } from '#lib/server/reads/load.js';
+import { tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
+import type { TableFormValues } from '#lib/tables/form-values.js';
 import { z } from 'zod';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import type { loadTableForDuplication } from '@mesaaberta/core/server/tables/duplicate';
@@ -74,6 +76,8 @@ export const load: PageServerLoad = async (event) => {
             joinDetails: input.joinDetails ?? '',
             postalCode: input.postalCode ?? '',
             placeSlug: source.placeSlug,
+            safetyTools: input.safetyTools ?? [],
+            contentRating: (input.contentRating ?? '') as TableFormValues['contentRating'],
           }
         : {
             ...NEW_TABLE_VALUES,
@@ -86,6 +90,7 @@ export const load: PageServerLoad = async (event) => {
     catalog: catalogRead.catalog,
     catalogRead,
     places,
+    safety: await tableSafetyEnabled(locals, await locals.getProfile()),
   };
 };
 

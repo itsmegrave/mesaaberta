@@ -1,4 +1,9 @@
 import { and, count, eq, like, or, sql } from 'drizzle-orm';
+import {
+  isContentRating,
+  orderedSafetyTools,
+  type ContentRating,
+} from '@mesaaberta/core/tables/safety';
 import { addTableMember } from '../messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, playerInvitations, systems } from '@mesaaberta/core/server/db/schema';
@@ -127,6 +132,8 @@ function columnsOf(input: TableInput) {
     locationCity: input.locationCity,
     locationState: input.locationState,
     placeId: input.placeId ?? null,
+    safetyTools: input.safetyTools ?? [],
+    contentRating: input.contentRating ?? null,
   };
 }
 
@@ -315,6 +322,10 @@ export async function loadTableForEdit(
     joinDetails: table.joinDetails ?? '',
     postalCode: table.postalCode ? formatCep(table.postalCode) : '',
     placeSlug: await placeSlugOf(db, table.placeId),
+    safetyTools: orderedSafetyTools(table.safetyTools),
+    contentRating: (table.contentRating && isContentRating(table.contentRating)
+      ? table.contentRating
+      : '') as ContentRating | '',
     platforms: catalog.platforms.map((p) => p.slug),
     tags: catalog.tags.map((t) => t.slug),
     imagePath: table.imagePath,
@@ -366,6 +377,8 @@ const AUDITED = [
   'locationCity',
   'locationState',
   'placeId',
+  'safetyTools',
+  'contentRating',
 ] as const;
 const PRIVATE_FIELDS = [
   'welcomeMessage',

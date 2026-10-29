@@ -354,6 +354,18 @@
   "form_platforms_hint": "Onde a mesa acontece. Escolha na lista ou escreva uma que falta para sugerir.",
   "form_tags": "Tags",
   "form_tags_hint": "Como é a mesa. Ajuda quem procura a encontrar a sua. Falta uma? Escreva para sugerir.",
+  "form_safety_tools": "Ferramentas de segurança",
+  "form_safety_tools_hint": "As combinações que você usa para a mesa ser boa para todo mundo. Marque as que valem na sua mesa.",
+  "form_content_rating": "Classificação indicativa",
+  "form_content_rating_hint": "A partir de que idade a mesa é indicada. Mesas 18+ só aparecem na lista para quem pede para vê-las.",
+  "form_content_rating_none": "Não informada",
+  "safety_tool_session_zero": "Sessão zero",
+  "safety_tool_lines_veils": "Linhas e véus",
+  "safety_tool_x_card": "Carta X",
+  "safety_tool_open_door": "Porta aberta",
+  "safety_tool_stars_wishes": "Estrelas e desejos",
+  "content_rating_free": "Livre",
+  "content_rating_age": "{age}+",
   "form_cancel": "Cancelar",
   "form_preview": "Como vai aparecer na lista",
   "form_schedule_adventure": "Várias sessões",
@@ -409,6 +421,8 @@
   "table_gm": "Quem mestra",
   "table_system": "Sistema",
   "table_schedule": "Horário",
+  "table_content_rating": "Classificação",
+  "table_safety_tools": "Segurança",
   "table_duration": "Duração",
   "table_extra_info": "Informações extras",
   "table_extra_info_summary": "O que quem mestra pede para a mesa.",
@@ -1693,6 +1707,28 @@
       }
     }
   ],
+  "tables_adult_hidden": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mesa 18+ está oculta.",
+        "count=*": "{count} mesas 18+ estão ocultas."
+      }
+    }
+  ],
+  "tables_adult_shown": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "Mostrando 1 mesa 18+.",
+        "count=*": "Mostrando {count} mesas 18+."
+      }
+    }
+  ],
+  "tables_adult_show": "Mostrar",
+  "tables_adult_hide": "Ocultar",
   "public_profile_message": "Mandar mensagem",
   "public_profile_message_to": "Mandar mensagem para {username}",
   "menu_view_as_visitor": "Ver como visitante",
@@ -1816,6 +1852,8 @@
   "history_field_capacity": "Vagas",
   "history_field_minPlayers": "Mínimo de participantes",
   "history_field_plannedSessions": "Sessões planejadas",
+  "history_field_safetyTools": "Ferramentas de segurança",
+  "history_field_contentRating": "Classificação indicativa",
   "history_field_startsAt": "Data e hora",
   "history_field_durationMinutes": "Duração (minutos)",
   "history_field_timezone": "Fuso horário",
