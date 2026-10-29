@@ -20,6 +20,7 @@ import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/cat
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
 import { checkTablePlace, placeSlugOf } from '../places/picker';
+import { promoteWaitlistOf } from '../registrations/waitlist';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
@@ -405,7 +406,7 @@ export async function updateTable(
   slug: string,
   input: TableInput,
   { imagePath }: { imagePath?: string } = {},
-): Promise<{ eventId: string | null }> {
+): Promise<{ eventId: string | null; promoted: string[] }> {
   const table = await findForWrite(db, slug);
   authorizeEdit(actor, table);
   await checkTablePlace(db, input.placeId ?? null, table.placeId);
@@ -422,7 +423,7 @@ export async function updateTable(
 
   // A new image replaces the current one; without one, the GM may take the current one off.
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
-  const eventId = await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
     const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     authorizeEdit(actor, locked);
@@ -486,10 +487,15 @@ export async function updateTable(
         image: 'imagePath' in image ? image.imagePath : table.imagePath,
       } as unknown as Record<Audited, Fact>,
     );
-    if (!changed && !hasChanges(changes)) return null;
+    // More seats: the lista de espera moves up into them.
+    const promoted =
+      input.capacity > table.capacity
+        ? await promoteWaitlistOf(tx as unknown as AnyDb, table.id)
+        : [];
+    if (!changed && !hasChanges(changes)) return { eventId: null, promoted };
 
     // Players hear about what they see; anything else is written for the history alone.
-    return recordEvent(tx as unknown as AnyDb, {
+    const eventId = await recordEvent(tx as unknown as AnyDb, {
       type: changed ? 'TableUpdated' : 'TableEdited',
       actorId: actor!.id,
       payload: {
@@ -500,9 +506,10 @@ export async function updateTable(
         ...(table.status === 'draft' ? { draft: true as const } : {}),
       },
     });
+    return { eventId, promoted };
   });
 
-  return { eventId };
+  return result;
 }
 
 /**

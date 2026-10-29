@@ -571,6 +571,27 @@ export const registrations = pgTable(
   ],
 ).enableRLS();
 
+// The lista de espera of a full table (`use_waitlist`): who asked to be told, in order. When a seat
+// frees up the first in line takes it (or, at a table that approves each player, their request goes
+// to the GM) in the same transaction, and their row goes. Personal data: it goes with the account.
+export const tableWaitlist = pgTable(
+  'table_waitlist',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.tableId, t.playerId] }),
+    index('table_waitlist_order_idx').on(t.tableId, t.createdAt),
+    index('table_waitlist_player_idx').on(t.playerId),
+  ],
+).enableRLS();
+
 // What a player thought of the GM of a table they played at: tables are not rated, GMs are. A
 // rating is made once, after the GM confirmed the session happened, and is final: it is not edited,
 // and it outlives the seat (a player who leaves or is removed keeps what they said about a session

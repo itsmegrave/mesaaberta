@@ -393,7 +393,7 @@ it('allows editing inactive sources after a copy takes their released slot', asy
     await duplicateTable(test.db, actor, original.slug, input(), { now });
     await expect(
       updateTable(test.db, actor, original.slug, input({ title: 'Fonte corrigida' })),
-    ).resolves.toEqual({ eventId: expect.any(String) });
+    ).resolves.toEqual({ eventId: expect.any(String), promoted: [] });
     expect((await row(original.slug)).status).toBe(status);
   }
 });

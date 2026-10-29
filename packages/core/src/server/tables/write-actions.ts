@@ -77,10 +77,10 @@ export const tableWriteActions = {
       slug: string,
       { input, imagePath }: { input: TableInput; imagePath: string | null },
     ) => {
-      const { eventId } = await updateTable(db, actor, slug, input, {
+      const { eventId, promoted } = await updateTable(db, actor, slug, input, {
         imagePath: imagePath ?? undefined,
       });
-      return { eventIds: eventId ? [eventId] : [], slug };
+      return { eventIds: [...(eventId ? [eventId] : []), ...promoted], slug };
     },
   },
   disable: {

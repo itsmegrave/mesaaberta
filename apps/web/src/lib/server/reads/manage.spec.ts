@@ -10,6 +10,9 @@ vi.mock('#lib/server/invitations/api.js', () => ({
   listTableInvitations: vi.fn(async () => []),
 }));
 vi.mock('@mesaaberta/core/server/tables/manage', () => ({ loadManage: vi.fn() }));
+vi.mock('@mesaaberta/core/server/registrations/waitlist', () => ({
+  listWaitlist: vi.fn().mockResolvedValue([]),
+}));
 
 const gm = '00000000-0000-4000-8000-0000000000e1';
 const another = '00000000-0000-4000-8000-0000000000e2';

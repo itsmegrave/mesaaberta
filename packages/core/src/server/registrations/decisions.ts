@@ -9,6 +9,7 @@ import {
   leaveTable,
   removePlayer,
 } from './service';
+import { joinWaitlist, leaveWaitlist } from './waitlist';
 import { playerRatingSchema, ratingSchema } from '../../tables/rating';
 import { submitRating } from '../ratings/service';
 import { ratePlayer } from '../ratings/players';
@@ -34,6 +35,15 @@ export const registrationActions = {
   leave: {
     schema: z.object({}),
     apply: (db: AnyDb, actor: Actor | null, slug: string) => leaveTable(db, actor, slug),
+  },
+  // The lista de espera of a full table (`use_waitlist`, checked by the web Worker).
+  waitlist: {
+    schema: z.object({}),
+    apply: (db: AnyDb, actor: Actor | null, slug: string) => joinWaitlist(db, actor, slug),
+  },
+  unwaitlist: {
+    schema: z.object({}),
+    apply: (db: AnyDb, actor: Actor | null, slug: string) => leaveWaitlist(db, actor, slug),
   },
   approve: {
     schema: player,

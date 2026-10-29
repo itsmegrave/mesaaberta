@@ -14,6 +14,7 @@ import { reportSchema } from '@mesaaberta/core/moderation/reports';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
 import { followAction } from '#lib/server/follows/action.js';
 import { gmFollowState } from '#lib/server/follows/state.js';
+import { waitlistEnabled } from '#lib/server/waitlist/enabled.js';
 import type { Actions, PageServerLoad } from './$types';
 /** The table's id and its GM's for a product event, after the response; null when it is gone. */
 const tableIds = (locals: App.Locals, actorId: string, slug: string) =>
@@ -104,6 +105,16 @@ export const actions: Actions = {
   leave: (event) =>
     runRegistrationAction(event, tableActionSchema, {
       api: () => ({ action: 'leave', slug: event.params.slug, body: {} }),
+    }),
+  // "Entrar na lista de espera" on a full table, and leaving the line (`use_waitlist`).
+  waitlist: async (event) =>
+    runRegistrationAction(event, tableActionSchema, {
+      allow: await waitlistEnabled(event.locals, await event.locals.getProfile()),
+      api: () => ({ action: 'waitlist', slug: event.params.slug, body: {} }),
+    }),
+  unwaitlist: (event) =>
+    runRegistrationAction(event, tableActionSchema, {
+      api: () => ({ action: 'unwaitlist', slug: event.params.slug, body: {} }),
     }),
   approve: (event) =>
     runRegistrationAction(event, playerActionSchema, {

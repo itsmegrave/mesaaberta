@@ -15,6 +15,7 @@ import GameHouseIcon from '@iconify-svelte/game-icons/house';
 import GameTradeIcon from '@iconify-svelte/game-icons/trade';
 import GameBlackKnightHelmIcon from '@iconify-svelte/game-icons/black-knight-helm';
 import GameShopIcon from '@iconify-svelte/game-icons/shop';
+import GameHourglassIcon from '@iconify-svelte/game-icons/hourglass';
 import TicketPercentIcon from '@iconify-svelte/reicon/ticket-percent-filled';
 import SquarePenIcon from '@iconify-svelte/reicon/edit-filled';
 import MoonIcon from '@iconify-svelte/reicon/moon-filled';
@@ -148,6 +149,8 @@ export const ICONS = {
   'game-icons:tavern-sign': GameTavernSignIcon,
   'game-icons:black-knight-helm': GameBlackKnightHelmIcon,
   'game-icons:shop': GameShopIcon,
+  // Lista de espera.
+  'game-icons:hourglass': GameHourglassIcon,
   'square-pen': SquarePenIcon,
   moon: MoonIcon,
   sun: SunIcon,

@@ -406,6 +406,31 @@
         </MAAccordion>
       </section>
 
+      {#if data.waitlist.length > 0}
+        <section class={card} aria-labelledby="waitlist">
+          <div class="flex items-center gap-2">
+            <h2 id="waitlist" class="text-2xl font-semibold">{m.manage_waitlist_title()}</h2>
+            <span class="chip h-6 min-w-6 rounded-full bg-surface-wash px-2 text-xs font-bold"
+              >{data.waitlist.length}</span
+            >
+          </div>
+          <p class="mt-2 text-muted">
+            {table.joinMode === 'approval'
+              ? m.manage_waitlist_note_approval()
+              : m.manage_waitlist_note_auto()}
+          </p>
+          <ol class="mt-4 {rosterListClass}">
+            {#each data.waitlist as person, i (person.playerId)}
+              <RosterRow
+                username={person.username}
+                avatarUrl={person.avatarUrl}
+                subline={m.table_waitlist_place({ position: i + 1 })}
+              />
+            {/each}
+          </ol>
+        </section>
+      {/if}
+
       {#if data.canRatePlayers}
         <PlayerRatings next={here} goingOn={table.status !== 'concluded'} players={data.players} />
       {/if}

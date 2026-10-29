@@ -7,6 +7,7 @@ import type { readManage } from '@mesaaberta/core/server/reads/manage';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
 import { playerRatingsEnabled } from '../ratings/players';
+import { waitlistEnabled } from '../waitlist/enabled';
 
 // The GM's page for one table: requests, players, recent activity. Approving, declining and removing
 // post to the table page's own actions (see ActionForm), which send the browser back here. Read by
@@ -44,8 +45,11 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     const { imagePath, ...table } = manage.table;
     // Off (`use_player_ratings`): no rating card and no score on the requests.
     const ratings = profile ? await playerRatingsEnabled(locals, profile) : false;
+    // An api Worker from before the lista de espera answers without it.
+    const waitlist = manage.waitlist ?? [];
     return {
       ...manage,
+      waitlist: (await waitlistEnabled(locals, profile)) ? waitlist.map(withPicture) : [],
       playerRatings: ratings,
       canRatePlayers: ratings && manage.canRatePlayers,
       table: { ...table, imageUrl: imageUrl(supabaseUrl, imagePath) },

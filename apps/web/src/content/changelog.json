@@ -1,5 +1,18 @@
 [
   {
+    "date": "2026-10-29",
+    "title": "Lista de espera nas mesas cheias",
+    "summary": "Mesa cheia não é mais fim de linha: entre na lista de espera e a vaga vem até você.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Lista de espera",
+        "description": "Numa mesa cheia, toque em Entrar na lista de espera. Quando abrir uma vaga, a primeira pessoa da lista entra na mesa e recebe um aviso. Se quem mestra aprova cada pessoa, o pedido vai direto para aprovação.",
+        "href": "/tables"
+      }
+    ]
+  },
+  {
     "date": "2026-10-27",
     "title": "Onde jogar RPG presencial",
     "summary": "Um diretório de lojas, clubes e espaços para jogar RPG, que qualquer pessoa pode indicar.",

@@ -79,6 +79,9 @@ export const NOTIFICATION_KINDS = {
   player_joined: { category: 'registration', icon: 'user-plus' },
   player_left: { category: 'registration', icon: 'user-minus' },
   player_removed: { category: 'registration', icon: 'user-minus' },
+  // A seat freed up and the first in the lista de espera moved up: seated, or asked the GM for it.
+  waitlist_seated: { category: 'registration', icon: 'user-check' },
+  waitlist_requested: { category: 'registration', icon: 'user-plus' },
   rating_received: { category: 'rating', icon: 'star' },
   rating_prompt: { category: 'rating', icon: 'star' },
   badge_earned: { category: 'achievements', icon: 'sparkles' },
