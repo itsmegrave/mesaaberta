@@ -400,7 +400,7 @@
   "table_kind_campaign": "Campanha",
   "table_kind_one_shot": "One-shot",
   "table_kind_adventure": "Aventura",
-  "table_kind_open": "Westmarch",
+  "table_kind_open": "Campanha aberta",
   "table_seats_left": [
     {
       "declarations": ["input count"],
@@ -434,8 +434,8 @@
       "declarations": ["input count"],
       "selectors": ["count"],
       "match": {
-        "count=1": "Westmarch: 1 pessoa joga cada sessão",
-        "count=*": "Westmarch: até {count} pessoas jogam cada sessão"
+        "count=1": "Campanha aberta: 1 pessoa joga cada sessão",
+        "count=*": "Campanha aberta: até {count} pessoas jogam cada sessão"
       }
     }
   ],
@@ -485,7 +485,7 @@
   "form_kind_one_shot": "One-shot (uma sessão)",
   "form_kind_campaign": "Campanha (várias sessões)",
   "form_kind_adventure": "Aventura (várias sessões, sem recorrência fixa)",
-  "form_kind_open": "Westmarch (elenco grande, cada sessão com parte dele)",
+  "form_kind_open": "Campanha aberta (elenco grande, cada sessão com parte dele)",
   "form_capacity": "Vagas",
   "form_roster": "Tamanho do elenco",
   "form_session_size": "Pessoas por sessão",
