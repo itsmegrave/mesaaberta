@@ -52,8 +52,8 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
   // The api reads every flag-gated part; the rollouts are by the profile shown, so everyone sees
   // the same strip on a given profile. Follows are targeted by the viewer.
   const viewer = user ? await locals.getProfile().catch(() => null) : null;
-  const [badgesOn, participantOn, favoritesOn, tableRoleOn, followsOn, linksOn] = await Promise.all(
-    [
+  const [badgesOn, participantOn, favoritesOn, tableRoleOn, followsOn, linksOn, reviewOn] =
+    await Promise.all([
       locals.flags.isEnabled('use_badges', subject),
       locals.flags.isEnabled('use_player_ratings', subject),
       locals.flags.isEnabled('use_signed_in_home', subject),
@@ -62,8 +62,8 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
       followsEnabled(locals, viewer),
       // "Mestra em" and "Cuida de".
       directoryLinksEnabled(locals),
-    ],
-  );
+      locals.flags.isEnabled('use_year_review', subject),
+    ]);
   // "Ver como visitante": the owner sees the page as anyone else does.
   const previewing = data.isOwner && url.searchParams.get('as') === 'visitor';
   // Seguir for anyone else; for the owner, how many follow them (shown to nobody else).
@@ -86,6 +86,8 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     follow,
     followers: previewing ? null : followers,
     isOwner: data.isOwner && !previewing,
+    // The owner's Retrospectiva of this year (`use_year_review`).
+    reviewYear: reviewOn && data.isOwner && !previewing ? new Date().getUTCFullYear() : null,
     previewing,
     canonical: indexingPolicy(url, siteOf(locals.env, locals.log).APP_ORIGIN).canonical!,
   };

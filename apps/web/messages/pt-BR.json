@@ -253,7 +253,7 @@
   "home_carousel_more_caption": "Todas as mesas abertas",
   "home_carousel_previous": "Mesas anteriores",
   "home_carousel_next": "Próximas mesas",
-  "players_title": "Para quem joga",
+  "players_title": "Procuro mesa",
   "players_text": "Escolha uma mesa pelo sistema, pela plataforma e pelas tags, e veja o horário e quantas vagas restam. Entre na hora ou peça a vaga, conforme a mesa, e acompanhe tudo na sua conta. O convite chega no calendário. Depois da sessão, você avalia a mestragem.",
   "gm_title": "Para quem mestra",
   "gm_text": "Abra uma mesa em poucos minutos: escolha o sistema e a plataforma, defina horário e vagas, e decida se as pessoas entram direto ou com a sua aprovação. Você vê quem entrou, remove quem precisar e acompanha as avaliações.",
@@ -2160,7 +2160,11 @@
     {
       "declarations": ["input count"],
       "selectors": ["count"],
-      "match": { "count=0": "Nenhum lugar", "count=1": "1 lugar", "count=*": "{count} lugares" }
+      "match": {
+        "count=0": "Nenhum lugar",
+        "count=1": "1 lugar",
+        "count=*": "{count} lugares"
+      }
     }
   ],
   "partner_card_gms": "Mestra: {people}",
@@ -2853,7 +2857,6 @@
   "gms_sort_tables": "Mais mesas mestradas",
   "gms_sort_name": "Nome (A–Z)",
   "players_crumb": "Procuro mesa",
-  "players_title": "Procuro mesa",
   "players_lede": "Pessoas procurando uma mesa. Se você mestra, encontre quem combina com a sua e convide pela página de gerenciar a mesa, com o @usuário.",
   "players_me_title": "Você está procurando mesa?",
   "players_me_hint": "Marque para aparecer aqui por 60 dias. Quem mestra pode te convidar para uma mesa.",
@@ -3283,7 +3286,10 @@
     {
       "declarations": ["input count"],
       "selectors": ["count"],
-      "match": { "count=1": "1 mesa aqui", "count=*": "{count} mesas aqui" }
+      "match": {
+        "count=1": "1 mesa aqui",
+        "count=*": "{count} mesas aqui"
+      }
     }
   ],
   "place_reviewed": "Cadastrado por quem participa da comunidade e conferido pela equipe.",
@@ -3510,7 +3516,11 @@
     {
       "declarations": ["input count"],
       "selectors": ["count"],
-      "match": { "count=0": "Nenhum pedido", "count=1": "1 pedido", "count=*": "{count} pedidos" }
+      "match": {
+        "count=0": "Nenhum pedido",
+        "count=1": "1 pedido",
+        "count=*": "{count} pedidos"
+      }
     }
   ],
   "admin_links_empty": "Nenhum pedido aqui.",
@@ -3590,5 +3600,101 @@
         "count=*": "{count} tags, geradas a partir do endereço, do tipo e das comodidades"
       }
     }
-  ]
+  ],
+  "year_review_link": "Retrospectiva {year}",
+  "year_review_title": "Retrospectiva {year}",
+  "year_review_heading": "O {year} de {who} nas mesas",
+  "year_review_heading_empty": "{who} ainda não fechou uma mesa este ano",
+  "year_review_empty_own": "Quando uma mesa sua for concluída, ela aparece aqui.",
+  "year_review_empty": "Volte depois: as mesas aparecem aqui quando são concluídas.",
+  "year_review_find_table": "Encontre uma mesa",
+  "year_review_played": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "mesas jogadas",
+        "count=1": "mesa jogada",
+        "count=*": "mesas jogadas"
+      }
+    }
+  ],
+  "year_review_ran": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "mesas mestradas",
+        "count=1": "mesa mestrada",
+        "count=*": "mesas mestradas"
+      }
+    }
+  ],
+  "year_review_companions": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "pessoas na mesa",
+        "count=1": "pessoa na mesa",
+        "count=*": "pessoas na mesa"
+      }
+    }
+  ],
+  "year_review_badges_tile": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "conquistas",
+        "count=1": "conquista",
+        "count=*": "conquistas"
+      }
+    }
+  ],
+  "year_review_systems": "Sistemas do ano",
+  "year_review_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "nenhuma mesa",
+        "count=1": "1 mesa",
+        "count=*": "{count} mesas"
+      }
+    }
+  ],
+  "year_review_highlights": "Destaques",
+  "year_review_busiest_month": "O mês com mais mesas foi {month}.",
+  "year_review_top_gm_before": "Quem mais mestrou para você:",
+  "year_review_top_gm_after": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "em nenhuma mesa.",
+        "count=1": "em 1 mesa.",
+        "count=*": "em {count} mesas."
+      }
+    }
+  ],
+  "year_review_badges": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=0": "Nenhuma conquista nova.",
+        "count=1": "1 conquista nova.",
+        "count=*": "{count} conquistas novas."
+      }
+    }
+  ],
+  "year_review_public": "Sua Retrospectiva é pública",
+  "year_review_private": "Só você vê sua Retrospectiva",
+  "year_review_public_hint": "Quem tiver o link pode abrir. Mostra só números e sistemas, nunca as mesas.",
+  "year_review_private_hint": "Deixe pública para compartilhar o link. Ela mostra só números e sistemas, nunca as mesas.",
+  "year_review_make_public": "Deixar pública",
+  "year_review_make_private": "Deixar só para mim",
+  "year_review_made_public": "Pronto, sua Retrospectiva é pública.",
+  "year_review_made_private": "Pronto, só você vê sua Retrospectiva."
 }

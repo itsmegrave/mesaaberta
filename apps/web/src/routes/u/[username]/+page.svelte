@@ -131,6 +131,15 @@
               class="btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold"
               >{m.public_profile_edit()}</a
             >
+            {#if data.reviewYear}
+              <a
+                href="{path}/review/{data.reviewYear}"
+                class="{buttonClass('secondary')} h-11 gap-2 px-5 font-semibold"
+                ><Icon name="game-icons:podium" size={20} />{m.year_review_link({
+                  year: String(data.reviewYear),
+                })}</a
+              >
+            {/if}
           {:else if data.follow}
             <FollowButton
               profileId={data.follow.profileId}

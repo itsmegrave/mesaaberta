@@ -547,6 +547,13 @@
       "when": 1793277342432,
       "tag": "0077_open_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1793279618722,
+      "tag": "0078_year_review",
+      "breakpoints": true
     }
   ]
 }
