@@ -1,3 +1,4 @@
+import { openTablesEnabled } from './open-enabled';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 import { redirect } from '@sveltejs/kit';
@@ -75,6 +76,9 @@ export async function handleTableForm(
   let asDraft: boolean;
   try {
     await guard(draft, data);
+    // A westmarch while the kind is off: the form did not offer it.
+    if (form.data.kind === 'open' && !(await openTablesEnabled(locals)))
+      throw new Invalid('kind', 'invalid');
     const image = data.get('image');
     let imagePath: string | undefined;
 

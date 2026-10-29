@@ -329,7 +329,7 @@ describe('player:rate', () => {
   const facts = (
     over: Partial<{
       tableStatus: TableStatus;
-      kind: 'campaign' | 'one_shot' | 'adventure';
+      kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
       markedPresent: boolean;
     }> = {},
   ) => ({

@@ -317,7 +317,7 @@ export async function readHome(
       .filter((table) =>
         playerRatingOpen({
           tableStatus: table.status,
-          kind: table.kind as 'campaign' | 'one_shot' | 'adventure',
+          kind: table.kind as 'campaign' | 'one_shot' | 'adventure' | 'open',
         }),
       )
       .map(({ slug, title, count }) => ({ kind: 'rate_players' as const, slug, title, count })),

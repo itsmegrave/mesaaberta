@@ -352,13 +352,26 @@
               total: table.capacity,
             })}
           </p>
-          <span class="md:hidden">
-            <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} />
-          </span>
+          {#if !table.sessionSize}
+            <span class="md:hidden">
+              <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} />
+            </span>
+          {/if}
         </div>
-        <p class="mt-3 max-md:hidden">
-          <SeatDots taken={table.capacity - table.seatsLeft} capacity={table.capacity} size={34} />
-        </p>
+        {#if table.sessionSize}
+          <!-- A westmarch: a roster too long for dots, and how many play each session. -->
+          <p class="mt-2 text-sm font-semibold text-muted">
+            {m.table_open_session_size({ count: table.sessionSize })}
+          </p>
+        {:else}
+          <p class="mt-3 max-md:hidden">
+            <SeatDots
+              taken={table.capacity - table.seatsLeft}
+              capacity={table.capacity}
+              size={34}
+            />
+          </p>
+        {/if}
         {#if table.minPlayers}
           <MinPlayersLine minPlayers={table.minPlayers} {taken} class="mt-3 max-md:hidden" />
         {/if}

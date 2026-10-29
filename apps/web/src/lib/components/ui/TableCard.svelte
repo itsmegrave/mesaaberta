@@ -18,7 +18,7 @@
   type Table = {
     slug: string;
     title: string;
-    kind: 'campaign' | 'one_shot' | 'adventure';
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
     /** An adventure's planned sessions, shown with its kind. */
     plannedSessions?: number | null;
     system: { name: string };

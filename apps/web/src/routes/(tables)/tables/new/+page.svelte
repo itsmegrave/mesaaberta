@@ -78,5 +78,6 @@
     gmName={data.account?.username ?? undefined}
     places={data.places}
     safety={data.safety}
+    openTables={data.openTables}
   />
 </section>

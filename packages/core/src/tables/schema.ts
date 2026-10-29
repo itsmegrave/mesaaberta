@@ -23,6 +23,8 @@ export const TABLE_LIMITS = {
   extraInfo: 2000,
   welcomeMessage: WELCOME_MESSAGE_MAX,
   capacity: { min: 1, max: 30 },
+  // A westmarch (an open table): its roster can be larger than any one session.
+  roster: { max: 100 },
   // Mirror the length checks on game_tables.
   locationArea: 120,
   // Platforms or tags a table can pick, each.
@@ -52,6 +54,9 @@ const isMinPlayers = (value: string) =>
   value === '' ||
   (/^\d{1,3}$/.test(value) && Number(value) >= 1 && Number(value) <= TABLE_LIMITS.capacity.max);
 
+/** Blank, or how many play each session of a westmarch: a whole number up to the largest table. */
+const isSessionSize = isMinPlayers;
+
 /** Blank, or a whole number of sessions an adventure can plan. */
 const isPlannedSessions = (value: string) =>
   value === '' ||
@@ -78,8 +83,11 @@ export const tableFormSchema = z
       .transform(cleanWelcomeMessage)
       .pipe(richText(TABLE_LIMITS.welcomeMessage))
       .default(''),
-    kind: z.enum(['campaign', 'one_shot', 'adventure']),
-    capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.capacity.max),
+    kind: z.enum(['campaign', 'one_shot', 'adventure', 'open']),
+    // The seats; on a westmarch, the roster (see `superRefine`).
+    capacity: whole(TABLE_LIMITS.capacity.min, TABLE_LIMITS.roster.max),
+    // Required on a westmarch (how many play each session), ignored on the other kinds.
+    sessionSize: z.string().trim().refine(isSessionSize, 'invalid').default(''),
     // Optional: blank means the table has no minimum. A text field, like the CEP, so "empty" is not 0.
     minPlayers: z.string().trim().refine(isMinPlayers, 'invalid').default(''),
     // Required on an adventure, ignored on the other kinds. Text, like `minPlayers`.
@@ -124,14 +132,26 @@ export const tableFormSchema = z
     ) {
       ctx.addIssue({ code: 'custom', message: 'required', path: ['locationArea'] });
     }
-    // The minimum cannot be more than the seats there are.
-    if (value.minPlayers !== '' && Number(value.minPlayers) > value.capacity) {
+    const open = value.kind === 'open';
+    // Only a westmarch's roster goes past the largest table.
+    if (!open && value.capacity > TABLE_LIMITS.capacity.max) {
+      ctx.addIssue({ code: 'custom', message: 'too_big', path: ['capacity'] });
+    }
+    // The minimum cannot be more than the seats there are (a session's, on a westmarch).
+    const seats = open && value.sessionSize !== '' ? Number(value.sessionSize) : value.capacity;
+    if (value.minPlayers !== '' && Number(value.minPlayers) > seats) {
       ctx.addIssue({ code: 'custom', message: 'above_capacity', path: ['minPlayers'] });
+    }
+    if (open && value.sessionSize === '') {
+      ctx.addIssue({ code: 'custom', message: 'required', path: ['sessionSize'] });
+    } else if (open && Number(value.sessionSize) > value.capacity) {
+      ctx.addIssue({ code: 'custom', message: 'above_capacity', path: ['sessionSize'] });
     }
     if (value.kind === 'adventure' && value.plannedSessions === '') {
       ctx.addIssue({ code: 'custom', message: 'required', path: ['plannedSessions'] });
     }
-    if (value.kind !== 'campaign') return;
+    // A campaign repeats; a westmarch may, or the GM sets each next date.
+    if (value.kind !== 'campaign' && !(open && value.repeat)) return;
 
     if (!(value.repeat in RULES)) {
       ctx.addIssue({ code: 'custom', message: 'required', path: ['repeat'] });
@@ -149,8 +169,11 @@ export type TableInput = {
   description: string;
   extraInfo: string | null;
   welcomeMessage: string | null;
-  kind: 'campaign' | 'one_shot' | 'adventure';
+  kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+  /** The seats; on a westmarch, the roster. */
   capacity: number;
+  /** How many play each session of a westmarch; null for the other kinds. */
+  sessionSize?: number | null;
   /** The fewest players the GM wants, or null for no minimum. */
   minPlayers: number | null;
   /** How many sessions an adventure plans; null for the other kinds. */
@@ -206,13 +229,15 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     postalCode,
     minPlayers,
     plannedSessions,
+    sessionSize,
     // Resolved to `placeId` on the server (`withPlace`), never stored as such.
     placeSlug: _placeSlug,
     safetyTools,
     contentRating,
     ...rest
   } = values;
-  const campaign = rest.kind === 'campaign';
+  // A westmarch repeats when the GM picked a rhythm.
+  const campaign = rest.kind === 'campaign' || (rest.kind === 'open' && repeat in RULES);
   const inPerson = rest.modality === 'in_person';
 
   return {
@@ -220,6 +245,7 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     minPlayers: minPlayers === '' ? null : Number(minPlayers),
     plannedSessions:
       rest.kind === 'adventure' && plannedSessions !== '' ? Number(plannedSessions) : null,
+    sessionSize: rest.kind === 'open' && sessionSize !== '' ? Number(sessionSize) : null,
     durationMinutes: Math.round(durationHours * 60),
     locationArea: inPerson ? locationArea || null : null,
     postalCode: inPerson ? normalizeCep(postalCode) : null,
@@ -244,46 +270,59 @@ const nullable = (max: number) => z.string().max(max).nullable();
  * `tableFormSchema` and resolved (`toTableInput`, `withLocation`), checked again for shape and
  * limits so the api never trusts the sender's validation.
  */
-export const tableInputSchema = z.object({
-  systemSlug: z.string().min(1).max(200),
-  title: z.string().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
-  description: z.string().max(20_000),
-  extraInfo: nullable(20_000),
-  welcomeMessage: nullable(20_000),
-  kind: z.enum(['campaign', 'one_shot', 'adventure']),
-  capacity: z.number().int().min(TABLE_LIMITS.capacity.min).max(TABLE_LIMITS.capacity.max),
-  minPlayers: z.number().int().min(1).max(TABLE_LIMITS.capacity.max).nullable(),
-  // Defaults to null so a web Worker that does not send it yet still passes.
-  plannedSessions: z
-    .number()
-    .int()
-    .min(TABLE_LIMITS.plannedSessions.min)
-    .max(TABLE_LIMITS.plannedSessions.max)
-    .nullable()
-    .default(null),
-  startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
-  timezone: z.string().refine(isTimeZone, 'invalid'),
-  durationMinutes: z
-    .number()
-    .int()
-    .min(TABLE_LIMITS.durationHours.min * 60)
-    .max(TABLE_LIMITS.durationHours.max * 60),
-  recurrence: z.enum([RULES.weekly, RULES.biweekly]).nullable(),
-  untilLocalDate: z.string().refine(isLocalDate, 'invalid').nullable(),
-  joinMode: z.enum(['auto', 'approval']),
-  modality: z.enum(['online', 'in_person']),
-  locationArea: nullable(TABLE_LIMITS.locationArea),
-  joinDetails: nullable(20_000),
-  platforms: z.array(z.string().min(1).max(200)).max(TABLE_LIMITS.catalogPicks),
-  tags: z.array(z.string().min(1).max(200)).max(TABLE_LIMITS.catalogPicks),
-  postalCode: nullable(8),
-  locationNeighbourhood: nullable(200),
-  locationCity: nullable(200),
-  locationState: nullable(100),
-  // Defaults to null so a web Worker that does not send it yet still passes.
-  placeId: z.uuid().nullable().default(null),
-  // Default to none so a web Worker that does not send them yet still passes.
-  safetyTools: z.array(z.enum(SAFETY_TOOLS)).max(SAFETY_TOOLS.length).default([]),
-  contentRating: z.enum(CONTENT_RATINGS).nullable().default(null),
-  removeImage: z.boolean(),
-}) satisfies z.ZodType<TableInput>;
+export const tableInputSchema = z
+  .object({
+    systemSlug: z.string().min(1).max(200),
+    title: z.string().min(TABLE_LIMITS.title.min).max(TABLE_LIMITS.title.max),
+    description: z.string().max(20_000),
+    extraInfo: nullable(20_000),
+    welcomeMessage: nullable(20_000),
+    kind: z.enum(['campaign', 'one_shot', 'adventure', 'open']),
+    capacity: z.number().int().min(TABLE_LIMITS.capacity.min).max(TABLE_LIMITS.roster.max),
+    // Defaults to null so a web Worker that does not send it yet still passes.
+    sessionSize: z.number().int().min(1).max(TABLE_LIMITS.capacity.max).nullable().default(null),
+    minPlayers: z.number().int().min(1).max(TABLE_LIMITS.capacity.max).nullable(),
+    // Defaults to null so a web Worker that does not send it yet still passes.
+    plannedSessions: z
+      .number()
+      .int()
+      .min(TABLE_LIMITS.plannedSessions.min)
+      .max(TABLE_LIMITS.plannedSessions.max)
+      .nullable()
+      .default(null),
+    startsAtLocal: z.string().refine(isLocalDateTime, 'invalid'),
+    timezone: z.string().refine(isTimeZone, 'invalid'),
+    durationMinutes: z
+      .number()
+      .int()
+      .min(TABLE_LIMITS.durationHours.min * 60)
+      .max(TABLE_LIMITS.durationHours.max * 60),
+    recurrence: z.enum([RULES.weekly, RULES.biweekly]).nullable(),
+    untilLocalDate: z.string().refine(isLocalDate, 'invalid').nullable(),
+    joinMode: z.enum(['auto', 'approval']),
+    modality: z.enum(['online', 'in_person']),
+    locationArea: nullable(TABLE_LIMITS.locationArea),
+    joinDetails: nullable(20_000),
+    platforms: z.array(z.string().min(1).max(200)).max(TABLE_LIMITS.catalogPicks),
+    tags: z.array(z.string().min(1).max(200)).max(TABLE_LIMITS.catalogPicks),
+    postalCode: nullable(8),
+    locationNeighbourhood: nullable(200),
+    locationCity: nullable(200),
+    locationState: nullable(100),
+    // Defaults to null so a web Worker that does not send it yet still passes.
+    placeId: z.uuid().nullable().default(null),
+    // Default to none so a web Worker that does not send them yet still passes.
+    safetyTools: z.array(z.enum(SAFETY_TOOLS)).max(SAFETY_TOOLS.length).default([]),
+    contentRating: z.enum(CONTENT_RATINGS).nullable().default(null),
+    removeImage: z.boolean(),
+  })
+  // Only a westmarch's roster goes past the largest table, and it says how many play a session.
+  .refine((input) => input.kind === 'open' || input.capacity <= TABLE_LIMITS.capacity.max, {
+    message: 'too_big',
+    path: ['capacity'],
+  })
+  .refine(
+    (input) =>
+      input.kind !== 'open' || (input.sessionSize !== null && input.sessionSize <= input.capacity),
+    { message: 'invalid', path: ['sessionSize'] },
+  ) satisfies z.ZodType<TableInput>;

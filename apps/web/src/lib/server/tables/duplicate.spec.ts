@@ -44,6 +44,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   plannedSessions: null,
   safetyTools: [],
   contentRating: null,
+  sessionSize: null,
   startsAtLocal: '2026-10-10T19:00',
   timezone: 'America/Sao_Paulo',
   durationMinutes: 240,
