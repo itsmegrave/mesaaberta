@@ -39,6 +39,11 @@
         "title": "Lugares parceiros",
         "description": "Quem cuida de um lugar e de um parceiro pode ligar os dois. Depois da aprovação da equipe, o lugar mostra o selo de parceiro e aparece na página do parceiro.",
         "href": "/places"
+      },
+      {
+        "kind": "fixed",
+        "title": "Conquistas depois da mesa",
+        "description": "As conquistas voltam a chegar quando quem mestra conclui uma mesa."
       }
     ]
   },
