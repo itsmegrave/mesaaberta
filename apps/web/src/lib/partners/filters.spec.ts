@@ -32,7 +32,9 @@ describe('readPartnerFilters', () => {
 });
 
 describe('partnerAdminFilters', () => {
-  it('opens on what waits for review', () => {
-    expect(partnerAdminFilters(new URLSearchParams('')).status).toBe('pending');
+  it('opens on every partner', () => {
+    expect(partnerAdminFilters(new URLSearchParams('')).status).toBe('all');
+    expect(partnerAdminFilters(new URLSearchParams('status=nope')).status).toBe('all');
+    expect(partnerAdminFilters(new URLSearchParams('status=pending')).status).toBe('pending');
   });
 });

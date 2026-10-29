@@ -17,10 +17,10 @@ export function partnerAdminFilters(params: URLSearchParams) {
   const backlink = params.get('backlink') ?? '';
   const type = params.get('type');
   return {
-    // The list opens on what waits for an admin.
+    // The list opens on every partner; "Aguardando" narrows it to what waits for an admin.
     status: (PARTNER_ADMIN_STATUSES as readonly string[]).includes(status)
       ? (status as PartnerAdminStatus)
-      : ('pending' as const),
+      : ('all' as const),
     backlink: (PARTNER_BACKLINK_FILTERS as readonly string[]).includes(backlink)
       ? (backlink as PartnerBacklinkFilter)
       : ('any' as const),
