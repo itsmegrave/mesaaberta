@@ -161,8 +161,12 @@ test('admin tables filter and display every real lifecycle status', async ({ pag
     // On a phone the status filter is in the "Filtros" sheet.
     if (isMobile && !(await segment(page, label).isVisible()))
       await page.getByRole('button', { name: /^Filtros/ }).click();
-    await segment(page, label).check({ force: true });
-    await expect(page).toHaveURL(new RegExp(`status=${status}`));
+    // A search sent before hydration reloads the page; a pick made while it is still hydrating
+    // is reset by it, so it is made again until the list's address takes it.
+    await expect(async () => {
+      await segment(page, label).check({ force: true });
+      await expect(page).toHaveURL(new RegExp(`status=${status}`), { timeout: 2_000 });
+    }).toPass();
     await expect(rows).toHaveCount(1);
     await expect(rows).toContainText(`${prefix}-${status}`);
     await expect(rows).toContainText(label);
