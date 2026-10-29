@@ -169,7 +169,7 @@
     search={{ value: list.query, label: m.admin_partners_search_label(), maxlength: 100 }}
     filterKeys={['q', 'status', 'type', 'backlink', 'page']}
     filtered={!!list.query ||
-      list.status !== 'pending' ||
+      list.status !== 'all' ||
       list.type !== null ||
       list.backlink !== 'any'}
     empty={m.admin_partners_empty()}
@@ -198,7 +198,7 @@
         label={m.admin_partners_status()}
         options={statusOptions}
         value={list.status}
-        fallback="pending"
+        fallback="all"
       />
       <SegmentedFilter
         name="backlink"
