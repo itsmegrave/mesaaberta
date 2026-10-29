@@ -5,6 +5,13 @@ import { WELCOME_MESSAGE_MAX, cleanWelcomeMessage } from '@mesaaberta/core/table
 import { richText } from '../text/rich-schema';
 import { normalizeCep } from '../location/cep';
 import { isTimeZone } from '../time/timezone';
+import {
+  CONTENT_RATINGS,
+  SAFETY_TOOLS,
+  orderedSafetyTools,
+  type ContentRating,
+  type SafetyTool,
+} from './safety';
 
 // Shared by the server (which decides) and the form (which could show the same limits).
 // Zod's JIT uses `Function`, which strict CSP blocks (and reports even when Zod catches the error).
@@ -100,6 +107,10 @@ export const tableFormSchema = z
       .default(''),
     // An "Onde jogar" place picked for an in-person table (its slug), or blank for "Outro lugar".
     placeSlug: z.string().trim().max(200).default(''),
+    // Checkboxes, like the platforms; unknown keys are refused.
+    safetyTools: z.array(z.enum(SAFETY_TOOLS)).max(SAFETY_TOOLS.length).default([]),
+    // Blank for "not said".
+    contentRating: z.union([z.literal(''), z.enum(CONTENT_RATINGS)]).default(''),
     // Editing: take the current image off (a new image wins over it).
     removeImage: z.boolean().default(false),
   })
@@ -172,6 +183,10 @@ export type TableInput = {
    * copies; null for "Outro lugar" and online.
    */
   placeId?: string | null;
+  /** Keys of `SAFETY_TOOLS`, in its order. */
+  safetyTools?: SafetyTool[];
+  /** ClassInd-style rating, or null when not said. */
+  contentRating?: ContentRating | null;
   /** Editing: take the current image off, unless a new one is sent. */
   removeImage: boolean;
 };
@@ -193,6 +208,8 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     plannedSessions,
     // Resolved to `placeId` on the server (`withPlace`), never stored as such.
     placeSlug: _placeSlug,
+    safetyTools,
+    contentRating,
     ...rest
   } = values;
   const campaign = rest.kind === 'campaign';
@@ -215,6 +232,8 @@ export function toTableInput(values: z.output<typeof tableFormSchema>): TableInp
     welcomeMessage: welcomeMessage || null,
     recurrence: campaign ? RULES[repeat as keyof typeof RULES] : null,
     untilLocalDate: campaign && until ? until : null,
+    safetyTools: orderedSafetyTools(safetyTools),
+    contentRating: contentRating || null,
   };
 }
 
@@ -263,5 +282,8 @@ export const tableInputSchema = z.object({
   locationState: nullable(100),
   // Defaults to null so a web Worker that does not send it yet still passes.
   placeId: z.uuid().nullable().default(null),
+  // Default to none so a web Worker that does not send them yet still passes.
+  safetyTools: z.array(z.enum(SAFETY_TOOLS)).max(SAFETY_TOOLS.length).default([]),
+  contentRating: z.enum(CONTENT_RATINGS).nullable().default(null),
   removeImage: z.boolean(),
 }) satisfies z.ZodType<TableInput>;

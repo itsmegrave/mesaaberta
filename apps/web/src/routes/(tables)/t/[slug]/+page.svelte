@@ -42,6 +42,8 @@
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { placeArea, placeKindLabels, placeMapHref } from '#lib/places/labels.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { contentRatingLabel, safetyToolLabel } from '#lib/tables/safety-labels.js';
+  import { orderedSafetyTools, type ContentRating } from '@mesaaberta/core/tables/safety';
   import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
   let { data: serverData, form } = $props();
@@ -277,6 +279,24 @@
               <span
                 class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
                 >{platform.name}</span
+              >
+            {/each}
+          </SummaryRow>
+        {/if}
+        {#if table.contentRating}
+          <SummaryRow label={m.table_content_rating()}>
+            <span
+              class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+              >{contentRatingLabel(table.contentRating as ContentRating)}</span
+            >
+          </SummaryRow>
+        {/if}
+        {#if table.safetyTools.length > 0}
+          <SummaryRow label={m.table_safety_tools()} class="flex flex-wrap gap-1">
+            {#each orderedSafetyTools(table.safetyTools) as tool (tool)}
+              <span
+                class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+                >{safetyToolLabel(tool)}</span
               >
             {/each}
           </SummaryRow>

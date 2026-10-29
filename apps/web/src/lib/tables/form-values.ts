@@ -31,6 +31,8 @@ export const NEW_TABLE_VALUES: TableFormValues = {
   placeSlug: '',
   platforms: [],
   tags: [],
+  safetyTools: [],
+  contentRating: '',
   removeImage: false,
 };
 

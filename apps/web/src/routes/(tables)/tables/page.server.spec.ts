@@ -40,6 +40,7 @@ beforeAll(async () => {
 afterAll(() => test.close());
 
 const tracked = vi.fn();
+let safetyOn = false;
 const viewer = '00000000-0000-4000-8000-000000000001';
 const event = (search = '', referer = '') =>
   ({
@@ -51,6 +52,7 @@ const event = (search = '', referer = '') =>
       track: tracked,
       getUser: async () => ({ id: viewer }),
       getProfile: async () => null,
+      flags: { isEnabled: async () => safetyOn },
     },
     request: new Request('https://x.test/tables', { headers: referer ? { referer } : {} }),
     url: new URL(`https://x.test/t${search}`),
@@ -78,6 +80,23 @@ describe('the table list load', () => {
     expect(slugs(data.systems)).toEqual(['d', 'c', 'a', 'b', 'e']);
     expect(slugs(data.tables)).toEqual(['t1', 't2', 't3']);
     expect(data.tables[0]).not.toHaveProperty('gmId');
+  });
+
+  it('keeps 18+ tables out until asked for, while the safety fields are on', async () => {
+    vi.mocked(listUpcomingTables).mockResolvedValue([
+      table('t1', 'd'),
+      { ...table('t2', 'd'), contentRating: '18' } as Table,
+    ]);
+    safetyOn = true;
+    try {
+      const hidden = await run(event());
+      expect(slugs(hidden.tables)).toEqual(['t1']);
+      expect(hidden.adult).toEqual({ count: 1, shown: false });
+      expect(slugs((await run(event('?adult=1'))).tables)).toEqual(['t1', 't2']);
+    } finally {
+      safetyOn = false;
+    }
+    expect(slugs((await run(event())).tables)).toEqual(['t1', 't2']);
   });
 
   it('narrows the list to the chosen system', async () => {

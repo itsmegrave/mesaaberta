@@ -6,6 +6,7 @@ import { readFromApi } from '../api-read';
 import { badgesEnabled } from '../badges/enabled';
 import { directoryEnabled } from '../directories/flags';
 import { waitlistEnabled } from '../waitlist/enabled';
+import { tableSafetyEnabled } from '../tables/safety-enabled';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const user = await locals.getUser();
@@ -45,7 +46,14 @@ export const read = async ({ locals, params }: RequestEvent) => {
     // Signed-in people only, like the rest of the badge system (`use_badges` targets a person).
     badges: badges && profile && (await badgesEnabled(locals, profile)) ? badges : null,
     gm: gmProfile && { avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile) },
-    table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
+    table: {
+      ...table,
+      imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
+      // Off (`use_table_safety`), or an api Worker from before them: nothing to show.
+      ...((await tableSafetyEnabled(locals, profile))
+        ? { safetyTools: table.safetyTools ?? [], contentRating: table.contentRating ?? null }
+        : { safetyTools: [] as string[], contentRating: null }),
+    },
     signedIn,
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.

@@ -15,6 +15,9 @@
   import FormField from '#lib/components/ui/FormField.svelte';
   import RichTextField from '#lib/components/ui/RichTextField.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
+  import CheckboxPills from '#lib/components/ui/CheckboxPills.svelte';
+  import { CONTENT_RATINGS, SAFETY_TOOLS } from '@mesaaberta/core/tables/safety';
+  import { contentRatingLabel, safetyToolLabel } from '#lib/tables/safety-labels.js';
   import SegmentedChoice from '#lib/components/ui/SegmentedChoice.svelte';
   import SeatSlider from '#lib/components/ui/SeatSlider.svelte';
   import DateTimeField from '#lib/components/ui/DateTimeField.svelte';
@@ -57,6 +60,8 @@
     calendarNote?: boolean;
     /** The "Onde jogar" places an in-person table can pick; null while the places are off. */
     places?: PlaceOption[] | null;
+    /** Safety tools and the content rating (`use_table_safety`). Off, their values ride along unseen. */
+    safety?: boolean;
   };
 
   let {
@@ -75,6 +80,7 @@
     manageHref,
     calendarNote = false,
     places = null,
+    safety = false,
   }: Props = $props();
   // svelte-ignore state_referenced_locally
   const { draft } = controller;
@@ -244,6 +250,44 @@
         <FieldError id={group.field} message={err(group.field)} />
       </div>
     {/each}
+    {#if safety}
+      <CheckboxPills
+        name="safetyTools"
+        legend={m.form_safety_tools()}
+        hint={m.form_safety_tools_hint()}
+        options={SAFETY_TOOLS.map((tool) => ({ value: tool, label: safetyToolLabel(tool) }))}
+        bind:group={$draft.safetyTools}
+        error={err('safetyTools')}
+      />
+      <div class="min-w-0">
+        <SearchSelect
+          id="contentRating"
+          name="contentRating"
+          label={m.form_content_rating()}
+          labelClass="label-text block font-semibold"
+          class="grid gap-1"
+          items={[
+            { slug: '', name: m.form_content_rating_none() },
+            ...CONTENT_RATINGS.map((rating) => ({
+              slug: rating,
+              name: contentRatingLabel(rating),
+            })),
+          ]}
+          value={$draft.contentRating ? [$draft.contentRating] : []}
+          placeholder={m.form_content_rating_none()}
+          invalid={!!invalid('contentRating')}
+          onchange={(picked) =>
+            ($draft.contentRating = (picked[0] ?? '') as TableFormValues['contentRating'])}
+        />
+        <p class="mt-1 text-sm text-surface-700-300">{m.form_content_rating_hint()}</p>
+        <FieldError id="contentRating" message={err('contentRating')} />
+      </div>
+    {:else}
+      {#each $draft.safetyTools as tool (tool)}
+        <input type="hidden" name="safetyTools" value={tool} />
+      {/each}
+      <input type="hidden" name="contentRating" value={$draft.contentRating} />
+    {/if}
     <FormField
       id="description"
       label={m.form_description()}

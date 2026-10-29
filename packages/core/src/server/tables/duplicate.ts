@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { isContentRating, orderedSafetyTools } from '@mesaaberta/core/tables/safety';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
@@ -63,6 +64,9 @@ export async function loadTableForDuplication(
       capacity: source.capacity,
       minPlayers: source.minPlayers,
       plannedSessions: source.plannedSessions,
+      safetyTools: orderedSafetyTools(source.safetyTools),
+      contentRating:
+        source.contentRating && isContentRating(source.contentRating) ? source.contentRating : null,
       startsAtLocal: '',
       timezone: source.timezone,
       durationMinutes: source.durationMinutes,

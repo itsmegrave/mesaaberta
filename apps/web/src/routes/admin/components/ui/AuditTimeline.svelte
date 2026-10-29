@@ -29,6 +29,8 @@
     capacity: m.history_field_capacity,
     minPlayers: m.history_field_minPlayers,
     plannedSessions: m.history_field_plannedSessions,
+    safetyTools: m.history_field_safetyTools,
+    contentRating: m.history_field_contentRating,
     startsAt: m.history_field_startsAt,
     durationMinutes: m.history_field_durationMinutes,
     timezone: m.history_field_timezone,

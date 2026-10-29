@@ -6,6 +6,7 @@
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import PageHead from '#lib/components/ui/PageHead.svelte';
   import { navigating, page } from '$app/state';
+  import { SvelteURLSearchParams } from 'svelte/reactivity';
   import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import TablesFilters from '../components/TablesFilters.svelte';
@@ -26,6 +27,14 @@
   const listHref = '/tables';
 
   const count = $derived(data.tables.length);
+  // The same filters with the 18+ tables shown or hidden again.
+  const adultHref = $derived.by(() => {
+    const query = new SvelteURLSearchParams(page.url.search);
+    if (data.adult.shown) query.delete('adult');
+    else query.set('adult', '1');
+    const search = query.toString();
+    return search ? `${listHref}?${search}` : listHref;
+  });
   const anyFilter = $derived(
     data.pickedSystems.length > 0 ||
       data.pickedPlatforms.length > 0 ||
@@ -70,6 +79,16 @@
     <p role="status" class="mt-6 text-sm font-semibold text-muted">
       {m.tables_found({ count })}
     </p>
+    {#if data.adult.count > 0}
+      <p class="mt-1 text-sm text-muted">
+        {data.adult.shown
+          ? m.tables_adult_shown({ count: data.adult.count })
+          : m.tables_adult_hidden({ count: data.adult.count })}
+        <a href={adultHref} class="font-semibold text-link underline underline-offset-4"
+          >{data.adult.shown ? m.tables_adult_hide() : m.tables_adult_show()}</a
+        >
+      </p>
+    {/if}
     <CardGrid class="mt-5 md:mt-3">
       {#each data.tables as table (table.slug)}
         <li><TableCard {table} level="h2" /></li>

@@ -339,6 +339,15 @@ export const gameTables = pgTable(
     // How many sessions an adventure plans, so the table can say "sessão 2 de 4". Only adventures
     // have one; null on the others, and on adventures made before the field existed.
     plannedSessions: integer('planned_sessions'),
+    // The safety tools the GM uses (Sessão Zero, Linhas e Véus, Carta X...): keys of `SAFETY_TOOLS` in
+    // `@mesaaberta/core/tables/safety`, in that order. Empty: the GM did not say.
+    safetyTools: text('safety_tools')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    // The content rating, ClassInd style: L, 10, 12, 14, 16 or 18. Null: not said. An 18 table is
+    // left out of the list unless the visitor asks for it.
+    contentRating: text('content_rating'),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     durationMinutes: integer('duration_minutes').notNull(),
     timezone: text('timezone').notNull(),
@@ -385,6 +394,10 @@ export const gameTables = pgTable(
     check(
       'game_tables_planned_sessions_range',
       sql`${table.plannedSessions} IS NULL OR (${table.kind}::text = 'adventure' AND ${table.plannedSessions} BETWEEN 2 AND 20)`,
+    ),
+    check(
+      'game_tables_content_rating_value',
+      sql`${table.contentRating} IS NULL OR ${table.contentRating} IN ('L', '10', '12', '14', '16', '18')`,
     ),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
     check(
