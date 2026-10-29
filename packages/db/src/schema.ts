@@ -133,6 +133,9 @@ export const profiles = pgTable(
     // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
     lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
     lookingForTableNote: text('looking_for_table_note'),
+    // On: the person's Retrospectiva (`/u/<username>/review/<year>`) opens for anyone with the link.
+    // Off, the default: only they see it, since it tells their history at the tables.
+    yearReviewPublic: boolean('year_review_public').notNull().default(false),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a

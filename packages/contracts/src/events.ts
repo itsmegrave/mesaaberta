@@ -244,6 +244,8 @@ export type DomainEvent =
   | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
   // "Estou procurando mesa" turned on (or on again) or off, in Procuro mesa. The note is not kept.
   | { type: 'PlayerLookingChanged'; payload: { profileId: string; looking: boolean } }
+  // The person made their Retrospectiva public (anyone with the link) or private again.
+  | { type: 'YearReviewShared'; payload: { profileId: string; shared: boolean } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
   | { type: 'EventForced'; payload: { eventId: string; eventType: string } }

@@ -25,6 +25,7 @@ import { locationRoutes } from './location';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
 import { meRoutes } from './me';
+import { yearReviewRoutes } from './year-review';
 import { messageRoutes } from './messages';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
@@ -118,6 +119,8 @@ export function createApi() {
   // The signed-in person's own frame: the profile row (the actor of every web request), the
   // header's numbers and the bell, and the notification feed.
   app.route('/v1/me', meRoutes());
+  // Retrospectiva: a person's year at the tables and their "Deixar pública" switch.
+  app.route('/v1/year-review', yearReviewRoutes());
   // The address behind a CEP, for the forms that fill one in.
   app.route('/v1/location', locationRoutes());
   // The installed extensions' widgets and public assets.
