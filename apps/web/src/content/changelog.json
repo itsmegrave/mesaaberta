@@ -1,7 +1,7 @@
 [
   {
     "date": "2026-10-29",
-    "title": "Lista de espera, segurança nas mesas e parceiros nos lugares",
+    "title": "Lista de espera, Começa já, segurança nas mesas e parceiros nos lugares",
     "summary": "Mesa cheia ganhou lista de espera, cada mesa pode dizer como cuida da segurança de quem joga, os lugares ganharam tags e quem mestra na casa, e cada parceiro tem sua página.",
     "changes": [
       {
@@ -39,6 +39,12 @@
         "title": "Lugares parceiros",
         "description": "Quem cuida de um lugar e de um parceiro pode ligar os dois. Depois da aprovação da equipe, o lugar mostra o selo de parceiro e aparece na página do parceiro.",
         "href": "/places"
+      },
+      {
+        "kind": "new",
+        "title": "Começa já",
+        "description": "No topo da lista de mesas, as mesas com vaga que começam nas próximas horas. Bom para uma noite livre de última hora.",
+        "href": "/tables"
       }
     ]
   },

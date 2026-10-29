@@ -12,6 +12,7 @@
   import TablesFilters from '../components/TablesFilters.svelte';
   import TableCard from '#lib/components/ui/TableCard.svelte';
   import { m } from '#lib/paraglide/messages.js';
+  import { STARTING_SOON_HOURS } from '#lib/tables/starting-soon.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
@@ -72,6 +73,23 @@
     }}
     {count}
   />
+
+  {#if !filtering.current && data.startingSoon?.length}
+    <section aria-labelledby="starting-soon" class="mt-6">
+      <h2 id="starting-soon" class="flex items-center gap-2 text-xl font-semibold">
+        <Icon name="game-icons:hourglass" size={20} />
+        {m.tables_starting_soon()}
+      </h2>
+      <p class="mt-1 text-sm text-muted">
+        {m.tables_starting_soon_hint({ hours: STARTING_SOON_HOURS })}
+      </p>
+      <CardGrid class="mt-3">
+        {#each data.startingSoon as table (table.slug)}
+          <li><TableCard {table} level="h3" /></li>
+        {/each}
+      </CardGrid>
+    </section>
+  {/if}
 
   {#if filtering.current}
     <ListSkeleton kind="cards" />

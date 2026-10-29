@@ -52,7 +52,7 @@ const event = (search = '', referer = '') =>
       track: tracked,
       getUser: async () => ({ id: viewer }),
       getProfile: async () => null,
-      flags: { isEnabled: async () => safetyOn },
+      flags: { isEnabled: async (name: string) => name === 'use_table_safety' && safetyOn },
     },
     request: new Request('https://x.test/tables', { headers: referer ? { referer } : {} }),
     url: new URL(`https://x.test/t${search}`),
