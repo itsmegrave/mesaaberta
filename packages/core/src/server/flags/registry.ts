@@ -108,6 +108,10 @@ export const flagDefaults = {
   // the table form leaves both out (a save keeps what is stored), a table page does not show them
   // and the list shows 18+ tables like any other. Targeted by the person's id.
   use_table_safety: false,
+  // "Começa já" on /tables, a new feature (created on for everyone): the tables of the list that
+  // start within six hours and still have a seat, in a row of their own. Off: no row. Targeted by
+  // the person's id.
+  use_starting_soon: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

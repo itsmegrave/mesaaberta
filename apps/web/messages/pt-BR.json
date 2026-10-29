@@ -1729,6 +1729,8 @@
   ],
   "tables_adult_show": "Mostrar",
   "tables_adult_hide": "Ocultar",
+  "tables_starting_soon": "Começa já",
+  "tables_starting_soon_hint": "Mesas com vaga que começam nas próximas {hours} horas.",
   "public_profile_message": "Mandar mensagem",
   "public_profile_message_to": "Mandar mensagem para {username}",
   "menu_view_as_visitor": "Ver como visitante",

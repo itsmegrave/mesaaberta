@@ -5,6 +5,8 @@ import { readTableFilters } from '#lib/tables/filters.js';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
 import { tableSafetyEnabled } from '../tables/safety-enabled';
+import { startingSoon } from '#lib/tables/starting-soon.js';
+import { startingSoonEnabled } from '../tables/starting-soon';
 
 export const read = async ({ locals, url }: RequestEvent) => {
   // Every filter comes from the query string of the GET form, validated by its schema. Several of
@@ -34,16 +36,21 @@ export const read = async ({ locals, url }: RequestEvent) => {
   };
 
   // 18+ tables stay out of the list until the visitor asks for them (`?adult=1`, `use_table_safety`).
-  const safety = await tableSafetyEnabled(locals, user ? await locals.getProfile() : null);
+  const profile = user ? await locals.getProfile() : null;
+  const safety = await tableSafetyEnabled(locals, profile);
   const adultShown = url.searchParams.get('adult') === '1';
   const isAdult = (table: { contentRating?: string | null }) => table.contentRating === '18';
   const adultCount = safety ? answer.tables.filter(isAdult).length : 0;
   const listed =
     safety && !adultShown ? answer.tables.filter((table) => !isAdult(table)) : answer.tables;
 
+  const pictures = cardPictures(supabaseUrlOf(locals.env));
+  const soon = (await startingSoonEnabled(locals, profile)) ? startingSoon(listed, new Date()) : [];
   return {
     ...answer,
-    tables: listed.map(cardPictures(supabaseUrlOf(locals.env))),
+    tables: listed.map(pictures),
     adult: { count: adultCount, shown: adultShown },
+    // "Começa já": the tables of this list that start within hours and still have a seat.
+    startingSoon: soon.map(pictures),
   };
 };
