@@ -12,6 +12,7 @@ const SKELETONS: Record<string, SkeletonKind> = {
   '/crowdfunding': 'cards',
   '/gamemasters': 'cards',
   '/places': 'cards',
+  '/players': 'cards',
   '/u/tables': 'columns',
   '/notifications': 'rows',
   '/messages': 'rows',

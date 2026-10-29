@@ -26,7 +26,8 @@
     query: string;
     searchLabel: string;
     show?: { legend: string; value: Show; options: readonly { value: Show; label: string }[] };
-    sort: { label: string; value: Sort; options: readonly { slug: Sort; name: string }[] };
+    /** Left out for a list with one order. */
+    sort?: { label: string; value: Sort; options: readonly { slug: Sort; name: string }[] };
     /** The count line ("48 sistemas com mesa aberta"). */
     result: string;
     /** More filters, after the search and the pills. */
@@ -38,7 +39,7 @@
 
   let text = $derived(query);
   const knownSort = (value: string | undefined): value is Sort =>
-    sort.options.some((option) => option.slug === value);
+    !!sort?.options.some((option) => option.slug === value);
 </script>
 
 <div class="mt-6 flex flex-col gap-3 md:mt-8 md:flex-row md:flex-wrap md:items-center">
@@ -86,20 +87,22 @@
     <p role="status" class="text-sm font-semibold text-muted">{result}</p>
     {#if note}<p class="mt-0.5 text-sm text-muted">{note}</p>{/if}
   </div>
-  <SearchSelect
-    id="{id}-sort"
-    name="sort"
-    label={sort.label}
-    labelClass="text-sm font-semibold text-muted"
-    class="flex w-full items-center gap-2 sm:w-72 md:w-auto"
-    controlClass="md:w-85"
-    compact
-    active={false}
-    items={[...sort.options]}
-    value={[sort.value]}
-    placeholder={sort.label}
-    onchange={(next) => {
-      if (knownSort(next[0])) onapply({ sort: next[0] });
-    }}
-  />
+  {#if sort}
+    <SearchSelect
+      id="{id}-sort"
+      name="sort"
+      label={sort.label}
+      labelClass="text-sm font-semibold text-muted"
+      class="flex w-full items-center gap-2 sm:w-72 md:w-auto"
+      controlClass="md:w-85"
+      compact
+      active={false}
+      items={[...sort.options]}
+      value={[sort.value]}
+      placeholder={sort.label}
+      onchange={(next) => {
+        if (knownSort(next[0])) onapply({ sort: next[0] });
+      }}
+    />
+  {/if}
 </div>

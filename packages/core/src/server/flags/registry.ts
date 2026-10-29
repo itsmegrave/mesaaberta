@@ -112,6 +112,10 @@ export const flagDefaults = {
   // start within six hours and still have a seat, in a row of their own. Off: no row. Targeted by
   // the person's id.
   use_starting_soon: false,
+  // Procuro mesa (`/players`), a new feature (created on for everyone): people say they are looking
+  // for a table and GMs find them. Off: the page is a 404, the menus leave it out and the switch
+  // refuses. Signed-in people only. Targeted by the person's id.
+  use_players_directory: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

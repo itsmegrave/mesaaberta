@@ -16,7 +16,7 @@
   }: {
     site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string };
     /** Which directories are on for the person: each one's link shows only then. */
-    directories?: { systems: boolean; gms: boolean; places: boolean };
+    directories?: { systems: boolean; gms: boolean; places: boolean; players?: boolean };
     /** Whether a blog post is out: the Blog link shows only then. */
     blogLive?: boolean;
   } = $props();
@@ -63,6 +63,16 @@
             path: '/gamemasters',
             items: undefined,
             label: m.directory_footer_gms,
+          } as const,
+        ]
+      : []),
+    ...(directories.players
+      ? [
+          {
+            route: '/players',
+            path: '/players',
+            items: undefined,
+            label: m.directory_footer_players,
           } as const,
         ]
       : []),
