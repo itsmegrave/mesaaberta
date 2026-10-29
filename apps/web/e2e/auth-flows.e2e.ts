@@ -229,6 +229,8 @@ test.describe('password reset', () => {
     await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
+    // The form's own navigation must finish first, or it interrupts the visit to the link.
+    await expect(page.getByRole('heading', { name: 'Confira seu email' })).toBeVisible();
     const [message] = await inbox(user.email, { waitFor: /reset|recover|password/i });
     await page.goto(linkIn(message)!);
 
@@ -259,6 +261,8 @@ test.describe('password reset', () => {
     await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
+    // The form's own navigation must finish first, or it interrupts the visit to the link.
+    await expect(page.getByRole('heading', { name: 'Confira seu email' })).toBeVisible();
     const [message] = await inbox(user.email, { waitFor: /reset|recover|password/i });
     const link = linkIn(message)!;
     await page.goto(link);
