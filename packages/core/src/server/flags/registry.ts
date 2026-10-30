@@ -121,8 +121,8 @@ export const flagDefaults = {
   // they are. Targeted by the person's id.
   use_open_tables: false,
   // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
-  // the person who approved them. Grave first, then everyone. Off: the consent page is a 404 and
-  // every MCP request is refused, even with a valid token. Targeted by the person's id.
+  // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
+  // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.
   use_mcp: false,
 } as const satisfies Record<string, boolean>;
 

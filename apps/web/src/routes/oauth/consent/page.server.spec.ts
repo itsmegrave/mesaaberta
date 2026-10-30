@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { actions, load } from './+page.server';
 
 const ID = 'auth-123';
-const profile = { id: '00000000-0000-4000-8000-0000000000aa', username: 'grave', status: 'active' };
+const profile = {
+  id: '00000000-0000-4000-8000-0000000000aa',
+  username: 'grave',
+  status: 'active',
+  role: 'admin',
+};
 
 type Oauth = {
   getAuthorizationDetails: ReturnType<typeof vi.fn>;
@@ -14,6 +19,7 @@ type Oauth = {
 function setup({
   signedIn = true,
   mcpOn = true,
+  role = 'admin',
   details = {
     data: {
       authorization_id: ID,
@@ -38,7 +44,7 @@ function setup({
   const locals = {
     supabase: { auth: { oauth } },
     getUser: async () => (signedIn ? { id: profile.id } : null),
-    getProfile: async () => (signedIn ? profile : null),
+    getProfile: async () => (signedIn ? { ...profile, role } : null),
     flags: { isEnabled },
     log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
   };
@@ -72,8 +78,23 @@ describe('the OAuth consent page', () => {
   it('is a 404 while use_mcp is off for the person, and asks Supabase nothing', async () => {
     const { event, oauth, isEnabled } = setup({ mcpOn: false });
     await expect(read(event())).rejects.toMatchObject({ status: 404 });
-    expect(isEnabled).toHaveBeenCalledWith('use_mcp', { id: profile.id });
+    expect(isEnabled).toHaveBeenCalledWith('use_mcp', { id: profile.id, isAdmin: true });
     expect(oauth.getAuthorizationDetails).not.toHaveBeenCalled();
+  });
+
+  it('is a 404 for anyone who is not an admin, even with use_mcp on', async () => {
+    const { event, oauth, isEnabled } = setup({ role: 'member' });
+    await expect(read(event())).rejects.toMatchObject({ status: 404 });
+    expect(isEnabled).not.toHaveBeenCalled();
+    expect(oauth.getAuthorizationDetails).not.toHaveBeenCalled();
+  });
+
+  it('refuses a non-admin decision, even with a request id', async () => {
+    const { event, oauth } = setup({ role: 'member' });
+    await expect(act('approve', event('', { authorizationId: ID }))).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(oauth.approveAuthorization).not.toHaveBeenCalled();
   });
 
   it('names the client, the account and only the host it returns to', async () => {
