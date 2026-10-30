@@ -4,7 +4,7 @@ The [MCP](https://modelcontextprotocol.io) server of Mesa Aberta: Claude (claude
 the desktop app) and other MCP clients read the site as the person who connected them. It is a door
 to the api and nothing more: no database, no business rule, no store and no secret.
 
-**Status: phase 1, read-only, behind `use_mcp`.** Every tool reads; none changes anything. Writes
+**Status: phase 1, read-only, admins only (kill switch `use_mcp`).** Every tool reads; none changes anything. Writes
 (asking for a seat, the GM's answers, messages) come in a later phase, each one confirmed by the
 person before it runs.
 
@@ -23,8 +23,9 @@ person before it runs.
    JWKS: issuer, audience `authenticated`, expiry, an asymmetric signature (ES256 or RS256) and the
    `client_id` claim. A site session token has no `client_id`, so it is refused: nothing reaches
    the MCP without the consent step.
-5. `use_mcp` must be on for the person (targeted by id), and `GET /v1/me` must answer an active
-   profile with a username. Then the tools call the api over the Service Binding with
+5. `GET /v1/me` must answer an active profile with a username **and the admin role**: the MCP is
+   for admins only, a requirement checked in code (here and on the consent page), not a flag.
+   `use_mcp` must also be on; it is only the kill switch. Then the tools call the api over the Service Binding with
    `x-actor-id` = the token's `sub`, exactly as the web Worker does, and the api authorizes as
    usual.
 

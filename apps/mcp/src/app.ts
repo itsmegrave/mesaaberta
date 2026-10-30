@@ -5,6 +5,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CfWorkerJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/cfworker';
 import { REQUEST_ID_HEADER, requestIdFrom, withRequestId } from '@mesaaberta/contracts';
+import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
 import type { Flags } from '@mesaaberta/core/server/flags/flags';
 import { logger } from '@mesaaberta/core/server/logger';
@@ -111,12 +112,6 @@ export function createMcp({ keys = supabaseKeys, flags = mcpFlags }: Deps = {}) 
     if (!caller) return challenge('invalid_token');
     const { userId } = caller;
 
-    const flagSet = flags(env);
-    if (!(await flagSet.isEnabled('use_mcp', { id: userId }))) {
-      logger.info('mcp.request_refused', { code: 'mcp_off', userId });
-      return c.json({ error: 'forbidden' }, 403);
-    }
-
     let read;
     try {
       read = apiReader(env, userId);
@@ -124,16 +119,26 @@ export function createMcp({ keys = supabaseKeys, flags = mcpFlags }: Deps = {}) 
       // one, gets nothing here, as on the site.
       const me = await read('/v1/me');
       if (me.status !== 200) return c.json({ error: 'unavailable' }, 503);
-      const profile = (
-        me.body as { profile?: { username?: string | null; status?: string } | null }
-      )?.profile;
+      const profile = (me.body as { profile?: (Actor & { username?: string | null }) | null })
+        ?.profile;
       if (!profile?.username || profile.status !== 'active') {
         logger.info('mcp.request_refused', { code: 'profile_unusable', userId });
+        return c.json({ error: 'forbidden' }, 403);
+      }
+      // Admins only, always: a requirement, not a rollout. `use_mcp` is only the kill switch.
+      if (!can(profile, 'admin:access')) {
+        logger.info('mcp.request_refused', { code: 'admin_only', userId });
         return c.json({ error: 'forbidden' }, 403);
       }
     } catch (error) {
       logger.warn('mcp.api_unreachable', { code: 'api_call_failed', userId, error });
       return c.json({ error: 'unavailable' }, 503);
+    }
+
+    const flagSet = flags(env);
+    if (!(await flagSet.isEnabled('use_mcp', { id: userId, isAdmin: true }))) {
+      logger.info('mcp.request_refused', { code: 'mcp_off', userId });
+      return c.json({ error: 'forbidden' }, 403);
     }
 
     const server = new McpServer(
@@ -142,7 +147,7 @@ export function createMcp({ keys = supabaseKeys, flags = mcpFlags }: Deps = {}) 
     );
     registerTools(server, {
       read,
-      isEnabled: (flag) => flagSet.isEnabled(flag, { id: userId }),
+      isEnabled: (flag) => flagSet.isEnabled(flag, { id: userId, isAdmin: true }),
       userId,
     });
     const transport = new WebStandardStreamableHTTPServerTransport({

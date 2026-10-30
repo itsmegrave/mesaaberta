@@ -3,15 +3,20 @@ import { z } from 'zod';
 import { initialForm, validateStringForm } from '#lib/forms/contract.js';
 import { formMessage } from '#lib/forms/server.js';
 import { requireUser } from '#lib/server/auth/guard.js';
+import { can } from '@mesaaberta/core/server/auth/policy';
 import type { Actions, PageServerLoad } from './$types';
 
 // Supabase's own id for the request it sent here; never shown, only handed back.
 const consentSchema = z.object({ authorizationId: z.string().min(1).max(200) });
 
-/** Whether the MCP (and so this page) is on for the signed-in person. */
+/**
+ * Whether the MCP (and so this page) is open to the signed-in person. Admins only, always: that is
+ * a requirement, not a rollout, so it is checked here and `use_mcp` is only the kill switch.
+ */
 async function mcpEnabled(locals: App.Locals) {
   const profile = await locals.getProfile();
-  return profile ? locals.flags.isEnabled('use_mcp', { id: profile.id }) : false;
+  if (!profile || !can(profile, 'admin:access')) return false;
+  return locals.flags.isEnabled('use_mcp', { id: profile.id, isAdmin: true });
 }
 
 /**

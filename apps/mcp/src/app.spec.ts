@@ -36,7 +36,7 @@ type Seen = { path: string; actor: string | null };
 /** A stand-in for the api Worker's binding: answers by path and records who asked for what. */
 function fakeApi(
   answers: Record<string, { status?: number; body: unknown }> = {},
-  profile: unknown = { id: USER, username: 'grave', status: 'active' },
+  profile: unknown = { id: USER, username: 'grave', status: 'active', role: 'admin' },
 ) {
   const seen: Seen[] = [];
   const binding = {
@@ -140,16 +140,19 @@ describe('the MCP door', () => {
     expect(seen).toHaveLength(0);
   });
 
-  it('stays shut while use_mcp is off for the person, even with a valid token', async () => {
+  it('stays shut while use_mcp is off, even for an admin with a valid token', async () => {
     const { rpc, seen } = setUp({ on: [] });
     expect((await rpc('tools/list')).status).toBe(403);
-    expect(seen).toHaveLength(0);
+    // Only the account check ran.
+    expect(seen.every((request) => request.path === '/v1/me')).toBe(true);
   });
 
   it.each([
-    ['has not finished signing up', { id: USER, username: null, status: 'active' }],
-    ['is suspended', { id: USER, username: 'grave', status: 'suspended' }],
+    ['has not finished signing up', { id: USER, username: null, status: 'active', role: 'admin' }],
+    ['is suspended', { id: USER, username: 'grave', status: 'suspended', role: 'admin' }],
     ['has no profile', null],
+    // Admins only is a requirement: use_mcp being on does not open it to anyone else.
+    ['is not an admin', { id: USER, username: 'ana', status: 'active', role: 'member' }],
   ])('refuses an account that %s', async (_, profile) => {
     const { rpc } = setUp({ profile });
     expect((await rpc('tools/list')).status).toBe(403);
