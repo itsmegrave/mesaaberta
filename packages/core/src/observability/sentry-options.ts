@@ -119,6 +119,16 @@ export const coloOf = (request: Request): string | undefined => {
   return request.headers.get('cf-ray')?.match(/-([A-Z]{3})$/)?.[1];
 };
 
+/**
+ * A frame's file as the deploy uploaded it. Cloudflare names a Worker's bundle bare (`entry.js`,
+ * `index.js`), while sentry-cli uploads it as `app:///entry.js`, so a bare bundle name takes the
+ * same prefix or no frame maps. URLs, `app:///` paths and `node-internal:` frames stay as they are.
+ */
+const frameFile = (filename: string | undefined) => {
+  const file = filename?.split(/[?#]/)[0];
+  return file && /^[\w.-]+\.m?js$/.test(file) ? `app:///${file}` : file;
+};
+
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
   if (cancelled(event) || offline(event)) return null;
   const tags = safeFields(event.tags);
@@ -157,7 +167,7 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
         value: describe(exception.value, tags),
         stacktrace: exception.stacktrace && {
           frames: exception.stacktrace.frames?.map((frame) => ({
-            filename: frame.filename?.split(/[?#]/)[0],
+            filename: frameFile(frame.filename),
             function: frame.function,
             lineno: frame.lineno,
             colno: frame.colno,
