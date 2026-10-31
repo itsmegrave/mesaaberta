@@ -54,8 +54,9 @@ describe('BottomTabBar.svelte', () => {
     for (const [href, icon] of Object.entries(expected)) {
       const svg = document.querySelector<SVGSVGElement>(`a[href="${href}"] svg`);
       expect(svg?.getAttribute('data-icon')).toBe(icon);
-      expect(svg?.getAttribute('viewBox')).toBe('0 0 512 512');
-      expect(svg?.querySelector('path')?.getBBox().width).toBeGreaterThan(0);
+      expect(svg?.querySelector('use')?.getAttribute('href')).toMatch(
+        new RegExp(`#${icon.replace(':', '--')}$`),
+      );
     }
   });
 

@@ -62,6 +62,13 @@ export default defineConfig({
           'default-src': ['self'],
           'script-src': ['self', 'https://static.cloudflareinsights.com'],
           'style-src': ['self'],
+          // Svelte server-renders `onload="this.__e=event"` / `onerror=…` on an <img> that has load or
+          // error handlers (Skeleton's Avatar.Image), so it can replay an event that fired before
+          // hydration. Only that exact string is allowed, by hash; anything else stays blocked.
+          'script-src-attr': [
+            'unsafe-hashes',
+            'sha256-7dQwUgLau1NFCCGjfn9FsYptB6ZtWxJin6VohGIu20I=',
+          ],
           // SvelteKit's own screen-reader announcer (`#svelte-announcer`) has an inline `style`
           // attribute. Only that exact string is allowed, by hash. If a SvelteKit upgrade changes
           // it, e2e/security.e2e.ts reports the blocked style: replace the hash with the new one.
