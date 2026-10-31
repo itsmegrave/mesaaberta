@@ -1,5 +1,5 @@
 import type { IconName } from '#lib/icons/names.js';
-import { ICONS } from '#lib/icons/registry.js';
+import { DRAWINGS } from '#lib/icons/drawings.generated.js';
 import { m } from '#lib/paraglide/messages.js';
 
 export type AdminCounts = {
@@ -27,7 +27,7 @@ export type AdminGroup = { key: string; label: string; sections: AdminSection[] 
 export type ExtensionSection = { path: string; label: string; icon: string };
 
 const iconOf = (name: string): IconName =>
-  Object.hasOwn(ICONS, name) ? (name as IconName) : 'globe';
+  Object.hasOwn(DRAWINGS, name) ? (name as IconName) : 'globe';
 
 /**
  * The admin's sections in their groups, with what waits on an admin counted beside them. One list

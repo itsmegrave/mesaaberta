@@ -19,4 +19,16 @@ describe('Icon', () => {
     expect(container.querySelector('animateTransform')).toBeNull();
     expect(container.querySelector('svg')?.getAttribute('data-icon')).toBe('svg-spinners:tadpole');
   });
+  it('draws without the Iconify CSS geometry, and gives each copy its own clip-path id', async () => {
+    const { container } = await render(Icon, { name: 'clock' });
+    const second = await render(Icon, { name: 'clock' });
+    const ids = [container, second.container].map((c) => c.querySelector('clipPath')!.id);
+
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24');
+    expect(container.querySelector('path')!.getAttribute('d')).toBeTruthy();
+    expect(ids[0]).not.toBe(ids[1]);
+    expect(container.querySelector('[clip-path]')!.getAttribute('clip-path')).toBe(
+      `url(#${ids[0]})`,
+    );
+  });
 });
