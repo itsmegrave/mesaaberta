@@ -42,6 +42,7 @@ const event = ({ api = true } = {}) =>
       log: { error, warn: vi.fn() },
       getUser: async () => null,
       getProfile: async () => null,
+      flags: { isEnabled: async () => false },
     },
     platform: undefined,
   }) as unknown as RequestEvent;
