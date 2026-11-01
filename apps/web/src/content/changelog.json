@@ -9,6 +9,11 @@
         "title": "Símbolo da classificação indicativa",
         "description": "A classificação que quem mestra escolhe aparece como o símbolo de autoclassificação do Ministério da Justiça (AL, A10, A14…) no card da mesa e na capa ou ao lado do título. Também dá para escolher a nova faixa de 6 anos.",
         "href": "/tables"
+      },
+      {
+        "kind": "fixed",
+        "title": "Menos erros ao abrir páginas",
+        "description": "Quando o servidor falha por um instante ao abrir a página de um sistema ou a lista de mesas, a Mesa Aberta tenta de novo sozinha em vez de mostrar a tela de erro."
       }
     ]
   },
