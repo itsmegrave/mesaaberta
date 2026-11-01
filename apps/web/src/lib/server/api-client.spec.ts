@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { describe, expect, it, vi } from 'vitest';
 import { setRequestContextStore, withRequestId } from '@mesaaberta/contracts';
-import { callApi, callApiRaw } from './api-client';
+import { callApi, callApiRaw, cloudflareErrorOf } from './api-client';
 
 const log = { warn: vi.fn() } as never;
 const envWith = (fetch: (request: Request) => Promise<Response>) =>
@@ -70,6 +70,65 @@ describe('callApi', () => {
 
     expect(await callApiRaw(undefined, '/v1/x', 'a', log)).toBeNull();
     expect(await callApiRaw(broken, '/v1/x', 'a', log)).toBeNull();
+  });
+});
+
+describe('callApiRaw when Cloudflare answers for the api', () => {
+  const errorPage = () => new Response('error code: 1102', { status: 500 });
+
+  it('tries a read once more, so one failed isolate is not a 503 page', async () => {
+    const fetch = vi
+      .fn<(request: Request) => Promise<Response>>()
+      .mockResolvedValueOnce(errorPage())
+      .mockResolvedValueOnce(Response.json({ name: 'Mausritter' }));
+    const warn = vi.fn();
+
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/reads/systems/mausritter',
+      null,
+      {
+        warn,
+      } as never,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toEqual({ ok: true, status: 200, body: { name: 'Mausritter' } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalledWith(
+      'api.call_failed',
+      expect.objectContaining({ code: 'api_answer_not_json', status: 500, reason: 'cf_1102' }),
+    );
+  });
+
+  it('is null when the second try fails too', async () => {
+    const fetch = vi.fn(async (_request: Request) => errorPage());
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/reads/tables',
+      null,
+      log,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('never sends a write twice', async () => {
+    const fetch = vi.fn(async (_request: Request) => errorPage());
+    expect(await callApiRaw(envWith(fetch), '/v1/tables/x/join', 'a', log, {})).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads only the error code from the page', () => {
+    expect(cloudflareErrorOf('error code: 1101')).toBe('cf_1101');
+    expect(cloudflareErrorOf('<html>Worker threw exception</html>')).toBeUndefined();
+    expect(cloudflareErrorOf(undefined)).toBeUndefined();
   });
 });
 

@@ -83,12 +83,37 @@ export async function callApiRaw(
   headers: Record<string, string> = {},
   method: 'GET' | 'POST' | 'DELETE' = 'POST',
 ): Promise<ApiAnswer | null> {
+  const first = await answerOnce(env, path, actorId, log, json, headers, method);
+  // A read is safe to send again. When Cloudflare answered for the api Worker (an error page, not
+  // the api's own JSON), that isolate failed while the next one usually does not: one more try
+  // keeps the page up instead of a 503.
+  if (first.kind === 'not_json' && method === 'GET' && first.status >= 500) {
+    const second = await answerOnce(env, path, actorId, log, json, headers, method);
+    return second.kind === 'answer' ? second.answer : null;
+  }
+  return first.kind === 'answer' ? first.answer : null;
+}
+
+type Attempt =
+  { kind: 'answer'; answer: ApiAnswer } | { kind: 'not_json'; status: number } | { kind: 'none' };
+
+async function answerOnce(
+  env: App.Locals['env'],
+  path: string,
+  actorId: string | null,
+  log: Logger,
+  json: unknown,
+  headers: Record<string, string>,
+  method: 'GET' | 'POST' | 'DELETE',
+): Promise<Attempt> {
   let status: number | undefined;
+  let text: string | undefined;
   try {
     const response = await sendToApi(env, path, actorId, { method, json, headers });
-    if (!response) return null;
+    if (!response) return { kind: 'none' };
     status = response.status;
-    return { ok: response.ok, status, body: await response.json() };
+    text = await response.text();
+    return { kind: 'answer', answer: { ok: response.ok, status, body: JSON.parse(text) } };
   } catch (error) {
     // With a status, the api (or Cloudflare in front of it) answered something that is not JSON:
     // an error page when the api Worker itself failed. Without one, the call never got an answer.
@@ -96,10 +121,20 @@ export async function callApiRaw(
       code: status === undefined ? 'api_call_failed' : 'api_answer_not_json',
       route: routeTemplate(path),
       status,
+      reason: cloudflareErrorOf(text),
       error,
     });
-    return null;
+    return status === undefined ? { kind: 'none' } : { kind: 'not_json', status };
   }
+}
+
+/**
+ * Cloudflare's own answer for a Worker that failed reads "error code: 1102" (resources exceeded),
+ * "1101" (threw) and so on: the code says why, and is all of the body that reaches telemetry.
+ */
+export function cloudflareErrorOf(body: string | undefined): string | undefined {
+  const code = body?.match(/error code:?\s*(\d{3,4})/i)?.[1];
+  return code ? `cf_${code}` : undefined;
 }
 
 /**
