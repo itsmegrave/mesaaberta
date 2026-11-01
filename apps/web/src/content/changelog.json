@@ -1,5 +1,18 @@
 [
   {
+    "date": "2026-11-01",
+    "title": "Classificação indicativa à vista",
+    "summary": "A classificação indicativa das mesas agora aparece com o símbolo colorido, no card e na página da mesa.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Símbolo da classificação indicativa",
+        "description": "A classificação que quem mestra escolhe aparece como o símbolo de autoclassificação do Ministério da Justiça (AL, A10, A14…) no card da mesa e na capa ou ao lado do título. Também dá para escolher a nova faixa de 6 anos.",
+        "href": "/tables"
+      }
+    ]
+  },
+  {
     "date": "2026-10-31",
     "title": "Páginas mais rápidas",
     "summary": "As páginas aparecem mais cedo, principalmente no celular.",

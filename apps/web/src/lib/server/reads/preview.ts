@@ -4,6 +4,7 @@ import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import type { readPreview } from '@mesaaberta/core/server/reads/preview';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
+import { contentRatingSymbolShown } from '../tables/safety-enabled';
 
 type Preview = Awaited<ReturnType<typeof readPreview>>;
 type PreviewTable = Preview['tables'][number];
@@ -29,7 +30,9 @@ export const read = async ({ locals }: RequestEvent) => {
       newTables: (remote.newTables ?? []).map(revive),
     };
 
-    const withImage = (table: PreviewTable) => cardPictures(supabaseUrlOf(locals.env))(table);
+    const rating = await contentRatingSymbolShown(locals, await locals.getProfile());
+    const withImage = (table: PreviewTable) =>
+      cardPictures(supabaseUrlOf(locals.env), rating)(table);
     return {
       tables: preview.tables.map(withImage),
       newTables: preview.newTables.map(withImage),

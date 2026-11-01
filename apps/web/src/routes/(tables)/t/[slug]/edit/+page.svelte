@@ -97,6 +97,7 @@
     suggestSystem={data.status === 'draft'}
     places={data.places}
     safety={data.safety}
+    ratingSymbol={data.ratingSymbol}
     openTables={data.openTables}
   />
 </section>

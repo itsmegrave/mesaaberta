@@ -42,7 +42,12 @@
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { placeArea, placeKindLabels, placeMapHref } from '#lib/places/labels.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
-  import { contentRatingLabel, safetyToolLabel } from '#lib/tables/safety-labels.js';
+  import {
+    contentRatingLabel,
+    contentRatingLongLabel,
+    safetyToolLabel,
+  } from '#lib/tables/safety-labels.js';
+  import ContentRatingSymbol from '#lib/components/ui/ContentRatingSymbol.svelte';
   import { orderedSafetyTools, type ContentRating } from '@mesaaberta/core/tables/safety';
   import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
@@ -159,6 +164,11 @@
         <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
           {table.title}
         </h1>
+        {#if data.ratingSymbol && !table.imageUrl}
+          <!-- No cover to carry it: the rating's symbol by the title, 56px, 70px from md (ClassInd's
+               size for websites). -->
+          <ContentRatingSymbol rating={table.contentRating} class="ml-auto size-14 md:size-17.5" />
+        {/if}
         <KebabMenu name={table.title} items={menu} />
       </div>
 
@@ -216,15 +226,24 @@
       </div>
 
       {#if table.imageUrl}
-        <img
-          src={table.imageUrl}
-          alt=""
-          width="1200"
-          height="480"
-          decoding="async"
-          referrerpolicy="no-referrer"
-          class="mt-8 aspect-5/2 w-full rounded-lg object-cover"
-        />
+        <div class="relative mt-8">
+          <img
+            src={table.imageUrl}
+            alt=""
+            width="1200"
+            height="480"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            class="aspect-5/2 w-full rounded-lg object-cover"
+          />
+          {#if data.ratingSymbol}
+            <!-- The rating's symbol in the cover's bottom-right corner: 56px, 70px from md. -->
+            <ContentRatingSymbol
+              rating={table.contentRating}
+              class="absolute right-3 bottom-3 size-14 md:right-4 md:bottom-4 md:size-17.5"
+            />
+          {/if}
+        </div>
       {/if}
 
       <!-- Rich text: RichText cleans it to a small set of tags before showing it. -->
@@ -284,12 +303,20 @@
           </SummaryRow>
         {/if}
         {#if table.contentRating}
-          <SummaryRow label={m.table_content_rating()}>
-            <span
-              class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
-              >{contentRatingLabel(table.contentRating as ContentRating)}</span
-            >
-          </SummaryRow>
+          {#if data.ratingSymbol}
+            <SummaryRow label={m.table_content_rating()} class="flex flex-wrap items-center gap-2">
+              <ContentRatingSymbol rating={table.contentRating} size={24} />
+              <span>{contentRatingLongLabel(table.contentRating as ContentRating)}</span>
+              <span class="text-sm font-semibold text-muted">· {m.content_rating_self()}</span>
+            </SummaryRow>
+          {:else}
+            <SummaryRow label={m.table_content_rating()}>
+              <span
+                class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+                >{contentRatingLabel(table.contentRating as ContentRating)}</span
+              >
+            </SummaryRow>
+          {/if}
         {/if}
         {#if table.safetyTools.length > 0}
           <SummaryRow label={m.table_safety_tools()} class="flex flex-wrap gap-1">

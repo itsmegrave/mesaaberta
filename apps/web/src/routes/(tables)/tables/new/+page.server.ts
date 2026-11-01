@@ -1,6 +1,6 @@
 import { openTablesEnabled } from '#lib/server/tables/open-enabled.js';
 import { loadRead } from '#lib/server/reads/load.js';
-import { tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
+import { contentRatingSymbolShown, tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
 import type { TableFormValues } from '#lib/tables/form-values.js';
 import { z } from 'zod';
 import { Forbidden, NotFound } from '@mesaaberta/core/server/errors';
@@ -96,6 +96,7 @@ export const load: PageServerLoad = async (event) => {
     catalogRead,
     places,
     safety: await tableSafetyEnabled(locals, await locals.getProfile()),
+    ratingSymbol: await contentRatingSymbolShown(locals, await locals.getProfile()),
     openTables: await openTablesEnabled(locals),
   };
 };

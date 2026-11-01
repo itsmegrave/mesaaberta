@@ -1,0 +1,2 @@
+ALTER TABLE "game_tables" DROP CONSTRAINT "game_tables_content_rating_value";--> statement-breakpoint
+ALTER TABLE "game_tables" ADD CONSTRAINT "game_tables_content_rating_value" CHECK ("game_tables"."content_rating" IS NULL OR "game_tables"."content_rating" IN ('L', '6', '10', '12', '14', '16', '18'));

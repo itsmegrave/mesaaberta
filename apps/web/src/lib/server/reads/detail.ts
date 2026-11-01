@@ -6,7 +6,7 @@ import { readFromApi } from '../api-read';
 import { badgesEnabled } from '../badges/enabled';
 import { directoryEnabled } from '../directories/flags';
 import { waitlistEnabled } from '../waitlist/enabled';
-import { tableSafetyEnabled } from '../tables/safety-enabled';
+import { contentRatingSymbolShown, tableSafetyEnabled } from '../tables/safety-enabled';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const user = await locals.getUser();
@@ -54,6 +54,8 @@ export const read = async ({ locals, params }: RequestEvent) => {
         ? { safetyTools: table.safetyTools ?? [], contentRating: table.contentRating ?? null }
         : { safetyTools: [] as string[], contentRating: null }),
     },
+    // The rating drawn as its ClassInd symbol on the cover or by the title (`use_content_rating_symbol`).
+    ratingSymbol: await contentRatingSymbolShown(locals, profile),
     signedIn,
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.

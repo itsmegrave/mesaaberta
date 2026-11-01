@@ -5,6 +5,7 @@ import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { directoryLinksEnabled, requireDirectory } from '../directories/flags';
 import { placeTagsEnabled } from '../places/tags';
+import { cardRating, contentRatingSymbolShown } from '../tables/safety-enabled';
 
 /**
  * The page of one place (`/pp/[slug]`). A place that waits for review or is hidden opens only for
@@ -50,9 +51,11 @@ export const read = async ({ locals, params }: RequestEvent) => {
     // Off, the page shows the old Comodidades apart, as before the catalog.
     placeTags: await placeTagsEnabled(locals),
     place: { ...place, imageUrl: imageUrl(supabase, imagePath) },
-    tables: found.tables.map(({ imagePath: tableImage, ...table }) => ({
-      ...table,
-      imageUrl: imageUrl(supabase, tableImage),
-    })),
+    tables: found.tables
+      .map(cardRating(await contentRatingSymbolShown(locals, await locals.getProfile())))
+      .map(({ imagePath: tableImage, ...table }) => ({
+        ...table,
+        imageUrl: imageUrl(supabase, tableImage),
+      })),
   };
 };

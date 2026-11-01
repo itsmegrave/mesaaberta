@@ -62,6 +62,8 @@
     places?: PlaceOption[] | null;
     /** Safety tools and the content rating (`use_table_safety`). Off, their values ride along unseen. */
     safety?: boolean;
+    /** The preview card draws the rating's ClassInd symbol (`use_content_rating_symbol`). */
+    ratingSymbol?: boolean;
     /** The westmarch kind is offered (`use_open_tables`); a table that is one keeps it anyway. */
     openTables?: boolean;
   };
@@ -83,6 +85,7 @@
     calendarNote = false,
     places = null,
     safety = false,
+    ratingSymbol = false,
     openTables = false,
   }: Props = $props();
   // svelte-ignore state_referenced_locally
@@ -148,6 +151,7 @@
     placeName: picked?.name ?? null,
     platforms: $draft.platforms.map((pick) => pickName(catalog.platforms, pick)),
     tags: $draft.tags.map((pick) => pickName(catalog.tags, pick)),
+    contentRating: safety && ratingSymbol ? $draft.contentRating || null : null,
   });
   const errors = fieldErrors<keyof TableFormValues>(() => controller, errorText);
   const { err, invalid } = errors;
