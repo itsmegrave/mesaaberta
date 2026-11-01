@@ -4,6 +4,7 @@ import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
 import { followsEnabled } from '#lib/server/follows/state.js';
+import { contentRatingSymbolShown } from '#lib/server/tables/safety-enabled.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { publicReadNow } from '@mesaaberta/core/server/reads/now';
 import type { readHome, Home } from '@mesaaberta/core/server/reads/home';
@@ -32,7 +33,8 @@ export const read = async ({ locals, url }: RequestEvent) => {
   );
 
   const supabaseUrl = supabaseUrlOf(locals.env);
-  const withImage = (table: HomeTable) => cardPictures(supabaseUrl)(table);
+  const rating = await contentRatingSymbolShown(locals, profile);
+  const withImage = (table: HomeTable) => cardPictures(supabaseUrl, rating)(table);
   return {
     ...home,
     signedInHome: true as const,

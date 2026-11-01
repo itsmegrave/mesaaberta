@@ -12,7 +12,7 @@ export const SAFETY_TOOLS = [
 export type SafetyTool = (typeof SAFETY_TOOLS)[number];
 
 /** The content ratings, youngest first. Mirrors the `game_tables_content_rating_value` check. */
-export const CONTENT_RATINGS = ['L', '10', '12', '14', '16', '18'] as const;
+export const CONTENT_RATINGS = ['L', '6', '10', '12', '14', '16', '18'] as const;
 export type ContentRating = (typeof CONTENT_RATINGS)[number];
 
 export const isSafetyTool = (value: string): value is SafetyTool =>

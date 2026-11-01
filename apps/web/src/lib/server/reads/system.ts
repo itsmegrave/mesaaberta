@@ -5,6 +5,7 @@ import type { readSystemPage } from '@mesaaberta/core/server/systems/directory';
 import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
 import { requireDirectory } from '../directories/flags';
+import { contentRatingSymbolShown } from '../tables/safety-enabled';
 
 /** The page of one system (`/s/[slug]`); a merged system moves to the one it was merged into. */
 export const read = async ({ locals, params }: RequestEvent) => {
@@ -30,7 +31,9 @@ export const read = async ({ locals, params }: RequestEvent) => {
   const supabase = supabaseUrlOf(locals.env);
   return {
     ...found,
-    openTables: found.openTables.map(cardPictures(supabase)),
+    openTables: found.openTables.map(
+      cardPictures(supabase, await contentRatingSymbolShown(locals, await locals.getProfile())),
+    ),
     gms: found.gms.map(({ avatarPath, avatarUrl, ...gm }) => ({
       ...gm,
       avatarUrl: pictureOf(supabase, { avatarPath, avatarUrl }),

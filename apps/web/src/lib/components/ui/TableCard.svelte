@@ -10,6 +10,7 @@
   import GmRating from './GmRating.svelte';
   import MAAvatar from './MAAvatar.svelte';
   import SeatRing from './SeatRing.svelte';
+  import ContentRatingSymbol from './ContentRatingSymbol.svelte';
   import { linkedCardClass } from './MediaCard.svelte';
 
   type PlatformItem = string | { name: string; slug?: string };
@@ -43,6 +44,9 @@
     placeName?: string | null;
     platforms?: PlatformItem[];
     tags?: TagItem[];
+    /** The age rating, drawn as its ClassInd symbol in the header's top-right corner. The server
+     * leaves it out while `use_content_rating_symbol` is off. */
+    contentRating?: string | null;
   };
 
   /** `level`: the title's heading level, one below the heading the card sits under. */
@@ -94,6 +98,11 @@
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"
       />
+      {#if table.contentRating}
+        <div class="absolute top-3 right-3">
+          <ContentRatingSymbol rating={table.contentRating} size={32} />
+        </div>
+      {/if}
       <!-- Kind pill -->
       <div class="absolute top-3 left-3">
         <span class="chip h-6 gap-1 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm">
@@ -144,14 +153,27 @@
           </div>
         {/if}
       </div>
-      <div class="flex items-center">
-        <SeatRing
-          capacity={table.capacity ?? 5}
-          seatsLeft={table.seatsLeft}
-          size={88}
-          label={seatSummary}
-        />
-      </div>
+      {#if table.contentRating}
+        <!-- With a rating its symbol takes the top-right corner and the ring moves down. -->
+        <div class="flex flex-col items-end justify-between">
+          <ContentRatingSymbol rating={table.contentRating} size={32} />
+          <SeatRing
+            capacity={table.capacity ?? 5}
+            seatsLeft={table.seatsLeft}
+            size={56}
+            label={seatSummary}
+          />
+        </div>
+      {:else}
+        <div class="flex items-center">
+          <SeatRing
+            capacity={table.capacity ?? 5}
+            seatsLeft={table.seatsLeft}
+            size={88}
+            label={seatSummary}
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 

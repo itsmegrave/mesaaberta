@@ -1,6 +1,6 @@
 import { openTablesEnabled } from '#lib/server/tables/open-enabled.js';
 import { loadRead } from '#lib/server/reads/load.js';
-import { tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
+import { contentRatingSymbolShown, tableSafetyEnabled } from '#lib/server/tables/safety-enabled.js';
 import { error, redirect } from '@sveltejs/kit';
 import { initialForm } from '#lib/forms/contract.js';
 import { NEW_TABLE_VALUES } from '#lib/tables/form-values.js';
@@ -46,6 +46,7 @@ export const load: PageServerLoad = async (event) => {
         ? await readPlaceOptions(locals, user.id)
         : null,
       safety: await tableSafetyEnabled(locals, await locals.getProfile()),
+      ratingSymbol: await contentRatingSymbolShown(locals, await locals.getProfile()),
     };
   } catch (e) {
     // Someone else's table is a 403; one that is not there is a 404. A concluded one says why.

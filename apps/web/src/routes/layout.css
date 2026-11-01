@@ -44,6 +44,15 @@ body {
   --font-brand: 'Cinzel Variable', Georgia, serif;
   /* Discord brand colour; no native equivalent */
   --color-discord: #5865f2;
+  /* ClassInd age-rating symbols (Guia Prático de Classificação Indicativa, 5ª ed., 2025, item H.1):
+     official colours, the same in both themes, never tinted. ContentRatingSymbol only. */
+  --color-classind-l: #00a651;
+  --color-classind-6: #e43493;
+  --color-classind-10: #0095da;
+  --color-classind-12: #fbc115;
+  --color-classind-14: #f58220;
+  --color-classind-16: #ec1d25;
+  --color-classind-18: #000000;
   /* Display sizes on the 4px grid (Tailwind's 30, 36, 60 and 72px are off it, and too big for the
      density we want). Line heights land on the grid too. */
   --text-3xl: 1.75rem;

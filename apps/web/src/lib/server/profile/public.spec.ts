@@ -174,6 +174,8 @@ describe('public profiles', () => {
     expect(data.profile.favoriteSystems).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
+      // The card's age rating, drawn only while the web app's flags say so.
+      'contentRating',
       'gmAvatar',
       'gmName',
       'gmRating',

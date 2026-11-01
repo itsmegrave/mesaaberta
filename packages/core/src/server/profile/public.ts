@@ -208,6 +208,8 @@ export async function publicProfile(
         avatarUrl: table.gmAvatarUrl,
       }),
       seatsLeft: table.seatsLeft,
+      // Drawn as its ClassInd symbol only when the web app's flags say so.
+      contentRating: table.contentRating ?? null,
       taken: table.taken,
       reserved: table.reserved,
       capacity: table.capacity,

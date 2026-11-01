@@ -417,7 +417,7 @@ export const gameTables = pgTable(
     ),
     check(
       'game_tables_content_rating_value',
-      sql`${table.contentRating} IS NULL OR ${table.contentRating} IN ('L', '10', '12', '14', '16', '18')`,
+      sql`${table.contentRating} IS NULL OR ${table.contentRating} IN ('L', '6', '10', '12', '14', '16', '18')`,
     ),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
     check(
