@@ -97,6 +97,10 @@ Pictures stay paths: the web Worker turns them into URLs.
 - `GET /v1/me/shell`: the header on every page (the bell's number and latest few, the conversations with something unread, and for an admin the catalog suggestions waiting).
 - `GET /v1/me/badges`: the two numbers the page polls.
 - `GET /v1/me/notifications?page=N&category=&unread=1`: a page of the feed and the unread total (a page past the last is a 404).
+- `GET /v1/me/calendar-feed` and `POST /v1/me/calendar-feed` (`{ on }`): the secret in the actor's calendar feed address, and a new one (the old address stops) or none; records `CalendarFeedChanged`. Web checks `use_calendar_feed` first.
+
+`GET /v1/calendar-feed/:token` answers the feed itself without an actor: the owner's `profileId` (web checks the flag for them) and their tables from 60 days back; an unknown or malformed secret is a 404. The web client logs the route as `/v1/calendar-feed/:param`, so the secret never reaches a log.
+
 - `GET /v1/me/availability` and `POST /v1/me/availability` (`{ slots }`, e.g. `mon-night`): "Quando posso jogar", read and saved (none clears it); records `AvailabilityChanged`. Web checks `use_profile_availability` first. `/v1/players` takes `day` and `period` filters and its cards and `/v1/profiles/:username` answer the stored `availability` integer, which web drops while the flag is off.
 
 `achievements=1` says the badge notices are on for the person (`use_badges`, decided in web).
