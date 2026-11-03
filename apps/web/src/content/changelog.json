@@ -6,6 +6,12 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Assinar agenda",
+        "description": "Em Minhas mesas, abra o menu e toque em Assinar agenda. O link mostra as mesas em que você joga ou mestra e se atualiza sozinho no Google Agenda, no celular ou no Outlook quando a data, o horário ou o local mudam. Dá para gerar um link novo ou desligar quando quiser.",
+        "href": "/u/calendar"
+      },
+      {
+        "kind": "new",
         "title": "Quando posso jogar",
         "description": "Em Editar perfil, marque os dias e se você joga de manhã, à tarde ou à noite. Os horários aparecem no seu perfil e no seu card do Procuro mesa.",
         "href": "/u/profile/edit/availability"

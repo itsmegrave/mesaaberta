@@ -125,6 +125,10 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // The subscribed calendar feed (`/calendar/<secret>.ics`), a new feature (created on for
+  // everyone). Off: Minhas mesas does not offer it and a feed address answers 404. Targeted by the
+  // feed owner's id.
+  use_calendar_feed: false,
   // "Quando posso jogar" on profiles, a new feature (created on for everyone): the days and parts
   // of the day a person can play, on their profile, on Procuro mesa and as its filter. Off: the
   // profile section is a 404 and nothing shows it. Targeted by the viewer (a profile: the person).
