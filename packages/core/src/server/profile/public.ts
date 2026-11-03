@@ -103,6 +103,7 @@ export async function publicProfile(
       name: profiles.name,
       showName: profiles.showName,
       showFavoriteSystems: profiles.showFavoriteSystems,
+      availability: profiles.availability,
       tableRole: profiles.tableRole,
       role: profiles.role,
     })
@@ -192,6 +193,8 @@ export async function publicProfile(
       rating,
       participantRating,
       favoriteSystems,
+      // "Quando posso jogar", the stored integer (`use_profile_availability`, which web asks).
+      availability: found.availability,
       // The places where they are a house GM, and the partners they chose to show they look after.
       hostedAt: (hosted.get(found.id) ?? []).map(({ slug, name }) => ({ slug, name })),
       looksAfter,

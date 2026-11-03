@@ -134,6 +134,12 @@ export const profiles = pgTable(
     // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
     lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
     lookingForTableNote: text('looking_for_table_note'),
+    // The secret in the person's calendar feed address (`/calendar/<token>.ics`), which a calendar
+    // app reads without signing in. Null: no feed. A new one replaces it, and the old address stops.
+    calendarFeedToken: text('calendar_feed_token'),
+    // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
+    // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
+    availability: integer('availability').notNull().default(0),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -148,6 +154,7 @@ export const profiles = pgTable(
     // Unique on the lowercase form, so `Ana` and `ana` cannot both exist even if a caller forgets to
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
+    uniqueIndex('profiles_calendar_feed_token_unique').on(profile.calendarFeedToken),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
@@ -155,6 +162,7 @@ export const profiles = pgTable(
     check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
     // Mirrors LOOKING_NOTE_MAX in packages/core/src/players/looking.
     check('profiles_looking_note_length', sql`char_length(${profile.lookingForTableNote}) <= 200`),
+    check('profiles_availability_range', sql`${profile.availability} between 0 and 2097151`),
     // Procuro mesa reads the people looking, newest first.
     index('profiles_looking_for_table_idx')
       .on(profile.lookingForTableAt)

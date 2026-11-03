@@ -6,6 +6,24 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Assinar agenda",
+        "description": "Em Minhas mesas, abra o menu e toque em Assinar agenda. O link mostra as mesas em que você joga ou mestra e se atualiza sozinho no Google Agenda, no celular ou no Outlook quando a data, o horário ou o local mudam. Dá para gerar um link novo ou desligar quando quiser.",
+        "href": "/u/calendar"
+      },
+      {
+        "kind": "new",
+        "title": "Quando posso jogar",
+        "description": "Em Editar perfil, marque os dias e se você joga de manhã, à tarde ou à noite. Os horários aparecem no seu perfil e no seu card do Procuro mesa.",
+        "href": "/u/profile/edit/availability"
+      },
+      {
+        "kind": "improved",
+        "title": "Procuro mesa filtra por dia e horário",
+        "description": "Quem mestra pode filtrar o Procuro mesa por dia da semana e por horário para achar quem pode jogar na mesma hora da mesa.",
+        "href": "/players"
+      },
+      {
+        "kind": "new",
         "title": "Sessões em Gerenciar mesa",
         "description": "Em Gerenciar mesa, a seção Sessões mostra as próximas datas e as já jogadas, com quantos estiveram. Dá para agendar mais uma sessão, mudar a data, escrever uma nota para quem joga ou cancelar uma sessão. Uma campanha semanal já deixa as 4 próximas datas na lista."
       },
@@ -31,9 +49,19 @@
         "href": "/crowdfunding"
       },
       {
+        "kind": "new",
+        "title": "Mensagens da equipe",
+        "description": "Quando a equipe da Mesa Aberta precisa falar com você sobre uma mesa, um parceiro, um lugar ou uma sugestão, a conversa aparece em Mensagens como [Admin] @nome, separada das suas conversas normais. Ela chega mesmo com as mensagens diretas desligadas, e você pode responder."
+      },
+      {
         "kind": "fixed",
         "title": "Sem erro depois de salvar um formulário",
         "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."
+      },
+      {
+        "kind": "improved",
+        "title": "Cada sessão na sua agenda",
+        "description": "Uma sessão cancelada sai da agenda, uma sessão que mudou de data aparece na nova data e uma sessão extra entra no evento da mesa. Quando quem mestra muda uma sessão, todos recebem por e-mail o convite atualizado."
       }
     ]
   },

@@ -141,3 +141,45 @@ describe('api Procuro mesa routes over a database', () => {
     });
   });
 });
+
+describe('Quando posso jogar on Procuro mesa', () => {
+  it('saves the slots through /v1/me/availability and records the event', async () => {
+    const { meRoutes } = await import('./me');
+    const me = (body?: unknown) =>
+      meRoutes((() => ({ db: test.db, close: async () => {} })) as never).request(
+        '/availability',
+        {
+          method: body === undefined ? 'GET' : 'POST',
+          headers: {
+            [ACTOR_HEADER]: bia,
+            ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+          },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        },
+        env,
+      );
+    expect((await me({ slots: ['mon-dawn'] })).status).toBe(400);
+    const saved = await me({ slots: ['fri-night', 'sat-afternoon'] });
+    expect(saved.status).toBe(200);
+    expect((await saved.json()).eventIds).toHaveLength(1);
+    expect(await (await me()).json()).toEqual({ slots: ['fri-night', 'sat-afternoon'] });
+    const [event] = await test.db
+      .select()
+      .from(events)
+      .where(eq(events.type, 'AvailabilityChanged'));
+    expect(event.payload).toEqual({ profileId: bia, slots: 2 });
+  });
+
+  it('filters by day and by part of the day, and the card carries the slots', async () => {
+    await call('/looking', bia, { looking: true, note: '' });
+    const all = await (await call('/', ana)).json();
+    expect(all.people[0].availability).toBeGreaterThan(0);
+    expect((await (await call('/?day=fri', ana)).json()).total).toBe(1);
+    expect((await (await call('/?period=night', ana)).json()).total).toBe(1);
+    expect((await (await call('/?day=fri&period=night', ana)).json()).total).toBe(1);
+    expect((await (await call('/?day=fri&period=morning', ana)).json()).total).toBe(0);
+    expect((await (await call('/?day=mon', ana)).json()).total).toBe(0);
+    // An unknown value is no filter.
+    expect((await (await call('/?day=someday', ana)).json()).total).toBe(1);
+  });
+});

@@ -491,3 +491,145 @@ describe('the namespace of the UIDs', () => {
     );
   });
 });
+
+describe('a campaign with its sessions', () => {
+  // Wednesdays at 19:00 in São Paulo (22:00 UTC), three hours.
+  const at = (day: string) => new Date(`${day}T22:00:00Z`);
+  const weekly: CalendarTable = {
+    ...table,
+    kind: 'campaign',
+    recurrence: 'FREQ=WEEKLY',
+    startsAt: at('2026-11-04'),
+    durationMinutes: 180,
+  };
+  const session = (
+    day: string,
+    over: Partial<NonNullable<CalendarTable['sessions']>[number]> = {},
+  ) => ({
+    startsAt: at(day),
+    durationMinutes: 180,
+    status: 'scheduled' as const,
+    movedFrom: null,
+    ...over,
+  });
+  const onRule = [
+    session('2026-11-04'),
+    session('2026-11-11'),
+    session('2026-11-18'),
+    session('2026-11-25'),
+  ];
+  const events = (ics: string) =>
+    new ICAL.Component(ICAL.parse(ics))
+      .getAllSubcomponents('vevent')
+      .map((component) => new ICAL.Event(component));
+  /** The starts (UTC ISO) of the series' first occurrences, overrides applied. */
+  const occurrences = (ics: string, count: number) => {
+    const all = events(ics);
+    const master = all.find((event) => !event.isRecurrenceException())!;
+    for (const exception of all.filter((event) => event.isRecurrenceException()))
+      master.relateException(exception);
+    const iterator = master.iterator();
+    const starts: string[] = [];
+    for (let next = iterator.next(); next && starts.length < count; next = iterator.next()) {
+      starts.push(master.getOccurrenceDetails(next).startDate.toJSDate().toISOString());
+    }
+    return starts;
+  };
+  const calendar = (sessions: CalendarTable['sessions'], over: Partial<CalendarTable> = {}) =>
+    buildCalendar({ tables: [{ ...weekly, sessions, ...over }], ...base });
+
+  it('is the same series as without sessions while every date is on the rule', () => {
+    expect(calendar(onRule)).toBe(calendar(undefined));
+    expect(calendar([])).toBe(calendar(undefined));
+  });
+
+  it('leaves a cancelled date out of the series (EXDATE), and keeps the rule going', () => {
+    const ics = calendar([
+      ...onRule.slice(0, 1),
+      session('2026-11-11', { status: 'cancelled' }),
+      ...onRule.slice(2),
+    ]);
+    expect(named(ics, 'EXDATE')).toEqual(['EXDATE;TZID=America/Sao_Paulo:20261111T190000']);
+    expect(occurrences(ics, 4)).toEqual([
+      '2026-11-04T22:00:00.000Z',
+      '2026-11-18T22:00:00.000Z',
+      '2026-11-25T22:00:00.000Z',
+      '2026-12-02T22:00:00.000Z',
+    ]);
+  });
+
+  it('moves a later session in place, as its own event of the series with the same UID', () => {
+    const ics = calendar([
+      onRule[0],
+      session('2026-11-13', { movedFrom: at('2026-11-11') }),
+      ...onRule.slice(2),
+    ]);
+    const all = events(ics);
+    expect(all).toHaveLength(2);
+    expect(new Set(all.map((event) => event.uid)).size).toBe(1);
+    expect(named(ics, 'RECURRENCE-ID')).toEqual([
+      'RECURRENCE-ID;TZID=America/Sao_Paulo:20261111T190000',
+    ]);
+    expect(occurrences(ics, 3)).toEqual([
+      '2026-11-04T22:00:00.000Z',
+      '2026-11-13T22:00:00.000Z',
+      '2026-11-18T22:00:00.000Z',
+    ]);
+  });
+
+  it('keeps the rule where it was when the next session itself was moved', () => {
+    // The table's date follows its moved first session; the series still starts on the rule.
+    const ics = calendar(
+      [session('2026-11-05', { movedFrom: at('2026-11-04') }), ...onRule.slice(1)],
+      { startsAt: at('2026-11-05') },
+    );
+    expect(named(ics, 'DTSTART').filter((line) => line.includes('TZID'))[0]).toBe(
+      'DTSTART;TZID=America/Sao_Paulo:20261104T190000',
+    );
+    expect(occurrences(ics, 3)).toEqual([
+      '2026-11-05T22:00:00.000Z',
+      '2026-11-11T22:00:00.000Z',
+      '2026-11-18T22:00:00.000Z',
+    ]);
+  });
+
+  it('adds a session off the rule (RDATE), with its own length when it differs', () => {
+    const ics = calendar([...onRule, session('2026-11-14', { durationMinutes: 300 })]);
+    expect(named(ics, 'RDATE')).toEqual(['RDATE;TZID=America/Sao_Paulo:20261114T190000']);
+    const extra = events(ics).find((event) => event.isRecurrenceException())!;
+    expect(extra.duration.toSeconds()).toBe(300 * 60);
+    expect(occurrences(ics, 4)).toContain('2026-11-14T22:00:00.000Z');
+  });
+
+  it('adds sessions to a table with no rule', () => {
+    const ics = calendar([session('2026-11-04'), session('2026-11-20')], { recurrence: null });
+    expect(named(ics, 'RRULE')).toEqual([]);
+    // ical.js's iterator leaves out DTSTART when there is no RRULE, so the lines are read directly.
+    expect(named(ics, 'DTSTART').filter((line) => line.includes('TZID'))).toEqual([
+      'DTSTART;TZID=America/Sao_Paulo:20261104T190000',
+    ]);
+    expect(named(ics, 'RDATE')).toEqual(['RDATE;TZID=America/Sao_Paulo:20261120T190000']);
+  });
+
+  it('puts the attendee and the organizer on every event of an invite', () => {
+    const ics = invite({
+      table: {
+        ...weekly,
+        sessions: [onRule[0], session('2026-11-13', { movedFrom: at('2026-11-11') })],
+      },
+    });
+    expect(named(ics, 'ATTENDEE')).toHaveLength(2);
+    expect(named(ics, 'ORGANIZER')).toHaveLength(2);
+  });
+
+  it('cancels the whole series in one event', () => {
+    const ics = invite({
+      method: 'CANCEL',
+      table: {
+        ...weekly,
+        sessions: [onRule[0], session('2026-11-13', { movedFrom: at('2026-11-11') })],
+      },
+    });
+    expect(named(ics, 'BEGIN').filter((l) => l === 'BEGIN:VEVENT')).toHaveLength(1);
+  });
+});

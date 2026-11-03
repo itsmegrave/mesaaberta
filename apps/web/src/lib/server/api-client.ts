@@ -18,6 +18,8 @@ export function routeTemplate(path: string): string {
         before === 'tables' ||
         before === 'manage' ||
         before === 'profiles' ||
+        // A calendar feed's secret must never reach a log.
+        before === 'calendar-feed' ||
         (before === 'table-writes' && i < segments.length - 1);
       return dynamic ? ':param' : segment;
     })

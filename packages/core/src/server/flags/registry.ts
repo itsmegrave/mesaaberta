@@ -125,6 +125,14 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // The subscribed calendar feed (`/calendar/<secret>.ics`), a new feature (created on for
+  // everyone). Off: Minhas mesas does not offer it and a feed address answers 404. Targeted by the
+  // feed owner's id.
+  use_calendar_feed: false,
+  // "Quando posso jogar" on profiles, a new feature (created on for everyone): the days and parts
+  // of the day a person can play, on their profile, on Procuro mesa and as its filter. Off: the
+  // profile section is a 404 and nothing shows it. Targeted by the viewer (a profile: the person).
+  use_profile_availability: false,
   // "Adicionar à agenda" on a table's page, a new feature (created on for everyone): the table in
   // Google Agenda or as an `.ics`, for its GM and confirmed players. Off: no button, and
   // /t/:slug/calendar is a 404. Targeted by the person's id.
@@ -137,6 +145,14 @@ export const flagDefaults = {
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.
   use_mcp: false,
+  // Admin conversations, a new feature (created on for everyone): "Mandar mensagem" on every admin
+  // review queue (partners, places, claims, partner links, crowdfunding, catalog suggestions), the
+  // tables and the people list opens an "[Admin] @username" conversation with the owner of the row
+  // or the person, apart from their everyday direct one; it reaches people with direct messages off
+  // and they can always answer. Admins only; this is the kill switch. Off: the rows don't offer it
+  // and a person's admin page opens the everyday direct conversation, as before. Targeted by the
+  // admin's id.
+  use_admin_messages: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

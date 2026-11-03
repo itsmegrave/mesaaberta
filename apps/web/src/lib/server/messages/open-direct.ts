@@ -17,3 +17,18 @@ export async function openDirectConversation(
   if (typeof written.body.conversationId !== 'string') error(503, 'Invalid API response');
   return written.body.conversationId;
 }
+
+/**
+ * The admin conversation between the signed-in admin and `recipientId` ("[Admin] @username"), made
+ * when there is none, by the api Worker. Apart from their everyday direct one.
+ */
+export async function openAdminConversation(
+  locals: App.Locals,
+  actor: Pick<Actor, 'id'> | null,
+  recipientId: string,
+): Promise<string> {
+  if (!actor) throw new Forbidden();
+  const written = await writeViaApi(locals, actor, '/v1/inbox/admin', { recipientId });
+  if (typeof written.body.conversationId !== 'string') error(503, 'Invalid API response');
+  return written.body.conversationId;
+}

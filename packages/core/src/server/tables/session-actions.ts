@@ -140,6 +140,17 @@ async function followFirst(
   });
 }
 
+/**
+ * A later session changed: the table's date did not, but its calendar event did, so the invite's
+ * sequence goes up and a calendar app takes the new copy over the one it has.
+ */
+async function laterChanged(tx: AnyDb, tableId: string) {
+  await tx
+    .update(gameTables)
+    .set({ icalSequence: sql`${gameTables.icalSequence} + 1` })
+    .where(eq(gameTables.id, tableId));
+}
+
 const sessionEvent = (
   type: 'SessionScheduled' | 'SessionMoved' | 'SessionCancelled',
   table: Table,
@@ -206,7 +217,9 @@ export async function scheduleSession(
       .returning({ id: tableSessions.id, startsAt: tableSessions.startsAt });
     const moved = await followFirst(tx, family, actor!);
     await syncTableSessions(tx, [table.id]);
-    return moved ?? recordEvent(tx, sessionEvent('SessionScheduled', table, actor!, session));
+    if (moved) return moved;
+    await laterChanged(tx, table.id);
+    return recordEvent(tx, sessionEvent('SessionScheduled', table, actor!, session));
   });
   return { eventId };
 }
@@ -248,12 +261,11 @@ export async function moveSession(
       .where(eq(tableSessions.id, session.id));
     const moved = await followFirst(tx, family, actor!);
     await syncTableSessions(tx, [table.id]);
-    return (
-      moved ??
-      recordEvent(
-        tx,
-        sessionEvent('SessionMoved', table, actor!, { ...session, startsAt }, session.startsAt),
-      )
+    if (moved) return moved;
+    await laterChanged(tx, table.id);
+    return recordEvent(
+      tx,
+      sessionEvent('SessionMoved', table, actor!, { ...session, startsAt }, session.startsAt),
     );
   });
   return { eventId };
@@ -314,7 +326,9 @@ export async function cancelSession(
     const moved = await followFirst(tx, family, actor!);
     // A weekly table gets its dates topped up again, past the cancelled one.
     await syncTableSessions(tx, [table.id]);
-    return moved ?? recordEvent(tx, sessionEvent('SessionCancelled', table, actor!, session));
+    if (moved) return moved;
+    await laterChanged(tx, table.id);
+    return recordEvent(tx, sessionEvent('SessionCancelled', table, actor!, session));
   });
   return { eventId };
 }

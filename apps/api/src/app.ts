@@ -9,6 +9,7 @@ import { adminEntryRoutes } from './admin-entries';
 import { adminReadRoutes } from './admin-reads';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
+import { calendarFeedRoutes } from './calendar-feed';
 import { catalogRoutes } from './catalog';
 import { changelogRoutes } from './changelog';
 import { eventRoutes } from './events';
@@ -152,6 +153,8 @@ export function createApi() {
   // The public sitemap's identifiers (published tables, active profiles). New and anonymous, so no
   // flag and no web fallback: web answers 503 when this read fails.
   app.route('/v1/seo', seoRoutes());
+  // A subscribed calendar feed, read by a calendar app with the secret in its address (no actor).
+  app.route('/v1/calendar-feed', calendarFeedRoutes());
   // The public profile page (/u/[username]). No flag and no web fallback either: database reads
   // live in the api now, and web answers 503 when this one fails.
   app.route('/v1/profiles', profileRoutes());

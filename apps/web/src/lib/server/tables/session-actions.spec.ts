@@ -225,7 +225,10 @@ describe('quem mestra manages the sessions', () => {
       type: 'SessionMoved',
       payload: expect.objectContaining({ from: third.startsAt.toISOString() }),
     });
-    expect((await tableAt(table.id)).startsAt).toEqual(first);
+    const after = await tableAt(table.id);
+    expect(after.startsAt).toEqual(first);
+    // The calendar event changed: invites carry a higher sequence so calendars take the new copy.
+    expect(after.icalSequence).toBe(table.icalSequence + 1);
   });
 
   it('writes and clears a note without telling anyone', async () => {

@@ -16,6 +16,7 @@
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
@@ -60,6 +61,7 @@
     !['published', 'publishing', 'uncertain', 'queued', 'processing'].includes(
       row.postStatus ?? '',
     );
+  const messages = personMessages();
   const items = (row: Row): KebabItem[] => [
     { id: 'view', label: m.menu_view_table(), icon: 'eye', href: href(row) },
     {
@@ -68,6 +70,7 @@
       icon: 'clock',
       href: `/admin/tables/${row.id}`,
     },
+    ...messages.item(row.gmId),
     { id: 'copy', label: m.menu_copy_link(), icon: 'copy', onselect: () => void copyLink(row) },
     {
       id: 'publish',
