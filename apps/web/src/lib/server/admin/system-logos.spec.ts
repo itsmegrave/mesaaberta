@@ -153,6 +153,7 @@ describe('searchNextLogos when Wikidata does not answer', () => {
       searched: [],
       more: false,
       failed: true,
+      retryAfter: undefined,
     });
     expect(requireApi).toHaveBeenCalledTimes(1);
   });

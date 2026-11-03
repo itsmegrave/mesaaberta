@@ -207,4 +207,17 @@ describe('findSystemLogo', () => {
     });
     expect(refused.reason).toBe('lookup_failed');
   });
+
+  it('waits once when Wikidata asks it to slow down', async () => {
+    let calls = 0;
+    const found = await findSystemLogo('Sistema Caseiro', {
+      fetcher: async () =>
+        ++calls === 1
+          ? new Response('slow down', { status: 429, headers: { 'retry-after': '0' } })
+          : json({ search: [] }),
+      resolve: publicDns,
+    });
+    expect(found.reason).toBe('no_wikidata_item');
+    expect(calls).toBeGreaterThan(1);
+  });
 });

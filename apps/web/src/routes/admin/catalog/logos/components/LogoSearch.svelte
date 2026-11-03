@@ -12,7 +12,10 @@
 
   let { unsearched }: { unsearched: number } = $props();
 
+  /** The longest pause Wikimedia may ask for before the search waits for the admin instead. */
+  const MAX_PAUSE_S = 120;
   let stopping = $state(false);
+  let pausing = $state(0);
   let searched = $state(0);
   const client = queryClient();
   const run = createMutation(
@@ -24,8 +27,16 @@
           const result = await postAction('?/search', new FormData());
           if (result.type !== 'success') throw new Error('search_failed');
           const step = result.data as
-            { searched?: unknown[]; more?: boolean; failed?: boolean } | undefined;
+            | { searched?: unknown[]; more?: boolean; failed?: boolean; retryAfter?: number }
+            | undefined;
           searched += step?.searched?.length ?? 0;
+          // Wikimedia asked for a pause: wait as long as it said, then go on (a long one stops).
+          if (step?.failed && step.retryAfter && step.retryAfter <= MAX_PAUSE_S && !stopping) {
+            pausing = step.retryAfter;
+            await new Promise((done) => setTimeout(done, step.retryAfter! * 1000));
+            pausing = 0;
+            continue;
+          }
           if (step?.failed) throw new Error('lookup_failed');
           if (!step?.more || stopping) return;
         }
@@ -47,7 +58,9 @@
   {#if unsearched > 0 || run.isPending}
     <p class="font-semibold" role="status">
       {run.isPending
-        ? m.admin_logos_searching({ count: searched })
+        ? pausing
+          ? m.admin_logos_pausing({ count: searched, seconds: pausing })
+          : m.admin_logos_searching({ count: searched })
         : m.admin_logos_unsearched({ count: unsearched })}
     </p>
     <p class="mt-1 text-sm text-muted">{m.admin_logos_search_hint()}</p>

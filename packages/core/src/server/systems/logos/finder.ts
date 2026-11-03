@@ -49,6 +49,8 @@ export type LogoSearch = {
    * system: Wikidata or Commons could not be read, so nothing should be recorded for it.
    */
   reason: 'no_wikidata_item' | 'no_logo' | 'only_svg' | 'lookup_failed' | null;
+  /** With `lookup_failed` on a 429: the seconds Wikimedia asked to wait before trying again. */
+  retryAfter?: number;
 };
 
 export type FinderDeps = { fetcher?: Fetcher; resolve?: Resolver; timeoutMs?: number };
@@ -58,7 +60,9 @@ const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
 /** Wide enough for a crisp logo on a retina card, small enough to stay under the image cap. */
 const THUMB_WIDTH = 512;
-const LANGUAGES = ['pt', 'en'] as const;
+const LANGUAGES = ['en', 'pt'] as const;
+/** The longest a `Retry-After` is waited for before the search gives up for now. */
+const MAX_RETRY_WAIT_S = 5;
 
 // "tabletop role-playing game". Items of other classes still count when their description says
 // they are a role-playing game (RPG_WORDS), which covers editions and rule systems too.
@@ -227,10 +231,23 @@ export function findLogoInHtml(
 // --- The search -----------------------------------------------------------------------------
 
 /** Wikidata or Commons could not be read: the search says so instead of "nothing found". */
-class LookupFailed extends Error {}
+class LookupFailed extends Error {
+  constructor(
+    reason: string,
+    /** Seconds Wikimedia asked to wait, on a 429. */
+    readonly retryAfter?: number,
+  ) {
+    super(reason);
+  }
+}
 
 /** A GET of a fixed, trusted API (Wikidata, Commons) as JSON. Throws `LookupFailed` on any failure. */
-async function getJson<T>(fetcher: Fetcher, url: string, timeoutMs: number): Promise<T> {
+async function getJson<T>(
+  fetcher: Fetcher,
+  url: string,
+  timeoutMs: number,
+  retry = true,
+): Promise<T> {
   let response: Response;
   try {
     response = await fetcher(url, {
@@ -240,9 +257,19 @@ async function getJson<T>(fetcher: Fetcher, url: string, timeoutMs: number): Pro
   } catch {
     throw new LookupFailed('network');
   }
+  // Asked to slow down: wait as told, once, when it is short; otherwise the search stops.
+  const wait = Number(response.headers.get('retry-after'));
+  if (response.status === 429 && retry && Number.isFinite(wait) && wait <= MAX_RETRY_WAIT_S) {
+    await response.body?.cancel().catch(() => undefined);
+    await new Promise((done) => setTimeout(done, Math.max(1, wait) * 1000));
+    return getJson(fetcher, url, timeoutMs, false);
+  }
   if (!response.ok) {
     await response.body?.cancel().catch(() => undefined);
-    throw new LookupFailed(`http_${response.status}`);
+    throw new LookupFailed(
+      `http_${response.status}`,
+      response.status === 429 && Number.isFinite(wait) && wait > 0 ? wait : undefined,
+    );
   }
   try {
     return (await response.json()) as T;
@@ -254,8 +281,14 @@ async function getJson<T>(fetcher: Fetcher, url: string, timeoutMs: number): Pro
 const query = (base: string, params: Record<string, string>) =>
   `${base}?${new URLSearchParams({ format: 'json', ...params })}`;
 
-async function wikidataItems(fetcher: Fetcher, name: string, timeoutMs: number) {
-  const ids: string[] = [];
+/**
+ * The Wikidata item that is this system, asking as little as it can (Wikimedia rate-limits
+ * anonymous clients): each searched name in English, then in Portuguese only when English found
+ * nothing new, the new hits read in one call, and it stops at the first exact match.
+ */
+async function findItem(fetcher: Fetcher, name: string, timeoutMs: number) {
+  const entities: WikidataEntity[] = [];
+  const seen = new Set<string>();
   for (const { term } of searchNames(name)) {
     for (const language of LANGUAGES) {
       const found = await getJson<{ search?: { id: string }[] }>(
@@ -270,21 +303,26 @@ async function wikidataItems(fetcher: Fetcher, name: string, timeoutMs: number) 
         }),
         timeoutMs,
       );
-      for (const hit of found?.search ?? []) if (!ids.includes(hit.id)) ids.push(hit.id);
+      const fresh = (found.search ?? []).map((hit) => hit.id).filter((id) => !seen.has(id));
+      if (fresh.length === 0) continue;
+      for (const id of fresh) seen.add(id);
+      const read = await getJson<{ entities?: Record<string, WikidataEntity> }>(
+        fetcher,
+        query(WIKIDATA_API, {
+          action: 'wbgetentities',
+          ids: fresh.join('|'),
+          props: 'labels|aliases|descriptions|claims',
+          languages: 'pt|en|mul',
+        }),
+        timeoutMs,
+      );
+      entities.push(...Object.values(read.entities ?? {}));
+      const picked = pickEntity(name, entities);
+      if (picked?.exact) return picked;
+      break;
     }
   }
-  if (ids.length === 0) return [];
-  const entities = await getJson<{ entities?: Record<string, WikidataEntity> }>(
-    fetcher,
-    query(WIKIDATA_API, {
-      action: 'wbgetentities',
-      ids: ids.slice(0, 50).join('|'),
-      props: 'labels|aliases|descriptions|claims',
-      languages: 'pt|en|mul',
-    }),
-    timeoutMs,
-  );
-  return Object.values(entities?.entities ?? {});
+  return pickEntity(name, entities);
 }
 
 type CommonsInfo = {
@@ -340,7 +378,13 @@ export async function findSystemLogo(name: string, deps: FinderDeps = {}): Promi
     return await search(name, deps);
   } catch (error) {
     if (!(error instanceof LookupFailed)) throw error;
-    return { candidate: null, wikidataId: null, website: null, reason: 'lookup_failed' };
+    return {
+      candidate: null,
+      wikidataId: null,
+      website: null,
+      reason: 'lookup_failed',
+      ...(error.retryAfter ? { retryAfter: error.retryAfter } : {}),
+    };
   }
 }
 
@@ -349,7 +393,7 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
   const resolve = deps.resolve ?? resolveOverHttps(fetcher);
   const timeoutMs = deps.timeoutMs ?? 8_000;
 
-  const picked = pickEntity(name, await wikidataItems(fetcher, name, timeoutMs));
+  const picked = await findItem(fetcher, name, timeoutMs);
   if (!picked)
     return { candidate: null, wikidataId: null, website: null, reason: 'no_wikidata_item' };
   const { entity, exact } = picked;

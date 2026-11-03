@@ -59,7 +59,13 @@ export async function searchNextLogos(
   locals: Locals,
   admin: Admin,
   deps: FinderDeps = {},
-): Promise<{ searched: SearchOutcome[]; more: boolean; failed?: true }> {
+): Promise<{
+  searched: SearchOutcome[];
+  more: boolean;
+  failed?: true;
+  /** Seconds Wikimedia asked to wait before the next step, when it asked. */
+  retryAfter?: number;
+}> {
   const { systems } = await requireApi<{ systems: { id: string; name: string; slug: string }[] }>(
     locals,
     admin,
@@ -72,7 +78,7 @@ export async function searchNextLogos(
     // an outage never marks every system as missing.
     if (search.reason === 'lookup_failed') {
       locals.log.warn('system_logos.lookup_failed', { code: 'lookup_failed' });
-      return { searched, more: false, failed: true };
+      return { searched, more: false, failed: true, retryAfter: search.retryAfter };
     }
     const path = search.candidate ? await storeCandidate(locals, search.candidate, deps) : null;
     const found =

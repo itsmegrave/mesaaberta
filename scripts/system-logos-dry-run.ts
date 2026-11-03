@@ -16,14 +16,21 @@ const counts: Record<string, number> = {};
 const queue = [...names];
 async function worker() {
   for (let system = queue.shift(); system; system = queue.shift()) {
-    const found = await findSystemLogo(system.name);
+    let found = await findSystemLogo(system.name);
+    // Asked to slow down: wait as told and ask again, like the admin page does.
+    for (let tries = 0; found.retryAfter && tries < 5; tries++) {
+      console.error(JSON.stringify({ outcome: 'pause', seconds: found.retryAfter }));
+      await new Promise((done) => setTimeout(done, found.retryAfter! * 1000));
+      found = await findSystemLogo(system.name);
+    }
     const key = found.candidate
       ? `${found.candidate.method}:${found.candidate.confidence}`
       : `none:${found.reason}`;
     counts[key] = (counts[key] ?? 0) + 1;
     console.log(JSON.stringify({ ...system, ...found }));
+    if (found.reason === 'lookup_failed') break;
   }
 }
-// A few at a time: Wikidata asks bots to keep it gentle.
-await Promise.all(Array.from({ length: 3 }, worker));
+// One at a time: Wikimedia rate-limits anonymous clients.
+await worker();
 console.error(JSON.stringify({ outcome: 'dry_run', systems: names.length, counts }));

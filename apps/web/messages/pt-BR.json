@@ -1387,6 +1387,7 @@
   "admin_logos_search": "Procurar logos",
   "admin_logos_searching": "Procurando… {count} sistemas nesta rodada",
   "admin_logos_stop": "Parar",
+  "admin_logos_pausing": "Procurados nesta rodada: {count}. O Wikidata pediu uma pausa: continuo em {seconds} segundos.",
   "admin_logos_lookup_failed": "O Wikidata não respondeu agora. O que já foi procurado ficou salvo: tente de novo daqui a pouco.",
   "admin_logos_search_done": "Todos os sistemas já foram procurados.",
   "admin_logos_search_hint": "A busca olha o Wikidata e o site oficial de cada sistema, de cinco em cinco. Pode fechar a página: ela continua de onde parou.",
