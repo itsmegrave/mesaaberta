@@ -34,6 +34,7 @@ import { readRoutes } from './reads';
 import { reportRoutes } from './reports';
 import { seoRoutes } from './seo';
 import { submissionRoutes } from './submissions';
+import { tableCalendarRoutes } from './table-calendar';
 import { tableWriteRoutes } from './table-writes';
 import { widgetRoutes } from './widgets';
 
@@ -118,6 +119,8 @@ export function createApi() {
   // The signed-in person's own frame: the profile row (the actor of every web request), the
   // header's numbers and the bell, and the notification feed.
   app.route('/v1/me', meRoutes());
+  // "Adicionar à agenda" on a table's page.
+  app.route('/v1/table-calendar', tableCalendarRoutes());
   // The address behind a CEP, for the forms that fill one in.
   app.route('/v1/location', locationRoutes());
   // The installed extensions' widgets and public assets.
