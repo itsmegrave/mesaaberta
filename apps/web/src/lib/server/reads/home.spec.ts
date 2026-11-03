@@ -82,7 +82,7 @@ beforeAll(async () => {
     tableId: id('o5'),
     gmId: other,
     playerId: me,
-    // Sent at the test's own `now`, not the clock's: the expiry must come after it.
+    // Stamped at the spec's clock: the default (the real now) passes this expiry after a day.
     createdAt: now,
     expiresAt: at(1),
   });

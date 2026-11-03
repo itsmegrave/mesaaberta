@@ -31,7 +31,9 @@ export default defineConfig({
   // stamps them with debug ids and uploads them with `sentry-cli` (`sourcemaps inject` and
   // `upload`): the plugin's own upload never runs under Vite 8, whose environment builds leave
   // its "is this the server build" check false, so no browser map had ever reached Sentry.
-  build: { sourcemap: 'hidden' },
+  // The WebP decoder's `.wasm` (imported in a Worker only) must reach Wrangler as written, which
+  // bundles it as a compiled module; Vite would instead try to link it as a WebAssembly ES module.
+  build: { sourcemap: 'hidden', rolldownOptions: { external: [/^@jsquash\/webp\/.*\.wasm$/] } },
   // The release the browser's events carry (the tag; the deploy sets SENTRY_RELEASE), the same as
   // the server's `sentryReleaseFor`. Empty outside a deploy.
   define: { __SENTRY_RELEASE__: JSON.stringify(process.env.SENTRY_RELEASE ?? '') },
