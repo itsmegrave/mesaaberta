@@ -34,13 +34,18 @@ describe('mainNav', () => {
   const hrefs = (links: { href: string }[]) => links.map((item) => item.href);
 
   it('hides the members’ links from visitors in the sidebar only', () => {
-    expect(hrefs(mainNav('sidebar', { signedIn: false }))).toEqual(['/tables', '/crowdfunding']);
+    expect(hrefs(mainNav('sidebar', { signedIn: false }))).toEqual(['/tables']);
     expect(hrefs(mainNav('tabs', { signedIn: false }))).toEqual([
       '/tables',
-      '/crowdfunding',
       '/tables/new',
       '/u/tables',
     ]);
+  });
+
+  // Financiamentos is in Explorar (directoryNav), not among the destinations.
+  it('leaves Financiamentos to Explorar', () => {
+    expect(hrefs(mainNav('tabs', { signedIn: true }))).not.toContain('/crowdfunding');
+    expect(hrefs(mainNav('sidebar', { signedIn: true }))).not.toContain('/crowdfunding');
   });
 
   // Admin is in the account menu on every surface (the nav is the same for admins and members).

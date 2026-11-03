@@ -17,14 +17,12 @@ export type Audience = 'everyone' | 'members';
 export type Surface = 'sidebar' | 'tabs';
 
 export interface MainNavLink {
-  href: '/tables' | '/crowdfunding' | '/tables/new' | '/u/tables';
+  href: '/tables' | '/tables/new' | '/u/tables';
   icon: IconName;
   /** The open sidebar's label. */
   label: () => string;
   /** The tab bar's label. */
   tabLabel: () => string;
-  /** What the tab is announced as when its label is a short form. */
-  tabAriaLabel?: () => string;
   /** The page you are on is in this section. */
   current: (pathname: string) => boolean;
   audience: Audience;
@@ -32,7 +30,8 @@ export interface MainNavLink {
   primary?: boolean;
 }
 
-// Parceiros has no link in the app chrome; the footer lists it.
+// Parceiros has no link in the app chrome; the footer lists it. Financiamentos is in Explorar
+// (directory-nav.ts).
 export const MAIN_NAV: readonly MainNavLink[] = [
   {
     href: '/tables',
@@ -41,16 +40,6 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     tabLabel: m.nav_tables,
     // The list and every table's own page (`/t/<slug>`), but not the form that opens one.
     current: (pathname) => isUnder(pathname, '/tables', ['/tables/new']) || isUnder(pathname, '/t'),
-    audience: 'everyone',
-  },
-  {
-    href: '/crowdfunding',
-    icon: 'game-icons:open-treasure-chest',
-    label: m.nav_crowdfunding,
-    // The short label fits the bar, the full name is what is announced.
-    tabLabel: m.nav_crowdfunding_short,
-    tabAriaLabel: m.nav_crowdfunding_label,
-    current: (pathname) => isUnder(pathname, '/crowdfunding'),
     audience: 'everyone',
   },
   {

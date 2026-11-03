@@ -181,7 +181,7 @@ describe('+layout.svelte', () => {
     await userEvent.tab();
     await expect.element(page.getByRole('tooltip')).toHaveTextContent('Mesas');
     await userEvent.tab();
-    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Financiamentos');
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Abrir uma mesa');
   });
 
   describe('directories in the menu', () => {
@@ -210,10 +210,13 @@ describe('+layout.svelte', () => {
       await expect.element(nav().getByText('Explorar', { exact: true })).not.toBeInTheDocument();
     });
 
-    it('has no group, divider or link while every directory is off', async () => {
+    it('keeps Explorar with Financiamentos while every directory is off', async () => {
       render(Layout, { children, data: signedOut });
 
-      await expect.element(nav().getByText('Explorar', { exact: true })).not.toBeInTheDocument();
+      await expect.element(nav().getByText('Explorar', { exact: true })).toBeVisible();
+      await expect
+        .element(nav().getByRole('link', { name: 'Financiamentos', exact: true }))
+        .toHaveAttribute('href', '/crowdfunding');
       expect(
         nav()
           .getByRole('link', { name: /Sistemas/ })
@@ -221,15 +224,42 @@ describe('+layout.svelte', () => {
       ).toHaveLength(0);
     });
 
-    it('links the only directory that is on straight from the phone bar', async () => {
+    it('lists Financiamentos after the directories', async () => {
+      render(Layout, { children, data: withSystems });
+
+      const hrefs = nav()
+        .getByRole('link')
+        .elements()
+        .map((link) => link.getAttribute('href'));
+      expect(hrefs.indexOf('/crowdfunding')).toBeGreaterThan(hrefs.indexOf('/systems'));
+      expect(hrefs.indexOf('/systems')).toBeGreaterThan(hrefs.indexOf('/tables'));
+    });
+
+    it("links Financiamentos straight from the phone bar when it is Explorar's only link", async () => {
+      await page.viewport(390, 844);
+      render(Layout, { children, data: signedOut });
+      const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
+
+      await expect
+        .element(bar.getByRole('link', { name: 'Financiamentos' }))
+        .toHaveAttribute('href', '/crowdfunding');
+      expect(bar.getByRole('link').elements()).toHaveLength(4);
+    });
+
+    it('puts Financiamentos in the phone Explorar sheet once a directory is on', async () => {
       await page.viewport(390, 844);
       render(Layout, { children, data: withSystems });
       const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
 
+      expect(bar.getByRole('link').elements()).toHaveLength(3);
+      await bar.getByRole('button', { name: 'Explorar' }).click();
+      const sheet = page.getByRole('dialog', { name: 'Explorar' });
       await expect
-        .element(bar.getByRole('link', { name: 'Sistemas' }))
+        .element(sheet.getByRole('link', { name: /Financiamentos/ }))
+        .toHaveAttribute('href', '/crowdfunding');
+      await expect
+        .element(sheet.getByRole('link', { name: /Sistemas de RPG/ }))
         .toHaveAttribute('href', '/systems');
-      expect(bar.getByRole('link').elements()).toHaveLength(5);
     });
   });
 
