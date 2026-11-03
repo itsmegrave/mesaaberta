@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   // Início for visitors (and members without the signed-in Início): what Mesa Aberta is, the new
   // and the upcoming tables, how it works, and what it offers players and GMs.
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -106,7 +107,7 @@
       moreHref="/tables"
       moreCaption={m.home_carousel_more_caption()}
     >
-      {#snippet card(table)}<TableCard {table} />{/snippet}
+      {#snippet card(table)}<TableCard {table} markBeginners={page.data.beginners} />{/snippet}
     </TableCarousel>
   </div>
 {:else}

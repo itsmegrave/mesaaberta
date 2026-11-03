@@ -24,6 +24,7 @@ const shell = {
   maintenance: false,
   maintenanceBypass: false,
   directories: { systems: false, gms: false, places: false, players: false },
+  beginners: false,
   viewer,
   site: {
     APP_ORIGIN: 'https://mesaaberta.app',

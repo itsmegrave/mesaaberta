@@ -11,6 +11,7 @@
   import MAAvatar from './MAAvatar.svelte';
   import SeatRing from './SeatRing.svelte';
   import ContentRatingSymbol from './ContentRatingSymbol.svelte';
+  import { isBeginnerTable } from '@mesaaberta/core/tables/beginners';
   import { linkedCardClass } from './MediaCard.svelte';
 
   type PlatformItem = string | { name: string; slug?: string };
@@ -49,8 +50,16 @@
     contentRating?: string | null;
   };
 
-  /** `level`: the title's heading level, one below the heading the card sits under. */
-  let { table, level = 'h3' }: { table: Table; level?: 'h2' | 'h3' } = $props();
+  /**
+   * `level`: the title's heading level, one below the heading the card sits under.
+   * `markBeginners`: whether a table tagged "Iniciantes" shows the mark (`use_beginner_tables`).
+   */
+  let {
+    table,
+    level = 'h3',
+    markBeginners = false,
+  }: { table: Table; level?: 'h2' | 'h3'; markBeginners?: boolean } = $props();
+  const beginner = $derived(markBeginners && isBeginnerTable(table.tags));
 
   const locale = getLocale();
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
@@ -186,8 +195,19 @@
 
   <!-- Card body -->
   <div class="flex grow flex-col px-4 pt-4 pb-3">
-    <div class="text-sm leading-snug font-semibold text-muted">
-      {table.system.name}
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0 text-sm leading-snug font-semibold text-muted">
+        {table.system.name}
+      </div>
+      {#if beginner}
+        <span
+          data-beginners-mark
+          class="chip h-6 shrink-0 gap-1 rounded-full preset-tonal-primary px-2.5 text-xs font-semibold"
+        >
+          <Icon name="game-icons:sprout" size={14} />
+          {m.beginners_mark()}
+        </span>
+      {/if}
     </div>
 
     <svelte:element this={level} class="mt-1 text-xl leading-tight font-semibold tracking-tight">

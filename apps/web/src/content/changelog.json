@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-11-03",
+    "title": "Primeira mesa",
+    "summary": "Quem nunca jogou RPG agora tem um guia para começar, e as mesas para iniciantes ganharam um selo.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Guia Primeira mesa",
+        "description": "Um guia curto explica o que é uma mesa de RPG, como escolher e entrar na primeira e o que acontece no dia. Ele está na lista de mesas, em Primeira vez?",
+        "href": "/beginners"
+      },
+      {
+        "kind": "improved",
+        "title": "Selo Iniciantes",
+        "description": "Mesas com a tag Iniciantes mostram o selo no card e um aviso na página da mesa. Quem mestra pode marcar a tag ao criar ou editar a mesa.",
+        "href": "/tables?tag=iniciantes"
+      }
+    ]
+  },
+  {
     "date": "2026-11-01",
     "title": "Classificação indicativa à vista",
     "summary": "A classificação indicativa das mesas agora aparece com o símbolo colorido, no card e na página da mesa.",

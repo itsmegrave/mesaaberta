@@ -125,6 +125,11 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // Iniciantes, a new feature (created on for everyone): tables tagged "Iniciantes" get a mark on
+  // their card and page, and the "Primeira mesa" guide (`/beginners`) explains how to start. Off:
+  // the guide is a 404 and nothing is marked (the tag and its filter stay). Targeted by the
+  // viewer's id, or anonymously.
+  use_beginner_tables: false,
   // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.
