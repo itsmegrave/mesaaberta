@@ -7,6 +7,9 @@ import { badgesEnabled } from '../badges/enabled';
 import { directoryEnabled } from '../directories/flags';
 import { waitlistEnabled } from '../waitlist/enabled';
 import { contentRatingSymbolShown, tableSafetyEnabled } from '../tables/safety-enabled';
+import { tableCalendarEnabled } from '../tables/calendar-enabled';
+import { tableSessionsEnabled } from '../tables/sessions-enabled';
+import { sessionsFromJson } from '../tables/sessions-json';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const user = await locals.getUser();
@@ -38,6 +41,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     badges = null,
     place = null,
     waitlist = null,
+    sessions = null,
     ...rest
   } = detail;
   return {
@@ -60,7 +64,12 @@ export const read = async ({ locals, params }: RequestEvent) => {
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.
     place: place && (await directoryEnabled(locals, 'places')) ? place : null,
+    // "Adicionar à agenda" for the GM and confirmed players (`use_table_calendar`).
+    tableCalendar: await tableCalendarEnabled(locals, profile),
     // The lista de espera, while `use_waitlist` is on: how many wait and the viewer's place in line.
     waitlist: waitlist && (await waitlistEnabled(locals, profile)) ? waitlist : null,
+    // Sessões, while `use_table_sessions` is on (and the api Worker sends them).
+    sessions:
+      sessions && (await tableSessionsEnabled(locals, profile)) ? sessionsFromJson(sessions) : null,
   };
 };

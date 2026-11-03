@@ -21,6 +21,7 @@
   import SummaryRow from '../components/ui/SummaryRow.svelte';
   import { Target } from '#lib/target.svelte.js';
   import TableGoingOn from './components/TableGoingOn.svelte';
+  import ManageSessions from './components/ManageSessions.svelte';
   import TableHead from '../components/ui/TableHead.svelte';
   import TableTabs from '../components/ui/TableTabs.svelte';
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
@@ -202,6 +203,7 @@
       startsAt={table.startsAt}
       step={page.url.searchParams.get('etapa')}
       nextSession={data.nextSession}
+      scheduledNext={data.scheduledNext}
       timezone={table.timezone}
       durationHours={table.durationMinutes / 60}
     />
@@ -222,6 +224,17 @@
 
   <div class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12">
     <div class="grid min-w-0 content-start gap-8 lg:col-span-2">
+      {#if data.sessions && table.kind !== 'one_shot' && data.sessions.length > 0}
+        <ManageSessions
+          class={card}
+          sessions={data.sessions}
+          next={here}
+          timezone={table.timezone}
+          weekly={!!table.everyWeeks}
+          durationHours={table.durationMinutes / 60}
+          canSchedule={table.status === 'active' || table.status === 'awaiting_confirmation'}
+        />
+      {/if}
       <section aria-labelledby="invitations" class={card}>
         <h2 id="invitations" class="text-2xl font-semibold">{m.invitation_manage_title()}</h2>
         <p class="mt-2 text-muted">{m.invitation_manage_help()}</p>

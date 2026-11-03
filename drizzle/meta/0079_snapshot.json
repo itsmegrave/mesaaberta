@@ -1,5 +1,5 @@
 {
-  "id": "8941ed9f-bca4-4f58-90c2-3aa22e0f46e4",
+  "id": "15721f0e-10a5-424c-aada-255227bd47bf",
   "prevId": "2c278523-30c8-4ecf-ba7d-425916d897be",
   "version": "7",
   "dialect": "postgresql",
@@ -5815,12 +5815,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "calendar_feed_token": {
-          "name": "calendar_feed_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "role": {
           "name": "role",
           "type": "profile_role",
@@ -5878,21 +5872,6 @@
               "expression": "lower(\"username\")",
               "asc": true,
               "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "profiles_calendar_feed_token_unique": {
-          "name": "profiles_calendar_feed_token_unique",
-          "columns": [
-            {
-              "expression": "calendar_feed_token",
-              "isExpression": false,
-              "asc": true,
               "nulls": "last"
             }
           ],
@@ -6667,6 +6646,199 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.table_session_attendance": {
+      "name": "table_session_attendance",
+      "schema": "",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attended": {
+          "name": "attended",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "table_session_attendance_player_idx": {
+          "name": "table_session_attendance_player_idx",
+          "columns": [
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "table_session_attendance_session_id_table_sessions_id_fk": {
+          "name": "table_session_attendance_session_id_table_sessions_id_fk",
+          "tableFrom": "table_session_attendance",
+          "tableTo": "table_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "table_session_attendance_player_id_profiles_id_fk": {
+          "name": "table_session_attendance_player_id_profiles_id_fk",
+          "tableFrom": "table_session_attendance",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "table_session_attendance_session_id_player_id_pk": {
+          "name": "table_session_attendance_session_id_player_id_pk",
+          "columns": [
+            "session_id",
+            "player_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.table_sessions": {
+      "name": "table_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "table_id": {
+          "name": "table_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "table_session_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'scheduled'"
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "table_sessions_table_idx": {
+          "name": "table_sessions_table_idx",
+          "columns": [
+            {
+              "expression": "table_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "table_sessions_table_id_game_tables_id_fk": {
+          "name": "table_sessions_table_id_game_tables_id_fk",
+          "tableFrom": "table_sessions",
+          "tableTo": "game_tables",
+          "columnsFrom": [
+            "table_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "table_sessions_duration_positive": {
+          "name": "table_sessions_duration_positive",
+          "value": "\"table_sessions\".\"duration_minutes\" > 0"
+        },
+        "table_sessions_note_length": {
+          "name": "table_sessions_note_length",
+          "value": "char_length(\"table_sessions\".\"note\") <= 500"
+        }
+      },
       "isRLSEnabled": true
     },
     "public.table_waitlist": {
@@ -7540,6 +7712,16 @@
         "player",
         "gm",
         "both"
+      ]
+    },
+    "public.table_session_status": {
+      "name": "table_session_status",
+      "schema": "public",
+      "values": [
+        "scheduled",
+        "held",
+        "not_held",
+        "cancelled"
       ]
     },
     "public.table_status": {

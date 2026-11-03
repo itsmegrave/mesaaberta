@@ -1,14 +1,39 @@
 [
   {
     "date": "2026-11-03",
-    "title": "Agenda que se atualiza sozinha",
-    "summary": "Assine a sua agenda de mesas no Google Agenda, no celular ou no Outlook e veja as mudanças sem baixar arquivo de novo.",
+    "title": "Sessões da mesa e a mesa na sua agenda",
+    "summary": "Campanhas e aventuras ganham uma lista de sessões que quem mestra agenda, muda ou cancela, e a mesa vai para a sua agenda direto da página dela.",
     "changes": [
       {
         "kind": "new",
         "title": "Assinar agenda",
-        "description": "Em Minhas mesas, abra o menu e toque em Assinar agenda. O link mostra as mesas em que você joga ou mestra e se atualiza quando a data, o horário ou o local mudam. Dá para gerar um link novo ou desligar quando quiser.",
+        "description": "Em Minhas mesas, abra o menu e toque em Assinar agenda. O link mostra as mesas em que você joga ou mestra e se atualiza sozinho no Google Agenda, no celular ou no Outlook quando a data, o horário ou o local mudam. Dá para gerar um link novo ou desligar quando quiser.",
         "href": "/u/calendar"
+      },
+      {
+        "kind": "new",
+        "title": "Sessões em Gerenciar mesa",
+        "description": "Em Gerenciar mesa, a seção Sessões mostra as próximas datas e as já jogadas, com quantos estiveram. Dá para agendar mais uma sessão, mudar a data, escrever uma nota para quem joga ou cancelar uma sessão. Uma campanha semanal já deixa as 4 próximas datas na lista."
+      },
+      {
+        "kind": "new",
+        "title": "Sessões na página da mesa",
+        "description": "A página de uma campanha ou aventura lista as próximas sessões. Quem tem vaga também vê as notas de quem mestra e, nas sessões já jogadas, se esteve presente."
+      },
+      {
+        "kind": "improved",
+        "title": "A mesa continua?",
+        "description": "Ao fim de uma sessão, se a próxima já está agendada, a pergunta já mostra a data dela em vez de pedir outra."
+      },
+      {
+        "kind": "new",
+        "title": "Adicionar à agenda",
+        "description": "Na página da mesa, o botão Adicionar à agenda abre a mesa no Google Agenda ou baixa o arquivo .ics para o Calendário do iPhone, o Outlook e outros. É o mesmo evento do convite por e-mail, então a mesa não aparece duas vezes."
+      },
+      {
+        "kind": "fixed",
+        "title": "Sem erro depois de salvar um formulário",
+        "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."
       }
     ]
   },

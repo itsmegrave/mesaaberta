@@ -1,4 +1,4 @@
-import { TABLE_STATUSES } from './table-status';
+import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
@@ -58,6 +58,7 @@ export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventur
 // `active` is open; `disabled` is the GM cancelling before the session; after the session the GM
 // confirms it: `awaiting_confirmation` until they answer, then `concluded` or `not_held`.
 export const tableStatus = pgEnum('table_status', TABLE_STATUSES);
+export const tableSessionStatus = pgEnum('table_session_status', TABLE_SESSION_STATUSES);
 // Where the table plays: over the internet, or around a real table.
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for
@@ -605,6 +606,56 @@ export const registrations = pgTable(
     index('registrations_player_idx').on(registration.playerId),
     // Mirror JOIN_MESSAGE_MAX in apps/web/src/lib/tables/registration.
     check('registrations_message_length', sql`char_length(${registration.message}) <= 500`),
+  ],
+).enableRLS();
+
+// The sessions of a table, one row each: the dates ahead and what became of the ones that passed.
+// `game_tables.starts_at` stays the date of the next one, written in the same transaction (lists,
+// filters, reminders and the sweeper read it), so a scheduled row mirrors it. Tracked from the
+// release of this table on: nothing before it is recovered. It goes with its table.
+export const tableSessions = pgTable(
+  'table_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    durationMinutes: integer('duration_minutes').notNull(),
+    status: tableSessionStatus('status').notNull().default('scheduled'),
+    // The GM's note to the players about this session ("começa às 20h"). Plain text, optional.
+    note: text('note'),
+    // The GM scheduled or moved this one by hand: a change to the table's repeat rule leaves it
+    // where it is. The dates a weekly campaign gets from its rule are not pinned.
+    pinned: boolean('pinned').notNull().default(false),
+    // Where a moved session was before ("Data movida de 29 de novembro"). The first move only.
+    movedFrom: timestamp('moved_from', { withTimezone: true }),
+    ...timestamps,
+  },
+  (session) => [
+    index('table_sessions_table_idx').on(session.tableId, session.startsAt),
+    check('table_sessions_duration_positive', sql`${session.durationMinutes} > 0`),
+    check('table_sessions_note_length', sql`char_length(${session.note}) <= 500`),
+  ],
+).enableRLS();
+
+// Who showed up at one session, as the GM said when confirming it. `registrations.attended` stays
+// the summary (present at least once), which ratings and badges read. Personal data: it goes with
+// the session and with the account.
+export const tableSessionAttendance = pgTable(
+  'table_session_attendance',
+  {
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => tableSessions.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    attended: boolean('attended').notNull(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.sessionId, row.playerId] }),
+    index('table_session_attendance_player_idx').on(row.playerId),
   ],
 ).enableRLS();
 
