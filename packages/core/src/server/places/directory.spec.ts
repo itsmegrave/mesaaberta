@@ -170,9 +170,15 @@ describe('the Onde jogar list', () => {
     ]);
   });
 
-  it('offers the states with a place, and the cities of the state picked', async () => {
+  it('offers all 27 states with their counts, and the cities of the state picked', async () => {
     const all = (await list())!;
-    expect(all.states.map((s) => s.slug)).toEqual(['pe', 'sp']);
+    expect(all.states).toHaveLength(27);
+    expect(all.states.filter((s) => s.count > 0).map((s) => s.slug)).toEqual(['pe', 'sp']);
+    expect(all.states.find((s) => s.slug === 'ac')).toEqual({
+      slug: 'ac',
+      label: 'Acre',
+      count: 0,
+    });
     expect(all.cities).toEqual([]);
     expect((await list('state=pe'))!.cities).toEqual([{ slug: 'pe-recife', label: 'Recife' }]);
   });

@@ -25,7 +25,10 @@ type NotifyingEvent = Extract<
       | 'JoinDeclined'
       | 'PlayerJoined'
       | 'PlayerLeft'
-      | 'RatingSubmitted';
+      | 'RatingSubmitted'
+      | 'SessionScheduled'
+      | 'SessionMoved'
+      | 'SessionCancelled';
   }
 >;
 
@@ -100,6 +103,24 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
         : { to: [gmId], type: 'player_left', link: manage };
     case 'RatingSubmitted':
       return { to: [gmId], type: 'rating_received', link: page };
+    case 'SessionScheduled':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'session_scheduled',
+        link: page,
+      };
+    case 'SessionMoved':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'session_moved',
+        link: page,
+      };
+    case 'SessionCancelled':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'session_cancelled',
+        link: page,
+      };
   }
 }
 
@@ -118,6 +139,15 @@ export function changeSummary(
       ? { startsAtFrom: start.from, startsAtTo: start.to }
       : {};
   return { ...(fields.length > 0 ? { changed: fields.join(',') } : {}), ...moved };
+}
+
+/** A session notice carries the session's date, and where it was for a move. */
+function sessionDates(event: NotifyingEvent): Pick<TableMetadata, 'startsAt' | 'startsAtFrom'> {
+  if (event.type === 'SessionMoved')
+    return { startsAt: event.payload.startsAt, startsAtFrom: event.payload.from };
+  if (event.type === 'SessionScheduled' || event.type === 'SessionCancelled')
+    return { startsAt: event.payload.startsAt };
+  return {};
 }
 
 /**
@@ -139,6 +169,9 @@ export const notificationHandler: Handler = {
     'PlayerJoined',
     'PlayerLeft',
     'RatingSubmitted',
+    'SessionScheduled',
+    'SessionMoved',
+    'SessionCancelled',
   ],
   async handle(event, db) {
     const notifying = event as NotifyingEvent;
@@ -159,6 +192,9 @@ export const notificationHandler: Handler = {
       [
         'TableUpdated',
         'TableAwaitingConfirmation',
+        'SessionScheduled',
+        'SessionMoved',
+        'SessionCancelled',
         'JoinRequested',
         'JoinApproved',
         'PlayerJoined',
@@ -175,6 +211,7 @@ export const notificationHandler: Handler = {
       slug: table.slug,
       title: table.title,
       ...(notifying.type === 'TableUpdated' ? changeSummary(notifying.payload.changes) : {}),
+      ...sessionDates(notifying),
     };
     await db
       .insert(notifications)
