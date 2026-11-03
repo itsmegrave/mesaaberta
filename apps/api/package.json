@@ -7,6 +7,7 @@
   "dependencies": {
     "@cf-wasm/resvg": "*",
     "@growthbook/growthbook": "*",
+    "@jsquash/webp": "*",
     "@mesaaberta/core": "workspace:*",
     "@mesaaberta/privy": "workspace:*",
     "@mesaaberta/db": "workspace:*",
