@@ -27,6 +27,7 @@ import {
 import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { extensions, type Extension } from '../extensions/index';
+import { syncTableSessions } from '../tables/sessions';
 
 /**
  * Everything the account holds, for the data portability right (LGPD art. 18, V). Only this
@@ -309,6 +310,7 @@ export async function closeAccount(
         .update(gameTables)
         .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
         .where(eq(gameTables.id, table.id));
+      await syncTableSessions(t, [table.id]);
       ids.push(
         await recordEvent(t, {
           type: 'TableDisabled',
