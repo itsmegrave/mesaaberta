@@ -82,6 +82,8 @@ beforeAll(async () => {
     tableId: id('o5'),
     gmId: other,
     playerId: me,
+    // Sent at the test's own `now`, not the clock's: the expiry must come after it.
+    createdAt: now,
     expiresAt: at(1),
   });
   await test.db.insert(userBadges).values({

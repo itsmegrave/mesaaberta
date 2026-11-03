@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/sveltekit';
 import type { Component } from 'svelte';
 import { decorations } from './panels.js';
 
@@ -19,6 +18,8 @@ export async function loadDecoration<P extends Record<string, unknown>>(
     return (await load()).default as unknown as Component<P>;
   } catch (failure) {
     console.error('extension.load_failed', { resourceType: 'decoration', resourceId: kind });
+    // Imported only on a failure: the SDK reads `$app/state`, which isolated component tests mock.
+    const Sentry = await import('@sentry/sveltekit');
     Sentry.captureException(failure, { tags: { resourceType: 'decoration', resourceId: kind } });
     return null;
   }
