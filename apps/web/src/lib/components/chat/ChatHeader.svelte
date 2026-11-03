@@ -25,6 +25,8 @@
     onblock?: () => void;
     conversation: {
       kind: 'table' | 'direct';
+      /** An admin conversation: the title reads "[Admin] @username" and it offers no block. */
+      admin?: boolean;
       table: { slug: string; title: string; imageUrl: string | null } | null;
       other: { username: string; avatarUrl: string | null } | null;
       muted: boolean;
@@ -35,7 +37,9 @@
   const title = $derived(
     conversation.kind === 'table'
       ? (conversation.table?.title ?? '')
-      : atHandle(conversation.other?.username),
+      : conversation.admin
+        ? m.messages_admin_title({ name: atHandle(conversation.other?.username) })
+        : atHandle(conversation.other?.username),
   );
   // The ⋮ of a direct conversation: the person's profile, then reporting and blocking them.
   const more = $derived.by((): KebabItem[] => {
@@ -58,7 +62,7 @@
             },
           ]
         : []),
-      ...(onblock && !conversation.blocked
+      ...(onblock && !conversation.blocked && !conversation.admin
         ? [
             {
               id: 'block',

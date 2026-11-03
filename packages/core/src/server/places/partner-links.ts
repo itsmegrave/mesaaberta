@@ -243,7 +243,7 @@ export async function listPartnerLinks(db: AnyDb, actor: Actor | null, params: U
       decisionNote: placePartnerLinks.decisionNote,
       place: { slug: places.slug, name: places.name },
       partner: { id: partners.id, name: partners.name },
-      requester: { username: requester.username },
+      requester: { id: requester.id, username: requester.username },
     })
     .from(placePartnerLinks)
     .innerJoin(places, eq(places.id, placePartnerLinks.placeId))

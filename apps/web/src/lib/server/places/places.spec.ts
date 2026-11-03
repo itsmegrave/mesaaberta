@@ -376,6 +376,13 @@ describe('the admin list', () => {
       ['Clube Ágora', 'bruno'],
     ]);
     expect(waiting!.rows[0]).toMatchObject({ id: first.id, city: 'Recife', reports: 0 });
+    // "Mandar mensagem" writes to who sent it, and to the owner once someone owns the place.
+    expect(waiting!.rows.map((row) => row.contactId)).toEqual([ana.id, bruno.id]);
+    await test.db
+      .update(places)
+      .set({ ownerId: bruno.id, ownerSince: now })
+      .where(eq(places.id, first.id));
+    expect((await list())!.rows[0].contactId).toBe(bruno.id);
     expect((await list('status=up'))!.rows.map((row) => row.name)).toEqual(['Bar da Rolagem']);
     expect((await list('status=all'))!.total).toBe(3);
   });

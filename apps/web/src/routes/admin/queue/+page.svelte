@@ -3,10 +3,14 @@
   import UserText from '#lib/components/ui/UserText.svelte';
   import CatalogApprove from './components/CatalogApprove.svelte';
   import CatalogDialog from '../components/CatalogDialog.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
+  const messages = personMessages();
 
   const locale = getLocale();
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
@@ -136,6 +140,20 @@
                     triggerLabel="{m.admin_queue_merge()}: {entry.name}"
                     triggerClass={tonal}
                   />
+                {/if}
+                {#if messages.can(entry.contactId)}
+                  {@const contactId = entry.contactId}
+                  <MAButton
+                    variant="secondary"
+                    class="gap-2 font-semibold"
+                    submitting={messages.opening === contactId}
+                    aria-label="{m.admin_user_message()}: {entry.suggestedBy}"
+                    onclick={() => void messages.open(contactId)}
+                    ><Icon
+                      name="game-icons:scroll-quill"
+                      size={20}
+                    />{m.admin_user_message()}</MAButton
+                  >
                 {/if}
                 <CatalogDialog
                   mode="reject"
