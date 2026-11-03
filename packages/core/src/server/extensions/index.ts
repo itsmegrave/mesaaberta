@@ -2,7 +2,7 @@ import type { AnyDb } from '../db/client';
 import type { Handler } from '../events/types';
 import type { Flags } from '../flags/flags';
 import { isFlagName } from '../flags/registry';
-import type { Extension, PersonDecorations } from './contract';
+import type { Extension, PersonDecorations, SettingsCard } from './contract';
 import { extensions as installed } from './installed';
 
 export type * from './contract';
@@ -76,4 +76,19 @@ export async function decorationsFor(
     }
   }
   return merged;
+}
+
+/** The settings cards of every installed extension for this person, in install order. */
+export async function settingsCardsFor(
+  db: AnyDb,
+  profileId: string,
+  flags: Flags,
+  list: readonly Extension[] = extensions,
+): Promise<{ ext: string; card: SettingsCard }[]> {
+  const cards: { ext: string; card: SettingsCard }[] = [];
+  for (const extension of list) {
+    const card = await extension.settings?.forPerson(db, profileId, flags);
+    if (card) cards.push({ ext: extension.id, card });
+  }
+  return cards;
 }

@@ -5,6 +5,7 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import ProfileForm from '../components/ProfileForm.svelte';
+  import ExtensionCard from './components/ExtensionCard.svelte';
   import HostedPlaces from './components/HostedPlaces.svelte';
   import SettingsSection from './components/ui/SettingsSection.svelte';
   import UploadDialog from './components/UploadDialog.svelte';
@@ -134,6 +135,14 @@
     <p role="status" class="mt-3 text-sm font-semibold">{notice}</p>
   {/if}
 </section>
+
+{#each data.extensionCards as { ext, card } (ext)}
+  <ExtensionCard
+    {ext}
+    {card}
+    avatar={{ src: data.avatarUrl, name: data.form.data.name || data.username }}
+  />
+{/each}
 
 <section aria-labelledby="public-fields" class={card}>
   <h3 id="public-fields" class={heading}>{m.account_public_fields()}</h3>

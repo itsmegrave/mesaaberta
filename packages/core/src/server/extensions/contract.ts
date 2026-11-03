@@ -126,6 +126,29 @@ export interface DecorationSurface {
 }
 
 /**
+ * A card an extension adds to a person's own "Editar perfil › Perfil público", such as a supporter
+ * choosing the frame around their avatar. `kind` picks its component (the `settings` map of the
+ * web app's `panels.ts`), which is given `data`.
+ */
+export type SettingsCard = { kind: string; data: Record<string, unknown> };
+
+/** After a save: the card as it now stands (null: it has nothing more to show), or refused fields. */
+export type SettingsAnswer = { card: SettingsCard | null } | { invalid: true };
+
+/** An extension's settings for the signed-in person, on their own profile. */
+export interface SettingsSurface {
+  /** Its card for this person, or null when it has none for them (the page shows nothing). */
+  forPerson(db: AnyDb, profileId: string, flags: Flags): Promise<SettingsCard | null>;
+  /** A save from its card's form (`fields`, the form's own fields). */
+  save(
+    db: AnyDb,
+    profileId: string,
+    fields: Readonly<Record<string, string>>,
+    flags: Flags,
+  ): Promise<SettingsAnswer>;
+}
+
+/**
  * A feature that plugs into Mesa Aberta from outside the public code: Instagram today, more later
  * (Trello #207, #208). An extension fills only the points it uses. The public code reads extensions
  * from `installed.ts` and never names one, so a build without any still compiles and runs.
@@ -162,6 +185,8 @@ export interface Extension {
   readonly widgets?: WidgetSurface;
   /** Decorations on people: a frame around the avatar, a mark on the profile. */
   readonly decorations?: DecorationSurface;
+  /** Its card on the person's own "Editar perfil", such as a supporter's frame. */
+  readonly settings?: SettingsSurface;
   /**
    * Badges of its own, such as a supporter badge (Trello #224). The badge handler checks one after
    * the public events its `triggers` name; for an event of its own, the extension's handler calls

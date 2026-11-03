@@ -1,6 +1,7 @@
 import type { Component } from 'svelte';
 import type { BadgePresentation } from './badge-types.js';
 import type { DecorationComponent } from './decoration-types.js';
+import type { SettingsComponent } from './settings-types.js';
 import type { WidgetComponent } from './widget-types.js';
 
 /**
@@ -46,3 +47,9 @@ export const badges: Readonly<Record<string, BadgePresentation>> = {};
 export const decorations: Readonly<
   Record<string, () => Promise<{ default: DecorationComponent }>>
 > = {};
+
+/**
+ * The component of each settings card kind (`SettingsCard.kind`), on the person's own "Editar
+ * perfil › Perfil público". None in the public build, so the page never asks for cards.
+ */
+export const settings: Readonly<Record<string, () => Promise<{ default: SettingsComponent }>>> = {};
