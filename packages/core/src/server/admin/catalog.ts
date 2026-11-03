@@ -122,6 +122,8 @@ export type QueueEntry = {
   name: string;
   slug: string;
   suggestedBy: string | null;
+  /** Who to write to from the queue ("Mandar mensagem"); null once the account is gone. */
+  contactId: string | null;
   createdAt: Date;
   tables: { title: string; slug: string }[];
   /** The places that picked a suggested place tag (none for the other kinds). */
@@ -146,6 +148,8 @@ export async function listQueue(db: AnyDb): Promise<QueueEntry[]> {
           slug: table.slug,
           createdAt: table.createdAt,
           suggestedBy: profiles.username,
+          // Who to write to from the queue ("Mandar mensagem"); null once the account is gone.
+          contactId: profiles.id,
         })
         .from(table)
         .leftJoin(profiles, eq(profiles.id, table.suggestedBy))

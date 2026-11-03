@@ -4,7 +4,7 @@ import type { adminActivity, adminProfile } from '@mesaaberta/core/server/admin/
 import type { profileHistory } from '@mesaaberta/core/server/admin/history';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { failFrom } from '#lib/server/fail-from.js';
-import { openDirectConversation } from '#lib/server/messages/open-direct.js';
+import { openAdminConversation, openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { standingOf } from '@mesaaberta/core/profile/standing';
 import type { moderationOf } from '@mesaaberta/core/server/moderation/admin';
 import { accountActions, badgeActions } from '#lib/server/moderation/admin-actions.js';
@@ -57,12 +57,19 @@ export const actions: Actions = {
   ...accountActions,
   ...badgeActions,
 
-  // "Mandar mensagem": the direct conversation with this person (an admin may write to anyone who
-  // takes direct messages).
+  // "Mandar mensagem": the admin conversation with this person ("[Admin] @username"), apart from
+  // any everyday direct one. It is also where the admin lists post (`personMessages`). With
+  // `use_admin_messages` off, the everyday direct conversation, as before.
   message: async ({ locals, params }) => {
     const admin = await requireAdmin(locals);
     try {
-      const conversationId = await openDirectConversation(locals, admin, params.id);
+      const asAdmin = await locals.flags.isEnabled('use_admin_messages', {
+        id: admin.id,
+        isAdmin: true,
+      });
+      const conversationId = asAdmin
+        ? await openAdminConversation(locals, admin, params.id)
+        : await openDirectConversation(locals, admin, params.id);
       redirect(303, `/m/${conversationId}`);
     } catch (cause) {
       if (isRedirect(cause)) throw cause;

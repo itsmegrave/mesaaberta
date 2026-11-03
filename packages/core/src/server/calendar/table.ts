@@ -3,6 +3,7 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, registrations } from '@mesaaberta/core/server/db/schema';
 import type { CalendarTable } from '@mesaaberta/core/server/calendar/ics';
 import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
+import { withSessions } from '@mesaaberta/core/server/calendar/sessions';
 
 /**
  * One table for "Adicionar à agenda" on its page: the same fields as the invite and the person's
@@ -42,18 +43,24 @@ export async function readTableCalendar(
     );
   if (!row) return null;
 
-  const { gmId, ...table } = row;
-  if (gmId === actor.id || can(actor, 'admin:access')) return table;
+  const { gmId, ...found } = row;
+  const allowed =
+    gmId === actor.id || can(actor, 'admin:access') || (await seated(db, row.id, actor.id));
+  if (!allowed) return null;
+  const [table] = await withSessions(db, [found]);
+  return table;
+}
 
+async function seated(db: AnyDb, tableId: string, playerId: string): Promise<boolean> {
   const [seat] = await db
     .select({ playerId: registrations.playerId })
     .from(registrations)
     .where(
       and(
-        eq(registrations.tableId, row.id),
-        eq(registrations.playerId, actor.id),
+        eq(registrations.tableId, tableId),
+        eq(registrations.playerId, playerId),
         eq(registrations.status, 'confirmed'),
       ),
     );
-  return seat ? table : null;
+  return Boolean(seat);
 }
