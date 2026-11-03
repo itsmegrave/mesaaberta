@@ -141,6 +141,9 @@ export const profiles = pgTable(
     // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
     // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
     availability: integer('availability').notNull().default(0),
+    // On: the person's Retrospectiva (`/u/<username>/review/<year>`) opens for anyone with the link.
+    // Off, the default: only they see it, since it tells their history at the tables.
+    yearReviewPublic: boolean('year_review_public').notNull().default(false),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a

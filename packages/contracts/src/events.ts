@@ -271,6 +271,8 @@ export type DomainEvent =
   | { type: 'CalendarFeedChanged'; payload: { profileId: string; on: boolean } }
   // "Quando posso jogar" saved on the profile: how many slots it now has (0: cleared).
   | { type: 'AvailabilityChanged'; payload: { profileId: string; slots: number } }
+  // The person made their Retrospectiva public (anyone with the link) or private again.
+  | { type: 'YearReviewShared'; payload: { profileId: string; shared: boolean } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
   | { type: 'EventForced'; payload: { eventId: string; eventType: string } }

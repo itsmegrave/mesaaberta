@@ -27,6 +27,7 @@ import { locationRoutes } from './location';
 import { invitationRoutes } from './invitations';
 import { manageRoutes } from './manage';
 import { meRoutes } from './me';
+import { yearReviewRoutes } from './year-review';
 import { messageRoutes } from './messages';
 import { moderationRoutes } from './moderation';
 import { passwordRoutes } from './password';
@@ -127,6 +128,8 @@ export function createApi() {
   app.route('/v1/me', meRoutes());
   // "Adicionar à agenda" on a table's page.
   app.route('/v1/table-calendar', tableCalendarRoutes());
+  // Retrospectiva: a person's year at the tables and their "Deixar pública" switch.
+  app.route('/v1/year-review', yearReviewRoutes());
   // The address behind a CEP, for the forms that fill one in.
   app.route('/v1/location', locationRoutes());
   // The installed extensions' widgets and public assets.

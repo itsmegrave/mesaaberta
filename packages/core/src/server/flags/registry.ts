@@ -162,6 +162,10 @@ export const flagDefaults = {
   // and a person's admin page opens the everyday direct conversation, as before. Targeted by the
   // admin's id.
   use_admin_messages: false,
+  // Retrospectiva (`/u/<username>/review/<year>`), a new feature (created on for everyone): a
+  // person's year at the tables, private unless they make it public. Off: the pages are a 404 and
+  // the profile has no link. Targeted by the person whose year it is.
+  use_year_review: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
