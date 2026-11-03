@@ -89,7 +89,18 @@ describe('api system logo routes over a database', () => {
     expect((await call('/toString', admin, {})).status).toBe(404);
 
     expect(await (await call('/approveSure', admin, {})).json()).toEqual({ approved: 1 });
+    expect(
+      await (
+        await call('/upload', admin, {
+          systemId,
+          path: 'systems/mine.png',
+          sourcePage: 'https://www.daggerheart.com/',
+          attribution: null,
+        })
+      ).json(),
+    ).toEqual({ replaced: 'systems/dh.png' });
     const again = await call('/approve', admin, { systemId });
+    // An upload is approved as sent, so there is nothing pending to approve.
     expect(again.status).toBe(400);
     expect(await again.json()).toMatchObject({ field: 'systemId', message: 'not_pending' });
   });

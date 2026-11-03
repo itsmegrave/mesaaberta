@@ -1,6 +1,11 @@
 import { readRemoteImage } from '@mesaaberta/core/server/crowdfunding/link-preview';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import { IMAGE_BUCKET, detectImageType, storeImage } from '@mesaaberta/core/server/images';
+import {
+  IMAGE_BUCKET,
+  detectImageType,
+  prepareImage,
+  storeImage,
+} from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import {
   findSystemLogo,
@@ -130,4 +135,34 @@ export async function decideLogo(
   );
   await removeFiles(locals, [answer.removed]);
   return answer;
+}
+
+/** A logo the admin sends by hand, with where it comes from. Approved as sent. */
+export async function uploadLogo(
+  locals: Locals,
+  admin: Admin,
+  {
+    systemId,
+    logo,
+    sourcePage,
+    attribution,
+  }: { systemId: string; logo: File; sourcePage: string; attribution: string },
+) {
+  const prepared = await prepareImage(logo, LOGO_FOLDER);
+  const storage = serverStorage(locals.env, IMAGE_BUCKET);
+  if (!storage) throw new Invalid('image', 'upload_failed');
+  const path = await storeImage(storage, prepared, locals.log);
+  try {
+    const { replaced } = await requireApi<{ replaced: string | null }>(
+      locals,
+      admin,
+      `${API}/upload`,
+      { method: 'POST', body: { systemId, path, sourcePage, attribution: attribution || null } },
+    );
+    await removeFiles(locals, [replaced]);
+  } catch (error) {
+    // Not recorded: the file would be left with nothing pointing at it.
+    await removeFiles(locals, [path]);
+    throw error;
+  }
 }

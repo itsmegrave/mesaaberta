@@ -15,6 +15,7 @@
   import { toast } from '#lib/toaster.js';
   import { m } from '#lib/paraglide/messages.js';
   import LogoSearch from './components/LogoSearch.svelte';
+  import LogoUploadForm from './components/LogoUploadForm.svelte';
 
   let { data } = $props();
 
@@ -40,6 +41,7 @@
     wikidata: m.admin_logos_method_wikidata(),
     commons: m.admin_logos_method_commons(),
     website: m.admin_logos_method_website(),
+    upload: m.admin_logos_method_upload(),
   };
   // The finder writes the reason as a code ("no_logo"), or "image_unreadable: <url>".
   const reasons: Record<string, () => string> = {
@@ -187,6 +189,9 @@
               >
             {/if}
           </div>
+          {#if logo.status === 'missing' || logo.status === 'rejected'}
+            <LogoUploadForm systemId={logo.systemId} name={logo.name} />
+          {/if}
         </li>
       {/each}
     </ul>

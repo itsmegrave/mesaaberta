@@ -14,6 +14,8 @@ import {
   recordSchema,
   rejectLogo,
   systemsToSearch,
+  uploadLogo,
+  uploadSchema,
 } from '@mesaaberta/core/server/systems/logos/service';
 import { adminGuard, type AdminVariables } from './admin-guard';
 
@@ -49,6 +51,10 @@ export function systemLogoRoutes(open: Open = createDb) {
     record: (body) => {
       const data = recordSchema.parse(body);
       return (db, actor) => recordLogoSearch(db, actor, data);
+    },
+    upload: (body) => {
+      const data = uploadSchema.parse(body);
+      return (db, actor) => uploadLogo(db, actor, data);
     },
     approve: (body) => {
       const { systemId } = decisionSchema.parse(body);

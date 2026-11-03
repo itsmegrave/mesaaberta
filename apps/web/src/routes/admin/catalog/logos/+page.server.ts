@@ -6,12 +6,14 @@ import {
   emptySchema,
   logoDecisionSchema,
   logoStatusOf,
+  logoUploadSchema,
   type LogoStatus,
 } from '@mesaaberta/core/admin/system-logos';
 import type { SystemLogoList } from '@mesaaberta/core/server/systems/logos/service';
-import { validateStringForm } from '#lib/forms/contract.js';
+import { validateFormData, validateStringForm } from '#lib/forms/contract.js';
+import { refuse, responseForm } from '#lib/forms/server.js';
 import { requireAdmin } from '#lib/server/admin-access.js';
-import { decideLogo, searchNextLogos } from '#lib/server/admin/system-logos.js';
+import { decideLogo, searchNextLogos, uploadLogo } from '#lib/server/admin/system-logos.js';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import type { Actions, PageServerLoad, RequestEvent } from './$types';
@@ -73,6 +75,24 @@ export const actions: Actions = {
     const form = validateStringForm(await event.request.formData(), emptySchema, []);
     const { approved = 0 } = await decideLogo(event.locals, actor, 'approveSure');
     return { form, approved };
+  },
+  // A logo the admin sends by hand for a system the search could not fill.
+  upload: async (event) => {
+    const actor = await admin(event);
+    const form = validateFormData(
+      await event.request.formData(),
+      logoUploadSchema,
+      { systemId: '', sourcePage: '', attribution: '', logo: undefined },
+      { files: ['logo'] },
+    );
+    if (!form.valid) return fail(400, { form: responseForm(form) });
+    try {
+      await uploadLogo(event.locals, actor, form.data);
+    } catch (error) {
+      if (!(error instanceof Invalid)) throw error;
+      return refuse(form, 400, error.message, error.field === 'image' ? 'logo' : error.field);
+    }
+    return { form: responseForm(form) };
   },
   approve: decision('approve'),
   reject: decision('reject'),

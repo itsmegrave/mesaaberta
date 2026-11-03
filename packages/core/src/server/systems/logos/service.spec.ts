@@ -10,6 +10,7 @@ import {
   recordLogoSearch,
   rejectLogo,
   systemsToSearch,
+  uploadLogo,
 } from './service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -113,6 +114,35 @@ describe('system logos', () => {
     expect(await rejectLogo(test.db, admin, ids.dnd)).toEqual({ removed: 'systems/dnd.png' });
     const [row] = await test.db.select().from(systemLogos).where(eq(systemLogos.systemId, ids.dnd));
     expect(row).toMatchObject({ status: 'rejected', path: null, reviewedBy: admin.id });
+  });
+
+  it('takes an upload as approved, answers the file it replaced, and refuses a foreign path', async () => {
+    expect(
+      await uploadLogo(test.db, admin, {
+        systemId: ids.dnd,
+        path: 'systems/mine.png',
+        sourcePage: 'https://dnd.wizards.com/',
+        attribution: 'Wizards of the Coast',
+      }),
+    ).toEqual({ replaced: null });
+    const [row] = await test.db.select().from(systemLogos).where(eq(systemLogos.systemId, ids.dnd));
+    expect(row).toMatchObject({ status: 'approved', method: 'upload', path: 'systems/mine.png' });
+    expect(
+      await uploadLogo(test.db, admin, {
+        systemId: ids.dnd,
+        path: 'systems/again.png',
+        sourcePage: 'https://dnd.wizards.com/',
+        attribution: null,
+      }),
+    ).toEqual({ replaced: 'systems/mine.png' });
+    await expect(
+      uploadLogo(test.db, admin, {
+        systemId: ids.dnd,
+        path: 'tables/../x.png',
+        sourcePage: 'https://x.com/',
+        attribution: null,
+      }),
+    ).rejects.toThrow();
   });
 
   it('forgets a system, so the next search looks at it again', async () => {

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { findSystemLogo } from '@mesaaberta/core/server/systems/logos/finder';
 import { serverStorage } from '@mesaaberta/core/server/storage';
 import { requireApi } from '../api-required';
-import { decideLogo, searchNextLogos } from './system-logos';
+import { decideLogo, searchNextLogos, uploadLogo } from './system-logos';
 
 vi.mock('../api-required', () => ({ requireApi: vi.fn() }));
 vi.mock('@mesaaberta/core/server/systems/logos/finder', () => ({ findSystemLogo: vi.fn() }));
@@ -169,5 +169,39 @@ describe('decideLogo', () => {
     vi.mocked(requireApi).mockResolvedValueOnce({ removed: 'tables/x.png' });
     await decideLogo(locals, admin, 'reject', 's1');
     expect(remove).not.toHaveBeenCalled();
+  });
+});
+
+describe('uploadLogo', () => {
+  const logo = new File([PNG], 'logo.png', { type: 'image/png' });
+
+  it('stores the file, records it and deletes the one it replaced', async () => {
+    vi.mocked(requireApi).mockResolvedValueOnce({ replaced: 'systems/old.png' });
+    await uploadLogo(locals, admin, {
+      systemId: 's1',
+      logo,
+      sourcePage: 'https://editora.example/',
+      attribution: '',
+    });
+    const [path] = upload.mock.calls[0] as unknown as [string];
+    expect(vi.mocked(requireApi).mock.calls[0][3]).toEqual({
+      method: 'POST',
+      body: { systemId: 's1', path, sourcePage: 'https://editora.example/', attribution: null },
+    });
+    expect(remove).toHaveBeenCalledWith(['systems/old.png']);
+  });
+
+  it('deletes its own file when the api refuses it', async () => {
+    vi.mocked(requireApi).mockRejectedValueOnce(new Error('nope'));
+    await expect(
+      uploadLogo(locals, admin, {
+        systemId: 's1',
+        logo,
+        sourcePage: 'https://editora.example/',
+        attribution: '',
+      }),
+    ).rejects.toThrow('nope');
+    const [path] = upload.mock.calls[0] as unknown as [string];
+    expect(remove).toHaveBeenCalledWith([path]);
   });
 });

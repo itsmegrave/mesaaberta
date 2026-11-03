@@ -36,6 +36,13 @@ export const recordSchema = z.object({
   reason: text(200),
   wikidataId: text(20),
 });
+/** A logo an admin sent by hand, already stored by the web Worker. Approved as it is sent. */
+export const uploadSchema = z.object({
+  systemId: z.uuid(),
+  path: z.string().max(200),
+  sourcePage: url,
+  attribution: text(500),
+});
 export const decisionSchema = z.object({ systemId: z.uuid() });
 
 const checkPath = (path: string) => {
@@ -147,6 +154,49 @@ export async function recordLogoSearch(
     .onConflictDoNothing()
     .returning({ systemId: systemLogos.systemId });
   return { unused: inserted.length === 0 ? (data.found?.path ?? null) : null };
+}
+
+/** An admin's own logo for a system, approved at once. Answers the file it replaced. */
+export async function uploadLogo(
+  db: AnyDb,
+  actor: Actor,
+  data: z.infer<typeof uploadSchema>,
+): Promise<{ replaced: string | null }> {
+  authorize(actor, 'admin:access');
+  checkPath(data.path);
+  const [system] = await db
+    .select({ id: systems.id })
+    .from(systems)
+    .where(eq(systems.id, data.systemId));
+  if (!system) throw new Invalid('systemId', 'not_found');
+  return db.transaction(async (tx) => {
+    const [before] = await tx
+      .select({ path: systemLogos.path })
+      .from(systemLogos)
+      .where(eq(systemLogos.systemId, data.systemId))
+      .for('update');
+    const values = {
+      status: 'approved' as const,
+      path: data.path,
+      method: 'upload',
+      confidence: null,
+      imageUrl: null,
+      sourcePage: data.sourcePage,
+      attribution: data.attribution || null,
+      license: null,
+      note: null,
+      reviewedBy: actor.id,
+      reviewedAt: new Date(),
+    };
+    await tx
+      .insert(systemLogos)
+      .values({ systemId: data.systemId, ...values })
+      .onConflictDoUpdate({
+        target: systemLogos.systemId,
+        set: { ...values, updatedAt: new Date() },
+      });
+    return { replaced: before?.path && before.path !== data.path ? before.path : null };
+  });
 }
 
 /** Approves a pending logo. */
