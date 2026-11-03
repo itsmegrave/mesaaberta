@@ -291,6 +291,7 @@
           timezone={table.timezone}
           repeat={table.everyWeeks ? recurrence : null}
           seated={data.canManage || data.myStatus === 'confirmed'}
+          rostered={data.myStatus === 'confirmed'}
         />
       {/if}
 

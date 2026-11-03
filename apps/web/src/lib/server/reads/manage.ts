@@ -8,7 +8,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
 import { playerRatingsEnabled } from '../ratings/players';
 import { waitlistEnabled } from '../waitlist/enabled';
-import { tableSessionsEnabled } from '../tables/sessions-enabled';
+import { sessionSignupEnabled, tableSessionsEnabled } from '../tables/sessions-enabled';
 import { sessionsFromJson } from '../tables/sessions-json';
 
 // The GM's page for one table: requests, players, recent activity. Approving, declining and removing
@@ -53,7 +53,9 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     const sessionsOn = !!manage.sessions && (await tableSessionsEnabled(locals, profile));
     return {
       ...manage,
-      sessions: sessionsOn ? sessionsFromJson(manage.sessions) : null,
+      sessions: sessionsOn
+        ? sessionsFromJson(manage.sessions, await sessionSignupEnabled(locals, profile))
+        : null,
       scheduledNext:
         sessionsOn && manage.scheduledNext
           ? { ...manage.scheduledNext, startsAt: new Date(manage.scheduledNext.startsAt) }

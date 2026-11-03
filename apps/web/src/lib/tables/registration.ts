@@ -12,6 +12,9 @@ export const tableActionSchema = z.object({ next });
 /** Approve, decline and remove: the player the GM is acting on. */
 export const playerActionSchema = actionSchema.required({ playerId: true });
 
+/** Campanha aberta: "Quero jogar esta" and leaving one session. */
+export const sessionSignupSchema = tableActionSchema.extend({ sessionId: z.uuid() });
+
 /** Mirrors the `registrations_message_length` check. */
 export const JOIN_MESSAGE_MAX = 500;
 

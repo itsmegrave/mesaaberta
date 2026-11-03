@@ -20,6 +20,7 @@ import {
   noteSession,
   scheduleSession,
 } from './session-actions';
+import { addToSession, removeFromSession } from './session-signups';
 
 const none = z.object({});
 const localDateTime = z.string().refine(isLocalDateTime, 'invalid');
@@ -135,6 +136,26 @@ export const tableLifecycleActions = {
       slug: string,
       data: { sessionId: string; message?: string },
     ) => cancelSession(db, actor, slug, data),
+  },
+  // Campanha aberta (`use_session_signup`): quem mestra puts someone from the roster in a session,
+  // or takes them out (the first who waits takes the place).
+  addToSession: {
+    schema: z.object({ sessionId: z.uuid(), playerId: z.guid() }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; playerId: string },
+    ) => addToSession(db, actor, slug, data),
+  },
+  removeFromSession: {
+    schema: z.object({ sessionId: z.uuid(), playerId: z.guid() }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; playerId: string },
+    ) => removeFromSession(db, actor, slug, data),
   },
 };
 

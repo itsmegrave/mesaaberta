@@ -65,4 +65,43 @@ describe('ManageSessions', () => {
     await expect.element(dialog).toBeVisible();
     await expect.element(dialog.getByLabelText(/Nota para quem joga/)).toBeVisible();
   });
+
+  it('opens who plays a campanha aberta session, with who waits and the rest of the roster', async () => {
+    await page.viewport(1280, 800);
+    const player = (n: number) => `00000000-0000-4000-8000-0000000001${n}0`;
+    render(ManageSessions, {
+      ...props,
+      sessions: [
+        session(5, {
+          seats: {
+            size: 2,
+            going: 2,
+            waiting: 1,
+            mine: null,
+            position: null,
+            people: [
+              { playerId: player(1), username: 'ana', status: 'going', position: null },
+              { playerId: player(2), username: 'bia', status: 'going', position: null },
+              { playerId: player(3), username: 'caio', status: 'waiting', position: 1 },
+            ],
+          },
+        }),
+        session(6),
+      ],
+      roster: [1, 2, 3, 4].map((n) => ({
+        playerId: player(n),
+        username: ['ana', 'bia', 'caio', 'davi'][n - 1],
+      })),
+    });
+
+    await expect.element(page.getByText(/2 de 2 vagas\s*· 1 pessoa na espera/)).toBeVisible();
+    await page.getByRole('button', { name: /Ações da sessão 5/ }).click();
+    await page.getByRole('menuitem', { name: 'Quem joga' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect.element(dialog.getByText('1º na espera')).toBeVisible();
+    await expect.element(dialog.getByRole('button', { name: 'Tirar' }).first()).toBeVisible();
+    await dialog.getByRole('button', { name: 'Pôr alguém do elenco' }).click();
+    await expect.element(dialog.getByText('@davi')).toBeVisible();
+  });
 });

@@ -9,12 +9,14 @@
   import { m } from '#lib/paraglide/messages.js';
   import SessionItem from './ui/SessionItem.svelte';
   import SessionBadges from './ui/SessionBadges.svelte';
+  import SessionSignup from './SessionSignup.svelte';
 
   let {
     sessions,
     timezone,
     repeat,
     seated,
+    rostered = false,
     class: className = '',
   }: {
     sessions: Session[];
@@ -23,6 +25,8 @@
     repeat: string | null;
     /** Quem mestra or a confirmed player: the sessions behind, with notes and attendance. */
     seated: boolean;
+    /** A confirmed player: signs up for a campanha aberta's sessions. */
+    rostered?: boolean;
     class?: string;
   } = $props();
 
@@ -53,7 +57,13 @@
     <h3 class="mt-4 text-lg font-semibold">{m.sessions_upcoming()}</h3>
     <ul aria-label={m.sessions_upcoming_label()}>
       {#each upcoming as session, index (session.id)}
-        <SessionItem {session} timezone={zone} last={index === upcoming.length - 1} />
+        <SessionItem {session} timezone={zone} last={index === upcoming.length - 1}>
+          {#snippet details()}
+            {#if session.seats}
+              <SessionSignup sessionId={session.id} seats={session.seats} {rostered} />
+            {/if}
+          {/snippet}
+        </SessionItem>
       {/each}
     </ul>
     {#if split.upcoming.length > SHOWN}

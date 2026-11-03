@@ -30,6 +30,7 @@ import { reportSubject } from './reports';
 import type { PlaceKind } from '../../places/types';
 export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
 import type { EventType } from '@mesaaberta/core/server/events/types';
+import { releaseSessionSeats } from '../tables/session-signups';
 import { syncTableSessions } from '../tables/sessions';
 
 // The admin side of moderation: the report queue and its decisions, suspending accounts, and the
@@ -557,6 +558,7 @@ export async function banAccount(
       .innerJoin(gameTables, eq(gameTables.id, registrations.tableId))
       .where(eq(registrations.playerId, profileId));
     for (const seat of seats) {
+      eventIds.push(...(await releaseSessionSeats(t, actor!.id, seat.tableId, profileId)));
       await t
         .delete(registrations)
         .where(and(eq(registrations.tableId, seat.tableId), eq(registrations.playerId, profileId)));
