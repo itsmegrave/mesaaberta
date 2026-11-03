@@ -2,6 +2,7 @@ import { and, eq, gt, inArray, or } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/schema';
 import type { CalendarTable } from '@mesaaberta/core/server/calendar/ics';
+import { withSessions } from '@mesaaberta/core/server/calendar/sessions';
 import { bytesToBase64 } from '../base64';
 import { recordEvent } from '../events/outbox';
 
@@ -28,7 +29,7 @@ export async function listCalendarTables(
     .from(registrations)
     .where(and(eq(registrations.playerId, profileId), eq(registrations.status, 'confirmed')));
 
-  return db
+  const tables = await db
     .select({
       id: gameTables.id,
       slug: gameTables.slug,
@@ -53,6 +54,7 @@ export async function listCalendarTables(
         or(eq(gameTables.gmId, profileId), inArray(gameTables.id, seated)),
       ),
     );
+  return withSessions(db, tables);
 }
 
 const newToken = () => {

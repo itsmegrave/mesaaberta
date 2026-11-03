@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { createSupabaseAdmin, emailOf, type SupabaseAdmin } from '../auth/admin-client';
 import { expandWelcomeMessage } from '../../tables/welcome';
 import { buildInvite, tableUrl, uidDomainFor, type CalendarTable } from '../calendar/ics';
+import { withSessions } from '../calendar/sessions';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
 import type { Mailer } from '../mail/mailer';
@@ -100,7 +101,8 @@ async function tableOf(db: AnyDb, tableId: string) {
     .from(gameTables)
     .where(eq(gameTables.id, tableId));
   if (!table) throw new Error('Table for invite event no longer exists');
-  return table as InviteTable;
+  const [withDates] = await withSessions(db, [table as InviteTable]);
+  return withDates;
 }
 
 async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
@@ -140,7 +142,10 @@ type InviteEvent = Extract<
       | 'PlayerLeft'
       | 'TableUpdated'
       | 'TableSessionHeld'
-      | 'TableDisabled';
+      | 'TableDisabled'
+      | 'SessionScheduled'
+      | 'SessionMoved'
+      | 'SessionCancelled';
   }
 >;
 
@@ -186,6 +191,10 @@ export function createInviteHandler(
       // A campaign or adventure that goes on moves to its next session: the calendar follows.
       'TableSessionHeld',
       'TableDisabled',
+      // A later session added, moved or cancelled: the same event, with that date changed in it.
+      'SessionScheduled',
+      'SessionMoved',
+      'SessionCancelled',
     ],
     async handle(event: InviteEvent, db) {
       // A draft has no players and no session anyone was invited to: nothing to send or cancel.
@@ -272,10 +281,14 @@ export function createInviteHandler(
         });
         // The GM runs the table and has no seat: their copy says what happened to their table, never
         // "your seat is confirmed", and it skips the players' hosted templates.
+        // A change to one later session reads the same for everyone, and skips the seat templates.
         const gmMail =
-          recipient.id === table.gmId
+          sessionCopy(event, table.title, (date) =>
+            formatSession(date, recipient.timezone ?? table.timezone, 'pt-BR'),
+          ) ??
+          (recipient.id === table.gmId
             ? gmCopy(event.type, method, table.title, startsAtFor(recipient))
-            : null;
+            : null);
         const subject =
           gmMail?.subject ??
           (method === 'REQUEST' ? `Convite: ${table.title}` : `Cancelada: ${table.title}`);
@@ -306,6 +319,34 @@ export function createInviteHandler(
       }
     },
   };
+}
+
+/** What everyone at the table reads when one later session was added, moved or cancelled. */
+function sessionCopy(
+  event: InviteEvent,
+  title: string,
+  when: (date: Date) => string,
+): { subject: string; text: string } | null {
+  const attached = 'O convite de calendário anexado atualiza o evento na sua agenda.';
+  switch (event.type) {
+    case 'SessionScheduled':
+      return {
+        subject: `Nova sessão: ${title}`,
+        text: `A mesa "${title}" tem uma nova sessão em ${when(new Date(event.payload.startsAt))}. ${attached}`,
+      };
+    case 'SessionMoved':
+      return {
+        subject: `Sessão remarcada: ${title}`,
+        text: `A sessão de ${when(new Date(event.payload.from))} da mesa "${title}" mudou para ${when(new Date(event.payload.startsAt))}. ${attached}`,
+      };
+    case 'SessionCancelled':
+      return {
+        subject: `Sessão cancelada: ${title}`,
+        text: `A sessão de ${when(new Date(event.payload.startsAt))} da mesa "${title}" foi cancelada. A mesa continua nas outras datas. ${attached}`,
+      };
+    default:
+      return null;
+  }
 }
 
 /**
