@@ -1,6 +1,8 @@
+import type { AnyDb } from '../db/client';
 import type { Handler } from '../events/types';
+import type { Flags } from '../flags/flags';
 import { isFlagName } from '../flags/registry';
-import type { Extension } from './contract';
+import type { Extension, PersonDecorations, SettingsCard } from './contract';
 import { extensions as installed } from './installed';
 
 export type * from './contract';
@@ -47,4 +49,46 @@ export function widgetExtensions(
     (extension): extension is Extension & { widgets: NonNullable<Extension['widgets']> } =>
       !!extension.widgets,
   );
+}
+
+/** How many people one decorations read may ask about (a page of a directory, a roster). */
+export const MAX_DECORATED = 60;
+
+/**
+ * The decorations of these people from every installed extension that draws any, merged: the
+ * first extension in install order keeps a place (`avatar`, `profile`) it fills.
+ */
+export async function decorationsFor(
+  db: AnyDb,
+  usernames: readonly string[],
+  flags: Flags,
+  list: readonly Extension[] = extensions,
+): Promise<Record<string, PersonDecorations>> {
+  const asked = [...new Set(usernames.map((name) => name.trim().toLowerCase()).filter(Boolean))];
+  const merged: Record<string, PersonDecorations> = {};
+  if (!asked.length) return merged;
+  for (const extension of list) {
+    if (!extension.decorations) continue;
+    const found = await extension.decorations.forPeople(db, asked.slice(0, MAX_DECORATED), flags);
+    for (const [username, decorations] of Object.entries(found)) {
+      if (!asked.includes(username)) continue;
+      merged[username] = { ...decorations, ...merged[username] };
+    }
+  }
+  return merged;
+}
+
+/** The settings cards of every installed extension for this person, in install order. */
+export async function settingsCardsFor(
+  db: AnyDb,
+  profileId: string,
+  flags: Flags,
+  list: readonly Extension[] = extensions,
+): Promise<{ ext: string; card: SettingsCard }[]> {
+  const cards: { ext: string; card: SettingsCard }[] = [];
+  for (const extension of list) {
+    const card = await extension.settings?.forPerson(db, profileId, flags);
+    if (card) cards.push({ ext: extension.id, card });
+  }
+  return cards;
 }

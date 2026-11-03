@@ -5,7 +5,7 @@ import { openDirectConversation } from '#lib/server/messages/open-direct.js';
 import { loadRead } from '#lib/server/reads/load.js';
 import { endActions } from '#lib/server/tables/end-actions.js';
 import { invitationAction } from '#lib/server/invitations/actions.js';
-import { confirmationActions } from '#lib/server/tables/confirmation-actions.js';
+import { confirmationActions, sessionActions } from '#lib/server/tables/confirmation-actions.js';
 import { runRegistrationAction } from '#lib/server/registrations/form-action.js';
 import { playerRatingsEnabled } from '#lib/server/ratings/players.js';
 import { playerRatingFormSchema } from '#lib/tables/registration.js';
@@ -16,6 +16,7 @@ export const load: PageServerLoad = (event) => loadRead(event, 'manage');
 export const actions: Actions = {
   // The answer to "did the session happen?" once its date has passed.
   ...confirmationActions,
+  ...sessionActions,
   ...endActions,
   invite: invitationAction('invite'),
 

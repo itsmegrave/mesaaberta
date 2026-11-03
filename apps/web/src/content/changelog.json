@@ -1,8 +1,8 @@
 [
   {
     "date": "2026-11-03",
-    "title": "Quando você pode jogar",
-    "summary": "Diga no perfil em que dias e horários você costuma jogar, e encontre no Procuro mesa quem joga quando você mestra.",
+    "title": "Sessões da mesa e a mesa na sua agenda",
+    "summary": "Campanhas e aventuras ganham uma lista de sessões que quem mestra agenda, muda ou cancela, e a mesa vai para a sua agenda direto da página dela.",
     "changes": [
       {
         "kind": "new",
@@ -15,6 +15,31 @@
         "title": "Procuro mesa filtra por dia e horário",
         "description": "Quem mestra pode filtrar o Procuro mesa por dia da semana e por horário para achar quem pode jogar na mesma hora da mesa.",
         "href": "/players"
+      },
+      {
+        "kind": "new",
+        "title": "Sessões em Gerenciar mesa",
+        "description": "Em Gerenciar mesa, a seção Sessões mostra as próximas datas e as já jogadas, com quantos estiveram. Dá para agendar mais uma sessão, mudar a data, escrever uma nota para quem joga ou cancelar uma sessão. Uma campanha semanal já deixa as 4 próximas datas na lista."
+      },
+      {
+        "kind": "new",
+        "title": "Sessões na página da mesa",
+        "description": "A página de uma campanha ou aventura lista as próximas sessões. Quem tem vaga também vê as notas de quem mestra e, nas sessões já jogadas, se esteve presente."
+      },
+      {
+        "kind": "improved",
+        "title": "A mesa continua?",
+        "description": "Ao fim de uma sessão, se a próxima já está agendada, a pergunta já mostra a data dela em vez de pedir outra."
+      },
+      {
+        "kind": "new",
+        "title": "Adicionar à agenda",
+        "description": "Na página da mesa, o botão Adicionar à agenda abre a mesa no Google Agenda ou baixa o arquivo .ics para o Calendário do iPhone, o Outlook e outros. É o mesmo evento do convite por e-mail, então a mesa não aparece duas vezes."
+      },
+      {
+        "kind": "fixed",
+        "title": "Sem erro depois de salvar um formulário",
+        "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."
       }
     ]
   },

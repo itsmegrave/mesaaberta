@@ -35,10 +35,13 @@
   import ConfirmDialog from '#lib/components/ui/ConfirmDialog.svelte';
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
   import DraftNotice from './components/DraftNotice.svelte';
+  import CalendarMenu from './components/CalendarMenu.svelte';
+  import TableSessions from './components/TableSessions.svelte';
+  import { googleCalendarHref } from '#lib/tables/google-calendar.js';
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
   import RosterBadge from './components/ui/RosterBadge.svelte';
-  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import PersonAvatar from '#lib/components/PersonAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { placeArea, placeKindLabels, placeMapHref } from '#lib/places/labels.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
@@ -83,6 +86,17 @@
 
   // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
   const stateLabel = $derived(tableStatusLabel(table.status));
+  // Sessões (`use_table_sessions`), for a campaign or adventure that has them.
+  const sessions = $derived(
+    table.kind !== 'one_shot' && data.sessions && data.sessions.length > 0 ? data.sessions : null,
+  );
+  // "Próxima sessão · sessão 5": the session the table's date is.
+  const nextNumber = $derived(
+    sessions?.find(
+      (session) =>
+        session.status === 'scheduled' && session.startsAt.getTime() === table.startsAt.getTime(),
+    )?.number ?? null,
+  );
 
   // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
   let disableOpen = $state(false);
@@ -197,7 +211,12 @@
       <!-- Quem mestra: the picture, the label over the handle, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
         <div class="flex min-w-0 items-center gap-4">
-          <MAAvatar src={data.gm?.avatarUrl ?? null} name={table.gmName} size={44} />
+          <PersonAvatar
+            username={data.gmUsername}
+            src={data.gm?.avatarUrl ?? null}
+            name={table.gmName}
+            size={44}
+          />
           <p class="min-w-0">
             <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
             {#if data.gmUsername}
@@ -251,6 +270,16 @@
         <RichText html={table.description} class="mt-8 max-w-prose text-lg" />
       {/if}
 
+      {#if sessions}
+        <TableSessions
+          class="mt-10 max-w-prose rounded-lg border border-surface-200-800 bg-panel p-4 md:p-6"
+          {sessions}
+          timezone={table.timezone}
+          repeat={table.everyWeeks ? recurrence : null}
+          seated={data.canManage || data.myStatus === 'confirmed'}
+        />
+      {/if}
+
       {#if table.extraInfo}
         <MAAccordion
           collapse="phone"
@@ -283,7 +312,13 @@
       aria-label={m.table_next_session()}
       class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
     >
-      <SessionDate startsAt={table.startsAt} timezone={table.timezone} {stateLabel} large />
+      <SessionDate
+        startsAt={table.startsAt}
+        timezone={table.timezone}
+        {stateLabel}
+        number={nextNumber}
+        large
+      />
 
       <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
         <SummaryRow label={m.table_modality()} class="flex items-center gap-2">
@@ -507,6 +542,15 @@
           <Icon name="game-icons:scroll-quill" size={18} />
           {m.messages_table_chat()}
         </a>
+      {/if}
+      {#if data.tableCalendar && (data.isGm || data.myStatus === 'confirmed') && ['active', 'awaiting_confirmation'].includes(table.status)}
+        <!-- "Adicionar à agenda": the same event as the invite sent by mail, so it is never doubled. -->
+        <CalendarMenu
+          class="mt-3"
+          googleHref={googleCalendarHref(table, `${page.url.origin}/t/${table.slug}`)}
+          icsHref={`/t/${table.slug}/calendar`}
+        />
+        <p class="mt-2 text-sm text-muted max-md:hidden">{m.table_calendar_note()}</p>
       {/if}
       {#if data.signedIn && !data.isGm && data.gmAcceptsDirect}
         <!-- Opened from the title menu ("Mandar mensagem para quem mestra"). -->

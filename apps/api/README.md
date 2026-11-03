@@ -200,6 +200,7 @@ The api reads GrowthBook itself (`flags.ts`: the same settings as web, the insta
 - `GET /v1/widgets?route=`: the widgets the actor may see on that page. Web still decides which pages show widgets at all (`showsWidgets`).
 - `GET /v1/widgets/:ext/:id`: a widget's public page, for anyone. `POST /v1/widgets/:ext/:id` (`{ fields }`): an answer from its form, which comes back as `{ widget }`, `invalid` or 404.
 - `GET /v1/widgets/assets/:ext/:key`: a public asset as raw bytes (Meta fetches it without cookies).
+- `GET /v1/settings`: the installed extensions' cards on the actor's own "Editar perfil" (`{ cards: [{ ext, card }] }`). `POST /v1/settings/:ext` (`{ fields }`): a save from a card's form, which comes back as `{ card }`, `invalid` or 404.
 - `GET /v1/admin/:ext/panel`: an extension's panel data. Its hand actions and the OAuth save always go through `POST /v1/admin/:ext/:action`, with no web fallback, so the `api_admin_<ext>` flag no longer decides anything.
 - `POST /v1/admin/social/publish` (`{ tableId }`): after `queue` answers `queued`, renders and publishes after the answer (202), on a connection of its own, reading `use_table_image`.
 

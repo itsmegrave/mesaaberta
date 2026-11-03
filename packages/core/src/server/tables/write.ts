@@ -24,6 +24,7 @@ import { cancelPendingInvitations } from '../invitations/service';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
+import { syncTableSessions } from './sessions';
 import { checkTablePlace, placeSlugOf } from '../places/picker';
 import { promoteWaitlistOf } from '../registrations/waitlist';
 
@@ -222,6 +223,7 @@ export async function createTable(
             ...(asDraft ? { status: 'draft' as const } : { publishedAt: now }),
           })
           .returning({ id: gameTables.id });
+        await syncTableSessions(tx as unknown as AnyDb, [created.id]);
         await setTableCatalog(tx as unknown as AnyDb, created.id, {
           ...catalogPicks(input, actor!.id),
           inheritedFromTableId: duplicatedFromTableId,
@@ -484,6 +486,11 @@ export async function updateTable(
         ...(changed ? { icalSequence: table.icalSequence + 1 } : {}),
       })
       .where(eq(gameTables.id, table.id));
+    // A new rule, time or length writes the later dates nobody moved again.
+    const reflow = (
+      ['startsAt', 'durationMinutes', 'timezone', 'recurrence', 'until'] as const
+    ).some((field) => !sameValue(locked[field], columns[field]));
+    await syncTableSessions(tx as unknown as AnyDb, [table.id], { reflow });
     await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
 
     const changes = tableChanges(
@@ -604,6 +611,7 @@ export async function disableTable(
       .update(gameTables)
       .set({ status: 'disabled', icalSequence: locked.icalSequence + 1 })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(tx as unknown as AnyDb, [table.id]);
 
     await cancelPendingInvitations(
       tx as unknown as AnyDb,

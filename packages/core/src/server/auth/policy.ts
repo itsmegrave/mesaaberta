@@ -25,6 +25,12 @@ type Resources = {
   'table:end': { gmId: string };
   /** After the session: say it happened, that it did not, or move it to a new date. */
   'table:confirm': { gmId: string; tableStatus: TableStatus };
+  /** A campaign or adventure that goes on: the GM schedules, moves, notes or cancels its sessions. */
+  'table:sessions': {
+    gmId: string;
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+  };
   /** A campaign or adventure that went on: the GM ends it, or lets players rate it meanwhile. */
   'table:finish': {
     gmId: string;
@@ -211,6 +217,11 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'table:confirm': (actor, table) =>
     table !== undefined &&
     nextStatus(table.tableStatus, 'HAPPENED') !== null &&
+    isGmOrAdmin(actor, table),
+  'table:sessions': (actor, table) =>
+    table !== undefined &&
+    table.kind !== 'one_shot' &&
+    ['active', 'awaiting_confirmation'].includes(table.tableStatus) &&
     isGmOrAdmin(actor, table),
   'table:finish': (actor, table) =>
     table !== undefined &&

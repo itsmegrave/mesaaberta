@@ -60,7 +60,11 @@
   const ANY = 'all';
   const stateItems = $derived([
     { slug: ANY, name: m.places_state_any() },
-    ...data.states.map((tag) => ({ slug: tag.slug, name: tag.label })),
+    // All 27 states, each with how many places it lists, so a state with none still shows.
+    ...data.states.map((state) => ({
+      slug: state.slug,
+      name: m.places_state_option({ name: state.label, count: state.count }),
+    })),
   ]);
   const cityItems = $derived([
     { slug: ANY, name: m.places_city_any() },

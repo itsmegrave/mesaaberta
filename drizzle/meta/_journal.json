@@ -558,8 +558,22 @@
     {
       "idx": 79,
       "version": "7",
-      "when": 1793717147494,
-      "tag": "0079_profile_availability",
+      "when": 1793716848514,
+      "tag": "0079_table_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1793717660189,
+      "tag": "0080_table_session_pins",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1793721438162,
+      "tag": "0081_profile_availability",
       "breakpoints": true
     }
   ]

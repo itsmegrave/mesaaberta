@@ -129,6 +129,14 @@ export const flagDefaults = {
   // of the day a person can play, on their profile, on Procuro mesa and as its filter. Off: the
   // profile section is a 404 and nothing shows it. Targeted by the viewer (a profile: the person).
   use_profile_availability: false,
+  // "Adicionar à agenda" on a table's page, a new feature (created on for everyone): the table in
+  // Google Agenda or as an `.ics`, for its GM and confirmed players. Off: no button, and
+  // /t/:slug/calendar is a 404. Targeted by the person's id.
+  use_table_calendar: false,
+  // Sessões, a new feature (created on for everyone): quem mestra schedules, moves, notes and
+  // cancels a campaign's or adventure's sessions in Gerenciar mesa, and the table page lists them.
+  // Off: neither shows and the four session actions are a 404. Visitors are evaluated too.
+  use_table_sessions: false,
   // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.

@@ -3,7 +3,8 @@
   import { copyText } from '#lib/clipboard.js';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import { page } from '$app/state';
-  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import PersonAvatar from '#lib/components/PersonAvatar.svelte';
+  import ProfileDecoration from '#lib/components/ProfileDecoration.svelte';
   import Breadcrumbs from '#lib/components/ui/Breadcrumbs.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import Pager from '#lib/components/ui/Pager.svelte';
@@ -119,9 +120,9 @@
             ? '-mt-12 md:-mt-16'
             : ''}"
         >
-          <MAAvatar
+          <PersonAvatar
+            username={profile.username}
             src={profile.avatarUrl}
-            name={profile.username}
             size={96}
             class="md:size-32 md:text-5xl"
           />
@@ -151,6 +152,7 @@
           >
             <UserLink username={profile.username} />
           </h1>
+          <ProfileDecoration username={profile.username} />
           {#if !data.isOwner}
             <ActionForm action="?/message">
               {#snippet children(state)}
