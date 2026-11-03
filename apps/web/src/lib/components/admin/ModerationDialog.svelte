@@ -81,9 +81,12 @@
     schema,
     errorMessage: m.admin_dialog_error,
     onSuccess: () => {
+      // Read the words first: closing clears the row the page made them from (`Target`), so a
+      // preset such as `removePlace(row.name, …)` cannot be read again after `open = false`.
+      const message = success;
       open = false;
       form.reset();
-      toast.success(success);
+      toast.success(message);
     },
   });
   const data = $derived(form.values as Record<string, string>);
