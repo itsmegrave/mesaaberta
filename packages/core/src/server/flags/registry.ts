@@ -125,6 +125,10 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // The subscribed calendar feed (`/calendar/<secret>.ics`), a new feature (created on for
+  // everyone). Off: Minhas mesas does not offer it and a feed address answers 404. Targeted by the
+  // feed owner's id.
+  use_calendar_feed: false,
   // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.

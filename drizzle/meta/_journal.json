@@ -554,6 +554,13 @@
       "when": 1793499986660,
       "tag": "0078_table_rating_six",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1793716011802,
+      "tag": "0079_calendar_feed",
+      "breakpoints": true
     }
   ]
 }

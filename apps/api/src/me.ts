@@ -19,7 +19,11 @@ import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import { isUsernameAvailable, loadProfileForm } from '@mesaaberta/core/server/profile/service';
 import { exportAccount } from '@mesaaberta/core/server/account/service';
 import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
-import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
+import {
+  calendarFeedTokenOf,
+  listCalendarTables,
+  setCalendarFeed,
+} from '@mesaaberta/core/server/calendar/feed';
 import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
 import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
 import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
@@ -148,6 +152,18 @@ export function meRoutes(open: Open = openDb) {
   app.get('/calendar', async (c) =>
     c.json(await listCalendarTables(c.get('db'), c.get('actorId'), new Date())),
   );
+
+  // The subscribed calendar feed: the actor's secret (null: no feed), and turning it on with a new
+  // secret or off. Web checks `use_calendar_feed` before it calls these.
+  app.get('/calendar-feed', async (c) =>
+    c.json({ token: await calendarFeedTokenOf(c.get('db'), c.get('actorId')) }),
+  );
+  app.post('/calendar-feed', async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { on?: unknown } | null;
+    if (typeof body?.on !== 'boolean')
+      return c.json({ error: 'invalid', field: 'on', message: 'invalid' }, 400);
+    return c.json(await setCalendarFeed(c.get('db'), c.get('actorId'), body.on));
+  });
 
   // The eye on an earned badge: hides it from the actor's profile, or shows it again. 404 when
   // the actor has no such badge.
