@@ -621,6 +621,11 @@ export const tableSessions = pgTable(
     status: tableSessionStatus('status').notNull().default('scheduled'),
     // The GM's note to the players about this session ("começa às 20h"). Plain text, optional.
     note: text('note'),
+    // The GM scheduled or moved this one by hand: a change to the table's repeat rule leaves it
+    // where it is. The dates a weekly campaign gets from its rule are not pinned.
+    pinned: boolean('pinned').notNull().default(false),
+    // Where a moved session was before ("Data movida de 29 de novembro"). The first move only.
+    movedFrom: timestamp('moved_from', { withTimezone: true }),
     ...timestamps,
   },
   (session) => [

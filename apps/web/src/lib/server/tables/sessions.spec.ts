@@ -206,8 +206,12 @@ describe('table sessions follow the table', () => {
 
     await skipSession(test.db, gm, table.slug, { nextStartsAtLocal: '2026-10-08T19:00' }, now);
 
+    // A weekly campaign: the next date, and the rule's three after it.
     expect((await sessionsOf(table.id)).map(({ status }) => status)).toEqual([
       'not_held',
+      'scheduled',
+      'scheduled',
+      'scheduled',
       'scheduled',
     ]);
   });
@@ -218,11 +222,12 @@ describe('table sessions follow the table', () => {
     await postponeTable(test.db, gm, table.slug, '2026-10-09T19:00', now);
 
     const sessions = await sessionsOf(table.id);
-    expect(sessions).toHaveLength(1);
     expect(sessions[0]).toMatchObject({
       startsAt: (await tableAt(table.slug)).startsAt,
       status: 'scheduled',
     });
+    // Nothing held or skipped: the same session, now on the new date.
+    expect(sessions.every(({ status }) => status === 'scheduled')).toBe(true);
   });
 
   it('concluded or not held: the last session is closed and nothing stays scheduled', async () => {

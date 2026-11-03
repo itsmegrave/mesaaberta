@@ -11,7 +11,7 @@ import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { markedPresentAt } from './attendance';
-import { closeSession, syncTableSessions, type Attendance } from './sessions';
+import { closeSession, nextScheduledAfter, syncTableSessions, type Attendance } from './sessions';
 import { localToInstant, nextWeeklySession, weeklyInterval } from './schedule';
 import {
   lockTableSchedule,
@@ -229,18 +229,22 @@ export const concludeTable = (
 
 /**
  * When the next session of a campaign or adventure is: `nextStartsAtLocal` (in the table's zone),
- * or a weekly campaign's next date without it. Throws `Invalid` for a one-shot, a missing date
+ * or without it the next session already scheduled, or else a weekly campaign's next date. Throws `Invalid` for a one-shot, a missing date
  * on an adventure and a date that is not in the future.
  */
-function nextSessionAt(
+async function nextSessionAt(
+  db: AnyDb,
   table: Awaited<ReturnType<typeof findAwaiting>>,
   nextStartsAtLocal: string | undefined,
   now: Date,
-): Date {
+): Promise<Date> {
   if (table.kind === 'one_shot') throw new Invalid('slug', 'not_multi_session');
   let startsAt: Date;
   if (nextStartsAtLocal) startsAt = localToInstant(nextStartsAtLocal, table.timezone);
   else {
+    // The next session already on the list, when there is one.
+    const scheduled = await nextScheduledAfter(db, table.id, table.startsAt, now);
+    if (scheduled) return scheduled;
     const interval = weeklyInterval(table.recurrence);
     if (!interval) throw new Invalid('nextStartsAtLocal', 'required');
     startsAt = nextWeeklySession(table.startsAt, interval, table.timezone, now);
@@ -266,7 +270,7 @@ export async function holdSession(
   now = new Date(),
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
-  const startsAt = nextSessionAt(table, nextStartsAtLocal, now);
+  const startsAt = await nextSessionAt(db, table, nextStartsAtLocal, now);
 
   return answer(
     db,
@@ -404,7 +408,7 @@ export async function skipSession(
   now = new Date(),
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
-  const startsAt = nextSessionAt(table, nextStartsAtLocal, now);
+  const startsAt = await nextSessionAt(db, table, nextStartsAtLocal, now);
 
   return answer(
     db,
