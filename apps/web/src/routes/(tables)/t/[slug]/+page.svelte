@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isBeginnerTable } from '@mesaaberta/core/tables/beginners';
   import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   import { copyText } from '#lib/clipboard.js';
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
@@ -194,6 +195,19 @@
         />
       {/if}
 
+      {#if page.data.beginners && isBeginnerTable(table.tags)}
+        <!-- Iniciantes: the GM tagged the table for people who never played; the guide says how. -->
+        <a
+          href="/beginners"
+          class="mt-4 flex items-start gap-3 rounded-lg preset-tonal-primary p-3 text-sm no-underline hover:underline"
+        >
+          <Icon name="game-icons:sprout" size={20} class="mt-0.5 shrink-0" />
+          <span>
+            <span class="block font-semibold">{m.beginners_table_title()}</span>
+            <span class="block">{m.beginners_table_body()}</span>
+          </span>
+        </a>
+      {/if}
       {#if table.tags.length > 0}
         <ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">
           {#each table.tags as tag (tag.slug)}

@@ -3,6 +3,7 @@ import { loadRead } from '#lib/server/reads/load.js';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import { NO_DIRECTORIES, directoryFlags } from '#lib/server/directories/flags.js';
+import { beginnersEnabled } from '#lib/server/tables/beginners.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { readShell } from '#lib/server/me.js';
 import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
@@ -30,6 +31,7 @@ export const load: LayoutServerLoad = async (event) => {
       cacheIdentity: 'anonymous',
       accountRead: null,
       directories: NO_DIRECTORIES,
+      beginners: false,
     };
   }
   // An admin still uses the site while it is down, with a banner saying so.
@@ -52,6 +54,8 @@ export const load: LayoutServerLoad = async (event) => {
       accountRead,
       // Which directories the menus and the footer link to.
       directories: await directoryFlags(locals),
+      // Iniciantes: the mark on table cards and pages, and the guide's links.
+      beginners: await beginnersEnabled(locals),
       maintenance: false,
       maintenanceBypass,
       // Every time on the site is shown in this zone.
@@ -85,6 +89,7 @@ export const load: LayoutServerLoad = async (event) => {
       cacheIdentity: 'anonymous',
       accountRead: null,
       directories: NO_DIRECTORIES,
+      beginners: false,
     };
   }
 };

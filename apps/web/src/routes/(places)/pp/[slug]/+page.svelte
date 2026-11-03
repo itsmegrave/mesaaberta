@@ -383,7 +383,7 @@
     {#if data.tables.length > 0}
       <CardGrid>
         {#each data.tables as table (table.slug)}
-          <li><TableCard {table} /></li>
+          <li><TableCard {table} markBeginners={page.data.beginners} /></li>
         {/each}
       </CardGrid>
     {:else}

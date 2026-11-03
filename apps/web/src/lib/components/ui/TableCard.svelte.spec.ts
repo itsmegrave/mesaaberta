@@ -143,6 +143,30 @@ describe('TableCard', () => {
     await expect.element(page.getByText('+2')).toBeVisible();
   });
 
+  it('marks a table tagged Iniciantes', async () => {
+    render(TableCard, {
+      table: { ...base, tags: [{ name: 'Iniciantes', slug: 'iniciantes' }] },
+      markBeginners: true,
+    });
+    await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
+    expect(document.querySelector('[data-beginners-mark]')?.textContent?.trim()).toBe('Iniciantes');
+  });
+
+  it('leaves the mark out while it is off', async () => {
+    render(TableCard, { table: { ...base, tags: [{ name: 'Iniciantes', slug: 'iniciantes' }] } });
+    await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
+    expect(document.querySelector('[data-beginners-mark]')).toBeNull();
+  });
+
+  it('does not mark a table without the tag', async () => {
+    render(TableCard, {
+      table: { ...base, tags: [{ name: 'Terror', slug: 'terror' }] },
+      markBeginners: true,
+    });
+    await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
+    expect(document.querySelector('[data-beginners-mark]')).toBeNull();
+  });
+
   it('shows plain text, never markup, from a title', async () => {
     render(TableCard, { table: { ...base, title: '<img src=x onerror=alert(1)>' } });
 

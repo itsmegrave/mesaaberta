@@ -309,7 +309,9 @@
       <p class="mt-4 text-muted">{m.public_profile_no_tables()}</p>
     {:else}
       <CardGrid class="mt-5">
-        {#each data.tables as table (table.slug)}<li><TableCard {table} /></li>{/each}
+        {#each data.tables as table (table.slug)}<li>
+            <TableCard {table} markBeginners={page.data.beginners} />
+          </li>{/each}
       </CardGrid>
     {/if}
     <Pager

@@ -6,6 +6,18 @@
     "changes": [
       {
         "kind": "new",
+        "title": "Guia Primeira mesa",
+        "description": "Um guia curto explica o que é uma mesa de RPG, como escolher e entrar na primeira e o que acontece no dia. Ele está na lista de mesas, em Primeira vez?",
+        "href": "/beginners"
+      },
+      {
+        "kind": "improved",
+        "title": "Selo Iniciantes",
+        "description": "Mesas com a tag Iniciantes mostram o selo no card e um aviso na página da mesa. Quem mestra pode marcar a tag ao criar ou editar a mesa.",
+        "href": "/tables?tag=iniciantes"
+      },
+      {
+        "kind": "new",
         "title": "Assinar agenda",
         "description": "Em Minhas mesas, abra o menu e toque em Assinar agenda. O link mostra as mesas em que você joga ou mestra e se atualiza sozinho no Google Agenda, no celular ou no Outlook quando a data, o horário ou o local mudam. Dá para gerar um link novo ou desligar quando quiser.",
         "href": "/u/calendar"

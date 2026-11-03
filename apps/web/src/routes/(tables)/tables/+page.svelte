@@ -60,6 +60,13 @@
       </a>
     {/snippet}
   </PageHead>
+  {#if page.data.beginners}
+    <p class="mt-3 text-sm">
+      <a href="/beginners" class="font-semibold underline underline-offset-4"
+        >{m.beginners_tables_link()}</a
+      >
+    </p>
+  {/if}
 
   <TablesFilters
     systems={data.systems}
@@ -85,7 +92,7 @@
       </p>
       <CardGrid class="mt-3">
         {#each data.startingSoon as table (table.slug)}
-          <li><TableCard {table} level="h3" /></li>
+          <li><TableCard {table} markBeginners={page.data.beginners} level="h3" /></li>
         {/each}
       </CardGrid>
     </section>
@@ -109,7 +116,7 @@
     {/if}
     <CardGrid class="mt-5 md:mt-3">
       {#each data.tables as table (table.slug)}
-        <li><TableCard {table} level="h2" /></li>
+        <li><TableCard {table} markBeginners={page.data.beginners} level="h2" /></li>
       {/each}
     </CardGrid>
   {:else}
