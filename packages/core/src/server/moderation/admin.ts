@@ -30,6 +30,7 @@ import { reportSubject } from './reports';
 import type { PlaceKind } from '../../places/types';
 export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
 import type { EventType } from '@mesaaberta/core/server/events/types';
+import { syncTableSessions } from '../tables/sessions';
 
 // The admin side of moderation: the report queue and its decisions, suspending accounts, and the
 // audit log. Every function authorizes the actor itself; the routes check again before calling.
@@ -399,6 +400,7 @@ export async function closeReportedTable(
         moderationNote: note,
       })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
       accepted,
@@ -450,6 +452,7 @@ export async function closeTableByAdmin(
         moderationNote: note,
       })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
       ...(await cancelPendingInvitations(
@@ -538,6 +541,7 @@ export async function banAccount(
         .update(gameTables)
         .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
         .where(eq(gameTables.id, table.id));
+      await syncTableSessions(t, [table.id]);
       eventIds.push(
         await recordEvent(t, {
           type: 'TableDisabled',

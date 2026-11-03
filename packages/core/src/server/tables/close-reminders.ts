@@ -13,6 +13,7 @@ import { recordEvent } from '../events/outbox';
 import { nextStatus } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { sessionEndedBy } from './lifecycle';
+import { closeSession, syncTableSessions } from './sessions';
 import { nextWeeklySession, weeklyInterval } from './schedule';
 import {
   assertTableSchedule,
@@ -192,8 +193,15 @@ async function autoClose(db: AnyDb, table: DueTable, now: Date): Promise<string 
           eq(gameTables.startsAt, table.startsAt),
         ),
       )
-      .returning({ id: gameTables.id });
+      .returning({ id: gameTables.id, durationMinutes: gameTables.durationMinutes });
     if (!updated) return null;
+    // Held, with nobody said absent: the session's attendance is left unrecorded.
+    await closeSession(
+      tx as unknown as AnyDb,
+      { id: table.id, startsAt: table.startsAt, durationMinutes: updated.durationMinutes },
+      'held',
+    );
+    await syncTableSessions(tx as unknown as AnyDb, [table.id]);
     await cancelPendingInvitations(
       tx as unknown as AnyDb,
       eq(playerInvitations.tableId, table.id),
@@ -263,6 +271,8 @@ async function autoHold(db: AnyDb, table: DueTable, now: Date): Promise<string[]
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
       .returning({ id: gameTables.id });
     if (!updated) return [];
+    await closeSession(executor, current, 'held');
+    await syncTableSessions(executor, [table.id]);
     await cancelPendingInvitations(
       executor,
       eq(playerInvitations.tableId, table.id),
