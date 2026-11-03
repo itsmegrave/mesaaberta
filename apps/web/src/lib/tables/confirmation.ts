@@ -50,3 +50,6 @@ export const noteSessionSchema = z.object({ sessionId, note: sessionNote, next }
 
 /** "Cancelar sessão": the session and an optional message to the players. */
 export const cancelSessionSchema = z.object({ sessionId, message: sessionNote, next });
+
+/** Campanha aberta: quem mestra puts a player from the roster in a session, or takes them out. */
+export const sessionPlayerSchema = z.object({ sessionId, playerId: z.guid(), next });

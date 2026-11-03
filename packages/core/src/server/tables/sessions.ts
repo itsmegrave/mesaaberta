@@ -3,6 +3,7 @@ import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { events, gameTables, tableSessionAttendance, tableSessions } from '../db/schema';
 import { nextWeeklySession, weeklyInterval } from './schedule';
+import type { SessionSeats } from './session-signups';
 
 // The sessions of a table (`table_sessions`). The table's `startsAt` is always its first scheduled
 // session (lists, reminders and the sweeper keep reading it); a campaign or adventure may have more
@@ -261,6 +262,8 @@ export type SessionRow = {
   present: { count: number; of: number } | null;
   /** For a player, a session that happened: whether they were there (null when nobody said). */
   attended: boolean | null;
+  /** A campanha aberta's session ahead: its places (`withSeats`); absent or null otherwise. */
+  seats?: SessionSeats | null;
 };
 
 /**

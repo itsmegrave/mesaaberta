@@ -3,7 +3,7 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, registrations } from '@mesaaberta/core/server/db/schema';
 import type { CalendarTable } from '@mesaaberta/core/server/calendar/ics';
 import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
-import { withSessions } from '@mesaaberta/core/server/calendar/sessions';
+import { calendarFor, withSessions } from '@mesaaberta/core/server/calendar/sessions';
 
 /**
  * One table for "Adicionar à agenda" on its page: the same fields as the invite and the person's
@@ -44,11 +44,14 @@ export async function readTableCalendar(
   if (!row) return null;
 
   const { gmId, ...found } = row;
-  const allowed =
-    gmId === actor.id || can(actor, 'admin:access') || (await seated(db, row.id, actor.id));
-  if (!allowed) return null;
+  const whole = gmId === actor.id || can(actor, 'admin:access');
+  if (!whole && !(await seated(db, row.id, actor.id))) return null;
   const [table] = await withSessions(db, [found]);
-  return table;
+  // A player of a campanha aberta that signs up per session gets only the sessions they play.
+  const mine = calendarFor(table, whole ? gmId : actor.id, gmId);
+  if (!mine) return null;
+  const { signups: _signups, ...calendar } = mine;
+  return { ...calendar, sessions: calendar.sessions.map(({ going: _going, ...s }) => s) };
 }
 
 async function seated(db: AnyDb, tableId: string, playerId: string): Promise<boolean> {

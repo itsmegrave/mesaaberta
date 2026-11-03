@@ -57,4 +57,51 @@ describe('TableSessions', () => {
       .element(page.getByRole('list', { name: 'Sessões já jogadas' }))
       .not.toBeInTheDocument();
   });
+
+  it('offers a player on the roster each session of a campanha aberta, or its waiting list', async () => {
+    const seats = (over: Partial<NonNullable<SessionItem['seats']>>) => ({
+      size: 5,
+      going: 3,
+      waiting: 0,
+      mine: null,
+      position: null,
+      people: null,
+      ...over,
+    });
+    render(TableSessions, {
+      ...props,
+      seated: true,
+      rostered: true,
+      sessions: [
+        session(5, { seats: seats({}) }),
+        session(6, { seats: seats({ going: 5, waiting: 2 }) }),
+        session(7, { seats: seats({ going: 5, waiting: 3, mine: 'waiting', position: 3 }) }),
+      ],
+    });
+
+    const upcoming = page.getByRole('list', { name: 'Próximas sessões' });
+    await expect.element(upcoming.getByLabelText('3 de 5 vagas')).toBeVisible();
+    await expect.element(upcoming.getByRole('button', { name: 'Quero jogar esta' })).toBeVisible();
+    await expect.element(upcoming.getByText('2 pessoas na espera.')).toBeVisible();
+    await expect.element(upcoming.getByRole('button', { name: 'Entrar na espera' })).toBeVisible();
+    await expect.element(upcoming.getByText('Você é a 3ª pessoa na espera.')).toBeVisible();
+    await expect.element(upcoming.getByRole('button', { name: 'Sair da espera' })).toBeVisible();
+  });
+
+  it('shows a visitor the places of each session, with nothing to press', async () => {
+    render(TableSessions, {
+      ...props,
+      seated: false,
+      sessions: [
+        session(5, {
+          seats: { size: 5, going: 5, waiting: 0, mine: null, position: null, people: null },
+        }),
+      ],
+    });
+
+    await expect.element(page.getByText('Cheia')).toBeVisible();
+    await expect
+      .element(page.getByRole('button', { name: 'Entrar na espera' }))
+      .not.toBeInTheDocument();
+  });
 });

@@ -11,6 +11,26 @@ export type SessionItem = {
   movedFrom: Date | null;
   present: { count: number; of: number } | null;
   attended: boolean | null;
+  /** A campanha aberta's session ahead: its places (`use_session_signup`). */
+  seats?: SessionSeats | null;
+};
+
+/** One session's places in a campanha aberta (core's `SessionSeats`). */
+export type SessionSeats = {
+  size: number;
+  going: number;
+  waiting: number;
+  mine: 'going' | 'waiting' | null;
+  position: number | null;
+  /** For quem mestra: who plays and who waits, in order. */
+  people:
+    | {
+        playerId: string;
+        username: string;
+        status: 'going' | 'waiting';
+        position: number | null;
+      }[]
+    | null;
 };
 
 /** "sábado, 8 de novembro", with " · 19:00" after it when `time`. */

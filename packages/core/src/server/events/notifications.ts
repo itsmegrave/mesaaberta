@@ -28,7 +28,9 @@ type NotifyingEvent = Extract<
       | 'RatingSubmitted'
       | 'SessionScheduled'
       | 'SessionMoved'
-      | 'SessionCancelled';
+      | 'SessionCancelled'
+      | 'SessionSignedUp'
+      | 'SessionSignupLeft';
   }
 >;
 
@@ -121,6 +123,22 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
         type: 'session_cancelled',
         link: page,
       };
+    // Campanha aberta: only what someone else did to the player's place. Signing up or leaving
+    // oneself, or getting in line, tells nobody.
+    case 'SessionSignedUp':
+      return event.payload.by === 'player'
+        ? { to: [], type: 'session_signup_added', link: page }
+        : {
+            to: [event.payload.playerId],
+            type: event.payload.by === 'gm' ? 'session_signup_added' : 'session_signup_seated',
+            link: page,
+          };
+    case 'SessionSignupLeft':
+      return {
+        to: event.payload.reason === 'removed' ? [event.payload.playerId] : [],
+        type: 'session_signup_removed',
+        link: page,
+      };
   }
 }
 
@@ -145,7 +163,12 @@ export function changeSummary(
 function sessionDates(event: NotifyingEvent): Pick<TableMetadata, 'startsAt' | 'startsAtFrom'> {
   if (event.type === 'SessionMoved')
     return { startsAt: event.payload.startsAt, startsAtFrom: event.payload.from };
-  if (event.type === 'SessionScheduled' || event.type === 'SessionCancelled')
+  if (
+    event.type === 'SessionScheduled' ||
+    event.type === 'SessionCancelled' ||
+    event.type === 'SessionSignedUp' ||
+    event.type === 'SessionSignupLeft'
+  )
     return { startsAt: event.payload.startsAt };
   return {};
 }
@@ -172,6 +195,8 @@ export const notificationHandler: Handler = {
     'SessionScheduled',
     'SessionMoved',
     'SessionCancelled',
+    'SessionSignedUp',
+    'SessionSignupLeft',
   ],
   async handle(event, db) {
     const notifying = event as NotifyingEvent;
@@ -195,6 +220,8 @@ export const notificationHandler: Handler = {
         'SessionScheduled',
         'SessionMoved',
         'SessionCancelled',
+        'SessionSignedUp',
+        'SessionSignupLeft',
         'JoinRequested',
         'JoinApproved',
         'PlayerJoined',

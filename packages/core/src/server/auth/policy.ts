@@ -31,6 +31,15 @@ type Resources = {
     tableStatus: TableStatus;
     kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
   };
+  /**
+   * Campanha aberta: a player on the roster (a confirmed seat) signs up for one session of an
+   * active table, or leaves it.
+   */
+  'session:signup': {
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+    confirmed: boolean;
+  };
   /** A campaign or adventure that went on: the GM ends it, or lets players rate it meanwhile. */
   'table:finish': {
     gmId: string;
@@ -223,6 +232,11 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     table.kind !== 'one_shot' &&
     ['active', 'awaiting_confirmation'].includes(table.tableStatus) &&
     isGmOrAdmin(actor, table),
+  'session:signup': (_actor, table) =>
+    table !== undefined &&
+    table.kind === 'open' &&
+    table.tableStatus === 'active' &&
+    table.confirmed,
   'table:finish': (actor, table) =>
     table !== undefined &&
     table.kind !== 'one_shot' &&

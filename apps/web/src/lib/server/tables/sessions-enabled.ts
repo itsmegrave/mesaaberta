@@ -13,3 +13,18 @@ export async function tableSessionsEnabled(
     profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
   );
 }
+
+/**
+ * Whether campanha aberta's places per session are on (`use_session_signup`, with Sessões): the
+ * places on each session, "Quero jogar esta" and quem mestra's list per session.
+ */
+export async function sessionSignupEnabled(
+  locals: Pick<App.Locals, 'flags'>,
+  profile: (Parameters<typeof can>[0] & { id: string }) | null,
+): Promise<boolean> {
+  const context = profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {};
+  return (
+    (await locals.flags.isEnabled('use_table_sessions', context)) &&
+    (await locals.flags.isEnabled('use_session_signup', context))
+  );
+}

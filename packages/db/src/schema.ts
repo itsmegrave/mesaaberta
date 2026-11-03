@@ -8,6 +8,7 @@ import {
   type AnyPgColumn,
   boolean,
   check,
+  foreignKey,
   date,
   doublePrecision,
   jsonb,
@@ -699,6 +700,37 @@ export const tableSessionAttendance = pgTable(
   (row) => [
     primaryKey({ columns: [row.sessionId, row.playerId] }),
     index('table_session_attendance_player_idx').on(row.playerId),
+  ],
+).enableRLS();
+
+// Campanha aberta (`use_session_signup`): who plays one session. A player on the table's roster
+// signs up and plays (`going`) while the session has room (`session_size`), or waits for it
+// (`waiting`, in order of `created_at`); when someone playing leaves, the first who waits takes
+// the place in the same transaction. Quem mestra may add or take out anyone. Personal data: it goes
+// with the session and with the account, and with the player's seat at the table.
+export const sessionSignupStatus = pgEnum('session_signup_status', ['going', 'waiting']);
+
+export const tableSessionSignups = pgTable(
+  'table_session_signups',
+  {
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => tableSessions.id, { onDelete: 'cascade' }),
+    tableId: uuid('table_id').notNull(),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: sessionSignupStatus('status').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.sessionId, row.playerId] }),
+    // Only someone with a place at the table signs up; leaving it takes them off every session.
+    foreignKey({
+      columns: [row.tableId, row.playerId],
+      foreignColumns: [registrations.tableId, registrations.playerId],
+    }).onDelete('cascade'),
+    index('table_session_signups_table_player_idx').on(row.tableId, row.playerId),
   ],
 ).enableRLS();
 

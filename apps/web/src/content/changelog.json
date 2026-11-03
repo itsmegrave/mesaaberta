@@ -66,6 +66,16 @@
         "description": "Quando a equipe da Mesa Aberta precisa falar com você sobre uma mesa, um parceiro, um lugar ou uma sugestão, a conversa aparece em Mensagens como [Admin] @nome, separada das suas conversas normais. Ela chega mesmo com as mensagens diretas desligadas, e você pode responder."
       },
       {
+        "kind": "new",
+        "title": "Vagas por sessão na campanha aberta",
+        "description": "Numa campanha aberta, quem está no elenco escolhe as sessões que quer jogar. Cada sessão tem as próprias vagas; cheia, dá para entrar na espera dela, e quem espera entra sozinho quando abre vaga. Quem mestra vê quem joga cada sessão e pode pôr ou tirar qualquer pessoa."
+      },
+      {
+        "kind": "improved",
+        "title": "Na campanha aberta, a agenda tem só as sessões que você joga",
+        "description": "Quando a mesa usa vagas por sessão, o convite, o botão Adicionar à agenda e a agenda assinada trazem só as sessões em que você entrou, e o lembrete vai só para quem joga aquela sessão."
+      },
+      {
         "kind": "fixed",
         "title": "Sem erro depois de salvar um formulário",
         "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."

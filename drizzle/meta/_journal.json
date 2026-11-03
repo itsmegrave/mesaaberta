@@ -586,8 +586,15 @@
     {
       "idx": 83,
       "version": "7",
-      "when": 1793725407994,
-      "tag": "0083_system_logos",
+      "when": 1793724282971,
+      "tag": "0083_session_signups",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1793741604394,
+      "tag": "0084_system_logos",
       "breakpoints": true
     }
   ]

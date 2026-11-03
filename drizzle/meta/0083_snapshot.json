@@ -1,5 +1,5 @@
 {
-  "id": "2c929fa8-e922-4671-ac22-f6ad18b42d46",
+  "id": "d75a6eb5-ed8c-4eb2-9ecc-f4bfbab6b8a0",
   "prevId": "d37d0ff7-4bac-4dcc-8c8f-7b2803de1e4b",
   "version": "7",
   "dialect": "postgresql",
@@ -6537,155 +6537,6 @@
       },
       "isRLSEnabled": true
     },
-    "public.system_logos": {
-      "name": "system_logos",
-      "schema": "",
-      "columns": {
-        "system_id": {
-          "name": "system_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "system_logo_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "path": {
-          "name": "path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "method": {
-          "name": "method",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "confidence": {
-          "name": "confidence",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "image_url": {
-          "name": "image_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source_page": {
-          "name": "source_page",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "attribution": {
-          "name": "attribution",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "license": {
-          "name": "license",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "wikidata_id": {
-          "name": "wikidata_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reviewed_by": {
-          "name": "reviewed_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reviewed_at": {
-          "name": "reviewed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "system_logos_status_idx": {
-          "name": "system_logos_status_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "system_logos_system_id_systems_id_fk": {
-          "name": "system_logos_system_id_systems_id_fk",
-          "tableFrom": "system_logos",
-          "tableTo": "systems",
-          "columnsFrom": [
-            "system_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "system_logos_reviewed_by_profiles_id_fk": {
-          "name": "system_logos_reviewed_by_profiles_id_fk",
-          "tableFrom": "system_logos",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "reviewed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": true
-    },
     "public.systems": {
       "name": "systems",
       "schema": "",
@@ -6900,6 +6751,123 @@
       "compositePrimaryKeys": {
         "table_session_attendance_session_id_player_id_pk": {
           "name": "table_session_attendance_session_id_player_id_pk",
+          "columns": [
+            "session_id",
+            "player_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.table_session_signups": {
+      "name": "table_session_signups",
+      "schema": "",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "table_id": {
+          "name": "table_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "session_signup_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "table_session_signups_table_player_idx": {
+          "name": "table_session_signups_table_player_idx",
+          "columns": [
+            {
+              "expression": "table_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "table_session_signups_session_id_table_sessions_id_fk": {
+          "name": "table_session_signups_session_id_table_sessions_id_fk",
+          "tableFrom": "table_session_signups",
+          "tableTo": "table_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "table_session_signups_player_id_profiles_id_fk": {
+          "name": "table_session_signups_player_id_profiles_id_fk",
+          "tableFrom": "table_session_signups",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "table_session_signups_table_id_player_id_registrations_table_id_player_id_fk": {
+          "name": "table_session_signups_table_id_player_id_registrations_table_id_player_id_fk",
+          "tableFrom": "table_session_signups",
+          "tableTo": "registrations",
+          "columnsFrom": [
+            "table_id",
+            "player_id"
+          ],
+          "columnsTo": [
+            "table_id",
+            "player_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "table_session_signups_session_id_player_id_pk": {
+          "name": "table_session_signups_session_id_player_id_pk",
           "columns": [
             "session_id",
             "player_id"
@@ -7881,14 +7849,12 @@
         "place"
       ]
     },
-    "public.system_logo_status": {
-      "name": "system_logo_status",
+    "public.session_signup_status": {
+      "name": "session_signup_status",
       "schema": "public",
       "values": [
-        "pending",
-        "approved",
-        "rejected",
-        "missing"
+        "going",
+        "waiting"
       ]
     },
     "public.table_kind": {

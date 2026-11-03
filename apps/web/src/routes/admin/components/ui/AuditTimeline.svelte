@@ -119,6 +119,10 @@
         return m.history_event_SessionMoved();
       case 'SessionCancelled':
         return m.history_event_SessionCancelled();
+      case 'SessionSignedUp':
+        return m.history_event_SessionSignedUp();
+      case 'SessionSignupLeft':
+        return m.history_event_SessionSignupLeft();
       case 'TableClosedByModeration':
         return m.history_event_TableClosedByModeration();
       case 'JoinRequested':
