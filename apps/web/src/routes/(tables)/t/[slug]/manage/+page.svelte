@@ -233,6 +233,7 @@
           weekly={!!table.everyWeeks}
           durationHours={table.durationMinutes / 60}
           canSchedule={table.status === 'active' || table.status === 'awaiting_confirmation'}
+          roster={data.players.map(({ playerId, username }) => ({ playerId, username }))}
         />
       {/if}
       <section aria-labelledby="invitations" class={card}>

@@ -133,6 +133,10 @@ export const flagDefaults = {
   // cancels a campaign's or adventure's sessions in Gerenciar mesa, and the table page lists them.
   // Off: neither shows and the four session actions are a 404. Visitors are evaluated too.
   use_table_sessions: false,
+  // Campanha aberta, a new feature (created on for everyone): players on the roster sign up for
+  // each session up to its size, then wait for it; quem mestra puts people in or takes them out.
+  // Needs use_table_sessions. Off: no places on the sessions and the four actions are a 404.
+  use_session_signup: false,
   // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.

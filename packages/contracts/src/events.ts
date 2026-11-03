@@ -117,6 +117,18 @@ export type DomainEvent =
   | { type: 'SessionScheduled'; payload: SessionFact }
   | { type: 'SessionMoved'; payload: SessionFact & { from: string } }
   | { type: 'SessionCancelled'; payload: SessionFact }
+  // Campanha aberta (`use_session_signup`): a player on the roster plays one session, or waits for
+  // it (`waiting`). `by`: the player signed up, quem mestra put them in, or a place opened and the
+  // first who waited took it (the actor is whoever left).
+  | {
+      type: 'SessionSignedUp';
+      payload: SessionFact & { playerId: string; waiting: boolean; by: 'player' | 'gm' | 'waitlist' };
+    }
+  // A player is off one session: they left it, or quem mestra took them out (`removed`).
+  | {
+      type: 'SessionSignupLeft';
+      payload: SessionFact & { playerId: string; waiting: boolean; reason: 'left' | 'removed' };
+    }
   // A player asked for a seat at a table that approves each one. Takes no seat.
   // `fromWaitlist`: no one asked just now; a seat freed up and the first in the table's lista de espera
   // moved up (the actor is that player). They are told too.

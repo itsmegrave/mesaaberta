@@ -8,7 +8,7 @@ import { directoryEnabled } from '../directories/flags';
 import { waitlistEnabled } from '../waitlist/enabled';
 import { contentRatingSymbolShown, tableSafetyEnabled } from '../tables/safety-enabled';
 import { tableCalendarEnabled } from '../tables/calendar-enabled';
-import { tableSessionsEnabled } from '../tables/sessions-enabled';
+import { sessionSignupEnabled, tableSessionsEnabled } from '../tables/sessions-enabled';
 import { sessionsFromJson } from '../tables/sessions-json';
 
 export const read = async ({ locals, params }: RequestEvent) => {
@@ -69,7 +69,10 @@ export const read = async ({ locals, params }: RequestEvent) => {
     // The lista de espera, while `use_waitlist` is on: how many wait and the viewer's place in line.
     waitlist: waitlist && (await waitlistEnabled(locals, profile)) ? waitlist : null,
     // Sessões, while `use_table_sessions` is on (and the api Worker sends them).
+    // A campanha aberta's places per session, while `use_session_signup` is on too.
     sessions:
-      sessions && (await tableSessionsEnabled(locals, profile)) ? sessionsFromJson(sessions) : null,
+      sessions && (await tableSessionsEnabled(locals, profile))
+        ? sessionsFromJson(sessions, await sessionSignupEnabled(locals, profile))
+        : null,
   };
 };

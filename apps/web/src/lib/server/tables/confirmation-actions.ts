@@ -9,8 +9,9 @@ import {
   noteSessionSchema,
   postponeSchema,
   scheduleSessionSchema,
+  sessionPlayerSchema,
 } from '#lib/tables/confirmation.js';
-import { tableSessionsEnabled } from './sessions-enabled';
+import { sessionSignupEnabled, tableSessionsEnabled } from './sessions-enabled';
 import { requireUser } from '../auth/guard';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';
@@ -112,6 +113,10 @@ export const confirmationActions = {
 const sessionsOn = async (locals: App.Locals) =>
   tableSessionsEnabled(locals, await locals.getProfile().catch(() => null));
 
+/** Campanha aberta's places per session are on for the person (`use_session_signup`). */
+const signupOn = async (locals: App.Locals) =>
+  sessionSignupEnabled(locals, await locals.getProfile().catch(() => null));
+
 /** Gerenciar mesa → Sessões: schedule one more, move one, write its note, cancel one. */
 export const sessionActions = {
   scheduleSession: confirmationAction(
@@ -145,5 +150,20 @@ export const sessionActions = {
     'cancelSession',
     ({ sessionId, message }) => ({ sessionId, ...(message ? { message } : {}) }),
     sessionsOn,
+  ),
+  // Campanha aberta (`use_session_signup`): "Pôr na sessão" and "Tirar".
+  addToSession: confirmationAction(
+    sessionPlayerSchema,
+    ['sessionId', 'playerId', 'next'],
+    'addToSession',
+    ({ sessionId, playerId }) => ({ sessionId, playerId }),
+    signupOn,
+  ),
+  removeFromSession: confirmationAction(
+    sessionPlayerSchema,
+    ['sessionId', 'playerId', 'next'],
+    'removeFromSession',
+    ({ sessionId, playerId }) => ({ sessionId, playerId }),
+    signupOn,
   ),
 };

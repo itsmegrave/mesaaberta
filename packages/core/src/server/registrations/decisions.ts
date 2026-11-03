@@ -10,6 +10,7 @@ import {
   removePlayer,
 } from './service';
 import { joinWaitlist, leaveWaitlist } from './waitlist';
+import { leaveSession, signUpForSession } from '../tables/session-signups';
 import { playerRatingSchema, ratingSchema } from '../../tables/rating';
 import { submitRating } from '../ratings/service';
 import { ratePlayer } from '../ratings/players';
@@ -44,6 +45,18 @@ export const registrationActions = {
   unwaitlist: {
     schema: z.object({}),
     apply: (db: AnyDb, actor: Actor | null, slug: string) => leaveWaitlist(db, actor, slug),
+  },
+  // Campanha aberta (`use_session_signup`, checked by the web Worker): "Quero jogar esta" (or wait
+  // for it) and leaving one session.
+  sessionSignup: {
+    schema: z.object({ sessionId: z.uuid() }),
+    apply: (db: AnyDb, actor: Actor | null, slug: string, data: { sessionId: string }) =>
+      signUpForSession(db, actor, slug, data),
+  },
+  sessionLeave: {
+    schema: z.object({ sessionId: z.uuid() }),
+    apply: (db: AnyDb, actor: Actor | null, slug: string, data: { sessionId: string }) =>
+      leaveSession(db, actor, slug, data),
   },
   approve: {
     schema: player,

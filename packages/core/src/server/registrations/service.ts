@@ -4,6 +4,7 @@ import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/
 import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { authorize, joinBlocker, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '@mesaaberta/core/server/errors';
+import { releaseSessionSeats } from '../tables/session-signups';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { DomainEvent } from '@mesaaberta/core/server/events/types';
 import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
@@ -133,6 +134,8 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
     const registration = await registrationOf(tx, table.id, actor!.id);
     if (!registration) throw new NotFound('no registration');
     const wasFull = registration.status === 'confirmed' && (await fullBefore(tx, table.id));
+    // Campanha aberta: the sessions they played go to whoever waited for them.
+    const movedUp = await releaseSessionSeats(asDb(tx), actor!.id, table.id, actor!.id);
 
     await tx
       .delete(registrations)
@@ -153,7 +156,7 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
       },
     });
     // The seat goes to the first in the lista de espera, if anyone waits.
-    return { eventIds: [eventId, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
+    return { eventIds: [eventId, ...movedUp, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 
@@ -221,6 +224,7 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
     const registration = await registrationOf(tx, table.id, playerId);
     if (registration?.status !== 'confirmed') throw new NotFound('that player has no seat');
     const wasFull = await fullBefore(tx, table.id);
+    const movedUp = await releaseSessionSeats(asDb(tx), actor!.id, table.id, playerId);
 
     await tx
       .delete(registrations)
@@ -238,7 +242,7 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
         ...(wasFull ? { wasFull: true as const } : {}),
       },
     });
-    return { eventIds: [eventId, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
+    return { eventIds: [eventId, ...movedUp, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 

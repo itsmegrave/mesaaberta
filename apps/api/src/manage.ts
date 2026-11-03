@@ -11,7 +11,7 @@ type Open = typeof createDb;
 /**
  * The GM's manage-page writes of Trello #120 (publish a draft, "it happened", "it did not",
  * postpone), moved out of the manage page's form actions. Looked up by name in core's
- * `tableLifecycleActions`, the registry the web actions run too. Answers `{ eventIds }` (one, or none for a note) for
+ * `tableLifecycleActions`, the registry the web actions run too. Answers `{ eventIds }` (one, several when a place moves up, or none for a note) for
  * the web Worker to dispatch, or the refusal the service made.
  */
 export function manageRoutes(open: Open = openDb) {
@@ -29,20 +29,20 @@ export function manageRoutes(open: Open = openDb) {
         actor: unknown,
         slug: string,
         data: unknown,
-      ) => Promise<{ eventId: string | null }>;
+      ) => Promise<{ eventId: string | null; eventIds?: string[] }>;
     };
 
     const parsed = action.schema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json({ error: 'invalid', field: '', message: 'invalid' }, 400);
 
     try {
-      const { eventId } = await action.apply(
+      const { eventId, eventIds } = await action.apply(
         c.get('db'),
         c.get('actor'),
         c.req.param('slug'),
         parsed.data,
       );
-      return c.json({ eventIds: eventId ? [eventId] : [] });
+      return c.json({ eventIds: eventIds ?? (eventId ? [eventId] : []) });
     } catch (error) {
       const refused = refusal(c, error);
       if (refused) return refused;

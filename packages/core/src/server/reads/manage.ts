@@ -4,6 +4,7 @@ import { loadManage } from '../tables/manage';
 import { listWaitlist } from '../registrations/waitlist';
 import { instantToLocal, nextWeeklySession, weeklyInterval } from '../tables/schedule';
 import { listSessions } from '../tables/sessions';
+import { withSeats } from '../tables/session-signups';
 
 function nextSessionOf(
   table: { recurrence: string | null; startsAt: Date; timezone: string },
@@ -28,7 +29,13 @@ function nextSessionOf(
 export async function readManage(db: AnyDb, actor: Actor | null, slug: string, now: Date) {
   const manage = await loadManage(db, actor, slug, now);
   const { gmId, id, ...table } = manage.table;
-  const sessions = await listSessions(db, { id, status: table.status }, { role: 'gm' });
+  const sessions = await withSeats(
+    db,
+    manage.table,
+    await listSessions(db, { id, status: table.status }, { role: 'gm' }),
+    { gm: true, playerId: null },
+    now,
+  );
   const scheduledNext =
     table.status === 'awaiting_confirmation'
       ? (sessions.find(

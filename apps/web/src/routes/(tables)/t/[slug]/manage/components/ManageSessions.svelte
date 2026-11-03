@@ -13,6 +13,7 @@
   import SessionItem from '../../components/ui/SessionItem.svelte';
   import SessionBadges from '../../components/ui/SessionBadges.svelte';
   import SessionDialog, { type SessionDialogMode } from './SessionDialog.svelte';
+  import SessionPeopleDialog from './SessionPeopleDialog.svelte';
 
   let {
     sessions,
@@ -21,6 +22,7 @@
     weekly,
     durationHours,
     canSchedule,
+    roster = [],
     class: className = '',
   }: {
     sessions: Session[];
@@ -32,6 +34,8 @@
     durationHours: number;
     /** The table takes changes now (active or waiting for the GM's answer). */
     canSchedule: boolean;
+    /** A campanha aberta's roster: who quem mestra may put in a session. */
+    roster?: { playerId: string; username: string }[];
     class?: string;
   } = $props();
 
@@ -49,7 +53,20 @@
   const open = (mode: SessionDialogMode, session: Session | null = null) =>
     (dialog = { mode, session });
 
+  let people = $state<string | null>(null);
+  const peopleOf = $derived(sessions.find((session) => session.id === people) ?? null);
+
   const menu = (session: Session) => [
+    ...(session.seats
+      ? [
+          {
+            id: 'people',
+            label: m.sessions_people_open(),
+            icon: 'user-id' as const,
+            onselect: () => (people = session.id),
+          },
+        ]
+      : []),
     {
       id: 'move',
       label: m.sessions_move(),
@@ -97,6 +114,17 @@
     <ul aria-label={m.sessions_upcoming_label()}>
       {#each split.upcoming as session, index (session.id)}
         <SessionItem {session} timezone={zone} last={index === split.upcoming.length - 1}>
+          {#snippet details()}
+            {#if session.seats}
+              <span class="text-sm text-muted"
+                >{m.sessions_seats_label({
+                  going: session.seats.going,
+                  size: session.seats.size,
+                })}{#if session.seats.waiting > 0}
+                  · {m.sessions_signup_waiting({ count: session.seats.waiting })}{/if}</span
+              >
+            {/if}
+          {/snippet}
           {#snippet actions()}
             <!-- The session that passed waits for the answer above: nothing to change here. -->
             {#if canSchedule && session.startsAt > now}
@@ -131,6 +159,16 @@
     </MAAccordion>
   {/if}
 </section>
+
+{#if peopleOf?.seats}
+  <SessionPeopleDialog
+    session={{ ...peopleOf, seats: peopleOf.seats }}
+    {roster}
+    {next}
+    timezone={zone}
+    onclose={() => (people = null)}
+  />
+{/if}
 
 {#if dialog}
   <SessionDialog

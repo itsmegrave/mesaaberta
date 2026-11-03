@@ -7,13 +7,15 @@
 
   // One row of a table's sessions (the table page's Sessões, Gerenciar mesa's): the calendar tile,
   // "Sessão 5", the day (and the time while it is ahead), the note and where a moved session was.
-  // `badges` are the outcome and the viewer's attendance; `actions` quem mestra's menu.
+  // `badges` are the outcome and the viewer's attendance; `actions` quem mestra's menu; `details`
+  // goes under the text (a campanha aberta's places).
   let {
     session,
     timezone,
     last = false,
     badges,
     actions,
+    details,
   }: {
     session: SessionItem;
     /** The zone the viewer reads times in. */
@@ -22,6 +24,7 @@
     last?: boolean;
     badges?: Snippet;
     actions?: Snippet;
+    details?: Snippet;
   } = $props();
 
   const locale = getLocale();
@@ -58,6 +61,7 @@
         >{m.sessions_present({ count: session.present.count, of: session.present.of })}</span
       >
     {/if}
+    {@render details?.()}
   </div>
   {#if badges || actions}
     <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
