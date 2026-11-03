@@ -486,7 +486,11 @@ export async function updateTable(
         ...(changed ? { icalSequence: table.icalSequence + 1 } : {}),
       })
       .where(eq(gameTables.id, table.id));
-    await syncTableSessions(tx as unknown as AnyDb, [table.id]);
+    // A new rule, time or length writes the later dates nobody moved again.
+    const reflow = (
+      ['startsAt', 'durationMinutes', 'timezone', 'recurrence', 'until'] as const
+    ).some((field) => !sameValue(locked[field], columns[field]));
+    await syncTableSessions(tx as unknown as AnyDb, [table.id], { reflow });
     await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
 
     const changes = tableChanges(

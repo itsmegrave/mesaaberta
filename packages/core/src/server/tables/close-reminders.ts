@@ -13,7 +13,7 @@ import { recordEvent } from '../events/outbox';
 import { nextStatus } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { sessionEndedBy } from './lifecycle';
-import { closeSession, syncTableSessions } from './sessions';
+import { closeSession, nextScheduledAfter, syncTableSessions } from './sessions';
 import { nextWeeklySession, weeklyInterval } from './schedule';
 import {
   assertTableSchedule,
@@ -241,12 +241,10 @@ async function autoHold(db: AnyDb, table: DueTable, now: Date): Promise<string[]
     )
       return [];
     const interval = weeklyInterval(current.recurrence) ?? 1;
-    let startsAt: Date | null = nextWeeklySession(
-      current.startsAt,
-      interval,
-      current.timezone,
-      now,
-    );
+    // The next session already on the list, or else the next weekly date.
+    let startsAt: Date | null =
+      (await nextScheduledAfter(executor, current.id, current.startsAt, now)) ??
+      nextWeeklySession(current.startsAt, interval, current.timezone, now);
     for (let attempt = 1; startsAt; attempt++) {
       try {
         assertTableSchedule(linked, { ...current, startsAt }, current.id);

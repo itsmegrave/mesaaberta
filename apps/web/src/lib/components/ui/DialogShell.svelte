@@ -76,7 +76,7 @@
           : 'items-center p-4'}"
       >
         <Dialog.Content
-          class="w-full {sizes[
+          class="w-full min-w-0 {sizes[
             size
           ]} card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl {scroll
             ? 'max-h-full overflow-y-auto'
