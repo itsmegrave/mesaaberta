@@ -122,7 +122,11 @@ export type DomainEvent =
   // first who waited took it (the actor is whoever left).
   | {
       type: 'SessionSignedUp';
-      payload: SessionFact & { playerId: string; waiting: boolean; by: 'player' | 'gm' | 'waitlist' };
+      payload: SessionFact & {
+        playerId: string;
+        waiting: boolean;
+        by: 'player' | 'gm' | 'waitlist';
+      };
     }
   // A player is off one session: they left it, or quem mestra took them out (`removed`).
   | {
