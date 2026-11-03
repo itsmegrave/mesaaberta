@@ -1,6 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { gameTables, profiles, registrations, systems } from '@mesaaberta/core/server/db/schema';
+import {
+  gameTables,
+  profiles,
+  registrations,
+  systems,
+  tableSessions,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { formatSession } from '@mesaaberta/core/tables/format';
 import { TEMPLATE_VARIABLES } from '@mesaaberta/core/server/mail/templates';
@@ -386,6 +392,70 @@ describe('calendar invite handler', () => {
       await test.db
         .update(gameTables)
         .set({ startsAt: new Date('2026-10-10T22:00:00Z'), icalSequence: 0 })
+        .where(eq(gameTables.id, tableId));
+    }
+  });
+
+  it('tells everyone about a later session moved, with the moved date in the same event', async () => {
+    await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
+    await test.db
+      .update(gameTables)
+      .set({ kind: 'campaign', recurrence: 'FREQ=WEEKLY', icalSequence: 2 })
+      .where(eq(gameTables.id, tableId));
+    await test.db.insert(tableSessions).values([
+      { tableId, startsAt: new Date('2026-10-10T22:00:00Z'), durationMinutes: 180 },
+      {
+        tableId,
+        startsAt: new Date('2026-10-18T22:00:00Z'),
+        durationMinutes: 180,
+        pinned: true,
+        movedFrom: new Date('2026-10-17T22:00:00Z'),
+      },
+    ]);
+    const byId = adminByRecipient({ [gm]: 'mestre@example.com', [player]: 'ana@example.com' });
+    const sent = capture();
+    try {
+      const handler = createInviteHandler(
+        { ...env, RESEND_TEMPLATE_INVITE: 'tpl-invite' },
+        sent.request,
+        byId,
+      );
+      expect(handler.types).toEqual(
+        expect.arrayContaining(['SessionScheduled', 'SessionMoved', 'SessionCancelled']),
+      );
+      const base = tableEvent('TableUpdated');
+      await handler.handle(
+        {
+          ...base,
+          type: 'SessionMoved',
+          payload: {
+            ...base.payload,
+            sessionId: '00000000-0000-4000-8000-000000000816',
+            startsAt: '2026-10-18T22:00:00.000Z',
+            from: '2026-10-17T22:00:00.000Z',
+          },
+        } as StoredEvent,
+        test.db,
+      );
+
+      expect(sent.bodies.map((body) => body.to[0]).sort()).toEqual([
+        'ana@example.com',
+        'mestre@example.com',
+      ]);
+      for (const body of sent.bodies) {
+        expect(body.subject).toBe('Sessão remarcada: Mesa do Dragão');
+        // Not "your seat is confirmed": the plain copy, never the seat template.
+        expect(body.template).toBeUndefined();
+        expect(body.text).toContain('mudou para');
+        const ics = Buffer.from(body.attachments[0].content, 'base64').toString();
+        expect(ics).toContain('RECURRENCE-ID;TZID=America/Sao_Paulo:20261017T190000');
+        expect(ics).toContain('SEQUENCE:2');
+      }
+    } finally {
+      await test.db.delete(tableSessions);
+      await test.db
+        .update(gameTables)
+        .set({ kind: 'one_shot', recurrence: null, icalSequence: 0 })
         .where(eq(gameTables.id, tableId));
     }
   });
