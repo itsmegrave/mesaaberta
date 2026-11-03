@@ -233,6 +233,45 @@ export const systems = pgTable(
   ],
 ).enableRLS();
 
+// What the logo finder (`@mesaaberta/core/server/systems/logos`) came back with for a system,
+// one row per system. Logos are trademarks, so each keeps where it came from and stays `pending`
+// until an admin approves it; only an `approved` logo is shown. `missing` means the search found
+// nothing, so the next run skips it and the admin knows to add one by hand. A rejected logo keeps
+// its source (so the same one is not proposed again) but its file is deleted.
+export const systemLogoStatus = pgEnum('system_logo_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'missing',
+]);
+export const systemLogos = pgTable(
+  'system_logos',
+  {
+    systemId: uuid('system_id')
+      .primaryKey()
+      .references(() => systems.id, { onDelete: 'cascade' }),
+    status: systemLogoStatus('status').notNull(),
+    // In the table-images bucket, under `systems/`. Null when missing or rejected.
+    path: text('path'),
+    // `wikidata`, `commons`, `website` or `upload` (an admin sent the file).
+    method: text('method'),
+    // `high`, `medium` or `low`, from the finder; null for an upload.
+    confidence: text('confidence'),
+    // Where the picture was read from, and the page that shows it with its terms.
+    imageUrl: text('image_url'),
+    sourcePage: text('source_page'),
+    attribution: text('attribution'),
+    license: text('license'),
+    // Why the finder is as sure as it is, or why it found nothing.
+    note: text('note'),
+    wikidataId: text('wikidata_id'),
+    reviewedBy: uuid('reviewed_by').references(() => profiles.id, { onDelete: 'set null' }),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (logo) => [index('system_logos_status_idx').on(logo.status)],
+).enableRLS();
+
 // The systems a person likes to play, which shape their Início. At most
 // FAVORITE_SYSTEMS_MAX each, held by the service, not the database.
 export const profileFavoriteSystems = pgTable(

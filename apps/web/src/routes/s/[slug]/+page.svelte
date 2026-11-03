@@ -53,7 +53,7 @@
     factsLabel={m.system_about()}
     highlightFirst={facts.openTables > 0}
   >
-    {#snippet mark()}<DirectoryMark name={system.name} size="lg" />{/snippet}
+    {#snippet mark()}<DirectoryMark name={system.name} src={system.logoUrl} size="lg" />{/snippet}
     {#snippet actions()}
       {#if facts.openTables > 0}
         <a href={tablesHref} class="{buttonClass('primary')} px-6 font-semibold"
@@ -135,5 +135,14 @@
         {/each}
       </ul>
     </DirectorySection>
+  {/if}
+
+  {#if system.logoUrl && system.logoSource}
+    <!-- The logo is the publisher's trademark: say where it comes from. -->
+    <p class="mt-10 text-sm text-muted">
+      <a href={system.logoSource} rel="noopener noreferrer nofollow" target="_blank"
+        >{m.system_logo_source()}</a
+      >
+    </p>
   {/if}
 </section>

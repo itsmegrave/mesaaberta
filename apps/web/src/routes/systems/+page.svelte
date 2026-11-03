@@ -113,7 +113,7 @@
             active={system.openTables > 0}
             level="h2"
           >
-            {#snippet mark()}<DirectoryMark name={system.name} />{/snippet}
+            {#snippet mark()}<DirectoryMark name={system.name} src={system.logoUrl} />{/snippet}
             {#snippet people()}
               <AvatarStack
                 people={system.gms}

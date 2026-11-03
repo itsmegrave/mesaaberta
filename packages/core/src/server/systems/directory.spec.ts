@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { gameTables, profiles, systems } from '@mesaaberta/core/server/db/schema';
+import { gameTables, profiles, systemLogos, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../../../../../apps/web/src/lib/server/db/test-db';
 import { readSystemDirectoryFilters } from '../../systems/directory-filters';
 import { listSystemDirectory, readSystemPage } from './directory';
@@ -79,6 +79,7 @@ describe('listSystemDirectory', () => {
         // Drafts and moderated tables never count; the banned GM's table does, the GM does not.
         totalTables: 4,
         gmCount: 2,
+        logoPath: null,
         gms: [
           { username: 'ana', avatarPath: null, avatarUrl: null },
           { username: 'bia', avatarPath: null, avatarUrl: null },
@@ -122,6 +123,40 @@ describe('listSystemDirectory', () => {
       pages: 1,
       systems: [],
     });
+  });
+});
+
+describe('system logos in the directory', () => {
+  it('shows a logo only once an admin approved it', async () => {
+    const [{ id }] = await test.db
+      .select({ id: systems.id })
+      .from(systems)
+      .where(eq(systems.slug, 'call-of-cthulhu'));
+    await test.db.insert(systemLogos).values({
+      systemId: id,
+      status: 'pending',
+      path: 'systems/coc.png',
+      sourcePage: 'https://commons.wikimedia.org/wiki/File:CoC.svg',
+    });
+    const logoOf = async () => {
+      const list = await listSystemDirectory(test.db, filters(), now);
+      const page = await readSystemPage(test.db, 'call-of-cthulhu', now);
+      return [
+        list!.systems[0].logoPath,
+        page && 'system' in page ? [page.system.logoPath, page.system.logoSource] : null,
+      ];
+    };
+    expect(await logoOf()).toEqual([null, [null, null]]);
+
+    await test.db
+      .update(systemLogos)
+      .set({ status: 'approved' })
+      .where(eq(systemLogos.systemId, id));
+    expect(await logoOf()).toEqual([
+      'systems/coc.png',
+      ['systems/coc.png', 'https://commons.wikimedia.org/wiki/File:CoC.svg'],
+    ]);
+    await test.db.delete(systemLogos);
   });
 });
 

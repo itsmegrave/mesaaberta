@@ -44,6 +44,7 @@ describe('the systems directory load', () => {
           openTables: 3,
           totalTables: 9,
           gmCount: 2,
+          logoPath: 'systems/t20.png',
           gms: [{ username: 'ana', avatarPath: 'ana/a.png', avatarUrl: null }],
         },
       ],
@@ -55,6 +56,14 @@ describe('the systems directory load', () => {
     await expect(run(event())).rejects.toMatchObject({ status: 404 });
     expect(flagged).toHaveBeenCalledWith('api_directory_systems', { id: viewer, isAdmin: false });
     expect(listSystemDirectory).not.toHaveBeenCalled();
+  });
+
+  it('turns an approved logo path into its URL', async () => {
+    const data = await run(event());
+    expect(data.systems[0].logoUrl).toBe(
+      'https://sb.test/storage/v1/object/public/table-images/systems/t20.png',
+    );
+    expect(data.systems[0]).not.toHaveProperty('logoPath');
   });
 
   it('reads the filters from the address, junk dropped, and turns avatar paths into URLs', async () => {
