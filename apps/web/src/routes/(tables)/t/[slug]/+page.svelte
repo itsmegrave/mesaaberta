@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isBeginnerTable } from '@mesaaberta/core/tables/beginners';
   import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   import { copyText } from '#lib/clipboard.js';
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
@@ -36,6 +37,7 @@
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
   import DraftNotice from './components/DraftNotice.svelte';
   import CalendarMenu from './components/CalendarMenu.svelte';
+  import TableSessions from './components/TableSessions.svelte';
   import { googleCalendarHref } from '#lib/tables/google-calendar.js';
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
@@ -85,6 +87,17 @@
 
   // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
   const stateLabel = $derived(tableStatusLabel(table.status));
+  // Sessões (`use_table_sessions`), for a campaign or adventure that has them.
+  const sessions = $derived(
+    table.kind !== 'one_shot' && data.sessions && data.sessions.length > 0 ? data.sessions : null,
+  );
+  // "Próxima sessão · sessão 5": the session the table's date is.
+  const nextNumber = $derived(
+    sessions?.find(
+      (session) =>
+        session.status === 'scheduled' && session.startsAt.getTime() === table.startsAt.getTime(),
+    )?.number ?? null,
+  );
 
   // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
   let disableOpen = $state(false);
@@ -182,6 +195,19 @@
         />
       {/if}
 
+      {#if page.data.beginners && isBeginnerTable(table.tags)}
+        <!-- Iniciantes: the GM tagged the table for people who never played; the guide says how. -->
+        <a
+          href="/beginners"
+          class="mt-4 flex items-start gap-3 rounded-lg preset-tonal-primary p-3 text-sm no-underline hover:underline"
+        >
+          <Icon name="game-icons:sprout" size={20} class="mt-0.5 shrink-0" />
+          <span>
+            <span class="block font-semibold">{m.beginners_table_title()}</span>
+            <span class="block">{m.beginners_table_body()}</span>
+          </span>
+        </a>
+      {/if}
       {#if table.tags.length > 0}
         <ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">
           {#each table.tags as tag (tag.slug)}
@@ -258,6 +284,16 @@
         <RichText html={table.description} class="mt-8 max-w-prose text-lg" />
       {/if}
 
+      {#if sessions}
+        <TableSessions
+          class="mt-10 max-w-prose rounded-lg border border-surface-200-800 bg-panel p-4 md:p-6"
+          {sessions}
+          timezone={table.timezone}
+          repeat={table.everyWeeks ? recurrence : null}
+          seated={data.canManage || data.myStatus === 'confirmed'}
+        />
+      {/if}
+
       {#if table.extraInfo}
         <MAAccordion
           collapse="phone"
@@ -290,7 +326,13 @@
       aria-label={m.table_next_session()}
       class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
     >
-      <SessionDate startsAt={table.startsAt} timezone={table.timezone} {stateLabel} large />
+      <SessionDate
+        startsAt={table.startsAt}
+        timezone={table.timezone}
+        {stateLabel}
+        number={nextNumber}
+        large
+      />
 
       <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
         <SummaryRow label={m.table_modality()} class="flex items-center gap-2">

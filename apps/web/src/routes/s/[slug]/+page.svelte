@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import DirectoryHeader from '#lib/components/directory/ui/DirectoryHeader.svelte';
   import DirectoryMark from '#lib/components/directory/ui/DirectoryMark.svelte';
   import DirectorySection from '#lib/components/directory/ui/DirectorySection.svelte';
@@ -73,7 +74,7 @@
     {#if data.openTables.length > 0}
       <CardGrid>
         {#each data.openTables as table (table.slug)}
-          <li><TableCard {table} /></li>
+          <li><TableCard {table} markBeginners={page.data.beginners} /></li>
         {/each}
       </CardGrid>
     {:else}

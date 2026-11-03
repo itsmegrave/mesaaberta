@@ -34,6 +34,8 @@ export const TABLE_LIMITS = {
   plannedSessions: { min: 2, max: 20 },
   // Typed in hours, in half-hour steps; stored in minutes (game_tables.duration_minutes).
   durationHours: { min: 0.5, max: 24, step: 0.5 },
+  // Quem mestra's note on one session (table_sessions.note).
+  sessionNote: 500,
 } as const;
 
 /** True when `iso` is a calendar moment that exists (not `2026-13-40`), read as UTC. */

@@ -1,4 +1,4 @@
-import { TABLE_STATUSES } from './table-status';
+import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
@@ -58,6 +58,7 @@ export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventur
 // `active` is open; `disabled` is the GM cancelling before the session; after the session the GM
 // confirms it: `awaiting_confirmation` until they answer, then `concluded` or `not_held`.
 export const tableStatus = pgEnum('table_status', TABLE_STATUSES);
+export const tableSessionStatus = pgEnum('table_session_status', TABLE_SESSION_STATUSES);
 // Where the table plays: over the internet, or around a real table.
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for
@@ -133,6 +134,12 @@ export const profiles = pgTable(
     // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
     lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
     lookingForTableNote: text('looking_for_table_note'),
+    // The secret in the person's calendar feed address (`/calendar/<token>.ics`), which a calendar
+    // app reads without signing in. Null: no feed. A new one replaces it, and the old address stops.
+    calendarFeedToken: text('calendar_feed_token'),
+    // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
+    // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
+    availability: integer('availability').notNull().default(0),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -147,6 +154,7 @@ export const profiles = pgTable(
     // Unique on the lowercase form, so `Ana` and `ana` cannot both exist even if a caller forgets to
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
+    uniqueIndex('profiles_calendar_feed_token_unique').on(profile.calendarFeedToken),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
@@ -154,6 +162,7 @@ export const profiles = pgTable(
     check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
     // Mirrors LOOKING_NOTE_MAX in packages/core/src/players/looking.
     check('profiles_looking_note_length', sql`char_length(${profile.lookingForTableNote}) <= 200`),
+    check('profiles_availability_range', sql`${profile.availability} between 0 and 2097151`),
     // Procuro mesa reads the people looking, newest first.
     index('profiles_looking_for_table_idx')
       .on(profile.lookingForTableAt)
@@ -640,6 +649,56 @@ export const registrations = pgTable(
     index('registrations_player_idx').on(registration.playerId),
     // Mirror JOIN_MESSAGE_MAX in apps/web/src/lib/tables/registration.
     check('registrations_message_length', sql`char_length(${registration.message}) <= 500`),
+  ],
+).enableRLS();
+
+// The sessions of a table, one row each: the dates ahead and what became of the ones that passed.
+// `game_tables.starts_at` stays the date of the next one, written in the same transaction (lists,
+// filters, reminders and the sweeper read it), so a scheduled row mirrors it. Tracked from the
+// release of this table on: nothing before it is recovered. It goes with its table.
+export const tableSessions = pgTable(
+  'table_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    durationMinutes: integer('duration_minutes').notNull(),
+    status: tableSessionStatus('status').notNull().default('scheduled'),
+    // The GM's note to the players about this session ("começa às 20h"). Plain text, optional.
+    note: text('note'),
+    // The GM scheduled or moved this one by hand: a change to the table's repeat rule leaves it
+    // where it is. The dates a weekly campaign gets from its rule are not pinned.
+    pinned: boolean('pinned').notNull().default(false),
+    // Where a moved session was before ("Data movida de 29 de novembro"). The first move only.
+    movedFrom: timestamp('moved_from', { withTimezone: true }),
+    ...timestamps,
+  },
+  (session) => [
+    index('table_sessions_table_idx').on(session.tableId, session.startsAt),
+    check('table_sessions_duration_positive', sql`${session.durationMinutes} > 0`),
+    check('table_sessions_note_length', sql`char_length(${session.note}) <= 500`),
+  ],
+).enableRLS();
+
+// Who showed up at one session, as the GM said when confirming it. `registrations.attended` stays
+// the summary (present at least once), which ratings and badges read. Personal data: it goes with
+// the session and with the account.
+export const tableSessionAttendance = pgTable(
+  'table_session_attendance',
+  {
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => tableSessions.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    attended: boolean('attended').notNull(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.sessionId, row.playerId] }),
+    index('table_session_attendance_player_idx').on(row.playerId),
   ],
 ).enableRLS();
 

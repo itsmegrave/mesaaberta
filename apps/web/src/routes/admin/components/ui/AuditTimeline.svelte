@@ -113,6 +113,12 @@
           : m.history_event_TableSessionHeld();
       case 'TableNotHeld':
         return m.history_event_TableNotHeld();
+      case 'SessionScheduled':
+        return m.history_event_SessionScheduled();
+      case 'SessionMoved':
+        return m.history_event_SessionMoved();
+      case 'SessionCancelled':
+        return m.history_event_SessionCancelled();
       case 'TableClosedByModeration':
         return m.history_event_TableClosedByModeration();
       case 'JoinRequested':

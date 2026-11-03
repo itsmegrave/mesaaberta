@@ -179,6 +179,16 @@
         name={m.dash_title()}
         class="self-end sm:self-auto"
         items={[
+          ...(data.calendarFeed
+            ? [
+                {
+                  id: 'feed',
+                  label: m.menu_subscribe_calendar(),
+                  icon: 'feed' as const,
+                  href: '/u/calendar',
+                },
+              ]
+            : []),
           {
             id: 'calendar',
             label: m.menu_download_calendar(),

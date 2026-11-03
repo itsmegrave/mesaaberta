@@ -10,6 +10,8 @@
   import Pager from '#lib/components/ui/Pager.svelte';
   import ScoreLine from '#lib/components/ui/ScoreLine.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
+  import AvailabilityList from '#lib/components/ui/AvailabilityList.svelte';
+  import { availabilityLines } from '#lib/profile/availability.js';
   import BadgeIcons from './components/ui/BadgeIcons.svelte';
   import ReviewCard from './components/ui/ReviewCard.svelte';
   import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
@@ -217,6 +219,11 @@
             {/each}
           </ul>
         {/if}
+        <AvailabilityList
+          class="mt-4"
+          lines={availabilityLines(profile.availability)}
+          label={m.availability_label()}
+        />
         {#if profile.hostedAt.length > 0}
           <p class="mt-4 text-sm">
             <span class="font-semibold text-muted">{m.gms_hosted_at()}</span>
@@ -302,7 +309,9 @@
       <p class="mt-4 text-muted">{m.public_profile_no_tables()}</p>
     {:else}
       <CardGrid class="mt-5">
-        {#each data.tables as table (table.slug)}<li><TableCard {table} /></li>{/each}
+        {#each data.tables as table (table.slug)}<li>
+            <TableCard {table} markBeginners={page.data.beginners} />
+          </li>{/each}
       </CardGrid>
     {/if}
     <Pager

@@ -23,12 +23,10 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
   });
 
-  it('offers the crowdfunding list with a short label and the full name for a screen reader', async () => {
+  it('leaves Financiamentos to Explorar', async () => {
     render(BottomTabBar);
 
-    const tab = nav().getByRole('link', { name: 'Financiamentos coletivos' });
-    await expect.element(tab).toHaveAttribute('href', '/crowdfunding');
-    await expect.element(tab).toHaveTextContent('FCs');
+    expect(document.querySelector('a[href="/crowdfunding"]')).toBeNull();
   });
 
   it('leaves Parceiros off the bar', async () => {
@@ -37,12 +35,13 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(nav().getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
   });
 
-  // Admin moved to the account menu, so admins get the same four tabs.
-  it('has four tabs for everyone', async () => {
+  // Admin moved to the account menu and Financiamentos to Explorar, so everyone gets the same three
+  // destinations (Explorar is the fourth tab).
+  it('has three destination tabs for everyone', async () => {
     render(BottomTabBar);
 
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
-    expect(nav().getByRole('link').elements()).toHaveLength(4);
+    expect(nav().getByRole('link').elements()).toHaveLength(3);
   });
   it('uses the new game artwork for every mobile tab', async () => {
     render(BottomTabBar);

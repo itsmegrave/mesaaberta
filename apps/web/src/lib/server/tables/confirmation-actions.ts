@@ -1,7 +1,16 @@
-import { fail, redirect, type Action, type RequestEvent } from '@sveltejs/kit';
+import { error, fail, redirect, type Action, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm } from '#lib/forms/contract.js';
-import { answerSchema, heldSchema, postponeSchema } from '#lib/tables/confirmation.js';
+import {
+  answerSchema,
+  cancelSessionSchema,
+  heldSchema,
+  moveSessionSchema,
+  noteSessionSchema,
+  postponeSchema,
+  scheduleSessionSchema,
+} from '#lib/tables/confirmation.js';
+import { tableSessionsEnabled } from './sessions-enabled';
 import { requireUser } from '../auth/guard';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { Invalid } from '@mesaaberta/core/server/errors';
@@ -20,10 +29,13 @@ function confirmationAction<Schema extends ZodType>(
   fields: readonly string[],
   action: TableLifecycleActionName,
   body?: (data: z.infer<Schema>, present?: string[]) => Record<string, unknown>,
+  /** Answers whether the action is on; off, it is a 404. */
+  gate?: (locals: App.Locals) => Promise<boolean>,
 ): Action {
   return async (event: RequestEvent) => {
     const { locals, request, url, params } = event;
     const user = await requireUser(locals, new URL(url.pathname, url));
+    if (gate && !(await gate(locals))) error(404, 'Not found');
 
     const formData = await request.formData();
     const form = validateStringForm(formData, schema, fields);
@@ -93,5 +105,45 @@ export const confirmationActions = {
     ['startsAtLocal', 'next'],
     'postpone',
     ({ startsAtLocal }) => ({ startsAtLocal }),
+  ),
+};
+
+/** Gerenciar mesa → Sessões is on for the person (`use_table_sessions`). */
+const sessionsOn = async (locals: App.Locals) =>
+  tableSessionsEnabled(locals, await locals.getProfile().catch(() => null));
+
+/** Gerenciar mesa → Sessões: schedule one more, move one, write its note, cancel one. */
+export const sessionActions = {
+  scheduleSession: confirmationAction(
+    scheduleSessionSchema,
+    ['startsAtLocal', 'durationHours', 'note', 'next'],
+    'scheduleSession',
+    ({ startsAtLocal, durationHours, note }) => ({
+      startsAtLocal,
+      durationMinutes: Math.round(durationHours * 60),
+      ...(note ? { note } : {}),
+    }),
+    sessionsOn,
+  ),
+  moveSession: confirmationAction(
+    moveSessionSchema,
+    ['sessionId', 'startsAtLocal', 'next'],
+    'moveSession',
+    ({ sessionId, startsAtLocal }) => ({ sessionId, startsAtLocal }),
+    sessionsOn,
+  ),
+  noteSession: confirmationAction(
+    noteSessionSchema,
+    ['sessionId', 'note', 'next'],
+    'noteSession',
+    ({ sessionId, note }) => ({ sessionId, note }),
+    sessionsOn,
+  ),
+  cancelSession: confirmationAction(
+    cancelSessionSchema,
+    ['sessionId', 'message', 'next'],
+    'cancelSession',
+    ({ sessionId, message }) => ({ sessionId, ...(message ? { message } : {}) }),
+    sessionsOn,
   ),
 };

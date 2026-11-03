@@ -34,7 +34,6 @@ describe('BottomTabBar.svelte, the tab that is on', () => {
       location.pathname = pathname;
       render(BottomTabBar);
       expect(lit('/tables')).toBe(false);
-      expect(lit('/crowdfunding')).toBe(false);
       expect(lit('/u/tables')).toBe(false);
     },
   );

@@ -6,8 +6,8 @@
   import type { DirectoryLink } from '#lib/navigation/directory-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
-  // The phone's Explorar: the tab bar's fifth item opens a sheet from the bottom with every
-  // directory that is on, each with its icon, name and one line on what it lists.
+  // The phone's Explorar: the tab bar's last item opens a sheet from the bottom with every
+  // directory that is on and Financiamentos, each with its icon, name and one line on what it lists.
   let {
     links,
     pathname,

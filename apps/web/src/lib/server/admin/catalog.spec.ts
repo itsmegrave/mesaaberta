@@ -101,6 +101,8 @@ describe('the approval queue', () => {
       ['platform', 'Foundry', 'bruno'],
       ['tag', 'Megadungeon', 'bruno'],
     ]);
+    // "Mandar mensagem" writes to whoever suggested it.
+    expect(queue.map((e) => e.contactId)).toEqual([gm.id, gm.id]);
     expect(queue[0].tables.map((t) => t.title)).toEqual(['Mesa 1', 'Mesa 2']);
     expect(queue[0].duplicateOf).toEqual({ id: foundryId, name: 'Foundry VTT' });
     expect(queue[1].duplicateOf).toBeNull();

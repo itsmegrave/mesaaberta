@@ -19,10 +19,16 @@ import { unreadConversations } from '@mesaaberta/core/server/messages/service';
 import { isUsernameAvailable, loadProfileForm } from '@mesaaberta/core/server/profile/service';
 import { exportAccount } from '@mesaaberta/core/server/account/service';
 import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
-import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
+import {
+  calendarFeedTokenOf,
+  listCalendarTables,
+  setCalendarFeed,
+} from '@mesaaberta/core/server/calendar/feed';
 import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
 import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
+import { availabilitySchema } from '@mesaaberta/core/profile/availability';
 import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
+import { availabilityOf, setAvailability } from '@mesaaberta/core/server/profile/availability';
 import {
   readFavoriteSystems,
   setFavoriteSystems,
@@ -149,6 +155,18 @@ export function meRoutes(open: Open = openDb) {
     c.json(await listCalendarTables(c.get('db'), c.get('actorId'), new Date())),
   );
 
+  // The subscribed calendar feed: the actor's secret (null: no feed), and turning it on with a new
+  // secret or off. Web checks `use_calendar_feed` before it calls these.
+  app.get('/calendar-feed', async (c) =>
+    c.json({ token: await calendarFeedTokenOf(c.get('db'), c.get('actorId')) }),
+  );
+  app.post('/calendar-feed', async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { on?: unknown } | null;
+    if (typeof body?.on !== 'boolean')
+      return c.json({ error: 'invalid', field: 'on', message: 'invalid' }, 400);
+    return c.json(await setCalendarFeed(c.get('db'), c.get('actorId'), body.on));
+  });
+
   // The eye on an earned badge: hides it from the actor's profile, or shows it again. 404 when
   // the actor has no such badge.
   app.post('/badges/:badgeId/hidden', async (c) => {
@@ -188,6 +206,19 @@ export function meRoutes(open: Open = openDb) {
       if (refused) return refused;
       throw error;
     }
+  });
+
+  // "Quando posso jogar": the actor's slots, and saving them (none clears it). Web checks
+  // `use_profile_availability` first.
+  app.get('/availability', async (c) =>
+    c.json(await availabilityOf(c.get('db'), c.get('actorId'))),
+  );
+
+  app.post('/availability', async (c) => {
+    const parsed = availabilitySchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success)
+      return c.json({ error: 'invalid', field: 'slots', message: 'invalid' }, 400);
+    return c.json(await setAvailability(c.get('db'), c.get('actorId'), parsed.data));
   });
 
   // Whether the actor is under a limit now: `{ ok: true }`, or the refusal with when it frees.

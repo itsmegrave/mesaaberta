@@ -140,6 +140,11 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       >`array(select coalesce(owner.username, ${NAMELESS}) from ${partnerOwners} join ${profiles} owner on owner.id = ${partnerOwners.profileId} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt})`.mapWith(
         textArray,
       ),
+      // Who to write to from the admin list ("Mandar mensagem"): the first account that looks after
+      // it, the submitter when it has no row yet.
+      contactId: sql<
+        string | null
+      >`coalesce((select ${partnerOwners.profileId} from ${partnerOwners} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt} limit 1), ${partners.submitterId})`,
       pendingInvites:
         sql<number>`(select count(*) from ${partnerInvitations} where ${partnerInvitations.partnerId} = ${partners.id} and ${partnerInvitations.status} = 'pending' and ${partnerInvitations.expiresAt} > now())`.mapWith(
           Number,

@@ -12,6 +12,7 @@
     path,
     systems = false,
     following = false,
+    availability = false,
   }: {
     /** The page's path, to mark its section. */
     path: string;
@@ -19,9 +20,11 @@
     systems?: boolean;
     /** Whether "Seguindo" is on for this person (`use_follows`). */
     following?: boolean;
+    /** Whether "Quando posso jogar" is on for this person (`use_profile_availability`). */
+    availability?: boolean;
   } = $props();
 
-  const sections = $derived(profileSections({ systems, following }));
+  const sections = $derived(profileSections({ systems, following, availability }));
   const current = $derived(
     sections.find((section) => section.path === path.replace(/\/$/, '')) ?? sections[0],
   );

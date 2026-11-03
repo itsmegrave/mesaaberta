@@ -111,6 +111,12 @@ export type DomainEvent =
       };
     }
   | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
+  // Quem mestra changed one session of a campaign or adventure that is not its next one (a change
+  // to the next one is a `TableUpdated` of `startsAt`): added it, moved it (`from`, ISO) or
+  // cancelled it. `startsAt` (ISO) is the session's date, the new one for a move.
+  | { type: 'SessionScheduled'; payload: SessionFact }
+  | { type: 'SessionMoved'; payload: SessionFact & { from: string } }
+  | { type: 'SessionCancelled'; payload: SessionFact }
   // A player asked for a seat at a table that approves each one. Takes no seat.
   // `fromWaitlist`: no one asked just now; a seat freed up and the first in the table's lista de espera
   // moved up (the actor is that player). They are told too.
@@ -244,6 +250,11 @@ export type DomainEvent =
   | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
   // "Estou procurando mesa" turned on (or on again) or off, in Procuro mesa. The note is not kept.
   | { type: 'PlayerLookingChanged'; payload: { profileId: string; looking: boolean } }
+  // The calendar feed got a new secret (`on`; the old address stops working) or was turned off.
+  // The secret itself is never in the log.
+  | { type: 'CalendarFeedChanged'; payload: { profileId: string; on: boolean } }
+  // "Quando posso jogar" saved on the profile: how many slots it now has (0: cleared).
+  | { type: 'AvailabilityChanged'; payload: { profileId: string; slots: number } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
   | { type: 'EventForced'; payload: { eventId: string; eventType: string } }
@@ -391,4 +402,13 @@ export type PlayerInvitationFact = {
   gmId: string;
   playerId: string;
   invitationId: string;
+};
+
+/** One session of a table, in the session events. */
+export type SessionFact = {
+  tableId: string;
+  slug: string;
+  title: string;
+  sessionId: string;
+  startsAt: string;
 };

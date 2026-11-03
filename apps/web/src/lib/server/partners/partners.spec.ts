@@ -246,6 +246,8 @@ describe('the contact email', () => {
     expect(JSON.stringify(card)).not.toContain('privado.example');
     const list = await listAdminPartners(test.db, admin, new URLSearchParams('status=all'));
     expect(list!.rows[0].contactEmail).toBe('dono@privado.example');
+    // "Mandar mensagem" writes to the account that looks after it.
+    expect(list!.rows[0].contactId).toBe(ana.id);
   });
 
   it('is optional', async () => {

@@ -4,16 +4,27 @@ import { directoryNav } from './directory-nav';
 const off = { systems: false, gms: false, places: false };
 
 describe('directoryNav', () => {
-  it('lists only the directories whose flag is on, in the menus order', () => {
-    expect(directoryNav(off)).toEqual([]);
-    expect(directoryNav({ ...off, systems: true }).map((link) => link.href)).toEqual(['/systems']);
+  it('lists the directories whose flag is on, in the menus order, then Financiamentos', () => {
+    expect(directoryNav(off).map((link) => link.href)).toEqual(['/crowdfunding']);
+    expect(directoryNav({ ...off, systems: true }).map((link) => link.href)).toEqual([
+      '/systems',
+      '/crowdfunding',
+    ]);
     expect(directoryNav({ ...off, systems: true, gms: true }).map((link) => link.href)).toEqual([
       '/systems',
       '/gamemasters',
+      '/crowdfunding',
     ]);
     expect(
       directoryNav({ systems: true, gms: true, places: true }).map((link) => link.href),
-    ).toEqual(['/systems', '/places', '/gamemasters']);
+    ).toEqual(['/systems', '/places', '/gamemasters', '/crowdfunding']);
+  });
+
+  it('marks Financiamentos current on its list and its pages', () => {
+    const crowdfunding = directoryNav(off).at(-1)!;
+    expect(crowdfunding.current('/crowdfunding')).toBe(true);
+    expect(crowdfunding.current('/crowdfunding/new')).toBe(true);
+    expect(crowdfunding.current('/crowdfundings')).toBe(false);
   });
 
   it('marks Sistemas current on its list and on a system page, not on a longer name', () => {
