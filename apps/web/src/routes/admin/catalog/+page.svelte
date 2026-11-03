@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import CatalogDialog from '../components/CatalogDialog.svelte';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import ListCard from '#lib/components/admin/ui/ListCard.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
@@ -80,6 +81,11 @@
 
 <AdminPage title={m.admin_catalog_title()} lede={m.admin_catalog_lede()}>
   {#snippet actions()}
+    {#if data.kind === 'system'}
+      <a href="/admin/catalog/logos" class="{buttonClass('secondary', 'sm')} font-semibold"
+        >{m.admin_logos_tab()}</a
+      >
+    {/if}
     <!-- A different catalog needs new defaults; refetches within the same kind preserve drafts. -->
     {#key data.kind}
       <CatalogDialog
@@ -110,12 +116,6 @@
           >
         </li>
       {/each}
-      <li class="ml-auto">
-        <a
-          href="/admin/catalog/logos"
-          class="{tab} border-transparent text-muted hover:text-inherit">{m.admin_logos_tab()}</a
-        >
-      </li>
     </ul>
   </nav>
 
