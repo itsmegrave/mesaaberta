@@ -21,7 +21,7 @@ refusals come back as the form's codes:
 still validates the form, stores the image and resolves the CEP, and sends the result). The inbox (`POST /v1/inbox/:action` with
 `send`, `mute`, `open`, `read` and `readAll`). What a member submits
 (`POST /v1/submissions/partners`, `/partners/:id` and `/crowdfundings`; web
-still validates the form and stores the picture). The admin's hand actions on an installed extension (`POST /v1/admin/:extension/:action`, from its
+still validates the form and stores the picture). The game systems' logos (`GET /v1/admin/system-logos?status=&page=` the review list, `GET /v1/admin/system-logos/to-search` the next systems the search has not looked at, and `POST /v1/admin/system-logos/:action` with `record`, `approve`, `approveSure`, `reject` and `forget`; web runs the finder and stores the pictures, and a write that frees a file answers its path for web to delete). The admin's hand actions on an installed extension (`POST /v1/admin/:extension/:action`, from its
 `adminActions`, behind the flag `api_admin_<extension>` that the extension declares; none is installed in this repository, and the private Instagram connector's `queue` and `reconcile` use `api_admin_instagram`). The admin
 announcements console (`POST /v1/admin/announcements`: count the audience, then send) and the direct conversation with someone (`POST /v1/inbox/direct`). Reporting a table, a partner or a campaign and withdrawing
 one's own partner (`POST /v1/reports/:action` with `table`, `partner`, `crowdfunding` and

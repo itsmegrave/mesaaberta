@@ -1,6 +1,6 @@
 import { cardPictures } from './card-pictures';
 import { error, isHttpError, redirect } from '@sveltejs/kit';
-import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { readSystemPage } from '@mesaaberta/core/server/systems/directory';
 import { readFromApi, revivedDates } from '../api-read';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -29,8 +29,10 @@ export const read = async ({ locals, params }: RequestEvent) => {
   if ('redirectTo' in found) redirect(301, `/s/${found.redirectTo}`);
 
   const supabase = supabaseUrlOf(locals.env);
+  const { logoPath, ...system } = found.system;
   return {
     ...found,
+    system: { ...system, logoUrl: imageUrl(supabase, logoPath) },
     openTables: found.openTables.map(
       cardPictures(supabase, await contentRatingSymbolShown(locals, await locals.getProfile())),
     ),

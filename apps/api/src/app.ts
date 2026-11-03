@@ -10,6 +10,7 @@ import { adminReadRoutes } from './admin-reads';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
 import { catalogRoutes } from './catalog';
+import { systemLogoRoutes } from './system-logos';
 import { changelogRoutes } from './changelog';
 import { eventRoutes } from './events';
 import { extensionRoutes } from './extensions';
@@ -93,6 +94,8 @@ export function createApi() {
   app.route('/v1/admin/announcements', announcementRoutes());
   // That an admin entered a section of the admin area (the audit log).
   app.route('/v1/admin/entries', adminEntryRoutes());
+  // The game systems' logos: the finder's results and the admin's review.
+  app.route('/v1/admin/system-logos', systemLogoRoutes());
   // The admin's hand actions on an installed extension (Instagram: queue, reconcile, connect),
   // behind `api_admin_<extension>`. After the routes above, which have a path of their own.
   app.route('/v1/admin', extensionRoutes());

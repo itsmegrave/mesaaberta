@@ -110,6 +110,12 @@
           >
         </li>
       {/each}
+      <li class="ml-auto">
+        <a
+          href="/admin/catalog/logos"
+          class="{tab} border-transparent text-muted hover:text-inherit">{m.admin_logos_tab()}</a
+        >
+      </li>
     </ul>
   </nav>
 

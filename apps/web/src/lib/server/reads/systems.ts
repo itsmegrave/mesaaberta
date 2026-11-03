@@ -1,4 +1,4 @@
-import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import type { listSystemDirectory } from '@mesaaberta/core/server/systems/directory';
 import { readFromApi } from '../api-read';
 import { readSystemDirectoryFilters } from '@mesaaberta/core/systems/directory-filters';
@@ -20,8 +20,9 @@ export const read = async ({ locals, url }: RequestEvent) => {
     filters,
     total: list.total,
     pages: list.pages,
-    systems: list.systems.map(({ gms, ...system }) => ({
+    systems: list.systems.map(({ gms, logoPath, ...system }) => ({
       ...system,
+      logoUrl: imageUrl(supabase, logoPath),
       gms: gms.map((gm) => ({ username: gm.username, avatarUrl: pictureOf(supabase, gm) })),
     })),
   };

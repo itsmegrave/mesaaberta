@@ -39,6 +39,7 @@
     "i18n": "bun scripts/i18n.ts",
     "icons": "bun scripts/icons.ts",
     "crowdfunding:dry-run": "bun scripts/crowdfunding-import-dry-run.ts",
+    "logos:dry-run": "bun scripts/system-logos-dry-run.ts",
     "badges:backfill": "bun --env-file=.dev.vars scripts/badges-backfill.ts"
   },
   "devDependencies": {

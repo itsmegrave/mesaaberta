@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, profiles, systems } from '../db/schema';
+import { gameTables, profiles, systemLogos, systems } from '../db/schema';
 import { publicName } from '../db/public-name';
 import { activeGm, escapeLike, folded, openSql, published } from '../directories/sql';
 import { gmRatings, type GmRating } from '../ratings/service';
@@ -27,6 +27,9 @@ const statsOf = (db: AnyDb, now: Date) =>
     .where(published)
     .groupBy(gameTables.systemId)
     .as('stats');
+
+/** Joins a system's logo only when an admin approved it: a pending or rejected one never shows. */
+const approvedLogo = and(eq(systemLogos.systemId, systems.id), eq(systemLogos.status, 'approved'));
 
 export type SystemFacts = { openTables: number; totalTables: number; gmCount: number };
 export type DirectoryPerson = {
@@ -110,9 +113,11 @@ export async function listSystemDirectory(db: AnyDb, filters: SystemDirectoryFil
       openTables,
       totalTables,
       gmCount: sql<number>`coalesce(${stats.gmCount}, 0)`,
+      logoPath: systemLogos.path,
     })
     .from(systems)
     .leftJoin(stats, eq(stats.systemId, systems.id))
+    .leftJoin(systemLogos, approvedLogo)
     .where(where)
     .orderBy(...order)
     .limit(SYSTEM_DIRECTORY_PAGE_SIZE)
@@ -158,8 +163,11 @@ export async function readSystemPage(db: AnyDb, slug: string, now: Date) {
       slug: systems.slug,
       status: systems.status,
       mergedInto: systems.mergedInto,
+      logoPath: systemLogos.path,
+      logoSource: systemLogos.sourcePage,
     })
     .from(systems)
+    .leftJoin(systemLogos, approvedLogo)
     .where(eq(systems.slug, slug));
   if (!found) return null;
   if (found.status !== 'approved') {
@@ -229,7 +237,13 @@ export async function readSystemPage(db: AnyDb, slug: string, now: Date) {
     .slice(0, PAGE_GMS);
 
   return {
-    system: { id: found.id, name: found.name, slug: found.slug },
+    system: {
+      id: found.id,
+      name: found.name,
+      slug: found.slug,
+      logoPath: found.logoPath,
+      logoSource: found.logoSource,
+    },
     facts: (facts[0] ?? { openTables: 0, totalTables: 0, gmCount: 0 }) as SystemFacts,
     modalities: modalities.map((row) => row.modality).sort(),
     openTables: openTables.map(({ gmId, ...table }) => table),
