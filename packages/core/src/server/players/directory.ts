@@ -4,6 +4,7 @@ import { profileFavoriteSystems, profiles, systems } from '../db/schema';
 import { escapeLike, folded } from '../directories/sql';
 import { recordEvent } from '../events/outbox';
 import { foldText } from '../../systems/directory-filters';
+import { availabilityFilterMask } from '../../profile/availability';
 import {
   LOOKING_DAYS,
   PLAYERS_PAGE_SIZE,
@@ -29,6 +30,8 @@ export type PlayerCard = {
   /** Their favorite systems, only when they show them on their profile. */
   systems: { name: string; slug: string }[];
   moreSystems: number;
+  /** "Quando posso jogar", the stored integer (0: not said). Web drops it while its flag is off. */
+  availability: number;
 };
 
 export type PlayerDirectory = {
@@ -60,6 +63,7 @@ export async function listLookingPlayers(
   filters: PlayerFilters,
   now: Date,
 ): Promise<PlayerDirectory | null> {
+  const slots = availabilityFilterMask(filters.day, filters.period);
   const needle = filters.query ? `%${escapeLike(foldText(filters.query))}%` : null;
   const where = and(
     listed(now),
@@ -67,6 +71,7 @@ export async function listLookingPlayers(
       ? sql`(${folded(profiles.username)} like ${needle} or (${profiles.showName} and ${folded(profiles.name)} like ${needle}) or ${folded(profiles.lookingForTableNote)} like ${needle})`
       : undefined,
     filters.system ? favors(filters.system) : undefined,
+    slots === null ? undefined : sql`(${profiles.availability} & ${slots}) <> 0`,
   );
   const [{ total }] = await db.select({ total: count() }).from(profiles).where(where);
   const pages = Math.max(1, Math.ceil(total / PLAYERS_PAGE_SIZE));
@@ -83,6 +88,7 @@ export async function listLookingPlayers(
       note: profiles.lookingForTableNote,
       lookingSince: profiles.lookingForTableAt,
       showFavoriteSystems: profiles.showFavoriteSystems,
+      availability: profiles.availability,
       // A one-table select leaves column names bare, so the subquery names its own tables.
       played: sql<number>`(select count(*)::int from registrations r inner join game_tables t on t.id = r.table_id where r.player_id = profiles.id and r.status = 'confirmed' and t.status not in ('draft', 'disabled') and t.moderated_at is null and t.starts_at <= ${now.toISOString()}::timestamptz)`,
     })
@@ -113,6 +119,7 @@ export async function listLookingPlayers(
         played: row.played,
         systems: liked.slice(0, PLAYER_CARD_SYSTEMS),
         moreSystems: Math.max(0, liked.length - PLAYER_CARD_SYSTEMS),
+        availability: row.availability,
       };
     }),
   };

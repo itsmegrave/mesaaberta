@@ -1,5 +1,5 @@
 {
-  "id": "9e020778-932d-4260-8de8-20660d7a8210",
+  "id": "24947f18-b077-4155-9676-b55e41009342",
   "prevId": "3c75a942-950e-4365-b6e3-597d48563191",
   "version": "7",
   "dialect": "postgresql",
@@ -5815,6 +5815,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "availability": {
+          "name": "availability",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "role": {
           "name": "role",
           "type": "profile_role",
@@ -5933,6 +5940,10 @@
         "profiles_looking_note_length": {
           "name": "profiles_looking_note_length",
           "value": "char_length(\"profiles\".\"looking_for_table_note\") <= 200"
+        },
+        "profiles_availability_range": {
+          "name": "profiles_availability_range",
+          "value": "\"profiles\".\"availability\" between 0 and 2097151"
         }
       },
       "isRLSEnabled": true
@@ -6719,123 +6730,6 @@
       "compositePrimaryKeys": {
         "table_session_attendance_session_id_player_id_pk": {
           "name": "table_session_attendance_session_id_player_id_pk",
-          "columns": [
-            "session_id",
-            "player_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": true
-    },
-    "public.table_session_signups": {
-      "name": "table_session_signups",
-      "schema": "",
-      "columns": {
-        "session_id": {
-          "name": "session_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "table_id": {
-          "name": "table_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "player_id": {
-          "name": "player_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "session_signup_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "table_session_signups_table_player_idx": {
-          "name": "table_session_signups_table_player_idx",
-          "columns": [
-            {
-              "expression": "table_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "player_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "table_session_signups_session_id_table_sessions_id_fk": {
-          "name": "table_session_signups_session_id_table_sessions_id_fk",
-          "tableFrom": "table_session_signups",
-          "tableTo": "table_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "table_session_signups_player_id_profiles_id_fk": {
-          "name": "table_session_signups_player_id_profiles_id_fk",
-          "tableFrom": "table_session_signups",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "player_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "table_session_signups_table_id_player_id_registrations_table_id_player_id_fk": {
-          "name": "table_session_signups_table_id_player_id_registrations_table_id_player_id_fk",
-          "tableFrom": "table_session_signups",
-          "tableTo": "registrations",
-          "columnsFrom": [
-            "table_id",
-            "player_id"
-          ],
-          "columnsTo": [
-            "table_id",
-            "player_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "table_session_signups_session_id_player_id_pk": {
-          "name": "table_session_signups_session_id_player_id_pk",
           "columns": [
             "session_id",
             "player_id"
@@ -7815,14 +7709,6 @@
         "message",
         "person",
         "place"
-      ]
-    },
-    "public.session_signup_status": {
-      "name": "session_signup_status",
-      "schema": "public",
-      "values": [
-        "going",
-        "waiting"
       ]
     },
     "public.table_kind": {

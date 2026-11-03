@@ -572,8 +572,22 @@
     {
       "idx": 81,
       "version": "7",
-      "when": 1793721074162,
-      "tag": "0081_session_signups",
+      "when": 1793721438162,
+      "tag": "0081_profile_availability",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1793722526755,
+      "tag": "0082_calendar_feed",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1793724282971,
+      "tag": "0083_session_signups",
       "breakpoints": true
     }
   ]

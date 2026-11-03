@@ -1,0 +1,2 @@
+ALTER TABLE "profiles" ADD COLUMN "availability" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "profiles" ADD CONSTRAINT "profiles_availability_range" CHECK ("profiles"."availability" between 0 and 2097151);
