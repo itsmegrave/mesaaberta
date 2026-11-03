@@ -99,6 +99,32 @@ export interface WidgetSurface {
   page?(db: AnyDb, widgetId: string, flags: Flags): Promise<WidgetPayload | null>;
 }
 
+/** Something an extension draws on a person, by `kind` (the web app's `panels.ts` maps each kind to a component, its only reader of `data`). Plain JSON: it crosses the network. */
+export type Decoration = { kind: string; data: Record<string, unknown> };
+
+/**
+ * Where a decoration is drawn: around the person's avatar wherever it shows, or once on their
+ * public profile page.
+ */
+export type PersonDecorations = { avatar?: Decoration; profile?: Decoration };
+
+/**
+ * Decorations an extension puts on people, such as a frame around a supporter's avatar. Public:
+ * anyone may see them, signed in or not, so nothing private goes in `data`. The public code only
+ * asks and draws; who gets what is the extension's business, behind its own flags.
+ */
+export interface DecorationSurface {
+  /**
+   * The decorations of these people, by username (lowercase, as stored). A person with none is
+   * left out of the answer.
+   */
+  forPeople(
+    db: AnyDb,
+    usernames: readonly string[],
+    flags: Flags,
+  ): Promise<Readonly<Record<string, PersonDecorations>>>;
+}
+
 /**
  * A feature that plugs into Mesa Aberta from outside the public code: Instagram today, more later
  * (Trello #207, #208). An extension fills only the points it uses. The public code reads extensions
@@ -134,6 +160,8 @@ export interface Extension {
   asset?(db: AnyDb, key: string): Promise<PublicAsset | null>;
   /** Widgets shown over the app's pages, such as polls. */
   readonly widgets?: WidgetSurface;
+  /** Decorations on people: a frame around the avatar, a mark on the profile. */
+  readonly decorations?: DecorationSurface;
   /**
    * Badges of its own, such as a supporter badge (Trello #224). The badge handler checks one after
    * the public events its `triggers` name; for an event of its own, the extension's handler calls

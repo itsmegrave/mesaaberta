@@ -38,7 +38,7 @@
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
   import RosterBadge from './components/ui/RosterBadge.svelte';
-  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import PersonAvatar from '#lib/components/PersonAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { placeArea, placeKindLabels, placeMapHref } from '#lib/places/labels.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
@@ -197,7 +197,12 @@
       <!-- Quem mestra: the picture, the label over the handle, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
         <div class="flex min-w-0 items-center gap-4">
-          <MAAvatar src={data.gm?.avatarUrl ?? null} name={table.gmName} size={44} />
+          <PersonAvatar
+            username={data.gmUsername}
+            src={data.gm?.avatarUrl ?? null}
+            name={table.gmName}
+            size={44}
+          />
           <p class="min-w-0">
             <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
             {#if data.gmUsername}

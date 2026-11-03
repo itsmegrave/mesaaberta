@@ -36,6 +36,7 @@ import { seoRoutes } from './seo';
 import { submissionRoutes } from './submissions';
 import { tableWriteRoutes } from './table-writes';
 import { widgetRoutes } from './widgets';
+import { decorationRoutes } from './decorations';
 
 /**
  * The api app of Trello #120: the one place writes, policies and the outbox will live once routes
@@ -122,6 +123,8 @@ export function createApi() {
   app.route('/v1/location', locationRoutes());
   // The installed extensions' widgets and public assets.
   app.route('/v1/widgets', widgetRoutes());
+  // What the installed extensions draw on people (avatar frames, profile marks).
+  app.route('/v1/decorations', decorationRoutes());
   // Seguir: the button, "Seguindo" and its bell switches.
   app.route('/v1/follows', followRoutes());
   // Procuro mesa: the people looking for a table and the actor's own switch.

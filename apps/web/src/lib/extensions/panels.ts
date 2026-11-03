@@ -1,5 +1,6 @@
 import type { Component } from 'svelte';
 import type { BadgePresentation } from './badge-types.js';
+import type { DecorationComponent } from './decoration-types.js';
 import type { WidgetComponent } from './widget-types.js';
 
 /**
@@ -36,3 +37,12 @@ export const footerNotes: readonly FooterNote[] = [];
  * `BADGE_PRESENTATION`. A badge missing here is not shown. None in the public build.
  */
 export const badges: Readonly<Record<string, BadgePresentation>> = {};
+
+/**
+ * The component of each decoration kind (`Decoration.kind`): a frame drawn around an avatar, a mark
+ * on a profile. Loaded when one is shown. The public build has none, so no page asks for
+ * decorations.
+ */
+export const decorations: Readonly<
+  Record<string, () => Promise<{ default: DecorationComponent }>>
+> = {};
