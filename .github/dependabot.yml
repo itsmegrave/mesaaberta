@@ -13,11 +13,3 @@ updates:
       # We run TS 6 for them and TS 7 side by side as @typescript/native.
       - dependency-name: typescript
         update-types: [version-update:semver-major]
-
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    groups:
-      actions:
-        patterns: ['*']

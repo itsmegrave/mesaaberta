@@ -54,7 +54,7 @@ The system is live at mesaaberta.app. The split into web / api / worker and the 
 
 - Bun workspaces (`apps/*`, `packages/*`). The pinned Bun is 1.4.2; an older local Bun writes a different lockfile, so use `bunx bun@1.4.2 install` to change `bun.lock` and `--frozen-lockfile` to validate it.
 - Check with `bunx bun@1.4.2 run --bun svelte-check --tsgo --tsconfig ./tsconfig.json`, run unit tests with `bun run --bun vitest run --project server <path>`, and bundle a Worker with `wrangler deploy --dry-run`.
-- Playwright e2e runs in CI only. The onboarding "without a single CSP violation" test is known to be flaky (the combobox positioner's inline style vs `style-src-attr`); rerun the failed shard and read its log before assuming a regression.
+- Playwright e2e runs in CI only (CircleCI, `.circleci/config.yml`; GitHub Actions is gone). The onboarding "without a single CSP violation" test is known to be flaky (the combobox positioner's inline style vs `style-src-attr`); rerun the workflow from failed and read the shard's log before assuming a regression.
 - Tests and CI never touch Cloudflare; they use Docker or simulated bindings.
 
 ### Workflow

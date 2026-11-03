@@ -23,7 +23,7 @@ const outputs = [
 const configs = [
   'wrangler.jsonc',
   ...readdirSync('apps').map((app) => join('apps', app, 'wrangler.jsonc')),
-  ...readdirSync('.github/workflows').map((file) => join('.github/workflows', file)),
+  '.circleci/config.yml',
   'docker-compose.yml',
 ];
 

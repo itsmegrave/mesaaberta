@@ -1,0 +1,484 @@
+version: 2.1
+
+# All of this repository's CI, the release tags and the self-host images. CircleCI reports each job to
+# GitHub as a `ci/circleci: <job>` status, which branch protection requires (CONTRIBUTING.md, "CI").
+# The GitHub Actions workflows were removed on 2026-11-03; CodeQL and dependency review only exist
+# there and were dropped with them.
+#
+# Set up by hand in CircleCI:
+#   Project settings   "Auto-cancel redundant workflows" on (GitHub cancelled a superseded run).
+#   Trigger            a schedule on main, Mondays 09:00 UTC, so new advisories surface even when
+#                      nothing is merged. A scheduled pipeline runs every check and releases nothing.
+#   Contexts           mesaaberta-release  GITHUB_TOKEN: fine-grained, Contents read and write on
+#                                          itsmegrave/mesaaberta; restricted to
+#                                          `pipeline.git.branch == "main"`
+#                      mesaaberta-ghcr     GHCR_USER and GHCR_TOKEN (classic, write:packages);
+#                                          restricted to `pipeline.git.tag starts-with "v"`
+
+parameters:
+  # Trigger Pipeline > release = true on main releases what main has now (the first time, or after a
+  # merge whose release failed). It does nothing if main's commit is already tagged.
+  release:
+    type: boolean
+    default: false
+
+executors:
+  node:
+    docker:
+      - image: cimg/node:26.8.2 # .nvmrc
+    resource_class: medium
+  # Docker itself (Supabase for the e2e suite, the compose stack, image builds).
+  vm:
+    machine:
+      image: ubuntu-2404:current
+    resource_class: medium
+
+commands:
+  setup-bun:
+    steps:
+      - run:
+          name: Install Bun (.bun-version)
+          command: |
+            curl -fsSL https://bun.sh/install | bash -s "bun-v$(cat .bun-version)"
+            echo 'export PATH="$HOME/.bun/bin:$PATH"' >> "$BASH_ENV"
+
+  # The machine image has its own Node; the version in .nvmrc is what the app is built and tested on.
+  setup-node:
+    steps:
+      - run:
+          name: Install Node (.nvmrc)
+          command: |
+            version="$(cat .nvmrc)"
+            mkdir -p "$HOME/node"
+            curl -fsSL "https://nodejs.org/dist/v$version/node-v$version-linux-x64.tar.xz" | tar -xJ -C "$HOME/node" --strip-components 1
+            echo 'export PATH="$HOME/node/bin:$PATH"' >> "$BASH_ENV"
+
+  install:
+    steps:
+      - restore_cache:
+          keys:
+            - bun-v1-{{ arch }}-{{ checksum "bun.lock" }}
+      - run: bun install --frozen-lockfile
+      - save_cache:
+          key: bun-v1-{{ arch }}-{{ checksum "bun.lock" }}
+          paths:
+            - ~/.bun/install/cache
+
+  # A change that only touches documentation (root Markdown, docs/, LICENSE) ends the job here as
+  # passed: the build and tests cost minutes and Docker for nothing. `deps` ends it unless a manifest
+  # or the lockfile changed. A scheduled run, main without a usable base, and any branch whose
+  # merge-base cannot be found run everything.
+  changes:
+    parameters:
+      needs:
+        type: enum
+        enum: [code, deps]
+        default: code
+    steps:
+      - run:
+          name: Decide whether this change needs the job
+          command: |
+            if [ "<< pipeline.trigger_source >>" = scheduled_pipeline ]; then echo 'Scheduled run: everything runs.'; exit 0; fi
+            if [ "$CIRCLE_BRANCH" = main ]; then
+              base="<< pipeline.git.base_revision >>"
+            else
+              git fetch --quiet origin main
+              base="$(git merge-base origin/main HEAD || true)"
+            fi
+            if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              echo 'No usable base to compare: everything runs.'; exit 0
+            fi
+            # NUL-separated and without rename detection: a code file renamed into docs/ must still
+            # show up as a deletion of its old path, and unusual file names must not be re-parsed.
+            code=false
+            deps=false
+            while IFS= read -r -d '' file; do
+              printf 'changed: %q\n' "$file"
+              case "$file" in
+                package.json | bun.lock | */package.json) deps=true; code=true ;;
+                docs/*.md | LICENSE) ;;
+                */*) code=true ;;
+                *.md) ;;
+                *) code=true ;;
+              esac
+            done < <(git diff --no-renames --name-only -z "$base" HEAD)
+            if [ "$<< parameters.needs >>" = true ]; then exit 0; fi
+            echo 'Nothing this job checks changed.'
+            circleci-agent step halt
+
+jobs:
+  lint:
+    executor: node
+    steps:
+      - checkout
+      - setup-bun
+      - install
+      - run: bun run lint
+
+  typecheck:
+    executor: node
+    steps:
+      - checkout
+      - changes
+      - setup-bun
+      - install
+      - run: bun run check
+
+  unit:
+    executor: node
+    steps:
+      - checkout
+      - changes
+      - setup-bun
+      - install
+      - run: bun run playwright install --with-deps chromium
+      - run: bun run test:unit
+
+  # A real Postgres for the integration tests: the capacity rules must hold under real concurrency.
+  integration:
+    docker:
+      - image: cimg/node:26.8.2 # .nvmrc
+      - image: postgres:17-alpine
+        environment:
+          POSTGRES_USER: mesaaberta
+          POSTGRES_PASSWORD: mesaaberta
+          POSTGRES_DB: mesaaberta
+    resource_class: medium
+    steps:
+      - checkout
+      - changes
+      - setup-bun
+      - install
+      - run:
+          name: Wait for Postgres
+          command: |
+            for i in $(seq 1 30); do
+              (exec 3<>/dev/tcp/localhost/5432) 2>/dev/null && exit 0
+              sleep 1
+            done
+            echo 'Postgres did not start.' >&2; exit 1
+      - run:
+          name: Integration tests against Postgres
+          command: |
+            echo 'DATABASE_URL=postgres://mesaaberta:mesaaberta@localhost:5432/mesaaberta' > .dev.vars
+            bun run db:migrate
+            bun run test:integration
+
+  build:
+    executor: node
+    steps:
+      - checkout
+      - changes
+      - setup-bun
+      - install
+      - run: bun run build
+      # The dev login (/dev/login) exists only under `vite dev`: fail if it reached this build.
+      - run: bun scripts/check-no-dev-login.ts
+      - run: bun run wrangler deploy --dry-run
+
+  # Four shards, one per parallel container.
+  e2e:
+    executor: vm
+    parallelism: 4
+    steps:
+      - checkout
+      - changes
+      - setup-node
+      - setup-bun
+      - install
+      - run: bun run playwright install --with-deps chromium
+      # The same Supabase as production (Postgres, Auth, Storage) in Docker, with a mail inbox: the
+      # tests sign up, confirm by email and reset passwords for real. It also runs the migrations.
+      - run: bun run e2e:up
+      - run: bun run test:e2e --shard=$((CIRCLE_NODE_INDEX + 1))/$CIRCLE_NODE_TOTAL
+      # The page snapshot of each failed test, in the log: the report artifact is not always at hand.
+      - run:
+          name: Print the failure context
+          when: on_fail
+          command: find apps/web/test-results -name error-context.md -print -exec cat {} \; || true
+      - run:
+          name: Stop Supabase
+          when: always
+          command: bun run supabase stop || true
+      - store_artifacts:
+          path: apps/web/playwright-report
+          destination: playwright-report
+
+  # The self-host path: build the three images and bring the whole compose stack up, then check the
+  # site answers through Caddy's TLS, that the web app reached the database and the worker, and that
+  # sign-up works with the bundled Auth and Mailpit (Trello #271).
+  # Cloudflare is not involved; this is the Bun/Docker version people clone and run.
+  docker:
+    executor: vm
+    environment:
+      HEALTHZ_TOKEN: ci-only
+    steps:
+      - checkout
+      - changes
+      - run: docker compose up --build --wait --wait-timeout 300
+      - run:
+          name: Smoke test through the TLS proxy
+          command: |
+            set -e
+            # -k: Caddy's local CA is not in the machine's trust store.
+            curl -fsSk https://localhost/ -o /dev/null
+            test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/healthz)" = 401
+            health=$(curl -fsSk -H 'authorization: Bearer ci-only' https://localhost/healthz)
+            echo "$health"
+            echo "$health" | grep -q '"database":"ok"'
+            curl -fsS http://localhost:8025/api/v1/info -o /dev/null
+            # Metrics are for the Docker network: the proxy refuses them, each service answers inside it.
+            test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/metrics)" = 404
+            for target in web:3000 api:8788 worker:9464; do
+              docker compose exec -T web bun -e "const r = await fetch('http://$target/metrics'); const t = await r.text(); if (!r.ok || !t.includes('# TYPE mesaaberta_')) process.exit(1)"
+            done
+            # Auth and Storage answer on the Docker network with the buckets in place; the proxy forwards
+            # only the e-mail links and the public images.
+            docker compose exec -T web bun -e "const r = await fetch(process.env.SUPABASE_URL + '/auth/v1/health'); if (!r.ok) process.exit(1)"
+            docker compose exec -T web bun -e "const r = await fetch(process.env.SUPABASE_URL + '/storage/v1/bucket', { headers: { authorization: 'Bearer ' + process.env.SUPABASE_SECRET_KEY } }); const ids = (await r.json()).map((b) => b.id); if (!ids.includes('table-images') || !ids.includes('profile-avatars')) process.exit(1)"
+            test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/auth/v1/admin/users)" = 404
+            test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/storage/v1/bucket)" = 404
+            # Signing up sends the confirmation e-mail to Mailpit.
+            email="smoke-$(date +%s)@example.test"
+            docker compose exec -T -e EMAIL="$email" web bun -e "const r = await fetch(process.env.SUPABASE_URL + '/auth/v1/signup', { method: 'POST', headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY, 'content-type': 'application/json' }, body: JSON.stringify({ email: process.env.EMAIL, password: 'smoke-password' }) }); if (!r.ok) process.exit(1)"
+            for i in $(seq 1 20); do
+              curl -fsS "http://localhost:8025/api/v1/search?query=to:$email" | grep -q '"total":[1-9]' && break
+              test "$i" -lt 20; sleep 1
+            done
+            # LOCAL_ONLY: a setting that reaches outside keeps the service from starting.
+            if docker compose run --rm --no-deps -e RESEND_API_KEY=re_smoke api; then exit 1; fi
+      - run:
+          name: Compose logs
+          when: on_fail
+          command: docker compose logs --no-color --tail 200
+      - run:
+          name: Stop the stack
+          when: always
+          command: docker compose down -v
+
+  audit:
+    executor: node
+    steps:
+      - checkout
+      - changes:
+          needs: deps
+      - setup-bun
+      - install
+      # Low-severity advisories in SvelteKit's own dependencies are upstream's to fix.
+      - run: bun audit --audit-level high
+
+  # Gitleaks over the commits this change adds (the whole history when there is no usable base).
+  secrets:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Install gitleaks
+          command: |
+            version=8.28.0
+            mkdir -p "$HOME/bin"
+            curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v$version/gitleaks_${version}_linux_x64.tar.gz" | tar -xz -C "$HOME/bin" gitleaks
+      - run:
+          name: Secret scan
+          command: |
+            if [ "$CIRCLE_BRANCH" = main ]; then
+              base="<< pipeline.git.base_revision >>"
+            else
+              git fetch --quiet origin main
+              base="$(git merge-base origin/main HEAD || true)"
+            fi
+            if [ "<< pipeline.trigger_source >>" != scheduled_pipeline ] && [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+              "$HOME/bin/gitleaks" git --redact --verbose --log-opts="$base..HEAD" .
+            else
+              "$HOME/bin/gitleaks" git --redact --verbose .
+            fi
+
+  # Every merge to main that changes app code becomes a release: the next semver version is picked,
+  # the tag is pushed and a GitHub release (with generated notes) is created. The tag starts its own
+  # pipeline, which publishes the images (`images` below). A chore (docs, CI, tests) releases nothing.
+  #
+  # Version, from the commits since the latest vX.Y.Z tag:
+  #   major  a subject like `feat!: ...` / `fix(api)!: ...` or a BREAKING CHANGE line
+  #   minor  a `feat` subject (the PR title of a squash merge)
+  #   patch  anything else
+  tag:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Tag and release
+          command: |
+            set -euo pipefail
+            # CircleCI's checkout rewrites https://github.com/ to SSH (the read-only deploy key); the
+            # push below goes over HTTPS with the release token instead.
+            export GIT_CONFIG_GLOBAL=/dev/null
+            git fetch --quiet --tags --force origin
+            sha="$CIRCLE_SHA1"
+
+            if [ "<< pipeline.parameters.release >>" != true ]; then
+              # Same filter as the images: only what ends up in them.
+              base="<< pipeline.git.base_revision >>"
+              if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+                if ! git diff --name-only "$base" "$sha" -- apps packages drizzle drizzle.config.ts package.json bun.lock bunfig.toml \
+                  ':(exclude,glob)**/*.spec.ts' ':(exclude)apps/web/e2e' | grep -q .; then
+                  echo 'No app code changed, nothing to release.'
+                  exit 0
+                fi
+              fi
+            fi
+            if [ -n "$(git tag --points-at "$sha" -l 'v*.*.*')" ]; then
+              echo 'This commit is already tagged, nothing to release.'
+              exit 0
+            fi
+            last="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)"
+            if [ -z "$last" ]; then echo 'No vX.Y.Z tag to count from.' >&2; exit 1; fi
+            IFS=. read -r major minor patch <<< "${last#v}"
+
+            subjects="$(git log --format=%s "$last..$sha")"
+            bodies="$(git log --format=%b "$last..$sha")"
+            if grep -Eq '^[^:]*!:' <<< "$subjects" || grep -q '^BREAKING CHANGE' <<< "$bodies"; then
+              bump=major; major=$((major + 1)); minor=0; patch=0
+            elif grep -Eqi '(^|[^a-z])feat(\([^)]*\))?:' <<< "$subjects"; then
+              bump=minor; minor=$((minor + 1)); patch=0
+            else
+              bump=patch; patch=$((patch + 1))
+            fi
+            tag="v$major.$minor.$patch"
+            echo "$last -> $tag ($bump)"
+
+            # The token goes in a one-off header, never in the remote URL or the config.
+            auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
+            git -c "http.extraHeader=Authorization: Basic $auth" \
+              push --quiet https://github.com/itsmegrave/mesaaberta.git "$sha:refs/tags/$tag"
+
+            api() { curl -fsS -H "authorization: Bearer $GITHUB_TOKEN" -H 'accept: application/vnd.github+json' "$@"; }
+            notes=$(jq -n --arg tag "$tag" --arg last "$last" '{tag_name: $tag, previous_tag_name: $last}' |
+              api -X POST https://api.github.com/repos/itsmegrave/mesaaberta/releases/generate-notes --data-binary @- | jq -r .body)
+            jq -n --arg tag "$tag" --arg body "$notes" '{tag_name: $tag, name: $tag, body: $body}' |
+              api -X POST https://api.github.com/repos/itsmegrave/mesaaberta/releases --data-binary @- -o /dev/null
+            echo "Released $tag."
+
+  # Publishes the self-host images to GitHub Container Registry for amd64 and arm64 (Oracle's free
+  # tier is arm64), for every vX.Y.Z tag: the ones `tag` pushes and any pushed by hand. Production on
+  # Cloudflare deploys from the private repo's pinned tag and does not use these images.
+  #
+  # One job per architecture builds the four images in turn: migrate is a stage of the web
+  # Dockerfile, and the api and worker images start from the same dependency layer, so the layers
+  # are reused instead of rebuilt.
+  images:
+    parameters:
+      arch:
+        type: enum
+        enum: [amd64, arm64]
+      resource:
+        type: string
+    machine:
+      image: ubuntu-2404:current
+    resource_class: << parameters.resource >>
+    steps:
+      - checkout
+      - run:
+          name: Log in to GHCR
+          command: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+      - run:
+          name: Build and push the << parameters.arch >> images
+          command: |
+            set -e
+            tag="sha-${CIRCLE_SHA1::7}"
+            build() { # image dockerfile [target]
+              ref="ghcr.io/itsmegrave/mesaaberta-$1:$tag-<< parameters.arch >>"
+              docker build -f "$2" ${3:+--target "$3"} -t "$ref" .
+              docker push "$ref"
+            }
+            build web apps/web/Dockerfile
+            # The migration runner is a stage of the web Dockerfile.
+            build migrate apps/web/Dockerfile migrate
+            build api apps/api/Dockerfile
+            build worker apps/worker/Dockerfile
+
+  # Tags on ghcr.io/itsmegrave/mesaaberta-<image> (web, api, worker, migrate):
+  #   every build            sha-<7 chars> (immutable, pin a deployment to it)
+  #   a release              vX.Y.Z, X.Y.Z and latest (latest is only ever a release)
+  #   the newest release     also main (moves), when its commit is on main
+  manifest:
+    executor: vm
+    steps:
+      - checkout
+      - run:
+          name: Join the architectures
+          command: |
+            set -e
+            export GIT_CONFIG_GLOBAL=/dev/null
+            git fetch --quiet --tags --force https://github.com/itsmegrave/mesaaberta.git main
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            sha="sha-${CIRCLE_SHA1::7}"
+            release="$CIRCLE_TAG"
+            newest="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)"
+            moving=""
+            if [ "$release" = "$newest" ] && git merge-base --is-ancestor "$CIRCLE_SHA1" FETCH_HEAD; then moving=main; fi
+            for image in web api worker migrate; do
+              base="ghcr.io/itsmegrave/mesaaberta-$image"
+              # v0.24.0 -> v0.24.0, 0.24.0 and latest
+              tags="-t $base:$sha -t $base:$release -t $base:${release#v} -t $base:latest"
+              if [ -n "$moving" ]; then tags="$tags -t $base:$moving"; fi
+              docker buildx imagetools create $tags "$base:$sha-amd64" "$base:$sha-arm64"
+            done
+
+workflows:
+  ci:
+    when:
+      not: << pipeline.parameters.release >>
+    jobs:
+      - lint
+      - typecheck
+      - unit
+      - integration
+      - build
+      - e2e
+      - docker
+      - audit
+      - secrets
+
+  # One release at a time, in the order of the merges, so versions never collide.
+  release:
+    when:
+      and:
+        - equal: [main, << pipeline.git.branch >>]
+        - not:
+            equal: [scheduled_pipeline, << pipeline.trigger_source >>]
+    jobs:
+      - tag:
+          context: mesaaberta-release
+          serial-group: << pipeline.project.slug >>/release
+
+  # A vX.Y.Z tag (pushed by `tag` or by hand) publishes its images.
+  images:
+    jobs:
+      - images:
+          name: images-amd64
+          arch: amd64
+          resource: medium
+          context: mesaaberta-ghcr
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - images:
+          name: images-arm64
+          arch: arm64
+          resource: arm.medium
+          context: mesaaberta-ghcr
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - manifest:
+          context: mesaaberta-ghcr
+          requires: [images-amd64, images-arm64]
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/

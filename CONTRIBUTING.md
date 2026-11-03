@@ -13,6 +13,10 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 See the [README](README.md) for setup and scripts.
 
+## CI
+
+CI runs on CircleCI (`.circleci/config.yml`), which reports each job to the pull request as a `ci/circleci: <job>` check: `lint`, `typecheck`, `unit`, `integration`, `build`, `e2e` (four parallel shards), `docker`, `audit` and `secrets`. A change that only touches documentation passes the heavy jobs without running them, and `audit` runs only when a manifest or `bun.lock` changed. Every merge to `main` that changes app code is tagged and released by the `tag` job; the tag's own pipeline publishes the self-host images to GHCR.
+
 ## Changelog
 
 User-facing releases are recorded in `apps/web/src/content/changelog.json` and published at `/changelog` (linked under Suporte in the footer). Add changes to the release day, newest first, with a short title and one plain sentence about what changed for the person using the app. Use pt-BR, sentence case and gender-neutral roles (quem mestra, quem joga). Categories are `new`, `improved` and `fixed`; optional links point to the relevant page or instructions. Internal changes, dependency updates and admin-only work stay in GitHub.
