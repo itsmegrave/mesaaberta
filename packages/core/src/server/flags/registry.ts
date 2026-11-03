@@ -137,6 +137,14 @@ export const flagDefaults = {
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.
   use_mcp: false,
+  // Admin conversations, a new feature (created on for everyone): "Mandar mensagem" on every admin
+  // review queue (partners, places, claims, partner links, crowdfunding, catalog suggestions), the
+  // tables and the people list opens an "[Admin] @username" conversation with the owner of the row
+  // or the person, apart from their everyday direct one; it reaches people with direct messages off
+  // and they can always answer. Admins only; this is the kill switch. Off: the rows don't offer it
+  // and a person's admin page opens the everyday direct conversation, as before. Targeted by the
+  // admin's id.
+  use_admin_messages: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

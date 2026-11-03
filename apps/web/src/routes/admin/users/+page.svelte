@@ -8,6 +8,7 @@
   import Media from '#lib/components/admin/ui/Media.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import UserLink from '#lib/components/ui/UserLink.svelte';
@@ -45,6 +46,7 @@
   function copyId(id: string) {
     return copyText(id, m.toast_id_copied());
   }
+  const messages = personMessages();
   const menuOf = (row: Profile): KebabItem[] => [
     { id: 'details', label: m.admin_menu_details(), icon: 'eye', href: detailsHref(row.id) },
     ...(row.username
@@ -57,6 +59,7 @@
           },
         ]
       : []),
+    ...messages.item(row.id),
     { id: 'copy', label: m.admin_menu_copy_id(), icon: 'copy', onselect: () => copyId(row.id) },
   ];
   const options = $derived([

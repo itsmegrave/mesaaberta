@@ -120,6 +120,9 @@ export async function listAdminPlaces(db: AnyDb, actor: Actor | null, params: UR
       removalReason: places.removalReason,
       owned: sql<boolean>`${places.ownerId} is not null`,
       submitter: publicName(profiles.username),
+      // Who to write to from the admin list ("Mandar mensagem"): the place's owner once it has
+      // one, otherwise whoever sent it.
+      contactId: sql<string | null>`coalesce(${places.ownerId}, ${places.submitterId})`,
       reports:
         sql<number>`(select count(*) from ${reports} where ${reports.targetType} = 'place' and ${reports.targetId} = ${places.id} and ${inArray(reports.status, [...OPEN_REPORT_STATUSES])})`.mapWith(
           Number,
