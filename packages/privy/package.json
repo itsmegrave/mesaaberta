@@ -5,6 +5,7 @@
   "type": "module",
   "peerDependencies": {
     "@cf-wasm/resvg": "*",
+    "@jsquash/webp": "*",
     "@mesaaberta/core": "*",
     "drizzle-orm": "*",
     "jpeg-js": "*",

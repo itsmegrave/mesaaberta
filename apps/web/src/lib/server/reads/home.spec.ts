@@ -82,6 +82,8 @@ beforeAll(async () => {
     tableId: id('o5'),
     gmId: other,
     playerId: me,
+    // Stamped at the spec's clock: the default (the real now) passes this expiry after a day.
+    createdAt: now,
     expiresAt: at(1),
   });
   await test.db.insert(userBadges).values({
