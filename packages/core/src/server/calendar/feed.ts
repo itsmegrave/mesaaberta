@@ -2,7 +2,7 @@ import { and, eq, gt, inArray, or } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/schema';
 import type { CalendarTable } from '@mesaaberta/core/server/calendar/ics';
-import { withSessions } from '@mesaaberta/core/server/calendar/sessions';
+import { calendarFor, withSessions } from '@mesaaberta/core/server/calendar/sessions';
 import { bytesToBase64 } from '../base64';
 import { recordEvent } from '../events/outbox';
 
@@ -43,6 +43,7 @@ export async function listCalendarTables(
       recurrence: gameTables.recurrence,
       until: gameTables.until,
       icalSequence: gameTables.icalSequence,
+      gmId: gameTables.gmId,
     })
     .from(gameTables)
     .where(
@@ -54,7 +55,13 @@ export async function listCalendarTables(
         or(eq(gameTables.gmId, profileId), inArray(gameTables.id, seated)),
       ),
     );
-  return withSessions(db, tables);
+  // A player of a campanha aberta that signs up per session gets only the sessions they play.
+  return (await withSessions(db, tables)).flatMap((table) => {
+    const mine = calendarFor(table, profileId, table.gmId);
+    if (!mine) return [];
+    const { gmId: _gmId, signups: _signups, ...calendar } = mine;
+    return [{ ...calendar, sessions: calendar.sessions.map(({ going: _going, ...s }) => s) }];
+  });
 }
 
 const newToken = () => {

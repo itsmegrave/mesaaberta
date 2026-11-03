@@ -1,5 +1,5 @@
 // Relative imports only: the api Worker bundles this file next to the delivery graph.
-import { and, asc, count, eq, gt, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, gt, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import {
   gameTables,
@@ -87,7 +87,18 @@ const fact = (table: Table, session: Session) => ({
   startsAt: session.startsAt.toISOString(),
 });
 
-const signedUp = (
+/**
+ * Who plays a session changed, so the players' calendars did (each has only the sessions they play):
+ * the invite's sequence goes up and a calendar app takes the new copy over the one it has.
+ */
+async function playersChanged(tx: AnyDb, tableId: string) {
+  await tx
+    .update(gameTables)
+    .set({ icalSequence: sql`${gameTables.icalSequence} + 1` })
+    .where(eq(gameTables.id, tableId));
+}
+
+async function signedUp(
   tx: AnyDb,
   actorId: string | null,
   table: Table,
@@ -95,12 +106,14 @@ const signedUp = (
   playerId: string,
   waiting: boolean,
   by: 'player' | 'gm' | 'waitlist',
-) =>
-  recordEvent(tx, {
+) {
+  if (!waiting) await playersChanged(tx, table.id);
+  return recordEvent(tx, {
     type: 'SessionSignedUp',
     actorId,
     payload: { ...fact(table, session), playerId, waiting, by },
   });
+}
 
 /** While the session has room, the first who wait take the places. Answers their events. */
 async function promote(
@@ -162,7 +175,10 @@ async function takeOff(
         }),
       ]
     : [];
-  if (status === 'going') eventIds.push(...(await promote(tx, actorId, table, session)));
+  if (status === 'going') {
+    await playersChanged(tx, table.id);
+    eventIds.push(...(await promote(tx, actorId, table, session)));
+  }
   return eventIds;
 }
 

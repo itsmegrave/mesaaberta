@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { and, asc, eq } from 'drizzle-orm';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import {
   events,
   gameTables,
@@ -24,6 +24,11 @@ import { syncTableSessions } from '@mesaaberta/core/server/tables/sessions';
 import { leaveTable, removePlayer } from '@mesaaberta/core/server/registrations/service';
 import { notificationHandler } from '@mesaaberta/core/server/events/notifications';
 import type { StoredEvent } from '@mesaaberta/core/server/events/types';
+import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
+import { readTableCalendar } from '@mesaaberta/core/server/calendar/table';
+import { sendSessionReminders } from '@mesaaberta/core/server/notifications/reminders';
+import { createInviteHandler } from '@mesaaberta/core/server/events/invites';
+import type { SupabaseAdmin } from '@mesaaberta/core/server/auth/admin-client';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-0000000053${String(n).padStart(2, '0')}`;
@@ -257,5 +262,127 @@ describe('a campanha aberta’s places per session', () => {
     const { table, session } = await openCampaign({ kind: 'campaign', sessionSize: null });
     const seats = await sessionSeatsOf(test.db, table, [session], { gm: true, playerId: null });
     expect(seats.size).toBe(0);
+  });
+});
+
+describe('a campanha aberta in each player’s calendar', () => {
+  it('has only the sessions a player plays, once anyone signs up; quem mestra keeps the whole table', async () => {
+    const { table, session, later } = await openCampaign();
+    // Nobody signed up yet: everyone on the roster has the whole table, as before.
+    expect((await readTableCalendar(test.db, bia, table.slug))?.recurrence).toBe('FREQ=WEEKLY');
+
+    await signUpForSession(test.db, ana, table.slug, { sessionId: later }, now);
+
+    const mine = await readTableCalendar(test.db, ana, table.slug);
+    expect(mine).toMatchObject({ recurrence: null, until: null });
+    expect(mine?.sessions?.map((s) => s.startsAt)).toHaveLength(1);
+    expect(mine?.startsAt.getTime()).toBeGreaterThan(first.getTime());
+    expect(mine?.sessions?.[0]).not.toHaveProperty('going');
+    // Bia plays none of them: nothing goes in her calendar, and the button answers 404.
+    expect(await readTableCalendar(test.db, bia, table.slug)).toBeNull();
+    expect((await readTableCalendar(test.db, gm, table.slug))?.recurrence).toBe('FREQ=WEEKLY');
+
+    const feed = (who: Actor) =>
+      listCalendarTables(test.db, who.id, now).then((tables) =>
+        tables.filter((t) => t.id === table.id),
+      );
+    expect(await feed(ana)).toMatchObject([{ recurrence: null }]);
+    expect((await feed(ana))[0]).not.toHaveProperty('gmId');
+    expect(await feed(bia)).toEqual([]);
+    expect(await feed(gm)).toMatchObject([{ recurrence: 'FREQ=WEEKLY' }]);
+    void session;
+  });
+
+  it('puts a new calendar copy out (a higher sequence) when who plays changes, not when someone waits', async () => {
+    const { table, session } = await openCampaign();
+    const sequence = async () =>
+      (
+        await test.db
+          .select({ n: gameTables.icalSequence })
+          .from(gameTables)
+          .where(eq(gameTables.id, table.id))
+      )[0].n;
+    const start = await sequence();
+    await signUpForSession(test.db, ana, table.slug, { sessionId: session }, at(0));
+    await signUpForSession(test.db, bia, table.slug, { sessionId: session }, at(1));
+    expect(await sequence()).toBe(start + 2);
+    await signUpForSession(test.db, caio, table.slug, { sessionId: session }, at(2));
+    expect(await sequence()).toBe(start + 2);
+    // Ana leaves and Caio moves up: two changes.
+    await leaveSession(test.db, ana, table.slug, { sessionId: session }, now);
+    expect(await sequence()).toBe(start + 4);
+  });
+
+  it('reminds only quem mestra and those who play the session', async () => {
+    const { table, session } = await openCampaign();
+    for (const [i, p] of [ana, bia, caio].entries())
+      await signUpForSession(test.db, p, table.slug, { sessionId: session }, at(i));
+
+    await sendSessionReminders(test.db, new Date(first.getTime() - 2 * 3600 * 1000));
+
+    const reminded = (
+      await test.db
+        .select({ recipientId: notifications.recipientId, metadata: notifications.metadata })
+        .from(notifications)
+        .where(eq(notifications.type, 'session_reminder'))
+    )
+      .filter((row) => (row.metadata as { tableId: string }).tableId === table.id)
+      .map((row) => row.recipientId)
+      .sort();
+    expect(reminded).toEqual([gm.id, ana.id, bia.id].sort());
+  });
+
+  it('mails the player the sessions they play, and cancels when they play none', async () => {
+    const { table, session } = await openCampaign();
+    const bodies: { to: string[]; subject: string; attachments?: { content: string }[] }[] = [];
+    const request = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response('{}', { status: 200 });
+    }) as unknown as typeof fetch;
+    const admin: SupabaseAdmin = {
+      auth: {
+        admin: {
+          getUserById: vi.fn(async () => ({
+            data: { user: { email: 'ana@example.com' } },
+            error: null,
+          })),
+          deleteUser: vi.fn(async () => ({ error: null })),
+        },
+      },
+    };
+    const handler = createInviteHandler(
+      {
+        RESEND_API_KEY: 're_test',
+        RESEND_FROM: 'Mesa Aberta <no-reply@mesaaberta.app>',
+        SUPABASE_URL: 'https://example.supabase.co',
+        SUPABASE_SECRET_KEY: 'sb_secret_test',
+        APP_ORIGIN: 'https://mesaaberta.app',
+        CALENDAR_UID_DOMAIN: 'mesaaberta.app',
+      },
+      request,
+      admin,
+    );
+    const latest = async () =>
+      (await test.db.select().from(events).orderBy(desc(events.createdAt)).limit(1))[0];
+    const ics = (n: number) => Buffer.from(bodies[n].attachments![0].content, 'base64').toString();
+
+    await signUpForSession(test.db, ana, table.slug, { sessionId: session }, now);
+    await handler.handle((await latest()) as unknown as StoredEvent, test.db);
+    expect(bodies[0].subject).toBe(`Você joga: ${table.title}`);
+    expect(ics(0)).toContain('METHOD:REQUEST');
+    expect(ics(0)).not.toContain('RRULE');
+
+    // Waiting for a session sends nothing.
+    await signUpForSession(test.db, bia, table.slug, { sessionId: session }, at(1));
+    await signUpForSession(test.db, caio, table.slug, { sessionId: session }, at(2));
+    await handler.handle((await latest()) as unknown as StoredEvent, test.db);
+    expect(bodies).toHaveLength(1);
+
+    await test.db.delete(events);
+    await leaveSession(test.db, ana, table.slug, { sessionId: session }, now);
+    const [left] = await test.db.select().from(events).where(eq(events.type, 'SessionSignupLeft'));
+    await handler.handle(left as unknown as StoredEvent, test.db);
+    expect(bodies[1].subject).toBe(`Fora da sessão: ${table.title}`);
+    expect(ics(1)).toContain('METHOD:CANCEL');
   });
 });
