@@ -85,4 +85,19 @@ describe('ChatHeader', () => {
     await expect.element(page.getByRole('menuitem', { name: 'Denunciar @bruno…' })).toBeVisible();
     expect(page.getByRole('menuitem', { name: /Bloquear/ }).elements()).toHaveLength(0);
   });
+
+  it('titles an admin conversation "[Admin] @username" and offers no block', async () => {
+    render(ChatHeader, {
+      conversation: { ...direct, admin: true },
+      onreport: () => {},
+      onblock: () => {},
+    });
+
+    await expect
+      .element(trail().getByText('[Admin] @bruno'))
+      .toHaveAttribute('aria-current', 'page');
+    await page.getByRole('button', { name: /Mais ações/ }).click();
+    await expect.element(page.getByRole('menuitem', { name: /Denunciar/ })).toBeVisible();
+    expect(page.getByRole('menuitem', { name: /Bloquear/ }).elements()).toHaveLength(0);
+  });
 });

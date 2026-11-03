@@ -20,6 +20,13 @@ export const load: LayoutServerLoad = async ({ locals }) => {
     adminConnections: panel ? `/admin/${panel.id}` : null,
     // The badges section, while badges are on (`use_badges` is its kill switch).
     adminBadges: await badgesEnabled(locals, profile),
+    // "Mandar mensagem" on the lists (`use_admin_messages`), and who is looking, so no row offers
+    // to write to oneself.
+    adminMessages: await locals.flags.isEnabled('use_admin_messages', {
+      id: profile.id,
+      isAdmin: true,
+    }),
+    adminId: profile.id,
     adminSections: extensions.flatMap(({ id, admin }) =>
       admin?.section ? [{ path: `/admin/${id}`, ...admin.section }] : [],
     ),

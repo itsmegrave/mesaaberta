@@ -5,6 +5,7 @@ import {
   countDistinct,
   desc,
   eq,
+  gte,
   inArray,
   isNotNull,
   isNull,
@@ -302,7 +303,7 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
             eq(reports.targetId, profileId),
             eq(reports.reason, 'no_show'),
             eq(reports.status, 'resolved'),
-            sql`${reports.createdAt} >= ${since}`,
+            gte(reports.createdAt, since),
           ),
         );
       const [removed] = await db
@@ -313,7 +314,7 @@ export function statsFor(db: AnyDb, profileId: string): BadgeStats {
             eq(events.type, 'PlayerLeft'),
             sql`${events.payload}->>'playerId' = ${profileId}`,
             sql`${events.payload}->>'reason' = 'removed'`,
-            sql`${events.createdAt} >= ${since}`,
+            gte(events.createdAt, since),
           ),
         );
       return noShow.total > 0 || removed.total > 0;

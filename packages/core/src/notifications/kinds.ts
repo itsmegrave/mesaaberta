@@ -68,6 +68,13 @@ export const NOTIFICATION_KINDS = {
   table_cancelled: { category: 'table', icon: 'cancel' },
   session_reminder: { category: 'table', icon: 'calendar' },
   session_confirmation: { category: 'table', icon: 'calendar' },
+  // Quem mestra added, moved or cancelled a later session of a campaign or adventure.
+  session_scheduled: { category: 'table', icon: 'calendar' },
+  session_moved: { category: 'table', icon: 'calendar' },
+  session_cancelled: { category: 'table', icon: 'cancel' },
+  session_signup_seated: { category: 'registration', icon: 'user-check' },
+  session_signup_added: { category: 'registration', icon: 'user-plus' },
+  session_signup_removed: { category: 'registration', icon: 'user-x' },
   player_invited: { category: 'registration', icon: 'user-plus' },
   invitation_accepted: { category: 'registration', icon: 'user-check' },
   invitation_declined: { category: 'registration', icon: 'user-x' },

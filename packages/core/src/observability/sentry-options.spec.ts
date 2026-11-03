@@ -37,6 +37,27 @@ describe('sentry options', () => {
     expect(privateEvent(event)).toMatchObject({ release: '0.97.0', dist: 'api' });
   });
 
+  it("names a Worker's bare bundle frames as the deploy uploads them", () => {
+    const frames = [
+      'entry.js',
+      'index.js',
+      'app:///_worker.js',
+      'node-internal:events',
+      'https://mesaaberta.app/_app/immutable/chunks/a.js?v=1',
+      'Coordinated Universal Time',
+    ].map((filename) => ({ filename, lineno: 1 }));
+    const event = { event_id: 'e1', exception: { values: [{ stacktrace: { frames } }] } };
+    const out = privateEvent(event as unknown as ErrorEvent);
+    expect(out?.exception?.values?.[0]?.stacktrace?.frames?.map((f) => f.filename)).toEqual([
+      'app:///entry.js',
+      'app:///index.js',
+      'app:///_worker.js',
+      'node-internal:events',
+      'https://mesaaberta.app/_app/immutable/chunks/a.js',
+      'Coordinated Universal Time',
+    ]);
+  });
+
   it('names the person by the opaque userId tag only', () => {
     const userId = '271761e6-d8aa-43ac-b3d5-4da3ca054af0';
     const event = {

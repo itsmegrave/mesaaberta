@@ -48,6 +48,35 @@ describe('TableCard', () => {
     ).toBe(link);
   });
 
+  it('draws the rating as its ClassInd symbol, with or without a cover', async () => {
+    render(TableCard, { table: { ...base, contentRating: '14' } });
+    await expect
+      .element(
+        page.getByRole('img', {
+          name: 'Classificação indicativa: Não recomendado para menores de 14 anos',
+        }),
+      )
+      .toBeVisible();
+  });
+
+  it('draws the symbol over a cover too', async () => {
+    render(TableCard, {
+      table: {
+        ...base,
+        contentRating: 'L',
+        imageUrl: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=',
+      },
+    });
+    await expect
+      .element(page.getByRole('img', { name: 'Classificação indicativa: Livre' }))
+      .toBeVisible();
+  });
+
+  it('draws no symbol without a rating', async () => {
+    render(TableCard, { table: base });
+    expect(page.getByRole('img', { name: /Classificação indicativa/ }).query()).toBeNull();
+  });
+
   it('badges a campaign as one', async () => {
     render(TableCard, { table: { ...base, kind: 'campaign' } });
 
@@ -112,6 +141,30 @@ describe('TableCard', () => {
     await expect.element(page.getByText(/Discord \+1/)).toBeVisible();
     await expect.element(page.getByText('Dungeon crawl')).toBeVisible();
     await expect.element(page.getByText('+2')).toBeVisible();
+  });
+
+  it('marks a table tagged Iniciantes', async () => {
+    render(TableCard, {
+      table: { ...base, tags: [{ name: 'Iniciantes', slug: 'iniciantes' }] },
+      markBeginners: true,
+    });
+    await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
+    expect(document.querySelector('[data-beginners-mark]')?.textContent?.trim()).toBe('Iniciantes');
+  });
+
+  it('leaves the mark out while it is off', async () => {
+    render(TableCard, { table: { ...base, tags: [{ name: 'Iniciantes', slug: 'iniciantes' }] } });
+    await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
+    expect(document.querySelector('[data-beginners-mark]')).toBeNull();
+  });
+
+  it('does not mark a table without the tag', async () => {
+    render(TableCard, {
+      table: { ...base, tags: [{ name: 'Terror', slug: 'terror' }] },
+      markBeginners: true,
+    });
+    await expect.element(page.getByText('Dungeons & Dragons 5e (2014)')).toBeVisible();
+    expect(document.querySelector('[data-beginners-mark]')).toBeNull();
   });
 
   it('shows plain text, never markup, from a title', async () => {

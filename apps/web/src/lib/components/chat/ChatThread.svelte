@@ -183,7 +183,9 @@
     onreport={data.safety && other
       ? () => report({ type: 'person', profileId: other.id, username: other.username })
       : undefined}
-    onblock={data.safety && other ? () => (blockOpen = true) : undefined}
+    onblock={data.safety && other && !data.conversation.admin
+      ? () => (blockOpen = true)
+      : undefined}
   />
 
   <MessageList

@@ -11,7 +11,7 @@
 
 {#if safe}
   <div class="rich-text {className}">
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -- the only {@html}: `safe` went through cleanRichHtml's allowlist -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- `safe` went through cleanRichHtml's allowlist -->
     {@html safe}
   </div>
 {/if}

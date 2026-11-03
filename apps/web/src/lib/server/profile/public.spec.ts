@@ -154,6 +154,7 @@ describe('public profiles', () => {
   it('returns only the allowlisted identity, aggregates and public cards', async () => {
     const data = (await read())!;
     expect(Object.keys(data.profile).sort()).toEqual([
+      'availability',
       'avatarUrl',
       'bannerUrl',
       'bio',
@@ -174,6 +175,8 @@ describe('public profiles', () => {
     expect(data.profile.favoriteSystems).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
+      // The card's age rating, drawn only while the web app's flags say so.
+      'contentRating',
       'gmAvatar',
       'gmName',
       'gmRating',

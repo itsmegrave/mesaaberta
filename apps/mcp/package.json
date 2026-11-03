@@ -1,0 +1,20 @@
+{
+  "name": "@mesaaberta/mcp",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "@growthbook/growthbook": "*",
+    "@mesaaberta/contracts": "workspace:*",
+    "@mesaaberta/core": "workspace:*",
+    "@mesaaberta/privy": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@sentry/cloudflare": "*",
+    "@sentry/core": "*",
+    "hono": "^4.13.13",
+    "jose": "^6.2.14",
+    "zod": "*"
+  }
+}

@@ -21,6 +21,7 @@
   import Pill from '#lib/components/ui/Pill.svelte';
   import { partnerTypeLabels, partnerTypeOptions } from '#lib/partners/type-labels.js';
   import PartnerTypesDialog from './components/PartnerTypesDialog.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
 
   import {
     PARTNER_ADMIN_STATUSES,
@@ -63,6 +64,7 @@
   function copyId(row: Row) {
     return copyText(row.id, m.toast_id_copied());
   }
+  const messages = personMessages();
   const items = (row: Row): KebabItem[] => [
     ...(!row.removedAt && !row.approvedAt
       ? [
@@ -106,6 +108,7 @@
             onselect: () => (typing.current = row),
           },
         ]),
+    ...messages.item(row.contactId),
     {
       id: 'reports',
       label: m.admin_partners_see_reports(),

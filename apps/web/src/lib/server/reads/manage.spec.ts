@@ -10,6 +10,10 @@ vi.mock('#lib/server/invitations/api.js', () => ({
   listTableInvitations: vi.fn(async () => []),
 }));
 vi.mock('@mesaaberta/core/server/tables/manage', () => ({ loadManage: vi.fn() }));
+vi.mock('@mesaaberta/core/server/tables/sessions', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@mesaaberta/core/server/tables/sessions')>()),
+  listSessions: vi.fn().mockResolvedValue([]),
+}));
 vi.mock('@mesaaberta/core/server/registrations/waitlist', () => ({
   listWaitlist: vi.fn().mockResolvedValue([]),
 }));

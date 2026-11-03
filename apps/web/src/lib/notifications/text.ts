@@ -60,6 +60,41 @@ function reminderText(table: string, metadata: Record<string, string>, timeZone:
     : m.notification_session_reminder_day({ table, when });
 }
 
+/** A later session added, moved or cancelled, with its date when the notice has it. */
+function sessionText(
+  type: 'session_scheduled' | 'session_moved' | 'session_cancelled',
+  table: string,
+  metadata: Record<string, string>,
+  timeZone: string,
+) {
+  const at = (iso: string) => formatSession(new Date(iso), timeZone, getLocale());
+  const { startsAt, startsAtFrom } = metadata;
+  if (!startsAt) return m.notification_table_updated({ table });
+  if (type === 'session_moved')
+    return startsAtFrom
+      ? m.notification_session_moved({ table, from: at(startsAtFrom), to: at(startsAt) })
+      : m.notification_table_updated({ table });
+  return type === 'session_scheduled'
+    ? m.notification_session_scheduled({ table, when: at(startsAt) })
+    : m.notification_session_cancelled({ table, when: at(startsAt) });
+}
+
+/** Campanha aberta: someone else changed the player's place in one session. */
+function signupText(
+  type: 'session_signup_seated' | 'session_signup_added' | 'session_signup_removed',
+  table: string,
+  metadata: Record<string, string>,
+  timeZone: string,
+) {
+  const when = metadata.startsAt
+    ? formatSession(new Date(metadata.startsAt), timeZone, getLocale())
+    : '';
+  if (type === 'session_signup_seated')
+    return m.notification_session_signup_seated({ table, when });
+  if (type === 'session_signup_added') return m.notification_session_signup_added({ table, when });
+  return m.notification_session_signup_removed({ table, when });
+}
+
 /** A table change, as specific as the notice's metadata allows; older notices stay generic. */
 function tableChangeText(table: string, metadata: Record<string, string>, timeZone: string) {
   const { startsAtFrom, startsAtTo, changed } = metadata;
@@ -100,6 +135,14 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return reminderText(table, item.metadata, timeZone);
     case 'session_confirmation':
       return m.notification_session_confirmation({ table });
+    case 'session_scheduled':
+    case 'session_moved':
+    case 'session_cancelled':
+      return sessionText(item.type, table, item.metadata, timeZone);
+    case 'session_signup_seated':
+    case 'session_signup_added':
+    case 'session_signup_removed':
+      return signupText(item.type, table, item.metadata, timeZone);
     case 'player_invited':
       return m.notification_player_invited({ player, table });
     case 'invitation_accepted':

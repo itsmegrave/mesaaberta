@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isBeginnerTable } from '@mesaaberta/core/tables/beginners';
   import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   import { copyText } from '#lib/clipboard.js';
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
@@ -35,14 +36,22 @@
   import ConfirmDialog from '#lib/components/ui/ConfirmDialog.svelte';
   import SeatDots from '#lib/components/ui/SeatDots.svelte';
   import DraftNotice from './components/DraftNotice.svelte';
+  import CalendarMenu from './components/CalendarMenu.svelte';
+  import TableSessions from './components/TableSessions.svelte';
+  import { googleCalendarHref } from '#lib/tables/google-calendar.js';
   import SessionDate from './components/ui/SessionDate.svelte';
   import SummaryRow from './components/ui/SummaryRow.svelte';
   import RosterBadge from './components/ui/RosterBadge.svelte';
-  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import PersonAvatar from '#lib/components/PersonAvatar.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
   import { placeArea, placeKindLabels, placeMapHref } from '#lib/places/labels.js';
   import { kindLabel, scheduleLabel, seatsLeftLabel } from '#lib/tables/format.js';
-  import { contentRatingLabel, safetyToolLabel } from '#lib/tables/safety-labels.js';
+  import {
+    contentRatingLabel,
+    contentRatingLongLabel,
+    safetyToolLabel,
+  } from '#lib/tables/safety-labels.js';
+  import ContentRatingSymbol from '#lib/components/ui/ContentRatingSymbol.svelte';
   import { orderedSafetyTools, type ContentRating } from '@mesaaberta/core/tables/safety';
   import MinPlayersLine from '#lib/components/ui/MinPlayersLine.svelte';
 
@@ -78,6 +87,17 @@
 
   // Past the open state (waiting for the GM, concluded or not held) the date stays and says so.
   const stateLabel = $derived(tableStatusLabel(table.status));
+  // Sessões (`use_table_sessions`), for a campaign or adventure that has them.
+  const sessions = $derived(
+    table.kind !== 'one_shot' && data.sessions && data.sessions.length > 0 ? data.sessions : null,
+  );
+  // "Próxima sessão · sessão 5": the session the table's date is.
+  const nextNumber = $derived(
+    sessions?.find(
+      (session) =>
+        session.status === 'scheduled' && session.startsAt.getTime() === table.startsAt.getTime(),
+    )?.number ?? null,
+  );
 
   // The title's "3 dots": what a GM can do with the table, or what anyone else can do about it.
   let disableOpen = $state(false);
@@ -159,6 +179,11 @@
         <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
           {table.title}
         </h1>
+        {#if data.ratingSymbol && !table.imageUrl}
+          <!-- No cover to carry it: the rating's symbol by the title, 56px, 70px from md (ClassInd's
+               size for websites). -->
+          <ContentRatingSymbol rating={table.contentRating} class="ml-auto size-14 md:size-17.5" />
+        {/if}
         <KebabMenu name={table.title} items={menu} />
       </div>
 
@@ -170,6 +195,19 @@
         />
       {/if}
 
+      {#if page.data.beginners && isBeginnerTable(table.tags)}
+        <!-- Iniciantes: the GM tagged the table for people who never played; the guide says how. -->
+        <a
+          href="/beginners"
+          class="mt-4 flex items-start gap-3 rounded-lg preset-tonal-primary p-3 text-sm no-underline hover:underline"
+        >
+          <Icon name="game-icons:sprout" size={20} class="mt-0.5 shrink-0" />
+          <span>
+            <span class="block font-semibold">{m.beginners_table_title()}</span>
+            <span class="block">{m.beginners_table_body()}</span>
+          </span>
+        </a>
+      {/if}
       {#if table.tags.length > 0}
         <ul aria-label={m.form_tags()} class="mt-4 flex flex-wrap gap-2">
           {#each table.tags as tag (tag.slug)}
@@ -187,7 +225,12 @@
       <!-- Quem mestra: the picture, the label over the handle, then the rating pill. -->
       <div class="mt-5 flex flex-wrap items-center gap-4">
         <div class="flex min-w-0 items-center gap-4">
-          <MAAvatar src={data.gm?.avatarUrl ?? null} name={table.gmName} size={44} />
+          <PersonAvatar
+            username={data.gmUsername}
+            src={data.gm?.avatarUrl ?? null}
+            name={table.gmName}
+            size={44}
+          />
           <p class="min-w-0">
             <span class="block text-xs font-semibold text-muted">{m.table_gm()}</span>
             {#if data.gmUsername}
@@ -216,20 +259,40 @@
       </div>
 
       {#if table.imageUrl}
-        <img
-          src={table.imageUrl}
-          alt=""
-          width="1200"
-          height="480"
-          decoding="async"
-          referrerpolicy="no-referrer"
-          class="mt-8 aspect-5/2 w-full rounded-lg object-cover"
-        />
+        <div class="relative mt-8">
+          <img
+            src={table.imageUrl}
+            alt=""
+            width="1200"
+            height="480"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            class="aspect-5/2 w-full rounded-lg object-cover"
+          />
+          {#if data.ratingSymbol}
+            <!-- The rating's symbol in the cover's bottom-right corner: 56px, 70px from md. -->
+            <ContentRatingSymbol
+              rating={table.contentRating}
+              class="absolute right-3 bottom-3 size-14 md:right-4 md:bottom-4 md:size-17.5"
+            />
+          {/if}
+        </div>
       {/if}
 
       <!-- Rich text: RichText cleans it to a small set of tags before showing it. -->
       {#if table.description}
         <RichText html={table.description} class="mt-8 max-w-prose text-lg" />
+      {/if}
+
+      {#if sessions}
+        <TableSessions
+          class="mt-10 max-w-prose rounded-lg border border-surface-200-800 bg-panel p-4 md:p-6"
+          {sessions}
+          timezone={table.timezone}
+          repeat={table.everyWeeks ? recurrence : null}
+          seated={data.canManage || data.myStatus === 'confirmed'}
+          rostered={data.myStatus === 'confirmed'}
+        />
       {/if}
 
       {#if table.extraInfo}
@@ -264,7 +327,13 @@
       aria-label={m.table_next_session()}
       class="self-start rounded-lg border border-surface-200-800 bg-panel p-6 lg:p-7"
     >
-      <SessionDate startsAt={table.startsAt} timezone={table.timezone} {stateLabel} large />
+      <SessionDate
+        startsAt={table.startsAt}
+        timezone={table.timezone}
+        {stateLabel}
+        number={nextNumber}
+        large
+      />
 
       <dl class="mt-6 grid grid-cols-3 border-t border-surface-200-800 text-sm">
         <SummaryRow label={m.table_modality()} class="flex items-center gap-2">
@@ -284,12 +353,20 @@
           </SummaryRow>
         {/if}
         {#if table.contentRating}
-          <SummaryRow label={m.table_content_rating()}>
-            <span
-              class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
-              >{contentRatingLabel(table.contentRating as ContentRating)}</span
-            >
-          </SummaryRow>
+          {#if data.ratingSymbol}
+            <SummaryRow label={m.table_content_rating()} class="flex flex-wrap items-center gap-2">
+              <ContentRatingSymbol rating={table.contentRating} size={24} />
+              <span>{contentRatingLongLabel(table.contentRating as ContentRating)}</span>
+              <span class="text-sm font-semibold text-muted">· {m.content_rating_self()}</span>
+            </SummaryRow>
+          {:else}
+            <SummaryRow label={m.table_content_rating()}>
+              <span
+                class="chip h-6 rounded-lg border border-surface-200-800 px-2 text-xs font-semibold"
+                >{contentRatingLabel(table.contentRating as ContentRating)}</span
+              >
+            </SummaryRow>
+          {/if}
         {/if}
         {#if table.safetyTools.length > 0}
           <SummaryRow label={m.table_safety_tools()} class="flex flex-wrap gap-1">
@@ -480,6 +557,15 @@
           <Icon name="game-icons:scroll-quill" size={18} />
           {m.messages_table_chat()}
         </a>
+      {/if}
+      {#if data.tableCalendar && (data.isGm || data.myStatus === 'confirmed') && ['active', 'awaiting_confirmation'].includes(table.status)}
+        <!-- "Adicionar à agenda": the same event as the invite sent by mail, so it is never doubled. -->
+        <CalendarMenu
+          class="mt-3"
+          googleHref={googleCalendarHref(table, `${page.url.origin}/t/${table.slug}`)}
+          icsHref={`/t/${table.slug}/calendar`}
+        />
+        <p class="mt-2 text-sm text-muted max-md:hidden">{m.table_calendar_note()}</p>
       {/if}
       {#if data.signedIn && !data.isGm && data.gmAcceptsDirect}
         <!-- Opened from the title menu ("Mandar mensagem para quem mestra"). -->

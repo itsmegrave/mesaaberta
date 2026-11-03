@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
@@ -62,6 +63,8 @@
     places?: PlaceOption[] | null;
     /** Safety tools and the content rating (`use_table_safety`). Off, their values ride along unseen. */
     safety?: boolean;
+    /** The preview card draws the rating's ClassInd symbol (`use_content_rating_symbol`). */
+    ratingSymbol?: boolean;
     /** The westmarch kind is offered (`use_open_tables`); a table that is one keeps it anyway. */
     openTables?: boolean;
   };
@@ -83,6 +86,7 @@
     calendarNote = false,
     places = null,
     safety = false,
+    ratingSymbol = false,
     openTables = false,
   }: Props = $props();
   // svelte-ignore state_referenced_locally
@@ -148,6 +152,7 @@
     placeName: picked?.name ?? null,
     platforms: $draft.platforms.map((pick) => pickName(catalog.platforms, pick)),
     tags: $draft.tags.map((pick) => pickName(catalog.tags, pick)),
+    contentRating: safety && ratingSymbol ? $draft.contentRating || null : null,
   });
   const errors = fieldErrors<keyof TableFormValues>(() => controller, errorText);
   const { err, invalid } = errors;
@@ -673,7 +678,7 @@
     {/if}
   {/snippet}
   {#snippet preview()}
-    <TableCard table={card} />
+    <TableCard table={card} markBeginners={page.data.beginners} />
   {/snippet}
   {#snippet details()}
     <ul class="mt-4 grid gap-2 rounded-lg border border-surface-200-800 bg-panel p-5 text-sm">

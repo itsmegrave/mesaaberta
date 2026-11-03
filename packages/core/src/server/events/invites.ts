@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { createSupabaseAdmin, emailOf, type SupabaseAdmin } from '../auth/admin-client';
 import { expandWelcomeMessage } from '../../tables/welcome';
 import { buildInvite, tableUrl, uidDomainFor, type CalendarTable } from '../calendar/ics';
+import { calendarFor, withSessions } from '../calendar/sessions';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
 import type { Mailer } from '../mail/mailer';
@@ -100,7 +101,8 @@ async function tableOf(db: AnyDb, tableId: string) {
     .from(gameTables)
     .where(eq(gameTables.id, tableId));
   if (!table) throw new Error('Table for invite event no longer exists');
-  return table as InviteTable;
+  const [withDates] = await withSessions(db, [table as InviteTable]);
+  return withDates;
 }
 
 async function profileOf(db: AnyDb, id: string): Promise<Recipient[]> {
@@ -140,7 +142,12 @@ type InviteEvent = Extract<
       | 'PlayerLeft'
       | 'TableUpdated'
       | 'TableSessionHeld'
-      | 'TableDisabled';
+      | 'TableDisabled'
+      | 'SessionScheduled'
+      | 'SessionMoved'
+      | 'SessionCancelled'
+      | 'SessionSignedUp'
+      | 'SessionSignupLeft';
   }
 >;
 
@@ -186,16 +193,25 @@ export function createInviteHandler(
       // A campaign or adventure that goes on moves to its next session: the calendar follows.
       'TableSessionHeld',
       'TableDisabled',
+      // A later session added, moved or cancelled: the same event, with that date changed in it.
+      'SessionScheduled',
+      'SessionMoved',
+      'SessionCancelled',
+      // Campanha aberta: a player's calendar has only the sessions they play.
+      'SessionSignedUp',
+      'SessionSignupLeft',
     ],
     async handle(event: InviteEvent, db) {
       // A draft has no players and no session anyone was invited to: nothing to send or cancel.
       if ('draft' in event.payload && event.payload.draft) return;
+      // Waiting for a session (or leaving its waiting list) puts nothing in anyone's calendar.
+      if ('waiting' in event.payload && event.payload.waiting) return;
       const table = await tableOf(db, event.payload.tableId);
-      const method =
+      const tableMethod =
         event.type === 'PlayerLeft' || event.type === 'TableDisabled' ? 'CANCEL' : 'REQUEST';
       // Queue order is not guaranteed. A delayed create/join/edit must not recreate a calendar
       // entry after the table's cancellation, including an edit made through the legacy form.
-      if (table.status === 'disabled' && method === 'REQUEST') return;
+      if (table.status === 'disabled' && tableMethod === 'REQUEST') return;
       const recipients = await recipientsFor(db, event, table);
       const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
       const url = tableUrl(env.APP_ORIGIN, table.slug);
@@ -262,8 +278,50 @@ export function createInviteHandler(
           });
           continue;
         }
+        // A player of a campanha aberta that signs up per session: only the sessions they play.
+        const view = calendarFor(table, recipient.id, table.gmId);
+        const signup = event.type === 'SessionSignedUp' || event.type === 'SessionSignupLeft';
+        // Off the last session they played: the event leaves their calendar.
+        const method = signup ? (view ? 'REQUEST' : 'CANCEL') : tableMethod;
+        if (!view && method === 'REQUEST') {
+          // Their only session was cancelled: take it out of their calendar.
+          if (event.type === 'SessionCancelled' && wasGoing(table, event, recipient.id)) {
+            await mailer.send({
+              to: email,
+              ...sessionCopy(event, 'CANCEL', table.title, (date) =>
+                formatSession(date, recipient.timezone ?? table.timezone, 'pt-BR'),
+              )!,
+              attachments: [
+                calendarFile(
+                  buildInvite({
+                    table,
+                    method: 'CANCEL',
+                    attendee: { email, name: recipient.name || recipient.username || NAMELESS },
+                    organizer: { email: addressOf(env.RESEND_FROM), name: 'Mesa Aberta' },
+                    baseUrl: env.APP_ORIGIN,
+                    uidDomain: env.CALENDAR_UID_DOMAIN,
+                  }),
+                  'CANCEL',
+                ),
+              ],
+              idempotencyKey: `${event.id}:${recipient.id}:CANCEL`,
+            });
+            continue;
+          }
+          // A new player who plays no session yet: their seat is confirmed, with nothing to add.
+          if (event.type === 'JoinApproved' || event.type === 'PlayerJoined') {
+            await mailer.send({
+              to: email,
+              subject: `Convite: ${table.title}`,
+              text: `Você tem uma vaga confirmada em "${table.title}". Escolha na página da mesa as sessões que quer jogar; cada uma entra na sua agenda. ${url}`,
+              welcomeMessage,
+              idempotencyKey: `${event.id}:${recipient.id}:REQUEST`,
+            });
+          }
+          continue;
+        }
         const ics = buildInvite({
-          table,
+          table: method === 'REQUEST' && view ? view : table,
           method,
           attendee: { email, name: recipient.name || recipient.username || NAMELESS },
           organizer: { email: addressOf(env.RESEND_FROM), name: 'Mesa Aberta' },
@@ -272,10 +330,14 @@ export function createInviteHandler(
         });
         // The GM runs the table and has no seat: their copy says what happened to their table, never
         // "your seat is confirmed", and it skips the players' hosted templates.
+        // A change to one later session reads the same for everyone, and skips the seat templates.
         const gmMail =
-          recipient.id === table.gmId
+          sessionCopy(event, method, table.title, (date) =>
+            formatSession(date, recipient.timezone ?? table.timezone, 'pt-BR'),
+          ) ??
+          (recipient.id === table.gmId
             ? gmCopy(event.type, method, table.title, startsAtFor(recipient))
-            : null;
+            : null);
         const subject =
           gmMail?.subject ??
           (method === 'REQUEST' ? `Convite: ${table.title}` : `Cancelada: ${table.title}`);
@@ -294,18 +356,78 @@ export function createInviteHandler(
               ? hosted('invite', 'REQUEST', recipient, text)
               : hosted('cancel', 'CANCEL', recipient, text)),
           welcomeMessage,
-          attachments: [
-            {
-              filename: 'mesa-aberta.ics',
-              content: ics,
-              contentType: `text/calendar; method=${method}; charset=utf-8`,
-            },
-          ],
+          attachments: [calendarFile(ics, method)],
           idempotencyKey: `${event.id}:${recipient.id}:${method}`,
         });
       }
     },
   };
+}
+
+const calendarFile = (content: string, method: 'REQUEST' | 'CANCEL') => ({
+  filename: 'mesa-aberta.ics',
+  content,
+  contentType: `text/calendar; method=${method}; charset=utf-8`,
+});
+
+/** Whether `playerId` played the session the event cancelled. */
+function wasGoing(
+  table: Awaited<ReturnType<typeof tableOf>>,
+  event: Extract<InviteEvent, { type: 'SessionCancelled' }>,
+  playerId: string,
+) {
+  const at = new Date(event.payload.startsAt).getTime();
+  return table.sessions.some(
+    (session) =>
+      session.status === 'cancelled' &&
+      session.startsAt.getTime() === at &&
+      (session.going ?? []).includes(playerId),
+  );
+}
+
+/**
+ * What everyone at the table reads when one later session was added, moved or cancelled, and what
+ * a player of a campanha aberta reads when they play a session or no longer do.
+ */
+function sessionCopy(
+  event: InviteEvent,
+  method: 'REQUEST' | 'CANCEL',
+  title: string,
+  when: (date: Date) => string,
+): { subject: string; text: string } | null {
+  const attached =
+    method === 'CANCEL'
+      ? 'O cancelamento de calendário anexado tira o evento da sua agenda.'
+      : 'O convite de calendário anexado atualiza o evento na sua agenda.';
+  switch (event.type) {
+    case 'SessionSignedUp':
+      return {
+        subject: `Você joga: ${title}`,
+        text: `Você joga a sessão de ${when(new Date(event.payload.startsAt))} da mesa "${title}". ${attached}`,
+      };
+    case 'SessionSignupLeft':
+      return {
+        subject: `Fora da sessão: ${title}`,
+        text: `Você não joga mais a sessão de ${when(new Date(event.payload.startsAt))} da mesa "${title}". ${attached}`,
+      };
+    case 'SessionScheduled':
+      return {
+        subject: `Nova sessão: ${title}`,
+        text: `A mesa "${title}" tem uma nova sessão em ${when(new Date(event.payload.startsAt))}. ${attached}`,
+      };
+    case 'SessionMoved':
+      return {
+        subject: `Sessão remarcada: ${title}`,
+        text: `A sessão de ${when(new Date(event.payload.from))} da mesa "${title}" mudou para ${when(new Date(event.payload.startsAt))}. ${attached}`,
+      };
+    case 'SessionCancelled':
+      return {
+        subject: `Sessão cancelada: ${title}`,
+        text: `A sessão de ${when(new Date(event.payload.startsAt))} da mesa "${title}" foi cancelada. A mesa continua nas outras datas. ${attached}`,
+      };
+    default:
+      return null;
+  }
 }
 
 /**

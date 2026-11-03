@@ -4,7 +4,7 @@ import type { readTables } from '@mesaaberta/core/server/reads/tables';
 import { readTableFilters } from '#lib/tables/filters.js';
 import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
-import { tableSafetyEnabled } from '../tables/safety-enabled';
+import { contentRatingSymbolShown, tableSafetyEnabled } from '../tables/safety-enabled';
 import { startingSoon } from '#lib/tables/starting-soon.js';
 import { startingSoonEnabled } from '../tables/starting-soon';
 
@@ -44,7 +44,10 @@ export const read = async ({ locals, url }: RequestEvent) => {
   const listed =
     safety && !adultShown ? answer.tables.filter((table) => !isAdult(table)) : answer.tables;
 
-  const pictures = cardPictures(supabaseUrlOf(locals.env));
+  const pictures = cardPictures(
+    supabaseUrlOf(locals.env),
+    await contentRatingSymbolShown(locals, profile),
+  );
   const soon = (await startingSoonEnabled(locals, profile)) ? startingSoon(listed, new Date()) : [];
   return {
     ...answer,

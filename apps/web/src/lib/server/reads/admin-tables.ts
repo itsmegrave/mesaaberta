@@ -5,7 +5,7 @@ import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { readFromApi } from '../api-read';
 import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
 import { noSocial } from '@mesaaberta/core/server/social/none';
-import { DRAWINGS } from '#lib/icons/drawings.generated.js';
+import { ICON_NAMES } from '#lib/icons/sprite.generated.js';
 import type { IconName } from '#lib/icons/names.js';
 export async function read({ locals, setHeaders, url }: RequestEvent) {
   await requireAdmin(locals);
@@ -40,7 +40,7 @@ export async function read({ locals, setHeaders, url }: RequestEvent) {
     // The connector as the page names and draws it; a network without its own icon gets the globe.
     social: {
       label: social.label ?? social.name.charAt(0).toUpperCase() + social.name.slice(1),
-      icon: (Object.hasOwn(DRAWINGS, social.name) ? social.name : 'globe') as IconName,
+      icon: (ICON_NAMES.has(social.name) ? social.name : 'globe') as IconName,
     },
   };
 }

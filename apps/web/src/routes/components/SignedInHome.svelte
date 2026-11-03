@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   // Início for a signed-in member (`use_signed_in_home`): what waits on them, their next sessions,
   // Sua conta and news from people they follow, then tables from their systems, from people they
   // follow, and Novas mesas. Each block shows only with something in it, but the two rows of
@@ -111,7 +112,7 @@
           >{m.home_row_systems_edit()}</a
         >
       {/snippet}
-      {#snippet card(table)}<TableCard {table} />{/snippet}
+      {#snippet card(table)}<TableCard {table} markBeginners={page.data.beginners} />{/snippet}
     </TableCarousel>
   {:else}
     {@render emptyRow(
@@ -134,7 +135,7 @@
         key={(table) => table.slug}
         itemClass="w-75 md:w-96"
       >
-        {#snippet card(table)}<TableCard {table} />{/snippet}
+        {#snippet card(table)}<TableCard {table} markBeginners={page.data.beginners} />{/snippet}
       </TableCarousel>
     {:else}
       {@render emptyRow(

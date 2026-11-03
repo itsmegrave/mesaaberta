@@ -80,7 +80,8 @@ describe("a place's page load", () => {
     ]);
     expect(data.place).not.toHaveProperty('imagePath');
     expect(data.place.imageUrl).toContain('places/t.png');
-    expect(data.tables[0]).toEqual({ slug: 'mesa', imageUrl: null });
+    // No ClassInd symbol while `use_content_rating_symbol` is off.
+    expect(data.tables[0]).toEqual({ slug: 'mesa', imageUrl: null, contentRating: null });
     expect(data.partner).toEqual({ id: 'p1', name: 'Loja do Dado' });
     expect(data.gms.people[0]).not.toHaveProperty('avatarPath');
     expect(data.gms.people[0].avatarUrl).toContain('ana/a.png');

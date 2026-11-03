@@ -3,7 +3,13 @@
 import { and, eq, gt, inArray, lte } from 'drizzle-orm';
 import { routes } from '../../routes';
 import type { AnyDb } from '../db/client';
-import { gameTables, notifications, registrations } from '../db/schema';
+import {
+  gameTables,
+  notifications,
+  registrations,
+  tableSessionSignups,
+  tableSessions,
+} from '../db/schema';
 import { NOTIFICATION_KINDS, type TableMetadata } from '../../notifications/kinds';
 
 const HOUR = 3600 * 1000;
@@ -46,7 +52,8 @@ export async function reminderId(
 }
 
 /**
- * Reminds the GM and the confirmed players of every open table whose session starts within a day:
+ * Reminds the GM and the confirmed players of every open table whose session starts within a day
+ * (at a campanha aberta whose players sign up per session, only those who play it):
  * once a day before and once an hour before, in the bell. The notice carries the start as an ISO
  * time, so each person reads it in their own timezone. Someone confirmed after a reminder went out
  * gets it on the next run. Returns how many it wrote.
@@ -59,6 +66,7 @@ export async function sendSessionReminders(db: AnyDb, now = new Date()): Promise
       title: gameTables.title,
       startsAt: gameTables.startsAt,
       gmId: gameTables.gmId,
+      kind: gameTables.kind,
     })
     .from(gameTables)
     .where(
@@ -83,6 +91,22 @@ export async function sendSessionReminders(db: AnyDb, now = new Date()): Promise
       ),
     );
 
+  // A campanha aberta whose players sign up per session reminds only those who play this one.
+  const open = due.filter((table) => table.kind === 'open').map((table) => table.id);
+  const signups =
+    open.length === 0
+      ? []
+      : await db
+          .select({
+            tableId: tableSessionSignups.tableId,
+            playerId: tableSessionSignups.playerId,
+            status: tableSessionSignups.status,
+            startsAt: tableSessions.startsAt,
+          })
+          .from(tableSessionSignups)
+          .innerJoin(tableSessions, eq(tableSessions.id, tableSessionSignups.sessionId))
+          .where(inArray(tableSessionSignups.tableId, open));
+
   const rows: (typeof notifications.$inferInsert)[] = [];
   for (const table of due) {
     const window = reminderWindow(table.startsAt, now);
@@ -95,7 +119,16 @@ export async function sendSessionReminders(db: AnyDb, now = new Date()): Promise
       startsAt: table.startsAt.toISOString(),
       window,
     };
-    const players = seats.filter((seat) => seat.tableId === table.id).map((seat) => seat.playerId);
+    const signedUp = signups.filter((row) => row.tableId === table.id);
+    const players =
+      signedUp.length > 0
+        ? signedUp
+            .filter(
+              (row) =>
+                row.status === 'going' && row.startsAt.getTime() === table.startsAt.getTime(),
+            )
+            .map((row) => row.playerId)
+        : seats.filter((seat) => seat.tableId === table.id).map((seat) => seat.playerId);
     for (const recipientId of new Set([table.gmId, ...players])) {
       rows.push({
         recipientId,

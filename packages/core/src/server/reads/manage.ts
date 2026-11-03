@@ -3,6 +3,8 @@ import { can, playerRatingOpen, type Actor } from '../auth/policy';
 import { loadManage } from '../tables/manage';
 import { listWaitlist } from '../registrations/waitlist';
 import { instantToLocal, nextWeeklySession, weeklyInterval } from '../tables/schedule';
+import { listSessions } from '../tables/sessions';
+import { withSeats } from '../tables/session-signups';
 
 function nextSessionOf(
   table: { recurrence: string | null; startsAt: Date; timezone: string },
@@ -27,6 +29,22 @@ function nextSessionOf(
 export async function readManage(db: AnyDb, actor: Actor | null, slug: string, now: Date) {
   const manage = await loadManage(db, actor, slug, now);
   const { gmId, id, ...table } = manage.table;
+  const sessions = await withSeats(
+    db,
+    manage.table,
+    await listSessions(db, { id, status: table.status }, { role: 'gm' }),
+    { gm: true, playerId: null },
+    now,
+  );
+  const scheduledNext =
+    table.status === 'awaiting_confirmation'
+      ? (sessions.find(
+          (session) =>
+            session.status === 'scheduled' &&
+            session.startsAt > table.startsAt &&
+            session.startsAt > now,
+        ) ?? null)
+      : null;
   return {
     table,
     // A concluded table is frozen (its ratings describe it as it was): no edit link to a 403.
@@ -38,8 +56,18 @@ export async function readManage(db: AnyDb, actor: Actor | null, slug: string, n
       tableStatus: manage.table.status,
       kind: manage.table.kind,
     }),
-    // A weekly campaign's next date after this session, in the table's zone, to prefill the answer.
-    nextSession: nextSessionOf(manage.table, now),
+    // The next session after this one, in the table's zone, to prefill the answer: the next one
+    // already scheduled, or a weekly campaign's next date.
+    nextSession:
+      (scheduledNext && instantToLocal(scheduledNext.startsAt, manage.table.timezone)) ??
+      nextSessionOf(manage.table, now),
+    // The next session is already on the list: "A mesa continua?" shows it instead of asking.
+    scheduledNext: scheduledNext && {
+      number: scheduledNext.number,
+      startsAt: scheduledNext.startsAt,
+    },
+    // Gerenciar mesa → Sessões (`use_table_sessions`; the web drops them while the flag is off).
+    sessions,
     session: manage.session,
     canInvite: actor?.id === gmId,
     // The GM may rate the players they marked present (an admin looking on may not).

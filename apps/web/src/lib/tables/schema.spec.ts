@@ -341,6 +341,13 @@ describe('safety tools and content rating', () => {
     expect(toTableInput(parsed.data).contentRating).toBe('16');
   });
 
+  it('takes the 6-year band, the newest ClassInd one', () => {
+    const parsed = parse({ contentRating: '6' });
+    if (!parsed.success) throw new Error('expected the form to pass');
+
+    expect(toTableInput(parsed.data).contentRating).toBe('6');
+  });
+
   it('refuses an unknown tool or rating', () => {
     expect(parse({ safetyTools: ['dice_jail'] }).success).toBe(false);
     expect(parse({ contentRating: '21' }).success).toBe(false);

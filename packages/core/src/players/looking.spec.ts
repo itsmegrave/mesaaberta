@@ -6,20 +6,26 @@ describe('readPlayerFilters', () => {
     expect(readPlayerFilters(new URLSearchParams('q=@ana&system=D%26D&page=x&sort=name'))).toEqual({
       query: 'ana',
       system: '',
+      day: '',
+      period: '',
       page: 1,
     });
-    expect(readPlayerFilters(new URLSearchParams('system=tormenta20&page=2'))).toEqual({
+    expect(
+      readPlayerFilters(new URLSearchParams('system=tormenta20&day=sat&period=dawn&page=2')),
+    ).toEqual({
       query: '',
       system: 'tormenta20',
+      day: 'sat',
+      period: '',
       page: 2,
     });
   });
 
   it('writes one address per list, defaults left out', () => {
-    expect(playerQuery({ query: '', system: '' })).toBe('');
-    expect(playerQuery({ query: 'terror', system: 'cthulhu' }, 3)).toBe(
-      '?q=terror&system=cthulhu&page=3',
-    );
+    expect(playerQuery({ query: '', system: '', day: '', period: '' })).toBe('');
+    expect(
+      playerQuery({ query: 'terror', system: 'cthulhu', day: 'fri', period: 'night' }, 3),
+    ).toBe('?q=terror&system=cthulhu&day=fri&period=night&page=3');
   });
 });
 

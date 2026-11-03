@@ -13,8 +13,18 @@ import {
   skipSession,
 } from './lifecycle';
 import { publishTable } from './write';
+import {
+  SESSION_NOTE_MAX,
+  cancelSession,
+  moveSession,
+  noteSession,
+  scheduleSession,
+} from './session-actions';
+import { addToSession, removeFromSession } from './session-signups';
 
 const none = z.object({});
+const localDateTime = z.string().refine(isLocalDateTime, 'invalid');
+const note = z.string().max(SESSION_NOTE_MAX).optional();
 
 /**
  * What the GM does from the manage page, by name: the data each needs (without the form's `next`)
@@ -80,6 +90,72 @@ export const tableLifecycleActions = {
       slug: string,
       { startsAtLocal }: { startsAtLocal: string },
     ) => postponeTable(db, actor, slug, startsAtLocal),
+  },
+  // Gerenciar mesa → Sessões: one more session, a session moved, its note, a session cancelled.
+  scheduleSession: {
+    schema: z.object({
+      startsAtLocal: localDateTime,
+      durationMinutes: z
+        .number()
+        .int()
+        .min(30)
+        .max(24 * 60)
+        .optional(),
+      note,
+    }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { startsAtLocal: string; durationMinutes?: number; note?: string },
+    ) => scheduleSession(db, actor, slug, data),
+  },
+  moveSession: {
+    schema: z.object({ sessionId: z.uuid(), startsAtLocal: localDateTime }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; startsAtLocal: string },
+    ) => moveSession(db, actor, slug, data),
+  },
+  noteSession: {
+    schema: z.object({ sessionId: z.uuid(), note }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; note?: string },
+    ) => noteSession(db, actor, slug, data),
+  },
+  cancelSession: {
+    schema: z.object({ sessionId: z.uuid(), message: note }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; message?: string },
+    ) => cancelSession(db, actor, slug, data),
+  },
+  // Campanha aberta (`use_session_signup`): quem mestra puts someone from the roster in a session,
+  // or takes them out (the first who waits takes the place).
+  addToSession: {
+    schema: z.object({ sessionId: z.uuid(), playerId: z.guid() }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; playerId: string },
+    ) => addToSession(db, actor, slug, data),
+  },
+  removeFromSession: {
+    schema: z.object({ sessionId: z.uuid(), playerId: z.guid() }),
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      data: { sessionId: string; playerId: string },
+    ) => removeFromSession(db, actor, slug, data),
   },
 };
 

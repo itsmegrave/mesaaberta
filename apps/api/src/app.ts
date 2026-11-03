@@ -9,6 +9,7 @@ import { adminEntryRoutes } from './admin-entries';
 import { adminReadRoutes } from './admin-reads';
 import { announcementRoutes } from './announcements';
 import { authRoutes } from './auth';
+import { calendarFeedRoutes } from './calendar-feed';
 import { catalogRoutes } from './catalog';
 import { changelogRoutes } from './changelog';
 import { eventRoutes } from './events';
@@ -35,8 +36,11 @@ import { readRoutes } from './reads';
 import { reportRoutes } from './reports';
 import { seoRoutes } from './seo';
 import { submissionRoutes } from './submissions';
+import { tableCalendarRoutes } from './table-calendar';
 import { tableWriteRoutes } from './table-writes';
 import { widgetRoutes } from './widgets';
+import { decorationRoutes } from './decorations';
+import { settingsRoutes } from './settings';
 
 /**
  * The api app of Trello #120: the one place writes, policies and the outbox will live once routes
@@ -119,12 +123,18 @@ export function createApi() {
   // The signed-in person's own frame: the profile row (the actor of every web request), the
   // header's numbers and the bell, and the notification feed.
   app.route('/v1/me', meRoutes());
+  // "Adicionar à agenda" on a table's page.
+  app.route('/v1/table-calendar', tableCalendarRoutes());
   // Retrospectiva: a person's year at the tables and their "Deixar pública" switch.
   app.route('/v1/year-review', yearReviewRoutes());
   // The address behind a CEP, for the forms that fill one in.
   app.route('/v1/location', locationRoutes());
   // The installed extensions' widgets and public assets.
   app.route('/v1/widgets', widgetRoutes());
+  // What the installed extensions draw on people (avatar frames, profile marks).
+  app.route('/v1/decorations', decorationRoutes());
+  // The installed extensions' cards on a person's own "Editar perfil".
+  app.route('/v1/settings', settingsRoutes());
   // Seguir: the button, "Seguindo" and its bell switches.
   app.route('/v1/follows', followRoutes());
   // Procuro mesa: the people looking for a table and the actor's own switch.
@@ -146,6 +156,8 @@ export function createApi() {
   // The public sitemap's identifiers (published tables, active profiles). New and anonymous, so no
   // flag and no web fallback: web answers 503 when this read fails.
   app.route('/v1/seo', seoRoutes());
+  // A subscribed calendar feed, read by a calendar app with the secret in its address (no actor).
+  app.route('/v1/calendar-feed', calendarFeedRoutes());
   // The public profile page (/u/[username]). No flag and no web fallback either: database reads
   // live in the api now, and web answers 503 when this one fails.
   app.route('/v1/profiles', profileRoutes());

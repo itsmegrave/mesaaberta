@@ -10,6 +10,8 @@
   import GmRating from './GmRating.svelte';
   import MAAvatar from './MAAvatar.svelte';
   import SeatRing from './SeatRing.svelte';
+  import ContentRatingSymbol from './ContentRatingSymbol.svelte';
+  import { isBeginnerTable } from '@mesaaberta/core/tables/beginners';
   import { linkedCardClass } from './MediaCard.svelte';
 
   type PlatformItem = string | { name: string; slug?: string };
@@ -43,10 +45,21 @@
     placeName?: string | null;
     platforms?: PlatformItem[];
     tags?: TagItem[];
+    /** The age rating, drawn as its ClassInd symbol in the header's top-right corner. The server
+     * leaves it out while `use_content_rating_symbol` is off. */
+    contentRating?: string | null;
   };
 
-  /** `level`: the title's heading level, one below the heading the card sits under. */
-  let { table, level = 'h3' }: { table: Table; level?: 'h2' | 'h3' } = $props();
+  /**
+   * `level`: the title's heading level, one below the heading the card sits under.
+   * `markBeginners`: whether a table tagged "Iniciantes" shows the mark (`use_beginner_tables`).
+   */
+  let {
+    table,
+    level = 'h3',
+    markBeginners = false,
+  }: { table: Table; level?: 'h2' | 'h3'; markBeginners?: boolean } = $props();
+  const beginner = $derived(markBeginners && isBeginnerTable(table.tags));
 
   const locale = getLocale();
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
@@ -94,6 +107,11 @@
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"
       />
+      {#if table.contentRating}
+        <div class="absolute top-3 right-3">
+          <ContentRatingSymbol rating={table.contentRating} size={32} />
+        </div>
+      {/if}
       <!-- Kind pill -->
       <div class="absolute top-3 left-3">
         <span class="chip h-6 gap-1 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm">
@@ -144,14 +162,27 @@
           </div>
         {/if}
       </div>
-      <div class="flex items-center">
-        <SeatRing
-          capacity={table.capacity ?? 5}
-          seatsLeft={table.seatsLeft}
-          size={88}
-          label={seatSummary}
-        />
-      </div>
+      {#if table.contentRating}
+        <!-- With a rating its symbol takes the top-right corner and the ring moves down. -->
+        <div class="flex flex-col items-end justify-between">
+          <ContentRatingSymbol rating={table.contentRating} size={32} />
+          <SeatRing
+            capacity={table.capacity ?? 5}
+            seatsLeft={table.seatsLeft}
+            size={56}
+            label={seatSummary}
+          />
+        </div>
+      {:else}
+        <div class="flex items-center">
+          <SeatRing
+            capacity={table.capacity ?? 5}
+            seatsLeft={table.seatsLeft}
+            size={88}
+            label={seatSummary}
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -164,8 +195,19 @@
 
   <!-- Card body -->
   <div class="flex grow flex-col px-4 pt-4 pb-3">
-    <div class="text-sm leading-snug font-semibold text-muted">
-      {table.system.name}
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0 text-sm leading-snug font-semibold text-muted">
+        {table.system.name}
+      </div>
+      {#if beginner}
+        <span
+          data-beginners-mark
+          class="chip h-6 shrink-0 gap-1 rounded-full preset-tonal-primary px-2.5 text-xs font-semibold"
+        >
+          <Icon name="game-icons:sprout" size={14} />
+          {m.beginners_mark()}
+        </span>
+      {/if}
     </div>
 
     <svelte:element this={level} class="mt-1 text-xl leading-tight font-semibold tracking-tight">

@@ -8,7 +8,13 @@ import { loadRead } from '#lib/server/reads/load.js';
 
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
 import { ratingSchema } from '@mesaaberta/core/tables/rating';
-import { joinSchema, playerActionSchema, tableActionSchema } from '#lib/tables/registration.js';
+import {
+  joinSchema,
+  playerActionSchema,
+  sessionSignupSchema,
+  tableActionSchema,
+} from '#lib/tables/registration.js';
+import { sessionSignupEnabled } from '#lib/server/tables/sessions-enabled.js';
 import { runRegistrationAction } from '#lib/server/registrations/form-action.js';
 import { reportSchema } from '@mesaaberta/core/moderation/reports';
 import { moderationAction } from '#lib/server/moderation/form-action.js';
@@ -115,6 +121,25 @@ export const actions: Actions = {
   unwaitlist: (event) =>
     runRegistrationAction(event, tableActionSchema, {
       api: () => ({ action: 'unwaitlist', slug: event.params.slug, body: {} }),
+    }),
+  // Campanha aberta (`use_session_signup`): "Quero jogar esta" (or wait for it), and leaving it.
+  sessionSignup: async (event) =>
+    runRegistrationAction(event, sessionSignupSchema, {
+      allow: await sessionSignupEnabled(event.locals, await event.locals.getProfile()),
+      api: ({ sessionId }) => ({
+        action: 'sessionSignup',
+        slug: event.params.slug,
+        body: { sessionId },
+      }),
+    }),
+  sessionLeave: async (event) =>
+    runRegistrationAction(event, sessionSignupSchema, {
+      allow: await sessionSignupEnabled(event.locals, await event.locals.getProfile()),
+      api: ({ sessionId }) => ({
+        action: 'sessionLeave',
+        slug: event.params.slug,
+        body: { sessionId },
+      }),
     }),
   approve: (event) =>
     runRegistrationAction(event, playerActionSchema, {

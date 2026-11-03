@@ -1,8 +1,126 @@
 [
   {
+    "date": "2026-11-03",
+    "title": "Sessões da mesa e a mesa na sua agenda",
+    "summary": "Campanhas e aventuras ganham uma lista de sessões que quem mestra agenda, muda ou cancela, e a mesa vai para a sua agenda direto da página dela.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Guia Primeira mesa",
+        "description": "Um guia curto explica o que é uma mesa de RPG, como escolher e entrar na primeira e o que acontece no dia. Ele está na lista de mesas, em Primeira vez?",
+        "href": "/beginners"
+      },
+      {
+        "kind": "improved",
+        "title": "Selo Iniciantes",
+        "description": "Mesas com a tag Iniciantes mostram o selo no card e um aviso na página da mesa. Quem mestra pode marcar a tag ao criar ou editar a mesa.",
+        "href": "/tables?tag=iniciantes"
+      },
+      {
+        "kind": "new",
+        "title": "Assinar agenda",
+        "description": "Em Minhas mesas, abra o menu e toque em Assinar agenda. O link mostra as mesas em que você joga ou mestra e se atualiza sozinho no Google Agenda, no celular ou no Outlook quando a data, o horário ou o local mudam. Dá para gerar um link novo ou desligar quando quiser.",
+        "href": "/u/calendar"
+      },
+      {
+        "kind": "new",
+        "title": "Quando posso jogar",
+        "description": "Em Editar perfil, marque os dias e se você joga de manhã, à tarde ou à noite. Os horários aparecem no seu perfil e no seu card do Procuro mesa.",
+        "href": "/u/profile/edit/availability"
+      },
+      {
+        "kind": "improved",
+        "title": "Procuro mesa filtra por dia e horário",
+        "description": "Quem mestra pode filtrar o Procuro mesa por dia da semana e por horário para achar quem pode jogar na mesma hora da mesa.",
+        "href": "/players"
+      },
+      {
+        "kind": "new",
+        "title": "Sessões em Gerenciar mesa",
+        "description": "Em Gerenciar mesa, a seção Sessões mostra as próximas datas e as já jogadas, com quantos estiveram. Dá para agendar mais uma sessão, mudar a data, escrever uma nota para quem joga ou cancelar uma sessão. Uma campanha semanal já deixa as 4 próximas datas na lista."
+      },
+      {
+        "kind": "new",
+        "title": "Sessões na página da mesa",
+        "description": "A página de uma campanha ou aventura lista as próximas sessões. Quem tem vaga também vê as notas de quem mestra e, nas sessões já jogadas, se esteve presente."
+      },
+      {
+        "kind": "improved",
+        "title": "A mesa continua?",
+        "description": "Ao fim de uma sessão, se a próxima já está agendada, a pergunta já mostra a data dela em vez de pedir outra."
+      },
+      {
+        "kind": "new",
+        "title": "Adicionar à agenda",
+        "description": "Na página da mesa, o botão Adicionar à agenda abre a mesa no Google Agenda ou baixa o arquivo .ics para o Calendário do iPhone, o Outlook e outros. É o mesmo evento do convite por e-mail, então a mesa não aparece duas vezes."
+      },
+      {
+        "kind": "improved",
+        "title": "Financiamentos em Explorar",
+        "description": "Os financiamentos coletivos agora ficam em Explorar, junto de Sistemas, Onde jogar e Quem mestra, no menu lateral e na barra do celular.",
+        "href": "/crowdfunding"
+      },
+      {
+        "kind": "new",
+        "title": "Mensagens da equipe",
+        "description": "Quando a equipe da Mesa Aberta precisa falar com você sobre uma mesa, um parceiro, um lugar ou uma sugestão, a conversa aparece em Mensagens como [Admin] @nome, separada das suas conversas normais. Ela chega mesmo com as mensagens diretas desligadas, e você pode responder."
+      },
+      {
+        "kind": "new",
+        "title": "Vagas por sessão na campanha aberta",
+        "description": "Numa campanha aberta, quem está no elenco escolhe as sessões que quer jogar. Cada sessão tem as próprias vagas; cheia, dá para entrar na espera dela, e quem espera entra sozinho quando abre vaga. Quem mestra vê quem joga cada sessão e pode pôr ou tirar qualquer pessoa."
+      },
+      {
+        "kind": "improved",
+        "title": "Na campanha aberta, a agenda tem só as sessões que você joga",
+        "description": "Quando a mesa usa vagas por sessão, o convite, o botão Adicionar à agenda e a agenda assinada trazem só as sessões em que você entrou, e o lembrete vai só para quem joga aquela sessão."
+      },
+      {
+        "kind": "fixed",
+        "title": "Sem erro depois de salvar um formulário",
+        "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."
+      },
+      {
+        "kind": "improved",
+        "title": "Cada sessão na sua agenda",
+        "description": "Uma sessão cancelada sai da agenda, uma sessão que mudou de data aparece na nova data e uma sessão extra entra no evento da mesa. Quando quem mestra muda uma sessão, todos recebem por e-mail o convite atualizado."
+      }
+    ]
+  },
+  {
+    "date": "2026-11-01",
+    "title": "Classificação indicativa à vista",
+    "summary": "A classificação indicativa das mesas agora aparece com o símbolo colorido, no card e na página da mesa.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Símbolo da classificação indicativa",
+        "description": "A classificação que quem mestra escolhe aparece como o símbolo de autoclassificação do Ministério da Justiça (AL, A10, A14…) no card da mesa e na capa ou ao lado do título. Também dá para escolher a nova faixa de 6 anos.",
+        "href": "/tables"
+      },
+      {
+        "kind": "fixed",
+        "title": "Menos erros ao abrir páginas",
+        "description": "Quando o servidor falha por um instante ao abrir a página de um sistema ou a lista de mesas, a Mesa Aberta tenta de novo sozinha em vez de mostrar a tela de erro."
+      }
+    ]
+  },
+  {
+    "date": "2026-10-31",
+    "title": "Páginas mais rápidas",
+    "summary": "As páginas aparecem mais cedo, principalmente no celular.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Primeira tela mais rápida",
+        "description": "As páginas mostram a primeira tela mais cedo, principalmente no celular, porque deixaram de baixar um arquivo de estilo que não era usado."
+      }
+    ]
+  },
+  {
     "date": "2026-10-29",
-    "title": "Lista de espera, Começa já, Procuro mesa, Westmarch, segurança nas mesas e parceiros nos lugares",
-    "summary": "Mesa cheia ganhou lista de espera, cada mesa pode dizer como cuida da segurança de quem joga, os lugares ganharam tags e quem mestra na casa, e cada parceiro tem sua página.",
+    "title": "Mesa Aberta 1.0",
+    "summary": "Um mês depois de abrir, a Mesa Aberta chega à versão 1.0, com mesas, quem mestra, lugares e parceiros num só lugar. Nesta versão, mesa cheia ganhou lista de espera, cada mesa diz como cuida da segurança de quem joga, Começa já mostra as mesas das próximas horas e Procuro mesa ajuda quem mestra a encontrar quem está sem mesa. Valeu por jogar com a gente!",
     "changes": [
       {
         "kind": "new",
@@ -54,9 +172,14 @@
       },
       {
         "kind": "new",
-        "title": "Westmarch",
-        "description": "Um novo tipo de mesa para quem mestra westmarch: um elenco grande, com até 100 pessoas, e cada sessão com parte dele. Diga quantas jogam por sessão e marque as datas no seu ritmo, toda semana ou quando quiser.",
+        "title": "Campanha aberta",
+        "description": "Um novo tipo de mesa: um elenco grande, com até 100 pessoas, e cada sessão com parte dele. Diga quantas jogam por sessão e marque as datas no seu ritmo, toda semana ou quando quiser.",
         "href": "/tables/new"
+      },
+      {
+        "kind": "fixed",
+        "title": "Conquistas depois da mesa",
+        "description": "As conquistas voltam a chegar quando quem mestra conclui uma mesa."
       }
     ]
   },

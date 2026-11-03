@@ -1,10 +1,9 @@
 <svelte:options namespace="svg" />
 
 <script module lang="ts">
-  import { DRAWINGS } from '#lib/icons/drawings.generated.js';
+  import { MEEPLE_PATH as meeple } from '#lib/icons/sprite.generated.js';
 
   // The person is the app's meeple (game-icons:meeple), the same icon as every person elsewhere.
-  const meeple = DRAWINGS['game-icons:meeple'].body.match(/ d="([^"]+)"/)?.[1] ?? '';
 
   /** The taken seats' colours, in order around the table (SeatDots, SeatRing, TableIllustration). */
   export const SEAT_COLOURS = [

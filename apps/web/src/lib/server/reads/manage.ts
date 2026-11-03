@@ -8,6 +8,8 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { readFromApi } from '../api-read';
 import { playerRatingsEnabled } from '../ratings/players';
 import { waitlistEnabled } from '../waitlist/enabled';
+import { sessionSignupEnabled, tableSessionsEnabled } from '../tables/sessions-enabled';
+import { sessionsFromJson } from '../tables/sessions-json';
 
 // The GM's page for one table: requests, players, recent activity. Approving, declining and removing
 // post to the table page's own actions (see ActionForm), which send the browser back here. Read by
@@ -47,8 +49,17 @@ export const read = async ({ locals, url, params }: RequestEvent) => {
     const ratings = profile ? await playerRatingsEnabled(locals, profile) : false;
     // An api Worker from before the lista de espera answers without it.
     const waitlist = manage.waitlist ?? [];
+    // Sessões, while `use_table_sessions` is on (and the api Worker sends them).
+    const sessionsOn = !!manage.sessions && (await tableSessionsEnabled(locals, profile));
     return {
       ...manage,
+      sessions: sessionsOn
+        ? sessionsFromJson(manage.sessions, await sessionSignupEnabled(locals, profile))
+        : null,
+      scheduledNext:
+        sessionsOn && manage.scheduledNext
+          ? { ...manage.scheduledNext, startsAt: new Date(manage.scheduledNext.startsAt) }
+          : null,
       waitlist: (await waitlistEnabled(locals, profile)) ? waitlist.map(withPicture) : [],
       playerRatings: ratings,
       canRatePlayers: ratings && manage.canRatePlayers,

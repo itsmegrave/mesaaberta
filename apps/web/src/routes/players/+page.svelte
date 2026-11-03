@@ -18,6 +18,8 @@
   import { fromResult } from '#lib/forms/contract.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { availabilityLines, dayLong, periodLabel } from '#lib/profile/availability.js';
+  import { AVAILABILITY_DAYS, AVAILABILITY_PERIODS } from '@mesaaberta/core/profile/availability';
   import { toast } from '#lib/toaster.js';
   import {
     LOOKING_NOTE_MAX,
@@ -48,7 +50,17 @@
     { slug: ANY_SYSTEM, name: m.gms_system_any() },
     ...data.systems.map((system) => ({ slug: system.slug, name: system.name })),
   ]);
-  const filtered = $derived(!!(filters.query || filters.system));
+  const filtered = $derived(!!(filters.query || filters.system || filters.day || filters.period));
+  // "Quando joga": a day and a part of the day, while `use_profile_availability` is on.
+  const ANY = 'all';
+  const dayItems = [
+    { slug: ANY, name: m.availability_any_day() },
+    ...AVAILABILITY_DAYS.map((day) => ({ slug: day, name: dayLong(day) })),
+  ];
+  const periodItems = [
+    { slug: ANY, name: m.availability_any_period() },
+    ...AVAILABILITY_PERIODS.map((period) => ({ slug: period, name: periodLabel(period) })),
+  ];
 
   // svelte-ignore state_referenced_locally
   const controller = actionForm({
@@ -140,6 +152,38 @@
           void apply({ system: slug === ANY_SYSTEM ? '' : slug });
         }}
       />
+      {#if data.availabilityOn}
+        <SearchSelect
+          id="players-day"
+          name="day"
+          label={m.availability_day_label()}
+          labelClass="sr-only"
+          class="w-full md:w-44"
+          compact
+          items={dayItems}
+          value={[filters.day || ANY]}
+          placeholder={m.availability_day_label()}
+          onchange={(next) => {
+            const day = next[0] ?? ANY;
+            void apply({ day: day === ANY ? '' : day });
+          }}
+        />
+        <SearchSelect
+          id="players-period"
+          name="period"
+          label={m.availability_period_label()}
+          labelClass="sr-only"
+          class="w-full md:w-44"
+          compact
+          items={periodItems}
+          value={[filters.period || ANY]}
+          placeholder={m.availability_period_label()}
+          onchange={(next) => {
+            const period = next[0] ?? ANY;
+            void apply({ period: period === ANY ? '' : period });
+          }}
+        />
+      {/if}
     {/snippet}
   </DirectoryFilters>
 
@@ -149,7 +193,11 @@
     <CardGrid>
       {#each data.people as player (player.username)}
         <li class="min-w-0">
-          <PlayerCard {player} facts={playerFacts(player, now)} />
+          <PlayerCard
+            {player}
+            facts={playerFacts(player, now)}
+            availability={availabilityLines(player.availability)}
+          />
         </li>
       {/each}
     </CardGrid>

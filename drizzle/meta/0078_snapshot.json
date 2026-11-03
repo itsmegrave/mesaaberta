@@ -1,5 +1,5 @@
 {
-  "id": "3f2ed81d-46d4-4f71-a096-bb9db0de7b6d",
+  "id": "2c278523-30c8-4ecf-ba7d-425916d897be",
   "prevId": "6a480171-2c6f-412d-86b1-91eba7940167",
   "version": "7",
   "dialect": "postgresql",
@@ -1619,7 +1619,7 @@
         },
         "game_tables_content_rating_value": {
           "name": "game_tables_content_rating_value",
-          "value": "\"game_tables\".\"content_rating\" IS NULL OR \"game_tables\".\"content_rating\" IN ('L', '10', '12', '14', '16', '18')"
+          "value": "\"game_tables\".\"content_rating\" IS NULL OR \"game_tables\".\"content_rating\" IN ('L', '6', '10', '12', '14', '16', '18')"
         },
         "game_tables_duration_positive": {
           "name": "game_tables_duration_positive",
@@ -5814,13 +5814,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "year_review_public": {
-          "name": "year_review_public",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "role": {
           "name": "role",

@@ -41,6 +41,7 @@ afterAll(() => test.close());
 
 const tracked = vi.fn();
 let safetyOn = false;
+let symbolOn = false;
 const viewer = '00000000-0000-4000-8000-000000000001';
 const event = (search = '', referer = '') =>
   ({
@@ -52,7 +53,11 @@ const event = (search = '', referer = '') =>
       track: tracked,
       getUser: async () => ({ id: viewer }),
       getProfile: async () => null,
-      flags: { isEnabled: async (name: string) => name === 'use_table_safety' && safetyOn },
+      flags: {
+        isEnabled: async (name: string) =>
+          (name === 'use_table_safety' && safetyOn) ||
+          (name === 'use_content_rating_symbol' && symbolOn),
+      },
     },
     request: new Request('https://x.test/tables', { headers: referer ? { referer } : {} }),
     url: new URL(`https://x.test/t${search}`),
@@ -97,6 +102,22 @@ describe('the table list load', () => {
       safetyOn = false;
     }
     expect(slugs((await run(event())).tables)).toEqual(['t1', 't2']);
+  });
+
+  it('hands the cards their rating only while the symbol is on', async () => {
+    vi.mocked(listUpcomingTables).mockResolvedValue([
+      { ...table('t1', 'd'), contentRating: '14' } as Table,
+    ]);
+    expect((await run(event())).tables[0].contentRating).toBeNull();
+    safetyOn = true;
+    try {
+      expect((await run(event())).tables[0].contentRating).toBeNull();
+      symbolOn = true;
+      expect((await run(event())).tables[0].contentRating).toBe('14');
+    } finally {
+      safetyOn = false;
+      symbolOn = false;
+    }
   });
 
   it('narrows the list to the chosen system', async () => {

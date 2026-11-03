@@ -50,6 +50,7 @@ export async function runRegistrationAction<T extends Record<string, unknown>>(
     'comment',
     'commentPublic',
     'message',
+    'sessionId',
   ]);
   if (!form.valid) return formMessage(form, { code: 'invalid' }, { status: 400 });
 

@@ -38,7 +38,7 @@
     latest: NonNullable<Parameters<typeof NotificationBell>[1]>['latest'];
     seenAt?: string;
     messagesUnread: number;
-    /** The directories that are on, drawn as their own group after the destinations. */
+    /** Explorar's links, drawn as their own group after the destinations. */
     directories?: DirectoryLink[];
   } = $props();
 
@@ -77,7 +77,7 @@
       primary: !!link.primary,
     })),
   );
-  // Sistemas, Lugares and Quem mestra, by their long names.
+  // Explorar: the directories that are on and Financiamentos, by their long names.
   const explore = $derived(
     directories.map((link) => ({
       href: link.href,

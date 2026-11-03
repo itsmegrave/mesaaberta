@@ -551,8 +551,50 @@
     {
       "idx": 78,
       "version": "7",
-      "when": 1793279618722,
-      "tag": "0078_year_review",
+      "when": 1793499986660,
+      "tag": "0078_table_rating_six",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1793716848514,
+      "tag": "0079_table_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1793717660189,
+      "tag": "0080_table_session_pins",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1793721438162,
+      "tag": "0081_profile_availability",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1793722526755,
+      "tag": "0082_calendar_feed",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1793724282971,
+      "tag": "0083_session_signups",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1793741645616,
+      "tag": "0084_year_review",
       "breakpoints": true
     }
   ]

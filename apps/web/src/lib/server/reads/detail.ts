@@ -6,7 +6,10 @@ import { readFromApi } from '../api-read';
 import { badgesEnabled } from '../badges/enabled';
 import { directoryEnabled } from '../directories/flags';
 import { waitlistEnabled } from '../waitlist/enabled';
-import { tableSafetyEnabled } from '../tables/safety-enabled';
+import { contentRatingSymbolShown, tableSafetyEnabled } from '../tables/safety-enabled';
+import { tableCalendarEnabled } from '../tables/calendar-enabled';
+import { sessionSignupEnabled, tableSessionsEnabled } from '../tables/sessions-enabled';
+import { sessionsFromJson } from '../tables/sessions-json';
 
 export const read = async ({ locals, params }: RequestEvent) => {
   const user = await locals.getUser();
@@ -38,6 +41,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     badges = null,
     place = null,
     waitlist = null,
+    sessions = null,
     ...rest
   } = detail;
   return {
@@ -54,11 +58,21 @@ export const read = async ({ locals, params }: RequestEvent) => {
         ? { safetyTools: table.safetyTools ?? [], contentRating: table.contentRating ?? null }
         : { safetyTools: [] as string[], contentRating: null }),
     },
+    // The rating drawn as its ClassInd symbol on the cover or by the title (`use_content_rating_symbol`).
+    ratingSymbol: await contentRatingSymbolShown(locals, profile),
     signedIn,
     invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.
     place: place && (await directoryEnabled(locals, 'places')) ? place : null,
+    // "Adicionar à agenda" for the GM and confirmed players (`use_table_calendar`).
+    tableCalendar: await tableCalendarEnabled(locals, profile),
     // The lista de espera, while `use_waitlist` is on: how many wait and the viewer's place in line.
     waitlist: waitlist && (await waitlistEnabled(locals, profile)) ? waitlist : null,
+    // Sessões, while `use_table_sessions` is on (and the api Worker sends them).
+    // A campanha aberta's places per session, while `use_session_signup` is on too.
+    sessions:
+      sessions && (await tableSessionsEnabled(locals, profile))
+        ? sessionsFromJson(sessions, await sessionSignupEnabled(locals, profile))
+        : null,
   };
 };
