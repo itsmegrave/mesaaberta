@@ -170,6 +170,7 @@ describe('findSystemLogo', () => {
           query: {
             search: [
               { title: 'File:Blades in the Dark cover.jpg' },
+              { title: 'File:Club Blades in the Dark Sports logo.png' },
               { title: 'File:Blades in the Dark logo.svg' },
             ],
           },
@@ -182,8 +183,7 @@ describe('findSystemLogo', () => {
                 imageinfo: [
                   {
                     thumburl: 'https://upload.wikimedia.org/bitd.png',
-                    descriptionurl:
-                      'https://commons.wikimedia.org/wiki/File:Blades_in_the_Dark_logo.svg',
+                    descriptionurl: '//commons.wikimedia.org/wiki/File:Blades_in_the_Dark_logo.svg',
                   },
                 ],
               },
@@ -196,6 +196,7 @@ describe('findSystemLogo', () => {
 
     expect(found.candidate).toMatchObject({
       imageUrl: 'https://upload.wikimedia.org/bitd.png',
+      sourcePage: 'https://commons.wikimedia.org/wiki/File:Blades_in_the_Dark_logo.svg',
       method: 'commons',
       confidence: 'medium',
     });

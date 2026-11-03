@@ -367,9 +367,10 @@ async function commonsFile(fetcher: Fetcher, file: string, timeoutMs: number) {
   const meta = image.extmetadata ?? {};
   return {
     imageUrl: image.thumburl,
-    sourcePage:
-      image.descriptionurl ??
-      `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`,
+    // Commons answers the page protocol-relative ("//commons.wikimedia.org/...").
+    sourcePage: image.descriptionurl
+      ? new URL(image.descriptionurl, 'https://commons.wikimedia.org').href
+      : `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`,
     license: plainText(meta.LicenseShortName?.value),
     attribution: plainText(meta.Artist?.value) ?? plainText(meta.Credit?.value),
   };
@@ -397,8 +398,15 @@ async function commonsLogoByTitle(fetcher: Fetcher, name: string, timeoutMs: num
   );
   for (const { title } of found.query?.search ?? []) {
     const file = title.replace(/^File:/, '');
-    const folded = foldName(file.replace(/\.[a-z0-9]+$/i, ''));
-    if (/\blogo\b/.test(folded) && folded.replace(/ /g, '').includes(wanted)) return file;
+    const squashed = foldName(file.replace(/\.[a-z0-9]+$/i, '')).replace(/ /g, '');
+    // The name and "logo", with at most a short word between or after ("rpg", "2e", a year):
+    // a name inside a longer title ("DJK Agon 08 Düsseldorf logo") is someone else's logo.
+    const rest = squashed.startsWith(wanted)
+      ? squashed.slice(wanted.length)
+      : squashed.endsWith(wanted)
+        ? squashed.slice(0, -wanted.length)
+        : null;
+    if (rest !== null && rest.includes('logo') && rest.replace('logo', '').length <= 6) return file;
   }
   return null;
 }
