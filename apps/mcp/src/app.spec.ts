@@ -177,13 +177,18 @@ describe('the read tools', () => {
 
   it('calls the api as the person the token names, never as someone an argument names', async () => {
     const { call, seen } = setUp({
-      answers: { '/v1/reads/tables': { body: { tables: [{ slug: 'torre' }] } } },
+      answers: {
+        '/v1/reads/tables': {
+          body: { tables: [{ slug: 'torre' }], systems: [{ slug: 'dnd-5e' }], catalog: {} },
+        },
+      },
     });
     const { isError, body } = await call('search_tables', {
       system: ['dnd-5e', 'tormenta20'],
       modality: 'online',
     });
     expect(isError).toBe(false);
+    // Only the tables: the page's filter menus (every system on the site) stay out.
     expect(body).toEqual({ tables: [{ slug: 'torre' }] });
     const last = seen.at(-1)!;
     expect(last.path).toBe('/v1/reads/tables?system=dnd-5e&system=tormenta20&modality=online');

@@ -82,8 +82,12 @@ export function registerTools(server: McpServer, context: ToolContext) {
       annotations: READ,
     },
     async ({ system, modality, platform, tag, gm }) =>
-      answer('search_tables', () =>
-        read(`/v1/reads/tables${queryOf({ system, modality, platform, tag, gm })}`),
+      answer(
+        'search_tables',
+        () => read(`/v1/reads/tables${queryOf({ system, modality, platform, tag, gm })}`),
+        // Only the tables: the rest feeds the page's filter menus (every system on the site, some
+        // 40 KB), too big for a tool answer and already in list_systems.
+        (body) => ({ tables: (body as { tables?: unknown }).tables ?? [] }),
       ),
   );
 
@@ -98,7 +102,15 @@ export function registerTools(server: McpServer, context: ToolContext) {
       annotations: READ,
     },
     async ({ slug }) =>
-      answer('get_table', () => read(`/v1/reads/detail/${encodeURIComponent(slug)}`)),
+      answer(
+        'get_table',
+        () => read(`/v1/reads/detail/${encodeURIComponent(slug)}`),
+        // `reportTargets` feeds the page's Denunciar menu; the seats are already in `registrations`.
+        (body) => {
+          const { reportTargets: _reportTargets, ...page } = body as Record<string, unknown>;
+          return page;
+        },
+      ),
   );
 
   server.registerTool(
