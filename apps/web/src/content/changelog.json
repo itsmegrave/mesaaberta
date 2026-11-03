@@ -1,5 +1,17 @@
 [
   {
+    "date": "2026-11-03",
+    "title": "A mesa na sua agenda",
+    "summary": "Quem mestra e quem tem vaga podem pôr a mesa na agenda direto da página dela.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Adicionar à agenda",
+        "description": "Na página da mesa, o botão Adicionar à agenda abre a mesa no Google Agenda ou baixa o arquivo .ics para o Calendário do iPhone, o Outlook e outros. É o mesmo evento do convite por e-mail, então a mesa não aparece duas vezes."
+      }
+    ]
+  },
+  {
     "date": "2026-11-01",
     "title": "Classificação indicativa à vista",
     "summary": "A classificação indicativa das mesas agora aparece com o símbolo colorido, no card e na página da mesa.",
