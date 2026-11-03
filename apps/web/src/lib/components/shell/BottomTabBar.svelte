@@ -10,7 +10,7 @@
   let {
     directories = [],
   }: {
-    /** The directories that are on: one is linked straight, two or more open Explorar. */
+    /** Explorar's links (directories and Financiamentos): one is linked straight, two or more open the sheet. */
     directories?: DirectoryLink[];
   } = $props();
 
@@ -46,7 +46,6 @@
     {@const current = link.current(pathname)}
     <a
       href={link.href}
-      aria-label={link.tabAriaLabel?.()}
       aria-current={current ? 'page' : undefined}
       class={tabClass(current, link.primary)}
     >

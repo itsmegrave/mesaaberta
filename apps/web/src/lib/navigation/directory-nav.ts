@@ -23,8 +23,9 @@ export interface DirectoryLink {
   current: (pathname: string) => boolean;
 }
 
-// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa.
-const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })[] = [
+// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa, then Financiamentos.
+// A link with no `key` has no flag and is always listed.
+const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches })[] = [
   {
     key: 'systems',
     href: '/systems',
@@ -62,9 +63,17 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key: keyof DirectorySwitches })
     description: m.nav_directory_players_description,
     current: (pathname) => isUnder(pathname, '/players'),
   },
+  {
+    href: '/crowdfunding',
+    icon: 'game-icons:open-treasure-chest',
+    label: m.nav_crowdfunding,
+    shortLabel: m.nav_crowdfunding,
+    description: m.nav_crowdfunding_description,
+    current: (pathname) => isUnder(pathname, '/crowdfunding'),
+  },
 ];
 
-/** The directory links to draw, in order: only the ones whose flag is on. */
+/** The Explorar links to draw, in order: the directories whose flag is on, and Financiamentos. */
 export function directoryNav(switches: DirectorySwitches): DirectoryLink[] {
-  return DIRECTORY_NAV.filter((link) => switches[link.key] === true);
+  return DIRECTORY_NAV.filter((link) => link.key === undefined || switches[link.key] === true);
 }

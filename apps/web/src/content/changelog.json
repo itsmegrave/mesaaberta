@@ -8,6 +8,12 @@
         "kind": "new",
         "title": "Adicionar à agenda",
         "description": "Na página da mesa, o botão Adicionar à agenda abre a mesa no Google Agenda ou baixa o arquivo .ics para o Calendário do iPhone, o Outlook e outros. É o mesmo evento do convite por e-mail, então a mesa não aparece duas vezes."
+      },
+      {
+        "kind": "improved",
+        "title": "Financiamentos em Explorar",
+        "description": "Os financiamentos coletivos agora ficam em Explorar, junto de Sistemas, Onde jogar e Quem mestra, no menu lateral e na barra do celular.",
+        "href": "/crowdfunding"
       }
     ]
   },
