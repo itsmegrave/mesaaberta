@@ -125,6 +125,10 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // "Quando posso jogar" on profiles, a new feature (created on for everyone): the days and parts
+  // of the day a person can play, on their profile, on Procuro mesa and as its filter. Off: the
+  // profile section is a 404 and nothing shows it. Targeted by the viewer (a profile: the person).
+  use_profile_availability: false,
   // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
   // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
   // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.

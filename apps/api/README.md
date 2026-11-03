@@ -97,6 +97,7 @@ Pictures stay paths: the web Worker turns them into URLs.
 - `GET /v1/me/shell`: the header on every page (the bell's number and latest few, the conversations with something unread, and for an admin the catalog suggestions waiting).
 - `GET /v1/me/badges`: the two numbers the page polls.
 - `GET /v1/me/notifications?page=N&category=&unread=1`: a page of the feed and the unread total (a page past the last is a 404).
+- `GET /v1/me/availability` and `POST /v1/me/availability` (`{ slots }`, e.g. `mon-night`): "Quando posso jogar", read and saved (none clears it); records `AvailabilityChanged`. Web checks `use_profile_availability` first. `/v1/players` takes `day` and `period` filters and its cards and `/v1/profiles/:username` answer the stored `availability` integer, which web drops while the flag is off.
 
 `achievements=1` says the badge notices are on for the person (`use_badges`, decided in web).
 

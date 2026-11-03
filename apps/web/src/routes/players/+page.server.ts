@@ -4,7 +4,7 @@ import { requireUser } from '#lib/server/auth/guard.js';
 import { requireDirectory } from '#lib/server/directories/flags.js';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { writeViaApi } from '#lib/server/api-write.js';
-import { lookingSchema, readPlayerFilters } from '@mesaaberta/core/players/looking';
+import { lookingSchema, playerQuery, readPlayerFilters } from '@mesaaberta/core/players/looking';
 import type { listLookingPlayers, LookingState } from '@mesaaberta/core/server/players/directory';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { Invalid } from '@mesaaberta/core/server/errors';
@@ -17,13 +17,21 @@ type List = NonNullable<Awaited<ReturnType<typeof listLookingPlayers>>> & { me: 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
   await requireDirectory(locals, 'players');
-  const filters = readPlayerFilters(url.searchParams);
+  // "Quando joga" (filter and cards) only while `use_profile_availability` is on for the viewer.
+  const availabilityOn = await locals.flags.isEnabled('use_profile_availability', { id: user.id });
+  const read = readPlayerFilters(url.searchParams);
+  const filters = availabilityOn ? read : { ...read, day: '', period: '' };
   const { me, ...list } = revivedDates(
-    await readFromApi<List>(locals, user.id, `/v1/players?${url.searchParams}`),
+    await readFromApi<List>(
+      locals,
+      user.id,
+      `/v1/players${playerQuery(filters, filters.page) || '?'}`,
+    ),
   );
   const supabase = supabaseUrlOf(locals.env);
   return {
     filters,
+    availabilityOn,
     me,
     form: initialForm({ looking: me.looking, note: me.note }),
     total: list.total,
@@ -31,6 +39,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     systems: list.systems,
     people: list.people.map(({ avatarPath, avatarUrl, ...person }) => ({
       ...person,
+      availability: availabilityOn ? person.availability : 0,
       avatarUrl: pictureOf(supabase, { avatarPath, avatarUrl }),
     })),
   };

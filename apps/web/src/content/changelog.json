@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-11-03",
+    "title": "Quando você pode jogar",
+    "summary": "Diga no perfil em que dias e horários você costuma jogar, e encontre no Procuro mesa quem joga quando você mestra.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Quando posso jogar",
+        "description": "Em Editar perfil, marque os dias e se você joga de manhã, à tarde ou à noite. Os horários aparecem no seu perfil e no seu card do Procuro mesa.",
+        "href": "/u/profile/edit/availability"
+      },
+      {
+        "kind": "improved",
+        "title": "Procuro mesa filtra por dia e horário",
+        "description": "Quem mestra pode filtrar o Procuro mesa por dia da semana e por horário para achar quem pode jogar na mesma hora da mesa.",
+        "href": "/players"
+      }
+    ]
+  },
+  {
     "date": "2026-11-01",
     "title": "Classificação indicativa à vista",
     "summary": "A classificação indicativa das mesas agora aparece com o símbolo colorido, no card e na página da mesa.",

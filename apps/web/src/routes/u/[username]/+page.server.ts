@@ -53,19 +53,29 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
   // The api reads every flag-gated part; the rollouts are by the profile shown, so everyone sees
   // the same strip on a given profile. Follows are targeted by the viewer.
   const viewer = user ? await locals.getProfile().catch(() => null) : null;
-  const [badgesOn, participantOn, favoritesOn, tableRoleOn, followsOn, linksOn, ratingOn] =
-    await Promise.all([
-      locals.flags.isEnabled('use_badges', subject),
-      locals.flags.isEnabled('use_player_ratings', subject),
-      locals.flags.isEnabled('use_signed_in_home', subject),
-      // The role tag shows to whoever Quem mestra is on for.
-      directoryEnabled(locals, 'gms'),
-      followsEnabled(locals, viewer),
-      // "Mestra em" and "Cuida de".
-      directoryLinksEnabled(locals),
-      // The cards' ClassInd symbol, targeted by the viewer.
-      contentRatingSymbolShown(locals, viewer),
-    ]);
+  const [
+    badgesOn,
+    participantOn,
+    favoritesOn,
+    tableRoleOn,
+    followsOn,
+    linksOn,
+    ratingOn,
+    availabilityOn,
+  ] = await Promise.all([
+    locals.flags.isEnabled('use_badges', subject),
+    locals.flags.isEnabled('use_player_ratings', subject),
+    locals.flags.isEnabled('use_signed_in_home', subject),
+    // The role tag shows to whoever Quem mestra is on for.
+    directoryEnabled(locals, 'gms'),
+    followsEnabled(locals, viewer),
+    // "Mestra em" and "Cuida de".
+    directoryLinksEnabled(locals),
+    // The cards' ClassInd symbol, targeted by the viewer.
+    contentRatingSymbolShown(locals, viewer),
+    // "Quando posso jogar", by the profile shown.
+    locals.flags.isEnabled('use_profile_availability', subject),
+  ]);
   // "Ver como visitante": the owner sees the page as anyone else does.
   const previewing = data.isOwner && url.searchParams.get('as') === 'visitor';
   // Seguir for anyone else; for the owner, how many follow them (shown to nobody else).
@@ -82,6 +92,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
       ...data.profile,
       participantRating: participantOn ? data.profile.participantRating : null,
       favoriteSystems: favoritesOn ? data.profile.favoriteSystems : null,
+      availability: availabilityOn ? (data.profile.availability ?? 0) : 0,
       tableRole: tableRoleOn ? data.profile.tableRole : null,
       hostedAt: linksOn ? (data.profile.hostedAt ?? []) : [],
       looksAfter: linksOn ? (data.profile.looksAfter ?? []) : [],

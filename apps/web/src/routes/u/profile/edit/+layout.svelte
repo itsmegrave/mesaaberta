@@ -34,6 +34,7 @@
       path={page.url.pathname}
       systems={data.systemsSection}
       following={data.followingSection}
+      availability={data.availabilitySection}
     />
     <div class="grid min-w-0 flex-1 gap-6">
       {@render children()}
