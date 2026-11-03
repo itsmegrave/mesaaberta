@@ -55,7 +55,7 @@
 >
   <Popover.Trigger
     type="button"
-    class="btn size-12 shrink-0 rounded-lg p-0 hover:preset-tonal"
+    class="btn size-11 shrink-0 rounded-lg p-0 hover:preset-tonal"
     aria-label={m.messages_emoji_open()}
     ><span aria-hidden="true" class="text-xl">😊</span></Popover.Trigger
   >

@@ -3,6 +3,9 @@
 @import '@skeletonlabs/skeleton-svelte';
 @import '@skeletonlabs/skeleton/themes/cerberus';
 @import '@fontsource-variable/cinzel';
+/* The private package (packages/privy, installed at build) draws its own components; Tailwind
+   does not scan workspace packages on its own. Nothing is there in the open-source build. */
+@source '../../../../packages/privy/src';
 
 /* Dark mode is a `data-mode` on <html>: set before the first paint (src/app.html) and by the theme toggle. */
 @custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));

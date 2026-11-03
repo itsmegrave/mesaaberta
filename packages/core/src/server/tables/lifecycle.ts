@@ -11,6 +11,7 @@ import type { Changes } from '../events/types';
 import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { markedPresentAt } from './attendance';
+import { closeSession, nextScheduledAfter, syncTableSessions, type Attendance } from './sessions';
 import { localToInstant, nextWeeklySession, weeklyInterval } from './schedule';
 import {
   lockTableSchedule,
@@ -101,16 +102,21 @@ async function answer(
   event: 'TableConcluded' | 'TableSessionHeld' | 'TableNotHeld' | 'TableUpdated',
   changes?: Changes,
   presentPlayerIds?: string[],
+  // What became of the session that passed: it happened or it did not. None for a postponement,
+  // which moves the same session to another date.
+  outcome?: 'held' | 'not_held',
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
 
   const eventId = await db.transaction(async (tx) => {
     let values = change(table);
+    let passed: { id: string; startsAt: Date; durationMinutes: number } = table;
     if (move === 'POSTPONE' || move === 'SESSION_HELD') {
       await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
       const { table: current, linked } = await lockTableFamily(tx as unknown as AnyDb, table.id);
       authorize(actor, 'table:confirm', { gmId: current.gmId, tableStatus: current.status });
       values = change(current);
+      passed = current;
       assertTableSchedule(linked, { ...current, ...values }, current.id);
     }
     const [updated] = await tx
@@ -119,11 +125,16 @@ async function answer(
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
       .returning({ id: gameTables.id });
     if (!updated) throw new Forbidden('table:confirm');
-    const absentPlayerIds = presentPlayerIds
+    const attendance = presentPlayerIds
       ? await markAttendance(tx as unknown as AnyDb, table.id, presentPlayerIds, {
           keepPresent: table.kind !== 'one_shot',
         })
       : undefined;
+    const absentPlayerIds = attendance?.absent;
+    if (outcome) {
+      await closeSession(tx as unknown as AnyDb, passed, outcome, attendance?.session);
+    }
+    await syncTableSessions(tx as unknown as AnyDb, [table.id]);
 
     await cancelPendingInvitations(
       tx as unknown as AnyDb,
@@ -155,14 +166,15 @@ async function answer(
  * confirmed player did not. Ids that hold no confirmed seat are ignored. Answers the absent ids.
  * A player who already rated the table played it, so they stay present whatever the list says.
  * `keepPresent`: a session of a table that goes on never takes back what an earlier one recorded,
- * so someone who showed up once stays present.
+ * so someone who showed up once stays present. `session` is who was or was not at this session
+ * alone, for its own attendance rows.
  */
 async function markAttendance(
   tx: AnyDb,
   tableId: string,
   presentPlayerIds: string[],
   { keepPresent = false }: { keepPresent?: boolean } = {},
-): Promise<string[]> {
+): Promise<{ absent: string[]; session: Attendance }> {
   const seated = await tx
     .select({ id: registrations.playerId, attended: registrations.attended })
     .from(registrations)
@@ -189,7 +201,8 @@ async function markAttendance(
       .set({ attended: false })
       .where(and(inTable, inArray(registrations.playerId, absent)));
   }
-  return absent;
+  const missed = seated.filter(({ id }) => !present.has(id)).map(({ id }) => id);
+  return { absent, session: { present: here, absent: missed } };
 }
 
 /**
@@ -201,22 +214,37 @@ export const concludeTable = (
   actor: Actor | null,
   slug: string,
   presentPlayerIds?: string[],
-) => answer(db, actor, slug, 'HAPPENED', () => ({}), 'TableConcluded', undefined, presentPlayerIds);
+) =>
+  answer(
+    db,
+    actor,
+    slug,
+    'HAPPENED',
+    () => ({}),
+    'TableConcluded',
+    undefined,
+    presentPlayerIds,
+    'held',
+  );
 
 /**
  * When the next session of a campaign or adventure is: `nextStartsAtLocal` (in the table's zone),
- * or a weekly campaign's next date without it. Throws `Invalid` for a one-shot, a missing date
+ * or without it the next session already scheduled, or else a weekly campaign's next date. Throws `Invalid` for a one-shot, a missing date
  * on an adventure and a date that is not in the future.
  */
-function nextSessionAt(
+async function nextSessionAt(
+  db: AnyDb,
   table: Awaited<ReturnType<typeof findAwaiting>>,
   nextStartsAtLocal: string | undefined,
   now: Date,
-): Date {
+): Promise<Date> {
   if (table.kind === 'one_shot') throw new Invalid('slug', 'not_multi_session');
   let startsAt: Date;
   if (nextStartsAtLocal) startsAt = localToInstant(nextStartsAtLocal, table.timezone);
   else {
+    // The next session already on the list, when there is one.
+    const scheduled = await nextScheduledAfter(db, table.id, table.startsAt, now);
+    if (scheduled) return scheduled;
     const interval = weeklyInterval(table.recurrence);
     if (!interval) throw new Invalid('nextStartsAtLocal', 'required');
     startsAt = nextWeeklySession(table.startsAt, interval, table.timezone, now);
@@ -242,7 +270,7 @@ export async function holdSession(
   now = new Date(),
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
-  const startsAt = nextSessionAt(table, nextStartsAtLocal, now);
+  const startsAt = await nextSessionAt(db, table, nextStartsAtLocal, now);
 
   return answer(
     db,
@@ -253,6 +281,7 @@ export async function holdSession(
     'TableSessionHeld',
     undefined,
     presentPlayerIds,
+    'held',
   );
 }
 
@@ -286,6 +315,8 @@ export async function finishTable(
       )
       .returning({ id: gameTables.id });
     if (!updated) throw new Forbidden('table:finish');
+    // The session that was next will not happen: the table ends without it.
+    await syncTableSessions(tx as unknown as AnyDb, [found.id]);
     const absent = await tx
       .select({ id: registrations.playerId })
       .from(registrations)
@@ -377,7 +408,7 @@ export async function skipSession(
   now = new Date(),
 ): Promise<{ eventId: string }> {
   const table = await findAwaiting(db, actor, slug);
-  const startsAt = nextSessionAt(table, nextStartsAtLocal, now);
+  const startsAt = await nextSessionAt(db, table, nextStartsAtLocal, now);
 
   return answer(
     db,
@@ -387,6 +418,8 @@ export async function skipSession(
     (current) => ({ startsAt, icalSequence: current.icalSequence + 1 }),
     'TableUpdated',
     diffFields({ startsAt: table.startsAt }, { startsAt }),
+    undefined,
+    'not_held',
   );
 }
 
@@ -395,7 +428,7 @@ export async function skipSession(
  * can be rated, a campaign or adventure included (`skipSession` keeps one going). Nobody is notified.
  */
 export const markTableNotHeld = (db: AnyDb, actor: Actor | null, slug: string) =>
-  answer(db, actor, slug, 'NOT_HELD', () => ({}), 'TableNotHeld');
+  answer(db, actor, slug, 'NOT_HELD', () => ({}), 'TableNotHeld', undefined, undefined, 'not_held');
 
 /**
  * The GM moves the session to a new date, read in the table's own zone, and the table is open

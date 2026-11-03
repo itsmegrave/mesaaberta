@@ -51,7 +51,7 @@ describe('the Onde jogar load', () => {
     vi.mocked(listPlaces).mockResolvedValue({
       total: 1,
       pages: 1,
-      states: [{ slug: 'pe', label: 'PE' }],
+      states: [{ slug: 'pe', label: 'Pernambuco', count: 1 }],
       cities: [],
       tags: [],
       places: [taverna],
