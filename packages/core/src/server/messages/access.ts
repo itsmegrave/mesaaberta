@@ -11,7 +11,7 @@ import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { firstSessionEnded } from '../ratings/service';
 import { blockState } from '../blocks/service';
 import type { TableStatus } from '../../tables/status-values';
-import { TABLE_CHAT_DAYS_AFTER_END } from '../../messages/schema';
+import { TABLE_CHAT_DAYS_AFTER_END, isAdminConversation } from '../../messages/schema';
 
 type Conversation = typeof conversations.$inferSelect;
 
@@ -106,7 +106,11 @@ export async function canSend(
   }
 
   const other = await otherDirectMember(db, conversation.id, actor.id);
-  if (other === undefined || !other.enabled || other.status !== 'active') return false;
+  if (other === undefined || other.status !== 'active') return false;
+  // An admin conversation goes both ways whatever the switch or a block says: the admin reaches the
+  // person, and the person can always answer.
+  if (isAdminConversation(conversation)) return true;
+  if (!other.enabled) return false;
   // An admin still reaches someone who blocked them: moderation must get through.
   if (can(actor, 'moderation:manage')) return true;
   const block = await blockState(db, actor.id, other.id);

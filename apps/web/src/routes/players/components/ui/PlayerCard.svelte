@@ -1,7 +1,8 @@
 <script lang="ts">
   // A person in Procuro mesa: the avatar, the name (or the @usuário) as the card's one link to the
-  // profile, the line they wrote for GMs, their favorite systems and a line of facts. Draws only
+  // profile, the line they wrote for GMs, their favorite systems, when they can play and a line of facts. Draws only
   // what it is given.
+  import AvailabilityList from '#lib/components/ui/AvailabilityList.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import { linkedCardClass } from '#lib/components/ui/MediaCard.svelte';
@@ -10,6 +11,7 @@
   let {
     player,
     facts,
+    availability = [],
   }: {
     player: {
       username: string;
@@ -21,6 +23,8 @@
     };
     /** The line of facts: since when they are looking, how many tables they played. */
     facts: string;
+    /** "Quando posso jogar", one line per part of the day; none draws nothing. */
+    availability?: string[];
   } = $props();
 </script>
 
@@ -60,6 +64,7 @@
       {/if}
     </ul>
   {/if}
+  <AvailabilityList lines={availability} label={m.availability_label()} />
   <div class="mt-auto flex items-center justify-between gap-3 border-t border-surface-200-800 pt-4">
     <span class="text-sm font-medium text-muted">{facts}</span>
     <span

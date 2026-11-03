@@ -9,6 +9,7 @@
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { shortDate } from '#lib/admin/format.js';
   import { removePlace } from '#lib/admin/moderation-presets.js';
@@ -66,6 +67,7 @@
   function copyId(row: Row) {
     return copyText(row.id, m.toast_id_copied());
   }
+  const messages = personMessages();
   const items = (row: Row): KebabItem[] => [
     ...(!row.removedAt && !row.approvedAt
       ? [
@@ -103,6 +105,7 @@
             href: `/pp/${row.slug}/edit`,
           },
         ]),
+    ...messages.item(row.contactId),
     {
       id: 'reports',
       label: m.admin_places_see_reports(),

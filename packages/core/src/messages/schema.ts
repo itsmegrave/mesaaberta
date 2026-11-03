@@ -35,3 +35,16 @@ export type MessageInput = z.infer<typeof messageSchema>;
 
 /** The key of the one direct conversation between two people, the same whoever asks. */
 export const pairKey = (a: string, b: string) => (a < b ? `${a}:${b}` : `${b}:${a}`);
+
+/**
+ * The key of the admin conversation between an admin and someone: a `direct` conversation of its
+ * own, apart from the pair's everyday one, shown to both as "[Admin] @username". It reaches people
+ * with direct messages off or who blocked the admin, and they can always answer it.
+ */
+export const adminPairKey = (adminId: string, profileId: string) =>
+  `${ADMIN_KEY_PREFIX}${pairKey(adminId, profileId)}`;
+export const ADMIN_KEY_PREFIX = 'admin:';
+
+/** Whether a conversation is an admin one (`adminPairKey`). */
+export const isAdminConversation = (conversation: { pairKey: string | null }) =>
+  conversation.pairKey?.startsWith(ADMIN_KEY_PREFIX) ?? false;

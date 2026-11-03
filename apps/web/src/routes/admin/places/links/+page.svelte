@@ -7,6 +7,7 @@
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { shortDate } from '#lib/admin/format.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -35,6 +36,7 @@
   // The row menu only picks; the dialogs are mounted next to the list, so closing the menu keeps them.
   const approving = new Target<Row>();
   const rejecting = new Target<Row>();
+  const messages = personMessages();
   const items = (row: Row): KebabItem[] => [
     ...(row.status === 'pending'
       ? [
@@ -58,6 +60,7 @@
       icon: 'external-link',
       href: `/p/${row.partner.id}`,
     },
+    ...messages.item(row.requester?.id),
     ...(row.status === 'pending'
       ? [
           {

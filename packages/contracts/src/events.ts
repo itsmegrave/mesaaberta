@@ -253,6 +253,8 @@ export type DomainEvent =
   // The calendar feed got a new secret (`on`; the old address stops working) or was turned off.
   // The secret itself is never in the log.
   | { type: 'CalendarFeedChanged'; payload: { profileId: string; on: boolean } }
+  // "Quando posso jogar" saved on the profile: how many slots it now has (0: cleared).
+  | { type: 'AvailabilityChanged'; payload: { profileId: string; slots: number } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
   | { type: 'EventForced'; payload: { eventId: string; eventType: string } }

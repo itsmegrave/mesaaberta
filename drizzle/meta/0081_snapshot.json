@@ -1,5 +1,5 @@
 {
-  "id": "0b19ea5f-374d-4efa-a541-a42a5092f9d3",
+  "id": "24947f18-b077-4155-9676-b55e41009342",
   "prevId": "3c75a942-950e-4365-b6e3-597d48563191",
   "version": "7",
   "dialect": "postgresql",
@@ -5815,11 +5815,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "calendar_feed_token": {
-          "name": "calendar_feed_token",
-          "type": "text",
+        "availability": {
+          "name": "availability",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": 0
         },
         "role": {
           "name": "role",
@@ -5886,21 +5887,6 @@
           "method": "btree",
           "with": {}
         },
-        "profiles_calendar_feed_token_unique": {
-          "name": "profiles_calendar_feed_token_unique",
-          "columns": [
-            {
-              "expression": "calendar_feed_token",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "profiles_looking_for_table_idx": {
           "name": "profiles_looking_for_table_idx",
           "columns": [
@@ -5954,6 +5940,10 @@
         "profiles_looking_note_length": {
           "name": "profiles_looking_note_length",
           "value": "char_length(\"profiles\".\"looking_for_table_note\") <= 200"
+        },
+        "profiles_availability_range": {
+          "name": "profiles_availability_range",
+          "value": "\"profiles\".\"availability\" between 0 and 2097151"
         }
       },
       "isRLSEnabled": true

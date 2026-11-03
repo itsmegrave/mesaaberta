@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { pageNumber } from '../admin/catalog';
 import type { SearchParamsLike } from '../search-params';
 import { SYSTEM_SEARCH_MAX } from '../systems/directory-filters';
+import { AVAILABILITY_DAYS, AVAILABILITY_PERIODS } from '../profile/availability';
 
 // "Procuro mesa" (`/players`): people who say they are looking for a table, for GMs to invite.
 
@@ -27,10 +28,15 @@ export type PlayerFilters = {
   query: string;
   /** A system's slug: people with it among their favorite systems. */
   system: string;
+  /** "Quando joga": a day (`mon`…`sun`) and a part of the day (`morning`, `afternoon`, `night`). */
+  day: string;
+  period: string;
   page: number;
 };
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const oneOf = (values: readonly string[], value: string | null) =>
+  value && values.includes(value) ? value : '';
 
 /** The filters in a `/players` address; what is not a filter is dropped, a bad page reads as 1. */
 export function readPlayerFilters(params: SearchParamsLike): PlayerFilters {
@@ -38,6 +44,8 @@ export function readPlayerFilters(params: SearchParamsLike): PlayerFilters {
   return {
     query: (params.get('q') ?? '').trim().replace(/^@/, '').slice(0, SYSTEM_SEARCH_MAX),
     system: SLUG.test(system) ? system : '',
+    day: oneOf(AVAILABILITY_DAYS, params.get('day')),
+    period: oneOf(AVAILABILITY_PERIODS, params.get('period')),
     page: pageNumber(params.get('page')),
   };
 }
@@ -47,6 +55,8 @@ export function playerQuery(filters: Omit<PlayerFilters, 'page'>, page = 1) {
   const params = new URLSearchParams();
   if (filters.query) params.set('q', filters.query);
   if (filters.system) params.set('system', filters.system);
+  if (filters.day) params.set('day', filters.day);
+  if (filters.period) params.set('period', filters.period);
   if (page > 1) params.set('page', String(page));
   const query = params.toString();
   return query ? `?${query}` : '';
