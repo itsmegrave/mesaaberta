@@ -62,6 +62,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     linksOn,
     ratingOn,
     availabilityOn,
+    reviewOn,
   ] = await Promise.all([
     locals.flags.isEnabled('use_badges', subject),
     locals.flags.isEnabled('use_player_ratings', subject),
@@ -75,6 +76,7 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     contentRatingSymbolShown(locals, viewer),
     // "Quando posso jogar", by the profile shown.
     locals.flags.isEnabled('use_profile_availability', subject),
+    locals.flags.isEnabled('use_year_review', subject),
   ]);
   // "Ver como visitante": the owner sees the page as anyone else does.
   const previewing = data.isOwner && url.searchParams.get('as') === 'visitor';
@@ -100,6 +102,8 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
     follow,
     followers: previewing ? null : followers,
     isOwner: data.isOwner && !previewing,
+    // The owner's Retrospectiva of this year (`use_year_review`).
+    reviewYear: reviewOn && data.isOwner && !previewing ? new Date().getUTCFullYear() : null,
     previewing,
     canonical: indexingPolicy(url, siteOf(locals.env, locals.log).APP_ORIGIN).canonical!,
   };
