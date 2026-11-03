@@ -134,6 +134,9 @@ export const profiles = pgTable(
     // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
     lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
     lookingForTableNote: text('looking_for_table_note'),
+    // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
+    // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
+    availability: integer('availability').notNull().default(0),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -155,6 +158,7 @@ export const profiles = pgTable(
     check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
     // Mirrors LOOKING_NOTE_MAX in packages/core/src/players/looking.
     check('profiles_looking_note_length', sql`char_length(${profile.lookingForTableNote}) <= 200`),
+    check('profiles_availability_range', sql`${profile.availability} between 0 and 2097151`),
     // Procuro mesa reads the people looking, newest first.
     index('profiles_looking_for_table_idx')
       .on(profile.lookingForTableAt)

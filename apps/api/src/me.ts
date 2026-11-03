@@ -22,7 +22,9 @@ import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
 import { hasPassword } from '@mesaaberta/core/server/auth/has-password';
 import { stillBanned } from '@mesaaberta/core/server/moderation/bans';
+import { availabilitySchema } from '@mesaaberta/core/profile/availability';
 import { favoriteSystemsSchema } from '@mesaaberta/core/profile/favorite-systems';
+import { availabilityOf, setAvailability } from '@mesaaberta/core/server/profile/availability';
 import {
   readFavoriteSystems,
   setFavoriteSystems,
@@ -188,6 +190,19 @@ export function meRoutes(open: Open = openDb) {
       if (refused) return refused;
       throw error;
     }
+  });
+
+  // "Quando posso jogar": the actor's slots, and saving them (none clears it). Web checks
+  // `use_profile_availability` first.
+  app.get('/availability', async (c) =>
+    c.json(await availabilityOf(c.get('db'), c.get('actorId'))),
+  );
+
+  app.post('/availability', async (c) => {
+    const parsed = availabilitySchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success)
+      return c.json({ error: 'invalid', field: 'slots', message: 'invalid' }, 400);
+    return c.json(await setAvailability(c.get('db'), c.get('actorId'), parsed.data));
   });
 
   // Whether the actor is under a limit now: `{ ok: true }`, or the refusal with when it frees.

@@ -154,6 +154,7 @@ describe('public profiles', () => {
   it('returns only the allowlisted identity, aggregates and public cards', async () => {
     const data = (await read())!;
     expect(Object.keys(data.profile).sort()).toEqual([
+      'availability',
       'avatarUrl',
       'bannerUrl',
       'bio',

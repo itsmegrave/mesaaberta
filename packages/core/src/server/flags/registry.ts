@@ -125,6 +125,10 @@ export const flagDefaults = {
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.
   use_open_tables: false,
+  // "Quando posso jogar" on profiles, a new feature (created on for everyone): the days and parts
+  // of the day a person can play, on their profile, on Procuro mesa and as its filter. Off: the
+  // profile section is a 404 and nothing shows it. Targeted by the viewer (a profile: the person).
+  use_profile_availability: false,
   // "Adicionar à agenda" on a table's page, a new feature (created on for everyone): the table in
   // Google Agenda or as an `.ics`, for its GM and confirmed players. Off: no button, and
   // /t/:slug/calendar is a 404. Targeted by the person's id.
