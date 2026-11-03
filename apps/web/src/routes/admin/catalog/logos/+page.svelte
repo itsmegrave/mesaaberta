@@ -38,6 +38,7 @@
   };
   const method: Record<string, string> = {
     wikidata: m.admin_logos_method_wikidata(),
+    commons: m.admin_logos_method_commons(),
     website: m.admin_logos_method_website(),
   };
   // The finder writes the reason as a code ("no_logo"), or "image_unreadable: <url>".

@@ -13,7 +13,10 @@ import {
  * 1. Wikidata: the item for the system (its label or an alias is the system's name, and it says it
  *    is a role-playing game). Its `logo image` (P154) is a file on Wikimedia Commons; Commons
  *    renders it as a PNG and tells its licence. That is the `wikidata` method.
- * 2. The item's `official website` (P856): an `<img>` there that calls itself a logo. That is the
+ * 2. Commons itself: a file titled with the system's name and "logo" (most RPG items have no P154,
+ *    but the file is often there). That is the `commons` method, `medium` when the Wikidata item
+ *    matched exactly, else `low` (found by name only).
+ * 3. The item's `official website` (P856): an `<img>` there that calls itself a logo. That is the
  *    `website` method, and never better than `medium`: a publisher's page shows the publisher's own
  *    logo as often as the game's.
  *
@@ -21,7 +24,7 @@ import {
  * adds their logo by hand. Nothing here throws on a bad answer from the web: it is just no logo.
  */
 
-export type LogoMethod = 'wikidata' | 'website';
+export type LogoMethod = 'wikidata' | 'commons' | 'website';
 export type LogoConfidence = 'high' | 'medium' | 'low';
 
 export type LogoCandidate = {
@@ -372,6 +375,34 @@ async function commonsFile(fetcher: Fetcher, file: string, timeoutMs: number) {
   };
 }
 
+/**
+ * A Commons file whose title is the system's name and the word logo ("Daggerheart logo.svg"),
+ * through Commons' own search; the first whose title really carries the whole name.
+ */
+async function commonsLogoByTitle(fetcher: Fetcher, name: string, timeoutMs: number) {
+  const terms = searchNames(name).filter((n) => n.exact);
+  const term = terms.at(-1)?.term ?? name;
+  const wanted = foldName(term).replace(/ /g, '');
+  if (wanted.length < 3) return null;
+  const found = await getJson<{ query?: { search?: { title: string }[] } }>(
+    fetcher,
+    query(COMMONS_API, {
+      action: 'query',
+      list: 'search',
+      srnamespace: '6',
+      srlimit: '10',
+      srsearch: `intitle:logo intitle:"${term.replace(/"/g, '')}"`,
+    }),
+    timeoutMs,
+  );
+  for (const { title } of found.query?.search ?? []) {
+    const file = title.replace(/^File:/, '');
+    const folded = foldName(file.replace(/\.[a-z0-9]+$/i, ''));
+    if (/\blogo\b/.test(folded) && folded.replace(/ /g, '').includes(wanted)) return file;
+  }
+  return null;
+}
+
 /** Looks for the logo of the system called `name`. Never throws. */
 export async function findSystemLogo(name: string, deps: FinderDeps = {}): Promise<LogoSearch> {
   try {
@@ -394,14 +425,14 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
   const timeoutMs = deps.timeoutMs ?? 8_000;
 
   const picked = await findItem(fetcher, name, timeoutMs);
-  if (!picked)
-    return { candidate: null, wikidataId: null, website: null, reason: 'no_wikidata_item' };
-  const { entity, exact } = picked;
-  const website = stringClaims(entity, 'P856')[0] ?? null;
-  const item = `https://www.wikidata.org/wiki/${entity.id}`;
+  const entity = picked?.entity ?? null;
+  const exact = picked?.exact ?? false;
+  const website = entity ? (stringClaims(entity, 'P856')[0] ?? null) : null;
+  const item = entity ? `https://www.wikidata.org/wiki/${entity.id}` : null;
+  const wikidataId = entity?.id ?? null;
 
-  const logoFile = stringClaims(entity, 'P154')[0];
-  if (logoFile) {
+  const logoFile = entity ? stringClaims(entity, 'P154')[0] : undefined;
+  if (entity && logoFile) {
     const file = await commonsFile(fetcher, logoFile, timeoutMs);
     if (file) {
       return {
@@ -413,12 +444,37 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
             ? `Logo do item ${entity.id} do Wikidata, com o mesmo nome do sistema.`
             : `Logo do item ${entity.id} do Wikidata, com o nome sem a edição: pode ser o logo de outra edição.`,
         },
-        wikidataId: entity.id,
+        wikidataId,
         website,
         reason: null,
       };
     }
   }
+
+  // Most RPG items have no logo statement, but Commons often has the file anyway.
+  const titled = await commonsLogoByTitle(fetcher, name, timeoutMs);
+  if (titled) {
+    const file = await commonsFile(fetcher, titled, timeoutMs);
+    if (file) {
+      return {
+        candidate: {
+          ...file,
+          method: 'commons',
+          confidence: exact ? 'medium' : 'low',
+          note: `Arquivo do Wikimedia Commons chamado "${titled}"${
+            exact && entity
+              ? `; o sistema é o item ${entity.id} do Wikidata`
+              : ', achado só pelo nome'
+          }.`,
+        },
+        wikidataId,
+        website,
+        reason: null,
+      };
+    }
+  }
+  if (!entity)
+    return { candidate: null, wikidataId: null, website: null, reason: 'no_wikidata_item' };
 
   if (website) {
     const page = await readPage(website, { fetcher, resolve });
@@ -437,14 +493,14 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
               ? `Imagem marcada como logo no site oficial (${item}), com o nome do sistema.`
               : `Primeira imagem marcada como logo no site oficial (${item}): pode ser o logo da editora.`,
           },
-          wikidataId: entity.id,
+          wikidataId,
           website,
           reason: null,
         };
       }
       if (found && 'onlySvg' in found)
-        return { candidate: null, wikidataId: entity.id, website, reason: 'only_svg' };
+        return { candidate: null, wikidataId, website, reason: 'only_svg' };
     }
   }
-  return { candidate: null, wikidataId: entity.id, website, reason: 'no_logo' };
+  return { candidate: null, wikidataId, website, reason: 'no_logo' };
 }

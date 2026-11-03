@@ -240,7 +240,7 @@ export const systemLogos = pgTable(
     status: systemLogoStatus('status').notNull(),
     // In the table-images bucket, under `systems/`. Null when missing or rejected.
     path: text('path'),
-    // `wikidata`, `website` or `upload` (an admin sent the file).
+    // `wikidata`, `commons`, `website` or `upload` (an admin sent the file).
     method: text('method'),
     // `high`, `medium` or `low`, from the finder; null for an upload.
     confidence: text('confidence'),

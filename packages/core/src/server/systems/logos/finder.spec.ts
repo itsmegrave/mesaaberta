@@ -161,6 +161,46 @@ describe('findSystemLogo', () => {
     });
   });
 
+  it('finds a Commons file named after the system when the item has no logo', async () => {
+    const fetcher = routes({
+      wbsearchentities: () => json({ search: [{ id: 'Q7' }] }),
+      wbgetentities: () => json({ entities: { Q7: item('Q7', 'Blades in the Dark') } }),
+      'list=search': () =>
+        json({
+          query: {
+            search: [
+              { title: 'File:Blades in the Dark cover.jpg' },
+              { title: 'File:Blades in the Dark logo.svg' },
+            ],
+          },
+        }),
+      'prop=imageinfo': () =>
+        json({
+          query: {
+            pages: {
+              '1': {
+                imageinfo: [
+                  {
+                    thumburl: 'https://upload.wikimedia.org/bitd.png',
+                    descriptionurl:
+                      'https://commons.wikimedia.org/wiki/File:Blades_in_the_Dark_logo.svg',
+                  },
+                ],
+              },
+            },
+          },
+        }),
+    });
+
+    const found = await findSystemLogo('Blades in the Dark', { fetcher, resolve: publicDns });
+
+    expect(found.candidate).toMatchObject({
+      imageUrl: 'https://upload.wikimedia.org/bitd.png',
+      method: 'commons',
+      confidence: 'medium',
+    });
+  });
+
   it('reads the official site when the item has no logo, at most at medium', async () => {
     const fetcher = routes({
       wbsearchentities: () => json({ search: [{ id: 'Q9' }] }),
@@ -168,6 +208,7 @@ describe('findSystemLogo', () => {
         json({
           entities: { Q9: item('Q9', 'Ordem Paranormal', { website: 'https://op.example.com/' }) },
         }),
+      'list=search': () => json({ query: { search: [] } }),
       'op.example.com': () => html('<img src="/ordem-paranormal-logo.png" alt="Ordem Paranormal">'),
     });
 
@@ -183,7 +224,10 @@ describe('findSystemLogo', () => {
 
   it('says why there is nothing', async () => {
     const nothing = await findSystemLogo('Sistema Caseiro', {
-      fetcher: routes({ wbsearchentities: () => json({ search: [] }) }),
+      fetcher: routes({
+        wbsearchentities: () => json({ search: [] }),
+        'list=search': () => json({ query: { search: [] } }),
+      }),
       resolve: publicDns,
     });
     expect(nothing).toEqual({
@@ -214,7 +258,7 @@ describe('findSystemLogo', () => {
       fetcher: async () =>
         ++calls === 1
           ? new Response('slow down', { status: 429, headers: { 'retry-after': '0' } })
-          : json({ search: [] }),
+          : json({ search: [], query: { search: [] } }),
       resolve: publicDns,
     });
     expect(found.reason).toBe('no_wikidata_item');

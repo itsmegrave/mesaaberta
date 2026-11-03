@@ -1398,6 +1398,7 @@
   "admin_logos_confidence_low": "Baixa confiança",
   "admin_logos_method_wikidata": "Wikidata e Wikimedia Commons",
   "admin_logos_method_website": "Site oficial",
+  "admin_logos_method_commons": "Wikimedia Commons, pelo nome do arquivo",
   "admin_logos_source": "Ver a fonte",
   "admin_logos_wikidata": "Item no Wikidata",
   "admin_logos_license": "Licença: {license}",
